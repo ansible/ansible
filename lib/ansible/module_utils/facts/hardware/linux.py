@@ -13,8 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import collections
 import errno
@@ -28,7 +27,7 @@ import time
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.text.formatters import bytes_to_human
@@ -170,6 +169,8 @@ class LinuxHardware(Hardware):
         coreid = 0
         sockets = {}
         cores = {}
+        zp = 0
+        zmt = 0
 
         xen = False
         xen_paravirt = False
@@ -209,7 +210,6 @@ class LinuxHardware(Hardware):
 
             # model name is for Intel arch, Processor (mind the uppercase P)
             # works for some ARM devices, like the Sheevaplug.
-            # 'ncpus active' is SPARC attribute
             if key in ['model name', 'Processor', 'vendor_id', 'cpu', 'Vendor', 'processor']:
                 if 'processor' not in cpu_facts:
                     cpu_facts['processor'] = []
@@ -233,8 +233,12 @@ class LinuxHardware(Hardware):
                 sockets[physid] = int(val)
             elif key == 'siblings':
                 cores[coreid] = int(val)
+            # S390x classic cpuinfo
             elif key == '# processors':
-                cpu_facts['processor_cores'] = int(val)
+                zp = int(val)
+            elif key == 'max thread id':
+                zmt = int(val) + 1
+            # SPARC
             elif key == 'ncpus active':
                 i = int(val)
 
@@ -250,13 +254,20 @@ class LinuxHardware(Hardware):
         if collected_facts.get('ansible_architecture', '').startswith(('armv', 'aarch', 'ppc')):
             i = processor_occurrence
 
-        # FIXME
-        if collected_facts.get('ansible_architecture') != 's390x':
+        if collected_facts.get('ansible_architecture') == 's390x':
+            # getting sockets would require 5.7+ with CONFIG_SCHED_TOPOLOGY
+            cpu_facts['processor_count'] = 1
+            cpu_facts['processor_cores'] = round(zp / zmt)
+            cpu_facts['processor_threads_per_core'] = zmt
+            cpu_facts['processor_vcpus'] = zp
+            cpu_facts['processor_nproc'] = zp
+        else:
             if xen_paravirt:
                 cpu_facts['processor_count'] = i
                 cpu_facts['processor_cores'] = i
                 cpu_facts['processor_threads_per_core'] = 1
                 cpu_facts['processor_vcpus'] = i
+                cpu_facts['processor_nproc'] = i
             else:
                 if sockets:
                     cpu_facts['processor_count'] = len(sockets)
@@ -271,32 +282,32 @@ class LinuxHardware(Hardware):
 
                 core_values = list(cores.values())
                 if core_values:
-                    cpu_facts['processor_threads_per_core'] = core_values[0] // cpu_facts['processor_cores']
+                    cpu_facts['processor_threads_per_core'] = round(core_values[0] / cpu_facts['processor_cores'])
                 else:
-                    cpu_facts['processor_threads_per_core'] = 1 // cpu_facts['processor_cores']
+                    cpu_facts['processor_threads_per_core'] = round(1 / cpu_facts['processor_cores'])
 
                 cpu_facts['processor_vcpus'] = (cpu_facts['processor_threads_per_core'] *
                                                 cpu_facts['processor_count'] * cpu_facts['processor_cores'])
 
-                # if the number of processors available to the module's
-                # thread cannot be determined, the processor count
-                # reported by /proc will be the default:
                 cpu_facts['processor_nproc'] = processor_occurrence
 
-                try:
-                    cpu_facts['processor_nproc'] = len(
-                        os.sched_getaffinity(0)
-                    )
-                except AttributeError:
-                    # In Python < 3.3, os.sched_getaffinity() is not available
-                    try:
-                        cmd = get_bin_path('nproc')
-                    except ValueError:
-                        pass
-                    else:
-                        rc, out, _err = self.module.run_command(cmd)
-                        if rc == 0:
-                            cpu_facts['processor_nproc'] = int(out)
+        # if the number of processors available to the module's
+        # thread cannot be determined, the processor count
+        # reported by /proc will be the default (as previously defined)
+        try:
+            cpu_facts['processor_nproc'] = len(
+                os.sched_getaffinity(0)
+            )
+        except AttributeError:
+            # In Python < 3.3, os.sched_getaffinity() is not available
+            try:
+                cmd = get_bin_path('nproc')
+            except ValueError:
+                pass
+            else:
+                rc, out, _err = self.module.run_command(cmd)
+                if rc == 0:
+                    cpu_facts['processor_nproc'] = int(out)
 
         return cpu_facts
 
@@ -538,12 +549,13 @@ class LinuxHardware(Hardware):
         # start threads to query each mount
         results = {}
         pool = ThreadPool(processes=min(len(mtab_entries), cpu_count()))
-        maxtime = globals().get('GATHER_TIMEOUT') or timeout.DEFAULT_GATHER_TIMEOUT
+        maxtime = timeout.GATHER_TIMEOUT or timeout.DEFAULT_GATHER_TIMEOUT
         for fields in mtab_entries:
             # Transform octal escape sequences
             fields = [self._replace_octal_escapes(field) for field in fields]
 
             device, mount, fstype, options = fields[0], fields[1], fields[2], fields[3]
+            dump, passno = int(fields[4]), int(fields[5])
 
             if not device.startswith(('/', '\\')) and ':/' not in device or fstype == 'none':
                 continue
@@ -551,7 +563,9 @@ class LinuxHardware(Hardware):
             mount_info = {'mount': mount,
                           'device': device,
                           'fstype': fstype,
-                          'options': options}
+                          'options': options,
+                          'dump': dump,
+                          'passno': passno}
 
             if mount in bind_mounts:
                 # only add if not already there, we might have a plain /etc/mtab

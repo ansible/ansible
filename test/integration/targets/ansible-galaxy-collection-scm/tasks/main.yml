@@ -5,7 +5,7 @@
 
 - name: Test installing collections from git repositories
   environment:
-    ANSIBLE_COLLECTIONS_PATHS: "{{ galaxy_dir }}/collections"
+    ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/collections"
   vars:
     cleanup: True
     galaxy_dir: "{{ galaxy_dir }}"
@@ -30,6 +30,7 @@
   - include_tasks: ./download.yml
   - include_tasks: ./setup_collection_bad_version.yml
   - include_tasks: ./test_invalid_version.yml
+  - include_tasks: ./test_manifest_metadata.yml
 
   always:
 

@@ -33,7 +33,6 @@ from .util import (
     SubprocessError,
     display,
     filter_args,
-    ANSIBLE_BIN_PATH,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_ROOT,
     OutputStream,
@@ -42,6 +41,10 @@ from .util import (
 from .util_common import (
     ResultType,
     process_scoped_temporary_directory,
+)
+
+from .ansible_util import (
+    get_ansible_bin_path,
 )
 
 from .containers import (
@@ -145,7 +148,7 @@ def delegate_command(args: EnvironmentConfig, host_state: HostState, exclude: li
             con.extract_archive(chdir=working_directory, src=payload_file)
     else:
         content_root = working_directory
-        ansible_bin_path = ANSIBLE_BIN_PATH
+        ansible_bin_path = get_ansible_bin_path(args)
 
     command = generate_command(args, host_state.controller_profile.python, ansible_bin_path, content_root, exclude, require)
 
@@ -177,7 +180,6 @@ def delegate_command(args: EnvironmentConfig, host_state: HostState, exclude: li
             con.run(['mkdir', '-p'] + writable_dirs, capture=True)
             con.run(['chmod', '777'] + writable_dirs, capture=True)
             con.run(['chmod', '755', working_directory], capture=True)
-            con.run(['chmod', '644', os.path.join(content_root, args.metadata_path)], capture=True)
             con.run(['useradd', pytest_user, '--create-home'], capture=True)
 
             con.run(insert_options(command, options + ['--requirements-mode', 'only']), capture=False)
@@ -226,7 +228,7 @@ def delegate_command(args: EnvironmentConfig, host_state: HostState, exclude: li
                     target.on_target_failure()  # when the controller is delegated, report failures after delegation fails
 
 
-def insert_options(command, options):
+def insert_options(command: list[str], options: list[str]) -> list[str]:
     """Insert addition command line options into the given command and return the result."""
     result = []
 
@@ -267,12 +269,12 @@ def download_results(args: EnvironmentConfig, con: Connection, content_root: str
 
 
 def generate_command(
-        args: EnvironmentConfig,
-        python: PythonConfig,
-        ansible_bin_path: str,
-        content_root: str,
-        exclude: list[str],
-        require: list[str],
+    args: EnvironmentConfig,
+    python: PythonConfig,
+    ansible_bin_path: str,
+    content_root: str,
+    exclude: list[str],
+    require: list[str],
 ) -> list[str]:
     """Generate the command necessary to delegate ansible-test."""
     cmd = [os.path.join(ansible_bin_path, 'ansible-test')]
@@ -319,14 +321,13 @@ def generate_command(
 
 
 def filter_options(
-        args: EnvironmentConfig,
-        argv: list[str],
-        exclude: list[str],
-        require: list[str],
+    args: EnvironmentConfig,
+    argv: list[str],
+    exclude: list[str],
+    require: list[str],
 ) -> c.Iterable[str]:
     """Return an iterable that filters out unwanted CLI options and injects new ones as requested."""
     replace: list[tuple[str, int, t.Optional[t.Union[bool, str, list[str]]]]] = [
-        ('--docker-no-pull', 0, False),
         ('--truncate', 1, str(args.truncate)),
         ('--color', 1, 'yes' if args.color else 'no'),
         ('--redact', 0, False),
@@ -347,7 +348,7 @@ def filter_options(
             ('--metadata', 1, args.metadata_path),
             ('--exclude', 1, exclude),
             ('--require', 1, require),
-            ('--base-branch', 1, args.base_branch or get_ci_provider().get_base_branch()),
+            ('--base-branch', 1, False),
         ])
 
     pass_through_args: list[str] = []

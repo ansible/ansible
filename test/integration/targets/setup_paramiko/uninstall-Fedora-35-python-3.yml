@@ -1,5 +1,0 @@
-- name: Revert the crypto-policy back to DEFAULT
-  command: update-crypto-policies --set DEFAULT
-
-- name: Uninstall Paramiko and crypto policies scripts using dnf history undo
-  command: dnf history undo last --assumeyes

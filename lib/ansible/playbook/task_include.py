@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import ansible.constants as C
 from ansible.errors import AnsibleParserError
@@ -35,7 +33,7 @@ class TaskInclude(Task):
 
     """
     A task include is derived from a regular task to handle the special
-    circumstances related to the `- include: ...` task.
+    circumstances related to the `- include_*: ...` task.
     """
 
     BASE = frozenset(('file', '_raw_params'))  # directly assigned
@@ -104,29 +102,6 @@ class TaskInclude(Task):
         new_me = super(TaskInclude, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
         new_me.statically_loaded = self.statically_loaded
         return new_me
-
-    def get_vars(self):
-        '''
-        We override the parent Task() classes get_vars here because
-        we need to include the args of the include into the vars as
-        they are params to the included tasks. But ONLY for 'include'
-        '''
-        if self.action not in C._ACTION_INCLUDE:
-            all_vars = super(TaskInclude, self).get_vars()
-        else:
-            all_vars = dict()
-            if self._parent:
-                all_vars |= self._parent.get_vars()
-
-            all_vars |= self.vars
-            all_vars |= self.args
-
-            if 'tags' in all_vars:
-                del all_vars['tags']
-            if 'when' in all_vars:
-                del all_vars['when']
-
-        return all_vars
 
     def build_parent_block(self):
         '''

@@ -3,8 +3,7 @@
 # Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -12,9 +11,9 @@ DOCUMENTATION = r'''
 module: wait_for_connection
 short_description: Waits until remote system is reachable/usable
 description:
-- Waits for a total of C(timeout) seconds.
-- Retries the transport connection after a timeout of C(connect_timeout).
-- Tests the transport connection every C(sleep) seconds.
+- Waits for a total of O(timeout) seconds.
+- Retries the transport connection after a timeout of O(connect_timeout).
+- Tests the transport connection every O(sleep) seconds.
 - This module makes use of internal ansible transport (and configuration) and the ping/win_ping module to guarantee correct end-to-end functioning.
 - This module is also supported for Windows targets.
 version_added: '2.3'
@@ -101,7 +100,7 @@ EXAMPLES = r'''
       customization:
         hostname: '{{ vm_shortname }}'
         runonce:
-        - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert -EnableCredSSP
+        - cmd.exe /c winrm.cmd quickconfig -quiet -force
     delegate_to: localhost
 
   - name: Wait for system to become reachable over WinRM

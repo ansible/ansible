@@ -1,8 +1,7 @@
 # (c) 2013, seth vidal <skvidal@fedoraproject.org> red hat, inc
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: first_found
@@ -15,9 +14,9 @@ DOCUMENTATION = """
         to the containing locations of role / play / include and so on.
       - The list of files has precedence over the paths searched.
         For example, A task in a role has a 'file1' in the play's relative path, this will be used, 'file2' in role's relative path will not.
-      - Either a list of files C(_terms) or a key C(files) with a list of files is required for this plugin to operate.
+      - Either a list of files O(_terms) or a key O(files) with a list of files is required for this plugin to operate.
     notes:
-      - This lookup can be used in 'dual mode', either passing a list of file names or a dictionary that has C(files) and C(paths).
+      - This lookup can be used in 'dual mode', either passing a list of file names or a dictionary that has O(files) and O(paths).
     options:
       _terms:
         description: A list of file names.
@@ -35,16 +34,19 @@ DOCUMENTATION = """
         type: boolean
         default: False
         description:
-          - When C(True), return an empty list when no files are matched.
+          - When V(True), return an empty list when no files are matched.
           - This is useful when used with C(with_first_found), as an empty list return to C(with_) calls
             causes the calling task to be skipped.
-          - When used as a template via C(lookup) or C(query), setting I(skip=True) will *not* cause the task to skip.
+          - When used as a template via C(lookup) or C(query), setting O(skip=True) will *not* cause the task to skip.
             Tasks must handle the empty list return from the template.
-          - When C(False) and C(lookup) or C(query) specifies  I(errors='ignore') all errors (including no file found,
+          - When V(False) and C(lookup) or C(query) specifies O(ignore:errors='ignore') all errors (including no file found,
             but potentially others) return an empty string or an empty list respectively.
-          - When C(True) and C(lookup) or C(query) specifies I(errors='ignore'), no file found will return an empty
+          - When V(True) and C(lookup) or C(query) specifies O(ignore:errors='ignore'), no file found will return an empty
             list and other potential errors return an empty string or empty list depending on the template call
-            (in other words return values of C(lookup) v C(query)).
+            (in other words return values of C(lookup) vs C(query)).
+    seealso:
+      - ref: playbook_task_paths
+        description: Search paths used for relative paths/files.
 """
 
 EXAMPLES = """
@@ -169,8 +171,9 @@ class LookupModule(LookupBase):
         for term in terms:
             if isinstance(term, Mapping):
                 self.set_options(var_options=variables, direct=term)
+                files = self.get_option('files')
             elif isinstance(term, string_types):
-                self.set_options(var_options=variables, direct=kwargs)
+                files = [term]
             elif isinstance(term, Sequence):
                 partial, skip = self._process_terms(term, variables, kwargs)
                 total_search.extend(partial)
@@ -178,13 +181,12 @@ class LookupModule(LookupBase):
             else:
                 raise AnsibleLookupError("Invalid term supplied, can handle string, mapping or list of strings but got: %s for %s" % (type(term), term))
 
-            files = self.get_option('files')
             paths = self.get_option('paths')
 
             # NOTE: this is used as 'global' but  can be set many times?!?!?
             skip = self.get_option('skip')
 
-            # magic extra spliting to create lists
+            # magic extra splitting to create lists
             filelist = _split_on(files, ',;')
             pathlist = _split_on(paths, ',:;')
 
@@ -195,14 +197,18 @@ class LookupModule(LookupBase):
                         f = os.path.join(path, fn)
                         total_search.append(f)
             elif filelist:
-                # NOTE: this seems wrong, should be 'extend' as any option/entry can clobber all
-                total_search = filelist
+                # NOTE: this is now 'extend', previously it would clobber all options, but we deemed that a bug
+                total_search.extend(filelist)
             else:
                 total_search.append(term)
 
         return total_search, skip
 
     def run(self, terms, variables, **kwargs):
+
+        if not terms:
+            self.set_options(var_options=variables, direct=kwargs)
+            terms = self.get_option('files')
 
         total_search, skip = self._process_terms(terms, variables, kwargs)
 
@@ -219,6 +225,8 @@ class LookupModule(LookupBase):
             try:
                 fn = self._templar.template(fn)
             except (AnsibleUndefinedVariable, UndefinedError):
+                # NOTE: backwards compat ff behaviour is to ignore errors when vars are undefined.
+                #       moved here from task_executor.
                 continue
 
             # get subdir if set by task executor, default to files otherwise
@@ -230,6 +238,6 @@ class LookupModule(LookupBase):
 
         # if we get here, no file was found
         if skip:
-            # NOTE: global skip wont matter, only last 'skip' value in dict term
+            # NOTE: global skip won't matter, only last 'skip' value in dict term
             return []
         raise AnsibleLookupError("No file was found when using first_found.")

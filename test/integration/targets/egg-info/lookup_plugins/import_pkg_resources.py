@@ -1,7 +1,6 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import pkg_resources
+import pkg_resources  # pylint: disable=unused-import
 
 from ansible.plugins.lookup import LookupBase
 

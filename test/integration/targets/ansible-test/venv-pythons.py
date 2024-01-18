@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """Return target Python options for use with ansible-test."""
+from __future__ import annotations
 
+import argparse
 import os
 import shutil
 import subprocess
@@ -10,6 +12,11 @@ from ansible import release
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--only-versions', action='store_true')
+
+    options = parser.parse_args()
+
     ansible_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(release.__file__))))
     source_root = os.path.join(ansible_root, 'test', 'lib')
 
@@ -33,6 +40,10 @@ def main():
             print(f'{executable} - {"fail" if process.returncode else "pass"}', file=sys.stderr)
 
             if not process.returncode:
+                if options.only_versions:
+                    args.append(python_version)
+                    continue
+
                 args.extend(['--target-python', f'venv/{python_version}'])
 
     print(' '.join(args))

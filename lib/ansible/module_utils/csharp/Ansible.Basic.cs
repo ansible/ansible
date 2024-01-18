@@ -1,6 +1,8 @@
+using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -15,6 +17,10 @@ using Newtonsoft.Json;
 #else
 using System.Web.Script.Serialization;
 #endif
+
+// Newtonsoft.Json may reference a different System.Runtime version (6.x) than loaded by PowerShell 7.3 (7.x).
+// Ignore CS1701 so the code can be compiled when warnings are reported as errors.
+//NoWarn -Name CS1701 -CLR Core
 
 // System.Diagnostics.EventLog.dll reference different versioned dlls that are
 // loaded in PSCore, ignore CS1702 so the code will ignore this warning
@@ -43,6 +49,7 @@ namespace Ansible.Basic
         private static List<string> BOOLEANS_TRUE = new List<string>() { "y", "yes", "on", "1", "true", "t", "1.0" };
         private static List<string> BOOLEANS_FALSE = new List<string>() { "n", "no", "off", "0", "false", "f", "0.0" };
 
+        private bool ignoreUnknownOpts = false;
         private string remoteTmp = Path.GetTempPath();
         private string tmpdir = null;
         private HashSet<string> noLogValues = new HashSet<string>();
@@ -54,10 +61,12 @@ namespace Ansible.Basic
         private Dictionary<string, string> passVars = new Dictionary<string, string>()
         {
             // null values means no mapping, not used in Ansible.Basic.AnsibleModule
+            // keep in sync with python counterpart in lib/ansible/module_utils/common/parameters.py
             { "check_mode", "CheckMode" },
             { "debug", "DebugMode" },
             { "diff", "DiffMode" },
             { "keep_remote_files", "KeepRemoteFiles" },
+            { "ignore_unknown_opts", "ignoreUnknownOpts" },
             { "module_name", "ModuleName" },
             { "no_log", "NoLog" },
             { "remote_tmp", "remoteTmp" },
@@ -66,11 +75,12 @@ namespace Ansible.Basic
             { "socket", null },
             { "string_conversion_action", null },
             { "syslog_facility", null },
+            { "target_log_info", "TargetLogInfo"},
             { "tmpdir", "tmpdir" },
             { "verbosity", "Verbosity" },
             { "version", "AnsibleVersion" },
         };
-        private List<string> passBools = new List<string>() { "check_mode", "debug", "diff", "keep_remote_files", "no_log" };
+        private List<string> passBools = new List<string>() { "check_mode", "debug", "diff", "keep_remote_files", "ignore_unknown_opts", "no_log" };
         private List<string> passInts = new List<string>() { "verbosity" };
         private Dictionary<string, List<object>> specDefaults = new Dictionary<string, List<object>>()
         {
@@ -119,6 +129,7 @@ namespace Ansible.Basic
         public bool KeepRemoteFiles { get; private set; }
         public string ModuleName { get; private set; }
         public bool NoLog { get; private set; }
+        public string TargetLogInfo { get; private set; }
         public int Verbosity { get; private set; }
         public string AnsibleVersion { get; private set; }
 
@@ -172,7 +183,8 @@ namespace Ansible.Basic
                     }
 
                     string dateTime = DateTime.Now.ToFileTime().ToString();
-                    string dirName = String.Format("ansible-moduletmp-{0}-{1}", dateTime, new Random().Next(0, int.MaxValue));
+                    string dirName = String.Format("ansible-moduletmp-{0}-{1}-{2}", dateTime, System.Diagnostics.Process.GetCurrentProcess().Id,
+                        new Random().Next(0, int.MaxValue));
                     string newTmpdir = Path.Combine(baseDir, dirName);
 #if CORECLR
                     DirectoryInfo tmpdirInfo = Directory.CreateDirectory(newTmpdir);
@@ -250,6 +262,7 @@ namespace Ansible.Basic
             DiffMode = false;
             KeepRemoteFiles = false;
             ModuleName = "undefined win module";
+            TargetLogInfo = "";
             NoLog = (bool)argumentSpec["no_log"];
             Verbosity = 0;
             AppDomain.CurrentDomain.ProcessExit += CleanupFiles;
@@ -305,8 +318,8 @@ namespace Ansible.Basic
 
         public void ExitJson()
         {
-            WriteLine(GetFormattedResults(Result));
             CleanupFiles(null, null);
+            WriteLine(GetFormattedResults(Result));
             Exit(0);
         }
 
@@ -333,8 +346,8 @@ namespace Ansible.Basic
                     Result["exception"] = exception.ToString();
             }
 
-            WriteLine(GetFormattedResults(Result));
             CleanupFiles(null, null);
+            WriteLine(GetFormattedResults(Result));
             Exit(1);
         }
 
@@ -365,9 +378,20 @@ namespace Ansible.Basic
                     logSource = "Application";
                 }
             }
+
+            if (String.IsNullOrWhiteSpace(TargetLogInfo))
+            {
+                message = String.Format("{0} - {1}", ModuleName, message);
+            }
+            else
+            {
+                message = String.Format("{0} {1} - {2}", ModuleName, TargetLogInfo, message);
+            }
+
             if (sanitise)
+            {
                 message = (string)RemoveNoLogValues(message, noLogValues);
-            message = String.Format("{0} - {1}", ModuleName, message);
+            }
 
             using (EventLog eventLog = new EventLog("Application"))
             {
@@ -1036,7 +1060,7 @@ namespace Ansible.Basic
             foreach (string parameter in removedParameters)
                 param.Remove(parameter);
 
-            if (unsupportedParameters.Count > 0)
+            if (unsupportedParameters.Count > 0 && !ignoreUnknownOpts)
             {
                 legalInputs.RemoveAll(x => passVars.Keys.Contains(x.Replace("_ansible_", "")));
                 string msg = String.Format("Unsupported parameters for ({0}) module: {1}", ModuleName, String.Join(", ", unsupportedParameters));
@@ -1440,10 +1464,22 @@ namespace Ansible.Basic
         {
             foreach (string path in cleanupFiles)
             {
-                if (File.Exists(path))
-                    File.Delete(path);
-                else if (Directory.Exists(path))
-                    Directory.Delete(path, true);
+                try
+                {
+#if WINDOWS
+                    FileCleaner.Delete(path);
+#else
+                    if (File.Exists(path))
+                        File.Delete(path);
+                    else if (Directory.Exists(path))
+                        Directory.Delete(path, true);
+#endif
+                }
+                catch (Exception e)
+                {
+                    Warn(string.Format("Failure cleaning temp path '{0}': {1} {2}",
+                        path, e.GetType().Name, e.Message));
+                }
             }
             cleanupFiles = new List<string>();
         }
@@ -1482,4 +1518,247 @@ namespace Ansible.Basic
             Console.WriteLine(line);
         }
     }
+
+#if WINDOWS
+    // Windows is tricky as AVs and other software might still
+    // have an open handle to files causing a failure. Use a
+    // custom deletion mechanism to remove the files/dirs.
+    // https://github.com/ansible/ansible/pull/80247
+    internal static class FileCleaner
+    {
+        private const int FileDispositionInformation = 13;
+        private const int FileDispositionInformationEx = 64;
+
+        private const int ERROR_INVALID_PARAMETER = 0x00000057;
+        private const int ERROR_DIR_NOT_EMPTY = 0x00000091;
+
+        private static bool? _supportsPosixDelete = null;
+
+        [Flags()]
+        public enum DispositionFlags : uint
+        {
+            FILE_DISPOSITION_DO_NOT_DELETE = 0x00000000,
+            FILE_DISPOSITION_DELETE = 0x00000001,
+            FILE_DISPOSITION_POSIX_SEMANTICS = 0x00000002,
+            FILE_DISPOSITION_FORCE_IMAGE_SECTION_CHECK = 0x00000004,
+            FILE_DISPOSITION_ON_CLOSE = 0x00000008,
+            FILE_DISPOSITION_IGNORE_READONLY_ATTRIBUTE = 0x00000010,
+        }
+
+        [Flags()]
+        public enum FileFlags : uint
+        {
+            FILE_FLAG_OPEN_NO_RECALL = 0x00100000,
+            FILE_FLAG_OPEN_REPARSE_POINT = 0x00200000,
+            FILE_FLAG_SESSION_AWARE = 0x00800000,
+            FILE_FLAG_POSIX_SEMANTICS = 0x01000000,
+            FILE_FLAG_BACKUP_SEMANTICS = 0x02000000,
+            FILE_FLAG_DELETE_ON_CLOSE = 0x04000000,
+            FILE_FLAG_SEQUENTIAL_SCAN = 0x08000000,
+            FILE_FLAG_RANDOM_ACCESS = 0x10000000,
+            FILE_FLAG_NO_BUFFERING = 0x20000000,
+            FILE_FLAG_OVERLAPPED = 0x40000000,
+            FILE_FLAG_WRITE_THROUGH = 0x80000000,
+        }
+
+        [DllImport("Kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern SafeFileHandle CreateFileW(
+            [MarshalAs(UnmanagedType.LPWStr)] string lpFileName,
+            FileSystemRights dwDesiredAccess,
+            FileShare dwShareMode,
+            IntPtr lpSecurityAttributes,
+            FileMode dwCreationDisposition,
+            uint dwFlagsAndAttributes,
+            IntPtr hTemplateFile);
+
+        private static SafeFileHandle CreateFile(string path, FileSystemRights access, FileShare share, FileMode mode,
+            FileAttributes attributes, FileFlags flags)
+        {
+            uint flagsAndAttributes = (uint)attributes | (uint)flags;
+            SafeFileHandle handle = CreateFileW(path, access, share, IntPtr.Zero, mode, flagsAndAttributes,
+                IntPtr.Zero);
+            if (handle.IsInvalid)
+            {
+                int errCode = Marshal.GetLastWin32Error();
+                string msg = string.Format("CreateFileW({0}) failed 0x{1:X8}: {2}",
+                    path, errCode, new Win32Exception(errCode).Message);
+                throw new Win32Exception(errCode, msg);
+            }
+
+            return handle;
+        }
+
+        [DllImport("Ntdll.dll")]
+        private static extern int NtSetInformationFile(
+            SafeFileHandle FileHandle,
+            out IntPtr IoStatusBlock,
+            ref int FileInformation,
+            int Length,
+            int FileInformationClass);
+
+        [DllImport("Ntdll.dll")]
+        private static extern int RtlNtStatusToDosError(
+            int Status);
+
+        public static void Delete(string path)
+        {
+            if (File.Exists(path))
+            {
+                DeleteEntry(path, FileAttributes.ReadOnly);
+            }
+            else if (Directory.Exists(path))
+            {
+                Queue<DirectoryInfo> dirQueue = new Queue<DirectoryInfo>();
+                dirQueue.Enqueue(new DirectoryInfo(path));
+                bool nonEmptyDirs = false;
+                HashSet<string> processedDirs = new HashSet<string>();
+
+                while (dirQueue.Count > 0)
+                {
+                    DirectoryInfo currentDir = dirQueue.Dequeue();
+
+                    bool deleteDir = true;
+                    if (processedDirs.Add(currentDir.FullName))
+                    {
+                        foreach (FileSystemInfo entry in currentDir.EnumerateFileSystemInfos())
+                        {
+                            // Tries to delete each entry. Failures are ignored
+                            // as they will be picked up when the dir is
+                            // deleted and not empty.
+                            if (entry is DirectoryInfo)
+                            {
+                                if ((entry.Attributes & FileAttributes.ReparsePoint) != 0)
+                                {
+                                    // If it's a reparse point, just delete it directly.
+                                    DeleteEntry(entry.FullName, entry.Attributes, ignoreFailure: true);
+                                }
+                                else
+                                {
+                                    // Add the dir to the queue to delete and it will be processed next round.
+                                    dirQueue.Enqueue((DirectoryInfo)entry);
+                                    deleteDir = false;
+                                }
+                            }
+                            else
+                            {
+                                DeleteEntry(entry.FullName, entry.Attributes, ignoreFailure: true);
+                            }
+                        }
+                    }
+
+                    if (deleteDir)
+                    {
+                        try
+                        {
+                            DeleteEntry(currentDir.FullName, FileAttributes.Directory);
+                        }
+                        catch (Win32Exception e)
+                        {
+                            if (e.NativeErrorCode == ERROR_DIR_NOT_EMPTY)
+                            {
+                                nonEmptyDirs = true;
+                            }
+                            else
+                            {
+                                throw;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        dirQueue.Enqueue(currentDir);
+                    }
+                }
+
+                if (nonEmptyDirs)
+                {
+                    throw new IOException("Directory contains files still open by other processes");
+                }
+            }
+        }
+
+        private static void DeleteEntry(string path, FileAttributes attr, bool ignoreFailure = false)
+        {
+            try
+            {
+                if ((attr & FileAttributes.ReadOnly) != 0)
+                {
+                    // Windows does not allow files set with ReadOnly to be
+                    // deleted. Pre-emptively unset the attribute.
+                    // FILE_DISPOSITION_IGNORE_READONLY_ATTRIBUTE is quite new,
+                    // look at using that flag with POSIX delete once Server 2019
+                    // is the baseline.
+                    File.SetAttributes(path, FileAttributes.Normal);
+                }
+
+                // REPARSE - Only touch the symlink itself and not the target
+                // BACKUP - Needed for dir handles, bypasses access checks for admins
+                // DELETE_ON_CLOSE is not used as it interferes with the POSIX delete
+                FileFlags flags = FileFlags.FILE_FLAG_OPEN_REPARSE_POINT |
+                    FileFlags.FILE_FLAG_BACKUP_SEMANTICS;
+
+                using (SafeFileHandle fileHandle = CreateFile(path, FileSystemRights.Delete,
+                    FileShare.ReadWrite | FileShare.Delete, FileMode.Open, FileAttributes.Normal, flags))
+                {
+                    if (_supportsPosixDelete == null || _supportsPosixDelete == true)
+                    {
+                        // A POSIX delete will delete the filesystem entry even if
+                        // it's still opened by another process so favour that if
+                        // available.
+                        DispositionFlags deleteFlags = DispositionFlags.FILE_DISPOSITION_DELETE |
+                            DispositionFlags.FILE_DISPOSITION_POSIX_SEMANTICS;
+
+                        SetInformationFile(fileHandle, FileDispositionInformationEx, (int)deleteFlags);
+                        if (_supportsPosixDelete == true)
+                        {
+                            return;
+                        }
+                    }
+
+                    // FileDispositionInformation takes in a struct with only a BOOLEAN value.
+                    // Using an int will also do the same thing to set that flag to true.
+                    SetInformationFile(fileHandle, FileDispositionInformation, Int32.MaxValue);
+                }
+            }
+            catch
+            {
+                if (!ignoreFailure)
+                {
+                    throw;
+                }
+            }
+        }
+
+        private static void SetInformationFile(SafeFileHandle handle, int infoClass, int value)
+        {
+            IntPtr ioStatusBlock = IntPtr.Zero;
+
+            int ntStatus = NtSetInformationFile(handle, out ioStatusBlock, ref value,
+                Marshal.SizeOf(typeof(int)), infoClass);
+
+            if (ntStatus != 0)
+            {
+                int errCode = RtlNtStatusToDosError(ntStatus);
+
+                // The POSIX delete was added in Server 2016 (Win 10 14393/Redstone 1)
+                // Mark this flag so we don't try again.
+                if (infoClass == FileDispositionInformationEx && _supportsPosixDelete == null &&
+                    errCode == ERROR_INVALID_PARAMETER)
+                {
+                    _supportsPosixDelete = false;
+                    return;
+                }
+
+                string msg = string.Format("NtSetInformationFile() failed 0x{0:X8}: {1}",
+                    errCode, new Win32Exception(errCode).Message);
+                throw new Win32Exception(errCode, msg);
+            }
+
+            if (infoClass == FileDispositionInformationEx)
+            {
+                _supportsPosixDelete = true;
+            }
+        }
+    }
+#endif
 }

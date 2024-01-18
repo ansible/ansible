@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import abc
-import atexit
 import datetime
 import os
 import re
@@ -28,6 +27,7 @@ from ....util import (
 )
 
 from ....util_common import (
+    ExitHandler,
     ResultType,
     write_json_test_results,
 )
@@ -47,6 +47,7 @@ from ....ci import (
 
 from ....data import (
     data_context,
+    PayloadConfig,
 )
 
 from ....docker_util import (
@@ -169,7 +170,7 @@ def cloud_init(args: IntegrationConfig, targets: tuple[IntegrationTarget, ...]) 
 
     if not args.explain and results:
         result_name = '%s-%s.json' % (
-            args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
+            args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.now(tz=datetime.timezone.utc).replace(microsecond=0, tzinfo=None))))
 
         data = dict(
             clouds=results,
@@ -180,6 +181,7 @@ def cloud_init(args: IntegrationConfig, targets: tuple[IntegrationTarget, ...]) 
 
 class CloudBase(metaclass=abc.ABCMeta):
     """Base class for cloud plugins."""
+
     _CONFIG_PATH = 'config_path'
     _RESOURCE_PREFIX = 'resource_prefix'
     _MANAGED = 'managed'
@@ -189,13 +191,14 @@ class CloudBase(metaclass=abc.ABCMeta):
         self.args = args
         self.platform = self.__module__.rsplit('.', 1)[-1]
 
-        def config_callback(files: list[tuple[str, str]]) -> None:
+        def config_callback(payload_config: PayloadConfig) -> None:
             """Add the config file to the payload file list."""
             if self.platform not in self.args.metadata.cloud_config:
                 return  # platform was initialized, but not used -- such as being skipped due to all tests being disabled
 
             if self._get_cloud_config(self._CONFIG_PATH, ''):
                 pair = (self.config_path, os.path.relpath(self.config_path, data_context().content.root))
+                files = payload_config.files
 
                 if pair not in files:
                     display.info('Including %s config: %s -> %s' % (self.platform, pair[0], pair[1]), verbosity=3)
@@ -257,6 +260,7 @@ class CloudBase(metaclass=abc.ABCMeta):
 
 class CloudProvider(CloudBase):
     """Base class for cloud provider plugins. Sets up cloud resources before delegation."""
+
     def __init__(self, args: IntegrationConfig, config_extension: str = '.ini') -> None:
         super().__init__(args)
 
@@ -288,21 +292,21 @@ class CloudProvider(CloudBase):
             exclude.append(skip)
 
             if not self.uses_docker and self.uses_config:
-                display.warning('Excluding tests marked "%s" which require config (see "%s"): %s'
-                                % (skip.rstrip('/'), self.config_template_path, ', '.join(skipped)))
+                display.warning('Excluding tests marked "%s" which require a "%s" config file (see "%s"): %s'
+                                % (skip.rstrip('/'), self.config_static_path, self.config_template_path, ', '.join(skipped)))
             elif self.uses_docker and not self.uses_config:
                 display.warning('Excluding tests marked "%s" which requires container support: %s'
                                 % (skip.rstrip('/'), ', '.join(skipped)))
             elif self.uses_docker and self.uses_config:
-                display.warning('Excluding tests marked "%s" which requires container support or config (see "%s"): %s'
-                                % (skip.rstrip('/'), self.config_template_path, ', '.join(skipped)))
+                display.warning('Excluding tests marked "%s" which requires container support or a "%s" config file (see "%s"): %s'
+                                % (skip.rstrip('/'), self.config_static_path, self.config_template_path, ', '.join(skipped)))
 
     def setup(self) -> None:
         """Setup the cloud resource before delegation and register a cleanup callback."""
         self.resource_prefix = self.ci_provider.generate_resource_prefix()
         self.resource_prefix = re.sub(r'[^a-zA-Z0-9]+', '-', self.resource_prefix)[:63].lower().rstrip('-')
 
-        atexit.register(self.cleanup)
+        ExitHandler.register(self.cleanup)
 
     def cleanup(self) -> None:
         """Clean up the cloud resource and any temporary configuration files after tests complete."""
@@ -356,6 +360,7 @@ class CloudProvider(CloudBase):
 
 class CloudEnvironment(CloudBase):
     """Base class for cloud environment plugins. Updates integration test environment after delegation."""
+
     def setup_once(self) -> None:
         """Run setup if it has not already been run."""
         if self.setup_executed:
@@ -377,12 +382,14 @@ class CloudEnvironment(CloudBase):
 
 class CloudEnvironmentConfig:
     """Configuration for the environment."""
-    def __init__(self,
-                 env_vars: t.Optional[dict[str, str]] = None,
-                 ansible_vars: t.Optional[dict[str, t.Any]] = None,
-                 module_defaults: t.Optional[dict[str, dict[str, t.Any]]] = None,
-                 callback_plugins: t.Optional[list[str]] = None,
-                 ):
+
+    def __init__(
+        self,
+        env_vars: t.Optional[dict[str, str]] = None,
+        ansible_vars: t.Optional[dict[str, t.Any]] = None,
+        module_defaults: t.Optional[dict[str, dict[str, t.Any]]] = None,
+        callback_plugins: t.Optional[list[str]] = None,
+    ):
         self.env_vars = env_vars
         self.ansible_vars = ansible_vars
         self.module_defaults = module_defaults

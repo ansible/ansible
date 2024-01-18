@@ -22,6 +22,7 @@ from . import (
 
 class GitSource(SourceProvider):
     """Source provider for a content root managed by git version control."""
+
     @staticmethod
     def is_content_root(path: str) -> bool:
         """Return True if the given path is a content root for this provider."""

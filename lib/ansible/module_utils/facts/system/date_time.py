@@ -15,15 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import datetime
 import time
 
 import ansible.module_utils.compat.typing as t
-
 from ansible.module_utils.facts.collector import BaseFactCollector
+from ansible.module_utils.compat.datetime import utcfromtimestamp
 
 
 class DateTimeFactCollector(BaseFactCollector):
@@ -37,7 +36,7 @@ class DateTimeFactCollector(BaseFactCollector):
         # Store the timestamp once, then get local and UTC versions from that
         epoch_ts = time.time()
         now = datetime.datetime.fromtimestamp(epoch_ts)
-        utcnow = datetime.datetime.utcfromtimestamp(epoch_ts)
+        utcnow = utcfromtimestamp(epoch_ts).replace(tzinfo=None)
 
         date_time_facts['year'] = now.strftime('%Y')
         date_time_facts['month'] = now.strftime('%m')

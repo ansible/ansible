@@ -2,16 +2,14 @@
 # Copyright (c) 2019 Ansible Project
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 
 import datetime
 
-from ansible.module_utils._text import to_text
-from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils.common.text.converters import to_text
+from ansible.module_utils.six.moves.collections_abc import Mapping
 from ansible.module_utils.common.collections import is_sequence
 
 

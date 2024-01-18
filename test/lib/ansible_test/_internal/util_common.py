@@ -1,7 +1,6 @@
 """Common utility code that depends on CommonConfig."""
 from __future__ import annotations
 
-import atexit
 import collections.abc as c
 import contextlib
 import json
@@ -64,8 +63,42 @@ from .host_configs import (
 CHECK_YAML_VERSIONS: dict[str, t.Any] = {}
 
 
+class ExitHandler:
+    """Simple exit handler implementation."""
+    _callbacks: list[tuple[t.Callable, tuple[t.Any, ...], dict[str, t.Any]]] = []
+
+    @staticmethod
+    def register(func: t.Callable, *args, **kwargs) -> None:
+        """Register the given function and args as a callback to execute during program termination."""
+        ExitHandler._callbacks.append((func, args, kwargs))
+
+    @staticmethod
+    @contextlib.contextmanager
+    def context() -> t.Generator[None, None, None]:
+        """Run all registered handlers when the context is exited."""
+        last_exception: BaseException | None = None
+
+        try:
+            yield
+        finally:
+            queue = list(ExitHandler._callbacks)
+
+            while queue:
+                func, args, kwargs = queue.pop()
+
+                try:
+                    func(*args, **kwargs)
+                except BaseException as ex:  # pylint: disable=broad-exception-caught
+                    last_exception = ex
+                    display.fatal(f'Exit handler failed: {ex}')
+
+            if last_exception:
+                raise last_exception
+
+
 class ShellScriptTemplate:
     """A simple substitution template for shell scripts."""
+
     def __init__(self, template: str) -> None:
         self.template = template
 
@@ -87,6 +120,7 @@ class ShellScriptTemplate:
 
 class ResultType:
     """Test result type."""
+
     BOT: ResultType = None
     COVERAGE: ResultType = None
     DATA: ResultType = None
@@ -96,7 +130,7 @@ class ResultType:
     TMP: ResultType = None
 
     @staticmethod
-    def _populate():
+    def _populate() -> None:
         ResultType.BOT = ResultType('bot')
         ResultType.COVERAGE = ResultType('coverage')
         ResultType.DATA = ResultType('data')
@@ -128,6 +162,7 @@ ResultType._populate()  # pylint: disable=protected-access
 
 class CommonConfig:
     """Configuration common to all commands."""
+
     def __init__(self, args: t.Any, command: str) -> None:
         self.command = command
         self.interactive = False
@@ -208,7 +243,7 @@ def process_scoped_temporary_file(args: CommonConfig, prefix: t.Optional[str] = 
     else:
         temp_fd, path = tempfile.mkstemp(prefix=prefix, suffix=suffix)
         os.close(temp_fd)
-        atexit.register(lambda: os.remove(path))
+        ExitHandler.register(lambda: os.remove(path))
 
     return path
 
@@ -219,7 +254,7 @@ def process_scoped_temporary_directory(args: CommonConfig, prefix: t.Optional[st
         path = os.path.join(tempfile.gettempdir(), f'{prefix or tempfile.gettempprefix()}{generate_name()}{suffix or ""}')
     else:
         path = tempfile.mkdtemp(prefix=prefix, suffix=suffix)
-        atexit.register(lambda: remove_tree(path))
+        ExitHandler.register(lambda: remove_tree(path))
 
     return path
 
@@ -237,12 +272,13 @@ def named_temporary_file(args: CommonConfig, prefix: str, suffix: str, directory
             yield tempfile_fd.name
 
 
-def write_json_test_results(category: ResultType,
-                            name: str,
-                            content: t.Union[list[t.Any], dict[str, t.Any]],
-                            formatted: bool = True,
-                            encoder: t.Optional[t.Type[json.JSONEncoder]] = None,
-                            ) -> None:
+def write_json_test_results(
+    category: ResultType,
+    name: str,
+    content: t.Union[list[t.Any], dict[str, t.Any]],
+    formatted: bool = True,
+    encoder: t.Optional[t.Type[json.JSONEncoder]] = None,
+) -> None:
     """Write the given json content to the specified test results path, creating directories as needed."""
     path = os.path.join(category.path, name)
     write_json_file(path, content, create_directories=True, formatted=formatted, encoder=encoder)
@@ -288,11 +324,11 @@ def get_injector_path() -> str:
 
     verified_chmod(injector_path, MODE_DIRECTORY)
 
-    def cleanup_injector():
+    def cleanup_injector() -> None:
         """Remove the temporary injector directory."""
         remove_tree(injector_path)
 
-    atexit.register(cleanup_injector)
+    ExitHandler.register(cleanup_injector)
 
     return injector_path
 
@@ -350,7 +386,7 @@ def get_python_path(interpreter: str) -> str:
     verified_chmod(python_path, MODE_DIRECTORY)
 
     if not PYTHON_PATHS:
-        atexit.register(cleanup_python_paths)
+        ExitHandler.register(cleanup_python_paths)
 
     PYTHON_PATHS[interpreter] = python_path
 
@@ -360,7 +396,7 @@ def get_python_path(interpreter: str) -> str:
 def create_temp_dir(prefix: t.Optional[str] = None, suffix: t.Optional[str] = None, base_dir: t.Optional[str] = None) -> str:
     """Create a temporary directory that persists until the current process exits."""
     temp_path = tempfile.mkdtemp(prefix=prefix or 'tmp', suffix=suffix or '', dir=base_dir)
-    atexit.register(remove_tree, temp_path)
+    ExitHandler.register(remove_tree, temp_path)
     return temp_path
 
 
@@ -373,7 +409,7 @@ def create_interpreter_wrapper(interpreter: str, injected_interpreter: str) -> N
     code = textwrap.dedent('''
     #!%s
 
-    from __future__ import absolute_import
+    from __future__ import annotations
 
     from os import execv
     from sys import argv
@@ -388,7 +424,7 @@ def create_interpreter_wrapper(interpreter: str, injected_interpreter: str) -> N
     verified_chmod(injected_interpreter, MODE_FILE_EXECUTE)
 
 
-def cleanup_python_paths():
+def cleanup_python_paths() -> None:
     """Clean up all temporary python directories."""
     for path in sorted(PYTHON_PATHS.values()):
         display.info('Cleaning up temporary python directory: %s' % path, verbosity=2)
@@ -396,14 +432,14 @@ def cleanup_python_paths():
 
 
 def intercept_python(
-        args: CommonConfig,
-        python: PythonConfig,
-        cmd: list[str],
-        env: dict[str, str],
-        capture: bool,
-        data: t.Optional[str] = None,
-        cwd: t.Optional[str] = None,
-        always: bool = False,
+    args: CommonConfig,
+    python: PythonConfig,
+    cmd: list[str],
+    env: dict[str, str],
+    capture: bool,
+    data: t.Optional[str] = None,
+    cwd: t.Optional[str] = None,
+    always: bool = False,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """
     Run a command while intercepting invocations of Python to control the version used.
@@ -428,30 +464,48 @@ def intercept_python(
 
 
 def run_command(
-        args: CommonConfig,
-        cmd: c.Iterable[str],
-        capture: bool,
-        env: t.Optional[dict[str, str]] = None,
-        data: t.Optional[str] = None,
-        cwd: t.Optional[str] = None,
-        always: bool = False,
-        stdin: t.Optional[t.IO[bytes]] = None,
-        stdout: t.Optional[t.IO[bytes]] = None,
-        interactive: bool = False,
-        output_stream: t.Optional[OutputStream] = None,
-        cmd_verbosity: int = 1,
-        str_errors: str = 'strict',
-        error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
+    args: CommonConfig,
+    cmd: c.Iterable[str],
+    capture: bool,
+    env: t.Optional[dict[str, str]] = None,
+    data: t.Optional[str] = None,
+    cwd: t.Optional[str] = None,
+    always: bool = False,
+    stdin: t.Optional[t.IO[bytes]] = None,
+    stdout: t.Optional[t.IO[bytes]] = None,
+    interactive: bool = False,
+    output_stream: t.Optional[OutputStream] = None,
+    cmd_verbosity: int = 1,
+    str_errors: str = 'strict',
+    error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified command and return stdout and stderr as a tuple."""
     explain = args.explain and not always
-    return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout, interactive=interactive,
-                       output_stream=output_stream, cmd_verbosity=cmd_verbosity, str_errors=str_errors, error_callback=error_callback)
+    return raw_command(
+        cmd,
+        capture=capture,
+        env=env,
+        data=data,
+        cwd=cwd,
+        explain=explain,
+        stdin=stdin,
+        stdout=stdout,
+        interactive=interactive,
+        output_stream=output_stream,
+        cmd_verbosity=cmd_verbosity,
+        str_errors=str_errors,
+        error_callback=error_callback,
+    )
 
 
-def yamlcheck(python):
+def yamlcheck(python: PythonConfig, explain: bool = False) -> t.Optional[bool]:
     """Return True if PyYAML has libyaml support, False if it does not and None if it was not found."""
-    result = json.loads(raw_command([python.path, os.path.join(ANSIBLE_TEST_TARGET_TOOLS_ROOT, 'yamlcheck.py')], capture=True)[0])
+    stdout = raw_command([python.path, os.path.join(ANSIBLE_TEST_TARGET_TOOLS_ROOT, 'yamlcheck.py')], capture=True, explain=explain)[0]
+
+    if explain:
+        return None
+
+    result = json.loads(stdout)
 
     if not result['yaml']:
         return None

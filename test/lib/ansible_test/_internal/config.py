@@ -8,7 +8,6 @@ import sys
 import typing as t
 
 from .util import (
-    display,
     verify_sys_executable,
     version_to_str,
     type_guard,
@@ -24,6 +23,7 @@ from .metadata import (
 
 from .data import (
     data_context,
+    PayloadConfig,
 )
 
 from .host_configs import (
@@ -41,6 +41,7 @@ THostConfig = t.TypeVar('THostConfig', bound=HostConfig)
 
 class TerminateMode(enum.Enum):
     """When to terminate instances."""
+
     ALWAYS = enum.auto()
     NEVER = enum.auto()
     SUCCESS = enum.auto()
@@ -52,6 +53,7 @@ class TerminateMode(enum.Enum):
 @dataclasses.dataclass(frozen=True)
 class ModulesConfig:
     """Configuration for modules."""
+
     python_requires: str
     python_versions: tuple[str, ...]
     controller_only: bool
@@ -60,13 +62,14 @@ class ModulesConfig:
 @dataclasses.dataclass(frozen=True)
 class ContentConfig:
     """Configuration for all content."""
+
     modules: ModulesConfig
     python_versions: tuple[str, ...]
-    py2_support: bool
 
 
 class EnvironmentConfig(CommonConfig):
     """Configuration common to all commands which execute in an environment."""
+
     def __init__(self, args: t.Any, command: str) -> None:
         super().__init__(args, command)
 
@@ -114,7 +117,7 @@ class EnvironmentConfig(CommonConfig):
         self.dev_systemd_debug: bool = args.dev_systemd_debug
         self.dev_probe_cgroups: t.Optional[str] = args.dev_probe_cgroups
 
-        def host_callback(files: list[tuple[str, str]]) -> None:
+        def host_callback(payload_config: PayloadConfig) -> None:
             """Add the host files to the payload file list."""
             config = self
 
@@ -123,17 +126,13 @@ class EnvironmentConfig(CommonConfig):
                 state_path = os.path.join(config.host_path, 'state.dat')
                 config_path = os.path.join(config.host_path, 'config.dat')
 
+                files = payload_config.files
+
                 files.append((os.path.abspath(settings_path), settings_path))
                 files.append((os.path.abspath(state_path), state_path))
                 files.append((os.path.abspath(config_path), config_path))
 
         data_context().register_payload_callback(host_callback)
-
-        if args.docker_no_pull:
-            display.warning('The --docker-no-pull option is deprecated and has no effect. It will be removed in a future version of ansible-test.')
-
-        if args.no_pip_check:
-            display.warning('The --no-pip-check option is deprecated and has no effect. It will be removed in a future version of ansible-test.')
 
     @property
     def controller(self) -> ControllerHostConfig:
@@ -196,6 +195,7 @@ class EnvironmentConfig(CommonConfig):
 
 class TestConfig(EnvironmentConfig):
     """Configuration common to all test commands."""
+
     def __init__(self, args: t.Any, command: str) -> None:
         super().__init__(args, command)
 
@@ -225,9 +225,10 @@ class TestConfig(EnvironmentConfig):
         if self.coverage_check:
             self.coverage = True
 
-        def metadata_callback(files: list[tuple[str, str]]) -> None:
+        def metadata_callback(payload_config: PayloadConfig) -> None:
             """Add the metadata file to the payload file list."""
             config = self
+            files = payload_config.files
 
             if config.metadata_path:
                 files.append((os.path.abspath(config.metadata_path), config.metadata_path))
@@ -237,6 +238,7 @@ class TestConfig(EnvironmentConfig):
 
 class ShellConfig(EnvironmentConfig):
     """Configuration for the shell command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'shell')
 
@@ -250,6 +252,7 @@ class ShellConfig(EnvironmentConfig):
 
 class SanityConfig(TestConfig):
     """Configuration for the sanity command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'sanity')
 
@@ -258,23 +261,14 @@ class SanityConfig(TestConfig):
         self.list_tests: bool = args.list_tests
         self.allow_disabled: bool = args.allow_disabled
         self.enable_optional_errors: bool = args.enable_optional_errors
-        self.keep_git: bool = args.keep_git
         self.prime_venvs: bool = args.prime_venvs
 
         self.display_stderr = self.lint or self.list_tests
 
-        if self.keep_git:
-            def git_callback(files: list[tuple[str, str]]) -> None:
-                """Add files from the content root .git directory to the payload file list."""
-                for dirpath, _dirnames, filenames in os.walk(os.path.join(data_context().content.root, '.git')):
-                    paths = [os.path.join(dirpath, filename) for filename in filenames]
-                    files.extend((path, os.path.relpath(path, data_context().content.root)) for path in paths)
-
-            data_context().register_payload_callback(git_callback)
-
 
 class IntegrationConfig(TestConfig):
     """Configuration for the integration command."""
+
     def __init__(self, args: t.Any, command: str) -> None:
         super().__init__(args, command)
 
@@ -319,18 +313,21 @@ TIntegrationConfig = t.TypeVar('TIntegrationConfig', bound=IntegrationConfig)
 
 class PosixIntegrationConfig(IntegrationConfig):
     """Configuration for the posix integration command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'integration')
 
 
 class WindowsIntegrationConfig(IntegrationConfig):
     """Configuration for the windows integration command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'windows-integration')
 
 
 class NetworkIntegrationConfig(IntegrationConfig):
     """Configuration for the network integration command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'network-integration')
 
@@ -339,6 +336,7 @@ class NetworkIntegrationConfig(IntegrationConfig):
 
 class UnitsConfig(TestConfig):
     """Configuration for the units command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'units')
 

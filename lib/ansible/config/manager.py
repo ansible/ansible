@@ -1,8 +1,7 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import atexit
 import configparser
@@ -11,14 +10,13 @@ import os.path
 import sys
 import stat
 import tempfile
-import traceback
 
 from collections import namedtuple
 from collections.abc import Mapping, Sequence
 from jinja2.nativetypes import NativeEnvironment
 
 from ansible.errors import AnsibleOptionsError, AnsibleError
-from ansible.module_utils._text import to_text, to_bytes, to_native
+from ansible.module_utils.common.text.converters import to_text, to_bytes, to_native
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -64,7 +62,7 @@ def ensure_type(value, value_type, origin=None):
         :temppath: Same as 'tmppath'
         :tmp: Same as 'tmppath'
         :pathlist: Treat the value as a typical PATH string.  (On POSIX, this
-            means colon separated strings.)  Split the value and then expand
+            means comma separated strings.)  Split the value and then expand
             each part for environment variables and tildes.
         :pathspec: Treat the value as a PATH string. Expands any environment variables
             tildes's in the value.
@@ -144,13 +142,17 @@ def ensure_type(value, value_type, origin=None):
 
         elif value_type in ('str', 'string'):
             if isinstance(value, (string_types, AnsibleVaultEncryptedUnicode, bool, int, float, complex)):
-                value = unquote(to_text(value, errors='surrogate_or_strict'))
+                value = to_text(value, errors='surrogate_or_strict')
+                if origin == 'ini':
+                    value = unquote(value)
             else:
                 errmsg = 'string'
 
         # defaults to string type
         elif isinstance(value, (string_types, AnsibleVaultEncryptedUnicode)):
-            value = unquote(to_text(value, errors='surrogate_or_strict'))
+            value = to_text(value, errors='surrogate_or_strict')
+            if origin == 'ini':
+                value = unquote(value)
 
         if errmsg:
             raise ValueError('Invalid type provided for "%s": %s' % (errmsg, to_native(value)))

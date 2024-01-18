@@ -4,8 +4,7 @@
 # Copyright: Ansible Team
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -40,7 +39,7 @@ attributes:
     become:
       support: none
     bypass_host_loop:
-      support: full
+      support: none
     bypass_task_loop:
       support: none
     check_mode:

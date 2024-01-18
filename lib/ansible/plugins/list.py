@@ -1,8 +1,7 @@
 # (c) Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 
 import os
@@ -11,10 +10,10 @@ from ansible import context
 from ansible import constants as C
 from ansible.collections.list import list_collections
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native, to_bytes
+from ansible.module_utils.common.text.converters import to_native, to_bytes
 from ansible.plugins import loader
 from ansible.utils.display import Display
-from ansible.utils.collection_loader._collection_finder import _get_collection_path, AnsibleCollectionRef
+from ansible.utils.collection_loader._collection_finder import _get_collection_path
 
 display = Display()
 
@@ -35,7 +34,7 @@ def get_composite_name(collection, name, path, depth):
             resolved_collection = 'ansible.builtin'
         resource_name = '.'.join(name.split(f"{resolved_collection}.")[1:])
 
-    # collectionize name
+    # create FQCN
     composite = [resolved_collection]
     if depth:
         composite.extend(path.split(os.path.sep)[depth * -1:])
@@ -44,6 +43,7 @@ def get_composite_name(collection, name, path, depth):
 
 
 def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
+    # TODO: update to use importlib.resources
 
     plugins = {}
 
@@ -112,14 +112,12 @@ def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
 def _list_j2_plugins_from_file(collection, plugin_path, ptype, plugin_name):
 
     ploader = getattr(loader, '{0}_loader'.format(ptype))
-    if collection in ('ansible.builtin', 'ansible.legacy'):
-        file_plugins = ploader.all()
-    else:
-        file_plugins = ploader.get_contained_plugins(collection, plugin_path, plugin_name)
+    file_plugins = ploader.get_contained_plugins(collection, plugin_path, plugin_name)
     return file_plugins
 
 
 def list_collection_plugins(ptype, collections, search_paths=None):
+    # TODO: update to use importlib.resources
 
     # starts at  {plugin_name: filepath, ...}, but changes at the end
     plugins = {}
@@ -172,28 +170,32 @@ def list_collection_plugins(ptype, collections, search_paths=None):
     return plugins
 
 
-def list_plugins(ptype, collection=None, search_paths=None):
+def list_plugins(ptype, collections=None, search_paths=None):
+    if isinstance(collections, str):
+        collections = [collections]
 
     # {plugin_name: (filepath, class), ...}
     plugins = {}
-    collections = {}
-    if collection is None:
+    plugin_collections = {}
+    if collections is None:
         # list all collections, add synthetic ones
-        collections['ansible.builtin'] = b''
-        collections['ansible.legacy'] = b''
-        collections.update(list_collections(search_paths=search_paths, dedupe=True))
-    elif collection == 'ansible.legacy':
-        # add builtin, since legacy also resolves to these
-        collections[collection] = b''
-        collections['ansible.builtin'] = b''
+        plugin_collections['ansible.builtin'] = b''
+        plugin_collections['ansible.legacy'] = b''
+        plugin_collections.update(list_collections(search_paths=search_paths, dedupe=True))
     else:
-        try:
-            collections[collection] = to_bytes(_get_collection_path(collection))
-        except ValueError as e:
-            raise AnsibleError("Cannot use supplied collection {0}: {1}".format(collection, to_native(e)), orig_exc=e)
+        for collection in collections:
+            if collection == 'ansible.legacy':
+                # add builtin, since legacy also resolves to these
+                plugin_collections[collection] = b''
+                plugin_collections['ansible.builtin'] = b''
+            else:
+                try:
+                    plugin_collections[collection] = to_bytes(_get_collection_path(collection))
+                except ValueError as e:
+                    raise AnsibleError("Cannot use supplied collection {0}: {1}".format(collection, to_native(e)), orig_exc=e)
 
-    if collections:
-        plugins.update(list_collection_plugins(ptype, collections))
+    if plugin_collections:
+        plugins.update(list_collection_plugins(ptype, plugin_collections))
 
     return plugins
 

@@ -15,20 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from unittest import mock
 
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, MagicMock
 from ansible.errors import AnsibleError
 from ansible.executor.task_executor import TaskExecutor, remove_omit
-from ansible.plugins.loader import action_loader, lookup_loader, module_loader
+from ansible.plugins.loader import action_loader, lookup_loader
 from ansible.parsing.yaml.objects import AnsibleUnicode
 from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
-from ansible.module_utils.six import text_type
 
 from collections import namedtuple
 from units.mock.loader import DictDataLoader
@@ -57,6 +54,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
             final_q=mock_queue,
+            variable_manager=MagicMock(),
         )
 
     def test_task_executor_run(self):
@@ -84,6 +82,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
             final_q=mock_queue,
+            variable_manager=MagicMock(),
         )
 
         te._get_loop_items = MagicMock(return_value=None)
@@ -102,7 +101,7 @@ class TestTaskExecutor(unittest.TestCase):
         self.assertIn("failed", res)
 
     def test_task_executor_run_clean_res(self):
-        te = TaskExecutor(None, MagicMock(), None, None, None, None, None, None)
+        te = TaskExecutor(None, MagicMock(), None, None, None, None, None, None, None)
         te._get_loop_items = MagicMock(return_value=[1])
         te._run_loop = MagicMock(
             return_value=[
@@ -119,8 +118,8 @@ class TestTaskExecutor(unittest.TestCase):
         data = res['results'][0]
         self.assertIsInstance(data['unsafe_bytes'], AnsibleUnsafeText)
         self.assertIsInstance(data['unsafe_text'], AnsibleUnsafeText)
-        self.assertIsInstance(data['bytes'], text_type)
-        self.assertIsInstance(data['text'], text_type)
+        self.assertIsInstance(data['bytes'], str)
+        self.assertIsInstance(data['text'], str)
         self.assertIsInstance(data['int'], int)
 
     def test_task_executor_get_loop_items(self):
@@ -150,6 +149,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
             final_q=mock_queue,
+            variable_manager=MagicMock(),
         )
 
         items = te._get_loop_items()
@@ -186,6 +186,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
             final_q=mock_queue,
+            variable_manager=MagicMock(),
         )
 
         def _execute(variables):
@@ -206,6 +207,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=DictDataLoader({}),
             shared_loader_obj=MagicMock(),
             final_q=MagicMock(),
+            variable_manager=MagicMock(),
         )
 
         context = MagicMock(resolved=False)
@@ -214,20 +216,20 @@ class TestTaskExecutor(unittest.TestCase):
         action_loader.has_plugin.return_value = True
         action_loader.get.return_value = mock.sentinel.handler
 
-        mock_connection = MagicMock()
         mock_templar = MagicMock()
         action = 'namespace.prefix_suffix'
         te._task.action = action
+        te._connection = MagicMock()
 
-        handler = te._get_action_handler(mock_connection, mock_templar)
+        with patch('ansible.executor.task_executor.start_connection'):
+            handler = te._get_action_handler(mock_templar)
 
         self.assertIs(mock.sentinel.handler, handler)
 
-        action_loader.has_plugin.assert_called_once_with(
-            action, collection_list=te._task.collections)
+        action_loader.has_plugin.assert_called_once_with(action, collection_list=te._task.collections)
 
-        action_loader.get.assert_called_once_with(
-            te._task.action, task=te._task, connection=mock_connection,
+        action_loader.get.assert_called_with(
+            te._task.action, task=te._task, connection=te._connection,
             play_context=te._play_context, loader=te._loader,
             templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
             collection_list=te._task.collections)
@@ -242,6 +244,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=DictDataLoader({}),
             shared_loader_obj=MagicMock(),
             final_q=MagicMock(),
+            variable_manager=MagicMock(),
         )
 
         context = MagicMock(resolved=False)
@@ -251,20 +254,21 @@ class TestTaskExecutor(unittest.TestCase):
         action_loader.get.return_value = mock.sentinel.handler
         action_loader.__contains__.return_value = True
 
-        mock_connection = MagicMock()
         mock_templar = MagicMock()
         action = 'namespace.netconf_suffix'
         module_prefix = action.split('_', 1)[0]
         te._task.action = action
+        te._connection = MagicMock()
 
-        handler = te._get_action_handler(mock_connection, mock_templar)
+        with patch('ansible.executor.task_executor.start_connection'):
+            handler = te._get_action_handler(mock_templar)
 
         self.assertIs(mock.sentinel.handler, handler)
         action_loader.has_plugin.assert_has_calls([mock.call(action, collection_list=te._task.collections),  # called twice
                                                    mock.call(module_prefix, collection_list=te._task.collections)])
 
-        action_loader.get.assert_called_once_with(
-            module_prefix, task=te._task, connection=mock_connection,
+        action_loader.get.assert_called_with(
+            module_prefix, task=te._task, connection=te._connection,
             play_context=te._play_context, loader=te._loader,
             templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
             collection_list=te._task.collections)
@@ -279,6 +283,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=DictDataLoader({}),
             shared_loader_obj=MagicMock(),
             final_q=MagicMock(),
+            variable_manager=MagicMock(),
         )
 
         action_loader = te._shared_loader_obj.action_loader
@@ -289,20 +294,22 @@ class TestTaskExecutor(unittest.TestCase):
         context = MagicMock(resolved=False)
         module_loader.find_plugin_with_context.return_value = context
 
-        mock_connection = MagicMock()
         mock_templar = MagicMock()
         action = 'namespace.prefix_suffix'
         module_prefix = action.split('_', 1)[0]
         te._task.action = action
-        handler = te._get_action_handler(mock_connection, mock_templar)
+        te._connection = MagicMock()
+
+        with patch('ansible.executor.task_executor.start_connection'):
+            handler = te._get_action_handler(mock_templar)
 
         self.assertIs(mock.sentinel.handler, handler)
 
         action_loader.has_plugin.assert_has_calls([mock.call(action, collection_list=te._task.collections),
                                                    mock.call(module_prefix, collection_list=te._task.collections)])
 
-        action_loader.get.assert_called_once_with(
-            'ansible.legacy.normal', task=te._task, connection=mock_connection,
+        action_loader.get.assert_called_with(
+            'ansible.legacy.normal', task=te._task, connection=te._connection,
             play_context=te._play_context, loader=te._loader,
             templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
             collection_list=None)
@@ -318,6 +325,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.become = False
         mock_task.retries = 0
         mock_task.delay = -1
+        mock_task.delegate_to = None
         mock_task.register = 'foo'
         mock_task.until = None
         mock_task.changed_when = None
@@ -329,6 +337,7 @@ class TestTaskExecutor(unittest.TestCase):
         # other reason is that if I specify 0 here, the test fails. ;)
         mock_task.async_val = 1
         mock_task.poll = 0
+        mock_task.evaluate_conditional_with_result.return_value = (True, None)
 
         mock_play_context = MagicMock()
         mock_play_context.post_validate.return_value = None
@@ -343,6 +352,9 @@ class TestTaskExecutor(unittest.TestCase):
         mock_action = MagicMock()
         mock_queue = MagicMock()
 
+        mock_vm = MagicMock()
+        mock_vm.get_delegated_vars_and_hostname.return_value = {}, None
+
         shared_loader = MagicMock()
         new_stdin = None
         job_vars = dict(omit="XXXXXXXXXXXXXXXXXXX")
@@ -356,11 +368,14 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=shared_loader,
             final_q=mock_queue,
+            variable_manager=mock_vm,
         )
 
         te._get_connection = MagicMock(return_value=mock_connection)
         context = MagicMock()
-        te._get_action_handler_with_context = MagicMock(return_value=get_with_context_result(mock_action, context))
+
+        with patch('ansible.executor.task_executor.start_connection'):
+            te._get_action_handler_with_context = MagicMock(return_value=get_with_context_result(mock_action, context))
 
         mock_action.run.return_value = dict(ansible_facts=dict())
         res = te._execute()
@@ -392,8 +407,6 @@ class TestTaskExecutor(unittest.TestCase):
 
         mock_play_context = MagicMock()
 
-        mock_connection = MagicMock()
-
         mock_action = MagicMock()
         mock_queue = MagicMock()
 
@@ -412,6 +425,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=shared_loader,
             final_q=mock_queue,
+            variable_manager=MagicMock(),
         )
 
         te._connection = MagicMock()

@@ -6,14 +6,11 @@ import enum
 import json
 import os
 import pathlib
+import re
 import socket
 import time
 import urllib.parse
 import typing as t
-
-from .io import (
-    read_text_file,
-)
 
 from .util import (
     ApplicationError,
@@ -246,6 +243,7 @@ def get_docker_info(args: CommonConfig) -> DockerInfo:
 
 class SystemdControlGroupV1Status(enum.Enum):
     """The state of the cgroup v1 systemd hierarchy on the container host."""
+
     SUBSYSTEM_MISSING = 'The systemd cgroup subsystem was not found.'
     FILESYSTEM_NOT_MOUNTED = 'The "/sys/fs/cgroup/systemd" filesystem is not mounted.'
     MOUNT_TYPE_NOT_CORRECT = 'The "/sys/fs/cgroup/systemd" mount type is not correct.'
@@ -255,11 +253,10 @@ class SystemdControlGroupV1Status(enum.Enum):
 @dataclasses.dataclass(frozen=True)
 class ContainerHostProperties:
     """Container host properties detected at run time."""
+
     audit_code: str
     max_open_files: int
     loginuid: t.Optional[int]
-    cgroups: tuple[CGroupEntry, ...]
-    mounts: tuple[MountEntry, ...]
     cgroup_v1: SystemdControlGroupV1Status
     cgroup_v2: bool
 
@@ -297,13 +294,23 @@ def detect_host_properties(args: CommonConfig) -> ContainerHostProperties:
     multi_line_commands = (
         ' && '.join(single_line_commands),
         'cat /proc/1/cgroup',
-        'cat /proc/1/mounts',
+        'cat /proc/1/mountinfo',
     )
 
     options = ['--volume', '/sys/fs/cgroup:/probe:ro']
     cmd = ['sh', '-c', ' && echo "-" && '.join(multi_line_commands)]
 
-    stdout = run_utility_container(args, f'ansible-test-probe-{args.session_name}', cmd, options)[0]
+    stdout = run_utility_container(args, 'ansible-test-probe', cmd, options)[0]
+
+    if args.explain:
+        return ContainerHostProperties(
+            audit_code='???',
+            max_open_files=MAX_NUM_OPEN_FILES,
+            loginuid=LOGINUID_NOT_SET,
+            cgroup_v1=SystemdControlGroupV1Status.VALID,
+            cgroup_v2=False,
+        )
+
     blocks = stdout.split('\n-\n')
 
     values = blocks[0].split('\n')
@@ -329,7 +336,7 @@ def detect_host_properties(args: CommonConfig) -> ContainerHostProperties:
         cmd = ['sh', '-c', 'ulimit -Hn']
 
         try:
-            stdout = run_utility_container(args, f'ansible-test-ulimit-{args.session_name}', cmd, options)[0]
+            stdout = run_utility_container(args, 'ansible-test-ulimit', cmd, options)[0]
         except SubprocessError as ex:
             display.warning(str(ex))
         else:
@@ -386,8 +393,6 @@ def detect_host_properties(args: CommonConfig) -> ContainerHostProperties:
         audit_code=audit_code,
         max_open_files=hard_limit,
         loginuid=loginuid,
-        cgroups=cgroups,
-        mounts=mounts,
         cgroup_v1=cgroup_v1,
         cgroup_v2=cgroup_v2,
     )
@@ -397,18 +402,25 @@ def detect_host_properties(args: CommonConfig) -> ContainerHostProperties:
     return properties
 
 
+def get_session_container_name(args: CommonConfig, name: str) -> str:
+    """Return the given container name with the current test session name applied to it."""
+    return f'{name}-{args.session_name}'
+
+
 def run_utility_container(
-        args: CommonConfig,
-        name: str,
-        cmd: list[str],
-        options: list[str],
-        data: t.Optional[str] = None,
+    args: CommonConfig,
+    name: str,
+    cmd: list[str],
+    options: list[str],
+    data: t.Optional[str] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified command using the ansible-test utility container, returning stdout and stderr."""
+    name = get_session_container_name(args, name)
+
     options = options + [
         '--name', name,
         '--rm',
-    ]
+    ]  # fmt: skip
 
     if data:
         options.append('-i')
@@ -420,6 +432,7 @@ def run_utility_container(
 
 class DockerCommand:
     """Details about the available docker command."""
+
     def __init__(self, command: str, executable: str, version: str) -> None:
         self.command = command
         self.executable = executable
@@ -483,7 +496,7 @@ def get_docker_hostname() -> str:
     """Return the hostname of the Docker service."""
     docker_host = os.environ.get('DOCKER_HOST')
 
-    if docker_host and docker_host.startswith('tcp://'):
+    if docker_host and docker_host.startswith(('tcp://', 'ssh://')):
         try:
             hostname = urllib.parse.urlparse(docker_host)[1].split(':')[0]
             display.info('Detected Docker host: %s' % hostname, verbosity=1)
@@ -573,24 +586,47 @@ def get_podman_hostname() -> str:
 @cache
 def get_docker_container_id() -> t.Optional[str]:
     """Return the current container ID if running in a container, otherwise return None."""
-    path = '/proc/self/cpuset'
+    mountinfo_path = pathlib.Path('/proc/self/mountinfo')
     container_id = None
+    engine = None
 
-    if os.path.exists(path):
-        # File content varies based on the environment:
-        #   No Container: /
-        #   Docker: /docker/c86f3732b5ba3d28bb83b6e14af767ab96abbc52de31313dcb1176a62d91a507
-        #   Azure Pipelines (Docker): /azpl_job/0f2edfed602dd6ec9f2e42c867f4d5ee640ebf4c058e6d3196d4393bb8fd0891
-        #   Podman: /../../../../../..
-        contents = read_text_file(path)
+    if mountinfo_path.is_file():
+        # NOTE: This method of detecting the container engine and container ID relies on implementation details of each container engine.
+        #       Although the implementation details have remained unchanged for some time, there is no guarantee they will continue to work.
+        #       There have been proposals to create a standard mechanism for this, but none is currently available.
+        #       See: https://github.com/opencontainers/runtime-spec/issues/1105
 
-        cgroup_path, cgroup_name = os.path.split(contents.strip())
+        mounts = MountEntry.loads(mountinfo_path.read_text())
 
-        if cgroup_path in ('/docker', '/azpl_job'):
-            container_id = cgroup_name
+        for mount in mounts:
+            if str(mount.path) == '/etc/hostname':
+                # Podman generates /etc/hostname in the makePlatformBindMounts function.
+                # That function ends up using ContainerRunDirectory to generate a path like: {prefix}/{container_id}/userdata/hostname
+                # NOTE: The {prefix} portion of the path can vary, so should not be relied upon.
+                # See: https://github.com/containers/podman/blob/480c7fbf5361f3bd8c1ed81fe4b9910c5c73b186/libpod/container_internal_linux.go#L660-L664
+                # See: https://github.com/containers/podman/blob/480c7fbf5361f3bd8c1ed81fe4b9910c5c73b186/vendor/github.com/containers/storage/store.go#L3133
+                # This behavior has existed for ~5 years and was present in Podman version 0.2.
+                # See: https://github.com/containers/podman/pull/248
+                if match := re.search('/(?P<id>[0-9a-f]{64})/userdata/hostname$', str(mount.root)):
+                    container_id = match.group('id')
+                    engine = 'Podman'
+                    break
+
+                # Docker generates /etc/hostname in the BuildHostnameFile function.
+                # That function ends up using the containerRoot function to generate a path like: {prefix}/{container_id}/hostname
+                # NOTE: The {prefix} portion of the path can vary, so should not be relied upon.
+                # See: https://github.com/moby/moby/blob/cd8a090e6755bee0bdd54ac8a894b15881787097/container/container_unix.go#L58
+                # See: https://github.com/moby/moby/blob/92e954a2f05998dc05773b6c64bbe23b188cb3a0/daemon/container.go#L86
+                # This behavior has existed for at least ~7 years and was present in Docker version 1.0.1.
+                # See: https://github.com/moby/moby/blob/v1.0.1/daemon/container.go#L351
+                # See: https://github.com/moby/moby/blob/v1.0.1/daemon/daemon.go#L133
+                if match := re.search('/(?P<id>[0-9a-f]{64})/hostname$', str(mount.root)):
+                    container_id = match.group('id')
+                    engine = 'Docker'
+                    break
 
     if container_id:
-        display.info('Detected execution in Docker container: %s' % container_id, verbosity=1)
+        display.info(f'Detected execution in {engine} container ID: {container_id}', verbosity=1)
 
     return container_id
 
@@ -644,30 +680,30 @@ def docker_cp_to(args: CommonConfig, container_id: str, src: str, dst: str) -> N
 
 
 def docker_create(
-        args: CommonConfig,
-        image: str,
-        options: list[str],
-        cmd: list[str] = None,
+    args: CommonConfig,
+    image: str,
+    options: list[str],
+    cmd: list[str] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Create a container using the given docker image."""
     return docker_command(args, ['create'] + options + [image] + cmd, capture=True)
 
 
 def docker_run(
-        args: CommonConfig,
-        image: str,
-        options: list[str],
-        cmd: list[str] = None,
-        data: t.Optional[str] = None,
+    args: CommonConfig,
+    image: str,
+    options: list[str],
+    cmd: list[str] = None,
+    data: t.Optional[str] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run a container using the given docker image."""
     return docker_command(args, ['run'] + options + [image] + cmd, data=data, capture=True)
 
 
 def docker_start(
-        args: CommonConfig,
-        container_id: str,
-        options: list[str],
+    args: CommonConfig,
+    container_id: str,
+    options: list[str],
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Start a container by name or ID."""
     return docker_command(args, ['start'] + options + [container_id], capture=True)
@@ -694,7 +730,8 @@ class DockerError(Exception):
 
 class ContainerNotFoundError(DockerError):
     """The container identified by `identifier` was not found."""
-    def __init__(self, identifier):
+
+    def __init__(self, identifier: str) -> None:
         super().__init__('The container "%s" was not found.' % identifier)
 
         self.identifier = identifier
@@ -702,6 +739,7 @@ class ContainerNotFoundError(DockerError):
 
 class DockerInspect:
     """The results of `docker inspect` for a single container."""
+
     def __init__(self, args: CommonConfig, inspection: dict[str, t.Any]) -> None:
         self.args = args
         self.inspection = inspection
@@ -748,6 +786,9 @@ class DockerInspect:
     @property
     def pid(self) -> int:
         """Return the PID of the init process."""
+        if self.args.explain:
+            return 0
+
         return self.state['Pid']
 
     @property
@@ -818,6 +859,7 @@ def docker_network_disconnect(args: CommonConfig, container_id: str, network: st
 
 class DockerImageInspect:
     """The results of `docker image inspect` for a single image."""
+
     def __init__(self, args: CommonConfig, inspection: dict[str, t.Any]) -> None:
         self.args = args
         self.inspection = inspection
@@ -880,6 +922,7 @@ def docker_image_inspect(args: CommonConfig, image: str, always: bool = False) -
 
 class DockerNetworkInspect:
     """The results of `docker network inspect` for a single network."""
+
     def __init__(self, args: CommonConfig, inspection: dict[str, t.Any]) -> None:
         self.args = args
         self.inspection = inspection
@@ -914,16 +957,16 @@ def docker_logs(args: CommonConfig, container_id: str) -> None:
 
 
 def docker_exec(
-        args: CommonConfig,
-        container_id: str,
-        cmd: list[str],
-        capture: bool,
-        options: t.Optional[list[str]] = None,
-        stdin: t.Optional[t.IO[bytes]] = None,
-        stdout: t.Optional[t.IO[bytes]] = None,
-        interactive: bool = False,
-        output_stream: t.Optional[OutputStream] = None,
-        data: t.Optional[str] = None,
+    args: CommonConfig,
+    container_id: str,
+    cmd: list[str],
+    capture: bool,
+    options: t.Optional[list[str]] = None,
+    stdin: t.Optional[t.IO[bytes]] = None,
+    stdout: t.Optional[t.IO[bytes]] = None,
+    interactive: bool = False,
+    output_stream: t.Optional[OutputStream] = None,
+    data: t.Optional[str] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Execute the given command in the specified container."""
     if not options:
@@ -932,20 +975,28 @@ def docker_exec(
     if data or stdin or stdout:
         options.append('-i')
 
-    return docker_command(args, ['exec'] + options + [container_id] + cmd, capture=capture, stdin=stdin, stdout=stdout, interactive=interactive,
-                          output_stream=output_stream, data=data)
+    return docker_command(
+        args,
+        ['exec'] + options + [container_id] + cmd,
+        capture=capture,
+        stdin=stdin,
+        stdout=stdout,
+        interactive=interactive,
+        output_stream=output_stream,
+        data=data,
+    )
 
 
 def docker_command(
-        args: CommonConfig,
-        cmd: list[str],
-        capture: bool,
-        stdin: t.Optional[t.IO[bytes]] = None,
-        stdout: t.Optional[t.IO[bytes]] = None,
-        interactive: bool = False,
-        output_stream: t.Optional[OutputStream] = None,
-        always: bool = False,
-        data: t.Optional[str] = None,
+    args: CommonConfig,
+    cmd: list[str],
+    capture: bool,
+    stdin: t.Optional[t.IO[bytes]] = None,
+    stdout: t.Optional[t.IO[bytes]] = None,
+    interactive: bool = False,
+    output_stream: t.Optional[OutputStream] = None,
+    always: bool = False,
+    data: t.Optional[str] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified docker command."""
     env = docker_environment()
@@ -954,8 +1005,18 @@ def docker_command(
     if command[0] == 'podman' and get_podman_remote():
         command.append('--remote')
 
-    return run_command(args, command + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, interactive=interactive, always=always,
-                       output_stream=output_stream, data=data)
+    return run_command(
+        args,
+        command + cmd,
+        env=env,
+        capture=capture,
+        stdin=stdin,
+        stdout=stdout,
+        interactive=interactive,
+        always=always,
+        output_stream=output_stream,
+        data=data,
+    )
 
 
 def docker_environment() -> dict[str, str]:

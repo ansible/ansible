@@ -18,6 +18,15 @@ from . import (
     SANITY_ROOT,
 )
 
+from ...constants import (
+    CONTROLLER_PYTHON_VERSIONS,
+    REMOTE_ONLY_PYTHON_VERSIONS,
+)
+
+from ...io import (
+    make_dirs,
+)
+
 from ...test import (
     TestResult,
 )
@@ -34,6 +43,7 @@ from ...util import (
 
 from ...util_common import (
     run_command,
+    process_scoped_temporary_file,
 )
 
 from ...ansible_util import (
@@ -41,6 +51,7 @@ from ...ansible_util import (
     get_collection_detail,
     CollectionDetail,
     CollectionDetailError,
+    ResultType,
 )
 
 from ...config import (
@@ -58,7 +69,8 @@ from ...host_configs import (
 
 class PylintTest(SanitySingleVersion):
     """Sanity test using pylint."""
-    def __init__(self):
+
+    def __init__(self) -> None:
         super().__init__()
         self.optional_error_codes.update([
             'ansible-deprecated-date',
@@ -75,6 +87,8 @@ class PylintTest(SanitySingleVersion):
         return [target for target in targets if os.path.splitext(target.path)[1] == '.py' or is_subdir(target.path, 'bin')]
 
     def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
+        min_python_version_db_path = self.create_min_python_db(args, targets.targets)
+
         plugin_dir = os.path.join(SANITY_ROOT, 'pylint', 'plugins')
         plugin_names = sorted(p[0] for p in [
             os.path.splitext(p) for p in os.listdir(plugin_dir)] if p[1] == '.py' and p[0] != '__init__')
@@ -106,6 +120,7 @@ class PylintTest(SanitySingleVersion):
 
         def filter_path(path_filter: str = None) -> c.Callable[[str], bool]:
             """Return a function that filters out paths which are not a subdirectory of the given path."""
+
             def context_filter(path_to_filter: str) -> bool:
                 """Return true if the given path matches, otherwise return False."""
                 return is_subdir(path_to_filter, path_filter)
@@ -149,19 +164,19 @@ class PylintTest(SanitySingleVersion):
             except CollectionDetailError as ex:
                 display.warning('Skipping pylint collection version checks since collection detail loading failed: %s' % ex.reason)
 
-        test_start = datetime.datetime.utcnow()
+        test_start = datetime.datetime.now(tz=datetime.timezone.utc)
 
         for context, context_paths in sorted(contexts):
             if not context_paths:
                 continue
 
-            context_start = datetime.datetime.utcnow()
-            messages += self.pylint(args, context, context_paths, plugin_dir, plugin_names, python, collection_detail)
-            context_end = datetime.datetime.utcnow()
+            context_start = datetime.datetime.now(tz=datetime.timezone.utc)
+            messages += self.pylint(args, context, context_paths, plugin_dir, plugin_names, python, collection_detail, min_python_version_db_path)
+            context_end = datetime.datetime.now(tz=datetime.timezone.utc)
 
             context_times.append('%s: %d (%s)' % (context, len(context_paths), context_end - context_start))
 
-        test_end = datetime.datetime.utcnow()
+        test_end = datetime.datetime.now(tz=datetime.timezone.utc)
 
         for context_time in context_times:
             display.info(context_time, verbosity=4)
@@ -187,15 +202,32 @@ class PylintTest(SanitySingleVersion):
 
         return SanitySuccess(self.name)
 
+    def create_min_python_db(self, args: SanityConfig, targets: t.Iterable[TestTarget]) -> str:
+        """Create a database of target file paths and their minimum required Python version, returning the path to the database."""
+        target_paths = set(target.path for target in self.filter_remote_targets(list(targets)))
+        controller_min_version = CONTROLLER_PYTHON_VERSIONS[0]
+        target_min_version = REMOTE_ONLY_PYTHON_VERSIONS[0]
+        min_python_versions = {
+            os.path.abspath(target.path): target_min_version if target.path in target_paths else controller_min_version for target in targets
+        }
+
+        min_python_version_db_path = process_scoped_temporary_file(args)
+
+        with open(min_python_version_db_path, 'w') as database_file:
+            json.dump(min_python_versions, database_file)
+
+        return min_python_version_db_path
+
     @staticmethod
     def pylint(
-            args: SanityConfig,
-            context: str,
-            paths: list[str],
-            plugin_dir: str,
-            plugin_names: list[str],
-            python: PythonConfig,
-            collection_detail: CollectionDetail,
+        args: SanityConfig,
+        context: str,
+        paths: list[str],
+        plugin_dir: str,
+        plugin_names: list[str],
+        python: PythonConfig,
+        collection_detail: CollectionDetail,
+        min_python_version_db_path: str,
     ) -> list[dict[str, str]]:
         """Run pylint using the config specified by the context on the specified paths."""
         rcfile = os.path.join(SANITY_ROOT, 'pylint', 'config', context.split('/')[0] + '.cfg')
@@ -227,7 +259,8 @@ class PylintTest(SanitySingleVersion):
             '--rcfile', rcfile,
             '--output-format', 'json',
             '--load-plugins', ','.join(sorted(load_plugins)),
-        ] + paths
+            '--min-python-version-db', min_python_version_db_path,
+        ] + paths  # fmt: skip
 
         if data_context().content.collection:
             cmd.extend(['--collection-name', data_context().content.collection.full_name])
@@ -245,6 +278,12 @@ class PylintTest(SanitySingleVersion):
 
         # expose plugin paths for use in custom plugins
         env.update(dict(('ANSIBLE_TEST_%s_PATH' % k.upper(), os.path.abspath(v) + os.path.sep) for k, v in data_context().content.plugin_paths.items()))
+
+        # Set PYLINTHOME to prevent pylint from checking for an obsolete directory, which can result in a test failure due to stderr output.
+        # See: https://github.com/PyCQA/pylint/blob/e6c6bf5dfd61511d64779f54264b27a368c43100/pylint/constants.py#L148
+        pylint_home = os.path.join(ResultType.TMP.path, 'pylint')
+        make_dirs(pylint_home)
+        env.update(PYLINTHOME=pylint_home)
 
         if paths:
             display.info('Checking %d file(s) in context "%s" with config: %s' % (len(paths), context, rcfile), verbosity=1)

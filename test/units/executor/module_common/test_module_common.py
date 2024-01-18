@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os.path
 
@@ -27,7 +25,6 @@ import ansible.errors
 
 from ansible.executor import module_common as amc
 from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredError
-from ansible.module_utils.six import PY2
 
 
 class TestStripComments:
@@ -44,15 +41,16 @@ class TestStripComments:
         assert amc._strip_comments(all_comments) == u""
 
     def test_all_whitespace(self):
-        # Note: Do not remove the spaces on the blank lines below.  They're
-        # test data to show that the lines get removed despite having spaces
-        # on them
-        all_whitespace = u"""
-              
+        all_whitespace = (
+            '\n'
+            '              \n'
+            '\n'
+            '                \n'
+            '\t\t\r\n'
+            '\n'
+            '            '
+        )
 
-                
-\t\t\r\n
-            """  # nopep8
         assert amc._strip_comments(all_whitespace) == u""
 
     def test_somewhat_normal(self):
@@ -80,29 +78,14 @@ class TestSlurp:
     def test_slurp_file(self, mocker):
         mocker.patch('os.path.exists', side_effect=lambda x: True)
         m = mocker.mock_open(read_data='This is a test')
-        if PY2:
-            mocker.patch('__builtin__.open', m)
-        else:
-            mocker.patch('builtins.open', m)
+        mocker.patch('builtins.open', m)
         assert amc._slurp('some_file') == 'This is a test'
 
     def test_slurp_file_with_newlines(self, mocker):
         mocker.patch('os.path.exists', side_effect=lambda x: True)
         m = mocker.mock_open(read_data='#!/usr/bin/python\ndef test(args):\nprint("hi")\n')
-        if PY2:
-            mocker.patch('__builtin__.open', m)
-        else:
-            mocker.patch('builtins.open', m)
+        mocker.patch('builtins.open', m)
         assert amc._slurp('some_file') == '#!/usr/bin/python\ndef test(args):\nprint("hi")\n'
-
-
-@pytest.fixture
-def templar():
-    class FakeTemplar:
-        def template(self, template_string, *args, **kwargs):
-            return template_string
-
-    return FakeTemplar()
 
 
 class TestGetShebang:

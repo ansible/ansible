@@ -37,6 +37,17 @@
 ## script
 ##
 
+- name: Required one of free-form and cmd
+  script:
+  ignore_errors: yes
+  register: script_required
+
+- name: assert that the script fails if neither free-form nor cmd is given
+  assert:
+    that:
+      - script_required.failed
+      - "'one of the following' in script_required.msg"
+
 - name: execute the test.sh script via command
   script: test.sh
   register: script_result0
@@ -151,7 +162,7 @@
   assert:
     that:
       - script_result3 is failed
-      - script_result3.msg == "async is not supported for this task."
+      - script_result3.msg == "This action (script) does not support async."
 
 
 # check mode

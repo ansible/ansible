@@ -52,6 +52,7 @@ from . import (
 
 class CoverageAnalyzeTargetsGenerateConfig(CoverageAnalyzeTargetsConfig):
     """Configuration for the `coverage analyze targets generate` command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
@@ -75,10 +76,10 @@ def command_coverage_analyze_targets_generate(args: CoverageAnalyzeTargetsGenera
 
 
 def analyze_python_coverage(
-        args: CoverageAnalyzeTargetsGenerateConfig,
-        host_state: HostState,
-        path: str,
-        target_indexes: TargetIndexes,
+    args: CoverageAnalyzeTargetsGenerateConfig,
+    host_state: HostState,
+    path: str,
+    target_indexes: TargetIndexes,
 ) -> Arcs:
     """Analyze Python code coverage."""
     results: Arcs = {}
@@ -107,9 +108,9 @@ def analyze_python_coverage(
 
 
 def analyze_powershell_coverage(
-        args: CoverageAnalyzeTargetsGenerateConfig,
-        path: str,
-        target_indexes: TargetIndexes,
+    args: CoverageAnalyzeTargetsGenerateConfig,
+    path: str,
+    target_indexes: TargetIndexes,
 ) -> Lines:
     """Analyze PowerShell code coverage"""
     results: Lines = {}
@@ -136,9 +137,9 @@ def analyze_powershell_coverage(
 
 
 def prune_invalid_filenames(
-        args: CoverageAnalyzeTargetsGenerateConfig,
-        results: dict[str, t.Any],
-        collection_search_re: t.Optional[t.Pattern] = None,
+    args: CoverageAnalyzeTargetsGenerateConfig,
+    results: dict[str, t.Any],
+    collection_search_re: t.Optional[t.Pattern] = None,
 ) -> None:
     """Remove invalid filenames from the given result set."""
     path_checker = PathChecker(args, collection_search_re)

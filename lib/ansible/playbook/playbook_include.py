@@ -15,19 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
 import ansible.constants as C
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 from ansible.module_utils.six import string_types
-from ansible.parsing.splitter import split_args, parse_kv
+from ansible.parsing.splitter import split_args
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
-from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
@@ -41,14 +39,14 @@ display = Display()
 
 class PlaybookInclude(Base, Conditional, Taggable):
 
-    import_playbook = FieldAttribute(isa='string')
-    vars_val = FieldAttribute(isa='dict', default=dict, alias='vars')
+    import_playbook = NonInheritableFieldAttribute(isa='string')
+    vars_val = NonInheritableFieldAttribute(isa='dict', default=dict, alias='vars')
 
     @staticmethod
     def load(data, basedir, variable_manager=None, loader=None):
         return PlaybookInclude().load_data(ds=data, basedir=basedir, variable_manager=variable_manager, loader=loader)
 
-    def load_data(self, ds, basedir, variable_manager=None, loader=None):
+    def load_data(self, ds, variable_manager=None, loader=None, basedir=None):
         '''
         Overrides the base load_data(), as we're actually going to return a new
         Playbook() object rather than a PlaybookInclude object

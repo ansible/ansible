@@ -16,20 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import pytest
 
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, MagicMock
 from units.mock.vault_helper import TextVaultSecret
 
 from ansible import context, errors
 from ansible.cli.vault import VaultCLI
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.utils import context_objects as co
 
 
@@ -171,7 +169,28 @@ class TestVaultCli(unittest.TestCase):
         mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
         cli = VaultCLI(args=['ansible-vault', 'create', '/dev/null/foo'])
         cli.parse()
+        self.assertRaisesRegex(errors.AnsibleOptionsError,
+                               "not a tty, editor cannot be opened",
+                               cli.run)
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
+    def test_create_skip_tty_check(self, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault', 'create', '--skip-tty-check', '/dev/null/foo'])
+        cli.parse()
         cli.run()
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
+    def test_create_with_tty(self, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        self.tty_stdout_patcher = patch('ansible.cli.sys.stdout.isatty', return_value=True)
+        self.tty_stdout_patcher.start()
+        cli = VaultCLI(args=['ansible-vault', 'create', '/dev/null/foo'])
+        cli.parse()
+        cli.run()
+        self.tty_stdout_patcher.stop()
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')

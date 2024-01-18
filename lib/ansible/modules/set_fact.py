@@ -3,8 +3,7 @@
 # Copyright: (c) 2013, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -15,13 +14,13 @@ version_added: "1.2"
 description:
     - This action allows setting variables associated to the current host.
     - These variables will be available to subsequent plays during an ansible-playbook run via the host they were set on.
-    - Set C(cacheable) to C(true) to save variables across executions using a fact cache.
+    - Set O(cacheable) to V(true) to save variables across executions using a fact cache.
       Variables will keep the set_fact precedence for the current run, but will used 'cached fact' precedence for subsequent ones.
     - Per the standard Ansible variable precedence rules, other types of variables have a higher priority, so this value may be overridden.
 options:
   key_value:
     description:
-      - "The C(set_fact) module takes C(key=value) pairs or C(key: value) (YAML notation) as variables to set in the playbook scope.
+      - "The M(ansible.builtin.set_fact) module takes C(key=value) pairs or C(key: value) (YAML notation) as variables to set in the playbook scope.
         The 'key' is the resulting variable name and the value is, of course, the value of said variable."
       - You can create multiple variables at once, by supplying multiple pairs, but do NOT mix notations.
     required: true
@@ -45,7 +44,7 @@ extends_documentation_fragment:
     - action_core
 attributes:
     action:
-        details: While the action plugin does do some of the work it relies on the core engine to actually create the variables, that part cannot be overriden
+        details: While the action plugin does do some of the work it relies on the core engine to actually create the variables, that part cannot be overridden
         support: partial
     bypass_host_loop:
         support: none

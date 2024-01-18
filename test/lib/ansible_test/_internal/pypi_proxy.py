@@ -1,7 +1,6 @@
 """PyPI proxy management."""
 from __future__ import annotations
 
-import atexit
 import os
 import urllib.parse
 
@@ -23,6 +22,7 @@ from .util import (
 )
 
 from .util_common import (
+    ExitHandler,
     process_scoped_temporary_file,
 )
 
@@ -76,7 +76,7 @@ def run_pypi_proxy(args: EnvironmentConfig, targets_use_pypi: bool) -> None:
         args=args,
         context='__pypi_proxy__',
         image=image,
-        name=f'pypi-test-container-{args.session_name}',
+        name='pypi-test-container',
         ports=[port],
     )
 
@@ -119,7 +119,7 @@ def configure_target_pypi_proxy(args: EnvironmentConfig, profile: HostProfile, p
 
     create_posix_inventory(args, inventory_path, [profile])
 
-    def cleanup_pypi_proxy():
+    def cleanup_pypi_proxy() -> None:
         """Undo changes made to configure the PyPI proxy."""
         run_playbook(args, inventory_path, 'pypi_proxy_restore.yml', capture=True)
 
@@ -128,7 +128,7 @@ def configure_target_pypi_proxy(args: EnvironmentConfig, profile: HostProfile, p
     run_playbook(args, inventory_path, 'pypi_proxy_prepare.yml', capture=True, variables=dict(
         pypi_endpoint=pypi_endpoint, pypi_hostname=pypi_hostname, force=force))
 
-    atexit.register(cleanup_pypi_proxy)
+    ExitHandler.register(cleanup_pypi_proxy)
 
 
 def configure_pypi_proxy_pip(args: EnvironmentConfig, profile: HostProfile, pypi_endpoint: str, pypi_hostname: str) -> None:
@@ -153,7 +153,7 @@ trusted-host = {1}
 
     if not args.explain:
         write_text_file(pip_conf_path, pip_conf, True)
-        atexit.register(pip_conf_cleanup)
+        ExitHandler.register(pip_conf_cleanup)
 
 
 def configure_pypi_proxy_easy_install(args: EnvironmentConfig, profile: HostProfile, pypi_endpoint: str) -> None:
@@ -177,4 +177,4 @@ index_url = {0}
 
     if not args.explain:
         write_text_file(pydistutils_cfg_path, pydistutils_cfg, True)
-        atexit.register(pydistutils_cfg_cleanup)
+        ExitHandler.register(pydistutils_cfg_cleanup)

@@ -123,6 +123,32 @@
   assert:
     that: "'rsa sha1 (md5) pgp md5 OK' in sl_check.stdout or 'digests signatures OK' in sl_check.stdout"
 
+- name: get keyid
+  shell: "rpm -q gpg-pubkey | head -n 1 | xargs rpm -q --qf %{version}"
+  register: key_id
+
+- name: remove GPG key using keyid
+  rpm_key:
+    state: absent
+    key: "{{ key_id.stdout }}"
+  register: remove_keyid
+  failed_when: remove_keyid.changed == false
+
+- name: remove GPG key using keyid (idempotent)
+  rpm_key:
+    state: absent
+    key: "{{ key_id.stdout }}"
+  register: key_id_idempotence
+
+- name: verify idempotent (key_id)
+  assert:
+    that: "not key_id_idempotence.changed"
+
+- name: add very first key on system again
+  rpm_key:
+    state: present
+    key: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/RPM-GPG-KEY-EPEL-7
+
 - name: Issue 20325 - Verify fingerprint of key, invalid fingerprint - EXPECTED FAILURE
   rpm_key:
     key: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/RPM-GPG-KEY.dag

@@ -1,6 +1,17 @@
 # test for https://github.com/ansible/ansible-modules-core/pull/5505
 - name: LOCALMODS | prepare old git repo
-  shell: rm -rf localmods; mkdir localmods; cd localmods; git init; echo "1" > a; git add a; git commit -m "1"
+  shell: |
+    set -eEu
+
+    rm -rf localmods
+    mkdir localmods
+    cd localmods
+
+    git init
+
+    echo "1" > a
+    git add a
+    git commit -m "1"
   args:
     chdir: "{{repo_dir}}"
 
@@ -55,7 +66,18 @@
 
 # localmods and shallow clone
 - name: LOCALMODS | prepare old git repo
-  shell: rm -rf localmods; mkdir localmods; cd localmods; git init; echo "1" > a; git add a; git commit -m "1"
+  shell: |
+    set -eEu
+
+    rm -rf localmods
+    mkdir localmods
+    cd localmods
+
+    git init
+
+    echo "1" > a
+    git add a
+    git commit -m "1"
   args:
     chdir: "{{repo_dir}}"
 

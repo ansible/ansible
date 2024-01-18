@@ -240,7 +240,7 @@
     url: https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything
     follow_redirects: none
     return_content: yes
-    method: GET
+    method: HEAD
   ignore_errors: yes
   register: http_308_head
 

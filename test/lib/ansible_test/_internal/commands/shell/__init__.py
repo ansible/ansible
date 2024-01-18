@@ -124,9 +124,11 @@ def command_shell(args: ShellConfig) -> None:
             # 255 indicates SSH itself failed, rather than a command run on the remote host.
             # In this case, report a host connection error so additional troubleshooting output is provided.
             if not args.delegate and not args.host_path:
+
                 def callback() -> None:
                     """Callback to run during error display."""
                     target_profile.on_target_failure()  # when the controller is not delegated, report failures immediately
+
             else:
                 callback = None
 

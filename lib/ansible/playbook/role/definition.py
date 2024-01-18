@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -25,7 +23,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
-from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
@@ -43,7 +41,7 @@ display = Display()
 
 class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
-    role = FieldAttribute(isa='string')
+    role = NonInheritableFieldAttribute(isa='string')
 
     def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=None):
 

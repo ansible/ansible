@@ -3,8 +3,7 @@
 # Copyright: (c) 2012, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -39,6 +38,8 @@ description:
      - This module does not require python on the remote system, much like
        the M(ansible.builtin.script) module.
      - This module is also supported for Windows targets.
+     - If the command returns non UTF-8 data, it must be encoded to avoid issues. One option is to pipe
+       the output through C(base64).
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.raw

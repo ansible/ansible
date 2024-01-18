@@ -82,6 +82,7 @@ THostConfig = t.TypeVar('THostConfig', bound=HostConfig)
 
 class CoverageHandler(t.Generic[THostConfig], metaclass=abc.ABCMeta):
     """Base class for configuring hosts for integration test code coverage."""
+
     def __init__(self, args: IntegrationConfig, host_state: HostState, inventory_path: str) -> None:
         self.args = args
         self.host_state = host_state
@@ -124,6 +125,7 @@ class CoverageHandler(t.Generic[THostConfig], metaclass=abc.ABCMeta):
 
 class PosixCoverageHandler(CoverageHandler[PosixConfig]):
     """Configure integration test code coverage for POSIX hosts."""
+
     def __init__(self, args: IntegrationConfig, host_state: HostState, inventory_path: str) -> None:
         super().__init__(args, host_state, inventory_path)
 
@@ -158,7 +160,7 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
         self.teardown_controller()
         self.teardown_target()
 
-    def setup_controller(self):
+    def setup_controller(self) -> None:
         """Perform setup for code coverage on the controller."""
         coverage_config_path = os.path.join(self.common_temp_path, COVERAGE_CONFIG_NAME)
         coverage_output_path = os.path.join(self.common_temp_path, ResultType.COVERAGE.name)
@@ -171,7 +173,7 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
         os.mkdir(coverage_output_path)
         verified_chmod(coverage_output_path, MODE_DIRECTORY_WRITE)
 
-    def setup_target(self):
+    def setup_target(self) -> None:
         """Perform setup for code coverage on the target."""
         if not self.target_profile:
             return
@@ -263,6 +265,7 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
 
 class WindowsCoverageHandler(CoverageHandler[WindowsConfig]):
     """Configure integration test code coverage for Windows hosts."""
+
     def __init__(self, args: IntegrationConfig, host_state: HostState, inventory_path: str) -> None:
         super().__init__(args, host_state, inventory_path)
 
@@ -334,6 +337,7 @@ class WindowsCoverageHandler(CoverageHandler[WindowsConfig]):
 
 class CoverageManager:
     """Manager for code coverage configuration and state."""
+
     def __init__(self, args: IntegrationConfig, host_state: HostState, inventory_path: str) -> None:
         self.args = args
         self.host_state = host_state

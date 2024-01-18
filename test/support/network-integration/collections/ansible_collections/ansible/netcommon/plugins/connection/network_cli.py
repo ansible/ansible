@@ -2,9 +2,8 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
+from __future__ import annotations
 
-__metaclass__ = type
 
 DOCUMENTATION = """
 author:
@@ -302,7 +301,7 @@ from functools import wraps
 from io import BytesIO
 
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle
@@ -1310,7 +1309,6 @@ class Connection(NetworkConnectionBase):
                         remote host before triggering timeout exception
         :return: None
         """
-        """Fetch file over scp/sftp from remote device"""
         ssh = self.ssh_type_conn._connect_uncached()
         if self.ssh_type == "libssh":
             self.ssh_type_conn.fetch_file(source, destination, proto=proto)

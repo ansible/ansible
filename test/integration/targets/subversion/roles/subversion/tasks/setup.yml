@@ -29,9 +29,46 @@
     path: '{{ subversion_server_dir }}'
     state: directory
 
-- name: setup selinux when enabled
-  include_tasks: setup_selinux.yml
-  when: ansible_selinux.status == "enabled"
+- name: Generate CA and TLS certificates via trustme
+  vars:
+    venv_path: >-
+      {{ subversion_server_dir }}/.venv
+    venv_python: >-
+      {{ subversion_server_dir }}/.venv/bin/python
+  block:
+  - name: trustme -- provision a venv
+    command: >-
+      {{ ansible_python_interpreter }} -Im venv
+      {{ venv_path }}
+  - name: trustme -- install tool
+    pip:
+      name: trustme
+      virtualenv: >-
+        {{ venv_path }}
+  - name: trustme -- generate CA and TLS certs
+    command:
+      argv:
+      - >-
+        {{ venv_python }}
+      - -Im
+      - trustme
+      - --dir={{ subversion_server_dir }}
+      - --identities={{ subversion_repo_ip }}
+      - --common-name={{ subversion_repo_ip }}
+
+- name: symlink trustme certificates into apache config dir - Red Hat
+  when: ansible_os_family in ['RedHat']
+  file:
+    src: /tmp/ansible-svn/server.{{ item.trustme_filetype }}
+    dest: /etc/pki/tls/{{ item.apache_target_path }}
+    state: link
+  loop:
+  - apache_target_path: certs/localhost.crt
+    trustme_filetype: pem
+  - apache_target_path: certs/server-chain.crt
+    trustme_filetype: pem
+  - apache_target_path: private/localhost.key
+    trustme_filetype: key
 
 - name: template out configuration file
   template:
@@ -45,11 +82,7 @@
     creates: '{{ subversion_server_dir }}/{{ subversion_repo_name }}'
 
 - name: add test user to htpasswd for Subversion site
-  htpasswd:
-    path: '{{ subversion_server_dir }}/svn-auth-users'
-    name: '{{ subversion_username }}'
-    password: '{{ subversion_password }}'
-    state: present
+  command: htpasswd -bc {{ subversion_server_dir + '/svn-auth-users' | quote }} {{ subversion_username | quote }} {{ subversion_password | quote }}
 
 - name: apply ownership for all SVN directories
   file:
@@ -62,11 +95,22 @@
   command: apachectl -k start -f {{ subversion_server_dir }}/subversion.conf
   async: 3600  # We kill apache manually in the clean up phase
   poll: 0
-  when: ansible_os_family not in ['RedHat', 'Alpine']
+  when: ansible_os_family not in ['RedHat']
 
 # On Red Hat based OS', we can't use apachectl to start up own instance, just use the raw httpd
 - name: start test Apache SVN site - Red Hat
   command: httpd -k start -f {{ subversion_server_dir }}/subversion.conf
   async: 3600  # We kill apache manually in the clean up phase
   poll: 0
-  when: ansible_os_family in ['RedHat', 'Alpine']
+  when: ansible_os_family in ['RedHat']
+
+- lineinfile:
+    dest: >-
+      {{ ansible_env.HOME }}/.subversion/servers
+    regexp: >-
+      ^#\s*ssl-authority-files\s*=\s*
+    line: >-
+      ssl-authority-files = {{ subversion_server_dir }}/client.pem
+    insertafter: >-
+      ^\[global\]
+    state: present

@@ -16,14 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 try:
     import passlib
     from passlib.handlers import pbkdf2
-except ImportError:
+except ImportError:  # pragma: nocover
     passlib = None
     pbkdf2 = None
 
@@ -31,12 +29,11 @@ import pytest
 
 from units.mock.loader import DictDataLoader
 
-from units.compat import unittest
+import unittest
 from unittest.mock import mock_open, patch
 from ansible.errors import AnsibleError
-from ansible.module_utils.six import text_type
-from ansible.module_utils.six.moves import builtins
-from ansible.module_utils._text import to_bytes
+import builtins
+from ansible.module_utils.common.text.converters import to_bytes
 from ansible.plugins.loader import PluginLoader, lookup_loader
 from ansible.plugins.lookup import password
 
@@ -276,13 +273,13 @@ class TestRandomPassword(unittest.TestCase):
     def test_default(self):
         res = password.random_password()
         self.assertEqual(len(res), DEFAULT_LENGTH)
-        self.assertTrue(isinstance(res, text_type))
+        self.assertTrue(isinstance(res, str))
         self._assert_valid_chars(res, DEFAULT_CANDIDATE_CHARS)
 
     def test_zero_length(self):
         res = password.random_password(length=0)
         self.assertEqual(len(res), 0)
-        self.assertTrue(isinstance(res, text_type))
+        self.assertTrue(isinstance(res, str))
         self._assert_valid_chars(res, u',')
 
     def test_just_a_common(self):
@@ -330,23 +327,34 @@ class TestRandomPassword(unittest.TestCase):
 class TestParseContent(unittest.TestCase):
 
     def test_empty_password_file(self):
-        plaintext_password, salt = password._parse_content(u'')
+        plaintext_password, salt, ident = password._parse_content(u'')
         self.assertEqual(plaintext_password, u'')
         self.assertEqual(salt, None)
+        self.assertEqual(ident, None)
 
     def test(self):
         expected_content = u'12345678'
         file_content = expected_content
-        plaintext_password, salt = password._parse_content(file_content)
+        plaintext_password, salt, ident = password._parse_content(file_content)
         self.assertEqual(plaintext_password, expected_content)
         self.assertEqual(salt, None)
+        self.assertEqual(ident, None)
 
     def test_with_salt(self):
         expected_content = u'12345678 salt=87654321'
         file_content = expected_content
-        plaintext_password, salt = password._parse_content(file_content)
+        plaintext_password, salt, ident = password._parse_content(file_content)
         self.assertEqual(plaintext_password, u'12345678')
         self.assertEqual(salt, u'87654321')
+        self.assertEqual(ident, None)
+
+    def test_with_salt_and_ident(self):
+        expected_content = u'12345678 salt=87654321 ident=2a'
+        file_content = expected_content
+        plaintext_password, salt, ident = password._parse_content(file_content)
+        self.assertEqual(plaintext_password, u'12345678')
+        self.assertEqual(salt, u'87654321')
+        self.assertEqual(ident, u'2a')
 
 
 class TestFormatContent(unittest.TestCase):
@@ -405,8 +413,6 @@ class BaseTestLookupModule(unittest.TestCase):
         password.os.open = lambda path, flag: None
         self.os_close = password.os.close
         password.os.close = lambda fd: None
-        self.os_remove = password.os.remove
-        password.os.remove = lambda path: None
         self.makedirs_safe = password.makedirs_safe
         password.makedirs_safe = lambda path, mode: None
 
@@ -414,7 +420,6 @@ class BaseTestLookupModule(unittest.TestCase):
         password.os.path.exists = self.os_path_exists
         password.os.open = self.os_open
         password.os.close = self.os_close
-        password.os.remove = self.os_remove
         password.makedirs_safe = self.makedirs_safe
 
 
@@ -429,7 +434,7 @@ class TestLookupModuleWithoutPasslib(BaseTestLookupModule):
         # FIXME: assert something useful
         for result in results:
             assert len(result) == DEFAULT_LENGTH
-            assert isinstance(result, text_type)
+            assert isinstance(result, str)
 
     @patch.object(PluginLoader, '_get_paths')
     @patch('ansible.plugins.lookup.password._write_password_file')
@@ -456,23 +461,17 @@ class TestLookupModuleWithoutPasslib(BaseTestLookupModule):
     def test_lock_been_held(self, mock_sleep):
         # pretend the lock file is here
         password.os.path.exists = lambda x: True
-        try:
+        with pytest.raises(AnsibleError):
             with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
                 # should timeout here
-                results = self.password_lookup.run([u'/path/to/somewhere chars=anything'], None)
-                self.fail("Lookup didn't timeout when lock already been held")
-        except AnsibleError:
-            pass
+                self.password_lookup.run([u'/path/to/somewhere chars=anything'], None)
 
     def test_lock_not_been_held(self):
         # pretend now there is password file but no lock
         password.os.path.exists = lambda x: x == to_bytes('/path/to/somewhere')
-        try:
-            with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
-                # should not timeout here
-                results = self.password_lookup.run([u'/path/to/somewhere chars=anything'], None)
-        except AnsibleError:
-            self.fail('Lookup timeouts when lock is free')
+        with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
+            # should not timeout here
+            results = self.password_lookup.run([u'/path/to/somewhere chars=anything'], None)
 
         for result in results:
             self.assertEqual(result, u'hunter42')
@@ -518,7 +517,7 @@ class TestLookupModuleWithPasslib(BaseTestLookupModule):
 
             # verify the string and parsehash agree on the number of rounds
             self.assertEqual(int(str_parts[2]), crypt_parts['rounds'])
-            self.assertIsInstance(result, text_type)
+            self.assertIsInstance(result, str)
 
     @patch('ansible.plugins.lookup.password._write_password_file')
     def test_password_already_created_encrypt(self, mock_write_file):
@@ -554,7 +553,7 @@ class TestLookupModuleWithPasslibWrappedAlgo(BaseTestLookupModule):
 
             self.assertEqual(len(results), 1)
             result = results[0]
-            self.assertIsInstance(result, text_type)
+            self.assertIsInstance(result, str)
 
             expected_password_length = 76
             self.assertEqual(len(result), expected_password_length)

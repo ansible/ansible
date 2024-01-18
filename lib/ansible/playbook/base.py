@@ -2,8 +2,7 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import itertools
 import operator
@@ -19,7 +18,7 @@ from ansible import context
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.attribute import Attribute, FieldAttribute, ConnectionFieldAttribute, NonInheritableFieldAttribute
 from ansible.plugins.loader import module_loader, action_loader
@@ -70,16 +69,18 @@ def _validate_action_group_metadata(action, found_group_metadata, fq_group_name)
         display.warning(" ".join(metadata_warnings))
 
 
+class _ClassProperty:
+    def __set_name__(self, owner, name):
+        self.name = name
+
+    def __get__(self, obj, objtype=None):
+        return getattr(objtype, f'_{self.name}')()
+
+
 class FieldAttributeBase:
 
-    @classmethod
-    @property
-    def fattributes(cls):
-        return cls._fattributes()
+    fattributes = _ClassProperty()
 
-    # mypy complains with "misc: Decorated property not supported"
-    # when @property and @cache are used together,
-    # split fattributes above into two methods
     @classmethod
     @cache
     def _fattributes(cls):
@@ -484,6 +485,8 @@ class FieldAttributeBase:
             if not isinstance(value, attribute.class_type):
                 raise TypeError("%s is not a valid %s (got a %s instead)" % (name, attribute.class_type, type(value)))
             value.post_validate(templar=templar)
+        else:
+            raise AnsibleAssertionError(f"Unknown value for attribute.isa: {attribute.isa}")
         return value
 
     def set_to_context(self, name):
@@ -557,7 +560,7 @@ class FieldAttributeBase:
                 setattr(self, name, value)
             except (TypeError, ValueError) as e:
                 value = getattr(self, name)
-                raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s."
+                raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s. "
                                          "The error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds(), orig_exc=e)
             except (AnsibleUndefinedVariable, UndefinedError) as e:
                 if templar._fail_on_undefined_errors and name != 'name':
@@ -633,7 +636,7 @@ class FieldAttributeBase:
         else:
             combined = value + new_value
 
-        return [i for i, _ in itertools.groupby(combined) if i is not None]
+        return [i for i, dummy in itertools.groupby(combined) if i is not None]
 
     def dump_attrs(self):
         '''

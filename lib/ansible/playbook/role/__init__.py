@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -26,12 +24,13 @@ from types import MappingProxyType
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.six import binary_type, text_type
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
+from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
@@ -97,24 +96,32 @@ def hash_params(params):
     return frozenset((params,))
 
 
-class Role(Base, Conditional, Taggable, CollectionSearch):
+class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
-    delegate_to = FieldAttribute(isa='string')
-    delegate_facts = FieldAttribute(isa='bool')
-
-    def __init__(self, play=None, from_files=None, from_include=False, validate=True, public=True):
+    def __init__(self, play=None, from_files=None, from_include=False, validate=True, public=None, static=True):
         self._role_name = None
         self._role_path = None
         self._role_collection = None
         self._role_params = dict()
         self._loader = None
-        self.public = public
-        self.static = True
+        self.static = static
+
+        # includes (static=false) default to private, while imports (static=true) default to public
+        # but both can be overriden by global config if set
+        if public is None:
+            global_private, origin = C.config.get_config_value_and_origin('DEFAULT_PRIVATE_ROLE_VARS')
+            if origin == 'default':
+                self.public = static
+            else:
+                self.public = not global_private
+        else:
+            self.public = public
 
         self._metadata = RoleMetadata()
         self._play = play
         self._parents = []
         self._dependencies = []
+        self._all_dependencies = None
         self._task_blocks = []
         self._handler_blocks = []
         self._compiled_handler_blocks = None
@@ -171,7 +178,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         return self._get_hash_dict() == other._get_hash_dict()
 
     @staticmethod
-    def load(role_include, play, parent_role=None, from_files=None, from_include=False, validate=True, public=True):
+    def load(role_include, play, parent_role=None, from_files=None, from_include=False, validate=True, public=None, static=True):
         if from_files is None:
             from_files = {}
         try:
@@ -179,7 +186,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             #  for the in-flight in role cache as a sentinel that we're already trying to load
             #  that role?)
             # see https://github.com/ansible/ansible/issues/61527
-            r = Role(play=play, from_files=from_files, from_include=from_include, validate=validate, public=public)
+            r = Role(play=play, from_files=from_files, from_include=from_include, validate=validate, public=public, static=static)
             r._load_role_data(role_include, parent_role=parent_role)
 
             role_path = r.get_role_path()
@@ -430,7 +437,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
 
         deps = []
         for role_include in self._metadata.dependencies:
-            r = Role.load(role_include, play=self._play, parent_role=self)
+            r = Role.load(role_include, play=self._play, parent_role=self, static=self.static)
             deps.append(r)
 
         return deps
@@ -530,15 +537,15 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         Returns a list of all deps, built recursively from all child dependencies,
         in the proper order in which they should be executed or evaluated.
         '''
+        if self._all_dependencies is None:
 
-        child_deps = []
+            self._all_dependencies = []
+            for dep in self.get_direct_dependencies():
+                for child_dep in dep.get_all_dependencies():
+                    self._all_dependencies.append(child_dep)
+                self._all_dependencies.append(dep)
 
-        for dep in self.get_direct_dependencies():
-            for child_dep in dep.get_all_dependencies():
-                child_deps.append(child_dep)
-            child_deps.append(dep)
-
-        return child_deps
+        return self._all_dependencies
 
     def get_task_blocks(self):
         return self._task_blocks[:]

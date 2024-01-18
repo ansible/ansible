@@ -42,6 +42,7 @@
 - name: remote user and port for ssh connection
   set_fact:
     ssh_user_and_port: '{{q("config", "remote_user", "port", plugin_type="connection", plugin_name="ssh")}}'
+    ssh_user_and_port_and_origin: '{{q("config", "remote_user", "port", plugin_type="connection", plugin_name="ssh", show_origin=True)}}'
   vars:
     ansible_ssh_user: lola
     ansible_ssh_port: 2022
@@ -71,4 +72,5 @@
       - lookup_config_7 is failed
       - '"Invalid setting" in lookup_config_7.msg'
       - ssh_user_and_port == ['lola', 2022]
+      - "ssh_user_and_port_and_origin == [['lola', 'var: ansible_ssh_user'], [2022, 'var: ansible_ssh_port']]"
       - yolo_remote == ["yolo"]

@@ -17,9 +17,9 @@ from ..environments import (
 
 
 def do_env(
-        subparsers,
-        parent: argparse.ArgumentParser,
-        completer: CompositeActionCompletionFinder,
+    subparsers,
+    parent: argparse.ArgumentParser,
+    completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `env` command."""
     parser: argparse.ArgumentParser = subparsers.add_parser(
@@ -55,7 +55,7 @@ def do_env(
 
     env.add_argument(
         '--timeout',
-        type=int,
+        type=float,
         metavar='MINUTES',
         help='timeout for future ansible-test commands (0 clears)',
     )

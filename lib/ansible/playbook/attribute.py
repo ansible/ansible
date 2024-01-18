@@ -15,11 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
-from copy import copy, deepcopy
+from __future__ import annotations
 
 from ansible.utils.sentinel import Sentinel
 
@@ -178,7 +174,6 @@ class FieldAttribute(Attribute):
             value = self.default
             if callable(value):
                 value = value()
-                setattr(obj, f'_{self.name}', value)
 
         return value
 

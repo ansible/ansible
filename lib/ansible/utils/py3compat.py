@@ -7,9 +7,7 @@
 # successful, the code in six will be available under six's more liberal license:
 # https://mail.python.org/pipermail/python-porting/2018-July/000539.html
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import sys
@@ -17,7 +15,7 @@ import sys
 from collections.abc import MutableMapping
 
 from ansible.module_utils.six import PY3
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 
 __all__ = ('environ',)
 

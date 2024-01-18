@@ -15,33 +15,28 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import ansible.constants as C
 from ansible.errors import AnsibleParserError
-from ansible.playbook.attribute import FieldAttribute, NonInheritableFieldAttribute
+from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.collectionsearch import CollectionSearch
+from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.helpers import load_list_of_tasks
+from ansible.playbook.notifiable import Notifiable
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible.utils.sentinel import Sentinel
 
 
-class Block(Base, Conditional, CollectionSearch, Taggable):
+class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatable):
 
     # main block fields containing the task lists
     block = NonInheritableFieldAttribute(isa='list', default=list)
     rescue = NonInheritableFieldAttribute(isa='list', default=list)
     always = NonInheritableFieldAttribute(isa='list', default=list)
-
-    # other fields for task compat
-    notify = FieldAttribute(isa='list')
-    delegate_to = FieldAttribute(isa='string')
-    delegate_facts = FieldAttribute(isa='bool')
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
@@ -380,7 +375,6 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                     if filtered_block.has_tasks():
                         tmp_list.append(filtered_block)
                 elif ((task.action in C._ACTION_META and task.implicit) or
-                        (task.action in C._ACTION_INCLUDE and task.evaluate_tags([], self._play.skip_tags, all_vars=all_vars)) or
                         task.evaluate_tags(self._play.only_tags, self._play.skip_tags, all_vars=all_vars)):
                     tmp_list.append(task)
             return tmp_list

@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import collections
+import json
 import os
 import re
 
 from . import (
     DOCUMENTABLE_PLUGINS,
+    MULTI_FILE_PLUGINS,
     SanitySingleVersion,
     SanityFailure,
     SanitySuccess,
@@ -48,6 +50,7 @@ from ...host_configs import (
 
 class AnsibleDocTest(SanitySingleVersion):
     """Sanity test for ansible-doc."""
+
     def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         plugin_paths = [plugin_path for plugin_type, plugin_path in data_context().content.plugin_paths.items() if plugin_type in DOCUMENTABLE_PLUGINS]
@@ -84,6 +87,44 @@ class AnsibleDocTest(SanitySingleVersion):
                 doc_targets[plugin_type].append(plugin_fqcn)
 
         env = ansible_environment(args, color=False)
+
+        for doc_type in MULTI_FILE_PLUGINS:
+            if doc_targets.get(doc_type):
+                # List plugins
+                cmd = ['ansible-doc', '-l', '--json', '-t', doc_type]
+                prefix = data_context().content.prefix if data_context().content.collection else 'ansible.builtin.'
+                cmd.append(prefix[:-1])
+                try:
+                    stdout, stderr = intercept_python(args, python, cmd, env, capture=True)
+                    status = 0
+                except SubprocessError as ex:
+                    stdout = ex.stdout
+                    stderr = ex.stderr
+                    status = ex.status
+
+                if status:
+                    summary = '%s' % SubprocessError(cmd=cmd, status=status, stderr=stderr)
+                    return SanityFailure(self.name, summary=summary)
+
+                if stdout:
+                    display.info(stdout.strip(), verbosity=3)
+
+                if stderr:
+                    summary = 'Output on stderr from ansible-doc is considered an error.\n\n%s' % SubprocessError(cmd, stderr=stderr)
+                    return SanityFailure(self.name, summary=summary)
+
+                if args.explain:
+                    continue
+
+                plugin_list_json = json.loads(stdout)
+                doc_targets[doc_type] = []
+                for plugin_name, plugin_value in sorted(plugin_list_json.items()):
+                    if plugin_value != 'UNDOCUMENTED':
+                        doc_targets[doc_type].append(plugin_name)
+
+                if not doc_targets[doc_type]:
+                    del doc_targets[doc_type]
+
         error_messages: list[SanityMessage] = []
 
         for doc_type in sorted(doc_targets):

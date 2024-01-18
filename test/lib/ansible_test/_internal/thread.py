@@ -15,13 +15,14 @@ TCallable = t.TypeVar('TCallable', bound=t.Callable[..., t.Any])
 
 class WrappedThread(threading.Thread):
     """Wrapper around Thread which captures results and exceptions."""
+
     def __init__(self, action: c.Callable[[], t.Any]) -> None:
         super().__init__()
         self._result: queue.Queue[t.Any] = queue.Queue()
         self.action = action
         self.result = None
 
-    def run(self):
+    def run(self) -> None:
         """
         Run action and capture results or exception.
         Do not override. Do not call directly. Executed by the start() method.
@@ -35,11 +36,8 @@ class WrappedThread(threading.Thread):
         except:  # noqa
             self._result.put((None, sys.exc_info()))
 
-    def wait_for_result(self):
-        """
-        Wait for thread to exit and return the result or raise an exception.
-        :rtype: any
-        """
+    def wait_for_result(self) -> t.Any:
+        """Wait for thread to exit and return the result or raise an exception."""
         result, exception = self._result.get()
 
         if exception:

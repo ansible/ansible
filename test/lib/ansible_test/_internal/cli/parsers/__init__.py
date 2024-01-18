@@ -53,6 +53,7 @@ from .base_argument_parsers import (
 
 class OriginControllerParser(ControllerNamespaceParser, TypeParser):
     """Composite argument parser for the controller when delegation is not supported."""
+
     def get_stateless_parsers(self) -> dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         return dict(
@@ -71,6 +72,7 @@ class OriginControllerParser(ControllerNamespaceParser, TypeParser):
 
 class DelegatedControllerParser(ControllerNamespaceParser, TypeParser):
     """Composite argument parser for the controller when delegation is supported."""
+
     def get_stateless_parsers(self) -> dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         parsers: dict[str, Parser] = dict(
@@ -97,6 +99,7 @@ class DelegatedControllerParser(ControllerNamespaceParser, TypeParser):
 
 class PosixTargetParser(TargetNamespaceParser, TypeParser):
     """Composite argument parser for a POSIX target."""
+
     def get_stateless_parsers(self) -> dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         parsers: dict[str, Parser] = dict(
@@ -127,6 +130,7 @@ class PosixTargetParser(TargetNamespaceParser, TypeParser):
 
 class WindowsTargetParser(TargetsNamespaceParser, TypeParser):
     """Composite argument parser for a Windows target."""
+
     @property
     def allow_inventory(self) -> bool:
         """True if inventory is allowed, otherwise False."""
@@ -169,6 +173,7 @@ class WindowsTargetParser(TargetsNamespaceParser, TypeParser):
 
 class NetworkTargetParser(TargetsNamespaceParser, TypeParser):
     """Composite argument parser for a network target."""
+
     @property
     def allow_inventory(self) -> bool:
         """True if inventory is allowed, otherwise False."""
@@ -211,6 +216,7 @@ class NetworkTargetParser(TargetsNamespaceParser, TypeParser):
 
 class PythonTargetParser(TargetsNamespaceParser, Parser):
     """Composite argument parser for a Python target."""
+
     def __init__(self, allow_venv: bool) -> None:
         super().__init__()
 
@@ -249,18 +255,21 @@ class PythonTargetParser(TargetsNamespaceParser, Parser):
 
 class SanityPythonTargetParser(PythonTargetParser):
     """Composite argument parser for a sanity Python target."""
+
     def __init__(self) -> None:
         super().__init__(allow_venv=False)
 
 
 class UnitsPythonTargetParser(PythonTargetParser):
     """Composite argument parser for a units Python target."""
+
     def __init__(self) -> None:
         super().__init__(allow_venv=True)
 
 
 class PosixSshTargetParser(PosixTargetParser):
     """Composite argument parser for a POSIX SSH target."""
+
     @property
     def option_name(self) -> str:
         """The option name used for this parser."""
@@ -269,6 +278,7 @@ class PosixSshTargetParser(PosixTargetParser):
 
 class WindowsSshTargetParser(WindowsTargetParser):
     """Composite argument parser for a Windows SSH target."""
+
     @property
     def option_name(self) -> str:
         """The option name used for this parser."""
@@ -287,6 +297,7 @@ class WindowsSshTargetParser(WindowsTargetParser):
 
 class NetworkSshTargetParser(NetworkTargetParser):
     """Composite argument parser for a network SSH target."""
+
     @property
     def option_name(self) -> str:
         """The option name used for this parser."""

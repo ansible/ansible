@@ -36,7 +36,8 @@ function pass_tests {
 	fi
 
 	# test for https://github.com/ansible/ansible/issues/13681
-	if grep -E '127\.0\.0\.1.*ok' "${temp_log}"; then
+	# match play default output stats, was matching limit + docker
+	if grep -E '127\.0\.0\.1\s*: ok=' "${temp_log}"; then
 	    cat "${temp_log}"
 	    echo "Found host 127.0.0.1 in output. Only localhost should be present."
 	    exit 1
@@ -85,3 +86,8 @@ pass_tests
 ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" "$@" multi_play_1.yml multi_play_2.yml | tee "${temp_log}"
 
 pass_tests_multi
+
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" conn_secret.yml --connection-password-file "${repo_dir}/secret_connection_password" "$@"
+
+# fail if we try do delete /var/tmp
+ANSIBLE_CONFIG='' ansible-pull -d var/tmp -U "${repo_dir}" --purge "$@"

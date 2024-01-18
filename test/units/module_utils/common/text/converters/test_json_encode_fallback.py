@@ -2,8 +2,7 @@
 # Copyright 2019, Andrew Klychkov @Andersson007 <aaklychkov@mail.ru>
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
 
@@ -19,12 +18,6 @@ class timezone(tzinfo):
 
     def utcoffset(self, dt):
         return self._offset
-
-    def dst(self, dt):
-        return timedelta(0)
-
-    def tzname(self, dt):
-        return None
 
 
 @pytest.mark.parametrize(

@@ -1,15 +1,14 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import ast
 import tokenize
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.utils.display import Display
 
@@ -73,7 +72,7 @@ def read_docstring_from_python_module(filename, verbose=True, ignore_errors=True
         tokens = tokenize.generate_tokens(f.readline)
         for token in tokens:
 
-            # found lable that looks like variable
+            # found label that looks like variable
             if token.type == tokenize.NAME:
 
                 # label is expected value, in correct place and has not been seen before
@@ -151,10 +150,10 @@ def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
                             if theid == 'EXAMPLES':
                                 # examples 'can' be yaml, but even if so, we dont want to parse as such here
                                 # as it can create undesired 'objects' that don't display well as docs.
-                                data[varkey] = to_text(child.value.s)
+                                data[varkey] = to_text(child.value.value)
                             else:
                                 # string should be yaml if already not a dict
-                                data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
+                                data[varkey] = AnsibleLoader(child.value.value, file_name=filename).get_single_data()
 
                         display.debug('Documentation assigned: %s' % varkey)
 

@@ -176,6 +176,7 @@ def categorize_changes(args: TestConfig, paths: list[str], verbose_command: t.Op
 
 class PathMapper:
     """Map file paths to test commands and targets."""
+
     def __init__(self, args: TestConfig) -> None:
         self.args = args
         self.integration_all_target = get_integration_all_target(self.args)
@@ -379,9 +380,9 @@ class PathMapper:
         if is_subdir(path, data_context().content.integration_path):
             if dirname == data_context().content.integration_path:
                 for command in (
-                        'integration',
-                        'windows-integration',
-                        'network-integration',
+                    'integration',
+                    'windows-integration',
+                    'network-integration',
                 ):
                     if name == command and ext == '.cfg':
                         return {
@@ -641,19 +642,19 @@ class PathMapper:
 
         if '/' not in path:
             if path in (
-                    '.gitignore',
-                    'COPYING',
-                    'LICENSE',
-                    'Makefile',
+                '.gitignore',
+                'COPYING',
+                'LICENSE',
+                'Makefile',
             ):
                 return minimal
 
             if ext in (
-                    '.in',
-                    '.md',
-                    '.rst',
-                    '.toml',
-                    '.txt',
+                '.in',
+                '.md',
+                '.rst',
+                '.toml',
+                '.txt',
             ):
                 return minimal
 
@@ -661,37 +662,58 @@ class PathMapper:
 
     def _classify_ansible(self, path: str) -> t.Optional[dict[str, str]]:
         """Return the classification for the given path using rules specific to Ansible."""
-        if path.startswith('test/units/compat/'):
-            return {
-                'units': 'test/units/',
-            }
-
-        result = self._classify_common(path)
-
-        if result is not None:
-            return result
-
         dirname = os.path.dirname(path)
         filename = os.path.basename(path)
         name, ext = os.path.splitext(filename)
 
         minimal: dict[str, str] = {}
 
+        packaging = {
+            'integration': 'packaging/',
+        }
+
+        # Early classification that needs to occur before common classification belongs here.
+
+        if dirname == '.azure-pipelines/commands':
+            test_map = {
+                'cloud.sh': 'integration:cloud/',
+                'linux.sh': 'integration:all',
+                'network.sh': 'network-integration:all',
+                'remote.sh': 'integration:all',
+                'sanity.sh': 'sanity:all',
+                'units.sh': 'units:all',
+                'windows.sh': 'windows-integration:all',
+            }
+
+            test_match = test_map.get(filename)
+
+            if test_match:
+                test_command, test_target = test_match.split(':')
+
+                return {
+                    test_command: test_target,
+                }
+
+            cloud_target = f'cloud/{name}/'
+
+            if cloud_target in self.integration_targets_by_alias:
+                return {
+                    'integration': cloud_target,
+                }
+
+        # Classification common to both ansible and collections.
+
+        result = self._classify_common(path)
+
+        if result is not None:
+            return result
+
+        # Classification here is specific to ansible, and runs after common classification.
+
         if path.startswith('bin/'):
             return all_tests(self.args)  # broad impact, run all tests
 
         if path.startswith('changelogs/'):
-            return minimal
-
-        if path.startswith('docs/'):
-            return minimal
-
-        if path.startswith('examples/'):
-            if path == 'examples/scripts/ConfigureRemotingForAnsible.ps1':
-                return {
-                    'windows-integration': 'connection_winrm',
-                }
-
             return minimal
 
         if path.startswith('hacking/'):
@@ -715,6 +737,13 @@ class PathMapper:
             return minimal
 
         if path.startswith('packaging/'):
+            packaging_target = f'packaging_{os.path.splitext(path.split(os.path.sep)[1])[0]}'
+
+            if packaging_target in self.integration_targets_by_name:
+                return {
+                    'integration': packaging_target,
+                }
+
             return minimal
 
         if path.startswith('test/ansible_test/'):
@@ -757,17 +786,17 @@ class PathMapper:
 
         if path.startswith('test/lib/ansible_test/_data/requirements/'):
             if name in (
-                    'integration',
-                    'network-integration',
-                    'windows-integration',
+                'integration',
+                'network-integration',
+                'windows-integration',
             ):
                 return {
                     name: self.integration_all_target,
                 }
 
             if name in (
-                    'sanity',
-                    'units',
+                'sanity',
+                'units',
             ):
                 return {
                     name: 'all',
@@ -791,60 +820,28 @@ class PathMapper:
         if path.startswith('test/support/'):
             return all_tests(self.args)  # test infrastructure, run all tests
 
-        if path.startswith('test/utils/shippable/'):
-            if dirname == 'test/utils/shippable':
-                test_map = {
-                    'cloud.sh': 'integration:cloud/',
-                    'linux.sh': 'integration:all',
-                    'network.sh': 'network-integration:all',
-                    'remote.sh': 'integration:all',
-                    'sanity.sh': 'sanity:all',
-                    'units.sh': 'units:all',
-                    'windows.sh': 'windows-integration:all',
-                }
-
-                test_match = test_map.get(filename)
-
-                if test_match:
-                    test_command, test_target = test_match.split(':')
-
-                    return {
-                        test_command: test_target,
-                    }
-
-                cloud_target = 'cloud/%s/' % name
-
-                if cloud_target in self.integration_targets_by_alias:
-                    return {
-                        'integration': cloud_target,
-                    }
-
-            return all_tests(self.args)  # test infrastructure, run all tests
-
-        if path.startswith('test/utils/'):
-            return minimal
-
         if '/' not in path:
             if path in (
-                    '.gitattributes',
-                    '.gitignore',
-                    '.mailmap',
-                    'COPYING',
-                    'Makefile',
+                '.gitattributes',
+                '.gitignore',
+                '.mailmap',
+                'COPYING',
+                'Makefile',
             ):
                 return minimal
 
             if path in (
-                    'setup.py',
+                'MANIFEST.in',
+                'pyproject.toml',
+                'requirements.txt',
+                'setup.cfg',
+                'setup.py',
             ):
-                return all_tests(self.args)  # broad impact, run all tests
+                return packaging
 
             if ext in (
-                    '.in',
-                    '.md',
-                    '.rst',
-                    '.toml',
-                    '.txt',
+                '.md',
+                '.rst',
             ):
                 return minimal
 

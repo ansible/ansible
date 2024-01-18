@@ -15,18 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from jinja2.runtime import Context
 
-from units.compat import unittest
-from unittest.mock import patch
+import unittest
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
-from ansible.module_utils.six import string_types
+from ansible.plugins.loader import init_plugin_loader
 from ansible.template import Templar, AnsibleContext, AnsibleEnvironment, AnsibleUndefined
 from ansible.utils.unsafe_proxy import AnsibleUnsafe, wrap_var
 from units.mock.loader import DictDataLoader
@@ -34,6 +31,7 @@ from units.mock.loader import DictDataLoader
 
 class BaseTemplar(object):
     def setUp(self):
+        init_plugin_loader()
         self.test_vars = dict(
             foo="bar",
             bam="{{foo}}",
@@ -60,14 +58,6 @@ class BaseTemplar(object):
 
     def is_unsafe(self, obj):
         return self._ansible_context._is_unsafe(obj)
-
-
-# class used for testing arbitrary objects passed to template
-class SomeClass(object):
-    foo = 'bar'
-
-    def __init__(self):
-        self.blip = 'blip'
 
 
 class SomeUnsafeClass(AnsibleUnsafe):
@@ -266,8 +256,6 @@ class TestTemplarMisc(BaseTemplar, unittest.TestCase):
             templar.available_variables = "foo=bam"
         except AssertionError:
             pass
-        except Exception as e:
-            self.fail(e)
 
     def test_templar_escape_backslashes(self):
         # Rule of thumb: If escape backslashes is True you should end up with

@@ -1,2 +1,0 @@
-minor_changes:
-  - apt_repository will use the trust repo directories in order of preference (more appropriate to less) as they exist on the target.

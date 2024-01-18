@@ -3,9 +3,7 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import base64
 import json
@@ -27,7 +25,7 @@ from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.errors import UnsupportedError
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.six import binary_type, string_types, text_type
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.release import __version__
 from ansible.utils.collection_loader import resource_from_fqcr
@@ -37,6 +35,18 @@ from ansible.vars.clean import remove_internal_keys
 from ansible.utils.plugin_docs import get_versioned_doclink
 
 display = Display()
+
+
+def _validate_utf8_json(d):
+    if isinstance(d, text_type):
+        # Purposefully not using to_bytes here for performance reasons
+        d.encode(encoding='utf-8', errors='strict')
+    elif isinstance(d, dict):
+        for o in d.items():
+            _validate_utf8_json(o)
+    elif isinstance(d, (list, tuple)):
+        for o in d:
+            _validate_utf8_json(o)
 
 
 class ActionBase(ABC):
@@ -51,6 +61,13 @@ class ActionBase(ABC):
     # A set of valid arguments
     _VALID_ARGS = frozenset([])  # type: frozenset[str]
 
+    # behavioral attributes
+    BYPASS_HOST_LOOP = False
+    TRANSFERS_FILES = False
+    _requires_connection = True
+    _supports_check_mode = True
+    _supports_async = False
+
     def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj):
         self._task = task
         self._connection = connection
@@ -60,19 +77,15 @@ class ActionBase(ABC):
         self._shared_loader_obj = shared_loader_obj
         self._cleanup_remote_tmp = False
 
-        self._supports_check_mode = True
-        self._supports_async = False
-
         # interpreter discovery state
         self._discovered_interpreter_key = None
         self._discovered_interpreter = False
         self._discovery_deprecation_warnings = []
         self._discovery_warnings = []
+        self._used_interpreter = None
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
-
-        self._used_interpreter = None
 
     @abstractmethod
     def run(self, tmp=None, task_vars=None):
@@ -87,7 +100,7 @@ class ActionBase(ABC):
             etc) associated with this task.
         :returns: dictionary of results from the module
 
-        Implementors of action modules may find the following variables especially useful:
+        Implementers of action modules may find the following variables especially useful:
 
         * Module parameters.  These are stored in self._task.args
         """
@@ -102,11 +115,11 @@ class ActionBase(ABC):
         del tmp
 
         if self._task.async_val and not self._supports_async:
-            raise AnsibleActionFail('async is not supported for this task.')
+            raise AnsibleActionFail('This action (%s) does not support async.' % self._task.action)
         elif self._task.check_mode and not self._supports_check_mode:
-            raise AnsibleActionSkip('check mode is not supported for this task.')
+            raise AnsibleActionSkip('This action (%s) does not support check mode.' % self._task.action)
         elif self._task.async_val and self._task.check_mode:
-            raise AnsibleActionFail('check mode and async cannot be used on same task.')
+            raise AnsibleActionFail('"check mode" and "async" cannot be used on same task.')
 
         # Error if invalid argument is passed
         if self._VALID_ARGS:
@@ -284,7 +297,8 @@ class ActionBase(ABC):
             try:
                 (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, self._templar,
                                                                             task_vars=use_vars,
-                                                                            module_compression=self._play_context.module_compression,
+                                                                            module_compression=C.config.get_config_value('DEFAULT_MODULE_COMPRESSION',
+                                                                                                                         variables=task_vars),
                                                                             async_timeout=self._task.async_val,
                                                                             environment=final_environment,
                                                                             remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
@@ -723,8 +737,7 @@ class ActionBase(ABC):
             return remote_paths
 
         # we'll need this down here
-        become_link = get_versioned_doclink('user_guide/become.html')
-
+        become_link = get_versioned_doclink('playbook_guide/playbooks_privilege_escalation.html')
         # Step 3f: Common group
         # Otherwise, we're a normal user. We failed to chown the paths to the
         # unprivileged user, but if we have a common group with them, we should
@@ -836,10 +849,13 @@ class ActionBase(ABC):
             path=path,
             follow=follow,
             get_checksum=checksum,
+            get_size=False,  # ansible.windows.win_stat added this in 1.11.0
             checksum_algorithm='sha1',
         )
+        # Unknown opts are ignored as module_args could be specific for the
+        # module that is being executed.
         mystat = self._execute_module(module_name='ansible.legacy.stat', module_args=module_args, task_vars=all_vars,
-                                      wrap_async=False)
+                                      wrap_async=False, ignore_unknown_opts=True)
 
         if mystat.get('failed'):
             msg = mystat.get('module_stderr')
@@ -860,38 +876,6 @@ class ActionBase(ABC):
             raise AnsibleError("Invalid checksum returned by stat: expected a string type but got %s" % type(mystat['stat']['checksum']))
 
         return mystat['stat']
-
-    def _remote_checksum(self, path, all_vars, follow=False):
-        """Deprecated. Use _execute_remote_stat() instead.
-
-        Produces a remote checksum given a path,
-        Returns a number 0-4 for specific errors instead of checksum, also ensures it is different
-        0 = unknown error
-        1 = file does not exist, this might not be an error
-        2 = permissions issue
-        3 = its a directory, not a file
-        4 = stat module failed, likely due to not finding python
-        5 = appropriate json module not found
-        """
-        self._display.deprecated("The '_remote_checksum()' method is deprecated. "
-                                 "The plugin author should update the code to use '_execute_remote_stat()' instead", "2.16")
-        x = "0"  # unknown error has occurred
-        try:
-            remote_stat = self._execute_remote_stat(path, all_vars, follow=follow)
-            if remote_stat['exists'] and remote_stat['isdir']:
-                x = "3"  # its a directory not a file
-            else:
-                x = remote_stat['checksum']  # if 1, file is missing
-        except AnsibleError as e:
-            errormsg = to_text(e)
-            if errormsg.endswith(u'Permission denied'):
-                x = "2"  # cannot read file
-            elif errormsg.endswith(u'MODULE FAILURE'):
-                x = "4"  # python not found or module uncaught exception
-            elif 'json' in errormsg:
-                x = "5"  # json module needed
-        finally:
-            return x  # pylint: disable=lost-exception
 
     def _remote_expand_user(self, path, sudoable=True, pathsep=None):
         ''' takes a remote path and performs tilde/$HOME expansion on the remote host '''
@@ -955,7 +939,7 @@ class ActionBase(ABC):
             data = re.sub(r'^((\r)?\n)?BECOME-SUCCESS.*(\r)?\n', '', data)
         return data
 
-    def _update_module_args(self, module_name, module_args, task_vars):
+    def _update_module_args(self, module_name, module_args, task_vars, ignore_unknown_opts: bool = False):
 
         # set check mode in the module arguments, if required
         if self._task.check_mode:
@@ -1013,7 +997,14 @@ class ActionBase(ABC):
         # make sure the remote_tmp value is sent through in case modules needs to create their own
         module_args['_ansible_remote_tmp'] = self.get_shell_option('remote_tmp', default='~/.ansible/tmp')
 
-    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False):
+        # tells the module to ignore options that are not in its argspec.
+        module_args['_ansible_ignore_unknown_opts'] = ignore_unknown_opts
+
+        # allow user to insert string to add context to remote loggging
+        module_args['_ansible_target_log_info'] = C.config.get_config_value('TARGET_LOG_INFO', variables=task_vars)
+
+    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False,
+                        ignore_unknown_opts: bool = False):
         '''
         Transfer and run a module along with its arguments.
         '''
@@ -1049,7 +1040,7 @@ class ActionBase(ABC):
         if module_args is None:
             module_args = self._task.args
 
-        self._update_module_args(module_name, module_args, task_vars)
+        self._update_module_args(module_name, module_args, task_vars, ignore_unknown_opts=ignore_unknown_opts)
 
         remove_async_dir = None
         if wrap_async or self._task.async_val:
@@ -1125,7 +1116,7 @@ class ActionBase(ABC):
             remote_files.append(remote_async_module_path)
 
             async_limit = self._task.async_val
-            async_jid = str(random.randint(0, 999999999999))
+            async_jid = f'j{random.randint(0, 999999999999)}'
 
             # call the interpreter for async_wrapper directly
             # this permits use of a script for an interpreter on non-Linux platforms
@@ -1232,6 +1223,18 @@ class ActionBase(ABC):
                 display.warning(w)
 
             data = json.loads(filtered_output)
+
+            if C.MODULE_STRICT_UTF8_RESPONSE and not data.pop('_ansible_trusted_utf8', None):
+                try:
+                    _validate_utf8_json(data)
+                except UnicodeEncodeError:
+                    # When removing this, also remove the loop and latin-1 from ansible.module_utils.common.text.converters.jsonify
+                    display.deprecated(
+                        f'Module "{self._task.resolved_action or self._task.action}" returned non UTF-8 data in '
+                        'the JSON response. This will become an error in the future',
+                        version='2.18',
+                    )
+
             data['_ansible_parsed'] = True
         except ValueError:
             # not valid json, lets try to capture error
@@ -1344,7 +1347,7 @@ class ActionBase(ABC):
         display.debug(u"_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, out, err))
         return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err, stderr_lines=err.splitlines())
 
-    def _get_diff_data(self, destination, source, task_vars, source_file=True):
+    def _get_diff_data(self, destination, source, task_vars, content=None, source_file=True):
 
         # Note: Since we do not diff the source and destination before we transform from bytes into
         # text the diff between source and destination may not be accurate.  To fix this, we'd need
@@ -1402,7 +1405,10 @@ class ActionBase(ABC):
                     if b"\x00" in src_contents:
                         diff['src_binary'] = 1
                     else:
-                        diff['after_header'] = source
+                        if content:
+                            diff['after_header'] = destination
+                        else:
+                            diff['after_header'] = source
                         diff['after'] = to_text(src_contents)
             else:
                 display.debug(u"source of file passed in")

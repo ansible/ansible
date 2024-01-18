@@ -3,8 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """A facade for interfacing with multiple Galaxy instances."""
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import typing as t
 
@@ -18,7 +17,7 @@ if t.TYPE_CHECKING:
     )
 
 from ansible.galaxy.api import GalaxyAPI, GalaxyError
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.utils.display import Display
 
 

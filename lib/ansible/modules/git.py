@@ -3,8 +3,7 @@
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -29,15 +28,15 @@ options:
         description:
             - The path of where the repository should be checked out. This
               is equivalent to C(git clone [repo_url] [directory]). The repository
-              named in I(repo) is not appended to this path and the destination directory must be empty. This
-              parameter is required, unless I(clone) is set to C(false).
+              named in O(repo) is not appended to this path and the destination directory must be empty. This
+              parameter is required, unless O(clone) is set to V(false).
         type: path
         required: true
     version:
         description:
             - What version of the repository to check out. This can be
-              the literal string C(HEAD), a branch name, a tag name.
-              It can also be a I(SHA-1) hash, in which case I(refspec) needs
+              the literal string V(HEAD), a branch name, a tag name.
+              It can also be a I(SHA-1) hash, in which case O(refspec) needs
               to be specified if the given revision is not already available.
         type: str
         default: "HEAD"
@@ -45,7 +44,7 @@ options:
         description:
             - Will ensure or not that "-o StrictHostKeyChecking=no" is present as an ssh option.
             - Be aware that this disables a protection against MITM attacks.
-            - Those using OpenSSH >= 7.5 might want to set I(ssh_opt) to 'StrictHostKeyChecking=accept-new'
+            - Those using OpenSSH >= 7.5 might want to set O(ssh_opts) to V(StrictHostKeyChecking=accept-new)
               instead, it does not remove the MITM issue but it does restrict it to the first attempt.
         type: bool
         default: 'no'
@@ -54,7 +53,7 @@ options:
         description:
             - As of OpenSSH 7.5, "-o StrictHostKeyChecking=accept-new" can be
               used which is safer and will only accepts host keys which are
-              not present or are the same. if C(true), ensure that
+              not present or are the same. if V(true), ensure that
               "-o StrictHostKeyChecking=accept-new" is present as an ssh option.
         type: bool
         default: 'no'
@@ -62,12 +61,12 @@ options:
     ssh_opts:
         description:
             - Options git will pass to ssh when used as protocol, it works via C(git)'s
-              GIT_SSH/GIT_SSH_COMMAND environment variables.
-            - For older versions it appends GIT_SSH_OPTS (specific to this module) to the
+              E(GIT_SSH)/E(GIT_SSH_COMMAND) environment variables.
+            - For older versions it appends E(GIT_SSH_OPTS) (specific to this module) to the
               variables above or via a wrapper script.
-            - Other options can add to this list, like I(key_file) and I(accept_hostkey).
+            - Other options can add to this list, like O(key_file) and O(accept_hostkey).
             - An example value could be "-o StrictHostKeyChecking=no" (although this particular
-              option is better set by I(accept_hostkey)).
+              option is better set by O(accept_hostkey)).
             - The module ensures that 'BatchMode=yes' is always present to avoid prompts.
         type: str
         version_added: "1.5"
@@ -75,7 +74,7 @@ options:
     key_file:
         description:
             - Specify an optional private key file path, on the target host, to use for the checkout.
-            - This ensures 'IdentitiesOnly=yes' is present in ssh_opts.
+            - This ensures 'IdentitiesOnly=yes' is present in O(ssh_opts).
         type: path
         version_added: "1.5"
     reference:
@@ -100,29 +99,29 @@ options:
         version_added: "1.9"
     force:
         description:
-            - If C(true), any modified files in the working
+            - If V(true), any modified files in the working
               repository will be discarded.  Prior to 0.7, this was always
-              C(true) and could not be disabled.  Prior to 1.9, the default was
-              C(true).
+              V(true) and could not be disabled.  Prior to 1.9, the default was
+              V(true).
         type: bool
         default: 'no'
         version_added: "0.7"
     depth:
         description:
             - Create a shallow clone with a history truncated to the specified
-              number or revisions. The minimum possible value is C(1), otherwise
+              number or revisions. The minimum possible value is V(1), otherwise
               ignored. Needs I(git>=1.9.1) to work correctly.
         type: int
         version_added: "1.2"
     clone:
         description:
-            - If C(false), do not clone the repository even if it does not exist locally.
+            - If V(false), do not clone the repository even if it does not exist locally.
         type: bool
         default: 'yes'
         version_added: "1.9"
     update:
         description:
-            - If C(false), do not retrieve new revisions from the origin repository.
+            - If V(false), do not retrieve new revisions from the origin repository.
             - Operations like archive will work on the existing (old) repository and might
               not respond to changes to the options version or remote.
         type: bool
@@ -136,7 +135,7 @@ options:
         version_added: "1.4"
     bare:
         description:
-            - If C(true), repository will be created as a bare repo, otherwise
+            - If V(true), repository will be created as a bare repo, otherwise
               it will be a standard repo with a workspace.
         type: bool
         default: 'no'
@@ -150,7 +149,7 @@ options:
 
     recursive:
         description:
-            - If C(false), repository will be cloned without the --recursive
+            - If V(false), repository will be cloned without the C(--recursive)
               option, skipping sub-modules.
         type: bool
         default: 'yes'
@@ -165,10 +164,10 @@ options:
 
     track_submodules:
         description:
-            - If C(true), submodules will track the latest commit on their
+            - If V(true), submodules will track the latest commit on their
               master branch (or other branch specified in .gitmodules).  If
-              C(false), submodules will be kept at the revision specified by the
-              main project. This is equivalent to specifying the --remote flag
+              V(false), submodules will be kept at the revision specified by the
+              main project. This is equivalent to specifying the C(--remote) flag
               to git submodule update.
         type: bool
         default: 'no'
@@ -176,7 +175,7 @@ options:
 
     verify_commit:
         description:
-            - If C(true), when cloning or checking out a I(version) verify the
+            - If V(true), when cloning or checking out a O(version) verify the
               signature of a GPG signed commit. This requires git version>=2.1.0
               to be installed. The commit MUST be signed and the public key MUST
               be present in the GPG keyring.
@@ -197,7 +196,7 @@ options:
 
     archive_prefix:
         description:
-            - Specify a prefix to add to each file path in archive. Requires I(archive) to be specified.
+            - Specify a prefix to add to each file path in archive. Requires O(archive) to be specified.
         version_added: "2.10"
         type: str
 
@@ -212,7 +211,7 @@ options:
         description:
            - A list of trusted GPG fingerprints to compare to the fingerprint of the
              GPG-signed commit.
-           - Only used when I(verify_commit=yes).
+           - Only used when O(verify_commit=yes).
            - Use of this feature requires Git 2.6+ due to its reliance on git's C(--raw) flag to C(verify-commit) and C(verify-tag).
         type: list
         elements: str
@@ -338,7 +337,7 @@ import shutil
 import tempfile
 from ansible.module_utils.compat.version import LooseVersion
 
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.process import get_bin_path
@@ -826,7 +825,7 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
         repo_path = get_repo_path(dest, bare)
     except (IOError, ValueError) as err:
         # No repo path found
-        """``.git`` file does not have a valid format for detached Git dir."""
+        # ``.git`` file does not have a valid format for detached Git dir.
         module.fail_json(
             msg='Current repo does not have a valid reference to a '
             'separate Git dir or it refers to the invalid path',
@@ -1124,7 +1123,7 @@ def create_archive(git_path, module, dest, archive, archive_prefix, version, rep
     """ Helper function for creating archive using git_archive """
     all_archive_fmt = {'.zip': 'zip', '.gz': 'tar.gz', '.tar': 'tar',
                        '.tgz': 'tgz'}
-    _, archive_ext = os.path.splitext(archive)
+    dummy, archive_ext = os.path.splitext(archive)
     archive_fmt = all_archive_fmt.get(archive_ext, None)
     if archive_fmt is None:
         module.fail_json(msg="Unable to get file extension from "
@@ -1264,7 +1263,7 @@ def main():
     # We screenscrape a huge amount of git commands so use C locale anytime we
     # call run_command()
     locale = get_best_parsable_locale(module)
-    module.run_command_environ_update = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LC_CTYPE=locale)
+    module.run_command_environ_update = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LC_CTYPE=locale, LANGUAGE=locale)
 
     if separate_git_dir:
         separate_git_dir = os.path.realpath(separate_git_dir)
@@ -1283,7 +1282,7 @@ def main():
                     repo_path = separate_git_dir
         except (IOError, ValueError) as err:
             # No repo path found
-            """``.git`` file does not have a valid format for detached Git dir."""
+            # ``.git`` file does not have a valid format for detached Git dir.
             module.fail_json(
                 msg='Current repo does not have a valid reference to a '
                 'separate Git dir or it refers to the invalid path',

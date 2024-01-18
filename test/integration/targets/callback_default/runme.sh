@@ -34,7 +34,7 @@ run_test() {
 	sed -i -e 's/^Using .*//g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e 's/[0-9]:[0-9]\{2\}:[0-9]\{2\}\.[0-9]\{6\}/0:00:00.000000/g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e 's/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\} [0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}\.[0-9]\{6\}/0000-00-00 00:00:00.000000/g' "${OUTFILE}.${testname}.stdout"
-	sed -i -e 's#: .*/source$#: .../source#g' "${OUTFILE}.${testname}.stdout"
+	sed -i -e 's#: .*/\.source\.txt$#: .../.source.txt#g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e '/secontext:/d' "${OUTFILE}.${testname}.stdout"
 	sed -i -e 's/group: wheel/group: root/g' "${OUTFILE}.${testname}.stdout"
 
@@ -135,8 +135,8 @@ run_test default test.yml
 # Check for async output
 # NOTE: regex to match 1 or more digits works for both BSD and GNU grep
 ansible-playbook -i inventory test_async.yml 2>&1 | tee async_test.out
-grep "ASYNC OK .* jid=[0-9]\{1,\}" async_test.out
-grep "ASYNC FAILED .* jid=[0-9]\{1,\}" async_test.out
+grep "ASYNC OK .* jid=j[0-9]\{1,\}" async_test.out
+grep "ASYNC FAILED .* jid=j[0-9]\{1,\}" async_test.out
 rm -f async_test.out
 
 # Hide skipped

@@ -26,6 +26,7 @@ from . import (
 
 class CoverageAnalyzeTargetsExpandConfig(CoverageAnalyzeTargetsConfig):
     """Configuration for the `coverage analyze targets expand` command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 

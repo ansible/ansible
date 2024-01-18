@@ -25,6 +25,7 @@ from ...config import (
 
 class IgnoresTest(SanityVersionNeutral):
     """Sanity test for sanity test ignore entries."""
+
     @property
     def can_ignore(self) -> bool:
         """True if the test supports ignore entries."""

@@ -15,18 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, mock_open
 from ansible.errors import AnsibleParserError, yaml_strings, AnsibleFileNotFound
 from ansible.parsing.vault import AnsibleVaultError
-from ansible.module_utils._text import to_text
-from ansible.module_utils.six import PY3
+from ansible.module_utils.common.text.converters import to_text
 
 from units.mock.vault_helper import TextVaultSecret
 from ansible.parsing.dataloader import DataLoader
@@ -92,11 +89,11 @@ class TestDataLoader(unittest.TestCase):
             - { role: 'testrole' }
 
         testrole/tasks/main.yml:
-        - include: "include1.yml"
+        - include_tasks: "include1.yml"
           static: no
 
         testrole/tasks/include1.yml:
-        - include: include2.yml
+        - include_tasks: include2.yml
           static: no
 
         testrole/tasks/include2.yml:
@@ -229,11 +226,7 @@ class TestDataLoaderWithVault(unittest.TestCase):
 3135306561356164310a343937653834643433343734653137383339323330626437313562306630
 3035
 """
-        if PY3:
-            builtins_name = 'builtins'
-        else:
-            builtins_name = '__builtin__'
 
-        with patch(builtins_name + '.open', mock_open(read_data=vaulted_data.encode('utf-8'))):
+        with patch('builtins.open', mock_open(read_data=vaulted_data.encode('utf-8'))):
             output = self._loader.load_from_file('dummy_vault.txt')
             self.assertEqual(output, dict(foo='bar'))

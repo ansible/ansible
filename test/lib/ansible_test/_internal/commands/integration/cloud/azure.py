@@ -31,6 +31,7 @@ from . import (
 
 class AzureCloudProvider(CloudProvider):
     """Azure cloud provider plugin. Sets up cloud resources before delegation."""
+
     def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
@@ -103,6 +104,7 @@ class AzureCloudProvider(CloudProvider):
 
 class AzureCloudEnvironment(CloudEnvironment):
     """Azure cloud environment plugin. Updates integration test environment after delegation."""
+
     def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         env_vars = get_config(self.config_path)

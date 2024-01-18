@@ -18,6 +18,7 @@ from . import (
 
 class UnversionedSource(SourceProvider):
     """Fallback source provider when no other provider matches the content root."""
+
     sequence = 0  # disable automatic detection
 
     @staticmethod
@@ -46,9 +47,6 @@ class UnversionedSource(SourceProvider):
             ),
             'tests': (
                 'output',
-            ),
-            'docs/docsite': (
-                '_build',
             ),
         }
 

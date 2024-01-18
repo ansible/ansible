@@ -15,16 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
 from ansible import constants as C
 from ansible import context
 from ansible.executor.task_queue_manager import TaskQueueManager, AnsibleEndPlay
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.loader import become_loader, connection_loader, shell_loader
 from ansible.playbook import Playbook
@@ -148,7 +146,7 @@ class PlaybookExecutor:
                             encrypt = var.get("encrypt", None)
                             salt_size = var.get("salt_size", None)
                             salt = var.get("salt", None)
-                            unsafe = var.get("unsafe", None)
+                            unsafe = boolean(var.get("unsafe", False))
 
                             if vname not in self._variable_manager.extra_vars:
                                 if self._tqm:
@@ -238,7 +236,7 @@ class PlaybookExecutor:
                             else:
                                 basedir = '~/'
 
-                            (retry_name, _) = os.path.splitext(os.path.basename(playbook_path))
+                            (retry_name, ext) = os.path.splitext(os.path.basename(playbook_path))
                             filename = os.path.join(basedir, "%s.retry" % retry_name)
                             if self._generate_retry_inventory(filename, retries):
                                 display.display("\tto retry, use: --limit @%s\n" % filename)

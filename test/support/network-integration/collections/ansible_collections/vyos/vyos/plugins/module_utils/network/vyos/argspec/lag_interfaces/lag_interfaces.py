@@ -23,9 +23,7 @@
 """
 The arg spec for the vyos_lag_interfaces module
 """
-from __future__ import absolute_import, division, print_function
-
-__metaclass__ = type
+from __future__ import annotations
 
 
 class Lag_interfacesArgs(object):  # pylint: disable=R0903

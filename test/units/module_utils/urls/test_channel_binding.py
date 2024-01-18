@@ -2,14 +2,37 @@
 # (c) 2020 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import base64
 import os.path
 import pytest
 
+from ansible.module_utils.compat.version import LooseVersion
 from ansible.module_utils import urls
+
+
+# cryptography < 41.0.0 does not associate the algorithm with the cert,
+# so module_utils falls back to cryptography.hazmat.primitives.hashes.SHA256
+rsa_pss_sha512 = (
+    b'\x85\x85\x19\xB9\xE1\x0F\x23\xE2'
+    b'\x1D\x2C\xE9\xD5\x47\x2A\xAB\xCE'
+    b'\x42\x0F\xD1\x00\x75\x9C\x53\xA1'
+    b'\x7B\xB9\x79\x86\xB2\x59\x61\x27'
+)
+
+if urls.HAS_CRYPTOGRAPHY:
+    import cryptography
+
+    if LooseVersion(cryptography.__version__) >= LooseVersion('41.0.0'):
+        rsa_pss_sha512 = (
+            b"K\x8c\xa5\xf5y\x89A\xa0\xaf'\xeb"
+            b"\x00\xeb\xccUz6z\xe0l\x035\xa3h"
+            b"\xfc\xa6 k\xda]\xba\x88\xf8m\xf3"
+            b"\x98\xd2\xd2wW\x87w\xa4\x0e\x14"
+            b"\t\xd4]\xb9\xa29\xe2h\x1b\x9f"
+            b"\xe6\x04\x00\xec\x7fc\x83\xd7b"
+        )
 
 
 @pytest.mark.skipif(not urls.HAS_CRYPTOGRAPHY, reason='Requires cryptography to be installed')
@@ -44,10 +67,7 @@ from ansible.module_utils import urls
                            b'\xC2\xDC\xBB\x89\x8D\x84\x47\x4E'
                            b'\x58\x9C\xD7\xC2\x7A\xDB\xEF\x8B'
                            b'\xD9\xC0\xC0\x68\xAF\x9C\x36\x6D'),
-    ('rsa-pss_sha512.pem', b'\x85\x85\x19\xB9\xE1\x0F\x23\xE2'
-                           b'\x1D\x2C\xE9\xD5\x47\x2A\xAB\xCE'
-                           b'\x42\x0F\xD1\x00\x75\x9C\x53\xA1'
-                           b'\x7B\xB9\x79\x86\xB2\x59\x61\x27'),
+    ('rsa-pss_sha512.pem', rsa_pss_sha512),
     ('ecdsa_sha256.pem', b'\xFE\xCF\x1B\x25\x85\x44\x99\x90'
                          b'\xD9\xE3\xB2\xC9\x2D\x3F\x59\x7E'
                          b'\xC8\x35\x4E\x12\x4E\xDA\x75\x1D'

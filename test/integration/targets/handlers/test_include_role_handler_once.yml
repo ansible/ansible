@@ -1,0 +1,20 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: "Call main entry point"
+      include_role:
+        name: two_tasks_files_role
+
+    - name: "Call main entry point again"
+      include_role:
+        name: two_tasks_files_role
+
+    - name: "Call other entry point"
+      include_role:
+        name: two_tasks_files_role
+        tasks_from: other
+
+    - name: "Call other entry point again"
+      include_role:
+        name: two_tasks_files_role
+        tasks_from: other

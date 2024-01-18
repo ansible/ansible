@@ -9,8 +9,7 @@ and the current ansible_facts regarding the distribution version.
 This assumes a working ansible version in the path.
 """
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import os.path
@@ -19,7 +18,7 @@ import subprocess
 import sys
 
 from ansible.module_utils import distro
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 
 
 filelist = [

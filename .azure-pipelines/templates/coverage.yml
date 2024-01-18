@@ -6,7 +6,7 @@
 jobs:
   - job: Coverage
     displayName: Code Coverage
-    container: default
+    container: $[ variables.defaultContainer ]
     workspace:
       clean: all
     steps:

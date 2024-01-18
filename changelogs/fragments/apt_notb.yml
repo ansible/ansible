@@ -1,2 +1,0 @@
-bugfixes:
-  - apt module should not traceback on invalid type given as package. issue 78663.

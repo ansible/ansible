@@ -15,22 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import FieldAttributeBase
 
 
 class LoopControl(FieldAttributeBase):
 
-    loop_var = FieldAttribute(isa='str', default='item', always_post_validate=True)
-    index_var = FieldAttribute(isa='str', always_post_validate=True)
-    label = FieldAttribute(isa='str')
-    pause = FieldAttribute(isa='float', default=0, always_post_validate=True)
-    extended = FieldAttribute(isa='bool', always_post_validate=True)
-    extended_allitems = FieldAttribute(isa='bool', default=True, always_post_validate=True)
+    loop_var = NonInheritableFieldAttribute(isa='string', default='item', always_post_validate=True)
+    index_var = NonInheritableFieldAttribute(isa='string', always_post_validate=True)
+    label = NonInheritableFieldAttribute(isa='string')
+    pause = NonInheritableFieldAttribute(isa='float', default=0, always_post_validate=True)
+    extended = NonInheritableFieldAttribute(isa='bool', always_post_validate=True)
+    extended_allitems = NonInheritableFieldAttribute(isa='bool', default=True, always_post_validate=True)
 
     def __init__(self):
         super(LoopControl, self).__init__()

@@ -33,6 +33,7 @@ SECCOMP_CHOICES = [
 # This bin symlink map must exactly match the contents of the bin directory.
 # It is necessary for payload creation to reconstruct the bin directory when running ansible-test from an installed version of ansible.
 # It is also used to construct the injector directory at runtime.
+# It is also used to construct entry points when not running ansible-test from source.
 ANSIBLE_BIN_SYMLINK_MAP = {
     'ansible': '../lib/ansible/cli/adhoc.py',
     'ansible-config': '../lib/ansible/cli/config.py',

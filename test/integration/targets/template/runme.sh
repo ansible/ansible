@@ -8,7 +8,10 @@ ANSIBLE_ROLES_PATH=../ ansible-playbook template.yml -i ../../inventory -v "$@"
 ansible testhost -i testhost, -m debug -a 'msg={{ hostvars["localhost"] }}' -e "vars1={{ undef() }}" -e "vars2={{ vars1 }}"
 
 # Test for https://github.com/ansible/ansible/issues/27262
-ansible-playbook ansible_managed.yml -c  ansible_managed.cfg -i ../../inventory -v "$@"
+ANSIBLE_CONFIG=ansible_managed.cfg ansible-playbook ansible_managed.yml -i ../../inventory -v "$@"
+
+# Test for https://github.com/ansible/ansible/pull/79129
+ANSIBLE_CONFIG=ansible_managed.cfg ansible-playbook ansible_managed_79129.yml -i ../../inventory -v "$@"
 
 # Test for #42585
 ANSIBLE_ROLES_PATH=../ ansible-playbook custom_template.yml -i ../../inventory -v "$@"
@@ -39,7 +42,7 @@ ansible-playbook 72262.yml -v "$@"
 ansible-playbook unsafe.yml -v "$@"
 
 # ensure Jinja2 overrides from a template are used
-ansible-playbook in_template_overrides.yml -v "$@"
+ansible-playbook template_overrides.yml -v "$@"
 
 ansible-playbook lazy_eval.yml -i ../../inventory -v "$@"
 

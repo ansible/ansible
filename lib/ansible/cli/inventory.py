@@ -4,8 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # PYTHON_ARGCOMPLETE_OK
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
@@ -18,7 +17,7 @@ from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.utils.vars import combine_vars
 from ansible.utils.display import Display
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
@@ -51,8 +50,7 @@ class InventoryCLI(CLI):
 
     name = 'ansible-inventory'
 
-    ARGUMENTS = {'host': 'The name of a host to match in the inventory, relevant when using --list',
-                 'group': 'The name of a group in the inventory, relevant when using --graph', }
+    ARGUMENTS = {'group': 'The name of a group in the inventory, relevant when using --graph', }
 
     def __init__(self, args):
 
@@ -63,8 +61,8 @@ class InventoryCLI(CLI):
 
     def init_parser(self):
         super(InventoryCLI, self).init_parser(
-            usage='usage: %prog [options] [host|group]',
-            epilog='Show Ansible inventory information, by default it uses the inventory script JSON format')
+            usage='usage: %prog [options] [group]',
+            desc='Show Ansible inventory information, by default it uses the inventory script JSON format')
 
         opt_help.add_inventory_options(self.parser)
         opt_help.add_vault_options(self.parser)
@@ -72,17 +70,17 @@ class InventoryCLI(CLI):
         opt_help.add_runtask_options(self.parser)
 
         # remove unused default options
-        self.parser.add_argument('-l', '--limit', help=argparse.SUPPRESS, action=opt_help.UnrecognizedArgument, nargs='?')
         self.parser.add_argument('--list-hosts', help=argparse.SUPPRESS, action=opt_help.UnrecognizedArgument)
 
-        self.parser.add_argument('args', metavar='host|group', nargs='?')
+        self.parser.add_argument('args', metavar='group', nargs='?', help='The name of a group in the inventory, relevant when using --graph')
 
         # Actions
         action_group = self.parser.add_argument_group("Actions", "One of following must be used on invocation, ONLY ONE!")
         action_group.add_argument("--list", action="store_true", default=False, dest='list', help='Output all hosts info, works as inventory script')
-        action_group.add_argument("--host", action="store", default=None, dest='host', help='Output specific host info, works as inventory script')
+        action_group.add_argument("--host", action="store", default=None, dest='host',
+                                  help='Output specific host info, works as inventory script. It will ignore limit')
         action_group.add_argument("--graph", action="store_true", default=False, dest='graph',
-                                  help='create inventory graph, if supplying pattern it must be a valid group name')
+                                  help='create inventory graph, if supplying pattern it must be a valid group name. It will ignore limit')
         self.parser.add_argument_group(action_group)
 
         # graph
@@ -144,17 +142,22 @@ class InventoryCLI(CLI):
             # FIXME: should we template first?
             results = self.dump(myvars)
 
-        elif context.CLIARGS['graph']:
-            results = self.inventory_graph()
-        elif context.CLIARGS['list']:
-            top = self._get_group('all')
-            if context.CLIARGS['yaml']:
-                results = self.yaml_inventory(top)
-            elif context.CLIARGS['toml']:
-                results = self.toml_inventory(top)
-            else:
-                results = self.json_inventory(top)
-            results = self.dump(results)
+        else:
+            if context.CLIARGS['subset']:
+                # not doing single host, set limit in general if given
+                self.inventory.subset(context.CLIARGS['subset'])
+
+            if context.CLIARGS['graph']:
+                results = self.inventory_graph()
+            elif context.CLIARGS['list']:
+                top = self._get_group('all')
+                if context.CLIARGS['yaml']:
+                    results = self.yaml_inventory(top)
+                elif context.CLIARGS['toml']:
+                    results = self.toml_inventory(top)
+                else:
+                    results = self.json_inventory(top)
+                results = self.dump(results)
 
         if results:
             outfile = context.CLIARGS['output_file']
@@ -249,7 +252,7 @@ class InventoryCLI(CLI):
         return dump
 
     @staticmethod
-    def _remove_empty(dump):
+    def _remove_empty_keys(dump):
         # remove empty keys
         for x in ('hosts', 'vars', 'children'):
             if x in dump and not dump[x]:
@@ -296,33 +299,34 @@ class InventoryCLI(CLI):
 
     def json_inventory(self, top):
 
-        seen = set()
+        seen_groups = set()
 
-        def format_group(group):
+        def format_group(group, available_hosts):
             results = {}
             results[group.name] = {}
             if group.name != 'all':
-                results[group.name]['hosts'] = [h.name for h in group.hosts]
+                results[group.name]['hosts'] = [h.name for h in group.hosts if h.name in available_hosts]
             results[group.name]['children'] = []
             for subgroup in group.child_groups:
                 results[group.name]['children'].append(subgroup.name)
-                if subgroup.name not in seen:
-                    results.update(format_group(subgroup))
-                    seen.add(subgroup.name)
+                if subgroup.name not in seen_groups:
+                    results.update(format_group(subgroup, available_hosts))
+                    seen_groups.add(subgroup.name)
             if context.CLIARGS['export']:
                 results[group.name]['vars'] = self._get_group_variables(group)
 
-            self._remove_empty(results[group.name])
+            self._remove_empty_keys(results[group.name])
+            # remove empty groups
             if not results[group.name]:
                 del results[group.name]
 
             return results
 
-        results = format_group(top)
+        hosts = self.inventory.get_hosts(top.name)
+        results = format_group(top, frozenset(h.name for h in hosts))
 
         # populate meta
         results['_meta'] = {'hostvars': {}}
-        hosts = self.inventory.get_hosts()
         for host in hosts:
             hvars = self._get_host_variables(host)
             if hvars:
@@ -332,9 +336,10 @@ class InventoryCLI(CLI):
 
     def yaml_inventory(self, top):
 
-        seen = []
+        seen_hosts = set()
+        seen_groups = set()
 
-        def format_group(group):
+        def format_group(group, available_hosts):
             results = {}
 
             # initialize group + vars
@@ -344,15 +349,21 @@ class InventoryCLI(CLI):
             results[group.name]['children'] = {}
             for subgroup in group.child_groups:
                 if subgroup.name != 'all':
-                    results[group.name]['children'].update(format_group(subgroup))
+                    if subgroup.name in seen_groups:
+                        results[group.name]['children'].update({subgroup.name: {}})
+                    else:
+                        results[group.name]['children'].update(format_group(subgroup, available_hosts))
+                        seen_groups.add(subgroup.name)
 
             # hosts for group
             results[group.name]['hosts'] = {}
             if group.name != 'all':
                 for h in group.hosts:
+                    if h.name not in available_hosts:
+                        continue  # observe limit
                     myvars = {}
-                    if h.name not in seen:  # avoid defining host vars more than once
-                        seen.append(h.name)
+                    if h.name not in seen_hosts:  # avoid defining host vars more than once
+                        seen_hosts.add(h.name)
                         myvars = self._get_host_variables(host=h)
                     results[group.name]['hosts'][h.name] = myvars
 
@@ -361,17 +372,22 @@ class InventoryCLI(CLI):
                 if gvars:
                     results[group.name]['vars'] = gvars
 
-            self._remove_empty(results[group.name])
+            self._remove_empty_keys(results[group.name])
+            # remove empty groups
+            if not results[group.name]:
+                del results[group.name]
 
             return results
 
-        return format_group(top)
+        available_hosts = frozenset(h.name for h in self.inventory.get_hosts(top.name))
+        return format_group(top, available_hosts)
 
     def toml_inventory(self, top):
-        seen = set()
+        seen_hosts = set()
+        seen_hosts = set()
         has_ungrouped = bool(next(g.hosts for g in top.child_groups if g.name == 'ungrouped'))
 
-        def format_group(group):
+        def format_group(group, available_hosts):
             results = {}
             results[group.name] = {}
 
@@ -381,12 +397,14 @@ class InventoryCLI(CLI):
                     continue
                 if group.name != 'all':
                     results[group.name]['children'].append(subgroup.name)
-                results.update(format_group(subgroup))
+                results.update(format_group(subgroup, available_hosts))
 
             if group.name != 'all':
                 for host in group.hosts:
-                    if host.name not in seen:
-                        seen.add(host.name)
+                    if host.name not in available_hosts:
+                        continue
+                    if host.name not in seen_hosts:
+                        seen_hosts.add(host.name)
                         host_vars = self._get_host_variables(host=host)
                     else:
                         host_vars = {}
@@ -398,13 +416,15 @@ class InventoryCLI(CLI):
             if context.CLIARGS['export']:
                 results[group.name]['vars'] = self._get_group_variables(group)
 
-            self._remove_empty(results[group.name])
+            self._remove_empty_keys(results[group.name])
+            # remove empty groups
             if not results[group.name]:
                 del results[group.name]
 
             return results
 
-        results = format_group(top)
+        available_hosts = frozenset(h.name for h in self.inventory.get_hosts(top.name))
+        results = format_group(top, available_hosts)
 
         return results
 

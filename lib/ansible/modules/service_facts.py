@@ -3,8 +3,7 @@
 # originally copied from AWX's scan_services module to bring this functionality
 # into Core
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -28,7 +27,7 @@ attributes:
     platform:
         platforms: posix
 notes:
-  - When accessing the C(ansible_facts.services) facts collected by this module,
+  - When accessing the RV(ansible_facts.services) facts collected by this module,
     it is recommended to not use "dot notation" because services can have a C(-)
     character in their name which would result in invalid "dot notation", such as
     C(ansible_facts.services.zuul-gateway). It is instead recommended to
@@ -57,19 +56,20 @@ ansible_facts:
     services:
       description: States of the services with service name as key.
       returned: always
-      type: complex
+      type: list
+      elements: dict
       contains:
         source:
           description:
           - Init system of the service.
-          - One of C(rcctl), C(systemd), C(sysv), C(upstart), C(src).
+          - One of V(rcctl), V(systemd), V(sysv), V(upstart), V(src).
           returned: always
           type: str
           sample: sysv
         state:
           description:
           - State of the service.
-          - 'This commonly includes (but is not limited to) the following: C(failed), C(running), C(stopped) or C(unknown).'
+          - 'This commonly includes (but is not limited to) the following: V(failed), V(running), V(stopped) or V(unknown).'
           - Depending on the used init system additional states might be returned.
           returned: always
           type: str
@@ -77,7 +77,7 @@ ansible_facts:
         status:
           description:
           - State of the service.
-          - Either C(enabled), C(disabled), C(static), C(indirect) or C(unknown).
+          - Either V(enabled), V(disabled), V(static), V(indirect) or V(unknown).
           returned: systemd systems or RedHat/SUSE flavored sysvinit/upstart or OpenBSD
           type: str
           sample: enabled
@@ -94,6 +94,7 @@ import platform
 import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
+from ansible.module_utils.service import is_systemd_managed
 
 
 class BaseService(object):
@@ -244,16 +245,7 @@ class SystemctlScanService(BaseService):
     BAD_STATES = frozenset(['not-found', 'masked', 'failed'])
 
     def systemd_enabled(self):
-        # Check if init is the systemd command, using comm as cmdline could be symlink
-        try:
-            f = open('/proc/1/comm', 'r')
-        except IOError:
-            # If comm doesn't exist, old kernel, no systemd
-            return False
-        for line in f:
-            if 'systemd' in line:
-                return True
-        return False
+        return is_systemd_managed(self.module)
 
     def _list_from_units(self, systemctl_path, services):
 
@@ -361,14 +353,31 @@ class OpenBSDScanService(BaseService):
                     svcs.append(svc)
         return svcs
 
+    def get_info(self, name):
+        info = {}
+        rc, stdout, stderr = self.module.run_command("%s get %s" % (self.rcctl_path, name))
+        if 'needs root privileges' in stderr.lower():
+            self.module.warn('rcctl requires root privileges')
+        else:
+            undy = '%s_' % name
+            for variable in stdout.split('\n'):
+                if variable == '' or '=' not in variable:
+                    continue
+                else:
+                    k, v = variable.replace(undy, '', 1).split('=')
+                    info[k] = v
+        return info
+
     def gather_services(self):
 
         services = {}
         self.rcctl_path = self.module.get_bin_path("rcctl")
         if self.rcctl_path:
 
+            # populate services will all possible
             for svc in self.query_rcctl('all'):
-                services[svc] = {'name': svc, 'source': 'rcctl'}
+                services[svc] = {'name': svc, 'source': 'rcctl', 'rogue': False}
+                services[svc].update(self.get_info(svc))
 
             for svc in self.query_rcctl('on'):
                 services[svc].update({'status': 'enabled'})
@@ -376,15 +385,21 @@ class OpenBSDScanService(BaseService):
             for svc in self.query_rcctl('started'):
                 services[svc].update({'state': 'running'})
 
-            # Based on the list of services that are enabled, determine which are disabled
-            [services[svc].update({'status': 'disabled'}) for svc in services if services[svc].get('status') is None]
-
-            # and do the same for those are aren't running
-            [services[svc].update({'state': 'stopped'}) for svc in services if services[svc].get('state') is None]
-
             # Override the state for services which are marked as 'failed'
             for svc in self.query_rcctl('failed'):
                 services[svc].update({'state': 'failed'})
+
+            for svc in services.keys():
+                # Based on the list of services that are enabled/failed, determine which are disabled
+                if services[svc].get('status') is None:
+                    services[svc].update({'status': 'disabled'})
+
+                # and do the same for those are aren't running
+                if services[svc].get('state') is None:
+                    services[svc].update({'state': 'stopped'})
+
+            for svc in self.query_rcctl('rogue'):
+                services[svc]['rogue'] = True
 
         return services
 

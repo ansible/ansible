@@ -1,8 +1,0 @@
-{
-    "value": {
-        "upgrade_policy": "NEVER",
-        "upgrade_status": "NONE",
-        "version": "VMX_11"
-    },
-    "changed": false
-}

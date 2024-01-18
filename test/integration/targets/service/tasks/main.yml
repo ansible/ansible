@@ -46,7 +46,7 @@
         msg: 'ansible_service_mgr: {{ ansible_service_mgr }}'
 
     - name: setup test service script
-      include_tasks: '{{ service_type }}_setup.yml'
+      include_tasks: '{{ service_type }}_setup.yml'
 
     - name: execute tests
       import_tasks: tests.yml

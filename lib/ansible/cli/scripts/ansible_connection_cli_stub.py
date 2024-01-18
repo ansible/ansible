@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
+from __future__ import annotations
 
-__metaclass__ = type
-
-
-import argparse
 import fcntl
 import hashlib
 import io
@@ -24,12 +20,12 @@ from contextlib import contextmanager
 
 from ansible import constants as C
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.connection import Connection, ConnectionError, send_data, recv_data
 from ansible.module_utils.service import fork_process
 from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.loader import connection_loader
+from ansible.plugins.loader import connection_loader, init_plugin_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.utils.display import Display
 from ansible.utils.jsonrpc import JsonRpcServer
@@ -230,6 +226,7 @@ def main(args=None):
     parser.add_argument('playbook_pid')
     parser.add_argument('task_uuid')
     args = parser.parse_args(args[1:] if args is not None else args)
+    init_plugin_loader()
 
     # initialize verbosity
     display.verbosity = args.verbosity

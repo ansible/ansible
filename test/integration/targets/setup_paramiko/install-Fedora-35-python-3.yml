@@ -1,9 +1,0 @@
-- name: Install Paramiko and crypto policies scripts
-  dnf:
-    name:
-      - crypto-policies-scripts
-      - python3-paramiko
-    install_weak_deps: no
-
-- name: Drop the crypto-policy to LEGACY for these tests
-  command: update-crypto-policies --set LEGACY

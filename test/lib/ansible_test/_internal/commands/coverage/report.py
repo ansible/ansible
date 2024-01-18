@@ -144,6 +144,7 @@ def _generate_powershell_output_report(args: CoverageReportConfig, coverage_file
 
 class CoverageReportConfig(CoverageCombineConfig):
     """Configuration for the coverage report command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 

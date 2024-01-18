@@ -25,6 +25,10 @@ from .host_profiles import (
     WindowsRemoteProfile,
 )
 
+from .ssh import (
+    ssh_options_to_str,
+)
+
 
 def create_controller_inventory(args: EnvironmentConfig, path: str, controller_host: ControllerHostProfile) -> None:
     """Create and return inventory for use in controller-only integration tests."""
@@ -149,6 +153,7 @@ def create_posix_inventory(args: EnvironmentConfig, path: str, target_hosts: lis
             ansible_port=ssh.settings.port,
             ansible_user=ssh.settings.user,
             ansible_ssh_private_key_file=ssh.settings.identity_file,
+            ansible_ssh_extra_args=ssh_options_to_str(ssh.settings.options),
         )
 
         if ssh.become:

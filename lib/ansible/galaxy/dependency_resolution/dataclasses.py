@@ -4,8 +4,7 @@
 """Dependency structs."""
 # FIXME: add caching all over the place
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import typing as t
@@ -27,10 +26,10 @@ if t.TYPE_CHECKING:
     )
 
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection import HAS_PACKAGING, PkgReq
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
@@ -167,6 +166,7 @@ def _is_concrete_artifact_pointer(tested_str):
 
 
 class _ComputedReqKindsMixin:
+    UNIQUE_ATTRS = ('fqcn', 'ver', 'src', 'type')
 
     def __init__(self, *args, **kwargs):
         if not self.may_have_offline_galaxy_info:
@@ -180,6 +180,12 @@ class _ComputedReqKindsMixin:
                 self.name,
                 self.ver
             )
+
+    def __hash__(self):
+        return hash(tuple(getattr(self, attr) for attr in _ComputedReqKindsMixin.UNIQUE_ATTRS))
+
+    def __eq__(self, candidate):
+        return hash(self) == hash(candidate)
 
     @classmethod
     def from_dir_path_as_unknown(  # type: ignore[misc]
@@ -209,10 +215,15 @@ class _ComputedReqKindsMixin:
             return cls.from_dir_path_implicit(dir_path)
 
     @classmethod
-    def from_dir_path(cls, dir_path, art_mgr):
+    def from_dir_path(  # type: ignore[misc]
+            cls,  # type: t.Type[Collection]
+            dir_path,  # type: bytes
+            art_mgr,  # type: ConcreteArtifactsManager
+    ):  # type: (...)  -> Collection
         """Make collection from an directory with metadata."""
-        b_dir_path = to_bytes(dir_path, errors='surrogate_or_strict')
-        if not _is_collection_dir(b_dir_path):
+        if dir_path.endswith(to_bytes(os.path.sep)):
+            dir_path = dir_path.rstrip(to_bytes(os.path.sep))
+        if not _is_collection_dir(dir_path):
             display.warning(
                 u"Collection at '{path!s}' does not have a {manifest_json!s} "
                 u'file, nor has it {galaxy_yml!s}: cannot detect version.'.
@@ -261,6 +272,8 @@ class _ComputedReqKindsMixin:
         regardless of whether any of known metadata files are present.
         """
         # There is no metadata, but it isn't required for a functional collection. Determine the namespace.name from the path.
+        if dir_path.endswith(to_bytes(os.path.sep)):
+            dir_path = dir_path.rstrip(to_bytes(os.path.sep))
         u_dir_path = to_text(dir_path, errors='surrogate_or_strict')
         path_list = u_dir_path.split(os.path.sep)
         req_name = '.'.join(path_list[-2:])
@@ -420,6 +433,9 @@ class _ComputedReqKindsMixin:
                 format(not_url=req_source.api_server),
             )
 
+        if req_type == 'dir' and req_source.endswith(os.path.sep):
+            req_source = req_source.rstrip(os.path.sep)
+
         tmp_inst_req = cls(req_name, req_version, req_source, req_type, req_signature_sources)
 
         if req_type not in {'galaxy', 'subdirs'} and req_name is None:
@@ -446,8 +462,8 @@ class _ComputedReqKindsMixin:
     def __unicode__(self):
         if self.fqcn is None:
             return (
-                u'"virtual collection Git repo"' if self.is_scm
-                else u'"virtual collection namespace"'
+                f'{self.type} collection from a Git repo' if self.is_scm
+                else f'{self.type} collection from a namespace'
             )
 
         return (
@@ -487,14 +503,14 @@ class _ComputedReqKindsMixin:
     @property
     def namespace(self):
         if self.is_virtual:
-            raise TypeError('Virtual collections do not have a namespace')
+            raise TypeError(f'{self.type} collections do not have a namespace')
 
         return self._get_separate_ns_n_name()[0]
 
     @property
     def name(self):
         if self.is_virtual:
-            raise TypeError('Virtual collections do not have a name')
+            raise TypeError(f'{self.type} collections do not have a name')
 
         return self._get_separate_ns_n_name()[-1]
 
@@ -548,6 +564,27 @@ class _ComputedReqKindsMixin:
         return not self.is_concrete_artifact
 
     @property
+    def is_pinned(self):
+        """Indicate if the version set is considered pinned.
+
+        This essentially computes whether the version field of the current
+        requirement explicitly requests a specific version and not an allowed
+        version range.
+
+        It is then used to help the resolvelib-based dependency resolver judge
+        whether it's acceptable to consider a pre-release candidate version
+        despite pre-release installs not being requested by the end-user
+        explicitly.
+
+        See https://github.com/ansible/ansible/pull/81606 for extra context.
+        """
+        version_string = self.ver[0]
+        return version_string.isdigit() or not (
+            version_string == '*' or
+            version_string.startswith(('<', '>', '!='))
+        )
+
+    @property
     def source_info(self):
         return self._source_info
 
@@ -584,3 +621,13 @@ class Candidate(
 
     def __init__(self, *args, **kwargs):
         super(Candidate, self).__init__()
+
+    def with_signatures_repopulated(self):  # type: (Candidate) -> Candidate
+        """Populate a new Candidate instance with Galaxy signatures.
+        :raises AnsibleAssertionError: If the supplied candidate is not sourced from a Galaxy-like index.
+        """
+        if self.type != 'galaxy':
+            raise AnsibleAssertionError(f"Invalid collection type for {self!r}: unable to get signatures from a galaxy server.")
+
+        signatures = self.src.get_collection_signatures(self.namespace, self.name, self.ver)
+        return self.__class__(self.fqcn, self.ver, self.src, self.type, frozenset([*self.signatures, *signatures]))

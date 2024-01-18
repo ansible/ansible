@@ -4,6 +4,7 @@ import typing as t
 
 from .util import (
     display,
+    generate_name,
 )
 
 from .io import (
@@ -19,12 +20,14 @@ from .diff import (
 
 class Metadata:
     """Metadata object for passing data to delegated tests."""
-    def __init__(self):
+
+    def __init__(self) -> None:
         """Initialize metadata."""
         self.changes: dict[str, tuple[tuple[int, int], ...]] = {}
         self.cloud_config: t.Optional[dict[str, dict[str, t.Union[int, str, bool]]]] = None
         self.change_description: t.Optional[ChangeDescription] = None
         self.ci_provider: t.Optional[str] = None
+        self.session_id = generate_name()
 
     def populate_changes(self, diff: t.Optional[list[str]]) -> None:
         """Populate the changeset using the given diff."""
@@ -52,6 +55,7 @@ class Metadata:
             cloud_config=self.cloud_config,
             ci_provider=self.ci_provider,
             change_description=self.change_description.to_dict(),
+            session_id=self.session_id,
         )
 
     def to_file(self, path: str) -> None:
@@ -76,13 +80,15 @@ class Metadata:
         metadata.cloud_config = data['cloud_config']
         metadata.ci_provider = data['ci_provider']
         metadata.change_description = ChangeDescription.from_dict(data['change_description'])
+        metadata.session_id = data['session_id']
 
         return metadata
 
 
 class ChangeDescription:
     """Description of changes."""
-    def __init__(self):
+
+    def __init__(self) -> None:
         self.command: str = ''
         self.changed_paths: list[str] = []
         self.deleted_paths: list[str] = []

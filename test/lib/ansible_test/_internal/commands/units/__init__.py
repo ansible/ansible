@@ -88,6 +88,7 @@ from ...host_profiles import (
 
 class TestContext:
     """Contexts that unit tests run in based on the type of content."""
+
     controller = 'controller'
     modules = 'modules'
     module_utils = 'module_utils'
@@ -244,7 +245,7 @@ def command_units(args: UnitsConfig) -> None:
         #
         # NOTE: This only affects use of pytest-mock.
         #       Collection unit tests may directly import mock, which will be provided by ansible-test when it installs requirements using pip.
-        #       Although mock is available for ansible-core unit tests, they should import units.compat.mock instead.
+        #       Although mock is available for ansible-core unit tests, they should import unittest.mock instead.
         if str_to_version(python.version) < (3, 8):
             config_name = 'legacy.ini'
         else:
@@ -252,17 +253,15 @@ def command_units(args: UnitsConfig) -> None:
 
         cmd = [
             'pytest',
-            '--forked',
             '-r', 'a',
             '-n', str(args.num_workers) if args.num_workers else 'auto',
-            '--color',
-            'yes' if args.color else 'no',
+            '--color', 'yes' if args.color else 'no',
             '-p', 'no:cacheprovider',
             '-c', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest', 'config', config_name),
             '--junit-xml', os.path.join(ResultType.JUNIT.path, 'python%s-%s-units.xml' % (python.version, test_context)),
             '--strict-markers',  # added in pytest 4.5.0
             '--rootdir', data_context().content.root,
-        ]
+        ]  # fmt:skip
 
         if not data_context().content.collection:
             cmd.append('--durations=25')
@@ -274,6 +273,8 @@ def command_units(args: UnitsConfig) -> None:
 
         if data_context().content.collection:
             plugins.append('ansible_pytest_collections')
+
+        plugins.append('ansible_forked')
 
         if plugins:
             env['PYTHONPATH'] += ':%s' % os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'pytest/plugins')

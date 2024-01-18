@@ -6,7 +6,7 @@ DOCUMENTATION:
   aliases: [change]
   description:
     - Tests if task required changes to complete
-    - This test checks for the existance of a C(changed) key in the input dictionary and that it is C(True) if present
+    - This test checks for the existence of a C(changed) key in the input dictionary and that it is V(True) if present
   options:
     _input:
       description: registered result from an Ansible task
@@ -14,9 +14,9 @@ DOCUMENTATION:
       required: True
 EXAMPLES: |
   # test 'status' to know how to respond
-  {{ (taskresults is changed }}
+  {{ taskresults is changed }}
 
 RETURN:
   _value:
-    description: Returns C(True) if the task was required changes, C(False) otherwise.
+    description: Returns V(True) if the task was required changes, V(False) otherwise.
     type: boolean

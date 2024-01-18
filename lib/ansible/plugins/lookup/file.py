@@ -1,8 +1,7 @@
 # (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: file
@@ -28,11 +27,14 @@ DOCUMENTATION = """
     notes:
       - if read in variable context, the file can be interpreted as YAML if the content is valid to the parser.
       - this lookup does not understand 'globbing', use the fileglob lookup instead.
+    seealso:
+      - ref: playbook_task_paths
+        description: Search paths used for relative files.
 """
 
 EXAMPLES = """
 - ansible.builtin.debug:
-    msg: "the value of foo.txt is {{lookup('ansible.builtin.file', '/etc/foo.txt') }}"
+    msg: "the value of foo.txt is {{ lookup('ansible.builtin.file', '/etc/foo.txt') }}"
 
 - name: display multiple file contents
   ansible.builtin.debug: var=item
@@ -52,7 +54,7 @@ RETURN = """
 
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleLookupError
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.utils.display import Display
 
 display = Display()

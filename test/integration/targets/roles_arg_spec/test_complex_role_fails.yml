@@ -168,3 +168,30 @@
                   - ansible_failed_result.validate_args_context.name == "test1"
                   - ansible_failed_result.validate_args_context.type == "role"
                   - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/test1')"
+
+      - name: test message for missing required parameters and invalid suboptions
+        block:
+            - include_role:
+                name: test1
+              vars:
+                some_json: '{}'
+                some_jsonarg: '{}'
+                multi_level_option:
+                  second_level:
+                    not_a_supported_suboption: true
+
+            - fail:
+                msg: "Should not get here"
+
+        rescue:
+           - debug:
+               var: ansible_failed_result
+
+           - assert:
+               that:
+                 - ansible_failed_result.argument_errors | length == 2
+                 - missing_required in ansible_failed_result.argument_errors
+                 - got_unexpected in ansible_failed_result.argument_errors
+             vars:
+               missing_required: "missing required arguments: third_level found in multi_level_option -> second_level"
+               got_unexpected: "multi_level_option.second_level.not_a_supported_suboption. Supported parameters include: third_level."

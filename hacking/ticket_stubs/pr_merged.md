@@ -10,6 +10,6 @@ The mailing list and irc are great ways to ask questions, or post if you don't t
 
 See  this page for a complete and up to date list of communication channels and their purposes:
 
-   * https://docs.ansible.com/ansible/latest/community/communication.html
+* https://docs.ansible.com/ansible/latest/community/communication.html
 
 Thank you!

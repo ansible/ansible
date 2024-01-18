@@ -2,18 +2,26 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import shutil
 import stat
 import tempfile
 
+from jinja2.defaults import (
+    BLOCK_END_STRING,
+    BLOCK_START_STRING,
+    COMMENT_END_STRING,
+    COMMENT_START_STRING,
+    VARIABLE_END_STRING,
+    VARIABLE_START_STRING,
+)
+
 from ansible import constants as C
 from ansible.config.manager import ensure_type
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleAction, AnsibleActionFail
-from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
@@ -57,12 +65,12 @@ class ActionModule(ActionBase):
         dest = self._task.args.get('dest', None)
         state = self._task.args.get('state', None)
         newline_sequence = self._task.args.get('newline_sequence', self.DEFAULT_NEWLINE_SEQUENCE)
-        variable_start_string = self._task.args.get('variable_start_string', None)
-        variable_end_string = self._task.args.get('variable_end_string', None)
-        block_start_string = self._task.args.get('block_start_string', None)
-        block_end_string = self._task.args.get('block_end_string', None)
-        comment_start_string = self._task.args.get('comment_start_string', None)
-        comment_end_string = self._task.args.get('comment_end_string', None)
+        variable_start_string = self._task.args.get('variable_start_string', VARIABLE_START_STRING)
+        variable_end_string = self._task.args.get('variable_end_string', VARIABLE_END_STRING)
+        block_start_string = self._task.args.get('block_start_string', BLOCK_START_STRING)
+        block_end_string = self._task.args.get('block_end_string', BLOCK_END_STRING)
+        comment_start_string = self._task.args.get('comment_start_string', COMMENT_START_STRING)
+        comment_end_string = self._task.args.get('comment_end_string', COMMENT_END_STRING)
         output_encoding = self._task.args.get('output_encoding', 'utf-8') or 'utf-8'
 
         wrong_sequences = ["\\n", "\\r", "\\r\\n"]
@@ -118,23 +126,29 @@ class ActionModule(ActionBase):
                 searchpath = newsearchpath
 
                 # add ansible 'template' vars
-                temp_vars = task_vars | generate_ansible_template_vars(self._task.args.get('src', None), source, dest)
+                temp_vars = task_vars.copy()
+                # NOTE in the case of ANSIBLE_DEBUG=1 task_vars is VarsWithSources(MutableMapping)
+                # so | operator cannot be used as it can be used only on dicts
+                # https://peps.python.org/pep-0584/#what-about-mapping-and-mutablemapping
+                temp_vars.update(generate_ansible_template_vars(self._task.args.get('src', None), source, dest))
 
                 # force templar to use AnsibleEnvironment to prevent issues with native types
                 # https://github.com/ansible/ansible/issues/46169
                 templar = self._templar.copy_with_new_env(environment_class=AnsibleEnvironment,
                                                           searchpath=searchpath,
                                                           newline_sequence=newline_sequence,
-                                                          block_start_string=block_start_string,
-                                                          block_end_string=block_end_string,
-                                                          variable_start_string=variable_start_string,
-                                                          variable_end_string=variable_end_string,
-                                                          comment_start_string=comment_start_string,
-                                                          comment_end_string=comment_end_string,
-                                                          trim_blocks=trim_blocks,
-                                                          lstrip_blocks=lstrip_blocks,
                                                           available_variables=temp_vars)
-                resultant = templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
+                overrides = dict(
+                    block_start_string=block_start_string,
+                    block_end_string=block_end_string,
+                    variable_start_string=variable_start_string,
+                    variable_end_string=variable_end_string,
+                    comment_start_string=comment_start_string,
+                    comment_end_string=comment_end_string,
+                    trim_blocks=trim_blocks,
+                    lstrip_blocks=lstrip_blocks
+                )
+                resultant = templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False, overrides=overrides)
             except AnsibleAction:
                 raise
             except Exception as e:

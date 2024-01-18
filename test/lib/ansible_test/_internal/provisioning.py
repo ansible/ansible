@@ -1,7 +1,6 @@
 """Provision hosts for running tests."""
 from __future__ import annotations
 
-import atexit
 import collections.abc as c
 import dataclasses
 import functools
@@ -25,6 +24,10 @@ from .util import (
     verify_sys_executable,
     version_to_str,
     type_guard,
+)
+
+from .util_common import (
+    ExitHandler,
 )
 
 from .thread import (
@@ -55,6 +58,7 @@ class PrimeContainers(ApplicationError):
 @dataclasses.dataclass(frozen=True)
 class HostState:
     """State of hosts and profiles to be passed to ansible-test during delegation."""
+
     controller_profile: ControllerHostProfile
     target_profiles: list[HostProfile]
 
@@ -97,10 +101,10 @@ class HostState:
 
 
 def prepare_profiles(
-        args: TEnvironmentConfig,
-        targets_use_pypi: bool = False,
-        skip_setup: bool = False,
-        requirements: t.Optional[c.Callable[[TEnvironmentConfig, HostState], None]] = None,
+    args: TEnvironmentConfig,
+    targets_use_pypi: bool = False,
+    skip_setup: bool = False,
+    requirements: t.Optional[c.Callable[[HostProfile], None]] = None,
 ) -> HostState:
     """
     Create new profiles, or load existing ones, and return them.
@@ -123,7 +127,7 @@ def prepare_profiles(
 
             raise PrimeContainers()
 
-        atexit.register(functools.partial(cleanup_profiles, host_state))
+        ExitHandler.register(functools.partial(cleanup_profiles, host_state))
 
         def provision(profile: HostProfile) -> None:
             """Provision the given profile."""
@@ -140,7 +144,7 @@ def prepare_profiles(
         check_controller_python(args, host_state)
 
         if requirements:
-            requirements(args, host_state)
+            requirements(host_state.controller_profile)
 
         def configure(profile: HostProfile) -> None:
             """Configure the given profile."""
@@ -148,6 +152,9 @@ def prepare_profiles(
 
             if not skip_setup:
                 profile.configure()
+
+            if requirements:
+                requirements(profile)
 
         dispatch_jobs([(profile, WrappedThread(functools.partial(configure, profile))) for profile in host_state.target_profiles])
 

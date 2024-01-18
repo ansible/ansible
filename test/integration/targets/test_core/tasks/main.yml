@@ -126,6 +126,16 @@
     hello: world
   register: executed_task
 
+- name: Skip me with multiple conditions
+  set_fact:
+    hello: world
+  when:
+  - True == True
+  - foo == 'bar'
+  vars:
+    foo: foo
+  register: skipped_task_multi_condition
+
 - name: Try skipped test on non-dictionary
   set_fact:
     hello: "{{ 'nope' is skipped }}"
@@ -136,8 +146,11 @@
   assert:
     that:
       - skipped_task is skipped
+      - skipped_task.false_condition == False
       - executed_task is not skipped
       - misuse_of_skipped is failure
+      - skipped_task_multi_condition is skipped
+      - skipped_task_multi_condition.false_condition == "foo == 'bar'"
 
 - name: Not an async task
   set_fact:

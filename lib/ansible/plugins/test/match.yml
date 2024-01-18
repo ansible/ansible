@@ -15,11 +15,11 @@ DOCUMENTATION:
       type: string
       required: True
     ignorecase:
-      description: Use case insenstive matching.
+      description: Use case insensitive matching.
       type: boolean
       default: False
     multiline:
-      description: Match against mulitple lines in string.
+      description: Match against multiple lines in string.
       type: boolean
       default: False
 EXAMPLES: |
@@ -28,5 +28,5 @@ EXAMPLES: |
   nomatch: url is match("/users/.*/resources")
 RETURN:
   _value:
-    description: Returns C(True) if there is a match, C(False) otherwise.
+    description: Returns V(True) if there is a match, V(False) otherwise.
     type: boolean

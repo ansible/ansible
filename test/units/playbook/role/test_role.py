@@ -15,16 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from collections.abc import Container
 
-from units.compat import unittest
+import pytest
+
+import unittest
 from unittest.mock import patch, MagicMock
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleParserError
 from ansible.playbook.block import Block
 
 from units.mock.loader import DictDataLoader
@@ -42,12 +42,9 @@ class TestHashParams(unittest.TestCase):
         self._assert_set(res)
         self._assert_hashable(res)
 
-    def _assert_hashable(self, res):
-        a_dict = {}
-        try:
-            a_dict[res] = res
-        except TypeError as e:
-            self.fail('%s is not hashable: %s' % (res, e))
+    @staticmethod
+    def _assert_hashable(res):
+        hash(res)
 
     def _assert_set(self, res):
         self.assertIsInstance(res, frozenset)
@@ -87,36 +84,28 @@ class TestHashParams(unittest.TestCase):
 
     def test_generator(self):
         def my_generator():
-            for i in ['a', 1, None, {}]:
-                yield i
+            yield
 
         params = my_generator()
         res = hash_params(params)
         self._assert_hashable(res)
+        assert list(params)
 
     def test_container_but_not_iterable(self):
         # This is a Container that is not iterable, which is unlikely but...
         class MyContainer(Container):
-            def __init__(self, some_thing):
-                self.data = []
-                self.data.append(some_thing)
+            def __init__(self, _some_thing):
+                pass
 
             def __contains__(self, item):
-                return item in self.data
+                """Implementation omitted, since it will never be called."""
 
-            def __hash__(self):
-                return hash(self.data)
+        params = MyContainer('foo bar')
 
-            def __len__(self):
-                return len(self.data)
+        with pytest.raises(TypeError) as ex:
+            hash_params(params)
 
-            def __call__(self):
-                return False
-
-        foo = MyContainer('foo bar')
-        params = foo
-
-        self.assertRaises(TypeError, hash_params, params)
+        assert ex.value.args == ("'MyContainer' object is not iterable",)
 
     def test_param_dict_dupe_values(self):
         params1 = {'foo': False}
@@ -151,18 +140,18 @@ class TestHashParams(unittest.TestCase):
         self.assertNotEqual(hash(res1), hash(res2))
         self.assertNotEqual(res1, res2)
 
-        foo = {}
-        foo[res1] = 'params1'
-        foo[res2] = 'params2'
+        params_dict = {}
+        params_dict[res1] = 'params1'
+        params_dict[res2] = 'params2'
 
-        self.assertEqual(len(foo), 2)
+        self.assertEqual(len(params_dict), 2)
 
-        del foo[res2]
-        self.assertEqual(len(foo), 1)
+        del params_dict[res2]
+        self.assertEqual(len(params_dict), 1)
 
-        for key in foo:
-            self.assertTrue(key in foo)
-            self.assertIn(key, foo)
+        for key in params_dict:
+            self.assertTrue(key in params_dict)
+            self.assertIn(key, params_dict)
 
 
 class TestRole(unittest.TestCase):

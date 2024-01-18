@@ -10,6 +10,7 @@ from . import (
 
 class InstalledSource(SourceProvider):
     """Source provider for content which has been installed."""
+
     sequence = 0  # disable automatic detection
 
     @staticmethod

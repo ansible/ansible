@@ -2,14 +2,12 @@
 # Copyright (c) 2021 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
 
 from ansible.module_utils.errors import AnsibleValidationError, AnsibleValidationErrorMultiple
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator, ValidationResult
-from ansible.module_utils.common.warnings import get_deprecation_messages, get_warning_messages
 
 # id, argument spec, parameters, expected parameters, deprecation, warning
 ALIAS_TEST_CASES = [
@@ -57,7 +55,12 @@ ALIAS_TEST_CASES = [
             'path': '/tmp',
             'not_yo_path': '/tmp',
         },
-        {'version': '1.7', 'date': None, 'collection_name': None, 'name': 'not_yo_path'},
+        {
+            'version': '1.7',
+            'date': None,
+            'collection_name': None,
+            'msg': "Alias 'not_yo_path' is deprecated. See the module docs for more information",
+        },
         "",
     )
 ]

@@ -76,6 +76,7 @@ from .docker_util import (
     run_utility_container,
     SystemdControlGroupV1Status,
     LOGINUID_NOT_SET,
+    UTILITY_IMAGE,
 )
 
 from .bootstrap import (
@@ -98,7 +99,6 @@ from .ansible_util import (
 )
 
 from .containers import (
-    CleanupMode,
     HostType,
     get_container_database,
     run_support_container,
@@ -138,6 +138,7 @@ TRemoteConfig = t.TypeVar('TRemoteConfig', bound=RemoteConfig)
 
 class ControlGroupError(ApplicationError):
     """Raised when the container host does not have the necessary cgroup support to run a container."""
+
     def __init__(self, args: CommonConfig, reason: str) -> None:
         engine = require_docker().command
         dd_wsl2 = get_docker_info(args).docker_desktop_wsl2
@@ -180,6 +181,7 @@ NOTE: These changes must be applied each time the container host is rebooted.
 @dataclasses.dataclass(frozen=True)
 class Inventory:
     """Simple representation of an Ansible inventory."""
+
     host_groups: dict[str, dict[str, dict[str, t.Union[str, int]]]]
     extra_groups: t.Optional[dict[str, list[str]]] = None
 
@@ -225,12 +227,14 @@ class Inventory:
 
 class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
     """Base class for host profiles."""
-    def __init__(self,
-                 *,
-                 args: EnvironmentConfig,
-                 config: THostConfig,
-                 targets: t.Optional[list[HostConfig]],
-                 ) -> None:
+
+    def __init__(
+        self,
+        *,
+        args: EnvironmentConfig,
+        config: THostConfig,
+        targets: t.Optional[list[HostConfig]],
+    ) -> None:
         self.args = args
         self.config = config
         self.controller = bool(targets)
@@ -271,6 +275,7 @@ class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
 
 class PosixProfile(HostProfile[TPosixConfig], metaclass=abc.ABCMeta):
     """Base class for POSIX host profiles."""
+
     @property
     def python(self) -> PythonConfig:
         """
@@ -292,6 +297,7 @@ class PosixProfile(HostProfile[TPosixConfig], metaclass=abc.ABCMeta):
 
 class ControllerHostProfile(PosixProfile[TControllerHostConfig], metaclass=abc.ABCMeta):
     """Base class for profiles usable as a controller."""
+
     @abc.abstractmethod
     def get_origin_controller_connection(self) -> Connection:
         """Return a connection for accessing the host as a controller from the origin."""
@@ -303,6 +309,7 @@ class ControllerHostProfile(PosixProfile[TControllerHostConfig], metaclass=abc.A
 
 class SshTargetHostProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
     """Base class for profiles offering SSH connectivity."""
+
     @abc.abstractmethod
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
@@ -310,6 +317,7 @@ class SshTargetHostProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
 
 class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
     """Base class for remote instance profiles."""
+
     @property
     def core_ci_state(self) -> t.Optional[dict[str, str]]:
         """The saved Ansible Core CI state."""
@@ -350,7 +358,7 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
 
         return self.core_ci
 
-    def delete_instance(self):
+    def delete_instance(self) -> None:
         """Delete the AnsibleCoreCI VM instance."""
         core_ci = self.get_instance()
 
@@ -386,6 +394,7 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
 
 class ControllerProfile(SshTargetHostProfile[ControllerConfig], PosixProfile[ControllerConfig]):
     """Host profile for the controller as a target."""
+
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
         settings = SshConnectionDetail(
@@ -408,8 +417,10 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
     @dataclasses.dataclass(frozen=True)
     class InitConfig:
         """Configuration details required to run the container init."""
+
         options: list[str]
         command: str
+        command_privileged: bool
         expected_mounts: tuple[CGroupMount, ...]
 
     @property
@@ -435,7 +446,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
     @property
     def label(self) -> str:
         """Label to apply to resources related to this profile."""
-        return f'{"controller" if self.controller else "target"}-{self.args.session_name}'
+        return f'{"controller" if self.controller else "target"}'
 
     def provision(self) -> None:
         """Provision the host before delegation."""
@@ -450,11 +461,15 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             ports=[22],
             publish_ports=not self.controller,  # connections to the controller over SSH are not required
             options=init_config.options,
-            cleanup=CleanupMode.NO,
-            cmd=self.build_sleep_command() if init_config.command or init_probe else None,
+            cleanup=False,
+            cmd=self.build_init_command(init_config, init_probe),
         )
 
         if not container:
+            if self.args.prime_containers:
+                if init_config.command_privileged or init_probe:
+                    docker_pull(self.args, UTILITY_IMAGE)
+
             return
 
         self.container_name = container.name
@@ -462,7 +477,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         try:
             options = ['--pid', 'host', '--privileged']
 
-            if init_config.command:
+            if init_config.command and init_config.command_privileged:
                 init_command = init_config.command
 
                 if not init_probe:
@@ -495,9 +510,17 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         """Return init config for running under Podman."""
         options = self.get_common_run_options()
         command: t.Optional[str] = None
+        command_privileged = False
         expected_mounts: tuple[CGroupMount, ...]
 
         cgroup_version = get_docker_info(self.args).cgroup_version
+
+        # Podman 4.4.0 updated containers/common to 0.51.0, which removed the SYS_CHROOT capability from the default list.
+        # This capability is needed by services such as sshd, so is unconditionally added here.
+        # See: https://github.com/containers/podman/releases/tag/v4.4.0
+        # See: https://github.com/containers/common/releases/tag/v0.51.0
+        # See: https://github.com/containers/common/pull/1240
+        options.extend(('--cap-add', 'SYS_CHROOT'))
 
         # Without AUDIT_WRITE the following errors may appear in the system logs of a container after attempting to log in using SSH:
         #
@@ -646,6 +669,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         return self.InitConfig(
             options=options,
             command=command,
+            command_privileged=command_privileged,
             expected_mounts=expected_mounts,
         )
 
@@ -653,6 +677,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         """Return init config for running under Docker."""
         options = self.get_common_run_options()
         command: t.Optional[str] = None
+        command_privileged = False
         expected_mounts: tuple[CGroupMount, ...]
 
         cgroup_version = get_docker_info(self.args).cgroup_version
@@ -719,7 +744,9 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         elif self.config.cgroup in (CGroupVersion.V1_V2, CGroupVersion.V2_ONLY) and cgroup_version == 2:
             # Docker hosts providing cgroup v2 will give each container a read-only cgroup mount.
             # It must be remounted read-write before systemd starts.
+            # This must be done in a privileged container, otherwise a "permission denied" error can occur.
             command = 'mount -o remount,rw /sys/fs/cgroup/'
+            command_privileged = True
 
             options.extend((
                 # A private cgroup namespace is used to avoid exposing the host cgroup to the container.
@@ -763,12 +790,14 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         return self.InitConfig(
             options=options,
             command=command,
+            command_privileged=command_privileged,
             expected_mounts=expected_mounts,
         )
 
-    def build_sleep_command(self) -> list[str]:
+    def build_init_command(self, init_config: InitConfig, sleep: bool) -> t.Optional[list[str]]:
         """
-        Build and return the command to put the container to sleep.
+        Build and return the command to start in the container.
+        Returns None if the default command for the container should be used.
 
         The sleep duration below was selected to:
 
@@ -777,11 +806,25 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
           - Avoid hanging indefinitely or for an unreasonably long time.
 
         NOTE: The container must have a POSIX-compliant default shell "sh" with a non-builtin "sleep" command.
+              The "sleep" command is invoked through "env" to avoid using a shell builtin "sleep" (if present).
         """
+        command = ''
+
+        if init_config.command and not init_config.command_privileged:
+            command += f'{init_config.command} && '
+
+        if sleep or init_config.command_privileged:
+            command += 'env sleep 60 ; '
+
+        if not command:
+            return None
+
         docker_pull(self.args, self.config.image)
         inspect = docker_image_inspect(self.args, self.config.image)
 
-        return ['sh', '-c', f'sleep 60; exec {shlex.join(inspect.cmd)}']
+        command += f'exec {shlex.join(inspect.cmd)}'
+
+        return ['sh', '-c', command]
 
     @property
     def wake_command(self) -> list[str]:
@@ -795,7 +838,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         """Check the cgroup v1 systemd hierarchy to verify it is writeable for our container."""
         probe_script = (read_text_file(os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'check_systemd_cgroup_v1.sh'))
                         .replace('@MARKER@', self.MARKER)
-                        .replace('@LABEL@', self.label))
+                        .replace('@LABEL@', f'{self.label}-{self.args.session_name}'))
 
         cmd = ['sh']
 
@@ -810,7 +853,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
 
     def create_systemd_cgroup_v1(self) -> str:
         """Create a unique ansible-test cgroup in the v1 systemd hierarchy and return its path."""
-        self.cgroup_path = f'/sys/fs/cgroup/systemd/ansible-test-{self.label}'
+        self.cgroup_path = f'/sys/fs/cgroup/systemd/ansible-test-{self.label}-{self.args.session_name}'
 
         # Privileged mode is required to create the cgroup directories on some hosts, such as Fedora 36 and RHEL 9.0.
         # The mkdir command will fail with "Permission denied" otherwise.
@@ -866,7 +909,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
 
         return message
 
-    def check_cgroup_requirements(self):
+    def check_cgroup_requirements(self) -> None:
         """Check cgroup requirements for the container."""
         cgroup_version = get_docker_info(self.args).cgroup_version
 
@@ -970,9 +1013,11 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             display.info(last_error)
 
             if not self.args.delegate and not self.args.host_path:
+
                 def callback() -> None:
                     """Callback to run during error display."""
                     self.on_target_failure()  # when the controller is not delegated, report failures immediately
+
             else:
                 callback = None
 
@@ -993,6 +1038,10 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             port=port,
             identity_file=SshKey(self.args).key,
             python_interpreter=self.python.path,
+            # CentOS 6 uses OpenSSH 5.3, making it incompatible with the default configuration of OpenSSH 8.8 and later clients.
+            # Since only CentOS 6 is affected, and it is only supported by ansible-core 2.12, support for RSA SHA-1 is simply hard-coded here.
+            # A substring is used to allow custom containers to work, not just the one provided with ansible-test.
+            enable_rsa_sha1='centos6' in self.config.image,
         )
 
         return [SshConnection(self.args, settings)]
@@ -1068,6 +1117,7 @@ class NetworkInventoryProfile(HostProfile[NetworkInventoryConfig]):
 
 class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
     """Host profile for a network remote instance."""
+
     def wait(self) -> None:
         """Wait for the instance to be ready. Executed before delegation for the controller and after delegation for targets."""
         self.wait_until_ready()
@@ -1084,6 +1134,12 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
             ansible_port=connection.port,
             ansible_user=connection.username,
             ansible_ssh_private_key_file=core_ci.ssh_key.key,
+            # VyOS 1.1.8 uses OpenSSH 5.5, making it incompatible with RSA SHA-256/512 used by Paramiko 2.9 and later.
+            # IOS CSR 1000V uses an ancient SSH server, making it incompatible with RSA SHA-256/512 used by Paramiko 2.9 and later.
+            # That means all network platforms currently offered by ansible-core-ci require support for RSA SHA-1, so it is simply hard-coded here.
+            # NOTE: This option only exists in ansible-core 2.14 and later. For older ansible-core versions, use of Paramiko 2.8.x or earlier is required.
+            #       See: https://github.com/ansible/ansible/pull/78789
+            #       See: https://github.com/ansible/ansible/pull/78842
             ansible_paramiko_use_rsa_sha2_algorithms='no',
             ansible_network_os=f'{self.config.collection}.{self.config.platform}' if self.config.collection else self.config.platform,
         )
@@ -1127,6 +1183,10 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
             port=core_ci.connection.port,
             user=core_ci.connection.username,
             identity_file=core_ci.ssh_key.key,
+            # VyOS 1.1.8 uses OpenSSH 5.5, making it incompatible with the default configuration of OpenSSH 8.8 and later clients.
+            # IOS CSR 1000V uses an ancient SSH server, making it incompatible with the default configuration of OpenSSH 8.8 and later clients.
+            # That means all network platforms currently offered by ansible-core-ci require support for RSA SHA-1, so it is simply hard-coded here.
+            enable_rsa_sha1=True,
         )
 
         return [SshConnection(self.args, settings)]
@@ -1134,6 +1194,7 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
 
 class OriginProfile(ControllerHostProfile[OriginConfig]):
     """Host profile for origin."""
+
     def get_origin_controller_connection(self) -> LocalConnection:
         """Return a connection for accessing the host as a controller from the origin."""
         return LocalConnection(self.args)
@@ -1145,6 +1206,7 @@ class OriginProfile(ControllerHostProfile[OriginConfig]):
 
 class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile[PosixRemoteConfig]):
     """Host profile for a POSIX remote instance."""
+
     def wait(self) -> None:
         """Wait for the instance to be ready. Executed before delegation for the controller and after delegation for targets."""
         self.wait_until_ready()
@@ -1251,6 +1313,7 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
 
 class PosixSshProfile(SshTargetHostProfile[PosixSshConfig], PosixProfile[PosixSshConfig]):
     """Host profile for a POSIX SSH instance."""
+
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
         settings = SshConnectionDetail(
@@ -1267,6 +1330,7 @@ class PosixSshProfile(SshTargetHostProfile[PosixSshConfig], PosixProfile[PosixSs
 
 class WindowsInventoryProfile(SshTargetHostProfile[WindowsInventoryConfig]):
     """Host profile for a Windows inventory."""
+
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
         inventory = parse_inventory(self.args, self.config.path)
@@ -1291,6 +1355,7 @@ class WindowsInventoryProfile(SshTargetHostProfile[WindowsInventoryConfig]):
 
 class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
     """Host profile for a Windows remote instance."""
+
     def wait(self) -> None:
         """Wait for the instance to be ready. Executed before delegation for the controller and after delegation for targets."""
         self.wait_until_ready()
@@ -1371,9 +1436,9 @@ def get_config_profile_type_map() -> dict[t.Type[HostConfig], t.Type[HostProfile
 
 
 def create_host_profile(
-        args: EnvironmentConfig,
-        config: HostConfig,
-        controller: bool,
+    args: EnvironmentConfig,
+    config: HostConfig,
+    controller: bool,
 ) -> HostProfile:
     """Create and return a host profile from the given host configuration."""
     profile_type = get_config_profile_type_map()[type(config)]

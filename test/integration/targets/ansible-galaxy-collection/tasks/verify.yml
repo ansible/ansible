@@ -3,6 +3,11 @@
   args:
     chdir: '{{ galaxy_dir }}/scratch'
 
+- name: created required runtime.yml
+  copy:
+    content: 'requires_ansible: ">=1.0.0"'
+    dest: '{{ galaxy_dir }}/scratch/ansible_test/verify/meta/runtime.yml'
+
 - name: build the collection
   command: ansible-galaxy collection build scratch/ansible_test/verify
   args:
@@ -31,6 +36,9 @@
 - name: verify the collection against the first valid server
   command: ansible-galaxy collection verify ansible_test.verify:1.0.0 -vvvv {{ galaxy_verbosity }}
   register: verify
+  vars:
+    # This sets a specific precedence that the tests are expecting
+    ANSIBLE_GALAXY_SERVER_LIST: offline,secondary,pulp_v2,galaxy_ng
 
 - assert:
     that:

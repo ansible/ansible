@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-inventory will not explicitly sort groups/hosts anymore, giving a chance (depending on output format) to match the order in the input sources.

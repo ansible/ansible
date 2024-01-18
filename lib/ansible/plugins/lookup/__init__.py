@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from abc import abstractmethod
 
@@ -100,7 +98,7 @@ class LookupBase(AnsiblePlugin):
         must be converted into python's unicode type as the strings will be run
         through jinja2 which has this requirement.  You can use::
 
-            from ansible.module_utils._text import to_text
+            from ansible.module_utils.common.text.converters import to_text
             result_string = to_text(result_string)
         """
         pass
@@ -117,7 +115,7 @@ class LookupBase(AnsiblePlugin):
 
         result = None
         try:
-            result = self._loader.path_dwim_relative_stack(paths, subdir, needle)
+            result = self._loader.path_dwim_relative_stack(paths, subdir, needle, is_role=bool('role_path' in myvars))
         except AnsibleFileNotFound:
             if not ignore_missing:
                 self._display.warning("Unable to find '%s' in expected paths (use -vvvvv to see paths)" % needle)

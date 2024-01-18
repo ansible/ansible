@@ -3,8 +3,7 @@
 # Copyright: (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -29,7 +28,7 @@ options:
   ciphers:
     description:
       - SSL/TLS Ciphers to use for the request
-      - 'When a list is provided, all ciphers are joined in order with C(:)'
+      - 'When a list is provided, all ciphers are joined in order with V(:)'
       - See the L(OpenSSL Cipher List Format,https://www.openssl.org/docs/manmaster/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT)
         for more details.
       - The available ciphers is dependent on the Python and OpenSSL/LibreSSL versions
@@ -50,11 +49,11 @@ options:
   dest:
     description:
       - Absolute path of where to download the file to.
-      - If C(dest) is a directory, either the server provided filename or, if
+      - If O(dest) is a directory, either the server provided filename or, if
         none provided, the base name of the URL on the remote server will be
-        used. If a directory, C(force) has no effect.
-      - If C(dest) is a directory, the file will always be downloaded
-        (regardless of the C(force) and C(checksum) option), but
+        used. If a directory, O(force) has no effect.
+      - If O(dest) is a directory, the file will always be downloaded
+        (regardless of the O(force) and O(checksum) option), but
         replaced only if the contents changed.
     type: path
     required: true
@@ -62,17 +61,17 @@ options:
     description:
       - Absolute path of where temporary file is downloaded to.
       - When run on Ansible 2.5 or greater, path defaults to ansible's remote_tmp setting
-      - When run on Ansible prior to 2.5, it defaults to C(TMPDIR), C(TEMP) or C(TMP) env variables or a platform specific value.
+      - When run on Ansible prior to 2.5, it defaults to E(TMPDIR), E(TEMP) or E(TMP) env variables or a platform specific value.
       - U(https://docs.python.org/3/library/tempfile.html#tempfile.tempdir)
     type: path
     version_added: '2.1'
   force:
     description:
-      - If C(true) and C(dest) is not a directory, will download the file every
-        time and replace the file if the contents change. If C(false), the file
+      - If V(true) and O(dest) is not a directory, will download the file every
+        time and replace the file if the contents change. If V(false), the file
         will only be downloaded if the destination does not exist. Generally
-        should be C(true) only for small local files.
-      - Prior to 0.6, this module behaved as if C(true) was the default.
+        should be V(true) only for small local files.
+      - Prior to 0.6, this module behaved as if V(true) was the default.
     type: bool
     default: no
     version_added: '0.7'
@@ -92,24 +91,26 @@ options:
         checksum="sha256:http://example.com/path/sha256sum.txt"'
       - If you worry about portability, only the sha1 algorithm is available
         on all platforms and python versions.
-      - The third party hashlib library can be installed for access to additional algorithms.
+      - The Python ``hashlib`` module is responsible for providing the available algorithms.
+        The choices vary based on Python version and OpenSSL version.
+      - On systems running in FIPS compliant mode, the ``md5`` algorithm may be unavailable.
       - Additionally, if a checksum is passed to this parameter, and the file exist under
-        the C(dest) location, the I(destination_checksum) would be calculated, and if
-        checksum equals I(destination_checksum), the file download would be skipped
-        (unless C(force) is true). If the checksum does not equal I(destination_checksum),
+        the O(dest) location, the C(destination_checksum) would be calculated, and if
+        checksum equals C(destination_checksum), the file download would be skipped
+        (unless O(force) is V(true)). If the checksum does not equal C(destination_checksum),
         the destination file is deleted.
     type: str
     default: ''
     version_added: "2.0"
   use_proxy:
     description:
-      - if C(false), it will not use a proxy, even if one is defined in
+      - if V(false), it will not use a proxy, even if one is defined in
         an environment variable on the target hosts.
     type: bool
     default: yes
   validate_certs:
     description:
-      - If C(false), SSL certificates will not be validated.
+      - If V(false), SSL certificates will not be validated.
       - This should only be used on personally controlled sites using self-signed certificates.
     type: bool
     default: yes
@@ -130,16 +131,16 @@ options:
   url_username:
     description:
       - The username for use in HTTP basic authentication.
-      - This parameter can be used without C(url_password) for sites that allow empty passwords.
-      - Since version 2.8 you can also use the C(username) alias for this option.
+      - This parameter can be used without O(url_password) for sites that allow empty passwords.
+      - Since version 2.8 you can also use the O(username) alias for this option.
     type: str
     aliases: ['username']
     version_added: '1.6'
   url_password:
     description:
         - The password for use in HTTP basic authentication.
-        - If the C(url_username) parameter is not specified, the C(url_password) parameter will not be used.
-        - Since version 2.8 you can also use the 'password' alias for this option.
+        - If the O(url_username) parameter is not specified, the O(url_password) parameter will not be used.
+        - Since version 2.8 you can also use the O(password) alias for this option.
     type: str
     aliases: ['password']
     version_added: '1.6'
@@ -155,13 +156,13 @@ options:
   client_cert:
     description:
       - PEM formatted certificate chain file to be used for SSL client authentication.
-      - This file can also include the key as well, and if the key is included, C(client_key) is not required.
+      - This file can also include the key as well, and if the key is included, O(client_key) is not required.
     type: path
     version_added: '2.4'
   client_key:
     description:
       - PEM formatted file that contains your private key to be used for SSL client authentication.
-      - If C(client_cert) contains both the certificate and key, this option is not required.
+      - If O(client_cert) contains both the certificate and key, this option is not required.
     type: path
     version_added: '2.4'
   http_agent:
@@ -183,7 +184,7 @@ options:
       - Use GSSAPI to perform the authentication, typically this is for Kerberos or Kerberos through Negotiate
         authentication.
       - Requires the Python library L(gssapi,https://github.com/pythongssapi/python-gssapi) to be installed.
-      - Credentials for GSSAPI can be specified with I(url_username)/I(url_password) or with the GSSAPI env var
+      - Credentials for GSSAPI can be specified with O(url_username)/O(url_password) or with the GSSAPI env var
         C(KRB5CCNAME) that specified a custom Kerberos credential cache.
       - NTLM authentication is I(not) supported even if the GSSAPI mech for NTLM has been installed.
     type: bool
@@ -259,7 +260,7 @@ EXAMPLES = r'''
 
 - name: Download file from a file path
   ansible.builtin.get_url:
-    url: file:///tmp/afile.txt
+    url: file:///tmp/a_file.txt
     dest: /tmp/afilecopy.txt
 
 - name: < Fetch file that requires authentication.
@@ -364,7 +365,6 @@ url:
     sample: https://www.ansible.com/
 '''
 
-import datetime
 import os
 import re
 import shutil
@@ -373,7 +373,8 @@ import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
-from ansible.module_utils._text import to_native
+from ansible.module_utils.compat.datetime import utcnow, utcfromtimestamp
+from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 # ==============================================================
@@ -395,10 +396,10 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     Return (tempfile, info about the request)
     """
 
-    start = datetime.datetime.utcnow()
+    start = utcnow()
     rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method,
                           unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
-    elapsed = (datetime.datetime.utcnow() - start).seconds
+    elapsed = (utcnow() - start).seconds
 
     if info['status'] == 304:
         module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''), status_code=info['status'], elapsed=elapsed)
@@ -598,7 +599,7 @@ def main():
         # If the file already exists, prepare the last modified time for the
         # request.
         mtime = os.path.getmtime(dest)
-        last_mod_time = datetime.datetime.utcfromtimestamp(mtime)
+        last_mod_time = utcfromtimestamp(mtime)
 
         # If the checksum does not match we have to force the download
         # because last_mod_time may be newer than on remote
@@ -606,11 +607,11 @@ def main():
             force = True
 
     # download to tmpsrc
-    start = datetime.datetime.utcnow()
+    start = utcnow()
     method = 'HEAD' if module.check_mode else 'GET'
     tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest, method,
-                           unredirected_headers=unredirected_headers, decompress=decompress, use_netrc=use_netrc)
-    result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
+                           unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
+    result['elapsed'] = (utcnow() - start).seconds
     result['src'] = tmpsrc
 
     # Now the request has completed, we can finally generate the final

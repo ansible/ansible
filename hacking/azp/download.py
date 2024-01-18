@@ -19,15 +19,13 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """CLI tool for downloading results from Azure Pipelines CI runs."""
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 # noinspection PyCompatibility
 import argparse
 import json
 import os
 import re
-import sys
 import io
 import zipfile
 

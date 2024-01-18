@@ -5,8 +5,8 @@ DOCUMENTATION:
   short_description: Make a path relative
   positional: _input, start
   description:
-    - Converts the given path to a relative path from the I(start),
-      or relative to the directory given in I(start).
+    - Converts the given path to a relative path from the O(start),
+      or relative to the directory given in O(start).
   options:
     _input:
       description: A path.

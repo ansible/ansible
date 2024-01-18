@@ -16,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import ast
 import base64
@@ -26,6 +24,7 @@ import datetime
 import json
 import os
 import shlex
+import time
 import zipfile
 import re
 import pkgutil
@@ -166,7 +165,7 @@ def _ansiballz_main():
     else:
         PY3 = True
 
-    ZIPDATA = """%(zipdata)s"""
+    ZIPDATA = %(zipdata)r
 
     # Note: temp_path isn't needed once we switch to zipimport
     def invoke_module(modlib_path, temp_path, json_params):
@@ -177,13 +176,13 @@ def _ansiballz_main():
         z = zipfile.ZipFile(modlib_path, mode='a')
 
         # py3: modlib_path will be text, py2: it's bytes.  Need bytes at the end
-        sitecustomize = u'import sys\\nsys.path.insert(0,"%%s")\\n' %%  modlib_path
+        sitecustomize = u'import sys\\nsys.path.insert(0,"%%s")\\n' %% modlib_path
         sitecustomize = sitecustomize.encode('utf-8')
         # Use a ZipInfo to work around zipfile limitation on hosts with
         # clocks set to a pre-1980 year (for instance, Raspberry Pi)
         zinfo = zipfile.ZipInfo()
         zinfo.filename = 'sitecustomize.py'
-        zinfo.date_time = ( %(year)i, %(month)i, %(day)i, %(hour)i, %(minute)i, %(second)i)
+        zinfo.date_time = %(date_time)s
         z.writestr(zinfo, sitecustomize)
         z.close()
 
@@ -196,7 +195,7 @@ def _ansiballz_main():
         basic._ANSIBLE_ARGS = json_params
 %(coverage)s
         # Run the module!  By importing it as '__main__', it thinks it is executing as a script
-        runpy.run_module(mod_name='%(module_fqn)s', init_globals=dict(_module_fqn='%(module_fqn)s', _modlib_path=modlib_path),
+        runpy.run_module(mod_name=%(module_fqn)r, init_globals=dict(_module_fqn=%(module_fqn)r, _modlib_path=modlib_path),
                          run_name='__main__', alter_sys=True)
 
         # Ansible modules must exit themselves
@@ -287,7 +286,7 @@ def _ansiballz_main():
             basic._ANSIBLE_ARGS = json_params
 
             # Run the module!  By importing it as '__main__', it thinks it is executing as a script
-            runpy.run_module(mod_name='%(module_fqn)s', init_globals=None, run_name='__main__', alter_sys=True)
+            runpy.run_module(mod_name=%(module_fqn)r, init_globals=None, run_name='__main__', alter_sys=True)
 
             # Ansible modules must exit themselves
             print('{"msg": "New-style module did not handle its own exit", "failed": true}')
@@ -312,9 +311,9 @@ def _ansiballz_main():
         # store this in remote_tmpdir (use system tempdir instead)
         # Only need to use [ansible_module]_payload_ in the temp_path until we move to zipimport
         # (this helps ansible-test produce coverage stats)
-        temp_path = tempfile.mkdtemp(prefix='ansible_%(ansible_module)s_payload_')
+        temp_path = tempfile.mkdtemp(prefix='ansible_' + %(ansible_module)r + '_payload_')
 
-        zipped_mod = os.path.join(temp_path, 'ansible_%(ansible_module)s_payload.zip')
+        zipped_mod = os.path.join(temp_path, 'ansible_' + %(ansible_module)r + '_payload.zip')
 
         with open(zipped_mod, 'wb') as modlib:
             modlib.write(base64.b64decode(ZIPDATA))
@@ -337,7 +336,7 @@ if __name__ == '__main__':
 '''
 
 ANSIBALLZ_COVERAGE_TEMPLATE = '''
-        os.environ['COVERAGE_FILE'] = '%(coverage_output)s=python-%%s=coverage' %% '.'.join(str(v) for v in sys.version_info[:2])
+        os.environ['COVERAGE_FILE'] = %(coverage_output)r + '=python-%%s=coverage' %% '.'.join(str(v) for v in sys.version_info[:2])
 
         import atexit
 
@@ -347,7 +346,7 @@ ANSIBALLZ_COVERAGE_TEMPLATE = '''
             print('{"msg": "Could not import `coverage` module.", "failed": true}')
             sys.exit(1)
 
-        cov = coverage.Coverage(config_file='%(coverage_config)s')
+        cov = coverage.Coverage(config_file=%(coverage_config)r)
 
         def atexit_coverage():
             cov.stop()
@@ -870,7 +869,17 @@ class CollectionModuleUtilLocator(ModuleUtilLocatorBase):
         return name_parts[5:]  # eg, foo.bar for ansible_collections.ns.coll.plugins.module_utils.foo.bar
 
 
-def recursive_finder(name, module_fqn, module_data, zf):
+def _make_zinfo(filename, date_time, zf=None):
+    zinfo = zipfile.ZipInfo(
+        filename=filename,
+        date_time=date_time
+    )
+    if zf:
+        zinfo.compress_type = zf.compression
+    return zinfo
+
+
+def recursive_finder(name, module_fqn, module_data, zf, date_time=None):
     """
     Using ModuleDepFinder, make sure we have all of the module_utils files that
     the module and its module_utils files needs. (no longer actually recursive)
@@ -880,6 +889,8 @@ def recursive_finder(name, module_fqn, module_data, zf):
     :arg zf: An open :python:class:`zipfile.ZipFile` object that holds the Ansible module payload
         which we're assembling
     """
+    if date_time is None:
+        date_time = time.gmtime()[:6]
 
     # py_module_cache maps python module names to a tuple of the code in the module
     # and the pathname to the module.
@@ -976,7 +987,10 @@ def recursive_finder(name, module_fqn, module_data, zf):
     for py_module_name in py_module_cache:
         py_module_file_name = py_module_cache[py_module_name][1]
 
-        zf.writestr(py_module_file_name, py_module_cache[py_module_name][0])
+        zf.writestr(
+            _make_zinfo(py_module_file_name, date_time, zf=zf),
+            py_module_cache[py_module_name][0]
+        )
         mu_file = to_text(py_module_file_name, errors='surrogate_or_strict')
         display.vvvvv("Including module_utils file %s" % mu_file)
 
@@ -1020,13 +1034,16 @@ def _get_ansible_module_fqn(module_path):
     return remote_module_fqn
 
 
-def _add_module_to_zip(zf, remote_module_fqn, b_module_data):
+def _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data):
     """Add a module from ansible or from an ansible collection into the module zip"""
     module_path_parts = remote_module_fqn.split('.')
 
     # Write the module
     module_path = '/'.join(module_path_parts) + '.py'
-    zf.writestr(module_path, b_module_data)
+    zf.writestr(
+        _make_zinfo(module_path, date_time, zf=zf),
+        b_module_data
+    )
 
     # Write the __init__.py's necessary to get there
     if module_path_parts[0] == 'ansible':
@@ -1045,7 +1062,10 @@ def _add_module_to_zip(zf, remote_module_fqn, b_module_data):
             continue
         # Note: We don't want to include more than one ansible module in a payload at this time
         # so no need to fill the __init__.py with namespace code
-        zf.writestr(package_path, b'')
+        zf.writestr(
+            _make_zinfo(package_path, date_time, zf=zf),
+            b''
+        )
 
 
 def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
@@ -1110,6 +1130,10 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         remote_module_fqn = 'ansible.modules.%s' % module_name
 
     if module_substyle == 'python':
+        date_time = time.gmtime()[:6]
+        if date_time[0] < 1980:
+            date_string = datetime.datetime(*date_time, tzinfo=datetime.timezone.utc).strftime('%c')
+            raise AnsibleError(f'Cannot create zipfile due to pre-1980 configured date: {date_string}')
         params = dict(ANSIBLE_MODULE_ARGS=module_args,)
         try:
             python_repred_params = repr(json.dumps(params, cls=AnsibleJSONEncoder, vault_to_text=True))
@@ -1155,10 +1179,10 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                     zf = zipfile.ZipFile(zipoutput, mode='w', compression=compression_method)
 
                     # walk the module imports, looking for module_utils to send- they'll be added to the zipfile
-                    recursive_finder(module_name, remote_module_fqn, b_module_data, zf)
+                    recursive_finder(module_name, remote_module_fqn, b_module_data, zf, date_time)
 
                     display.debug('ANSIBALLZ: Writing module into payload')
-                    _add_module_to_zip(zf, remote_module_fqn, b_module_data)
+                    _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data)
 
                     zf.close()
                     zipdata = base64.b64encode(zipoutput.getvalue())
@@ -1241,7 +1265,6 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         else:
             coverage = ''
 
-        now = datetime.datetime.utcnow()
         output.write(to_bytes(ACTIVE_ANSIBALLZ_TEMPLATE % dict(
             zipdata=zipdata,
             ansible_module=module_name,
@@ -1249,12 +1272,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             params=python_repred_params,
             shebang=shebang,
             coding=ENCODING_STRING,
-            year=now.year,
-            month=now.month,
-            day=now.day,
-            hour=now.hour,
-            minute=now.minute,
-            second=now.second,
+            date_time=date_time,
             coverage=coverage,
             rlimit=rlimit,
         )))
@@ -1377,20 +1395,7 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
     return (b_module_data, module_style, shebang)
 
 
-def get_action_args_with_defaults(action, args, defaults, templar, redirected_names=None, action_groups=None):
-    if redirected_names:
-        resolved_action_name = redirected_names[-1]
-    else:
-        resolved_action_name = action
-
-    if redirected_names is not None:
-        msg = (
-            "Finding module_defaults for the action %s. "
-            "The caller passed a list of redirected action names, which is deprecated. "
-            "The task's resolved action should be provided as the first argument instead."
-        )
-        display.deprecated(msg % resolved_action_name, version='2.16')
-
+def get_action_args_with_defaults(action, args, defaults, templar, action_groups=None):
     # Get the list of groups that contain this action
     if action_groups is None:
         msg = (
@@ -1401,7 +1406,7 @@ def get_action_args_with_defaults(action, args, defaults, templar, redirected_na
         display.warning(msg=msg)
         group_names = []
     else:
-        group_names = action_groups.get(resolved_action_name, [])
+        group_names = action_groups.get(action, [])
 
     tmp_args = {}
     module_defaults = {}
@@ -1420,7 +1425,7 @@ def get_action_args_with_defaults(action, args, defaults, templar, redirected_na
                 tmp_args.update((module_defaults.get('group/%s' % group_name) or {}).copy())
 
     # handle specific action defaults
-    tmp_args.update(module_defaults.get(resolved_action_name, {}).copy())
+    tmp_args.update(module_defaults.get(action, {}).copy())
 
     # direct args override all
     tmp_args.update(args)

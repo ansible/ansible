@@ -4,8 +4,7 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -14,9 +13,10 @@ module: tempfile
 version_added: "2.3"
 short_description: Creates temporary files and directories
 description:
-  - The C(tempfile) module creates temporary files and directories. C(mktemp) command takes different parameters on various systems, this module helps
-    to avoid troubles related to that. Files/directories created by module are accessible only by creator. In case you need to make them world-accessible
-    you need to use M(ansible.builtin.file) module.
+  - The M(ansible.builtin.tempfile) module creates temporary files and directories. C(mktemp) command
+    takes different parameters on various systems, this module helps to avoid troubles related to that.
+    Files/directories created by module are accessible only by creator. In case you need to make them
+    world-accessible you need to use M(ansible.builtin.file) module.
   - For Windows targets, use the M(ansible.windows.win_tempfile) module instead.
 options:
   state:
@@ -67,6 +67,12 @@ EXAMPLES = """
     suffix: temp
   register: tempfile_1
 
+- name: Create a temporary file with a specific prefix
+  ansible.builtin.tempfile:
+     state: file
+     suffix: txt
+     prefix: myfile_
+
 - name: Use the registered var and the file module to remove the temporary file
   ansible.builtin.file:
     path: "{{ tempfile_1.path }}"
@@ -87,7 +93,7 @@ from tempfile import mkstemp, mkdtemp
 from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 
 
 def main():

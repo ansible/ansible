@@ -16,15 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from abc import abstractmethod
 from functools import wraps
 
 from ansible.errors import AnsibleError
 from ansible.plugins import AnsiblePlugin
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.basic import missing_required_lib
 
 try:
@@ -62,8 +61,8 @@ class NetconfBase(AnsiblePlugin):
         :class:`TerminalBase` plugins are byte strings.  This is because of
         how close to the underlying platform these plugins operate.  Remember
         to mark literal strings as byte string (``b"string"``) and to use
-        :func:`~ansible.module_utils._text.to_bytes` and
-        :func:`~ansible.module_utils._text.to_text` to avoid unexpected
+        :func:`~ansible.module_utils.common.text.converters.to_bytes` and
+        :func:`~ansible.module_utils.common.text.converters.to_text` to avoid unexpected
         problems.
 
         List of supported rpc's:

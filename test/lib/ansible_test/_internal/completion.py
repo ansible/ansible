@@ -29,6 +29,7 @@ from .become import (
 
 class CGroupVersion(enum.Enum):
     """The control group version(s) required by a container."""
+
     NONE = 'none'
     V1_ONLY = 'v1-only'
     V2_ONLY = 'v2-only'
@@ -40,6 +41,7 @@ class CGroupVersion(enum.Enum):
 
 class AuditMode(enum.Enum):
     """The audit requirements of a container."""
+
     NONE = 'none'
     REQUIRED = 'required'
 
@@ -50,17 +52,19 @@ class AuditMode(enum.Enum):
 @dataclasses.dataclass(frozen=True)
 class CompletionConfig(metaclass=abc.ABCMeta):
     """Base class for completion configuration."""
+
     name: str
 
     @property
     @abc.abstractmethod
-    def is_default(self):
+    def is_default(self) -> bool:
         """True if the completion entry is only used for defaults, otherwise False."""
 
 
 @dataclasses.dataclass(frozen=True)
 class PosixCompletionConfig(CompletionConfig, metaclass=abc.ABCMeta):
     """Base class for completion configuration of POSIX environments."""
+
     @property
     @abc.abstractmethod
     def supported_pythons(self) -> list[str]:
@@ -85,6 +89,7 @@ class PosixCompletionConfig(CompletionConfig, metaclass=abc.ABCMeta):
 @dataclasses.dataclass(frozen=True)
 class PythonCompletionConfig(PosixCompletionConfig, metaclass=abc.ABCMeta):
     """Base class for completion configuration of Python environments."""
+
     python: str = ''
     python_dir: str = '/usr/bin'
 
@@ -103,21 +108,22 @@ class PythonCompletionConfig(PosixCompletionConfig, metaclass=abc.ABCMeta):
 @dataclasses.dataclass(frozen=True)
 class RemoteCompletionConfig(CompletionConfig):
     """Base class for completion configuration of remote environments provisioned through Ansible Core CI."""
+
     provider: t.Optional[str] = None
     arch: t.Optional[str] = None
 
     @property
-    def platform(self):
+    def platform(self) -> str:
         """The name of the platform."""
         return self.name.partition('/')[0]
 
     @property
-    def version(self):
+    def version(self) -> str:
         """The version of the platform."""
         return self.name.partition('/')[2]
 
     @property
-    def is_default(self):
+    def is_default(self) -> bool:
         """True if the completion entry is only used for defaults, otherwise False."""
         return not self.version
 
@@ -132,6 +138,7 @@ class RemoteCompletionConfig(CompletionConfig):
 @dataclasses.dataclass(frozen=True)
 class InventoryCompletionConfig(CompletionConfig):
     """Configuration for inventory files."""
+
     def __init__(self) -> None:
         super().__init__(name='inventory')
 
@@ -144,6 +151,7 @@ class InventoryCompletionConfig(CompletionConfig):
 @dataclasses.dataclass(frozen=True)
 class PosixSshCompletionConfig(PythonCompletionConfig):
     """Configuration for a POSIX host reachable over SSH."""
+
     def __init__(self, user: str, host: str) -> None:
         super().__init__(
             name=f'{user}@{host}',
@@ -159,6 +167,7 @@ class PosixSshCompletionConfig(PythonCompletionConfig):
 @dataclasses.dataclass(frozen=True)
 class DockerCompletionConfig(PythonCompletionConfig):
     """Configuration for Docker containers."""
+
     image: str = ''
     seccomp: str = 'default'
     cgroup: str = CGroupVersion.V1_V2.value
@@ -166,7 +175,7 @@ class DockerCompletionConfig(PythonCompletionConfig):
     placeholder: bool = False
 
     @property
-    def is_default(self):
+    def is_default(self) -> bool:
         """True if the completion entry is only used for defaults, otherwise False."""
         return False
 
@@ -201,6 +210,7 @@ class DockerCompletionConfig(PythonCompletionConfig):
 @dataclasses.dataclass(frozen=True)
 class NetworkRemoteCompletionConfig(RemoteCompletionConfig):
     """Configuration for remote network platforms."""
+
     collection: str = ''
     connection: str = ''
     placeholder: bool = False
@@ -213,6 +223,7 @@ class NetworkRemoteCompletionConfig(RemoteCompletionConfig):
 @dataclasses.dataclass(frozen=True)
 class PosixRemoteCompletionConfig(RemoteCompletionConfig, PythonCompletionConfig):
     """Configuration for remote POSIX platforms."""
+
     become: t.Optional[str] = None
     placeholder: bool = False
 
@@ -270,13 +281,15 @@ def parse_completion_entry(value: str) -> tuple[str, dict[str, str]]:
 
 
 def filter_completion(
-        completion: dict[str, TCompletionConfig],
-        controller_only: bool = False,
-        include_defaults: bool = False,
+    completion: dict[str, TCompletionConfig],
+    controller_only: bool = False,
+    include_defaults: bool = False,
 ) -> dict[str, TCompletionConfig]:
     """Return the given completion dictionary, filtering out configs which do not support the controller if controller_only is specified."""
     if controller_only:
-        completion = {name: config for name, config in completion.items() if isinstance(config, PosixCompletionConfig) and config.controller_supported}
+        # The cast is needed because mypy gets confused here and forgets that completion values are TCompletionConfig.
+        completion = {name: t.cast(TCompletionConfig, config) for name, config in completion.items() if
+                      isinstance(config, PosixCompletionConfig) and config.controller_supported}
 
     if not include_defaults:
         completion = {name: config for name, config in completion.items() if not config.is_default}

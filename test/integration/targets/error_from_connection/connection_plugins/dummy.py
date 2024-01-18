@@ -1,5 +1,4 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     author:
@@ -11,7 +10,6 @@ DOCUMENTATION = """
     version_added: "2.0"
     options: {}
 """
-import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.connection import ConnectionBase
 

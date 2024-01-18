@@ -9,16 +9,13 @@
 #    - Abhijeet Kasurde (@Akasurde)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import time
 import glob
-import tempfile
 from abc import ABCMeta, abstractmethod
 
-from ansible.module_utils._text import to_native
 from ansible.module_utils.six import with_metaclass
 
 yumdnf_argument_spec = dict(

@@ -90,6 +90,7 @@ from .cloud import (
 
 from ...data import (
     data_context,
+    PayloadConfig,
 )
 
 from ...host_configs import (
@@ -99,6 +100,7 @@ from ...host_configs import (
 
 from ...host_profiles import (
     ControllerProfile,
+    ControllerHostProfile,
     HostProfile,
     PosixProfile,
     SshTargetHostProfile,
@@ -213,11 +215,13 @@ def delegate_inventory(args: IntegrationConfig, inventory_path_src: str) -> None
     if isinstance(args, PosixIntegrationConfig):
         return
 
-    def inventory_callback(files: list[tuple[str, str]]) -> None:
+    def inventory_callback(payload_config: PayloadConfig) -> None:
         """
         Add the inventory file to the payload file list.
         This will preserve the file during delegation even if it is ignored or is outside the content and install roots.
         """
+        files = payload_config.files
+
         inventory_path = get_inventory_relative_path(args)
         inventory_tuple = inventory_path_src, inventory_path
 
@@ -239,9 +243,9 @@ def delegate_inventory(args: IntegrationConfig, inventory_path_src: str) -> None
 
 @contextlib.contextmanager
 def integration_test_environment(
-        args: IntegrationConfig,
-        target: IntegrationTarget,
-        inventory_path_src: str,
+    args: IntegrationConfig,
+    target: IntegrationTarget,
+    inventory_path_src: str,
 ) -> c.Iterator[IntegrationEnvironment]:
     """Context manager that prepares the integration test environment and cleans it up."""
     ansible_config_src = args.get_ansible_config()
@@ -310,7 +314,7 @@ def integration_test_environment(
         directory_copies = [
             (
                 os.path.join(integration_targets_relative_path, target.relative_path),
-                os.path.join(temp_dir, integration_targets_relative_path, target.relative_path)
+                os.path.join(temp_dir, integration_targets_relative_path, target.relative_path),
             )
             for target in target_dependencies
         ]
@@ -342,9 +346,9 @@ def integration_test_environment(
 
 @contextlib.contextmanager
 def integration_test_config_file(
-        args: IntegrationConfig,
-        env_config: CloudEnvironmentConfig,
-        integration_dir: str,
+    args: IntegrationConfig,
+    env_config: CloudEnvironmentConfig,
+    integration_dir: str,
 ) -> c.Iterator[t.Optional[str]]:
     """Context manager that provides a config file for integration tests, if needed."""
     if not env_config:
@@ -353,12 +357,12 @@ def integration_test_config_file(
 
     config_vars = (env_config.ansible_vars or {}).copy()
 
-    config_vars.update(dict(
+    config_vars.update(
         ansible_test=dict(
             environment=env_config.env_vars,
             module_defaults=env_config.module_defaults,
         )
-    ))
+    )
 
     config_file = json.dumps(config_vars, indent=4, sort_keys=True)
 
@@ -371,10 +375,10 @@ def integration_test_config_file(
 
 
 def create_inventory(
-        args: IntegrationConfig,
-        host_state: HostState,
-        inventory_path: str,
-        target: IntegrationTarget,
+    args: IntegrationConfig,
+    host_state: HostState,
+    inventory_path: str,
+    target: IntegrationTarget,
 ) -> None:
     """Create inventory."""
     if isinstance(args, PosixIntegrationConfig):
@@ -397,13 +401,13 @@ def create_inventory(
 
 
 def command_integration_filtered(
-        args: IntegrationConfig,
-        host_state: HostState,
-        targets: tuple[IntegrationTarget, ...],
-        all_targets: tuple[IntegrationTarget, ...],
-        inventory_path: str,
-        pre_target: t.Optional[c.Callable[[IntegrationTarget], None]] = None,
-        post_target: t.Optional[c.Callable[[IntegrationTarget], None]] = None,
+    args: IntegrationConfig,
+    host_state: HostState,
+    targets: tuple[IntegrationTarget, ...],
+    all_targets: tuple[IntegrationTarget, ...],
+    inventory_path: str,
+    pre_target: t.Optional[c.Callable[[IntegrationTarget], None]] = None,
+    post_target: t.Optional[c.Callable[[IntegrationTarget], None]] = None,
 ):
     """Run integration tests for the specified targets."""
     found = False
@@ -562,7 +566,7 @@ def command_integration_filtered(
             coverage_manager.teardown()
 
             result_name = '%s-%s.json' % (
-                args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
+                args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.now(tz=datetime.timezone.utc).replace(microsecond=0, tzinfo=None))))
 
             data = dict(
                 targets=results,
@@ -576,12 +580,12 @@ def command_integration_filtered(
 
 
 def command_integration_script(
-        args: IntegrationConfig,
-        host_state: HostState,
-        target: IntegrationTarget,
-        test_dir: str,
-        inventory_path: str,
-        coverage_manager: CoverageManager,
+    args: IntegrationConfig,
+    host_state: HostState,
+    target: IntegrationTarget,
+    test_dir: str,
+    inventory_path: str,
+    coverage_manager: CoverageManager,
 ):
     """Run an integration test script."""
     display.info('Running %s integration test script' % target.name)
@@ -611,10 +615,10 @@ def command_integration_script(
         env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config, test_env)
         cwd = os.path.join(test_env.targets_dir, target.relative_path)
 
-        env.update(dict(
+        env.update(
             # support use of adhoc ansible commands in collections without specifying the fully qualified collection name
             ANSIBLE_PLAYBOOK_DIR=cwd,
-        ))
+        )
 
         if env_config and env_config.env_vars:
             env.update(env_config.env_vars)
@@ -628,13 +632,13 @@ def command_integration_script(
 
 
 def command_integration_role(
-        args: IntegrationConfig,
-        host_state: HostState,
-        target: IntegrationTarget,
-        start_at_task: t.Optional[str],
-        test_dir: str,
-        inventory_path: str,
-        coverage_manager: CoverageManager,
+    args: IntegrationConfig,
+    host_state: HostState,
+    target: IntegrationTarget,
+    start_at_task: t.Optional[str],
+    test_dir: str,
+    inventory_path: str,
+    coverage_manager: CoverageManager,
 ):
     """Run an integration test role."""
     display.info('Running %s integration test role' % target.name)
@@ -649,9 +653,9 @@ def command_integration_role(
     if isinstance(args, WindowsIntegrationConfig):
         hosts = 'windows'
         gather_facts = False
-        variables.update(dict(
+        variables.update(
             win_output_dir=r'C:\ansible_testing',
-        ))
+        )
     elif isinstance(args, NetworkIntegrationConfig):
         hosts = target.network_platform
         gather_facts = False
@@ -696,10 +700,10 @@ def command_integration_role(
             if env_config.ansible_vars:
                 variables.update(env_config.ansible_vars)
 
-            play.update(dict(
+            play.update(
                 environment=env_config.env_vars,
                 module_defaults=env_config.module_defaults,
-            ))
+            )
 
         playbook = json.dumps([play], indent=4, sort_keys=True)
 
@@ -732,10 +736,10 @@ def command_integration_role(
             env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config, test_env)
             cwd = test_env.integration_dir
 
-            env.update(dict(
+            env.update(
                 # support use of adhoc ansible commands in collections without specifying the fully qualified collection name
                 ANSIBLE_PLAYBOOK_DIR=cwd,
-            ))
+            )
 
             if env_config and env_config.env_vars:
                 env.update(env_config.env_vars)
@@ -747,15 +751,15 @@ def command_integration_role(
 
 
 def run_setup_targets(
-        args: IntegrationConfig,
-        host_state: HostState,
-        test_dir: str,
-        target_names: c.Sequence[str],
-        targets_dict: dict[str, IntegrationTarget],
-        targets_executed: set[str],
-        inventory_path: str,
-        coverage_manager: CoverageManager,
-        always: bool,
+    args: IntegrationConfig,
+    host_state: HostState,
+    test_dir: str,
+    target_names: c.Sequence[str],
+    targets_dict: dict[str, IntegrationTarget],
+    targets_executed: set[str],
+    inventory_path: str,
+    coverage_manager: CoverageManager,
+    always: bool,
 ):
     """Run setup targets."""
     for target_name in target_names:
@@ -778,13 +782,13 @@ def run_setup_targets(
 
 
 def integration_environment(
-        args: IntegrationConfig,
-        target: IntegrationTarget,
-        test_dir: str,
-        inventory_path: str,
-        ansible_config: t.Optional[str],
-        env_config: t.Optional[CloudEnvironmentConfig],
-        test_env: IntegrationEnvironment,
+    args: IntegrationConfig,
+    target: IntegrationTarget,
+    test_dir: str,
+    inventory_path: str,
+    ansible_config: t.Optional[str],
+    env_config: t.Optional[CloudEnvironmentConfig],
+    test_env: IntegrationEnvironment,
 ) -> dict[str, str]:
     """Return a dictionary of environment variables to use when running the given integration test target."""
     env = ansible_environment(args, ansible_config=ansible_config)
@@ -803,13 +807,13 @@ def integration_environment(
     )
 
     if args.debug_strategy:
-        env.update(dict(ANSIBLE_STRATEGY='debug'))
+        env.update(ANSIBLE_STRATEGY='debug')
 
     if 'non_local/' in target.aliases:
         if args.coverage:
             display.warning('Skipping coverage reporting on Ansible modules for non-local test: %s' % target.name)
 
-        env.update(dict(ANSIBLE_TEST_REMOTE_INTERPRETER=''))
+        env.update(ANSIBLE_TEST_REMOTE_INTERPRETER='')
 
     env.update(integration)
 
@@ -818,7 +822,8 @@ def integration_environment(
 
 class IntegrationEnvironment:
     """Details about the integration environment."""
-    def __init__(self, test_dir, integration_dir, targets_dir, inventory_path, ansible_config, vars_file):
+
+    def __init__(self, test_dir: str, integration_dir: str, targets_dir: str, inventory_path: str, ansible_config: str, vars_file: str) -> None:
         self.test_dir = test_dir
         self.integration_dir = integration_dir
         self.targets_dir = targets_dir
@@ -829,18 +834,15 @@ class IntegrationEnvironment:
 
 class IntegrationCache(CommonCache):
     """Integration cache."""
+
     @property
-    def integration_targets(self):
-        """
-        :rtype: list[IntegrationTarget]
-        """
+    def integration_targets(self) -> list[IntegrationTarget]:
+        """The list of integration test targets."""
         return self.get('integration_targets', lambda: list(walk_integration_targets()))
 
     @property
-    def dependency_map(self):
-        """
-        :rtype: dict[str, set[IntegrationTarget]]
-        """
+    def dependency_map(self) -> dict[str, set[IntegrationTarget]]:
+        """The dependency map of integration test targets."""
         return self.get('dependency_map', lambda: generate_dependency_map(self.integration_targets))
 
 
@@ -900,9 +902,10 @@ If necessary, context can be controlled by adding entries to the "aliases" file 
     return exclude
 
 
-def command_integration_filter(args: TIntegrationConfig,
-                               targets: c.Iterable[TIntegrationTarget],
-                               ) -> tuple[HostState, tuple[TIntegrationTarget, ...]]:
+def command_integration_filter(
+    args: TIntegrationConfig,
+    targets: c.Iterable[TIntegrationTarget],
+) -> tuple[HostState, tuple[TIntegrationTarget, ...]]:
     """Filter the given integration test targets."""
     targets = tuple(target for target in targets if 'hidden/' not in target.aliases)
     changes = get_changes_filter(args)
@@ -940,11 +943,13 @@ def command_integration_filter(args: TIntegrationConfig,
     vars_file_src = os.path.join(data_context().content.root, data_context().content.integration_vars_path)
 
     if os.path.exists(vars_file_src):
-        def integration_config_callback(files: list[tuple[str, str]]) -> None:
+
+        def integration_config_callback(payload_config: PayloadConfig) -> None:
             """
             Add the integration config vars file to the payload file list.
             This will preserve the file during delegation even if the file is ignored by source control.
             """
+            files = payload_config.files
             files.append((vars_file_src, data_context().content.integration_vars_path))
 
         data_context().register_payload_callback(integration_config_callback)
@@ -961,13 +966,10 @@ def command_integration_filter(args: TIntegrationConfig,
     return host_state, internal_targets
 
 
-def requirements(args: IntegrationConfig, host_state: HostState) -> None:
-    """Install requirements."""
-    target_profile = host_state.target_profiles[0]
-
-    configure_pypi_proxy(args, host_state.controller_profile)  # integration, windows-integration, network-integration
-
-    if isinstance(target_profile, PosixProfile) and not isinstance(target_profile, ControllerProfile):
-        configure_pypi_proxy(args, target_profile)  # integration
-
-    install_requirements(args, host_state.controller_profile.python, ansible=True, command=True)  # integration, windows-integration, network-integration
+def requirements(host_profile: HostProfile) -> None:
+    """Install requirements after bootstrapping and delegation."""
+    if isinstance(host_profile, ControllerHostProfile) and host_profile.controller:
+        configure_pypi_proxy(host_profile.args, host_profile)  # integration, windows-integration, network-integration
+        install_requirements(host_profile.args, host_profile.python, ansible=True, command=True)  # integration, windows-integration, network-integration
+    elif isinstance(host_profile, PosixProfile) and not isinstance(host_profile, ControllerProfile):
+        configure_pypi_proxy(host_profile.args, host_profile)  # integration

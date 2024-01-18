@@ -1,8 +1,7 @@
 # (c) 2013, Serge van Ginderachter <serge@vanginderachter.be>
 # (c) 2012-17 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: subelements
@@ -19,8 +18,8 @@ DOCUMENTATION = """
         default: False
         description:
           - Lookup accepts this flag from a dictionary as optional. See Example section for more information.
-          - If set to C(True), the lookup plugin will skip the lists items that do not contain the given subkey.
-          - If set to C(False), the plugin will yield an error and complain about the missing subkey.
+          - If set to V(True), the lookup plugin will skip the lists items that do not contain the given subkey.
+          - If set to V(False), the plugin will yield an error and complain about the missing subkey.
 """
 
 EXAMPLES = """

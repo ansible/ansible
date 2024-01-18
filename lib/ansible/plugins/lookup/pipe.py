@@ -1,8 +1,7 @@
 # (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = r"""
     name: pipe
@@ -24,6 +23,7 @@ DOCUMENTATION = r"""
         It is strongly recommended to pass user input or variable input via quote filter before using with pipe lookup.
         See example section for this.
         Read more about this L(Bandit B602 docs,https://bandit.readthedocs.io/en/latest/plugins/b602_subprocess_popen_with_shell_equals_true.html)
+      - The directory of the play is used as the current working directory.
 """
 
 EXAMPLES = r"""
@@ -56,15 +56,13 @@ class LookupModule(LookupBase):
 
         ret = []
         for term in terms:
-            '''
-            https://docs.python.org/3/library/subprocess.html#popen-constructor
-
-            The shell argument (which defaults to False) specifies whether to use the
-            shell as the program to execute. If shell is True, it is recommended to pass
-            args as a string rather than as a sequence
-
-            https://github.com/ansible/ansible/issues/6550
-            '''
+            # https://docs.python.org/3/library/subprocess.html#popen-constructor
+            #
+            # The shell argument (which defaults to False) specifies whether to use the
+            # shell as the program to execute. If shell is True, it is recommended to pass
+            # args as a string rather than as a sequence
+            #
+            # https://github.com/ansible/ansible/issues/6550
             term = str(term)
 
             p = subprocess.Popen(term, cwd=self._loader.get_basedir(), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)

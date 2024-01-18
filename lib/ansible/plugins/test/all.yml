@@ -19,5 +19,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: Returns C(True) if all elements of the list were True, C(False) otherwise.
+    description: Returns V(True) if all elements of the list were True, V(False) otherwise.
     type: boolean

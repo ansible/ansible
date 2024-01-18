@@ -15,16 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.task_executor import remove_omit
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.playbook.handler import Handler
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role_include import IncludeRole
@@ -72,8 +70,6 @@ class IncludedFile:
             original_task = res._task
 
             if original_task.action in C._ACTION_ALL_INCLUDES:
-                if original_task.action in C._ACTION_INCLUDE:
-                    display.deprecated('"include" is deprecated, use include_tasks/import_tasks/import_playbook instead', "2.16")
 
                 if original_task.loop:
                     if 'results' not in res._result:
@@ -118,7 +114,7 @@ class IncludedFile:
 
                     templar = Templar(loader=loader, variables=task_vars)
 
-                    if original_task.action in C._ACTION_ALL_INCLUDE_TASKS:
+                    if original_task.action in C._ACTION_INCLUDE_TASKS:
                         include_file = None
 
                         if original_task._parent:
@@ -148,9 +144,12 @@ class IncludedFile:
                                     cumulative_path = parent_include_dir
                                 include_target = templar.template(include_result['include'])
                                 if original_task._role:
-                                    new_basedir = os.path.join(original_task._role._role_path, 'tasks', cumulative_path)
-                                    candidates = [loader.path_dwim_relative(original_task._role._role_path, 'tasks', include_target),
-                                                  loader.path_dwim_relative(new_basedir, 'tasks', include_target)]
+                                    dirname = 'handlers' if isinstance(original_task, Handler) else 'tasks'
+                                    new_basedir = os.path.join(original_task._role._role_path, dirname, cumulative_path)
+                                    candidates = [
+                                        loader.path_dwim_relative(original_task._role._role_path, dirname, include_target, is_role=True),
+                                        loader.path_dwim_relative(new_basedir, dirname, include_target, is_role=True)
+                                    ]
                                     for include_file in candidates:
                                         try:
                                             # may throw OSError
@@ -187,6 +186,7 @@ class IncludedFile:
                             role_name = templar.template(role_name)
 
                         new_task = original_task.copy()
+                        new_task.post_validate(templar=templar)
                         new_task._role_name = role_name
                         for from_arg in new_task.FROM_ARGS:
                             if from_arg in include_args:

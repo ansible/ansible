@@ -4,12 +4,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # PYTHON_ARGCOMPLETE_OK
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
 
+import importlib
 import pkgutil
 import os
 import os.path
@@ -26,11 +26,10 @@ from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.collections.list import list_collection_dirs
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError, AnsiblePluginNotFound
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.json import json_dump
 from ansible.module_utils.common.yaml import yaml_dump
-from ansible.module_utils.compat import importlib
 from ansible.module_utils.six import string_types
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.utils.yaml import from_yaml
@@ -49,11 +48,6 @@ TARGET_OPTIONS = C.DOCUMENTABLE_PLUGINS + ('role', 'keyword',)
 PB_OBJECTS = ['Play', 'Role', 'Block', 'Task']
 PB_LOADED = {}
 SNIPPETS = ['inventory', 'lookup', 'module']
-
-
-def add_collection_plugins(plugin_list, plugin_type, coll_filter=None):
-    display.deprecated("add_collection_plugins method, use ansible.plugins.list functions instead.", version='2.17')
-    plugin_list.update(list_plugins(plugin_type, coll_filter))
 
 
 def jdump(text):
@@ -163,8 +157,8 @@ class RoleMixin(object):
             might be fully qualified with the collection name (e.g., community.general.roleA)
             or not (e.g., roleA).
 
-        :param collection_filter: A string containing the FQCN of a collection which will be
-            used to limit results. This filter will take precedence over the name_filters.
+        :param collection_filter: A list of strings containing the FQCN of a collection which will
+            be used to limit results. This filter will take precedence over the name_filters.
 
         :returns: A set of tuples consisting of: role name, collection name, collection path
         """
@@ -362,11 +356,22 @@ class DocCLI(CLI, RoleMixin):
     _ITALIC = re.compile(r"\bI\(([^)]+)\)")
     _BOLD = re.compile(r"\bB\(([^)]+)\)")
     _MODULE = re.compile(r"\bM\(([^)]+)\)")
+    _PLUGIN = re.compile(r"\bP\(([^#)]+)#([a-z]+)\)")
     _LINK = re.compile(r"\bL\(([^)]+), *([^)]+)\)")
     _URL = re.compile(r"\bU\(([^)]+)\)")
     _REF = re.compile(r"\bR\(([^)]+), *([^)]+)\)")
     _CONST = re.compile(r"\bC\(([^)]+)\)")
+    _SEM_PARAMETER_STRING = r"\(((?:[^\\)]+|\\.)+)\)"
+    _SEM_OPTION_NAME = re.compile(r"\bO" + _SEM_PARAMETER_STRING)
+    _SEM_OPTION_VALUE = re.compile(r"\bV" + _SEM_PARAMETER_STRING)
+    _SEM_ENV_VARIABLE = re.compile(r"\bE" + _SEM_PARAMETER_STRING)
+    _SEM_RET_VALUE = re.compile(r"\bRV" + _SEM_PARAMETER_STRING)
     _RULER = re.compile(r"\bHORIZONTALLINE\b")
+
+    # helper for unescaping
+    _UNESCAPE = re.compile(r"\\(.)")
+    _FQCN_TYPE_PREFIX_RE = re.compile(r'^([^.]+\.[^.]+\.[^#]+)#([a-z]+):(.*)$')
+    _IGNORE_MARKER = 'ignore:'
 
     # rst specific
     _RST_NOTE = re.compile(r".. note::")
@@ -379,10 +384,39 @@ class DocCLI(CLI, RoleMixin):
         super(DocCLI, self).__init__(args)
         self.plugin_list = set()
 
-    @classmethod
-    def find_plugins(cls, path, internal, plugin_type, coll_filter=None):
-        display.deprecated("find_plugins method as it is incomplete/incorrect. use ansible.plugins.list functions instead.", version='2.17')
-        return list_plugins(plugin_type, coll_filter, [path]).keys()
+    @staticmethod
+    def _tty_ify_sem_simle(matcher):
+        text = DocCLI._UNESCAPE.sub(r'\1', matcher.group(1))
+        return f"`{text}'"
+
+    @staticmethod
+    def _tty_ify_sem_complex(matcher):
+        text = DocCLI._UNESCAPE.sub(r'\1', matcher.group(1))
+        value = None
+        if '=' in text:
+            text, value = text.split('=', 1)
+        m = DocCLI._FQCN_TYPE_PREFIX_RE.match(text)
+        if m:
+            plugin_fqcn = m.group(1)
+            plugin_type = m.group(2)
+            text = m.group(3)
+        elif text.startswith(DocCLI._IGNORE_MARKER):
+            text = text[len(DocCLI._IGNORE_MARKER):]
+            plugin_fqcn = plugin_type = ''
+        else:
+            plugin_fqcn = plugin_type = ''
+        entrypoint = None
+        if ':' in text:
+            entrypoint, text = text.split(':', 1)
+        if value is not None:
+            text = f"{text}={value}"
+        if plugin_fqcn and plugin_type:
+            plugin_suffix = '' if plugin_type in ('role', 'module', 'playbook') else ' plugin'
+            plugin = f"{plugin_type}{plugin_suffix} {plugin_fqcn}"
+            if plugin_type == 'role' and entrypoint is not None:
+                plugin = f"{plugin}, {entrypoint} entrypoint"
+            return f"`{text}' (of {plugin})"
+        return f"`{text}'"
 
     @classmethod
     def tty_ify(cls, text):
@@ -393,8 +427,13 @@ class DocCLI(CLI, RoleMixin):
         t = cls._MODULE.sub("[" + r"\1" + "]", t)       # M(word) => [word]
         t = cls._URL.sub(r"\1", t)                      # U(word) => word
         t = cls._LINK.sub(r"\1 <\2>", t)                # L(word, url) => word <url>
+        t = cls._PLUGIN.sub("[" + r"\1" + "]", t)       # P(word#type) => [word]
         t = cls._REF.sub(r"\1", t)            # R(word, sphinx-ref) => word
         t = cls._CONST.sub(r"`\1'", t)        # C(word) => `word'
+        t = cls._SEM_OPTION_NAME.sub(cls._tty_ify_sem_complex, t)  # O(expr)
+        t = cls._SEM_OPTION_VALUE.sub(cls._tty_ify_sem_simle, t)  # V(expr)
+        t = cls._SEM_ENV_VARIABLE.sub(cls._tty_ify_sem_simle, t)  # E(expr)
+        t = cls._SEM_RET_VALUE.sub(cls._tty_ify_sem_complex, t)  # RV(expr)
         t = cls._RULER.sub("\n{0}\n".format("-" * 13), t)   # HORIZONTALLINE => -------
 
         # remove rst
@@ -628,12 +667,11 @@ class DocCLI(CLI, RoleMixin):
     def _get_collection_filter(self):
 
         coll_filter = None
-        if len(context.CLIARGS['args']) == 1:
-            coll_filter = context.CLIARGS['args'][0]
-            if not AnsibleCollectionRef.is_valid_collection_name(coll_filter):
-                raise AnsibleError('Invalid collection name (must be of the form namespace.collection): {0}'.format(coll_filter))
-            elif len(context.CLIARGS['args']) > 1:
-                raise AnsibleOptionsError("Only a single collection filter is supported.")
+        if len(context.CLIARGS['args']) >= 1:
+            coll_filter = context.CLIARGS['args']
+            for coll_name in coll_filter:
+                if not AnsibleCollectionRef.is_valid_collection_name(coll_name):
+                    raise AnsibleError('Invalid collection name (must be of the form namespace.collection): {0}'.format(coll_name))
 
         return coll_filter
 
@@ -776,7 +814,7 @@ class DocCLI(CLI, RoleMixin):
                 else:
                     plugin_names = self._list_plugins(ptype, None)
                     docs['all'][ptype] = self._get_plugins_docs(ptype, plugin_names, fail_ok=(ptype in ('test', 'filter')), fail_on_errors=no_fail)
-                    # reset list after each type to avoid polution
+                    # reset list after each type to avoid pollution
         elif listing:
             if plugin_type == 'keyword':
                 docs = DocCLI._list_keywords()
@@ -1021,6 +1059,14 @@ class DocCLI(CLI, RoleMixin):
         return 'version %s' % (version_added, )
 
     @staticmethod
+    def warp_fill(text, limit, initial_indent='', subsequent_indent='', **kwargs):
+        result = []
+        for paragraph in text.split('\n\n'):
+            result.append(textwrap.fill(paragraph, limit, initial_indent=initial_indent, subsequent_indent=subsequent_indent, **kwargs))
+            initial_indent = subsequent_indent
+        return '\n'.join(result)
+
+    @staticmethod
     def add_fields(text, fields, limit, opt_indent, return_values=False, base_indent=''):
 
         for o in sorted(fields):
@@ -1045,11 +1091,11 @@ class DocCLI(CLI, RoleMixin):
                 for entry_idx, entry in enumerate(opt['description'], 1):
                     if not isinstance(entry, string_types):
                         raise AnsibleError("Expected string in description of %s at index %s, got %s" % (o, entry_idx, type(entry)))
-                    text.append(textwrap.fill(DocCLI.tty_ify(entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify(entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
             else:
                 if not isinstance(opt['description'], string_types):
                     raise AnsibleError("Expected string in description of %s, got %s" % (o, type(opt['description'])))
-                text.append(textwrap.fill(DocCLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                text.append(DocCLI.warp_fill(DocCLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
             del opt['description']
 
             suboptions = []
@@ -1141,9 +1187,9 @@ class DocCLI(CLI, RoleMixin):
                 else:
                     desc = doc['description']
 
-                text.append("%s\n" % textwrap.fill(DocCLI.tty_ify(desc),
-                                                   limit, initial_indent=opt_indent,
-                                                   subsequent_indent=opt_indent))
+                text.append("%s\n" % DocCLI.warp_fill(DocCLI.tty_ify(desc),
+                                                      limit, initial_indent=opt_indent,
+                                                      subsequent_indent=opt_indent))
             if doc.get('options'):
                 text.append("OPTIONS (= is mandatory):\n")
                 DocCLI.add_fields(text, doc.pop('options'), limit, opt_indent)
@@ -1159,7 +1205,7 @@ class DocCLI(CLI, RoleMixin):
                 if k not in doc:
                     continue
                 if isinstance(doc[k], string_types):
-                    text.append('%s: %s' % (k.upper(), textwrap.fill(DocCLI.tty_ify(doc[k]),
+                    text.append('%s: %s' % (k.upper(), DocCLI.warp_fill(DocCLI.tty_ify(doc[k]),
                                             limit - (len(k) + 2), subsequent_indent=opt_indent)))
                 elif isinstance(doc[k], (list, tuple)):
                     text.append('%s: %s' % (k.upper(), ', '.join(doc[k])))
@@ -1192,8 +1238,8 @@ class DocCLI(CLI, RoleMixin):
         else:
             desc = doc.pop('description')
 
-        text.append("%s\n" % textwrap.fill(DocCLI.tty_ify(desc), limit, initial_indent=opt_indent,
-                                           subsequent_indent=opt_indent))
+        text.append("%s\n" % DocCLI.warp_fill(DocCLI.tty_ify(desc), limit, initial_indent=opt_indent,
+                                              subsequent_indent=opt_indent))
 
         if 'version_added' in doc:
             version_added = doc.pop('version_added')
@@ -1231,8 +1277,8 @@ class DocCLI(CLI, RoleMixin):
         if doc.get('notes', False):
             text.append("NOTES:")
             for note in doc['notes']:
-                text.append(textwrap.fill(DocCLI.tty_ify(note), limit - 6,
-                                          initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
+                text.append(DocCLI.warp_fill(DocCLI.tty_ify(note), limit - 6,
+                                             initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
             text.append('')
             text.append('')
             del doc['notes']
@@ -1241,25 +1287,45 @@ class DocCLI(CLI, RoleMixin):
             text.append("SEE ALSO:")
             for item in doc['seealso']:
                 if 'module' in item:
-                    text.append(textwrap.fill(DocCLI.tty_ify('Module %s' % item['module']),
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify('Module %s' % item['module']),
                                 limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    description = item.get('description', 'The official documentation on the %s module.' % item['module'])
-                    text.append(textwrap.fill(DocCLI.tty_ify(description), limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(DocCLI.tty_ify(get_versioned_doclink('modules/%s_module.html' % item['module'])),
-                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
+                    description = item.get('description')
+                    if description is None and item['module'].startswith('ansible.builtin.'):
+                        description = 'The official documentation on the %s module.' % item['module']
+                    if description is not None:
+                        text.append(DocCLI.warp_fill(DocCLI.tty_ify(description),
+                                    limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
+                    if item['module'].startswith('ansible.builtin.'):
+                        relative_url = 'collections/%s_module.html' % item['module'].replace('.', '/', 2)
+                        text.append(DocCLI.warp_fill(DocCLI.tty_ify(get_versioned_doclink(relative_url)),
+                                    limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
+                elif 'plugin' in item and 'plugin_type' in item:
+                    plugin_suffix = ' plugin' if item['plugin_type'] not in ('module', 'role') else ''
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify('%s%s %s' % (item['plugin_type'].title(), plugin_suffix, item['plugin'])),
+                                limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
+                    description = item.get('description')
+                    if description is None and item['plugin'].startswith('ansible.builtin.'):
+                        description = 'The official documentation on the %s %s%s.' % (item['plugin'], item['plugin_type'], plugin_suffix)
+                    if description is not None:
+                        text.append(DocCLI.warp_fill(DocCLI.tty_ify(description),
+                                    limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
+                    if item['plugin'].startswith('ansible.builtin.'):
+                        relative_url = 'collections/%s_%s.html' % (item['plugin'].replace('.', '/', 2), item['plugin_type'])
+                        text.append(DocCLI.warp_fill(DocCLI.tty_ify(get_versioned_doclink(relative_url)),
+                                    limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
                 elif 'name' in item and 'link' in item and 'description' in item:
-                    text.append(textwrap.fill(DocCLI.tty_ify(item['name']),
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify(item['name']),
                                 limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(DocCLI.tty_ify(item['description']),
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify(item['description']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(DocCLI.tty_ify(item['link']),
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify(item['link']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
                 elif 'ref' in item and 'description' in item:
-                    text.append(textwrap.fill(DocCLI.tty_ify('Ansible documentation [%s]' % item['ref']),
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify('Ansible documentation [%s]' % item['ref']),
                                 limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(DocCLI.tty_ify(item['description']),
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify(item['description']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(DocCLI.tty_ify(get_versioned_doclink('/#stq=%s&stp=1' % item['ref'])),
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify(get_versioned_doclink('/#stq=%s&stp=1' % item['ref'])),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
 
             text.append('')
@@ -1268,14 +1334,14 @@ class DocCLI(CLI, RoleMixin):
 
         if doc.get('requirements', False):
             req = ", ".join(doc.pop('requirements'))
-            text.append("REQUIREMENTS:%s\n" % textwrap.fill(DocCLI.tty_ify(req), limit - 16, initial_indent="  ", subsequent_indent=opt_indent))
+            text.append("REQUIREMENTS:%s\n" % DocCLI.warp_fill(DocCLI.tty_ify(req), limit - 16, initial_indent="  ", subsequent_indent=opt_indent))
 
         # Generic handler
         for k in sorted(doc):
             if k in DocCLI.IGNORE or not doc[k]:
                 continue
             if isinstance(doc[k], string_types):
-                text.append('%s: %s' % (k.upper(), textwrap.fill(DocCLI.tty_ify(doc[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))
+                text.append('%s: %s' % (k.upper(), DocCLI.warp_fill(DocCLI.tty_ify(doc[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))
             elif isinstance(doc[k], (list, tuple)):
                 text.append('%s: %s' % (k.upper(), ', '.join(doc[k])))
             else:
@@ -1337,14 +1403,14 @@ def _do_yaml_snippet(doc):
         if module:
             if required:
                 desc = "(required) %s" % desc
-            text.append("      %-20s   # %s" % (o, textwrap.fill(desc, limit, subsequent_indent=subdent)))
+            text.append("      %-20s   # %s" % (o, DocCLI.warp_fill(desc, limit, subsequent_indent=subdent)))
         else:
             if required:
                 default = '(required)'
             else:
                 default = opt.get('default', 'None')
 
-            text.append("%s %-9s # %s" % (o, default, textwrap.fill(desc, limit, subsequent_indent=subdent, max_lines=3)))
+            text.append("%s %-9s # %s" % (o, default, DocCLI.warp_fill(desc, limit, subsequent_indent=subdent, max_lines=3)))
 
     return text
 

@@ -24,12 +24,14 @@ from . import (
 
 from . import (
     NamedPoints,
+    TargetKey,
     TargetIndexes,
 )
 
 
 class CoverageAnalyzeTargetsFilterConfig(CoverageAnalyzeTargetsConfig):
     """Configuration for the `coverage analyze targets filter` command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
@@ -50,8 +52,12 @@ def command_coverage_analyze_targets_filter(args: CoverageAnalyzeTargetsFilterCo
 
     covered_targets, covered_path_arcs, covered_path_lines = read_report(args.input_file)
 
-    filtered_path_arcs = expand_indexes(covered_path_arcs, covered_targets, lambda v: v)
-    filtered_path_lines = expand_indexes(covered_path_lines, covered_targets, lambda v: v)
+    def pass_target_key(value: TargetKey) -> TargetKey:
+        """Return the given target key unmodified."""
+        return value
+
+    filtered_path_arcs = expand_indexes(covered_path_arcs, covered_targets, pass_target_key)
+    filtered_path_lines = expand_indexes(covered_path_lines, covered_targets, pass_target_key)
 
     include_targets = set(args.include_targets) if args.include_targets else None
     exclude_targets = set(args.exclude_targets) if args.exclude_targets else None
@@ -59,7 +65,7 @@ def command_coverage_analyze_targets_filter(args: CoverageAnalyzeTargetsFilterCo
     include_path = re.compile(args.include_path) if args.include_path else None
     exclude_path = re.compile(args.exclude_path) if args.exclude_path else None
 
-    def path_filter_func(path):
+    def path_filter_func(path: str) -> bool:
         """Return True if the given path should be included, otherwise return False."""
         if include_path and not re.search(include_path, path):
             return False
@@ -69,7 +75,7 @@ def command_coverage_analyze_targets_filter(args: CoverageAnalyzeTargetsFilterCo
 
         return True
 
-    def target_filter_func(targets):
+    def target_filter_func(targets: set[str]) -> set[str]:
         """Filter the given targets and return the result based on the defined includes and excludes."""
         if include_targets:
             targets &= include_targets
@@ -92,9 +98,9 @@ def command_coverage_analyze_targets_filter(args: CoverageAnalyzeTargetsFilterCo
 
 
 def filter_data(
-        data: NamedPoints,
-        path_filter_func: c.Callable[[str], bool],
-        target_filter_func: c.Callable[[set[str]], set[str]],
+    data: NamedPoints,
+    path_filter_func: c.Callable[[str], bool],
+    target_filter_func: c.Callable[[set[str]], set[str]],
 ) -> NamedPoints:
     """Filter the data set using the specified filter function."""
     result: NamedPoints = {}

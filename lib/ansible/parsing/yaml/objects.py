@@ -15,20 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import string
 import sys as _sys
 
 from collections.abc import Sequence
 
-import sys
-import yaml
-
 from ansible.module_utils.six import text_type
-from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 
 
 class AnsibleBaseYAMLObject(object):

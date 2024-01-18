@@ -1,0 +1,47 @@
+# https://github.com/ansible/ansible/issues/71916
+- name: Test setting expiration for a user account that does not have an /etc/shadow entry
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+  block:
+    - name: Remove ansibulluser
+      user:
+        name: ansibulluser
+        state: absent
+        remove: yes
+
+    - name: Create user account entry in /etc/passwd
+      lineinfile:
+        path: /etc/passwd
+        line: "ansibulluser::575:575::/home/dummy:/bin/bash"
+        regexp: "^ansibulluser.*"
+        state: present
+
+    - name: Create user with negative expiration
+      user:
+        name: ansibulluser
+        uid: 575
+        expires: -1
+      register: user_test_expires_no_shadow_1
+
+    - name: Create user with negative expiration again
+      user:
+        name: ansibulluser
+        uid: 575
+        expires: -1
+      register: user_test_expires_no_shadow_2
+
+    - name: Ensure changes were made appropriately
+      assert:
+        that:
+          - user_test_expires_no_shadow_1 is changed
+          - user_test_expires_no_shadow_2 is not changed
+
+    - name: Get expiration date for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be empty or -1, not {{ getent_shadow['ansibulluser'][6] }}"
+        that:
+          - not getent_shadow['ansibulluser'][6] or getent_shadow['ansibulluser'][6] | int < 0

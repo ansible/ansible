@@ -23,14 +23,13 @@ import time
 import functools
 import shlex
 import typing as t
+import warnings
 
 from struct import unpack, pack
 from termios import TIOCGWINSZ
 
-try:
-    from typing_extensions import TypeGuard  # TypeGuard was added in Python 3.10
-except ImportError:
-    TypeGuard = None
+# CAUTION: Avoid third-party imports in this module whenever possible.
+#          Any third-party imports occurring here will result in an error if they are vendored by ansible-core.
 
 from .locale_util import (
     LOCALE_WARNING,
@@ -70,14 +69,12 @@ ANSIBLE_TEST_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # assume running from install
 ANSIBLE_ROOT = os.path.dirname(ANSIBLE_TEST_ROOT)
-ANSIBLE_BIN_PATH = os.path.dirname(os.path.abspath(sys.argv[0]))
 ANSIBLE_LIB_ROOT = os.path.join(ANSIBLE_ROOT, 'ansible')
 ANSIBLE_SOURCE_ROOT = None
 
 if not os.path.exists(ANSIBLE_LIB_ROOT):
     # running from source
     ANSIBLE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(ANSIBLE_TEST_ROOT)))
-    ANSIBLE_BIN_PATH = os.path.join(ANSIBLE_ROOT, 'bin')
     ANSIBLE_LIB_ROOT = os.path.join(ANSIBLE_ROOT, 'lib', 'ansible')
     ANSIBLE_SOURCE_ROOT = ANSIBLE_ROOT
 
@@ -129,6 +126,7 @@ class Architecture:
     Normalized architecture names.
     These are the architectures supported by ansible-test, such as when provisioning remote instances.
     """
+
     X86_64 = 'x86_64'
     AARCH64 = 'aarch64'
 
@@ -338,6 +336,17 @@ def get_ansible_version() -> str:
     return ansible_version
 
 
+def _enable_vendoring() -> None:
+    """Enable support for loading Python packages vendored by ansible-core."""
+    # Load the vendoring code by file path, since ansible may not be in our sys.path.
+    # Convert warnings into errors, to avoid problems from surfacing later.
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings('error')
+
+        load_module(os.path.join(ANSIBLE_LIB_ROOT, '_vendor', '__init__.py'), 'ansible_vendor')
+
+
 @cache
 def get_available_python_versions() -> dict[str, str]:
     """Return a dictionary indicating which supported Python versions are available."""
@@ -345,19 +354,19 @@ def get_available_python_versions() -> dict[str, str]:
 
 
 def raw_command(
-        cmd: c.Iterable[str],
-        capture: bool,
-        env: t.Optional[dict[str, str]] = None,
-        data: t.Optional[str] = None,
-        cwd: t.Optional[str] = None,
-        explain: bool = False,
-        stdin: t.Optional[t.Union[t.IO[bytes], int]] = None,
-        stdout: t.Optional[t.Union[t.IO[bytes], int]] = None,
-        interactive: bool = False,
-        output_stream: t.Optional[OutputStream] = None,
-        cmd_verbosity: int = 1,
-        str_errors: str = 'strict',
-        error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
+    cmd: c.Iterable[str],
+    capture: bool,
+    env: t.Optional[dict[str, str]] = None,
+    data: t.Optional[str] = None,
+    cwd: t.Optional[str] = None,
+    explain: bool = False,
+    stdin: t.Optional[t.Union[t.IO[bytes], int]] = None,
+    stdout: t.Optional[t.Union[t.IO[bytes], int]] = None,
+    interactive: bool = False,
+    output_stream: t.Optional[OutputStream] = None,
+    cmd_verbosity: int = 1,
+    str_errors: str = 'strict',
+    error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified command and return stdout and stderr as a tuple."""
     output_stream = output_stream or OutputStream.AUTO
@@ -422,7 +431,7 @@ def raw_command(
     display.info(f'{description}: {escaped_cmd}', verbosity=cmd_verbosity, truncate=True)
     display.info('Working directory: %s' % cwd, verbosity=2)
 
-    program = find_executable(cmd[0], cwd=cwd, path=env['PATH'], required='warning')
+    program = find_executable(cmd[0], cwd=cwd, path=env['PATH'], required=False)
 
     if program:
         display.info('Program found: %s' % program, verbosity=2)
@@ -496,12 +505,12 @@ def raw_command(
 
 
 def communicate_with_process(
-        process: subprocess.Popen,
-        stdin: t.Optional[bytes],
-        stdout: bool,
-        stderr: bool,
-        capture: bool,
-        output_stream: OutputStream,
+    process: subprocess.Popen,
+    stdin: t.Optional[bytes],
+    stdout: bool,
+    stderr: bool,
+    capture: bool,
+    output_stream: OutputStream,
 ) -> tuple[bytes, bytes]:
     """Communicate with the specified process, handling stdin/stdout/stderr as requested."""
     threads: list[WrappedThread] = []
@@ -553,6 +562,7 @@ def communicate_with_process(
 
 class WriterThread(WrappedThread):
     """Thread to write data to stdin of a subprocess."""
+
     def __init__(self, handle: t.IO[bytes], data: bytes) -> None:
         super().__init__(self._run)
 
@@ -570,6 +580,7 @@ class WriterThread(WrappedThread):
 
 class ReaderThread(WrappedThread, metaclass=abc.ABCMeta):
     """Thread to read stdout from a subprocess."""
+
     def __init__(self, handle: t.IO[bytes], buffer: t.BinaryIO) -> None:
         super().__init__(self._run)
 
@@ -584,6 +595,7 @@ class ReaderThread(WrappedThread, metaclass=abc.ABCMeta):
 
 class CaptureThread(ReaderThread):
     """Thread to capture stdout from a subprocess into a buffer."""
+
     def _run(self) -> None:
         """Workload to run on a thread."""
         src = self.handle
@@ -598,6 +610,7 @@ class CaptureThread(ReaderThread):
 
 class OutputThread(ReaderThread):
     """Thread to pass stdout from a subprocess to stdout."""
+
     def _run(self) -> None:
         """Workload to run on a thread."""
         src = self.handle
@@ -611,7 +624,7 @@ class OutputThread(ReaderThread):
             src.close()
 
 
-def common_environment():
+def common_environment() -> dict[str, str]:
     """Common environment used for executing all programs."""
     env = dict(
         LC_ALL=CONFIGURED_LOCALE,
@@ -778,6 +791,7 @@ def generate_password() -> str:
 
 class Display:
     """Manages color console output."""
+
     clear = '\033[0m'
     red = '\033[31m'
     green = '\033[32m'
@@ -793,17 +807,17 @@ class Display:
         3: cyan,
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.verbosity = 0
         self.color = sys.stdout.isatty()
-        self.warnings = []
-        self.warnings_unique = set()
+        self.warnings: list[str] = []
+        self.warnings_unique: set[str] = set()
         self.fd = sys.stderr  # default to stderr until config is initialized to avoid early messages going to stdout
         self.rows = 0
         self.columns = 0
         self.truncate = 0
         self.redact = True
-        self.sensitive = set()
+        self.sensitive: set[str] = set()
 
         if os.isatty(0):
             self.rows, self.columns = unpack('HHHH', fcntl.ioctl(0, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[:2]
@@ -855,11 +869,11 @@ class Display:
             self.print_message(message, color=color, truncate=truncate)
 
     def print_message(  # pylint: disable=locally-disabled, invalid-name
-            self,
-            message: str,
-            color: t.Optional[str] = None,
-            stderr: bool = False,
-            truncate: bool = False,
+        self,
+        message: str,
+        color: t.Optional[str] = None,
+        stderr: bool = False,
+        truncate: bool = False,
     ) -> None:
         """Display a message."""
         if self.redact and self.sensitive:
@@ -886,6 +900,7 @@ class Display:
 
 class InternalError(Exception):
     """An unhandled internal error indicating a bug in the code."""
+
     def __init__(self, message: str) -> None:
         super().__init__(f'An internal error has occurred in ansible-test: {message}')
 
@@ -898,16 +913,21 @@ class ApplicationWarning(Exception):
     """General application warning which interrupts normal program flow."""
 
 
+class TimeoutExpiredError(SystemExit):
+    """Error raised when the test timeout has been reached or exceeded."""
+
+
 class SubprocessError(ApplicationError):
     """Error resulting from failed subprocess execution."""
+
     def __init__(
-            self,
-            cmd: list[str],
-            status: int = 0,
-            stdout: t.Optional[str] = None,
-            stderr: t.Optional[str] = None,
-            runtime: t.Optional[float] = None,
-            error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
+        self,
+        cmd: list[str],
+        status: int = 0,
+        stdout: t.Optional[str] = None,
+        stderr: t.Optional[str] = None,
+        runtime: t.Optional[float] = None,
+        error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
     ) -> None:
         message = 'Command "%s" returned exit status %s.\n' % (shlex.join(cmd), status)
 
@@ -936,6 +956,7 @@ class SubprocessError(ApplicationError):
 
 class MissingEnvironmentVariable(ApplicationError):
     """Error caused by missing environment variable."""
+
     def __init__(self, name: str) -> None:
         super().__init__('Missing environment variable: %s' % name)
 
@@ -948,6 +969,7 @@ class HostConnectionError(ApplicationError):
     Raised by provisioning code when one or more provisioning threads raise this exception.
     Also raised when an SSH connection fails for the shell command.
     """
+
     def __init__(self, message: str, callback: t.Callable[[], None] = None) -> None:
         super().__init__(message)
 
@@ -959,7 +981,7 @@ class HostConnectionError(ApplicationError):
             self._callback()
 
 
-def retry(func, ex_type=SubprocessError, sleep=10, attempts=10, warn=True):
+def retry(func: t.Callable[..., TValue], ex_type: t.Type[BaseException] = SubprocessError, sleep: int = 10, attempts: int = 10, warn: bool = True) -> TValue:
     """Retry the specified function on failure."""
     for dummy in range(1, attempts):
         try:
@@ -1090,7 +1112,7 @@ def load_module(path: str, name: str) -> None:
     spec.loader.exec_module(module)
 
 
-def sanitize_host_name(name):
+def sanitize_host_name(name: str) -> str:
     """Return a sanitized version of the given name, suitable for use as a hostname."""
     return re.sub('[^A-Za-z0-9]+', '-', name)[:63].strip('-')
 
@@ -1128,7 +1150,7 @@ def verify_sys_executable(path: str) -> t.Optional[str]:
     return expected_executable
 
 
-def type_guard(sequence: c.Sequence[t.Any], guard_type: t.Type[C]) -> TypeGuard[c.Sequence[C]]:
+def type_guard(sequence: c.Sequence[t.Any], guard_type: t.Type[C]) -> t.TypeGuard[c.Sequence[C]]:
     """
     Raises an exception if any item in the given sequence does not match the specified guard type.
     Use with assert so that type checkers are aware of the type guard.
@@ -1144,3 +1166,5 @@ def type_guard(sequence: c.Sequence[t.Any], guard_type: t.Type[C]) -> TypeGuard[
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name
+
+_enable_vendoring()

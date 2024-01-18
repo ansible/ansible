@@ -17,9 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from abc import ABC
 
@@ -28,7 +26,7 @@ import typing as t
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.six import string_types
 from ansible.utils.display import Display
 
@@ -55,6 +53,9 @@ class AnsiblePlugin(ABC):
     # allow extra passthrough parameters
     allow_extras = False
 
+    # Set by plugin loader
+    _load_name: str
+
     def __init__(self):
         self._options = {}
         self._defs = None
@@ -69,12 +70,17 @@ class AnsiblePlugin(ABC):
             possible_fqcns.add(name)
         return bool(possible_fqcns.intersection(set(self.ansible_aliases)))
 
+    def get_option_and_origin(self, option, hostvars=None):
+        try:
+            option_value, origin = C.config.get_config_value_and_origin(option, plugin_type=self.plugin_type, plugin_name=self._load_name, variables=hostvars)
+        except AnsibleError as e:
+            raise KeyError(to_native(e))
+        return option_value, origin
+
     def get_option(self, option, hostvars=None):
+
         if option not in self._options:
-            try:
-                option_value = C.config.get_config_value(option, plugin_type=self.plugin_type, plugin_name=self._load_name, variables=hostvars)
-            except AnsibleError as e:
-                raise KeyError(to_native(e))
+            option_value, dummy = self.get_option_and_origin(option, hostvars=hostvars)
             self.set_option(option, option_value)
         return self._options.get(option)
 
@@ -85,7 +91,7 @@ class AnsiblePlugin(ABC):
         return options
 
     def set_option(self, option, value):
-        self._options[option] = value
+        self._options[option] = C.config.get_config_value(option, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={option: value})
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         '''
@@ -100,7 +106,8 @@ class AnsiblePlugin(ABC):
         # allow extras/wildcards from vars that are not directly consumed in configuration
         # this is needed to support things like winrm that can have extended protocol options we don't directly handle
         if self.allow_extras and var_options and '_extras' in var_options:
-            self.set_option('_extras', var_options['_extras'])
+            # these are largely unvalidated passthroughs, either plugin or underlying API will validate
+            self._options['_extras'] = var_options['_extras']
 
     def has_option(self, option):
         if not self._options:

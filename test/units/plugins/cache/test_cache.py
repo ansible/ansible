@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import shutil
@@ -25,11 +23,11 @@ import tempfile
 
 from unittest import mock
 
-from units.compat import unittest
+import unittest
 from ansible.errors import AnsibleError
 from ansible.plugins.cache import CachePluginAdjudicator
 from ansible.plugins.cache.memory import CacheModule as MemoryCache
-from ansible.plugins.loader import cache_loader
+from ansible.plugins.loader import cache_loader, init_plugin_loader
 from ansible.vars.fact_cache import FactCache
 
 import pytest
@@ -66,7 +64,7 @@ class TestCachePluginAdjudicator(unittest.TestCase):
 
     def test___getitem__(self):
         with pytest.raises(KeyError):
-            self.cache['foo']
+            self.cache['foo']  # pylint: disable=pointless-statement
 
     def test_pop_with_default(self):
         assert self.cache.pop('foo', 'bar') == 'bar'
@@ -183,6 +181,7 @@ class TestFactCache(unittest.TestCase):
         assert len(self.cache.keys()) == 0
 
     def test_plugin_load_failure(self):
+        init_plugin_loader()
         # See https://github.com/ansible/ansible/issues/18751
         # Note no fact_connection config set, so this will fail
         with mock.patch('ansible.constants.CACHE_PLUGIN', 'json'):

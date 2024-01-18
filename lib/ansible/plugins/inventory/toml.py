@@ -1,8 +1,7 @@
 # Copyright (c) 2018 Matt Martz <matt@sivel.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = r'''
     name: toml
@@ -94,7 +93,7 @@ from collections.abc import MutableMapping, MutableSequence
 from functools import partial
 
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError, AnsibleRuntimeError
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.six import string_types, text_type
 from ansible.parsing.yaml.objects import AnsibleSequence, AnsibleUnicode
 from ansible.plugins.inventory import BaseFileInventoryPlugin

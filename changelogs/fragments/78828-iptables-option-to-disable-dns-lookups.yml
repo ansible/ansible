@@ -1,2 +1,0 @@
-minor_changes:
-  - add parameter ``numeric`` to the iptables module to disable dns lookups when running list -action internally (https://github.com/ansible/ansible/issues/78793).

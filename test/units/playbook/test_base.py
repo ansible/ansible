@@ -15,19 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from units.compat import unittest
+import unittest
 
-from ansible.errors import AnsibleParserError
-from ansible.module_utils.six import string_types
+from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.playbook.attribute import FieldAttribute, NonInheritableFieldAttribute
 from ansible.template import Templar
 from ansible.playbook import base
-from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes, AnsibleUnsafeText
-from ansible.utils.sentinel import Sentinel
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText
 
 from units.mock.loader import DictDataLoader
 
@@ -331,21 +327,15 @@ class ExampleSubClass(base.Base):
     def __init__(self):
         super(ExampleSubClass, self).__init__()
 
-    def get_dep_chain(self):
-        if self._parent:
-            return self._parent.get_dep_chain()
-        else:
-            return None
-
 
 class BaseSubClass(base.Base):
     name = FieldAttribute(isa='string', default='', always_post_validate=True)
     test_attr_bool = FieldAttribute(isa='bool', always_post_validate=True)
     test_attr_int = FieldAttribute(isa='int', always_post_validate=True)
     test_attr_float = FieldAttribute(isa='float', default=3.14159, always_post_validate=True)
-    test_attr_list = FieldAttribute(isa='list', listof=string_types, always_post_validate=True)
+    test_attr_list = FieldAttribute(isa='list', listof=(str,), always_post_validate=True)
     test_attr_list_no_listof = FieldAttribute(isa='list', always_post_validate=True)
-    test_attr_list_required = FieldAttribute(isa='list', listof=string_types, required=True,
+    test_attr_list_required = FieldAttribute(isa='list', listof=(str,), required=True,
                                              default=list, always_post_validate=True)
     test_attr_string = FieldAttribute(isa='string', default='the_test_attr_string_default_value')
     test_attr_string_required = FieldAttribute(isa='string', required=True,
@@ -588,10 +578,11 @@ class TestBaseSubClass(TestBase):
                                bsc.post_validate, templar)
 
     def test_attr_unknown(self):
-        a_list = ['some string']
-        ds = {'test_attr_unknown_isa': a_list}
-        bsc = self._base_validate(ds)
-        self.assertEqual(bsc.test_attr_unknown_isa, a_list)
+        self.assertRaises(
+            AnsibleAssertionError,
+            self._base_validate,
+            {'test_attr_unknown_isa': True}
+        )
 
     def test_attr_method(self):
         ds = {'test_attr_method': 'value from the ds'}

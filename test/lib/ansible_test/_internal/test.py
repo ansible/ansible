@@ -47,7 +47,7 @@ def calculate_confidence(path: str, line: int, metadata: Metadata) -> int:
         return 0
 
     # changes were made to the same file and line
-    if any(r[0] <= line <= r[1] in r for r in ranges):
+    if any(r[0] <= line <= r[1] for r in ranges):
         return 100
 
     # changes were made to the same file and the line number is unknown
@@ -60,6 +60,7 @@ def calculate_confidence(path: str, line: int, metadata: Metadata) -> int:
 
 class TestResult:
     """Base class for test results."""
+
     def __init__(self, command: str, test: str, python_version: t.Optional[str] = None) -> None:
         self.command = command
         self.test = test
@@ -113,7 +114,7 @@ class TestResult:
                 junit_xml.TestSuite(
                     name='ansible-test',
                     cases=[test_case],
-                    timestamp=datetime.datetime.utcnow(),
+                    timestamp=datetime.datetime.now(tz=datetime.timezone.utc),
                 ),
             ],
         )
@@ -128,7 +129,8 @@ class TestResult:
 
 class TestTimeout(TestResult):
     """Test timeout."""
-    def __init__(self, timeout_duration: int) -> None:
+
+    def __init__(self, timeout_duration: int | float) -> None:
         super().__init__(command='timeout', test='')
 
         self.timeout_duration = timeout_duration
@@ -151,13 +153,11 @@ One or more of the following situations may be responsible:
 
         output += '\n\nConsult the console log for additional details on where the timeout occurred.'
 
-        timestamp = datetime.datetime.utcnow()
-
         suites = junit_xml.TestSuites(
             suites=[
                 junit_xml.TestSuite(
                     name='ansible-test',
-                    timestamp=timestamp,
+                    timestamp=datetime.datetime.now(tz=datetime.timezone.utc),
                     cases=[
                         junit_xml.TestCase(
                             name='timeout',
@@ -180,6 +180,7 @@ One or more of the following situations may be responsible:
 
 class TestSuccess(TestResult):
     """Test success."""
+
     def write_junit(self, args: TestConfig) -> None:
         """Write results to a junit XML file."""
         test_case = junit_xml.TestCase(classname=self.command, name=self.name)
@@ -189,6 +190,7 @@ class TestSuccess(TestResult):
 
 class TestSkipped(TestResult):
     """Test skipped."""
+
     def __init__(self, command: str, test: str, python_version: t.Optional[str] = None) -> None:
         super().__init__(command, test, python_version)
 
@@ -214,13 +216,14 @@ class TestSkipped(TestResult):
 
 class TestFailure(TestResult):
     """Test failure."""
+
     def __init__(
-            self,
-            command: str,
-            test: str,
-            python_version: t.Optional[str] = None,
-            messages: t.Optional[c.Sequence[TestMessage]] = None,
-            summary: t.Optional[str] = None,
+        self,
+        command: str,
+        test: str,
+        python_version: t.Optional[str] = None,
+        messages: t.Optional[c.Sequence[TestMessage]] = None,
+        summary: t.Optional[str] = None,
     ):
         super().__init__(command, test, python_version)
 
@@ -333,10 +336,8 @@ class TestFailure(TestResult):
 
         return command
 
-    def find_docs(self):
-        """
-        :rtype: str
-        """
+    def find_docs(self) -> t.Optional[str]:
+        """Return the docs URL for this test or None if there is no docs URL."""
         if self.command != 'sanity':
             return None  # only sanity tests have docs links
 
@@ -380,15 +381,16 @@ class TestFailure(TestResult):
 
 class TestMessage:
     """Single test message for one file."""
+
     def __init__(
-            self,
-            message: str,
-            path: str,
-            line: int = 0,
-            column: int = 0,
-            level: str = 'error',
-            code: t.Optional[str] = None,
-            confidence: t.Optional[int] = None,
+        self,
+        message: str,
+        path: str,
+        line: int = 0,
+        column: int = 0,
+        level: str = 'error',
+        code: t.Optional[str] = None,
+        confidence: t.Optional[int] = None,
     ):
         self.__path = path
         self.__line = line

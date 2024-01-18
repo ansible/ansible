@@ -6,8 +6,7 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -21,22 +20,23 @@ description:
 options:
   use_backend:
     description:
-      - This module supports C(yum) (as it always has), this is known as C(yum3)/C(YUM3)/C(yum-deprecated) by
+      - This module supports V(yum) (as it always has), this is known as C(yum3)/C(YUM3)/C(yum-deprecated) by
         upstream yum developers. As of Ansible 2.7+, this module also supports C(YUM4), which is the
-        "new yum" and it has an C(dnf) backend.
+        "new yum" and it has an V(dnf) backend. As of ansible-core 2.15+, this module will auto select the backend
+        based on the C(ansible_pkg_mgr) fact.
       - By default, this module will select the backend based on the C(ansible_pkg_mgr) fact.
     default: "auto"
-    choices: [ auto, yum, yum4, dnf ]
+    choices: [ auto, yum, yum4, dnf, dnf4, dnf5 ]
     type: str
     version_added: "2.7"
   name:
     description:
-      - A package name or package specifier with version, like C(name-1.0).
-      - Comparison operators for package version are valid here C(>), C(<), C(>=), C(<=). Example - C(name>=1.0)
-      - If a previous version is specified, the task also needs to turn C(allow_downgrade) on.
-        See the C(allow_downgrade) documentation for caveats with downgrading packages.
-      - When using state=latest, this can be C('*') which means run C(yum -y update).
-      - You can also pass a url or a local path to a rpm file (using state=present).
+      - A package name or package specifier with version, like V(name-1.0).
+      - Comparison operators for package version are valid here C(>), C(<), C(>=), C(<=). Example - V(name>=1.0)
+      - If a previous version is specified, the task also needs to turn O(allow_downgrade) on.
+        See the O(allow_downgrade) documentation for caveats with downgrading packages.
+      - When using O(state=latest), this can be V('*') which means run C(yum -y update).
+      - You can also pass a url or a local path to an rpm file (using O(state=present)).
         To operate on several packages this can accept a comma separated string of packages or (as of 2.0) a list of packages.
     aliases: [ pkg ]
     type: list
@@ -52,17 +52,17 @@ options:
   list:
     description:
       - "Package name to run the equivalent of C(yum list --show-duplicates <package>) against. In addition to listing packages,
-        use can also list the following: C(installed), C(updates), C(available) and C(repos)."
-      - This parameter is mutually exclusive with I(name).
+        use can also list the following: V(installed), V(updates), V(available) and V(repos)."
+      - This parameter is mutually exclusive with O(name).
     type: str
   state:
     description:
-      - Whether to install (C(present) or C(installed), C(latest)), or remove (C(absent) or C(removed)) a package.
-      - C(present) and C(installed) will simply ensure that a desired package is installed.
-      - C(latest) will update the specified package if it's not of the latest available version.
-      - C(absent) and C(removed) will remove the specified package.
-      - Default is C(None), however in effect the default action is C(present) unless the C(autoremove) option is
-        enabled for this module, then C(absent) is inferred.
+      - Whether to install (V(present) or V(installed), V(latest)), or remove (V(absent) or V(removed)) a package.
+      - V(present) and V(installed) will simply ensure that a desired package is installed.
+      - V(latest) will update the specified package if it's not of the latest available version.
+      - V(absent) and V(removed) will remove the specified package.
+      - Default is V(None), however in effect the default action is V(present) unless the O(autoremove) option is
+        enabled for this module, then V(absent) is inferred.
     type: str
     choices: [ absent, installed, latest, present, removed ]
   enablerepo:
@@ -95,7 +95,7 @@ options:
   disable_gpg_check:
     description:
       - Whether to disable the GPG checking of signatures of packages being
-        installed. Has an effect only if state is I(present) or I(latest).
+        installed. Has an effect only if O(state) is V(present) or V(latest).
     type: bool
     default: "no"
     version_added: "1.2"
@@ -109,30 +109,30 @@ options:
   update_cache:
     description:
       - Force yum to check if cache is out of date and redownload if needed.
-        Has an effect only if state is I(present) or I(latest).
+        Has an effect only if O(state) is V(present) or V(latest).
     type: bool
     default: "no"
     aliases: [ expire-cache ]
     version_added: "1.9"
   validate_certs:
     description:
-      - This only applies if using a https url as the source of the rpm. e.g. for localinstall. If set to C(false), the SSL certificates will not be validated.
-      - This should only set to C(false) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
-      - Prior to 2.1 the code worked as if this was set to C(true).
+      - This only applies if using a https url as the source of the rpm. e.g. for localinstall. If set to V(false), the SSL certificates will not be validated.
+      - This should only set to V(false) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
+      - Prior to 2.1 the code worked as if this was set to V(true).
     type: bool
     default: "yes"
     version_added: "2.1"
   sslverify:
     description:
       - Disables SSL validation of the repository server for this transaction.
-      - This should be set to C(false) if one of the configured repositories is using an untrusted or self-signed certificate.
+      - This should be set to V(false) if one of the configured repositories is using an untrusted or self-signed certificate.
     type: bool
     default: "yes"
     version_added: "2.13"
   update_only:
     description:
       - When using latest, only update installed packages. Do not install packages.
-      - Has an effect only if state is I(latest)
+      - Has an effect only if O(state) is V(latest)
     default: "no"
     type: bool
     version_added: "2.5"
@@ -146,13 +146,13 @@ options:
     version_added: "2.3"
   security:
     description:
-      - If set to C(true), and C(state=latest) then only installs updates that have been marked security related.
+      - If set to V(true), and O(state=latest) then only installs updates that have been marked security related.
     type: bool
     default: "no"
     version_added: "2.4"
   bugfix:
     description:
-      - If set to C(true), and C(state=latest) then only installs updates that have been marked bugfix related.
+      - If set to V(true), and O(state=latest) then only installs updates that have been marked bugfix related.
     default: "no"
     type: bool
     version_added: "2.6"
@@ -193,9 +193,9 @@ options:
     version_added: "2.7"
   autoremove:
     description:
-      - If C(true), removes all "leaf" packages from the system that were originally
+      - If V(true), removes all "leaf" packages from the system that were originally
         installed as dependencies of user-installed packages but which are no longer
-        required by any such package. Should be used alone or when state is I(absent)
+        required by any such package. Should be used alone or when O(state) is V(absent)
       - "NOTE: This feature requires yum >= 3.4.3 (RHEL/CentOS 7+)"
     type: bool
     default: "no"
@@ -203,9 +203,9 @@ options:
   disable_excludes:
     description:
       - Disable the excludes defined in YUM config files.
-      - If set to C(all), disables all excludes.
-      - If set to C(main), disable excludes defined in [main] in yum.conf.
-      - If set to C(repoid), disable excludes defined for given repo id.
+      - If set to V(all), disables all excludes.
+      - If set to V(main), disable excludes defined in [main] in yum.conf.
+      - If set to V(repoid), disable excludes defined for given repo id.
     type: str
     version_added: "2.7"
   download_only:
@@ -231,7 +231,7 @@ options:
   download_dir:
     description:
       - Specifies an alternate directory to store packages.
-      - Has an effect only if I(download_only) is specified.
+      - Has an effect only if O(download_only) is specified.
     type: str
     version_added: "2.8"
   install_repoquery:
@@ -240,7 +240,7 @@ options:
         registered to RHN or an RHN Satellite, repoquery allows for querying
         all channels assigned to the system. It is also required to use the
         'list' parameter.
-      - "NOTE: This will run and be logged as a separate yum transation which
+      - "NOTE: This will run and be logged as a separate yum transaction which
         takes place before any other installation or removal."
       - "NOTE: This will use the system's default enabled repositories without
         regard for disablerepo/enablerepo given to the module."
@@ -273,7 +273,7 @@ attributes:
         platforms: rhel
 notes:
   - When used with a C(loop:) each package will be processed individually,
-    it is much more efficient to pass the list directly to the I(name) option.
+    it is much more efficient to pass the list directly to the O(name) option.
   - In versions prior to 1.9.2 this module installed and removed each package
     given to the yum module separately. This caused problems when packages
     specified by filename or url had to be installed or removed together. In
@@ -407,8 +407,7 @@ EXAMPLES = '''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.respawn import has_respawned, respawn_module
-from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
 import errno
@@ -569,7 +568,7 @@ class YumModule(YumDnf):
 
             # A sideeffect of accessing conf is that the configuration is
             # loaded and plugins are discovered
-            self.yum_base.conf
+            self.yum_base.conf  # pylint: disable=pointless-statement
 
             try:
                 for rid in self.disablerepo:
@@ -618,7 +617,7 @@ class YumModule(YumDnf):
         if not repoq:
             pkgs = []
             try:
-                e, m, _ = self.yum_base.rpmdb.matchPackageNames([pkgspec])
+                e, m, dummy = self.yum_base.rpmdb.matchPackageNames([pkgspec])
                 pkgs = e + m
                 if not pkgs and not is_pkg:
                     pkgs.extend(self.yum_base.returnInstalledPackagesByDep(pkgspec))
@@ -670,7 +669,7 @@ class YumModule(YumDnf):
 
             pkgs = []
             try:
-                e, m, _ = self.yum_base.pkgSack.matchPackageNames([pkgspec])
+                e, m, dummy = self.yum_base.pkgSack.matchPackageNames([pkgspec])
                 pkgs = e + m
                 if not pkgs:
                     pkgs.extend(self.yum_base.returnPackagesByDep(pkgspec))
@@ -710,7 +709,7 @@ class YumModule(YumDnf):
                 pkgs = self.yum_base.returnPackagesByDep(pkgspec) + \
                     self.yum_base.returnInstalledPackagesByDep(pkgspec)
                 if not pkgs:
-                    e, m, _ = self.yum_base.pkgSack.matchPackageNames([pkgspec])
+                    e, m, dummy = self.yum_base.pkgSack.matchPackageNames([pkgspec])
                     pkgs = e + m
                 updates = self.yum_base.doPackageLists(pkgnarrow='updates').updates
             except Exception as e:
@@ -928,7 +927,7 @@ class YumModule(YumDnf):
         cmd = repoq + ["--qf", qf, "-a"]
         if self.releasever:
             cmd.extend(['--releasever=%s' % self.releasever])
-        rc, out, _ = self.module.run_command(cmd)
+        rc, out, err = self.module.run_command(cmd)
         if rc == 0:
             return set(p for p in out.split('\n') if p.strip())
         else:
@@ -1284,15 +1283,13 @@ class YumModule(YumDnf):
         obsoletes = {}
         for line in out.split('\n'):
             line = line.split()
-            """
-            Ignore irrelevant lines:
-              - '*' in line matches lines like mirror lists: "* base: mirror.corbina.net"
-              - len(line) != 3 or 6 could be strings like:
-                  "This system is not registered with an entitlement server..."
-              - len(line) = 6 is package obsoletes
-              - checking for '.' in line[0] (package name) likely ensures that it is of format:
-                  "package_name.arch" (coreutils.x86_64)
-            """
+            # Ignore irrelevant lines:
+            #  - '*' in line matches lines like mirror lists: "* base: mirror.corbina.net"
+            #  - len(line) != 3 or 6 could be strings like:
+            #      "This system is not registered with an entitlement server..."
+            #  - len(line) = 6 is package obsoletes
+            #  - checking for '.' in line[0] (package name) likely ensures that it is of format:
+            #      "package_name.arch" (coreutils.x86_64)
             if '*' in line or len(line) not in [3, 6] or '.' not in line[0]:
                 continue
 
@@ -1421,7 +1418,7 @@ class YumModule(YumDnf):
                     # this contains the full NVR and spec could contain wildcards
                     # or virtual provides (like "python-*" or "smtp-daemon") while
                     # updates contains name only.
-                    pkgname, _, _, _, _ = splitFilename(pkg)
+                    (pkgname, ver, rel, epoch, arch) = splitFilename(pkg)
                     if spec in pkgs['update'] and pkgname in updates:
                         nothing_to_do = False
                         will_update.add(spec)
@@ -1621,30 +1618,29 @@ class YumModule(YumDnf):
             self.yum_basecmd.extend(e_cmd)
 
         if self.state in ('installed', 'present', 'latest'):
-            """ The need of this entire if conditional has to be changed
-                this function is the ensure function that is called
-                in the main section.
-
-                This conditional tends to disable/enable repo for
-                install present latest action, same actually
-                can be done for remove and absent action
-
-                As solution I would advice to cal
-                try: self.yum_base.repos.disableRepo(disablerepo)
-                and
-                try: self.yum_base.repos.enableRepo(enablerepo)
-                right before any yum_cmd is actually called regardless
-                of yum action.
-
-                Please note that enable/disablerepo options are general
-                options, this means that we can call those with any action
-                option.  https://linux.die.net/man/8/yum
-
-                This docstring will be removed together when issue: #21619
-                will be solved.
-
-                This has been triggered by: #19587
-            """
+            # The need of this entire if conditional has to be changed
+            # this function is the ensure function that is called
+            # in the main section.
+            #
+            # This conditional tends to disable/enable repo for
+            # install present latest action, same actually
+            # can be done for remove and absent action
+            #
+            # As solution I would advice to cal
+            # try: self.yum_base.repos.disableRepo(disablerepo)
+            # and
+            # try: self.yum_base.repos.enableRepo(enablerepo)
+            # right before any yum_cmd is actually called regardless
+            # of yum action.
+            #
+            # Please note that enable/disablerepo options are general
+            # options, this means that we can call those with any action
+            # option.  https://linux.die.net/man/8/yum
+            #
+            # This docstring will be removed together when issue: #21619
+            # will be solved.
+            #
+            # This has been triggered by: #19587
 
             if self.update_cache:
                 self.module.run_command(self.yum_basecmd + ['clean', 'expire-cache'])
@@ -1810,7 +1806,7 @@ def main():
     #   list=repos
     #   list=pkgspec
 
-    yumdnf_argument_spec['argument_spec']['use_backend'] = dict(default='auto', choices=['auto', 'yum', 'yum4', 'dnf'])
+    yumdnf_argument_spec['argument_spec']['use_backend'] = dict(default='auto', choices=['auto', 'yum', 'yum4', 'dnf', 'dnf4', 'dnf5'])
 
     module = AnsibleModule(
         **yumdnf_argument_spec

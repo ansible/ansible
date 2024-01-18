@@ -16,8 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 
@@ -34,8 +33,8 @@ class TerminalBase(ABC):
         :class:`TerminalBase` plugins are byte strings.  This is because of
         how close to the underlying platform these plugins operate.  Remember
         to mark literal strings as byte string (``b"string"``) and to use
-        :func:`~ansible.module_utils._text.to_bytes` and
-        :func:`~ansible.module_utils._text.to_text` to avoid unexpected
+        :func:`~ansible.module_utils.common.text.converters.to_bytes` and
+        :func:`~ansible.module_utils.common.text.converters.to_text` to avoid unexpected
         problems.
     '''
 
@@ -85,7 +84,7 @@ class TerminalBase(ABC):
 
         This method is called right after the invoke_shell() is called from
         the Paramiko SSHClient instance.  It provides an opportunity to setup
-        terminal parameters such as disbling paging for instance.
+        terminal parameters such as disabling paging for instance.
         """
         pass
 

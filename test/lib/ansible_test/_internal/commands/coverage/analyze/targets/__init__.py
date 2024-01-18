@@ -20,6 +20,7 @@ from .. import (
 )
 
 TargetKey = t.TypeVar('TargetKey', int, tuple[int, int])
+TFlexKey = t.TypeVar('TFlexKey', int, tuple[int, int], str)
 NamedPoints = dict[str, dict[TargetKey, set[str]]]
 IndexedPoints = dict[str, dict[TargetKey, set[int]]]
 Arcs = dict[str, dict[tuple[int, int], set[int]]]
@@ -56,9 +57,9 @@ def load_report(report: dict[str, t.Any]) -> tuple[list[str], Arcs, Lines]:
         arc_data: dict[str, dict[str, int]] = report['arcs']
         line_data: dict[str, dict[int, int]] = report['lines']
     except KeyError as ex:
-        raise ApplicationError('Document is missing key "%s".' % ex.args)
+        raise ApplicationError('Document is missing key "%s".' % ex.args) from None
     except TypeError:
-        raise ApplicationError('Document is type "%s" instead of "dict".' % type(report).__name__)
+        raise ApplicationError('Document is type "%s" instead of "dict".' % type(report).__name__) from None
 
     arcs = dict((path, dict((parse_arc(arc), set(target_sets[index])) for arc, index in data.items())) for path, data in arc_data.items())
     lines = dict((path, dict((int(line), set(target_sets[index])) for line, index in data.items())) for path, data in line_data.items())
@@ -71,12 +72,12 @@ def read_report(path: str) -> tuple[list[str], Arcs, Lines]:
     try:
         report = read_json_file(path)
     except Exception as ex:
-        raise ApplicationError('File "%s" is not valid JSON: %s' % (path, ex))
+        raise ApplicationError('File "%s" is not valid JSON: %s' % (path, ex)) from None
 
     try:
         return load_report(report)
     except ApplicationError as ex:
-        raise ApplicationError('File "%s" is not an aggregated coverage data file. %s' % (path, ex))
+        raise ApplicationError('File "%s" is not an aggregated coverage data file. %s' % (path, ex)) from None
 
 
 def write_report(args: CoverageAnalyzeTargetsConfig, report: dict[str, t.Any], path: str) -> None:
@@ -118,12 +119,12 @@ def get_target_index(name: str, target_indexes: TargetIndexes) -> int:
 
 
 def expand_indexes(
-        source_data: IndexedPoints,
-        source_index: list[str],
-        format_func: c.Callable[[TargetKey], str],
-) -> NamedPoints:
+    source_data: IndexedPoints,
+    source_index: list[str],
+    format_func: c.Callable[[TargetKey], TFlexKey],
+) -> dict[str, dict[TFlexKey, set[str]]]:
     """Expand indexes from the source into target names for easier processing of the data (arcs or lines)."""
-    combined_data: dict[str, dict[t.Any, set[str]]] = {}
+    combined_data: dict[str, dict[TFlexKey, set[str]]] = {}
 
     for covered_path, covered_points in source_data.items():
         combined_points = combined_data.setdefault(covered_path, {})

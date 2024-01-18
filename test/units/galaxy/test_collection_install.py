@@ -2,9 +2,7 @@
 # Copyright: (c) 2019, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import copy
 import json
@@ -18,16 +16,15 @@ import yaml
 
 from io import BytesIO, StringIO
 from unittest.mock import MagicMock, patch
-from unittest import mock
 
-import ansible.module_utils.six.moves.urllib.error as urllib_error
+import urllib.error
 
 from ansible import context
 from ansible.cli.galaxy import GalaxyCLI
 from ansible.errors import AnsibleError
 from ansible.galaxy import collection, api, dependency_resolution
 from ansible.galaxy.dependency_resolution.dataclasses import Candidate, Requirement
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.process import get_bin_path
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
@@ -51,78 +48,6 @@ def call_galaxy_cli(args):
         GalaxyCLI(args=['ansible-galaxy', 'collection'] + args).run()
     finally:
         co.GlobalCLIArgs._Singleton__instance = orig
-
-
-def artifact_json(namespace, name, version, dependencies, server):
-    json_str = json.dumps({
-        'artifact': {
-            'filename': '%s-%s-%s.tar.gz' % (namespace, name, version),
-            'sha256': '2d76f3b8c4bab1072848107fb3914c345f71a12a1722f25c08f5d3f51f4ab5fd',
-            'size': 1234,
-        },
-        'download_url': '%s/download/%s-%s-%s.tar.gz' % (server, namespace, name, version),
-        'metadata': {
-            'namespace': namespace,
-            'name': name,
-            'dependencies': dependencies,
-        },
-        'version': version
-    })
-    return to_text(json_str)
-
-
-def artifact_versions_json(namespace, name, versions, galaxy_api, available_api_versions=None):
-    results = []
-    available_api_versions = available_api_versions or {}
-    api_version = 'v2'
-    if 'v3' in available_api_versions:
-        api_version = 'v3'
-    for version in versions:
-        results.append({
-            'href': '%s/api/%s/%s/%s/versions/%s/' % (galaxy_api.api_server, api_version, namespace, name, version),
-            'version': version,
-        })
-
-    if api_version == 'v2':
-        json_str = json.dumps({
-            'count': len(versions),
-            'next': None,
-            'previous': None,
-            'results': results
-        })
-
-    if api_version == 'v3':
-        response = {'meta': {'count': len(versions)},
-                    'data': results,
-                    'links': {'first': None,
-                              'last': None,
-                              'next': None,
-                              'previous': None},
-                    }
-        json_str = json.dumps(response)
-    return to_text(json_str)
-
-
-def error_json(galaxy_api, errors_to_return=None, available_api_versions=None):
-    errors_to_return = errors_to_return or []
-    available_api_versions = available_api_versions or {}
-
-    response = {}
-
-    api_version = 'v2'
-    if 'v3' in available_api_versions:
-        api_version = 'v3'
-
-    if api_version == 'v2':
-        assert len(errors_to_return) <= 1
-        if errors_to_return:
-            response = errors_to_return[0]
-
-    if api_version == 'v3':
-        response['errors'] = errors_to_return
-
-    json_str = json.dumps(response)
-    return to_text(json_str)
 
 
 @pytest.fixture(autouse='function')
@@ -371,6 +296,27 @@ def test_build_requirement_from_tar(collection_artifact):
     assert actual.ver == u'0.1.0'
 
 
+def test_build_requirement_from_tar_url(tmp_path_factory):
+    test_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
+    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(test_dir, validate_certs=False)
+    test_url = 'https://example.com/org/repo/sample.tar.gz'
+    expected = fr"^Failed to download collection tar from '{to_text(test_url)}'"
+
+    with pytest.raises(AnsibleError, match=expected):
+        Requirement.from_requirement_dict({'name': test_url, 'type': 'url'}, concrete_artifact_cm)
+
+
+def test_build_requirement_from_tar_url_wrong_type(tmp_path_factory):
+    test_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
+    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(test_dir, validate_certs=False)
+    test_url = 'https://example.com/org/repo/sample.tar.gz'
+    expected = fr"^Unable to find collection artifact file at '{to_text(test_url)}'\.$"
+
+    with pytest.raises(AnsibleError, match=expected):
+        # Specified wrong collection type for http URL
+        Requirement.from_requirement_dict({'name': test_url, 'type': 'file'}, concrete_artifact_cm)
+
+
 def test_build_requirement_from_tar_fail_not_tar(tmp_path_factory):
     test_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
     test_file = os.path.join(test_dir, b'fake.tar.gz')
@@ -603,7 +549,7 @@ def test_build_requirement_from_name_missing(galaxy_server, monkeypatch, tmp_pat
 
 def test_build_requirement_from_name_401_unauthorized(galaxy_server, monkeypatch, tmp_path_factory):
     mock_open = MagicMock()
-    mock_open.side_effect = api.GalaxyError(urllib_error.HTTPError('https://galaxy.server.com', 401, 'msg', {},
+    mock_open.side_effect = api.GalaxyError(urllib.error.HTTPError('https://galaxy.server.com', 401, 'msg', {},
                                                                    StringIO()), "error")
 
     monkeypatch.setattr(galaxy_server, 'get_collection_versions', mock_open)
@@ -895,7 +841,8 @@ def test_install_collections_from_tar(collection_artifact, monkeypatch):
     concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(temp_path, validate_certs=False)
 
     requirements = [Requirement('ansible_namespace.collection', '0.1.0', to_text(collection_tar), 'file', None)]
-    collection.install_collections(requirements, to_text(temp_path), [], False, False, False, False, False, False, concrete_artifact_cm, True, False)
+    collection.install_collections(
+        requirements, to_text(temp_path), [], False, False, False, False, False, False, concrete_artifact_cm, True, False, set())
 
     assert os.path.isdir(collection_path)
 
@@ -919,57 +866,6 @@ def test_install_collections_from_tar(collection_artifact, monkeypatch):
     assert display_msgs[2] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" % to_text(collection_path)
 
 
-def test_install_collections_existing_without_force(collection_artifact, monkeypatch):
-    collection_path, collection_tar = collection_artifact
-    temp_path = os.path.split(collection_tar)[0]
-
-    mock_display = MagicMock()
-    monkeypatch.setattr(Display, 'display', mock_display)
-
-    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(temp_path, validate_certs=False)
-
-    assert os.path.isdir(collection_path)
-
-    requirements = [Requirement('ansible_namespace.collection', '0.1.0', to_text(collection_tar), 'file', None)]
-    collection.install_collections(requirements, to_text(temp_path), [], False, False, False, False, False, False, concrete_artifact_cm, True, False)
-
-    assert os.path.isdir(collection_path)
-
-    actual_files = os.listdir(collection_path)
-    actual_files.sort()
-    assert actual_files == [b'README.md', b'docs', b'galaxy.yml', b'playbooks', b'plugins', b'roles', b'runme.sh']
-
-    # Filter out the progress cursor display calls.
-    display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
-    assert len(display_msgs) == 1
-
-    assert display_msgs[0] == 'Nothing to do. All requested collections are already installed. If you want to reinstall them, consider using `--force`.'
-
-    for msg in display_msgs:
-        assert 'WARNING' not in msg
-
-
-def test_install_missing_metadata_warning(collection_artifact, monkeypatch):
-    collection_path, collection_tar = collection_artifact
-    temp_path = os.path.split(collection_tar)[0]
-
-    mock_display = MagicMock()
-    monkeypatch.setattr(Display, 'display', mock_display)
-
-    for file in [b'MANIFEST.json', b'galaxy.yml']:
-        b_path = os.path.join(collection_path, file)
-        if os.path.isfile(b_path):
-            os.unlink(b_path)
-
-    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(temp_path, validate_certs=False)
-    requirements = [Requirement('ansible_namespace.collection', '0.1.0', to_text(collection_tar), 'file', None)]
-    collection.install_collections(requirements, to_text(temp_path), [], False, False, False, False, False, False, concrete_artifact_cm, True, False)
-
-    display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
-
-    assert 'WARNING' in display_msgs[0]
-
-
 # Makes sure we don't get stuck in some recursive loop
 @pytest.mark.parametrize('collection_artifact', [
     {'ansible_namespace.collection': '>=0.0.1'},
@@ -984,7 +880,8 @@ def test_install_collection_with_circular_dependency(collection_artifact, monkey
 
     concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(temp_path, validate_certs=False)
     requirements = [Requirement('ansible_namespace.collection', '0.1.0', to_text(collection_tar), 'file', None)]
-    collection.install_collections(requirements, to_text(temp_path), [], False, False, False, False, False, False, concrete_artifact_cm, True, False)
+    collection.install_collections(
+        requirements, to_text(temp_path), [], False, False, False, False, False, False, concrete_artifact_cm, True, False, set())
 
     assert os.path.isdir(collection_path)
 
@@ -1021,7 +918,8 @@ def test_install_collection_with_no_dependency(collection_artifact, monkeypatch)
 
     concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(temp_path, validate_certs=False)
     requirements = [Requirement('ansible_namespace.collection', '0.1.0', to_text(collection_tar), 'file', None)]
-    collection.install_collections(requirements, to_text(temp_path), [], False, False, False, False, False, False, concrete_artifact_cm, True, False)
+    collection.install_collections(
+        requirements, to_text(temp_path), [], False, False, False, False, False, False, concrete_artifact_cm, True, False, set())
 
     assert os.path.isdir(collection_path)
 

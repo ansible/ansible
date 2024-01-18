@@ -1,6 +1,5 @@
 """Import the given python module(s) and report error(s) encountered."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 
 def main():
@@ -44,15 +43,12 @@ def main():
         # noinspection PyCompatibility
         from importlib import import_module
     except ImportError:
-        def import_module(name):
+        def import_module(name, package=None):  # type: (str, str | None) -> types.ModuleType
+            assert package is None
             __import__(name)
             return sys.modules[name]
 
-    try:
-        # noinspection PyCompatibility
-        from StringIO import StringIO
-    except ImportError:
-        from io import StringIO
+    from io import BytesIO, TextIOWrapper
 
     try:
         from importlib.util import spec_from_loader, module_from_spec
@@ -436,8 +432,9 @@ def main():
     class Capture:
         """Captured output and/or exception."""
         def __init__(self):
-            self.stdout = StringIO()
-            self.stderr = StringIO()
+            # use buffered IO to simulate StringIO; allows Ansible's stream patching to behave without warnings
+            self.stdout = TextIOWrapper(BytesIO())
+            self.stderr = TextIOWrapper(BytesIO())
 
     def capture_report(path, capture, messages):
         """Report on captured output.
@@ -445,12 +442,17 @@ def main():
         :type capture: Capture
         :type messages: set[str]
         """
-        if capture.stdout.getvalue():
-            first = capture.stdout.getvalue().strip().splitlines()[0].strip()
+        # since we're using buffered IO, flush before checking for data
+        capture.stdout.flush()
+        capture.stderr.flush()
+        stdout_value = capture.stdout.buffer.getvalue()
+        if stdout_value:
+            first = stdout_value.decode().strip().splitlines()[0].strip()
             report_message(path, 0, 0, 'stdout', first, messages)
 
-        if capture.stderr.getvalue():
-            first = capture.stderr.getvalue().strip().splitlines()[0].strip()
+        stderr_value = capture.stderr.buffer.getvalue()
+        if stderr_value:
+            first = stderr_value.decode().strip().splitlines()[0].strip()
             report_message(path, 0, 0, 'stderr', first, messages)
 
     def report_message(path, line, column, code, message, messages):
@@ -538,24 +540,6 @@ def main():
                 warnings.filterwarnings(
                     "ignore",
                     "AnsibleCollectionFinder has already been configured")
-
-            if sys.version_info[0] == 2:
-                warnings.filterwarnings(
-                    "ignore",
-                    "Python 2 is no longer supported by the Python core team. Support for it is now deprecated in cryptography,"
-                    " and will be removed in a future release.")
-                warnings.filterwarnings(
-                    "ignore",
-                    "Python 2 is no longer supported by the Python core team. Support for it is now deprecated in cryptography,"
-                    " and will be removed in the next release.")
-
-            if sys.version_info[:2] == (3, 5):
-                warnings.filterwarnings(
-                    "ignore",
-                    "Python 3.5 support will be dropped in the next release ofcryptography. Please upgrade your Python.")
-                warnings.filterwarnings(
-                    "ignore",
-                    "Python 3.5 support will be dropped in the next release of cryptography. Please upgrade your Python.")
 
             try:
                 yield

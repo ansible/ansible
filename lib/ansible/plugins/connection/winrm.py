@@ -2,8 +2,7 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     author: Ansible Core Team
@@ -39,7 +38,7 @@ DOCUMENTATION = """
             - name: remote_user
         type: str
       remote_password:
-        description: Authentication password for the C(remote_user). Can be supplied as CLI option.
+        description: Authentication password for the O(remote_user). Can be supplied as CLI option.
         vars:
             - name: ansible_password
             - name: ansible_winrm_pass
@@ -61,8 +60,8 @@ DOCUMENTATION = """
       scheme:
         description:
             - URI scheme to use
-            - If not set, then will default to C(https) or C(http) if I(port) is
-              C(5985).
+            - If not set, then will default to V(https) or V(http) if O(port) is
+              V(5985).
         choices: [http, https]
         vars:
           - name: ansible_winrm_scheme
@@ -119,7 +118,7 @@ DOCUMENTATION = """
             - The managed option means Ansible will obtain kerberos ticket.
             - While the manual one means a ticket must already have been obtained by the user.
             - If having issues with Ansible freezing when trying to obtain the
-              Kerberos ticket, you can either set this to C(manual) and obtain
+              Kerberos ticket, you can either set this to V(manual) and obtain
               it outside Ansible or install C(pexpect) through pip and try
               again.
         choices: [managed, manual]
@@ -148,8 +147,8 @@ DOCUMENTATION = """
               seconds higher than the WS-Man operation timeout, thus make the connection more
               robust on networks with long latency and/or many hops between server and client
               network wise.
-            - Setting the difference bewteen the operation and the read timeout to 10 seconds
-              alligns it to the defaults used in the winrm-module and the PSRP-module which also
+            - Setting the difference between the operation and the read timeout to 10 seconds
+              aligns it to the defaults used in the winrm-module and the PSRP-module which also
               uses 10 seconds (30 seconds for read timeout and 20 seconds for operation timeout)
             - Corresponds to the C(operation_timeout_sec) and
               C(read_timeout_sec) args in pywinrm so avoid setting these vars
@@ -170,13 +169,15 @@ import json
 import tempfile
 import shlex
 import subprocess
+import time
+import typing as t
 
 from inspect import getfullargspec
 from urllib.parse import urlunsplit
 
 HAVE_KERBEROS = False
 try:
-    import kerberos
+    import kerberos  # pylint: disable=unused-import
     HAVE_KERBEROS = True
 except ImportError:
     pass
@@ -186,10 +187,11 @@ from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.six import binary_type
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import _parse_clixml
+from ansible.plugins.shell.powershell import ShellBase as PowerShellBase
 from ansible.utils.hashing import secure_hash
 from ansible.utils.display import Display
 
@@ -197,6 +199,7 @@ from ansible.utils.display import Display
 try:
     import winrm
     from winrm import Response
+    from winrm.exceptions import WinRMError, WinRMOperationTimeoutError
     from winrm.protocol import Protocol
     import requests.exceptions
     HAS_WINRM = True
@@ -245,14 +248,15 @@ class Connection(ConnectionBase):
     has_pipelining = True
     allow_extras = True
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
 
         self.always_pipeline_modules = True
         self.has_native_async = True
 
-        self.protocol = None
-        self.shell_id = None
+        self.protocol: winrm.Protocol | None = None
+        self.shell_id: str | None = None
         self.delegate = None
+        self._shell: PowerShellBase
         self._shell_type = 'powershell'
 
         super(Connection, self).__init__(*args, **kwargs)
@@ -262,7 +266,7 @@ class Connection(ConnectionBase):
             logging.getLogger('requests_kerberos').setLevel(logging.INFO)
             logging.getLogger('urllib3').setLevel(logging.INFO)
 
-    def _build_winrm_kwargs(self):
+    def _build_winrm_kwargs(self) -> None:
         # this used to be in set_options, as win_reboot needs to be able to
         # override the conn timeout, we need to be able to build the args
         # after setting individual options. This is called by _connect before
@@ -336,7 +340,7 @@ class Connection(ConnectionBase):
 
     # Until pykerberos has enough goodies to implement a rudimentary kinit/klist, simplest way is to let each connection
     # auth itself with a private CCACHE.
-    def _kerb_auth(self, principal, password):
+    def _kerb_auth(self, principal: str, password: str) -> None:
         if password is None:
             password = ""
 
@@ -401,8 +405,8 @@ class Connection(ConnectionBase):
             rc = child.exitstatus
         else:
             proc_mechanism = "subprocess"
-            password = to_bytes(password, encoding='utf-8',
-                                errors='surrogate_or_strict')
+            b_password = to_bytes(password, encoding='utf-8',
+                                  errors='surrogate_or_strict')
 
             display.vvvv("calling kinit with subprocess for principal %s"
                          % principal)
@@ -417,7 +421,7 @@ class Connection(ConnectionBase):
                           "'%s': %s" % (self._kinit_cmd, to_native(err))
                 raise AnsibleConnectionFailure(err_msg)
 
-            stdout, stderr = p.communicate(password + b'\n')
+            stdout, stderr = p.communicate(b_password + b'\n')
             rc = p.returncode != 0
 
         if rc != 0:
@@ -432,7 +436,7 @@ class Connection(ConnectionBase):
 
         display.vvvvv("kinit succeeded for principal %s" % principal)
 
-    def _winrm_connect(self):
+    def _winrm_connect(self) -> winrm.Protocol:
         '''
         Establish a WinRM connection over HTTP/HTTPS.
         '''
@@ -491,7 +495,44 @@ class Connection(ConnectionBase):
         else:
             raise AnsibleError('No transport found for WinRM connection')
 
-    def _winrm_send_input(self, protocol, shell_id, command_id, stdin, eof=False):
+    def _winrm_write_stdin(self, command_id: str, stdin_iterator: t.Iterable[tuple[bytes, bool]]) -> None:
+        for (data, is_last) in stdin_iterator:
+            for attempt in range(1, 4):
+                try:
+                    self._winrm_send_input(self.protocol, self.shell_id, command_id, data, eof=is_last)
+
+                except WinRMOperationTimeoutError:
+                    # A WSMan OperationTimeout can be received for a Send
+                    # operation when the server is under severe load. On manual
+                    # testing the input is still processed and it's safe to
+                    # continue. As the calling method still tries to wait for
+                    # the proc to end if this failed it shouldn't hurt to just
+                    # treat this as a warning.
+                    display.warning(
+                        "WSMan OperationTimeout during send input, attempting to continue. "
+                        "If this continues to occur, try increasing the connection_timeout "
+                        "value for this host."
+                    )
+                    if not is_last:
+                        time.sleep(5)
+
+                except WinRMError as e:
+                    # Error 170 == ERROR_BUSY. This could be the result of a
+                    # timed out Send from above still being processed on the
+                    # server. Add a 5 second delay and try up to 3 times before
+                    # fully giving up.
+                    # pywinrm does not expose the internal WSMan fault details
+                    # through an actual object but embeds it as a repr.
+                    if attempt == 3 or "'wsmanfault_code': '170'" not in str(e):
+                        raise
+
+                    display.warning(f"WSMan send failed on attempt {attempt} as the command is busy, trying to send data again")
+                    time.sleep(5)
+                    continue
+
+                break
+
+    def _winrm_send_input(self, protocol: winrm.Protocol, shell_id: str, command_id: str, stdin: bytes, eof: bool = False) -> None:
         rq = {'env:Envelope': protocol._get_soap_header(
             resource_uri='http://schemas.microsoft.com/wbem/wsman/1/windows/shell/cmd',
             action='http://schemas.microsoft.com/wbem/wsman/1/windows/shell/Send',
@@ -505,7 +546,13 @@ class Connection(ConnectionBase):
             stream['@End'] = 'true'
         protocol.send_message(xmltodict.unparse(rq))
 
-    def _winrm_exec(self, command, args=(), from_exec=False, stdin_iterator=None):
+    def _winrm_exec(
+        self,
+        command: str,
+        args: t.Iterable[bytes] = (),
+        from_exec: bool = False,
+        stdin_iterator: t.Iterable[tuple[bytes, bool]] = None,
+    ) -> winrm.Response:
         if not self.protocol:
             self.protocol = self._winrm_connect()
             self._connected = True
@@ -520,8 +567,7 @@ class Connection(ConnectionBase):
 
             try:
                 if stdin_iterator:
-                    for (data, is_last) in stdin_iterator:
-                        self._winrm_send_input(self.protocol, self.shell_id, command_id, data, eof=is_last)
+                    self._winrm_write_stdin(command_id, stdin_iterator)
 
             except Exception as ex:
                 display.warning("ERROR DURING WINRM SEND INPUT - attempting to recover: %s %s"
@@ -567,7 +613,7 @@ class Connection(ConnectionBase):
             if command_id:
                 self.protocol.cleanup_command(self.shell_id, command_id)
 
-    def _connect(self):
+    def _connect(self) -> Connection:
 
         if not HAS_WINRM:
             raise AnsibleError("winrm or requests is not installed: %s" % to_native(WINRM_IMPORT_ERR))
@@ -581,20 +627,20 @@ class Connection(ConnectionBase):
             self._connected = True
         return self
 
-    def reset(self):
+    def reset(self) -> None:
         if not self._connected:
             return
         self.protocol = None
         self.shell_id = None
         self._connect()
 
-    def _wrapper_payload_stream(self, payload, buffer_size=200000):
+    def _wrapper_payload_stream(self, payload: bytes, buffer_size: int = 200000) -> t.Iterable[tuple[bytes, bool]]:
         payload_bytes = to_bytes(payload)
         byte_count = len(payload_bytes)
         for i in range(0, byte_count, buffer_size):
             yield payload_bytes[i:i + buffer_size], i + buffer_size >= byte_count
 
-    def exec_command(self, cmd, in_data=None, sudoable=True):
+    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
         cmd_parts = self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False)
 
@@ -622,7 +668,7 @@ class Connection(ConnectionBase):
         return (result.status_code, result.std_out, result.std_err)
 
     # FUTURE: determine buffer size at runtime via remote winrm config?
-    def _put_file_stdin_iterator(self, in_path, out_path, buffer_size=250000):
+    def _put_file_stdin_iterator(self, in_path: str, out_path: str, buffer_size: int = 250000) -> t.Iterable[tuple[bytes, bool]]:
         in_size = os.path.getsize(to_bytes(in_path, errors='surrogate_or_strict'))
         offset = 0
         with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
@@ -635,9 +681,9 @@ class Connection(ConnectionBase):
                 yield b64_data, (in_file.tell() == in_size)
 
             if offset == 0:  # empty file, return an empty buffer + eof to close it
-                yield "", True
+                yield b"", True
 
-    def put_file(self, in_path, out_path):
+    def put_file(self, in_path: str, out_path: str) -> None:
         super(Connection, self).put_file(in_path, out_path)
         out_path = self._shell._unquote(out_path)
         display.vvv('PUT "%s" TO "%s"' % (in_path, out_path), host=self._winrm_host)
@@ -678,7 +724,7 @@ class Connection(ConnectionBase):
         cmd_parts = self._shell._encode_script(script, as_list=True, strict_mode=False, preserve_rc=False)
 
         result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], stdin_iterator=self._put_file_stdin_iterator(in_path, out_path))
-        # TODO: improve error handling
+
         if result.status_code != 0:
             raise AnsibleError(to_native(result.std_err))
 
@@ -700,7 +746,7 @@ class Connection(ConnectionBase):
         if not remote_sha1 == local_sha1:
             raise AnsibleError("Remote sha1 hash {0} does not match local hash {1}".format(to_native(remote_sha1), to_native(local_sha1)))
 
-    def fetch_file(self, in_path, out_path):
+    def fetch_file(self, in_path: str, out_path: str) -> None:
         super(Connection, self).fetch_file(in_path, out_path)
         in_path = self._shell._unquote(in_path)
         out_path = out_path.replace('\\', '/')
@@ -714,7 +760,7 @@ class Connection(ConnectionBase):
                 try:
                     script = '''
                         $path = '%(path)s'
-                        If (Test-Path -Path $path -PathType Leaf)
+                        If (Test-Path -LiteralPath $path -PathType Leaf)
                         {
                             $buffer_size = %(buffer_size)d
                             $offset = %(offset)d
@@ -729,7 +775,7 @@ class Connection(ConnectionBase):
                             }
                             $stream.Close() > $null
                         }
-                        ElseIf (Test-Path -Path $path -PathType Container)
+                        ElseIf (Test-Path -LiteralPath $path -PathType Container)
                         {
                             Write-Host "[DIR]";
                         }
@@ -767,7 +813,7 @@ class Connection(ConnectionBase):
             if out_file:
                 out_file.close()
 
-    def close(self):
+    def close(self) -> None:
         if self.protocol and self.shell_id:
             display.vvvvv('WINRM CLOSE SHELL: %s' % self.shell_id, host=self._winrm_host)
             self.protocol.close_shell(self.shell_id)

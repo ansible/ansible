@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -105,7 +103,7 @@ def test_included_file_instantiation():
     assert inc_file._task is None
 
 
-def test_process_include_results(mock_iterator, mock_variable_manager):
+def test_process_include_tasks_results(mock_iterator, mock_variable_manager):
     hostname = "testhost1"
     hostname2 = "testhost2"
 
@@ -113,7 +111,7 @@ def test_process_include_results(mock_iterator, mock_variable_manager):
     parent_task = Task.load(parent_task_ds)
     parent_task._play = None
 
-    task_ds = {'include': 'include_test.yml'}
+    task_ds = {'include_tasks': 'include_test.yml'}
     loaded_task = TaskInclude.load(task_ds, task_include=parent_task)
 
     return_data = {'include': 'include_test.yml'}
@@ -133,7 +131,7 @@ def test_process_include_results(mock_iterator, mock_variable_manager):
     assert res[0]._vars == {}
 
 
-def test_process_include_diff_files(mock_iterator, mock_variable_manager):
+def test_process_include_tasks_diff_files(mock_iterator, mock_variable_manager):
     hostname = "testhost1"
     hostname2 = "testhost2"
 
@@ -141,11 +139,11 @@ def test_process_include_diff_files(mock_iterator, mock_variable_manager):
     parent_task = Task.load(parent_task_ds)
     parent_task._play = None
 
-    task_ds = {'include': 'include_test.yml'}
+    task_ds = {'include_tasks': 'include_test.yml'}
     loaded_task = TaskInclude.load(task_ds, task_include=parent_task)
     loaded_task._play = None
 
-    child_task_ds = {'include': 'other_include_test.yml'}
+    child_task_ds = {'include_tasks': 'other_include_test.yml'}
     loaded_child_task = TaskInclude.load(child_task_ds, task_include=loaded_task)
     loaded_child_task._play = None
 
@@ -175,7 +173,7 @@ def test_process_include_diff_files(mock_iterator, mock_variable_manager):
     assert res[1]._vars == {}
 
 
-def test_process_include_simulate_free(mock_iterator, mock_variable_manager):
+def test_process_include_tasks_simulate_free(mock_iterator, mock_variable_manager):
     hostname = "testhost1"
     hostname2 = "testhost2"
 
@@ -186,7 +184,7 @@ def test_process_include_simulate_free(mock_iterator, mock_variable_manager):
     parent_task1._play = None
     parent_task2._play = None
 
-    task_ds = {'include': 'include_test.yml'}
+    task_ds = {'include_tasks': 'include_test.yml'}
     loaded_task1 = TaskInclude.load(task_ds, task_include=parent_task1)
     loaded_task2 = TaskInclude.load(task_ds, task_include=parent_task2)
 
@@ -317,9 +315,6 @@ def test_empty_raw_params():
     parent_task._play = None
 
     task_ds_list = [
-        {
-            'include': ''
-        },
         {
             'include_tasks': ''
         },

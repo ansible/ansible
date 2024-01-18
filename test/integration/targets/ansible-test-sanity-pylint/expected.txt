@@ -1,0 +1,1 @@
+plugins/lookup/deprecated.py:26:0: collection-deprecated-version: Deprecated version ('2.0.0') found in call to Display.deprecated or AnsibleModule.deprecate

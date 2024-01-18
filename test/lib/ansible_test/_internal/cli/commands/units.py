@@ -24,9 +24,9 @@ from ..environments import (
 
 
 def do_units(
-        subparsers,
-        parent: argparse.ArgumentParser,
-        completer: CompositeActionCompletionFinder,
+    subparsers,
+    parent: argparse.ArgumentParser,
+    completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `units` command."""
     parser: argparse.ArgumentParser = subparsers.add_parser(

@@ -41,6 +41,7 @@ repo_update_url_2: 'https://github.com/ansible-test-robinro/git-test-new'
 known_host_files:
   - "{{ lookup('env','HOME') }}/.ssh/known_hosts"
   - '/etc/ssh/ssh_known_hosts'
+git_default_branch: main
 git_version_supporting_depth: 1.9.1
 git_version_supporting_ls_remote: 1.7.5
 git_version_supporting_single_branch: 1.7.10

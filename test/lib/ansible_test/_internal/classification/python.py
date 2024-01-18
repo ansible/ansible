@@ -146,10 +146,8 @@ def get_python_module_utils_name(path: str) -> str:
     return name
 
 
-def enumerate_module_utils():
-    """Return a list of available module_utils imports.
-    :rtype: set[str]
-    """
+def enumerate_module_utils() -> set[str]:
+    """Return a list of available module_utils imports."""
     module_utils = []
 
     for path in data_context().content.walk_files(data_context().content.module_utils_path):
@@ -233,6 +231,7 @@ def relative_to_absolute(name: str, level: int, module: str, path: str, lineno: 
 
 class ModuleUtilFinder(ast.NodeVisitor):
     """AST visitor to find valid module_utils imports."""
+
     def __init__(self, path: str, module_utils: set[str]) -> None:
         self.path = path
         self.module_utils = module_utils
@@ -257,7 +256,6 @@ class ModuleUtilFinder(ast.NodeVisitor):
             # The mapping is a tuple consisting of a path pattern to match and a replacement path.
             # During analysis, any relative imports not covered here will result in warnings, which can be fixed by adding the appropriate entry.
             path_map = (
-                ('^hacking/build_library/build_ansible/', 'build_ansible/'),
                 ('^lib/ansible/', 'ansible/'),
                 ('^test/lib/ansible_test/_util/controller/sanity/validate-modules/', 'validate_modules/'),
                 ('^test/units/', 'test/units/'),

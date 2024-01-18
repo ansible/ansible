@@ -1,0 +1,6 @@
+---
+- debug:
+    msg: "{{ lookup('vars', name='test') }}"
+
+- debug:
+    msg: "{{ query('vars', name='test') }}"

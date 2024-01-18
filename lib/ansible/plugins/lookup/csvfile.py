@@ -1,8 +1,7 @@
 # (c) 2013, Jan-Piet Mens <jpmens(at)gmail.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = r"""
     name: csvfile
@@ -12,15 +11,20 @@ DOCUMENTATION = r"""
     description:
       - The csvfile lookup reads the contents of a file in CSV (comma-separated value) format.
         The lookup looks for the row where the first column matches keyname (which can be multiple words)
-        and returns the value in the C(col) column (default 1, which indexed from 0 means the second column in the file).
+        and returns the value in the O(col) column (default 1, which indexed from 0 means the second column in the file).
     options:
       col:
         description:  column to return (0 indexed).
         default: "1"
+      keycol:
+        description:  column to search in (0 indexed).
+        default: 0
+        type: int
+        version_added: "2.17"
       default:
         description: what to return if the value is not found in the file.
       delimiter:
-        description: field separator in the file, for a tab you can specify C(TAB) or C(\t).
+        description: field separator in the file, for a tab you can specify V(TAB) or V(\\t).
         default: TAB
       file:
         description: name of the CSV/TSV file to open.
@@ -35,6 +39,9 @@ DOCUMENTATION = r"""
       - For historical reasons, in the search keyname, quotes are treated
         literally and cannot be used around the string unless they appear
         (escaped as required) in the first column of the file you are parsing.
+    seealso:
+      - ref: playbook_task_paths
+        description: Search paths used for relative files.
 """
 
 EXAMPLES = """
@@ -54,7 +61,7 @@ EXAMPLES = """
     neighbor_as: "{{ csvline[5] }}"
     neigh_int_ip: "{{ csvline[6] }}"
   vars:
-    csvline = "{{ lookup('ansible.builtin.csvfile', bgp_neighbor_ip, file='bgp_neighbors.csv', delimiter=',') }}"
+    csvline: "{{ lookup('ansible.builtin.csvfile', bgp_neighbor_ip, file='bgp_neighbors.csv', delimiter=',') }}"
   delegate_to: localhost
 """
 
@@ -75,12 +82,12 @@ from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils.six import PY2
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 
 
 class CSVRecoder:
     """
-    Iterator that reads an encoded stream and reencodes the input to UTF-8
+    Iterator that reads an encoded stream and encodes the input to UTF-8
     """
     def __init__(self, f, encoding='utf-8'):
         self.reader = codecs.getreader(encoding)(f)
@@ -120,14 +127,14 @@ class CSVReader:
 
 class LookupModule(LookupBase):
 
-    def read_csv(self, filename, key, delimiter, encoding='utf-8', dflt=None, col=1):
+    def read_csv(self, filename, key, delimiter, encoding='utf-8', dflt=None, col=1, keycol=0):
 
         try:
             f = open(to_bytes(filename), 'rb')
             creader = CSVReader(f, delimiter=to_native(delimiter), encoding=encoding)
 
             for row in creader:
-                if len(row) and row[0] == key:
+                if len(row) and row[keycol] == key:
                     return row[int(col)]
         except Exception as e:
             raise AnsibleError("csvfile: %s" % to_native(e))
@@ -170,7 +177,7 @@ class LookupModule(LookupBase):
                 paramvals['delimiter'] = "\t"
 
             lookupfile = self.find_file_in_search_path(variables, 'files', paramvals['file'])
-            var = self.read_csv(lookupfile, key, paramvals['delimiter'], paramvals['encoding'], paramvals['default'], paramvals['col'])
+            var = self.read_csv(lookupfile, key, paramvals['delimiter'], paramvals['encoding'], paramvals['default'], paramvals['col'], paramvals['keycol'])
             if var is not None:
                 if isinstance(var, MutableSequence):
                     for v in var:

@@ -6,8 +6,7 @@ This file provides ease of use shortcuts for loading and dumping YAML,
 preferring the YAML compiled C extensions to reduce duplicated code.
 """
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from functools import partial as _partial
 
@@ -24,13 +23,13 @@ if HAS_YAML:
     try:
         from yaml import CSafeLoader as SafeLoader
         from yaml import CSafeDumper as SafeDumper
-        from yaml.cyaml import CParser as Parser
+        from yaml.cyaml import CParser as Parser  # type: ignore[attr-defined]  # pylint: disable=unused-import
 
         HAS_LIBYAML = True
     except (ImportError, AttributeError):
-        from yaml import SafeLoader  # type: ignore[misc]
-        from yaml import SafeDumper  # type: ignore[misc]
-        from yaml.parser import Parser  # type: ignore[misc]
+        from yaml import SafeLoader  # type: ignore[assignment]
+        from yaml import SafeDumper  # type: ignore[assignment]
+        from yaml.parser import Parser  # type: ignore[assignment]  # pylint: disable=unused-import
 
     yaml_load = _partial(_yaml.load, Loader=SafeLoader)
     yaml_load_all = _partial(_yaml.load_all, Loader=SafeLoader)

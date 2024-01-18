@@ -1,7 +1,6 @@
 # Copyright (c) 2019 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 
 class ModuleDocFragment(object):
@@ -35,7 +34,7 @@ options:
     description:
     - Controls if we set the locale for modules when executing on the
       target.
-    - Windows only supports C(no) as an option.
+    - Windows only supports V(no) as an option.
     type: bool
     default: 'no'
     choices: ['no', False]

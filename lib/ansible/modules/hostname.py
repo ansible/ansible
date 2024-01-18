@@ -4,8 +4,7 @@
 # Copyright: (c) 2013, Hiroaki Nakamura <hnakamur@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -81,8 +80,7 @@ from ansible.module_utils.basic import (
 from ansible.module_utils.common.sys_info import get_platform_subclass
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
 from ansible.module_utils.facts.utils import get_file_lines, get_file_content
-from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.six import PY3, text_type
+from ansible.module_utils.common.text.converters import to_native, to_text
 
 STRATS = {
     'alpine': 'Alpine',
@@ -387,10 +385,29 @@ class OpenRCStrategy(BaseStrategy):
 class OpenBSDStrategy(FileStrategy):
     """
     This is a OpenBSD family Hostname manipulation strategy class - it edits
-    the /etc/myname file.
+    the /etc/myname file for the permanent hostname and executes hostname
+    command for the current hostname.
     """
 
     FILE = '/etc/myname'
+    COMMAND = "hostname"
+
+    def __init__(self, module):
+        super(OpenBSDStrategy, self).__init__(module)
+        self.hostname_cmd = self.module.get_bin_path(self.COMMAND, True)
+
+    def get_current_hostname(self):
+        cmd = [self.hostname_cmd]
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
+        return to_native(out).strip()
+
+    def set_current_hostname(self, name):
+        cmd = [self.hostname_cmd, name]
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
 
 class SolarisStrategy(BaseStrategy):
@@ -514,21 +531,6 @@ class DarwinStrategy(BaseStrategy):
         self.name_types = ('HostName', 'ComputerName', 'LocalHostName')
         self.scrubbed_name = self._scrub_hostname(self.module.params['name'])
 
-    def _make_translation(self, replace_chars, replacement_chars, delete_chars):
-        if PY3:
-            return str.maketrans(replace_chars, replacement_chars, delete_chars)
-
-        if not isinstance(replace_chars, text_type) or not isinstance(replacement_chars, text_type):
-            raise ValueError('replace_chars and replacement_chars must both be strings')
-        if len(replace_chars) != len(replacement_chars):
-            raise ValueError('replacement_chars must be the same length as replace_chars')
-
-        table = dict(zip((ord(c) for c in replace_chars), replacement_chars))
-        for char in delete_chars:
-            table[ord(char)] = None
-
-        return table
-
     def _scrub_hostname(self, name):
         """
         LocalHostName only accepts valid DNS characters while HostName and ComputerName
@@ -540,7 +542,7 @@ class DarwinStrategy(BaseStrategy):
         name = to_text(name)
         replace_chars = u'\'"~`!@#$%^&*(){}[]/=?+\\|-_ '
         delete_chars = u".'"
-        table = self._make_translation(replace_chars, u'-' * len(replace_chars), delete_chars)
+        table = str.maketrans(replace_chars, '-' * len(replace_chars), delete_chars)
         name = name.translate(table)
 
         # Replace multiple dashes with a single dash

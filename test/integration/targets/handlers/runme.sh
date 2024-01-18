@@ -50,6 +50,9 @@ for strategy in linear free; do
   [ "$(ansible-playbook test_force_handlers.yml -i inventory.handlers -v "$@" --tags force_false_in_play --force-handlers \
   | grep -E -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_B" ]
 
+  # https://github.com/ansible/ansible/pull/80898
+  [ "$(ansible-playbook 80880.yml -i inventory.handlers -vv "$@" 2>&1)" ]
+
   unset ANSIBLE_STRATEGY
 
 done
@@ -65,6 +68,9 @@ done
 
 # Notify handler listen
 ansible-playbook test_handlers_listen.yml -i inventory.handlers -v "$@"
+
+# https://github.com/ansible/ansible/issues/82363
+ansible-playbook test_multiple_handlers_with_recursive_notification.yml -i inventory.handlers -v "$@"
 
 # Notify inexistent handlers results in error
 set +e
@@ -170,3 +176,43 @@ ansible-playbook test_flush_handlers_rescue_always.yml -i inventory.handlers "$@
 ansible-playbook test_fqcn_meta_flush_handlers.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
 grep out.txt -e "handler ran"
 grep out.txt -e "after flush"
+
+ansible-playbook 79776.yml -i inventory.handlers "$@"
+
+ansible-playbook test_block_as_handler.yml "$@"  2>&1 | tee out.txt
+grep out.txt -e "ERROR! Using a block as a handler is not supported."
+
+ansible-playbook test_block_as_handler-include.yml "$@"  2>&1 | tee out.txt
+grep out.txt -e "ERROR! Using a block as a handler is not supported."
+
+ansible-playbook test_block_as_handler-import.yml "$@"  2>&1 | tee out.txt
+grep out.txt -e "ERROR! Using a block as a handler is not supported."
+
+ansible-playbook test_include_role_handler_once.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'handler ran')" = "1" ]
+
+ansible-playbook test_listen_role_dedup.yml "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'a handler from a role')" = "1" ]
+
+ansible localhost -m include_role -a "name=r1-dep_chain-vars" "$@"
+
+ansible-playbook test_include_tasks_in_include_role.yml "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'handler ran')" = "1" ]
+
+ansible-playbook test_run_once.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'handler ran once')" = "1" ]
+
+ansible-playbook force_handlers_blocks_81533-1.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'task1')" = "1" ]
+[ "$(grep out.txt -ce 'task2')" = "1" ]
+[ "$(grep out.txt -ce 'hosts_left')" = "1" ]
+
+ansible-playbook force_handlers_blocks_81533-2.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'hosts_left')" = "1" ]
+
+ansible-playbook nested_flush_handlers_failure_force.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'flush_handlers_rescued')" = "1" ]
+[ "$(grep out.txt -ce 'flush_handlers_always')" = "2" ]
+
+ansible-playbook 82241.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'included_task_from_tasks_dir')" = "1" ]

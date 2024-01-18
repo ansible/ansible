@@ -14,9 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = '''
     name: free
@@ -40,7 +38,7 @@ from ansible.playbook.included_file import IncludedFile
 from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.utils.display import Display
 
 display = Display()
@@ -146,6 +144,8 @@ class StrategyModule(StrategyBase):
                         # advance the host, mark the host blocked, and queue it
                         self._blocked_hosts[host_name] = True
                         iterator.set_state_for_host(host.name, state)
+                        if isinstance(task, Handler):
+                            task.remove_host(host)
 
                         try:
                             action = action_loader.get(task.action, class_only=True, collection_list=task.collections)

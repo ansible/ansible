@@ -3,9 +3,7 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 
@@ -13,7 +11,7 @@ from yaml import YAMLError
 
 from ansible.errors import AnsibleParserError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 from ansible.parsing.ajson import AnsibleJSONDecoder

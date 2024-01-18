@@ -3,8 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """Concrete collection candidate management helper module."""
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import os
@@ -21,19 +20,20 @@ from tempfile import mkdtemp
 
 if t.TYPE_CHECKING:
     from ansible.galaxy.dependency_resolution.dataclasses import (
-        Candidate, Requirement,
+        Candidate, Collection, Requirement,
     )
     from ansible.galaxy.token import GalaxyToken
 
 from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
+from ansible.galaxy.api import should_retry_error
 from ansible.galaxy.dependency_resolution.dataclasses import _GALAXY_YAML
 from ansible.galaxy.user_agent import user_agent
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.api import retry_with_delays_and_condition
+from ansible.module_utils.api import generate_jittered_backoff
 from ansible.module_utils.common.process import get_bin_path
-from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.module_utils.common.yaml import yaml_load
-from ansible.module_utils.six import raise_from
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
@@ -138,13 +138,10 @@ class ConcreteArtifactsManager:
         try:
             url, sha256_hash, token = self._galaxy_collection_cache[collection]
         except KeyError as key_err:
-            raise_from(
-                RuntimeError(
-                    'The is no known source for {coll!s}'.
-                    format(coll=collection),
-                ),
-                key_err,
-            )
+            raise RuntimeError(
+                'There is no known source for {coll!s}'.
+                format(coll=collection),
+            ) from key_err
 
         display.vvvv(
             "Fetching a collection tarball for '{collection!s}' from "
@@ -160,17 +157,24 @@ class ConcreteArtifactsManager:
                 token=token,
             )  # type: bytes
         except URLError as err:
-            raise_from(
-                AnsibleError(
-                    'Failed to download collection tar '
-                    "from '{coll_src!s}': {download_err!s}".
-                    format(
-                        coll_src=to_native(collection.src),
-                        download_err=to_native(err),
-                    ),
+            raise AnsibleError(
+                'Failed to download collection tar '
+                "from '{coll_src!s}': {download_err!s}".
+                format(
+                    coll_src=to_native(collection.src),
+                    download_err=to_native(err),
                 ),
-                err,
-            )
+            ) from err
+        except Exception as err:
+            raise AnsibleError(
+                'Failed to download collection tar '
+                "from '{coll_src!s}' due to the following unforeseen error: "
+                '{download_err!s}'.
+                format(
+                    coll_src=to_native(collection.src),
+                    download_err=to_native(err),
+                ),
+            ) from err
         else:
             display.vvv(
                 "Collection '{coll!s}' obtained from "
@@ -185,7 +189,7 @@ class ConcreteArtifactsManager:
         return b_artifact_path
 
     def get_artifact_path(self, collection):
-        # type: (t.Union[Candidate, Requirement]) -> bytes
+        # type: (Collection) -> bytes
         """Given a concrete collection pointer, return a cached path.
 
         If it's not yet on disk, this method downloads the artifact first.
@@ -220,17 +224,14 @@ class ConcreteArtifactsManager:
                     timeout=self.timeout
                 )
             except Exception as err:
-                raise_from(
-                    AnsibleError(
-                        'Failed to download collection tar '
-                        "from '{coll_src!s}': {download_err!s}".
-                        format(
-                            coll_src=to_native(collection.src),
-                            download_err=to_native(err),
-                        ),
+                raise AnsibleError(
+                    'Failed to download collection tar '
+                    "from '{coll_src!s}': {download_err!s}".
+                    format(
+                        coll_src=to_native(collection.src),
+                        download_err=to_native(err),
                     ),
-                    err,
-                )
+                ) from err
         elif collection.is_scm:
             b_artifact_path = _extract_collection_from_git(
                 collection.src,
@@ -249,16 +250,22 @@ class ConcreteArtifactsManager:
         self._artifact_cache[collection.src] = b_artifact_path
         return b_artifact_path
 
+    def get_artifact_path_from_unknown(self, collection):
+        # type: (Candidate) -> bytes
+        if collection.is_concrete_artifact:
+            return self.get_artifact_path(collection)
+        return self.get_galaxy_artifact_path(collection)
+
     def _get_direct_collection_namespace(self, collection):
         # type: (Candidate) -> t.Optional[str]
         return self.get_direct_collection_meta(collection)['namespace']  # type: ignore[return-value]
 
     def _get_direct_collection_name(self, collection):
-        # type: (Candidate) -> t.Optional[str]
+        # type: (Collection) -> t.Optional[str]
         return self.get_direct_collection_meta(collection)['name']  # type: ignore[return-value]
 
     def get_direct_collection_fqcn(self, collection):
-        # type: (Candidate) -> t.Optional[str]
+        # type: (Collection) -> t.Optional[str]
         """Extract FQCN from the given on-disk collection artifact.
 
         If the collection is virtual, ``None`` is returned instead
@@ -274,7 +281,7 @@ class ConcreteArtifactsManager:
         ))
 
     def get_direct_collection_version(self, collection):
-        # type: (t.Union[Candidate, Requirement]) -> str
+        # type: (Collection) -> str
         """Extract version from the given on-disk collection artifact."""
         return self.get_direct_collection_meta(collection)['version']  # type: ignore[return-value]
 
@@ -287,7 +294,7 @@ class ConcreteArtifactsManager:
         return collection_dependencies  # type: ignore[return-value]
 
     def get_direct_collection_meta(self, collection):
-        # type: (t.Union[Candidate, Requirement]) -> dict[str, t.Union[str, dict[str, str], list[str], None, t.Type[Sentinel]]]
+        # type: (Collection) -> dict[str, t.Union[str, dict[str, str], list[str], None, t.Type[Sentinel]]]
         """Extract meta from the given on-disk collection artifact."""
         try:  # FIXME: use unique collection identifier as a cache key?
             return self._artifact_meta_cache[collection.src]
@@ -301,13 +308,10 @@ class ConcreteArtifactsManager:
             try:
                 collection_meta = _get_meta_from_dir(b_artifact_path, self.require_build_metadata)
             except LookupError as lookup_err:
-                raise_from(
-                    AnsibleError(
-                        'Failed to find the collection dir deps: {err!s}'.
-                        format(err=to_native(lookup_err)),
-                    ),
-                    lookup_err,
-                )
+                raise AnsibleError(
+                    'Failed to find the collection dir deps: {err!s}'.
+                    format(err=to_native(lookup_err)),
+                ) from lookup_err
         elif collection.is_scm:
             collection_meta = {
                 'name': None,
@@ -429,29 +433,23 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
     try:
         subprocess.check_call(git_clone_cmd)
     except subprocess.CalledProcessError as proc_err:
-        raise_from(
-            AnsibleError(  # should probably be LookupError
-                'Failed to clone a Git repository from `{repo_url!s}`.'.
-                format(repo_url=to_native(git_url)),
-            ),
-            proc_err,
-        )
+        raise AnsibleError(  # should probably be LookupError
+            'Failed to clone a Git repository from `{repo_url!s}`.'.
+            format(repo_url=to_native(git_url)),
+        ) from proc_err
 
     git_switch_cmd = git_executable, 'checkout', to_text(version)
     try:
         subprocess.check_call(git_switch_cmd, cwd=b_checkout_path)
     except subprocess.CalledProcessError as proc_err:
-        raise_from(
-            AnsibleError(  # should probably be LookupError
-                'Failed to switch a cloned Git repo `{repo_url!s}` '
-                'to the requested revision `{commitish!s}`.'.
-                format(
-                    commitish=to_native(version),
-                    repo_url=to_native(git_url),
-                ),
+        raise AnsibleError(  # should probably be LookupError
+            'Failed to switch a cloned Git repo `{repo_url!s}` '
+            'to the requested revision `{commitish!s}`.'.
+            format(
+                commitish=to_native(version),
+                repo_url=to_native(git_url),
             ),
-            proc_err,
-        )
+        ) from proc_err
 
     return (
         os.path.join(b_checkout_path, to_bytes(fragment))
@@ -460,6 +458,10 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
 
 
 # FIXME: use random subdirs while preserving the file names
+@retry_with_delays_and_condition(
+    backoff_iterator=generate_jittered_backoff(retries=6, delay_base=2, delay_threshold=40),
+    should_retry_error=should_retry_error
+)
 def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeout=60):
     # type: (str, bytes, t.Optional[str], bool, GalaxyToken, int) -> bytes
     # ^ NOTE: used in download and verify_collections ^
@@ -478,13 +480,16 @@ def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeo
     display.display("Downloading %s to %s" % (url, to_text(b_tarball_dir)))
     # NOTE: Galaxy redirects downloads to S3 which rejects the request
     # NOTE: if an Authorization header is attached so don't redirect it
-    resp = open_url(
-        to_native(url, errors='surrogate_or_strict'),
-        validate_certs=validate_certs,
-        headers=None if token is None else token.headers(),
-        unredirected_headers=['Authorization'], http_agent=user_agent(),
-        timeout=timeout
-    )
+    try:
+        resp = open_url(
+            to_native(url, errors='surrogate_or_strict'),
+            validate_certs=validate_certs,
+            headers=None if token is None else token.headers(),
+            unredirected_headers=['Authorization'], http_agent=user_agent(),
+            timeout=timeout
+        )
+    except Exception as err:
+        raise AnsibleError(to_native(err), orig_exc=err)
 
     with open(b_file_path, 'wb') as download_file:  # type: t.BinaryIO
         actual_hash = _consume_file(resp, write_to=download_file)
@@ -620,17 +625,14 @@ def _get_meta_from_src_dir(
         try:
             manifest = yaml_load(manifest_file_obj)
         except yaml.error.YAMLError as yaml_err:
-            raise_from(
-                AnsibleError(
-                    "Failed to parse the galaxy.yml at '{path!s}' with "
-                    'the following error:\n{err_txt!s}'.
-                    format(
-                        path=to_native(galaxy_yml),
-                        err_txt=to_native(yaml_err),
-                    ),
+            raise AnsibleError(
+                "Failed to parse the galaxy.yml at '{path!s}' with "
+                'the following error:\n{err_txt!s}'.
+                format(
+                    path=to_native(galaxy_yml),
+                    err_txt=to_native(yaml_err),
                 ),
-                yaml_err,
-            )
+            ) from yaml_err
 
     if not isinstance(manifest, dict):
         if require_build_metadata:
@@ -699,6 +701,11 @@ def _get_meta_from_installed_dir(
 def _get_meta_from_tar(
         b_path,  # type: bytes
 ):  # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None, t.Type[Sentinel]]]
+    if not os.path.exists(b_path):
+        raise AnsibleError(
+            f"Unable to find collection artifact file at '{to_native(b_path)}'."
+        )
+
     if not tarfile.is_tarfile(b_path):
         raise AnsibleError(
             "Collection artifact at '{path!s}' is not a valid tar file.".

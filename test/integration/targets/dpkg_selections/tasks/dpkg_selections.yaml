@@ -87,3 +87,15 @@
   apt:
     name: hello
     state: absent
+
+- name: Try to select non-existent package
+  dpkg_selections:
+    name: kernel
+    selection: hold
+  ignore_errors: yes
+  register: result
+
+- name: Check that module fails for non-existent package
+  assert:
+    that:
+      - "'Failed to find package' in result.msg"

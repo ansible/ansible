@@ -20,3 +20,4 @@
 - import_tasks: test_different_language_var.yml
 - import_tasks: test_invalid_options.yml
 - import_tasks: test_ownership_top_folder.yml
+- import_tasks: test_relative_dest.yml

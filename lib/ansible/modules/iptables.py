@@ -4,8 +4,7 @@
 # Copyright: (c) 2017, Sébastien DA ROCHA <sebastien@da-rocha.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -17,7 +16,7 @@ author:
 - Linus Unnebäck (@LinusU) <linus@folkdatorn.se>
 - Sébastien DA ROCHA (@sebastiendarocha)
 description:
-  - C(iptables) is used to set up, maintain, and inspect the tables of IP packet
+  - M(ansible.builtin.iptables) is used to set up, maintain, and inspect the tables of IP packet
     filter rules in the Linux kernel.
   - This module does not handle the saving and/or loading of rules, but rather
     only manipulates the current rules that are present in memory. This is the
@@ -38,7 +37,7 @@ notes:
 options:
   table:
     description:
-      - This option specifies the packet matching table which the command should operate on.
+      - This option specifies the packet matching table on which the command should operate.
       - If the kernel is configured with automatic module loading, an attempt will be made
          to load the appropriate module for that table if it is not already there.
     type: str
@@ -61,7 +60,7 @@ options:
   rule_num:
     description:
       - Insert the rule as the given rule number.
-      - This works only with C(action=insert).
+      - This works only with O(action=insert).
     type: str
     version_added: "2.5"
   ip_version:
@@ -74,18 +73,18 @@ options:
     description:
       - Specify the iptables chain to modify.
       - This could be a user-defined chain or one of the standard iptables chains, like
-        C(INPUT), C(FORWARD), C(OUTPUT), C(PREROUTING), C(POSTROUTING), C(SECMARK) or C(CONNSECMARK).
+        V(INPUT), V(FORWARD), V(OUTPUT), V(PREROUTING), V(POSTROUTING), V(SECMARK) or V(CONNSECMARK).
     type: str
   protocol:
     description:
       - The protocol of the rule or of the packet to check.
-      - The specified protocol can be one of C(tcp), C(udp), C(udplite), C(icmp), C(ipv6-icmp) or C(icmpv6),
-        C(esp), C(ah), C(sctp) or the special keyword C(all), or it can be a numeric value,
+      - The specified protocol can be one of V(tcp), V(udp), V(udplite), V(icmp), V(ipv6-icmp) or V(icmpv6),
+        V(esp), V(ah), V(sctp) or the special keyword V(all), or it can be a numeric value,
         representing one of these protocols or a different one.
-      - A protocol name from I(/etc/protocols) is also allowed.
-      - A C(!) argument before the protocol inverts the test.
+      - A protocol name from C(/etc/protocols) is also allowed.
+      - A V(!) argument before the protocol inverts the test.
       - The number zero is equivalent to all.
-      - C(all) will match with all protocols and is taken as default when this option is omitted.
+      - V(all) will match with all protocols and is taken as default when this option is omitted.
     type: str
   source:
     description:
@@ -97,7 +96,7 @@ options:
         a remote query such as DNS is a really bad idea.
       - The mask can be either a network mask or a plain number, specifying
         the number of 1's at the left side of the network mask. Thus, a mask
-        of 24 is equivalent to 255.255.255.0. A C(!) argument before the
+        of 24 is equivalent to 255.255.255.0. A V(!) argument before the
         address specification inverts the sense of the address.
     type: str
   destination:
@@ -110,13 +109,13 @@ options:
         a remote query such as DNS is a really bad idea.
       - The mask can be either a network mask or a plain number, specifying
         the number of 1's at the left side of the network mask. Thus, a mask
-        of 24 is equivalent to 255.255.255.0. A C(!) argument before the
+        of 24 is equivalent to 255.255.255.0. A V(!) argument before the
         address specification inverts the sense of the address.
     type: str
   tcp_flags:
     description:
       - TCP flags specification.
-      - C(tcp_flags) expects a dict with the two keys C(flags) and C(flags_set).
+      - O(tcp_flags) expects a dict with the two keys C(flags) and C(flags_set).
     type: dict
     version_added: "2.4"
     suboptions:
@@ -134,9 +133,9 @@ options:
     description:
       - Specifies a match to use, that is, an extension module that tests for
         a specific property.
-      - The set of matches make up the condition under which a target is invoked.
+      - The set of matches makes up the condition under which a target is invoked.
       - Matches are evaluated first to last if specified as an array and work in short-circuit
-        fashion, i.e. if one extension yields false, evaluation will stop.
+        fashion, i.e. if one extension yields false, the evaluation will stop.
     type: list
     elements: str
     default: []
@@ -144,7 +143,7 @@ options:
     description:
       - This specifies the target of the rule; i.e., what to do if the packet matches it.
       - The target can be a user-defined chain (other than the one
-        this rule is in), one of the special builtin targets which decide the
+        this rule is in), one of the special builtin targets that decide the
         fate of the packet immediately, or an extension (see EXTENSIONS
         below).
       - If this option is omitted in a rule (and the goto parameter
@@ -153,44 +152,44 @@ options:
     type: str
   gateway:
     description:
-      - This specifies the IP address of host to send the cloned packets.
-      - This option is only valid when C(jump) is set to C(TEE).
+      - This specifies the IP address of the host to send the cloned packets.
+      - This option is only valid when O(jump) is set to V(TEE).
     type: str
     version_added: "2.8"
   log_prefix:
     description:
-      - Specifies a log text for the rule. Only make sense with a LOG jump.
+      - Specifies a log text for the rule. Only makes sense with a LOG jump.
     type: str
     version_added: "2.5"
   log_level:
     description:
       - Logging level according to the syslogd-defined priorities.
       - The value can be strings or numbers from 1-8.
-      - This parameter is only applicable if C(jump) is set to C(LOG).
+      - This parameter is only applicable if O(jump) is set to V(LOG).
     type: str
     version_added: "2.8"
     choices: [ '0', '1', '2', '3', '4', '5', '6', '7', 'emerg', 'alert', 'crit', 'error', 'warning', 'notice', 'info', 'debug' ]
   goto:
     description:
-      - This specifies that the processing should continue in a user specified chain.
+      - This specifies that the processing should continue in a user-specified chain.
       - Unlike the jump argument return will not continue processing in
         this chain but instead in the chain that called us via jump.
     type: str
   in_interface:
     description:
       - Name of an interface via which a packet was received (only for packets
-        entering the C(INPUT), C(FORWARD) and C(PREROUTING) chains).
-      - When the C(!) argument is used before the interface name, the sense is inverted.
-      - If the interface name ends in a C(+), then any interface which begins with
+        entering the V(INPUT), V(FORWARD) and V(PREROUTING) chains).
+      - When the V(!) argument is used before the interface name, the sense is inverted.
+      - If the interface name ends in a V(+), then any interface which begins with
         this name will match.
       - If this option is omitted, any interface name will match.
     type: str
   out_interface:
     description:
       - Name of an interface via which a packet is going to be sent (for
-        packets entering the C(FORWARD), C(OUTPUT) and C(POSTROUTING) chains).
-      - When the C(!) argument is used before the interface name, the sense is inverted.
-      - If the interface name ends in a C(+), then any interface which begins
+        packets entering the V(FORWARD), V(OUTPUT) and V(POSTROUTING) chains).
+      - When the V(!) argument is used before the interface name, the sense is inverted.
+      - If the interface name ends in a V(+), then any interface which begins
         with this name will match.
       - If this option is omitted, any interface name will match.
     type: str
@@ -200,20 +199,20 @@ options:
         of fragmented packets.
       - Since there is no way to tell the source or destination ports of such
         a packet (or ICMP type), such a packet will not match any rules which specify them.
-      - When the "!" argument precedes fragment argument, the rule will only match head fragments,
+      - When the "!" argument precedes the fragment argument, the rule will only match head fragments,
         or unfragmented packets.
     type: str
   set_counters:
     description:
       - This enables the administrator to initialize the packet and byte
-        counters of a rule (during C(INSERT), C(APPEND), C(REPLACE) operations).
+        counters of a rule (during V(INSERT), V(APPEND), V(REPLACE) operations).
     type: str
   source_port:
     description:
       - Source port or port range specification.
       - This can either be a service name or a port number.
       - An inclusive range can also be specified, using the format C(first:last).
-      - If the first port is omitted, C(0) is assumed; if the last is omitted, C(65535) is assumed.
+      - If the first port is omitted, V(0) is assumed; if the last is omitted, V(65535) is assumed.
       - If the first port is greater than the second one they will be swapped.
     type: str
   destination_port:
@@ -239,7 +238,7 @@ options:
       - This specifies a destination port or range of ports to use, without
         this, the destination port is never altered.
       - This is only valid if the rule also specifies one of the protocol
-        C(tcp), C(udp), C(dccp) or C(sctp).
+        V(tcp), V(udp), V(dccp) or V(sctp).
     type: str
   to_destination:
     description:
@@ -266,14 +265,16 @@ options:
     description:
       - This allows specifying a DSCP mark to be added to packets.
         It takes either an integer or hex value.
-      - Mutually exclusive with C(set_dscp_mark_class).
+      - If the parameter is set, O(jump) is set to V(DSCP).
+      - Mutually exclusive with O(set_dscp_mark_class).
     type: str
     version_added: "2.1"
   set_dscp_mark_class:
     description:
       - This allows specifying a predefined DiffServ class which will be
         translated to the corresponding DSCP mark.
-      - Mutually exclusive with C(set_dscp_mark).
+      - If the parameter is set, O(jump) is set to V(DSCP).
+      - Mutually exclusive with O(set_dscp_mark).
     type: str
     version_added: "2.1"
   comment:
@@ -283,13 +284,13 @@ options:
   ctstate:
     description:
       - A list of the connection states to match in the conntrack module.
-      - Possible values are C(INVALID), C(NEW), C(ESTABLISHED), C(RELATED), C(UNTRACKED), C(SNAT), C(DNAT).
+      - Possible values are V(INVALID), V(NEW), V(ESTABLISHED), V(RELATED), V(UNTRACKED), V(SNAT), V(DNAT).
     type: list
     elements: str
     default: []
   src_range:
     description:
-      - Specifies the source IP range to match in the iprange module.
+      - Specifies the source IP range to match the iprange module.
     type: str
     version_added: "2.8"
   dst_range:
@@ -299,9 +300,9 @@ options:
     version_added: "2.8"
   match_set:
     description:
-      - Specifies a set name which can be defined by ipset.
+      - Specifies a set name that can be defined by ipset.
       - Must be used together with the match_set_flags parameter.
-      - When the C(!) argument is prepended then it inverts the rule.
+      - When the V(!) argument is prepended then it inverts the rule.
       - Uses the iptables set extension.
     type: str
     version_added: "2.11"
@@ -317,8 +318,8 @@ options:
     description:
       - Specifies the maximum average number of matches to allow per second.
       - The number can specify units explicitly, using C(/second), C(/minute),
-        C(/hour) or C(/day), or parts of them (so C(5/second) is the same as
-        C(5/s)).
+        C(/hour) or C(/day), or parts of them (so V(5/second) is the same as
+        V(5/s)).
     type: str
   limit_burst:
     description:
@@ -327,14 +328,14 @@ options:
     version_added: "2.1"
   uid_owner:
     description:
-      - Specifies the UID or username to use in match by owner rule.
+      - Specifies the UID or username to use in the match by owner rule.
       - From Ansible 2.6 when the C(!) argument is prepended then the it inverts
         the rule to apply instead to all users except that one specified.
     type: str
     version_added: "2.1"
   gid_owner:
     description:
-      - Specifies the GID or group to use in match by owner rule.
+      - Specifies the GID or group to use in the match by owner rule.
     type: str
     version_added: "2.9"
   reject_with:
@@ -362,10 +363,10 @@ options:
     description:
       - Set the policy for the chain to the given target.
       - Only built-in chains can have policies.
-      - This parameter requires the C(chain) parameter.
+      - This parameter requires the O(chain) parameter.
       - If you specify this parameter, all other parameters will be ignored.
-      - This parameter is used to set default policy for the given C(chain).
-        Do not confuse this with C(jump) parameter.
+      - This parameter is used to set the default policy for the given O(chain).
+        Do not confuse this with O(jump) parameter.
     type: str
     choices: [ ACCEPT, DROP, QUEUE, RETURN ]
     version_added: "2.2"
@@ -377,18 +378,18 @@ options:
     version_added: "2.10"
   chain_management:
     description:
-      - If C(true) and C(state) is C(present), the chain will be created if needed.
-      - If C(true) and C(state) is C(absent), the chain will be deleted if the only
-        other parameter passed are C(chain) and optionally C(table).
+      - If V(true) and O(state) is V(present), the chain will be created if needed.
+      - If V(true) and O(state) is V(absent), the chain will be deleted if the only
+        other parameter passed are O(chain) and optionally O(table).
     type: bool
     default: false
     version_added: "2.13"
   numeric:
     description:
       - This parameter controls the running of the list -action of iptables, which is used internally by the module
-      - Does not affect the actual functionality. Use this if iptables hangs when creating chain or altering policy
-      - If C(true), then iptables skips the DNS-lookup of the IP addresses in a chain when it uses the list -action
-      - Listing is used internally for example when setting a policy or creting of a chain
+      - Does not affect the actual functionality. Use this if iptables hang when creating a chain or altering policy
+      - If V(true), then iptables skips the DNS-lookup of the IP addresses in a chain when it uses the list -action
+      - Listing is used internally for example when setting a policy or creating a chain
     type: bool
     default: false
     version_added: "2.15"
@@ -636,11 +637,16 @@ def construct_rule(params):
     append_param(rule, params['destination_port'], '--destination-port', False)
     append_param(rule, params['to_ports'], '--to-ports', False)
     append_param(rule, params['set_dscp_mark'], '--set-dscp', False)
+    if params.get('set_dscp_mark') and params.get('jump').lower() != 'dscp':
+        append_jump(rule, params['set_dscp_mark'], 'DSCP')
+
     append_param(
         rule,
         params['set_dscp_mark_class'],
         '--set-dscp-class',
         False)
+    if params.get('set_dscp_mark_class') and params.get('jump').lower() != 'dscp':
+        append_jump(rule, params['set_dscp_mark_class'], 'DSCP')
     append_match_flag(rule, params['syn'], '--syn', True)
     if 'conntrack' in params['match']:
         append_csv(rule, params['ctstate'], '--ctstate')
@@ -674,6 +680,9 @@ def construct_rule(params):
     append_param(rule, params['gid_owner'], '--gid-owner', False)
     if params['jump'] is None:
         append_jump(rule, params['reject_with'], 'REJECT')
+        append_jump(rule, params['set_dscp_mark_class'], 'DSCP')
+        append_jump(rule, params['set_dscp_mark'], 'DSCP')
+
     append_param(rule, params['reject_with'], '--reject-with', False)
     append_param(
         rule,
@@ -698,7 +707,7 @@ def push_arguments(iptables_path, action, params, make_rule=True):
 
 def check_rule_present(iptables_path, module, params):
     cmd = push_arguments(iptables_path, '-C', params)
-    rc, _, __ = module.run_command(cmd, check_rc=False)
+    rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     return (rc == 0)
 
 
@@ -732,7 +741,7 @@ def get_chain_policy(iptables_path, module, params):
     cmd = push_arguments(iptables_path, '-L', params, make_rule=False)
     if module.params['numeric']:
         cmd.append('--numeric')
-    rc, out, _ = module.run_command(cmd, check_rc=True)
+    rc, out, err = module.run_command(cmd, check_rc=True)
     chain_header = out.split("\n")[0]
     result = re.search(r'\(policy ([A-Z]+)\)', chain_header)
     if result:
@@ -742,7 +751,7 @@ def get_chain_policy(iptables_path, module, params):
 
 def get_iptables_version(iptables_path, module):
     cmd = [iptables_path, '--version']
-    rc, out, _ = module.run_command(cmd, check_rc=True)
+    rc, out, err = module.run_command(cmd, check_rc=True)
     return out.split('v')[1].rstrip('\n')
 
 
@@ -755,7 +764,7 @@ def check_chain_present(iptables_path, module, params):
     cmd = push_arguments(iptables_path, '-L', params, make_rule=False)
     if module.params['numeric']:
         cmd.append('--numeric')
-    rc, _, __ = module.run_command(cmd, check_rc=False)
+    rc, out, err = module.run_command(cmd, check_rc=False)
     return (rc == 0)
 
 
@@ -828,6 +837,10 @@ def main():
             ['set_dscp_mark', 'set_dscp_mark_class'],
             ['flush', 'policy'],
         ),
+        required_by=dict(
+            set_dscp_mark=('jump',),
+            set_dscp_mark_class=('jump',),
+        ),
         required_if=[
             ['jump', 'TEE', ['gateway']],
             ['jump', 'tee', ['gateway']],
@@ -895,33 +908,38 @@ def main():
             delete_chain(iptables_path, module, module.params)
 
     else:
-        insert = (module.params['action'] == 'insert')
-        rule_is_present = check_rule_present(
-            iptables_path, module, module.params
-        )
-        chain_is_present = rule_is_present or check_chain_present(
-            iptables_path, module, module.params
-        )
-        should_be_present = (args['state'] == 'present')
+        # Create the chain if there are no rule arguments
+        if (args['state'] == 'present') and not args['rule']:
+            chain_is_present = check_chain_present(
+                iptables_path, module, module.params
+            )
+            args['changed'] = not chain_is_present
 
-        # Check if target is up to date
-        args['changed'] = (rule_is_present != should_be_present)
-        if args['changed'] is False:
-            # Target is already up to date
-            module.exit_json(**args)
+            if (not chain_is_present and args['chain_management'] and not module.check_mode):
+                create_chain(iptables_path, module, module.params)
 
-        # Check only; don't modify
-        if not module.check_mode:
-            if should_be_present:
-                if not chain_is_present and args['chain_management']:
-                    create_chain(iptables_path, module, module.params)
+        else:
+            insert = (module.params['action'] == 'insert')
+            rule_is_present = check_rule_present(
+                iptables_path, module, module.params
+            )
 
-                if insert:
-                    insert_rule(iptables_path, module, module.params)
+            should_be_present = (args['state'] == 'present')
+            # Check if target is up to date
+            args['changed'] = (rule_is_present != should_be_present)
+            if args['changed'] is False:
+                # Target is already up to date
+                module.exit_json(**args)
+
+            # Modify if not check_mode
+            if not module.check_mode:
+                if should_be_present:
+                    if insert:
+                        insert_rule(iptables_path, module, module.params)
+                    else:
+                        append_rule(iptables_path, module, module.params)
                 else:
-                    append_rule(iptables_path, module, module.params)
-            else:
-                remove_rule(iptables_path, module, module.params)
+                    remove_rule(iptables_path, module, module.params)
 
     module.exit_json(**args)
 

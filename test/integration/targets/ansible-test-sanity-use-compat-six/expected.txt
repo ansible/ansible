@@ -1,0 +1,1 @@
+plugins/modules/check-me.py:3:1: use `ansible.module_utils.six` instead of `six`

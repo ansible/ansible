@@ -2,8 +2,7 @@
 # Copyright (c) 2019 Ansible Project
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 
@@ -67,7 +66,7 @@ def human_to_bytes(number, default_unit=None, isbits=False):
         unit = default_unit
 
     if unit is None:
-        ''' No unit given, returning raw number '''
+        # No unit given, returning raw number
         return int(round(num))
     range_key = unit[0].upper()
     try:

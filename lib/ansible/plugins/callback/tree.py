@@ -2,8 +2,7 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = '''
     name: tree
@@ -31,7 +30,7 @@ DOCUMENTATION = '''
 import os
 
 from ansible.constants import TREE_DIR
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.path import makedirs_safe, unfrackpath
 

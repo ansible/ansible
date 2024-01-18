@@ -1,8 +1,7 @@
 # (c) 2013, Jayson Vantuyl <jayson@aggressive.ly>
 # (c) 2012-17 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: sequence
@@ -175,7 +174,7 @@ class LookupModule(LookupBase):
         if not match:
             return False
 
-        _, start, end, _, stride, _, format = match.groups()
+        dummy, start, end, dummy, stride, dummy, format = match.groups()
 
         if start is not None:
             try:

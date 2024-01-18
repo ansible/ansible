@@ -65,26 +65,17 @@ def main():
                     # keeping constraints for tests other than sanity tests in one file helps avoid conflicts
                     print('%s:%d:%d: put the constraint (%s%s) in `%s`' % (path, lineno, 1, name, raw_constraints, constraints_path))
 
-    for name, requirements in frozen_sanity.items():
-        if len(set(req[3].group('constraints').strip() for req in requirements)) != 1:
-            for req in requirements:
-                print('%s:%d:%d: sanity constraint (%s) does not match others for package `%s`' % (
-                    req[0], req[1], req[3].start('constraints') + 1, req[3].group('constraints'), name))
-
 
 def check_ansible_test(path: str, requirements: list[tuple[int, str, re.Match]]) -> None:
     sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.parent.joinpath('lib')))
 
-    from ansible_test._internal.python_requirements import VIRTUALENV_VERSION
     from ansible_test._internal.coverage_util import COVERAGE_VERSIONS
     from ansible_test._internal.util import version_to_str
 
-    expected_lines = set([
-        f"virtualenv == {VIRTUALENV_VERSION} ; python_version < '3'",
-    ] + [
+    expected_lines = set((
         f"coverage == {item.coverage_version} ; python_version >= '{version_to_str(item.min_python)}' and python_version <= '{version_to_str(item.max_python)}'"
         for item in COVERAGE_VERSIONS
-    ])
+    ))
 
     for idx, requirement in enumerate(requirements):
         lineno, line, match = requirement

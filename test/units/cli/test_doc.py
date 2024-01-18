@@ -1,11 +1,9 @@
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
 
 from ansible.cli.doc import DocCLI, RoleMixin
-from ansible.plugins.loader import module_loader
+from ansible.plugins.loader import module_loader, init_plugin_loader
 
 
 TTY_IFY_DATA = {
@@ -118,6 +116,7 @@ def test_builtin_modules_list():
     args = ['ansible-doc', '-l', 'ansible.builtin', '-t', 'module']
     obj = DocCLI(args=args)
     obj.parse()
+    init_plugin_loader()
     result = obj._list_plugins('module', module_loader)
     assert len(result) > 0
 

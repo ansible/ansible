@@ -1,3 +1,0 @@
-bugfixes:
-- paramiko - Add back support for ``ssh_args``, ``ssh_common_args``, and ``ssh_extra_args`` for parsing the ``ProxyCommand``
-  (https://github.com/ansible/ansible/issues/78750)

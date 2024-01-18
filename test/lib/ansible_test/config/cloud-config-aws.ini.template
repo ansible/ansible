@@ -6,7 +6,9 @@
 # 2) Using the automatically provisioned AWS credentials in ansible-test.
 #
 # If you do not want to use the automatically provisioned temporary AWS credentials,
-# fill in the @VAR placeholders below and save this file without the .template extension.
+# fill in the @VAR placeholders below and save this file without the .template extension,
+# into the tests/integration directory of the collection you're testing.
+# If you need to omit optional fields like security_token, comment out that line.
 # This will cause ansible-test to use the given configuration instead of temporary credentials.
 #
 # NOTE: Automatic provisioning of AWS credentials requires an ansible-core-ci API key.

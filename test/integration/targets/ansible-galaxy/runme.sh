@@ -61,10 +61,13 @@ f_ansible_galaxy_create_role_repo_post()
             git add .
             git commit -m "local testing ansible galaxy role"
 
+            # NOTE: `HEAD` is used because the newer Git versions create
+            # NOTE: `main` by default and the older ones differ. We
+            # NOTE: want to avoid hardcoding them.
             git archive \
                 --format=tar \
                 --prefix="${repo_name}/" \
-                master > "${repo_tar}"
+                HEAD > "${repo_tar}"
             # Configure basic (insecure) HTTPS-accessible repository
             galaxy_local_test_role_http_repo="${galaxy_webserver_root}/${galaxy_local_test_role}.git"
             if [[ ! -d "${galaxy_local_test_role_http_repo}" ]]; then
@@ -354,7 +357,7 @@ pushd "${galaxy_testdir}"
 popd # ${galaxy_testdir}
 
 f_ansible_galaxy_status \
-    "role info non-existant role"
+    "role info non-existent role"
 
 mkdir -p "${role_testdir}"
 pushd "${role_testdir}"

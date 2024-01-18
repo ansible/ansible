@@ -25,6 +25,14 @@
         regexp: "^dependencies:*"
         line: "dependencies: {'ns.coll2': '>=1.0.0'}"
 
+    - name: create required runtime.yml
+      copy:
+        dest: "{{ galaxy_dir }}/offline/setup/ns/{{ item }}/meta/runtime.yml"
+        content: "requires_ansible: '>=1.0.0'"
+      loop:
+        - coll1
+        - coll2
+
     - name: build both collections
       command: ansible-galaxy collection build {{ init_dir }}/ns/{{ item }}
       args:

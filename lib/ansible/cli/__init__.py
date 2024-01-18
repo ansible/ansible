@@ -3,9 +3,7 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import locale
 import os
@@ -13,9 +11,9 @@ import sys
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
-if sys.version_info < (3, 9):
+if sys.version_info < (3, 10):
     raise SystemExit(
-        'ERROR: Ansible requires Python 3.9 or newer on the controller. '
+        'ERROR: Ansible requires Python 3.10 or newer on the controller. '
         'Current version: %s' % ''.join(sys.version.splitlines())
     )
 
@@ -97,11 +95,12 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.file import is_executable
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
-from ansible.plugins.loader import add_all_plugin_dirs
+from ansible.plugins.loader import add_all_plugin_dirs, init_plugin_loader
 from ansible.release import __version__
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
@@ -154,6 +153,13 @@ class CLI(ABC):
         """
         self.parse()
 
+        # Initialize plugin loader after parse, so that the init code can utilize parsed arguments
+        cli_collections_path = context.CLIARGS.get('collections_path') or []
+        if not is_sequence(cli_collections_path):
+            # In some contexts ``collections_path`` is singular
+            cli_collections_path = [cli_collections_path]
+        init_plugin_loader(cli_collections_path)
+
         display.vv(to_text(opt_help.version(self.parser.prog)))
 
         if C.CONFIG_FILE:
@@ -188,8 +194,7 @@ class CLI(ABC):
 
     @staticmethod
     def build_vault_ids(vault_ids, vault_password_files=None,
-                        ask_vault_pass=None, create_new_password=None,
-                        auto_prompt=True):
+                        ask_vault_pass=None, auto_prompt=True):
         vault_password_files = vault_password_files or []
         vault_ids = vault_ids or []
 
@@ -212,7 +217,6 @@ class CLI(ABC):
 
         return vault_ids
 
-    # TODO: remove the now unused args
     @staticmethod
     def setup_vault_secrets(loader, vault_ids, vault_password_files=None,
                             ask_vault_pass=None, create_new_password=False,
@@ -246,7 +250,6 @@ class CLI(ABC):
         vault_ids = CLI.build_vault_ids(vault_ids,
                                         vault_password_files,
                                         ask_vault_pass,
-                                        create_new_password,
                                         auto_prompt=auto_prompt)
 
         last_exception = found_vault_secret = None
@@ -522,6 +525,10 @@ class CLI(ABC):
 
     @staticmethod
     def _play_prereqs():
+        # TODO: evaluate moving all of the code that touches ``AnsibleCollectionConfig``
+        # into ``init_plugin_loader`` so that we can specifically remove
+        # ``AnsibleCollectionConfig.playbook_paths`` to make it immutable after instantiation
+
         options = context.CLIARGS
 
         # all needs loader
@@ -594,7 +601,7 @@ class CLI(ABC):
             try:
                 p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             except OSError as e:
-                raise AnsibleError("Problem occured when trying to run the password script %s (%s)."
+                raise AnsibleError("Problem occurred when trying to run the password script %s (%s)."
                                    " If this is not a script, remove the executable bit from the file." % (pwd_file, e))
 
             stdout, stderr = p.communicate()

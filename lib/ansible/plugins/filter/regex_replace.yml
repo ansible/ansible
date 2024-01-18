@@ -5,7 +5,7 @@ DOCUMENTATION:
   description:
     - Replace a substring defined by a regular expression with another defined by another regular expression based on the first match.
   notes:
-    - Maps to Python's C(regex.replace).
+    - Maps to Python's C(re.sub).
   positional: _input, _regex_match, _regex_replace
   options:
     _input:
@@ -21,13 +21,23 @@ DOCUMENTATION:
       type: int
       required: true
     multiline:
-      description: Search across line endings if C(True), do not if otherwise.
+      description: Search across line endings if V(True), do not if otherwise.
       type: bool
       default: no
     ignorecase:
-      description: Force the search to be case insensitive if C(True), case sensitive otherwise.
+      description: Force the search to be case insensitive if V(True), case sensitive otherwise.
       type: bool
       default: no
+    count:
+      description: Maximum number of pattern occurrences to replace. If zero, replace all occurrences.
+      type: int
+      default: 0
+      version_added: "2.17"
+    mandatory_count:
+      description: Except a certain number of replacements. Raises an error otherwise. If zero, ignore.
+      type: int
+      default: 0
+      version_added: "2.17"
 
 EXAMPLES: |
 
@@ -39,6 +49,15 @@ EXAMPLES: |
 
   # piratecomment => '#CAR\n#tar\nfoo\n#bar\n'
   piratecomment: "{{ 'CAR\ntar\nfoo\nbar\n' | regex_replace('^(.ar)$', '#\\1', multiline=True, ignorecase=True) }}"
+
+  # Using inline regex flags instead of passing options to filter
+  # See https://docs.python.org/3/library/re.html for more information
+  # on inline regex flags
+  # piratecomment => '#CAR\n#tar\nfoo\n#bar\n'
+  piratecomment: "{{ 'CAR\ntar\nfoo\nbar\n' | regex_replace('(?im)^(.ar)$', '#\\1') }}"
+
+  # 'foo=bar=baz' => 'foo:bar=baz'
+  key_value: "{{ 'foo=bar=baz' | regex_replace('=', ':', count=1) }}"
 
 RETURN:
   _value:

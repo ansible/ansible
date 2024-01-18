@@ -6,12 +6,11 @@ If pkg_resources is installed but is unable to function, this test will fail.
 
 One known failure case this test can detect is when ansible declares a __requires__ and then tests are run without an egg-info directory.
 """
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 # noinspection PyUnresolvedReferences
 try:
-    from pkg_resources import Requirement
+    from pkg_resources import Requirement  # pylint: disable=unused-import
 except ImportError:
     Requirement = None
 

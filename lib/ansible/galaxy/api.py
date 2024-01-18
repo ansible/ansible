@@ -2,8 +2,7 @@
 # Copyright: (c) 2019, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import collections
 import datetime
@@ -16,7 +15,9 @@ import tarfile
 import time
 import threading
 
-from urllib.error import HTTPError
+from http import HTTPStatus
+from http.client import BadStatusLine, IncompleteRead
+from urllib.error import HTTPError, URLError
 from urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs, urljoin
 
 from ansible import constants as C
@@ -25,7 +26,7 @@ from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.api import retry_with_delays_and_condition
 from ansible.module_utils.api import generate_jittered_backoff
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url, prepare_multipart
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash_s
@@ -34,10 +35,11 @@ from ansible.utils.path import makedirs_safe
 display = Display()
 _CACHE_LOCK = threading.Lock()
 COLLECTION_PAGE_SIZE = 100
-RETRY_HTTP_ERROR_CODES = [  # TODO: Allow user-configuration
-    429,  # Too Many Requests
+RETRY_HTTP_ERROR_CODES = {  # TODO: Allow user-configuration
+    HTTPStatus.TOO_MANY_REQUESTS,
     520,  # Galaxy rate limit error code (Cloudflare unknown error)
-]
+    HTTPStatus.BAD_GATEWAY,  # Common error from galaxy that may represent any number of transient backend issues
+}
 
 
 def cache_lock(func):
@@ -48,11 +50,24 @@ def cache_lock(func):
     return wrapped
 
 
-def is_rate_limit_exception(exception):
+def should_retry_error(exception):
     # Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
     # Since 403 could reflect the actual problem (such as an expired token), we should
     # not retry by default.
-    return isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES
+    if isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES:
+        return True
+
+    if isinstance(exception, AnsibleError) and (orig_exc := getattr(exception, 'orig_exc', None)):
+        # URLError is often a proxy for an underlying error, handle wrapped exceptions
+        if isinstance(orig_exc, URLError):
+            orig_exc = orig_exc.reason
+
+        # Handle common URL related errors such as TimeoutError, and BadStatusLine
+        # Note: socket.timeout is only required for Py3.9
+        if isinstance(orig_exc, (TimeoutError, BadStatusLine, IncompleteRead)):
+            return True
+
+    return False
 
 
 def g_connect(versions):
@@ -327,7 +342,7 @@ class GalaxyAPI:
 
     @retry_with_delays_and_condition(
         backoff_iterator=generate_jittered_backoff(retries=6, delay_base=2, delay_threshold=40),
-        should_retry_error=is_rate_limit_exception
+        should_retry_error=should_retry_error
     )
     def _call_galaxy(self, url, args=None, headers=None, method=None, auth_required=False, error_context_msg=None,
                      cache=False, cache_key=None):
@@ -343,7 +358,8 @@ class GalaxyAPI:
             valid = False
             if cache_key in server_cache:
                 expires = datetime.datetime.strptime(server_cache[cache_key]['expires'], iso_datetime_format)
-                valid = datetime.datetime.utcnow() < expires
+                expires = expires.replace(tzinfo=datetime.timezone.utc)
+                valid = datetime.datetime.now(datetime.timezone.utc) < expires
 
             is_paginated_url = 'page' in query or 'offset' in query
             if valid and not is_paginated_url:
@@ -368,7 +384,7 @@ class GalaxyAPI:
 
             elif not is_paginated_url:
                 # The cache entry had expired or does not exist, start a new blank entry to be filled later.
-                expires = datetime.datetime.utcnow()
+                expires = datetime.datetime.now(datetime.timezone.utc)
                 expires += datetime.timedelta(days=1)
                 server_cache[cache_key] = {
                     'expires': expires.strftime(iso_datetime_format),
@@ -385,7 +401,10 @@ class GalaxyAPI:
         except HTTPError as e:
             raise GalaxyError(e, error_context_msg)
         except Exception as e:
-            raise AnsibleError("Unknown error when attempting to call Galaxy at '%s': %s" % (url, to_native(e)))
+            raise AnsibleError(
+                "Unknown error when attempting to call Galaxy at '%s': %s" % (url, to_native(e)),
+                orig_exc=e
+            )
 
         resp_data = to_text(resp.read(), errors='surrogate_or_strict')
         try:
@@ -463,8 +482,6 @@ class GalaxyAPI:
         }
         if role_name:
             args['alternate_role_name'] = role_name
-        elif github_repo.startswith('ansible-role'):
-            args['alternate_role_name'] = github_repo[len('ansible-role') + 1:]
         data = self._call_galaxy(url, args=urlencode(args), method="POST")
         if data.get('results', None):
             return data['results']
@@ -903,11 +920,7 @@ class GalaxyAPI:
         data = self._call_galaxy(n_collection_url, error_context_msg=error_context_msg, cache=True)
         self._set_cache()
 
-        try:
-            signatures = data["signatures"]
-        except KeyError:
-            # Noisy since this is used by the dep resolver, so require more verbosity than Galaxy calls
-            display.vvvvvv(f"Server {self.api_server} has not signed {namespace}.{name}:{version}")
-            return []
-        else:
-            return [signature_info["signature"] for signature_info in signatures]
+        signatures = [signature_info["signature"] for signature_info in data.get("signatures") or []]
+        if not signatures:
+            display.vvvv(f"Server {self.api_server} has not signed {namespace}.{name}:{version}")
+        return signatures
