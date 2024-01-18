@@ -870,11 +870,6 @@ class StrategyBase:
                 loader=self._loader,
                 variable_manager=self._variable_manager,
             )
-
-            # since we skip incrementing the stats when the task result is
-            # first processed, we do so now for each host in the list
-            for host in included_file._hosts:
-                self._tqm._stats.increment('ok', host.name)
         except AnsibleParserError:
             raise
         except AnsibleError as e:
@@ -882,18 +877,8 @@ class StrategyBase:
                 reason = "Could not find or access '%s' on the Ansible Controller." % to_text(e.file_name)
             else:
                 reason = to_text(e)
-
-            for r in included_file._results:
-                r._result['failed'] = True
-
-            for host in included_file._hosts:
-                tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=reason))
-                self._tqm._stats.increment('failures', host.name)
-                self._tqm.send_callback('v2_runner_on_failed', tr)
             raise AnsibleError(reason) from e
 
-        # finally, send the callback and return the list of blocks loaded
-        self._tqm.send_callback('v2_playbook_on_include', included_file)
         display.debug("done processing included file")
         return block_list
 
