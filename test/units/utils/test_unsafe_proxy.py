@@ -5,6 +5,9 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import pathlib
+import sys
+
 from ansible.module_utils.six import PY3
 from ansible.utils.unsafe_proxy import AnsibleUnsafe, AnsibleUnsafeBytes, AnsibleUnsafeText, wrap_var
 from ansible.module_utils.common.text.converters import to_text, to_bytes
@@ -119,3 +122,10 @@ def test_to_text_unsafe():
 def test_to_bytes_unsafe():
     assert isinstance(to_bytes(AnsibleUnsafeText(u'foo')), AnsibleUnsafeBytes)
     assert to_bytes(AnsibleUnsafeText(u'foo')) == AnsibleUnsafeBytes(b'foo')
+
+
+def test_unsafe_with_sys_intern():
+    # Specifically this is actually about sys.intern, test of pathlib
+    # because that is a specific affected use
+    assert sys.intern(AnsibleUnsafeText('foo')) == 'foo'
+    assert pathlib.Path(AnsibleUnsafeText('/tmp')) == pathlib.Path('/tmp')
