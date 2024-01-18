@@ -255,3 +255,15 @@
   vars:
     hash1: "{{ role_path }}/test_symlink/symlink/hashes/hash1.yml"
     hash2: "{{ role_path }}/test_symlink/symlink/hashes/hash2.yml"
+
+- name: Test include_vars includes everything to the correct depth
+  ansible.builtin.include_vars:
+    dir: "{{ role_path }}/files/test_depth"
+    depth: 3
+    name: test_depth_var
+  register: test_depth
+
+- assert:
+    that:
+      - "test_depth.ansible_included_var_files|length == 8"
+      - "test_depth_var.keys()|length == 8"
