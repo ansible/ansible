@@ -1,2 +1,0 @@
-bugfixes:
-  - validate-modules - add action_plugin as a valid field for modules in the runtime-metadata schema (https://github.com/ansible/ansible/pull/82562).
