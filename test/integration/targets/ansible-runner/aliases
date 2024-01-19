@@ -1,4 +1,0 @@
-shippable/posix/group5
-context/controller
-skip/macos
-skip/freebsd
