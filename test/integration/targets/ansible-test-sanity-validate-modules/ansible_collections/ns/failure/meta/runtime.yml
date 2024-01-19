@@ -1,0 +1,4 @@
+plugin_routing:
+  lookup:
+    lookup:
+      action_plugin: invalid

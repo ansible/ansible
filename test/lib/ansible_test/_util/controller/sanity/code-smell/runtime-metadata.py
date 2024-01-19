@@ -197,21 +197,26 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
         avoid_additional_data
     )
 
-    plugin_routing_schema = Any(
-        Schema({
-            ('deprecation'): Any(deprecation_schema),
-            ('tombstone'): Any(tombstoning_schema),
-            ('redirect'): fqcr,
-        }, extra=PREVENT_EXTRA),
+    plugins_routing_common_schema = Schema({
+        ('deprecation'): Any(deprecation_schema),
+        ('tombstone'): Any(tombstoning_schema),
+        ('redirect'): fqcr,
+    }, extra=PREVENT_EXTRA)
+
+    plugin_routing_schema = Any(plugins_routing_common_schema)
+
+    # Adjusted schema for modules only
+    plugin_routing_schema_modules = Any(
+        plugins_routing_common_schema.extend({
+            ('action_plugin'): fqcr}
+        )
     )
 
     # Adjusted schema for module_utils
     plugin_routing_schema_mu = Any(
-        Schema({
-            ('deprecation'): Any(deprecation_schema),
-            ('tombstone'): Any(tombstoning_schema),
-            ('redirect'): Any(*string_types),
-        }, extra=PREVENT_EXTRA),
+        plugins_routing_common_schema.extend({
+            ('redirect'): Any(*string_types)}
+        ),
     )
 
     list_dict_plugin_routing_schema = [{str_type: plugin_routing_schema}
@@ -219,6 +224,9 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
 
     list_dict_plugin_routing_schema_mu = [{str_type: plugin_routing_schema_mu}
                                           for str_type in string_types]
+
+    list_dict_plugin_routing_schema_modules = [{str_type: plugin_routing_schema_modules}
+                                               for str_type in string_types]
 
     plugin_schema = Schema({
         ('action'): Any(None, *list_dict_plugin_routing_schema),
@@ -233,7 +241,7 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
         ('inventory'): Any(None, *list_dict_plugin_routing_schema),
         ('lookup'): Any(None, *list_dict_plugin_routing_schema),
         ('module_utils'): Any(None, *list_dict_plugin_routing_schema_mu),
-        ('modules'): Any(None, *list_dict_plugin_routing_schema),
+        ('modules'): Any(None, *list_dict_plugin_routing_schema_modules),
         ('netconf'): Any(None, *list_dict_plugin_routing_schema),
         ('shell'): Any(None, *list_dict_plugin_routing_schema),
         ('strategy'): Any(None, *list_dict_plugin_routing_schema),
