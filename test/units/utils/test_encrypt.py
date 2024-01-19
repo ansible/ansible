@@ -11,14 +11,8 @@ from ansible.utils import encrypt
 
 
 def assert_hash(expected, secret, algorithm, **settings):
-
     assert encrypt.do_encrypt(secret, algorithm, **settings) == expected
-    if encrypt.PASSLIB_AVAILABLE:
-        assert encrypt.PasslibHash(algorithm).hash(secret, **settings) == expected
-    else:
-        with pytest.raises(AnsibleError) as excinfo:
-            encrypt.PasslibHash(algorithm).hash(secret, **settings)
-        assert excinfo.value.args[0] == "passlib must be installed and usable to hash with '%s'" % algorithm
+    assert encrypt.PasslibHash(algorithm).hash(secret, **settings) == expected
 
 
 @pytest.mark.skipif(not encrypt.PASSLIB_AVAILABLE, reason='passlib must be installed to run this test')
