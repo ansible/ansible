@@ -29,6 +29,7 @@ run_test() {
 	sed -i -e 's/@@ -1,1 +1,1 @@/@@ -1 +1 @@/g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e 's/: .*\/test_diff\.txt/: ...\/test_diff.txt/g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e "s#${ANSIBLE_PLAYBOOK_DIR}#TEST_PATH#g" "${OUTFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stderr"
+	sed -i -e "s#/var/root/#/root/#g" "${OUTFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stderr"  # macos
 	sed -i -e 's/^Using .*//g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e 's/[0-9]:[0-9]\{2\}:[0-9]\{2\}\.[0-9]\{6\}/0:00:00.000000/g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e 's/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\} [0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}\.[0-9]\{6\}/0000-00-00 00:00:00.000000/g' "${OUTFILE}.${testname}.stdout"
