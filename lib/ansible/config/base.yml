@@ -934,9 +934,9 @@ DEFAULT_PRIVATE_ROLE_VARS:
   name: Private role variables
   default: False
   description:
-    - Makes role variables inaccessible from other roles.
-    - This was introduced as a way to reset role variables to default values if
-      a role is used more than once in a playbook.
+    - By default, imported roles publish their variables to the play and other roles, this setting can avoid that.
+    - This was introduced as a way to reset role variables to default values if a role is used more than once in a playbook.
+    - Included roles only make their variables public at execution, unlike imported roles which happen at playbook compile time.
   env: [{name: ANSIBLE_PRIVATE_ROLE_VARS}]
   ini:
   - {key: private_role_vars, section: defaults}
