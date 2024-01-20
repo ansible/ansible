@@ -115,11 +115,11 @@ class ActionBase(ABC):
         del tmp
 
         if self._task.async_val and not self._supports_async:
-            raise AnsibleActionFail('async is not supported for this task.')
+            raise AnsibleActionFail('This action (%s) does not support async.' % self._task.action)
         elif self._task.check_mode and not self._supports_check_mode:
-            raise AnsibleActionSkip('check mode is not supported for this task.')
+            raise AnsibleActionSkip('This action (%s) does not support check mode.' % self._task.action)
         elif self._task.async_val and self._task.check_mode:
-            raise AnsibleActionFail('check mode and async cannot be used on same task.')
+            raise AnsibleActionFail('"check mode" and "async" cannot be used on same task.')
 
         # Error if invalid argument is passed
         if self._VALID_ARGS:
@@ -1347,7 +1347,7 @@ class ActionBase(ABC):
         display.debug(u"_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, out, err))
         return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err, stderr_lines=err.splitlines())
 
-    def _get_diff_data(self, destination, source, task_vars, content, source_file=True):
+    def _get_diff_data(self, destination, source, task_vars, content=None, source_file=True):
 
         # Note: Since we do not diff the source and destination before we transform from bytes into
         # text the diff between source and destination may not be accurate.  To fix this, we'd need

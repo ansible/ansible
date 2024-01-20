@@ -37,7 +37,6 @@ lib/ansible/modules/git.py use-argspec-type-path
 lib/ansible/modules/git.py validate-modules:doc-required-mismatch
 lib/ansible/modules/lineinfile.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/lineinfile.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/lineinfile.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/package_facts.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/replace.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/replace.py pylint:used-before-assignment  # false positive detection by pylint
@@ -103,6 +102,8 @@ test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/un
 test/integration/targets/ansible-test-no-tty/ansible_collections/ns/col/vendored_pty.py pep8!skip # vendored code
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/modules/my_module.py pylint:relative-beyond-top-level
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util2.py pylint:relative-beyond-top-level
+test/integration/targets/config/lookup_plugins/casting.py pylint:unidiomatic-typecheck
+test/integration/targets/config/lookup_plugins/casting_individual.py pylint:unidiomatic-typecheck
 test/integration/targets/fork_safe_stdio/vendored_pty.py pep8!skip # vendored code
 test/integration/targets/gathering_facts/library/bogus_facts shebang
 test/integration/targets/gathering_facts/library/dummy1 shebang
@@ -113,15 +114,19 @@ test/integration/targets/incidental_win_reboot/templates/post_reboot.ps1 pslint!
 test/integration/targets/json_cleanup/library/bad_json shebang
 test/integration/targets/lookup_csvfile/files/crlf.csv line-endings
 test/integration/targets/lookup_ini/lookup-8859-15.ini no-smart-quotes
+test/integration/targets/lookup_ini/lookup-8859-15.ini no-unwanted-characters
 test/integration/targets/module_precedence/lib_with_extension/a.ini shebang
 test/integration/targets/module_precedence/lib_with_extension/ping.ini shebang
 test/integration/targets/module_precedence/roles_with_extension/foo/library/a.ini shebang
 test/integration/targets/module_precedence/roles_with_extension/foo/library/ping.ini shebang
 test/integration/targets/old_style_modules_posix/library/helloworld.sh shebang
 test/integration/targets/template/files/encoding_1252_utf-8.expected no-smart-quotes
+test/integration/targets/template/files/encoding_1252_utf-8.expected no-unwanted-characters
 test/integration/targets/template/files/encoding_1252_windows-1252.expected no-smart-quotes
+test/integration/targets/template/files/encoding_1252_windows-1252.expected no-unwanted-characters
 test/integration/targets/template/files/foo.dos.txt line-endings
 test/integration/targets/template/templates/encoding_1252.j2 no-smart-quotes
+test/integration/targets/template/templates/encoding_1252.j2 no-unwanted-characters
 test/integration/targets/unicode/unicode.yml no-smart-quotes
 test/integration/targets/windows-minimal/library/win_ping_syntax_error.ps1 pslint!skip
 test/integration/targets/win_exec_wrapper/library/test_fail.ps1 pslint:PSCustomUseLiteralPath

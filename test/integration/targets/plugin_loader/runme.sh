@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -ux
+set -eux
 
 cleanup() {
     unlink normal/library/_symlink.py

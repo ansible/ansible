@@ -213,6 +213,9 @@ notes:
    - When used with a C(loop:) each package will be processed individually, it is much more efficient to pass the list directly to the O(name) option.
    - When O(default_release) is used, an implicit priority of 990 is used. This is the same behavior as C(apt-get -t).
    - When an exact version is specified, an implicit priority of 1001 is used.
+   - If the interpreter can't import ``python-apt``/``python3-apt`` the module will check for it in system-owned interpreters as well.
+     If the dependency can't be found, the module will attempt to install it.
+     If the dependency is found or installed, the module will be respawned under the correct interpreter.
 '''
 
 EXAMPLES = '''
@@ -321,7 +324,7 @@ EXAMPLES = '''
     purge: true
 
 - name: Run the equivalent of "apt-get clean" as a separate step
-  apt:
+  ansible.builtin.apt:
     clean: yes
 '''
 
@@ -372,7 +375,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 from ansible.module_utils.common.text.converters import to_native, to_text
-from ansible.module_utils.six import PY3, string_types
+from ansible.module_utils.six import string_types
 from ansible.module_utils.urls import fetch_file
 
 DPKG_OPTIONS = 'force-confdef,force-confold'
@@ -1257,13 +1260,13 @@ def main():
         #    made any more complex than it already is to try and cover more, eg, custom interpreters taking over
         #    system locations)
 
-        apt_pkg_name = 'python3-apt' if PY3 else 'python-apt'
+        apt_pkg_name = 'python3-apt'
 
         if has_respawned():
             # this shouldn't be possible; short-circuit early if it happens...
             module.fail_json(msg="{0} must be installed and visible from {1}.".format(apt_pkg_name, sys.executable))
 
-        interpreters = ['/usr/bin/python3', '/usr/bin/python2', '/usr/bin/python']
+        interpreters = ['/usr/bin/python3', '/usr/bin/python']
 
         interpreter = probe_interpreters_for_module(interpreters, 'apt')
 

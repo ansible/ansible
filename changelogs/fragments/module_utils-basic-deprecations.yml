@@ -1,0 +1,5 @@
+deprecated_features:
+  - >-
+    ``module_utils`` - importing the following convenience helpers from ``ansible.module_utils.basic`` has been deprecated:
+    ``get_exception``, ``literal_eval``, ``_literal_eval``, ``datetime``, ``signal``, ``types``, ``chain``, ``repeat``,
+    ``PY2``, ``PY3``, ``b``, ``binary_type``, ``integer_types``, ``iteritems``, ``string_types``, ``test_type``, ``map`` and ``shlex_quote``.

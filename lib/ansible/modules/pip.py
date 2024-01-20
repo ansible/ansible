@@ -324,7 +324,6 @@ except Exception:
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.basic import AnsibleModule, is_executable, missing_required_lib
 from ansible.module_utils.common.locale import get_best_parsable_locale
-from ansible.module_utils.six import PY3
 
 
 #: Python one-liners to be run at the command line that will determine the
@@ -451,15 +450,7 @@ def _is_present(module, req, installed_pkgs, pkg_command):
 
 
 def _get_pip(module, env=None, executable=None):
-    # Older pip only installed under the "/usr/bin/pip" name.  Many Linux
-    # distros install it there.
-    # By default, we try to use pip required for the current python
-    # interpreter, so people can use pip to install modules dependencies
-    candidate_pip_basenames = ('pip2', 'pip')
-    if PY3:
-        # pip under python3 installs the "/usr/bin/pip3" name
-        candidate_pip_basenames = ('pip3',)
-
+    candidate_pip_basenames = ('pip3',)
     pip = None
     if executable is not None:
         if os.path.isabs(executable):
@@ -600,13 +591,10 @@ def setup_virtualenv(module, env, chdir, out, err):
     if not _is_venv_command(module.params['virtualenv_command']):
         if virtualenv_python:
             cmd.append('-p%s' % virtualenv_python)
-        elif PY3:
-            # Ubuntu currently has a patch making virtualenv always
-            # try to use python2.  Since Ubuntu16 works without
-            # python2 installed, this is a problem.  This code mimics
-            # the upstream behaviour of using the python which invoked
-            # virtualenv to determine which python is used inside of
-            # the virtualenv (when none are specified).
+        else:
+            # This code mimics the upstream behaviour of using the python
+            # which invoked virtualenv to determine which python is used
+            # inside of the virtualenv (when none are specified).
             cmd.append('-p%s' % sys.executable)
 
     # if venv or pyvenv are used and virtualenv_python is defined, then

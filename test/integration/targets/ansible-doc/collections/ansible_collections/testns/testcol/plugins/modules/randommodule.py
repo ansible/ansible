@@ -64,6 +64,15 @@ seealso:
       description: See also the Ansible docsite.
     - ref: foo_bar
       description: Some foo bar.
+notes:
+    - This is a note.
+    - |-
+      This is a multi-paragraph note.
+
+      This is its second paragraph.
+      This is just another line in the second paragraph.
+      Eventually this will break into a new line,
+      depending with which line width this is rendered.
 '''
 
 EXAMPLES = '''
