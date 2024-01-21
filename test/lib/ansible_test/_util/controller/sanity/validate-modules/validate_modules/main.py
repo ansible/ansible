@@ -1123,14 +1123,6 @@ class ModuleValidator(Validator):
                         ' documentation for removed'
                 )
         else:
-            # We are testing a collection
-            if self.object_name.startswith('_'):
-                self.reporter.error(
-                    path=self.object_path,
-                    code='collections-no-underscore-on-deprecation',
-                    msg='Deprecated content in collections MUST NOT start with "_", update meta/runtime.yml instead',
-                )
-
             if not (doc_deprecated == routing_says_deprecated):
                 # DOCUMENTATION.deprecated and meta/runtime.yml disagree
                 self.reporter.error(
