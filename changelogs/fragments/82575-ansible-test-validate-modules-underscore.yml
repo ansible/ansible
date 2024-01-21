@@ -1,0 +1,2 @@
+bugfixes:
+  - "ansible-test validate-modules sanity test - do not treat leading underscores for plugin names in collections as an attempted deprecation (https://github.com/ansible/ansible/pull/82575)."
