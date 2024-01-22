@@ -28,7 +28,7 @@ options:
     - A variable name to debug.
     - Mutually exclusive with the O(msg) option.
     - Be aware that this option already runs in Jinja2 context and has an implicit C({{ }}) wrapping,
-      so you should not be using Jinja2 delimiters unless you are looking for double interpolation.
+      so you should not be using Jinja2 delimiters unless you are looking for double interpretation.
     type: str
   verbosity:
     description:
