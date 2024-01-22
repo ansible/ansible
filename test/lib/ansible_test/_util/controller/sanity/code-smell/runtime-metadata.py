@@ -19,6 +19,7 @@ from ansible.module_utils.six import string_types
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.version import SemanticVersion
 
+
 def fqcr(value):
     """Validate a FQCR."""
     if not isinstance(value, string_types):
@@ -26,6 +27,7 @@ def fqcr(value):
     if not AnsibleCollectionRef.is_valid_fqcr(value):
         raise Invalid('Must be a FQCR')
     return value
+
 
 def isodate(value, check_deprecation_date=False, is_tombstone=False):
     """Validate a datetime.date or ISO 8601 date string."""
