@@ -1000,6 +1000,34 @@ releases:
     - fbsd13_1_remove.yml
     - unsafe-fixes-2.yml
     release_date: '2023-12-11'
+  2.14.14rc1:
+    changes:
+      bugfixes:
+      - '``ansible-test sanity --test runtime-metadata`` - add ``action_plugin`` as
+        a valid field for modules in the schema (https://github.com/ansible/ansible/pull/82562).'
+      - ansible-galaxy role install - normalize tarfile paths and symlinks using ``ansible.utils.path.unfrackpath``
+        and consider them valid as long as the realpath is in the tarfile's role directory
+        (https://github.com/ansible/ansible/issues/81965).
+      - unsafe data - Enable directly using ``AnsibleUnsafeText`` with Python ``pathlib``
+        (https://github.com/ansible/ansible/issues/82414)
+      minor_changes:
+      - ansible-test - Removed `freebsd/12.4` remote.
+      release_summary: '| Release Date: 2024-01-22
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+        '
+      security_fixes:
+      - ANSIBLE_NO_LOG - Address issue where ANSIBLE_NO_LOG was ignored (CVE-2024-0690)
+    codename: C'mon Everybody
+    fragments:
+    - 2.14.14rc1_summary.yaml
+    - ansible-galaxy-role-install-symlink.yml
+    - cve-2024-0690.yml
+    - fix-runtime-metadata-modules-action_plugin.yml
+    - freebsd_12_4_removal.yml
+    - unsafe-intern.yml
+    release_date: '2024-01-22'
   2.14.1rc1:
     changes:
       bugfixes:
