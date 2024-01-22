@@ -149,6 +149,11 @@ options:
             - Default is unlimited depth.
         type: int
         version_added: "2.6"
+    encoding:
+        description:
+            - When doing a C(contains) search, determine the encoding of the files to be searched.
+        type: str
+        version_added: "2.17"
 extends_documentation_fragment: action_common_attributes
 attributes:
     check_mode:
@@ -337,11 +342,12 @@ def sizefilter(st, size):
     return False
 
 
-def contentfilter(fsname, pattern, read_whole_file=False):
+def contentfilter(fsname, pattern, encoding, read_whole_file=False):
     """
     Filter files which contain the given expression
     :arg fsname: Filename to scan for lines matching a pattern
     :arg pattern: Pattern to look for inside of line
+    :arg encoding: Encoding of the file to be scanned
     :arg read_whole_file: If true, the whole file is read into memory before the regex is applied against it. Otherwise, the regex is applied line-by-line.
     :rtype: bool
     :returns: True if one of the lines in fsname matches the pattern. Otherwise False
@@ -352,7 +358,7 @@ def contentfilter(fsname, pattern, read_whole_file=False):
     prog = re.compile(pattern)
 
     try:
-        with open(fsname) as f:
+        with open(fsname, encoding=encoding) as f:
             if read_whole_file:
                 return bool(prog.search(f.read()))
 
@@ -360,6 +366,13 @@ def contentfilter(fsname, pattern, read_whole_file=False):
                 if prog.match(line):
                     return True
 
+    except LookupError as e:
+        raise e
+    except UnicodeDecodeError as e:
+        if encoding is None:
+            encoding = 'None (default determined by the Python built-in function "open")'
+        msg = f'Failed to read the file {fsname} due to an encoding error. current encoding: {encoding}'
+        raise Exception(msg) from e
     except Exception:
         pass
 
@@ -457,6 +470,7 @@ def main():
             depth=dict(type='int'),
             mode=dict(type='raw'),
             exact_mode=dict(type='bool', default=True),
+            encoding=dict(type='str')
         ),
         supports_check_mode=True,
     )
@@ -563,7 +577,7 @@ def main():
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
                                 agefilter(st, now, age, params['age_stamp']) and
                                 sizefilter(st, size) and
-                                contentfilter(fsname, params['contains'], params['read_whole_file']) and
+                                contentfilter(fsname, params['contains'], params['encoding'], params['read_whole_file']) and
                                 mode_filter(st, params['mode'], params['exact_mode'], module)):
 
                             r.update(statinfo(st))
