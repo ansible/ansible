@@ -1089,7 +1089,7 @@ class DocCLI(CLI, RoleMixin):
             text = DocCLI.get_man_text(doc, collection_name, plugin_type)
         except Exception as e:
             display.vvv(traceback.format_exc())
-            raise AnsibleError("Unable to retrieve documentation from '%s' due to: %s" % (plugin, to_native(e)), orig_exc=e)
+            raise AnsibleError("Unable to retrieve documentation from '%s'" % (plugin), orig_exc=e)
 
         return text
 
@@ -1387,16 +1387,15 @@ class DocCLI(CLI, RoleMixin):
         if doc.get('deprecated', False):
             text.append(_format("DEPRECATED: ", 'bold', 'DEP'))
             if isinstance(doc['deprecated'], dict):
-                if 'removed_at_date' in doc['deprecated']:
-                    text.append(
-                        "\tReason: %(why)s\n\tWill be removed in a release after %(removed_at_date)s\n\tAlternatives: %(alternative)s" % doc.pop('deprecated')
-                    )
-                else:
-                    if 'version' in doc['deprecated'] and 'removed_in' not in doc['deprecated']:
-                        doc['deprecated']['removed_in'] = doc['deprecated']['version']
-                    text.append("\tReason: %(why)s\n\tWill be removed in: Ansible %(removed_in)s\n\tAlternatives: %(alternative)s" % doc.pop('deprecated'))
+                if 'removed_at_date' not in doc['deprecated'] and 'version' in doc['deprecated'] and 'removed_in' not in doc['deprecated']:
+                    doc['deprecated']['removed_in'] = doc['deprecated']['version']
+                try:
+                    text.append('\t' + C.config.get_deprecated_msg_from_config(doc['deprecated'], True))
+                except KeyError as e:
+                    raise AnsibleError("Invalid deprecation documentation structure", orig_exc=e)
             else:
-                text.append("%s" % doc.pop('deprecated'))
+                text.append("%s" % doc['deprecated'])
+            del doc['deprecated']
 
         if doc.pop('has_action', False):
             text.append("")
