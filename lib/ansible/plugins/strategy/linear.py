@@ -291,7 +291,12 @@ class StrategyModule(StrategyBase):
                                 )
                             else:
                                 is_handler = isinstance(included_file._task, Handler)
-                                new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=is_handler)
+                                new_blocks = self._load_included_file(
+                                    included_file,
+                                    iterator=iterator,
+                                    is_handler=is_handler,
+                                    handle_stats_and_callbacks=False,
+                                )
 
                             # let PlayIterator know about any new handlers included via include_role or
                             # import_role within include_role/include_taks
@@ -324,13 +329,19 @@ class StrategyModule(StrategyBase):
                         except AnsibleParserError:
                             raise
                         except AnsibleError as e:
-                            if included_file._is_role:
-                                # include_role does not have on_include callback so display the error
-                                display.error(to_text(e), wrap_text=False)
+                            display.error(to_text(e), wrap_text=False)
                             for r in included_file._results:
                                 r._result['failed'] = True
+                                r._result['reason'] = str(e)
+                                self._tqm._stats.increment('failures', r._host.name)
+                                self._tqm.send_callback('v2_runner_on_failed', r)
                                 failed_includes_hosts.add(r._host)
-                            continue
+                        else:
+                            # since we skip incrementing the stats when the task result is
+                            # first processed, we do so now for each host in the list
+                            for host in included_file._hosts:
+                                self._tqm._stats.increment('ok', host.name)
+                            self._tqm.send_callback('v2_playbook_on_include', included_file)
 
                     for host in failed_includes_hosts:
                         self._tqm._failed_hosts[host.name] = True

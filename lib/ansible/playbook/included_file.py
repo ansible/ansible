@@ -89,7 +89,7 @@ class IncludedFile:
                     except KeyError:
                         task_vars = task_vars_cache[cache_key] = variable_manager.get_vars(play=iterator._play, host=original_host, task=original_task)
 
-                    include_args = include_result.get('include_args', dict())
+                    include_args = include_result.pop('include_args', dict())
                     special_vars = {}
                     loop_var = include_result.get('ansible_loop_var', 'item')
                     index_var = include_result.get('ansible_index_var')

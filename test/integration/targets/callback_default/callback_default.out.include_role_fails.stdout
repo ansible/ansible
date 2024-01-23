@@ -1,0 +1,9 @@
+
+PLAY [testhost] ****************************************************************
+
+TASK [include_role : does-not-exist] *******************************************
+fatal: [testhost]: FAILED! => {"changed": false, "reason": "the role 'does-not-exist' was not found in TEST_PATH/roles:/root/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:TEST_PATH\n\nThe error appears to be in 'TEST_PATH/test_include_role_fails.yml': line 5, column 15, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n    - include_role:\n        name: does-not-exist\n              ^ here\n"}
+
+PLAY RECAP *********************************************************************
+testhost                   : ok=0    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+

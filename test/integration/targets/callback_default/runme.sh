@@ -25,12 +25,11 @@ run_test() {
 	{ ansible-playbook -i inventory "$playbook" "${@:3}" \
 		> >(set +x; tee "${OUTFILE}.${testname}.stdout"); } \
 		2> >(set +x; tee "${OUTFILE}.${testname}.stderr" >&2)
-	# Scrub deprication warning that shows up in Python 2.6 on CentOS 6
-	sed -i -e '/RandomPool_DeprecationWarning/d' "${OUTFILE}.${testname}.stderr"
 	sed -i -e 's/included: .*\/test\/integration/included: ...\/test\/integration/g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e 's/@@ -1,1 +1,1 @@/@@ -1 +1 @@/g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e 's/: .*\/test_diff\.txt/: ...\/test_diff.txt/g' "${OUTFILE}.${testname}.stdout"
-	sed -i -e "s#${ANSIBLE_PLAYBOOK_DIR}#TEST_PATH#g" "${OUTFILE}.${testname}.stdout"
+	sed -i -e "s#${ANSIBLE_PLAYBOOK_DIR}#TEST_PATH#g" "${OUTFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stderr"
+	sed -i -e "s#/var/root/#/root/#g" "${OUTFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stderr"  # macos
 	sed -i -e 's/^Using .*//g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e 's/[0-9]:[0-9]\{2\}:[0-9]\{2\}\.[0-9]\{6\}/0:00:00.000000/g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e 's/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\} [0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}\.[0-9]\{6\}/0000-00-00 00:00:00.000000/g' "${OUTFILE}.${testname}.stdout"
@@ -47,7 +46,7 @@ run_test_dryrun() {
 	# optional, pass --check to run a dry run
 	local chk=${2:-}
 
-	# outout was recorded w/o cowsay, ensure we reproduce the same
+	# output was recorded w/o cowsay, ensure we reproduce the same
 	export ANSIBLE_NOCOWS=1
 
 	# This needed to satisfy shellcheck that can not accept unquoted variable
@@ -58,8 +57,6 @@ run_test_dryrun() {
 	{ $cmd \
 		> >(set +x; tee "${OUTFILE}.${testname}.stdout"); } \
 		2> >(set +x; tee "${OUTFILE}.${testname}.stderr" >&2)
-	# Scrub deprication warning that shows up in Python 2.6 on CentOS 6
-	sed -i -e '/RandomPool_DeprecationWarning/d' "${OUTFILE}.${testname}.stderr"
 
 	diff -u "${ORIGFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stdout" || diff_failure
 	diff -u "${ORIGFILE}.${testname}.stderr" "${OUTFILE}.${testname}.stderr" || diff_failure
@@ -132,6 +129,10 @@ export ANSIBLE_CHECK_MODE_MARKERS=0
 
 run_test default test.yml
 
+set +e
+ANSIBLE_CALLBACKS_ENABLED=default run_test include_role_fails test_include_role_fails.yml
+set -e
+
 # Check for async output
 # NOTE: regex to match 1 or more digits works for both BSD and GNU grep
 ansible-playbook -i inventory test_async.yml 2>&1 | tee async_test.out
@@ -177,7 +178,7 @@ export ANSIBLE_DISPLAY_OK_HOSTS=1
 export ANSIBLE_DISPLAY_FAILED_STDERR=1
 export ANSIBLE_TIMEOUT=1
 
-# Check if UNREACHBLE is available in stderr
+# Check if UNREACHABLE is available in stderr
 set +e
 ansible-playbook -i inventory test_2.yml > >(set +x; tee "${BASEFILE}.unreachable.stdout";) 2> >(set +x; tee "${BASEFILE}.unreachable.stderr" >&2) || true
 set -e

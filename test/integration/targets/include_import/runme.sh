@@ -123,7 +123,7 @@ test "$(grep -c 'ok=3' test_allow_single_role_dup.out)" = 1
 
 # test templating public, allow_duplicates, and rolespec_validate
 ansible-playbook tasks/test_templating_IncludeRole_FA.yml 2>&1 | tee IncludeRole_FA_template.out
-test "$(grep -c 'ok=4' IncludeRole_FA_template.out)" = 1
+test "$(grep -c 'ok=6' IncludeRole_FA_template.out)" = 1
 test "$(grep -c 'failed=0' IncludeRole_FA_template.out)" = 1
 
 # https://github.com/ansible/ansible/issues/66764
