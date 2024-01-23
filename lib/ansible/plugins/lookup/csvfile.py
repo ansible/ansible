@@ -160,6 +160,7 @@ class LookupModule(LookupBase):
 
             # parameters override per term using k/v
             try:
+                reset_params = False
                 for name, value in kv.items():
                     if name == '_raw_params':
                         continue
@@ -167,7 +168,11 @@ class LookupModule(LookupBase):
                         raise AnsibleAssertionError('%s is not a valid option' % name)
 
                     self._deprecate_inline_kv()
-                    paramvals[name] = value
+                    self.set_option(name, value)
+                    reset_params = True
+
+                if reset_params:
+                    paramvals = self.get_options()
 
             except (ValueError, AssertionError) as e:
                 raise AnsibleError(e)
