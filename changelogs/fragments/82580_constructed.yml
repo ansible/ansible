@@ -1,0 +1,2 @@
+minor_changes:
+  - "constructed inventory plugin - Adding a note that only group_vars of explicit groups are loaded (https://github.com/ansible/ansible/pull/82580)."
