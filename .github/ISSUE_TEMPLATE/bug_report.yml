@@ -87,7 +87,7 @@ body:
 
 
       [collections org]: /ansible-collections
-    placeholder: dnf, apt, yum, pip, user etc.
+    placeholder: dnf, apt, pip, user etc.
   validations:
     required: true
 

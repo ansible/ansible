@@ -1,11 +1,4 @@
 - block:
-  - name: Install epel repo which is missing on rhel-7 and is needed for rpmfluff
-    include_role:
-      name: setup_epel
-    when:
-      - ansible_distribution in ['RedHat', 'CentOS']
-      - ansible_distribution_major_version is version('7', '==')
-
   - name: Include distribution specific variables
     include_vars: "{{ lookup('first_found', params) }}"
     vars:

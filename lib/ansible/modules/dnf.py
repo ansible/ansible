@@ -21,7 +21,7 @@ options:
     description:
       - By default, this module will select the backend based on the C(ansible_pkg_mgr) fact.
     default: "auto"
-    choices: [ auto, dnf4, dnf5 ]
+    choices: [ auto, yum, yum4, dnf4, dnf5 ]
     type: str
     version_added: 2.15
   name:
@@ -206,8 +206,8 @@ options:
     version_added: "2.7"
   install_repoquery:
     description:
-      - This is effectively a no-op in DNF as it is not needed with DNF, but is an accepted parameter for feature
-        parity/compatibility with the M(ansible.builtin.yum) module.
+      - This is effectively a no-op in DNF as it is not needed with DNF.
+      - This option is deprecated and will be removed in ansible-core 2.20.
     type: bool
     default: "yes"
     version_added: "2.7"
@@ -261,7 +261,7 @@ extends_documentation_fragment:
 - action_common_attributes.flow
 attributes:
     action:
-        details: In the case of dnf, it has 2 action plugins that use it under the hood, M(ansible.builtin.yum) and M(ansible.builtin.package).
+        details: dnf has 2 action plugins that use it under the hood, M(ansible.builtin.dnf) and M(ansible.builtin.package).
         support: partial
     async:
         support: none
@@ -409,22 +409,12 @@ class DnfModule(YumDnf):
         super(DnfModule, self).__init__(module)
 
         self._ensure_dnf()
-        self.lockfile = "/var/cache/dnf/*_lock.pid"
         self.pkg_mgr_name = "dnf"
 
         try:
             self.with_modules = dnf.base.WITH_MODULES
         except AttributeError:
             self.with_modules = False
-
-        # DNF specific args that are not part of YumDnf
-        self.allowerasing = self.module.params['allowerasing']
-        self.nobest = self.module.params['nobest']
-
-    def is_lockfile_pid_valid(self):
-        # FIXME? it looks like DNF takes care of invalid lock files itself?
-        # https://github.com/ansible/ansible/issues/57189
-        return True
 
     def _sanitize_dnf_error_msg_install(self, spec, error):
         """
@@ -467,7 +457,7 @@ class DnfModule(YumDnf):
             'version': package.version,
             'repo': package.repoid}
 
-        # envra format for alignment with the yum module
+        # envra format for backwards compat
         result['envra'] = '{epoch}:{name}-{version}-{release}.{arch}'.format(**result)
 
         # keep nevra key for backwards compat as it was previously
@@ -1461,11 +1451,7 @@ def main():
     #   list=repos
     #   list=pkgspec
 
-    # Extend yumdnf_argument_spec with dnf-specific features that will never be
-    # backported to yum because yum is now in "maintenance mode" upstream
-    yumdnf_argument_spec['argument_spec']['allowerasing'] = dict(default=False, type='bool')
-    yumdnf_argument_spec['argument_spec']['nobest'] = dict(default=False, type='bool')
-    yumdnf_argument_spec['argument_spec']['use_backend'] = dict(default='auto', choices=['auto', 'dnf4', 'dnf5'])
+    yumdnf_argument_spec['argument_spec']['use_backend'] = dict(default='auto', choices=['auto', 'yum', 'yum4', 'dnf4', 'dnf5'])
 
     module = AnsibleModule(
         **yumdnf_argument_spec

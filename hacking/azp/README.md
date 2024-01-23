@@ -15,7 +15,7 @@ This directory contains the following scripts:
 
 Incidental testing and code coverage occurs when a test covers one or more portions of code as an unintentional side-effect of testing another portion of code.
 
-For example, the ``yum`` integration test intentionally tests the ``yum`` Ansible module.
+For example, the ``dnf`` integration test intentionally tests the ``dnf`` Ansible module.
 However, in doing so it also uses, and unintentionally tests the ``file`` module as well.
 
 As part of the process of migrating modules and plugins into collections, integration tests were identified that provided exclusive incidental code coverage.

@@ -8,10 +8,9 @@ from ansible.utils.display import Display
 
 display = Display()
 
-VALID_BACKENDS = frozenset(("dnf", "dnf4", "dnf5"))
+VALID_BACKENDS = frozenset(("yum", "yum4", "dnf", "dnf4", "dnf5"))
 
 
-# FIXME mostly duplicate of the yum action plugin
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
@@ -29,7 +28,7 @@ class ActionModule(ActionBase):
 
         module = self._task.args.get('use', self._task.args.get('use_backend', 'auto'))
 
-        if module == 'auto':
+        if module in {'yum', 'auto'}:
             try:
                 if self._task.delegate_to:  # if we delegate, we should use delegated host's facts
                     module = self._templar.template("{{hostvars['%s']['ansible_facts']['pkg_mgr']}}" % self._task.delegate_to)
@@ -57,7 +56,7 @@ class ActionModule(ActionBase):
             )
 
         else:
-            if module == "dnf4":
+            if module in {"yum4", "dnf4"}:
                 module = "dnf"
 
             # eliminate collisions with collections search while still allowing local override
