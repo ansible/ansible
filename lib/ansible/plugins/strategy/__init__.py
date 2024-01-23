@@ -854,7 +854,7 @@ class StrategyBase:
         if handle_stats_and_callbacks:
             display.deprecated(
                 "Reporting play recap stats and running callbacks functionality for "
-                "``include_tasks``/``include_role`` in ``StrategyBase._load_included_file "
+                "``include_tasks``/``include_role`` in ``StrategyBase._load_included_file`` "
                 "is deprecated. See ``https://github.com/ansible/ansible/pull/79260`` for "
                 "guidance on how to move the reporting into specific strategy plugins.",
                 version="2.21"
