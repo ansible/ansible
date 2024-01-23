@@ -331,28 +331,31 @@ class LookupModule(LookupBase):
         if invalid_params:
             raise AnsibleError('Unrecognized parameter(s) given to password lookup: %s' % ', '.join(invalid_params))
 
-        # Set defaults
-        params['length'] = int(params.get('length', self.get_option('length')))
-        params['encrypt'] = params.get('encrypt', self.get_option('encrypt'))
-        params['ident'] = params.get('ident', self.get_option('ident'))
-        params['seed'] = params.get('seed', self.get_option('seed'))
+        # update options with what we got
+        if params:
+            self.set_options(direct=params)
 
-        params['chars'] = params.get('chars', self.get_option('chars'))
-        if params['chars'] and isinstance(params['chars'], string_types):
+        # chars still might need more
+        chars = params.get('chars', self.get_option('chars'))
+        if chars and isinstance(chars, string_types):
             tmp_chars = []
-            if u',,' in params['chars']:
+            if u',,' in chars:
                 tmp_chars.append(u',')
-            tmp_chars.extend(c for c in params['chars'].replace(u',,', u',').split(u',') if c)
-            params['chars'] = tmp_chars
+            tmp_chars.extend(c for c in chars.replace(u',,', u',').split(u',') if c)
+            self.set_option('chars', tmp_chars)
+
+        # return processed params
+        for field in VALID_PARAMS:
+            params[field] = self.get_option(field)
 
         return relpath, params
 
     def run(self, terms, variables, **kwargs):
         ret = []
 
-        self.set_options(var_options=variables, direct=kwargs)
-
         for term in terms:
+
+            self.set_options(var_options=variables, direct=kwargs)
 
             changed = None
             relpath, params = self._parse_parameters(term)
