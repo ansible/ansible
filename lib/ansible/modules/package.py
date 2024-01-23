@@ -15,7 +15,7 @@ author:
     - Ansible Core Team
 short_description: Generic OS package manager
 description:
-    - This modules manages packages on a target without specifying a package manager module (like M(ansible.builtin.yum), M(ansible.builtin.apt), ...).
+    - This modules manages packages on a target without specifying a package manager module (like M(ansible.builtin.dnf), M(ansible.builtin.apt), ...).
       It is convenient to use in an heterogeneous environment of machines without having to create a specific task for
       each package manager. M(ansible.builtin.package) calls behind the module for the package manager used by the operating system
       discovered by the module M(ansible.builtin.setup).  If M(ansible.builtin.setup) was not yet run, M(ansible.builtin.package) will run it.
@@ -38,7 +38,7 @@ options:
     required: true
   use:
     description:
-      - The required package manager module to use (V(yum), V(apt), and so on). The default V(auto) will use existing facts or try to autodetect it.
+      - The required package manager module to use (V(dnf), V(apt), and so on). The default V(auto) will use existing facts or try to autodetect it.
       - You should only use this field if the automatic selection is not working for some reason.
     default: auto
 requirements:
