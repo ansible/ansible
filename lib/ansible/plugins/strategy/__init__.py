@@ -843,7 +843,7 @@ class StrategyBase:
 
         return ti_copy
 
-    def _load_included_file(self, included_file, iterator, is_handler=False):
+    def _load_included_file(self, included_file, iterator, is_handler=False, handle_stats_and_callbacks=True):
         '''
         Loads an included YAML file of tasks, applying the optional set of variables.
 
@@ -851,6 +851,15 @@ class StrategyBase:
         in such case the caller is responsible for marking the host(s) as failed
         using PlayIterator.mark_host_failed().
         '''
+        if handle_stats_and_callbacks:
+            display.deprecated(
+                "Reporting play recap stats and running callbacks functionality for "
+                "``include_tasks`` in ``StrategyBase._load_included_file`` is deprecated. "
+                "See ``https://github.com/ansible/ansible/pull/79260`` for guidance on how to "
+                "move the reporting into specific strategy plugins to account for "
+                "``include_role`` tasks as well.",
+                version="2.21"
+            )
         display.debug("loading included file: %s" % included_file._filename)
         try:
             data = self._loader.load_from_file(included_file._filename)
@@ -870,11 +879,9 @@ class StrategyBase:
                 loader=self._loader,
                 variable_manager=self._variable_manager,
             )
-
-            # since we skip incrementing the stats when the task result is
-            # first processed, we do so now for each host in the list
-            for host in included_file._hosts:
-                self._tqm._stats.increment('ok', host.name)
+            if handle_stats_and_callbacks:
+                for host in included_file._hosts:
+                    self._tqm._stats.increment('ok', host.name)
         except AnsibleParserError:
             raise
         except AnsibleError as e:
@@ -882,18 +889,18 @@ class StrategyBase:
                 reason = "Could not find or access '%s' on the Ansible Controller." % to_text(e.file_name)
             else:
                 reason = to_text(e)
+            if handle_stats_and_callbacks:
+                for r in included_file._results:
+                    r._result['failed'] = True
 
-            for r in included_file._results:
-                r._result['failed'] = True
-
-            for host in included_file._hosts:
-                tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=reason))
-                self._tqm._stats.increment('failures', host.name)
-                self._tqm.send_callback('v2_runner_on_failed', tr)
+                for host in included_file._hosts:
+                    tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=reason))
+                    self._tqm._stats.increment('failures', host.name)
+                    self._tqm.send_callback('v2_runner_on_failed', tr)
             raise AnsibleError(reason) from e
 
-        # finally, send the callback and return the list of blocks loaded
-        self._tqm.send_callback('v2_playbook_on_include', included_file)
+        if handle_stats_and_callbacks:
+            self._tqm.send_callback('v2_playbook_on_include', included_file)
         display.debug("done processing included file")
         return block_list
 
