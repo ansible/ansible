@@ -1,0 +1,6 @@
+---
+bugfixes:
+  - ansible.builtin.uri - the module was ignoring the ``force`` parameter and always
+    requesting a cached copy (via the ``If-Modified-Since`` header) when downloading
+    to an existing local file. Disable caching when ``force`` is ``true``, as
+    documented (https://github.com/ansible/ansible/issues/82166).
