@@ -12,7 +12,7 @@ DOCUMENTATION = '''
     version_added: "2.14"
     deprecated:
         why: reasons
-        alternative: other thing
+        alternatives: other thing
         removed_in: "2.16"
         removed_from_collection: "ansible.legacy"
     options: {}

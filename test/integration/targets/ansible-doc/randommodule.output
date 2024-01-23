@@ -6,7 +6,7 @@
             ],
             "collection": "testns.testcol",
             "deprecated": {
-                "alternative": "Use some other module",
+                "alternatives": "Use some other module",
                 "removed_from_collection": "testns.testcol",
                 "removed_in": "3.0.0",
                 "why": "Test deprecation"
@@ -31,7 +31,7 @@
                     "env": [
                         {
                             "deprecated": {
-                                "alternative": "none",
+                                "alternatives": "none",
                                 "removed_in": "2.0.0",
                                 "version": "2.0.0",
                                 "why": "Test deprecation"

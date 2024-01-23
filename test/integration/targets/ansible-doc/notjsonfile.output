@@ -11,7 +11,7 @@
             "options": {
                 "_prefix": {
                     "deprecated": {
-                        "alternative": "none",
+                        "alternatives": "none",
                         "collection_name": "testns.testcol",
                         "removed_at_date": "2050-01-01",
                         "why": "Another test deprecation"
@@ -49,7 +49,7 @@
                     "vars": [
                         {
                             "deprecated": {
-                                "alternative": "do not use a variable",
+                                "alternatives": "do not use a variable",
                                 "collection_name": "testns.testcol",
                                 "version": "3.0.0",
                                 "why": "Test deprecation"
@@ -74,7 +74,7 @@
                     "ini": [
                         {
                             "deprecated": {
-                                "alternative": "none",
+                                "alternatives": "none",
                                 "collection_name": "testns.testcol",
                                 "version": "2.0.0",
                                 "why": "Test deprecation"
@@ -87,7 +87,7 @@
                 },
                 "testcol2depr": {
                     "deprecated": {
-                        "alternative": "none",
+                        "alternatives": "none",
                         "collection_name": "testns.testcol2",
                         "version": "2.0.0",
                         "why": "Test option deprecation"
@@ -104,7 +104,7 @@
                     "env": [
                         {
                             "deprecated": {
-                                "alternative": "none",
+                                "alternatives": "none",
                                 "collection_name": "testns.testcol2",
                                 "removed_at_date": "2020-01-31",
                                 "why": "Test deprecation"
@@ -117,7 +117,7 @@
                     "ini": [
                         {
                             "deprecated": {
-                                "alternative": "none",
+                                "alternatives": "none",
                                 "collection_name": "testns.testcol2",
                                 "version": "3.0.0",
                                 "why": "Test deprecation"
@@ -132,7 +132,7 @@
                     "vars": [
                         {
                             "deprecated": {
-                                "alternative": "none",
+                                "alternatives": "none",
                                 "collection_name": "testns.testcol2",
                                 "removed_at_date": "2040-12-31",
                                 "why": "Test deprecation"

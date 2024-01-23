@@ -4,7 +4,7 @@
             "author": "Ansible core team",
             "collection": "testns.testcol",
             "deprecated": {
-                "alternative": "Use some other lookup",
+                "alternatives": "Use some other lookup",
                 "removed_from_collection": "testns.testcol",
                 "removed_in": "3.0.0",
                 "why": "Test deprecation"

@@ -12,7 +12,7 @@ author:
     - Ansible Core Team
 version_added: 1.0.0
 deprecated:
-    alternative: Use some other module
+    alternatives: Use some other module
     why: Test deprecation
     removed_in: '3.0.0'
 options:
@@ -41,7 +41,7 @@ options:
             - name: TEST_ENV
               version_added: 1.0.0
               deprecated:
-                alternative: none
+                alternatives: none
                 why: Test deprecation
                 removed_in: '2.0.0'
                 version: '2.0.0'
