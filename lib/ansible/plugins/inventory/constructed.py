@@ -18,6 +18,19 @@ DOCUMENTATION = '''
             description: token that ensures this is a source file for the 'constructed' plugin.
             required: True
             choices: ['ansible.builtin.constructed', 'constructed']
+        use_vars_plugins:
+            description:
+                - Normally, for performance reasons, vars plugins get executed after the inventory sources complete the base inventory,
+                  this option allows for getting vars related to hosts/groups from those plugins.
+                - The host_group_vars (enabled by default) 'vars plugin' is the one responsible for reading host_vars/ and group_vars/ directories.
+                - This will execute all vars plugins, even those that are not supposed to execute at the 'inventory' stage.
+                  See vars plugins docs for details on 'stage'.
+                - Implicit groups, such as 'all' or 'ungrouped', need to be explicitly defined in any previous inventory to apply the
+                  corresponding group_vars
+            required: false
+            default: false
+            type: boolean
+            version_added: '2.11'
     extends_documentation_fragment:
       - constructed
 '''
