@@ -375,5 +375,61 @@
       - '"{{ remote_tmp_dir_test }}/astest/.hidden.txt" in astest_list'
       - '"checksum" in result.files[0]'
 
+# Test permission error is correctly handled by find module
+- vars:
+    test_dir: /tmp/permission_test
+  block:
+    - name: Set up content
+      file:
+        path: "{{ test_dir }}/{{ item.name }}"
+        state: "{{ item.state }}"
+        mode: "{{ item.mode }}"
+        owner: "{{ item.owner | default(omit) }}"
+        group: "{{ item.group | default(omit) }}"
+      loop:
+        - name: readable
+          state: directory
+          owner: "{{ test_user_name }}"
+          mode: "1711"
+        - name: readable/1-unreadable
+          state: directory
+          mode: "0700"
+        - name: readable/2-readable
+          state: touch
+          owner: "{{ test_user_name }}"
+          mode: "0777"
+
+    - name: Find a file in readable directory
+      find:
+        paths: "{{ test_dir }}/readable/"
+        patterns: "*"
+        recurse: true
+      register: permission_issue
+      become_user: "{{ test_user_name }}"
+
+    - name: Find a file in readable directory
+      find:
+        paths: "{{ test_dir }}/readable/"
+        patterns: "*"
+        recurse: true
+      register: permission_issue
+      become_user: "{{ test_user_name }}"
+      become: yes
+
+    - name: Check if the skipped_paths are populated correctly with permission error
+      assert:
+        that:
+          - permission_issue is success
+          - not permission_issue.changed
+          - permission_issue.skipped_paths|length == 1
+          - "'{{ test_dir }}/readable/1-unreadable' in permission_issue.skipped_paths"
+          - "'Permission denied' in permission_issue.skipped_paths['{{ test_dir }}/readable/1-unreadable']"
+          - permission_issue.matched == 1
+  always:
+    - name: cleanup test directory
+      file:
+        dest: "{{ test_dir }}"
+        state: absent
+
 - name: Run mode tests
   import_tasks: mode.yml
