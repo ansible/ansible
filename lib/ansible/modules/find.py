@@ -262,6 +262,7 @@ skipped_paths:
     version_added: '2.12'
 '''
 
+import errno
 import fnmatch
 import grp
 import os
@@ -446,10 +447,6 @@ def statinfo(st):
     }
 
 
-def handle_walk_errors(e):
-    raise e
-
-
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -494,6 +491,12 @@ def main():
 
     filelist = []
     skipped = {}
+
+    def handle_walk_errors(e):
+        if e.errno in (errno.EPERM, errno.EACCES):
+            skipped[e.filename] = to_text(e)
+            return
+        raise e
 
     if params['age'] is None:
         age = None
