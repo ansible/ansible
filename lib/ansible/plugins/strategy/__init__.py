@@ -376,36 +376,36 @@ class StrategyBase:
             raise AnsibleError("Failed to convert the throttle value to an integer.", obj=task._ds, orig_exc=e)
 
         # and then queue the new task
-        try:
-            # Determine the "rewind point" of the worker list. This means we start
-            # iterating over the list of workers until the end of the list is found.
-            # Normally, that is simply the length of the workers list (as determined
-            # by the forks or serial setting), however a task/block/play may "throttle"
-            # that limit down.
-            rewind_point = len(self._workers)
-            if throttle > 0 and self.ALLOW_BASE_THROTTLING:
-                if task.run_once:
-                    display.debug("Ignoring 'throttle' as 'run_once' is also set for '%s'" % task.get_name())
-                else:
-                    if throttle <= rewind_point:
-                        display.debug("task: %s, throttle: %d" % (task.get_name(), throttle))
-                        rewind_point = throttle
+        # Determine the "rewind point" of the worker list. This means we start
+        # iterating over the list of workers until the end of the list is found.
+        # Normally, that is simply the length of the workers list (as determined
+        # by the forks or serial setting), however a task/block/play may "throttle"
+        # that limit down.
+        rewind_point = len(self._workers)
+        if throttle > 0 and self.ALLOW_BASE_THROTTLING:
+            if task.run_once:
+                display.debug("Ignoring 'throttle' as 'run_once' is also set for '%s'" % task.get_name())
+            else:
+                if throttle <= rewind_point:
+                    display.debug("task: %s, throttle: %d" % (task.get_name(), throttle))
+                    rewind_point = throttle
 
-            queued = False
-            starting_worker = self._cur_worker
-            while True:
-                if self._cur_worker >= rewind_point:
-                    self._cur_worker = 0
+        queued = False
+        starting_worker = self._cur_worker
+        while True:
+            if self._cur_worker >= rewind_point:
+                self._cur_worker = 0
 
-                worker_prc = self._workers[self._cur_worker]
-                if worker_prc is None or not worker_prc.is_alive():
-                    self._queued_task_cache[(host.name, task._uuid)] = {
-                        'host': host,
-                        'task': task,
-                        'task_vars': task_vars,
-                        'play_context': play_context
-                    }
+            worker_prc = self._workers[self._cur_worker]
+            if worker_prc is None or not worker_prc.is_alive():
+                self._queued_task_cache[(host.name, task._uuid)] = {
+                    'host': host,
+                    'task': task,
+                    'task_vars': task_vars,
+                    'play_context': play_context
+                }
 
+                try:
                     # Pass WorkerProcess its strategy worker number so it can send an identifier along with intra-task requests
                     worker_prc = WorkerProcess(
                         self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader, self._cur_worker,
@@ -413,24 +413,28 @@ class StrategyBase:
                     self._workers[self._cur_worker] = worker_prc
                     self._tqm.send_callback('v2_runner_on_start', host, task)
                     worker_prc.start()
-                    display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
-                    queued = True
+                except Exception as ex:
+                    if isinstance(ex, OSError) and ex.errno in (23, 24):  # EMFILE/ENFILE
+                        detail = "too many open files (try increasing system open files limit?)"
+                    else:
+                        detail = str(ex)
 
-                self._cur_worker += 1
+                    raise RuntimeError(f"a fatal error occurred while launching a worker: {detail}") from ex
 
-                if self._cur_worker >= rewind_point:
-                    self._cur_worker = 0
+                display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
+                queued = True
 
-                if queued:
-                    break
-                elif self._cur_worker == starting_worker:
-                    time.sleep(0.0001)
+            self._cur_worker += 1
 
-            self._pending_results += 1
-        except (EOFError, IOError, AssertionError) as e:
-            # most likely an abort
-            display.debug("got an error while queuing: %s" % e)
-            return
+            if self._cur_worker >= rewind_point:
+                self._cur_worker = 0
+
+            if queued:
+                break
+            elif self._cur_worker == starting_worker:
+                time.sleep(0.0001)
+
+        self._pending_results += 1
         display.debug("exiting _queue_task() for %s/%s" % (host.name, task.action))
 
     def get_task_hosts(self, iterator, task_host, task):

@@ -1,0 +1,2 @@
+bugfixes:
+  - propagate WorkerProcess startup failure exceptions (https://github.com/ansible/ansible/issues/82471)
