@@ -212,6 +212,16 @@
     that:
       - 'source_file.stat.exists == True'
 
+- name: Check if the PPA URL
+  shell: "grep 'https://ppa.launchpadcontent.net' /etc/apt/sources.list.d/{{test_ppa_filename}}.list"
+  register: r
+
+- name: Test if PPA URL points to https URL
+  assert:
+    that:
+      - r.changed
+      - "'https://ppa.launchpadcontent.net' in r.stdout"
+
 - name: 'examine apt cache mtime'
   stat: path='/var/cache/apt/pkgcache.bin'
   register: cache_after
