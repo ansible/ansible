@@ -578,6 +578,19 @@
       - shell_expand_failure is failed
       - "shell_expand_failure.msg == 'Unsupported parameters for (shell) module: expand_argument_vars'"
 
+- name: run shell with warn
+  shell: echo 'hi'
+  args:
+    warn: false
+  register: shell_warn_failure
+  ignore_errors: true
+
+- name: assert shell with warn failed
+  assert:
+    that:
+      - shell_warn_failure is failed
+      - "shell_warn_failure.msg == 'Unsupported parameters for (shell) module: warn'"
+
 - name: Run command that backgrounds, to ensure no hang
   shell: '{{ role_path }}/scripts/yoink.sh &'
   delegate_to: localhost

@@ -17,8 +17,10 @@ class ActionModule(ActionBase):
 
         # Shell shares the same module code as command. Fail if command
         # specific options are set.
-        if "expand_argument_vars" in self._task.args:
-            raise AnsibleActionFail(f"Unsupported parameters for ({self._task.action}) module: expand_argument_vars")
+        invalid_args = ("expand_argument_vars", "warn")
+        for invalid_arg in invalid_args:
+            if invalid_arg in self._task.args:
+                raise AnsibleActionFail(f"Unsupported parameters for ({self._task.action}) module: {invalid_arg}")
 
         command_action = self._shared_loader_obj.action_loader.get('ansible.legacy.command',
                                                                    task=self._task,

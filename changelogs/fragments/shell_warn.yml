@@ -1,0 +1,3 @@
+---
+bugfixes:
+ - shell - fail module if unsupported parameter warn is provided (https://github.com/ansible/ansible/issues/81944).
