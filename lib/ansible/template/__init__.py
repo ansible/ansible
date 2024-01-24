@@ -644,7 +644,7 @@ class AnsibleEnvironment(NativeEnvironment):
                 ('trim_blocks', self.trim_blocks),
                 ('variable_end_string', self.variable_end_string),
                 ('variable_start_string', self.variable_start_string),
-                ('native', self.__class__ == AnsibleNativeEnvironment),
+                ('native', self.__class__ is AnsibleNativeEnvironment),
             )
         )
         return f'{source}[overrides={overrides}]'
@@ -764,6 +764,9 @@ class Templar:
 
         :returns: Copy of Templar with updated environment.
         """
+        if environment_class not in {AnsibleEnvironment, AnsibleNativeEnvironment}:
+            raise AnsibleAssertionError('environment_class must be one of AnsibleEnvironment or AnsibleNativeEnvironment')
+
         # We need to use __new__ to skip __init__, mainly not to create a new
         # environment there only to override it below
         new_env = object.__new__(environment_class)
