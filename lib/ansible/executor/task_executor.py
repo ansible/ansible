@@ -353,15 +353,6 @@ class TaskExecutor:
             res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
             res['_ansible_ignore_unreachable'] = task_fields.get('ignore_unreachable')
 
-            # gets templated here unlike rest of loop_control fields, depends on loop_var above
-            try:
-                res['_ansible_item_label'] = templar.template(label)
-            except AnsibleUndefinedVariable as e:
-                res.update({
-                    'failed': True,
-                    'msg': 'Failed to template loop_control.label: %s' % to_text(e)
-                })
-
             tr = TaskResult(
                 self._host.name,
                 self._task._uuid,
@@ -377,6 +368,13 @@ class TaskExecutor:
                     self._final_q.send_callback('v2_on_file_diff', tr)
                 if self._task.action not in C._ACTION_INVENTORY_TASKS:
                     self._final_q.send_callback('v2_runner_item_on_ok', tr)
+                try:
+                    res['_ansible_item_label'] = templar.template(label)
+                except AnsibleUndefinedVariable as e:
+                    res.update({
+                        'failed': True,
+                        'msg': 'Failed to template loop_control.label: %s' % to_text(e)
+                    })
 
             results.append(res)
             del task_vars[loop_var]
