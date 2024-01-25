@@ -406,8 +406,6 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
     def _validate_args(self, module_name, module_args):
         argspec = self._get_argspec_from_docs(module_name)
-
-        # call validation
         # TODO: validate(argpsec, module_args)
 
     def _compute_environment_string(self, raw_environment_out=None):
