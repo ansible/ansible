@@ -314,7 +314,7 @@ EXAMPLES = r'''
   ansible.builtin.user:
     name: james
     shell: /bin/bash
-    groups: admins,developers
+    groups: ['admins', 'developers']
     append: yes
 
 - name: Remove the user 'johnd'
