@@ -1,14 +1,11 @@
 # Copyright: 2023, Ansible Project
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause )
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
-from ansible.module_utils.common._collections_compat import Sequence
+from __future__ import annotations
 
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.six import string_types
-# from ansible.module_utils._text import to_text
 
 ARGS_DOCS_KEYS = ("aliases", "choices", "default", "elements", "no_log", "required", "type")
 
