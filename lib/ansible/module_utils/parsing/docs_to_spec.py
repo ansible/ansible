@@ -105,8 +105,7 @@ def validate_spec_from_plugin(plugin):
     # take plugin object (name?), get docs and process with above
     pass
 
-
-'''
+e1 = '''
 # example usage:
 
         #prep
@@ -130,7 +129,7 @@ def validate_spec_from_plugin(plugin):
 # TODO: attributes = {}
 # add_attributes(attributes, doc['ATTRIBUTES'])
 
-'''
+e2 = '''
 # example of DOCUMENTATION with requirements:
 options:
      ...jkk
