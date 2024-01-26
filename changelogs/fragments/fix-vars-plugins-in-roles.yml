@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix loading vars_plugins in roles (https://github.com/ansible/ansible/issues/82239).
