@@ -46,3 +46,5 @@ ANSIBLE_DEBUG=True ansible-playbook test_task_vars.yml > out.txt
 [ "$(grep -c "Loading VarsModule 'host_group_vars'" out.txt)" -eq 1 ]
 [ "$(grep -c "Loading VarsModule 'require_enabled'" out.txt)" -lt 3 ]
 [ "$(grep -c "Loading VarsModule 'auto_enabled'" out.txt)" -gt 50 ]
+
+ansible localhost -m include_role -a 'name=a' "$@"
