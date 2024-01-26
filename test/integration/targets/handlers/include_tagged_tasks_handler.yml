@@ -1,0 +1,4 @@
+- set_fact:
+    included_tagged_task_handler_ran: true
+  tags:
+    - handler_tag

@@ -1,19 +1,83 @@
 - hosts: localhost
   gather_facts: false
   tasks:
-    - command: echo
-      notify:
-        - handler_tagged
-        - handler_implicit_always
+    - block:
+      - include_role:
+          role: dynamic_tagged_handler
+
+      - command: echo
+        notify:
+          - dynamic_tagged_handler
+          - static_tagged_handler
+          - include_tagged_tasks_handler
+          - implicit_always_handler
+          - listening_handlers
+          - duplicate_name_handler
+
+      - meta: flush_handlers
+
+      - assert:
+          that:
+            - implicit_always_handler_ran is defined
       tags:
         - always
-  handlers:
-    - name: handler_tagged
-      debug:
-        msg: handler_tagged ran
+
+    # --tags handler_tag
+    - assert:
+        that:
+          - dynamic_tagged_handler_ran is defined
+          - static_tagged_handler_ran is defined
+          - included_tagged_task_handler_ran is defined
+          - listen_tagged_handler1_ran is defined
+          - listen_tagged_handler2_ran is defined
+          - this_should_run is defined
+          - this_should_be_shadowed is undefined
       tags:
         - handler_tag
 
-    - name: handler_implicit_always
-      debug:
-        msg: handler_implicit_always ran
+    # --skip-tags handler_tag
+    - assert:
+        that:
+          - dynamic_tagged_handler_ran is undefined
+          - static_tagged_handler_ran is undefined
+          - included_tagged_task_handler_ran is undefined
+          - listen_tagged_handler1_ran is undefined
+          - listen_tagged_handler2_ran is undefined
+          - this_should_run is undefined
+          - this_should_be_shadowed is undefined
+
+  handlers:
+    - name: static_tagged_handler
+      set_fact:
+        static_tagged_handler_ran: true
+      tags:
+        - handler_tag
+
+    - name: include_tagged_tasks_handler
+      include_tasks: include_tagged_tasks_handler.yml
+      tags:
+        - handler_tag
+
+    - name: implicit_always_handler
+      set_fact:
+        implicit_always_handler_ran: true
+
+    - set_fact:
+        listen_tagged_handler1_ran: true
+      listen:
+        - listening_handlers
+      tags:
+        - handler_tag
+
+    - set_fact:
+        listen_tagged_handler2_ran: true
+      listen:
+        - listening_handlers
+      tags:
+        - handler_tag
+
+    - name: duplicate_name_handler
+      set_fact:
+        this_should_be_shadowed: true
+      tags:
+        - handler_tag

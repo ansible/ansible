@@ -951,9 +951,21 @@ class StrategyBase:
         elif meta_action == 'flush_handlers':
             if _evaluate_conditional(target_host):
                 host_state = iterator.get_state_for_host(target_host.name)
+                all_vars = self._variable_manager.get_vars(
+                    play=iterator._play,
+                    host=target_host,
+                    task=task,
+                    _hosts=self._hosts_cache,
+                    _hosts_all=self._hosts_cache_all,
+                )
                 # actually notify proper handlers based on all notifications up to this point
                 for notification in list(host_state.handler_notifications):
                     for handler in self.search_handlers_by_notification(notification, iterator):
+                        if not (
+                            (handler.action in C._ACTION_META and handler.implicit) or
+                            handler.evaluate_tags(iterator._play.only_tags, iterator._play.skip_tags, all_vars=all_vars)
+                        ):
+                            continue
                         if handler.notify_host(target_host):
                             # NOTE even with notifications deduplicated this can still happen in case of handlers being
                             # notified multiple times using different names, like role name or fqcn

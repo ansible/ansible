@@ -1,0 +1,11 @@
+- name: dynamic_tagged_handler
+  set_fact:
+    dynamic_tagged_handler_ran: true
+  tags:
+    - handler_tag
+
+- name: duplicate_name_handler
+  set_fact:
+    this_should_run: true
+  tags:
+    - handler_tag
