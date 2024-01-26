@@ -16,41 +16,14 @@ from ansible.utils.vars import combine_vars
 
 display = Display()
 
-cached_vars_plugin_order = None
 
-
-def _load_vars_plugins_order():
+def _prime_vars_loader():
     # find 3rd party legacy vars plugins once, and look them up by name subsequently
-    auto = []
-    for auto_run_plugin in vars_loader.all(class_only=True):
-        needs_enabled = False
-        if hasattr(auto_run_plugin, 'REQUIRES_ENABLED'):
-            needs_enabled = auto_run_plugin.REQUIRES_ENABLED
-        elif hasattr(auto_run_plugin, 'REQUIRES_WHITELIST'):
-            needs_enabled = auto_run_plugin.REQUIRES_WHITELIST
-            display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
-                               "Use 'REQUIRES_ENABLED' instead.", version=2.18)
-        if needs_enabled:
-            continue
-        auto.append(auto_run_plugin._load_name)
-
-    # find enabled plugins once so we can look them up by resolved fqcn subsequently
-    enabled = []
+    list(vars_loader.all(class_only=True))
     for plugin_name in C.VARIABLE_PLUGINS_ENABLED:
-        if (plugin := vars_loader.get(plugin_name)) is None:
-            enabled.append(plugin_name)
-        else:
-            collection = '.' in plugin.ansible_name and not plugin.ansible_name.startswith('ansible.builtin.')
-            # Warn if a collection plugin has REQUIRES_ENABLED because it has no effect.
-            if collection and (hasattr(plugin, 'REQUIRES_ENABLED') or hasattr(plugin, 'REQUIRES_WHITELIST')):
-                display.warning(
-                    "Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED is not supported. "
-                    "This should be removed from the plugin %s." % plugin.ansible_name
-                )
-            enabled.append(plugin.ansible_name)
-
-    global cached_vars_plugin_order
-    cached_vars_plugin_order = auto + enabled
+        if not plugin_name:
+            continue
+        vars_loader.get(plugin_name)
 
 
 def get_plugin_vars(loader, plugin, path, entities):
@@ -106,15 +79,22 @@ def _plugin_should_run(plugin, stage):
 
 
 def get_vars_from_path(loader, path, entities, stage):
-
     data = {}
+    if vars_loader._paths is None:
+        # cache has been reset, reload all()
+        _prime_vars_loader()
 
-    if cached_vars_plugin_order is None:
-        _load_vars_plugins_order()
-
-    for plugin_name in cached_vars_plugin_order:
+    for plugin_name in vars_loader._plugin_instance_cache:
         if (plugin := vars_loader.get(plugin_name)) is None:
             continue
+
+        collection = '.' in plugin.ansible_name and not plugin.ansible_name.startswith('ansible.builtin.')
+        # Warn if a collection plugin has REQUIRES_ENABLED because it has no effect.
+        if collection and (hasattr(plugin, 'REQUIRES_ENABLED') or hasattr(plugin, 'REQUIRES_WHITELIST')):
+            display.warning(
+                "Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED is not supported. "
+                "This should be removed from the plugin %s." % plugin.ansible_name
+            )
 
         if not _plugin_should_run(plugin, stage):
             continue
