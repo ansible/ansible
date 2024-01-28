@@ -63,6 +63,7 @@ class Handler(Task):
             setattr(self, name, ["always"])
             if C.HANDLERS_TAGS_COMPAT_WARNING and context.cliargs_deferred_get('tags')() != ("all",):
                 # FIXME deprecate this behavior and match the functionality with regular tasks?
+                display.vvvv(f"Handler named '{self.name}' is untagged.")
                 display.warning(
                     "Since ansible-core 2.17 tags are supported on handlers. "
                     "There is at least one untagged handler in the play while the --tags "
