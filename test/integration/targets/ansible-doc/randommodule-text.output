@@ -1,28 +1,22 @@
-> TESTNS.TESTCOL.RANDOMMODULE    (./collections/ansible_collections/testns/testcol/plugins/modules/randommodule.py)
+> MODULE testns.testcol.randommodule (./collections/ansible_collections/testns/testcol/plugins/modules/randommodule.py)
 
-        A random module. See `foo=bar' (of role foo.bar.baz, main
-        entrypoint) for how this is used in the [foo.bar.baz]'s `main'
-        entrypoint. See the docsite <https://docs.ansible.com/ansible-
-        core/devel/> for more information on ansible-core. This module
-        is not related to the [ansible.builtin.copy] module.
-        -------------  You might also be interested in
-        ansible_python_interpreter. Sometimes you have [broken markup]
-        that will result in error messages.
-
-ADDED IN: version 1.0.0 of testns.testcol
-
+  A random module. See `foo=bar' (of role foo.bar.baz, main
+  entrypoint) for how this is used in the [[foo.bar.baz]]'s `main'
+  entrypoint. See the docsite
+  <https://docs.ansible.com/ansible-core/devel/> for more information
+  on ansible-core. This module is not related to the
+  [ansible.builtin.copy] module.  -------------  You might also be
+  interested in ansible_python_interpreter. Sometimes you have [broken
+  markup] that will result in error messages.
 DEPRECATED: 
-
 	Reason: Test deprecation
 	Will be removed in: Ansible 3.0.0
 	Alternatives: Use some other module
 
+OPTIONS (= inicates it is required):
 
-OPTIONS (= is mandatory):
-
-- sub
-        Suboptions. Contains `sub.subtest', which can be set to `123'.
-        You can use `TEST_ENV' to set this.
+- sub     Suboptions. Contains `sub.subtest', which can be set to `123'.
+           You can use `TEST_ENV' to set this.
         set_via:
           env:
           - deprecated:
@@ -33,47 +27,32 @@ OPTIONS (= is mandatory):
             name: TEST_ENV
         default: null
         type: dict
+        options:
 
-        OPTIONS:
+        - subtest2          Another suboption. Useful when [[ansible.builtin.shuffle]]
+                     is used with value `[a,b,),d\]'.
+          default: null
+          type: float
+          added in: version 1.1.0
+        suboptions:
 
-        - subtest2
-            Another suboption. Useful when [ansible.builtin.shuffle]
-            is used with value `[a,b,),d\]'.
-            default: null
-            type: float
-            added in: version 1.1.0
+        - subtest          A suboption. Not compatible to `path=c:\foo(1).txt' (of
+                    module ansible.builtin.copy).
+          default: null
+          type: int
+          added in: version 1.1.0 of testns.testcol
 
-
-
-        SUBOPTIONS:
-
-        - subtest
-            A suboption. Not compatible to `path=c:\foo(1).txt' (of
-            module ansible.builtin.copy).
-            default: null
-            type: int
-            added in: version 1.1.0 of testns.testcol
-
-
-- test
-        Some text. Consider not using `foo=bar'.
-        default: null
-        type: str
-        added in: version 1.2.0 of testns.testcol
-
-
-- testcol2option
-        An option taken from testcol2
-        default: null
-        type: str
-        added in: version 1.0.0 of testns.testcol2
-
-
-- testcol2option2
-        Another option taken from testcol2
+- test    Some text. Consider not using `foo=bar'.
         default: null
         type: str
 
+- testcol2option  An option taken from testcol2
+        default: null
+        type: str
+
+- testcol2option2  Another option taken from testcol2
+        default: null
+        type: str
 
 NOTES:
       * This is a note.
@@ -82,7 +61,6 @@ NOTES:
         in the second paragraph. Eventually this will break into
         a new line, depending with which line width this is
         rendered.
-
 
 SEE ALSO:
       * Module ansible.builtin.ping
@@ -102,40 +80,32 @@ SEE ALSO:
            Some foo bar.
            https://docs.ansible.com/ansible-core/devel/#stq=foo_bar&stp=1
 
-
 AUTHOR: Ansible Core Team
 
 EXAMPLES:
 
 
-
-
 RETURN VALUES:
-- a_first
-        A first result. Use `a_first=foo(bar\baz)bam'.
+
+- a_first  A first result. Use `a_first=foo(bar\baz)bam'.
         returned: success
         type: str
 
-- m_middle
-        This should be in the middle.
-        Has some more data.
-        Check out `m_middle.suboption' and compare it to `a_first=foo'
-        and `value' (of lookup plugin community.general.foo).
+- m_middle  This should be in the middle.
+             Has some more data.
+             Check out `m_middle.suboption' and compare it to
+             `a_first=foo' and `value' (of lookup plugin
+             community.general.foo).
         returned: success and 1st of month
         type: dict
+        contains:
 
-        CONTAINS:
+        - suboption          A suboption.
+          choices: [ARF, BARN, c_without_capital_first_letter]
+          type: str
+          added in: version 1.4.0 of testns.testcol
 
-        - suboption
-            A suboption.
-            choices: [ARF, BARN, c_without_capital_first_letter]
-            type: str
-            added in: version 1.4.0 of testns.testcol
-
-
-- z_last
-        A last result.
+- z_last  A last result.
         returned: success
         type: str
-        added in: version 1.3.0 of testns.testcol
 

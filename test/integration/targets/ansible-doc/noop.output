@@ -15,6 +15,7 @@
             "filename": "./collections/ansible_collections/testns/testcol/plugins/lookup/noop.py",
             "lookup": "noop",
             "options": {},
+            "plugin_name": "testns.testcol.noop",
             "short_description": "returns input",
             "version_added": "1.0.0",
             "version_added_collection": "testns.testcol2"
