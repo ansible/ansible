@@ -5622,6 +5622,8 @@ plugin_routing:
       redirect: cisco.asa.asa_acl
     asa_config:
       redirect: cisco.asa.asa_config
+    asa_facts:
+      redirect: cisco.asa.asa_facts
     asa_og:
       redirect: cisco.asa.asa_og
     asa_command:
