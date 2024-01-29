@@ -27,7 +27,7 @@ from ansible.utils.path import cleanup_tmp_file, makedirs_safe, unfrackpath
 
 
 Plugin = namedtuple('Plugin', 'name type')
-Setting = namedtuple('Setting', 'name value origin type')
+Setting = namedtuple('Setting', 'name value origin type template')
 
 INTERNAL_DEFS = {'lookup': ('_terms',)}
 
@@ -345,12 +345,13 @@ class ConfigManager(object):
         ''' Load YAML Config Files in order, check merge flags, keep origin of settings'''
         pass
 
-    def get_plugin_options(self, plugin_type, name, keys=None, variables=None, direct=None):
+    def get_plugin_options(self, plugin_type, name, keys=None, variables=None, direct=None, templar=None):
 
         options = {}
         defs = self.get_configuration_definitions(plugin_type, name)
         for option in defs:
-            options[option] = self.get_config_value(option, plugin_type=plugin_type, plugin_name=name, keys=keys, variables=variables, direct=direct)
+            options[option] = self.get_config_value(option, plugin_type=plugin_type, plugin_name=name, keys=keys,
+                                                    variables=variables, direct=direct, templar=templar)
 
         return options
 
@@ -437,19 +438,19 @@ class ConfigManager(object):
 
         return value, origin
 
-    def get_config_value(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
+    def get_config_value(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None, templar=None):
         ''' wrapper '''
 
         try:
             value, _drop = self.get_config_value_and_origin(config, cfile=cfile, plugin_type=plugin_type, plugin_name=plugin_name,
-                                                            keys=keys, variables=variables, direct=direct)
+                                                            keys=keys, variables=variables, direct=direct, templar=templar)
         except AnsibleError:
             raise
         except Exception as e:
             raise AnsibleError("Unhandled exception when retrieving %s:\n%s" % (config, to_native(e)), orig_exc=e)
         return value
 
-    def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
+    def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None, templar=None):
         ''' Given a config key figure out the actual value and report on the origin of the settings '''
         if cfile is None:
             # use default config
@@ -548,14 +549,43 @@ class ConfigManager(object):
                 else:
                     origin = 'default'
                     value = defs[config].get('default')
-                    if isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')) and variables is not None:
-                        # template default values if possible
-                        # NOTE: cannot use is_template due to circular dep
+                    if defs[config].get('template', 'static') == 'restricted' and variables is not None:
                         try:
                             t = NativeEnvironment().from_string(value)
                             value = t.render(variables)
                         except Exception:
                             pass  # not templatable
+
+            # since elif, value is already not None
+            elif defs[config].get('template', 'static') in ('restricted', 'vault', 'full', 'implicit') and \
+                None not in (templar, variables) and \
+                config not in ('_terms', '_input') and \
+                templar.is_template(value):
+
+                # template default values if needed and possible
+                t_type = defs[config]['template']
+                use_lookup = True
+                unvault_only = False
+                if t_type == 'full':
+                    t_value = value
+                elif t_type == 'implicit':
+                    t_value = '{{%s}}' % value
+                elif t_type == 'restricted':
+                    t_value = value
+                    use_lookup = False
+                elif t_type == 'vault':
+                    unvault_only = True
+                    t_value = value
+
+                if unvault_only:
+                    # TODO: manually unvault here
+                    raise AnsibleError('Unimplemented to only unvault')
+                else:
+                    try:
+                        value = templar.template(t_value, disable_lookups=(not use_lookup))
+                    except Exception as e:
+                        # TODO: toggle to error if 'strict'?
+                        self.WARNINGS.add("Unable to template (%s), leaving as is: %s" % to_native(e))
 
             # ensure correct type, can raise exceptions on mismatched types
             try:
