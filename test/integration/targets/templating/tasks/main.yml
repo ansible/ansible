@@ -33,3 +33,14 @@
       - result is failed
       - >-
         "TemplateSyntaxError: Could not load \"asdf \": 'invalid plugin name: ansible.builtin.asdf '" in result.msg
+
+- name: Make sure syntax errors originating from a template being compiled into Python code object result in a failure
+  debug:
+    msg: "{{ lookup('vars', 'v1', default='', default='') }}"
+  ignore_errors: true
+  register: r
+
+- assert:
+    that:
+      - r is failed
+      - "'keyword argument repeated' in r.msg"
