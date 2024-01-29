@@ -1297,6 +1297,17 @@ releases:
     - fbsd13_1_remove.yml
     - unsafe-fixes-2.yml
     release_date: '2023-12-11'
+  2.15.9:
+    changes:
+      release_summary: '| Release Date: 2024-01-29
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+        '
+    codename: Ten Years Gone
+    fragments:
+    - 2.15.9_summary.yaml
+    release_date: '2024-01-29'
   2.15.9rc1:
     changes:
       bugfixes:
