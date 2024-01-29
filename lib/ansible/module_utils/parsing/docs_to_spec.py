@@ -102,6 +102,7 @@ def validate_spec_from_plugin(plugin):
     # take plugin object (name?), get docs and process with above
     pass
 
+
 e1 = '''
 # example usage:
 
