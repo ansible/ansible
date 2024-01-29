@@ -1011,12 +1011,16 @@ class Templar:
                     if unsafe:
                         res = wrap_var(res)
             return res
-        except (UndefinedError, AnsibleUndefinedVariable) as e:
+        except UndefinedError as e:
             if fail_on_undefined:
                 raise AnsibleUndefinedVariable(e)
-            else:
-                display.debug("Ignoring undefined failure: %s" % to_text(e))
-                return data
+            display.debug("Ignoring undefined failure: %s" % to_text(e))
+            return data
+        except AnsibleUndefinedVariable as e:
+            if fail_on_undefined:
+                raise
+            display.debug("Ignoring undefined failure: %s" % to_text(e))
+            return data
 
     # for backwards compatibility in case anyone is using old private method directly
     _do_template = do_template
