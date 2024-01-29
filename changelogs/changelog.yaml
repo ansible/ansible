@@ -839,6 +839,17 @@ releases:
     - 2.16.2_summary.yaml
     - unsafe-fixes-2.yml
     release_date: '2023-12-11'
+  2.16.3:
+    changes:
+      release_summary: '| Release Date: 2024-01-29
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+    codename: All My Love
+    fragments:
+    - 2.16.3_summary.yaml
+    release_date: '2024-01-29'
   2.16.3rc1:
     changes:
       bugfixes:
