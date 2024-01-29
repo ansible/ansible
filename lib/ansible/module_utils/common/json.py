@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 
 import datetime
+from decimal import Decimal
 
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.six.moves.collections_abc import Mapping
@@ -68,6 +69,9 @@ class AnsibleJSONEncoder(json.JSONEncoder):
         elif isinstance(o, (datetime.date, datetime.datetime)):
             # date object
             value = o.isoformat()
+        elif isinstance(o, Decimal):
+            # Decimal object
+            value = str(o)
         else:
             # use default encoder
             value = super(AnsibleJSONEncoder, self).default(o)

@@ -1,0 +1,4 @@
+minor_changes:
+  - "``AnsibleJSONEncoder`` now also supports encoding of Decimal values
+  - Wihtout this change you get the error ``Object of type Decimal is not JSON serializable`` when trying to convert a Decimal value to json
+  - One example will be when you have an inventory variable in decimal format (eg. ram_gb for a virtual machine) and try to list the inventory with ansible-inventory
