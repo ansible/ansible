@@ -1,33 +1,27 @@
-
-        Test module
+  Test module
 
 AUTHOR: Ansible Core Team
 
 EXAMPLES:
 
 
-
-
 RETURN VALUES:
-- a_first
-        A first result.
+
+- a_first  A first result.
         returned: success
         type: str
 
-- m_middle
-        This should be in the middle.
-        Has some more data
+- m_middle  This should be in the middle.
+             Has some more data
         returned: success and 1st of month
         type: dict
+        contains:
 
-        CONTAINS:
+        - suboption          A suboption.
+          choices: [ARF, BARN, c_without_capital_first_letter]
+          type: str
 
-        - suboption
-            A suboption.
-            choices: [ARF, BARN, c_without_capital_first_letter]
-            type: str
-
-- z_last
-        A last result.
+- z_last  A last result.
         returned: success
         type: str
+

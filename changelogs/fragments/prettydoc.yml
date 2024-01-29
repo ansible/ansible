@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-doc output has been revamped to make it more visually pleasing when going to a terminal, also more concise, use -v to show extra information.

@@ -1,32 +1,28 @@
-> TEST_ROLE1    (/ansible/test/integration/targets/ansible-doc/roles/normal_role1)
+> ROLE: *test_role1* (test/integration/targets/ansible-doc/roles/test_role1)
 
-ENTRY POINT: main - test_role1 from roles subdir
+ENTRY POINT: *main* - test_role1 from roles subdir
 
-        In to am attended desirous raptures *declared* diverted
-        confined at. Collected instantly remaining up certainly to
-        `necessary' as. Over walk dull into son boy door went new. At
-        or happiness commanded daughters as. Is `handsome' an declared
-        at received in extended vicinity subjects. Into miss on he
-        over been late pain an. Only week bore boy what fat case left
-        use. Match round scale now style far times. Your me past an
-        much.
+          In to am attended desirous raptures *declared* diverted
+          confined at. Collected instantly remaining up certainly to
+          `necessary' as. Over walk dull into son boy door went new.
+          At or happiness commanded daughters as. Is `handsome` an
+          declared at received in extended vicinity subjects. Into
+          miss on he over been late pain an. Only week bore boy what
+          fat case left use. Match round scale now style far times.
+          Your me past an much.
 
-OPTIONS (= is mandatory):
+Options (= inicates it is required):
 
-= myopt1
-        First option.
-        type: str
+= myopt1    First option.
+          type: str
 
-- myopt2
-        Second option
-        default: 8000
-        type: int
+- myopt2    Second option
+          default: 8000
+          type: int
 
-- myopt3
-        Third option.
-        choices: [choice1, choice2]
-        default: null
-        type: str
-
+- myopt3    Third option.
+          choices: [choice1, choice2]
+          default: null
+          type: str
 
 AUTHOR: John Doe (@john), Jane Doe (@jane)

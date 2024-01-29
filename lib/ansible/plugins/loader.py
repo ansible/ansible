@@ -1290,6 +1290,8 @@ class Jinja2Loader(PluginLoader):
                         if plugin:
                             context = plugin_impl.plugin_load_context
                             self._update_object(plugin, src_name, plugin_impl.object._original_path, resolved=fq_name)
+                            # context will have filename, which for tests/filters might not be correct
+                            context._resolved_fqcn = plugin.ansible_name
                             # FIXME: once we start caching these results, we'll be missing functions that would have loaded later
                             break  # go to next file as it can override if dupe (dont break both loops)
 

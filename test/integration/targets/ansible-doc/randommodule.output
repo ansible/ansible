@@ -78,6 +78,7 @@
                     "type": "str"
                 }
             },
+            "plugin_name": "testns.testcol.randommodule",
             "seealso": [
                 {
                     "module": "ansible.builtin.ping"
