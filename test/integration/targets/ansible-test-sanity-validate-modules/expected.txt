@@ -4,6 +4,8 @@ plugins/modules/check_mode_attribute_2.py:0:0: attributes-check-mode: The module
 plugins/modules/check_mode_attribute_3.py:0:0: attributes-check-mode: The module does declare support for check mode, but the check_mode attribute's support value is 'none'
 plugins/modules/check_mode_attribute_4.py:0:0: attributes-check-mode-details: The module declares it does not fully support check mode, but has no details on what exactly that means
 plugins/modules/import_order.py:7:0: import-before-documentation: Import found before documentation variables. All imports must appear below DOCUMENTATION/EXAMPLES/RETURN.
+plugins/modules/invalid_argument_spec_extra_key.py:0:0: invalid-ansiblemodule-schema: AnsibleModule.argument_spec.foo.extra_key: extra keys not allowed @ data['argument_spec']['foo']['extra_key']. Got 'bar'
+plugins/modules/invalid_argument_spec_incorrect_context.py:0:0: invalid-ansiblemodule-schema: AnsibleModule.argument_spec.foo.context: expected dict for dictionary value @ data['argument_spec']['foo']['context']. Got 'bar'
 plugins/modules/invalid_choice_value.py:0:0: doc-choices-do-not-match-spec: Argument 'caching' in argument_spec defines choices as (['ReadOnly', 'ReadOnly']) but documentation defines choices as (['ReadOnly', 'ReadWrite'])
 plugins/modules/invalid_yaml_syntax.py:0:0: deprecation-mismatch: "meta/runtime.yml" and DOCUMENTATION.deprecation do not agree.
 plugins/modules/invalid_yaml_syntax.py:0:0: missing-documentation: No DOCUMENTATION provided
