@@ -1191,7 +1191,7 @@ class GalaxyCLI(CLI):
             # Use [:] to mutate the list os.walk uses
             dirs[:] = [d for d in dirs if not any(r.match(d) for r in skeleton_ignore_re)]
 
-            for f in files:
+            for f in sorted(files):
                 filename, ext = os.path.splitext(f)
 
                 if any(r.match(os.path.join(rel_root, f)) for r in skeleton_ignore_re):

@@ -433,6 +433,15 @@ class TestGalaxyInitSkeleton(unittest.TestCase, ValidRoleTests):
         self.assertTrue(os.path.isdir(files_dir))
         self.assertListEqual(os.listdir(files_dir), [], msg='we expect the files directory to be empty, is ignore working?')
 
+    def test_readme_contents(self):
+        with open(os.path.join(self.role_dir, 'README.md'), 'r') as readme:
+            contents = readme.read()
+
+        with open(os.path.join(self.role_skeleton_path, 'README.md.j2'), 'r') as f:
+            expected_contents = f.read()
+
+        self.assertEqual(expected_contents, contents, msg='README.md does not match expected')
+
     def test_template_ignore_jinja(self):
         test_conf_j2 = os.path.join(self.role_dir, 'templates', 'test.conf.j2')
         self.assertTrue(os.path.exists(test_conf_j2), msg="The test.conf.j2 template doesn't seem to exist, is it being rendered as test.conf?")

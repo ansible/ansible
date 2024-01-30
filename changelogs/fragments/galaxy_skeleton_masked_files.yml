@@ -1,0 +1,9 @@
+---
+minor-changes:
+  - >
+    If a collection-skeleton is used with ansible-galaxy collection init
+    ansible-galaxy processes the files in the skeleton in sorted order
+  - >
+    If a role-skeleton is used with ansible-galaxy role init
+    ansible-galaxy processes the files in the skeleton in sorted order
+...
