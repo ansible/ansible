@@ -1,9 +1,0 @@
----
-minor_changes:
-  - >
-    If a collection-skeleton is used with ansible-galaxy collection init
-    and both a file and file.j2 are present, only copy file.j2
-  - >
-    If a role-skeleton is used with ansible-galaxy role init
-    and both a file and file.j2 are present, only copy file.j2
-...

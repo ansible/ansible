@@ -1218,7 +1218,7 @@ class GalaxyCLI(CLI):
                     with open(dest_file, 'wb') as df:
                         df.write(b_rendered)
                 else:
-                    if os.path.join(f, '.j2') in files:
+                    if f + '.j2' in files:
                         # We have two possible sources for the same file, we prefer the jinja template
                         continue
                     f_rel_path = os.path.relpath(os.path.join(root, f), obj_skeleton)

@@ -1,0 +1,7 @@
+---
+minor_changes:
+  - >-
+    If a collection-skeleton is used with ansible-galaxy collection init
+    or role init and both a file and file.j2 are present, only copy file.j2
+    (https://github.com/ansible/ansible/pull/82624)
+...
