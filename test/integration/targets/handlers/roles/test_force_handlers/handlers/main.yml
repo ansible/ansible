@@ -1,2 +1,6 @@
 - name: echoing handler
   command: echo CALLED_HANDLER_{{ inventory_hostname }}
+  tags:
+    - normal
+    - force_true_in_play
+    - force_false_in_play

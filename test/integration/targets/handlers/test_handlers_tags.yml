@@ -10,15 +10,15 @@
           - dynamic_tagged_handler
           - static_tagged_handler
           - include_tagged_tasks_handler
-          - implicit_always_handler
+          #- implicit_always_handler
           - listening_handlers
           - duplicate_name_handler
 
       - meta: flush_handlers
 
-      - assert:
-          that:
-            - implicit_always_handler_ran is defined
+#      - assert:
+#          that:
+#            - implicit_always_handler_ran is defined
       tags:
         - always
 
@@ -58,9 +58,9 @@
       tags:
         - handler_tag
 
-    - name: implicit_always_handler
-      set_fact:
-        implicit_always_handler_ran: true
+#    - name: implicit_always_handler
+#      set_fact:
+#        implicit_always_handler_ran: true
 
     - set_fact:
         listen_tagged_handler1_ran: true

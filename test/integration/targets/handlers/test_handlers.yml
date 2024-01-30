@@ -35,10 +35,16 @@
       set_fact:
         notify_listen_ran_1: True
       listen: notify_listen
+      tags:
+        - scenario1
+        - scenario2
     # second listening handler does not
     - set_fact:
         notify_listen_ran_2: True
       listen: notify_listen
+      tags:
+        - scenario1
+        - scenario2
 
 - name: test handlers
   hosts: testgroup

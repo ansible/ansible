@@ -1,5 +1,11 @@
 - name: handler name with {{ test_var }}
   debug: msg='handler with var ran'
+  tags:
+    - lazy_evaluation
+    - evaluation_time
 
 - name: handler name
   debug: msg='handler ran'
+  tags:
+    - lazy_evaluation
+    - evaluation_time

@@ -59,19 +59,18 @@ class Handler(Task):
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def _validate_tags(self, attr, name, value):
-        if not value:
+        if not value and context.cliargs_deferred_get('tags')() not in (("all",), None):
             setattr(self, name, ["always"])
-            if C.HANDLERS_TAGS_COMPAT_WARNING and context.cliargs_deferred_get('tags')() != ("all",):
-                # FIXME deprecate this behavior and match the functionality with regular tasks?
-                display.vvvv(f"Handler named '{self.name}' is untagged.")
-                display.warning(
-                    "Since ansible-core 2.17 tags are supported on handlers. "
-                    "There is at least one untagged handler in the play while the --tags "
-                    "command line option is specified. For backwards compatibility any "
-                    "untagged handler is implicitly tagged with the 'always' tag "
-                    "and therefore ignores any tags specified in --tags. You can silence "
-                    "this warning via the HANDLERS_TAGS_COMPAT_WARNING configuration option."
-                )
+            # FIXME deprecate this behavior and match the functionality with regular tasks?
+            display.vvvv(f"Handler named '{self.name}' is untagged.")
+            display.warning(
+                "Since ansible-core 2.17 tags are supported on handlers. "
+                "There is at least one untagged handler in the play while the --tags "
+                "command line option is specified. To see which handlers are untagged "
+                "run the playbook with the '-vvvv' option. For backwards compatibility "
+                "any untagged handler is implicitly tagged with the 'always' tag "
+                "and therefore ignores any tags specified in --tags."
+            )
 
     def notify_host(self, host):
         if not self.is_host_notified(host):
