@@ -445,6 +445,14 @@ class TestGalaxyInitSkeleton(unittest.TestCase, ValidRoleTests):
         expected_contents = '[defaults]\ntest_key = {{ test_variable }}'
         self.assertEqual(expected_contents, contents.strip(), msg="test.conf.j2 doesn't contain what it should, is it being rendered?")
 
+    def test_file_not_masked_by_template(self):
+        test_conf = os.path.join(self.role_dir, 'templates', 'test.conf')
+        self.assertTrue(os.path.exists(test_conf), msg="The test.conf file doesn't seem to exist, was it not copied because test.conf.j2 does exist too?")
+        with open(test_conf, 'r') as f:
+            contents = f.read()
+        expected_contents = '[defaults]\ntest_key = not_a_jinja_file_at_all'
+        self.assertEqual(expected_contents, contents.strip(), msg="test.conf doesn't contain what it should, is it being rendered?")
+
     def test_template_ignore_jinja_subfolder(self):
         test_conf_j2 = os.path.join(self.role_dir, 'templates', 'subfolder', 'test.conf.j2')
         self.assertTrue(os.path.exists(test_conf_j2), msg="The test.conf.j2 template doesn't seem to exist, is it being rendered as test.conf?")

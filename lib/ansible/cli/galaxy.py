@@ -1217,10 +1217,10 @@ class GalaxyCLI(CLI):
                     b_rendered = to_bytes(templar.template(template_data), errors='surrogate_or_strict')
                     with open(dest_file, 'wb') as df:
                         df.write(b_rendered)
+                elif f + '.j2' in files and not in_templates_dir:
+                    # We have two possible sources for the same file, we prefer the jinja template
+                    continue
                 else:
-                    if f + '.j2' in files:
-                        # We have two possible sources for the same file, we prefer the jinja template
-                        continue
                     f_rel_path = os.path.relpath(os.path.join(root, f), obj_skeleton)
                     shutil.copyfile(os.path.join(root, f), os.path.join(obj_path, f_rel_path), follow_symlinks=False)
 
