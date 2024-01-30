@@ -443,7 +443,7 @@ def test_init_collection(collection_input):
     file_hash = secure_hash_s(open(os.path.join(input_dir, 'README.md')).read())
     assert file_hash == '08f24200b9fbe18903e7a50930c9d0df0b8d7da3'  # shasum test/units/cli/test_data/collection_skeleton/README.md.j2
 
-     
+
 def test_build_collection_no_galaxy_yaml():
     fake_path = u'/fake/ÅÑŚÌβŁÈ/path'
     expected = to_native("The collection galaxy.yml path '%s/galaxy.yml' does not exist." % fake_path)

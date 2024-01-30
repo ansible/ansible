@@ -1,5 +1,5 @@
 ---
-minor-changes:
+minor_changes:
   - >
     If a collection-skeleton is used with ansible-galaxy collection init
     ansible-galaxy processes the files in the skeleton in sorted order
