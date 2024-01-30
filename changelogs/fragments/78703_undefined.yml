@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Do not print undefined error message twice (https://github.com/ansible/ansible/issues/78703).
