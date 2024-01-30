@@ -1191,7 +1191,7 @@ class GalaxyCLI(CLI):
             # Use [:] to mutate the list os.walk uses
             dirs[:] = [d for d in dirs if not any(r.match(d) for r in skeleton_ignore_re)]
 
-            for f in sorted(files):
+            for f in files:
                 filename, ext = os.path.splitext(f)
 
                 if any(r.match(os.path.join(rel_root, f)) for r in skeleton_ignore_re):
@@ -1218,6 +1218,9 @@ class GalaxyCLI(CLI):
                     with open(dest_file, 'wb') as df:
                         df.write(b_rendered)
                 else:
+                    if os.path.join(f, '.j2') in files:
+                        # We have two possible sources for the same file, we prefer the jinja template
+                        continue
                     f_rel_path = os.path.relpath(os.path.join(root, f), obj_skeleton)
                     shutil.copyfile(os.path.join(root, f), os.path.join(obj_path, f_rel_path), follow_symlinks=False)
 
