@@ -1,0 +1,4 @@
+minor_changes:
+- module argument spec - Allow module authors to include arbitrary additional context in the argument spec, by making use of a new top level key
+  called ``context``. This key should be a dict type. This allows for users to customize what they place in the argument spec, without having to
+  ignore sanity tests that validate the schema.
