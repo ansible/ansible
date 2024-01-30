@@ -167,10 +167,3 @@ def get_py_argument_spec(filename, collection):
         return argument_spec, fake.kwargs
     except (TypeError, IndexError):
         return {}, {}
-
-
-def get_argument_spec(filename, collection):
-    if filename.endswith('.py'):
-        return get_py_argument_spec(filename, collection)
-    else:
-        return get_ps_argument_spec(filename, collection)

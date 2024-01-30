@@ -27,3 +27,5 @@ plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: Directive 
 plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: Directive "O(foo.bar=1)" contains a non-existing option "foo.bar"
 plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: Directive "RV(bam)" contains a non-existing return value "bam"
 plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: Directive "RV(does.not.exist=true)" contains a non-existing return value "does.not.exist"
+plugins/modules/unsupported_extension.nope:0:0: invalid-extension: Official Ansible modules must have a .py extension for python modules or a .ps1 for powershell modules
+plugins/modules/unsupported_extension.nope:0:0: missing-gplv3-license: GPLv3 license header not found in the first 20 lines of the module
