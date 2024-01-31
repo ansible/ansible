@@ -10,16 +10,23 @@
     - debug:
       register: foo
 
+    - local_action:
+        module: debug
+      register: local_action_foo
+
     - name: test that 'debug' task used default 'msg' param
       assert:
-        that: foo.msg == "test default"
+        that:
+          - foo.msg == "test default"
+          - local_action_foo.msg == "test default"
 
     - name: remove test file
       file:
         state: absent
 
     - name: touch test file
-      file:
+      local_action:
+        module: file
         state: touch
 
     - name: stat test file
