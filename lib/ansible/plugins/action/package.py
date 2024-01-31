@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import annotations
 
+from ansible import constants as C
 from ansible.errors import AnsibleAction, AnsibleActionFail
 from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.module_utils.facts.system.pkg_mgr import PKG_MGRS
@@ -45,14 +46,20 @@ class ActionModule(ActionBase):
         if module == 'auto':
             try:
                 if self._task.delegate_to:  # if we delegate, we should use delegated host's facts
-                    module = self._templar.template("{{hostvars['%s']['ansible_facts']['pkg_mgr']}}" % self._task.delegate_to)
+                    module = C.config.get_config_value('PACKAGE_MANAGER_OVERRIDE', variables=combine_vars(self._task.vars, task_vars.get('delegated_vars', {})))
+                    if module is None:
+                        dh = '%s' % self._task.delegate_to
+                        module = self._templar.template(f"{{hostvars['{dh}']['ansible_local']['pkg_mgr']|default(hostvars['{dh}']['ansible_facts']['pkg_mgr']})}}"
                 else:
-                    module = self._templar.template('{{ansible_facts.pkg_mgr}}')
+                    module = C.config.get_config_value('PACKAGE_MANAGER_OVERRIDE', variables=task_vars)
+                    if module is None:
+                        module = self._templar.template('{{ansible_local.pkg_mgr|default(ansible_facts.pkg_mgr)}}')
             except Exception:
                 pass  # could not get it from template!
 
         try:
             if module == 'auto':
+                # TODO: change to action 'gather_facts'
                 facts = self._execute_module(
                     module_name='ansible.legacy.setup',
                     module_args=dict(filter='ansible_pkg_mgr', gather_subset='!all'),

@@ -1,0 +1,2 @@
+minor_changes:
+  - package action now has a configuration and local fact that allow to override the package manager to use and not just rely on detection.
