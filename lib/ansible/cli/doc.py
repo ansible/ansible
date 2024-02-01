@@ -1356,7 +1356,6 @@ class DocCLI(CLI, RoleMixin):
             else:
                 text.append("%s" % doc['deprecated'])
             del doc['deprecated']
-            text.append("\n")
 
         if doc.pop('has_action', False):
             text.append("")
