@@ -40,8 +40,8 @@ options:
     description:
       - The required package manager module to use (V(dnf), V(apt), and so on). The default V(auto) will use existing facts or try to autodetect it.
       - You should only use this field if the automatic selection is not working for some reason.
-      - Since version 2.17 you can override the automatic detection both via a local facts by setting 'pkg_mgr' or override both by using the
-        PACKAGE_MANAGER_OVERRIDE configuration settable via ANSIBLE_PACKAGE_MANAGER_OVERRIDE enviornment variable or ansible_package_manager_override variable.
+      - Since version 2.17 you can override the automatic detection both through a local facts C(overrides) file and setting C(pkg_mgr) or override both by using the
+        C(PACKAGE_MANAGER_OVERRIDE) configuration.
     default: auto
 requirements:
     - Whatever is required for the package plugins specific for each system.
