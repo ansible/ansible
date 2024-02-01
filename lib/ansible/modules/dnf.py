@@ -245,11 +245,19 @@ options:
     version_added: "2.10"
   nobest:
     description:
-      - Set best option to False, so that transactions are not limited to best candidates only.
+      - This is the opposite of the O(best) option kept for backwards compatibility.
+      - Since ansible-core 2.17 the default value is set by the operating system distribution.
     required: false
     type: bool
-    default: "no"
     version_added: "2.11"
+  best:
+    description:
+      - When set to V(true), either use a package with the highest version available or fail.
+      - When set to V(false), if the latest version cannot be installed go with the lower version.
+      - Default is set by the operating system distribution.
+    required: false
+    type: bool
+    version_added: "2.17"
   cacheonly:
     description:
       - Tells dnf to run entirely from system cache; does not download or update metadata.
@@ -678,9 +686,11 @@ class DnfModule(YumDnf):
         if self.skip_broken:
             conf.strict = 0
 
-        # Set best
-        if self.nobest:
-            conf.best = 0
+        # best and nobest are mutually exclusive
+        if self.nobest is not None:
+            conf.best = not self.nobest
+        elif self.best is not None:
+            conf.best = self.best
 
         if self.download_only:
             conf.downloadonly = True
@@ -1195,13 +1205,6 @@ class DnfModule(YumDnf):
                         response['results'].append("Packages providing %s not installed due to update_only specified" % spec)
                 else:
                     for pkg_spec in pkg_specs:
-                        # Previously we forced base.conf.best=True here.
-                        # However in 2.11+ there is a self.nobest option, so defer to that.
-                        # Note, however, that just because nobest isn't set, doesn't mean that
-                        # base.conf.best is actually true. We only force it false in
-                        # _configure_base(), we never set it to true, and it can default to false.
-                        # Thus, we still need to explicitly set it here.
-                        self.base.conf.best = not self.nobest
                         install_result = self._mark_package_install(pkg_spec, upgrade=True)
                         if install_result['failed']:
                             if install_result['msg']:
