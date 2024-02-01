@@ -334,12 +334,9 @@ def verify_local_collection(local_collection, remote_collection, artifacts_manag
             )
 
     b_ignore_patterns = [
-        b'.git',
         b'*.pyc',
-        b'*.retry',
-        b'tests/output',  # Ignore ansible-test result output directory.
     ]
-    b_ignore_dirs = frozenset([b'CVS', b'.bzr', b'.hg', b'.git', b'.svn', b'__pycache__', b'.tox'])
+    b_ignore_dirs = frozenset([b'__pycache__',])
 
     # Find any paths not in the FILES.json
     for root, dirs, files in os.walk(b_collection_path):
