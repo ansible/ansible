@@ -778,7 +778,7 @@ class Base(FieldAttributeBase):
         Return the list of paths you should search for files, in order.
         This follows role/playbook dependency chain.
         '''
-        path_stack = []
+        path_stack = [] + C.LOCAL_SEARCH_PATH
 
         dep_chain = self.get_dep_chain()
         # inside role: add the dependency chain from current to dependent

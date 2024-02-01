@@ -2115,4 +2115,13 @@ VERBOSE_TO_STDERR:
     - section: defaults
       key: verbose_to_stderr
   type: bool
+LOCAL_SEARCH_PATH:
+  version_added: '2.17'
+  name: Additional prefered search paths for local files
+  default: '{{ "" }}'
+  description: Colon-separated paths in which Ansible will search for local files when source path is relative.
+  env: [{name: ANSIBLE_LOCAL_SEARCH_PATH}]
+  ini:
+  - {key: local_search_path, section: defaults}
+  type: pathspec
 ...
