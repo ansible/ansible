@@ -947,66 +947,71 @@ class TestIptables(ModuleTestCase):
 
     def test_match_set(self):
         """ Test match_set together with match_set_flags """
-        set_module_args({
-            'chain': 'INPUT',
-            'protocol': 'tcp',
-            'match_set': 'admin_hosts',
-            'match_set_flags': 'src',
-            'destination_port': '22',
-            'jump': 'ACCEPT',
-            'comment': 'this is a comment',
-        })
-        commands_results = [
-            (0, '', ''),
+        tests = [
+            [
+                {
+                    "chain": "INPUT",
+                    "protocol": "tcp",
+                    "match_set": "admin_hosts",
+                    "match_set_flags": "src",
+                    "destination_port": "22",
+                    "jump": "ACCEPT",
+                    "comment": "this is a comment",
+                },
+                [
+                    "/sbin/iptables", "-t", "filter",
+                    "-C", "INPUT", "-p", "tcp",
+                    "-j", "ACCEPT", "--destination-port", "22",
+                    "-m", "set", "--match-set", "admin_hosts",
+                    "src", "-m", "comment", "--comment", "this is a comment",
+                ],
+            ],
+            [
+                {
+                    "chain": "INPUT",
+                    "protocol": "udp",
+                    "match_set": "banned_hosts",
+                    "match_set_flags": "src,dst",
+                    "jump": "REJECT",
+                },
+                [
+                    "/sbin/iptables", "-t", "filter",
+                    "-C", "INPUT", "-p", "udp",
+                    "-j", "REJECT", "-m", "set",
+                    "--match-set", "banned_hosts", "src,dst",
+                ],
+            ],
+            [
+                {
+                    "chain": "INPUT",
+                    "protocol": "udp",
+                    "match_set": "banned_hosts",
+                    "match_set_flags": "src,src",
+                    "jump": "REJECT",
+                },
+                [
+                    "/sbin/iptables", "-t", "filter",
+                    "-C", "INPUT", "-p", "udp",
+                    "-j", "REJECT", "-m", "set",
+                    "--match-set", "banned_hosts", "src,src",
+                ],
+            ],
         ]
 
-        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
-            run_command.side_effect = commands_results
-            with self.assertRaises(AnsibleExitJson) as result:
-                iptables.main()
-                self.assertTrue(result.exception.args[0]['changed'])
+        for test in tests:
+            set_module_args(test[0])
+            commands_results = [
+                (0, '', ''),
+            ]
 
-        self.assertEqual(run_command.call_count, 1)
-        self.assertEqual(run_command.call_args_list[0][0][0], [
-            '/sbin/iptables',
-            '-t', 'filter',
-            '-C', 'INPUT',
-            '-p', 'tcp',
-            '-j', 'ACCEPT',
-            '--destination-port', '22',
-            '-m', 'set',
-            '--match-set', 'admin_hosts', 'src',
-            '-m', 'comment',
-            '--comment', 'this is a comment'
-        ])
+            with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+                run_command.side_effect = commands_results
+                with self.assertRaises(AnsibleExitJson) as result:
+                    iptables.main()
+                    self.assertTrue(result.exception.args[0]['changed'])
 
-        set_module_args({
-            'chain': 'INPUT',
-            'protocol': 'udp',
-            'match_set': 'banned_hosts',
-            'match_set_flags': 'src,dst',
-            'jump': 'REJECT',
-        })
-        commands_results = [
-            (0, '', ''),
-        ]
-
-        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
-            run_command.side_effect = commands_results
-            with self.assertRaises(AnsibleExitJson) as result:
-                iptables.main()
-                self.assertTrue(result.exception.args[0]['changed'])
-
-        self.assertEqual(run_command.call_count, 1)
-        self.assertEqual(run_command.call_args_list[0][0][0], [
-            '/sbin/iptables',
-            '-t', 'filter',
-            '-C', 'INPUT',
-            '-p', 'udp',
-            '-j', 'REJECT',
-            '-m', 'set',
-            '--match-set', 'banned_hosts', 'src,dst'
-        ])
+            self.assertEqual(run_command.call_count, 1)
+            self.assertEqual(run_command.call_args_list[0][0][0], test[1])
 
     def test_chain_creation(self):
         """Test chain creation when absent"""
