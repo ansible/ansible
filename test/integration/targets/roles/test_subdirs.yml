@@ -4,7 +4,7 @@
   tasks:
     - import_role:
         name: a
-        tasks_from: subdir/main.yml
+        tasks_from: subdir/entrypoint.yml
     - include_role:
         name: a
-        tasks_from: subdir/main.yml
+        tasks_from: subdir/entrypoint.yml
