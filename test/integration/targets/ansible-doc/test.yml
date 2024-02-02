@@ -18,7 +18,7 @@
         that:
           - result is failed
           - |
-            "ERROR! Unable to retrieve documentation from 'test_docs_missing_description' due to: All (sub-)options and return values must have a 'description' field"
+            "ERROR! Unable to retrieve documentation from 'test_docs_missing_description'. All (sub-)options and return values must have a 'description' field"
             in result.stderr
 
     - name: module with suboptions (avoid first line as it has full path)
