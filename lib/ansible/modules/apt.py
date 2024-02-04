@@ -1314,7 +1314,7 @@ def main():
         aptclean_stdout, aptclean_stderr, aptclean_diff = aptclean(module)
         # If there is nothing else to do exit. This will set state as
         #  changed based on if the cache was updated.
-        if not p['package'] and not p['upgrade'] and not p['deb']:
+        if not p['package'] and p['upgrade'] == 'no' and not p['deb']:
             module.exit_json(
                 changed=True,
                 msg=aptclean_stdout,
