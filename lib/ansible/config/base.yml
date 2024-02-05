@@ -2123,6 +2123,7 @@ LOCAL_SEARCH_PATH:
     - This option allows you to globally configure additional paths for local file lookups with relative paths
       (see :ref:`ansible_collections.ansible.builtin.file`, :ref:`ansible_collections.ansible.builtin.copy`,
       :ref:`ansible_collections.ansible.builtin.template` etc.)
+  default: []
   env: [{name: ANSIBLE_LOCAL_SEARCH_PATH}]
   ini:
   - {key: local_search_path, section: defaults}
