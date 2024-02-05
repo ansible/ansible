@@ -114,21 +114,24 @@ options:
         type: list
         aliases: [ permission ]
         elements: str
-        version_added: "2.13"
+        version_added: "2.17"
+        default: []
     users:
         description:
             - If set, only elements owned by a user in the list are returned
         type: list
         aliases: [ user ]
         elements: str
-        version_added: "2.13"
+        version_added: "2.17"
+        default: []
     groups:
         description:
             - If set, only elements owned by a group in the list are returned
         type: list
         aliases: [ group ]
         elements: str
-        version_added: "2.13"
+        version_added: "2.17"
+        default: []
     hidden:
         description:
             - Set this to V(true) to include hidden files, otherwise they will be ignored.
