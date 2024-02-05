@@ -105,17 +105,6 @@ options:
         type: str
         choices: [ atime, ctime, mtime ]
         default: mtime
-    permissions:
-        description:
-            - Accepts a list of permissions to filter the results by. Similar (but not equal!) to `find -perm`
-            - Unless the parameter is empty, files that don't have any permission from the list are excluded.
-            - List elements can e.g. be "o+r", "u+w" etc.
-            - All permissions in the list are combined using `OR` - see examples for clarification
-        type: list
-        aliases: [ permission ]
-        elements: str
-        version_added: "2.17"
-        default: []
     users:
         description:
             - If set, only elements owned by a user in the list are returned
@@ -253,20 +242,6 @@ EXAMPLES = r'''
     patterns:
       - '^_[0-9]{2,4}_.*.log$'
       - '^[a-z]{1,5}_.*log$'
-
-- name: find only user executable elements in a certain dir
-  find:
-    paths: /opt/myapp
-    permissions:
-      - u+x
-
-- name: find all executable elements in a certain dir
-  find:
-    paths: /opt/myapp
-    permissions:
-      - u+x
-      - g+x
-      - o+x
 
 - name: find all elements owned by user and group root:shadow
   find:
@@ -501,25 +476,6 @@ def statinfo(st):
     }
 
 
-def permission_filter(st, perm_list):
-    '''filter files that have or have not a certain permission'''
-    if perm_list is None or (iter(perm_list) and len(perm_list) < 1):
-        return True
-    if iter(perm_list):
-        stinfo = statinfo(st)
-        for perm in perm_list:
-            if perm[0].lower() == 'u':
-                if stinfo[perm[2].lower() + 'usr']:
-                    return True
-            elif perm[0].lower() == 'g':
-                if stinfo[perm[2].lower() + 'grp']:
-                    return True
-            elif perm[0].lower() == 'o':
-                if stinfo[perm[2].lower() + 'oth']:
-                    return True
-    return False
-
-
 def owner_filter(st, users, groups):
     '''filter files that do not belong to a certain owner/group'''
     if (users is None or (iter(users) and len(users) < 1)) and \
@@ -546,7 +502,6 @@ def main():
             read_whole_file=dict(type='bool', default=False),
             file_type=dict(type='str', default="file", choices=['any', 'directory', 'file', 'link']),
             age=dict(type='str'),
-            permissions=dict(type='list', default=[], aliases=['permission'], elements='str'),
             users=dict(type='list', default=[], aliases=['user'], elements='str'),
             groups=dict(type='list', default=[], aliases=['group'], elements='str'),
             age_stamp=dict(type='str', default="mtime", choices=['atime', 'ctime', 'mtime']),
@@ -612,13 +567,6 @@ def main():
         else:
             module.fail_json(size=params['size'], msg="failed to process size")
 
-    # Check permissions parameter, if given
-    if params['permissions'] is not None:
-        for perm in params['permissions']:
-            if len(perm) != 3 or perm[0].lower() not in ['u', 'g', 'o'] or perm[1] != '+' or perm[2].lower() not in ['r', 'w', 'x']:
-                module.fail_json(permissions=params['permissions'],
-                                 msg="'%s' is not valid permission in the format (u|g|o)+(r|w|x), e.g. 'u+w'" % to_native(perm))
-
     now = time.time()
     msg = 'All paths examined'
     looked = 0
@@ -655,7 +603,6 @@ def main():
                     if params['file_type'] == 'any':
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
                                 agefilter(st, now, age, params['age_stamp']) and
-                                permission_filter(st, params['permissions']) and
                                 owner_filter(st, params['users'], params['groups']) and
                                 mode_filter(st, params['mode'], params['exact_mode'], module)):
 
@@ -672,7 +619,6 @@ def main():
                     elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
                                 agefilter(st, now, age, params['age_stamp']) and
-                                permission_filter(st, params['permissions']) and
                                 owner_filter(st, params['users'], params['groups']) and
                                 mode_filter(st, params['mode'], params['exact_mode'], module)):
 
@@ -683,7 +629,6 @@ def main():
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
                                 agefilter(st, now, age, params['age_stamp']) and
                                 sizefilter(st, size) and
-                                permission_filter(st, params['permissions']) and
                                 owner_filter(st, params['users'], params['groups']) and
                                 contentfilter(fsname, params['contains'], params['encoding'], params['read_whole_file']) and
                                 mode_filter(st, params['mode'], params['exact_mode'], module)):
@@ -696,7 +641,6 @@ def main():
                     elif stat.S_ISLNK(st.st_mode) and params['file_type'] == 'link':
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
                                 agefilter(st, now, age, params['age_stamp']) and
-                                permission_filter(st, params['permissions']) and
                                 owner_filter(st, params['users'], params['groups']) and
                                 mode_filter(st, params['mode'], params['exact_mode'], module)):
 
