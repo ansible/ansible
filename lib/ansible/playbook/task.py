@@ -15,23 +15,23 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.six import string_types
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.plugins.loader import lookup_loader
-from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
+from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.loop_control import LoopControl
+from ansible.playbook.notifiable import Notifiable
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible.utils.collection_loader import AnsibleCollectionConfig
@@ -43,7 +43,7 @@ __all__ = ['Task']
 display = Display()
 
 
-class Task(Base, Conditional, Taggable, CollectionSearch):
+class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatable):
 
     """
     A task is a language feature that represents a call to a module, with given arguments and other parameters.
@@ -63,28 +63,25 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     # might be possible to define others
 
     # NOTE: ONLY set defaults on task attributes that are not inheritable,
-    # inheritance is only triggered if the 'current value' is None,
+    # inheritance is only triggered if the 'current value' is Sentinel,
     # default can be set at play/top level object and inheritance will take it's course.
 
-    _args = FieldAttribute(isa='dict', default=dict)
-    _action = FieldAttribute(isa='string')
+    args = NonInheritableFieldAttribute(isa='dict', default=dict)
+    action = NonInheritableFieldAttribute(isa='string')
 
-    _async_val = FieldAttribute(isa='int', default=0, alias='async')
-    _changed_when = FieldAttribute(isa='list', default=list)
-    _delay = FieldAttribute(isa='int', default=5)
-    _delegate_to = FieldAttribute(isa='string')
-    _delegate_facts = FieldAttribute(isa='bool')
-    _failed_when = FieldAttribute(isa='list', default=list)
-    _loop = FieldAttribute()
-    _loop_control = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
-    _notify = FieldAttribute(isa='list')
-    _poll = FieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
-    _register = FieldAttribute(isa='string', static=True)
-    _retries = FieldAttribute(isa='int', default=3)
-    _until = FieldAttribute(isa='list', default=list)
+    async_val = NonInheritableFieldAttribute(isa='int', default=0, alias='async')
+    changed_when = NonInheritableFieldAttribute(isa='list', default=list)
+    delay = NonInheritableFieldAttribute(isa='int', default=5)
+    failed_when = NonInheritableFieldAttribute(isa='list', default=list)
+    loop = NonInheritableFieldAttribute(isa='list')
+    loop_control = NonInheritableFieldAttribute(isa='class', class_type=LoopControl, default=LoopControl)
+    poll = NonInheritableFieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
+    register = NonInheritableFieldAttribute(isa='string', static=True)
+    retries = NonInheritableFieldAttribute(isa='int')  # default is set in TaskExecutor
+    until = NonInheritableFieldAttribute(isa='list', default=list)
 
     # deprecated, used to be loop and loop_args but loop has been repurposed
-    _loop_with = FieldAttribute(isa='string', private=True, inherit=False)
+    loop_with = NonInheritableFieldAttribute(isa='string', private=True)
 
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
@@ -137,8 +134,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def __repr__(self):
-        ''' returns a human readable representation of the task '''
-        if self.get_name() in C._ACTION_META:
+        ''' returns a human-readable representation of the task '''
+        if self.action in C._ACTION_META:
             return "TASK: meta (%s)" % self.args['_raw_params']
         else:
             return "TASK: %s" % self.get_name()
@@ -146,7 +143,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     def _preprocess_with_loop(self, ds, new_ds, k, v):
         ''' take a lookup plugin name and store it correctly '''
 
-        loop_name = k.replace("with_", "")
+        loop_name = k.removeprefix("with_")
         if new_ds.get('loop') is not None or new_ds.get('loop_with') is not None:
             raise AnsibleError("duplicate loop in task: %s" % loop_name, obj=ds)
         if v is None:
@@ -182,7 +179,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         else:
             # Validate this untemplated field early on to guarantee we are dealing with a list.
             # This is also done in CollectionSearch._load_collections() but this runs before that call.
-            collections_list = self.get_validated_value('collections', self._collections, collections_list, None)
+            collections_list = self.get_validated_value('collections', self.fattributes.get('collections'), collections_list, None)
 
         if default_collection and not self._role:  # FIXME: and not a collections role
             if collections_list:
@@ -241,10 +238,10 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             if k in ('action', 'local_action', 'args', 'delegate_to') or k == action or k == 'shell':
                 # we don't want to re-assign these values, which were determined by the ModuleArgsParser() above
                 continue
-            elif k.startswith('with_') and k.replace("with_", "") in lookup_loader:
+            elif k.startswith('with_') and k.removeprefix("with_") in lookup_loader:
                 # transform into loop property
                 self._preprocess_with_loop(ds, new_ds, k, v)
-            elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self._valid_attrs:
+            elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self.fattributes:
                 new_ds[k] = v
             else:
                 display.warning("Ignoring invalid attribute: %s" % k)
@@ -267,6 +264,14 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         except AnsibleParserError as e:
             e.message += '\nThis error can be suppressed as a warning using the "invalid_task_attribute_failed" configuration'
             raise e
+
+    def _validate_changed_when(self, attr, name, value):
+        if not isinstance(value, list):
+            setattr(self, name, [value])
+
+    def _validate_failed_when(self, attr, name, value):
+        if not isinstance(value, list):
+            setattr(self, name, [value])
 
     def post_validate(self, templar):
         '''
@@ -315,7 +320,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                     else:
                         isdict = templar.template(env_item, convert_bare=False)
                         if isinstance(isdict, dict):
-                            env.update(isdict)
+                            env |= isdict
                         else:
                             display.warning("could not parse environment value, skipping: %s" % value)
 
@@ -354,9 +359,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     def get_vars(self):
         all_vars = dict()
         if self._parent:
-            all_vars.update(self._parent.get_vars())
+            all_vars |= self._parent.get_vars()
 
-        all_vars.update(self.vars)
+        all_vars |= self.vars
 
         if 'tags' in all_vars:
             del all_vars['tags']
@@ -368,9 +373,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     def get_include_params(self):
         all_vars = dict()
         if self._parent:
-            all_vars.update(self._parent.get_include_params())
+            all_vars |= self._parent.get_include_params()
         if self.action in C._ACTION_ALL_INCLUDES:
-            all_vars.update(self.vars)
+            all_vars |= self.vars
         return all_vars
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
@@ -386,6 +391,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
 
         new_me.implicit = self.implicit
         new_me.resolved_action = self.resolved_action
+        new_me._uuid = self._uuid
 
         return new_me
 
@@ -448,15 +454,22 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         if self._parent:
             self._parent.set_loader(loader)
 
-    def _get_parent_attribute(self, attr, extend=False, prepend=False):
+    def _get_parent_attribute(self, attr, omit=False):
         '''
         Generic logic to get the attribute or parent attribute for a task value.
         '''
+        fattr = self.fattributes[attr]
 
-        extend = self._valid_attrs[attr].extend
-        prepend = self._valid_attrs[attr].prepend
+        extend = fattr.extend
+        prepend = fattr.prepend
+
         try:
-            value = self._attributes[attr]
+            # omit self, and only get parent values
+            if omit:
+                value = Sentinel
+            else:
+                value = getattr(self, f'_{attr}', Sentinel)
+
             # If parent is static, we can grab attrs from the parent
             # otherwise, defer to the grandparent
             if getattr(self._parent, 'statically_loaded', True):
@@ -470,7 +483,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                     if attr != 'vars' and hasattr(_parent, '_get_parent_attribute'):
                         parent_value = _parent._get_parent_attribute(attr)
                     else:
-                        parent_value = _parent._attributes.get(attr, Sentinel)
+                        parent_value = getattr(_parent, f'_{attr}', Sentinel)
 
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)
@@ -493,3 +506,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                 return self._parent
             return self._parent.get_first_parent_include()
         return None
+
+    def get_play(self):
+        parent = self._parent
+        while not isinstance(parent, Block):
+            parent = parent._parent
+        return parent._play

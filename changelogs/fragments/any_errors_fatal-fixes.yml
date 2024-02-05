@@ -1,0 +1,6 @@
+bugfixes:
+  - Fix for when ``any_errors_fatal`` was ignored if error occurred in a block with always (https://github.com/ansible/ansible/issues/31543)
+  - Fix ``force_handlers`` not working with ``any_errors_fatal`` (https://github.com/ansible/ansible/issues/36308)
+  - Fix tasks in always section not being executed for nested blocks with ``any_errors_fatal`` (https://github.com/ansible/ansible/issues/73246)
+  - "``any_errors_fatal`` should fail all hosts and rescue all of them when a ``rescue`` section is specified (https://github.com/ansible/ansible/issues/80981)"
+  - Fix issues when tasks withing nested blocks wouldn't run when ``force_handlers`` is set (https://github.com/ansible/ansible/issues/81533)

@@ -1,9 +1,7 @@
 # (c) 2012, Jeroen Hoekx <jeroen@hoekx.be>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import base64
 import glob
@@ -17,8 +15,9 @@ import sys
 import time
 import uuid
 import yaml
-
 import datetime
+
+from collections.abc import Mapping
 from functools import partial
 from random import Random, SystemRandom, shuffle
 
@@ -26,15 +25,14 @@ from jinja2.filters import pass_environment
 
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.six import string_types, integer_types, reraise, text_type
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
-from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.common.yaml import yaml_load, yaml_load_all
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.template import recursive_check_defined
 from ansible.utils.display import Display
-from ansible.utils.encrypt import passlib_or_crypt
+from ansible.utils.encrypt import do_encrypt, PASSLIB_AVAILABLE
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
 from ansible.utils.vars import merge_hash
@@ -45,7 +43,7 @@ UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
 
 def to_yaml(a, *args, **kw):
-    '''Make verbose, human readable yaml'''
+    '''Make verbose, human-readable yaml'''
     default_flow_style = kw.pop('default_flow_style', None)
     try:
         transformed = yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, default_flow_style=default_flow_style, **kw)
@@ -55,7 +53,7 @@ def to_yaml(a, *args, **kw):
 
 
 def to_nice_yaml(a, indent=4, *args, **kw):
-    '''Make verbose, human readable yaml'''
+    '''Make verbose, human-readable yaml'''
     try:
         transformed = yaml.dump(a, Dumper=AnsibleDumper, indent=indent, allow_unicode=True, default_flow_style=False, **kw)
     except Exception as e:
@@ -66,7 +64,7 @@ def to_nice_yaml(a, indent=4, *args, **kw):
 def to_json(a, *args, **kw):
     ''' Convert the value to JSON '''
 
-    # defualts for filters
+    # defaults for filters
     if 'vault_to_text' not in kw:
         kw['vault_to_text'] = True
     if 'preprocess_unsafe' not in kw:
@@ -76,7 +74,7 @@ def to_json(a, *args, **kw):
 
 
 def to_nice_json(a, indent=4, sort_keys=True, *args, **kw):
-    '''Make verbose, human readable JSON'''
+    '''Make verbose, human-readable JSON'''
     return to_json(a, indent=indent, sort_keys=sort_keys, separators=(',', ': '), *args, **kw)
 
 
@@ -95,14 +93,18 @@ def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
     return datetime.datetime.strptime(string, format)
 
 
-def strftime(string_format, second=None):
+def strftime(string_format, second=None, utc=False):
     ''' return a date string using string. See https://docs.python.org/3/library/time.html#time.strftime for format '''
+    if utc:
+        timefn = time.gmtime
+    else:
+        timefn = time.localtime
     if second is not None:
         try:
             second = float(second)
         except Exception:
             raise AnsibleFilterError('Invalid value for epoch value (%s)' % second)
-    return time.strftime(string_format, time.localtime(second))
+    return time.strftime(string_format, timefn(second))
 
 
 def quote(a):
@@ -117,7 +119,7 @@ def fileglob(pathname):
     return [g for g in glob.glob(pathname) if os.path.isfile(g)]
 
 
-def regex_replace(value='', pattern='', replacement='', ignorecase=False, multiline=False):
+def regex_replace(value='', pattern='', replacement='', ignorecase=False, multiline=False, count=0, mandatory_count=0):
     ''' Perform a `re.sub` returning a string '''
 
     value = to_text(value, errors='surrogate_or_strict', nonstring='simplerepr')
@@ -128,7 +130,11 @@ def regex_replace(value='', pattern='', replacement='', ignorecase=False, multil
     if multiline:
         flags |= re.M
     _re = re.compile(pattern, flags=flags)
-    return _re.sub(replacement, value)
+    (output, subs) = _re.subn(replacement, value, count=count)
+    if mandatory_count and mandatory_count != subs:
+        raise AnsibleFilterError("'%s' should match %d times, but matches %d times in '%s'"
+                                 % (pattern, mandatory_count, count, value))
+    return output
 
 
 def regex_findall(value, regex, multiline=False, ignorecase=False):
@@ -188,8 +194,8 @@ def ternary(value, true_val, false_val, none_val=None):
 
 
 def regex_escape(string, re_type='python'):
+    """Escape all regular expressions special characters from STRING."""
     string = to_text(string, errors='surrogate_or_strict', nonstring='simplerepr')
-    '''Escape all regular expressions special characters from STRING.'''
     if re_type == 'python':
         return re.escape(string)
     elif re_type == 'posix_basic':
@@ -277,10 +283,27 @@ def get_encrypted_password(password, hashtype='sha512', salt=None, salt_size=Non
     }
 
     hashtype = passlib_mapping.get(hashtype, hashtype)
+
+    unknown_passlib_hashtype = False
+    if PASSLIB_AVAILABLE and hashtype not in passlib_mapping and hashtype not in passlib_mapping.values():
+        unknown_passlib_hashtype = True
+        display.deprecated(
+            f"Checking for unsupported password_hash passlib hashtype '{hashtype}'. "
+            "This will be an error in the future as all supported hashtypes must be documented.",
+            version='2.19'
+        )
+
     try:
-        return passlib_or_crypt(password, hashtype, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
+        return do_encrypt(password, hashtype, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
     except AnsibleError as e:
         reraise(AnsibleFilterError, AnsibleFilterError(to_native(e), orig_exc=e), sys.exc_info()[2])
+    except Exception as e:
+        if unknown_passlib_hashtype:
+            # This can occur if passlib.hash has the hashtype attribute, but it has a different signature than the valid choices.
+            # In 2.19 this will replace the deprecation warning above and the extra exception handling can be deleted.
+            choices = ', '.join(passlib_mapping)
+            raise AnsibleFilterError(f"{hashtype} is not in the list of supported passlib algorithms: {choices}") from e
+        raise
 
 
 def to_uuid(string, namespace=UUID_NAMESPACE_ANSIBLE):
@@ -295,9 +318,9 @@ def to_uuid(string, namespace=UUID_NAMESPACE_ANSIBLE):
 
 
 def mandatory(a, msg=None):
+    """Make a variable mandatory."""
     from jinja2.runtime import Undefined
 
-    ''' Make a variable mandatory '''
     if isinstance(a, Undefined):
         if a._undefined_name is not None:
             name = "'%s' " % to_text(a._undefined_name)
@@ -306,8 +329,7 @@ def mandatory(a, msg=None):
 
         if msg is not None:
             raise AnsibleFilterError(to_native(msg))
-        else:
-            raise AnsibleFilterError("Mandatory variable %s not defined." % name)
+        raise AnsibleFilterError("Mandatory variable %s not defined." % name)
 
     return a
 
@@ -539,7 +561,15 @@ def list_of_dict_key_value_elements_to_dict(mylist, key_name='key', value_name='
     if not is_sequence(mylist):
         raise AnsibleFilterTypeError("items2dict requires a list, got %s instead." % type(mylist))
 
-    return dict((item[key_name], item[value_name]) for item in mylist)
+    try:
+        return dict((item[key_name], item[value_name]) for item in mylist)
+    except KeyError:
+        raise AnsibleFilterTypeError(
+            "items2dict requires each dictionary in the list to contain the keys '%s' and '%s', got %s instead."
+            % (key_name, value_name, mylist)
+        )
+    except TypeError:
+        raise AnsibleFilterTypeError("items2dict requires a list of dictionaries, got %s instead." % mylist)
 
 
 def path_join(paths):
@@ -547,10 +577,24 @@ def path_join(paths):
         of the different members '''
     if isinstance(paths, string_types):
         return os.path.join(paths)
-    elif is_sequence(paths):
+    if is_sequence(paths):
         return os.path.join(*paths)
-    else:
-        raise AnsibleFilterTypeError("|path_join expects string or sequence, got %s instead." % type(paths))
+    raise AnsibleFilterTypeError("|path_join expects string or sequence, got %s instead." % type(paths))
+
+
+def commonpath(paths):
+    """
+    Retrieve the longest common path from the given list.
+
+    :param paths: A list of file system paths.
+    :type paths: List[str]
+    :returns: The longest common path.
+    :rtype: str
+    """
+    if not is_sequence(paths):
+        raise AnsibleFilterTypeError("|path_join expects sequence, got %s instead." % type(paths))
+
+    return os.path.commonpath(paths)
 
 
 class FilterModule(object):
@@ -588,6 +632,8 @@ class FilterModule(object):
             'win_basename': partial(unicode_wrap, ntpath.basename),
             'win_dirname': partial(unicode_wrap, ntpath.dirname),
             'win_splitdrive': partial(unicode_wrap, ntpath.splitdrive),
+            'commonpath': commonpath,
+            'normpath': partial(unicode_wrap, os.path.normpath),
 
             # file glob
             'fileglob': fileglob,

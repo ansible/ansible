@@ -33,7 +33,7 @@ from .provisioning import (
 )
 
 
-def get_changes_filter(args):  # type: (TestConfig) -> t.List[str]
+def get_changes_filter(args: TestConfig) -> list[str]:
     """Return a list of targets which should be tested based on the changes made."""
     paths = detect_changes(args)
 
@@ -57,7 +57,7 @@ def get_changes_filter(args):  # type: (TestConfig) -> t.List[str]
     return args.metadata.change_description.targets
 
 
-def detect_changes(args):  # type: (TestConfig) -> t.Optional[t.List[str]]
+def detect_changes(args: TestConfig) -> t.Optional[list[str]]:
     """Return a list of changed paths."""
     if args.changed:
         paths = get_ci_provider().detect_changes(args)
@@ -81,19 +81,22 @@ def detect_changes(args):  # type: (TestConfig) -> t.Optional[t.List[str]]
 
 class NoChangesDetected(ApplicationWarning):
     """Exception when change detection was performed, but no changes were found."""
-    def __init__(self):
+
+    def __init__(self) -> None:
         super().__init__('No changes detected.')
 
 
 class NoTestsForChanges(ApplicationWarning):
     """Exception when changes detected, but no tests trigger as a result."""
-    def __init__(self):
+
+    def __init__(self) -> None:
         super().__init__('No tests found for detected changes.')
 
 
 class Delegate(Exception):
     """Trigger command delegation."""
-    def __init__(self, host_state, exclude=None, require=None):  # type: (HostState, t.List[str], t.List[str]) -> None
+
+    def __init__(self, host_state: HostState, exclude: list[str] = None, require: list[str] = None) -> None:
         super().__init__()
 
         self.host_state = host_state
@@ -103,7 +106,8 @@ class Delegate(Exception):
 
 class ListTargets(Exception):
     """List integration test targets instead of executing them."""
-    def __init__(self, target_names):  # type: (t.List[str]) -> None
+
+    def __init__(self, target_names: list[str]) -> None:
         super().__init__()
 
         self.target_names = target_names
@@ -111,5 +115,6 @@ class ListTargets(Exception):
 
 class AllTargetsSkipped(ApplicationWarning):
     """All targets skipped."""
-    def __init__(self):
+
+    def __init__(self) -> None:
         super().__init__('All targets skipped.')

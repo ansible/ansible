@@ -1,4 +1,4 @@
-# test code 
+# test code
 # (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
 
 # This file is part of Ansible
@@ -22,7 +22,7 @@
     output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
 
 - name: deploy a template that will use variables at various levels
-  template: src=foo.j2 dest={{output_dir}}/foo.templated 
+  template: src=foo.j2 dest={{output_dir}}/foo.templated
   register: template_result
 
 - name: copy known good into place
@@ -33,9 +33,9 @@
   register: diff_result
 
 - name: verify templated file matches known good
-  assert:  
-    that: 
-        - 'diff_result.stdout == ""' 
+  assert:
+    that:
+        - 'diff_result.stdout == ""'
 
 - name: check debug variable with same name as var content
   debug: var=same_value_as_var_name_var

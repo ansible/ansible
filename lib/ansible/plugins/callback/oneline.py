@@ -2,9 +2,7 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = '''
     name: oneline
@@ -12,7 +10,7 @@ DOCUMENTATION = '''
     short_description: oneline Ansible screen output
     version_added: historical
     description:
-        - This is the output callback used by the -o/--one-line command line option.
+        - This is the output callback used by the C(-o)/C(--one-line) command line option.
 '''
 
 from ansible.plugins.callback import CallbackBase

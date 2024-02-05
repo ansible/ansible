@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible_facts.devices - Fix parsing of device serial number detected via sg_inq for rhel8 (https://github.com/ansible/ansible/issues/75420)

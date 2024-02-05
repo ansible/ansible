@@ -12,23 +12,24 @@ from .util import (
 
 class Git:
     """Wrapper around git command-line tools."""
-    def __init__(self, root=None):  # type: (t.Optional[str]) -> None
+
+    def __init__(self, root: t.Optional[str] = None) -> None:
         self.git = 'git'
         self.root = root
 
-    def get_diff(self, args, git_options=None):  # type: (t.List[str], t.Optional[t.List[str]]) -> t.List[str]
+    def get_diff(self, args: list[str], git_options: t.Optional[list[str]] = None) -> list[str]:
         """Run `git diff` and return the result as a list."""
         cmd = ['diff'] + args
         if git_options is None:
             git_options = ['-c', 'core.quotePath=']
         return self.run_git_split(git_options + cmd, '\n', str_errors='replace')
 
-    def get_diff_names(self, args):  # type: (t.List[str]) -> t.List[str]
+    def get_diff_names(self, args: list[str]) -> list[str]:
         """Return a list of file names from the `git diff` command."""
         cmd = ['diff', '--name-only', '--no-renames', '-z'] + args
         return self.run_git_split(cmd, '\0')
 
-    def get_submodule_paths(self):  # type: () -> t.List[str]
+    def get_submodule_paths(self) -> list[str]:
         """Return a list of submodule paths recursively."""
         cmd = ['submodule', 'status', '--recursive']
         output = self.run_git_split(cmd, '\n')
@@ -45,22 +46,22 @@ class Git:
 
         return submodule_paths
 
-    def get_file_names(self, args):  # type: (t.List[str]) -> t.List[str]
+    def get_file_names(self, args: list[str]) -> list[str]:
         """Return a list of file names from the `git ls-files` command."""
         cmd = ['ls-files', '-z'] + args
         return self.run_git_split(cmd, '\0')
 
-    def get_branches(self):  # type: () -> t.List[str]
+    def get_branches(self) -> list[str]:
         """Return the list of branches."""
         cmd = ['for-each-ref', 'refs/heads/', '--format', '%(refname:strip=2)']
         return self.run_git_split(cmd)
 
-    def get_branch(self):  # type: () -> str
+    def get_branch(self) -> str:
         """Return the current branch name."""
         cmd = ['symbolic-ref', '--short', 'HEAD']
         return self.run_git(cmd).strip()
 
-    def get_rev_list(self, commits=None, max_count=None):  # type: (t.Optional[t.List[str]], t.Optional[int]) -> t.List[str]
+    def get_rev_list(self, commits: t.Optional[list[str]] = None, max_count: t.Optional[int] = None) -> list[str]:
         """Return the list of results from the `git rev-list` command."""
         cmd = ['rev-list']
 
@@ -74,12 +75,12 @@ class Git:
 
         return self.run_git_split(cmd)
 
-    def get_branch_fork_point(self, branch):  # type: (str) -> str
+    def get_branch_fork_point(self, branch: str) -> str:
         """Return a reference to the point at which the given branch was forked."""
-        cmd = ['merge-base', '--fork-point', branch]
+        cmd = ['merge-base', branch, 'HEAD']
         return self.run_git(cmd).strip()
 
-    def is_valid_ref(self, ref):  # type: (str) -> bool
+    def is_valid_ref(self, ref: str) -> bool:
         """Return True if the given reference is valid, otherwise return False."""
         cmd = ['show', ref]
         try:
@@ -88,7 +89,7 @@ class Git:
         except SubprocessError:
             return False
 
-    def run_git_split(self, cmd, separator=None, str_errors='strict'):  # type: (t.List[str], t.Optional[str], str) -> t.List[str]
+    def run_git_split(self, cmd: list[str], separator: t.Optional[str] = None, str_errors: str = 'strict') -> list[str]:
         """Run the given `git` command and return the results as a list."""
         output = self.run_git(cmd, str_errors=str_errors).strip(separator)
 
@@ -97,6 +98,6 @@ class Git:
 
         return output.split(separator)
 
-    def run_git(self, cmd, str_errors='strict'):  # type: (t.List[str], str) -> str
+    def run_git(self, cmd: list[str], str_errors: str = 'strict') -> str:
         """Run the given `git` command and return the results as a string."""
         return raw_command([self.git] + cmd, cwd=self.root, capture=True, str_errors=str_errors)[0]

@@ -106,5 +106,15 @@
   - This uses C(fnmatch) to match the files or directories.
   - Some directories and files like C(galaxy.yml), C(*.pyc), C(*.retry), and
     C(.git) are always filtered.
+  - Mutually exclusive with C(manifest)
   type: list
   version_added: '2.10'
+
+- key: manifest
+  description:
+  - A dict controlling use of manifest directives used in building the collection artifact.
+  - The key C(directives) is a list of MANIFEST.in style L(directives,https://packaging.python.org/en/latest/guides/using-manifest-in/#manifest-in-commands)
+  - The key C(omit_default_directives) is a boolean that controls whether the default directives are used
+  - Mutually exclusive with C(build_ignore)
+  type: sentinel
+  version_added: '2.14'

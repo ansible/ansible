@@ -1,2 +1,0 @@
-minor_changes:
-  - "PlayIterator - use enums for Iterating and Failed states (https://github.com/ansible/ansible/pull/74511)"

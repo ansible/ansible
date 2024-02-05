@@ -2,8 +2,7 @@
 # Copyright: (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import glob
 import json
@@ -11,7 +10,7 @@ import os
 import pytest
 from itertools import product
 
-from ansible.module_utils.six.moves import builtins
+import builtins
 
 # the module we are actually testing (sort of)
 from ansible.module_utils.facts.system.distribution import DistributionFactCollector
@@ -49,6 +48,13 @@ def test_distribution_version(am, mocker, testcase):
         if strip and data is not None:
             data = data.strip()
         return data
+
+    def mock_get_file_lines(fname, strip=True):
+        """give fake lines if file exists, otherwise return empty list"""
+        data = mock_get_file_content(fname=fname, strip=strip)
+        if data:
+            return [data]
+        return []
 
     def mock_get_uname(am, flags):
         if '-v' in flags:
@@ -115,6 +121,7 @@ def test_distribution_version(am, mocker, testcase):
         return ret
 
     mocker.patch('ansible.module_utils.facts.system.distribution.get_file_content', mock_get_file_content)
+    mocker.patch('ansible.module_utils.facts.system.distribution.get_file_lines', mock_get_file_lines)
     mocker.patch('ansible.module_utils.facts.system.distribution.get_uname', mock_get_uname)
     mocker.patch('ansible.module_utils.facts.system.distribution._file_exists', mock_file_exists)
     mocker.patch('ansible.module_utils.distro.name', mock_distro_name)

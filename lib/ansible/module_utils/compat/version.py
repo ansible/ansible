@@ -25,13 +25,12 @@ Every version number class implements the following interface:
     of the same class, thus must follow the same rules)
 """
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 
 try:
-    RE_FLAGS = re.VERBOSE | re.ASCII
+    RE_FLAGS = re.VERBOSE | re.ASCII  # type: ignore[attr-defined]
 except AttributeError:
     RE_FLAGS = re.VERBOSE
 
@@ -225,7 +224,7 @@ class StrictVersion(Version):
 #     ('alpha', 'beta', 'a', 'b', 'pre', 'p')
 #   - indicating a post-release patch ('p', 'pl', 'patch')
 # but of course this can't cover all version number schemes, and there's
-# no way to know what a programmer means without asking him.
+# no way to know what a programmer means without asking them.
 #
 # The problem is what to do with letters (and other non-numeric
 # characters) in a version number.  The current implementation does the

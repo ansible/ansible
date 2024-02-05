@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-core modules - Remove unused Python shebangs from built-in modules.
-  - ansible-test - Accept new-style Python modules without a shebang.

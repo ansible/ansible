@@ -1,0 +1,29 @@
+{
+    "name": "Uos 20",
+    "distro": {
+        "codename": "fou",
+        "id": "Uos",
+        "name": "Uos",
+        "version": "20",
+        "version_best": "20",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/os-release": "PRETTY_NAME=\"UnionTech OS Server 20\"\nNAME=\"UnionTech OS Server 20\"\nVERSION_ID=\"20\"\nVERSION=\"20\"\nID=UOS\nHOME_URL=\"https://www.chinauos.com/\"\nBUG_REPORT_URL=\"https://bbs.chinauos.com/\"\nVERSION_CODENAME=fou",
+        "/etc/lsb-release": "DISTRIB_ID=uos\nDISTRIB_RELEASE=20\nDISTRIB_DESCRIPTION=\"UnionTech OS Server 20\"\nDISTRIB_CODENAME=fou\n",
+        "/usr/lib/os-release": "PRETTY_NAME=\"UnionTech OS Server 20\"\nNAME=\"UnionTech OS Server 20\"\nVERSION_ID=\"20\"\nVERSION=\"20\"\nID=UOS\nHOME_URL=\"https://www.chinauos.com/\"\nBUG_REPORT_URL=\"https://bbs.chinauos.com/\"\nVERSION_CODENAME=fou"
+    },
+    "platform.dist": [
+        "uos",
+        "20",
+        "fou"
+    ],
+    "result": {
+        "distribution": "Uos",
+        "distribution_version": "20",
+        "distribution_release": "fou",
+        "distribution_major_version": "20",
+        "os_family": "Debian"
+    }
+}

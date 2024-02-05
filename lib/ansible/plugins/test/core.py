@@ -15,20 +15,26 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 import operator as py_operator
+
+from collections.abc import MutableMapping, MutableSequence
+
 from ansible.module_utils.compat.version import LooseVersion, StrictVersion
 
 from ansible import errors
-from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.utils.display import Display
 from ansible.utils.version import SemanticVersion
+
+try:
+    from packaging.version import Version as PEP440Version
+    HAS_PACKAGING = True
+except ImportError:
+    HAS_PACKAGING = False
 
 display = Display()
 
@@ -130,7 +136,7 @@ def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='s
 
 
 def vault_encrypted(value):
-    """Evaulate whether a variable is a single vault encrypted value
+    """Evaluate whether a variable is a single vault encrypted value
 
     .. versionadded:: 2.10
     """
@@ -163,6 +169,7 @@ def version_compare(value, version, operator='eq', strict=None, version_type=Non
         'strict': StrictVersion,
         'semver': SemanticVersion,
         'semantic': SemanticVersion,
+        'pep440': PEP440Version,
     }
 
     if strict is not None and version_type is not None:
@@ -173,6 +180,9 @@ def version_compare(value, version, operator='eq', strict=None, version_type=Non
 
     if not version:
         raise errors.AnsibleFilterError("Version parameter to compare against cannot be empty")
+
+    if version_type == 'pep440' and not HAS_PACKAGING:
+        raise errors.AnsibleFilterError("The pep440 version_type requires the Python 'packaging' library")
 
     Version = LooseVersion
     if strict:

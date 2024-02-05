@@ -354,16 +354,16 @@ Function Get-FileChecksum($path, $algorithm = 'sha1') {
             $hash = $raw_hash.Hash.ToLower()
         }
         Else {
-            $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite);
-            $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
-            $fp.Dispose();
+            $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+            $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower()
+            $fp.Dispose()
         }
     }
     ElseIf (Test-Path -LiteralPath $path -PathType Container) {
-        $hash = "3";
+        $hash = "3"
     }
     Else {
-        $hash = "1";
+        $hash = "1"
     }
     return $hash
 }
@@ -372,8 +372,11 @@ Function Get-PendingRebootStatus {
     <#
     .SYNOPSIS
     Check if reboot is required, if so notify CA.
-    Function returns true if computer has a pending reboot
-#>
+    Function returns true if computer has a pending reboot.
+
+    People should not be using this function, it is kept
+    just for backwards compatibility.
+    #>
     $featureData = Invoke-CimMethod -EA Ignore -Name GetServerFeature -Namespace root\microsoft\windows\servermanager -Class MSFT_ServerManagerTasks
     $regData = Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" "PendingFileRenameOperations" -EA Ignore
     $CBSRebootStatus = Get-ChildItem "HKLM:\\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing" -ErrorAction SilentlyContinue |

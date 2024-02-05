@@ -18,8 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """CLI tool for reporting on incidental test coverage."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 # noinspection PyCompatibility
 import argparse
@@ -86,6 +85,10 @@ def parse_args():
                         action='store_true',
                         help='increase verbosity')
 
+    parser.add_argument('--result-sha',
+                        default=None,
+                        help='Override the result sha')
+
     targets = parser.add_mutually_exclusive_group()
 
     targets.add_argument('--targets',
@@ -131,11 +134,13 @@ def incidental_report(args):
     git = Git(os.path.abspath(args.source))
     coverage_data = CoverageData(os.path.abspath(args.result))
 
+    result_sha = args.result_sha or coverage_data.result_sha
+
     try:
-        git.show([coverage_data.result_sha, '--'])
+        git.show([result_sha, '--'])
     except subprocess.CalledProcessError:
         raise ApplicationError('%s: commit not found: %s\n'
-                               'make sure your source repository is up-to-date' % (git.path, coverage_data.result_sha))
+                               'make sure your source repository is up-to-date' % (git.path, result_sha))
 
     if coverage_data.result != "succeeded":
         check_failed(args, 'results indicate tests did not pass (result: %s)\n'
@@ -225,7 +230,7 @@ def incidental_report(args):
         cached(source_expanded_target_path, args.use_cache, args.verbose,
                lambda: ct.expand(source_target_path, source_expanded_target_path))
 
-        summary[target_name] = sources = collect_sources(source_expanded_target_path, git, coverage_data)
+        summary[target_name] = sources = collect_sources(source_expanded_target_path, git, coverage_data, result_sha)
 
         txt_report_path = os.path.join(reports_path, '%s.txt' % cache_name)
         cached(txt_report_path, args.use_cache, args.verbose,
@@ -364,7 +369,7 @@ class SourceFile:
         self.covered_lines = set(abs(p[0]) for p in self.covered_points) | set(abs(p[1]) for p in self.covered_points)
 
 
-def collect_sources(data_path, git, coverage_data):
+def collect_sources(data_path, git, coverage_data, result_sha):
     with open(data_path) as data_file:
         data = json.load(data_file)
 
@@ -372,7 +377,7 @@ def collect_sources(data_path, git, coverage_data):
 
     for path_coverage in data.values():
         for path, path_data in path_coverage.items():
-            sources.append(SourceFile(path, git.show(['%s:%s' % (coverage_data.result_sha, path)]), coverage_data, path_data))
+            sources.append(SourceFile(path, git.show(['%s:%s' % (result_sha, path)]), coverage_data, path_data))
 
     return sources
 

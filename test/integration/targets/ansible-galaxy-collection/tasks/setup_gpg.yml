@@ -1,0 +1,24 @@
+- name: create empty gpg homedir
+  file:
+    state: "{{ item }}"
+    path: "{{ gpg_homedir }}"
+    mode: 0700
+  loop:
+    - absent
+    - directory
+
+- name: get username for generating key
+  command: whoami
+  register: user
+
+- name: generate key for user with gpg
+  command: "gpg --no-tty --homedir {{ gpg_homedir }} --passphrase '' --pinentry-mode loopback --quick-gen-key {{ user.stdout }} default default"
+
+- name: list gpg keys for user
+  command: "gpg --no-tty --homedir {{ gpg_homedir }} --list-keys {{ user.stdout }}"
+  register: gpg_list_keys
+
+- name: save gpg user and fingerprint of new key
+  set_fact:
+    gpg_user: "{{ user.stdout }}"
+    fingerprint: "{{ gpg_list_keys.stdout_lines[1] | trim }}"

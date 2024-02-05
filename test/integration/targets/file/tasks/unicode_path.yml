@@ -1,10 +1,10 @@
 - name: create local file with unicode filename and content
   lineinfile:
-    dest: "{{ output_dir }}/语/汉语.txt"
+    dest: "{{ remote_tmp_dir_test }}/语/汉语.txt"
     create: true
     line: 汉语
 
 - name: remove local file with unicode filename and content
   file:
-    path: "{{ output_dir }}/语/汉语.txt"
+    path: "{{ remote_tmp_dir_test }}/语/汉语.txt"
     state: absent

@@ -16,15 +16,15 @@
 
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args $true;
+$params = Parse-Args $args $true
 
 $params.thisPropertyDoesNotExist
 
-$data = Get-Attr $params "data" "pong";
+$data = Get-Attr $params "data" "pong"
 
 $result = @{
     changed = $false
     ping = $data
-};
+}
 
-Exit-Json $result;
+Exit-Json $result

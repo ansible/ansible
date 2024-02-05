@@ -1,0 +1,2 @@
+bugfixes:
+  - module no_log will no longer affect top level booleans, for example ``no_log_module_parameter='a'`` will no longer hide ``changed=False`` as a 'no log value' (matches 'a').

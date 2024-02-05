@@ -26,4 +26,4 @@
 
   - assert:
       that:
-        - test_role_output.msg == test_role_input
+        - non_coll_role_to_call_test_role_output.msg == test_role_input

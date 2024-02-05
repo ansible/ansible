@@ -15,60 +15,85 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import abc
 import argparse
 import ast
 import datetime
 import json
-import errno
 import os
 import re
-import subprocess
 import sys
-import tempfile
 import traceback
+import warnings
 
 from collections import OrderedDict
+from collections.abc import Mapping
 from contextlib import contextmanager
-from ansible.module_utils.compat.version import StrictVersion, LooseVersion
 from fnmatch import fnmatch
+
+from antsibull_docs_parser import dom
+from antsibull_docs_parser.parser import parse, Context
 
 import yaml
 
+from voluptuous.humanize import humanize_error
+
+
+def setup_collection_loader():
+    """
+    Configure the collection loader if a collection is being tested.
+    This must be done before the plugin loader is imported.
+    """
+    if '--collection' not in sys.argv:
+        return
+
+    # noinspection PyProtectedMember
+    from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+
+    collections_paths = os.environ.get('ANSIBLE_COLLECTIONS_PATH', '').split(os.pathsep)
+    collection_loader = _AnsibleCollectionFinder(collections_paths)
+    # noinspection PyProtectedMember
+    collection_loader._install()  # pylint: disable=protected-access
+
+    warnings.filterwarnings(
+        "ignore",
+        "AnsibleCollectionFinder has already been configured")
+
+
+setup_collection_loader()
+
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS, NEW_STYLE_PYTHON_MODULE_RE
-from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.parameters import DEFAULT_TYPE_VALIDATORS
-from ansible.plugins.loader import fragment_loader
-from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
-from ansible.utils.plugin_docs import REJECTLIST, add_collection_to_versions_and_dates, add_fragments, get_docstring
-from ansible.utils.version import SemanticVersion
+from ansible.module_utils.compat.version import StrictVersion, LooseVersion
 from ansible.module_utils.basic import to_bytes
+from ansible.plugins.loader import fragment_loader
+from ansible.plugins.list import IGNORE as REJECTLIST
+from ansible.utils.plugin_docs import add_collection_to_versions_and_dates, add_fragments, get_docstring
+from ansible.utils.version import SemanticVersion
 
 from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, get_argument_spec
 
-from .schema import ansible_module_kwargs_schema, doc_schema, return_schema
+from .schema import (
+    ansible_module_kwargs_schema,
+    doc_schema,
+    return_schema,
+)
 
-from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, is_empty, parse_yaml, parse_isodate
-from voluptuous.humanize import humanize_error
+from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, parse_yaml, parse_isodate
 
-from ansible.module_utils.six import PY3, with_metaclass, string_types
 
-if PY3:
-    # Because there is no ast.TryExcept in Python 3 ast module
-    TRY_EXCEPT = ast.Try
-    # REPLACER_WINDOWS from ansible.executor.module_common is byte
-    # string but we need unicode for Python 3
-    REPLACER_WINDOWS = REPLACER_WINDOWS.decode('utf-8')
-else:
-    TRY_EXCEPT = ast.TryExcept
+# Because there is no ast.TryExcept in Python 3 ast module
+TRY_EXCEPT = ast.Try
+# REPLACER_WINDOWS from ansible.executor.module_common is byte
+# string but we need unicode for Python 3
+REPLACER_WINDOWS = REPLACER_WINDOWS.decode('utf-8')
 
 REJECTLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
-TYPE_REGEX = re.compile(r'.*(if|or)(\s+[^"\']*|\s+)(?<!_)(?<!str\()type\([^)].*')
 SYS_EXIT_REGEX = re.compile(r'[^#]*sys.exit\s*\(.*')
 NO_LOG_REGEX = re.compile(r'(?:pass(?!ive)|secret|token|key)', re.I)
 
@@ -95,6 +120,11 @@ OS_CALL_REGEX = re.compile(r'os\.call.*')
 
 
 LOOSE_ANSIBLE_VERSION = LooseVersion('.'.join(ansible_version.split('.')[:3]))
+
+
+PLUGINS_WITH_RETURN_VALUES = ('module', )
+PLUGINS_WITH_EXAMPLES = ('module', )
+PLUGINS_WITH_YAML_EXAMPLES = ('module', )
 
 
 def is_potential_secret_option(option_name):
@@ -234,7 +264,7 @@ class Reporter:
         return 3 if sum(ret) else 0
 
 
-class Validator(with_metaclass(abc.ABCMeta, object)):
+class Validator(metaclass=abc.ABCMeta):
     """Validator instances are intended to be run on a single object.  if you
     are scanning multiple objects for problems, you'll want to have a separate
     Validator for each one."""
@@ -265,28 +295,21 @@ class ModuleValidator(Validator):
     REJECTLIST_FILES = frozenset(('.git', '.gitignore', '.travis.yml',
                                   '.gitattributes', '.gitmodules', 'COPYING',
                                   '__init__.py', 'VERSION', 'test-docs.sh'))
-    REJECTLIST = REJECTLIST_FILES.union(REJECTLIST['MODULE'])
-
-    PS_DOC_REJECTLIST = frozenset((
-        'async_status.ps1',
-        'slurp.ps1',
-        'setup.ps1'
-    ))
+    REJECTLIST = REJECTLIST_FILES.union(REJECTLIST['module'])
 
     # win_dsc is a dynamic arg spec, the docs won't ever match
     PS_ARG_VALIDATE_REJECTLIST = frozenset(('win_dsc.ps1', ))
 
-    ACCEPTLIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
-
-    def __init__(self, path, analyze_arg_spec=False, collection=None, collection_version=None,
-                 base_branch=None, git_cache=None, reporter=None, routing=None):
+    def __init__(self, path, git_cache: GitCache, analyze_arg_spec=False, collection=None, collection_version=None,
+                 reporter=None, routing=None, plugin_type='module'):
         super(ModuleValidator, self).__init__(reporter=reporter or Reporter())
 
         self.path = path
         self.basename = os.path.basename(self.path)
         self.name = os.path.splitext(self.basename)[0]
+        self.plugin_type = plugin_type
 
-        self.analyze_arg_spec = analyze_arg_spec
+        self.analyze_arg_spec = analyze_arg_spec and plugin_type == 'module'
 
         self._Version = LooseVersion
         self._StrictVersion = StrictVersion
@@ -304,8 +327,8 @@ class ModuleValidator(Validator):
             self.collection_version_str = collection_version
             self.collection_version = SemanticVersion(collection_version)
 
-        self.base_branch = base_branch
-        self.git_cache = git_cache or GitCache()
+        self.git_cache = git_cache
+        self.base_module = self.git_cache.get_original_path(self.path)
 
         self._python_module_override = False
 
@@ -316,11 +339,6 @@ class ModuleValidator(Validator):
             self.ast = ast.parse(self.text)
         except Exception:
             self.ast = None
-
-        if base_branch:
-            self.base_module = self._get_base_file()
-        else:
-            self.base_module = None
 
     def _create_version(self, v, collection_name=None):
         if not v:
@@ -344,13 +362,7 @@ class ModuleValidator(Validator):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if not self.base_module:
-            return
-
-        try:
-            os.remove(self.base_module)
-        except Exception:
-            pass
+        pass
 
     @property
     def object_name(self):
@@ -375,54 +387,33 @@ class ModuleValidator(Validator):
             return True
         return False
 
+    def _sidecar_doc(self):
+        if self.path.endswith('.yml') or self.path.endswith('.yaml'):
+            return True
+        return False
+
     def _just_docs(self):
         """Module can contain just docs and from __future__ boilerplate
         """
         try:
             for child in self.ast.body:
                 if not isinstance(child, ast.Assign):
-                    # allowed from __future__ imports
+                    # allow string constant expressions (these are docstrings)
+                    if isinstance(child, ast.Expr) and isinstance(child.value, ast.Constant) and isinstance(child.value.value, str):
+                        continue
+
+                    # allow __future__ imports (the specific allowed imports are checked by other sanity tests)
                     if isinstance(child, ast.ImportFrom) and child.module == '__future__':
-                        for future_import in child.names:
-                            if future_import.name not in self.ACCEPTLIST_FUTURE_IMPORTS:
-                                break
-                        else:
-                            continue
+                        continue
+
                     return False
             return True
         except AttributeError:
             return False
 
-    def _get_base_branch_module_path(self):
-        """List all paths within lib/ansible/modules to try and match a moved module"""
-        return self.git_cache.base_module_paths.get(self.object_name)
-
-    def _has_alias(self):
-        """Return true if the module has any aliases."""
-        return self.object_name in self.git_cache.head_aliased_modules
-
-    def _get_base_file(self):
-        # In case of module moves, look for the original location
-        base_path = self._get_base_branch_module_path()
-
-        command = ['git', 'show', '%s:%s' % (self.base_branch, base_path or self.path)]
-        p = subprocess.Popen(command, stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
-        if int(p.returncode) != 0:
-            return None
-
-        t = tempfile.NamedTemporaryFile(delete=False)
-        t.write(stdout)
-        t.close()
-
-        return t.name
-
-    def _is_new_module(self):
-        if self._has_alias():
-            return False
-
-        return not self.object_name.startswith('_') and bool(self.base_branch) and not bool(self.base_module)
+    def _is_new_module(self) -> bool | None:
+        """Return True if the content is new, False if it is not and None if the information is not available."""
+        return self.git_cache.is_new(self.path)
 
     def _check_interpreter(self, powershell=False):
         if powershell:
@@ -448,21 +439,6 @@ class ModuleValidator(Validator):
                 code='missing-python-interpreter',
                 msg='Interpreter line is not "#!/usr/bin/python"',
             )
-
-    def _check_type_instead_of_isinstance(self, powershell=False):
-        if powershell:
-            return
-        for line_no, line in enumerate(self.text.splitlines()):
-            typekeyword = TYPE_REGEX.match(line)
-            if typekeyword:
-                # TODO: add column
-                self.reporter.error(
-                    path=self.object_path,
-                    code='unidiomatic-typecheck',
-                    msg=('Type comparison using type() found. '
-                         'Use isinstance() instead'),
-                    line=line_no + 1
-                )
 
     def _check_for_sys_exit(self):
         # Optimize out the happy path
@@ -643,38 +619,21 @@ class ModuleValidator(Validator):
                 )
 
     def _ensure_imports_below_docs(self, doc_info, first_callable):
-        try:
-            min_doc_line = min(
-                [doc_info[key]['lineno'] for key in doc_info if doc_info[key]['lineno']]
-            )
-        except ValueError:
-            # We can't perform this validation, as there are no DOCs provided at all
-            return
+        doc_line_numbers = [lineno for lineno in (doc_info[key]['lineno'] for key in doc_info) if lineno > 0]
 
-        max_doc_line = max(
-            [doc_info[key]['end_lineno'] for key in doc_info if doc_info[key]['end_lineno']]
-        )
+        min_doc_line = min(doc_line_numbers) if doc_line_numbers else None
+        max_doc_line = max(doc_info[key]['end_lineno'] for key in doc_info)
 
         import_lines = []
 
         for child in self.ast.body:
             if isinstance(child, (ast.Import, ast.ImportFrom)):
+                # allow __future__ imports (the specific allowed imports are checked by other sanity tests)
                 if isinstance(child, ast.ImportFrom) and child.module == '__future__':
-                    # allowed from __future__ imports
-                    for future_import in child.names:
-                        if future_import.name not in self.ACCEPTLIST_FUTURE_IMPORTS:
-                            self.reporter.error(
-                                path=self.object_path,
-                                code='illegal-future-imports',
-                                msg=('Only the following from __future__ imports are allowed: %s'
-                                     % ', '.join(self.ACCEPTLIST_FUTURE_IMPORTS)),
-                                line=child.lineno
-                            )
-                            break
-                    else:  # for-else.  If we didn't find a problem nad break out of the loop, then this is a legal import
-                        continue
+                    continue
+
                 import_lines.append(child.lineno)
-                if child.lineno < min_doc_line:
+                if min_doc_line and child.lineno < min_doc_line:
                     self.reporter.error(
                         path=self.object_path,
                         code='import-before-documentation',
@@ -691,7 +650,7 @@ class ModuleValidator(Validator):
                 for grandchild in bodies:
                     if isinstance(grandchild, (ast.Import, ast.ImportFrom)):
                         import_lines.append(grandchild.lineno)
-                        if grandchild.lineno < min_doc_line:
+                        if min_doc_line and grandchild.lineno < min_doc_line:
                             self.reporter.error(
                                 path=self.object_path,
                                 code='import-before-documentation',
@@ -783,19 +742,28 @@ class ModuleValidator(Validator):
                 msg='No Ansible.ModuleUtils or C# Ansible util requirements/imports found'
             )
 
-    def _find_ps_docs_py_file(self):
-        if self.object_name in self.PS_DOC_REJECTLIST:
-            return
+    def _find_ps_docs_file(self):
+        sidecar = self._find_sidecar_docs()
+        if sidecar:
+            return sidecar
+
         py_path = self.path.replace('.ps1', '.py')
         if not os.path.isfile(py_path):
             self.reporter.error(
                 path=self.object_path,
-                code='missing-python-doc',
-                msg='Missing python documentation file'
+                code='missing-documentation',
+                msg='No DOCUMENTATION provided'
             )
         return py_path
 
-    def _get_docs(self):
+    def _find_sidecar_docs(self):
+        base_path = os.path.splitext(self.path)[0]
+        for ext in ('.yml', '.yaml'):
+            doc_path = f"{base_path}{ext}"
+            if os.path.isfile(doc_path):
+                return doc_path
+
+    def _get_py_docs(self):
         docs = {
             'DOCUMENTATION': {
                 'value': None,
@@ -820,22 +788,22 @@ class ModuleValidator(Validator):
                         continue
 
                     if grandchild.id == 'DOCUMENTATION':
-                        docs['DOCUMENTATION']['value'] = child.value.s
+                        docs['DOCUMENTATION']['value'] = child.value.value
                         docs['DOCUMENTATION']['lineno'] = child.lineno
                         docs['DOCUMENTATION']['end_lineno'] = (
-                            child.lineno + len(child.value.s.splitlines())
+                            child.lineno + len(child.value.value.splitlines())
                         )
                     elif grandchild.id == 'EXAMPLES':
-                        docs['EXAMPLES']['value'] = child.value.s
+                        docs['EXAMPLES']['value'] = child.value.value
                         docs['EXAMPLES']['lineno'] = child.lineno
                         docs['EXAMPLES']['end_lineno'] = (
-                            child.lineno + len(child.value.s.splitlines())
+                            child.lineno + len(child.value.value.splitlines())
                         )
                     elif grandchild.id == 'RETURN':
-                        docs['RETURN']['value'] = child.value.s
+                        docs['RETURN']['value'] = child.value.value
                         docs['RETURN']['lineno'] = child.lineno
                         docs['RETURN']['end_lineno'] = (
-                            child.lineno + len(child.value.s.splitlines())
+                            child.lineno + len(child.value.value.splitlines())
                         )
 
         return docs
@@ -872,16 +840,11 @@ class ModuleValidator(Validator):
             )
 
     def _validate_docs(self):
-        doc_info = self._get_docs()
         doc = None
-        documentation_exists = False
-        examples_exist = False
-        returns_exist = False
         # We have three ways of marking deprecated/removed files.  Have to check each one
         # individually and then make sure they all agree
         filename_deprecated_or_removed = False
         deprecated = False
-        removed = False
         doc_deprecated = None  # doc legally might not exist
         routing_says_deprecated = False
 
@@ -890,28 +853,53 @@ class ModuleValidator(Validator):
 
         # We are testing a collection
         if self.routing:
-            routing_deprecation = self.routing.get('plugin_routing', {}).get('modules', {}).get(self.name, {}).get('deprecation', {})
+            routing_deprecation = self.routing.get('plugin_routing', {})
+            routing_deprecation = routing_deprecation.get('modules' if self.plugin_type == 'module' else self.plugin_type, {})
+            routing_deprecation = routing_deprecation.get(self.name, {}).get('deprecation', {})
             if routing_deprecation:
                 # meta/runtime.yml says this is deprecated
                 routing_says_deprecated = True
                 deprecated = True
 
-        if not removed:
-            if not bool(doc_info['DOCUMENTATION']['value']):
+        if self._python_module():
+            doc_info = self._get_py_docs()
+        else:
+            doc_info = None
+
+        sidecar_text = None
+        if self._sidecar_doc():
+            sidecar_text = self.text
+        elif sidecar_path := self._find_sidecar_docs():
+            with open(sidecar_path, mode='r', encoding='utf-8') as fd:
+                sidecar_text = fd.read()
+
+        if sidecar_text:
+            sidecar_doc, errors, traces = parse_yaml(sidecar_text, 0, self.name, 'DOCUMENTATION')
+            for error in errors:
                 self.reporter.error(
                     path=self.object_path,
-                    code='missing-documentation',
-                    msg='No DOCUMENTATION provided'
+                    code='documentation-syntax-error',
+                    **error
                 )
-            else:
-                documentation_exists = True
+            for trace in traces:
+                self.reporter.trace(
+                    path=self.object_path,
+                    tracebk=trace
+                )
+
+            doc = sidecar_doc.get('DOCUMENTATION', None)
+            examples_raw = sidecar_doc.get('EXAMPLES', None)
+            examples_lineno = 1
+            returns = sidecar_doc.get('RETURN', None)
+
+        elif doc_info:
+            if bool(doc_info['DOCUMENTATION']['value']):
                 doc, errors, traces = parse_yaml(
                     doc_info['DOCUMENTATION']['value'],
                     doc_info['DOCUMENTATION']['lineno'],
                     self.name, 'DOCUMENTATION'
                 )
-                if doc:
-                    add_collection_to_versions_and_dates(doc, self.collection_name, is_module=True)
+
                 for error in errors:
                     self.reporter.error(
                         path=self.object_path,
@@ -923,129 +911,15 @@ class ModuleValidator(Validator):
                         path=self.object_path,
                         tracebk=trace
                     )
-                if not errors and not traces:
-                    missing_fragment = False
-                    with CaptureStd():
-                        try:
-                            get_docstring(self.path, fragment_loader, verbose=True,
-                                          collection_name=self.collection_name, is_module=True)
-                        except AssertionError:
-                            fragment = doc['extends_documentation_fragment']
-                            self.reporter.error(
-                                path=self.object_path,
-                                code='missing-doc-fragment',
-                                msg='DOCUMENTATION fragment missing: %s' % fragment
-                            )
-                            missing_fragment = True
-                        except Exception as e:
-                            self.reporter.trace(
-                                path=self.object_path,
-                                tracebk=traceback.format_exc()
-                            )
-                            self.reporter.error(
-                                path=self.object_path,
-                                code='documentation-error',
-                                msg='Unknown DOCUMENTATION error, see TRACE: %s' % e
-                            )
 
-                    if not missing_fragment:
-                        add_fragments(doc, self.object_path, fragment_loader=fragment_loader, is_module=True)
+            examples_raw = doc_info['EXAMPLES']['value']
+            examples_lineno = doc_info['EXAMPLES']['lineno']
 
-                    if 'options' in doc and doc['options'] is None:
-                        self.reporter.error(
-                            path=self.object_path,
-                            code='invalid-documentation-options',
-                            msg='DOCUMENTATION.options must be a dictionary/hash when used',
-                        )
-
-                    if 'deprecated' in doc and doc.get('deprecated'):
-                        doc_deprecated = True
-                        doc_deprecation = doc['deprecated']
-                        documentation_collection = doc_deprecation.get('removed_from_collection')
-                        if documentation_collection != self.collection_name:
-                            self.reporter.error(
-                                path=self.object_path,
-                                code='deprecation-wrong-collection',
-                                msg='"DOCUMENTATION.deprecation.removed_from_collection must be the current collection name: %r vs. %r' % (
-                                    documentation_collection, self.collection_name)
-                            )
-                    else:
-                        doc_deprecated = False
-
-                    if os.path.islink(self.object_path):
-                        # This module has an alias, which we can tell as it's a symlink
-                        # Rather than checking for `module: $filename` we need to check against the true filename
-                        self._validate_docs_schema(
-                            doc,
-                            doc_schema(
-                                os.readlink(self.object_path).split('.')[0],
-                                for_collection=bool(self.collection),
-                                deprecated_module=deprecated,
-                            ),
-                            'DOCUMENTATION',
-                            'invalid-documentation',
-                        )
-                    else:
-                        # This is the normal case
-                        self._validate_docs_schema(
-                            doc,
-                            doc_schema(
-                                self.object_name.split('.')[0],
-                                for_collection=bool(self.collection),
-                                deprecated_module=deprecated,
-                            ),
-                            'DOCUMENTATION',
-                            'invalid-documentation',
-                        )
-
-                    if not self.collection:
-                        existing_doc = self._check_for_new_args(doc)
-                        self._check_version_added(doc, existing_doc)
-
-            if not bool(doc_info['EXAMPLES']['value']):
-                self.reporter.error(
-                    path=self.object_path,
-                    code='missing-examples',
-                    msg='No EXAMPLES provided'
-                )
-            else:
-                _doc, errors, traces = parse_yaml(doc_info['EXAMPLES']['value'],
-                                                  doc_info['EXAMPLES']['lineno'],
-                                                  self.name, 'EXAMPLES', load_all=True,
-                                                  ansible_loader=True)
-                for error in errors:
-                    self.reporter.error(
-                        path=self.object_path,
-                        code='invalid-examples',
-                        **error
-                    )
-                for trace in traces:
-                    self.reporter.trace(
-                        path=self.object_path,
-                        tracebk=trace
-                    )
-
-            if not bool(doc_info['RETURN']['value']):
-                if self._is_new_module():
-                    self.reporter.error(
-                        path=self.object_path,
-                        code='missing-return',
-                        msg='No RETURN provided'
-                    )
-                else:
-                    self.reporter.warning(
-                        path=self.object_path,
-                        code='missing-return-legacy',
-                        msg='No RETURN provided'
-                    )
-            else:
-                data, errors, traces = parse_yaml(doc_info['RETURN']['value'],
-                                                  doc_info['RETURN']['lineno'],
-                                                  self.name, 'RETURN')
-                if data:
-                    add_collection_to_versions_and_dates(data, self.collection_name, is_module=True, return_docs=True)
-                self._validate_docs_schema(data, return_schema(for_collection=bool(self.collection)),
-                                           'RETURN', 'return-syntax-error')
+            returns = None
+            if bool(doc_info['RETURN']['value']):
+                returns, errors, traces = parse_yaml(doc_info['RETURN']['value'],
+                                                     doc_info['RETURN']['lineno'],
+                                                     self.name, 'RETURN')
 
                 for error in errors:
                     self.reporter.error(
@@ -1059,15 +933,162 @@ class ModuleValidator(Validator):
                         tracebk=trace
                     )
 
+        if doc:
+            add_collection_to_versions_and_dates(doc, self.collection_name,
+                                                 is_module=self.plugin_type == 'module')
+
+            missing_fragment = False
+            with CaptureStd():
+                try:
+                    get_docstring(self.path, fragment_loader=fragment_loader,
+                                  verbose=True,
+                                  collection_name=self.collection_name,
+                                  plugin_type=self.plugin_type)
+                except AssertionError:
+                    fragment = doc['extends_documentation_fragment']
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='missing-doc-fragment',
+                        msg='DOCUMENTATION fragment missing: %s' % fragment
+                    )
+                    missing_fragment = True
+                except Exception as e:
+                    self.reporter.trace(
+                        path=self.object_path,
+                        tracebk=traceback.format_exc()
+                    )
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='documentation-error',
+                        msg='Unknown DOCUMENTATION error, see TRACE: %s' % e
+                    )
+
+            if not missing_fragment:
+                add_fragments(doc, self.object_path, fragment_loader=fragment_loader,
+                              is_module=self.plugin_type == 'module')
+
+            if 'options' in doc and doc['options'] is None:
+                self.reporter.error(
+                    path=self.object_path,
+                    code='invalid-documentation-options',
+                    msg='DOCUMENTATION.options must be a dictionary/hash when used',
+                )
+
+            if 'deprecated' in doc and doc.get('deprecated'):
+                doc_deprecated = True
+                doc_deprecation = doc['deprecated']
+                documentation_collection = doc_deprecation.get('removed_from_collection')
+                if documentation_collection != self.collection_name:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='deprecation-wrong-collection',
+                        msg='"DOCUMENTATION.deprecation.removed_from_collection must be the current collection name: %r vs. %r' % (
+                            documentation_collection, self.collection_name)
+                    )
+            else:
+                doc_deprecated = False
+
+            if os.path.islink(self.object_path):
+                # This module has an alias, which we can tell as it's a symlink
+                # Rather than checking for `module: $filename` we need to check against the true filename
+                self._validate_docs_schema(
+                    doc,
+                    doc_schema(
+                        os.readlink(self.object_path).split('.')[0],
+                        for_collection=bool(self.collection),
+                        deprecated_module=deprecated,
+                        plugin_type=self.plugin_type,
+                    ),
+                    'DOCUMENTATION',
+                    'invalid-documentation',
+                )
+            else:
+                # This is the normal case
+                self._validate_docs_schema(
+                    doc,
+                    doc_schema(
+                        self.object_name.split('.')[0],
+                        for_collection=bool(self.collection),
+                        deprecated_module=deprecated,
+                        plugin_type=self.plugin_type,
+                    ),
+                    'DOCUMENTATION',
+                    'invalid-documentation',
+                )
+
+            self._validate_all_semantic_markup(doc, returns)
+
+            if not self.collection:
+                existing_doc = self._check_for_new_args(doc)
+                self._check_version_added(doc, existing_doc)
+        else:
+            self.reporter.error(
+                path=self.object_path,
+                code='missing-documentation',
+                msg='No DOCUMENTATION provided',
+            )
+
+        if not examples_raw and self.plugin_type in PLUGINS_WITH_EXAMPLES:
+            if self.plugin_type in PLUGINS_WITH_EXAMPLES:
+                self.reporter.error(
+                    path=self.object_path,
+                    code='missing-examples',
+                    msg='No EXAMPLES provided'
+                )
+
+        elif self.plugin_type in PLUGINS_WITH_YAML_EXAMPLES:
+            dummy, errors, traces = parse_yaml(examples_raw,
+                                               examples_lineno,
+                                               self.name, 'EXAMPLES',
+                                               load_all=True,
+                                               ansible_loader=True)
+            for error in errors:
+                self.reporter.error(
+                    path=self.object_path,
+                    code='invalid-examples',
+                    **error
+                )
+            for trace in traces:
+                self.reporter.trace(
+                    path=self.object_path,
+                    tracebk=trace
+                )
+
+        if returns:
+            if returns:
+                add_collection_to_versions_and_dates(
+                    returns,
+                    self.collection_name,
+                    is_module=self.plugin_type == 'module',
+                    return_docs=True)
+            self._validate_docs_schema(
+                returns,
+                return_schema(for_collection=bool(self.collection), plugin_type=self.plugin_type),
+                'RETURN', 'return-syntax-error')
+
+        elif self.plugin_type in PLUGINS_WITH_RETURN_VALUES:
+            if self._is_new_module():
+                self.reporter.error(
+                    path=self.object_path,
+                    code='missing-return',
+                    msg='No RETURN provided'
+                )
+            else:
+                self.reporter.warning(
+                    path=self.object_path,
+                    code='missing-return-legacy',
+                    msg='No RETURN provided'
+                )
+
         # Check for mismatched deprecation
         if not self.collection:
             mismatched_deprecation = True
-            if not (filename_deprecated_or_removed or removed or deprecated or doc_deprecated):
+            if not (filename_deprecated_or_removed or deprecated or doc_deprecated):
                 mismatched_deprecation = False
             else:
                 if (filename_deprecated_or_removed and doc_deprecated):
                     mismatched_deprecation = False
-                if (filename_deprecated_or_removed and removed and not (documentation_exists or examples_exist or returns_exist)):
+                if (filename_deprecated_or_removed and not doc):
                     mismatched_deprecation = False
 
             if mismatched_deprecation:
@@ -1121,6 +1142,113 @@ class ModuleValidator(Validator):
             # In the future we should error if ANSIBLE_METADATA exists in a collection
 
         return doc_info, doc
+
+    def _check_sem_option(self, part: dom.OptionNamePart, current_plugin: dom.PluginIdentifier) -> None:
+        if part.plugin is None or part.plugin != current_plugin:
+            return
+        if part.entrypoint is not None:
+            return
+        if tuple(part.link) not in self._all_options:
+            self.reporter.error(
+                path=self.object_path,
+                code='invalid-documentation-markup',
+                msg='Directive "%s" contains a non-existing option "%s"' % (part.source, part.name)
+            )
+
+    def _check_sem_return_value(self, part: dom.ReturnValuePart, current_plugin: dom.PluginIdentifier) -> None:
+        if part.plugin is None or part.plugin != current_plugin:
+            return
+        if part.entrypoint is not None:
+            return
+        if tuple(part.link) not in self._all_return_values:
+            self.reporter.error(
+                path=self.object_path,
+                code='invalid-documentation-markup',
+                msg='Directive "%s" contains a non-existing return value "%s"' % (part.source, part.name)
+            )
+
+    def _validate_semantic_markup(self, object) -> None:
+        # Make sure we operate on strings
+        if is_iterable(object):
+            for entry in object:
+                self._validate_semantic_markup(entry)
+            return
+        if not isinstance(object, str):
+            return
+
+        if self.collection:
+            fqcn = f'{self.collection_name}.{self.name}'
+        else:
+            fqcn = f'ansible.builtin.{self.name}'
+        current_plugin = dom.PluginIdentifier(fqcn=fqcn, type=self.plugin_type)
+        for par in parse(object, Context(current_plugin=current_plugin), errors='message', add_source=True):
+            for part in par:
+                # Errors are already covered during schema validation, we only check for option and
+                # return value references
+                if part.type == dom.PartType.OPTION_NAME:
+                    self._check_sem_option(part, current_plugin)
+                if part.type == dom.PartType.RETURN_VALUE:
+                    self._check_sem_return_value(part, current_plugin)
+
+    def _validate_semantic_markup_collect(self, destination, sub_key, data, all_paths):
+        if not isinstance(data, dict):
+            return
+        for key, value in data.items():
+            if not isinstance(value, dict):
+                continue
+            keys = {key}
+            if is_iterable(value.get('aliases')):
+                keys.update(value['aliases'])
+            new_paths = [path + [key] for path in all_paths for key in keys]
+            destination.update([tuple(path) for path in new_paths])
+            self._validate_semantic_markup_collect(destination, sub_key, value.get(sub_key), new_paths)
+
+    def _validate_semantic_markup_options(self, options):
+        if not isinstance(options, dict):
+            return
+        for key, value in options.items():
+            self._validate_semantic_markup(value.get('description'))
+            self._validate_semantic_markup_options(value.get('suboptions'))
+
+    def _validate_semantic_markup_return_values(self, return_vars):
+        if not isinstance(return_vars, dict):
+            return
+        for key, value in return_vars.items():
+            self._validate_semantic_markup(value.get('description'))
+            self._validate_semantic_markup(value.get('returned'))
+            self._validate_semantic_markup_return_values(value.get('contains'))
+
+    def _validate_all_semantic_markup(self, docs, return_docs):
+        if not isinstance(docs, dict):
+            docs = {}
+        if not isinstance(return_docs, dict):
+            return_docs = {}
+
+        self._all_options = set()
+        self._all_return_values = set()
+        self._validate_semantic_markup_collect(self._all_options, 'suboptions', docs.get('options'), [[]])
+        self._validate_semantic_markup_collect(self._all_return_values, 'contains', return_docs, [[]])
+
+        for string_keys in ('short_description', 'description', 'notes', 'requirements', 'todo'):
+            self._validate_semantic_markup(docs.get(string_keys))
+
+        if is_iterable(docs.get('seealso')):
+            for entry in docs.get('seealso'):
+                if isinstance(entry, dict):
+                    self._validate_semantic_markup(entry.get('description'))
+
+        if isinstance(docs.get('attributes'), dict):
+            for entry in docs.get('attributes').values():
+                if isinstance(entry, dict):
+                    for key in ('description', 'details'):
+                        self._validate_semantic_markup(entry.get(key))
+
+        if isinstance(docs.get('deprecated'), dict):
+            for key in ('why', 'alternative'):
+                self._validate_semantic_markup(docs.get('deprecated').get(key))
+
+        self._validate_semantic_markup_options(docs.get('options'))
+        self._validate_semantic_markup_return_values(return_docs)
 
     def _check_version_added(self, doc, existing_doc):
         version_added_raw = doc.get('version_added')
@@ -1189,6 +1317,31 @@ class ModuleValidator(Validator):
 
         self._validate_argument_spec(docs, spec, kwargs)
 
+        if isinstance(docs, Mapping) and isinstance(docs.get('attributes'), Mapping):
+            if isinstance(docs['attributes'].get('check_mode'), Mapping):
+                support_value = docs['attributes']['check_mode'].get('support')
+                if not kwargs.get('supports_check_mode', False):
+                    if support_value != 'none':
+                        self.reporter.error(
+                            path=self.object_path,
+                            code='attributes-check-mode',
+                            msg="The module does not declare support for check mode, but the check_mode attribute's"
+                                " support value is '%s' and not 'none'" % support_value
+                        )
+                else:
+                    if support_value not in ('full', 'partial', 'N/A'):
+                        self.reporter.error(
+                            path=self.object_path,
+                            code='attributes-check-mode',
+                            msg="The module does declare support for check mode, but the check_mode attribute's support value is '%s'" % support_value
+                        )
+                if support_value in ('partial', 'N/A') and docs['attributes']['check_mode'].get('details') in (None, '', []):
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='attributes-check-mode-details',
+                        msg="The module declares it does not fully support check mode, but has no details on what exactly that means"
+                    )
+
     def _validate_list_of_module_args(self, name, terms, spec, context):
         if terms is None:
             return
@@ -1201,7 +1354,7 @@ class ModuleValidator(Validator):
                 continue
             bad_term = False
             for term in check:
-                if not isinstance(term, string_types):
+                if not isinstance(term, str):
                     msg = name
                     if context:
                         msg += " found in %s" % " -> ".join(context)
@@ -1269,7 +1422,7 @@ class ModuleValidator(Validator):
                 continue
             bad_term = False
             for term in requirements:
-                if not isinstance(term, string_types):
+                if not isinstance(term, str):
                     msg = "required_if"
                     if context:
                         msg += " found in %s" % " -> ".join(context)
@@ -1352,13 +1505,13 @@ class ModuleValidator(Validator):
             # This is already reported by schema checking
             return
         for key, value in terms.items():
-            if isinstance(value, string_types):
+            if isinstance(value, str):
                 value = [value]
             if not isinstance(value, (list, tuple)):
                 # This is already reported by schema checking
                 continue
             for term in value:
-                if not isinstance(term, string_types):
+                if not isinstance(term, str):
                     # This is already reported by schema checking
                     continue
             if len(set(value)) != len(value) or key in value:
@@ -1397,7 +1550,8 @@ class ModuleValidator(Validator):
 
         try:
             if not context:
-                add_fragments(docs, self.object_path, fragment_loader=fragment_loader, is_module=True)
+                add_fragments(docs, self.object_path, fragment_loader=fragment_loader,
+                              is_module=self.plugin_type == 'module')
         except Exception:
             # Cannot merge fragments
             return
@@ -1703,7 +1857,7 @@ class ModuleValidator(Validator):
                     )
 
             arg_default = None
-            if 'default' in data and not is_empty(data['default']):
+            if 'default' in data and data['default'] is not None:
                 try:
                     with CaptureStd():
                         arg_default = _type_checker(data['default'])
@@ -1744,7 +1898,7 @@ class ModuleValidator(Validator):
 
             try:
                 doc_default = None
-                if 'default' in doc_options_arg and not is_empty(doc_options_arg['default']):
+                if 'default' in doc_options_arg and doc_options_arg['default'] is not None:
                     with CaptureStd():
                         doc_default = _type_checker(doc_options_arg['default'])
             except (Exception, SystemExit):
@@ -1885,16 +2039,6 @@ class ModuleValidator(Validator):
             doc_elements = doc_options_arg.get('elements', None)
             doc_type = doc_options_arg.get('type', 'str')
             data_elements = data.get('elements', None)
-            if (doc_elements and not doc_type == 'list'):
-                msg = "Argument '%s' " % arg
-                if context:
-                    msg += " found in %s" % " -> ".join(context)
-                msg += " defines parameter elements as %s but it is valid only when value of parameter type is list" % doc_elements
-                self.reporter.error(
-                    path=self.object_path,
-                    code='doc-elements-invalid',
-                    msg=msg
-                )
             if (doc_elements or data_elements) and not (doc_elements == data_elements):
                 msg = "Argument '%s' in argument_spec" % arg
                 if context:
@@ -1975,13 +2119,14 @@ class ModuleValidator(Validator):
                 )
 
     def _check_for_new_args(self, doc):
-        if not self.base_branch or self._is_new_module():
+        if not self.base_module:
             return
 
         with CaptureStd():
             try:
                 existing_doc, dummy_examples, dummy_return, existing_metadata = get_docstring(
-                    self.base_module, fragment_loader, verbose=True, collection_name=self.collection_name, is_module=True)
+                    self.base_module, fragment_loader, verbose=True, collection_name=self.collection_name,
+                    is_module=self.plugin_type == 'module')
                 existing_options = existing_doc.get('options', {}) or {}
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
@@ -2060,7 +2205,8 @@ class ModuleValidator(Validator):
                 # already reported during schema validation
                 continue
 
-            if collection_name != self.collection_name:
+            builtin = self.collection_name == 'ansible.builtin' and collection_name in ('ansible.builtin', None)
+            if not builtin and collection_name != self.collection_name:
                 continue
             if (strict_ansible_version != mod_version_added and
                     (version_added < strict_ansible_version or
@@ -2094,7 +2240,7 @@ class ModuleValidator(Validator):
 
     def validate(self):
         super(ModuleValidator, self).validate()
-        if not self._python_module() and not self._powershell_module():
+        if not self._python_module() and not self._powershell_module() and not self._sidecar_doc():
             self.reporter.error(
                 path=self.object_path,
                 code='invalid-extension',
@@ -2120,7 +2266,8 @@ class ModuleValidator(Validator):
             return
 
         end_of_deprecation_should_be_removed_only = False
-        if self._python_module():
+        doc_info = None
+        if self._python_module() or self._sidecar_doc():
             doc_info, docs = self._validate_docs()
 
             # See if current version => deprecated.removed_in, ie, should be docs only
@@ -2183,36 +2330,37 @@ class ModuleValidator(Validator):
                         pass
 
         if self._python_module() and not self._just_docs() and not end_of_deprecation_should_be_removed_only:
-            self._validate_ansible_module_call(docs)
+            if self.plugin_type == 'module':
+                self._validate_ansible_module_call(docs)
             self._check_for_sys_exit()
             self._find_rejectlist_imports()
-            self._find_module_utils()
+            if self.plugin_type == 'module':
+                self._find_module_utils()
             self._find_has_import()
-            first_callable = self._get_first_callable() or 1000000  # use a bogus "high" line number if no callable exists
-            self._ensure_imports_below_docs(doc_info, first_callable)
-            self._check_for_subprocess()
-            self._check_for_os_call()
+
+            if doc_info:
+                first_callable = self._get_first_callable() or 1000000  # use a bogus "high" line number if no callable exists
+                self._ensure_imports_below_docs(doc_info, first_callable)
+
+            if self.plugin_type == 'module':
+                self._check_for_subprocess()
+                self._check_for_os_call()
 
         if self._powershell_module():
-            if self.basename in self.PS_DOC_REJECTLIST:
-                return
-
             self._validate_ps_replacers()
-            docs_path = self._find_ps_docs_py_file()
+            docs_path = self._find_ps_docs_file()
 
             # We can only validate PowerShell arg spec if it is using the new Ansible.Basic.AnsibleModule util
             pattern = r'(?im)^#\s*ansiblerequires\s+\-csharputil\s*Ansible\.Basic'
             if re.search(pattern, self.text) and self.object_name not in self.PS_ARG_VALIDATE_REJECTLIST:
-                with ModuleValidator(docs_path, base_branch=self.base_branch, git_cache=self.git_cache) as docs_mv:
+                with ModuleValidator(docs_path, git_cache=self.git_cache) as docs_mv:
                     docs = docs_mv._validate_docs()[1]
                     self._validate_ansible_module_call(docs)
 
         self._check_gpl3_header()
-        if not self._just_docs() and not end_of_deprecation_should_be_removed_only:
-            self._check_interpreter(powershell=self._powershell_module())
-            self._check_type_instead_of_isinstance(
-                powershell=self._powershell_module()
-            )
+        if not self._just_docs() and not self._sidecar_doc() and not end_of_deprecation_should_be_removed_only:
+            if self.plugin_type == 'module':
+                self._check_interpreter(powershell=self._powershell_module())
 
 
 class PythonPackageValidator(Validator):
@@ -2247,9 +2395,82 @@ class PythonPackageValidator(Validator):
             )
 
 
-def setup_collection_loader():
-    collections_paths = os.environ.get('ANSIBLE_COLLECTIONS_PATH', '').split(os.pathsep)
-    _AnsibleCollectionFinder(collections_paths)
+class GitCache(metaclass=abc.ABCMeta):
+    """Base class for access to original files."""
+    @abc.abstractmethod
+    def get_original_path(self, path: str) -> str | None:
+        """Return the path to the original version of the specified file, or None if there isn't one."""
+
+    @abc.abstractmethod
+    def is_new(self, path: str) -> bool | None:
+        """Return True if the content is new, False if it is not and None if the information is not available."""
+
+    @staticmethod
+    def create(original_plugins: str | None, plugin_type: str) -> GitCache:
+        return CoreGitCache(original_plugins, plugin_type) if original_plugins else NoOpGitCache()
+
+
+class CoreGitCache(GitCache):
+    """Provides access to original files when testing core."""
+    def __init__(self, original_plugins: str | None, plugin_type: str) -> None:
+        super().__init__()
+
+        self.original_plugins = original_plugins
+
+        rel_path = 'lib/ansible/modules/' if plugin_type == 'module' else f'lib/ansible/plugins/{plugin_type}/'
+        head_tree = self._find_files(rel_path)
+
+        head_aliased_modules = set()
+
+        for path in head_tree:
+            filename = os.path.basename(path)
+
+            if filename.startswith('_') and filename != '__init__.py':
+                if os.path.islink(path):
+                    head_aliased_modules.add(os.path.basename(os.path.realpath(path)))
+
+        self._head_aliased_modules = head_aliased_modules
+
+    def get_original_path(self, path: str) -> str | None:
+        """Return the path to the original version of the specified file, or None if there isn't one."""
+        path = os.path.join(self.original_plugins, path)
+
+        if not os.path.exists(path):
+            path = None
+
+        return path
+
+    def is_new(self, path: str) -> bool | None:
+        """Return True if the content is new, False if it is not and None if the information is not available."""
+        if os.path.basename(path).startswith('_'):
+            return False
+
+        if os.path.basename(path) in self._head_aliased_modules:
+            return False
+
+        return not self.get_original_path(path)
+
+    @staticmethod
+    def _find_files(path: str) -> list[str]:
+        """Return a list of files found in the specified directory."""
+        paths = []
+
+        for (dir_path, dir_names, file_names) in os.walk(path):
+            for file_name in file_names:
+                paths.append(os.path.join(dir_path, file_name))
+
+        return sorted(paths)
+
+
+class NoOpGitCache(GitCache):
+    """Provides a no-op interface for access to original files."""
+    def get_original_path(self, path: str) -> str | None:
+        """Return the path to the original version of the specified file, or None if there isn't one."""
+        return None
+
+    def is_new(self, path: str) -> bool | None:
+        """Return True if the content is new, False if it is not and None if the information is not available."""
+        return None
 
 
 def re_compile(value):
@@ -2269,16 +2490,14 @@ def re_compile(value):
 
 def run():
     parser = argparse.ArgumentParser(prog="validate-modules")
-    parser.add_argument('modules', nargs='+',
-                        help='Path to module or module directory')
+    parser.add_argument('plugins', nargs='+',
+                        help='Path to module/plugin or module/plugin directory')
     parser.add_argument('-w', '--warnings', help='Show warnings',
                         action='store_true')
     parser.add_argument('--exclude', help='RegEx exclusion pattern',
                         type=re_compile)
     parser.add_argument('--arg-spec', help='Analyze module argument spec',
                         action='store_true', default=False)
-    parser.add_argument('--base-branch', default=None,
-                        help='Used in determining if new options were added')
     parser.add_argument('--format', choices=['json', 'plain'], default='plain',
                         help='Output format. Default: "%(default)s"')
     parser.add_argument('--output', default='-',
@@ -2292,19 +2511,22 @@ def run():
     parser.add_argument('--collection-version',
                         help='The collection\'s version number used to check '
                              'deprecations')
+    parser.add_argument('--plugin-type',
+                        default='module',
+                        help='The plugin type to validate. Defaults to %(default)s')
+    parser.add_argument('--original-plugins')
 
     args = parser.parse_args()
 
-    args.modules = [m.rstrip('/') for m in args.modules]
+    args.plugins = [m.rstrip('/') for m in args.plugins]
 
     reporter = Reporter()
-    git_cache = GitCache(args.base_branch)
+    git_cache = GitCache.create(args.original_plugins, args.plugin_type)
 
     check_dirs = set()
 
     routing = None
     if args.collection:
-        setup_collection_loader()
         routing_file = 'meta/runtime.yml'
         # Load meta/runtime.yml if it exists, as it may contain deprecation information
         if os.path.isfile(routing_file):
@@ -2316,25 +2538,26 @@ def run():
             except Exception as ex:  # pylint: disable=broad-except
                 print('%s:%d:%d: YAML load failed: %s' % (routing_file, 0, 0, re.sub(r'\s+', ' ', str(ex))))
 
-    for module in args.modules:
-        if os.path.isfile(module):
-            path = module
+    for plugin in args.plugins:
+        if os.path.isfile(plugin):
+            path = plugin
             if args.exclude and args.exclude.search(path):
                 continue
             if ModuleValidator.is_on_rejectlist(path):
                 continue
             with ModuleValidator(path, collection=args.collection, collection_version=args.collection_version,
-                                 analyze_arg_spec=args.arg_spec, base_branch=args.base_branch,
-                                 git_cache=git_cache, reporter=reporter, routing=routing) as mv1:
+                                 analyze_arg_spec=args.arg_spec,
+                                 git_cache=git_cache, reporter=reporter, routing=routing,
+                                 plugin_type=args.plugin_type) as mv1:
                 mv1.validate()
                 check_dirs.add(os.path.dirname(path))
 
-        for root, dirs, files in os.walk(module):
-            basedir = root[len(module) + 1:].split('/', 1)[0]
+        for root, dirs, files in os.walk(plugin):
+            basedir = root[len(plugin) + 1:].split('/', 1)[0]
             if basedir in REJECTLIST_DIRS:
                 continue
             for dirname in dirs:
-                if root == module and dirname in REJECTLIST_DIRS:
+                if root == plugin and dirname in REJECTLIST_DIRS:
                     continue
                 path = os.path.join(root, dirname)
                 if args.exclude and args.exclude.search(path):
@@ -2348,11 +2571,12 @@ def run():
                 if ModuleValidator.is_on_rejectlist(path):
                     continue
                 with ModuleValidator(path, collection=args.collection, collection_version=args.collection_version,
-                                     analyze_arg_spec=args.arg_spec, base_branch=args.base_branch,
-                                     git_cache=git_cache, reporter=reporter, routing=routing) as mv2:
+                                     analyze_arg_spec=args.arg_spec,
+                                     git_cache=git_cache, reporter=reporter, routing=routing,
+                                     plugin_type=args.plugin_type) as mv2:
                     mv2.validate()
 
-    if not args.collection:
+    if not args.collection and args.plugin_type == 'module':
         for path in sorted(check_dirs):
             pv = PythonPackageValidator(path, reporter=reporter)
             pv.validate()
@@ -2361,70 +2585,6 @@ def run():
         sys.exit(reporter.plain(warnings=args.warnings, output=args.output))
     else:
         sys.exit(reporter.json(warnings=args.warnings, output=args.output))
-
-
-class GitCache:
-    def __init__(self, base_branch):
-        self.base_branch = base_branch
-
-        if self.base_branch:
-            self.base_tree = self._git(['ls-tree', '-r', '--name-only', self.base_branch, 'lib/ansible/modules/'])
-        else:
-            self.base_tree = []
-
-        try:
-            self.head_tree = self._git(['ls-tree', '-r', '--name-only', 'HEAD', 'lib/ansible/modules/'])
-        except GitError as ex:
-            if ex.status == 128:
-                # fallback when there is no .git directory
-                self.head_tree = self._get_module_files()
-            else:
-                raise
-        except OSError as ex:
-            if ex.errno == errno.ENOENT:
-                # fallback when git is not installed
-                self.head_tree = self._get_module_files()
-            else:
-                raise
-
-        self.base_module_paths = dict((os.path.basename(p), p) for p in self.base_tree if os.path.splitext(p)[1] in ('.py', '.ps1'))
-
-        self.base_module_paths.pop('__init__.py', None)
-
-        self.head_aliased_modules = set()
-
-        for path in self.head_tree:
-            filename = os.path.basename(path)
-
-            if filename.startswith('_') and filename != '__init__.py':
-                if os.path.islink(path):
-                    self.head_aliased_modules.add(os.path.basename(os.path.realpath(path)))
-
-    @staticmethod
-    def _get_module_files():
-        module_files = []
-
-        for (dir_path, dir_names, file_names) in os.walk('lib/ansible/modules/'):
-            for file_name in file_names:
-                module_files.append(os.path.join(dir_path, file_name))
-
-        return module_files
-
-    @staticmethod
-    def _git(args):
-        cmd = ['git'] + args
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
-        if p.returncode != 0:
-            raise GitError(stderr, p.returncode)
-        return stdout.decode('utf-8').splitlines()
-
-
-class GitError(Exception):
-    def __init__(self, message, status):
-        super(GitError, self).__init__(message)
-
-        self.status = status
 
 
 def main():

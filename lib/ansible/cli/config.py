@@ -3,16 +3,17 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # PYTHON_ARGCOMPLETE_OK
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
 
 import os
+import yaml
 import shlex
 import subprocess
-import yaml
+
+from collections.abc import Mapping
 
 from ansible import context
 import ansible.plugins.loader as plugin_loader
@@ -21,8 +22,8 @@ from ansible import constants as C
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.config.manager import ConfigManager, Setting
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils._text import to_native, to_text, to_bytes
-from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
+from ansible.module_utils.common.json import json_dump
 from ansible.module_utils.six import string_types
 from ansible.parsing.quoting import is_quoted
 from ansible.parsing.yaml.dumper import AnsibleDumper
@@ -31,6 +32,21 @@ from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
 
 display = Display()
+
+
+def yaml_dump(data, default_flow_style=False, default_style=None):
+    return yaml.dump(data, Dumper=AnsibleDumper, default_flow_style=default_flow_style, default_style=default_style)
+
+
+def yaml_short(data):
+    return yaml_dump(data, default_flow_style=True, default_style="''")
+
+
+def get_constants():
+    ''' helper method to ensure we can template based on existing constants '''
+    if not hasattr(get_constants, 'cvars'):
+        get_constants.cvars = {k: getattr(C, k) for k in dir(C) if not k.startswith('__')}
+    return get_constants.cvars
 
 
 class ConfigCLI(CLI):
@@ -50,7 +66,7 @@ class ConfigCLI(CLI):
             desc="View ansible configuration.",
         )
 
-        common = opt_help.argparse.ArgumentParser(add_help=False)
+        common = opt_help.ArgumentParser(add_help=False)
         opt_help.add_verbosity_options(common)
         common.add_argument('-c', '--config', dest='config_file',
                             help="path to configuration file, defaults to first file found in precedence.")
@@ -63,11 +79,15 @@ class ConfigCLI(CLI):
 
         list_parser = subparsers.add_parser('list', help='Print all config options', parents=[common])
         list_parser.set_defaults(func=self.execute_list)
+        list_parser.add_argument('--format', '-f', dest='format', action='store', choices=['json', 'yaml'], default='yaml',
+                                 help='Output format for list')
 
         dump_parser = subparsers.add_parser('dump', help='Dump configuration', parents=[common])
         dump_parser.set_defaults(func=self.execute_dump)
         dump_parser.add_argument('--only-changed', '--changed-only', dest='only_changed', action='store_true',
                                  help="Only show configurations that have changed from the default")
+        dump_parser.add_argument('--format', '-f', dest='format', action='store', choices=['json', 'yaml', 'display'], default='display',
+                                 help='Output format for dump')
 
         view_parser = subparsers.add_parser('view', help='View configuration file', parents=[common])
         view_parser.set_defaults(func=self.execute_view)
@@ -166,7 +186,7 @@ class ConfigCLI(CLI):
 
         # pylint: disable=unreachable
         try:
-            editor = shlex.split(os.environ.get('EDITOR', 'vi'))
+            editor = shlex.split(C.config.get_config_value('EDITOR'))
             editor.append(self.config_file)
             subprocess.call(editor)
         except Exception as e:
@@ -229,7 +249,12 @@ class ConfigCLI(CLI):
         '''
 
         config_entries = self._list_entries_from_args()
-        self.pager(to_text(yaml.dump(config_entries, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
+        if context.CLIARGS['format'] == 'yaml':
+            output = yaml_dump(config_entries)
+        elif context.CLIARGS['format'] == 'json':
+            output = json_dump(config_entries)
+
+        self.pager(to_text(output, errors='surrogate_or_strict'))
 
     def _get_settings_vars(self, settings, subkey):
 
@@ -277,14 +302,18 @@ class ConfigCLI(CLI):
 
                 # TODO: might need quoting and value coercion depending on type
                 if subkey == 'env':
+                    if entry.startswith('_ANSIBLE_'):
+                        continue
                     data.append('%s%s=%s' % (prefix, entry, default))
                 elif subkey == 'vars':
-                    data.append(prefix + to_text(yaml.dump({entry: default}, Dumper=AnsibleDumper, default_flow_style=False), errors='surrogate_or_strict'))
+                    if entry.startswith('_ansible_'):
+                        continue
+                    data.append(prefix + '%s: %s' % (entry, to_text(yaml_short(default), errors='surrogate_or_strict')))
                 data.append('')
 
         return data
 
-    def _get_settings_ini(self, settings):
+    def _get_settings_ini(self, settings, seen):
 
         sections = {}
         for o in sorted(settings.keys()):
@@ -297,7 +326,7 @@ class ConfigCLI(CLI):
 
             if not opt.get('description'):
                 # its a plugin
-                new_sections = self._get_settings_ini(opt)
+                new_sections = self._get_settings_ini(opt, seen)
                 for s in new_sections:
                     if s in sections:
                         sections[s].extend(new_sections[s])
@@ -313,36 +342,45 @@ class ConfigCLI(CLI):
 
             if 'ini' in opt and opt['ini']:
                 entry = opt['ini'][-1]
+                if entry['section'] not in seen:
+                    seen[entry['section']] = []
                 if entry['section'] not in sections:
                     sections[entry['section']] = []
 
-                default = opt.get('default', '')
-                if opt.get('type', '') == 'list' and not isinstance(default, string_types):
-                    # python lists are not valid ini ones
-                    default = ', '.join(default)
-                elif default is None:
-                    default = ''
+                # avoid dupes
+                if entry['key'] not in seen[entry['section']]:
+                    seen[entry['section']].append(entry['key'])
 
-                if context.CLIARGS['commented']:
-                    entry['key'] = ';%s' % entry['key']
+                    default = opt.get('default', '')
+                    if opt.get('type', '') == 'list' and not isinstance(default, string_types):
+                        # python lists are not valid ini ones
+                        default = ', '.join(default)
+                    elif default is None:
+                        default = ''
 
-                key = desc + '\n%s=%s' % (entry['key'], default)
-                sections[entry['section']].append(key)
+                    if context.CLIARGS['commented']:
+                        entry['key'] = ';%s' % entry['key']
+
+                    key = desc + '\n%s=%s' % (entry['key'], default)
+
+                    sections[entry['section']].append(key)
 
         return sections
 
     def execute_init(self):
+        """Create initial configuration"""
 
+        seen = {}
         data = []
         config_entries = self._list_entries_from_args()
         plugin_types = config_entries.pop('PLUGINS', None)
 
         if context.CLIARGS['format'] == 'ini':
-            sections = self._get_settings_ini(config_entries)
+            sections = self._get_settings_ini(config_entries, seen)
 
             if plugin_types:
                 for ptype in plugin_types:
-                    plugin_sections = self._get_settings_ini(plugin_types[ptype])
+                    plugin_sections = self._get_settings_ini(plugin_types[ptype], seen)
                     for s in plugin_sections:
                         if s in sections:
                             sections[s].extend(plugin_sections[s])
@@ -368,34 +406,41 @@ class ConfigCLI(CLI):
 
     def _render_settings(self, config):
 
-        text = []
+        entries = []
         for setting in sorted(config):
-            changed = False
-            if isinstance(config[setting], Setting):
-                # proceed normally
-                if config[setting].origin == 'default':
-                    color = 'green'
-                elif config[setting].origin == 'REQUIRED':
-                    # should include '_terms', '_input', etc
-                    color = 'red'
+            changed = (config[setting].origin not in ('default', 'REQUIRED'))
+
+            if context.CLIARGS['format'] == 'display':
+                if isinstance(config[setting], Setting):
+                    # proceed normally
+                    if config[setting].origin == 'default':
+                        color = 'green'
+                    elif config[setting].origin == 'REQUIRED':
+                        # should include '_terms', '_input', etc
+                        color = 'red'
+                    else:
+                        color = 'yellow'
+                    msg = "%s(%s) = %s" % (setting, config[setting].origin, config[setting].value)
                 else:
-                    color = 'yellow'
-                    changed = True
-                msg = "%s(%s) = %s" % (setting, config[setting].origin, config[setting].value)
+                    color = 'green'
+                    msg = "%s(%s) = %s" % (setting, 'default', config[setting].get('default'))
+
+                entry = stringc(msg, color)
             else:
-                color = 'green'
-                msg = "%s(%s) = %s" % (setting, 'default', config[setting].get('default'))
+                entry = {}
+                for key in config[setting]._fields:
+                    entry[key] = getattr(config[setting], key)
 
             if not context.CLIARGS['only_changed'] or changed:
-                text.append(stringc(msg, color))
+                entries.append(entry)
 
-        return text
+        return entries
 
     def _get_global_configs(self):
         config = self.config.get_configuration_definitions(ignore_private=True).copy()
-        for setting in self.config.data.get_settings():
-            if setting.name in config:
-                config[setting.name] = setting
+        for setting in config.keys():
+            v, o = C.config.get_config_value_and_origin(setting, cfile=self.config_file, variables=get_constants())
+            config[setting] = Setting(setting, v, o, None)
 
         return self._render_settings(config)
 
@@ -405,7 +450,7 @@ class ConfigCLI(CLI):
         loader = getattr(plugin_loader, '%s_loader' % ptype)
 
         # acumulators
-        text = []
+        output = []
         config_entries = {}
 
         # build list
@@ -443,7 +488,7 @@ class ConfigCLI(CLI):
             # actually get the values
             for setting in config_entries[finalname].keys():
                 try:
-                    v, o = C.config.get_config_value_and_origin(setting, plugin_type=ptype, plugin_name=name)
+                    v, o = C.config.get_config_value_and_origin(setting, cfile=self.config_file, plugin_type=ptype, plugin_name=name, variables=get_constants())
                 except AnsibleError as e:
                     if to_text(e).startswith('No setting was provided for required configuration'):
                         v = None
@@ -460,10 +505,14 @@ class ConfigCLI(CLI):
             # pretty please!
             results = self._render_settings(config_entries[finalname])
             if results:
-                # avoid header for empty lists (only changed!)
-                text.append('\n%s:\n%s' % (finalname, '_' * len(finalname)))
-                text.extend(results)
-        return text
+                if context.CLIARGS['format'] == 'display':
+                    # avoid header for empty lists (only changed!)
+                    output.append('\n%s:\n%s' % (finalname, '_' * len(finalname)))
+                    output.extend(results)
+                else:
+                    output.append({finalname: results})
+
+        return output
 
     def execute_dump(self):
         '''
@@ -471,19 +520,35 @@ class ConfigCLI(CLI):
         '''
         if context.CLIARGS['type'] == 'base':
             # deal with base
-            text = self._get_global_configs()
+            output = self._get_global_configs()
         elif context.CLIARGS['type'] == 'all':
             # deal with base
-            text = self._get_global_configs()
+            output = self._get_global_configs()
             # deal with plugins
             for ptype in C.CONFIGURABLE_PLUGINS:
-                text.append('\n%s:\n%s' % (ptype.upper(), '=' * len(ptype)))
-                text.extend(self._get_plugin_configs(ptype, context.CLIARGS['args']))
+                plugin_list = self._get_plugin_configs(ptype, context.CLIARGS['args'])
+                if context.CLIARGS['format'] == 'display':
+                    if not context.CLIARGS['only_changed'] or plugin_list:
+                        output.append('\n%s:\n%s' % (ptype.upper(), '=' * len(ptype)))
+                        output.extend(plugin_list)
+                else:
+                    if ptype in ('modules', 'doc_fragments'):
+                        pname = ptype.upper()
+                    else:
+                        pname = '%s_PLUGINS' % ptype.upper()
+                    output.append({pname: plugin_list})
         else:
             # deal with plugins
-            text = self._get_plugin_configs(context.CLIARGS['type'], context.CLIARGS['args'])
+            output = self._get_plugin_configs(context.CLIARGS['type'], context.CLIARGS['args'])
 
-        self.pager(to_text('\n'.join(text), errors='surrogate_or_strict'))
+        if context.CLIARGS['format'] == 'display':
+            text = '\n'.join(output)
+        if context.CLIARGS['format'] == 'yaml':
+            text = yaml_dump(output)
+        elif context.CLIARGS['format'] == 'json':
+            text = json_dump(output)
+
+        self.pager(to_text(text, errors='surrogate_or_strict'))
 
 
 def main(args=None):

@@ -24,16 +24,16 @@ from ..environments import (
 
 
 def do_units(
-        subparsers,
-        parent,  # type: argparse.ArgumentParser
-        completer,  # type: CompositeActionCompletionFinder
+    subparsers,
+    parent: argparse.ArgumentParser,
+    completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `units` command."""
-    parser = subparsers.add_parser(
+    parser: argparse.ArgumentParser = subparsers.add_parser(
         'units',
         parents=[parent],
         help='unit tests',
-    )  # type: argparse.ArgumentParser
+    )
 
     parser.set_defaults(
         func=command_units,

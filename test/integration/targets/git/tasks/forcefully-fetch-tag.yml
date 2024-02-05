@@ -11,7 +11,7 @@
     git add leet;
     git commit -m uh-oh;
     git tag -f herewego;
-    git push --tags origin master
+    git push --tags origin '{{ git_default_branch }}'
   args:
     chdir: "{{ repo_dir }}/tag_force_push_clone1"
 
@@ -26,7 +26,7 @@
     git add leet;
     git commit -m uh-oh;
     git tag -f herewego;
-    git push -f --tags origin master
+    git push -f --tags origin '{{ git_default_branch }}'
   args:
     chdir: "{{ repo_dir }}/tag_force_push_clone1"
 

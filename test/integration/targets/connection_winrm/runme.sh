@@ -16,3 +16,8 @@ INVENTORY="${OUTPUT_DIR}/test_connection.inventory" ./test.sh \
     -e local_tmp=/tmp/ansible-local \
     -e remote_tmp=c:/windows/temp/ansible-remote \
     "$@"
+
+cd ../connection_winrm
+
+ansible-playbook -i "${OUTPUT_DIR}/test_connection.inventory" tests.yml \
+    "$@"

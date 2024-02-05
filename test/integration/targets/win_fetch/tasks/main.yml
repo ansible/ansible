@@ -176,8 +176,13 @@
       - "fetch_missing_implicit.msg"
       - "fetch_missing_implicit is not changed"
 
+- name: create empty temp directory
+  win_file:
+    path: '{{ remote_tmp_dir }}\fetch_tmp'
+    state: directory
+
 - name: attempt to fetch a directory
-  fetch: src="C:\\Windows" dest={{ host_output_dir }}
+  fetch: src="{{ remote_tmp_dir }}\\fetch_tmp" dest={{ host_output_dir }}
   register: fetch_dir
   ignore_errors: true
 
@@ -210,3 +215,17 @@
     - fetch_special_file.checksum == '34d4150adc3347f1dd8ce19fdf65b74d971ab602'
     - fetch_special_file.dest == host_output_dir + "/abc$not var'quote‘"
     - fetch_special_file_actual.stdout == 'abc'
+
+- name: create file with wildcard characters
+  raw: Set-Content -LiteralPath '{{ remote_tmp_dir }}\abc[].txt' -Value 'abc'
+
+- name: fetch file with wildcard characters
+  fetch:
+    src: '{{ remote_tmp_dir }}\abc[].txt'
+    dest: '{{ host_output_dir }}/'
+  register: fetch_wildcard_file_nofail
+
+- name: assert fetch file with wildcard characters
+  assert:
+    that:
+    - "fetch_wildcard_file_nofail is not failed"

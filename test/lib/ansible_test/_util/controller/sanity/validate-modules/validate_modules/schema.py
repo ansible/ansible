@@ -3,8 +3,7 @@
 # Copyright: (c) 2015, Matt Martz <matt@sivel.net>
 # Copyright: (c) 2015, Rackspace US, Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 
@@ -12,11 +11,17 @@ from ansible.module_utils.compat.version import StrictVersion
 from functools import partial
 from urllib.parse import urlparse
 
-from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Required, Schema, Self, ValueInvalid
+from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, MultipleInvalid, Required, Schema, Self, ValueInvalid, Exclusive
+from ansible.constants import DOCUMENTABLE_PLUGINS
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.collections import is_iterable
+from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.parsing.quoting import unquote
 from ansible.utils.version import SemanticVersion
 from ansible.release import __version__
+
+from antsibull_docs_parser import dom
+from antsibull_docs_parser.parser import parse, Context
 
 from .utils import parse_isodate
 
@@ -79,26 +84,8 @@ def date(error_code=None):
     return Any(isodate, error_code=error_code)
 
 
-_MODULE = re.compile(r"\bM\(([^)]+)\)")
-_LINK = re.compile(r"\bL\(([^)]+)\)")
-_URL = re.compile(r"\bU\(([^)]+)\)")
-_REF = re.compile(r"\bR\(([^)]+)\)")
-
-
-def _check_module_link(directive, content):
-    if not FULLY_QUALIFIED_COLLECTION_RESOURCE_RE.match(content):
-        raise _add_ansible_error_code(
-            Invalid('Directive "%s" must contain a FQCN' % directive), 'invalid-documentation-markup')
-
-
-def _check_link(directive, content):
-    if ',' not in content:
-        raise _add_ansible_error_code(
-            Invalid('Directive "%s" must contain a comma' % directive), 'invalid-documentation-markup')
-    idx = content.rindex(',')
-    title = content[:idx]
-    url = content[idx + 1:].lstrip(' ')
-    _check_url(directive, url)
+# Roles can also be referenced by semantic markup
+_VALID_PLUGIN_TYPES = set(DOCUMENTABLE_PLUGINS + ('role', ))
 
 
 def _check_url(directive, content):
@@ -106,15 +93,10 @@ def _check_url(directive, content):
         parsed_url = urlparse(content)
         if parsed_url.scheme not in ('', 'http', 'https'):
             raise ValueError('Schema must be HTTP, HTTPS, or not specified')
-    except ValueError as exc:
-        raise _add_ansible_error_code(
-            Invalid('Directive "%s" must contain an URL' % directive), 'invalid-documentation-markup')
-
-
-def _check_ref(directive, content):
-    if ',' not in content:
-        raise _add_ansible_error_code(
-            Invalid('Directive "%s" must contain a comma' % directive), 'invalid-documentation-markup')
+        return []
+    except ValueError:
+        return [_add_ansible_error_code(
+            Invalid('Directive %s must contain a valid URL' % directive), 'invalid-documentation-markup')]
 
 
 def doc_string(v):
@@ -122,25 +104,55 @@ def doc_string(v):
     if not isinstance(v, string_types):
         raise _add_ansible_error_code(
             Invalid('Must be a string'), 'invalid-documentation')
-    for m in _MODULE.finditer(v):
-        _check_module_link(m.group(0), m.group(1))
-    for m in _LINK.finditer(v):
-        _check_link(m.group(0), m.group(1))
-    for m in _URL.finditer(v):
-        _check_url(m.group(0), m.group(1))
-    for m in _REF.finditer(v):
-        _check_ref(m.group(0), m.group(1))
+    errors = []
+    for par in parse(v, Context(), errors='message', strict=True, add_source=True):
+        for part in par:
+            if part.type == dom.PartType.ERROR:
+                errors.append(_add_ansible_error_code(Invalid(part.message), 'invalid-documentation-markup'))
+            if part.type == dom.PartType.URL:
+                errors.extend(_check_url('U()', part.url))
+            if part.type == dom.PartType.LINK:
+                errors.extend(_check_url('L()', part.url))
+            if part.type == dom.PartType.MODULE:
+                if not FULLY_QUALIFIED_COLLECTION_RESOURCE_RE.match(part.fqcn):
+                    errors.append(_add_ansible_error_code(Invalid(
+                        'Directive "%s" must contain a FQCN; found "%s"' % (part.source, part.fqcn)),
+                        'invalid-documentation-markup'))
+            if part.type == dom.PartType.PLUGIN:
+                if not FULLY_QUALIFIED_COLLECTION_RESOURCE_RE.match(part.plugin.fqcn):
+                    errors.append(_add_ansible_error_code(Invalid(
+                        'Directive "%s" must contain a FQCN; found "%s"' % (part.source, part.plugin.fqcn)),
+                        'invalid-documentation-markup'))
+                if part.plugin.type not in _VALID_PLUGIN_TYPES:
+                    errors.append(_add_ansible_error_code(Invalid(
+                        'Directive "%s" must contain a valid plugin type; found "%s"' % (part.source, part.plugin.type)),
+                        'invalid-documentation-markup'))
+            if part.type == dom.PartType.OPTION_NAME:
+                if part.plugin is not None and not FULLY_QUALIFIED_COLLECTION_RESOURCE_RE.match(part.plugin.fqcn):
+                    errors.append(_add_ansible_error_code(Invalid(
+                        'Directive "%s" must contain a FQCN; found "%s"' % (part.source, part.plugin.fqcn)),
+                        'invalid-documentation-markup'))
+                if part.plugin is not None and part.plugin.type not in _VALID_PLUGIN_TYPES:
+                    errors.append(_add_ansible_error_code(Invalid(
+                        'Directive "%s" must contain a valid plugin type; found "%s"' % (part.source, part.plugin.type)),
+                        'invalid-documentation-markup'))
+            if part.type == dom.PartType.RETURN_VALUE:
+                if part.plugin is not None and not FULLY_QUALIFIED_COLLECTION_RESOURCE_RE.match(part.plugin.fqcn):
+                    errors.append(_add_ansible_error_code(Invalid(
+                        'Directive "%s" must contain a FQCN; found "%s"' % (part.source, part.plugin.fqcn)),
+                        'invalid-documentation-markup'))
+                if part.plugin is not None and part.plugin.type not in _VALID_PLUGIN_TYPES:
+                    errors.append(_add_ansible_error_code(Invalid(
+                        'Directive "%s" must contain a valid plugin type; found "%s"' % (part.source, part.plugin.type)),
+                        'invalid-documentation-markup'))
+    if len(errors) == 1:
+        raise errors[0]
+    if errors:
+        raise MultipleInvalid(errors)
     return v
 
 
-def doc_string_or_strings(v):
-    """Match a documentation string, or list of strings."""
-    if isinstance(v, string_types):
-        return doc_string(v)
-    if isinstance(v, (list, tuple)):
-        return [doc_string(vv) for vv in v]
-    raise _add_ansible_error_code(
-        Invalid('Must be a string or list of strings'), 'invalid-documentation')
+doc_string_or_strings = Any(doc_string, [doc_string])
 
 
 def is_callable(v):
@@ -169,6 +181,11 @@ seealso_schema = Schema(
         Any(
             {
                 Required('module'): Any(*string_types),
+                'description': doc_string,
+            },
+            {
+                Required('plugin'): Any(*string_types),
+                Required('plugin_type'): Any(*DOCUMENTABLE_PLUGINS),
                 'description': doc_string,
             },
             {
@@ -280,6 +297,7 @@ def argument_spec_schema(for_collection):
                 [is_callable, list_string_types],
             ),
             'choices': Any([object], (object,)),
+            'context': dict,
             'required': bool,
             'no_log': bool,
             'aliases': Any(list_string_types, tuple(list_string_types)),
@@ -385,47 +403,274 @@ def version_added(v, error_code='version-added-invalid', accept_historical=False
     return v
 
 
-def list_dict_option_schema(for_collection):
-    suboption_schema = Schema(
-        {
-            Required('description'): doc_string_or_strings,
-            'required': bool,
-            'choices': list,
-            'aliases': Any(list_string_types),
-            'version_added': version(for_collection),
-            'version_added_collection': collection_name,
-            'default': json_value,
-            # Note: Types are strings, not literal bools, such as True or False
-            'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-            # in case of type='list' elements define type of individual item in list
-            'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-            # Recursive suboptions
-            'suboptions': Any(None, *list({str_type: Self} for str_type in string_types)),
-        },
-        extra=PREVENT_EXTRA
-    )
+def check_option_elements(v):
+    # Check whether elements is there iff type == 'list'
+    v_type = v.get('type')
+    v_elements = v.get('elements')
+    if v_type == 'list' and v_elements is None:
+        raise _add_ansible_error_code(
+            Invalid('Argument defines type as list but elements is not defined'),
+            error_code='parameter-list-no-elements')  # FIXME: adjust error code?
+    if v_type != 'list' and v_elements is not None:
+        raise _add_ansible_error_code(
+            Invalid('Argument defines parameter elements as %s but it is valid only when value of parameter type is list' % (v_elements, )),
+            error_code='doc-elements-invalid')
+    return v
+
+
+def get_type_checker(v):
+    v_type = v.get('type')
+    if v_type == 'list':
+        elt_checker, elt_name = get_type_checker({'type': v.get('elements')})
+
+        def list_checker(value):
+            if isinstance(value, string_types):
+                value = [unquote(x.strip()) for x in value.split(',')]
+            if not isinstance(value, list):
+                raise ValueError('Value must be a list')
+            if elt_checker:
+                for elt in value:
+                    try:
+                        elt_checker(elt)
+                    except Exception as exc:
+                        raise ValueError('Entry %r is not of type %s: %s' % (elt, elt_name, exc))
+
+        return list_checker, ('list of %s' % elt_name) if elt_checker else 'list'
+
+    if v_type in ('boolean', 'bool'):
+        return partial(boolean, strict=False), v_type
+
+    if v_type in ('integer', 'int'):
+        return int, v_type
+
+    if v_type == 'float':
+        return float, v_type
+
+    if v_type == 'none':
+        def none_checker(value):
+            if value not in ('None', None):
+                raise ValueError('Value must be "None" or none')
+
+        return none_checker, v_type
+
+    if v_type in ('str', 'string', 'path', 'tmp', 'temppath', 'tmppath'):
+        def str_checker(value):
+            if not isinstance(value, string_types):
+                raise ValueError('Value must be string')
+
+        return str_checker, v_type
+
+    if v_type in ('pathspec', 'pathlist'):
+        def path_list_checker(value):
+            if not isinstance(value, string_types) and not is_iterable(value):
+                raise ValueError('Value must be string or list of strings')
+
+        return path_list_checker, v_type
+
+    if v_type in ('dict', 'dictionary'):
+        def dict_checker(value):
+            if not isinstance(value, dict):
+                raise ValueError('Value must be dictionary')
+
+        return dict_checker, v_type
+
+    return None, 'unknown'
+
+
+def check_option_choices(v):
+    # Check whether choices have the correct type
+    v_choices = v.get('choices')
+    if not is_iterable(v_choices):
+        return v
+
+    if v.get('type') == 'list':
+        # choices for a list type means that every list element must be one of these choices
+        type_checker, type_name = get_type_checker({'type': v.get('elements')})
+    else:
+        type_checker, type_name = get_type_checker(v)
+
+    if type_checker is None:
+        return v
+
+    if isinstance(v_choices, dict):
+        # choices are still a list (the keys) but dict form serves to document each choice.
+        iterate = v_choices.keys()
+    else:
+        iterate = v_choices
+
+    for value in iterate:
+        try:
+            type_checker(value)
+        except Exception as exc:
+            raise _add_ansible_error_code(
+                Invalid(
+                    'Argument defines choices as (%r) but this is incompatible with argument type %s: %s' % (value, type_name, exc)),
+                error_code='doc-choices-incompatible-type')
+
+    return v
+
+
+def check_option_default(v):
+    # Check whether default is only present if required=False, and whether default has correct type
+    v_default = v.get('default')
+    if v.get('required') and v_default is not None:
+        raise _add_ansible_error_code(
+            Invalid(
+                'Argument is marked as required but specifies a default.'
+                ' Arguments with a default should not be marked as required'),
+            error_code='no-default-for-required-parameter')  # FIXME: adjust error code?
+
+    if v_default is None:
+        return v
+
+    type_checker, type_name = get_type_checker(v)
+    if type_checker is None:
+        return v
+
+    try:
+        type_checker(v_default)
+    except Exception as exc:
+        raise _add_ansible_error_code(
+            Invalid(
+                'Argument defines default as (%r) but this is incompatible with parameter type %s: %s' % (v_default, type_name, exc)),
+            error_code='incompatible-default-type')
+
+    return v
+
+
+def list_dict_option_schema(for_collection, plugin_type):
+    if plugin_type == 'module':
+        option_types = Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str')
+        element_types = option_types
+    else:
+        option_types = Any(None, 'boolean', 'bool', 'integer', 'int', 'float', 'list', 'dict', 'dictionary', 'none',
+                           'path', 'tmp', 'temppath', 'tmppath', 'pathspec', 'pathlist', 'str', 'string', 'raw')
+        element_types = Any(None, 'boolean', 'bool', 'integer', 'int', 'float', 'list', 'dict', 'dictionary', 'path', 'str', 'string', 'raw')
+
+    basic_option_schema = {
+        Required('description'): doc_string_or_strings,
+        'required': bool,
+        'choices': Any(list, {object: doc_string_or_strings}),
+        'aliases': Any(list_string_types),
+        'version_added': version(for_collection),
+        'version_added_collection': collection_name,
+        'default': json_value,
+        # Note: Types are strings, not literal bools, such as True or False
+        'type': option_types,
+        # in case of type='list' elements define type of individual item in list
+        'elements': element_types,
+    }
+    if plugin_type != 'module':
+        basic_option_schema['name'] = Any(*string_types)
+        deprecated_schema = All(
+            Schema(
+                All(
+                    {
+                        # This definition makes sure everything has the correct types/values
+                        'why': doc_string,
+                        'alternatives': doc_string,
+                        # vod stands for 'version or date'; this is the name of the exclusive group
+                        Exclusive('removed_at_date', 'vod'): date(),
+                        Exclusive('version', 'vod'): version(for_collection),
+                        'collection_name': collection_name,
+                    },
+                    {
+                        # This definition makes sure that everything we require is there
+                        Required('why'): Any(*string_types),
+                        'alternatives': Any(*string_types),
+                        Required(Any('removed_at_date', 'version')): Any(*string_types),
+                        Required('collection_name'): Any(*string_types),
+                    },
+                ),
+                extra=PREVENT_EXTRA
+            ),
+            partial(check_removal_version,
+                    version_field='version',
+                    collection_name_field='collection_name',
+                    error_code='invalid-removal-version'),
+        )
+        env_schema = All(
+            Schema({
+                Required('name'): Any(*string_types),
+                'deprecated': deprecated_schema,
+                'version_added': version(for_collection),
+                'version_added_collection': collection_name,
+            }, extra=PREVENT_EXTRA),
+            partial(version_added, error_code='option-invalid-version-added')
+        )
+        ini_schema = All(
+            Schema({
+                Required('key'): Any(*string_types),
+                Required('section'): Any(*string_types),
+                'deprecated': deprecated_schema,
+                'version_added': version(for_collection),
+                'version_added_collection': collection_name,
+            }, extra=PREVENT_EXTRA),
+            partial(version_added, error_code='option-invalid-version-added')
+        )
+        vars_schema = All(
+            Schema({
+                Required('name'): Any(*string_types),
+                'deprecated': deprecated_schema,
+                'version_added': version(for_collection),
+                'version_added_collection': collection_name,
+            }, extra=PREVENT_EXTRA),
+            partial(version_added, error_code='option-invalid-version-added')
+        )
+        cli_schema = All(
+            Schema({
+                Required('name'): Any(*string_types),
+                'option': Any(*string_types),
+                'deprecated': deprecated_schema,
+                'version_added': version(for_collection),
+                'version_added_collection': collection_name,
+            }, extra=PREVENT_EXTRA),
+            partial(version_added, error_code='option-invalid-version-added')
+        )
+        keyword_schema = All(
+            Schema({
+                Required('name'): Any(*string_types),
+                'deprecated': deprecated_schema,
+                'version_added': version(for_collection),
+                'version_added_collection': collection_name,
+            }, extra=PREVENT_EXTRA),
+            partial(version_added, error_code='option-invalid-version-added')
+        )
+        basic_option_schema.update({
+            'env': [env_schema],
+            'ini': [ini_schema],
+            'vars': [vars_schema],
+            'cli': [cli_schema],
+            'keyword': [keyword_schema],
+            'deprecated': deprecated_schema,
+        })
+
+    suboption_schema = dict(basic_option_schema)
+    suboption_schema.update({
+        # Recursive suboptions
+        'suboptions': Any(None, *list({str_type: Self} for str_type in string_types)),
+    })
+    suboption_schema = Schema(All(
+        suboption_schema,
+        check_option_elements,
+        check_option_choices,
+        check_option_default,
+    ), extra=PREVENT_EXTRA)
 
     # This generates list of dicts with keys from string_types and suboption_schema value
     # for example in Python 3: {str: suboption_schema}
     list_dict_suboption_schema = [{str_type: suboption_schema} for str_type in string_types]
 
-    option_schema = Schema(
-        {
-            Required('description'): doc_string_or_strings,
-            'required': bool,
-            'choices': list,
-            'aliases': Any(list_string_types),
-            'version_added': version(for_collection),
-            'version_added_collection': collection_name,
-            'default': json_value,
-            'suboptions': Any(None, *list_dict_suboption_schema),
-            # Note: Types are strings, not literal bools, such as True or False
-            'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-            # in case of type='list' elements define type of individual item in list
-            'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-        },
-        extra=PREVENT_EXTRA
-    )
+    option_schema = dict(basic_option_schema)
+    option_schema.update({
+        'suboptions': Any(None, *list_dict_suboption_schema),
+    })
+    option_schema = Schema(All(
+        option_schema,
+        check_option_elements,
+        check_option_choices,
+        check_option_default,
+    ), extra=PREVENT_EXTRA)
 
     option_version_added = Schema(
         All({
@@ -451,24 +696,38 @@ def return_contains(v):
     return v
 
 
-def return_schema(for_collection):
+def return_schema(for_collection, plugin_type='module'):
+    if plugin_type == 'module':
+        return_types = Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'raw', 'str')
+        element_types = Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str')
+    else:
+        return_types = Any(None, 'boolean', 'bool', 'integer', 'int', 'float', 'list', 'dict', 'dictionary', 'path', 'str', 'string', 'raw')
+        element_types = return_types
+
+    basic_return_option_schema = {
+        Required('description'): doc_string_or_strings,
+        'returned': doc_string,
+        'version_added': version(for_collection),
+        'version_added_collection': collection_name,
+        'sample': json_value,
+        'example': json_value,
+        # in case of type='list' elements define type of individual item in list
+        'elements': element_types,
+        'choices': Any([object], (object,)),
+    }
+    if plugin_type == 'module':
+        # type is only required for modules right now
+        basic_return_option_schema[Required('type')] = return_types
+    else:
+        basic_return_option_schema['type'] = return_types
+
+    inner_return_option_schema = dict(basic_return_option_schema)
+    inner_return_option_schema.update({
+        'contains': Any(None, *list({str_type: Self} for str_type in string_types)),
+    })
     return_contains_schema = Any(
         All(
-            Schema(
-                {
-                    Required('description'): doc_string_or_strings,
-                    'returned': doc_string,  # only returned on top level
-                    Required('type'): Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'str'),
-                    'version_added': version(for_collection),
-                    'version_added_collection': collection_name,
-                    'choices': Any([object], (object,)),
-                    'sample': json_value,
-                    'example': json_value,
-                    'contains': Any(None, *list({str_type: Self} for str_type in string_types)),
-                    # in case of type='list' elements define type of individual item in list
-                    'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-                }
-            ),
+            Schema(inner_return_option_schema),
             Schema(return_contains),
             Schema(partial(version_added, error_code='option-invalid-version-added')),
         ),
@@ -479,23 +738,19 @@ def return_schema(for_collection):
     # for example in Python 3: {str: return_contains_schema}
     list_dict_return_contains_schema = [{str_type: return_contains_schema} for str_type in string_types]
 
+    return_option_schema = dict(basic_return_option_schema)
+    return_option_schema.update({
+        'contains': Any(None, *list_dict_return_contains_schema),
+    })
+    if plugin_type == 'module':
+        # 'returned' is required on top-level
+        del return_option_schema['returned']
+        return_option_schema[Required('returned')] = Any(*string_types)
     return Any(
         All(
             Schema(
                 {
-                    any_string_types: {
-                        Required('description'): doc_string_or_strings,
-                        Required('returned'): doc_string,
-                        Required('type'): Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'str'),
-                        'version_added': version(for_collection),
-                        'version_added_collection': collection_name,
-                        'choices': Any([object], (object,)),
-                        'sample': json_value,
-                        'example': json_value,
-                        'contains': Any(None, *list_dict_return_contains_schema),
-                        # in case of type='list' elements define type of individual item in list
-                        'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-                    }
+                    any_string_types: return_option_schema
                 }
             ),
             Schema({any_string_types: return_contains}),
@@ -561,24 +816,35 @@ def author(value):
     return value
 
 
-def doc_schema(module_name, for_collection=False, deprecated_module=False):
+def doc_schema(module_name, for_collection=False, deprecated_module=False, plugin_type='module'):
 
-    if module_name.startswith('_'):
+    if module_name.startswith('_') and not for_collection:
         module_name = module_name[1:]
         deprecated_module = True
+    if for_collection is False and plugin_type == 'connection' and module_name == 'paramiko_ssh':
+        # The plugin loader has a hard-coded exception: when the builtin connection 'paramiko' is
+        # referenced, it loads 'paramiko_ssh' instead. That's why in this plugin, the name must be
+        # 'paramiko' and not 'paramiko_ssh'.
+        module_name = 'paramiko'
     doc_schema_dict = {
-        Required('module'): module_name,
+        Required('module' if plugin_type == 'module' else 'name'): module_name,
         Required('short_description'): doc_string,
         Required('description'): doc_string_or_strings,
-        Required('author'): All(Any(None, list_string_types, *string_types), author),
         'notes': Any(None, [doc_string]),
         'seealso': Any(None, seealso_schema),
         'requirements': [doc_string],
         'todo': Any(None, doc_string_or_strings),
-        'options': Any(None, *list_dict_option_schema(for_collection)),
+        'options': Any(None, *list_dict_option_schema(for_collection, plugin_type)),
         'extends_documentation_fragment': Any(list_string_types, *string_types),
         'version_added_collection': collection_name,
     }
+    if plugin_type == 'module':
+        doc_schema_dict[Required('author')] = All(Any(None, list_string_types, *string_types), author)
+    else:
+        # author is optional for plugins (for now)
+        doc_schema_dict['author'] = All(Any(None, list_string_types, *string_types), author)
+    if plugin_type == 'callback':
+        doc_schema_dict[Required('type')] = Any('aggregate', 'notification', 'stdout')
 
     if for_collection:
         # Optional
@@ -621,9 +887,6 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
                 any_string_types: add_default_attributes(),
                 'action_group': add_default_attributes({
                     Required('membership'): list_string_types,
-                }),
-                'forced_action_plugin': add_default_attributes({
-                    Required('action_plugin'): any_string_types,
                 }),
                 'platform': add_default_attributes({
                     Required('platforms'): Any(list_string_types, *string_types)

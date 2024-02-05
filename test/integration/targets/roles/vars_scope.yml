@@ -1,0 +1,358 @@
+- name: play and roles
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vars/play.yml
+  roles:
+    - name: vars_scope
+      vars:
+        roles_only: roles
+        roles_and_role_vars: roles
+        play_and_roles: roles
+        play_and_roles_and_role_vars: roles
+        defined:
+            default_only: default
+            import_and_role_vars: role_vars
+            include_and_role_vars: role_vars
+            play_and_import: play
+            play_and_import_and_role_vars: role_vars
+            play_and_include: play
+            play_and_include_and_role_vars: role_vars
+            play_and_roles: roles
+            play_and_roles_and_role_vars: roles
+            play_and_role_vars: role_vars
+            play_and_role_vars_and_role_vars: role_vars
+            play_only: play
+            roles_and_role_vars: roles
+            roles_only: roles
+            role_vars_only: role_vars
+
+  pre_tasks:
+    - include_tasks: tasks/check_vars.yml
+      vars:
+        defined:
+            default_only: default
+            import_and_role_vars: role_vars
+            include_and_role_vars: role_vars
+            play_and_import: play
+            play_and_import_and_role_vars: role_vars
+            play_and_include: play
+            play_and_include_and_role_vars: role_vars
+            play_and_roles: play
+            play_and_roles_and_role_vars: role_vars
+            play_and_role_vars: role_vars
+            play_and_role_vars_and_role_vars: role_vars
+            play_only: play
+            roles_and_role_vars: role_vars
+            role_vars_only: role_vars
+  tasks:
+    - include_tasks: roles/vars_scope/tasks/check_vars.yml
+      vars:
+        defined:
+          default_only: default
+          import_and_role_vars: role_vars
+          include_and_role_vars: role_vars
+          play_and_import: play
+          play_and_import_and_role_vars: role_vars
+          play_and_include: play
+          play_and_include_and_role_vars: role_vars
+          play_and_roles: play
+          play_and_roles_and_role_vars: role_vars
+          play_and_role_vars: role_vars
+          play_and_role_vars_and_role_vars: role_vars
+          play_only: play
+          roles_and_role_vars: role_vars
+          role_vars_only: role_vars
+- name: play baseline (no roles)
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vars/play.yml
+  tasks:
+    - include_tasks: roles/vars_scope/tasks/check_vars.yml
+      vars:
+        defined:
+          play_and_import: play
+          play_and_import_and_role_vars: play
+          play_and_include: play
+          play_and_include_and_role_vars: play
+          play_and_roles: play
+          play_and_roles_and_role_vars: play
+          play_and_role_vars: play
+          play_only: play
+
+- name: play and import
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vars/play.yml
+  tasks:
+    - include_tasks: roles/vars_scope/tasks/check_vars.yml
+      vars:
+        defined:
+          play_and_import: play
+          play_and_include: play
+          play_and_roles: play
+          play_only: play
+          default_only: default
+          import_and_role_vars: role_vars
+          include_and_role_vars: role_vars
+          play_and_import_and_role_vars: role_vars
+          play_and_role_vars: role_vars
+          play_and_role_vars_and_role_vars: role_vars
+          play_and_include_and_role_vars: role_vars
+          play_and_roles_and_role_vars: role_vars
+          roles_and_role_vars: role_vars
+          role_vars_only: role_vars
+
+    - name: static import
+      import_role:
+        name: vars_scope
+      vars:
+        import_only: import
+        import_and_role_vars: import
+        play_and_import: import
+        play_and_import_and_role_vars: import
+        defined:
+          default_only: default
+          import_and_role_vars: import
+          import_only: import
+          include_and_role_vars: role_vars
+          play_and_import: import
+          play_and_import_and_role_vars: import
+          play_and_include: play
+          play_and_include_and_role_vars: role_vars
+          play_and_roles: play
+          play_and_roles_and_role_vars: role_vars
+          play_and_role_vars: role_vars
+          play_and_role_vars_and_role_vars: role_vars
+          play_only: play
+          roles_and_role_vars: role_vars
+          role_vars_only: role_vars
+
+    - include_tasks: roles/vars_scope/tasks/check_vars.yml
+      vars:
+        defined:
+          default_only: default
+          import_and_role_vars: role_vars
+          include_and_role_vars: role_vars
+          play_and_import: play
+          play_and_import_and_role_vars: role_vars
+          play_and_include: play
+          play_and_include_and_role_vars: role_vars
+          play_and_roles: play
+          play_and_roles_and_role_vars: role_vars
+          play_and_role_vars: role_vars
+          play_and_role_vars_and_role_vars: role_vars
+          play_only: play
+          roles_and_role_vars: role_vars
+          role_vars_only: role_vars
+
+- name: play and include
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vars/play.yml
+  tasks:
+    - include_tasks: roles/vars_scope/tasks/check_vars.yml
+      vars:
+        defined:
+          play_and_import: play
+          play_and_import_and_role_vars: play
+          play_and_include: play
+          play_and_include_and_role_vars: play
+          play_and_roles: play
+          play_and_roles_and_role_vars: play
+          play_and_role_vars: play
+          play_only: play
+
+    - name: dynamic include
+      include_role:
+        name: vars_scope
+      vars:
+        include_only: include
+        include_and_role_vars: include
+        play_and_include: include
+        play_and_include_and_role_vars: include
+        defined:
+          default_only: default
+          import_and_role_vars: role_vars
+          include_and_role_vars: include
+          include_only: include
+          play_and_import: play
+          play_and_import_and_role_vars: role_vars
+          play_and_include: include
+          play_and_include_and_role_vars: include
+          play_and_roles: play
+          play_and_roles_and_role_vars: role_vars
+          play_and_role_vars: role_vars
+          play_and_role_vars_and_role_vars: role_vars
+          play_only: play
+          roles_and_role_vars: role_vars
+          role_vars_only: role_vars
+
+    - include_tasks: roles/vars_scope/tasks/check_vars.yml
+      vars:
+        defined:
+          play_and_import: play
+          play_and_import_and_role_vars: play
+          play_and_include: play
+          play_and_include_and_role_vars: play
+          play_and_roles: play
+          play_and_roles_and_role_vars: play
+          play_and_role_vars: play
+          play_only: play
+
+- name: play and roles and import and include
+  hosts: localhost
+  gather_facts: false
+  vars:
+  vars_files:
+    - vars/play.yml
+  roles:
+    - name: vars_scope
+      vars:
+        roles_only: roles
+        roles_and_role_vars: roles
+        play_and_roles: roles
+        play_and_roles_and_role_vars: roles
+        defined:
+          default_only: default
+          import_and_role_vars: role_vars
+          include_and_role_vars: role_vars
+          play_and_import: play
+          play_and_import_and_role_vars: role_vars
+          play_and_include: play
+          play_and_include_and_role_vars: role_vars
+          play_and_roles: roles
+          play_and_roles_and_role_vars: roles
+          play_and_role_vars: role_vars
+          play_and_role_vars_and_role_vars: role_vars
+          play_only: play
+          roles_and_role_vars: roles
+          roles_only: roles
+          role_vars_only: role_vars
+
+  pre_tasks:
+    - include_tasks: roles/vars_scope/tasks/check_vars.yml
+      vars:
+        defined:
+            default_only: default
+            import_and_role_vars: role_vars
+            include_and_role_vars: role_vars
+            play_and_import: play
+            play_and_import_and_role_vars: role_vars
+            play_and_include: play
+            play_and_include_and_role_vars: role_vars
+            play_and_roles: play
+            play_and_roles_and_role_vars: role_vars
+            play_and_role_vars: role_vars
+            play_and_role_vars_and_role_vars: role_vars
+            play_only: play
+            roles_and_role_vars: role_vars
+            role_vars_only: role_vars
+
+  tasks:
+    - include_tasks: roles/vars_scope/tasks/check_vars.yml
+      vars:
+        defined:
+            default_only: default
+            import_and_role_vars: role_vars
+            include_and_role_vars: role_vars
+            play_and_import: play
+            play_and_import_and_role_vars: role_vars
+            play_and_include: play
+            play_and_include_and_role_vars: role_vars
+            play_and_roles: play
+            play_and_roles_and_role_vars: role_vars
+            play_and_role_vars: role_vars
+            play_and_role_vars_and_role_vars: role_vars
+            play_only: play
+            roles_and_role_vars: role_vars
+            role_vars_only: role_vars
+
+    - name: static import
+      import_role:
+        name: vars_scope
+      vars:
+        import_only: import
+        import_and_role_vars: import
+        play_and_import: import
+        play_and_import_and_role_vars: import
+        defined:
+            default_only: default
+            import_and_role_vars: import
+            import_only: import
+            include_and_role_vars: role_vars
+            play_and_import: import
+            play_and_import_and_role_vars: import
+            play_and_include: play
+            play_and_include_and_role_vars: role_vars
+            play_and_roles: play
+            play_and_roles_and_role_vars: role_vars
+            play_and_role_vars: role_vars
+            play_and_role_vars_and_role_vars: role_vars
+            play_only: play
+            roles_and_role_vars: role_vars
+            role_vars_only: role_vars
+
+    - include_tasks: roles/vars_scope/tasks/check_vars.yml
+      vars:
+        defined:
+            default_only: default
+            import_and_role_vars: role_vars
+            include_and_role_vars: role_vars
+            play_and_import: play
+            play_and_import_and_role_vars: role_vars
+            play_and_include: play
+            play_and_include_and_role_vars: role_vars
+            play_and_roles: play
+            play_and_roles_and_role_vars: role_vars
+            play_and_role_vars: role_vars
+            play_and_role_vars_and_role_vars: role_vars
+            play_only: play
+            roles_and_role_vars: role_vars
+            role_vars_only: role_vars
+
+    - name: dynamic include
+      include_role:
+        name: vars_scope
+      vars:
+        include_only: include
+        include_and_role_vars: include
+        play_and_include: include
+        play_and_include_and_role_vars: include
+        defined:
+            default_only: default
+            import_and_role_vars: role_vars
+            include_and_role_vars: include
+            include_only: include
+            play_and_import: play
+            play_and_import_and_role_vars: role_vars
+            play_and_include: include
+            play_and_include_and_role_vars: include
+            play_and_roles: play
+            play_and_roles_and_role_vars: role_vars
+            play_and_role_vars: role_vars
+            play_and_role_vars_and_role_vars: role_vars
+            play_only: play
+            roles_and_role_vars: role_vars
+            role_vars_only: role_vars
+
+    - include_tasks: roles/vars_scope/tasks/check_vars.yml
+      vars:
+        defined:
+            default_only: default
+            import_and_role_vars: role_vars
+            include_and_role_vars: role_vars
+            play_and_import: play
+            play_and_import_and_role_vars: role_vars
+            play_and_include: play
+            play_and_include_and_role_vars: role_vars
+            play_and_roles: play
+            play_and_roles_and_role_vars: role_vars
+            play_and_role_vars: role_vars
+            play_and_role_vars_and_role_vars: role_vars
+            play_only: play
+            roles_and_role_vars: role_vars
+            role_vars_only: role_vars

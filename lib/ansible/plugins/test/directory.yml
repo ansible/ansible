@@ -1,0 +1,21 @@
+DOCUMENTATION:
+  name: directory
+  author: Ansible Core
+  version_added: "2.5"
+  short_description: does the path resolve to an existing directory
+  description:
+    - Check if the provided path maps to an existing directory on the controller's filesystem (localhost).
+  options:
+    _input:
+      description: A path.
+      type: path
+
+EXAMPLES: |
+  vars:
+    my_etc_hosts_not_a_dir: "{{ '/etc/hosts' is directory}}"
+    list_of_files: "{{ list_of_paths | reject('directory') }}"
+
+RETURN:
+  _value:
+    description: Returns V(True) if the path corresponds to an existing directory on the filesystem on the controller, V(False) if otherwise.
+    type: boolean

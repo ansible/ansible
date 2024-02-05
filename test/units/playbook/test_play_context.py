@@ -3,19 +3,15 @@
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
 
 from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
 from ansible.playbook.play import Play
-from ansible.plugins.loader import become_loader
 from ansible.utils import context_objects as co
 
 

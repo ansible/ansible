@@ -36,24 +36,25 @@ CODE = ''  # not really a CI provider, so use an empty string for the code
 
 class Local(CIProvider):
     """CI provider implementation when not using CI."""
+
     priority = 1000
 
     @staticmethod
-    def is_supported():  # type: () -> bool
+    def is_supported() -> bool:
         """Return True if this provider is supported in the current running environment."""
         return True
 
     @property
-    def code(self):  # type: () -> str
+    def code(self) -> str:
         """Return a unique code representing this provider."""
         return CODE
 
     @property
-    def name(self):  # type: () -> str
+    def name(self) -> str:
         """Return descriptive name for this provider."""
         return 'Local'
 
-    def generate_resource_prefix(self):  # type: () -> str
+    def generate_resource_prefix(self) -> str:
         """Return a resource prefix specific to this CI provider."""
         prefix = 'ansible-test-%d-%s' % (
             random.randint(10000000, 99999999),
@@ -62,11 +63,11 @@ class Local(CIProvider):
 
         return prefix
 
-    def get_base_branch(self):  # type: () -> str
-        """Return the base branch or an empty string."""
+    def get_base_commit(self, args: CommonConfig) -> str:
+        """Return the base commit or an empty string."""
         return ''
 
-    def detect_changes(self, args):  # type: (TestConfig) -> t.Optional[t.List[str]]
+    def detect_changes(self, args: TestConfig) -> t.Optional[list[str]]:
         """Initialize change detection."""
         result = LocalChanges(args)
 
@@ -116,12 +117,12 @@ class Local(CIProvider):
 
         return sorted(names)
 
-    def supports_core_ci_auth(self):  # type: () -> bool
+    def supports_core_ci_auth(self) -> bool:
         """Return True if Ansible Core CI is supported."""
         path = self._get_aci_key_path()
         return os.path.exists(path)
 
-    def prepare_core_ci_auth(self):  # type: () -> t.Dict[str, t.Any]
+    def prepare_core_ci_auth(self) -> dict[str, t.Any]:
         """Return authentication details for Ansible Core CI."""
         path = self._get_aci_key_path()
         auth_key = read_text_file(path).strip()
@@ -137,19 +138,20 @@ class Local(CIProvider):
 
         return auth
 
-    def get_git_details(self, args):  # type: (CommonConfig) -> t.Optional[t.Dict[str, t.Any]]
+    def get_git_details(self, args: CommonConfig) -> t.Optional[dict[str, t.Any]]:
         """Return details about git in the current environment."""
         return None  # not yet implemented for local
 
     @staticmethod
-    def _get_aci_key_path():  # type: () -> str
+    def _get_aci_key_path() -> str:
         path = os.path.expanduser('~/.ansible-core-ci.key')
         return path
 
 
 class InvalidBranch(ApplicationError):
     """Exception for invalid branch specification."""
-    def __init__(self, branch, reason):  # type: (str, str) -> None
+
+    def __init__(self, branch: str, reason: str) -> None:
         message = 'Invalid branch: %s\n%s' % (branch, reason)
 
         super().__init__(message)
@@ -159,7 +161,8 @@ class InvalidBranch(ApplicationError):
 
 class LocalChanges:
     """Change information for local work."""
-    def __init__(self, args):  # type: (TestConfig) -> None
+
+    def __init__(self, args: TestConfig) -> None:
         self.args = args
         self.git = Git()
 
@@ -198,7 +201,7 @@ class LocalChanges:
         # diff of all tracked files from fork point to working copy
         self.diff = self.git.get_diff([self.fork_point])
 
-    def is_official_branch(self, name):  # type: (str) -> bool
+    def is_official_branch(self, name: str) -> bool:
         """Return True if the given branch name an official branch for development or releases."""
         if self.args.base_branch:
             return name == self.args.base_branch

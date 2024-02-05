@@ -17,16 +17,16 @@ from ...environments import (
 
 
 def do_erase(
-        subparsers,
-        parent,  # type: argparse.ArgumentParser
-        completer,  # type: CompositeActionCompletionFinder
-):  # type: (...) -> None
+    subparsers,
+    parent: argparse.ArgumentParser,
+    completer: CompositeActionCompletionFinder,
+) -> None:
     """Command line parsing for the `coverage erase` command."""
-    parser = subparsers.add_parser(
+    parser: argparse.ArgumentParser = subparsers.add_parser(
         'erase',
         parents=[parent],
         help='erase coverage data files',
-    )  # type: argparse.ArgumentParser
+    )
 
     parser.set_defaults(
         func=command_coverage_erase,

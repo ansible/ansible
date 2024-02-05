@@ -1,3 +1,0 @@
-minor_changes:
-  - apt - Adds APT option ``--allow-change-held-packages`` as module parameter ``allow_change_held_packages`` to allow APT up- or
-    downgrading a package which is on APTs hold list (https://github.com/ansible/ansible/issues/65325)

@@ -1,10 +1,11 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+"""Require Unix line endings."""
+from __future__ import annotations
 
 import sys
 
 
 def main():
+    """Main entry point."""
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
         with open(path, 'rb') as path_fd:
             contents = path_fd.read()

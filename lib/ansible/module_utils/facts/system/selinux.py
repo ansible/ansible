@@ -15,8 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
+
+import ansible.module_utils.compat.typing as t
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 
@@ -35,7 +36,7 @@ SELINUX_MODE_DICT = {
 
 class SelinuxFactCollector(BaseFactCollector):
     name = 'selinux'
-    _fact_ids = set()
+    _fact_ids = set()  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         facts_dict = {}

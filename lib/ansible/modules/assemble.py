@@ -5,8 +5,7 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -17,7 +16,7 @@ description:
 - Assembles a configuration file from fragments.
 - Often a particular program will take a single configuration file and does not support a
   C(conf.d) style structure where it is easy to build up the configuration
-  from multiple sources. C(assemble) will take a directory of files that can be
+  from multiple sources. M(ansible.builtin.assemble) will take a directory of files that can be
   local or have already been transferred to the system, and concatenate them
   together to produce a destination file.
 - Files are assembled in string sorting order.
@@ -36,7 +35,7 @@ options:
     required: true
   backup:
     description:
-    - Create a backup file (if C(yes)), including the timestamp information so
+    - Create a backup file (if V(true)), including the timestamp information so
       you can get the original file back if you somehow clobbered it
       incorrectly.
     type: bool
@@ -48,16 +47,16 @@ options:
     version_added: '1.4'
   remote_src:
     description:
-    - If C(no), it will search for src at originating/master machine.
-    - If C(yes), it will go to the remote/target machine for the src.
+    - If V(false), it will search for src at originating/master machine.
+    - If V(true), it will go to the remote/target machine for the src.
     type: bool
     default: yes
     version_added: '1.4'
   regexp:
     description:
-    - Assemble files only if C(regex) matches the filename.
+    - Assemble files only if the given regular expression matches the filename.
     - If not set, all files are assembled.
-    - Every "\" (backslash) must be escaped as "\\" to comply to YAML syntax.
+    - Every V(\\) (backslash) must be escaped as V(\\\\) to comply to YAML syntax.
     - Uses L(Python regular expressions,https://docs.python.org/3/library/re.html).
     type: str
   ignore_hidden:
@@ -133,7 +132,7 @@ import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import b, indexbytes
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 
 
 def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, tmpdir=None):

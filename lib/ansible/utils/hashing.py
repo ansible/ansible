@@ -15,26 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
 from hashlib import sha1
 
-# Backwards compat only
 try:
     from hashlib import md5 as _md5
 except ImportError:
-    try:
-        from md5 import md5 as _md5
-    except ImportError:
-        # Assume we're running in FIPS mode here
-        _md5 = None
+    # Assume we're running in FIPS mode here
+    _md5 = None
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 
 
 def secure_hash_s(data, hash_func=sha1):

@@ -15,13 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from units.compat import unittest
-from units.compat.mock import patch
+import unittest
+from unittest.mock import patch
 from ansible.playbook.task import Task
+from ansible.plugins.loader import init_plugin_loader
 from ansible.parsing.yaml import objects
 from ansible import errors
 
@@ -74,6 +73,7 @@ class TestTask(unittest.TestCase):
 
     @patch.object(errors.AnsibleError, '_get_error_lines_from_file')
     def test_load_task_kv_form_error_36848(self, mock_get_err_lines):
+        init_plugin_loader()
         ds = objects.AnsibleMapping(kv_bad_args_ds)
         ds.ansible_pos = ('test_task_faux_playbook.yml', 1, 1)
         mock_get_err_lines.return_value = (kv_bad_args_str, '')

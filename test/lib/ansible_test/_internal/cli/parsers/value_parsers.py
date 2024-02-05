@@ -1,10 +1,12 @@
 """Composite argument value parsers used by other parsers."""
 from __future__ import annotations
 
+import collections.abc as c
 import typing as t
 
 from ...host_configs import (
     NativePythonConfig,
+    PythonConfig,
     VirtualPythonConfig,
 )
 
@@ -18,6 +20,7 @@ from ..argparsing.parsers import (
     Parser,
     ParserError,
     ParserState,
+    ParserBoundary,
 )
 
 
@@ -57,12 +60,14 @@ class PythonParser(Parser):
     Known docker/remote environments limit the available Python versions to configured values known to be valid.
     The origin host and unknown environments assume all relevant Python versions are available.
     """
-    def __init__(self,
-                 versions,  # type: t.List[str]
-                 *,
-                 allow_default,  # type: bool
-                 allow_venv,  # type: bool
-                 ):
+
+    def __init__(
+        self,
+        versions: c.Sequence[str],
+        *,
+        allow_default: bool,
+        allow_venv: bool,
+    ):
         version_choices = list(versions)
 
         if allow_default:
@@ -83,10 +88,14 @@ class PythonParser(Parser):
         self.venv_choices = venv_choices
         self.venv_choices = venv_choices
 
-    def parse(self, state):  # type: (ParserState) -> t.Any
+    def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
+        boundary: ParserBoundary
+
         with state.delimit('@/', required=False) as boundary:
             version = ChoicesParser(self.first_choices).parse(state)
+
+        python: PythonConfig
 
         if version == 'venv':
             with state.delimit('@/', required=False) as boundary:
@@ -110,7 +119,7 @@ class PythonParser(Parser):
 
         return python
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
 
         docs = '[venv/[system-site-packages/]]' if self.allow_venv else ''
@@ -127,10 +136,11 @@ class PythonParser(Parser):
 
 class PlatformParser(ChoicesParser):
     """Composite argument parser for "{platform}/{version}" formatted choices."""
-    def __init__(self, choices):  # type: (t.List[str]) -> None
+
+    def __init__(self, choices: list[str]) -> None:
         super().__init__(choices, conditions=MatchConditions.CHOICE | MatchConditions.ANY)
 
-    def parse(self, state):  # type: (ParserState) -> t.Any
+    def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         value = super().parse(state)
 
@@ -145,9 +155,10 @@ class SshConnectionParser(Parser):
     Composite argument parser for connecting to a host using SSH.
     Format: user@host[:port]
     """
+
     EXPECTED_FORMAT = '{user}@{host}[:{port}]'
 
-    def parse(self, state):  # type: (ParserState) -> t.Any
+    def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         namespace = state.current_namespace
 
@@ -156,7 +167,7 @@ class SshConnectionParser(Parser):
 
         setattr(namespace, 'user', user)
 
-        with state.delimit(':', required=False) as colon:
+        with state.delimit(':', required=False) as colon:  # type: ParserBoundary
             host = AnyParser(no_match_message=f'Expected {{host}} from: {self.EXPECTED_FORMAT}').parse(state)
 
         setattr(namespace, 'host', host)
@@ -167,6 +178,6 @@ class SshConnectionParser(Parser):
 
         return namespace
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         return self.EXPECTED_FORMAT

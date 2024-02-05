@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-galaxy publish - Fix warning and error detection in import messages to properly display them in Ansible

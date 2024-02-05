@@ -16,17 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+from collections.abc import Sequence, Set, Mapping
 from io import StringIO
 
-from units.compat import unittest
+import unittest
 
 from ansible import errors
-from ansible.module_utils.six import text_type, binary_type
-from ansible.module_utils.common._collections_compat import Sequence, Set, Mapping
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing import vault
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
@@ -35,12 +32,8 @@ from ansible.parsing.yaml.dumper import AnsibleDumper
 from units.mock.yaml_helper import YamlTestUtils
 from units.mock.vault_helper import TextVaultSecret
 
-try:
-    from _yaml import ParserError
-    from _yaml import ScannerError
-except ImportError:
-    from yaml.parser import ParserError
-    from yaml.scanner import ScannerError
+from yaml.parser import ParserError
+from yaml.scanner import ScannerError
 
 
 class NameStringIO(StringIO):
@@ -70,7 +63,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         loader = AnsibleLoader(stream, 'myfile.yml')
         data = loader.get_single_data()
         self.assertEqual(data, u'Ansible')
-        self.assertIsInstance(data, text_type)
+        self.assertIsInstance(data, str)
 
         self.assertEqual(data.ansible_pos, ('myfile.yml', 2, 17))
 
@@ -81,7 +74,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         loader = AnsibleLoader(stream, 'myfile.yml')
         data = loader.get_single_data()
         self.assertEqual(data, u'Cafè Eñyei')
-        self.assertIsInstance(data, text_type)
+        self.assertIsInstance(data, str)
 
         self.assertEqual(data.ansible_pos, ('myfile.yml', 2, 17))
 
@@ -94,8 +87,8 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         data = loader.get_single_data()
         self.assertEqual(data, {'webster': 'daniel', 'oed': 'oxford'})
         self.assertEqual(len(data), 2)
-        self.assertIsInstance(list(data.keys())[0], text_type)
-        self.assertIsInstance(list(data.values())[0], text_type)
+        self.assertIsInstance(list(data.keys())[0], str)
+        self.assertIsInstance(list(data.values())[0], str)
 
         # Beginning of the first key
         self.assertEqual(data.ansible_pos, ('myfile.yml', 2, 17))
@@ -112,7 +105,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         data = loader.get_single_data()
         self.assertEqual(data, [u'a', u'b'])
         self.assertEqual(len(data), 2)
-        self.assertIsInstance(data[0], text_type)
+        self.assertIsInstance(data[0], str)
 
         self.assertEqual(data.ansible_pos, ('myfile.yml', 2, 17))
 
@@ -359,10 +352,10 @@ class TestAnsibleLoaderPlay(unittest.TestCase):
 
     def walk(self, data):
         # Make sure there's no str in the data
-        self.assertNotIsInstance(data, binary_type)
+        self.assertNotIsInstance(data, bytes)
 
         # Descend into various container types
-        if isinstance(data, text_type):
+        if isinstance(data, str):
             # strings are a sequence so we have to be explicit here
             return
         elif isinstance(data, (Sequence, Set)):

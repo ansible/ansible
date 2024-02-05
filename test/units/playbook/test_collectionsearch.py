@@ -15,14 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible.errors import AnsibleParserError
 from ansible.playbook.play import Play
 from ansible.playbook.task import Task
 from ansible.playbook.block import Block
-from ansible.playbook.collectionsearch import CollectionSearch
 
 import pytest
 

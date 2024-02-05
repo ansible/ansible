@@ -1,2 +1,0 @@
-bugfixes:
- - hostname - add hostname support for openEuler distro (https://github.com/ansible/ansible/pull/76619).

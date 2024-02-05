@@ -3,12 +3,12 @@
 #
 - name: Cleanup the output directory
   file:
-    dest: '{{ output_dir }}'
+    dest: '{{ remote_tmp_dir_test }}'
     state: 'absent'
 
 - name: Recreate the toplevel output dir
   file:
-    dest: '{{ output_dir }}'
+    dest: '{{ remote_tmp_dir_test }}'
     state: 'directory'
 
 - name: prep with a basic file to operate on

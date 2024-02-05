@@ -1,10 +1,9 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
-from units.compat import mock
-from units.compat import unittest
+from unittest.mock import patch, Mock
+import unittest
 
 from ansible.modules import apt_key
 
@@ -15,11 +14,11 @@ def returnc(x):
 
 class AptKeyTestCase(unittest.TestCase):
 
-    @mock.patch.object(apt_key, 'apt_key_bin', '/usr/bin/apt-key')
-    @mock.patch.object(apt_key, 'lang_env', returnc)
-    @mock.patch.dict(os.environ, {'HTTP_PROXY': 'proxy.example.com'})
+    @patch.object(apt_key, 'apt_key_bin', '/usr/bin/apt-key')
+    @patch.object(apt_key, 'lang_env', returnc)
+    @patch.dict(os.environ, {'HTTP_PROXY': 'proxy.example.com'})
     def test_import_key_with_http_proxy(self):
-        m_mock = mock.Mock()
+        m_mock = Mock()
         m_mock.run_command.return_value = (0, '', '')
         apt_key.import_key(
             m_mock, keyring=None, keyserver='keyserver.example.com',

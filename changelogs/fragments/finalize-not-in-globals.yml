@@ -1,2 +1,0 @@
-breaking_changes:
-  - "The ``finalize`` method is no longer exposed in the globals for use in templating."

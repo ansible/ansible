@@ -1,6 +1,7 @@
 """Context information for the current invocation of ansible-test."""
 from __future__ import annotations
 
+import collections.abc as c
 import dataclasses
 import os
 import typing as t
@@ -34,15 +35,32 @@ from .provider.source.installed import (
     InstalledSource,
 )
 
+from .provider.source.unsupported import (
+    UnsupportedSource,
+)
+
 from .provider.layout import (
     ContentLayout,
     LayoutProvider,
 )
 
+from .provider.layout.unsupported import (
+    UnsupportedLayout,
+)
+
+
+@dataclasses.dataclass(frozen=True)
+class PayloadConfig:
+    """Configuration required to build a source tree payload for delegation."""
+
+    files: list[tuple[str, str]]
+    permissions: dict[str, int]
+
 
 class DataContext:
     """Data context providing details about the current execution environment for ansible-test."""
-    def __init__(self):
+
+    def __init__(self) -> None:
         content_path = os.environ.get('ANSIBLE_TEST_CONTENT_ROOT')
         current_path = os.getcwd()
 
@@ -51,20 +69,21 @@ class DataContext:
 
         self.__layout_providers = layout_providers
         self.__source_providers = source_providers
-        self.__ansible_source = None  # type: t.Optional[t.Tuple[t.Tuple[str, str], ...]]
+        self.__ansible_source: t.Optional[tuple[tuple[str, str], ...]] = None
 
-        self.payload_callbacks = []  # type: t.List[t.Callable[[t.List[t.Tuple[str, str]]], None]]
+        self.payload_callbacks: list[c.Callable[[PayloadConfig], None]] = []
 
         if content_path:
-            content = self.__create_content_layout(layout_providers, source_providers, content_path, False)
+            content, source_provider = self.__create_content_layout(layout_providers, source_providers, content_path, False)
         elif ANSIBLE_SOURCE_ROOT and is_subdir(current_path, ANSIBLE_SOURCE_ROOT):
-            content = self.__create_content_layout(layout_providers, source_providers, ANSIBLE_SOURCE_ROOT, False)
+            content, source_provider = self.__create_content_layout(layout_providers, source_providers, ANSIBLE_SOURCE_ROOT, False)
         else:
-            content = self.__create_content_layout(layout_providers, source_providers, current_path, True)
+            content, source_provider = self.__create_content_layout(layout_providers, source_providers, current_path, True)
 
-        self.content = content  # type: ContentLayout
+        self.content: ContentLayout = content
+        self.source_provider = source_provider
 
-    def create_collection_layouts(self):  # type: () -> t.List[ContentLayout]
+    def create_collection_layouts(self) -> list[ContentLayout]:
         """
         Return a list of collection layouts, one for each collection in the same collection root as the current collection layout.
         An empty list is returned if the current content layout is not a collection layout.
@@ -90,7 +109,7 @@ class DataContext:
                 if collection_path == os.path.join(collection.root, collection.directory):
                     collection_layout = layout
                 else:
-                    collection_layout = self.__create_content_layout(self.__layout_providers, self.__source_providers, collection_path, False)
+                    collection_layout = self.__create_content_layout(self.__layout_providers, self.__source_providers, collection_path, False)[0]
 
                 file_count = len(collection_layout.all_files())
 
@@ -103,26 +122,33 @@ class DataContext:
         return collections
 
     @staticmethod
-    def __create_content_layout(layout_providers,  # type: t.List[t.Type[LayoutProvider]]
-                                source_providers,  # type: t.List[t.Type[SourceProvider]]
-                                root,  # type: str
-                                walk,  # type: bool
-                                ):  # type: (...) -> ContentLayout
+    def __create_content_layout(
+        layout_providers: list[t.Type[LayoutProvider]],
+        source_providers: list[t.Type[SourceProvider]],
+        root: str,
+        walk: bool,
+    ) -> t.Tuple[ContentLayout, SourceProvider]:
         """Create a content layout using the given providers and root path."""
-        layout_provider = find_path_provider(LayoutProvider, layout_providers, root, walk)
+        try:
+            layout_provider = find_path_provider(LayoutProvider, layout_providers, root, walk)
+        except ProviderNotFoundForPath:
+            layout_provider = UnsupportedLayout(root)
 
         try:
             # Begin the search for the source provider at the layout provider root.
             # This intentionally ignores version control within subdirectories of the layout root, a condition which was previously an error.
             # Doing so allows support for older git versions for which it is difficult to distinguish between a super project and a sub project.
             # It also provides a better user experience, since the solution for the user would effectively be the same -- to remove the nested version control.
-            source_provider = find_path_provider(SourceProvider, source_providers, layout_provider.root, walk)
+            if isinstance(layout_provider, UnsupportedLayout):
+                source_provider: SourceProvider = UnsupportedSource(layout_provider.root)
+            else:
+                source_provider = find_path_provider(SourceProvider, source_providers, layout_provider.root, walk)
         except ProviderNotFoundForPath:
             source_provider = UnversionedSource(layout_provider.root)
 
         layout = layout_provider.create(layout_provider.root, source_provider.get_paths(layout_provider.root))
 
-        return layout
+        return layout, source_provider
 
     def __create_ansible_source(self):
         """Return a tuple of Ansible source files with both absolute and relative paths."""
@@ -150,20 +176,58 @@ class DataContext:
         return tuple((os.path.join(source_provider.root, path), path) for path in source_provider.get_paths(source_provider.root))
 
     @property
-    def ansible_source(self):  # type: () -> t.Tuple[t.Tuple[str, str], ...]
+    def ansible_source(self) -> tuple[tuple[str, str], ...]:
         """Return a tuple of Ansible source files with both absolute and relative paths."""
         if not self.__ansible_source:
             self.__ansible_source = self.__create_ansible_source()
 
         return self.__ansible_source
 
-    def register_payload_callback(self, callback):  # type: (t.Callable[[t.List[t.Tuple[str, str]]], None]) -> None
+    def register_payload_callback(self, callback: c.Callable[[PayloadConfig], None]) -> None:
         """Register the given payload callback."""
         self.payload_callbacks.append(callback)
 
+    def check_layout(self) -> None:
+        """Report an error if the layout is unsupported."""
+        if self.content.unsupported:
+            raise ApplicationError(self.explain_working_directory())
+
+    def explain_working_directory(self) -> str:
+        """Return a message explaining the working directory requirements."""
+        blocks = [
+            'The current working directory must be within the source tree being tested.',
+            '',
+        ]
+
+        if ANSIBLE_SOURCE_ROOT:
+            blocks.append(f'Testing Ansible: {ANSIBLE_SOURCE_ROOT}/')
+            blocks.append('')
+
+        cwd = os.getcwd()
+
+        blocks.append('Testing an Ansible collection: {...}/ansible_collections/{namespace}/{collection}/')
+        blocks.append('Example #1: community.general -> ~/code/ansible_collections/community/general/')
+        blocks.append('Example #2: ansible.util -> ~/.ansible/collections/ansible_collections/ansible/util/')
+        blocks.append('')
+        blocks.append(f'Current working directory: {cwd}/')
+
+        if os.path.basename(os.path.dirname(cwd)) == 'ansible_collections':
+            blocks.append(f'Expected parent directory: {os.path.dirname(cwd)}/{{namespace}}/{{collection}}/')
+        elif os.path.basename(cwd) == 'ansible_collections':
+            blocks.append(f'Expected parent directory: {cwd}/{{namespace}}/{{collection}}/')
+        elif 'ansible_collections' not in cwd.split(os.path.sep):
+            blocks.append('No "ansible_collections" parent directory was found.')
+
+        if isinstance(self.content.unsupported, list):
+            blocks.extend(self.content.unsupported)
+
+        message = '\n'.join(blocks)
+
+        return message
+
 
 @cache
-def data_context():  # type: () -> DataContext
+def data_context() -> DataContext:
     """Initialize provider plugins."""
     provider_types = (
         'layout',
@@ -173,21 +237,7 @@ def data_context():  # type: () -> DataContext
     for provider_type in provider_types:
         import_plugins('provider/%s' % provider_type)
 
-    try:
-        context = DataContext()
-    except ProviderNotFoundForPath:
-        options = [
-            ' - an Ansible collection: {...}/ansible_collections/{namespace}/{collection}/',
-        ]
-
-        if ANSIBLE_SOURCE_ROOT:
-            options.insert(0, ' - the Ansible source: %s/' % ANSIBLE_SOURCE_ROOT)
-
-        raise ApplicationError('''The current working directory must be at or below:
-
-%s
-
-Current working directory: %s''' % ('\n'.join(options), os.getcwd()))
+    context = DataContext()
 
     return context
 
@@ -195,24 +245,25 @@ Current working directory: %s''' % ('\n'.join(options), os.getcwd()))
 @dataclasses.dataclass(frozen=True)
 class PluginInfo:
     """Information about an Ansible plugin."""
+
     plugin_type: str
     name: str
-    paths: t.List[str]
+    paths: list[str]
 
 
 @cache
-def content_plugins():
+def content_plugins() -> dict[str, dict[str, PluginInfo]]:
     """
     Analyze content.
-    The primary purpose of this analysis is to facilitiate mapping of integration tests to the plugin(s) they are intended to test.
+    The primary purpose of this analysis is to facilitate mapping of integration tests to the plugin(s) they are intended to test.
     """
-    plugins = {}  # type: t.Dict[str, t.Dict[str, PluginInfo]]
+    plugins: dict[str, dict[str, PluginInfo]] = {}
 
     for plugin_type, plugin_directory in data_context().content.plugin_paths.items():
         plugin_paths = sorted(data_context().content.walk_files(plugin_directory))
         plugin_directory_offset = len(plugin_directory.split(os.path.sep))
 
-        plugin_files = {}
+        plugin_files: dict[str, list[str]] = {}
 
         for plugin_path in plugin_paths:
             plugin_filename = os.path.basename(plugin_path)

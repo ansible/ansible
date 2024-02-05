@@ -1,0 +1,49 @@
+- name: test becoming user ({{ become_test }})
+  raw: whoami
+  register: whoami
+
+- name: implicit tilde expansion reflects become user ({{ become_test }})
+  stat:
+    path: "~"
+  register: stat_home_implicit
+
+- name: explicit tilde expansion reflects become user ({{ become_test }})
+  stat:
+    path: "~{{ ansible_become_user }}"
+  register: stat_home_explicit
+
+- name: put a file ({{ become_test }})
+  copy:
+    src: copy.txt
+    dest: "~{{ ansible_become_user }}/{{ ansible_become_method }}-{{ ansible_become_user }}-copy.txt"
+  register: put_file
+
+- name: fetch a file ({{ become_test }})
+  fetch:
+    src: "~{{ ansible_become_user }}/{{ ansible_become_method }}-{{ ansible_become_user }}-copy.txt"
+    dest: "{{ output_dir }}"
+  register: fetch_file
+
+- name: explicit tilde expansion reflects become user ({{ become_test }})
+  stat:
+    path: "~{{ ansible_become_user }}/{{ ansible_become_method }}-{{ ansible_become_user }}-copy.txt"
+  register: stat_file
+
+- name: verify results from previous tasks ({{ become_test }})
+  assert:
+    that:
+      - "whoami.stdout|trim == ansible_become_user"
+
+      - "stat_home_implicit.stat.exists == True"
+      - "stat_home_implicit.stat.path|basename == ansible_become_user"
+
+      - "stat_home_explicit.stat.exists == True"
+      - "stat_home_explicit.stat.path|basename == ansible_become_user"
+
+      - "put_file.uid == test_user.uid"
+      - "put_file.gid == test_user.group"
+
+      - "fetch_file.remote_checksum == put_file.checksum"
+
+      - "stat_file.stat.exists == True"
+      - "stat_file.stat.path|dirname|basename == ansible_become_user"

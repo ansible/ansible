@@ -1,0 +1,6 @@
+---
+- hosts: all
+  tasks:
+  - name: static import inside dynamic include inherits defaults/vars
+    include_role:
+      name: include_import_dep_chain

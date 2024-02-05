@@ -15,17 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import re
 import textwrap
 import types
 
-from units.compat import unittest
-from units.compat.mock import MagicMock
+import unittest
+from unittest.mock import MagicMock
 
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host

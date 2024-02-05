@@ -3,13 +3,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+from collections.abc import MutableMapping
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins.loader import cache_loader
 from ansible.utils.display import Display
 

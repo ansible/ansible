@@ -43,16 +43,17 @@ from ...host_configs import (
 
 class Pep8Test(SanitySingleVersion):
     """Sanity test for PEP 8 style guidelines using pycodestyle."""
+
     @property
-    def error_code(self):  # type: () -> t.Optional[str]
+    def error_code(self) -> t.Optional[str]:
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'A100'
 
-    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+    def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         return [target for target in targets if os.path.splitext(target.path)[1] == '.py' or is_subdir(target.path, 'bin')]
 
-    def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
+    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
         current_ignore_file = os.path.join(SANITY_ROOT, 'pep8', 'current-ignore.txt')
         current_ignore = sorted(read_lines_without_comments(current_ignore_file, remove_blank_lines=True))
 
@@ -66,7 +67,7 @@ class Pep8Test(SanitySingleVersion):
             '--max-line-length', '160',
             '--config', '/dev/null',
             '--ignore', ','.join(sorted(current_ignore)),
-        ] + paths
+        ] + paths  # fmt: skip
 
         if paths:
             try:
@@ -92,7 +93,7 @@ class Pep8Test(SanitySingleVersion):
         else:
             results = []
 
-        results = [SanityMessage(
+        messages = [SanityMessage(
             message=r['message'],
             path=r['path'],
             line=int(r['line']),
@@ -101,7 +102,7 @@ class Pep8Test(SanitySingleVersion):
             code=r['code'],
         ) for r in results]
 
-        errors = settings.process_errors(results, paths)
+        errors = settings.process_errors(messages, paths)
 
         if errors:
             return SanityFailure(self.name, messages=errors)

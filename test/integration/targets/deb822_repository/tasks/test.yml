@@ -1,0 +1,243 @@
+- name: Create deb822 repo - check_mode
+  deb822_repository:
+    name: ansible-test focal archive
+    uris: http://us.archive.ubuntu.com/ubuntu
+    suites:
+      - focal
+      - focal-updates
+    components:
+      - main
+      - restricted
+  register: deb822_check_mode_1
+  check_mode: true
+
+- name: Create deb822 repo
+  deb822_repository:
+    name: ansible-test focal archive
+    uris: http://us.archive.ubuntu.com/ubuntu
+    suites:
+      - focal
+      - focal-updates
+    components:
+      - main
+      - restricted
+    date_max_future: 10
+  register: deb822_create_1
+
+- name: Check file mode
+  stat:
+    path: /etc/apt/sources.list.d/ansible-test-focal-archive.sources
+  register: deb822_create_1_stat_1
+
+- name: Create another deb822 repo
+  deb822_repository:
+    name: ansible-test focal security
+    uris: http://security.ubuntu.com/ubuntu
+    suites:
+      - focal-security
+    components:
+      - main
+      - restricted
+  register: deb822_create_2
+
+- name: Create deb822 repo idempotency
+  deb822_repository:
+    name: ansible-test focal archive
+    uris: http://us.archive.ubuntu.com/ubuntu
+    suites:
+      - focal
+      - focal-updates
+    components:
+      - main
+      - restricted
+    date_max_future: 10
+  register: deb822_create_1_idem
+
+- name: Create deb822 repo (changed order of parameters) idempotency
+  deb822_repository:
+    uris: http://us.archive.ubuntu.com/ubuntu
+    name: ansible-test focal archive
+    date_max_future: 10
+    components:
+      - main
+      - restricted
+    suites:
+      - focal
+      - focal-updates
+  register: deb822_create_2_idem
+
+- name: Create deb822 repo - check_mode
+  deb822_repository:
+    name: ansible-test focal archive
+    uris: http://us.archive.ubuntu.com/ubuntu
+    suites:
+      - focal
+      - focal-updates
+    components:
+      - main
+      - restricted
+    date_max_future: 10
+  register: deb822_check_mode_2
+  check_mode: yes
+
+- name: Change deb822 repo mode
+  deb822_repository:
+    name: ansible-test focal archive
+    uris: http://us.archive.ubuntu.com/ubuntu
+    suites:
+      - focal
+      - focal-updates
+    components:
+      - main
+      - restricted
+    date_max_future: 10
+    mode: '0600'
+  register: deb822_create_1_mode
+
+- name: Check file mode
+  stat:
+    path: /etc/apt/sources.list.d/ansible-test-focal-archive.sources
+  register: deb822_create_1_stat_2
+
+- assert:
+    that:
+      - deb822_check_mode_1 is changed
+
+      - deb822_check_mode_2 is not changed
+
+      - deb822_create_1 is changed
+      - deb822_create_1.dest == '/etc/apt/sources.list.d/ansible-test-focal-archive.sources'
+      - deb822_create_1.repo|trim == focal_archive_expected
+
+      - deb822_create_1_idem is not changed
+      - deb822_create_2_idem is not changed
+
+      - deb822_create_1_mode is changed
+      - deb822_create_1_stat_1.stat.mode == '0644'
+      - deb822_create_1_stat_2.stat.mode == '0600'
+  vars:
+    focal_archive_expected: |-
+      Components: main restricted
+      Date-Max-Future: 10
+      X-Repolib-Name: ansible-test focal archive
+      Suites: focal focal-updates
+      Types: deb
+      URIs: http://us.archive.ubuntu.com/ubuntu
+
+- name: Remove repos
+  deb822_repository:
+    name: '{{ item }}'
+    state: absent
+  register: remove_repos_1
+  loop:
+    - ansible-test focal archive
+    - ansible-test focal security
+
+- name: Check for repo files
+  stat:
+    path: /etc/apt/sources.list.d/ansible-test-{{ item }}.sources
+  register: remove_stats
+  loop:
+    - focal-archive
+    - focal-security
+
+- assert:
+    that:
+      - remove_repos_1 is changed
+      - remove_stats.results|map(attribute='stat')|selectattr('exists') == []
+
+- name: Add repo with signed_by
+  deb822_repository:
+    name: ansible-test
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by: |-
+      -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+      mDMEYCQjIxYJKwYBBAHaRw8BAQdAD/P5Nvvnvk66SxBBHDbhRml9ORg1WV5CvzKY
+      CuMfoIS0BmFiY2RlZoiQBBMWCgA4FiEErCIG1VhKWMWo2yfAREZd5NfO31cFAmAk
+      IyMCGyMFCwkIBwMFFQoJCAsFFgIDAQACHgECF4AACgkQREZd5NfO31fbOwD6ArzS
+      dM0Dkd5h2Ujy1b6KcAaVW9FOa5UNfJ9FFBtjLQEBAJ7UyWD3dZzhvlaAwunsk7DG
+      3bHcln8DMpIJVXht78sL
+      =IE0r
+      -----END PGP PUBLIC KEY BLOCK-----
+  register: signed_by_inline
+
+- name: Change signed_by to URL
+  deb822_repository:
+    name: ansible-test
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    components:
+      - main
+      - contrib
+      - non-free
+    signed_by: https://ci-files.testing.ansible.com/test/integration/targets/apt_key/apt-key-example-binary.gpg
+  register: signed_by_url
+
+- assert:
+    that:
+      - signed_by_inline.key_filename is none
+      - signed_by_inline.repo|trim == signed_by_inline_expected
+      - signed_by_url is changed
+      - signed_by_url.key_filename == '/etc/apt/keyrings/ansible-test.gpg'
+      - >
+        'BEGIN' not in signed_by_url.repo
+  vars:
+    signed_by_inline_expected: |-
+      Components: main contrib non-free
+      X-Repolib-Name: ansible-test
+      Signed-By:
+          -----BEGIN PGP PUBLIC KEY BLOCK-----
+          .
+          mDMEYCQjIxYJKwYBBAHaRw8BAQdAD/P5Nvvnvk66SxBBHDbhRml9ORg1WV5CvzKY
+          CuMfoIS0BmFiY2RlZoiQBBMWCgA4FiEErCIG1VhKWMWo2yfAREZd5NfO31cFAmAk
+          IyMCGyMFCwkIBwMFFQoJCAsFFgIDAQACHgECF4AACgkQREZd5NfO31fbOwD6ArzS
+          dM0Dkd5h2Ujy1b6KcAaVW9FOa5UNfJ9FFBtjLQEBAJ7UyWD3dZzhvlaAwunsk7DG
+          3bHcln8DMpIJVXht78sL
+          =IE0r
+          -----END PGP PUBLIC KEY BLOCK-----
+      Suites: stable
+      Types: deb
+      URIs: https://deb.debian.org
+
+- name: remove ansible-test repo
+  deb822_repository:
+    name: ansible-test
+    state: absent
+  register: ansible_test_repo_remove
+
+- name: check for ansible-test repo and key
+  stat:
+    path: '{{ item }}'
+  register: ansible_test_repo_stats
+  loop:
+    - /etc/apt/sources.list.d/ansible-test.sources
+    - /etc/apt/keyrings/ansible-test.gpg
+
+- assert:
+    that:
+      - ansible_test_repo_remove is changed
+      - ansible_test_repo_stats.results|map(attribute='stat')|selectattr('exists') == []
+
+- name: Check if http-agent works when using cloudflare repo - check_mode
+  deb822_repository:
+    name: cloudflared
+    types: deb
+    uris: https://pkg.cloudflare.com/cloudflared
+    suites: "bullseye"
+    components: main
+    signed_by: https://pkg.cloudflare.com/cloudflare-main.gpg
+    state: present
+  check_mode: true
+  register: ansible_test_http_agent
+
+- assert:
+    that:
+      - ansible_test_http_agent is changed

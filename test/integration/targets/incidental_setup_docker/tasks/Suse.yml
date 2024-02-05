@@ -1,7 +1,0 @@
-- name: Install docker
-  zypper:
-    name: "{{ docker_packages }}"
-    force: yes
-    disable_gpg_check: yes
-    update_cache: yes
-  notify: cleanup docker

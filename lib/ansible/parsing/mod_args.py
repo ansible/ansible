@@ -15,14 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import ansible.constants as C
 from ansible.errors import AnsibleParserError, AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.plugins.loader import module_loader, action_loader
 from ansible.template import Templar
@@ -48,7 +46,6 @@ RAW_PARAM_MODULES = FREEFORM_ACTIONS.union(add_internal_fqcns((
 
 BUILTIN_TASKS = frozenset(add_internal_fqcns((
     'meta',
-    'include',
     'include_tasks',
     'include_role',
     'import_tasks',
@@ -114,8 +111,8 @@ class ModuleArgsParser:
         from ansible.playbook.task import Task
         from ansible.playbook.handler import Handler
         # store the valid Task/Handler attrs for quick access
-        self._task_attrs = set(Task._valid_attrs.keys())
-        self._task_attrs.update(set(Handler._valid_attrs.keys()))
+        self._task_attrs = set(Task.fattributes)
+        self._task_attrs.update(set(Handler.fattributes))
         # HACK: why are these not FieldAttributes on task with a post-validate to check usage?
         self._task_attrs.update(['local_action', 'static'])
         self._task_attrs = frozenset(self._task_attrs)
@@ -304,9 +301,14 @@ class ModuleArgsParser:
             elif skip_action_validation:
                 is_action_candidate = True
             else:
-                context = action_loader.find_plugin_with_context(item, collection_list=self._collection_list)
-                if not context.resolved:
-                    context = module_loader.find_plugin_with_context(item, collection_list=self._collection_list)
+                try:
+                    context = action_loader.find_plugin_with_context(item, collection_list=self._collection_list)
+                    if not context.resolved:
+                        context = module_loader.find_plugin_with_context(item, collection_list=self._collection_list)
+                except AnsibleError as e:
+                    if e.obj is None:
+                        e.obj = self._task_ds
+                    raise e
 
                 is_action_candidate = context.resolved and bool(context.redirect_list)
 

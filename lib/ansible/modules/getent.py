@@ -3,17 +3,16 @@
 # Copyright: (c) 2014, Brian Coca <brian.coca+dev@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: getent
 short_description: A wrapper to the unix getent utility
 description:
-     - Runs getent against one of it's various databases and returns information into
-       the host's facts, in a getent_<database> prefixed variable.
+     - Runs getent against one of its various databases and returns information into
+       the host's facts, in a C(getent_<database>) prefixed variable.
 version_added: "1.8"
 options:
     database:
@@ -27,7 +26,6 @@ options:
             - Key from which to return values from the specified database, otherwise the
               full contents are returned.
         type: str
-        default: ''
     service:
         description:
             - Override all databases with the specified service
@@ -36,11 +34,12 @@ options:
         version_added: "2.9"
     split:
         description:
-            - "Character used to split the database values into lists/arrays such as ':' or '\t', otherwise  it will try to pick one depending on the database."
+            - Character used to split the database values into lists/arrays such as V(:) or V(\\t),
+              otherwise it will try to pick one depending on the database.
         type: str
     fail_key:
         description:
-            - If a supplied key is missing this will make the task fail if C(yes).
+            - If a supplied key is missing this will make the task fail if V(true).
         type: bool
         default: 'yes'
 extends_documentation_fragment:
@@ -63,39 +62,39 @@ author:
 
 EXAMPLES = '''
 - name: Get root user info
-  getent:
+  ansible.builtin.getent:
     database: passwd
     key: root
-- debug:
+- ansible.builtin.debug:
     var: ansible_facts.getent_passwd
 
 - name: Get all groups
-  getent:
+  ansible.builtin.getent:
     database: group
     split: ':'
-- debug:
+- ansible.builtin.debug:
     var: ansible_facts.getent_group
 
 - name: Get all hosts, split by tab
-  getent:
+  ansible.builtin.getent:
     database: hosts
-- debug:
+- ansible.builtin.debug:
     var: ansible_facts.getent_hosts
 
 - name: Get http service info, no error if missing
-  getent:
+  ansible.builtin.getent:
     database: services
     key: http
     fail_key: False
-- debug:
+- ansible.builtin.debug:
     var: ansible_facts.getent_services
 
 - name: Get user password hash (requires sudo/root)
-  getent:
+  ansible.builtin.getent:
     database: shadow
     key: www-data
     split: ':'
-- debug:
+- ansible.builtin.debug:
     var: ansible_facts.getent_shadow
 
 '''
@@ -110,7 +109,7 @@ ansible_facts:
       description:
         - A list of results or a single result as a list of the fields the db provides
         - The list elements depend on the database queried, see getent man page for the structure
-        - Starting at 2.11 it now returns multiple duplicate entries, previouslly it only returned the last one
+        - Starting at 2.11 it now returns multiple duplicate entries, previously it only returned the last one
       returned: always
       type: list
 '''
@@ -118,7 +117,7 @@ ansible_facts:
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 
 
 def main():

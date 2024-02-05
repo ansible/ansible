@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import os
 import time
-import typing as t
 
 from xml.etree.ElementTree import (
     Comment,
@@ -48,7 +47,7 @@ from . import (
 )
 
 
-def command_coverage_xml(args):  # type: (CoverageXmlConfig) -> None
+def command_coverage_xml(args: CoverageXmlConfig) -> None:
     """Generate an XML coverage report."""
     host_state = prepare_profiles(args)  # coverage xml
     output_files = combine_coverage_files(args, host_state)
@@ -69,14 +68,14 @@ def command_coverage_xml(args):  # type: (CoverageXmlConfig) -> None
             run_coverage(args, host_state, output_file, 'xml', ['-i', '-o', xml_path])
 
 
-def _generate_powershell_xml(coverage_file):  # type: (str) -> Element
+def _generate_powershell_xml(coverage_file: str) -> Element:
     """Generate a PowerShell coverage report XML element from the specified coverage file and return it."""
     coverage_info = read_json_file(coverage_file)
 
     content_root = data_context().content.root
     is_ansible = data_context().content.is_ansible
 
-    packages = {}
+    packages: dict[str, dict[str, dict[str, int]]] = {}
     for path, results in coverage_info.items():
         filename = os.path.splitext(os.path.basename(path))[0]
 
@@ -131,7 +130,7 @@ def _generate_powershell_xml(coverage_file):  # type: (str) -> Element
     return elem_coverage
 
 
-def _add_cobertura_package(packages, package_name, package_data):  # type: (Element, str, t.Dict[str, t.Dict[str, int]]) -> t.Tuple[int, int]
+def _add_cobertura_package(packages: Element, package_name: str, package_data: dict[str, dict[str, int]]) -> tuple[int, int]:
     """Add a package element to the given packages element."""
     elem_package = SubElement(packages, 'package')
     elem_classes = SubElement(elem_package, 'classes')

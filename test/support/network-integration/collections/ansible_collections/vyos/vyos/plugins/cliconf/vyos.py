@@ -16,9 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import absolute_import, division, print_function
+from __future__ import annotations
 
-__metaclass__ = type
 
 DOCUMENTATION = """
 ---
@@ -34,9 +33,10 @@ version_added: "2.4"
 import re
 import json
 
+from collections.abc import Mapping
+
 from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils._text import to_text
-from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils.common.text.converters import to_text
 from ansible_collections.ansible.netcommon.plugins.module_utils.network.common.config import (
     NetworkConfig,
 )

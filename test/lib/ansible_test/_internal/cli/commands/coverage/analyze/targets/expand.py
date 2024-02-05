@@ -17,16 +17,16 @@ from .....environments import (
 
 
 def do_expand(
-        subparsers,
-        parent,  # type: argparse.ArgumentParser
-        completer,  # type: CompositeActionCompletionFinder
+    subparsers,
+    parent: argparse.ArgumentParser,
+    completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `coverage analyze targets expand` command."""
-    parser = subparsers.add_parser(
+    parser: argparse.ArgumentParser = subparsers.add_parser(
         'expand',
         parents=[parent],
         help='expand target names from integers in aggregated coverage',
-    )  # type: argparse.ArgumentParser
+    )
 
     parser.set_defaults(
         func=command_coverage_analyze_targets_expand,

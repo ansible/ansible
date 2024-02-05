@@ -1,1 +1,0 @@
-data = 'overridden facts.py'

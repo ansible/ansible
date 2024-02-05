@@ -1,0 +1,2 @@
+bugfixes:
+  - "facts - detect VMware ESXi 8.0 virtualization by product name VMware20,1"

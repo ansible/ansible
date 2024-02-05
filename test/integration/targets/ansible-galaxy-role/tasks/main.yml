@@ -1,3 +1,6 @@
+- name: Install role from Galaxy (should not fail with AttributeError)
+  command: ansible-galaxy role install ansible.nope -vvvv --ignore-errors
+
 - name: Archive directories
   file:
     state: directory
@@ -22,10 +25,18 @@
 - name: Valid role archive
   command: "tar cf {{ remote_tmp_dir }}/valid-role.tar {{ remote_tmp_dir }}/role.d"
 
-- name: Invalid file
-  copy:
-    content: ""
+- name: Add invalid symlink
+  file:
+    state: link
+    src: "~/invalid"
     dest: "{{ remote_tmp_dir }}/role.d/tasks/~invalid.yml"
+    force: yes
+
+- name: Add another invalid symlink
+  file:
+    state: link
+    src: "/"
+    dest: "{{ remote_tmp_dir }}/role.d/tasks/invalid$name.yml"
 
 - name: Valid requirements file
   copy:
@@ -56,3 +67,6 @@
 
 - name: Uninstall invalid role
   command: ansible-galaxy role remove invalid-testrole
+
+- import_tasks: dir-traversal.yml
+- import_tasks: valid-role-symlinks.yml

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import collections.abc as c
 import typing as t
 
 from ....commands.coverage.combine import (
@@ -18,17 +19,17 @@ from ...environments import (
 
 
 def do_combine(
-        subparsers,
-        parent,  # type: argparse.ArgumentParser
-        add_coverage_common,  # type: t.Callable[[argparse.ArgumentParser], None]
-        completer,  # type: CompositeActionCompletionFinder
-):  # type: (...) -> None
+    subparsers,
+    parent: argparse.ArgumentParser,
+    add_coverage_common: c.Callable[[argparse.ArgumentParser], None],
+    completer: CompositeActionCompletionFinder,
+) -> None:
     """Command line parsing for the `coverage combine` command."""
-    parser = subparsers.add_parser(
+    parser: argparse.ArgumentParser = subparsers.add_parser(
         'combine',
         parents=[parent],
         help='combine coverage data and rewrite remote paths',
-    )  # type: argparse.ArgumentParser
+    )
 
     parser.set_defaults(
         func=command_coverage_combine,

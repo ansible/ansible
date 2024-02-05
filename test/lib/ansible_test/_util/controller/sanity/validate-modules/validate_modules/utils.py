@@ -15,8 +15,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import ast
 import datetime
@@ -29,7 +28,7 @@ from io import BytesIO, TextIOWrapper
 import yaml
 import yaml.reader
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.yaml import SafeLoader
 from ansible.module_utils.six import string_types
@@ -155,11 +154,9 @@ def parse_yaml(value, lineno, module, name, load_all=False, ansible_loader=False
         if load_all:
             data = list(data)
     except yaml.MarkedYAMLError as e:
-        e.problem_mark.line += lineno - 1
-        e.problem_mark.name = '%s.%s' % (module, name)
         errors.append({
             'msg': '%s is not valid YAML' % name,
-            'line': e.problem_mark.line + 1,
+            'line': e.problem_mark.line + lineno,
             'column': e.problem_mark.column + 1
         })
         traces.append(e)
@@ -195,7 +192,7 @@ def compare_unordered_lists(a, b):
       - unordered lists
       - unhashable elements
     """
-    return len(a) == len(b) and all(x in b for x in a)
+    return len(a) == len(b) and all(x in b for x in a) and all(x in a for x in b)
 
 
 class NoArgsAnsibleModule(AnsibleModule):

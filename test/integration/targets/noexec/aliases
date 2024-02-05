@@ -1,4 +1,4 @@
-shippable/posix/group2
+shippable/posix/group4
 context/controller
 skip/docker
 skip/macos

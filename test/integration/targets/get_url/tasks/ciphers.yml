@@ -1,0 +1,19 @@
+- name: test good cipher
+  get_url:
+    url: https://{{ httpbin_host }}/get
+    ciphers: ECDHE-RSA-AES128-SHA256
+    dest: '{{ remote_tmp_dir }}/good_cipher_get.json'
+  register: good_ciphers
+
+- name: test bad cipher
+  get_url:
+    url: https://{{ httpbin_host }}/get
+    ciphers: ECDHE-ECDSA-AES128-SHA
+    dest: '{{ remote_tmp_dir }}/bad_cipher_get.json'
+  ignore_errors: true
+  register: bad_ciphers
+
+- assert:
+    that:
+      - good_ciphers is successful
+      - bad_ciphers is failed

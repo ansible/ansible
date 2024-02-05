@@ -1,8 +1,7 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = '''
     inventory: yaml
@@ -16,7 +15,7 @@ DOCUMENTATION = '''
         - File MUST have a valid extension, defined in configuration.
     notes:
         - If you want to set vars for the C(all) group inside the inventory file, the C(all) group must be the first entry in the file.
-        - Whitelisted in configuration by default.
+        - Enabled in configuration by default.
     options:
       yaml_extensions:
         description: list of 'valid' extensions for files containing YAML
@@ -60,10 +59,11 @@ all: # keys must be unique, i.e. only one 'hosts' per group
 
 import os
 
+from collections.abc import MutableMapping
+
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common._collections_compat import MutableMapping
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.plugins.inventory import BaseFileInventoryPlugin
 
 NoneType = type(None)

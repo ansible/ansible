@@ -50,6 +50,19 @@
     src: ansible.cfg.j2
     dest: '{{ galaxy_dir }}/ansible.cfg'
 
+- name: test install command using an unsupported version of resolvelib
+  include_tasks: unsupported_resolvelib.yml
+  loop: "{{ unsupported_resolvelib_versions }}"
+  loop_control:
+    loop_var: resolvelib_version
+
+- name: run ansible-galaxy collection offline installation tests
+  include_tasks: install_offline.yml
+  args:
+    apply:
+      environment:
+        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+
 - name: run ansible-galaxy collection publish tests for {{ test_name }}
   include_tasks: publish.yml
   args:
@@ -59,16 +72,17 @@
   vars:
     test_name: '{{ item.name }}'
     test_server: '{{ item.server }}'
-    vX: '{{ "v3/" if item.v3|default(false) else "v2/" }}'
+    test_api_server: '{{ item.api_server|default(item.server) }}'
   loop:
   - name: pulp_v2
-    server: '{{ pulp_server }}published/api/'
-  - name: pulp_v3
-    server: '{{ pulp_server }}published/api/'
-    v3: true
+    api_server: '{{ galaxy_ng_server }}'
+    server: '{{ pulp_server }}primary/api/'
+    v2: true
   - name: galaxy_ng
     server: '{{ galaxy_ng_server }}'
     v3: true
+
+- include_tasks: setup_gpg.yml
 
 # We use a module for this so we can speed up the test time.
 # For pulp interactions, we only upload to galaxy_ng which shares
@@ -79,6 +93,7 @@
   setup_collections:
     server: galaxy_ng
     collections: '{{ collection_list }}'
+    signature_dir: '{{ gpg_homedir }}'
   environment:
     ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
 
@@ -89,10 +104,12 @@
 - name: run ansible-galaxy collection install tests for {{ test_name }}
   include_tasks: install.yml
   vars:
+    test_id: '{{ item.name }}'
     test_name: '{{ item.name }}'
     test_server: '{{ item.server }}'
-    vX: '{{ "v3/" if item.v3|default(false) else "v2/" }}'
+    test_api_server: '{{ item.api_server|default(item.server) }}'
     requires_auth: '{{ item.requires_auth|default(false) }}'
+    v2: '{{ item.v2|default(false) }}'
   args:
     apply:
       environment:
@@ -103,10 +120,30 @@
     v3: true
     requires_auth: true
   - name: pulp_v2
-    server: '{{ pulp_server }}published/api/'
-  - name: pulp_v3
-    server: '{{ pulp_server }}published/api/'
-    v3: true
+    server: '{{ pulp_server }}primary/api/'
+    api_server: '{{ galaxy_ng_server }}'
+    v2: true
+
+- name: test installing and downloading collections with the range of supported resolvelib versions
+  include_tasks: supported_resolvelib.yml
+  args:
+    apply:
+      environment:
+        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+  loop: '{{ supported_resolvelib_versions }}'
+  loop_control:
+    loop_var: resolvelib_version
+
+- name: test choosing pinned pre-releases anywhere in the dependency tree
+  # This is a regression test for the case when the end-user does not
+  # explicitly allow installing pre-release collection versions, but their
+  # precise pins are still selected if met among the dependencies, either
+  # direct or transitive.
+  include_tasks: pinned_pre_releases_in_deptree.yml
+
+- name: test installing prereleases via scm direct requests
+  # In this test suite because the bug relies on the dep having versions on a Galaxy server
+  include_tasks: virtual_direct_requests.yml
 
 - name: publish collection with a dep on another server
   setup_collections:
@@ -149,13 +186,13 @@
       in install_cross_dep.stdout
     # pulp_v2 is highest in the list so it will find it there first
     - >-
-      "'parent_dep.parent_collection:1.0.0' obtained from server pulp_v2"
+      "'parent_dep.parent_collection:1.0.0' obtained from server galaxy_ng"
       in install_cross_dep.stdout
     - >-
-      "'child_dep.child_collection:0.9.9' obtained from server pulp_v2"
+      "'child_dep.child_collection:0.9.9' obtained from server galaxy_ng"
       in install_cross_dep.stdout
     - >-
-      "'child_dep.child_dep2:1.2.2' obtained from server pulp_v2"
+      "'child_dep.child_dep2:1.2.2' obtained from server galaxy_ng"
       in install_cross_dep.stdout
     - (install_cross_dep_actual.results[0].content | b64decode | from_json).collection_info.version == '1.0.0'
     - (install_cross_dep_actual.results[1].content | b64decode | from_json).collection_info.version == '1.0.0'
@@ -174,12 +211,12 @@
   args:
     apply:
       environment:
+        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
         ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
   vars:
-    test_api_fallback: 'pulp_v2'
-    test_api_fallback_versions: 'v1, v2'
-    test_name: 'galaxy_ng'
-    test_server: '{{ galaxy_ng_server }}'
+    test_api_fallback: 'galaxy_ng'
+    test_api_fallback_versions: 'v3, pulp-v3, v1'
+    test_name: 'pulp_v2'
 
 - name: run ansible-galaxy collection list tests
   include_tasks: list.yml

@@ -26,8 +26,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import hashlib
@@ -38,7 +37,7 @@ import traceback
 import uuid
 
 from functools import partial
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import cPickle
@@ -144,7 +143,7 @@ class Connection(object):
             )
 
         try:
-            data = json.dumps(req, cls=AnsibleJSONEncoder)
+            data = json.dumps(req, cls=AnsibleJSONEncoder, vault_to_text=True)
         except TypeError as exc:
             raise ConnectionError(
                 "Failed to encode some variables as JSON for communication with ansible-connection. "

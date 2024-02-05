@@ -18,34 +18,34 @@ from . import (
     write_report,
 )
 
-if t.TYPE_CHECKING:
-    from . import (
-        Arcs,
-        IndexedPoints,
-        Lines,
-        TargetIndexes,
-    )
+from . import (
+    Arcs,
+    IndexedPoints,
+    Lines,
+    TargetIndexes,
+)
 
 
 class CoverageAnalyzeTargetsCombineConfig(CoverageAnalyzeTargetsConfig):
     """Configuration for the `coverage analyze targets combine` command."""
-    def __init__(self, args):  # type: (t.Any) -> None
+
+    def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
-        self.input_files = args.input_file  # type: t.List[str]
-        self.output_file = args.output_file  # type: str
+        self.input_files: list[str] = args.input_file
+        self.output_file: str = args.output_file
 
 
-def command_coverage_analyze_targets_combine(args):  # type: (CoverageAnalyzeTargetsCombineConfig) -> None
+def command_coverage_analyze_targets_combine(args: CoverageAnalyzeTargetsCombineConfig) -> None:
     """Combine integration test target code coverage reports."""
     host_state = prepare_profiles(args)  # coverage analyze targets combine
 
     if args.delegate:
         raise Delegate(host_state=host_state)
 
-    combined_target_indexes = {}  # type: TargetIndexes
-    combined_path_arcs = {}  # type: Arcs
-    combined_path_lines = {}  # type: Lines
+    combined_target_indexes: TargetIndexes = {}
+    combined_path_arcs: Arcs = {}
+    combined_path_lines: Lines = {}
 
     for report_path in args.input_files:
         covered_targets, covered_path_arcs, covered_path_lines = read_report(report_path)
@@ -59,11 +59,11 @@ def command_coverage_analyze_targets_combine(args):  # type: (CoverageAnalyzeTar
 
 
 def merge_indexes(
-        source_data,  # type: IndexedPoints
-        source_index,  # type: t.List[str]
-        combined_data,  # type: IndexedPoints
-        combined_index,  # type: TargetIndexes
-):  # type: (...) -> None
+    source_data: IndexedPoints,
+    source_index: list[str],
+    combined_data: IndexedPoints,
+    combined_index: TargetIndexes,
+) -> None:
     """Merge indexes from the source into the combined data set (arcs or lines)."""
     for covered_path, covered_points in source_data.items():
         combined_points = combined_data.setdefault(covered_path, {})

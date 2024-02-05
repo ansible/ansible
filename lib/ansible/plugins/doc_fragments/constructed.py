@@ -2,8 +2,7 @@
 
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 
 class ModuleDocFragment(object):
@@ -12,7 +11,7 @@ class ModuleDocFragment(object):
 options:
   strict:
     description:
-        - If C(yes) make invalid entries a fatal error, otherwise skip and continue.
+        - If V(yes) make invalid entries a fatal error, otherwise skip and continue.
         - Since it is possible to use facts in the expressions they might not always be available
           and we ignore those errors by default.
     type: bool
@@ -49,13 +48,13 @@ options:
       default_value:
         description:
         - The default value when the host variable's value is an empty string.
-        - This option is mutually exclusive with C(trailing_separator).
+        - This option is mutually exclusive with O(keyed_groups[].trailing_separator).
         type: str
         version_added: '2.12'
       trailing_separator:
         description:
-        - Set this option to I(False) to omit the C(separator) after the host variable when the value is an empty string.
-        - This option is mutually exclusive with C(default_value).
+        - Set this option to V(False) to omit the O(keyed_groups[].separator) after the host variable when the value is an empty string.
+        - This option is mutually exclusive with O(keyed_groups[].default_value).
         type: bool
         default: True
         version_added: '2.12'

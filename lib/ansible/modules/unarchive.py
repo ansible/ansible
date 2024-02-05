@@ -7,8 +7,7 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -17,42 +16,44 @@ module: unarchive
 version_added: '1.4'
 short_description: Unpacks an archive after (optionally) copying it from the local machine
 description:
-     - The C(unarchive) module unpacks an archive. It will not unpack a compressed file that does not contain an archive.
+     - The M(ansible.builtin.unarchive) module unpacks an archive. It will not unpack a compressed file that does not contain an archive.
      - By default, it will copy the source file from the local system to the target before unpacking.
-     - Set C(remote_src=yes) to unpack an archive which already exists on the target.
-     - If checksum validation is desired, use M(ansible.builtin.get_url) or M(ansible.builtin.uri) instead to fetch the file and set C(remote_src=yes).
+     - Set O(remote_src=yes) to unpack an archive which already exists on the target.
+     - If checksum validation is desired, use M(ansible.builtin.get_url) or M(ansible.builtin.uri) instead to fetch the file and set O(remote_src=yes).
      - For Windows targets, use the M(community.windows.win_unzip) module instead.
 options:
   src:
     description:
-      - If C(remote_src=no) (default), local path to archive file to copy to the target server; can be absolute or relative. If C(remote_src=yes), path on the
+      - If O(remote_src=no) (default), local path to archive file to copy to the target server; can be absolute or relative. If O(remote_src=yes), path on the
         target server to existing archive file to unpack.
-      - If C(remote_src=yes) and C(src) contains C(://), the remote machine will download the file from the URL first. (version_added 2.0). This is only for
+      - If O(remote_src=yes) and O(src) contains V(://), the remote machine will download the file from the URL first. (version_added 2.0). This is only for
         simple cases, for full download support use the M(ansible.builtin.get_url) module.
     type: path
     required: true
   dest:
     description:
       - Remote absolute path where the archive should be unpacked.
+      - The given path must exist. Base directory is not created by this module.
     type: path
     required: true
   copy:
     description:
       - If true, the file is copied from local controller to the managed (remote) node, otherwise, the plugin will look for src archive on the managed machine.
-      - This option has been deprecated in favor of C(remote_src).
-      - This option is mutually exclusive with C(remote_src).
+      - This option has been deprecated in favor of O(remote_src).
+      - This option is mutually exclusive with O(remote_src).
     type: bool
     default: yes
   creates:
     description:
       - If the specified absolute path (file or directory) already exists, this step will B(not) be run.
+      - The specified absolute path (file or directory) must be below the base path given with O(dest).
     type: path
     version_added: "1.6"
   io_buffer_size:
     description:
       - Size of the volatile memory buffer that is used for extracting files from the archive in bytes.
     type: int
-    default: 64 KiB
+    default: 65536
     version_added: "2.12"
   list_files:
     description:
@@ -63,16 +64,16 @@ options:
   exclude:
     description:
       - List the directory and file entries that you would like to exclude from the unarchive action.
-      - Mutually exclusive with C(include).
+      - Mutually exclusive with O(include).
     type: list
     default: []
     elements: str
     version_added: "2.1"
   include:
     description:
-      - List of directory and file entries that you would like to extract from the archive. If C(include)
+      - List of directory and file entries that you would like to extract from the archive. If O(include)
         is not empty, only files listed here will be extracted.
-      - Mutually exclusive with C(exclude).
+      - Mutually exclusive with O(exclude).
     type: list
     default: []
     elements: str
@@ -90,20 +91,20 @@ options:
       - Command-line options with multiple elements must use multiple lines in the array, one for each element.
     type: list
     elements: str
-    default: ""
+    default: []
     version_added: "2.1"
   remote_src:
     description:
-      - Set to C(yes) to indicate the archived file is already on the remote system and not local to the Ansible controller.
-      - This option is mutually exclusive with C(copy).
+      - Set to V(true) to indicate the archived file is already on the remote system and not local to the Ansible controller.
+      - This option is mutually exclusive with O(copy).
     type: bool
     default: no
     version_added: "2.2"
   validate_certs:
     description:
       - This only applies if using a https URL as the source of the file.
-      - This should only set to C(no) used on personally controlled sites using self-signed certificate.
-      - Prior to 2.2 the code worked as if this was set to C(yes).
+      - This should only set to V(false) used on personally controlled sites using self-signed certificate.
+      - Prior to 2.2 the code worked as if this was set to V(true).
     type: bool
     default: yes
     version_added: "2.2"
@@ -121,7 +122,8 @@ attributes:
     bypass_host_loop:
       support: none
     check_mode:
-      support: full
+      support: partial
+      details: Not supported for gzipped tar files.
     diff_mode:
       support: partial
       details: Uses gtar's C(--diff) arg to calculate if changed or not. If this C(arg) is not supported, it will always unpack the archive.
@@ -185,7 +187,7 @@ dest:
   sample: /opt/software
 files:
   description: List of all the files in the archive.
-  returned: When I(list_files) is True
+  returned: When O(list_files) is V(True)
   type: list
   sample: '["file1", "file2"]'
 gid:
@@ -221,7 +223,7 @@ size:
 src:
   description:
     - The source archive's path.
-    - If I(src) was a remote web URL, or from the local ansible controller, this shows the temporary location where the download was stored.
+    - If O(src) was a remote web URL, or from the local ansible controller, this shows the temporary location where the download was stored.
   returned: always
   type: str
   sample: "/home/paul/test.tar.gz"
@@ -250,18 +252,23 @@ import stat
 import time
 import traceback
 from functools import partial
-from zipfile import ZipFile, BadZipfile
+from zipfile import ZipFile
 
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.urls import fetch_file
 
 try:  # python 3.3+
-    from shlex import quote
+    from shlex import quote  # type: ignore[attr-defined]
 except ImportError:  # older python
     from pipes import quote
+
+try:  # python 3.2+
+    from zipfile import BadZipFile  # type: ignore[attr-defined]
+except ImportError:  # older python
+    from zipfile import BadZipfile as BadZipFile
 
 # String from tar that shows the tar contents are different from the
 # filesystem
@@ -275,6 +282,7 @@ MISSING_FILE_RE = re.compile(r': Warning: Cannot stat: No such file or directory
 ZIP_FILE_MODE_RE = re.compile(r'([r-][w-][SsTtx-]){3}')
 INVALID_OWNER_RE = re.compile(r': Invalid owner')
 INVALID_GROUP_RE = re.compile(r': Invalid group')
+SYMLINK_DIFF_RE = re.compile(r': Symlink differs$')
 
 
 def crc32(path, buffer_size):
@@ -304,7 +312,7 @@ class ZipArchive(object):
         self.file_args = file_args
         self.opts = module.params['extra_opts']
         self.module = module
-        self.io_buffer_size = module.params.get("io_buffer_size", 64 * 1024)
+        self.io_buffer_size = module.params["io_buffer_size"]
         self.excludes = module.params['exclude']
         self.includes = []
         self.include_files = self.module.params['include']
@@ -312,6 +320,11 @@ class ZipArchive(object):
         self.zipinfo_cmd_path = None
         self._files_in_archive = []
         self._infodict = dict()
+        self.zipinfoflag = ''
+        self.binaries = (
+            ('unzip', 'cmd_path'),
+            ('zipinfo', 'zipinfo_cmd_path'),
+        )
 
     def _permstr_to_octal(self, modestr, umask):
         ''' Convert a Unix permission string (rw-r--r--) into a mode (0644) '''
@@ -329,6 +342,7 @@ class ZipArchive(object):
     def _legacy_file_list(self):
         rc, out, err = self.module.run_command([self.cmd_path, '-v', self.src])
         if rc:
+            self.module.debug(err)
             raise UnarchiveError('Neither python zipfile nor unzip can read %s' % self.src)
 
         for line in out.splitlines()[3:-2]:
@@ -342,7 +356,7 @@ class ZipArchive(object):
 
         try:
             archive = ZipFile(self.src)
-        except BadZipfile as e:
+        except BadZipFile as e:
             if e.args[0].lower().startswith('bad magic number'):
                 # Python2.4 can't handle zipfiles with > 64K files.  Try using
                 # /usr/bin/unzip instead
@@ -367,7 +381,7 @@ class ZipArchive(object):
         self._files_in_archive = []
         try:
             archive = ZipFile(self.src)
-        except BadZipfile as e:
+        except BadZipFile as e:
             if e.args[0].lower().startswith('bad magic number'):
                 # Python2.4 can't handle zipfiles with > 64K files.  Try using
                 # /usr/bin/unzip instead
@@ -399,13 +413,17 @@ class ZipArchive(object):
 
     def is_unarchived(self):
         # BSD unzip doesn't support zipinfo listings with timestamp.
-        cmd = [self.zipinfo_cmd_path, '-T', '-s', self.src]
+        if self.zipinfoflag:
+            cmd = [self.zipinfo_cmd_path, self.zipinfoflag, '-T', '-s', self.src]
+        else:
+            cmd = [self.zipinfo_cmd_path, '-T', '-s', self.src]
 
         if self.excludes:
             cmd.extend(['-x', ] + self.excludes)
         if self.include_files:
             cmd.extend(self.include_files)
         rc, out, err = self.module.run_command(cmd)
+        self.module.debug(err)
 
         old_out = out
         diff = ''
@@ -482,7 +500,8 @@ class ZipArchive(object):
                 continue
 
             # Check first and seventh field in order to skip header/footer
-            if len(pcs[0]) != 7 and len(pcs[0]) != 10:
+            # 7 or 8 are FAT, 10 is normal unix perms
+            if len(pcs[0]) not in (7, 8, 10):
                 continue
             if len(pcs[6]) != 15:
                 continue
@@ -530,6 +549,12 @@ class ZipArchive(object):
                 if path[-1] == '/':
                     permstr = 'rwxrwxrwx'
                 elif permstr == 'rwx---':
+                    permstr = 'rwxrwxrwx'
+                else:
+                    permstr = 'rw-rw-rw-'
+                file_umask = umask
+            elif len(permstr) == 7:
+                if permstr == 'rwxa---':
                     permstr = 'rwxrwxrwx'
                 else:
                     permstr = 'rw-rw-rw-'
@@ -720,12 +745,8 @@ class ZipArchive(object):
         return dict(cmd=cmd, rc=rc, out=out, err=err)
 
     def can_handle_archive(self):
-        binaries = (
-            ('unzip', 'cmd_path'),
-            ('zipinfo', 'zipinfo_cmd_path'),
-        )
         missing = []
-        for b in binaries:
+        for b in self.binaries:
             try:
                 setattr(self, b[1], get_bin_path(b[0]))
             except ValueError:
@@ -738,6 +759,9 @@ class ZipArchive(object):
         rc, out, err = self.module.run_command(cmd)
         if rc == 0:
             return True, None
+
+        self.module.debug(err)
+
         return False, 'Command "%s" could not handle archive: %s' % (self.cmd_path, err)
 
 
@@ -787,6 +811,7 @@ class TgzArchive(object):
         locale = get_best_parsable_locale(self.module)
         rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LANGUAGE=locale))
         if rc != 0:
+            self.module.debug(err)
             raise UnarchiveError('Unable to list files in the archive: %s' % err)
 
         for filename in out.splitlines():
@@ -861,6 +886,8 @@ class TgzArchive(object):
             if INVALID_OWNER_RE.search(line):
                 out += line + '\n'
             if INVALID_GROUP_RE.search(line):
+                out += line + '\n'
+            if SYMLINK_DIFF_RE.search(line):
                 out += line + '\n'
         if out:
             unarchived = False
@@ -948,9 +975,32 @@ class TarZstdArchive(TgzArchive):
         self.zipflag = '--use-compress-program=zstd'
 
 
+class ZipZArchive(ZipArchive):
+    def __init__(self, src, b_dest, file_args, module):
+        super(ZipZArchive, self).__init__(src, b_dest, file_args, module)
+        self.zipinfoflag = '-Z'
+        self.binaries = (
+            ('unzip', 'cmd_path'),
+            ('unzip', 'zipinfo_cmd_path'),
+        )
+
+    def can_handle_archive(self):
+        unzip_available, error_msg = super(ZipZArchive, self).can_handle_archive()
+
+        if not unzip_available:
+            return unzip_available, error_msg
+
+        # Ensure unzip -Z is available before we use it in is_unarchive
+        cmd = [self.zipinfo_cmd_path, self.zipinfoflag]
+        rc, out, err = self.module.run_command(cmd)
+        if 'zipinfo' in out.lower():
+            return True, None
+        return False, 'Command "unzip -Z" could not handle archive: %s' % err
+
+
 # try handlers in order and return the one that works or bail if none work
 def pick_handler(src, dest, file_args, module):
-    handlers = [ZipArchive, TgzArchive, TarArchive, TarBzipArchive, TarXzArchive, TarZstdArchive]
+    handlers = [ZipArchive, ZipZArchive, TgzArchive, TarArchive, TarBzipArchive, TarXzArchive, TarZstdArchive]
     reasons = set()
     for handler in handlers:
         obj = handler(src, dest, file_args, module)
@@ -976,6 +1026,13 @@ def main():
             include=dict(type='list', elements='str', default=[]),
             extra_opts=dict(type='list', elements='str', default=[]),
             validate_certs=dict(type='bool', default=True),
+            io_buffer_size=dict(type='int', default=64 * 1024),
+
+            # Options that are for the action plugin, but ignored by the module itself.
+            # We have them here so that the sanity tests pass without ignores, which
+            # reduces the likelihood of further bugs added.
+            copy=dict(type='bool', default=True),
+            decrypt=dict(type='bool', default=True),
         ),
         add_file_common_args=True,
         # check-mode only works for zip files, we cover that later
@@ -985,7 +1042,12 @@ def main():
 
     src = module.params['src']
     dest = module.params['dest']
-    b_dest = to_bytes(dest, errors='surrogate_or_strict')
+    abs_dest = os.path.abspath(dest)
+    b_dest = to_bytes(abs_dest, errors='surrogate_or_strict')
+
+    if not os.path.isabs(dest):
+        module.warn("Relative destination path '{dest}' was resolved to absolute path '{abs_dest}'.".format(dest=dest, abs_dest=abs_dest))
+
     remote_src = module.params['remote_src']
     file_args = module.load_file_common_arguments(module.params)
 
@@ -1000,6 +1062,9 @@ def main():
             module.fail_json(msg="Source '%s' does not exist" % src)
     if not os.access(src, os.R_OK):
         module.fail_json(msg="Source '%s' not readable" % src)
+
+    # ensure src is an absolute path before picking handlers
+    src = os.path.abspath(src)
 
     # skip working with 0 size archives
     try:
@@ -1044,6 +1109,7 @@ def main():
     # Run only if we found differences (idempotence) or diff was missing
     if res_args.get('diff', True) and not module.check_mode:
         # do we need to change perms?
+        top_folders = []
         for filename in handler.files_in_archive:
             file_args['path'] = os.path.join(b_dest, to_bytes(filename, errors='surrogate_or_strict'))
 
@@ -1051,6 +1117,21 @@ def main():
                 res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
             except (IOError, OSError) as e:
                 module.fail_json(msg="Unexpected error when accessing exploded file: %s" % to_native(e), **res_args)
+
+            if '/' in filename:
+                top_folder_path = filename.split('/')[0]
+                if top_folder_path not in top_folders:
+                    top_folders.append(top_folder_path)
+
+        # make sure top folders have the right permissions
+        # https://github.com/ansible/ansible/issues/35426
+        if top_folders:
+            for f in top_folders:
+                file_args['path'] = "%s/%s" % (dest, f)
+                try:
+                    res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
+                except (IOError, OSError) as e:
+                    module.fail_json(msg="Unexpected error when accessing exploded file: %s" % to_native(e), **res_args)
 
     if module.params['list_files']:
         res_args['files'] = handler.files_in_archive

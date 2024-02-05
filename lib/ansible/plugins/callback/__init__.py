@@ -15,26 +15,25 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import difflib
 import json
 import re
 import sys
 import textwrap
+
 from collections import OrderedDict
+from collections.abc import MutableMapping
 from copy import deepcopy
 
 from ansible import constants as C
-from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.six import text_type
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.parsing.yaml.objects import AnsibleUnicode
-from ansible.plugins import AnsiblePlugin, get_plugin_class
+from ansible.plugins import AnsiblePlugin
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
 from ansible.utils.unsafe_proxy import AnsibleUnsafeText, NativeJinjaUnsafeText
@@ -162,11 +161,11 @@ class CallbackBase(AnsiblePlugin):
 
         self._hide_in_debug = ('changed', 'failed', 'skipped', 'invocation', 'skip_reason')
 
-    ''' helper for callbacks, so they don't all have to include deepcopy '''
+    # helper for callbacks, so they don't all have to include deepcopy
     _copy_result = deepcopy
 
     def set_option(self, k, v):
-        self._plugin_options[k] = v
+        self._plugin_options[k] = C.config.get_config_value(k, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={k: v})
 
     def get_option(self, k):
         return self._plugin_options[k]
@@ -177,7 +176,7 @@ class CallbackBase(AnsiblePlugin):
         '''
 
         # load from config
-        self._plugin_options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options, direct=direct)
+        self._plugin_options = C.config.get_plugin_options(self.plugin_type, self._load_name, keys=task_keys, variables=var_options, direct=direct)
 
     @staticmethod
     def host_label(result):
@@ -298,12 +297,13 @@ class CallbackBase(AnsiblePlugin):
 
         if 'exception' in result:
             msg = "An exception occurred during task execution. "
+            exception_str = to_text(result['exception'])
             if self._display.verbosity < 3:
                 # extract just the actual error message from the exception text
-                error = result['exception'].strip().split('\n')[-1]
+                error = exception_str.strip().split('\n')[-1]
                 msg += "To see the full traceback, use -vvv. The error was: %s" % error
             else:
-                msg = "The full traceback is:\n" + result['exception']
+                msg = "The full traceback is:\n" + exception_str
                 del result['exception']
 
             self._display.display(msg, color=C.COLOR_ERROR, stderr=use_stderr)
@@ -383,13 +383,6 @@ class CallbackBase(AnsiblePlugin):
                                               tofiledate=u'',
                                               n=C.DIFF_CONTEXT)
                 difflines = list(differ)
-                if len(difflines) >= 3 and sys.version_info[:2] == (2, 6):
-                    # difflib in Python 2.6 adds trailing spaces after
-                    # filenames in the -- before/++ after headers.
-                    difflines[0] = difflines[0].replace(u' \n', u'\n')
-                    difflines[1] = difflines[1].replace(u' \n', u'\n')
-                    # it also treats empty files differently
-                    difflines[2] = difflines[2].replace(u'-1,0', u'-0,0').replace(u'+1,0', u'+0,0')
                 has_diff = False
                 for line in difflines:
                     has_diff = True

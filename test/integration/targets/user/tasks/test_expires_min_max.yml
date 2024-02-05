@@ -53,3 +53,21 @@
         that:
           - ansible_facts.getent_shadow['ansibulluser'][2] == '5'
           - ansible_facts.getent_shadow['ansibulluser'][3] == '10'
+
+    - name: Set min and max at the same time
+      user:
+        name: ansibulluser
+        # also checks that assigning 0 works
+        password_expire_min: 0
+        password_expire_max: 0
+
+    - name: Get shadow data for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: Ensure password expiration was set properly
+      assert:
+        that:
+          - ansible_facts.getent_shadow['ansibulluser'][2] == '0'
+          - ansible_facts.getent_shadow['ansibulluser'][3] == '0'

@@ -1,16 +1,13 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import shutil
 import tempfile
 
-from units.compat.mock import patch, MagicMock, mock_open
-from ansible.module_utils import basic
+from unittest.mock import patch, MagicMock, mock_open
 from ansible.module_utils.common._utils import get_all_subclasses
 from ansible.modules import hostname
 from units.modules.utils import ModuleTestCase, set_module_args
-from ansible.module_utils.six import PY2
 
 
 class TestHostname(ModuleTestCase):
@@ -29,14 +26,22 @@ class TestHostname(ModuleTestCase):
 
             m = mock_open()
             builtins = 'builtins'
-            if PY2:
-                builtins = '__builtin__'
             with patch('%s.open' % builtins, m):
                 instance.get_permanent_hostname()
                 instance.get_current_hostname()
                 self.assertFalse(
                     m.return_value.write.called,
                     msg='%s called write, should not have' % str(cls))
+
+    def test_all_named_strategies_exist(self):
+        """Loop through the STRATS and see if anything is missing."""
+        for _name, prefix in hostname.STRATS.items():
+            classname = "%sStrategy" % prefix
+            cls = getattr(hostname, classname, None)
+
+            assert cls is not None
+
+            self.assertTrue(issubclass(cls, hostname.BaseStrategy))
 
 
 class TestRedhatStrategy(ModuleTestCase):

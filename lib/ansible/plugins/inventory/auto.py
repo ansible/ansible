@@ -1,8 +1,7 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = '''
     name: auto
@@ -11,14 +10,14 @@ DOCUMENTATION = '''
     version_added: "2.5"
     short_description: Loads and executes an inventory plugin specified in a YAML config
     description:
-        - By whitelisting C(auto) inventory plugin, any YAML inventory config file with a
+        - By enabling the C(auto) inventory plugin, any YAML inventory config file with a
           C(plugin) key at its root will automatically cause the named plugin to be loaded and executed with that
-          config. This effectively provides automatic whitelisting of all installed/accessible inventory plugins.
+          config. This effectively provides automatic enabling of all installed/accessible inventory plugins.
         - To disable this behavior, remove C(auto) from the C(INVENTORY_ENABLED) config element.
 '''
 
 EXAMPLES = '''
-# This plugin is not intended for direct use; it is a fallback mechanism for automatic whitelisting of
+# This plugin is not intended for direct use; it is a fallback mechanism for automatic enabling of
 # all installed inventory plugins.
 '''
 

@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import tempfile
@@ -25,6 +23,7 @@ from subprocess import Popen, PIPE
 import tarfile
 
 import ansible.constants as C
+from ansible import context
 from ansible.errors import AnsibleError
 from ansible.utils.display import Display
 from ansible.module_utils.common.process import get_bin_path
@@ -62,7 +61,19 @@ def scm_archive_resource(src, scm='git', name=None, version='HEAD', keep_scm_met
         raise AnsibleError("could not find/use %s, it is required to continue with installing %s" % (scm, src))
 
     tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
-    clone_cmd = [scm_path, 'clone', src, name]
+    clone_cmd = [scm_path, 'clone']
+
+    # Add specific options for ignoring certificates if requested
+    ignore_certs = context.CLIARGS['ignore_certs']
+
+    if ignore_certs:
+        if scm == 'git':
+            clone_cmd.extend(['-c', 'http.sslVerify=false'])
+        elif scm == 'hg':
+            clone_cmd.append('--insecure')
+
+    clone_cmd.extend([src, name])
+
     run_scm_cmd(clone_cmd, tempdir)
 
     if scm == 'git' and version:

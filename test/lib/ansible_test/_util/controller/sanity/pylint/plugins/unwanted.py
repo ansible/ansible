@@ -1,15 +1,19 @@
 """A plugin for pylint to identify imports and functions which should not be used."""
-from __future__ import (absolute_import, division, print_function)
-
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import typing as t
 
 import astroid
 
+# support pylint 2.x and 3.x -- remove when supporting only 3.x
+try:
+    from pylint.interfaces import IAstroidChecker
+except ImportError:
+    class IAstroidChecker:
+        """Backwards compatibility for 2.x / 3.x support."""
+
 from pylint.checkers import BaseChecker
-from pylint.interfaces import IAstroidChecker
 
 ANSIBLE_TEST_MODULES_PATH = os.environ['ANSIBLE_TEST_MODULES_PATH']
 ANSIBLE_TEST_MODULE_UTILS_PATH = os.environ['ANSIBLE_TEST_MODULE_UTILS_PATH']
@@ -23,11 +27,13 @@ class UnwantedEntry:
             modules_only=False,  # type: bool
             names=None,  # type: t.Optional[t.Tuple[str, ...]]
             ignore_paths=None,  # type: t.Optional[t.Tuple[str, ...]]
+            ansible_test_only=False,  # type: bool
     ):  # type: (...) -> None
         self.alternative = alternative
         self.modules_only = modules_only
         self.names = set(names) if names else set()
         self.ignore_paths = ignore_paths
+        self.ansible_test_only = ansible_test_only
 
     def applies_to(self, path, name=None):  # type: (str, t.Optional[str]) -> bool
         """Return True if this entry applies to the given path, otherwise return False."""
@@ -39,6 +45,9 @@ class UnwantedEntry:
                 return False
 
         if self.ignore_paths and any(path.endswith(ignore_path) for ignore_path in self.ignore_paths):
+            return False
+
+        if self.ansible_test_only and '/test/lib/ansible_test/_internal/' not in path:
             return False
 
         if self.modules_only:
@@ -91,10 +100,7 @@ class AnsibleUnwantedChecker(BaseChecker):
                               )),
 
         # see https://docs.python.org/3/library/collections.abc.html
-        collections=UnwantedEntry('ansible.module_utils.common._collections_compat',
-                                  ignore_paths=(
-                                      '/lib/ansible/module_utils/common/_collections_compat.py',
-                                  ),
+        collections=UnwantedEntry('ansible.module_utils.six.moves.collections_abc',
                                   names=(
                                       'MappingView',
                                       'ItemsView',
@@ -115,6 +121,10 @@ class AnsibleUnwantedChecker(BaseChecker):
     unwanted_functions = {
         # see https://docs.python.org/3/library/tempfile.html#tempfile.mktemp
         'tempfile.mktemp': UnwantedEntry('tempfile.mkstemp'),
+
+        # os.chmod resolves as posix.chmod
+        'posix.chmod': UnwantedEntry('verified_chmod',
+                                     ansible_test_only=True),
 
         'sys.exit': UnwantedEntry('exit_json or fail_json',
                                   ignore_paths=(

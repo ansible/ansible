@@ -3,8 +3,7 @@
 # Copyright: (c) 2013, Romeo Theriault <romeot () hawaii.edu>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -17,6 +16,22 @@ description:
   - For Windows targets, use the M(ansible.windows.win_uri) module instead.
 version_added: "1.1"
 options:
+  ciphers:
+    description:
+      - SSL/TLS Ciphers to use for the request.
+      - 'When a list is provided, all ciphers are joined in order with V(:)'
+      - See the L(OpenSSL Cipher List Format,https://www.openssl.org/docs/manmaster/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT)
+        for more details.
+      - The available ciphers is dependent on the Python and OpenSSL/LibreSSL versions
+    type: list
+    elements: str
+    version_added: '2.14'
+  decompress:
+    description:
+      - Whether to attempt to decompress gzip content-encoded responses
+    type: bool
+    default: true
+    version_added: '2.14'
   url:
     description:
       - HTTP or HTTPS URL in the form (http|https)://host.domain[:port]/path
@@ -24,7 +39,7 @@ options:
     required: true
   dest:
     description:
-      - A path of where to download the file to (if desired). If I(dest) is a
+      - A path of where to download the file to (if desired). If O(dest) is a
         directory, the basename of the file on the remote server will be used.
     type: path
   url_username:
@@ -39,23 +54,23 @@ options:
     aliases: [ password ]
   body:
     description:
-      - The body of the http request/response to the web service. If C(body_format) is set
-        to 'json' it will take an already formatted JSON string or convert a data structure
+      - The body of the http request/response to the web service. If O(body_format) is set
+        to V(json) it will take an already formatted JSON string or convert a data structure
         into JSON.
-      - If C(body_format) is set to 'form-urlencoded' it will convert a dictionary
+      - If O(body_format) is set to V(form-urlencoded) it will convert a dictionary
         or list of tuples into an 'application/x-www-form-urlencoded' string. (Added in v2.7)
-      - If C(body_format) is set to 'form-multipart' it will convert a dictionary
+      - If O(body_format) is set to V(form-multipart) it will convert a dictionary
         into 'multipart/form-multipart' body. (Added in v2.10)
     type: raw
   body_format:
     description:
-      - The serialization format of the body. When set to C(json), C(form-multipart), or C(form-urlencoded), encodes
+      - The serialization format of the body. When set to V(json), V(form-multipart), or V(form-urlencoded), encodes
         the body argument, if needed, and automatically sets the Content-Type header accordingly.
       - As of v2.3 it is possible to override the C(Content-Type) header, when
-        set to C(json) or C(form-urlencoded) via the I(headers) option.
-      - The 'Content-Type' header cannot be overridden when using C(form-multipart)
-      - C(form-urlencoded) was added in v2.7.
-      - C(form-multipart) was added in v2.10.
+        set to V(json) or V(form-urlencoded) via the O(headers) option.
+      - The 'Content-Type' header cannot be overridden when using V(form-multipart)
+      - V(form-urlencoded) was added in v2.7.
+      - V(form-multipart) was added in v2.10.
     type: str
     choices: [ form-urlencoded, json, raw, form-multipart ]
     default: raw
@@ -72,24 +87,31 @@ options:
       - Whether or not to return the body of the response as a "content" key in
         the dictionary result no matter it succeeded or failed.
       - Independently of this option, if the reported Content-type is "application/json", then the JSON is
-        always loaded into a key called C(json) in the dictionary results.
+        always loaded into a key called RV(ignore:json) in the dictionary results.
     type: bool
     default: no
   force_basic_auth:
     description:
       - Force the sending of the Basic authentication header upon initial request.
-      - The library used by the uri module only sends authentication information when a webservice
-        responds to an initial request with a 401 status. Since some basic auth services do not properly
-        send a 401, logins will fail.
+      - When this setting is V(false), this module will first try an unauthenticated request, and when the server replies
+        with an C(HTTP 401) error, it will submit the Basic authentication header.
+      - When this setting is V(true), this module will immediately send a Basic authentication header on the first
+        request.
+      - "Use this setting in any of the following scenarios:"
+      - You know the webservice endpoint always requires HTTP Basic authentication, and you want to speed up your
+        requests by eliminating the first roundtrip.
+      - The web service does not properly send an HTTP 401 error to your client, so Ansible's HTTP library will not
+        properly respond with HTTP credentials, and logins will fail.
+      - The webservice bans or rate-limits clients that cause any HTTP 401 errors.
     type: bool
     default: no
   follow_redirects:
     description:
-      - Whether or not the URI module should follow redirects. C(all) will follow all redirects.
-        C(safe) will follow only "safe" redirects, where "safe" means that the client is only
-        doing a GET or HEAD on the URI to which it is being redirected. C(none) will not follow
-        any redirects. Note that C(yes) and C(no) choices are accepted for backwards compatibility,
-        where C(yes) is the equivalent of C(all) and C(no) is the equivalent of C(safe). C(yes) and C(no)
+      - Whether or not the URI module should follow redirects. V(all) will follow all redirects.
+        V(safe) will follow only "safe" redirects, where "safe" means that the client is only
+        doing a GET or HEAD on the URI to which it is being redirected. V(none) will not follow
+        any redirects. Note that V(true) and V(false) choices are accepted for backwards compatibility,
+        where V(true) is the equivalent of V(all) and V(false) is the equivalent of V(safe). V(true) and V(false)
         are deprecated and will be removed in some future version of Ansible.
     type: str
     choices: ['all', 'no', 'none', 'safe', 'urllib2', 'yes']
@@ -116,28 +138,29 @@ options:
   headers:
     description:
         - Add custom HTTP headers to a request in the format of a YAML hash. As
-          of C(2.3) supplying C(Content-Type) here will override the header
-          generated by supplying C(json) or C(form-urlencoded) for I(body_format).
+          of Ansible 2.3 supplying C(Content-Type) here will override the header
+          generated by supplying V(json) or V(form-urlencoded) for O(body_format).
     type: dict
+    default: {}
     version_added: '2.1'
   validate_certs:
     description:
-      - If C(no), SSL certificates will not be validated.
-      - This should only set to C(no) used on personally controlled sites using self-signed certificates.
-      - Prior to 1.9.2 the code defaulted to C(no).
+      - If V(false), SSL certificates will not be validated.
+      - This should only set to V(false) used on personally controlled sites using self-signed certificates.
+      - Prior to 1.9.2 the code defaulted to V(false).
     type: bool
-    default: yes
+    default: true
     version_added: '1.9.2'
   client_cert:
     description:
       - PEM formatted certificate chain file to be used for SSL client authentication.
-      - This file can also include the key as well, and if the key is included, I(client_key) is not required
+      - This file can also include the key as well, and if the key is included, O(client_key) is not required
     type: path
     version_added: '2.4'
   client_key:
     description:
       - PEM formatted file that contains your private key to be used for SSL client authentication.
-      - If I(client_cert) contains both the certificate and key, this option is not required.
+      - If O(client_cert) contains both the certificate and key, this option is not required.
     type: path
     version_added: '2.4'
   ca_path:
@@ -148,26 +171,27 @@ options:
   src:
     description:
       - Path to file to be submitted to the remote server.
-      - Cannot be used with I(body).
+      - Cannot be used with O(body).
+      - Should be used with O(force_basic_auth) to ensure success when the remote end sends a 401.
     type: path
     version_added: '2.7'
   remote_src:
     description:
-      - If C(no), the module will search for the C(src) on the controller node.
-      - If C(yes), the module will search for the C(src) on the managed (remote) node.
+      - If V(false), the module will search for the O(src) on the controller node.
+      - If V(true), the module will search for the O(src) on the managed (remote) node.
     type: bool
     default: no
     version_added: '2.7'
   force:
     description:
-      - If C(yes) do not get a cached copy.
+      - If V(true) do not get a cached copy.
     type: bool
     default: no
   use_proxy:
     description:
-      - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+      - If V(false), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
     type: bool
-    default: yes
+    default: true
   unix_socket:
     description:
     - Path to Unix domain socket to use for connection
@@ -192,12 +216,20 @@ options:
       - Use GSSAPI to perform the authentication, typically this is for Kerberos or Kerberos through Negotiate
         authentication.
       - Requires the Python library L(gssapi,https://github.com/pythongssapi/python-gssapi) to be installed.
-      - Credentials for GSSAPI can be specified with I(url_username)/I(url_password) or with the GSSAPI env var
+      - Credentials for GSSAPI can be specified with O(url_username)/O(url_password) or with the GSSAPI env var
         C(KRB5CCNAME) that specified a custom Kerberos credential cache.
-      - NTLM authentication is C(not) supported even if the GSSAPI mech for NTLM has been installed.
+      - NTLM authentication is B(not) supported even if the GSSAPI mech for NTLM has been installed.
     type: bool
     default: no
     version_added: '2.11'
+  use_netrc:
+    description:
+      - Determining whether to use credentials from ``~/.netrc`` file
+      - By default .netrc is used with Basic authentication headers
+      - When set to False, .netrc credentials are ignored
+    type: bool
+    default: true
+    version_added: '2.14'
 extends_documentation_fragment:
   - action_common_attributes
   - files
@@ -221,29 +253,29 @@ author:
 
 EXAMPLES = r'''
 - name: Check that you can connect (GET) to a page and it returns a status 200
-  uri:
+  ansible.builtin.uri:
     url: http://www.example.com
 
-- name: Check that a page returns a status 200 and fail if the word AWESOME is not in the page contents
-  uri:
+- name: Check that a page returns successfully but fail if the word AWESOME is not in the page contents
+  ansible.builtin.uri:
     url: http://www.example.com
-    return_content: yes
+    return_content: true
   register: this
-  failed_when: "'AWESOME' not in this.content"
+  failed_when: this is failed or "'AWESOME' not in this.content"
 
 - name: Create a JIRA issue
-  uri:
+  ansible.builtin.uri:
     url: https://your.jira.example.com/rest/api/2/issue/
     user: your_username
     password: your_pass
     method: POST
-    body: "{{ lookup('file','issue.json') }}"
-    force_basic_auth: yes
+    body: "{{ lookup('ansible.builtin.file','issue.json') }}"
+    force_basic_auth: true
     status_code: 201
     body_format: json
 
 - name: Login to a form based webpage, then use the returned cookie to access the app in later tasks
-  uri:
+  ansible.builtin.uri:
     url: https://your.form.based.auth.example.com/index.php
     method: POST
     body_format: form-urlencoded
@@ -255,7 +287,7 @@ EXAMPLES = r'''
   register: login
 
 - name: Login to a form based webpage using a list of tuples
-  uri:
+  ansible.builtin.uri:
     url: https://your.form.based.auth.example.com/index.php
     method: POST
     body_format: form-urlencoded
@@ -267,7 +299,7 @@ EXAMPLES = r'''
   register: login
 
 - name: Upload a file via multipart/form-multipart
-  uri:
+  ansible.builtin.uri:
     url: https://httpbin.org/post
     method: POST
     body_format: form-multipart
@@ -282,37 +314,37 @@ EXAMPLES = r'''
       text_form_field: value
 
 - name: Connect to website using a previously stored cookie
-  uri:
+  ansible.builtin.uri:
     url: https://your.form.based.auth.example.com/dashboard.php
     method: GET
-    return_content: yes
+    return_content: true
     headers:
       Cookie: "{{ login.cookies_string }}"
 
 - name: Queue build of a project in Jenkins
-  uri:
+  ansible.builtin.uri:
     url: http://{{ jenkins.host }}/job/{{ jenkins.job }}/build?token={{ jenkins.token }}
     user: "{{ jenkins.user }}"
     password: "{{ jenkins.password }}"
     method: GET
-    force_basic_auth: yes
+    force_basic_auth: true
     status_code: 201
 
 - name: POST from contents of local file
-  uri:
+  ansible.builtin.uri:
     url: https://httpbin.org/post
     method: POST
     src: file.json
 
 - name: POST from contents of remote file
-  uri:
+  ansible.builtin.uri:
     url: https://httpbin.org/post
     method: POST
     src: /path/to/my/file.json
-    remote_src: yes
+    remote_src: true
 
 - name: Create workspaces in Log analytics Azure
-  uri:
+  ansible.builtin.uri:
     url: https://www.mms.microsoft.com/Embedded/Api/ConfigDataSources/LogManagementData/Save
     method: POST
     body_format: json
@@ -326,7 +358,7 @@ EXAMPLES = r'''
     body:
 
 - name: Pause play until a URL is reachable from this host
-  uri:
+  ansible.builtin.uri:
     url: "http://192.0.2.1/some/test"
     follow_redirects: none
     method: GET
@@ -335,44 +367,25 @@ EXAMPLES = r'''
   retries: 720 # 720 * 5 seconds = 1hour (60*60/5)
   delay: 5 # Every 5 seconds
 
-# There are issues in a supporting Python library that is discussed in
-# https://github.com/ansible/ansible/issues/52705 where a proxy is defined
-# but you want to bypass proxy use on CIDR masks by using no_proxy
-- name: Work around a python issue that doesn't support no_proxy envvar
+- name: Provide SSL/TLS ciphers as a list
   uri:
-    follow_redirects: none
-    validate_certs: false
-    timeout: 5
-    url: "http://{{ ip_address }}:{{ port | default(80) }}"
-  register: uri_data
-  failed_when: false
-  changed_when: false
-  vars:
-    ip_address: 192.0.2.1
-  environment: |
-      {
-        {% for no_proxy in (lookup('env', 'no_proxy') | regex_replace('\s*,\s*', ' ') ).split() %}
-          {% if no_proxy | regex_search('\/') and
-                no_proxy | ipaddr('net') != '' and
-                no_proxy | ipaddr('net') != false and
-                ip_address | ipaddr(no_proxy) is not none and
-                ip_address | ipaddr(no_proxy) != false %}
-            'no_proxy': '{{ ip_address }}'
-          {% elif no_proxy | regex_search(':') != '' and
-                  no_proxy | regex_search(':') != false and
-                  no_proxy == ip_address + ':' + (port | default(80)) %}
-            'no_proxy': '{{ ip_address }}:{{ port | default(80) }}'
-          {% elif no_proxy | ipaddr('host') != '' and
-                  no_proxy | ipaddr('host') != false and
-                  no_proxy == ip_address %}
-            'no_proxy': '{{ ip_address }}'
-          {% elif no_proxy | regex_search('^(\*|)\.') != '' and
-                  no_proxy | regex_search('^(\*|)\.') != false and
-                  no_proxy | regex_replace('\*', '') in ip_address %}
-            'no_proxy': '{{ ip_address }}'
-          {% endif %}
-        {% endfor %}
-      }
+    url: https://example.org
+    ciphers:
+      - '@SECLEVEL=2'
+      - ECDH+AESGCM
+      - ECDH+CHACHA20
+      - ECDH+AES
+      - DHE+AES
+      - '!aNULL'
+      - '!eNULL'
+      - '!aDSS'
+      - '!SHA1'
+      - '!AESCCM'
+
+- name: Provide SSL/TLS ciphers as an OpenSSL formatted cipher list
+  uri:
+    url: https://example.org
+    ciphers: '@SECLEVEL=2:ECDH+AESGCM:ECDH+CHACHA20:ECDH+AES:DHE+AES:!aNULL:!eNULL:!aDSS:!SHA1:!AESCCM'
 '''
 
 RETURN = r'''
@@ -426,22 +439,21 @@ url:
   sample: https://www.ansible.com/
 '''
 
-import datetime
 import json
 import os
 import re
 import shutil
-import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule, sanitize_keys
-from ansible.module_utils.six import PY2, PY3, binary_type, iteritems, string_types
+from ansible.module_utils.six import binary_type, iteritems, string_types
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
-from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common._collections_compat import Mapping, Sequence
+from ansible.module_utils.common.text.converters import to_native, to_text
+from ansible.module_utils.compat.datetime import utcnow, utcfromtimestamp
+from ansible.module_utils.six.moves.collections_abc import Mapping, Sequence
 from ansible.module_utils.urls import fetch_url, get_response_filename, parse_content_type, prepare_multipart, url_argument_spec
 
-JSON_CANDIDATES = ('text', 'json', 'javascript')
+JSON_CANDIDATES = {'json', 'javascript'}
 
 # List of response key names we do not want sanitize_keys() to change.
 NO_MODIFY_KEYS = frozenset(
@@ -457,61 +469,39 @@ def format_message(err, resp):
 
 
 def write_file(module, dest, content, resp):
-    # create a tempfile with some test content
-    fd, tmpsrc = tempfile.mkstemp(dir=module.tmpdir)
-    f = os.fdopen(fd, 'wb')
+    """
+    Create temp file and write content to dest file only if content changed
+    """
+
+    tmpsrc = None
+
     try:
-        if isinstance(content, binary_type):
-            f.write(content)
-        else:
-            shutil.copyfileobj(content, f)
+        fd, tmpsrc = tempfile.mkstemp(dir=module.tmpdir)
+        with os.fdopen(fd, 'wb') as f:
+            if isinstance(content, binary_type):
+                f.write(content)
+            else:
+                shutil.copyfileobj(content, f)
     except Exception as e:
-        os.remove(tmpsrc)
+        if tmpsrc and os.path.exists(tmpsrc):
+            os.remove(tmpsrc)
         msg = format_message("Failed to create temporary content file: %s" % to_native(e), resp)
         module.fail_json(msg=msg, **resp)
-    f.close()
 
-    checksum_src = None
-    checksum_dest = None
-
-    # raise an error if there is no tmpsrc file
-    if not os.path.exists(tmpsrc):
-        os.remove(tmpsrc)
-        msg = format_message("Source '%s' does not exist" % tmpsrc, resp)
-        module.fail_json(msg=msg, **resp)
-    if not os.access(tmpsrc, os.R_OK):
-        os.remove(tmpsrc)
-        msg = format_message("Source '%s' not readable" % tmpsrc, resp)
-        module.fail_json(msg=msg, **resp)
     checksum_src = module.sha1(tmpsrc)
-
-    # check if there is no dest file
-    if os.path.exists(dest):
-        # raise an error if copy has no permission on dest
-        if not os.access(dest, os.W_OK):
-            os.remove(tmpsrc)
-            msg = format_message("Destination '%s' not writable" % dest, resp)
-            module.fail_json(msg=msg, **resp)
-        if not os.access(dest, os.R_OK):
-            os.remove(tmpsrc)
-            msg = format_message("Destination '%s' not readable" % dest, resp)
-            module.fail_json(msg=msg, **resp)
-        checksum_dest = module.sha1(dest)
-    else:
-        if not os.access(os.path.dirname(dest), os.W_OK):
-            os.remove(tmpsrc)
-            msg = format_message("Destination dir '%s' not writable" % os.path.dirname(dest), resp)
-            module.fail_json(msg=msg, **resp)
+    checksum_dest = module.sha1(dest)
 
     if checksum_src != checksum_dest:
         try:
-            shutil.copyfile(tmpsrc, dest)
+            module.atomic_move(tmpsrc, dest)
         except Exception as e:
-            os.remove(tmpsrc)
+            if os.path.exists(tmpsrc):
+                os.remove(tmpsrc)
             msg = format_message("failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)), resp)
             module.fail_json(msg=msg, **resp)
 
-    os.remove(tmpsrc)
+    if os.path.exists(tmpsrc):
+        os.remove(tmpsrc)
 
 
 def absolute_location(url, location):
@@ -568,7 +558,8 @@ def form_urlencoded(body):
     return body
 
 
-def uri(module, url, dest, body, body_format, method, headers, socket_timeout, ca_path, unredirected_headers):
+def uri(module, url, dest, body, body_format, method, headers, socket_timeout, ca_path, unredirected_headers, decompress,
+        ciphers, use_netrc):
     # is dest is set and is a directory, let's check if we get redirected and
     # set the filename from that url
 
@@ -587,12 +578,13 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
     kwargs = {}
     if dest is not None and os.path.isfile(dest):
         # if destination file already exist, only download if file newer
-        kwargs['last_mod_time'] = datetime.datetime.utcfromtimestamp(os.path.getmtime(dest))
+        kwargs['last_mod_time'] = utcfromtimestamp(os.path.getmtime(dest))
 
     resp, info = fetch_url(module, url, data=data, headers=headers,
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
                            ca_path=ca_path, unredirected_headers=unredirected_headers,
-                           **kwargs)
+                           use_proxy=module.params['use_proxy'], decompress=decompress,
+                           ciphers=ciphers, use_netrc=use_netrc, force=module.params['force'], **kwargs)
 
     if src:
         # Try to close the open file handle
@@ -625,6 +617,9 @@ def main():
         remote_src=dict(type='bool', default=False),
         ca_path=dict(type='path', default=None),
         unredirected_headers=dict(type='list', elements='str', default=[]),
+        decompress=dict(type='bool', default=True),
+        ciphers=dict(type='list', elements='str'),
+        use_netrc=dict(type='bool', default=True),
     )
 
     module = AnsibleModule(
@@ -646,6 +641,9 @@ def main():
     ca_path = module.params['ca_path']
     dict_headers = module.params['headers']
     unredirected_headers = module.params['unredirected_headers']
+    decompress = module.params['decompress']
+    ciphers = module.params['ciphers']
+    use_netrc = module.params['use_netrc']
 
     if not re.match('^[A-Z]+$', method):
         module.fail_json(msg="Parameter 'method' needs to be a single word in uppercase, like GET or POST.")
@@ -686,11 +684,12 @@ def main():
             module.exit_json(stdout="skipped, since '%s' does not exist" % removes, changed=False)
 
     # Make the request
-    start = datetime.datetime.utcnow()
+    start = utcnow()
     r, info = uri(module, url, dest, body, body_format, method,
-                  dict_headers, socket_timeout, ca_path, unredirected_headers)
+                  dict_headers, socket_timeout, ca_path, unredirected_headers,
+                  decompress, ciphers, use_netrc)
 
-    elapsed = (datetime.datetime.utcnow() - start).seconds
+    elapsed = (utcnow() - start).seconds
 
     if r and dest is not None and os.path.isdir(dest):
         filename = get_response_filename(r) or 'index.html'
@@ -702,16 +701,24 @@ def main():
         content_type, main_type, sub_type, content_encoding = parse_content_type(r)
     else:
         content_type = 'application/octet-stream'
-        main_type = 'aplication'
+        main_type = 'application'
         sub_type = 'octet-stream'
         content_encoding = 'utf-8'
 
-    maybe_json = content_type and any(candidate in sub_type for candidate in JSON_CANDIDATES)
+    if sub_type and '+' in sub_type:
+        # https://www.rfc-editor.org/rfc/rfc6839#section-3.1
+        sub_type_suffix = sub_type.partition('+')[2]
+        maybe_json = content_type and sub_type_suffix.lower() in JSON_CANDIDATES
+    elif sub_type:
+        maybe_json = content_type and sub_type.lower() in JSON_CANDIDATES
+    else:
+        maybe_json = False
+
     maybe_output = maybe_json or return_content or info['status'] not in status_code
 
     if maybe_output:
         try:
-            if PY3 and (r.fp is None or r.closed):
+            if r.fp is None or r.closed:
                 raise TypeError
             content = r.read()
         except (AttributeError, TypeError):
@@ -762,8 +769,7 @@ def main():
                 js = json.loads(u_content)
                 uresp['json'] = js
             except Exception:
-                if PY2:
-                    sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
+                ...
     else:
         u_content = None
 

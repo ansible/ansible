@@ -1,0 +1,19 @@
+- name: "Set hash algorithms to test"
+  set_fact:
+    algorithms:
+      sha256: b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006
+      sha384: 298553d31087fd3f6659801d2e5cde3ff63fad609dc50ad8e194dde80bfb8a084edfa761f025928448f39d720fce55f2
+      sha512: 69b589f7775fe04244e8a9db216a3c91db1680baa33ccd0c317b8d7f0334433f7362d00c8080b3365bf08d532956ba01dbebc497b51ced8f8b05a44a66b854bf
+      sha3_256: 64e5ea73a2f799f35abd0b1242df5e70c84248c9883f89343d4cd5f6d493a139
+      sha3_384: 976edebcb496ad8be0f7fa4411cc8e2404e7e65f1088fabf7be44484458726c61d4985bdaeff8700008ed1670a9b982d
+      sha3_512: f8cca1d98e750e2c2ab44954dc9f1b6e8e35ace71ffcc1cd21c7770eb8eccfbd77d40b2d7d145120efbbb781599294ccc6148c6cda1aa66146363e5fdddd2336
+
+- name: "Verify various checksum algorithms work"
+  get_url:
+    url: 'http://localhost:{{ http_port }}/27617.txt'  # content is 'ptux'
+    dest: '{{ remote_tmp_dir }}/27617.{{ algorithm }}.txt'
+    checksum: "{{ algorithm }}:{{ algorithms[algorithm] }}"
+    force: yes
+  loop: "{{ algorithms.keys() }}"
+  loop_control:
+    loop_var: algorithm

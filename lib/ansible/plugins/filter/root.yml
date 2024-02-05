@@ -1,0 +1,32 @@
+DOCUMENTATION:
+  name: root
+  version_added: "1.9"
+  short_description: root of (math operation)
+  description:
+    - Math operation that returns the Nth root of inputed number C(X ^^ N).
+  positional: _input, base
+  options:
+    _input:
+      description: Number to operate on.
+      type: float
+      required: true
+    base:
+      description: Which root to take.
+      type: float
+      default: 2
+
+EXAMPLES: |
+
+  # => 8
+  fiveroot: "{{ 32768 | root(5) }}"
+
+  # 2
+  sqrt_of_2: "{{ 4 | root }}"
+
+  # me ^^ 3
+  cuberoot_me: "{{ me | root(3) }}"
+
+RETURN:
+  _value:
+    description: Resulting number.
+    type: float

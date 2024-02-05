@@ -3,8 +3,7 @@
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -53,7 +52,7 @@ EXAMPLES = r'''
     msg: "{{ mounts['content'] | b64decode }}"
 
 # From the commandline, find the pid of the remote machine's sshd
-# $ ansible host -m slurp -a 'src=/var/run/sshd.pid'
+# $ ansible host -m ansible.builtin.slurp -a 'src=/var/run/sshd.pid'
 # host | SUCCESS => {
 #     "changed": false,
 #     "content": "MjE3OQo=",
@@ -84,7 +83,6 @@ source:
 
 import base64
 import errno
-import os
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native

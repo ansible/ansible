@@ -1,0 +1,38 @@
+- hosts: all
+  gather_facts: false
+  tasks:
+    - block:
+      - name: check initial state
+        assert:
+          that:
+            - "'one' in ansible_play_hosts"
+            - "'two' in ansible_play_hosts"
+            - "'three' in ansible_play_hosts"
+            - "'four' not in ansible_play_hosts"
+        run_once: true
+
+      - name: change symlink
+        file: src=./inventory_new.yml dest=./inventory_refresh.yml state=link force=yes follow=false
+        delegate_to: localhost
+        run_once: true
+
+      - name: refresh the inventory to new source
+        meta: refresh_inventory
+
+      always:
+        - name: revert symlink, invenotry was already reread or failed
+          file: src=./inventory_old.yml dest=./inventory_refresh.yml state=link force=yes follow=false
+          delegate_to: localhost
+          run_once: true
+
+- hosts: all
+  gather_facts: false
+  tasks:
+      - name: check refreshed state
+        assert:
+          that:
+            - "'one' not in ansible_play_hosts"
+            - "'two' in ansible_play_hosts"
+            - "'three' in ansible_play_hosts"
+            - "'four' in ansible_play_hosts"
+        run_once: true

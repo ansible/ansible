@@ -1,22 +1,29 @@
 # Copyright (c) 2018 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
+from functools import lru_cache
+
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.inventory.host import Host
-from ansible.module_utils._text import to_bytes
+from ansible.inventory.group import InventoryObjectType
 from ansible.plugins.loader import vars_loader
-from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
 
 display = Display()
+
+
+def _prime_vars_loader():
+    # find 3rd party legacy vars plugins once, and look them up by name subsequently
+    list(vars_loader.all(class_only=True))
+    for plugin_name in C.VARIABLE_PLUGINS_ENABLED:
+        if not plugin_name:
+            continue
+        vars_loader.get(plugin_name)
 
 
 def get_plugin_vars(loader, plugin, path, entities):
@@ -25,12 +32,20 @@ def get_plugin_vars(loader, plugin, path, entities):
     try:
         data = plugin.get_vars(loader, path, entities)
     except AttributeError:
+        if hasattr(plugin, 'get_host_vars') or hasattr(plugin, 'get_group_vars'):
+            display.deprecated(
+                f"The vars plugin {plugin.ansible_name} from {plugin._original_path} is relying "
+                "on the deprecated entrypoints 'get_host_vars' and 'get_group_vars'. "
+                "This plugin should be updated to inherit from BaseVarsPlugin and define "
+                "a 'get_vars' method as the main entrypoint instead.",
+                version="2.20",
+            )
         try:
             for entity in entities:
-                if isinstance(entity, Host):
-                    data.update(plugin.get_host_vars(entity.name))
+                if entity.base_type is InventoryObjectType.HOST:
+                    data |= plugin.get_host_vars(entity.name)
                 else:
-                    data.update(plugin.get_group_vars(entity.name))
+                    data |= plugin.get_group_vars(entity.name)
         except AttributeError:
             if hasattr(plugin, 'run'):
                 raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
@@ -39,40 +54,53 @@ def get_plugin_vars(loader, plugin, path, entities):
     return data
 
 
+# optimized for stateless plugins; non-stateless plugin instances will fall out quickly
+@lru_cache(maxsize=10)
+def _plugin_should_run(plugin, stage):
+    # if a plugin-specific setting has not been provided, use the global setting
+    # older/non shipped plugins that don't support the plugin-specific setting should also use the global setting
+    allowed_stages = None
+
+    try:
+        allowed_stages = plugin.get_option('stage')
+    except (AttributeError, KeyError):
+        pass
+
+    if allowed_stages:
+        return allowed_stages in ('all', stage)
+
+    # plugin didn't declare a preference; consult global config
+    config_stage_override = C.RUN_VARS_PLUGINS
+    if config_stage_override == 'demand' and stage == 'inventory':
+        return False
+    elif config_stage_override == 'start' and stage == 'task':
+        return False
+    return True
+
+
 def get_vars_from_path(loader, path, entities, stage):
-
     data = {}
+    if vars_loader._paths is None:
+        # cache has been reset, reload all()
+        _prime_vars_loader()
 
-    vars_plugin_list = list(vars_loader.all())
-    for plugin_name in C.VARIABLE_PLUGINS_ENABLED:
-        if AnsibleCollectionRef.is_valid_fqcr(plugin_name):
-            vars_plugin = vars_loader.get(plugin_name)
-            if vars_plugin is None:
-                # Error if there's no play directory or the name is wrong?
-                continue
-            if vars_plugin not in vars_plugin_list:
-                vars_plugin_list.append(vars_plugin)
-
-    for plugin in vars_plugin_list:
-        if plugin._load_name not in C.VARIABLE_PLUGINS_ENABLED and getattr(plugin, 'REQUIRES_WHITELIST', False):
-            # 2.x plugins shipped with ansible should require whitelisting, older or non shipped should load automatically
+    for plugin_name in vars_loader._plugin_instance_cache:
+        if (plugin := vars_loader.get(plugin_name)) is None:
             continue
 
-        has_stage = hasattr(plugin, 'get_option') and plugin.has_option('stage')
+        collection = '.' in plugin.ansible_name and not plugin.ansible_name.startswith('ansible.builtin.')
+        # Warn if a collection plugin has REQUIRES_ENABLED because it has no effect.
+        if collection and (hasattr(plugin, 'REQUIRES_ENABLED') or hasattr(plugin, 'REQUIRES_WHITELIST')):
+            display.warning(
+                "Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED is not supported. "
+                "This should be removed from the plugin %s." % plugin.ansible_name
+            )
 
-        # if a plugin-specific setting has not been provided, use the global setting
-        # older/non shipped plugins that don't support the plugin-specific setting should also use the global setting
-        use_global = (has_stage and plugin.get_option('stage') is None) or not has_stage
-
-        if use_global:
-            if C.RUN_VARS_PLUGINS == 'demand' and stage == 'inventory':
-                continue
-            elif C.RUN_VARS_PLUGINS == 'start' and stage == 'task':
-                continue
-        elif has_stage and plugin.get_option('stage') not in ('all', stage):
+        if not _plugin_should_run(plugin, stage):
             continue
 
-        data = combine_vars(data, get_plugin_vars(loader, plugin, path, entities))
+        if (new_vars := get_plugin_vars(loader, plugin, path, entities)) != {}:
+            data = combine_vars(data, new_vars)
 
     return data
 
@@ -86,10 +114,11 @@ def get_vars_from_inventory_sources(loader, sources, entities, stage):
             continue
         if ',' in path and not os.path.exists(path):  # skip host lists
             continue
-        elif not os.path.isdir(to_bytes(path)):
+        elif not os.path.isdir(path):
             # always pass the directory of the inventory source file
             path = os.path.dirname(path)
 
-        data = combine_vars(data, get_vars_from_path(loader, path, entities, stage))
+        if (new_vars := get_vars_from_path(loader, path, entities, stage)) != {}:
+            data = combine_vars(data, new_vars)
 
     return data

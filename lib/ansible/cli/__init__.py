@@ -3,19 +3,65 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+import locale
+import os
 import sys
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
-if sys.version_info < (3, 8):
+if sys.version_info < (3, 10):
     raise SystemExit(
-        'ERROR: Ansible requires Python 3.8 or newer on the controller. '
+        'ERROR: Ansible requires Python 3.10 or newer on the controller. '
         'Current version: %s' % ''.join(sys.version.splitlines())
     )
+
+
+def check_blocking_io():
+    """Check stdin/stdout/stderr to make sure they are using blocking IO."""
+    handles = []
+
+    for handle in (sys.stdin, sys.stdout, sys.stderr):
+        # noinspection PyBroadException
+        try:
+            fd = handle.fileno()
+        except Exception:
+            continue  # not a real file handle, such as during the import sanity test
+
+        if not os.get_blocking(fd):
+            handles.append(getattr(handle, 'name', None) or '#%s' % fd)
+
+    if handles:
+        raise SystemExit('ERROR: Ansible requires blocking IO on stdin/stdout/stderr. '
+                         'Non-blocking file handles detected: %s' % ', '.join(_io for _io in handles))
+
+
+check_blocking_io()
+
+
+def initialize_locale():
+    """Set the locale to the users default setting and ensure
+    the locale and filesystem encoding are UTF-8.
+    """
+    try:
+        locale.setlocale(locale.LC_ALL, '')
+        dummy, encoding = locale.getlocale()
+    except (locale.Error, ValueError) as e:
+        raise SystemExit(
+            'ERROR: Ansible could not initialize the preferred locale: %s' % e
+        )
+
+    if not encoding or encoding.lower() not in ('utf-8', 'utf8'):
+        raise SystemExit('ERROR: Ansible requires the locale encoding to be UTF-8; Detected %s.' % encoding)
+
+    fs_enc = sys.getfilesystemencoding()
+    if fs_enc.lower() != 'utf-8':
+        raise SystemExit('ERROR: Ansible requires the filesystem encoding to be UTF-8; Detected %s.' % fs_enc)
+
+
+initialize_locale()
+
 
 from importlib.metadata import version
 from ansible.module_utils.compat.version import LooseVersion
@@ -31,7 +77,6 @@ if jinja2_version < LooseVersion('3.0'):
 
 import errno
 import getpass
-import os
 import subprocess
 import traceback
 from abc import ABC, abstractmethod
@@ -39,8 +84,7 @@ from pathlib import Path
 
 try:
     from ansible import constants as C
-    from ansible.utils.display import Display, initialize_locale
-    initialize_locale()
+    from ansible.utils.display import Display
     display = Display()
 except Exception as e:
     print('ERROR: %s' % e, file=sys.stderr)
@@ -51,11 +95,12 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.file import is_executable
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
-from ansible.plugins.loader import add_all_plugin_dirs
+from ansible.plugins.loader import add_all_plugin_dirs, init_plugin_loader
 from ansible.release import __version__
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
@@ -73,7 +118,7 @@ except ImportError:
 class CLI(ABC):
     ''' code behind bin/ansible* programs '''
 
-    PAGER = 'less'
+    PAGER = C.config.get_config_value('PAGER')
 
     # -F (quit-if-one-screen) -R (allow raw ansi control chars)
     # -S (chop long lines) -X (disable termcap init and de-init)
@@ -107,6 +152,13 @@ class CLI(ABC):
         running an Ansible command.
         """
         self.parse()
+
+        # Initialize plugin loader after parse, so that the init code can utilize parsed arguments
+        cli_collections_path = context.CLIARGS.get('collections_path') or []
+        if not is_sequence(cli_collections_path):
+            # In some contexts ``collections_path`` is singular
+            cli_collections_path = [cli_collections_path]
+        init_plugin_loader(cli_collections_path)
 
         display.vv(to_text(opt_help.version(self.parser.prog)))
 
@@ -142,8 +194,7 @@ class CLI(ABC):
 
     @staticmethod
     def build_vault_ids(vault_ids, vault_password_files=None,
-                        ask_vault_pass=None, create_new_password=None,
-                        auto_prompt=True):
+                        ask_vault_pass=None, auto_prompt=True):
         vault_password_files = vault_password_files or []
         vault_ids = vault_ids or []
 
@@ -166,7 +217,6 @@ class CLI(ABC):
 
         return vault_ids
 
-    # TODO: remove the now unused args
     @staticmethod
     def setup_vault_secrets(loader, vault_ids, vault_password_files=None,
                             ask_vault_pass=None, create_new_password=False,
@@ -200,7 +250,6 @@ class CLI(ABC):
         vault_ids = CLI.build_vault_ids(vault_ids,
                                         vault_password_files,
                                         ask_vault_pass,
-                                        create_new_password,
                                         auto_prompt=auto_prompt)
 
         last_exception = found_vault_secret = None
@@ -409,8 +458,8 @@ class CLI(ABC):
 
         try:
             options = self.parser.parse_args(self.args[1:])
-        except SystemExit as e:
-            if(e.code != 0):
+        except SystemExit as ex:
+            if ex.code != 0:
                 self.parser.exit(status=2, message=" \n%s" % self.parser.format_help())
             raise
         options = self.post_process_args(options)
@@ -448,11 +497,11 @@ class CLI(ABC):
         # this is a much simpler form of what is in pydoc.py
         if not sys.stdout.isatty():
             display.display(text, screen_only=True)
-        elif 'PAGER' in os.environ:
+        elif CLI.PAGER:
             if sys.platform == 'win32':
                 display.display(text, screen_only=True)
             else:
-                CLI.pager_pipe(text, os.environ['PAGER'])
+                CLI.pager_pipe(text)
         else:
             p = subprocess.Popen('less --version', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             p.communicate()
@@ -462,12 +511,12 @@ class CLI(ABC):
                 display.display(text, screen_only=True)
 
     @staticmethod
-    def pager_pipe(text, cmd):
+    def pager_pipe(text):
         ''' pipe text through a pager '''
-        if 'LESS' not in os.environ:
+        if 'less' in CLI.PAGER:
             os.environ['LESS'] = CLI.LESS_OPTS
         try:
-            cmd = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
+            cmd = subprocess.Popen(CLI.PAGER, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
             cmd.communicate(input=to_bytes(text))
         except IOError:
             pass
@@ -476,6 +525,10 @@ class CLI(ABC):
 
     @staticmethod
     def _play_prereqs():
+        # TODO: evaluate moving all of the code that touches ``AnsibleCollectionConfig``
+        # into ``init_plugin_loader`` so that we can specifically remove
+        # ``AnsibleCollectionConfig.playbook_paths`` to make it immutable after instantiation
+
         options = context.CLIARGS
 
         # all needs loader
@@ -503,7 +556,7 @@ class CLI(ABC):
         loader.set_vault_secrets(vault_secrets)
 
         # create the inventory, and filter it based on the subset specified (if any)
-        inventory = InventoryManager(loader=loader, sources=options['inventory'])
+        inventory = InventoryManager(loader=loader, sources=options['inventory'], cache=(not options.get('flush_cache')))
 
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables
@@ -525,7 +578,7 @@ class CLI(ABC):
 
         hosts = inventory.list_hosts(pattern)
         if not hosts and no_hosts is False:
-            raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
+            raise AnsibleError("Specified inventory, host pattern and/or --limit leaves us with no hosts to target.")
 
         return hosts
 
@@ -548,7 +601,7 @@ class CLI(ABC):
             try:
                 p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             except OSError as e:
-                raise AnsibleError("Problem occured when trying to run the password script %s (%s)."
+                raise AnsibleError("Problem occurred when trying to run the password script %s (%s)."
                                    " If this is not a script, remove the executable bit from the file." % (pwd_file, e))
 
             stdout, stderr = p.communicate()
@@ -579,7 +632,7 @@ class CLI(ABC):
         try:
             display.debug("starting run")
 
-            ansible_dir = Path("~/.ansible").expanduser()
+            ansible_dir = Path(C.ANSIBLE_HOME).expanduser()
             try:
                 ansible_dir.mkdir(mode=0o700)
             except OSError as exc:

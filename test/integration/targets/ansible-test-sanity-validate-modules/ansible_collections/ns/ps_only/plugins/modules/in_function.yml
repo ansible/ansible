@@ -1,0 +1,25 @@
+# Copyright (c) 2022 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+DOCUMENTATION:
+  module: in_function
+  short_description: Short description for in_function module
+  description:
+  - Description for in_function module
+  options:
+    test:
+      description: Description for test
+      type: str
+  author:
+  - Ansible Core Team
+
+EXAMPLES: |
+  - name: example for sidecar
+    ns.col.in_function:
+
+RETURN:
+  test:
+    description: The test return value
+    returned: always
+    type: str
+    sample: abc

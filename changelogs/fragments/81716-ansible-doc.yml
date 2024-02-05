@@ -1,0 +1,3 @@
+---
+removed_features:
+  - Remove deprecated APIs from ansible-docs (https://github.com/ansible/ansible/issues/81716).

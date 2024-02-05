@@ -11,6 +11,7 @@ from ...util import (
 
 from ..completers import (
     complete_target,
+    register_completer,
 )
 
 from ..environments import (
@@ -43,9 +44,9 @@ from .units import (
 
 
 def do_commands(
-        parent,  # type: argparse.ArgumentParser
-        completer,  # type: CompositeActionCompletionFinder
-):  # type: (...) -> None
+    parent: argparse.ArgumentParser,
+    completer: CompositeActionCompletionFinder,
+) -> None:
     """Command line parsing for all commands."""
     common = argparse.ArgumentParser(add_help=False)
 
@@ -110,33 +111,33 @@ def do_commands(
 
     testing = test.add_argument_group(title='common testing arguments')
 
-    testing.add_argument(
+    register_completer(testing.add_argument(
         'include',
         metavar='TARGET',
         nargs='*',
         help='test the specified target',
-    ).completer = functools.partial(complete_target, completer)
+    ), functools.partial(complete_target, completer))
 
-    testing.add_argument(
+    register_completer(testing.add_argument(
         '--include',
         metavar='TARGET',
         action='append',
         help='include the specified target',
-    ).completer = functools.partial(complete_target, completer)
+    ), functools.partial(complete_target, completer))
 
-    testing.add_argument(
+    register_completer(testing.add_argument(
         '--exclude',
         metavar='TARGET',
         action='append',
         help='exclude the specified target',
-    ).completer = functools.partial(complete_target, completer)
+    ), functools.partial(complete_target, completer))
 
-    testing.add_argument(
+    register_completer(testing.add_argument(
         '--require',
         metavar='TARGET',
         action='append',
         help='require the specified target',
-    ).completer = functools.partial(complete_target, completer)
+    ), functools.partial(complete_target, completer))
 
     testing.add_argument(
         '--coverage',
@@ -226,7 +227,7 @@ def do_commands(
     do_units(subparsers, test, completer)
 
 
-def color(value):  # type: (str) -> bool
+def color(value: str) -> bool:
     """Strict converter for color option."""
     if value == 'yes':
         return True

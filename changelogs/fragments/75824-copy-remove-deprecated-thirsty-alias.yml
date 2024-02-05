@@ -1,2 +1,0 @@
-removed_features:
-  - copy - remove deprecated ``thirsty`` alias (https://github.com/ansible/ansible/issues/75824)

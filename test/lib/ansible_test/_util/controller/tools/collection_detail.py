@@ -1,6 +1,5 @@
 """Retrieve collection detail."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import os
@@ -41,17 +40,17 @@ def read_manifest_json(collection_path):
         return None
 
     try:
-        with open(manifest_path) as manifest_file:
+        with open(manifest_path, encoding='utf-8') as manifest_file:
             manifest = json.load(manifest_file)
 
-        collection_info = manifest.get('collection_info') or dict()
+        collection_info = manifest.get('collection_info') or {}
 
         result = dict(
             version=collection_info.get('version'),
         )
         validate_version(result['version'])
     except Exception as ex:  # pylint: disable=broad-except
-        raise Exception('{0}: {1}'.format(os.path.basename(manifest_path), ex))
+        raise Exception('{0}: {1}'.format(os.path.basename(manifest_path), ex)) from None
 
     return result
 
@@ -64,7 +63,7 @@ def read_galaxy_yml(collection_path):
         return None
 
     try:
-        with open(galaxy_path) as galaxy_file:
+        with open(galaxy_path, encoding='utf-8') as galaxy_file:
             galaxy = yaml.safe_load(galaxy_file)
 
         result = dict(
@@ -72,7 +71,7 @@ def read_galaxy_yml(collection_path):
         )
         validate_version(result['version'])
     except Exception as ex:  # pylint: disable=broad-except
-        raise Exception('{0}: {1}'.format(os.path.basename(galaxy_path), ex))
+        raise Exception('{0}: {1}'.format(os.path.basename(galaxy_path), ex)) from None
 
     return result
 
@@ -82,7 +81,7 @@ def main():
     collection_path = sys.argv[1]
 
     try:
-        result = read_manifest_json(collection_path) or read_galaxy_yml(collection_path) or dict()
+        result = read_manifest_json(collection_path) or read_galaxy_yml(collection_path) or {}
     except Exception as ex:  # pylint: disable=broad-except
         result = dict(
             error='{0}'.format(ex),

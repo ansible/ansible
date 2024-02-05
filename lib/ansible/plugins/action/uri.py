@@ -3,17 +3,14 @@
 # (c) 2018, Matt Martz  <matt@sivel.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
 from ansible.errors import AnsibleError, AnsibleAction, _AnsibleActionDone, AnsibleActionFail
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.collections import Mapping, MutableMapping
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils.six import text_type
 from ansible.plugins.action import ActionBase
 
 
@@ -23,6 +20,7 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
         self._supports_async = True
+        self._supports_check_mode = False
 
         if task_vars is None:
             task_vars = dict()
@@ -82,8 +80,7 @@ class ActionModule(ActionBase):
                     self._fixup_perms2((self._connection._shell.tmpdir, tmp_src))
                 kwargs['body'] = body
 
-            new_module_args = self._task.args.copy()
-            new_module_args.update(kwargs)
+            new_module_args = self._task.args | kwargs
 
             # call with ansible.legacy prefix to prevent collections collisions while allowing local override
             result.update(self._execute_module('ansible.legacy.uri', module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))

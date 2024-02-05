@@ -20,16 +20,16 @@ from ..environments import (
 
 
 def do_shell(
-        subparsers,
-        parent,  # type: argparse.ArgumentParser
-        completer,  # type: CompositeActionCompletionFinder
+    subparsers,
+    parent: argparse.ArgumentParser,
+    completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `shell` command."""
-    parser = subparsers.add_parser(
+    parser: argparse.ArgumentParser = subparsers.add_parser(
         'shell',
         parents=[parent],
         help='open an interactive shell',
-    )  # type: argparse.ArgumentParser
+    )
 
     parser.set_defaults(
         func=command_shell,
@@ -39,9 +39,21 @@ def do_shell(
     shell = parser.add_argument_group(title='shell arguments')
 
     shell.add_argument(
+        'cmd',
+        nargs='*',
+        help='run the specified command',
+    )
+
+    shell.add_argument(
         '--raw',
         action='store_true',
         help='direct to shell with no setup',
+    )
+
+    shell.add_argument(
+        '--export',
+        metavar='PATH',
+        help='export inventory instead of opening a shell',
     )
 
     add_environments(parser, completer, ControllerMode.DELEGATED, TargetMode.SHELL)  # shell

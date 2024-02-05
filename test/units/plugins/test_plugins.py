@@ -16,15 +16,12 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
-from units.compat import unittest
-from units.compat.builtins import BUILTINS
-from units.compat.mock import patch, MagicMock
+import unittest
+from unittest.mock import patch, MagicMock
 from ansible.plugins.loader import PluginLoader, PluginPathContext
 
 
@@ -47,14 +44,14 @@ class TestErrors(unittest.TestCase):
         # python library, and then uses the __file__ attribute of
         # the result for that to get the library path, so we mock
         # that here and patch the builtin to use our mocked result
-        foo = MagicMock()
-        bar = MagicMock()
+        foo_pkg = MagicMock()
+        bar_pkg = MagicMock()
         bam = MagicMock()
         bam.__file__ = '/path/to/my/foo/bar/bam/__init__.py'
-        bar.bam = bam
-        foo.return_value.bar = bar
+        bar_pkg.bam = bam
+        foo_pkg.return_value.bar = bar_pkg
         pl = PluginLoader('test', 'foo.bar.bam', 'test', 'test_plugin')
-        with patch('{0}.__import__'.format(BUILTINS), foo):
+        with patch('builtins.__import__', foo_pkg):
             self.assertEqual(pl._get_package_paths(), ['/path/to/my/foo/bar/bam'])
 
     def test_plugins__get_paths(self):
@@ -105,7 +102,7 @@ class TestErrors(unittest.TestCase):
         self.assertEqual(one, two)
 
     @patch('ansible.plugins.loader.glob')
-    @patch.object(PluginLoader, '_get_paths')
+    @patch.object(PluginLoader, '_get_paths_with_context')
     def test_all_no_duplicate_names(self, gp_mock, glob_mock):
         '''
         This test goes along with ``test__load_module_source_no_duplicate_names``
@@ -115,8 +112,8 @@ class TestErrors(unittest.TestCase):
         fixture_path = os.path.join(os.path.dirname(__file__), 'loader_fixtures')
 
         gp_mock.return_value = [
-            fixture_path,
-            '/path/to'
+            MagicMock(path=fixture_path),
+            MagicMock(path='/path/to'),
         ]
 
         glob_mock.glob.side_effect = [
@@ -124,7 +121,7 @@ class TestErrors(unittest.TestCase):
             ['/path/to/import_fixture.py']
         ]
 
-        pl = PluginLoader('test', '', 'test', 'test_plugin')
+        pl = PluginLoader('test', '', 'test', 'test_plugins')
         # Aside from needing ``list()`` so we can do a len, ``PluginLoader.all`` returns a generator
         # so ``list()`` actually causes ``PluginLoader.all`` to run.
         plugins = list(pl.all())

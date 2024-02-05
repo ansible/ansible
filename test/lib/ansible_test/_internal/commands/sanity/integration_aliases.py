@@ -1,9 +1,11 @@
 """Sanity test to check integration test aliases."""
 from __future__ import annotations
 
+import dataclasses
 import json
 import textwrap
 import os
+import re
 import typing as t
 
 from . import (
@@ -30,6 +32,7 @@ from ...target import (
     walk_integration_targets,
     walk_module_targets,
     CompletionTarget,
+    IntegrationTargetType,
 )
 
 from ..integration.cloud import (
@@ -46,6 +49,7 @@ from ...util import (
 )
 
 from ...util_common import (
+    get_docs_url,
     write_json_test_results,
     ResultType,
 )
@@ -57,6 +61,7 @@ from ...host_configs import (
 
 class IntegrationAliasesTest(SanitySingleVersion):
     """Sanity test to evaluate integration test aliases."""
+
     CI_YML = '.azure-pipelines/azure-pipelines.yml'
     TEST_ALIAS_PREFIX = 'shippable'  # this will be changed at some point in the future
 
@@ -64,7 +69,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
     UNSTABLE = 'unstable/'
     UNSUPPORTED = 'unsupported/'
 
-    EXPLAIN_URL = 'https://docs.ansible.com/ansible-core/devel/dev_guide/testing/sanity/integration-aliases.html'
+    EXPLAIN_URL = get_docs_url('https://docs.ansible.com/ansible-core/devel/dev_guide/testing/sanity/integration-aliases.html')
 
     TEMPLATE_DISABLED = """
     The following integration tests are **disabled** [[explain]({explain_url}#disabled)]:
@@ -100,23 +105,23 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
     ansible_only = True
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
-        self._ci_config = {}  # type: t.Dict[str, t.Any]
-        self._ci_test_groups = {}  # type: t.Dict[str, t.List[int]]
+        self._ci_config: dict[str, t.Any] = {}
+        self._ci_test_groups: dict[str, list[int]] = {}
 
     @property
-    def can_ignore(self):  # type: () -> bool
+    def can_ignore(self) -> bool:
         """True if the test supports ignore entries."""
         return False
 
     @property
-    def no_targets(self):  # type: () -> bool
+    def no_targets(self) -> bool:
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return True
 
-    def load_ci_config(self, python):  # type: (PythonConfig) -> t.Dict[str, t.Any]
+    def load_ci_config(self, python: PythonConfig) -> dict[str, t.Any]:
         """Load and return the CI YAML configuration."""
         if not self._ci_config:
             self._ci_config = self.load_yaml(python, self.CI_YML)
@@ -124,10 +129,10 @@ class IntegrationAliasesTest(SanitySingleVersion):
         return self._ci_config
 
     @property
-    def ci_test_groups(self):  # type: () -> t.Dict[str, t.List[int]]
+    def ci_test_groups(self) -> dict[str, list[int]]:
         """Return a dictionary of CI test names and their group(s)."""
         if not self._ci_test_groups:
-            test_groups = {}
+            test_groups: dict[str, set[int]] = {}
 
             for stage in self._ci_config['stages']:
                 for job in stage['jobs']:
@@ -170,7 +175,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         return self._ci_test_groups
 
-    def format_test_group_alias(self, name, fallback=''):  # type: (str, str) -> str
+    def format_test_group_alias(self, name: str, fallback: str = '') -> str:
         """Return a test group alias using the given name and fallback."""
         group_numbers = self.ci_test_groups.get(name, None)
 
@@ -194,12 +199,12 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         return alias
 
-    def load_yaml(self, python, path):  # type: (PythonConfig, str) -> t.Dict[str, t.Any]
+    def load_yaml(self, python: PythonConfig, path: str) -> dict[str, t.Any]:
         """Load the specified YAML file and return the contents."""
         yaml_to_json_path = os.path.join(SANITY_ROOT, self.name, 'yaml_to_json.py')
         return json.loads(raw_command([python.path, yaml_to_json_path], data=read_text_file(path), capture=True)[0])
 
-    def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
+    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
         if args.explain:
             return SanitySuccess(self.name)
 
@@ -209,7 +214,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
                 path=self.CI_YML,
             )])
 
-        results = dict(
+        results = Results(
             comments=[],
             labels={},
         )
@@ -217,7 +222,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
         self.load_ci_config(python)
         self.check_changes(args, results)
 
-        write_json_test_results(ResultType.BOT, 'data-sanity-ci.json', results)
+        write_json_test_results(ResultType.BOT, 'data-sanity-ci.json', results.__dict__)
 
         messages = []
 
@@ -229,15 +234,15 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         return SanitySuccess(self.name)
 
-    def check_posix_targets(self, args):  # type: (SanityConfig) -> t.List[SanityMessage]
+    def check_posix_targets(self, args: SanityConfig) -> list[SanityMessage]:
         """Check POSIX integration test targets and return messages with any issues found."""
         posix_targets = tuple(walk_posix_integration_targets())
 
         clouds = get_cloud_platforms(args, posix_targets)
         cloud_targets = ['cloud/%s/' % cloud for cloud in clouds]
 
-        all_cloud_targets = tuple(filter_targets(posix_targets, ['cloud/'], directories=False, errors=False))
-        invalid_cloud_targets = tuple(filter_targets(all_cloud_targets, cloud_targets, include=False, directories=False, errors=False))
+        all_cloud_targets = tuple(filter_targets(posix_targets, ['cloud/'], errors=False))
+        invalid_cloud_targets = tuple(filter_targets(all_cloud_targets, cloud_targets, include=False, errors=False))
 
         messages = []
 
@@ -250,13 +255,13 @@ class IntegrationAliasesTest(SanitySingleVersion):
                     messages.append(SanityMessage('invalid alias `%s`' % alias, '%s/aliases' % target.path))
 
         messages += self.check_ci_group(
-            targets=tuple(filter_targets(posix_targets, ['cloud/', '%s/generic/' % self.TEST_ALIAS_PREFIX], include=False, directories=False, errors=False)),
+            targets=tuple(filter_targets(posix_targets, ['cloud/', '%s/generic/' % self.TEST_ALIAS_PREFIX], include=False, errors=False)),
             find=self.format_test_group_alias('linux').replace('linux', 'posix'),
             find_incidental=['%s/posix/incidental/' % self.TEST_ALIAS_PREFIX],
         )
 
         messages += self.check_ci_group(
-            targets=tuple(filter_targets(posix_targets, ['%s/generic/' % self.TEST_ALIAS_PREFIX], directories=False, errors=False)),
+            targets=tuple(filter_targets(posix_targets, ['%s/generic/' % self.TEST_ALIAS_PREFIX], errors=False)),
             find=self.format_test_group_alias('generic'),
         )
 
@@ -269,17 +274,42 @@ class IntegrationAliasesTest(SanitySingleVersion):
                 find_incidental = ['%s/%s/incidental/' % (self.TEST_ALIAS_PREFIX, cloud), '%s/cloud/incidental/' % self.TEST_ALIAS_PREFIX]
 
             messages += self.check_ci_group(
-                targets=tuple(filter_targets(posix_targets, ['cloud/%s/' % cloud], directories=False, errors=False)),
+                targets=tuple(filter_targets(posix_targets, ['cloud/%s/' % cloud], errors=False)),
                 find=find,
                 find_incidental=find_incidental,
             )
 
+        target_type_groups = {
+            IntegrationTargetType.TARGET: (1, 2),
+            IntegrationTargetType.CONTROLLER: (3, 4, 5),
+            IntegrationTargetType.CONFLICT: (),
+            IntegrationTargetType.UNKNOWN: (),
+        }
+
+        for target in posix_targets:
+            if target.name == 'ansible-test-container':
+                continue  # special test target which uses group 6 -- nothing else should be in that group
+
+            if f'{self.TEST_ALIAS_PREFIX}/posix/' not in target.aliases:
+                continue
+
+            found_groups = [alias for alias in target.aliases if re.search(f'^{self.TEST_ALIAS_PREFIX}/posix/group[0-9]+/$', alias)]
+            expected_groups = [f'{self.TEST_ALIAS_PREFIX}/posix/group{group}/' for group in target_type_groups[target.target_type]]
+            valid_groups = [group for group in found_groups if group in expected_groups]
+            invalid_groups = [group for group in found_groups if not any(group.startswith(expected_group) for expected_group in expected_groups)]
+
+            if not valid_groups:
+                messages.append(SanityMessage(f'Target of type {target.target_type.name} must be in at least one of these groups: {", ".join(expected_groups)}',
+                                              f'{target.path}/aliases'))
+
+            if invalid_groups:
+                messages.append(SanityMessage(f'Target of type {target.target_type.name} cannot be in these groups: {", ".join(invalid_groups)}',
+                                              f'{target.path}/aliases'))
+
         return messages
 
-    def check_windows_targets(self):
-        """
-        :rtype: list[SanityMessage]
-        """
+    def check_windows_targets(self) -> list[SanityMessage]:
+        """Check Windows integration test targets and return messages with any issues found."""
         windows_targets = tuple(walk_windows_integration_targets())
 
         messages = []
@@ -293,18 +323,18 @@ class IntegrationAliasesTest(SanitySingleVersion):
         return messages
 
     def check_ci_group(
-            self,
-            targets,  # type: t.Tuple[CompletionTarget, ...]
-            find,  # type: str
-            find_incidental=None,  # type: t.Optional[t.List[str]]
-    ):  # type: (...) -> t.List[SanityMessage]
+        self,
+        targets: tuple[CompletionTarget, ...],
+        find: str,
+        find_incidental: t.Optional[list[str]] = None,
+    ) -> list[SanityMessage]:
         """Check the CI groups set in the provided targets and return a list of messages with any issues found."""
         all_paths = set(target.path for target in targets)
-        supported_paths = set(target.path for target in filter_targets(targets, [find], directories=False, errors=False))
-        unsupported_paths = set(target.path for target in filter_targets(targets, [self.UNSUPPORTED], directories=False, errors=False))
+        supported_paths = set(target.path for target in filter_targets(targets, [find], errors=False))
+        unsupported_paths = set(target.path for target in filter_targets(targets, [self.UNSUPPORTED], errors=False))
 
         if find_incidental:
-            incidental_paths = set(target.path for target in filter_targets(targets, find_incidental, directories=False, errors=False))
+            incidental_paths = set(target.path for target in filter_targets(targets, find_incidental, errors=False))
         else:
             incidental_paths = set()
 
@@ -317,6 +347,9 @@ class IntegrationAliasesTest(SanitySingleVersion):
         messages = []
 
         for path in unassigned_paths:
+            if path == 'test/integration/targets/ansible-test-container':
+                continue  # special test target which uses group 6 -- nothing else should be in that group
+
             messages.append(SanityMessage(unassigned_message, '%s/aliases' % path))
 
         for path in conflicting_paths:
@@ -324,8 +357,8 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         return messages
 
-    def check_changes(self, args, results):  # type: (SanityConfig, t.Dict[str, t.Any]) -> None
-        """Check changes and store results in the provided results dictionary."""
+    def check_changes(self, args: SanityConfig, results: Results) -> None:
+        """Check changes and store results in the provided result dictionary."""
         integration_targets = list(walk_integration_targets())
         module_targets = list(walk_module_targets())
 
@@ -369,10 +402,10 @@ class IntegrationAliasesTest(SanitySingleVersion):
             unsupported_tests=bool(unsupported_targets),
         )
 
-        results['comments'] += comments
-        results['labels'].update(labels)
+        results.comments += comments
+        results.labels.update(labels)
 
-    def format_comment(self, template, targets):  # type: (str, t.List[str]) -> t.Optional[str]
+    def format_comment(self, template: str, targets: list[str]) -> t.Optional[str]:
         """Format and return a comment based on the given template and targets, or None if there are no targets."""
         if not targets:
             return None
@@ -387,3 +420,11 @@ class IntegrationAliasesTest(SanitySingleVersion):
         message = textwrap.dedent(template).strip().format(**data)
 
         return message
+
+
+@dataclasses.dataclass
+class Results:
+    """Check results."""
+
+    comments: list[str]
+    labels: dict[str, bool]

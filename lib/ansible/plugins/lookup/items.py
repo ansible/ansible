@@ -1,8 +1,7 @@
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: items
@@ -23,7 +22,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: "loop through list"
-  debug:
+  ansible.builtin.debug:
     msg: "An item: {{ item }}"
   with_items:
     - 1
@@ -31,7 +30,7 @@ EXAMPLES = """
     - 3
 
 - name: add several users
-  user:
+  ansible.builtin.user:
     name: "{{ item }}"
     groups: "wheel"
     state: present
@@ -40,12 +39,12 @@ EXAMPLES = """
      - testuser2
 
 - name: "loop through list from a variable"
-  debug:
+  ansible.builtin.debug:
     msg: "An item: {{ item }}"
   with_items: "{{ somelist }}"
 
 - name: more complex items to add several users
-  user:
+  ansible.builtin.user:
     name: "{{ item.name }}"
     uid: "{{ item.uid }}"
     groups: "{{ item.groups }}"

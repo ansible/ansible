@@ -27,7 +27,8 @@
     },
     "input": {
         "/etc/os-release": "PRETTY_NAME=\"Debian GNU/Linux 10 (buster)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"10\"\nVERSION=\"10 (buster)\"\nVERSION_CODENAME=buster\nID=debian\nHOME_URL=\"https://www.debian.org/\"\nSUPPORT_URL=\"https://www.debian.org/support\"\nBUG_REPORT_URL=\"https://bugs.debian.org/\"\n",
-        "/usr/lib/os-release": "PRETTY_NAME=\"Debian GNU/Linux 10 (buster)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"10\"\nVERSION=\"10 (buster)\"\nVERSION_CODENAME=buster\nID=debian\nHOME_URL=\"https://www.debian.org/\"\nSUPPORT_URL=\"https://www.debian.org/support\"\nBUG_REPORT_URL=\"https://bugs.debian.org/\"\n"
+        "/usr/lib/os-release": "PRETTY_NAME=\"Debian GNU/Linux 10 (buster)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"10\"\nVERSION=\"10 (buster)\"\nVERSION_CODENAME=buster\nID=debian\nHOME_URL=\"https://www.debian.org/\"\nSUPPORT_URL=\"https://www.debian.org/support\"\nBUG_REPORT_URL=\"https://bugs.debian.org/\"\n",
+        "/etc/debian_version": "10.7\n"
     },
     "platform.dist": ["debian", "10", "buster"],
     "result": {
@@ -35,6 +36,7 @@
         "distribution_version": "10",
         "distribution_release": "buster",
         "distribution_major_version": "10",
+        "distribution_minor_version": "7",
         "os_family": "Debian"
     }
 }

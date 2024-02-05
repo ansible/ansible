@@ -1,8 +1,7 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = '''
     name: constructed
@@ -13,7 +12,7 @@ DOCUMENTATION = '''
         - The Jinja2 conditionals that qualify a host for membership.
         - The Jinja2 expressions are calculated and assigned to the variables
         - Only variables already available from previous inventories or the fact cache can be used for templating.
-        - When I(strict) is False, failed expressions will be ignored (assumes vars were missing).
+        - When O(strict) is False, failed expressions will be ignored (assumes vars were missing).
     options:
         plugin:
             description: token that ensures this is a source file for the 'constructed' plugin.
@@ -26,6 +25,8 @@ DOCUMENTATION = '''
                 - The host_group_vars (enabled by default) 'vars plugin' is the one responsible for reading host_vars/ and group_vars/ directories.
                 - This will execute all vars plugins, even those that are not supposed to execute at the 'inventory' stage.
                   See vars plugins docs for details on 'stage'.
+                - Implicit groups, such as 'all' or 'ungrouped', need to be explicitly defined in any previous inventory to apply the
+                  corresponding group_vars
             required: false
             default: false
             type: boolean
@@ -84,7 +85,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleParserError, AnsibleOptionsError
 from ansible.inventory.helpers import get_group_vars
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.utils.vars import combine_vars
 from ansible.vars.fact_cache import FactCache
 from ansible.vars.plugins import get_vars_from_inventory_sources

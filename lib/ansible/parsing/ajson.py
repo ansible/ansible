@@ -1,14 +1,12 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 
 # Imported for backwards compat
-from ansible.module_utils.common.json import AnsibleJSONEncoder
+from ansible.module_utils.common.json import AnsibleJSONEncoder  # pylint: disable=unused-import
 
 from ansible.parsing.vault import VaultLib
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
@@ -17,7 +15,7 @@ from ansible.utils.unsafe_proxy import wrap_var
 
 class AnsibleJSONDecoder(json.JSONDecoder):
 
-    _vaults = {}
+    _vaults = {}  # type: dict[str, VaultLib]
 
     def __init__(self, *args, **kwargs):
         kwargs['object_hook'] = self.object_hook

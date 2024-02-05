@@ -1,6 +1,5 @@
 """Import the given python module(s) and report error(s) encountered."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 
 def main():
@@ -44,15 +43,20 @@ def main():
         # noinspection PyCompatibility
         from importlib import import_module
     except ImportError:
-        def import_module(name):
+        def import_module(name, package=None):  # type: (str, str | None) -> types.ModuleType
+            assert package is None
             __import__(name)
             return sys.modules[name]
 
+    from io import BytesIO, TextIOWrapper
+
     try:
-        # noinspection PyCompatibility
-        from StringIO import StringIO
+        from importlib.util import spec_from_loader, module_from_spec
+        from importlib.machinery import SourceFileLoader, ModuleSpec  # pylint: disable=unused-import
     except ImportError:
-        from io import StringIO
+        has_py3_loader = False
+    else:
+        has_py3_loader = True
 
     if collection_full_name:
         # allow importing code from collections when testing a collection
@@ -149,12 +153,25 @@ def main():
             self.loaded_modules = set()
             self.restrict_to_module_paths = restrict_to_module_paths
 
+        def find_spec(self, fullname, path=None, target=None):  # pylint: disable=unused-argument
+            # type: (RestrictedModuleLoader, str, list[str], types.ModuleType | None ) -> ModuleSpec | None | ImportError
+            """Return the spec from the loader or None"""
+            loader = self._get_loader(fullname, path=path)
+            if loader is not None:
+                if has_py3_loader:
+                    # loader is expected to be Optional[importlib.abc.Loader], but RestrictedModuleLoader does not inherit from importlib.abc.Loder
+                    return spec_from_loader(fullname, loader)  # type: ignore[arg-type]
+                raise ImportError("Failed to import '%s' due to a bug in ansible-test. Check importlib imports for typos." % fullname)
+            return None
+
         def find_module(self, fullname, path=None):
-            """Return self if the given fullname is restricted, otherwise return None.
-            :param fullname: str
-            :param path: str
-            :return: RestrictedModuleLoader | None
-            """
+            # type: (RestrictedModuleLoader, str, list[str]) -> RestrictedModuleLoader | None
+            """Return self if the given fullname is restricted, otherwise return None."""
+            return self._get_loader(fullname, path=path)
+
+        def _get_loader(self, fullname, path=None):
+            # type: (RestrictedModuleLoader, str, list[str]) -> RestrictedModuleLoader | None
+            """Return self if the given fullname is restricted, otherwise return None."""
             if fullname in self.loaded_modules:
                 return None  # ignore modules that are already being loaded
 
@@ -191,27 +208,49 @@ def main():
             # not a namespace we care about
             return None
 
+        def create_module(self, spec):  # pylint: disable=unused-argument
+            # type: (RestrictedModuleLoader, ModuleSpec) -> None
+            """Return None to use default module creation."""
+            return None
+
+        def exec_module(self, module):
+            # type: (RestrictedModuleLoader, types.ModuleType) -> None | ImportError
+            """Execute the module if the name is ansible.module_utils.basic and otherwise raise an ImportError"""
+            fullname = module.__spec__.name
+            if fullname == 'ansible.module_utils.basic':
+                self.loaded_modules.add(fullname)
+                for path in convert_ansible_name_to_absolute_paths(fullname):
+                    if not os.path.exists(path):
+                        continue
+                    loader = SourceFileLoader(fullname, path)
+                    spec = spec_from_loader(fullname, loader)
+                    real_module = module_from_spec(spec)
+                    loader.exec_module(real_module)
+                    real_module.AnsibleModule = ImporterAnsibleModule  # type: ignore[attr-defined]
+                    real_module._load_params = lambda *args, **kwargs: {}  # type: ignore[attr-defined] # pylint: disable=protected-access
+                    sys.modules[fullname] = real_module
+                    return None
+                raise ImportError('could not find "%s"' % fullname)
+            raise ImportError('import of "%s" is not allowed in this context' % fullname)
+
         def load_module(self, fullname):
-            """Raise an ImportError.
-            :type fullname: str
-            """
+            # type: (RestrictedModuleLoader, str) -> types.ModuleType | ImportError
+            """Return the module if the name is ansible.module_utils.basic and otherwise raise an ImportError."""
             if fullname == 'ansible.module_utils.basic':
                 module = self.__load_module(fullname)
 
                 # stop Ansible module execution during AnsibleModule instantiation
-                module.AnsibleModule = ImporterAnsibleModule
+                module.AnsibleModule = ImporterAnsibleModule  # type: ignore[attr-defined]
                 # no-op for _load_params since it may be called before instantiating AnsibleModule
-                module._load_params = lambda *args, **kwargs: {}  # pylint: disable=protected-access
+                module._load_params = lambda *args, **kwargs: {}  # type: ignore[attr-defined] # pylint: disable=protected-access
 
                 return module
 
             raise ImportError('import of "%s" is not allowed in this context' % fullname)
 
         def __load_module(self, fullname):
-            """Load the requested module while avoiding infinite recursion.
-            :type fullname: str
-            :rtype: module
-            """
+            # type: (RestrictedModuleLoader, str) -> types.ModuleType
+            """Load the requested module while avoiding infinite recursion."""
             self.loaded_modules.add(fullname)
             return import_module(fullname)
 
@@ -393,8 +432,9 @@ def main():
     class Capture:
         """Captured output and/or exception."""
         def __init__(self):
-            self.stdout = StringIO()
-            self.stderr = StringIO()
+            # use buffered IO to simulate StringIO; allows Ansible's stream patching to behave without warnings
+            self.stdout = TextIOWrapper(BytesIO())
+            self.stderr = TextIOWrapper(BytesIO())
 
     def capture_report(path, capture, messages):
         """Report on captured output.
@@ -402,12 +442,17 @@ def main():
         :type capture: Capture
         :type messages: set[str]
         """
-        if capture.stdout.getvalue():
-            first = capture.stdout.getvalue().strip().splitlines()[0].strip()
+        # since we're using buffered IO, flush before checking for data
+        capture.stdout.flush()
+        capture.stderr.flush()
+        stdout_value = capture.stdout.buffer.getvalue()
+        if stdout_value:
+            first = stdout_value.decode().strip().splitlines()[0].strip()
             report_message(path, 0, 0, 'stdout', first, messages)
 
-        if capture.stderr.getvalue():
-            first = capture.stderr.getvalue().strip().splitlines()[0].strip()
+        stderr_value = capture.stderr.buffer.getvalue()
+        if stderr_value:
+            first = stderr_value.decode().strip().splitlines()[0].strip()
             report_message(path, 0, 0, 'stderr', first, messages)
 
     def report_message(path, line, column, code, message, messages):
@@ -495,60 +540,6 @@ def main():
                 warnings.filterwarnings(
                     "ignore",
                     "AnsibleCollectionFinder has already been configured")
-
-            if sys.version_info[0] == 2:
-                warnings.filterwarnings(
-                    "ignore",
-                    "Python 2 is no longer supported by the Python core team. Support for it is now deprecated in cryptography,"
-                    " and will be removed in a future release.")
-                warnings.filterwarnings(
-                    "ignore",
-                    "Python 2 is no longer supported by the Python core team. Support for it is now deprecated in cryptography,"
-                    " and will be removed in the next release.")
-
-            if sys.version_info[:2] == (3, 5):
-                warnings.filterwarnings(
-                    "ignore",
-                    "Python 3.5 support will be dropped in the next release ofcryptography. Please upgrade your Python.")
-                warnings.filterwarnings(
-                    "ignore",
-                    "Python 3.5 support will be dropped in the next release of cryptography. Please upgrade your Python.")
-
-            if sys.version_info >= (3, 10):
-                # Temporary solution for Python 3.10 until find_spec is implemented in RestrictedModuleLoader.
-                # That implementation is dependent on find_spec being added to the controller's collection loader first.
-                # The warning text is: main.<locals>.RestrictedModuleLoader.find_spec() not found; falling back to find_module()
-                warnings.filterwarnings(
-                    "ignore",
-                    r"main\.<locals>\.RestrictedModuleLoader\.find_spec\(\) not found; falling back to find_module\(\)",
-                )
-                # Temporary solution for Python 3.10 until exec_module is implemented in RestrictedModuleLoader.
-                # That implementation is dependent on exec_module being added to the controller's collection loader first.
-                # The warning text is: main.<locals>.RestrictedModuleLoader.exec_module() not found; falling back to load_module()
-                warnings.filterwarnings(
-                    "ignore",
-                    r"main\.<locals>\.RestrictedModuleLoader\.exec_module\(\) not found; falling back to load_module\(\)",
-                )
-
-                # Temporary solution for Python 3.10 until find_spec is implemented in the controller's collection loader.
-                warnings.filterwarnings(
-                    "ignore",
-                    r"_Ansible.*Finder\.find_spec\(\) not found; falling back to find_module\(\)",
-                )
-                # Temporary solution for Python 3.10 until exec_module is implemented in the controller's collection loader.
-                warnings.filterwarnings(
-                    "ignore",
-                    r"_Ansible.*Loader\.exec_module\(\) not found; falling back to load_module\(\)",
-                )
-
-                # Temporary solution until there is a vendored copy of distutils.version in module_utils.
-                # Some of our dependencies such as packaging.tags also import distutils, which we have no control over
-                # The warning text is: The distutils package is deprecated and slated for removal in Python 3.12.
-                # Use setuptools or check PEP 632 for potential alternatives
-                warnings.filterwarnings(
-                    "ignore",
-                    r"The distutils package is deprecated and slated for removal in Python 3\.12\. .*",
-                )
 
             try:
                 yield

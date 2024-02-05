@@ -28,13 +28,15 @@ Function Install-PSModule {
     }
 }
 
+# Versions changes should be made first in ansible-test which is then synced to
+# the default-test-container over time
 Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-Install-PSModule -Name PSScriptAnalyzer -RequiredVersion 1.20.0
+Install-PSModule -Name PSScriptAnalyzer -RequiredVersion 1.21.0
 
 if ($IsContainer) {
     # PSScriptAnalyzer contain lots of json files for the UseCompatibleCommands check. We don't use this rule so by
     # removing the contents we can save 200MB in the docker image (or more in the future).
-    # https://github.com/PowerShell/PSScriptAnalyzer/blob/master/RuleDocumentation/UseCompatibleCommands.md
+    # https://github.com/PowerShell/PSScriptAnalyzer/blob/master/docs/Rules/UseCompatibleCommands.md
     $pssaPath = (Get-Module -ListAvailable -Name PSScriptAnalyzer).ModuleBase
     $compatPath = Join-Path -Path $pssaPath -ChildPath compatibility_profiles -AdditionalChildPath '*'
     Remove-Item -Path $compatPath -Recurse -Force

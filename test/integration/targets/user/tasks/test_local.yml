@@ -85,8 +85,12 @@
     - testgroup2
     - testgroup3
     - testgroup4
+    - testgroup5
+    - testgroup6
+    - local_ansibulluser
   tags:
     - user_test_local_mode
+  register: test_groups
 
 - name: Create local_ansibulluser with groups
   user:
@@ -111,12 +115,68 @@
   tags:
     - user_test_local_mode
 
+- name: Append groups for local_ansibulluser (again)
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    groups: ['testgroup3', 'testgroup4']
+    append: yes
+  register: local_user_test_4_again
+  ignore_errors: yes
+  tags:
+    - user_test_local_mode
+
 - name: Test append without groups for local_ansibulluser
   user:
     name: local_ansibulluser
     state: present
     append: yes
   register: local_user_test_5
+  ignore_errors: yes
+  tags:
+    - user_test_local_mode
+
+- name: Assign named group for local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    group: testgroup5
+  register: local_user_test_6
+  tags:
+    - user_test_local_mode
+
+- name: Append groups for local_ansibulluser using group id
+  user:
+    name: local_ansibulluser
+    state: present
+    append: yes
+    groups: "{{ test_groups.results[5]['gid'] }}"
+  register: local_user_test_7
+  ignore_errors: yes
+  tags:
+    - user_test_local_mode
+
+- name: Append groups for local_ansibulluser using gid (again)
+  user:
+    name: local_ansibulluser
+    state: present
+    append: yes
+    groups: "{{ test_groups.results[5]['gid'] }}"
+  register: local_user_test_7_again
+  ignore_errors: yes
+  tags:
+    - user_test_local_mode
+
+# If we don't re-assign, then "Set user expiration" will
+# fail.
+- name: Re-assign named group for local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    group: local_ansibulluser
   ignore_errors: yes
   tags:
     - user_test_local_mode
@@ -139,6 +199,9 @@
     - testgroup2
     - testgroup3
     - testgroup4
+    - testgroup5
+    - testgroup6
+    - local_ansibulluser
   tags:
     - user_test_local_mode
 
@@ -149,6 +212,10 @@
       - local_user_test_2 is not changed
       - local_user_test_3 is changed
       - local_user_test_4 is changed
+      - local_user_test_4_again is not changed
+      - local_user_test_6 is changed
+      - local_user_test_7 is changed
+      - local_user_test_7_again is not changed
       - local_user_test_remove_1 is changed
       - local_user_test_remove_2 is not changed
   tags:
@@ -157,8 +224,6 @@
 - name: Ensure warnings were displayed properly
   assert:
     that:
-      - local_user_test_1['warnings'] | length > 0
-      - local_user_test_1['warnings'] | first is search('The local user account may already exist')
       - local_user_test_5['warnings'] is search("'append' is set, but no 'groups' are specified. Use 'groups'")
       - local_existing['warnings'] is not defined
   when: ansible_facts.system in ['Linux']

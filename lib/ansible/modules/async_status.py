@@ -3,8 +3,7 @@
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -23,8 +22,8 @@ options:
     required: true
   mode:
     description:
-    - If C(status), obtain the status.
-    - If C(cleanup), clean up the async job cache (by default in C(~/.ansible_async/)) for the specified job I(jid).
+    - If V(status), obtain the status.
+    - If V(cleanup), clean up the async job cache (by default in C(~/.ansible_async/)) for the specified job O(jid), without waiting for it to finish.
     type: str
     choices: [ cleanup, status ]
     default: status
@@ -55,21 +54,26 @@ author:
 
 EXAMPLES = r'''
 ---
-- name: Asynchronous yum task
-  yum:
+- name: Asynchronous dnf task
+  ansible.builtin.dnf:
     name: docker-io
     state: present
   async: 1000
   poll: 0
-  register: yum_sleeper
+  register: dnf_sleeper
 
 - name: Wait for asynchronous job to end
-  async_status:
-    jid: '{{ yum_sleeper.ansible_job_id }}'
+  ansible.builtin.async_status:
+    jid: '{{ dnf_sleeper.ansible_job_id }}'
   register: job_result
   until: job_result.finished
   retries: 100
   delay: 10
+
+- name: Clean up async file
+  ansible.builtin.async_status:
+    jid: '{{ dnf_sleeper.ansible_job_id }}'
+    mode: cleanup
 '''
 
 RETURN = r'''
@@ -79,12 +83,12 @@ ansible_job_id:
   type: str
   sample: '360874038559.4169'
 finished:
-  description: Whether the asynchronous job has finished (C(1)) or not (C(0))
+  description: Whether the asynchronous job has finished (V(1)) or not (V(0))
   returned: always
   type: int
   sample: 1
 started:
-  description: Whether the asynchronous job has started (C(1)) or not (C(0))
+  description: Whether the asynchronous job has started (V(1)) or not (V(0))
   returned: always
   type: int
   sample: 1
@@ -107,7 +111,7 @@ import os
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 
 
 def main():
@@ -124,8 +128,7 @@ def main():
     async_dir = module.params['_async_dir']
 
     # setup logging directory
-    logdir = os.path.expanduser(async_dir)
-    log_path = os.path.join(logdir, jid)
+    log_path = os.path.join(async_dir, jid)
 
     if not os.path.exists(log_path):
         module.fail_json(msg="could not find job", ansible_job_id=jid, started=1, finished=1)

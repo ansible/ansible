@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import pytest
@@ -29,7 +27,7 @@ from io import BytesIO
 import ansible.errors
 
 from ansible.executor.module_common import recursive_finder
-
+from ansible.plugins.loader import init_plugin_loader
 
 # These are the modules that are brought in by module_utils/basic.py  This may need to be updated
 # when basic.py gains new imports
@@ -42,8 +40,6 @@ MODULE_UTILS_BASIC_FILES = frozenset(('ansible/__init__.py',
                                       'ansible/module_utils/basic.py',
                                       'ansible/module_utils/six/__init__.py',
                                       'ansible/module_utils/_text.py',
-                                      'ansible/module_utils/common/_collections_compat.py',
-                                      'ansible/module_utils/common/_json_compat.py',
                                       'ansible/module_utils/common/collections.py',
                                       'ansible/module_utils/common/parameters.py',
                                       'ansible/module_utils/common/warnings.py',
@@ -60,8 +56,6 @@ MODULE_UTILS_BASIC_FILES = frozenset(('ansible/__init__.py',
                                       'ansible/module_utils/common/_utils.py',
                                       'ansible/module_utils/common/arg_spec.py',
                                       'ansible/module_utils/compat/__init__.py',
-                                      'ansible/module_utils/compat/_selectors2.py',
-                                      'ansible/module_utils/compat/selectors.py',
                                       'ansible/module_utils/compat/selinux.py',
                                       'ansible/module_utils/distro/__init__.py',
                                       'ansible/module_utils/distro/_distro.py',
@@ -79,6 +73,8 @@ ANSIBLE_LIB = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.pa
 
 @pytest.fixture
 def finder_containers():
+    init_plugin_loader()
+
     FinderContainers = namedtuple('FinderContainers', ['zf'])
 
     zipoutput = BytesIO()

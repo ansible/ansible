@@ -18,21 +18,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
+from __future__ import annotations
 
 import itertools
 import math
+
+from collections.abc import Mapping, Iterable
 
 from jinja2.filters import pass_environment
 
 from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.common.text import formatters
 from ansible.module_utils.six import binary_type, text_type
-from ansible.module_utils.common._collections_compat import Hashable, Mapping, Iterable
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.utils.display import Display
 
 try:
@@ -84,27 +82,27 @@ def unique(environment, a, case_sensitive=None, attribute=None):
 
 @pass_environment
 def intersect(environment, a, b):
-    if isinstance(a, Hashable) and isinstance(b, Hashable):
-        c = set(a) & set(b)
-    else:
+    try:
+        c = list(set(a) & set(b))
+    except TypeError:
         c = unique(environment, [x for x in a if x in b], True)
     return c
 
 
 @pass_environment
 def difference(environment, a, b):
-    if isinstance(a, Hashable) and isinstance(b, Hashable):
-        c = set(a) - set(b)
-    else:
+    try:
+        c = list(set(a) - set(b))
+    except TypeError:
         c = unique(environment, [x for x in a if x not in b], True)
     return c
 
 
 @pass_environment
 def symmetric_difference(environment, a, b):
-    if isinstance(a, Hashable) and isinstance(b, Hashable):
-        c = set(a) ^ set(b)
-    else:
+    try:
+        c = list(set(a) ^ set(b))
+    except TypeError:
         isect = intersect(environment, a, b)
         c = [x for x in union(environment, a, b) if x not in isect]
     return c
@@ -112,9 +110,9 @@ def symmetric_difference(environment, a, b):
 
 @pass_environment
 def union(environment, a, b):
-    if isinstance(a, Hashable) and isinstance(b, Hashable):
-        c = set(a) | set(b)
-    else:
+    try:
+        c = list(set(a) | set(b))
+    except TypeError:
         c = unique(environment, a + b, True)
     return c
 
@@ -147,7 +145,7 @@ def inversepower(x, base=2):
 
 
 def human_readable(size, isbits=False, unit=None):
-    ''' Return a human readable string '''
+    ''' Return a human-readable string '''
     try:
         return formatters.bytes_to_human(size, isbits, unit)
     except TypeError as e:
@@ -157,7 +155,7 @@ def human_readable(size, isbits=False, unit=None):
 
 
 def human_to_bytes(size, default_unit=None, isbits=False):
-    ''' Return bytes count from a human readable string '''
+    ''' Return bytes count from a human-readable string '''
     try:
         return formatters.human_to_bytes(size, default_unit, isbits)
     except TypeError as e:

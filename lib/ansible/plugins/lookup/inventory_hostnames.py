@@ -3,8 +3,7 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: inventory_hostnames
@@ -22,7 +21,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: show all the hosts matching the pattern, i.e. all but the group www
-  debug:
+  ansible.builtin.debug:
     msg: "{{ item }}"
   with_inventory_hostnames:
     - all:!www

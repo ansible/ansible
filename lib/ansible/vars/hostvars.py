@@ -15,11 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.module_utils.common._collections_compat import Mapping
+from collections.abc import Mapping
+
 from ansible.template import Templar, AnsibleUndefined
 
 STATIC_VARS = [
@@ -136,8 +135,7 @@ class HostVarsVars(Mapping):
 
     def __getitem__(self, var):
         templar = Templar(variables=self._vars, loader=self._loader)
-        foo = templar.template(self._vars[var], fail_on_undefined=False, static_vars=STATIC_VARS)
-        return foo
+        return templar.template(self._vars[var], fail_on_undefined=False, static_vars=STATIC_VARS)
 
     def __contains__(self, var):
         return (var in self._vars)

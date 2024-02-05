@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import os
-import typing as t
 
 from . import (
     SanityMultipleVersion,
@@ -44,11 +43,12 @@ from ...host_configs import (
 
 class CompileTest(SanityMultipleVersion):
     """Sanity test for proper python syntax."""
-    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+
+    def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         return [target for target in targets if os.path.splitext(target.path)[1] == '.py' or is_subdir(target.path, 'bin')]
 
-    def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
+    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
         if args.prime_venvs:
             return SanitySkipped(self.name, python_version=python.version)
 

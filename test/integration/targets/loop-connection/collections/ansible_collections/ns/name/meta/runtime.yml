@@ -1,0 +1,4 @@
+plugin_routing:
+  connection:
+    redirected_dummy:
+      redirect: ns.name.dummy

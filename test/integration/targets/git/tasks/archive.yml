@@ -68,7 +68,6 @@
 - name: ARCHIVE | Inspect archive file
   command:
     cmd: "{{ git_list_commands[item] }} {{ checkout_dir }}/test_role.{{ item }}"
-    warn: no
   register: archive_content
   with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
 

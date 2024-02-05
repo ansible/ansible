@@ -7,8 +7,7 @@
 # it runs the 'command' module with special arguments and it behaves differently.
 # See the command source and the comment "#USE_SHELL".
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -16,8 +15,8 @@ DOCUMENTATION = r'''
 module: shell
 short_description: Execute shell commands on targets
 description:
-     - The C(shell) module takes the command name followed by a list of space-delimited arguments.
-     - Either a free form command or C(cmd) parameter is required, see the examples.
+     - The M(ansible.builtin.shell) module takes the command name followed by a list of space-delimited arguments.
+     - Either a free form command or O(cmd) parameter is required, see the examples.
      - It is almost exactly like the M(ansible.builtin.command) module but runs
        the command through a shell (C(/bin/sh)) on the remote node.
      - For Windows targets, use the M(ansible.windows.win_shell) module instead.
@@ -53,12 +52,6 @@ options:
       - This expects an absolute path to the executable.
     type: path
     version_added: "0.9"
-  warn:
-    description:
-      - Whether to enable task warnings.
-    type: bool
-    default: yes
-    version_added: "1.8"
   stdin:
     description:
       - Set the stdin of the command directly to the specified value.
@@ -75,7 +68,7 @@ extends_documentation_fragment:
     - action_common_attributes.raw
 attributes:
     check_mode:
-        details: while the command itself is arbitrary and cannot be subject to the check mode semantics it adds C(creates)/C(removes) options as a workaround
+        details: while the command itself is arbitrary and cannot be subject to the check mode semantics it adds O(creates)/O(removes) options as a workaround
         support: partial
     diff_mode:
         support: none
@@ -96,6 +89,8 @@ notes:
   - An alternative to using inline shell scripts with this module is to use
     the M(ansible.builtin.script) module possibly together with the M(ansible.builtin.template) module.
   - For rebooting systems, use the M(ansible.builtin.reboot) or M(ansible.windows.win_reboot) module.
+  - If the command returns non UTF-8 data, it must be encoded to avoid issues. One option is to pipe
+    the output through C(base64).
 seealso:
 - module: ansible.builtin.command
 - module: ansible.builtin.raw
@@ -155,12 +150,6 @@ EXAMPLES = r'''
   args:
     executable: /usr/bin/expect
   delegate_to: localhost
-
-# Disabling warnings
-- name: Using curl to connect to a host via SOCKS proxy (unsupported in uri). Ordinarily this would throw a warning
-  ansible.builtin.shell: curl --socks5 localhost:9000 http://www.ansible.com
-  args:
-    warn: no
 '''
 
 RETURN = r'''

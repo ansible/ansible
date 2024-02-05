@@ -22,7 +22,8 @@ from .util_common import (
 
 class HttpClient:
     """Make HTTP requests via curl."""
-    def __init__(self, args, always=False, insecure=False, proxy=None):  # type: (CommonConfig, bool, bool, t.Optional[str]) -> None
+
+    def __init__(self, args: CommonConfig, always: bool = False, insecure: bool = False, proxy: t.Optional[str] = None) -> None:
         self.args = args
         self.always = always
         self.insecure = insecure
@@ -31,19 +32,19 @@ class HttpClient:
         self.username = None
         self.password = None
 
-    def get(self, url):  # type: (str) -> HttpResponse
+    def get(self, url: str) -> HttpResponse:
         """Perform an HTTP GET and return the response."""
         return self.request('GET', url)
 
-    def delete(self, url):  # type: (str) -> HttpResponse
+    def delete(self, url: str) -> HttpResponse:
         """Perform an HTTP DELETE and return the response."""
         return self.request('DELETE', url)
 
-    def put(self, url, data=None, headers=None):  # type: (str, t.Optional[str], t.Optional[t.Dict[str, str]]) -> HttpResponse
+    def put(self, url: str, data: t.Optional[str] = None, headers: t.Optional[dict[str, str]] = None) -> HttpResponse:
         """Perform an HTTP PUT and return the response."""
         return self.request('PUT', url, data, headers)
 
-    def request(self, method, url, data=None, headers=None):  # type: (str, str, t.Optional[str], t.Optional[t.Dict[str, str]]) -> HttpResponse
+    def request(self, method: str, url: str, data: t.Optional[str] = None, headers: t.Optional[dict[str, str]] = None) -> HttpResponse:
         """Perform an HTTP request and return the response."""
         cmd = ['curl', '-s', '-S', '-i', '-X', method]
 
@@ -92,7 +93,7 @@ class HttpClient:
                 break
             except SubprocessError as ex:
                 if ex.status in retry_on_status and attempts < max_attempts:
-                    display.warning(u'%s' % ex)
+                    display.warning('%s' % ex)
                     time.sleep(sleep_seconds)
                     continue
 
@@ -113,22 +114,24 @@ class HttpClient:
 
 class HttpResponse:
     """HTTP response from curl."""
-    def __init__(self, method, url, status_code, response):  # type: (str, str, int, str) -> None
+
+    def __init__(self, method: str, url: str, status_code: int, response: str) -> None:
         self.method = method
         self.url = url
         self.status_code = status_code
         self.response = response
 
-    def json(self):  # type: () -> t.Any
+    def json(self) -> t.Any:
         """Return the response parsed as JSON, raising an exception if parsing fails."""
         try:
             return json.loads(self.response)
         except ValueError:
-            raise HttpError(self.status_code, 'Cannot parse response to %s %s as JSON:\n%s' % (self.method, self.url, self.response))
+            raise HttpError(self.status_code, 'Cannot parse response to %s %s as JSON:\n%s' % (self.method, self.url, self.response)) from None
 
 
 class HttpError(ApplicationError):
     """HTTP response as an error."""
-    def __init__(self, status, message):  # type: (int, str) -> None
+
+    def __init__(self, status: int, message: str) -> None:
         super().__init__('%s: %s' % (status, message))
         self.status = status

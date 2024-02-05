@@ -1,8 +1,7 @@
 # Copyright: (c) 2018 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import bisect
 import json
@@ -10,12 +9,16 @@ import pkgutil
 import re
 
 from ansible import constants as C
-from ansible.module_utils._text import to_native, to_text
+from ansible.errors import AnsibleError
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.distro import LinuxDistribution
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_versioned_doclink
 from ansible.module_utils.compat.version import LooseVersion
+from ansible.module_utils.facts.system.distribution import Distribution
 from traceback import format_exc
+
+OS_FAMILY_LOWER = {k.lower(): v.lower() for k, v in Distribution.OS_FAMILY.items()}
 
 display = Display()
 foundre = re.compile(r'(?s)PLATFORM[\r\n]+(.*)FOUND(.*)ENDFOUND')
@@ -55,7 +58,7 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
     is_silent = discovery_mode.endswith('_silent')
 
     try:
-        platform_python_map = C.config.get_config_value('INTERPRETER_PYTHON_DISTRO_MAP', variables=task_vars)
+        platform_python_map = C.config.get_config_value('_INTERPRETER_PYTHON_DISTRO_MAP', variables=task_vars)
         bootstrap_python_list = C.config.get_config_value('INTERPRETER_PYTHON_FALLBACK', variables=task_vars)
 
         display.vvv(msg=u"Attempting {0} interpreter discovery".format(interpreter_name), host=host)
@@ -107,7 +110,9 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
         if not distro or not version:
             raise NotImplementedError('unable to get Linux distribution/version info')
 
-        version_map = platform_python_map.get(distro.lower().strip())
+        family = OS_FAMILY_LOWER.get(distro.lower().strip())
+
+        version_map = platform_python_map.get(distro.lower().strip()) or platform_python_map.get(family)
         if not version_map:
             raise NotImplementedError('unsupported Linux distribution: {0}'.format(distro))
 
@@ -145,6 +150,8 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
         return platform_interpreter
     except NotImplementedError as ex:
         display.vvv(msg=u'Python interpreter discovery fallback ({0})'.format(to_text(ex)), host=host)
+    except AnsibleError:
+        raise
     except Exception as ex:
         if not is_silent:
             display.warning(msg=u'Unhandled error in Python interpreter discovery for host {0}: {1}'.format(host, to_text(ex)))

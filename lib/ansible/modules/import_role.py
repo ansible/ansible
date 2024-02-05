@@ -2,8 +2,7 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -56,6 +55,14 @@ options:
     type: bool
     default: yes
     version_added: '2.11'
+  public:
+    description:
+      - This option dictates whether the role's C(vars) and C(defaults) are exposed to the play.
+      - Variables are exposed to the play at playbook parsing time, and available to earlier roles and tasks as well unlike C(include_role).
+      - The default depends on the configuration option :ref:`default_private_role_vars`.
+    type: bool
+    default: yes
+    version_added: '2.17'
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.conn
@@ -78,29 +85,29 @@ seealso:
 - module: ansible.builtin.import_tasks
 - module: ansible.builtin.include_role
 - module: ansible.builtin.include_tasks
-- ref: playbooks_reuse_includes
+- ref: playbooks_reuse
   description: More information related to including and importing playbooks, roles and tasks.
 '''
 
 EXAMPLES = r'''
 - hosts: all
   tasks:
-    - import_role:
+    - ansible.builtin.import_role:
         name: myrole
 
     - name: Run tasks/other.yaml instead of 'main'
-      import_role:
+      ansible.builtin.import_role:
         name: myrole
         tasks_from: other
 
     - name: Pass variables to role
-      import_role:
+      ansible.builtin.import_role:
         name: myrole
       vars:
         rolevar1: value from task
 
     - name: Apply condition to each task in role
-      import_role:
+      ansible.builtin.import_role:
         name: myrole
       when: not idontwanttorun
 '''

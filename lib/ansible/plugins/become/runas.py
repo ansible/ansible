@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: runas
     short_description: Run As user
     description:
-        - This become plugins allows your remote/login user to execute commands as another user via the windows runas facility.
+        - This become plugin allows your remote/login user to execute commands as another user via the windows runas facility.
     author: ansible (@core)
     version_added: "2.8"
     options:
@@ -25,6 +24,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_USER
               - name: ANSIBLE_RUNAS_USER
+            keyword:
+              - name: become_user
             required: True
         become_flags:
             description: Options to pass to runas, a space delimited list of k=v pairs
@@ -40,6 +41,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_FLAGS
               - name: ANSIBLE_RUNAS_FLAGS
+            keyword:
+              - name: become_flags
         become_pass:
             description: password
             ini:

@@ -1,25 +1,21 @@
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import multiprocessing
 import random
-import re
 import string
-import sys
 
 from collections import namedtuple
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import text_type
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils.common.text.converters import to_text, to_bytes
 from ansible.utils.display import Display
 
-PASSLIB_E = CRYPT_E = None
-HAS_CRYPT = PASSLIB_AVAILABLE = False
+PASSLIB_E = None
+PASSLIB_AVAILABLE = False
 try:
     import passlib
     import passlib.hash
@@ -32,18 +28,10 @@ try:
 except Exception as e:
     PASSLIB_E = e
 
-try:
-    import crypt
-    HAS_CRYPT = True
-except Exception as e:
-    CRYPT_E = e
-
 
 display = Display()
 
 __all__ = ['do_encrypt']
-
-_LOCK = multiprocessing.Lock()
 
 DEFAULT_PASSWORD_LENGTH = 20
 
@@ -87,88 +75,13 @@ class BaseHash(object):
         self.algorithm = algorithm
 
 
-class CryptHash(BaseHash):
-    def __init__(self, algorithm):
-        super(CryptHash, self).__init__(algorithm)
-
-        if not HAS_CRYPT:
-            raise AnsibleError("crypt.crypt cannot be used as the 'crypt' python library is not installed or is unusable.", orig_exc=CRYPT_E)
-
-        if sys.platform.startswith('darwin'):
-            raise AnsibleError("crypt.crypt not supported on Mac OS X/Darwin, install passlib python module")
-
-        if algorithm not in self.algorithms:
-            raise AnsibleError("crypt.crypt does not support '%s' algorithm" % self.algorithm)
-        self.algo_data = self.algorithms[algorithm]
-
-    def hash(self, secret, salt=None, salt_size=None, rounds=None, ident=None):
-        salt = self._salt(salt, salt_size)
-        rounds = self._rounds(rounds)
-        ident = self._ident(ident)
-        return self._hash(secret, salt, rounds, ident)
-
-    def _salt(self, salt, salt_size):
-        salt_size = salt_size or self.algo_data.salt_size
-        ret = salt or random_salt(salt_size)
-        if re.search(r'[^./0-9A-Za-z]', ret):
-            raise AnsibleError("invalid characters in salt")
-        if self.algo_data.salt_exact and len(ret) != self.algo_data.salt_size:
-            raise AnsibleError("invalid salt size")
-        elif not self.algo_data.salt_exact and len(ret) > self.algo_data.salt_size:
-            raise AnsibleError("invalid salt size")
-        return ret
-
-    def _rounds(self, rounds):
-        if rounds == self.algo_data.implicit_rounds:
-            # Passlib does not include the rounds if it is the same as implicit_rounds.
-            # Make crypt lib behave the same, by not explicitly specifying the rounds in that case.
-            return None
-        else:
-            return rounds
-
-    def _ident(self, ident):
-        if not ident:
-            return self.algo_data.crypt_id
-        if self.algorithm == 'bcrypt':
-            return ident
-        return None
-
-    def _hash(self, secret, salt, rounds, ident):
-        saltstring = ""
-        if ident:
-            saltstring = "$%s" % ident
-
-        if rounds:
-            saltstring += "$rounds=%d" % rounds
-
-        saltstring += "$%s" % salt
-
-        # crypt.crypt on Python < 3.9 returns None if it cannot parse saltstring
-        # On Python >= 3.9, it throws OSError.
-        try:
-            result = crypt.crypt(secret, saltstring)
-            orig_exc = None
-        except OSError as e:
-            result = None
-            orig_exc = e
-
-        # None as result would be interpreted by the some modules (user module)
-        # as no password at all.
-        if not result:
-            raise AnsibleError(
-                "crypt.crypt does not support '%s' algorithm" % self.algorithm,
-                orig_exc=orig_exc,
-            )
-
-        return result
-
-
 class PasslibHash(BaseHash):
     def __init__(self, algorithm):
         super(PasslibHash, self).__init__(algorithm)
 
         if not PASSLIB_AVAILABLE:
             raise AnsibleError("passlib must be installed and usable to hash with '%s'" % algorithm, orig_exc=PASSLIB_E)
+        display.vv("Using passlib to hash input with '%s'" % algorithm)
 
         try:
             self.crypt_algo = getattr(passlib.hash, algorithm)
@@ -231,12 +144,15 @@ class PasslibHash(BaseHash):
             settings['ident'] = ident
 
         # starting with passlib 1.7 'using' and 'hash' should be used instead of 'encrypt'
-        if hasattr(self.crypt_algo, 'hash'):
-            result = self.crypt_algo.using(**settings).hash(secret)
-        elif hasattr(self.crypt_algo, 'encrypt'):
-            result = self.crypt_algo.encrypt(secret, **settings)
-        else:
-            raise AnsibleError("installed passlib version %s not supported" % passlib.__version__)
+        try:
+            if hasattr(self.crypt_algo, 'hash'):
+                result = self.crypt_algo.using(**settings).hash(secret)
+            elif hasattr(self.crypt_algo, 'encrypt'):
+                result = self.crypt_algo.encrypt(secret, **settings)
+            else:
+                raise AnsibleError("installed passlib version %s not supported" % passlib.__version__)
+        except ValueError as e:
+            raise AnsibleError("Could not hash the secret.", orig_exc=e)
 
         # passlib.hash should always return something or raise an exception.
         # Still ensure that there is always a result.
@@ -246,18 +162,17 @@ class PasslibHash(BaseHash):
 
         # Hashes from passlib.hash should be represented as ascii strings of hex
         # digits so this should not traceback.  If it's not representable as such
-        # we need to traceback and then blacklist such algorithms because it may
+        # we need to traceback and then block such algorithms because it may
         # impact calling code.
         return to_text(result, errors='strict')
 
 
 def passlib_or_crypt(secret, algorithm, salt=None, salt_size=None, rounds=None, ident=None):
+    display.deprecated("passlib_or_crypt API is deprecated in favor of do_encrypt", version='2.20')
+    return do_encrypt(secret, algorithm, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
+
+
+def do_encrypt(result, encrypt, salt_size=None, salt=None, ident=None, rounds=None):
     if PASSLIB_AVAILABLE:
-        return PasslibHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
-    if HAS_CRYPT:
-        return CryptHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
-    raise AnsibleError("Unable to encrypt nor hash, either crypt or passlib must be installed.", orig_exc=CRYPT_E)
-
-
-def do_encrypt(result, encrypt, salt_size=None, salt=None, ident=None):
-    return passlib_or_crypt(result, encrypt, salt_size=salt_size, salt=salt, ident=ident)
+        return PasslibHash(encrypt).hash(result, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
+    raise AnsibleError("Unable to encrypt nor hash, passlib must be installed", orig_exc=PASSLIB_E)

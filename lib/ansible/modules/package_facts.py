@@ -3,8 +3,7 @@
 
 # most of it copied from AWX's scan_packages module
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -27,8 +26,8 @@ options:
   strategy:
     description:
       - This option controls how the module queries the package managers on the system.
-        C(first) means it will return only information for the first supported package manager available.
-        C(all) will return information for all supported and available package managers on the system.
+        V(first) means it will return only information for the first supported package manager available.
+        V(all) will return information for all supported and available package managers on the system.
     choices: ['first', 'all']
     default: 'first'
     type: str
@@ -37,6 +36,8 @@ version_added: "2.5"
 requirements:
     - For 'portage' support it requires the C(qlist) utility, which is part of 'app-portage/portage-utils'.
     - For Debian-based systems C(python-apt) package must be installed on targeted hosts.
+    - For SUSE-based systems C(python3-rpm) package must be installed on targeted hosts.
+      This package is required because SUSE does not include RPM Python bindings by default.
 author:
   - Matthew Jones (@matburt)
   - Brian Coca (@bcoca)
@@ -238,7 +239,7 @@ ansible_facts:
 
 import re
 
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.process import get_bin_path

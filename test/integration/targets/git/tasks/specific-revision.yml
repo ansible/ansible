@@ -162,7 +162,14 @@
     path: "{{ checkout_dir }}"
 
 - name: SPECIFIC-REVISION | prepare origina repo
-  shell: git init; echo "1" > a; git add a; git commit -m "1"
+  shell: |
+    set -eEu
+
+    git init
+
+    echo "1" > a
+    git add a
+    git commit -m "1"
   args:
     chdir: "{{ checkout_dir }}"
 
@@ -191,7 +198,14 @@
     force: yes
 
 - name: SPECIFIC-REVISION | create new commit in original
-  shell: git init; echo "2" > b; git add b; git commit -m "2"
+  shell: |
+    set -eEu
+
+    git init
+
+    echo "2" > b
+    git add b
+    git commit -m "2"
   args:
     chdir: "{{ checkout_dir }}"
 

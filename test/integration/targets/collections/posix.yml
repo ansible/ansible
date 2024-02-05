@@ -151,8 +151,8 @@
 
   - assert:
       that:
-        - |
-          'This is a broken filter plugin.' in result.msg
+        # FUTURE: ensure that the warning was also issued with the actual failure details
+        - result is failed
 
   - debug:
       msg: "{{ 'foo'|missing.collection.filter }}"

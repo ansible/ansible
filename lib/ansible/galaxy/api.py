@@ -2,8 +2,7 @@
 # Copyright: (c) 2019, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import collections
 import datetime
@@ -16,7 +15,9 @@ import tarfile
 import time
 import threading
 
-from urllib.error import HTTPError
+from http import HTTPStatus
+from http.client import BadStatusLine, IncompleteRead
+from urllib.error import HTTPError, URLError
 from urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs, urljoin
 
 from ansible import constants as C
@@ -25,25 +26,20 @@ from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.api import retry_with_delays_and_condition
 from ansible.module_utils.api import generate_jittered_backoff
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url, prepare_multipart
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash_s
 from ansible.utils.path import makedirs_safe
 
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    # Python 2
-    from urlparse import urlparse
-
 display = Display()
 _CACHE_LOCK = threading.Lock()
 COLLECTION_PAGE_SIZE = 100
-RETRY_HTTP_ERROR_CODES = [  # TODO: Allow user-configuration
-    429,  # Too Many Requests
+RETRY_HTTP_ERROR_CODES = {  # TODO: Allow user-configuration
+    HTTPStatus.TOO_MANY_REQUESTS,
     520,  # Galaxy rate limit error code (Cloudflare unknown error)
-]
+    HTTPStatus.BAD_GATEWAY,  # Common error from galaxy that may represent any number of transient backend issues
+}
 
 
 def cache_lock(func):
@@ -54,11 +50,24 @@ def cache_lock(func):
     return wrapped
 
 
-def is_rate_limit_exception(exception):
+def should_retry_error(exception):
     # Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
     # Since 403 could reflect the actual problem (such as an expired token), we should
     # not retry by default.
-    return isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES
+    if isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES:
+        return True
+
+    if isinstance(exception, AnsibleError) and (orig_exc := getattr(exception, 'orig_exc', None)):
+        # URLError is often a proxy for an underlying error, handle wrapped exceptions
+        if isinstance(orig_exc, URLError):
+            orig_exc = orig_exc.reason
+
+        # Handle common URL related errors such as TimeoutError, and BadStatusLine
+        # Note: socket.timeout is only required for Py3.9
+        if isinstance(orig_exc, (TimeoutError, BadStatusLine, IncompleteRead)):
+            return True
+
+    return False
 
 
 def g_connect(versions):
@@ -229,7 +238,7 @@ CollectionMetadata = collections.namedtuple('CollectionMetadata', ['namespace', 
 
 class CollectionVersionMetadata:
 
-    def __init__(self, namespace, name, version, download_url, artifact_sha256, dependencies):
+    def __init__(self, namespace, name, version, download_url, artifact_sha256, dependencies, signatures_url, signatures):
         """
         Contains common information about a collection on a Galaxy server to smooth through API differences for
         Collection and define a standard meta info for a collection.
@@ -240,6 +249,8 @@ class CollectionVersionMetadata:
         :param download_url: The URL to download the collection.
         :param artifact_sha256: The SHA256 of the collection artifact for later verification.
         :param dependencies: A dict of dependencies of the collection.
+        :param signatures_url: The URL to the specific version of the collection.
+        :param signatures: The list of signatures found at the signatures_url.
         """
         self.namespace = namespace
         self.name = name
@@ -247,6 +258,8 @@ class CollectionVersionMetadata:
         self.download_url = download_url
         self.artifact_sha256 = artifact_sha256
         self.dependencies = dependencies
+        self.signatures_url = signatures_url
+        self.signatures = signatures
 
 
 @functools.total_ordering
@@ -259,6 +272,7 @@ class GalaxyAPI:
             available_api_versions=None,
             clear_response_cache=False, no_cache=True,
             priority=float('inf'),
+            timeout=60,
     ):
         self.galaxy = galaxy
         self.name = name
@@ -267,10 +281,12 @@ class GalaxyAPI:
         self.token = token
         self.api_server = url
         self.validate_certs = validate_certs
+        self.timeout = timeout
         self._available_api_versions = available_api_versions or {}
         self._priority = priority
+        self._server_timeout = timeout
 
-        b_cache_dir = to_bytes(C.config.get_config_value('GALAXY_CACHE_DIR'), errors='surrogate_or_strict')
+        b_cache_dir = to_bytes(C.GALAXY_CACHE_DIR, errors='surrogate_or_strict')
         makedirs_safe(b_cache_dir, mode=0o700)
         self._b_cache_path = os.path.join(b_cache_dir, b'api.json')
 
@@ -292,7 +308,7 @@ class GalaxyAPI:
         return to_native(self.name)
 
     def __unicode__(self):
-        # type: (GalaxyAPI) -> unicode
+        # type: (GalaxyAPI) -> str
         """Render GalaxyAPI as a unicode/text string representation."""
         return to_text(self.name)
 
@@ -308,7 +324,7 @@ class GalaxyAPI:
         )
 
     def __lt__(self, other_galaxy_api):
-        # type: (GalaxyAPI, GalaxyAPI) -> Union[bool, 'NotImplemented']
+        # type: (GalaxyAPI, GalaxyAPI) -> bool
         """Return whether the instance priority is higher than other."""
         if not isinstance(other_galaxy_api, self.__class__):
             return NotImplemented
@@ -318,7 +334,7 @@ class GalaxyAPI:
             self.name < self.name
         )
 
-    @property
+    @property  # type: ignore[misc]  # https://github.com/python/mypy/issues/1362
     @g_connect(['v1', 'v2', 'v3'])
     def available_api_versions(self):
         # Calling g_connect will populate self._available_api_versions
@@ -326,28 +342,31 @@ class GalaxyAPI:
 
     @retry_with_delays_and_condition(
         backoff_iterator=generate_jittered_backoff(retries=6, delay_base=2, delay_threshold=40),
-        should_retry_error=is_rate_limit_exception
+        should_retry_error=should_retry_error
     )
     def _call_galaxy(self, url, args=None, headers=None, method=None, auth_required=False, error_context_msg=None,
-                     cache=False):
+                     cache=False, cache_key=None):
         url_info = urlparse(url)
         cache_id = get_cache_id(url)
+        if not cache_key:
+            cache_key = url_info.path
         query = parse_qs(url_info.query)
         if cache and self._cache:
             server_cache = self._cache.setdefault(cache_id, {})
             iso_datetime_format = '%Y-%m-%dT%H:%M:%SZ'
 
             valid = False
-            if url_info.path in server_cache:
-                expires = datetime.datetime.strptime(server_cache[url_info.path]['expires'], iso_datetime_format)
-                valid = datetime.datetime.utcnow() < expires
+            if cache_key in server_cache:
+                expires = datetime.datetime.strptime(server_cache[cache_key]['expires'], iso_datetime_format)
+                expires = expires.replace(tzinfo=datetime.timezone.utc)
+                valid = datetime.datetime.now(datetime.timezone.utc) < expires
 
             is_paginated_url = 'page' in query or 'offset' in query
             if valid and not is_paginated_url:
                 # Got a hit on the cache and we aren't getting a paginated response
-                path_cache = server_cache[url_info.path]
+                path_cache = server_cache[cache_key]
                 if path_cache.get('paginated'):
-                    if '/v3/' in url_info.path:
+                    if '/v3/' in cache_key:
                         res = {'links': {'next': None}}
                     else:
                         res = {'next': None}
@@ -365,9 +384,9 @@ class GalaxyAPI:
 
             elif not is_paginated_url:
                 # The cache entry had expired or does not exist, start a new blank entry to be filled later.
-                expires = datetime.datetime.utcnow()
+                expires = datetime.datetime.now(datetime.timezone.utc)
                 expires += datetime.timedelta(days=1)
-                server_cache[url_info.path] = {
+                server_cache[cache_key] = {
                     'expires': expires.strftime(iso_datetime_format),
                     'paginated': False,
                 }
@@ -378,11 +397,14 @@ class GalaxyAPI:
         try:
             display.vvvv("Calling Galaxy at %s" % url)
             resp = open_url(to_native(url), data=args, validate_certs=self.validate_certs, headers=headers,
-                            method=method, timeout=20, http_agent=user_agent(), follow_redirects='safe')
+                            method=method, timeout=self._server_timeout, http_agent=user_agent(), follow_redirects='safe')
         except HTTPError as e:
             raise GalaxyError(e, error_context_msg)
         except Exception as e:
-            raise AnsibleError("Unknown error when attempting to call Galaxy at '%s': %s" % (url, to_native(e)))
+            raise AnsibleError(
+                "Unknown error when attempting to call Galaxy at '%s': %s" % (url, to_native(e)),
+                orig_exc=e
+            )
 
         resp_data = to_text(resp.read(), errors='surrogate_or_strict')
         try:
@@ -392,7 +414,7 @@ class GalaxyAPI:
                                % (resp.url, to_native(resp_data)))
 
         if cache and self._cache:
-            path_cache = self._cache[cache_id][url_info.path]
+            path_cache = self._cache[cache_id][cache_key]
 
             # v3 can return data or results for paginated results. Scan the result so we can determine what to cache.
             paginated_key = None
@@ -436,7 +458,14 @@ class GalaxyAPI:
         """
         url = _urljoin(self.api_server, self.available_api_versions['v1'], "tokens") + '/'
         args = urlencode({"github_token": github_token})
-        resp = open_url(url, data=args, validate_certs=self.validate_certs, method="POST", http_agent=user_agent())
+
+        try:
+            resp = open_url(url, data=args, validate_certs=self.validate_certs, method="POST", http_agent=user_agent(), timeout=self._server_timeout)
+        except HTTPError as e:
+            raise GalaxyError(e, 'Attempting to authenticate to galaxy')
+        except Exception as e:
+            raise AnsibleError('Unable to authenticate to galaxy: %s' % to_native(e), orig_exc=e)
+
         data = json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
         return data
 
@@ -453,8 +482,6 @@ class GalaxyAPI:
         }
         if role_name:
             args['alternate_role_name'] = role_name
-        elif github_repo.startswith('ansible-role'):
-            args['alternate_role_name'] = github_repo[len('ansible-role') + 1:]
         data = self._call_galaxy(url, args=urlencode(args), method="POST")
         if data.get('results', None):
             return data['results']
@@ -780,9 +807,11 @@ class GalaxyAPI:
         data = self._call_galaxy(n_collection_url, error_context_msg=error_context_msg, cache=True)
         self._set_cache()
 
+        signatures = data.get('signatures') or []
+
         return CollectionVersionMetadata(data['namespace']['name'], data['collection']['name'], data['version'],
                                          data['download_url'], data['artifact']['sha256'],
-                                         data['metadata']['dependencies'])
+                                         data['metadata']['dependencies'], data['href'], signatures)
 
     @g_connect(['v2', 'v3'])
     def get_collection_versions(self, namespace, name):
@@ -805,6 +834,7 @@ class GalaxyAPI:
         page_size_name = 'limit' if 'v3' in self.available_api_versions else 'page_size'
         versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?%s=%d' % (page_size_name, COLLECTION_PAGE_SIZE))
         versions_url_info = urlparse(versions_url)
+        cache_key = versions_url_info.path
 
         # We should only rely on the cache if the collection has not changed. This may slow things down but it ensures
         # we are not waiting a day before finding any new collections that have been published.
@@ -824,7 +854,7 @@ class GalaxyAPI:
             if cached_modified_date != modified_date:
                 modified_cache['%s.%s' % (namespace, name)] = modified_date
                 if versions_url_info.path in server_cache:
-                    del server_cache[versions_url_info.path]
+                    del server_cache[cache_key]
 
                 self._set_cache()
 
@@ -832,7 +862,7 @@ class GalaxyAPI:
                             % (namespace, name, self.name, self.api_server)
 
         try:
-            data = self._call_galaxy(versions_url, error_context_msg=error_context_msg, cache=True)
+            data = self._call_galaxy(versions_url, error_context_msg=error_context_msg, cache=True, cache_key=cache_key)
         except GalaxyError as err:
             if err.http_code != 404:
                 raise
@@ -866,7 +896,31 @@ class GalaxyAPI:
                 next_link = versions_url.replace(versions_url_info.path, next_link)
 
             data = self._call_galaxy(to_native(next_link, errors='surrogate_or_strict'),
-                                     error_context_msg=error_context_msg, cache=True)
+                                     error_context_msg=error_context_msg, cache=True, cache_key=cache_key)
         self._set_cache()
 
         return versions
+
+    @g_connect(['v2', 'v3'])
+    def get_collection_signatures(self, namespace, name, version):
+        """
+        Gets the collection signatures from the Galaxy server about a specific Collection version.
+
+        :param namespace: The collection namespace.
+        :param name: The collection name.
+        :param version: Version of the collection to get the information for.
+        :return: A list of signature strings.
+        """
+        api_path = self.available_api_versions.get('v3', self.available_api_versions.get('v2'))
+        url_paths = [self.api_server, api_path, 'collections', namespace, name, 'versions', version, '/']
+
+        n_collection_url = _urljoin(*url_paths)
+        error_context_msg = 'Error when getting collection version metadata for %s.%s:%s from %s (%s)' \
+                            % (namespace, name, version, self.name, self.api_server)
+        data = self._call_galaxy(n_collection_url, error_context_msg=error_context_msg, cache=True)
+        self._set_cache()
+
+        signatures = [signature_info["signature"] for signature_info in data.get("signatures") or []]
+        if not signatures:
+            display.vvvv(f"Server {self.api_server} has not signed {namespace}.{name}:{version}")
+        return signatures

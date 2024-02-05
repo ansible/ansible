@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: su
     short_description: Substitute User
     description:
-        - This become plugins allows your remote/login user to execute commands as another user via the su utility.
+        - This become plugin allows your remote/login user to execute commands as another user via the su utility.
     author: ansible (@core)
     version_added: "2.8"
     options:
@@ -26,6 +25,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_USER
               - name: ANSIBLE_SU_USER
+            keyword:
+              - name: become_user
         become_exe:
             description: Su executable
             default: su
@@ -40,6 +41,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_EXE
               - name: ANSIBLE_SU_EXE
+            keyword:
+              - name: become_exe
         become_flags:
             description: Options to pass to su
             default: ''
@@ -54,6 +57,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_FLAGS
               - name: ANSIBLE_SU_FLAGS
+            keyword:
+              - name: become_flags
         become_pass:
             description: Password to pass to su
             required: False
@@ -75,6 +80,7 @@ DOCUMENTATION = """
                   if you add another one in your string, your prompt will fail with a "Timeout" error.
             default: []
             type: list
+            elements: string
             ini:
               - section: su_become_plugin
                 key: localized_prompts
@@ -87,7 +93,7 @@ DOCUMENTATION = """
 import re
 import shlex
 
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 from ansible.plugins.become import BecomeBase
 
 

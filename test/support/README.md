@@ -1,4 +1,4 @@
-# IMPORTANT!
+# IMPORTANT
 
 Files under this directory are not actual plugins and modules used by Ansible
 and as such should **not be modified**. They are used for testing purposes

@@ -15,8 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import select
@@ -24,14 +23,13 @@ import shlex
 import subprocess
 import sys
 
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes
 
 
 def run_cmd(cmd, live=False, readsize=10):
     cmdargs = shlex.split(cmd)
 
-    # subprocess should be passed byte strings.  (on python2.6 it must be
-    # passed byte strtings)
+    # subprocess should be passed byte strings.
     cmdargs = [to_bytes(a, errors='surrogate_or_strict') for a in cmdargs]
 
     p = subprocess.Popen(cmdargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

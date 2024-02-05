@@ -38,6 +38,7 @@ docs/docsite/rst/cli/ansible-*.rst
 docs/docsite/rst/cli/ansible.rst
 docs/docsite/rst/dev_guide/collections_galaxy_meta.rst
 docs/docsite/rst/dev_guide/testing/sanity/index.rst.new
+docs/docsite/rst/dev_guide/index.rst
 docs/docsite/rst/modules/*.rst
 docs/docsite/rst/collections/*.rst
 !docs/docsite/rst/collections/all_plugins.rst
@@ -72,7 +73,16 @@ coverage.xml
 /test/cache/*
 # Development
 /test/develop
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 venv
+env
 Vagrantfile
 .vagrant
 # Backwards compatibility with `stable-2.9` and earlier branches.
@@ -89,8 +99,6 @@ lib/ansible/_vendor/*
 /test/integration/cloud-config-*.*
 !/test/integration/cloud-config-*.*.template
 .python-version
-/hacking/tests/selinux/*.mod
-/hacking/tests/selinux/*.pp
 # Release directory
 packaging/release/ansible_release
 /.cache/

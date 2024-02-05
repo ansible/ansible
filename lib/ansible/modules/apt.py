@@ -6,8 +6,7 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -20,15 +19,15 @@ version_added: "0.0.2"
 options:
   name:
     description:
-      - A list of package names, like C(foo), or package specifier with version, like C(foo=1.0) or C(foo>=1.0).
-        Name wildcards (fnmatch) like C(apt*) and version wildcards like C(foo=1.0*) are also supported.
+      - A list of package names, like V(foo), or package specifier with version, like V(foo=1.0) or V(foo>=1.0).
+        Name wildcards (fnmatch) like V(apt*) and version wildcards like V(foo=1.0*) are also supported.
     aliases: [ package, pkg ]
     type: list
     elements: str
   state:
     description:
-      - Indicates the desired package state. C(latest) ensures that the latest version is installed. C(build-dep) ensures the package build dependencies
-        are installed. C(fixed) attempt to correct a system with broken dependencies in place.
+      - Indicates the desired package state. V(latest) ensures that the latest version is installed. V(build-dep) ensures the package build dependencies
+        are installed. V(fixed) attempt to correct a system with broken dependencies in place.
     type: str
     default: present
     choices: [ absent, build-dep, latest, present, fixed ]
@@ -40,25 +39,25 @@ options:
     type: bool
   update_cache_retries:
     description:
-      - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
+      - Amount of retries if the cache update fails. Also see O(update_cache_retry_max_delay).
     type: int
     default: 5
     version_added: '2.10'
   update_cache_retry_max_delay:
     description:
-      - Use an exponential backoff delay for each retry (see I(update_cache_retries)) up to this max delay in seconds.
+      - Use an exponential backoff delay for each retry (see O(update_cache_retries)) up to this max delay in seconds.
     type: int
     default: 12
     version_added: '2.10'
   cache_valid_time:
     description:
-      - Update the apt cache if it is older than the I(cache_valid_time). This option is set in seconds.
-      - As of Ansible 2.4, if explicitly set, this sets I(update_cache=yes).
+      - Update the apt cache if it is older than the O(cache_valid_time). This option is set in seconds.
+      - As of Ansible 2.4, if explicitly set, this sets O(update_cache=yes).
     type: int
     default: 0
   purge:
     description:
-     - Will force purging of configuration files if the module state is set to I(absent).
+     - Will force purging of configuration files if O(state=absent) or O(autoremove=yes).
     type: bool
     default: 'no'
   default_release:
@@ -68,13 +67,13 @@ options:
     type: str
   install_recommends:
     description:
-      - Corresponds to the C(--no-install-recommends) option for I(apt). C(yes) installs recommended packages.  C(no) does not install
+      - Corresponds to the C(--no-install-recommends) option for I(apt). V(true) installs recommended packages.  V(false) does not install
         recommended packages. By default, Ansible will use the same defaults as the operating system. Suggested packages are never installed.
     aliases: [ install-recommends ]
     type: bool
   force:
     description:
-      - 'Corresponds to the C(--force-yes) to I(apt-get) and implies C(allow_unauthenticated: yes) and C(allow_downgrade: yes)'
+      - 'Corresponds to the C(--force-yes) to I(apt-get) and implies O(allow_unauthenticated=yes) and O(allow_downgrade=yes)'
       - "This option will disable checking both the packages' signatures and the certificates of the
         web servers they are downloaded from."
       - 'This option *is not* the equivalent of passing the C(-f) flag to I(apt-get) on the command line'
@@ -82,10 +81,18 @@ options:
          Please also see C(man apt-get) for more information.'
     type: bool
     default: 'no'
+  clean:
+    description:
+      - Run the equivalent of C(apt-get clean) to clear out the local repository of retrieved package files. It removes everything but
+        the lock file from /var/cache/apt/archives/ and /var/cache/apt/archives/partial/.
+      - Can be run as part of the package installation (clean runs before install) or as a separate step.
+    type: bool
+    default: 'no'
+    version_added: "2.13"
   allow_unauthenticated:
     description:
       - Ignore if packages cannot be authenticated. This is useful for bootstrapping environments that manage their own apt-key setup.
-      - 'C(allow_unauthenticated) is only supported with state: I(install)/I(present)'
+      - 'O(allow_unauthenticated) is only supported with O(state): V(install)/V(present)'
     aliases: [ allow-unauthenticated ]
     type: bool
     default: 'no'
@@ -94,8 +101,9 @@ options:
     description:
       - Corresponds to the C(--allow-downgrades) option for I(apt).
       - This option enables the named package and version to replace an already installed higher version of that package.
-      - Note that setting I(allow_downgrade=true) can make this module behave in a non-idempotent way.
+      - Note that setting O(allow_downgrade=true) can make this module behave in a non-idempotent way.
       - (The task could end up with a set of packages that does not match the complete list of specified packages to install).
+      - 'O(allow_downgrade) is only supported by C(apt) and will be ignored if C(aptitude) is detected or specified.'
     aliases: [ allow-downgrade, allow_downgrades, allow-downgrades ]
     type: bool
     default: 'no'
@@ -133,14 +141,14 @@ options:
      version_added: "1.6"
   autoremove:
     description:
-      - If C(yes), remove unused dependency packages for all module states except I(build-dep). It can also be used as the only option.
+      - If V(true), remove unused dependency packages for all module states except V(build-dep). It can also be used as the only option.
       - Previous to version 2.4, autoclean was also an alias for autoremove, now it is its own separate command. See documentation for further information.
     type: bool
     default: 'no'
     version_added: "2.1"
   autoclean:
     description:
-      - If C(yes), cleans the local repository of retrieved package files that can no longer be downloaded.
+      - If V(true), cleans the local repository of retrieved package files that can no longer be downloaded.
     type: bool
     default: 'no'
     version_added: "2.4"
@@ -149,7 +157,7 @@ options:
       - Force the exit code of /usr/sbin/policy-rc.d.
       - For example, if I(policy_rc_d=101) the installed package will not trigger a service start.
       - If /usr/sbin/policy-rc.d already exists, it is backed up and restored after the package installation.
-      - If C(null), the /usr/sbin/policy-rc.d isn't created/changed.
+      - If V(null), the /usr/sbin/policy-rc.d isn't created/changed.
     type: int
     default: null
     version_added: "2.8"
@@ -162,8 +170,9 @@ options:
   fail_on_autoremove:
     description:
       - 'Corresponds to the C(--no-remove) option for C(apt).'
-      - 'If C(yes), it is ensured that no packages will be removed or the task will fail.'
-      - 'C(fail_on_autoremove) is only supported with state except C(absent)'
+      - 'If V(true), it is ensured that no packages will be removed or the task will fail.'
+      - 'O(fail_on_autoremove) is only supported with O(state) except V(absent).'
+      - 'O(fail_on_autoremove) is only supported by C(apt) and will be ignored if C(aptitude) is detected or specified.'
     type: bool
     default: 'no'
     version_added: "2.11"
@@ -194,115 +203,129 @@ attributes:
     platform:
         platforms: debian
 notes:
-   - Three of the upgrade modes (C(full), C(safe) and its alias C(yes)) required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a fall-back.
+   - Three of the upgrade modes (V(full), V(safe) and its alias V(true)) required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a fall-back.
    - In most cases, packages installed with apt will start newly installed services by default. Most distributions have mechanisms to avoid this.
-     For example when installing Postgresql-9.5 in Debian 9, creating an excutable shell script (/usr/sbin/policy-rc.d) that throws
-     a return code of 101 will stop Postgresql 9.5 starting up after install. Remove the file or remove its execute permission afterwards.
+     For example when installing Postgresql-9.5 in Debian 9, creating an executable shell script (/usr/sbin/policy-rc.d) that throws
+     a return code of 101 will stop Postgresql 9.5 starting up after install. Remove the file or  its execute permission afterward.
    - The apt-get commandline supports implicit regex matches here but we do not because it can let typos through easier
      (If you typo C(foo) as C(fo) apt-get would install packages that have "fo" in their name with a warning and a prompt for the user.
-     Since we don't have warnings and prompts before installing we disallow this.Use an explicit fnmatch pattern if you want wildcarding)
-   - When used with a C(loop:) each package will be processed individually, it is much more efficient to pass the list directly to the I(name) option.
+     Since we don't have warnings and prompts before installing, we disallow this.Use an explicit fnmatch pattern if you want wildcarding)
+   - When used with a C(loop:) each package will be processed individually, it is much more efficient to pass the list directly to the O(name) option.
+   - When O(default_release) is used, an implicit priority of 990 is used. This is the same behavior as C(apt-get -t).
+   - When an exact version is specified, an implicit priority of 1001 is used.
+   - If the interpreter can't import ``python-apt``/``python3-apt`` the module will check for it in system-owned interpreters as well.
+     If the dependency can't be found, the module will attempt to install it.
+     If the dependency is found or installed, the module will be respawned under the correct interpreter.
 '''
 
 EXAMPLES = '''
 - name: Install apache httpd  (state=present is optional)
-  apt:
+  ansible.builtin.apt:
     name: apache2
     state: present
 
 - name: Update repositories cache and install "foo" package
-  apt:
+  ansible.builtin.apt:
     name: foo
     update_cache: yes
 
 - name: Remove "foo" package
-  apt:
+  ansible.builtin.apt:
     name: foo
     state: absent
 
 - name: Install the package "foo"
-  apt:
+  ansible.builtin.apt:
     name: foo
 
 - name: Install a list of packages
-  apt:
+  ansible.builtin.apt:
     pkg:
     - foo
     - foo-tools
 
 - name: Install the version '1.00' of package "foo"
-  apt:
+  ansible.builtin.apt:
     name: foo=1.00
 
 - name: Update the repository cache and update package "nginx" to latest version using default release squeeze-backport
-  apt:
+  ansible.builtin.apt:
     name: nginx
     state: latest
     default_release: squeeze-backports
     update_cache: yes
 
 - name: Install the version '1.18.0' of package "nginx" and allow potential downgrades
-  apt:
+  ansible.builtin.apt:
     name: nginx=1.18.0
     state: present
     allow_downgrade: yes
 
 - name: Install zfsutils-linux with ensuring conflicted packages (e.g. zfs-fuse) will not be removed.
-  apt:
+  ansible.builtin.apt:
     name: zfsutils-linux
     state: latest
     fail_on_autoremove: yes
 
 - name: Install latest version of "openjdk-6-jdk" ignoring "install-recommends"
-  apt:
+  ansible.builtin.apt:
     name: openjdk-6-jdk
     state: latest
     install_recommends: no
 
 - name: Update all packages to their latest version
-  apt:
+  ansible.builtin.apt:
     name: "*"
     state: latest
 
 - name: Upgrade the OS (apt-get dist-upgrade)
-  apt:
+  ansible.builtin.apt:
     upgrade: dist
 
 - name: Run the equivalent of "apt-get update" as a separate step
-  apt:
+  ansible.builtin.apt:
     update_cache: yes
 
 - name: Only run "update_cache=yes" if the last one is more than 3600 seconds ago
-  apt:
+  ansible.builtin.apt:
     update_cache: yes
     cache_valid_time: 3600
 
 - name: Pass options to dpkg on run
-  apt:
+  ansible.builtin.apt:
     upgrade: dist
     update_cache: yes
     dpkg_options: 'force-confold,force-confdef'
 
 - name: Install a .deb package
-  apt:
+  ansible.builtin.apt:
     deb: /tmp/mypackage.deb
 
 - name: Install the build dependencies for package "foo"
-  apt:
+  ansible.builtin.apt:
     pkg: foo
     state: build-dep
 
 - name: Install a .deb package from the internet
-  apt:
+  ansible.builtin.apt:
     deb: https://example.com/python-ppq_0.1-1_all.deb
 
 - name: Remove useless packages from the cache
-  apt:
+  ansible.builtin.apt:
     autoclean: yes
 
 - name: Remove dependencies that are no longer required
-  apt:
+  ansible.builtin.apt:
     autoremove: yes
+
+- name: Remove dependencies that are no longer required and purge their configuration files
+  ansible.builtin.apt:
+    autoremove: yes
+    purge: true
+
+- name: Run the equivalent of "apt-get clean" as a separate step
+  ansible.builtin.apt:
+    clean: yes
 '''
 
 RETURN = '''
@@ -320,7 +343,12 @@ stdout:
     description: output from apt
     returned: success, when needed
     type: str
-    sample: "Reading package lists...\nBuilding dependency tree...\nReading state information...\nThe following extra packages will be installed:\n  apache2-bin ..."
+    sample: |-
+        Reading package lists...
+        Building dependency tree...
+        Reading state information...
+        The following extra packages will be installed:
+          apache2-bin ...
 stderr:
     description: error output from apt
     returned: success, when needed
@@ -334,7 +362,7 @@ warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 
 import datetime
 import fnmatch
-import itertools
+import locale as locale_module
 import os
 import random
 import re
@@ -346,8 +374,8 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
-from ansible.module_utils._text import to_native
-from ansible.module_utils.six import PY3
+from ansible.module_utils.common.text.converters import to_native, to_text
+from ansible.module_utils.six import string_types
 from ansible.module_utils.urls import fetch_file
 
 DPKG_OPTIONS = 'force-confdef,force-confold'
@@ -364,7 +392,6 @@ CLEAN_OP_CHANGED_STR = dict(
     autoclean='Del ',
 )
 
-apt = apt_pkg = None  # keep pylint happy by declaring unconditionally
 
 HAS_PYTHON_APT = False
 try:
@@ -373,7 +400,7 @@ try:
     import apt_pkg
     HAS_PYTHON_APT = True
 except ImportError:
-    pass
+    apt = apt_pkg = None
 
 
 class PolicyRcD(object):
@@ -427,7 +454,7 @@ class PolicyRcD(object):
 
     def __exit__(self, type, value, traceback):
         """
-        This method will be called when we enter the context, before we call `apt-get …`
+        This method will be called when we exit the context, after `apt-get …` is done
         """
 
         # if policy_rc_d is null then we don't need to modify policy-rc.d
@@ -469,12 +496,17 @@ def package_version_compare(version, other_version):
 
 def package_best_match(pkgname, version_cmp, version, release, cache):
     policy = apt_pkg.Policy(cache)
+
+    policy.read_pinfile(apt_pkg.config.find_file("Dir::Etc::preferences"))
+    policy.read_pindir(apt_pkg.config.find_file("Dir::Etc::preferencesparts"))
+
     if release:
         # 990 is the priority used in `apt-get -t`
         policy.create_pin('Release', pkgname, release, 990)
     if version_cmp == "=":
-        # You can't pin to a minimum version, only equality with a glob
-        policy.create_pin('Version', pkgname, version, 991)
+        # Installing a specific version from command line overrides all pinning
+        # We don't mimmic this exactly, but instead set a priority which is higher than all APT built-in pin priorities.
+        policy.create_pin('Version', pkgname, version, 1001)
     pkg = cache[pkgname]
     pkgver = policy.get_candidate_ver(pkg)
     if not pkgver:
@@ -487,6 +519,14 @@ def package_best_match(pkgname, version_cmp, version, release, cache):
 
 
 def package_status(m, pkgname, version_cmp, version, default_release, cache, state):
+    """
+    :return: A tuple of (installed, installed_version, version_installable, has_files). *installed* indicates whether
+    the package (regardless of version) is installed. *installed_version* indicates whether the installed package
+    matches the provided version criteria. *version_installable* provides the latest matching version that can be
+    installed. In the case of virtual packages where we can't determine an applicable match, True is returned.
+    *has_files* indicates whether the package has files on the filesystem (even if not installed, meaning a purge is
+    required).
+    """
     try:
         # get the package from the cache, as well as the
         # low-level apt_pkg.Package object which contains
@@ -499,24 +539,27 @@ def package_status(m, pkgname, version_cmp, version, default_release, cache, sta
             try:
                 provided_packages = cache.get_providing_packages(pkgname)
                 if provided_packages:
-                    is_installed = False
-                    version_installable = None
-                    version_ok = False
-                    # when virtual package providing only one package, look up status of target package
+                    # When this is a virtual package satisfied by only
+                    # one installed package, return the status of the target
+                    # package to avoid requesting re-install
                     if cache.is_virtual_package(pkgname) and len(provided_packages) == 1:
                         package = provided_packages[0]
-                        installed, version_ok, version_installable, has_files = \
+                        installed, installed_version, version_installable, has_files = \
                             package_status(m, package.name, version_cmp, version, default_release, cache, state='install')
                         if installed:
-                            is_installed = True
-                    return is_installed, version_ok, version_installable, False
+                            return installed, installed_version, version_installable, has_files
+
+                    # Otherwise return nothing so apt will sort out
+                    # what package to satisfy this with
+                    return False, False, True, False
+
                 m.fail_json(msg="No package matching '%s' is available" % pkgname)
             except AttributeError:
                 # python-apt version too old to detect virtual packages
                 # mark as not installed and let apt-get install deal with it
-                return False, False, None, False
+                return False, False, True, False
         else:
-            return False, False, False, False
+            return False, False, None, False
     try:
         has_files = len(pkg.installed_files) > 0
     except UnicodeDecodeError:
@@ -546,13 +589,16 @@ def package_status(m, pkgname, version_cmp, version, default_release, cache, sta
         if version_cmp == "=":
             # check if the version is matched as well
             version_is_installed = fnmatch.fnmatch(installed_version, version)
+            if version_best and installed_version != version_best and fnmatch.fnmatch(version_best, version):
+                version_installable = version_best
         elif version_cmp == ">=":
             version_is_installed = apt_pkg.version_compare(installed_version, version) >= 0
+            if version_best and installed_version != version_best and apt_pkg.version_compare(version_best, version) >= 0:
+                version_installable = version_best
         else:
             version_is_installed = True
-
-        if installed_version != version_best:
-            version_installable = version_best
+            if version_best and installed_version != version_best:
+                version_installable = version_best
     else:
         version_installable = version_best
 
@@ -580,6 +626,10 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
     new_pkgspec = []
     if pkgspec:
         for pkgspec_pattern in pkgspec:
+
+            if not isinstance(pkgspec_pattern, string_types):
+                m.fail_json(msg="Invalid type for package name, expected string but got %s" % type(pkgspec_pattern))
+
             pkgname_pattern, version_cmp, version = package_split(pkgspec_pattern)
 
             # note that none of these chars is allowed in a (debian) pkgname
@@ -589,20 +639,20 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
                 if ":" not in pkgname_pattern:
                     # Filter the multiarch packages from the cache only once
                     try:
-                        pkg_name_cache = _non_multiarch
+                        pkg_name_cache = _non_multiarch  # pylint: disable=used-before-assignment
                     except NameError:
                         pkg_name_cache = _non_multiarch = [pkg.name for pkg in cache if ':' not in pkg.name]  # noqa: F841
                 else:
                     # Create a cache of pkg_names including multiarch only once
                     try:
-                        pkg_name_cache = _all_pkg_names
+                        pkg_name_cache = _all_pkg_names  # pylint: disable=used-before-assignment
                     except NameError:
                         pkg_name_cache = _all_pkg_names = [pkg.name for pkg in cache]  # noqa: F841
 
                 matches = fnmatch.filter(pkg_name_cache, pkgname_pattern)
 
                 if not matches:
-                    m.fail_json(msg="No package(s) matching '%s' available" % str(pkgname_pattern))
+                    m.fail_json(msg="No package(s) matching '%s' available" % to_text(pkgname_pattern))
                 else:
                     new_pkgspec.extend(matches)
             else:
@@ -673,23 +723,32 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         name, version_cmp, version = package_split(package)
         package_names.append(name)
         installed, installed_version, version_installable, has_files = package_status(m, name, version_cmp, version, default_release, cache, state='install')
-        if (not installed and not only_upgrade) or (installed and not installed_version) or (upgrade and version_installable):
-            if version_installable or version:
-                pkg_list.append("'%s=%s'" % (name, version_installable or version))
+
+        if not installed and only_upgrade:
+            # only_upgrade upgrades packages that are already installed
+            # since this package is not installed, skip it
+            continue
+
+        if not installed_version and not version_installable:
+            status = False
+            data = dict(msg="no available installation candidate for %s" % package)
+            return (status, data)
+
+        if version_installable and ((not installed and not only_upgrade) or upgrade or not installed_version):
+            if version_installable is not True:
+                pkg_list.append("'%s=%s'" % (name, version_installable))
+            elif version:
+                pkg_list.append("'%s=%s'" % (name, version))
             else:
                 pkg_list.append("'%s'" % name)
         elif installed_version and version_installable and version_cmp == "=":
             # This happens when the package is installed, a newer version is
             # available, and the version is a wildcard that matches both
             #
-            # We do not apply the upgrade flag because we cannot specify both
-            # a version and state=latest.  (This behaviour mirrors how apt
-            # treats a version with wildcard in the package)
-            #
             # This is legacy behavior, and isn't documented (in fact it does
             # things documentations says it shouldn't). It should not be relied
             # upon.
-            pkg_list.append("'%s=%s'" % (name, version_installable))
+            pkg_list.append("'%s=%s'" % (name, version))
     packages = ' '.join(pkg_list)
 
     if packages:
@@ -768,7 +827,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         status = True
         data = dict(changed=False)
 
-    if not build_dep:
+    if not build_dep and not m.check_mode:
         mark_installed_manually(m, package_names)
 
     return (status, data)
@@ -879,7 +938,8 @@ def install_deb(
 
 
 def remove(m, pkgspec, cache, purge=False, force=False,
-           dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False):
+           dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False,
+           allow_change_held_packages=False):
     pkg_list = []
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
     for package in pkgspec:
@@ -912,7 +972,21 @@ def remove(m, pkgspec, cache, purge=False, force=False,
         else:
             check_arg = ''
 
-        cmd = "%s -q -y %s %s %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, force_yes, autoremove, check_arg, packages)
+        if allow_change_held_packages:
+            allow_change_held_packages = '--allow-change-held-packages'
+        else:
+            allow_change_held_packages = ''
+
+        cmd = "%s -q -y %s %s %s %s %s %s remove %s" % (
+            APT_GET_CMD,
+            dpkg_options,
+            purge,
+            force_yes,
+            autoremove,
+            check_arg,
+            allow_change_held_packages,
+            packages
+        )
 
         with PolicyRcD(m):
             rc, out, err = m.run_command(cmd)
@@ -964,6 +1038,17 @@ def cleanup(m, purge=False, force=False, operation=None,
     m.exit_json(changed=changed, stdout=out, stderr=err, diff=diff)
 
 
+def aptclean(m):
+    clean_rc, clean_out, clean_err = m.run_command(['apt-get', 'clean'])
+    clean_diff = parse_diff(clean_out) if m._diff else {}
+
+    if clean_rc:
+        m.fail_json(msg="apt-get clean failed", stdout=clean_out, rc=clean_rc)
+    if clean_err:
+        m.fail_json(msg="apt-get clean failed: %s" % clean_err, stdout=clean_out, rc=clean_rc)
+    return (clean_out, clean_err, clean_diff)
+
+
 def upgrade(m, mode="yes", force=False, default_release=None,
             use_apt_get=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False, fail_on_autoremove=False,
@@ -1010,13 +1095,24 @@ def upgrade(m, mode="yes", force=False, default_release=None,
         force_yes = ''
 
     if fail_on_autoremove:
-        fail_on_autoremove = '--no-remove'
+        if apt_cmd == APT_GET_CMD:
+            fail_on_autoremove = '--no-remove'
+        else:
+            m.warn("APTITUDE does not support '--no-remove', ignoring the 'fail_on_autoremove' parameter.")
+            fail_on_autoremove = ''
     else:
         fail_on_autoremove = ''
 
     allow_unauthenticated = '--allow-unauthenticated' if allow_unauthenticated else ''
 
-    allow_downgrade = '--allow-downgrades' if allow_downgrade else ''
+    if allow_downgrade:
+        if apt_cmd == APT_GET_CMD:
+            allow_downgrade = '--allow-downgrades'
+        else:
+            m.warn("APTITUDE does not support '--allow-downgrades', ignoring the 'allow_downgrade' parameter.")
+            allow_downgrade = ''
+    else:
+        allow_downgrade = ''
 
     if apt_cmd is None:
         if use_apt_get:
@@ -1125,6 +1221,7 @@ def main():
             policy_rc_d=dict(type='int', default=None),
             only_upgrade=dict(type='bool', default=False),
             force_apt_get=dict(type='bool', default=False),
+            clean=dict(type='bool', default=False),
             allow_unauthenticated=dict(type='bool', default=False, aliases=['allow-unauthenticated']),
             allow_downgrade=dict(type='bool', default=False, aliases=['allow-downgrade', 'allow_downgrades', 'allow-downgrades']),
             allow_change_held_packages=dict(type='bool', default=False),
@@ -1139,6 +1236,7 @@ def main():
     # to make sure we use the best parsable locale when running commands
     # also set apt specific vars for desired behaviour
     locale = get_best_parsable_locale(module)
+    locale_module.setlocale(locale_module.LC_ALL, locale)
     # APT related constants
     APT_ENV_VARS = dict(
         DEBIAN_FRONTEND='noninteractive',
@@ -1162,13 +1260,13 @@ def main():
         #    made any more complex than it already is to try and cover more, eg, custom interpreters taking over
         #    system locations)
 
-        apt_pkg_name = 'python3-apt' if PY3 else 'python-apt'
+        apt_pkg_name = 'python3-apt'
 
         if has_respawned():
             # this shouldn't be possible; short-circuit early if it happens...
             module.fail_json(msg="{0} must be installed and visible from {1}.".format(apt_pkg_name, sys.executable))
 
-        interpreters = ['/usr/bin/python3', '/usr/bin/python2', '/usr/bin/python']
+        interpreters = ['/usr/bin/python3', '/usr/bin/python']
 
         interpreter = probe_interpreters_for_module(interpreters, 'apt')
 
@@ -1211,6 +1309,19 @@ def main():
     APT_GET_CMD = module.get_bin_path("apt-get")
 
     p = module.params
+
+    if p['clean'] is True:
+        aptclean_stdout, aptclean_stderr, aptclean_diff = aptclean(module)
+        # If there is nothing else to do exit. This will set state as
+        #  changed based on if the cache was updated.
+        if not p['package'] and not p['upgrade'] and not p['deb']:
+            module.exit_json(
+                changed=True,
+                msg=aptclean_stdout,
+                stdout=aptclean_stdout,
+                stderr=aptclean_stderr,
+                diff=aptclean_diff
+            )
 
     if p['upgrade'] == 'no':
         p['upgrade'] = None
@@ -1265,7 +1376,8 @@ def main():
 
                     for retry in range(update_cache_retries):
                         try:
-                            cache.update()
+                            if not module.check_mode:
+                                cache.update()
                             break
                         except apt.cache.FetchFailedException as e:
                             err = to_native(e)
@@ -1280,7 +1392,7 @@ def main():
 
                     cache.open(progress=None)
                     mtimestamp, post_cache_update_time = get_updated_cache_time()
-                    if updated_cache_time != post_cache_update_time:
+                    if module.check_mode or updated_cache_time != post_cache_update_time:
                         updated_cache = True
                     updated_cache_time = post_cache_update_time
 
@@ -1393,7 +1505,16 @@ def main():
                 else:
                     module.fail_json(**retvals)
             elif p['state'] == 'absent':
-                remove(module, packages, cache, p['purge'], force=force_yes, dpkg_options=dpkg_options, autoremove=autoremove)
+                remove(
+                    module,
+                    packages,
+                    cache,
+                    p['purge'],
+                    force=force_yes,
+                    dpkg_options=dpkg_options,
+                    autoremove=autoremove,
+                    allow_change_held_packages=allow_change_held_packages
+                )
 
         except apt.cache.LockFailedException as lockFailedException:
             if time.time() < deadline:

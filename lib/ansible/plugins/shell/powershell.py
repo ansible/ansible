@@ -1,8 +1,7 @@
 # Copyright (c) 2014, Chris Church <chris@ninemoreminutes.com>
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = '''
 name: powershell
@@ -23,7 +22,7 @@ import pkgutil
 import xml.etree.ElementTree as ET
 import ntpath
 
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.plugins.shell import ShellBase
 
 
@@ -62,7 +61,7 @@ class ShellModule(ShellBase):
     # Common shell filenames that this plugin handles
     # Powershell is handled differently.  It's selected when winrm is the
     # connection
-    COMPATIBLE_SHELLS = frozenset()
+    COMPATIBLE_SHELLS = frozenset()  # type: frozenset[str]
     # Family of shells this has.  Must match the filename without extension
     SHELL_FAMILY = 'powershell'
 
@@ -82,7 +81,7 @@ class ShellModule(ShellBase):
         # use normpath() to remove doubled slashed and convert forward to backslashes
         parts = [ntpath.normpath(self._unquote(arg)) for arg in args]
 
-        # Becuase ntpath.join treats any component that begins with a backslash as an absolute path,
+        # Because ntpath.join treats any component that begins with a backslash as an absolute path,
         # we have to strip slashes from at least the beginning, otherwise join will ignore all previous
         # path components except for the drive.
         return ntpath.join(parts[0], *[part.strip('\\') for part in parts[1:]])

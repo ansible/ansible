@@ -7,6 +7,8 @@
 The facts base class
 this contains methods common to all facts subsets
 """
+from __future__ import annotations
+
 from ansible_collections.ansible.netcommon.plugins.module_utils.network.common.network import (
     get_resource_connection,
 )
@@ -79,7 +81,7 @@ class FactsBase(object):
                 self._module.fail_json(
                     msg="Subset must be one of [%s], got %s"
                     % (
-                        ", ".join(sorted([item for item in valid_subsets])),
+                        ", ".join(sorted(list(valid_subsets))),
                         subset,
                     )
                 )

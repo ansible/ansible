@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import os
 import re
-import typing as t
 
 from ..io import (
     open_text_file,
@@ -26,7 +25,7 @@ from ..target import (
 )
 
 
-def get_csharp_module_utils_imports(powershell_targets, csharp_targets):  # type: (t.List[TestTarget], t.List[TestTarget]) -> t.Dict[str, t.Set[str]]
+def get_csharp_module_utils_imports(powershell_targets: list[TestTarget], csharp_targets: list[TestTarget]) -> dict[str, set[str]]:
     """Return a dictionary of module_utils names mapped to sets of powershell file paths."""
     module_utils = enumerate_module_utils()
 
@@ -38,7 +37,7 @@ def get_csharp_module_utils_imports(powershell_targets, csharp_targets):  # type
     for target in csharp_targets:
         imports_by_target_path[target.path] = extract_csharp_module_utils_imports(target.path, module_utils, True)
 
-    imports = {module_util: set() for module_util in module_utils}  # type: t.Dict[str, t.Set[str]]
+    imports: dict[str, set[str]] = {module_util: set() for module_util in module_utils}
 
     for target_path, modules in imports_by_target_path.items():
         for module_util in modules:
@@ -51,7 +50,7 @@ def get_csharp_module_utils_imports(powershell_targets, csharp_targets):  # type
     return imports
 
 
-def get_csharp_module_utils_name(path):  # type: (str) -> str
+def get_csharp_module_utils_name(path: str) -> str:
     """Return a namespace and name from the given module_utils path."""
     base_path = data_context().content.module_utils_csharp_path
 
@@ -65,14 +64,14 @@ def get_csharp_module_utils_name(path):  # type: (str) -> str
     return name
 
 
-def enumerate_module_utils():  # type: () -> t.Set[str]
+def enumerate_module_utils() -> set[str]:
     """Return a set of available module_utils imports."""
     return set(get_csharp_module_utils_name(p)
                for p in data_context().content.walk_files(data_context().content.module_utils_csharp_path)
                if os.path.splitext(p)[1] == '.cs')
 
 
-def extract_csharp_module_utils_imports(path, module_utils, is_pure_csharp):  # type: (str, t.Set[str], bool) -> t.Set[str]
+def extract_csharp_module_utils_imports(path: str, module_utils: set[str], is_pure_csharp: bool) -> set[str]:
     """Return a set of module_utils imports found in the specified source file."""
     imports = set()
     if is_pure_csharp:

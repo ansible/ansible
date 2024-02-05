@@ -17,10 +17,12 @@ from .. import (
 
 class Layout:
     """Description of content locations and helper methods to access content."""
-    def __init__(self,
-                 root,  # type: str
-                 paths,  # type: t.List[str]
-                 ):  # type: (...) -> None
+
+    def __init__(
+        self,
+        root: str,
+        paths: list[str],
+    ) -> None:
         self.root = root
 
         self.__paths = paths  # contains both file paths and symlinked directory paths (ending with os.path.sep)
@@ -28,14 +30,14 @@ class Layout:
         self.__paths_tree = paths_to_tree(self.__paths)
         self.__files_tree = paths_to_tree(self.__files)
 
-    def all_files(self, include_symlinked_directories=False):  # type: (bool) -> t.List[str]
+    def all_files(self, include_symlinked_directories: bool = False) -> list[str]:
         """Return a list of all file paths."""
         if include_symlinked_directories:
             return self.__paths
 
         return self.__files
 
-    def walk_files(self, directory, include_symlinked_directories=False):  # type: (str, bool) -> t.List[str]
+    def walk_files(self, directory: str, include_symlinked_directories: bool = False) -> list[str]:
         """Return a list of file paths found recursively under the given directory."""
         if include_symlinked_directories:
             tree = self.__paths_tree
@@ -59,13 +61,13 @@ class Layout:
 
         return files
 
-    def get_dirs(self, directory):  # type: (str) -> t.List[str]
+    def get_dirs(self, directory: str) -> list[str]:
         """Return a list directory paths found directly under the given directory."""
         parts = directory.rstrip(os.path.sep).split(os.path.sep)
         item = get_tree_item(self.__files_tree, parts)
         return [os.path.join(directory, key) for key in item[0].keys()] if item else []
 
-    def get_files(self, directory):  # type: (str) -> t.List[str]
+    def get_files(self, directory: str) -> list[str]:
         """Return a list of file paths found directly under the given directory."""
         parts = directory.rstrip(os.path.sep).split(os.path.sep)
         item = get_tree_item(self.__files_tree, parts)
@@ -74,24 +76,27 @@ class Layout:
 
 class ContentLayout(Layout):
     """Information about the current Ansible content being tested."""
-    def __init__(self,
-                 root,  # type: str
-                 paths,  # type: t.List[str]
-                 plugin_paths,  # type: t.Dict[str, str]
-                 collection,  # type: t.Optional[CollectionDetail]
-                 test_path,  # type: str
-                 results_path,  # type: str
-                 sanity_path,  # type: str
-                 sanity_messages,  # type: t.Optional[LayoutMessages]
-                 integration_path,  # type: str
-                 integration_targets_path,  # type: str
-                 integration_vars_path,  # type: str
-                 integration_messages,  # type: t.Optional[LayoutMessages]
-                 unit_path,  # type: str
-                 unit_module_path,  # type: str
-                 unit_module_utils_path,  # type: str
-                 unit_messages,  # type: t.Optional[LayoutMessages]
-                 ):  # type: (...) -> None
+
+    def __init__(
+        self,
+        root: str,
+        paths: list[str],
+        plugin_paths: dict[str, str],
+        collection: t.Optional[CollectionDetail],
+        test_path: str,
+        results_path: str,
+        sanity_path: str,
+        sanity_messages: t.Optional[LayoutMessages],
+        integration_path: str,
+        integration_targets_path: str,
+        integration_vars_path: str,
+        integration_messages: t.Optional[LayoutMessages],
+        unit_path: str,
+        unit_module_path: str,
+        unit_module_utils_path: str,
+        unit_messages: t.Optional[LayoutMessages],
+        unsupported: bool | list[str] = False,
+    ) -> None:
         super().__init__(root, paths)
 
         self.plugin_paths = plugin_paths
@@ -108,11 +113,12 @@ class ContentLayout(Layout):
         self.unit_module_path = unit_module_path
         self.unit_module_utils_path = unit_module_utils_path
         self.unit_messages = unit_messages
+        self.unsupported = unsupported
 
         self.is_ansible = root == ANSIBLE_SOURCE_ROOT
 
     @property
-    def prefix(self):  # type: () -> str
+    def prefix(self) -> str:
         """Return the collection prefix or an empty string if not a collection."""
         if self.collection:
             return self.collection.prefix
@@ -120,17 +126,17 @@ class ContentLayout(Layout):
         return ''
 
     @property
-    def module_path(self):  # type: () -> t.Optional[str]
+    def module_path(self) -> t.Optional[str]:
         """Return the path where modules are found, if any."""
         return self.plugin_paths.get('modules')
 
     @property
-    def module_utils_path(self):  # type: () -> t.Optional[str]
+    def module_utils_path(self) -> t.Optional[str]:
         """Return the path where module_utils are found, if any."""
         return self.plugin_paths.get('module_utils')
 
     @property
-    def module_utils_powershell_path(self):  # type: () -> t.Optional[str]
+    def module_utils_powershell_path(self) -> t.Optional[str]:
         """Return the path where powershell module_utils are found, if any."""
         if self.is_ansible:
             return os.path.join(self.plugin_paths['module_utils'], 'powershell')
@@ -138,7 +144,7 @@ class ContentLayout(Layout):
         return self.plugin_paths.get('module_utils')
 
     @property
-    def module_utils_csharp_path(self):  # type: () -> t.Optional[str]
+    def module_utils_csharp_path(self) -> t.Optional[str]:
         """Return the path where csharp module_utils are found, if any."""
         if self.is_ansible:
             return os.path.join(self.plugin_paths['module_utils'], 'csharp')
@@ -148,19 +154,22 @@ class ContentLayout(Layout):
 
 class LayoutMessages:
     """Messages generated during layout creation that should be deferred for later display."""
-    def __init__(self):
-        self.info = []  # type: t.List[str]
-        self.warning = []  # type: t.List[str]
-        self.error = []  # type: t.List[str]
+
+    def __init__(self) -> None:
+        self.info: list[str] = []
+        self.warning: list[str] = []
+        self.error: list[str] = []
 
 
 class CollectionDetail:
     """Details about the layout of the current collection."""
-    def __init__(self,
-                 name,  # type: str
-                 namespace,  # type: str
-                 root,  # type: str
-                 ):  # type: (...) -> None
+
+    def __init__(
+        self,
+        name: str,
+        namespace: str,
+        root: str,
+    ) -> None:
         self.name = name
         self.namespace = namespace
         self.root = root
@@ -171,6 +180,7 @@ class CollectionDetail:
 
 class LayoutProvider(PathProvider):
     """Base class for layout providers."""
+
     PLUGIN_TYPES = (
         'action',
         'become',
@@ -198,13 +208,13 @@ class LayoutProvider(PathProvider):
     )
 
     @abc.abstractmethod
-    def create(self, root, paths):  # type: (str, t.List[str]) -> ContentLayout
+    def create(self, root: str, paths: list[str]) -> ContentLayout:
         """Create a layout using the given root and paths."""
 
 
-def paths_to_tree(paths):  # type: (t.List[str]) -> t.Tuple[t.Dict[str, t.Any], t.List[str]]
+def paths_to_tree(paths: list[str]) -> tuple[dict[str, t.Any], list[str]]:
     """Return a filesystem tree from the given list of paths."""
-    tree = {}, []
+    tree: tuple[dict[str, t.Any], list[str]] = {}, []
 
     for path in paths:
         parts = path.split(os.path.sep)
@@ -221,7 +231,7 @@ def paths_to_tree(paths):  # type: (t.List[str]) -> t.Tuple[t.Dict[str, t.Any], 
     return tree
 
 
-def get_tree_item(tree, parts):  # type: (t.Tuple[t.Dict[str, t.Any], t.List[str]], t.List[str]) -> t.Optional[t.Tuple[t.Dict[str, t.Any], t.List[str]]]
+def get_tree_item(tree: tuple[dict[str, t.Any], list[str]], parts: list[str]) -> t.Optional[tuple[dict[str, t.Any], list[str]]]:
     """Return the portion of the tree found under the path given by parts, or None if it does not exist."""
     root = tree
 

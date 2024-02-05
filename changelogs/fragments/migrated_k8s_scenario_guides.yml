@@ -1,3 +1,0 @@
----
-minor_changes:
-- k8s - scenario guides for kubernetes migrated to ``kubernetes.core`` collection.

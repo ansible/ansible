@@ -1,7 +1,6 @@
 """Payload management for sending Ansible files and test content to other systems (VMs, containers)."""
 from __future__ import annotations
 
-import atexit
 import os
 import stat
 import tarfile
@@ -27,28 +26,93 @@ from .util import (
 
 from .data import (
     data_context,
+    PayloadConfig,
 )
 
 from .util_common import (
     CommonConfig,
+    ExitHandler,
 )
 
 # improve performance by disabling uid/gid lookups
-tarfile.pwd = None
-tarfile.grp = None
+tarfile.pwd = None  # type: ignore[attr-defined]  # undocumented attribute
+tarfile.grp = None  # type: ignore[attr-defined]  # undocumented attribute
 
 
-def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
+def create_payload(args: CommonConfig, dst_path: str) -> None:
     """Create a payload for delegation."""
     if args.explain:
         return
 
     files = list(data_context().ansible_source)
-    filters = {}
+    permissions: dict[str, int] = {}
+    filters: dict[str, t.Callable[[tarfile.TarInfo], t.Optional[tarfile.TarInfo]]] = {}
 
-    def make_executable(tar_info):  # type: (tarfile.TarInfo) -> t.Optional[tarfile.TarInfo]
-        """Make the given file executable."""
-        tar_info.mode |= stat.S_IXUSR | stat.S_IXOTH | stat.S_IXGRP
+    # Exclude vendored files from the payload.
+    # They may not be compatible with the delegated environment.
+    files = [
+        (abs_path, rel_path) for abs_path, rel_path in files
+        if not rel_path.startswith('lib/ansible/_vendor/')
+        or rel_path == 'lib/ansible/_vendor/__init__.py'
+    ]
+
+    def apply_permissions(tar_info: tarfile.TarInfo, mode: int) -> t.Optional[tarfile.TarInfo]:
+        """
+        Apply the specified permissions to the given file.
+        Existing file type bits are preserved.
+        """
+        tar_info.mode &= ~(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+        tar_info.mode |= mode
+
+        return tar_info
+
+    def make_executable(tar_info: tarfile.TarInfo) -> t.Optional[tarfile.TarInfo]:
+        """
+        Make the given file executable and readable by all, and writeable by the owner.
+        Existing file type bits are preserved.
+        This ensures consistency of test results when using unprivileged users.
+        """
+        return apply_permissions(
+            tar_info,
+            stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH |
+            stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH |
+            stat.S_IWUSR
+        )  # fmt: skip
+
+    def make_non_executable(tar_info: tarfile.TarInfo) -> t.Optional[tarfile.TarInfo]:
+        """
+        Make the given file readable by all, and writeable by the owner.
+        Existing file type bits are preserved.
+        This ensures consistency of test results when using unprivileged users.
+        """
+        return apply_permissions(
+            tar_info,
+            stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH |
+            stat.S_IWUSR
+        )  # fmt: skip
+
+    def detect_permissions(tar_info: tarfile.TarInfo) -> t.Optional[tarfile.TarInfo]:
+        """
+        Detect and apply the appropriate permissions for a file.
+        Existing file type bits are preserved.
+        This ensures consistency of test results when using unprivileged users.
+        """
+        if tar_info.path.startswith('ansible/'):
+            mode = permissions.get(os.path.relpath(tar_info.path, 'ansible'))
+        elif data_context().content.collection and is_subdir(tar_info.path, data_context().content.collection.directory):
+            mode = permissions.get(os.path.relpath(tar_info.path, data_context().content.collection.directory))
+        else:
+            mode = None
+
+        if mode:
+            tar_info = apply_permissions(tar_info, mode)
+        elif tar_info.mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH):
+            # If any execute bit is set, treat the file as executable.
+            # This ensures that sanity tests which check execute bits behave correctly.
+            tar_info = make_executable(tar_info)
+        else:
+            tar_info = make_non_executable(tar_info)
+
         return tar_info
 
     if not ANSIBLE_SOURCE_ROOT:
@@ -69,8 +133,8 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
 
         collection_layouts = data_context().create_collection_layouts()
 
-        content_files = []
-        extra_files = []
+        content_files: list[tuple[str, str]] = []
+        extra_files: list[tuple[str, str]] = []
 
         for layout in collection_layouts:
             if layout == data_context().content:
@@ -85,10 +149,15 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
         # there are no extra files when testing ansible itself
         extra_files = []
 
+    payload_config = PayloadConfig(
+        files=content_files,
+        permissions=permissions,
+    )
+
     for callback in data_context().payload_callbacks:
         # execute callbacks only on the content paths
         # this is done before placing them in the appropriate subdirectory (see below)
-        callback(content_files)
+        callback(payload_config)
 
     # place ansible source files under the 'ansible' directory on the delegated host
     files = [(src, os.path.join('ansible', dst)) for src, dst in files]
@@ -109,7 +178,7 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
     with tarfile.open(dst_path, mode='w:gz', compresslevel=4, format=tarfile.GNU_FORMAT) as tar:
         for src, dst in files:
             display.info('%s -> %s' % (src, dst), verbosity=4)
-            tar.add(src, dst, filter=filters.get(dst))
+            tar.add(src, dst, filter=filters.get(dst, detect_permissions))
 
     duration = time.time() - start
     payload_size_bytes = os.path.getsize(dst_path)
@@ -117,13 +186,13 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
     display.info('Created a %d byte payload archive containing %d files in %d seconds.' % (payload_size_bytes, len(files), duration), verbosity=1)
 
 
-def create_temporary_bin_files(args):  # type: (CommonConfig) -> t.Tuple[t.Tuple[str, str], ...]
+def create_temporary_bin_files(args: CommonConfig) -> tuple[tuple[str, str], ...]:
     """Create a temporary ansible bin directory populated using the symlink map."""
     if args.explain:
         temp_path = '/tmp/ansible-tmp-bin'
     else:
         temp_path = tempfile.mkdtemp(prefix='ansible', suffix='bin')
-        atexit.register(remove_tree, temp_path)
+        ExitHandler.register(remove_tree, temp_path)
 
         for name, dest in ANSIBLE_BIN_SYMLINK_MAP.items():
             path = os.path.join(temp_path, name)

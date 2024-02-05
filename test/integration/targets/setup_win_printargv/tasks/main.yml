@@ -1,7 +1,7 @@
 ---
 - name: download the PrintArgv.exe binary to temp location
   win_get_url:
-    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/setup_win_printargv/PrintArgv.exe
+    url: https://ci-files.testing.ansible.com/test/integration/targets/setup_win_printargv/PrintArgv.exe
     dest: '{{ remote_tmp_dir }}\PrintArgv.exe'
 
 - name: set fact containing PrintArgv binary path

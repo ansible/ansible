@@ -13,23 +13,25 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import glob
 import json
 import os
 import stat
 
-from ansible.module_utils._text import to_text
+import ansible.module_utils.compat.typing as t
+
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.collector import BaseFactCollector
+from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import configparser, StringIO
 
 
 class LocalFactCollector(BaseFactCollector):
     name = 'local'
-    _fact_ids = set()
+    _fact_ids = set()  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         local_facts = {}
@@ -48,8 +50,15 @@ class LocalFactCollector(BaseFactCollector):
         for fn in sorted(glob.glob(fact_path + '/*.fact')):
             # use filename for key where it will sit under local facts
             fact_base = os.path.basename(fn).replace('.fact', '')
-            if stat.S_IXUSR & os.stat(fn)[stat.ST_MODE]:
-                failed = None
+            failed = None
+            try:
+                executable_fact = stat.S_IXUSR & os.stat(fn)[stat.ST_MODE]
+            except OSError as e:
+                failed = 'Could not stat fact (%s): %s' % (fn, to_text(e))
+                local[fact_base] = failed
+                module.warn(failed)
+                continue
+            if executable_fact:
                 try:
                     # run it
                     rc, out, err = module.run_command(fn)
@@ -82,7 +91,10 @@ class LocalFactCollector(BaseFactCollector):
                 # if that fails read it with ConfigParser
                 cp = configparser.ConfigParser()
                 try:
-                    cp.readfp(StringIO(out))
+                    if PY3:
+                        cp.read_file(StringIO(out))
+                    else:
+                        cp.readfp(StringIO(out))
                 except configparser.Error:
                     fact = "error loading facts as JSON or ini - please check content: %s" % fn
                     module.warn(fact)

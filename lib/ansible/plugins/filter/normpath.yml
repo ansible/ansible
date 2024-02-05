@@ -1,0 +1,24 @@
+DOCUMENTATION:
+  name: normpath
+  author: Shivam Durgbuns
+  version_added: "2.15"
+  short_description: Normalize a pathname
+  description:
+    - Returns the normalized pathname by collapsing redundant separators and up-level references.
+  options:
+    _input:
+      description: A path.
+      type: path
+      required: true
+  seealso:
+    - plugin: ansible.builtin.basename
+      plugin_type: filter
+EXAMPLES: |
+
+  # To get a normalized path (for example - '/foo/bar') from the path (for example - '/foo//bar')
+  {{ path | normpath }}
+
+RETURN:
+  _value:
+    description: The normalized path from the path given.
+    type: path

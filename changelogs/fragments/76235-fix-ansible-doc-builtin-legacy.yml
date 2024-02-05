@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-doc - Fix ansible-doc -l ansible.builtin / ansible.legacy not returning anything

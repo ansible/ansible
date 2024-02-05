@@ -48,7 +48,7 @@ ANSIBLE_SSH_ARGS='-C -o ControlMaster=auto -o ControlPersist=60s -o UserKnownHos
 # this test is not doing what it says it does, also relies on var that should not be available
 #ansible-playbook test_loop_control.yml -v "$@"
 
-ansible-playbook test_delegate_to_loop_randomness.yml -v "$@"
+ansible-playbook test_delegate_to_loop_randomness.yml -i inventory -v "$@"
 
 ansible-playbook delegate_and_nolog.yml -i inventory -v "$@"
 
@@ -76,3 +76,7 @@ ansible-playbook test_delegate_to_lookup_context.yml -i inventory -v "$@"
 ansible-playbook delegate_local_from_root.yml -i inventory -v "$@" -e 'ansible_user=root'
 ansible-playbook delegate_with_fact_from_delegate_host.yml "$@"
 ansible-playbook delegate_facts_loop.yml -i inventory -v "$@"
+ansible-playbook test_random_delegate_to_with_loop.yml -i inventory -v "$@"
+
+# Run playbook multiple times to ensure there are no false-negatives
+for i in $(seq 0 10); do ansible-playbook test_random_delegate_to_without_loop.yml -i inventory -v "$@"; done;

@@ -1,0 +1,36 @@
+DOCUMENTATION:
+  name: difference
+  author: Brian Coca (@bcoca)
+  version_added: "1.4"
+  short_description: the difference of one list from another
+  description:
+    - Provide a unique list of all the elements of the first list that do not appear in the second one.
+    - Items in the resulting list are returned in arbitrary order.
+  options:
+    _input:
+      description: A list.
+      type: list
+      required: true
+    _second_list:
+      description: A list.
+      type: list
+      required: true
+  seealso:
+    - plugin_type: filter
+      plugin: ansible.builtin.intersect
+    - plugin_type: filter
+      plugin: ansible.builtin.symmetric_difference
+    - plugin_type: filter
+      plugin: ansible.builtin.union
+    - plugin_type: filter
+      plugin: ansible.builtin.unique
+EXAMPLES: |
+  # return the elements of list1 not in list2
+  # list1: [1, 2, 5, 1, 3, 4, 10]
+  # list2: [1, 2, 3, 4, 5, 11, 99]
+  {{ list1 | difference(list2) }}
+  # => [10]
+RETURN:
+  _value:
+    description: A unique list of the elements from the first list that do not appear on the second.
+    type: list

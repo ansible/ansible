@@ -1,2 +1,0 @@
-minor_changes:
-  - Reduce number of iterations through PlayIterator (https://github.com/ansible/ansible/pull/74175)

@@ -2,8 +2,7 @@
 # Copyright: (c) 2020, Matt Martz <matt@sivel.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -23,6 +22,10 @@ def main():
                 'type': 'str',
                 'choices': ['absent', 'present'],
             },
+            'default_value': {
+                'type': 'bool',
+                'default': True,
+            },
             'path': {},
             'content': {},
             'mapping': {
@@ -34,7 +37,7 @@ def main():
                 'elements': 'dict',
                 'options': {
                     'thing': {},
-                    'other': {},
+                    'other': {'aliases': ['other_alias']},
                 },
             },
             'required_by': {
@@ -136,15 +139,117 @@ def main():
                     'bar': {
                         'type': 'str',
                         'default': 'baz',
+                        'aliases': ['bar_alias1', 'bar_alias2'],
                     },
                 },
             },
+            'deprecation_aliases': {
+                'type': 'str',
+                'aliases': [
+                    'deprecation_aliases_version',
+                    'deprecation_aliases_date',
+                ],
+                'deprecated_aliases': [
+                    {
+                        'name': 'deprecation_aliases_version',
+                        'version': '2.0.0',
+                        'collection_name': 'foo.bar',
+                    },
+                    {
+                        'name': 'deprecation_aliases_date',
+                        'date': '2023-01-01',
+                        'collection_name': 'foo.bar',
+                    },
+                ],
+            },
+            'deprecation_param_version': {
+                'type': 'str',
+                'removed_in_version': '2.0.0',
+                'removed_from_collection': 'foo.bar',
+            },
+            'deprecation_param_date': {
+                'type': 'str',
+                'removed_at_date': '2023-01-01',
+                'removed_from_collection': 'foo.bar',
+            },
+            'subdeprecation': {
+                'aliases': [
+                    'subdeprecation_alias',
+                ],
+                'type': 'dict',
+                'options': {
+                    'deprecation_aliases': {
+                        'type': 'str',
+                        'aliases': [
+                            'deprecation_aliases_version',
+                            'deprecation_aliases_date',
+                        ],
+                        'deprecated_aliases': [
+                            {
+                                'name': 'deprecation_aliases_version',
+                                'version': '2.0.0',
+                                'collection_name': 'foo.bar',
+                            },
+                            {
+                                'name': 'deprecation_aliases_date',
+                                'date': '2023-01-01',
+                                'collection_name': 'foo.bar',
+                            },
+                        ],
+                    },
+                    'deprecation_param_version': {
+                        'type': 'str',
+                        'removed_in_version': '2.0.0',
+                        'removed_from_collection': 'foo.bar',
+                    },
+                    'deprecation_param_date': {
+                        'type': 'str',
+                        'removed_at_date': '2023-01-01',
+                        'removed_from_collection': 'foo.bar',
+                    },
+                },
+            },
+            'subdeprecation_list': {
+                'type': 'list',
+                'elements': 'dict',
+                'options': {
+                    'deprecation_aliases': {
+                        'type': 'str',
+                        'aliases': [
+                            'deprecation_aliases_version',
+                            'deprecation_aliases_date',
+                        ],
+                        'deprecated_aliases': [
+                            {
+                                'name': 'deprecation_aliases_version',
+                                'version': '2.0.0',
+                                'collection_name': 'foo.bar',
+                            },
+                            {
+                                'name': 'deprecation_aliases_date',
+                                'date': '2023-01-01',
+                                'collection_name': 'foo.bar',
+                            },
+                        ],
+                    },
+                    'deprecation_param_version': {
+                        'type': 'str',
+                        'removed_in_version': '2.0.0',
+                        'removed_from_collection': 'foo.bar',
+                    },
+                    'deprecation_param_date': {
+                        'type': 'str',
+                        'removed_at_date': '2023-01-01',
+                        'removed_from_collection': 'foo.bar',
+                    },
+                },
+            }
         },
         required_if=(
             ('state', 'present', ('path', 'content'), True),
         ),
         mutually_exclusive=(
-            ('path', 'content'),
+            ('path', 'content', 'default_value',),
         ),
         required_one_of=(
             ('required_one_of_one', 'required_one_of_two'),

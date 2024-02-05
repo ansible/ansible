@@ -13,10 +13,10 @@
     # on vim-tiny. Really any .deb will work here so long as it has
     # dependencies that exist in a repo and get brought in.
     # The source and files for building this .deb can be found here:
-    # https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/apt/echo-hello-source.tar.gz
+    # https://ci-files.testing.ansible.com/test/integration/targets/apt/echo-hello-source.tar.gz
     - name: Install deb file with dependencies from URL (check_mode)
       apt:
-        deb: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/apt/echo-hello_1.0_all.deb
+        deb: https://ci-files.testing.ansible.com/test/integration/targets/apt/echo-hello_1.0_all.deb
       check_mode: true
       register: apt_url_deps_check_mode
 
@@ -33,7 +33,7 @@
 
     - name: Install deb file with dependencies from URL (for real this time)
       apt:
-        deb: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/apt/echo-hello_1.0_all.deb
+        deb: https://ci-files.testing.ansible.com/test/integration/targets/apt/echo-hello_1.0_all.deb
       register: apt_url_deps
 
     - name: check to make sure we installed the package

@@ -11,10 +11,16 @@ from .init import (
     CURRENT_RLIMIT_NOFILE,
 )
 
+from .constants import (
+    STATUS_HOST_CONNECTION_ERROR,
+)
+
 from .util import (
     ApplicationError,
+    HostConnectionError,
+    TimeoutExpiredError,
     display,
-    MAXFD,
+    report_locale,
 )
 
 from .delegation import (
@@ -37,6 +43,7 @@ from .data import (
 
 from .util_common import (
     CommonConfig,
+    ExitHandler,
 )
 
 from .cli import (
@@ -47,27 +54,40 @@ from .provisioning import (
     PrimeContainers,
 )
 
+from .config import (
+    TestConfig,
+)
 
-def main(cli_args=None):  # type: (t.Optional[t.List[str]]) -> None
+
+def main(cli_args: t.Optional[list[str]] = None) -> None:
+    """Wrapper around the main program function to invoke cleanup functions at exit."""
+    with ExitHandler.context():
+        main_internal(cli_args)
+
+
+def main_internal(cli_args: t.Optional[list[str]] = None) -> None:
     """Main program function."""
     try:
         os.chdir(data_context().content.root)
         args = parse_args(cli_args)
-        config = args.config(args)  # type: CommonConfig
+        config: CommonConfig = args.config(args)
         display.verbosity = config.verbosity
         display.truncate = config.truncate
         display.redact = config.redact
         display.color = config.color
-        display.info_stderr = config.info_stderr
+        display.fd = sys.stderr if config.display_stderr else sys.stdout
         configure_timeout(config)
+        report_locale(isinstance(config, TestConfig) and not config.delegate)
 
         display.info('RLIMIT_NOFILE: %s' % (CURRENT_RLIMIT_NOFILE,), verbosity=2)
-        display.info('MAXFD: %d' % MAXFD, verbosity=2)
 
         delegate_args = None
         target_names = None
 
         try:
+            if config.check_layout:
+                data_context().check_layout()
+
             args.func(config)
         except PrimeContainers:
             pass
@@ -79,20 +99,26 @@ def main(cli_args=None):  # type: (t.Optional[t.List[str]]) -> None
             delegate_args = (ex.host_state, ex.exclude, ex.require)
 
         if delegate_args:
-            # noinspection PyTypeChecker
             delegate(config, *delegate_args)
 
         if target_names:
             for target_name in target_names:
-                print(target_name)  # info goes to stderr, this should be on stdout
+                print(target_name)  # display goes to stderr, this should be on stdout
 
         display.review_warnings()
         config.success = True
+    except HostConnectionError as ex:
+        display.fatal(str(ex))
+        ex.run_callback()
+        sys.exit(STATUS_HOST_CONNECTION_ERROR)
     except ApplicationWarning as ex:
-        display.warning(u'%s' % ex)
+        display.warning('%s' % ex)
         sys.exit(0)
     except ApplicationError as ex:
-        display.error(u'%s' % ex)
+        display.fatal('%s' % ex)
+        sys.exit(1)
+    except TimeoutExpiredError as ex:
+        display.fatal('%s' % ex)
         sys.exit(1)
     except KeyboardInterrupt:
         sys.exit(2)

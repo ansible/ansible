@@ -328,5 +328,73 @@ finally {
 }
 Assert-Equal -actual ([Namespace12.Class12]::GetString()) -expected "b"
 
+$unsafe_code_fail = @'
+using System;
+
+namespace Namespace13
+{
+    public class Class13
+    {
+
+        public static int GetNumber()
+        {
+            int num = 2;
+            int* numPtr = &num;
+
+            DoubleNumber(numPtr);
+
+            return num;
+        }
+
+        private unsafe static void DoubleNumber(int* num)
+        {
+            *num = *num * 3;
+        }
+    }
+}
+'@
+$failed = $false
+try {
+    Add-CSharpType -Reference $unsafe_code_fail
+}
+catch {
+    $failed = $true
+    $actual = $_.Exception.Message.Contains("error CS0227: Unsafe code may only appear if compiling with /unsafe")
+    Assert-Equal -actual $actual -expected $true
+}
+Assert-Equal -actual $failed -expected $true
+
+$unsafe_code = @'
+using System;
+
+//AllowUnsafe
+
+namespace Namespace13
+{
+    public class Class13
+    {
+        public static int GetNumber()
+        {
+            int num = 2;
+            unsafe
+            {
+                int* numPtr = &num;
+
+                DoubleNumber(numPtr);
+            }
+
+            return num;
+        }
+
+        private unsafe static void DoubleNumber(int* num)
+        {
+            *num = *num * 2;
+        }
+    }
+}
+'@
+Add-CSharpType -Reference $unsafe_code
+Assert-Equal -actual ([Namespace13.Class13]::GetNumber()) -expected 4
+
 $result.res = "success"
 Exit-Json -obj $result

@@ -1,6 +1,5 @@
 """Wrapper around yamllint that supports YAML embedded in Ansible modules."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import ast
 import json
@@ -13,7 +12,7 @@ import yaml
 from yaml.resolver import Resolver
 from yaml.constructor import SafeConstructor
 from yaml.error import MarkedYAMLError
-from _yaml import CParser  # pylint: disable=no-name-in-module
+from yaml.cyaml import CParser
 
 from yamllint import linter
 from yamllint.config import YamlLintConfig
@@ -45,17 +44,17 @@ class TestConstructor(SafeConstructor):
 
 
 TestConstructor.add_constructor(
-    u'!unsafe',
+    '!unsafe',
     TestConstructor.construct_yaml_unsafe)
 
 
 TestConstructor.add_constructor(
-    u'!vault',
+    '!vault',
     TestConstructor.construct_yaml_str)
 
 
 TestConstructor.add_constructor(
-    u'!vault-encrypted',
+    '!vault-encrypted',
     TestConstructor.construct_yaml_str)
 
 
@@ -91,7 +90,7 @@ class YamlChecker:
         for path in paths:
             extension = os.path.splitext(path)[1]
 
-            with open(path) as file:
+            with open(path, encoding='utf-8') as file:
                 contents = file.read()
 
             if extension in ('.yml', '.yaml'):
@@ -127,19 +126,31 @@ class YamlChecker:
                 yaml_data = yaml_data[1:]
                 lineno += 1
 
-            self.check_parsable(path, yaml_data, lineno)
+            multiple_docs_allowed = [
+                "EXAMPLES",
+            ]
+            self.check_parsable(path, yaml_data, lineno, (key in multiple_docs_allowed), key)
 
             messages = list(linter.run(yaml_data, conf, path))
 
             self.messages += [self.result_to_message(r, path, lineno - 1, key) for r in messages]
 
-    def check_parsable(self, path, contents, lineno=1):  # type: (str, str, int) -> None
+    def check_parsable(self, path, contents, lineno=1, allow_multiple=False, prefix=""):  # type: (str, str, int, bool) -> None
         """Check the given contents to verify they can be parsed as YAML."""
+        prefix = f"{prefix}: " if prefix else ""
         try:
-            yaml.load(contents, Loader=TestLoader)
+            documents = len(list(yaml.load_all(contents, Loader=TestLoader)))
+            if documents > 1 and not allow_multiple:
+                self.messages += [{'code': 'multiple-yaml-documents',
+                                   'message': f'{prefix}expected a single document in the stream',
+                                   'path': path,
+                                   'line': lineno,
+                                   'column': 1,
+                                   'level': 'error',
+                                   }]
         except MarkedYAMLError as ex:
             self.messages += [{'code': 'unparsable-with-libyaml',
-                               'message': '%s - %s' % (ex.args[0], ex.args[2]),
+                               'message': f'{prefix}{ex.args[0]} - {ex.args[2]}',
                                'path': path,
                                'line': ex.problem_mark.line + lineno,
                                'column': ex.problem_mark.column + 1,
@@ -182,15 +193,15 @@ class YamlChecker:
                 if doc_types and target.id not in doc_types:
                     continue
 
-                fmt_match = fmt_re.match(statement.value.s.lstrip())
+                fmt_match = fmt_re.match(statement.value.value.lstrip())
                 fmt = 'yaml'
                 if fmt_match:
                     fmt = fmt_match.group(1)
 
                 docs[target.id] = dict(
-                    yaml=statement.value.s,
+                    yaml=statement.value.value,
                     lineno=statement.lineno,
-                    end_lineno=statement.lineno + len(statement.value.s.splitlines()),
+                    end_lineno=statement.lineno + len(statement.value.value.splitlines()),
                     fmt=fmt.lower(),
                 )
 

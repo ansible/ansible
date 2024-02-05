@@ -3,12 +3,11 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """Version comparison helpers."""
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import operator
-from ansible.module_utils.compat.version import LooseVersion
 
+from ansible.module_utils.compat.version import LooseVersion
 from ansible.utils.version import SemanticVersion
 
 

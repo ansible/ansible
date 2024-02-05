@@ -2,8 +2,7 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = '''
     name: junit
@@ -40,6 +39,13 @@ DOCUMENTATION = '''
         version_added: "2.8"
         env:
           - name: JUNIT_TASK_RELATIVE_PATH
+      replace_out_of_tree_path:
+        name: Replace out of tree path
+        default: none
+        description: Replace the directory portion of an out-of-tree relative task path with the given placeholder
+        version_added: "2.12.3"
+        env:
+          - name: JUNIT_REPLACE_OUT_OF_TREE_PATH
       fail_on_change:
         name: JUnit fail on change
         default: False
@@ -68,7 +74,7 @@ DOCUMENTATION = '''
       test_case_prefix:
         name: Prefix to find actual test cases
         default: <empty>
-        description: Consider a task only as test case if it has this value as prefix. Additionaly failing tasks are recorded as failed test cases.
+        description: Consider a task only as test case if it has this value as prefix. Additionally failing tasks are recorded as failed test cases.
         version_added: "2.8"
         env:
           - name: JUNIT_TEST_CASE_PREFIX
@@ -81,7 +87,7 @@ import time
 import re
 
 from ansible import constants as C
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
 from ansible.utils._junit_xml import (
     TestCase,
@@ -120,7 +126,7 @@ class CallbackModule(CallbackBase):
                                      Default: True
         JUNIT_HIDE_TASK_ARGUMENTS (optional): Hide the arguments for a task
                                      Default: False
-        JUNIT_TEST_CASE_PREFIX (optional): Consider a task only as test case if it has this value as prefix. Additionaly failing tasks are recorded as failed
+        JUNIT_TEST_CASE_PREFIX (optional): Consider a task only as test case if it has this value as prefix. Additionally failing tasks are recorded as failed
                                      test cases.
                                      Default: <empty>
     """
@@ -141,6 +147,7 @@ class CallbackModule(CallbackBase):
         self._include_setup_tasks_in_report = os.getenv('JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT', 'True').lower()
         self._hide_task_arguments = os.getenv('JUNIT_HIDE_TASK_ARGUMENTS', 'False').lower()
         self._test_case_prefix = os.getenv('JUNIT_TEST_CASE_PREFIX', '')
+        self._replace_out_of_tree_path = os.getenv('JUNIT_REPLACE_OUT_OF_TREE_PATH', None)
         self._playbook_path = None
         self._playbook_name = None
         self._play_name = None
@@ -149,6 +156,9 @@ class CallbackModule(CallbackBase):
         self.disabled = False
 
         self._task_data = {}
+
+        if self._replace_out_of_tree_path is not None:
+            self._replace_out_of_tree_path = to_text(self._replace_out_of_tree_path)
 
         if not os.path.exists(self._output_dir):
             os.makedirs(self._output_dir)
@@ -208,10 +218,13 @@ class CallbackModule(CallbackBase):
         name = '[%s] %s: %s' % (host_data.name, task_data.play, task_data.name)
         duration = host_data.finish - task_data.start
 
-        if self._task_relative_path:
-            junit_classname = os.path.relpath(task_data.path, self._task_relative_path)
+        if self._task_relative_path and task_data.path:
+            junit_classname = to_text(os.path.relpath(to_bytes(task_data.path), to_bytes(self._task_relative_path)))
         else:
             junit_classname = task_data.path
+
+        if self._replace_out_of_tree_path is not None and junit_classname.startswith('../'):
+            junit_classname = self._replace_out_of_tree_path + to_text(os.path.basename(to_bytes(junit_classname)))
 
         if self._task_class == 'true':
             junit_classname = re.sub(r'\.yml:[0-9]+$', '', junit_classname)

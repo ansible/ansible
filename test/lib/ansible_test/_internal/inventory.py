@@ -25,8 +25,12 @@ from .host_profiles import (
     WindowsRemoteProfile,
 )
 
+from .ssh import (
+    ssh_options_to_str,
+)
 
-def create_controller_inventory(args, path, controller_host):  # type: (EnvironmentConfig, str, ControllerHostProfile) -> None
+
+def create_controller_inventory(args: EnvironmentConfig, path: str, controller_host: ControllerHostProfile) -> None:
     """Create and return inventory for use in controller-only integration tests."""
     inventory = Inventory(
         host_groups=dict(
@@ -43,7 +47,7 @@ def create_controller_inventory(args, path, controller_host):  # type: (Environm
     inventory.write(args, path)
 
 
-def create_windows_inventory(args, path, target_hosts):  # type: (EnvironmentConfig, str, t.List[HostProfile]) -> None
+def create_windows_inventory(args: EnvironmentConfig, path: str, target_hosts: list[HostProfile]) -> None:
     """Create and return inventory for use in target Windows integration tests."""
     first = target_hosts[0]
 
@@ -58,7 +62,7 @@ def create_windows_inventory(args, path, target_hosts):  # type: (EnvironmentCon
 
         return
 
-    target_hosts = t.cast(t.List[WindowsRemoteProfile], target_hosts)
+    target_hosts = t.cast(list[WindowsRemoteProfile], target_hosts)
     hosts = [(target_host, target_host.wait_for_instance().connection) for target_host in target_hosts]
     windows_hosts = {sanitize_host_name(host.config.name): host.get_inventory_variables() for host, connection in hosts}
 
@@ -78,7 +82,7 @@ def create_windows_inventory(args, path, target_hosts):  # type: (EnvironmentCon
     inventory.write(args, path)
 
 
-def create_network_inventory(args, path, target_hosts):  # type: (EnvironmentConfig, str, t.List[HostProfile]) -> None
+def create_network_inventory(args: EnvironmentConfig, path: str, target_hosts: list[HostProfile]) -> None:
     """Create and return inventory for use in target network integration tests."""
     first = target_hosts[0]
 
@@ -93,8 +97,8 @@ def create_network_inventory(args, path, target_hosts):  # type: (EnvironmentCon
 
         return
 
-    target_hosts = t.cast(t.List[NetworkRemoteProfile], target_hosts)
-    host_groups = {target_host.config.platform: {} for target_host in target_hosts}
+    target_hosts = t.cast(list[NetworkRemoteProfile], target_hosts)
+    host_groups: dict[str, dict[str, dict[str, t.Union[str, int]]]] = {target_host.config.platform: {} for target_host in target_hosts}
 
     for target_host in target_hosts:
         host_groups[target_host.config.platform][sanitize_host_name(target_host.config.name)] = target_host.get_inventory_variables()
@@ -112,9 +116,9 @@ def create_network_inventory(args, path, target_hosts):  # type: (EnvironmentCon
     inventory.write(args, path)
 
 
-def create_posix_inventory(args, path, target_hosts, needs_ssh=False):  # type: (EnvironmentConfig, str, t.List[HostProfile], bool) -> None
+def create_posix_inventory(args: EnvironmentConfig, path: str, target_hosts: list[HostProfile], needs_ssh: bool = False) -> None:
     """Create and return inventory for use in POSIX integration tests."""
-    target_hosts = t.cast(t.List[SshTargetHostProfile], target_hosts)
+    target_hosts = t.cast(list[SshTargetHostProfile], target_hosts)
 
     if len(target_hosts) != 1:
         raise Exception()
@@ -141,7 +145,7 @@ def create_posix_inventory(args, path, target_hosts, needs_ssh=False):  # type: 
 
         ssh = connections[0]
 
-        testhost = dict(
+        testhost: dict[str, t.Optional[t.Union[str, int]]] = dict(
             ansible_connection='ssh',
             ansible_pipelining='yes',
             ansible_python_interpreter=ssh.settings.python_interpreter,
@@ -149,6 +153,7 @@ def create_posix_inventory(args, path, target_hosts, needs_ssh=False):  # type: 
             ansible_port=ssh.settings.port,
             ansible_user=ssh.settings.user,
             ansible_ssh_private_key_file=ssh.settings.identity_file,
+            ansible_ssh_extra_args=ssh_options_to_str(ssh.settings.options),
         )
 
         if ssh.become:

@@ -2,8 +2,7 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = '''
     name: script
@@ -24,19 +23,142 @@ DOCUMENTATION = '''
         - The source provided must be an executable that returns Ansible inventory JSON
         - The source must accept C(--list) and C(--host <hostname>) as arguments.
           C(--host) will only be used if no C(_meta) key is present.
-          This is a performance optimization as the script would be called per host otherwise.
+          This is a performance optimization as the script would be called one additional time per host otherwise.
     notes:
-        - Whitelisted in configuration by default.
+        - Enabled in configuration by default.
         - The plugin does not cache results because external inventory scripts are responsible for their own caching.
+        - To write your own inventory script see (R(Developing dynamic inventory,developing_inventory) from the documentation site.
+        - To find the scripts that used to be part of the code release, go to U(https://github.com/ansible-community/contrib-scripts/).
 '''
+
+EXAMPLES = r'''# fmt: code
+
+### simple bash script
+
+   #!/usr/bin/env bash
+
+   if [ "$1" == "--list" ]; then
+   cat<<EOF
+   {
+     "bash_hosts": {
+       "hosts": [
+         "myhost.domain.com",
+         "myhost2.domain.com"
+       ],
+       "vars": {
+         "host_test": "test-value"
+       }
+     },
+     "_meta": {
+       "hostvars": {
+         "myhost.domain.com": {
+           "host_specific_test_var": "test-value"
+         }
+       }
+     }
+   }
+   EOF
+   elif [ "$1" == "--host" ]; then
+     # this should not normally be called by Ansible as we return _meta above
+     if [ "$2" == "myhost.domain.com" ]; then
+        echo '{"_meta": {hostvars": {"myhost.domain.com": {"host_specific-test_var": "test-value"}}}}'
+     else
+        echo '{"_meta": {hostvars": {}}}'
+     fi
+   else
+     echo "Invalid option: use --list or --host <hostname>"
+     exit 1
+   fi
+
+
+### python example with ini config
+
+    #!/usr/bin/env python
+    """
+    # ansible_inventory.py
+    """
+    import argparse
+    import json
+    import os.path
+    import sys
+    from configparser import ConfigParser
+    from inventories.custom import MyInventoryAPI
+
+    def load_config() -> ConfigParser:
+        cp = ConfigParser()
+        config_file = os.path.expanduser("~/.config/ansible_inventory_script.cfg")
+        cp.read(config_file)
+        if not cp.has_option('DEFAULT', 'namespace'):
+            raise ValueError("Missing configuration option: DEFAULT -> namespace")
+        return cp
+
+
+    def get_api_data(namespace: str, pretty=False) -> str:
+        """
+        :param namespace: parameter for our custom api
+        :param pretty: Human redable JSON vs machine readable
+        :return: JSON string
+        """
+        found_data = list(MyInventoryAPI(namespace))
+        hostvars = {}
+        data = { '_meta': { 'hostvars': {}},}
+
+        groups = found_data['groups'].keys()
+        for group in groups:
+            groups[group]['hosts'] = found_data[groups].get('host_list', [])
+            if group not in data:
+                data[group] = {}
+            data[group]['hosts'] = found_data[groups].get('host_list', [])
+            data[group]['vars'] = found_data[groups].get('info', [])
+            data[group]['children'] = found_data[group].get('subgroups', [])
+
+        for host_data in found_data['hosts']:
+            for name in host_data.items():
+                # turn info into vars
+                data['_meta'][name] = found_data[name].get('info', {})
+                # set ansible_host if possible
+                if 'address' in found_data[name]:
+                    data[name]['_meta']['ansible_host'] = found_data[name]['address']
+        data['_meta']['hostvars'] = hostvars
+
+        return json.dumps(data, indent=pretty)
+
+    if __name__ == '__main__':
+
+        arg_parser = argparse.ArgumentParser( description=__doc__, prog=__file__)
+        arg_parser.add_argument('--pretty', action='store_true', default=False, help="Pretty JSON")
+        mandatory_options = arg_parser.add_mutually_exclusive_group()
+        mandatory_options.add_argument('--list', action='store', nargs="*", help="Get inventory JSON from our API")
+        mandatory_options.add_argument('--host', action='store',
+                                       help="Get variables for specific host, not used but kept for compatability")
+
+        try:
+            config = load_config()
+            namespace = config.get('DEFAULT', 'namespace')
+
+            args = arg_parser.parse_args()
+            if args.host:
+                print('{"_meta":{}}')
+                sys.stderr.write('This script already provides _meta via --list, so this option is really ignored')
+            elif len(args.list) >= 0:
+                print(get_api_data(namespace, args.pretty))
+            else:
+                raise ValueError("Valid options are --list or --host <HOSTNAME>")
+
+        except ValueError:
+            raise
+
+'''
+
 
 import os
 import subprocess
 
+from collections.abc import Mapping
+
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.basic import json_dict_bytes_to_unicode
-from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.plugins.inventory import BaseInventoryPlugin
 from ansible.utils.display import Display
 
@@ -186,7 +308,11 @@ class InventoryModule(BaseInventoryPlugin):
             sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError as e:
             raise AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
-        (out, err) = sp.communicate()
+        (out, stderr) = sp.communicate()
+
+        if sp.returncode != 0:
+            raise AnsibleError("Inventory script (%s) had an execution error: %s" % (path, to_native(stderr)))
+
         if out.strip() == '':
             return {}
         try:

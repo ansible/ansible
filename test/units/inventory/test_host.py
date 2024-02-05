@@ -17,16 +17,14 @@
 
 # for __setstate__/__getstate__ tests
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import pickle
 
-from units.compat import unittest
+import unittest
 
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
-from ansible.module_utils.six import string_types
 
 
 class TestHost(unittest.TestCase):
@@ -51,7 +49,7 @@ class TestHost(unittest.TestCase):
 
     def test_repr(self):
         host_repr = repr(self.hostA)
-        self.assertIsInstance(host_repr, string_types)
+        self.assertIsInstance(host_repr, str)
 
     def test_add_group(self):
         group = Group('some_group')
@@ -69,10 +67,10 @@ class TestHost(unittest.TestCase):
 
     def test_equals_none(self):
         other = None
-        self.hostA == other
-        other == self.hostA
-        self.hostA != other
-        other != self.hostA
+        assert not (self.hostA == other)
+        assert not (other == self.hostA)
+        assert self.hostA != other
+        assert other != self.hostA
         self.assertNotEqual(self.hostA, other)
 
     def test_serialize(self):

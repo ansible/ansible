@@ -265,7 +265,7 @@ Function Get-AnsibleWebRequest {
     # proxy to work with, otherwise just ignore the credentials property.
     if ($null -ne $proxy) {
         if ($ProxyUseDefaultCredential) {
-            # Weird hack, $web_request.Proxy returns an IWebProxy object which only gurantees the Credentials
+            # Weird hack, $web_request.Proxy returns an IWebProxy object which only guarantees the Credentials
             # property. We cannot set UseDefaultCredentials so we just set the Credentials to the
             # DefaultCredentials in the CredentialCache which does the same thing.
             $proxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials
@@ -355,7 +355,7 @@ Function Invoke-WithWebRequest {
     .PARAMETER Module
     The Ansible.Basic module to set the return values for. This will set the following return values;
         elapsed - The total time, in seconds, that it took to send the web request and process the response
-        msg - The human readable description of the response status code
+        msg - The human-readable description of the response status code
         status_code - An int that is the response status code
 
     .PARAMETER Request

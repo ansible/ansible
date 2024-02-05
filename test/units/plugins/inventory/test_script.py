@@ -17,18 +17,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
+from unittest import mock
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.loader import PluginLoader
-from units.compat import mock
-from units.compat import unittest
-from ansible.module_utils._text import to_bytes, to_native
+import unittest
+from ansible.module_utils.common.text.converters import to_bytes, to_native
 
 
 class TestInventoryModule(unittest.TestCase):
@@ -103,3 +101,11 @@ class TestInventoryModule(unittest.TestCase):
             self.inventory_module.parse(self.inventory, self.loader, '/foo/bar/foobar.py')
         assert e.value.message == to_native("failed to parse executable inventory script results from "
                                             "/foo/bar/foobar.py: needs to be a json dict\ndummyédata\n")
+
+    def test_get_host_variables_subprocess_script_raises_error(self):
+        self.popen_result.returncode = 1
+        self.popen_result.stderr = to_bytes("dummyéerror")
+
+        with pytest.raises(AnsibleError) as e:
+            self.inventory_module.get_host_variables('/foo/bar/foobar.py', 'dummy host')
+        assert e.value.message == "Inventory script (/foo/bar/foobar.py) had an execution error: dummyéerror"

@@ -2,13 +2,12 @@
 # Copyright: (c) 2021, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
+from __future__ import annotations
 
-__metaclass__ = type
 
 import pytest
 
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.validation import check_required_if
 
 
@@ -53,7 +52,7 @@ def test_check_required_if_missing_multiple():
     assert to_native(e.value) == expected
 
 
-def test_check_required_if_missing_multiple():
+def test_check_required_if_missing_multiple_with_context():
     arguments_terms = [["state", "present", ("path", "owner")]]
     params = {
         "state": "present",

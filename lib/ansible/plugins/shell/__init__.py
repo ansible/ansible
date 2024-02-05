@@ -14,8 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import os.path
@@ -24,9 +23,11 @@ import re
 import shlex
 import time
 
+from collections.abc import Mapping, Sequence
+
 from ansible.errors import AnsibleError
-from ansible.module_utils.six import text_type
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
+from ansible.module_utils.six import text_type, string_types
 from ansible.plugins import AnsiblePlugin
 
 _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
@@ -60,12 +61,16 @@ class ShellBase(AnsiblePlugin):
         super(ShellBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
         # set env if needed, deal with environment's 'dual nature' list of dicts or dict
+        # TODO: config system should already resolve this so we should be able to just iterate over dicts
         env = self.get_option('environment')
-        if isinstance(env, list):
-            for env_dict in env:
-                self.env.update(env_dict)
-        else:
-            self.env.update(env)
+        if isinstance(env, string_types):
+            raise AnsibleError('The "environment" keyword takes a list of dictionaries or a dictionary, not a string')
+        if not isinstance(env, Sequence):
+            env = [env]
+        for env_dict in env:
+            if not isinstance(env_dict, Mapping):
+                raise AnsibleError('The "environment" keyword takes a list of dictionaries (or single dictionary), but got a "%s" instead' % type(env_dict))
+            self.env.update(env_dict)
 
         # We can remove the try: except in the future when we make ShellBase a proper subset of
         # *all* shells.  Right now powershell and third party shells which do not use the

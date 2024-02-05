@@ -95,14 +95,16 @@
     repo: 'file://{{ repo_dir|expanduser }}/shallow'
     dest: '{{ checkout_dir }}'
     depth: 1
-    version: master
+    version: >-
+      {{ git_default_branch }}
 
 - name: DEPTH | run a second time (now fetch, not clone)
   git:
     repo: 'file://{{ repo_dir|expanduser }}/shallow'
     dest: '{{ checkout_dir }}'
     depth: 1
-    version: master
+    version: >-
+      {{ git_default_branch }}
   register: git_fetch
 
 - name: DEPTH | ensure the fetch succeeded
@@ -120,7 +122,8 @@
     repo: 'file://{{ repo_dir|expanduser }}/shallow'
     dest: '{{ checkout_dir }}'
     depth: 1
-    version: master
+    version: >-
+      {{ git_default_branch }}
 
 - name: DEPTH | switch to older branch with depth=1 (uses fetch)
   git:

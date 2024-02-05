@@ -15,11 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from units.compat import unittest
-from units.compat.mock import MagicMock, patch
+import unittest
+from unittest.mock import MagicMock, patch
 
 from ansible import constants as C
 from ansible.playbook.task import Task

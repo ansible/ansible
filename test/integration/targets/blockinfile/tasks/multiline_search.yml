@@ -1,0 +1,70 @@
+- name: Create multiline_search test file
+  copy:
+    dest: "{{ remote_tmp_dir }}/listener.ora"
+    content: |
+      LISTENER=(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=IPC)(KEY=LISTENER)))) # line added by Agent
+      ENABLE_GLOBAL_DYNAMIC_ENDPOINT_LISTENER=ON                                   # line added by Agent
+
+      SID_LIST_LISTENER_DG =
+          (SID_LIST =
+              (SID_DESC =
+                  (GLOBAL_DBNAME = DB01_DG)
+                  (ORACLE_HOME = /u01/app/oracle/product/12.1.0.1/db_1)
+                  (SID_NAME = DB011)
+              )
+          )
+
+      SID_LIST_LISTENER =
+          (SID_LIST =
+              (SID_DESC =
+                  (GLOBAL_DBNAME = DB02)
+                  (ORACLE_HOME = /u01/app/oracle/product/12.1.0.1/db_1)
+                  (SID_NAME = DB021)
+              )
+          )
+
+- name: Set fact listener_line
+  set_fact:
+    listener_line: |
+        (SID_DESC =
+          (GLOBAL_DBNAME = DB03
+          (ORACLE_HOME = /u01/app/oracle/product/12.1.0.1/db_1)
+          (SID_NAME = DB031)
+        )
+
+- name: Add block using multiline_search enabled
+  blockinfile:
+    path: "{{ remote_tmp_dir }}/listener.ora"
+    block: "{{ listener_line }}"
+    insertafter: '(?m)SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
+    marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK 1-->"
+  register: multiline_search1
+
+- name: Add block using multiline_search enabled again
+  blockinfile:
+    path: "{{ remote_tmp_dir }}/listener.ora"
+    block: "{{ listener_line }}"
+    insertafter: '(?m)SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
+    marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK 1-->"
+  register: multiline_search2
+
+- name: Try to add block using without multiline flag in regex should add block add end of file
+  blockinfile:
+    path: "{{ remote_tmp_dir }}/listener.ora"
+    block: "{{ listener_line }}"
+    insertafter: 'SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
+    marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK 2-->"
+  register: multiline_search3
+
+- name: Stat the listener.ora file
+  stat:
+    path: "{{ remote_tmp_dir }}/listener.ora"
+  register: listener_ora_file
+
+- name: Ensure insertafter worked correctly
+  assert:
+    that:
+      - multiline_search1 is changed
+      - multiline_search2 is not changed
+      - multiline_search3 is changed
+      - listener_ora_file.stat.checksum == '5a8010ac4a2fad7c822e6aeb276931657cee75c0'

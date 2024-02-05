@@ -13,8 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
+
+import ansible.module_utils.compat.typing as t
 
 from ansible.module_utils.facts.utils import get_file_content
 
@@ -27,7 +28,7 @@ class SshPubKeyFactCollector(BaseFactCollector):
                      'ssh_host_key_dsa_public',
                      'ssh_host_key_rsa_public',
                      'ssh_host_key_ecdsa_public',
-                     'ssh_host_key_ed25519_public'])
+                     'ssh_host_key_ed25519_public'])  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         ssh_pub_key_facts = {}

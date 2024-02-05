@@ -15,18 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
+from __future__ import annotations
 
-from units.compat import unittest
-from units.compat.mock import MagicMock
+import unittest
+from unittest.mock import MagicMock
 
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
 from ansible.plugins.callback import CallbackBase
 from ansible.utils import context_objects as co
-
-__metaclass__ = type
 
 
 class TestTaskQueueManagerCallbacks(unittest.TestCase):

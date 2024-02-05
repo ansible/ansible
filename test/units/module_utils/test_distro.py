@@ -12,11 +12,9 @@
 # Note that nir0s/distro has many more tests in it's test suite. The tests here are
 # primarily for testing the vendoring.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible.module_utils import distro
-from ansible.module_utils.six import string_types
 
 
 # Generic test case with minimal assertions about specific returned values.
@@ -30,4 +28,4 @@ class TestDistro():
 
     def test_id(self):
         id = distro.id()
-        assert isinstance(id, string_types), 'distro.id() returned %s (%s) which is not a string' % (id, type(id))
+        assert isinstance(id, str), 'distro.id() returned %s (%s) which is not a string' % (id, type(id))

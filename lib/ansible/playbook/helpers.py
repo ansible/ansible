@@ -15,15 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
 from ansible import constants as C
-from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError
-from ansible.module_utils._text import to_native
-from ansible.module_utils.six import string_types
+from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
+from ansible.module_utils.common.text.converters import to_native
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.utils.display import Display
 
@@ -105,6 +103,8 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             raise AnsibleAssertionError('The ds (%s) should be a dict but was a %s' % (ds, type(ds)))
 
         if 'block' in task_ds:
+            if use_handlers:
+                raise AnsibleParserError("Using a block as a handler is not supported.", obj=task_ds)
             t = Block.load(
                 task_ds,
                 play=play,
@@ -148,22 +148,9 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 templar = Templar(loader=loader, variables=all_vars)
 
                 # check to see if this include is dynamic or static:
-                # 1. the user has set the 'static' option to false or true
-                # 2. one of the appropriate config options was set
-                if action in C._ACTION_INCLUDE_TASKS:
-                    is_static = False
-                elif action in C._ACTION_IMPORT_TASKS:
-                    is_static = True
-                else:
-                    display.deprecated('"include" is deprecated, use include_tasks/import_tasks instead', "2.16")
-                    is_static = not templar.is_template(t.args['_raw_params']) and t.all_parents_static() and not t.loop
-
-                if is_static:
+                if action in C._ACTION_IMPORT_TASKS:
                     if t.loop is not None:
-                        if action in C._ACTION_IMPORT_TASKS:
-                            raise AnsibleParserError("You cannot use loops on 'import_tasks' statements. You should use 'include_tasks' instead.", obj=task_ds)
-                        else:
-                            raise AnsibleParserError("You cannot use 'static' on an include with a loop", obj=task_ds)
+                        raise AnsibleParserError("You cannot use loops on 'import_tasks' statements. You should use 'include_tasks' instead.", obj=task_ds)
 
                     # we set a flag to indicate this include was static
                     t.statically_loaded = True
@@ -269,10 +256,12 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     else:
                         task_list.extend(included_blocks)
                 else:
-                    t.is_static = False
                     task_list.append(t)
 
             elif action in C._ACTION_ALL_PROPER_INCLUDE_IMPORT_ROLES:
+                if use_handlers:
+                    raise AnsibleParserError(f"Using '{action}' as a handler is not supported.", obj=task_ds)
+
                 ir = IncludeRole.load(
                     task_ds,
                     block=block,
@@ -282,18 +271,9 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     loader=loader,
                 )
 
-                #   1. the user has set the 'static' option to false or true
-                #   2. one of the appropriate config options was set
-                is_static = False
                 if action in C._ACTION_IMPORT_ROLE:
-                    is_static = True
-
-                if is_static:
                     if ir.loop is not None:
-                        if action in C._ACTION_IMPORT_ROLE:
-                            raise AnsibleParserError("You cannot use loops on 'import_role' statements. You should use 'include_role' instead.", obj=task_ds)
-                        else:
-                            raise AnsibleParserError("You cannot use 'static' on an include_role with a loop", obj=task_ds)
+                        raise AnsibleParserError("You cannot use loops on 'import_role' statements. You should use 'include_role' instead.", obj=task_ds)
 
                     # we set a flag to indicate this include was static
                     ir.statically_loaded = True
@@ -301,10 +281,11 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     # template the role name now, if needed
                     all_vars = variable_manager.get_vars(play=play, task=ir)
                     templar = Templar(loader=loader, variables=all_vars)
+                    ir.post_validate(templar=templar)
                     ir._role_name = templar.template(ir._role_name)
 
                     # uses compiled list from object
-                    blocks, _ = ir.get_block_list(variable_manager=variable_manager, loader=loader)
+                    blocks, dummy = ir.get_block_list(variable_manager=variable_manager, loader=loader)
                     task_list.extend(blocks)
                 else:
                     # passes task object itself for latter generation of list

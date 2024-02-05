@@ -21,8 +21,7 @@ a newer upstream release.
 """
 
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import fnmatch
 import json
@@ -50,7 +49,6 @@ def get_bundled_libs(paths):
     for filename in fnmatch.filter(paths, 'lib/ansible/compat/*/__init__.py'):
         bundled_libs.add(filename)
 
-    bundled_libs.add('lib/ansible/module_utils/compat/selectors.py')
     bundled_libs.add('lib/ansible/module_utils/distro/__init__.py')
     bundled_libs.add('lib/ansible/module_utils/six/__init__.py')
     # backports.ssl_match_hostname should be moved to its own file in the future

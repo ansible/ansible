@@ -17,7 +17,7 @@ ansible -m include_role -a name=role1 localhost
 ## Import (static)
 
 # Playbook
-test "$(ANSIBLE_DEPRECATION_WARNINGS=1 ansible-playbook -i ../../inventory playbook/test_import_playbook.yml "$@" 2>&1 | grep -c '\[DEPRECATION WARNING\]: Additional parameters in import_playbook')" = 1
+ansible-playbook playbook/test_import_playbook.yml -i inventory "$@"
 
 ANSIBLE_STRATEGY='linear' ansible-playbook playbook/test_import_playbook_tags.yml -i inventory "$@" --tags canary1,canary22,validate --skip-tags skipme
 
@@ -120,6 +120,11 @@ ansible-playbook valid_include_keywords/playbook.yml "$@"
 # https://github.com/ansible/ansible/issues/64902
 ansible-playbook tasks/test_allow_single_role_dup.yml 2>&1 | tee test_allow_single_role_dup.out
 test "$(grep -c 'ok=3' test_allow_single_role_dup.out)" = 1
+
+# test templating public, allow_duplicates, and rolespec_validate
+ansible-playbook tasks/test_templating_IncludeRole_FA.yml 2>&1 | tee IncludeRole_FA_template.out
+test "$(grep -c 'ok=6' IncludeRole_FA_template.out)" = 1
+test "$(grep -c 'failed=0' IncludeRole_FA_template.out)" = 1
 
 # https://github.com/ansible/ansible/issues/66764
 ANSIBLE_HOST_PATTERN_MISMATCH=error ansible-playbook empty_group_warning/playbook.yml

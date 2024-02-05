@@ -2,8 +2,7 @@
 # Most of these names are only available via PluginLoader so pylint doesn't
 # know they exist
 # pylint: disable=no-name-in-module
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible.module_utils.basic import AnsibleModule
 import datetime

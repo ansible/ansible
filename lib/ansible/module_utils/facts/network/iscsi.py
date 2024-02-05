@@ -15,11 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import sys
-import subprocess
+
+import ansible.module_utils.compat.typing as t
 
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.facts.utils import get_file_content
@@ -28,7 +28,7 @@ from ansible.module_utils.facts.network.base import NetworkCollector
 
 class IscsiInitiatorNetworkCollector(NetworkCollector):
     name = 'iscsi'
-    _fact_ids = set()
+    _fact_ids = set()  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         """

@@ -2,20 +2,16 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 
-from ast import literal_eval
-from jinja2 import Template
 from string import ascii_letters, digits
 
-from ansible.config.manager import ConfigManager, ensure_type
-from ansible.module_utils._text import to_text
+from ansible.config.manager import ConfigManager
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.common.collections import Sequence
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
-from ansible.module_utils.six import string_types
 from ansible.release import __version__
 from ansible.utils.fqcn import add_internal_fqcns
 
@@ -67,21 +63,20 @@ _ACTION_DEBUG = add_internal_fqcns(('debug', ))
 _ACTION_IMPORT_PLAYBOOK = add_internal_fqcns(('import_playbook', ))
 _ACTION_IMPORT_ROLE = add_internal_fqcns(('import_role', ))
 _ACTION_IMPORT_TASKS = add_internal_fqcns(('import_tasks', ))
-_ACTION_INCLUDE = add_internal_fqcns(('include', ))
 _ACTION_INCLUDE_ROLE = add_internal_fqcns(('include_role', ))
 _ACTION_INCLUDE_TASKS = add_internal_fqcns(('include_tasks', ))
 _ACTION_INCLUDE_VARS = add_internal_fqcns(('include_vars', ))
+_ACTION_INVENTORY_TASKS = add_internal_fqcns(('add_host', 'group_by'))
 _ACTION_META = add_internal_fqcns(('meta', ))
 _ACTION_SET_FACT = add_internal_fqcns(('set_fact', ))
 _ACTION_SETUP = add_internal_fqcns(('setup', ))
 _ACTION_HAS_CMD = add_internal_fqcns(('command', 'shell', 'script'))
 _ACTION_ALLOWS_RAW_ARGS = _ACTION_HAS_CMD + add_internal_fqcns(('raw', ))
-_ACTION_ALL_INCLUDES = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS + _ACTION_INCLUDE_ROLE
-_ACTION_ALL_INCLUDE_IMPORT_TASKS = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS + _ACTION_IMPORT_TASKS
+_ACTION_ALL_INCLUDES = _ACTION_INCLUDE_TASKS + _ACTION_INCLUDE_ROLE
+_ACTION_ALL_INCLUDE_IMPORT_TASKS = _ACTION_INCLUDE_TASKS + _ACTION_IMPORT_TASKS
 _ACTION_ALL_PROPER_INCLUDE_IMPORT_ROLES = _ACTION_INCLUDE_ROLE + _ACTION_IMPORT_ROLE
 _ACTION_ALL_PROPER_INCLUDE_IMPORT_TASKS = _ACTION_INCLUDE_TASKS + _ACTION_IMPORT_TASKS
 _ACTION_ALL_INCLUDE_ROLE_TASKS = _ACTION_INCLUDE_ROLE + _ACTION_INCLUDE_TASKS
-_ACTION_ALL_INCLUDE_TASKS = _ACTION_INCLUDE + _ACTION_INCLUDE_TASKS
 _ACTION_FACT_GATHERING = _ACTION_SETUP + add_internal_fqcns(('gather_facts', ))
 _ACTION_WITH_CLEAN_FACTS = _ACTION_SET_FACT + _ACTION_INCLUDE_VARS
 
@@ -101,6 +96,11 @@ COLOR_CODES = {
 REJECT_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst')
 BOOL_TRUE = BOOLEANS_TRUE
 COLLECTION_PTYPE_COMPAT = {'module': 'modules'}
+
+PYTHON_DOC_EXTENSIONS = ('.py',)
+YAML_DOC_EXTENSIONS = ('.yml', '.yaml')
+DOC_EXTENSIONS = PYTHON_DOC_EXTENSIONS + YAML_DOC_EXTENSIONS
+
 DEFAULT_BECOME_PASS = None
 DEFAULT_PASSWORD_CHARS = to_text(ascii_letters + digits + ".,:-_", errors='strict')  # characters included in auto-generated passwords
 DEFAULT_REMOTE_PASS = None
@@ -108,8 +108,8 @@ DEFAULT_SUBSET = None
 # FIXME: expand to other plugins, but never doc fragments
 CONFIGURABLE_PLUGINS = ('become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'netconf', 'shell', 'vars')
 # NOTE: always update the docs/docsite/Makefile to match
-DOCUMENTABLE_PLUGINS = CONFIGURABLE_PLUGINS + ('module', 'strategy')
-IGNORE_FILES = ("COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES")  # ignore during module search
+DOCUMENTABLE_PLUGINS = CONFIGURABLE_PLUGINS + ('module', 'strategy', 'test', 'filter')
+IGNORE_FILES = ("COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES", "MANIFEST", "Makefile")  # ignore during module search
 INTERNAL_RESULT_KEYS = ('add_host', 'add_group')
 LOCALHOST = ('127.0.0.1', 'localhost', '::1')
 MODULE_REQUIRE_ARGS = tuple(add_internal_fqcns(('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
@@ -117,6 +117,7 @@ MODULE_REQUIRE_ARGS = tuple(add_internal_fqcns(('command', 'win_command', 'ansib
 MODULE_NO_JSON = tuple(add_internal_fqcns(('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
                                            'ansible.windows.win_shell', 'raw')))
 RESTRICTED_RESULT_KEYS = ('ansible_rsync_path', 'ansible_playbook_python', 'ansible_facts')
+SYNTHETIC_COLLECTIONS = ('ansible.builtin', 'ansible.legacy')
 TREE_DIR = None
 VAULT_VERSION_MIN = 1.0
 VAULT_VERSION_MAX = 1.0
@@ -180,25 +181,8 @@ MAGIC_VARIABLE_MAPPING = dict(
 config = ConfigManager()
 
 # Generate constants from config
-for setting in config.data.get_settings():
-
-    value = setting.value
-    if setting.origin == 'default' and \
-       isinstance(setting.value, string_types) and \
-       (setting.value.startswith('{{') and setting.value.endswith('}}')):
-        try:
-            t = Template(setting.value)
-            value = t.render(vars())
-            try:
-                value = literal_eval(value)
-            except ValueError:
-                pass  # not a python data structure
-        except Exception:
-            pass  # not templatable
-
-        value = ensure_type(value, setting.type)
-
-    set_constant(setting.name, value)
+for setting in config.get_configuration_definitions():
+    set_constant(setting, config.get_config_value(setting, variables=vars()))
 
 for warn in config.WARNINGS:
     _warning(warn)

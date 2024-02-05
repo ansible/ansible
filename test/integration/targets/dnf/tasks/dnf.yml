@@ -6,8 +6,6 @@
   shell: rpm -q python2-dnf
   register: rpm_result
   ignore_errors: true
-  args:
-    warn: no
 
 # Don't uninstall python2-dnf with the `dnf` module in case it needs to load
 # some dnf python files after the package is uninstalled.
@@ -110,6 +108,19 @@
   assert:
     that:
         - "not dnf_result.changed"
+
+- name: install sos again with empty string enablerepo
+  dnf:
+    name: sos
+    state: present
+    enablerepo: ""
+  register: dnf_result
+
+- name: verify no change on third install with empty string enablerepo
+  assert:
+    that:
+        - "dnf_result is success"
+        - "not dnf_result is changed"
 
 # Multiple packages
 - name: uninstall sos and dos2unix
@@ -226,7 +237,7 @@
 - assert:
     that:
       - dnf_result is success
-      - dnf_result.results|length == 2
+      - dnf_result.results|length >= 2
       - "dnf_result.results[0].startswith('Removed: ')"
       - "dnf_result.results[1].startswith('Removed: ')"
 
@@ -425,9 +436,9 @@
     name: landsidescalping
     state: absent
 
-# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-- shell: 'dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"'
-  register: shell_dnf_result
+- dnf:
+    name: "@Custom Group"
+    state: absent
 
 # GROUP UPGRADE - this will go to the same method as group install
 # but through group_update - it is its invocation we're testing here
@@ -445,8 +456,9 @@
     - dnf_result is changed
     - "'results' in dnf_result"
 
-# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-- shell: dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"
+- dnf:
+    name: "@Custom Group"
+    state: absent
 
 - name: try to install non existing group
   dnf:
@@ -488,7 +500,7 @@
 
 - name: try to install from non existing url
   dnf:
-    name: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/dnf/non-existing-1.0.0.fc26.noarch.rpm
+    name: https://ci-files.testing.ansible.com/test/integration/targets/dnf/non-existing-1.0.0.fc26.noarch.rpm
     state: present
   register: dnf_result
   ignore_errors: yes
@@ -498,6 +510,7 @@
     that:
         - "dnf_result is failed"
         - "not dnf_result.changed"
+        - "'Failure downloading' in dnf_result.msg or 'Failed to download' in dnf_result.msg"
 
 - name: verify dnf module outputs
   assert:
@@ -553,37 +566,42 @@
         - "'No package non-existent-rpm available' in dnf_result['failures'][0]"
         - "'Failed to install some of the specified packages' in dnf_result['msg']"
 
-- name: use latest to install httpd
+- name: ensure sos isn't installed
   dnf:
-    name: httpd
+    name: sos
+    state: absent
+
+- name: use latest to install sos
+  dnf:
+    name: sos
     state: latest
   register: dnf_result
 
-- name: verify httpd was installed
+- name: verify sos was installed
   assert:
     that:
-      - "'changed' in dnf_result"
+      - dnf_result is changed
 
-- name: uninstall httpd
+- name: uninstall sos
   dnf:
-    name: httpd
+    name: sos
     state: removed
 
-- name: update httpd only if it exists
+- name: update sos only if it exists
   dnf:
-    name: httpd
+    name: sos
     state: latest
     update_only: yes
   register: dnf_result
 
-- name: verify httpd not installed
+- name: verify sos not installed
   assert:
     that:
       - "not dnf_result is changed"
 
 - name: try to install not compatible arch rpm, should fail
   dnf:
-    name: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/dnf/banner-1.3.4-3.el7.ppc64le.rpm
+    name: https://ci-files.testing.ansible.com/test/integration/targets/dnf/banner-1.3.4-3.el7.ppc64le.rpm
     state: present
   register: dnf_result
   ignore_errors: True
@@ -649,6 +667,28 @@
     that:
         - "dnf_result is success"
         - "dnf_result is changed"
+        - "dnf_result is not failed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'results' in dnf_result"
+
+# Install RPM from url with update_only
+- name: install from url with update_only
+  dnf:
+    name: "file://{{ pkg_path }}"
+    state: latest
+    update_only: true
+    disable_gpg_check: true
+  register: dnf_result
+
+- name: verify installation
+  assert:
+    that:
+        - "dnf_result is success"
+        - "not dnf_result is changed"
         - "dnf_result is not failed"
 
 - name: verify dnf module outputs

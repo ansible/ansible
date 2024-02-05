@@ -1,3 +1,0 @@
-bugfixes:
-  - ansible-test - Target integration test requirements are now correctly installed for target environments running on the controller.
-  - ansible-test - Automatic target requirements installation is now based on the target environment instead of the controller environment.

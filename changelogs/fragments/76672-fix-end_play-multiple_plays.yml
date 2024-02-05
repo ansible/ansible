@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix ``end_play`` to end the current play only (https://github.com/ansible/ansible/issues/76672)

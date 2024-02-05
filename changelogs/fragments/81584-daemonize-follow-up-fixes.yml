@@ -1,0 +1,2 @@
+bugfixes:
+  - "``ansible.module_utils.service`` - ensure binary data transmission in ``daemonize()``"

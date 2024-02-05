@@ -1,11 +1,11 @@
 - name: test non-ascii with different LANGUAGE
   when: ansible_os_family == 'Debian'
   block:
-    - name: install de language pack
-      apt: 
-        name: language-pack-de 
+    - name: install fr language pack
+      apt:
+        name: language-pack-fr
         state: present
-      
+
     - name: create our unarchive destination
       file:
         path: "{{ remote_tmp_dir }}/test-unarchive-nonascii-くらとみ-tar-gz"
@@ -38,4 +38,4 @@
         state: absent
 
   environment:
-    LANGUAGE: de_DE:en
+    LANGUAGE: fr_FR:fr

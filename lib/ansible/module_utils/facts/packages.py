@@ -1,8 +1,7 @@
 # (c) 2018, Ansible Project
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 
@@ -16,7 +15,7 @@ def get_all_pkg_managers():
     return {obj.__name__.lower(): obj for obj in get_all_subclasses(PkgMgr) if obj not in (CLIMgr, LibMgr)}
 
 
-class PkgMgr(with_metaclass(ABCMeta, object)):
+class PkgMgr(with_metaclass(ABCMeta, object)):  # type: ignore[misc]
 
     @abstractmethod
     def is_available(self):
@@ -52,7 +51,7 @@ class PkgMgr(with_metaclass(ABCMeta, object)):
 
 class LibMgr(PkgMgr):
 
-    LIB = None
+    LIB = None  # type: str | None
 
     def __init__(self):
 
@@ -71,7 +70,7 @@ class LibMgr(PkgMgr):
 
 class CLIMgr(PkgMgr):
 
-    CLI = None
+    CLI = None  # type: str | None
 
     def __init__(self):
 

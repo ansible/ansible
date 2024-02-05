@@ -4,7 +4,7 @@
     dest: '{{ scm_path }}/amazon.aws/'
 
 - name: install
-  command: 'ansible-galaxy collection install git+file://{{ scm_path }}/amazon.aws/.git'
+  command: 'ansible-galaxy collection install git+file://{{ scm_path }}/amazon.aws/.git --no-deps'
 
 - name: list installed collections
   command: 'ansible-galaxy collection list'

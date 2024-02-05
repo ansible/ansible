@@ -1,0 +1,30 @@
+DOCUMENTATION:
+  name: rekey_on_member
+  version_added: "2.13"
+  short_description: Rekey a list of dicts into a dict using a member
+  positional: _input, '_key', duplicates
+  description: Iterate over several iterables in parallel, producing tuples with an item from each one.
+  options:
+    _input:
+      description: Original dictionary.
+      type: dict
+      required: yes
+    _key:
+      description: The key to rekey.
+      type: str
+      required: yes
+    duplicates:
+      description: How to handle duplicates.
+      type: str
+      default: error
+      choices: [overwrite, error]
+
+EXAMPLES: |
+
+  # mydict => {'eigrp': {'state': 'enabled', 'proto': 'eigrp'}, 'ospf': {'state': 'enabled', 'proto': 'ospf'}}
+   mydict: '{{ [{"proto": "eigrp", "state": "enabled"}, {"proto": "ospf", "state": "enabled"}] | rekey_on_member("proto") }}'
+
+RETURN:
+  _value:
+    description: The resulting dictionary.
+    type: dict

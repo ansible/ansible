@@ -15,16 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import yaml
 
 from ansible.module_utils.six import text_type, binary_type
 from ansible.module_utils.common.yaml import SafeDumper
 from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping, AnsibleVaultEncryptedUnicode
-from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes, NativeJinjaUnsafeText
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes, NativeJinjaUnsafeText, NativeJinjaText
 from ansible.template import AnsibleUndefined
 from ansible.vars.hostvars import HostVars, HostVarsVars
 from ansible.vars.manager import VarsWithSources
@@ -113,5 +111,10 @@ AnsibleDumper.add_representer(
 
 AnsibleDumper.add_representer(
     NativeJinjaUnsafeText,
+    represent_unicode,
+)
+
+AnsibleDumper.add_representer(
+    NativeJinjaText,
     represent_unicode,
 )

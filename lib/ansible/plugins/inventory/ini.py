@@ -1,7 +1,6 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = '''
     name: ini
@@ -17,14 +16,15 @@ DOCUMENTATION = '''
         - Values passed in the INI format using the C(key=value) syntax are interpreted differently depending on where they are declared within your inventory.
         - When declared inline with the host, INI values are processed by Python's ast.literal_eval function
           (U(https://docs.python.org/3/library/ast.html#ast.literal_eval)) and interpreted as Python literal structures
-          (strings, numbers, tuples, lists, dicts, booleans, None). Host lines accept multiple C(key=value) parameters per line.
+         (strings, numbers, tuples, lists, dicts, booleans, None). If you want a number to be treated as a string, you must quote it.
+          Host lines accept multiple C(key=value) parameters per line.
           Therefore they need a way to indicate that a space is part of a value rather than a separator.
         - When declared in a C(:vars) section, INI values are interpreted as strings. For example C(var=FALSE) would create a string equal to C(FALSE).
           Unlike host lines, C(:vars) sections accept only a single entry per line, so everything after the C(=) must be the value for the entry.
         - Do not rely on types set during definition, always make sure you specify type with a filter when needed when consuming the variable.
         - See the Examples for proper quoting to prevent changes to variable type.
     notes:
-        - Whitelisted in configuration by default.
+        - Enabled in configuration by default.
         - Consider switching to YAML format for inventory sources to avoid confusion on the actual type of a variable.
           The YAML inventory plugin processes variable values consistently and correctly.
 '''
@@ -74,12 +74,13 @@ host4 # same host as above, but member of 2 groups, will inherit vars from both
 
 import ast
 import re
+import warnings
 
 from ansible.inventory.group import to_safe_group_name
 from ansible.plugins.inventory import BaseFileInventoryPlugin
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.utils.shlex import shlex_split
 
 
@@ -340,9 +341,11 @@ class InventoryModule(BaseFileInventoryPlugin):
         (int, dict, list, unicode string, etc).
         '''
         try:
-            v = ast.literal_eval(v)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", SyntaxWarning)
+                v = ast.literal_eval(v)
         # Using explicit exceptions.
-        # Likely a string that literal_eval does not like. We wil then just set it.
+        # Likely a string that literal_eval does not like. We will then just set it.
         except ValueError:
             # For some reason this was thought to be malformed.
             pass

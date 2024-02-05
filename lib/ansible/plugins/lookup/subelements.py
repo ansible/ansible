@@ -1,8 +1,7 @@
 # (c) 2013, Serge van Ginderachter <serge@vanginderachter.be>
 # (c) 2012-17 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: subelements
@@ -19,8 +18,8 @@ DOCUMENTATION = """
         default: False
         description:
           - Lookup accepts this flag from a dictionary as optional. See Example section for more information.
-          - If set to C(True), the lookup plugin will skip the lists items that do not contain the given subkey.
-          - If set to C(False), the plugin will yield an error and complain about the missing subkey.
+          - If set to V(True), the lookup plugin will skip the lists items that do not contain the given subkey.
+          - If set to V(False), the plugin will yield an error and complain about the missing subkey.
 """
 
 EXAMPLES = """
@@ -56,7 +55,7 @@ EXAMPLES = """
               - "DB2.*:ALL"
   tasks:
     - name: Set authorized ssh key, extracting just that data from 'users'
-      authorized_key:
+      ansible.posix.authorized_key:
         user: "{{ item.0.name }}"
         key: "{{ lookup('file', item.1) }}"
       with_subelements:
@@ -64,7 +63,7 @@ EXAMPLES = """
          - authorized
 
     - name: Setup MySQL users, given the mysql hosts and privs subkey lists
-      mysql_user:
+      community.mysql.mysql_user:
         name: "{{ item.0.name }}"
         password: "{{ item.0.mysql.password }}"
         host: "{{ item.1 }}"
@@ -74,8 +73,8 @@ EXAMPLES = """
         - mysql.hosts
 
     - name: list groups for users that have them, don't error if groups key is missing
-      debug: var=item
-      loop: "{{ q('subelements', users, 'groups', {'skip_missing': True}) }}"
+      ansible.builtin.debug: var=item
+      loop: "{{ q('ansible.builtin.subelements', users, 'groups', {'skip_missing': True}) }}"
 """
 
 RETURN = """
@@ -101,7 +100,7 @@ class LookupModule(LookupBase):
             raise AnsibleError(
                 "subelements lookup expects a list of two or three items, " + msg)
 
-        terms[0] = listify_lookup_plugin_terms(terms[0], templar=self._templar, loader=self._loader)
+        terms[0] = listify_lookup_plugin_terms(terms[0], templar=self._templar)
 
         # check lookup terms - check number of terms
         if not isinstance(terms, list) or not 2 <= len(terms) <= 3:

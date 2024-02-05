@@ -1,0 +1,24 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    # make sure tasks with an undefined variable in the name are gracefully handled
+    - name: "Task name with undefined variable: {{ not_defined }}"
+      debug:
+        msg: Hello
+
+    # ensure we properly test for an action name, not a task name when cheking for a meta task
+    - name: "meta"
+      debug:
+        msg: Hello
+
+    - name: ensure malformed raw_params on arbitrary actions are not ignored
+      debug:
+        garbage {{"with a template"}}
+      ignore_errors: true
+      register: bad_templated_raw_param
+
+    - assert:
+        that:
+        - bad_templated_raw_param is failed
+        - |
+          "invalid or malformed argument: 'garbage with a template'" in bad_templated_raw_param.msg

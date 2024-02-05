@@ -15,14 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
-from units.compat import unittest
-from units.compat.mock import MagicMock
+import unittest
+from unittest.mock import MagicMock
 from units.mock.loader import DictDataLoader
 
 from ansible import errors
@@ -44,7 +42,7 @@ class MixinForMocks(object):
 
         self.mock_play = MagicMock(name='MockPlay')
         self.mock_play._attributes = []
-        self.mock_play.collections = None
+        self.mock_play._collections = None
 
         self.mock_iterator = MagicMock(name='MockIterator')
         self.mock_iterator._play = self.mock_play
@@ -52,10 +50,6 @@ class MixinForMocks(object):
         self.mock_inventory = MagicMock(name='MockInventory')
         self.mock_inventory._hosts_cache = dict()
 
-        def _get_host(host_name):
-            return None
-
-        self.mock_inventory.get_host.side_effect = _get_host
         # TODO: can we use a real VariableManager?
         self.mock_variable_manager = MagicMock(name='MockVariableManager')
         self.mock_variable_manager.get_vars.return_value = dict()
@@ -69,11 +63,11 @@ class MixinForMocks(object):
 
         self._test_data_path = os.path.dirname(__file__)
         self.fake_include_loader = DictDataLoader({"/dev/null/includes/test_include.yml": """
-                                                   - include: other_test_include.yml
+                                                   - include_tasks: other_test_include.yml
                                                    - shell: echo 'hello world'
                                                    """,
                                                    "/dev/null/includes/static_test_include.yml": """
-                                                   - include: other_test_include.yml
+                                                   - include_tasks: other_test_include.yml
                                                    - shell: echo 'hello static world'
                                                    """,
                                                    "/dev/null/includes/other_test_include.yml": """
@@ -85,10 +79,6 @@ class MixinForMocks(object):
 class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
     def setUp(self):
         self._setup()
-
-    def _assert_is_task_list(self, results):
-        for result in results:
-            self.assertIsInstance(result, Task)
 
     def _assert_is_task_list_or_blocks(self, results):
         self.assertIsInstance(results, list)
@@ -160,75 +150,65 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
         self.assertIsInstance(block.always, list)
         self.assertEqual(len(block.always), 0)
 
-    def test_block_unknown_action_use_handlers(self):
-        ds = [{
-            'block': [{'action': 'foo_test_block_unknown_action'}]
-        }]
-        res = helpers.load_list_of_tasks(ds, play=self.mock_play, use_handlers=True,
-                                         variable_manager=self.mock_variable_manager, loader=self.fake_loader)
-        self._assert_is_task_list_or_blocks(res)
-        self.assertIsInstance(res[0], Block)
-        self._assert_default_block(res[0])
-
-    def test_one_bogus_block_use_handlers(self):
+    def test_block_use_handlers(self):
         ds = [{'block': True}]
         self.assertRaisesRegex(errors.AnsibleParserError,
-                               "A malformed block was encountered",
+                               "Using a block as a handler is not supported.",
                                helpers.load_list_of_tasks,
                                ds, play=self.mock_play, use_handlers=True,
                                variable_manager=self.mock_variable_manager, loader=self.fake_loader)
 
-    def test_one_bogus_include(self):
-        ds = [{'include': 'somefile.yml'}]
+    def test_one_bogus_include_tasks(self):
+        ds = [{'include_tasks': 'somefile.yml'}]
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_loader)
         self.assertIsInstance(res, list)
-        self.assertEqual(len(res), 0)
+        self.assertEqual(len(res), 1)
+        self.assertIsInstance(res[0], TaskInclude)
 
-    def test_one_bogus_include_use_handlers(self):
-        ds = [{'include': 'somefile.yml'}]
+    def test_one_bogus_include_tasks_use_handlers(self):
+        ds = [{'include_tasks': 'somefile.yml'}]
         res = helpers.load_list_of_tasks(ds, play=self.mock_play, use_handlers=True,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_loader)
         self.assertIsInstance(res, list)
-        self.assertEqual(len(res), 0)
+        self.assertEqual(len(res), 1)
+        self.assertIsInstance(res[0], TaskInclude)
 
-    def test_one_bogus_include_static(self):
+    def test_one_bogus_import_tasks(self):
         ds = [{'import_tasks': 'somefile.yml'}]
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_loader)
         self.assertIsInstance(res, list)
         self.assertEqual(len(res), 0)
 
-    def test_one_include(self):
-        ds = [{'include': '/dev/null/includes/other_test_include.yml'}]
+    def test_one_include_tasks(self):
+        ds = [{'include_tasks': '/dev/null/includes/other_test_include.yml'}]
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_include_loader)
         self.assertEqual(len(res), 1)
         self._assert_is_task_list_or_blocks(res)
 
-    def test_one_parent_include(self):
-        ds = [{'include': '/dev/null/includes/test_include.yml'}]
+    def test_one_parent_include_tasks(self):
+        ds = [{'include_tasks': '/dev/null/includes/test_include.yml'}]
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_include_loader)
         self._assert_is_task_list_or_blocks(res)
-        self.assertIsInstance(res[0], Block)
-        self.assertIsInstance(res[0]._parent, TaskInclude)
+        self.assertIsInstance(res[0], TaskInclude)
+        self.assertIsNone(res[0]._parent)
 
-    # TODO/FIXME: do this non deprecated way
-    def test_one_include_tags(self):
-        ds = [{'include': '/dev/null/includes/other_test_include.yml',
+    def test_one_include_tasks_tags(self):
+        ds = [{'include_tasks': '/dev/null/includes/other_test_include.yml',
                'tags': ['test_one_include_tags_tag1', 'and_another_tagB']
                }]
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_include_loader)
         self._assert_is_task_list_or_blocks(res)
-        self.assertIsInstance(res[0], Block)
+        self.assertIsInstance(res[0], TaskInclude)
         self.assertIn('test_one_include_tags_tag1', res[0].tags)
         self.assertIn('and_another_tagB', res[0].tags)
 
-    # TODO/FIXME: do this non deprecated way
-    def test_one_parent_include_tags(self):
-        ds = [{'include': '/dev/null/includes/test_include.yml',
+    def test_one_parent_include_tasks_tags(self):
+        ds = [{'include_tasks': '/dev/null/includes/test_include.yml',
                # 'vars': {'tags': ['test_one_parent_include_tags_tag1', 'and_another_tag2']}
                'tags': ['test_one_parent_include_tags_tag1', 'and_another_tag2']
                }
@@ -236,20 +216,20 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_include_loader)
         self._assert_is_task_list_or_blocks(res)
-        self.assertIsInstance(res[0], Block)
+        self.assertIsInstance(res[0], TaskInclude)
         self.assertIn('test_one_parent_include_tags_tag1', res[0].tags)
         self.assertIn('and_another_tag2', res[0].tags)
 
-    def test_one_include_use_handlers(self):
-        ds = [{'include': '/dev/null/includes/other_test_include.yml'}]
+    def test_one_include_tasks_use_handlers(self):
+        ds = [{'include_tasks': '/dev/null/includes/other_test_include.yml'}]
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
                                          use_handlers=True,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_include_loader)
         self._assert_is_task_list_or_blocks(res)
         self.assertIsInstance(res[0], Handler)
 
-    def test_one_parent_include_use_handlers(self):
-        ds = [{'include': '/dev/null/includes/test_include.yml'}]
+    def test_one_parent_include_tasks_use_handlers(self):
+        ds = [{'include_tasks': '/dev/null/includes/test_include.yml'}]
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
                                          use_handlers=True,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_include_loader)
@@ -301,12 +281,14 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
 
     def test_one_bogus_include_role_use_handlers(self):
         ds = [{'include_role': {'name': 'bogus_role'}, 'collections': []}]
-        res = helpers.load_list_of_tasks(ds, play=self.mock_play, use_handlers=True,
-                                         block=self.mock_block,
-                                         variable_manager=self.mock_variable_manager,
-                                         loader=self.fake_role_loader)
-        self.assertEqual(len(res), 1)
-        self._assert_is_task_list_or_blocks(res)
+
+        self.assertRaises(errors.AnsibleError, helpers.load_list_of_tasks,
+                          ds,
+                          self.mock_play,
+                          True,  # use_handlers
+                          self.mock_block,
+                          self.mock_variable_manager,
+                          self.fake_role_loader)
 
 
 class TestLoadListOfRoles(unittest.TestCase, MixinForMocks):

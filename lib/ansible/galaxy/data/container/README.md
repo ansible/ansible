@@ -3,7 +3,7 @@
 Adds a <SERVICE_NAME> service to your [Ansible Container](https://github.com/ansible/ansible-container) project. Run the following commands
 to install the service:
 
-```
+```shell
 # Set the working directory to your Ansible Container project root
 $ cd myproject
 
@@ -15,7 +15,8 @@ $ ansible-container install <USERNAME.ROLE_NAME>
 
 - [Ansible Container](https://github.com/ansible/ansible-container)
 - An existing Ansible Container project. To create a project, simply run the following:
-    ```
+
+    ```shell
     # Create an empty project directory
     $ mkdir myproject
 
@@ -27,7 +28,6 @@ $ ansible-container install <USERNAME.ROLE_NAME>
     ```
 
 - Continue listing any prerequisites here...
-
 
 ## Role Variables
 
@@ -45,5 +45,3 @@ BSD
 ## Author Information
 
 An optional section for the role authors to include contact information, or a website (HTML is not allowed).
-
-

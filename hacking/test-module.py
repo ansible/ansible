@@ -23,13 +23,12 @@
 # modules
 #
 # example:
-#    ./hacking/test-module.py -m lib/ansible/modules/commands/command.py -a "/bin/sleep 3"
-#    ./hacking/test-module.py -m lib/ansible/modules/commands/command.py -a "/bin/sleep 3" --debugger /usr/bin/pdb
-#    ./hacking/test-module.py -m lib/ansible/modules/files/lineinfile.py -a "dest=/etc/exports line='/srv/home hostname1(rw,sync)'" --check
-#    ./hacking/test-module.py -m lib/ansible/modules/commands/command.py -a "echo hello" -n -o "test_hello"
+#    ./hacking/test-module.py -m lib/ansible/modules/command.py -a "/bin/sleep 3"
+#    ./hacking/test-module.py -m lib/ansible/modules/command.py -a "/bin/sleep 3" --debugger /usr/bin/pdb
+#    ./hacking/test-module.py -m lib/ansible/modules/lineinfile.py -a "dest=/etc/exports line='/srv/home hostname1(rw,sync)'" --check
+#    ./hacking/test-module.py -m lib/ansible/modules/command.py -a "echo hello" -n -o "test_hello"
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import glob
 import optparse
@@ -44,9 +43,10 @@ import ansible.utils.vars as utils_vars
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.parsing.splitter import parse_kv
+from ansible.plugins.loader import init_plugin_loader
 from ansible.executor import module_common
 import ansible.constants as C
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.template import Templar
 
 import json
@@ -266,6 +266,7 @@ def rundebug(debugger, modfile, argspath, modname, module_style, interpreters):
 def main():
 
     options, args = parse()
+    init_plugin_loader()
     interpreters = get_interpreters(options.interpreter)
     (modfile, modname, module_style) = boilerplate_module(options.module_path, options.module_args, interpreters, options.check, options.filename)
 

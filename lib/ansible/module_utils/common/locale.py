@@ -1,10 +1,9 @@
 # Copyright (c), Ansible Project
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 
 
 def get_best_parsable_locale(module, preferences=None, raise_on_locale=False):
@@ -32,7 +31,7 @@ def get_best_parsable_locale(module, preferences=None, raise_on_locale=False):
         if preferences is None:
             # new POSIX standard or English cause those are messages core team expects
             # yes, the last 2 are the same but some systems are weird
-            preferences = ['C.utf8', 'en_US.utf8', 'C', 'POSIX']
+            preferences = ['C.utf8', 'C.UTF-8', 'en_US.utf8', 'en_US.UTF-8', 'C', 'POSIX']
 
         rc, out, err = module.run_command([locale, '-a'])
 
@@ -50,8 +49,12 @@ def get_best_parsable_locale(module, preferences=None, raise_on_locale=False):
                     found = pref
                     break
 
-    except RuntimeWarning:
+    except RuntimeWarning as e:
         if raise_on_locale:
             raise
+        else:
+            module.debug('Failed to get locale information: %s' % to_native(e))
+
+    module.debug('Matched preferred locale to: %s' % found)
 
     return found

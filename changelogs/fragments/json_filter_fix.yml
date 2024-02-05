@@ -1,2 +1,0 @@
-bugfixes:
-  - to_json/to_nice_json filters defaults back to unvaulting/no unsafe packing.

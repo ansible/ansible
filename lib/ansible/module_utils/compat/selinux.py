@@ -1,8 +1,7 @@
 # Copyright: (c) 2021, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import sys
@@ -62,7 +61,7 @@ def _module_setup():
         fn.restype = cfg.get('restype', c_int)
 
         # just patch simple directly callable functions directly onto the module
-        if not fn.argtypes or not any(argtype for argtype in fn.argtypes if type(argtype) == base_ptr_type):
+        if not fn.argtypes or not any(argtype for argtype in fn.argtypes if type(argtype) is base_ptr_type):
             setattr(_thismod, fname, fn)
             continue
 

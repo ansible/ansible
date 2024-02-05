@@ -1,8 +1,7 @@
 # (c) 2012, Jan-Piet Mens <jpmens(at)gmail.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: env
@@ -23,30 +22,30 @@ DOCUMENTATION = """
         default: ''
         version_added: '2.13'
     notes:
-        - You can pass the C(Undefined) object as C(default) to force an undefined error
+        - You can pass the C(Undefined) object as O(default) to force an undefined error
 """
 
 EXAMPLES = """
 - name: Basic usage
-  debug:
-    msg: "{{ lookup('env', 'HOME') }} is the HOME environment variable."
+  ansible.builtin.debug:
+    msg: "'{{ lookup('ansible.builtin.env', 'HOME') }}' is the HOME environment variable."
 
 - name: Before 2.13, how to set default value if the variable is not defined.
         This cannot distinguish between USR undefined and USR=''.
-  debug:
-    msg: "{{ lookup('env', 'USR')|default('nobody', True) }} is the user."
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.env', 'USR')|default('nobody', True) }} is the user."
 
 - name: Example how to set default value if the variable is not defined, ignores USR=''
-  debug:
-    msg: "{{ lookup('env', 'USR', default='nobody') }} is the user."
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.env', 'USR', default='nobody') }} is the user."
 
 - name: Set default value to Undefined, if the variable is not defined
-  debug:
-    msg: "{{ lookup('env', 'USR', default=Undefined) }} is the user."
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.env', 'USR', default=Undefined) }} is the user."
 
 - name: Set default value to undef(), if the variable is not defined
-  debug:
-    msg: "{{ lookup('env', 'USR', default=undef()) }} is the user."
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.env', 'USR', default=undef()) }} is the user."
 """
 
 RETURN = """

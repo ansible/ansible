@@ -1,0 +1,4 @@
+plugin: exercise_cache
+cache: true
+cache_plugin: jsonfile
+cache_connection: ./cache

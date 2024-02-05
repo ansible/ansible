@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import dataclasses
+import itertools
 import json
 import os
 import random
@@ -31,6 +32,7 @@ from .config import (
 @dataclasses.dataclass
 class SshConnectionDetail:
     """Information needed to establish an SSH connection to a host."""
+
     name: str
     host: str
     port: t.Optional[int]
@@ -38,20 +40,51 @@ class SshConnectionDetail:
     identity_file: str
     python_interpreter: t.Optional[str] = None
     shell_type: t.Optional[str] = None
+    enable_rsa_sha1: bool = False
 
     def __post_init__(self):
         self.name = sanitize_host_name(self.name)
 
+    @property
+    def options(self) -> dict[str, str]:
+        """OpenSSH config options, which can be passed to the `ssh` CLI with the `-o` argument."""
+        options: dict[str, str] = {}
+
+        if self.enable_rsa_sha1:
+            # Newer OpenSSH clients connecting to older SSH servers must explicitly enable ssh-rsa support.
+            # OpenSSH 8.8, released on 2021-09-26, deprecated using RSA with the SHA-1 hash algorithm (ssh-rsa).
+            # OpenSSH 7.2, released on 2016-02-29, added support for using RSA with SHA-256/512 hash algorithms.
+            # See: https://www.openssh.com/txt/release-8.8
+            algorithms = '+ssh-rsa'  # append the algorithm to the default list, requires OpenSSH 7.0 or later
+
+            options.update(
+                # Host key signature algorithms that the client wants to use.
+                # Available options can be found with `ssh -Q HostKeyAlgorithms` or `ssh -Q key` on older clients.
+                # This option was updated in OpenSSH 7.0, released on 2015-08-11, to support the "+" prefix.
+                # See: https://www.openssh.com/txt/release-7.0
+                HostKeyAlgorithms=algorithms,
+                # Signature algorithms that will be used for public key authentication.
+                # Available options can be found with `ssh -Q PubkeyAcceptedAlgorithms` or `ssh -Q key` on older clients.
+                # This option was added in OpenSSH 7.0, released on 2015-08-11.
+                # See: https://www.openssh.com/txt/release-7.0
+                # This option is an alias for PubkeyAcceptedAlgorithms, which was added in OpenSSH 8.5.
+                # See: https://www.openssh.com/txt/release-8.5
+                PubkeyAcceptedKeyTypes=algorithms,
+            )
+
+        return options
+
 
 class SshProcess:
     """Wrapper around an SSH process."""
-    def __init__(self, process):  # type: (t.Optional[subprocess.Popen]) -> None
+
+    def __init__(self, process: t.Optional[subprocess.Popen]) -> None:
         self._process = process
-        self.pending_forwards = None  # type: t.Optional[t.Set[t.Tuple[str, int]]]
+        self.pending_forwards: t.Optional[list[tuple[str, int]]] = None
 
-        self.forwards = {}  # type: t.Dict[t.Tuple[str, int], int]
+        self.forwards: dict[tuple[str, int], int] = {}
 
-    def terminate(self):  # type: () -> None
+    def terminate(self) -> None:
         """Terminate the SSH process."""
         if not self._process:
             return  # explain mode
@@ -62,16 +95,16 @@ class SshProcess:
         except Exception:  # pylint: disable=broad-except
             pass
 
-    def wait(self):  # type: () -> None
+    def wait(self) -> None:
         """Wait for the SSH process to terminate."""
         if not self._process:
             return  # explain mode
 
         self._process.wait()
 
-    def collect_port_forwards(self):  # type: (SshProcess) -> t.Dict[t.Tuple[str, int], int]
+    def collect_port_forwards(self) -> dict[tuple[str, int], int]:
         """Collect port assignments for dynamic SSH port forwards."""
-        errors = []
+        errors: list[str] = []
 
         display.info('Collecting %d SSH port forward(s).' % len(self.pending_forwards), verbosity=2)
 
@@ -107,7 +140,7 @@ class SshProcess:
                 dst = (dst_host, dst_port)
             else:
                 # explain mode
-                dst = list(self.pending_forwards)[0]
+                dst = self.pending_forwards[0]
                 src_port = random.randint(40000, 50000)
 
             self.pending_forwards.remove(dst)
@@ -120,17 +153,17 @@ class SshProcess:
 
 
 def create_ssh_command(
-        ssh,  # type: SshConnectionDetail
-        options=None,  # type: t.Optional[t.Dict[str, t.Union[str, int]]]
-        cli_args=None,  # type: t.List[str]
-        command=None,  # type: t.Optional[str]
-):  # type: (...) -> t.List[str]
+    ssh: SshConnectionDetail,
+    options: t.Optional[dict[str, t.Union[str, int]]] = None,
+    cli_args: list[str] = None,
+    command: t.Optional[str] = None,
+) -> list[str]:
     """Create an SSH command using the specified options."""
     cmd = [
         'ssh',
         '-n',  # prevent reading from stdin
         '-i', ssh.identity_file,  # file from which the identity for public key authentication is read
-    ]
+    ]  # fmt: skip
 
     if not command:
         cmd.append('-N')  # do not execute a remote command
@@ -141,7 +174,7 @@ def create_ssh_command(
     if ssh.user:
         cmd.extend(['-l', ssh.user])  # user to log in as on the remote machine
 
-    ssh_options = dict(
+    ssh_options: dict[str, t.Union[int, str]] = dict(
         BatchMode='yes',
         ExitOnForwardFailure='yes',
         LogLevel='ERROR',
@@ -153,9 +186,7 @@ def create_ssh_command(
 
     ssh_options.update(options or {})
 
-    for key, value in sorted(ssh_options.items()):
-        cmd.extend(['-o', '='.join([key, str(value)])])
-
+    cmd.extend(ssh_options_to_list(ssh_options))
     cmd.extend(cli_args or [])
     cmd.append(ssh.host)
 
@@ -165,21 +196,33 @@ def create_ssh_command(
     return cmd
 
 
+def ssh_options_to_list(options: t.Union[dict[str, t.Union[int, str]], dict[str, str]]) -> list[str]:
+    """Format a dictionary of SSH options as a list suitable for passing to the `ssh` command."""
+    return list(itertools.chain.from_iterable(
+        ('-o', f'{key}={value}') for key, value in sorted(options.items())
+    ))
+
+
+def ssh_options_to_str(options: t.Union[dict[str, t.Union[int, str]], dict[str, str]]) -> str:
+    """Format a dictionary of SSH options as a string suitable for passing as `ansible_ssh_extra_args` in inventory."""
+    return shlex.join(ssh_options_to_list(options))
+
+
 def run_ssh_command(
-        args,  # type: EnvironmentConfig
-        ssh,  # type: SshConnectionDetail
-        options=None,  # type: t.Optional[t.Dict[str, t.Union[str, int]]]
-        cli_args=None,  # type: t.List[str]
-        command=None,  # type: t.Optional[str]
-):  # type: (...) -> SshProcess
+    args: EnvironmentConfig,
+    ssh: SshConnectionDetail,
+    options: t.Optional[dict[str, t.Union[str, int]]] = None,
+    cli_args: list[str] = None,
+    command: t.Optional[str] = None,
+) -> SshProcess:
     """Run the specified SSH command, returning the created SshProcess instance created."""
     cmd = create_ssh_command(ssh, options, cli_args, command)
     env = common_environment()
 
-    cmd_show = ' '.join([shlex.quote(c) for c in cmd])
+    cmd_show = shlex.join(cmd)
     display.info('Run background command: %s' % cmd_show, verbosity=1, truncate=True)
 
-    cmd_bytes = [to_bytes(c) for c in cmd]
+    cmd_bytes = [to_bytes(arg) for arg in cmd]
     env_bytes = dict((to_bytes(k), to_bytes(v)) for k, v in env.items())
 
     if args.explain:
@@ -192,16 +235,17 @@ def run_ssh_command(
 
 
 def create_ssh_port_forwards(
-        args,  # type: EnvironmentConfig
-        ssh,  # type: SshConnectionDetail
-        forwards,  # type: t.List[t.Tuple[str, int]]
-):  # type: (...) -> SshProcess
+    args: EnvironmentConfig,
+    ssh: SshConnectionDetail,
+    forwards: list[tuple[str, int]],
+) -> SshProcess:
     """
     Create SSH port forwards using the provided list of tuples (target_host, target_port).
-    Port bindings will be automatically assigned by SSH and must be collected with a subseqent call to collect_port_forwards.
+    Port bindings will be automatically assigned by SSH and must be collected with a subsequent call to collect_port_forwards.
     """
-    options = dict(
+    options: dict[str, t.Union[str, int]] = dict(
         LogLevel='INFO',  # info level required to get messages on stderr indicating the ports assigned to each forward
+        ControlPath='none',  # if the user has ControlPath set up for every host, it will prevent creation of forwards
     )
 
     cli_args = []
@@ -216,12 +260,12 @@ def create_ssh_port_forwards(
 
 
 def create_ssh_port_redirects(
-        args,  # type: EnvironmentConfig
-        ssh,  # type: SshConnectionDetail
-        redirects,  # type: t.List[t.Tuple[int, str, int]]
-):  # type: (...) -> SshProcess
+    args: EnvironmentConfig,
+    ssh: SshConnectionDetail,
+    redirects: list[tuple[int, str, int]],
+) -> SshProcess:
     """Create SSH port redirections using the provided list of tuples (bind_port, target_host, target_port)."""
-    options = {}
+    options: dict[str, t.Union[str, int]] = {}
     cli_args = []
 
     for bind_port, target_host, target_port in redirects:
@@ -232,7 +276,7 @@ def create_ssh_port_redirects(
     return process
 
 
-def generate_ssh_inventory(ssh_connections):  # type: (t.List[SshConnectionDetail]) -> str
+def generate_ssh_inventory(ssh_connections: list[SshConnectionDetail]) -> str:
     """Return an inventory file in JSON format, created from the provided SSH connection details."""
     inventory = dict(
         all=dict(
@@ -245,7 +289,7 @@ def generate_ssh_inventory(ssh_connections):  # type: (t.List[SshConnectionDetai
                 ansible_pipelining='yes',
                 ansible_python_interpreter=ssh.python_interpreter,
                 ansible_shell_type=ssh.shell_type,
-                ansible_ssh_extra_args='-o UserKnownHostsFile=/dev/null',  # avoid changing the test environment
+                ansible_ssh_extra_args=ssh_options_to_str(dict(UserKnownHostsFile='/dev/null', **ssh.options)),  # avoid changing the test environment
                 ansible_ssh_host_key_checking='no',
             ))) for ssh in ssh_connections),
         ),

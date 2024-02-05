@@ -9,7 +9,7 @@ PATH="${PWD}/bin:${PATH}"
 
 mkdir "${agent_temp_directory}/coverage/"
 
-options=(--venv --venv-system-site-packages --color -v)
+options=(--venv --color -v)
 
 ansible-test coverage combine --group-by command --export "${agent_temp_directory}/coverage/" "${options[@]}"
 

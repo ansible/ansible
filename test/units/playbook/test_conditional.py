@@ -1,9 +1,8 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from units.compat import unittest
+import unittest
 from units.mock.loader import DictDataLoader
-from units.compat.mock import MagicMock
+from unittest.mock import MagicMock
 
 from ansible.template import Templar
 from ansible import errors
@@ -118,19 +117,6 @@ class TestConditional(unittest.TestCase):
         when = [u"some_defined_dict_with_undefined_values"]
         self.assertRaisesRegex(errors.AnsibleError,
                                "The conditional check 'some_defined_dict_with_undefined_values' failed.",
-                               self._eval_con,
-                               when, variables)
-
-    def test_dict_undefined_values_is_defined(self):
-        variables = {'dict_value': 1,
-                     'some_defined_dict_with_undefined_values': {'key1': 'value1',
-                                                                 'key2': '{{ dict_value }}',
-                                                                 'key3': '{{ undefined_dict_value }}'
-                                                                 }}
-
-        when = [u"some_defined_dict_with_undefined_values is defined"]
-        self.assertRaisesRegex(errors.AnsibleError,
-                               "The conditional check 'some_defined_dict_with_undefined_values is defined' failed.",
                                self._eval_con,
                                when, variables)
 

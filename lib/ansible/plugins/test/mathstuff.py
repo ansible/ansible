@@ -15,8 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import math
 
@@ -50,13 +49,13 @@ class TestModule:
     def tests(self):
         return {
             # set theory
-            'issubset': issubset,
             'subset': issubset,
-            'issuperset': issuperset,
+            'issubset': issubset,
             'superset': issuperset,
+            'issuperset': issuperset,
             'contains': contains,
 
             # numbers
-            'isnan': isnotanumber,
             'nan': isnotanumber,
+            'isnan': isnotanumber,
         }

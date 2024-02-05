@@ -1,2 +1,0 @@
-bugfixes:
-- Ansible.ModuleUtils.LinkUtil - Ignore the ``LIB`` environment variable when loading the ``LinkUtil`` code

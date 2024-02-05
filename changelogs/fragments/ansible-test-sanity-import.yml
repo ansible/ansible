@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Fix installation and usage of ``pyyaml`` requirement for the ``import`` sanity test for collections.

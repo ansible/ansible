@@ -1,0 +1,49 @@
+DOCUMENTATION:
+  name: combine
+  version_added: "2.0"
+  short_description: combine two dictionaries
+  description:
+    - Create a dictionary (hash/associative array) as a result of merging existing dictionaries.
+  positional: _input, _dicts
+  options:
+    _input:
+      description: First dictionary to combine.
+      type: dict
+      required: true
+    _dicts:  # TODO: this is really an *args so not list, but list ref
+      description: The list of dictionaries to combine.
+      type: list
+      elements: dictionary
+      required: true
+    recursive:
+      description: If V(True), merge elements recursively.
+      type: bool
+      default: false
+    list_merge:
+      description: Behavior when encountering list elements.
+      type: str
+      default: replace
+      choices:
+        replace: overwrite older entries with newer ones
+        keep: discard newer entries
+        append: append newer entries to the older ones
+        prepend: insert newer entries in front of the older ones
+        append_rp: append newer entries to the older ones, overwrite duplicates
+        prepend_rp: insert newer entries in front of the older ones, discard duplicates
+
+EXAMPLES: |
+
+    # ab => {'a':1, 'b':3, 'c': 4}
+    ab: {{ {'a':1, 'b':2} | ansible.builtin.combine({'b':3, 'c':4}) }}
+
+    many: "{{ dict1 | ansible.builtin.combine(dict2, dict3, dict4) }}"
+    
+    # defaults => {'a':{'b':3, 'c':4}, 'd': 5}
+    # customization => {'a':{'c':20}}
+    # final => {'a':{'b':3, 'c':20}, 'd': 5}
+    final: "{{ defaults | ansible.builtin.combine(customization, recursive=true) }}"
+
+RETURN:
+  _value:
+    description: Resulting merge of supplied dictionaries.
+    type: dict

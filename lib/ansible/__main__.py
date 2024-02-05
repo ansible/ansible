@@ -1,5 +1,6 @@
 # Copyright: (c) 2021, Matt Martz <matt@sivel.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import annotations
 
 import argparse
 import importlib
@@ -10,7 +11,7 @@ from importlib.metadata import distribution
 
 
 def _short_name(name):
-    return name.replace('ansible-', '').replace('ansible', 'adhoc')
+    return name.removeprefix('ansible-').replace('ansible', 'adhoc')
 
 
 def main():

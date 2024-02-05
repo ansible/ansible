@@ -1,8 +1,7 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import copy
 import operator
@@ -16,7 +15,7 @@ from jinja2 import __version__ as j2_version
 
 import ansible
 from ansible import constants as C
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.yaml import HAS_LIBYAML, yaml_load
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
@@ -29,6 +28,16 @@ class SortingHelpFormatter(argparse.HelpFormatter):
     def add_arguments(self, actions):
         actions = sorted(actions, key=operator.attrgetter('option_strings'))
         super(SortingHelpFormatter, self).add_arguments(actions)
+
+
+class ArgumentParser(argparse.ArgumentParser):
+    def add_argument(self, *args, **kwargs):
+        action = kwargs.get('action')
+        help = kwargs.get('help')
+        if help and action in {'append', 'append_const', 'count', 'extend', PrependListAction}:
+            help = f'{help.rstrip(".")}. This argument may be specified multiple times.'
+        kwargs['help'] = help
+        return super().add_argument(*args, **kwargs)
 
 
 class AnsibleVersion(argparse.Action):
@@ -87,16 +96,16 @@ def ensure_value(namespace, name, value):
 #
 # Callbacks to validate and normalize Options
 #
-def unfrack_path(pathsep=False):
+def unfrack_path(pathsep=False, follow=True):
     """Turn an Option's data into a single path in Ansible locations"""
     def inner(value):
         if pathsep:
-            return [unfrackpath(x) for x in value.split(os.pathsep) if x]
+            return [unfrackpath(x, follow=follow) for x in value.split(os.pathsep) if x]
 
         if value == '-':
             return value
 
-        return unfrackpath(value)
+        return unfrackpath(value, follow=follow)
     return inner
 
 
@@ -177,7 +186,7 @@ def version(prog=None):
     result.append("  ansible python module location = %s" % ':'.join(ansible.__path__))
     result.append("  ansible collection location = %s" % ':'.join(C.COLLECTIONS_PATHS))
     result.append("  executable location = %s" % sys.argv[0])
-    result.append("  python version = %s" % ''.join(sys.version.splitlines()))
+    result.append("  python version = %s (%s)" % (''.join(sys.version.splitlines()), to_native(sys.executable)))
     result.append("  jinja version = %s" % j2_version)
     result.append("  libyaml = %s" % HAS_LIBYAML)
     return "\n".join(result)
@@ -192,7 +201,7 @@ def create_base_parser(prog, usage="", desc=None, epilog=None):
     Create an options parser for all ansible scripts
     """
     # base opts
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParser(
         prog=prog,
         formatter_class=SortingHelpFormatter,
         epilog=epilog,
@@ -210,7 +219,9 @@ def create_base_parser(prog, usage="", desc=None, epilog=None):
 def add_verbosity_options(parser):
     """Add options for verbosity"""
     parser.add_argument('-v', '--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
-                        help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
+                        help="Causes Ansible to print more debug messages. Adding multiple -v will increase the verbosity, "
+                             "the builtin plugins currently evaluate up to -vvvvvv. A reasonable level to start is -vvv, "
+                             "connection debugging might require -vvvv.")
 
 
 def add_async_options(parser):
@@ -223,7 +234,7 @@ def add_async_options(parser):
 
 def add_basedir_options(parser):
     """Add options for commands which can set a playbook basedir"""
-    parser.add_argument('--playbook-dir', default=C.config.get_config_value('PLAYBOOK_DIR'), dest='basedir', action='store',
+    parser.add_argument('--playbook-dir', default=C.PLAYBOOK_DIR, dest='basedir', action='store',
                         help="Since this tool does not use playbooks, use this as a substitute playbook directory. "
                              "This sets the relative path for many features including roles/ group_vars/ etc.",
                         type=unfrack_path())
@@ -233,8 +244,6 @@ def add_check_options(parser):
     """Add options for commands which can run with diagnostic information of tasks"""
     parser.add_argument("-C", "--check", default=False, dest='check', action='store_true',
                         help="don't make any changes; instead, try to predict some of the changes that may occur")
-    parser.add_argument('--syntax-check', dest='syntax', action='store_true',
-                        help="perform a syntax check on the playbook, but do not execute it")
     parser.add_argument("-D", "--diff", default=C.DIFF_ALWAYS, dest='diff', action='store_true',
                         help="when changing (small) files and templates, show the differences in those"
                              " files; works great with --check")
@@ -250,8 +259,8 @@ def add_connect_options(parser):
                                help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
     connect_group.add_argument('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT,
                                help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
-    connect_group.add_argument('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type=int, dest='timeout',
-                               help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
+    connect_group.add_argument('-T', '--timeout', default=None, type=int, dest='timeout',
+                               help="override the connection timeout in seconds (default depends on connection)")
 
     # ssh only
     connect_group.add_argument('--ssh-common-args', default=None, dest='ssh_common_args',
@@ -383,7 +392,7 @@ def add_vault_options(parser):
     parser.add_argument('--vault-id', default=[], dest='vault_ids', action='append', type=str,
                         help='the vault identity to use')
     base_group = parser.add_mutually_exclusive_group()
-    base_group.add_argument('--ask-vault-password', '--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
+    base_group.add_argument('-J', '--ask-vault-password', '--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
                             help='ask for vault password')
     base_group.add_argument('--vault-password-file', '--vault-pass-file', default=[], dest='vault_password_files',
-                            help="vault password file", type=unfrack_path(), action='append')
+                            help="vault password file", type=unfrack_path(follow=False), action='append')

@@ -2,14 +2,14 @@
 # (c) 2019, Jordan Borean <jborean@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from units.compat.mock import MagicMock
+import pytest
+from unittest.mock import MagicMock
 
 from ansible.executor.interpreter_discovery import discover_interpreter
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
+from ansible.errors import AnsibleConnectionFailure
 
 mock_ubuntu_platform_res = to_text(
     r'{"osrelease_content": "NAME=\"Ubuntu\"\nVERSION=\"16.04.5 LTS (Xenial Xerus)\"\nID=ubuntu\nID_LIKE=debian\n'
@@ -20,7 +20,7 @@ mock_ubuntu_platform_res = to_text(
 
 
 def test_discovery_interpreter_linux_auto_legacy():
-    res1 = u'PLATFORM\nLinux\nFOUND\n/usr/bin/python\n/usr/bin/python3.5\n/usr/bin/python3\nENDFOUND'
+    res1 = u'PLATFORM\nLinux\nFOUND\n/usr/bin/python\n/usr/bin/python3\nENDFOUND'
 
     mock_action = MagicMock()
     mock_action._low_level_execute_command.side_effect = [{'stdout': res1}, {'stdout': mock_ubuntu_platform_res}]
@@ -35,7 +35,7 @@ def test_discovery_interpreter_linux_auto_legacy():
 
 
 def test_discovery_interpreter_linux_auto_legacy_silent():
-    res1 = u'PLATFORM\nLinux\nFOUND\n/usr/bin/python\n/usr/bin/python3.5\n/usr/bin/python3\nENDFOUND'
+    res1 = u'PLATFORM\nLinux\nFOUND\n/usr/bin/python\n/usr/bin/python3\nENDFOUND'
 
     mock_action = MagicMock()
     mock_action._low_level_execute_command.side_effect = [{'stdout': res1}, {'stdout': mock_ubuntu_platform_res}]
@@ -47,7 +47,7 @@ def test_discovery_interpreter_linux_auto_legacy_silent():
 
 
 def test_discovery_interpreter_linux_auto():
-    res1 = u'PLATFORM\nLinux\nFOUND\n/usr/bin/python\n/usr/bin/python3.5\n/usr/bin/python3\nENDFOUND'
+    res1 = u'PLATFORM\nLinux\nFOUND\n/usr/bin/python\n/usr/bin/python3\nENDFOUND'
 
     mock_action = MagicMock()
     mock_action._low_level_execute_command.side_effect = [{'stdout': res1}, {'stdout': mock_ubuntu_platform_res}]
@@ -84,3 +84,13 @@ def test_no_interpreters_found():
     assert mock_action.method_calls[1][0] == '_discovery_warnings.append'
     assert u'No python interpreters found for host host-fóöbär (tried' \
            in mock_action.method_calls[1][1][0]
+
+
+def test_ansible_error_exception():
+    mock_action = MagicMock()
+    mock_action._low_level_execute_command.side_effect = AnsibleConnectionFailure("host key mismatch")
+
+    with pytest.raises(AnsibleConnectionFailure) as context:
+        discover_interpreter(mock_action, 'python', 'auto_legacy', {'inventory_hostname': u'host'})
+
+    assert 'host key mismatch' == str(context.value)

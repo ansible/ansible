@@ -1,5 +1,5 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+"""Check changelog fragment naming, syntax, etc."""
+from __future__ import annotations
 
 import os
 import sys
@@ -7,6 +7,7 @@ import subprocess
 
 
 def main():
+    """Main entry point."""
     paths = sys.argv[1:] or sys.stdin.read().splitlines()
 
     allowed_extensions = ('.yml', '.yaml')
@@ -48,7 +49,11 @@ def main():
     env = os.environ.copy()
     env.update(PYTHONPATH='%s:%s' % (os.path.join(os.path.dirname(__file__), 'changelog'), env['PYTHONPATH']))
 
-    subprocess.call(cmd, env=env)  # ignore the return code, rely on the output instead
+    # ignore the return code, rely on the output instead
+    process = subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True, text=True, env=env, check=False)
+
+    sys.stdout.write(process.stdout)
+    sys.stderr.write(process.stderr)
 
 
 if __name__ == '__main__':

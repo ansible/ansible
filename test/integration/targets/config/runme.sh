@@ -2,12 +2,11 @@
 
 set -eux
 
-# ignore empty env var and use default
-# shellcheck disable=SC1007
-ANSIBLE_TIMEOUT= ansible -m ping testhost -i ../../inventory "$@"
+# use default timeout
+ANSIBLE_TIMEOUT='' ansible -m ping testhost -i ../../inventory "$@"
 
 # env var is wrong type, this should be a fatal error pointing at the setting
-ANSIBLE_TIMEOUT='lola' ansible -m ping testhost -i ../../inventory "$@" 2>&1|grep 'Invalid type for configuration option setting: DEFAULT_TIMEOUT'
+ANSIBLE_TIMEOUT='lola' ansible -m ping testhost -i ../../inventory "$@" 2>&1|grep 'Invalid type for configuration option setting: DEFAULT_TIMEOUT (from env: ANSIBLE_TIMEOUT)'
 
 # https://github.com/ansible/ansible/issues/69577
 ANSIBLE_REMOTE_TMP="$HOME/.ansible/directory_with_no_space"  ansible -m ping testhost -i ../../inventory "$@"
@@ -18,6 +17,10 @@ ANSIBLE_CONFIG=nonexistent.cfg ansible-config dump --only-changed -v | grep 'No 
 
 # https://github.com/ansible/ansible/pull/73715
 ANSIBLE_CONFIG=inline_comment_ansible.cfg ansible-config dump --only-changed | grep "'ansibull'"
+
+# test type headers are only displayed with --only-changed -t all for changed options
+env -i PATH="$PATH" PYTHONPATH="$PYTHONPATH" ansible-config dump --only-changed -t all | grep -v "CONNECTION"
+env -i PATH="$PATH" PYTHONPATH="$PYTHONPATH" ANSIBLE_SSH_PIPELINING=True ansible-config dump --only-changed -t all | grep "CONNECTION"
 
 # test the config option validation
 ansible-playbook validation.yml "$@"

@@ -9,9 +9,10 @@ from .. import (
 
 class CoverageAnalyzeConfig(CoverageConfig):
     """Configuration for the `coverage analyze` command."""
-    def __init__(self, args):  # type: (t.Any) -> None
+
+    def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
         # avoid mixing log messages with file output when using `/dev/stdout` for the output file on commands
         # this may be worth considering as the default behavior in the future, instead of being dependent on the command or options used
-        self.info_stderr = True
+        self.display_stderr = True

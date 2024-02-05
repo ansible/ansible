@@ -13,7 +13,6 @@ from ....config import (
 )
 
 from ....containers import (
-    CleanupMode,
     run_support_container,
 )
 
@@ -28,14 +27,15 @@ KRB5_PASSWORD_ENV = 'KRB5_PASSWORD'
 
 class HttptesterProvider(CloudProvider):
     """HTTP Tester provider plugin. Sets up resources before delegation."""
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
+
+    def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
-        self.image = os.environ.get('ANSIBLE_HTTP_TEST_CONTAINER', 'quay.io/ansible/http-test-container:1.3.0')
+        self.image = os.environ.get('ANSIBLE_HTTP_TEST_CONTAINER', 'quay.io/ansible/http-test-container:2.1.0')
 
         self.uses_docker = True
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Setup resources before delegation."""
         super().setup()
 
@@ -61,8 +61,6 @@ class HttptesterProvider(CloudProvider):
             'http-test-container',
             ports,
             aliases=aliases,
-            allow_existing=True,
-            cleanup=CleanupMode.YES,
             env={
                 KRB5_PASSWORD_ENV: generate_password(),
             },
@@ -82,11 +80,12 @@ class HttptesterProvider(CloudProvider):
 
 class HttptesterEnvironment(CloudEnvironment):
     """HTTP Tester environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+
+    def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         return CloudEnvironmentConfig(
             env_vars=dict(
                 HTTPTESTER='1',  # backwards compatibility for tests intended to work with or without HTTP Tester
-                KRB5_PASSWORD=self._get_cloud_config(KRB5_PASSWORD_ENV),
+                KRB5_PASSWORD=str(self._get_cloud_config(KRB5_PASSWORD_ENV)),
             )
         )
