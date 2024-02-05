@@ -69,7 +69,7 @@ class ActionModule(ActionBase):
 
             if not remote_src:
                 try:
-                    source = self._loader.get_real_file(self._find_needle('files', source), decrypt=decrypt)
+                    source = self._loader.get_real_file(self._find_needle('files', source, task_vars), decrypt=decrypt)
                 except AnsibleError as e:
                     raise AnsibleActionFail(to_text(e))
 

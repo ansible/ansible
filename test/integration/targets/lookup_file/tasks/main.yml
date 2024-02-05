@@ -11,3 +11,15 @@
   assert:
     that:
         - "foo == 'bar'"
+
+- name: load the file relative as a fact
+  set_fact:
+    ansible_local_search_path: "{{ output_dir }}"
+    foo: "{{ lookup('file', 'foo.txt' ) }}"
+
+- debug: var=foo
+
+- name: verify relative file lookup
+  assert:
+    that:
+        - "foo == 'bar'"

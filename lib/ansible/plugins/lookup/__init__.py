@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 
+from ansible import constants as C
 from ansible.errors import AnsibleFileNotFound
 from ansible.plugins import AnsiblePlugin
 from ansible.utils.display import Display
@@ -108,10 +109,12 @@ class LookupBase(AnsiblePlugin):
         Return a file (needle) in the task's expected search path.
         '''
 
+        paths = C.config.get_config_value('LOCAL_SEARCH_PATH', variables=myvars)
+
         if 'ansible_search_path' in myvars:
-            paths = myvars['ansible_search_path']
+            paths += myvars['ansible_search_path']
         else:
-            paths = [self.get_basedir(myvars)]
+            paths.append(self.get_basedir(myvars))
 
         result = None
         try:

@@ -466,7 +466,7 @@ class ActionModule(ActionBase):
             trailing_slash = source.endswith(os.path.sep)
             try:
                 # find in expected paths
-                source = self._find_needle('files', source)
+                source = self._find_needle('files', source, task_vars)
             except AnsibleError as e:
                 result['failed'] = True
                 result['msg'] = to_text(e)

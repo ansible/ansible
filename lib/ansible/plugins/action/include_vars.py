@@ -119,7 +119,7 @@ class ActionModule(ActionBase):
                     results.update(updated_results)
         else:
             try:
-                self.source_file = self._find_needle('vars', self.source_file)
+                self.source_file = self._find_needle('vars', self.source_file, task_vars)
                 failed, err_msg, updated_results = (
                     self._load_files(self.source_file)
                 )

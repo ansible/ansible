@@ -90,7 +90,7 @@ class ActionModule(ActionBase):
                 raise AnsibleActionFail("newline_sequence needs to be one of: \n, \r or \r\n")
             else:
                 try:
-                    source = self._find_needle('templates', source)
+                    source = self._find_needle('templates', source, task_vars)
                 except AnsibleError as e:
                     raise AnsibleActionFail(to_text(e))
 

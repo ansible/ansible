@@ -108,7 +108,7 @@ class ActionModule(ActionBase):
                 raise _AnsibleActionDone()
             else:
                 try:
-                    src = self._find_needle('files', src)
+                    src = self._find_needle('files', src, task_vars)
                 except AnsibleError as e:
                     raise AnsibleActionFail(to_native(e))
 

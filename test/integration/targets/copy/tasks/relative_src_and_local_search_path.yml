@@ -1,0 +1,17 @@
+- set_fact:
+    ansible_local_search_path: "{{role_path}}/files-different/"
+
+- name: Copy file from ansible_local_search_path
+  copy:
+    src: corge.txt
+    dest: '{{ remote_dir }}'
+  register: copy_result
+
+- debug:
+    var: copy_result
+    verbosity: 1
+
+- name: Verify that the file was marked as changed
+  assert:
+    that:
+      - "copy_result.changed == true"

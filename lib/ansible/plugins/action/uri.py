@@ -45,7 +45,7 @@ class ActionModule(ActionBase):
 
             if src:
                 try:
-                    src = self._find_needle('files', src)
+                    src = self._find_needle('files', src, task_vars)
                 except AnsibleError as e:
                     raise AnsibleActionFail(to_native(e))
 
@@ -67,7 +67,7 @@ class ActionModule(ActionBase):
                         continue
 
                     try:
-                        filename = self._find_needle('files', filename)
+                        filename = self._find_needle('files', filename, task_vars)
                     except AnsibleError as e:
                         raise AnsibleActionFail(to_native(e))
 

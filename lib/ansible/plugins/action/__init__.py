@@ -1423,15 +1423,17 @@ class ActionBase(ABC):
 
         return diff
 
-    def _find_needle(self, dirname, needle):
+    def _find_needle(self, dirname, needle, task_vars=None):
         '''
             find a needle in haystack of paths, optionally using 'dirname' as a subdir.
             This will build the ordered list of paths to search and pass them to dwim
             to get back the first existing file found.
         '''
 
+        path_stack = C.config.get_config_value('LOCAL_SEARCH_PATH', variables=task_vars)
+
         # dwim already deals with playbook basedirs
-        path_stack = self._task.get_search_path()
+        path_stack += self._task.get_search_path()
 
         # if missing it will return a file not found exception
         return self._loader.path_dwim_relative_stack(path_stack, dirname, needle)

@@ -97,7 +97,7 @@ class ActionModule(ActionBase):
             if executable:
                 executable = to_native(new_module_args['executable'], errors='surrogate_or_strict')
             try:
-                source = self._loader.get_real_file(self._find_needle('files', source), decrypt=self._task.args.get('decrypt', True))
+                source = self._loader.get_real_file(self._find_needle('files', source, task_vars), decrypt=self._task.args.get('decrypt', True))
             except AnsibleError as e:
                 raise AnsibleActionFail(to_native(e))
 
