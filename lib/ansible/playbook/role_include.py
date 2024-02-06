@@ -16,8 +16,6 @@
 
 from __future__ import annotations
 
-from os.path import basename
-
 import ansible.constants as C
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import NonInheritableFieldAttribute
@@ -141,7 +139,7 @@ class IncludeRole(TaskInclude):
             args_value = ir.args.get(key)
             if not isinstance(args_value, string_types):
                 raise AnsibleParserError('Expected a string for %s but got %s instead' % (key, type(args_value)))
-            ir._from_files[from_key] = basename(args_value)
+            ir._from_files[from_key] = args_value
 
         # apply is only valid for includes, not imports as they inherit directly
         apply_attrs = ir.args.get('apply', {})
