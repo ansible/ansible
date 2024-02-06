@@ -365,6 +365,8 @@ class Display(metaclass=Singleton):
     def _meets_debug(
         func: c.Callable[..., None]
     ) -> c.Callable[..., None]:
+        """This method ensures that debug is enabled before delegating to the proxy
+        """
         @wraps(func)
         def wrapper(self, msg: str, host: str | None = None) -> None:
             if not C.DEFAULT_DEBUG:
@@ -376,6 +378,10 @@ class Display(metaclass=Singleton):
     def _meets_verbosity(
         func: c.Callable[..., None]
     ) -> c.Callable[..., None]:
+        """This method ensures the verbosity has been met before delegating to the proxy
+
+        Currently this method is unused, and the logic is handled directly in ``verbose``
+        """
         @wraps(func)
         def wrapper(self, msg: str, host: str | None = None, caplevel: int = None) -> None:
             if self.verbosity > caplevel:
@@ -443,7 +449,6 @@ class Display(metaclass=Singleton):
         if logger and not screen_only:
             self._log(nocolor, color)
 
-    @proxy_display
     def _log(self, msg: str, color: str | None = None, caplevel: int | None = None):
 
         if caplevel is None or self.log_verbosity > caplevel:
@@ -478,21 +483,27 @@ class Display(metaclass=Singleton):
     def vvvvvv(self, msg: str, host: str | None = None) -> None:
         return self.verbose(msg, host=host, caplevel=5)
 
-    @_meets_verbosity
-    @_proxy
     def verbose(self, msg: str, host: str | None = None, caplevel: int = 2) -> None:
-
-        to_stderr = C.VERBOSE_TO_STDERR
         if self.verbosity > caplevel:
-            if host is None:
-                self.display(msg, color=C.COLOR_VERBOSE, stderr=to_stderr)
-            else:
-                self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, stderr=to_stderr)
-        elif self.log_verbosity > self.verbosity and self.log_verbosity > caplevel:
-            # we send to log if log was configured with higher verbosity
-            if host is not None:
-                msg = "<%s> %s" % (host, msg)
-            self._log(msg, C.COLOR_VERBOSE, caplevel)
+            self._verbose_display(msg, host=host, caplevel=caplevel)
+
+        if self.log_verbosity > self.verbosity and self.log_verbosity > caplevel:
+            self._verbose_log(msg, host=host, caplevel=caplevel)
+
+    @_proxy
+    def _verbose_display(self, msg: str, host: str | None = None, caplevel: int = 2) -> None:
+        to_stderr = C.VERBOSE_TO_STDERR
+        if host is None:
+            self.display(msg, color=C.COLOR_VERBOSE, stderr=to_stderr)
+        else:
+            self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, stderr=to_stderr)
+
+    @_proxy
+    def _verbose_log(self, msg: str, host: str | None = None, caplevel: int = 2) -> None:
+        # we send to log if log was configured with higher verbosity
+        if host is not None:
+            msg = "<%s> %s" % (host, msg)
+        self._log(msg, C.COLOR_VERBOSE, caplevel)
 
     @_meets_debug
     @_proxy
