@@ -1,4 +1,0 @@
-- name: Install ansible-runner
-  pip:
-    name: ansible-runner
-    version: 2.2.0
