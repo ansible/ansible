@@ -1,0 +1,2 @@
+minor_changes:
+- Interpreter Discovery - Remove hardcoded references to specific python interpreters to use for certain distro versions, and modify logic for python3 to become the default.
