@@ -613,8 +613,8 @@ class ConfigManager(object):
         removal = ''
         if include_removal:
             if 'removed_at_date' in dep_docs:
-                removal = "Will be removed in a release after {dep_docs['removed_at_date']}\n\t"
+                removal = f"Will be removed in a release after {dep_docs['removed_at_date']}\n\t"
             else:
-                removal = "Will be removed in: Ansible {dep_docs['removed_in']}\n\t"
+                removal = f"Will be removed in: Ansible {dep_docs['removed_in']}\n\t"
 
-        return "Reason: {dep_docs['why']}\n\t{removal}Alternatives: {dep_docs['alternatives']}"
+        return f"Reason: {dep_docs['why']}\n\t{removal}Alternatives: {dep_docs['alternatives']}"
