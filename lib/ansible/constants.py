@@ -50,7 +50,7 @@ def handle_config_noise(display=None):
         d = _deprecated
 
     while config.WARNINGS:
-        warn = config.WARNINGS.pop()
+        warn = config.WARNINGS.pop(0)
         w(warn)
 
     while config.DEPRECATED:
