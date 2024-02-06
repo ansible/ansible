@@ -301,7 +301,7 @@ options:
   match_set:
     description:
       - Specifies a set name that can be defined by ipset.
-      - Must be used together with the match_set_flags parameter.
+      - Must be used together with the O(match_set_flags) parameter.
       - When the V(!) argument is prepended then it inverts the rule.
       - Uses the iptables set extension.
     type: str
@@ -309,10 +309,11 @@ options:
   match_set_flags:
     description:
       - Specifies the necessary flags for the match_set parameter.
-      - Must be used together with the match_set parameter.
+      - Must be used together with the O(match_set) parameter.
       - Uses the iptables set extension.
+      - Choices V(dst,dst) and V(src,src) added in version 2.17.
     type: str
-    choices: [ "src", "dst", "src,dst", "dst,src" ]
+    choices: [ "src", "dst", "src,dst", "dst,src", "dst,dst", "src,src" ]
     version_added: "2.11"
   limit:
     description:
@@ -820,7 +821,10 @@ def main():
             src_range=dict(type='str'),
             dst_range=dict(type='str'),
             match_set=dict(type='str'),
-            match_set_flags=dict(type='str', choices=['src', 'dst', 'src,dst', 'dst,src']),
+            match_set_flags=dict(
+                type='str',
+                choices=['src', 'dst', 'src,dst', 'dst,src', 'src,src', 'dst,dst']
+            ),
             limit=dict(type='str'),
             limit_burst=dict(type='str'),
             uid_owner=dict(type='str'),
