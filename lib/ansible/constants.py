@@ -55,7 +55,7 @@ def handle_config_noise(display=None):
 
     while config.DEPRECATED:
         # tuple with name and options
-        dep = config.DEPRECATED.pop()
+        dep = config.DEPRECATED.pop(0)
         msg = config.get_deprecated_msg_from_config(dep[1])
         d(msg, version=dep[1]['version'])
 
