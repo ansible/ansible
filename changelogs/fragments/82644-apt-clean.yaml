@@ -1,0 +1,2 @@
+bugfix:
+ - ansible.builtin.apt - calling clean = true caused /var/cache/apt/pkgcache.bin and /var/cache/apt/srcpkgcache.bin files to remain due to an incorrect check on if other operations are called. Fix now correctly evaluates whether update is called (https://github.com/ansible/ansible/issues/82611)
