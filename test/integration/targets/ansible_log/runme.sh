@@ -14,7 +14,7 @@ grep -q 'ping' "${ALOG}"
 rm "${ALOG}"
 # inline grep should fail if EXEC was present
 set +e
-ANSIBLE_LOG_PATH=${ALOG} ANSIBLE_LOG_VERBOSITY=3 ansible-playbook - logit.yml | tee /dev/stderr | grep -q EXEC
+ANSIBLE_LOG_PATH=${ALOG} ANSIBLE_LOG_VERBOSITY=3 ansible-playbook -v logit.yml | tee /dev/stderr | grep -q EXEC
 rc=$?
 set -e
 if [ "$rc" == "0" ]; then
