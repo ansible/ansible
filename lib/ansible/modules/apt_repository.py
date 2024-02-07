@@ -465,6 +465,7 @@ class UbuntuSourcesList(SourcesList):
     # prefer api.launchpad.net over launchpad.net/api
     # see: https://github.com/ansible/ansible/pull/81978#issuecomment-1767062178
     LP_API = 'https://api.launchpad.net/1.0/~%s/+archive/%s'
+    PPA_URI = 'https://ppa.launchpadcontent.net'
 
     def __init__(self, module):
         self.module = module
@@ -496,7 +497,7 @@ class UbuntuSourcesList(SourcesList):
         except IndexError:
             ppa_name = 'ppa'
 
-        line = 'deb http://ppa.launchpad.net/%s/%s/ubuntu %s main' % (ppa_owner, ppa_name, self.codename)
+        line = 'deb %s/%s/%s/ubuntu %s main' % (self.PPA_URI, ppa_owner, ppa_name, self.codename)
         return line, ppa_owner, ppa_name
 
     def _key_already_exists(self, key_fingerprint):

@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - apt_repository - update PPA URL to point to https URL (https://github.com/ansible/ansible/issues/82463).
