@@ -12,9 +12,12 @@
     that:
         - "foo == 'bar'"
 
-- name: load the file relative as a fact
+- name: prepare relative file lookup
   set_fact:
     ansible_local_search_path: "{{ output_dir }}"
+
+- name: load the file relative as a fact
+  set_fact:
     foo: "{{ lookup('file', 'foo.txt' ) }}"
 
 - debug: var=foo
