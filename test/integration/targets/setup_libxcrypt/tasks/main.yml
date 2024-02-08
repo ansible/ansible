@@ -1,0 +1,50 @@
+- name: Gather facts
+  setup:
+    gather_subset: [min]
+
+- name: Install libxcrypt on RedHat/CentOS/Fedora
+  when: ansible_facts.os_family == 'RedHat'
+  become: yes
+  package:
+    name: libxcrypt
+    state: present
+  notify: libxcrypt was installed
+
+- name: Install libxcrypt on Debian/Ubuntu
+  when: ansible_facts.os_family == 'Debian'
+  become: yes
+  package:
+    name: libcrypt1
+    state: present
+  notify: libxcrypt was installed
+
+- name: Install libxcrypt on macOS
+  when: ansible_facts.distribution == 'MacOSX'
+  block:
+    - name: MACOS | Find brew binary
+      command: which brew
+      register: brew_which
+
+    - name: MACOS | Get owner of brew binary
+      stat:
+        path: "{{ brew_which.stdout }}"
+      register: brew_stat
+
+    - become: yes
+      become_user: "{{ brew_stat.stat.pw_name }}"
+      environment:
+        HOMEBREW_NO_AUTO_UPDATE: True
+      block:
+        - name: MACOS | Install libxcrypt
+          command: brew install libxcrypt
+          notify: libxcrypt was installed
+
+        - name: MACOS | Get brew prefix
+          command: brew --prefix
+          register: brew_prefix
+
+        - name: MACOS | Link libxcrypt
+          file:
+            src: '{{ brew_prefix.stdout_lines.0 }}/opt/libxcrypt/lib/libcrypt.dylib'
+            dest: /usr/local/lib/libcrypt.dylib
+            state: link

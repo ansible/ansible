@@ -1,0 +1,36 @@
+- name: Gather facts
+  setup:
+    gather_subset: [min]
+
+- name: Uninstall libxcrypt on RedHat/CentOS/Fedora
+  when: ansible_facts.os_family == 'RedHat'
+  become: yes
+  package:
+    name: libxcrypt
+    state: absent
+
+- name: Uninstall libxcrypt on Debian/Ubuntu
+  when: ansible_facts.os_family == 'Debian'
+  become: yes
+  package:
+    name: libcrypt1
+    state: absent
+
+- name: Uninstall libxcrypt on macOS
+  when: ansible_facts.distribution == 'MacOSX'
+  block:
+    - name: MACOS | Find brew binary
+      command: which brew
+      register: brew_which
+
+    - name: MACOS | Get owner of brew binary
+      stat:
+        path: "{{ brew_which.stdout }}"
+      register: brew_stat
+
+    - name: MACOS | Uninstall libxcrypt
+      command: brew uninstall libxcrypt
+      become: yes
+      become_user: "{{ brew_stat.stat.pw_name }}"
+      environment:
+        HOMEBREW_NO_AUTO_UPDATE: True

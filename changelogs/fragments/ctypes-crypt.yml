@@ -1,0 +1,2 @@
+minor_changes:
+- password hashing - Add support back for using the ``crypt`` implmentation from the C library used to build Python, or with expanded functionality using ``libxcrypt``
