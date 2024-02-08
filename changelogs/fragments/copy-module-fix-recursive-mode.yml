@@ -1,0 +1,2 @@
+bugfixes:
+  - copy - fix setting ``mode`` and ``directory_mode`` recursively when copying a remote directory (https://github.com/ansible/ansible/issues/81126).

@@ -82,10 +82,10 @@ options:
       See CVE-2020-1736 for further details.
   directory_mode:
     description:
-    - Set the access permissions of newly created directories to the given mode.
-      Permissions on existing directories do not change.
-    - See O(mode) for the syntax of accepted values.
-    - The target system's defaults determine permissions when this parameter is not set.
+    - Set the access permissions of all directories copied from the O(src) to the given mode.
+      When O(dest) ends with a trailing slash, any intermediate destination directories created also use this mode.
+    - See O(mode) for the syntax of accepted values (V(preserve) is not supported).
+    - The target system's defaults determine permissions for newly created directories when this parameter is not set.
     type: raw
     version_added: '1.5'
   remote_src:
@@ -332,25 +332,25 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
     return changed
 
 
-def chown_path(module, path, owner, group):
-    """Update the owner/group if specified and different from the current owner/group."""
-    changed = module.set_owner_if_different(path, owner, False)
-    return module.set_group_if_different(path, group, changed)
-
-
-def chown_recursive(path, module):
+def walk_path_and_apply_fs_attributes(path, module, file_args, directory_args):
     changed = False
-    owner = module.params['owner']
-    group = module.params['group']
 
-    # TODO: Consolidate with the other methods calling set_*_if_different method, this is inefficient.
+    if file_args['mode'] == 'preserve':
+        # preserve is handled in copy_diff_files and copy_left_only where we have the src file
+        file_args['mode'] = None
+
+    if os.path.isfile(path):
+        file_args['path'] = path
+        changed |= module.set_fs_attributes_if_different(file_args, changed)
+        return changed
+
     for dirpath, dirnames, filenames in os.walk(path):
-        changed |= chown_path(module, dirpath, owner, group)
-        for subdir in [os.path.join(dirpath, d) for d in dirnames]:
-            changed |= chown_path(module, subdir, owner, group)
-        for filepath in [os.path.join(dirpath, f) for f in filenames]:
-            changed |= chown_path(module, filepath, owner, group)
-
+        for _dir in [dirpath] + [os.path.join(dirpath, d) for d in dirnames]:
+            directory_args['path'] = _dir
+            changed |= module.set_fs_attributes_if_different(directory_args, changed)
+        for _file in [os.path.join(dirpath, f) for f in filenames]:
+            file_args['path'] = _file
+            changed |= module.set_fs_attributes_if_different(file_args, changed)
     return changed
 
 
@@ -375,9 +375,8 @@ def copy_diff_files(src, dest, module):
                 os.symlink(linkto, b_dest_item_path)
             else:
                 shutil.copyfile(b_src_item_path, b_dest_item_path)
-                shutil.copymode(b_src_item_path, b_dest_item_path)
-
-            chown_path(module, b_dest_item_path, owner, group)
+                if module.params['mode'] == 'preserve':
+                    shutil.copymode(b_src_item_path, b_dest_item_path)
             changed = True
     return changed
 
@@ -401,7 +400,6 @@ def copy_left_only(src, dest, module):
 
             if os.path.islink(b_src_item_path) and os.path.isdir(b_src_item_path) and local_follow is True:
                 shutil.copytree(b_src_item_path, b_dest_item_path, symlinks=not local_follow)
-                chown_recursive(b_dest_item_path, module)
 
             if os.path.islink(b_src_item_path) and os.path.isdir(b_src_item_path) and local_follow is False:
                 linkto = os.readlink(b_src_item_path)
@@ -409,7 +407,8 @@ def copy_left_only(src, dest, module):
 
             if os.path.islink(b_src_item_path) and os.path.isfile(b_src_item_path) and local_follow is True:
                 shutil.copyfile(b_src_item_path, b_dest_item_path)
-                chown_path(module, b_dest_item_path, owner, group)
+                if module.params['mode'] == 'preserve':
+                    shutil.copymode(b_src_item_path, b_dest_item_path)
 
             if os.path.islink(b_src_item_path) and os.path.isfile(b_src_item_path) and local_follow is False:
                 linkto = os.readlink(b_src_item_path)
@@ -417,12 +416,11 @@ def copy_left_only(src, dest, module):
 
             if not os.path.islink(b_src_item_path) and os.path.isfile(b_src_item_path):
                 shutil.copyfile(b_src_item_path, b_dest_item_path)
-                shutil.copymode(b_src_item_path, b_dest_item_path)
-                chown_path(module, b_dest_item_path, owner, group)
+                if module.params['mode'] == 'preserve':
+                    shutil.copymode(b_src_item_path, b_dest_item_path)
 
             if not os.path.islink(b_src_item_path) and os.path.isdir(b_src_item_path):
                 shutil.copytree(b_src_item_path, b_dest_item_path, symlinks=not local_follow)
-                chown_recursive(b_dest_item_path, module)
 
             changed = True
     return changed
@@ -450,14 +448,12 @@ def copy_directory(src, dest, module):
     if not os.path.exists(dest):
         if not module.check_mode:
             shutil.copytree(src, dest, symlinks=not module.params['local_follow'])
-            chown_recursive(dest, module)
         changed = True
     else:
         diff_files_changed = copy_diff_files(src, dest, module)
         left_only_changed = copy_left_only(src, dest, module)
         common_dirs_changed = copy_common_dirs(src, dest, module)
-        owner_group_changed = chown_recursive(dest, module)
-        changed = any([diff_files_changed, left_only_changed, common_dirs_changed, owner_group_changed])
+        changed = any([diff_files_changed, left_only_changed, common_dirs_changed])
     return changed
 
 
@@ -485,7 +481,7 @@ def main():
 
     src = module.params['src']
     b_src = to_bytes(src, errors='surrogate_or_strict')
-    dest = module.params['dest']
+    dest = dest_root = module.params['dest']
     # Make sure we always have a directory component for later processing
     if os.path.sep not in dest:
         dest = '.{0}{1}'.format(os.path.sep, dest)
@@ -496,7 +492,6 @@ def main():
     validate = module.params.get('validate', None)
     follow = module.params['follow']
     local_follow = module.params['local_follow']
-    mode = module.params['mode']
     owner = module.params['owner']
     group = module.params['group']
     remote_src = module.params['remote_src']
@@ -510,8 +505,9 @@ def main():
     # Preserve is usually handled in the action plugin but mode + remote_src has to be done on the
     # remote host
     if module.params['mode'] == 'preserve':
-        module.params['mode'] = '0%03o' % stat.S_IMODE(os.stat(b_src).st_mode)
-    mode = module.params['mode']
+        mode = '0%03o' % stat.S_IMODE(os.stat(b_src).st_mode)
+    else:
+        mode = module.params['mode']
 
     changed = False
 
@@ -557,13 +553,7 @@ def main():
                 module.exit_json(msg='dest directory %s would be created' % dirname, changed=True, src=src)
             os.makedirs(b_dirname)
             changed = True
-            directory_args = module.load_file_common_arguments(module.params)
-            directory_mode = module.params["directory_mode"]
-            if directory_mode is not None:
-                directory_args['mode'] = directory_mode
-            else:
-                directory_args['mode'] = None
-            adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list, module, directory_args, changed)
+            dest_root = os.path.join(pre_existing_dir, new_directory_list[0]) if new_directory_list else dirname
 
     if os.path.isdir(b_dest):
         basename = os.path.basename(src)
@@ -612,7 +602,8 @@ def main():
                     # if we have a mode, make sure we set it on the temporary
                     # file source as some validations may require it
                     module.set_mode_if_different(src, mode, False)
-                    chown_path(module, src, owner, group)
+                    module.set_owner_if_different(src, owner, False)
+                    module.set_group_if_different(src, group, False)
                     if "%s" not in validate:
                         module.fail_json(msg="validate must contain %%s: %s" % (validate))
                     (rc, out, err) = module.run_command(validate % src)
@@ -661,10 +652,11 @@ def main():
         res_args['backup_file'] = backup_file
 
     file_args = module.load_file_common_arguments(module.params, path=dest)
-    directory_mode = module.params['directory_mode']
-    if os.path.isdir(b_dest) and directory_mode is not None:
-        file_args['mode'] = directory_mode
-    res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
+    if file_args['mode'] == 'preserve' and os.path.isfile(dest):
+        file_args['mode'] = mode
+    directory_args = file_args.copy()
+    directory_args['mode'] = module.params['directory_mode']
+    res_args['changed'] |= walk_path_and_apply_fs_attributes(dest_root, module, file_args, directory_args)
 
     module.exit_json(**res_args)
 
