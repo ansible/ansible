@@ -8,6 +8,11 @@ import string
 
 from collections import namedtuple
 
+import ctypes
+import ctypes.util
+import re
+import sys
+
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import text_type
@@ -27,6 +32,34 @@ try:
     PASSLIB_AVAILABLE = True
 except Exception as e:
     PASSLIB_E = e
+
+CRYPT_NAME = None
+CRYPT_E = None
+HAS_CRYPT = False
+try:
+    # prefer ``libcrypt``/``libxcrypt`` over ``libc``
+    # libc can return None, and still give us the functionality we need
+    for _lib_name, _allow_none in (('crypt', False), ('c', True)):
+        _lib_so = ctypes.util.find_library(_lib_name)
+        if not _lib_so and not _allow_none:
+            # None will load ``libc`` in LoadLibrary, if we requested ``crypt``
+            # we don't want to allow that becoming ``libc``
+            continue
+        _lib = ctypes.cdll.LoadLibrary(_lib_so)
+        try:
+            crypt = _lib.crypt
+        except AttributeError:
+            # Whatever lib this is exists, but is missing ``crypt``
+            continue
+        crypt.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
+        crypt.restype = ctypes.c_char_p
+        break
+    else:
+        raise ImportError('Cannot find crypt implementation')
+    CRYPT_NAME = _lib_name
+    HAS_CRYPT = True
+except Exception as e:
+    CRYPT_E = e
 
 
 display = Display()
@@ -73,6 +106,90 @@ class BaseHash(object):
 
     def __init__(self, algorithm):
         self.algorithm = algorithm
+
+
+class CryptHash(BaseHash):
+    def __init__(self, algorithm):
+        super(CryptHash, self).__init__(algorithm)
+
+        if not HAS_CRYPT:
+            raise AnsibleError("crypt cannot be used as the 'libcrypt' library is not installed or is unusable.", orig_exc=CRYPT_E)
+
+        if sys.platform.startswith('darwin') and CRYPT_NAME != 'crypt':
+            # crypt in macos doesn't implement what we need. Installing libxcrypt or passlib offer usable
+            # mechanisms for password hashing
+            raise AnsibleError("crypt not supported on Mac OS X/Darwin, install libxcrypt or the passlib python module")
+
+        if algorithm not in self.algorithms:
+            raise AnsibleError("crypt does not support '%s' algorithm" % self.algorithm)
+
+        self.algo_data = self.algorithms[algorithm]
+
+    def hash(self, secret, salt=None, salt_size=None, rounds=None, ident=None):
+        salt = self._salt(salt, salt_size)
+        rounds = self._rounds(rounds)
+        ident = self._ident(ident)
+        return self._hash(secret, salt, rounds, ident)
+
+    def _salt(self, salt, salt_size):
+        salt_size = salt_size or self.algo_data.salt_size
+        ret = salt or random_salt(salt_size)
+        if re.search(r'[^./0-9A-Za-z]', ret):
+            raise AnsibleError("invalid characters in salt")
+        if self.algo_data.salt_exact and len(ret) != self.algo_data.salt_size:
+            raise AnsibleError(f"invalid salt size supplied ({len(ret)}), expected {self.algo_data.salt_size}")
+        elif not self.algo_data.salt_exact and len(ret) > self.algo_data.salt_size:
+            raise AnsibleError(f"invalid salt size supplied ({len(ret)}), expected at most {self.algo_data.salt_size}")
+        return ret
+
+    def _rounds(self, rounds):
+        if self.algorithm == 'bcrypt':
+            # crypt requires 2 digits for rounds
+            return rounds or self.algo_data.implicit_rounds
+        elif rounds == self.algo_data.implicit_rounds:
+            # Passlib does not include the rounds if it is the same as implicit_rounds.
+            # Make crypt lib behave the same, by not explicitly specifying the rounds in that case.
+            return None
+        else:
+            return rounds
+
+    def _ident(self, ident):
+        if not ident:
+            return self.algo_data.crypt_id
+        if self.algorithm == 'bcrypt':
+            return ident
+        return None
+
+    def _hash(self, secret, salt, rounds, ident):
+        saltstring = ""
+        if ident:
+            saltstring = "$%s" % ident
+
+        if rounds:
+            if self.algorithm == 'bcrypt':
+                saltstring += "$%d" % rounds
+            else:
+                saltstring += "$rounds=%d" % rounds
+
+        saltstring += "$%s" % salt
+
+        # crypt.crypt throws OSError on Python >= 3.9 if it cannot parse saltstring.
+        try:
+            result = crypt(to_bytes(secret), to_bytes(saltstring))
+            orig_exc = None
+        except OSError as e:
+            result = None
+            orig_exc = e
+
+        # None as result would be interpreted by some modules (user module)
+        # as no password at all.
+        if not result:
+            raise AnsibleError(
+                "crypt.crypt does not support '%s' algorithm" % self.algorithm,
+                orig_exc=orig_exc,
+            )
+
+        return result
 
 
 class PasslibHash(BaseHash):
@@ -175,4 +292,6 @@ def passlib_or_crypt(secret, algorithm, salt=None, salt_size=None, rounds=None, 
 def do_encrypt(result, encrypt, salt_size=None, salt=None, ident=None, rounds=None):
     if PASSLIB_AVAILABLE:
         return PasslibHash(encrypt).hash(result, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
-    raise AnsibleError("Unable to encrypt nor hash, passlib must be installed", orig_exc=PASSLIB_E)
+    if HAS_CRYPT:
+        return CryptHash(encrypt).hash(result, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
+    raise AnsibleError("Unable to encrypt nor hash, either crypt/libxcrypt or passlib must be installed", orig_exc=PASSLIB_E)
