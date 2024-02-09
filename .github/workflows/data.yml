@@ -1,0 +1,35 @@
+name: Post Merged PRs to Slack
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  post-merged-prs:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Get Merged PRs
+      id: get_prs
+      uses: actions/github-script@v5
+      with:
+        script: |
+          const response = await github.request('GET /repos/{owner}/{repo}/pulls', {
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'closed',
+            base: 'main' // or whatever your base branch is
+          });
+          const mergedPRs = response.data.filter(pr => pr.merged_at);
+          const prList = mergedPRs.map(pr => `- ${pr.title} (#${pr.number}) by ${pr.user.login}: ${pr.html_url}`).join('\n');
+          console.log(prList);
+          core.setOutput('merged_pr_list', prList);
+
+    - name: Post to Slack
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_CHANNEL: '#random' # Change to your desired Slack channel
+      run: |
+        PR_LIST=$(echo "${{ steps.get_prs.outputs.merged_pr_list }}")
+        JSON="{\"text\": \"Merged Pull Requests:\n$PR_LIST\", \"channel\": \"$SLACK_CHANNEL\"}"
+        curl -X POST -H 'Content-type: application/json' --data "$JSON" $SLACK_WEBHOOK_URL
