@@ -1,0 +1,9 @@
+## Changelog
+
+### Bug Fixes
+
+- Fix an issue in `ansible.builtin.include_tasks` where `ansible_loop_var` and `ansible_index_var` were not working as expected in a loop (Issue #82655 https://github.com/ansible/ansible/issues/82655)
+
+### Internal Changes
+
+- Update `included_file.py` to properly set `ansible_loop_var` and `ansible_index_var` in `ansible.builtin.include_tasks` when used in a loop

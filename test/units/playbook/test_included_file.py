@@ -128,7 +128,7 @@ def test_process_include_tasks_results(mock_iterator, mock_variable_manager):
     assert res[0]._filename == os.path.join(os.getcwd(), 'include_test.yml')
     assert res[0]._hosts == ['testhost1', 'testhost2']
     assert res[0]._args == {}
-    assert res[0]._vars == {}
+    assert res[0]._vars == {'ansible_loop_var': 'item'}
 
 
 def test_process_include_tasks_diff_files(mock_iterator, mock_variable_manager):
@@ -169,8 +169,8 @@ def test_process_include_tasks_diff_files(mock_iterator, mock_variable_manager):
     assert res[0]._args == {}
     assert res[1]._args == {}
 
-    assert res[0]._vars == {}
-    assert res[1]._vars == {}
+    assert res[0]._vars == {'ansible_loop_var': 'item'}
+    assert res[1]._vars == {'ansible_loop_var': 'index'}
 
 
 def test_process_include_tasks_simulate_free(mock_iterator, mock_variable_manager):
@@ -208,8 +208,8 @@ def test_process_include_tasks_simulate_free(mock_iterator, mock_variable_manage
     assert res[0]._args == {}
     assert res[1]._args == {}
 
-    assert res[0]._vars == {}
-    assert res[1]._vars == {}
+    assert res[0]._vars == {'ansible_loop_var': 'item'}
+    assert res[1]._vars == {'ansible_loop_var': 'index'}
 
 
 def test_process_include_simulate_free_block_role_tasks(mock_iterator,
@@ -305,8 +305,8 @@ def test_process_include_simulate_free_block_role_tasks(mock_iterator,
     assert res[0]._args == {}
     assert res[1]._args == {}
 
-    assert res[0]._vars == {}
-    assert res[1]._vars == {}
+    assert res[0]._vars == {'ansible_loop_var': 'item'}
+    assert res[1]._vars == {'ansible_loop_var': 'index'}
 
 
 def test_empty_raw_params():
