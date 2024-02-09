@@ -179,7 +179,11 @@ class ModuleArgsParser:
             for arg in args:
                 arg = to_text(arg)
                 if arg.startswith('_ansible_'):
-                    raise AnsibleError("invalid parameter specified for action '%s': '%s'" % (action, arg))
+                    err_msg = (
+                        f"Invalid parameter specified beginning with keyword '_ansible_' for action '{action !s}': '{arg !s}'. "
+                        "The prefix '_ansible_' is reserved for internal use only."
+                    )
+                    raise AnsibleError(err_msg)
 
         # finally, update the args we're going to return with the ones
         # which were normalized above
