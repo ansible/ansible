@@ -34,3 +34,6 @@ ansible-playbook -i inventory set_fact_empty_str_key.yml
 
 # https://github.com/ansible/ansible/issues/21088
 ansible-playbook -i inventory "$@" set_fact_auto_unsafe.yml
+
+ansible-playbook -i inventory "$@" set_fact_ansible_vars.yml 2>&1 | tee test_set_fact_ansible_vars.out
+test "$(grep -E -c 'is reserved for internal use only.' test_set_fact_ansible_vars.out)" = 1
