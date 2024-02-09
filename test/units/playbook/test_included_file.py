@@ -208,8 +208,8 @@ def test_process_include_tasks_simulate_free(mock_iterator, mock_variable_manage
     assert res[0]._args == {}
     assert res[1]._args == {}
 
-    assert res[0]._vars == {'ansible_loop_var': 'item'}
-    assert res[1]._vars == {'ansible_loop_var': 'index'}
+    assert res[0]._vars == {}
+    assert res[1]._vars == {}
 
 
 def test_process_include_simulate_free_block_role_tasks(mock_iterator,
@@ -305,8 +305,8 @@ def test_process_include_simulate_free_block_role_tasks(mock_iterator,
     assert res[0]._args == {}
     assert res[1]._args == {}
 
-    assert res[0]._vars == {'ansible_loop_var': 'item'}
-    assert res[1]._vars == {'ansible_loop_var': 'index'}
+    assert res[0]._vars == {}
+    assert res[1]._vars == {}
 
 
 def test_empty_raw_params():
