@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Ansible Project
+# Copyright: Contributors to the Ansible project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
@@ -545,16 +545,59 @@ def test_remove_rule_check_mode(mocker, mock_basic_commands):
     ]
 
 
-def test_insert_with_reject(mocker, mock_basic_commands):
+@pytest.mark.parametrize(
+    ("test_input", "expected"),
+    [
+        pytest.param(
+            {
+                "chain": "INPUT",
+                "protocol": "tcp",
+                "reject_with": "tcp-reset",
+                "ip_version": "ipv4",
+            },
+            [
+                IPTABLES_CMD,
+                "-t",
+                "filter",
+                "-C",
+                "INPUT",
+                "-p",
+                "tcp",
+                "-j",
+                "REJECT",
+                "--reject-with",
+                "tcp-reset",
+            ],
+            id="insert_reject_with",
+        ),
+        pytest.param(
+            {
+                "chain": "INPUT",
+                "protocol": "tcp",
+                "jump": "REJECT",
+                "reject_with": "tcp-reset",
+                "ip_version": "ipv4",
+            },
+            [
+                IPTABLES_CMD,
+                "-t",
+                "filter",
+                "-C",
+                "INPUT",
+                "-p",
+                "tcp",
+                "-j",
+                "REJECT",
+                "--reject-with",
+                "tcp-reset",
+            ],
+            id="update_reject_with",
+        ),
+    ]
+)
+def test_insert_with_reject(mocker, mock_basic_commands, test_input, expected):
     """Using reject_with with a previously defined jump: REJECT results in two Jump statements #18988."""
-    set_module_args(
-        {
-            "chain": "INPUT",
-            "protocol": "tcp",
-            "reject_with": "tcp-reset",
-            "ip_version": "ipv4",
-        }
-    )
+    set_module_args(test_input)
     commands_results = [
         (0, "", ""),
     ]
@@ -569,59 +612,7 @@ def test_insert_with_reject(mocker, mock_basic_commands):
 
     assert run_command.call_count == 1
     first_cmd_args_list = run_command.call_args_list[0]
-    assert first_cmd_args_list[0][0] == [
-        IPTABLES_CMD,
-        "-t",
-        "filter",
-        "-C",
-        "INPUT",
-        "-p",
-        "tcp",
-        "-j",
-        "REJECT",
-        "--reject-with",
-        "tcp-reset",
-    ]
-
-
-def test_insert_jump_reject_with_reject(mocker, mock_basic_commands):
-    """Using reject_with with a previously defined jump: REJECT results in two Jump statements #18988."""
-    set_module_args(
-        {
-            "chain": "INPUT",
-            "protocol": "tcp",
-            "jump": "REJECT",
-            "reject_with": "tcp-reset",
-            "ip_version": "ipv4",
-        }
-    )
-    commands_results = [
-        (0, "", ""),
-    ]
-
-    run_command = mocker.patch(
-        "ansible.module_utils.basic.AnsibleModule.run_command",
-        side_effect=commands_results,
-    )
-
-    with pytest.raises(SystemExit):
-        iptables.main()
-
-    assert run_command.call_count == 1
-    first_cmd_args_list = run_command.call_args_list[0]
-    assert first_cmd_args_list[0][0] == [
-        IPTABLES_CMD,
-        "-t",
-        "filter",
-        "-C",
-        "INPUT",
-        "-p",
-        "tcp",
-        "-j",
-        "REJECT",
-        "--reject-with",
-        "tcp-reset",
-    ]
+    assert first_cmd_args_list[0][0] == expected
 
 
 def test_jump_tee_gateway_negative(mocker, mock_basic_commands):
@@ -704,11 +695,11 @@ def test_jump_tee_gateway(mocker, mock_basic_commands):
 
 
 @pytest.mark.parametrize(
-    "test_input",
+    ("test_input"),
     [
-        'flags=ALL flags_set="ACK,RST,SYN,FIN"',
-        {"flags": "ALL", "flags_set": "ACK,RST,SYN,FIN"},
-        {"flags": ["ALL"], "flags_set": ["ACK", "RST", "SYN", "FIN"]},
+        pytest.param('flags=ALL flags_set="ACK,RST,SYN,FIN"', id="tcp_flags_str"),
+        pytest.param({"flags": "ALL", "flags_set": "ACK,RST,SYN,FIN"}, id="tcp_flags_dict"),
+        pytest.param({"flags": ["ALL"], "flags_set": ["ACK", "RST", "SYN", "FIN"]}, id="tcp_flags_list"),
     ],
 )
 def test_tcp_flags(mocker, mock_basic_commands, test_input):
@@ -753,10 +744,24 @@ def test_tcp_flags(mocker, mock_basic_commands, test_input):
 
 
 @pytest.mark.parametrize(
-    "log_level",
+    ("log_level"),
     [
-        "0", "1", "2", "3", "4", "5", "6", "7",
-        "emerg", "alert", "crit", "error", "warning", "notice", "info", "debug",
+        pytest.param("0", id="log_level_0"),
+        pytest.param("1", id="log_level_1"),
+        pytest.param("2", id="log_level_2"),
+        pytest.param("3", id="log_level_3"),
+        pytest.param("4", id="log_level_4"),
+        pytest.param("5", id="log_level_5"),
+        pytest.param("6", id="log_level_6"),
+        pytest.param("7", id="log_level_7"),
+        pytest.param("emerg", id="log_level_emerg"),
+        pytest.param("alert", id="log_level_alert"),
+        pytest.param("crit", id="log_level_crit"),
+        pytest.param("error", id="log_level_error"),
+        pytest.param("warning", id="log_level_warning"),
+        pytest.param("notice", id="log_level_notice"),
+        pytest.param("info", id="log_level_info"),
+        pytest.param("debug", id="log_level_debug"),
     ],
 )
 def test_log_level(mocker, mock_basic_commands, log_level):
@@ -803,9 +808,9 @@ def test_log_level(mocker, mock_basic_commands, log_level):
 
 
 @pytest.mark.parametrize(
-    "test_input,expected",
+    ("test_input", "expected"),
     [
-        (
+        pytest.param(
             {
                 "chain": "INPUT",
                 "match": ["iprange"],
@@ -825,8 +830,9 @@ def test_log_level(mocker, mock_basic_commands, log_level):
                 "--src-range",
                 "192.168.1.100-192.168.1.199",
             ],
+            id="ip_range_with_src_range",
         ),
-        (
+        pytest.param(
             {
                 "chain": "INPUT",
                 "src_range": "192.168.1.100-192.168.1.199",
@@ -848,9 +854,14 @@ def test_log_level(mocker, mock_basic_commands, log_level):
                 "--dst-range",
                 "10.0.0.50-10.0.0.100",
             ],
+            id="ip_range_with_src_range_dst_range",
         ),
-        (
-            {"chain": "INPUT", "dst_range": "10.0.0.50-10.0.0.100", "jump": "ACCEPT"},
+        pytest.param(
+            {
+                "chain": "INPUT",
+                "dst_range": "10.0.0.50-10.0.0.100",
+                "jump": "ACCEPT"
+            },
             [
                 IPTABLES_CMD,
                 "-t",
@@ -864,6 +875,7 @@ def test_log_level(mocker, mock_basic_commands, log_level):
                 "--dst-range",
                 "10.0.0.50-10.0.0.100",
             ],
+            id="ip_range_dst_range"
         ),
     ],
 )
@@ -1031,9 +1043,9 @@ def test_destination_ports(mocker, mock_basic_commands):
 
 
 @pytest.mark.parametrize(
-    "test_input,expected",
+    ("test_input", "expected"),
     [
-        (
+        pytest.param(
             {
                 "chain": "INPUT",
                 "protocol": "tcp",
@@ -1065,8 +1077,9 @@ def test_destination_ports(mocker, mock_basic_commands):
                 "--comment",
                 "this is a comment",
             ],
+            id="match_set_src",
         ),
-        (
+        pytest.param(
             {
                 "chain": "INPUT",
                 "protocol": "udp",
@@ -1090,8 +1103,9 @@ def test_destination_ports(mocker, mock_basic_commands):
                 "banned_hosts",
                 "src,dst",
             ],
+            id="match_set_src_dst",
         ),
-        (
+        pytest.param(
             {
                 "chain": "INPUT",
                 "protocol": "udp",
@@ -1115,8 +1129,9 @@ def test_destination_ports(mocker, mock_basic_commands):
                 "banned_hosts_dst",
                 "dst,dst",
             ],
+            id="match_set_dst_dst",
         ),
-        (
+        pytest.param(
             {
                 "chain": "INPUT",
                 "protocol": "udp",
@@ -1140,6 +1155,7 @@ def test_destination_ports(mocker, mock_basic_commands):
                 "banned_hosts",
                 "src,src",
             ],
+            id="match_set_src_src",
         ),
     ],
 )
@@ -1223,7 +1239,7 @@ def test_chain_creation(mocker, mock_basic_commands):
 
 
 def test_chain_creation_check_mode(mocker, mock_basic_commands):
-    """Test chain creation when absent."""
+    """Test chain creation when absent in check mode."""
     set_module_args(
         {
             "chain": "FOOBAR",
@@ -1334,7 +1350,7 @@ def test_chain_deletion(mocker, mock_basic_commands):
 
 
 def test_chain_deletion_check_mode(mocker, mock_basic_commands):
-    """Test chain deletion when present."""
+    """Test chain deletion when present in check mode."""
     set_module_args(
         {
             "chain": "FOOBAR",
