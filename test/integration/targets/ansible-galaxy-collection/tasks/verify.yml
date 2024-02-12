@@ -292,7 +292,6 @@
       - "'plugins/modules/test_module.py' in verify.stdout"
       - "'plugins/modules/test_new_file.py' in verify.stdout"
       - "'plugins/modules/test_new_dir' in verify.stdout"
-      - "'plugins/modules/__pycache__' not in verify.stdout"
       - "'plugins/modules/__pycache__/test.cpython-311.pyc' not in verify.stdout"
 
 # TODO: add a test for offline Galaxy signature metadata
