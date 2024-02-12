@@ -1306,6 +1306,16 @@ class DocCLI(CLI, RoleMixin):
                 text.append(_format("Options", 'bold') + " (%s inicates it is required):" % ("=" if C.ANSIBLE_NOCOLOR else 'red'))
                 DocCLI.add_fields(text, doc.pop('options'), limit, opt_indent)
 
+            if doc.get('attributes', False):
+                text.append("")
+                text.append(_format("ATTRIBUTES:", 'bold'))
+                for k in doc['attributes'].keys():
+                    text.append('')
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify(_format('%s:' % k, 'UNDERLINE')), limit - 6, initial_indent=opt_indent,
+                                                 subsequent_indent=opt_indent))
+                    text.append(DocCLI._indent_lines(DocCLI._dump_yaml(doc['attributes'][k]), opt_indent))
+                del doc['attributes']
+
             # generic elements we will handle identically
             for k in ('author',):
                 if k not in doc:
