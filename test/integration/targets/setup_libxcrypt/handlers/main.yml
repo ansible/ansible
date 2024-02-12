@@ -1,0 +1,6 @@
+- name: uninstall libxcrypt
+  command: brew uninstall libxcrypt
+  become: yes
+  become_user: "{{ brew_stat.stat.pw_name }}"
+  environment:
+    HOMEBREW_NO_AUTO_UPDATE: True
