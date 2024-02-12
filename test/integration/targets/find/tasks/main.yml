@@ -239,7 +239,7 @@
 
 - assert:
       that:
-          - fail_to_search_file_by_non_exists_encoding.skipped_paths[remote_tmp_dir_test] == "unknown encoding: idontexist"
+          - 'fail_to_search_file_by_non_exists_encoding.skipped_paths[remote_tmp_dir_test] == "unknown encoding: idontexist"'
 
 - block:
     - set_fact:
