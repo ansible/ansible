@@ -43,7 +43,7 @@ from ansible.vars.plugins import get_vars_from_inventory_sources
 
 display = Display()
 
-IGNORED_ALWAYS = [br"^\.", b"^host_vars$", b"^group_vars$", b"^vars_plugins$"]
+IGNORED_ALWAYS = [br"^\.", b"^host_vars$", b"^group_vars$", b"^extra_vars(.y[a]?ml)?$", b"^vars_plugins$"]
 IGNORED_PATTERNS = [to_bytes(x) for x in C.INVENTORY_IGNORE_PATTERNS]
 IGNORED_EXTS = [b'%s$' % to_bytes(re.escape(x)) for x in C.INVENTORY_IGNORE_EXTS]
 

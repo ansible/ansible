@@ -184,6 +184,18 @@ def load_extra_vars(loader):
 
     if not getattr(load_extra_vars, 'extra_vars', None):
         extra_vars = {}
+
+        # load extra_vars from inventory
+        if loader:
+            for inventory_path in context.CLIARGS.get('inventory', tuple()):
+                for extra_var_file in loader.find_vars_files(inventory_path, 'extra_vars'):
+                    data = loader.load_from_file(extra_var_file)
+                    if isinstance(data, MutableMapping):
+                        extra_vars = combine_vars(extra_vars, data)
+                    else:
+                        raise AnsibleOptionsError("Invalid extra vars file supplied. '%s' could not be made into a dictionary" % extra_var_file)
+
+        # load extra_vars from CLIARGS
         for extra_vars_opt in context.CLIARGS.get('extra_vars', tuple()):
             data = None
             extra_vars_opt = to_text(extra_vars_opt, errors='surrogate_or_strict')
