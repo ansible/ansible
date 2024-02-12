@@ -1,0 +1,2 @@
+minor_changes:
+  - Load 'extra_vars' from the inventory directory. This eliminates the need to redundantly define credentials and tokens when used in modules and dynamic inventories.
