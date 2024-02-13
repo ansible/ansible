@@ -8,8 +8,6 @@ import string
 
 from collections import namedtuple
 
-import ctypes
-import ctypes.util
 import re
 import sys
 
@@ -33,30 +31,11 @@ try:
 except Exception as e:
     PASSLIB_E = e
 
-CRYPT_NAME = None
+CRYPT_NAME: str | None = None
 CRYPT_E = None
 HAS_CRYPT = False
 try:
-    # prefer ``libcrypt``/``libxcrypt`` over ``libc``
-    # libc can return None, and still give us the functionality we need
-    for _lib_name, _allow_none in (('crypt', False), ('c', True)):
-        _lib_so = ctypes.util.find_library(_lib_name)
-        if not _lib_so and not _allow_none:
-            # None will load ``libc`` in LoadLibrary, if we requested ``crypt``
-            # we don't want to allow that becoming ``libc``
-            continue
-        _lib = ctypes.cdll.LoadLibrary(_lib_so)
-        try:
-            crypt = _lib.crypt
-        except AttributeError:
-            # Whatever lib this is exists, but is missing ``crypt``
-            continue
-        crypt.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
-        crypt.restype = ctypes.c_char_p
-        break
-    else:
-        raise ImportError('Cannot find crypt implementation')
-    CRYPT_NAME = _lib_name
+    from ansible.utils.crypt import CRYPT_NAME, crypt
     HAS_CRYPT = True
 except Exception as e:
     CRYPT_E = e
