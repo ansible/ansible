@@ -539,6 +539,9 @@ def get_ca_certs(cafile=None, capath=None):
         paths_checked.add('/etc/pki/ca-trust/extracted/pem')
         paths_checked.add('/etc/pki/tls/certs')
         paths_checked.add('/usr/share/ca-certificates/cacert.org')
+        # add paths that are present in WSLv1 Ubuntu 20.04
+        paths_checked.add('/usr/lib/ssl/certs')
+        paths_checked.add('/etc/ssl/certs')
     elif system == u'FreeBSD':
         paths_checked.add('/usr/local/share/certs')
     elif system == u'OpenBSD':
