@@ -98,7 +98,7 @@ def hash_params(params):
 
 class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
-    def __init__(self, play=None, from_files=None, from_include=False, validate=True, public=None, static=True):
+    def __init__(self, play=None, from_files=None, from_include=False, validate=True, public=None, static=True, allow_duplicates=None):
         self._role_name = None
         self._role_path = None
         self._role_collection = None
@@ -140,6 +140,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
         self._hash = None
 
+        # Need it for deduplication across the play before metadata is loaded
+        self._ir_allow_duplicates = allow_duplicates
+
         super(Role, self).__init__()
 
     def __repr__(self):
@@ -167,6 +170,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
                 'from_files': MappingProxyType(self._from_files),
                 'vars': MappingProxyType(self.vars),
                 'from_include': self.from_include,
+                'ir_allow_duplicates': self._ir_allow_duplicates,
             }
         )
         return self._hash
@@ -178,7 +182,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         return self._get_hash_dict() == other._get_hash_dict()
 
     @staticmethod
-    def load(role_include, play, parent_role=None, from_files=None, from_include=False, validate=True, public=None, static=True):
+    def load(role_include, play, parent_role=None, from_files=None, from_include=False, validate=True, public=None, static=True, allow_duplicates=None):
         if from_files is None:
             from_files = {}
         try:
@@ -186,7 +190,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             #  for the in-flight in role cache as a sentinel that we're already trying to load
             #  that role?)
             # see https://github.com/ansible/ansible/issues/61527
-            r = Role(play=play, from_files=from_files, from_include=from_include, validate=validate, public=public, static=static)
+            r = Role(play=play, from_files=from_files, from_include=from_include, validate=validate, public=public, static=static,
+                     allow_duplicates=allow_duplicates)
             r._load_role_data(role_include, parent_role=parent_role)
 
             role_path = r.get_role_path()
@@ -195,7 +200,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
             # Using the role path as a cache key is done to improve performance when a large number of roles
             # are in use in the play
-            play.role_cache[role_path].append(r)
+            if r not in play.role_cache[role_path]:
+                play.role_cache[role_path].append(r)
 
             return r
 
@@ -582,13 +588,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         Returns true if this role has been iterated over completely and
         at least one task was run
         '''
-        if self._metadata.allow_duplicates is False:
-            for cached_role in self._play.role_cache[self.get_role_path()]:
-                if cached_role != self:
-                    continue
-                if host.name in cached_role._completed:
-                    return True
-        return False
+
+        return host.name in self._completed and not self._metadata.allow_duplicates
 
     def compile(self, play, dep_chain=None):
         '''
@@ -650,6 +651,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         res['_default_vars'] = self._default_vars
         res['_had_task_run'] = self._had_task_run.copy()
         res['_completed'] = self._completed.copy()
+        res['_ir_allow_duplicates'] = self._ir_allow_duplicates
 
         res['_metadata'] = self._metadata.serialize()
 
@@ -674,6 +676,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         self._default_vars = data.get('_default_vars', dict())
         self._had_task_run = data.get('_had_task_run', dict())
         self._completed = data.get('_completed', dict())
+        self._ir_allow_duplicates = data.get('_ir_allow_duplicates')
 
         if include_deps:
             deps = []

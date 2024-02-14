@@ -795,7 +795,8 @@ class StrategyBase:
             if original_task._role is not None and role_ran:  # TODO:  and original_task.action not in C._ACTION_INCLUDE_ROLE:?
                 # lookup the role in the role cache to make sure we're dealing
                 # with the correct object and mark it as executed
-                original_task._role._had_task_run[original_host.name] = True
+                role_obj = self._get_cached_role(original_task, iterator._play)
+                role_obj._had_task_run[original_host.name] = True
 
             ret_results.append(task_result)
 
@@ -1034,8 +1035,9 @@ class StrategyBase:
             # Allow users to use this in a play as reported in https://github.com/ansible/ansible/issues/22286?
             # How would this work with allow_duplicates??
             if task.implicit:
-                if target_host.name in task._role._had_task_run:
-                    task._role._completed[target_host.name] = True
+                role_obj = self._get_cached_role(task, iterator._play)
+                if target_host.name in role_obj._had_task_run:
+                    role_obj._completed[target_host.name] = True
                     msg = 'role_complete for %s' % target_host.name
         elif meta_action == 'reset_connection':
             all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task,

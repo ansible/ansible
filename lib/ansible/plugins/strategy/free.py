@@ -174,7 +174,8 @@ class StrategyModule(StrategyBase):
                         # check to see if this task should be skipped, due to it being a member of a
                         # role which has already run (and whether that role allows duplicate execution)
                         if not isinstance(task, Handler) and task._role:
-                            if task._role.has_run(host) and task._role._metadata.allow_duplicates is False:
+                            role_obj = self._get_cached_role(task, iterator._play)
+                            if role_obj.has_run(host) and role_obj._metadata.allow_duplicates is False:
                                 display.debug("'%s' skipped because role has already run" % task, host=host_name)
                                 del self._blocked_hosts[host_name]
                                 continue
