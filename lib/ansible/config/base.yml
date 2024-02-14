@@ -1553,18 +1553,9 @@ INTERPRETER_PYTHON:
 _INTERPRETER_PYTHON_DISTRO_MAP:
   name: Mapping of known included platform pythons for various Linux distros
   default:
-    redhat:
-      '6': /usr/bin/python
-      '8': /usr/libexec/platform-python
-      '9': /usr/bin/python3
-    debian:
-      '8': /usr/bin/python
-      '10': /usr/bin/python3
-    fedora:
-      '23': /usr/bin/python3
-    ubuntu:
-      '14': /usr/bin/python
-      '16': /usr/bin/python3
+    # Entry only for testing
+    ansible test:
+      '99': /usr/bin/python99
   version_added: "2.8"
   # FUTURE: add inventory override once we're sure it can't be abused by a rogue target
   # FUTURE: add a platform layer to the map so we could use for, eg, freebsd/macos/etc?
@@ -1578,9 +1569,7 @@ INTERPRETER_PYTHON_FALLBACK:
   - python3.8
   - python3.7
   - /usr/bin/python3
-  - /usr/libexec/platform-python
-  - /usr/bin/python
-  - python
+  - python3
   vars:
     - name: ansible_interpreter_python_fallback
   type: list
