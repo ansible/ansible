@@ -1,0 +1,22 @@
+# See https://docs.ansible.com/ansible/latest/dev_guide/collections_galaxy_meta.html
+
+namespace: {{ namespace }}
+name: {{ collection_name }}
+version: 0.1.0
+readme: README.md
+authors:
+  - YOUR NAME (github.com/YOURGITHUB)
+description: null
+license_file: LICENSE
+tags:
+# tags so people can search for collections https://galaxy.ansible.com/search
+# tags are all lower-case, no spaces, no dashes.
+  - example1
+  - example2
+repository: https://github.com/ansible-collections/{{ namespace }}.{{ collection_name }}
+homepage: https://github.com/ansible-collections/{{ namespace }}.{{ collection_name }}
+issues: https://github.com/ansible-collections/{{ namespace }}.{{ collection_name }}/issues
+build_ignore:
+# https://docs.ansible.com/ansible/devel/dev_guide/developing_collections_distributing.html#ignoring-files-and-folders
+  - .gitignore
+  - changelogs/.plugin-cache.yaml
