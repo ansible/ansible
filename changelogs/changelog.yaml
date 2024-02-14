@@ -293,7 +293,7 @@ releases:
         that they will continue to work going forward.
       - '``STRING_CONVERSION_ACTION`` config option is deprecated as it is no longer
         used in the Ansible Core code base.'
-      - the 'smart' option for setting a connection plugin is being removed as it's
+      - the 'smart' option for setting a connection plugin is being removed as its
         main purpose (choosing between ssh and paramiko) is now irrelevant.
       - vault and unfault filters - the undocumented ``vaultid`` parameter is deprecated
         and will be removed in ansible-core 2.20. Use ``vault_id`` instead.
