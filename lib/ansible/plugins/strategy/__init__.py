@@ -41,7 +41,7 @@ from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, PromptSend
 from ansible.module_utils.six import string_types
-from ansible.module_utils.common.text.converters import to_text
+from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.handler import Handler
@@ -116,7 +116,11 @@ def results_thread_main(strategy):
                 break
             elif isinstance(result, DisplaySend):
                 dmethod = getattr(display, result.method)
-                dmethod(*result.args, **result.kwargs)
+                try:
+                    dmethod(*result.args, **result.kwargs)
+                except Exception as e:
+                    # in case of generic exception on display
+                    raise AnsibleError("Failed on call display.%s(): %s" % (result.method, to_native(e)), orig_exc=e)
             elif isinstance(result, CallbackSend):
                 for arg in result.args:
                     if isinstance(arg, TaskResult):

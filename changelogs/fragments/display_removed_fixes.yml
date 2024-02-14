@@ -1,0 +1,5 @@
+bugfixes:
+  - Display class exceptions from parent when method call was passed through from child are now correclty captured in child.
+minor_changes:
+  - Display class with removed == True does not raise an exception anymore, but returns a message that can be used to raise one.
+  - When executing a module that has been removed the core engine will now raise an exception, matching the old behavior from display + remote=True.

@@ -47,7 +47,7 @@ from functools import wraps
 from struct import unpack, pack
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleAssertionError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive
+from ansible.errors import AnsibleAssertionError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.six import text_type
 from ansible.utils.color import stringc
@@ -525,21 +525,24 @@ class Display(metaclass=Singleton):
         removed: bool = False,
         date: str | None = None,
         collection_name: str | None = None,
-    ) -> None:
+    ) -> str:
+
         if not removed and not C.DEPRECATION_WARNINGS:
-            return
+            return ''
 
         message_text = self.get_deprecation_message(msg, version=version, removed=removed, date=date, collection_name=collection_name)
-
-        if removed:
-            raise AnsibleError(message_text)
 
         wrapped = textwrap.wrap(message_text, self.columns, drop_whitespace=False)
         message_text = "\n".join(wrapped) + "\n"
 
+        if removed:
+            return message_text
+
         if message_text not in self._deprecations:
             self.display(message_text.strip(), color=C.COLOR_DEPRECATE, stderr=True)
             self._deprecations[message_text] = 1
+
+        return ''
 
     @proxy_display
     def warning(self, msg: str, formatted: bool = False) -> None:
