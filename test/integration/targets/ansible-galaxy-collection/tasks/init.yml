@@ -128,11 +128,18 @@
         - link: custom_skeleton/galaxy.yml
           source: galaxy.yml
 
+    - name: create j2 file
+      copy:
+        dest: "{{ galaxy_dir }}/scratch/skeleton/custom_skeleton/README.j2"
+        content: !unsafe |
+          Requires ansible-core >={{ min_ansible_version }}
+
     - name: initialize a collection using the skeleton
-      command: ansible-galaxy collection init ansible_test.my_collection {{ init_path }} {{ skeleton }}
+      command: ansible-galaxy collection init ansible_test.my_collection {{ init_path }} {{ skeleton }} {{ extra }}
       vars:
         init_path: '--init-path {{ galaxy_dir }}/scratch/skeleton'
         skeleton: '--collection-skeleton {{ galaxy_dir }}/scratch/skeleton/custom_skeleton'
+        extra: '-e min_ansible_version="2.17"'
 
     - name: stat expected collection contents
       stat:
@@ -143,6 +150,7 @@
         - plugins/inventory
         - galaxy.yml
         - plugins/inventory/foo.py
+        - README
 
     - assert:
         that:
@@ -150,7 +158,18 @@
           - stat_result.results[1].stat.islnk
           - stat_result.results[2].stat.islnk
           - stat_result.results[3].stat.isreg
+          - stat_result.results[4].stat.isreg
 
+    - name: Verify the README was templated successfully
+      copy:
+        dest: "{{ galaxy_dir }}/scratch/skeleton/ansible_test/my_collection/README"
+        content: |
+          Requires ansible-core >=2.17
+      register: validate_readme_content
+
+    - assert:
+        that:
+          - not validate_readme_content.changed
   always:
     - name: cleanup
       file:
