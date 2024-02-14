@@ -21,7 +21,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.playbook.role.definition import RoleDefinition
 from ansible.utils.display import Display
-from ansible.utils.galaxy import scm_archive_resource
+from ansible.utils.galaxy import scm_archive_resource, scm_archive_resource_async
 
 __all__ = ['RoleRequirement']
 
@@ -124,3 +124,8 @@ class RoleRequirement(RoleDefinition):
     def scm_archive_role(src, scm='git', name=None, version='HEAD', keep_scm_meta=False):
 
         return scm_archive_resource(src, scm=scm, name=name, version=version, keep_scm_meta=keep_scm_meta)
+
+    @staticmethod
+    async def scm_archive_role_async(src, scm='git', name=None, version='HEAD', keep_scm_meta=False):
+
+        return await scm_archive_resource_async(src, scm=scm, name=name, version=version, keep_scm_meta=keep_scm_meta)

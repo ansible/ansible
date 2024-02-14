@@ -10,6 +10,7 @@ from __future__ import annotations
 from ansible.cli import CLI
 
 import argparse
+import asyncio
 import functools
 import json
 import os.path
@@ -572,6 +573,9 @@ class GalaxyCLI(CLI):
             install_parser.add_argument('-g', '--keep-scm-meta', dest='keep_scm_meta', action='store_true',
                                         default=False,
                                         help='Use tar instead of the scm archive option when packaging the role.')
+
+            install_parser.add_argument('--max-concurrent-downloads', dest='max_concurrent_downloads', type=int, default=1,
+                                        help="The maximum number of concurrent downloads to perform when installing roles.")
 
     def add_build_options(self, parser, parents=None):
         build_parser = parser.add_parser('build', parents=parents,
@@ -1466,85 +1470,137 @@ class GalaxyCLI(CLI):
 
         return 0
 
-    def _execute_install_role(self, requirements):
-        role_file = context.CLIARGS['requirements']
+    def _execute_install_role_handle_install_result(self, role, installed, requirements, next_roles_to_install):
+
         no_deps = context.CLIARGS['no_deps']
         force_deps = context.CLIARGS['force_with_deps']
-        force = context.CLIARGS['force'] or force_deps
 
-        for role in requirements:
-            # only process roles in roles files when names matches if given
-            if role_file and context.CLIARGS['args'] and role.name not in context.CLIARGS['args']:
-                display.vvv('Skipping role %s' % role.name)
-                continue
-
-            display.vvv('Processing role %s ' % role.name)
-
-            # query the galaxy API for the role data
-
-            if role.install_info is not None:
-                if role.install_info['version'] != role.version or force:
-                    if force:
-                        display.display('- changing role %s from %s to %s' %
-                                        (role.name, role.install_info['version'], role.version or "unspecified"))
-                        role.remove()
-                    else:
-                        display.warning('- %s (%s) is already installed - use --force to change version to %s' %
-                                        (role.name, role.install_info['version'], role.version or "unspecified"))
+        # install dependencies, if we want them
+        if not no_deps and installed:
+            if not role.metadata:
+                # NOTE: the meta file is also required for installing the role, not just dependencies
+                display.warning("Meta file %s is empty. Skipping dependencies." % role.path)
+            else:
+                role_dependencies = role.metadata_dependencies + role.requirements
+                for dep in role_dependencies:
+                    display.debug('Installing dep %s' % dep)
+                    dep_req = RoleRequirement()
+                    dep_info = dep_req.role_yaml_parse(dep)
+                    dep_role = GalaxyRole(self.galaxy, self.lazy_role_api, **dep_info)
+                    if '.' not in dep_role.name and '.' not in dep_role.src and dep_role.scm is None:
+                        # we know we can skip this, as it's not going to
+                        # be found on galaxy.ansible.com
                         continue
-                else:
-                    if not force:
-                        display.display('- %s is already installed, skipping.' % str(role))
-                        continue
-
-            try:
-                installed = role.install()
-            except AnsibleError as e:
-                display.warning(u"- %s was NOT installed successfully: %s " % (role.name, to_text(e)))
-                self.exit_without_ignore()
-                continue
-
-            # install dependencies, if we want them
-            if not no_deps and installed:
-                if not role.metadata:
-                    # NOTE: the meta file is also required for installing the role, not just dependencies
-                    display.warning("Meta file %s is empty. Skipping dependencies." % role.path)
-                else:
-                    role_dependencies = role.metadata_dependencies + role.requirements
-                    for dep in role_dependencies:
-                        display.debug('Installing dep %s' % dep)
-                        dep_req = RoleRequirement()
-                        dep_info = dep_req.role_yaml_parse(dep)
-                        dep_role = GalaxyRole(self.galaxy, self.lazy_role_api, **dep_info)
-                        if '.' not in dep_role.name and '.' not in dep_role.src and dep_role.scm is None:
-                            # we know we can skip this, as it's not going to
-                            # be found on galaxy.ansible.com
-                            continue
-                        if dep_role.install_info is None:
-                            if dep_role not in requirements:
-                                display.display('- adding dependency: %s' % to_text(dep_role))
-                                requirements.append(dep_role)
-                            else:
-                                display.display('- dependency %s already pending installation.' % dep_role.name)
+                    if dep_role.install_info is None:
+                        if dep_role not in requirements:
+                            display.display('- adding dependency: %s' % to_text(dep_role))
+                            requirements.append(dep_role)
+                            next_roles_to_install.append(dep_role)
                         else:
-                            if dep_role.install_info['version'] != dep_role.version:
-                                if force_deps:
-                                    display.display('- changing dependent role %s from %s to %s' %
-                                                    (dep_role.name, dep_role.install_info['version'], dep_role.version or "unspecified"))
-                                    dep_role.remove()
-                                    requirements.append(dep_role)
-                                else:
-                                    display.warning('- dependency %s (%s) from role %s differs from already installed version (%s), skipping' %
-                                                    (to_text(dep_role), dep_role.version, role.name, dep_role.install_info['version']))
+                            display.display('- dependency %s already pending installation.' % dep_role.name)
+                    else:
+                        if dep_role.install_info['version'] != dep_role.version:
+                            if force_deps:
+                                display.display('- changing dependent role %s from %s to %s' %
+                                                (dep_role.name, dep_role.install_info['version'], dep_role.version or "unspecified"))
+                                dep_role.remove()
+                                requirements.append(dep_role)
+                                next_roles_to_install.append(dep_role)
                             else:
-                                if force_deps:
-                                    requirements.append(dep_role)
-                                else:
-                                    display.display('- dependency %s is already installed, skipping.' % dep_role.name)
+                                display.warning('- dependency %s (%s) from role %s differs from already installed version (%s), skipping' %
+                                                (to_text(dep_role), dep_role.version, role.name, dep_role.install_info['version']))
+                        else:
+                            if force_deps:
+                                requirements.append(dep_role)
+                                next_roles_to_install.append(dep_role)
+                            else:
+                                display.display('- dependency %s is already installed, skipping.' % dep_role.name)
 
-            if not installed:
-                display.warning("- %s was NOT installed successfully." % role.name)
-                self.exit_without_ignore()
+        if not installed:
+            display.warning("- %s was NOT installed successfully." % role.name)
+            self.exit_without_ignore()
+
+    def _execute_install_role(self, requirements):
+        role_file = context.CLIARGS['requirements']
+        force_deps = context.CLIARGS['force_with_deps']
+        force = context.CLIARGS['force'] or force_deps
+        max_concurrent_downloads = context.CLIARGS['max_concurrent_downloads']
+
+        roles_to_install = requirements
+
+        while roles_to_install:
+
+            scheduled_role_installs = []
+            next_roles_to_install = []
+
+            for role in roles_to_install:
+                # only process roles in roles files when names matches if given
+                if role_file and context.CLIARGS['args'] and role.name not in context.CLIARGS['args']:
+                    display.vvv('Skipping role %s' % role.name)
+                    continue
+
+                display.vvv('Processing role %s ' % role.name)
+
+                # query the galaxy API for the role data
+
+                if role.install_info is not None:
+                    if role.install_info['version'] != role.version or force:
+                        if force:
+                            display.display('- changing role %s from %s to %s' %
+                                            (role.name, role.install_info['version'], role.version or "unspecified"))
+                            role.remove()
+                        else:
+                            display.warning('- %s (%s) is already installed - use --force to change version to %s' %
+                                            (role.name, role.install_info['version'], role.version or "unspecified"))
+                            continue
+                    else:
+                        if not force:
+                            display.display('- %s is already installed, skipping.' % str(role))
+                            continue
+
+                if max_concurrent_downloads > 1:
+                    scheduled_role_installs.append(role)
+                else:
+                    try:
+                        installed = role.install()
+                    except AnsibleError as e:
+                        display.warning(u"- %s was NOT installed successfully: %s " % (role.name, to_text(e)))
+                        self.exit_without_ignore()
+                        continue
+
+                    self._execute_install_role_handle_install_result(role, installed, requirements, next_roles_to_install)
+
+            if max_concurrent_downloads > 1:
+                async def install_role_async(sem, role):
+                    async with sem:
+                        return await role.install_async()
+
+                async def async_download(scheduled_role_installs, requirements, next_roles_to_install, max_concurrent_downloads):
+                    sem = asyncio.Semaphore(max_concurrent_downloads)
+                    futures_to_role = {asyncio.ensure_future(install_role_async(sem, role)): role for role in scheduled_role_installs}
+
+                    done, not_done = await asyncio.wait(futures_to_role, timeout=None, return_when=asyncio.ALL_COMPLETED)
+
+                    for future in done:
+                        role = futures_to_role[future]
+
+                        try:
+                            installed = future.result()
+                            self._execute_install_role_handle_install_result(role, installed, requirements, next_roles_to_install)
+                        except AnsibleError as e:
+                            display.warning(u"- %s was NOT installed successfully: %s " % (role.name, to_text(e)))
+                            self.exit_without_ignore()
+                            return 1
+
+                    if not_done:
+                        for future in not_done:
+                            role = futures_to_role[future]
+                            display.warning("- %s was NOT installed successfully." % role.name)
+                        self.exit_without_ignore()
+
+                asyncio.run(async_download(scheduled_role_installs, requirements, next_roles_to_install, max_concurrent_downloads))
+
+            roles_to_install = next_roles_to_install
 
         return 0
 
