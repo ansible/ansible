@@ -195,8 +195,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
             # Using the role path as a cache key is done to improve performance when a large number of roles
             # are in use in the play
-            if r not in play.role_cache[role_path]:
-                play.role_cache[role_path].append(r)
+            play.role_cache[role_path].append(r)
 
             return r
 
@@ -583,8 +582,13 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         Returns true if this role has been iterated over completely and
         at least one task was run
         '''
-
-        return host.name in self._completed and not self._metadata.allow_duplicates
+        if self._metadata.allow_duplicates is False:
+            for cached_role in self._play.role_cache[self.get_role_path()]:
+                if cached_role != self:
+                    continue
+                if host.name in cached_role._completed:
+                    return True
+        return False
 
     def compile(self, play, dep_chain=None):
         '''
