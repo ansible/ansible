@@ -53,7 +53,7 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
     host = task_vars.get('inventory_hostname', 'unknown')
     res = None
     platform_type = 'unknown'
-    found_interpreters = [u'/usr/bin/python']  # fallback value
+    found_interpreters = [u'/usr/bin/python3']  # fallback value
     is_auto_legacy = discovery_mode.startswith('auto_legacy')
     is_silent = discovery_mode.endswith('_silent')
 
@@ -89,7 +89,7 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
                 action._discovery_warnings.append(u'No python interpreters found for '
                                                   u'host {0} (tried {1})'.format(host, bootstrap_python_list))
             # this is lame, but returning None or throwing an exception is uglier
-            return u'/usr/bin/python'
+            return u'/usr/bin/python3'
 
         if platform_type != 'linux':
             raise NotImplementedError('unsupported platform for extended discovery: {0}'.format(to_native(platform_type)))
@@ -106,7 +106,6 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
         platform_info = json.loads(res.get('stdout'))
 
         distro, version = _get_linux_distro(platform_info)
-
         if not distro or not version:
             raise NotImplementedError('unable to get Linux distribution/version info')
 
@@ -120,15 +119,15 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
 
         # provide a transition period for hosts that were using /usr/bin/python previously (but shouldn't have been)
         if is_auto_legacy:
-            if platform_interpreter != u'/usr/bin/python' and u'/usr/bin/python' in found_interpreters:
+            if platform_interpreter != u'/usr/bin/python3' and u'/usr/bin/python3' in found_interpreters:
                 if not is_silent:
                     action._discovery_warnings.append(
                         u"Distribution {0} {1} on host {2} should use {3}, but is using "
-                        u"/usr/bin/python for backward compatibility with prior Ansible releases. "
+                        u"/usr/bin/python3 for backward compatibility with prior Ansible releases. "
                         u"See {4} for more information"
                         .format(distro, version, host, platform_interpreter,
                                 get_versioned_doclink('reference_appendices/interpreter_discovery.html')))
-                return u'/usr/bin/python'
+                return u'/usr/bin/python3'
 
         if platform_interpreter not in found_interpreters:
             if platform_interpreter not in bootstrap_python_list:
