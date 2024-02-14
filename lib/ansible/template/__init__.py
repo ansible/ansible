@@ -973,7 +973,7 @@ class Templar:
 
             try:
                 t = myenv.from_string(data)
-            except TemplateSyntaxError as e:
+            except (TemplateSyntaxError, SyntaxError) as e:
                 raise AnsibleError("template error while templating string: %s. String: %s" % (to_native(e), to_native(data)), orig_exc=e)
             except Exception as e:
                 if 'recursion' in to_native(e):
