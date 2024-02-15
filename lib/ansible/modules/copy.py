@@ -364,8 +364,7 @@ def copy_diff_files(src, dest, module):
                 os.symlink(linkto, b_dest_item_path)
             else:
                 shutil.copyfile(b_src_item_path, b_dest_item_path)
-                if module.params['mode'] == 'preserve':
-                    shutil.copymode(b_src_item_path, b_dest_item_path)
+                shutil.copymode(b_src_item_path, b_dest_item_path)
             changed = True
     return changed
 
@@ -396,8 +395,7 @@ def copy_left_only(src, dest, module):
 
             if os.path.islink(b_src_item_path) and os.path.isfile(b_src_item_path) and local_follow is True:
                 shutil.copyfile(b_src_item_path, b_dest_item_path)
-                if module.params['mode'] == 'preserve':
-                    shutil.copymode(b_src_item_path, b_dest_item_path)
+                shutil.copymode(b_src_item_path, b_dest_item_path)
 
             if os.path.islink(b_src_item_path) and os.path.isfile(b_src_item_path) and local_follow is False:
                 linkto = os.readlink(b_src_item_path)
@@ -405,8 +403,7 @@ def copy_left_only(src, dest, module):
 
             if not os.path.islink(b_src_item_path) and os.path.isfile(b_src_item_path):
                 shutil.copyfile(b_src_item_path, b_dest_item_path)
-                if module.params['mode'] == 'preserve':
-                    shutil.copymode(b_src_item_path, b_dest_item_path)
+                shutil.copymode(b_src_item_path, b_dest_item_path)
 
             if not os.path.islink(b_src_item_path) and os.path.isdir(b_src_item_path):
                 shutil.copytree(b_src_item_path, b_dest_item_path, symlinks=not local_follow)
