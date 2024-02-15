@@ -1066,6 +1066,12 @@ def _make_python_ansiballz(module_name, remote_module_fqn, b_module_data, module
     except TypeError as e:
         raise AnsibleError("Unable to pass options to module, they must be JSON serializable: %s" % to_native(e))
 
+    o_interpreter, o_args = _extract_interpreter(b_module_data)
+    if o_interpreter is None:
+        o_interpreter = u'/usr/bin/python'
+
+    shebang, interpreter = _get_shebang(o_interpreter, task_vars, templar, o_args, remote_is_local=remote_is_local)
+
     try:
         compression_method = getattr(zipfile, module_compression)
     except AttributeError:
@@ -1100,8 +1106,8 @@ def _make_python_ansiballz(module_name, remote_module_fqn, b_module_data, module
             if not os.path.exists(cached_module_filename):
                 display.debug('ANSIBALLZ: Creating module')
                 # Create the module zip data
-                zipoutput = BytesIO()
-                zf = zipfile.ZipFile(zipoutput, mode='w', compression=compression_method)
+                zipoutput = BytesIO(to_bytes(shebang) + b'\n')
+                zf = zipfile.ZipFile(zipoutput, mode='a', compression=compression_method)
 
                 # walk the module imports, looking for module_utils to send- they'll be added to the zipfile
                 recursive_finder(module_name, remote_module_fqn, b_module_data, zf, date_time)
@@ -1110,7 +1116,6 @@ def _make_python_ansiballz(module_name, remote_module_fqn, b_module_data, module
                 _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data)
 
                 zf.close()
-                # zipdata = base64.b64encode(zipoutput.getvalue())
 
                 # Write the assembled module to a temp file (write to temp
                 # so that no one looking for the file reads a partially
@@ -1160,12 +1165,6 @@ def _make_python_ansiballz(module_name, remote_module_fqn, b_module_data, module
         )
     else:
         zipdata = ''
-
-    o_interpreter, o_args = _extract_interpreter(b_module_data)
-    if o_interpreter is None:
-        o_interpreter = u'/usr/bin/python'
-
-    shebang, interpreter = _get_shebang(o_interpreter, task_vars, templar, o_args, remote_is_local=remote_is_local)
 
     # FUTURE: the module cache entry should be invalidated if we got this value from a host-dependent source
     rlimit_nofile = C.config.get_config_value('PYTHON_MODULE_RLIMIT_NOFILE', variables=task_vars)
