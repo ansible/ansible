@@ -225,7 +225,7 @@ def runtest(modfile, argspath, modname, module_style, interpreters):
 
     os.system("chmod +x %s" % modfile)
 
-    invoke = "%s%s execute" % (invoke, modfile)
+    invoke = "%s%s" % (invoke, modfile)
     if argspath is not None:
         invoke = "%s %s" % (invoke, argspath)
 
