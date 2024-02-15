@@ -77,8 +77,8 @@ stages:
       - template: templates/matrix.yml  # context/target
         parameters:
           targets:
-            - name: macOS 13.2
-              test: macos/13.2
+            - name: macOS 14.3
+              test: macos/14.3
             - name: RHEL 9.3 py39
               test: rhel/9.3@3.9
             - name: RHEL 9.3 py311
@@ -91,8 +91,8 @@ stages:
       - template: templates/matrix.yml  # context/controller
         parameters:
           targets:
-            - name: macOS 13.2
-              test: macos/13.2
+            - name: macOS 14.3
+              test: macos/14.3
             - name: RHEL 9.3
               test: rhel/9.3
             - name: FreeBSD 13.2
