@@ -187,7 +187,7 @@ def _ansiballz_main():
         print('{"msg": "New-style module did not handle its own exit", "failed": true}')
         sys.exit(1)
 
-    def debug(command, zipped_mod, json_params):
+    def debug(command, zipped_mod, temp_dir, json_params):
         # The code here normally doesn't run.  It's only used for debugging on the
         # remote machine.
         #
@@ -221,7 +221,7 @@ def _ansiballz_main():
         #   $ /usr/bin/python /home/badger/.ansible/tmp/ansible-tmp-1461173013.93-9076457629738/ping execute
 
         # Okay to use __file__ here because we're running from a kept file
-        basedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'debug_dir')
+        basedir = os.path.join(temp_path, 'debug_dir')
         args_path = os.path.join(basedir, 'args')
 
         if command == 'explode':
@@ -278,7 +278,7 @@ def _ansiballz_main():
             sys.exit(1)
 
         else:
-            print('WARNING: Unknown debug command.  Doing nothing.')
+            print('WARNING: Unknown debug command ({0}).  Doing nothing.'.format(command))
             exitcode = 0
 
         return exitcode
@@ -306,7 +306,7 @@ def _ansiballz_main():
                 modlib.write(base64.b64decode(ZIPDATA))
 
         if len(sys.argv) == 2:
-            exitcode = debug(sys.argv[1], zipped_mod, ANSIBALLZ_PARAMS)
+            exitcode = debug(sys.argv[1], zipped_mod, temp_path, ANSIBALLZ_PARAMS)
         else:
             # Note: temp_path isn't needed once we switch to zipimport
             invoke_module(zipped_mod, temp_path, ANSIBALLZ_PARAMS)
