@@ -453,7 +453,7 @@ def main():
 
     src = module.params['src']
     b_src = to_bytes(src, errors='surrogate_or_strict')
-    dest = dest_root = module.params['dest']
+    dest = module.params['dest']
     # Make sure we always have a directory component for later processing
     if os.path.sep not in dest:
         dest = '.{0}{1}'.format(os.path.sep, dest)
@@ -508,6 +508,7 @@ def main():
         )
 
     # Special handling for recursive copy - create intermediate dirs
+    created_intermediate_dir = None
     if dest.endswith(os.sep):
         if _original_basename:
             dest = os.path.join(dest, _original_basename)
@@ -525,7 +526,7 @@ def main():
                 module.exit_json(msg='dest directory %s would be created' % dirname, changed=True, src=src)
             os.makedirs(b_dirname)
             changed = True
-            dest_root = os.path.join(pre_existing_dir, new_directory_list[0]) if new_directory_list else dirname
+            created_intermediate_dir = os.path.join(pre_existing_dir, new_directory_list[0]) if new_directory_list else dirname
 
     if os.path.isdir(b_dest):
         basename = os.path.basename(src)
@@ -659,12 +660,12 @@ def main():
     if backup_file:
         res_args['backup_file'] = backup_file
 
-    file_args = module.load_file_common_arguments(module.params, path=dest)
+    file_args = module.load_file_common_arguments(module.params, path=created_intermediate_dir or dest)
     if file_args['mode'] == 'preserve' and os.path.isfile(dest):
         file_args['mode'] = mode
     directory_args = file_args.copy()
     directory_args['mode'] = module.params['directory_mode']
-    res_args['changed'] |= walk_path_and_apply_fs_attributes(dest_root, module, file_args, directory_args)
+    res_args['changed'] |= walk_path_and_apply_fs_attributes(file_args['path'], module, file_args, directory_args)
 
     module.exit_json(**res_args)
 
