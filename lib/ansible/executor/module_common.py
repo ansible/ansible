@@ -171,23 +171,6 @@ def _ansiballz_main():
 
     # Note: temp_path isn't needed once we switch to zipimport
     def invoke_module(modlib_path, temp_path, json_params):
-        # When installed via setuptools (including python setup.py install),
-        # ansible may be installed with an easy-install.pth file.  That file
-        # may load the system-wide install of ansible rather than the one in
-        # the module.  sitecustomize is the only way to override that setting.
-        z = zipfile.ZipFile(modlib_path, mode='a')
-
-        # py3: modlib_path will be text, py2: it's bytes.  Need bytes at the end
-        sitecustomize = u'import sys\\nsys.path.insert(0,"%%s")\\n' %% modlib_path
-        sitecustomize = sitecustomize.encode('utf-8')
-        # Use a ZipInfo to work around zipfile limitation on hosts with
-        # clocks set to a pre-1980 year (for instance, Raspberry Pi)
-        zinfo = zipfile.ZipInfo()
-        zinfo.filename = 'sitecustomize.py'
-        zinfo.date_time = %(date_time)s
-        z.writestr(zinfo, sitecustomize)
-        z.close()
-
         # Put the zipped up module_utils we got from the controller first in the python path so that we
         # can monkeypatch the right basic
         sys.path.insert(0, modlib_path)
@@ -1215,6 +1198,13 @@ def _make_python_ansiballz(module_name, remote_module_fqn, b_module_data, module
             coverage = ANSIBALLZ_COVERAGE_CHECK_TEMPLATE
     else:
         coverage = ''
+
+    zf = zipfile.ZipFile(zipoutput, mode='a', compression=compression_method)
+    zf.writestr(
+        _make_zinfo('sitecustomize.py', date_time, zf=zf),
+        b"import os\nimport sys\nroot = os.path.dirname(__file__)\nif root[-4:-1] == '.py':\n    root = root[:-1]\nsys.path.insert(0, root)\n"
+    )
+    zf.close()
 
     b_data = to_bytes(ACTIVE_ANSIBALLZ_TEMPLATE % dict(
         zipdata=zipdata,
