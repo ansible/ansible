@@ -1,0 +1,2 @@
+minor_changes:
+  - service_facts - add service_facts_var as an optional argument to service_facts module to specify under what variable to save the retrieved facts

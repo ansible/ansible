@@ -45,6 +45,10 @@ EXAMPLES = r'''
 - name: Print service facts
   ansible.builtin.debug:
     var: ansible_facts.services
+
+- name: Populate service facts under a different variable
+  ansible.builtin.service_facts:
+    service_facts_var: host_services
 '''
 
 RETURN = r'''
@@ -405,7 +409,10 @@ class OpenBSDScanService(BaseService):
 
 
 def main():
-    module = AnsibleModule(argument_spec=dict(), supports_check_mode=True)
+    module_args = dict(
+        service_facts_var=dict(type='str', required=False, default='services')
+    )
+    module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
     locale = get_best_parsable_locale(module)
     module.run_command_environ_update = dict(LANG=locale, LC_ALL=locale)
     service_modules = (ServiceScanService, SystemctlScanService, AIXScanService, OpenBSDScanService)
@@ -418,7 +425,8 @@ def main():
     if len(all_services) == 0:
         results = dict(skipped=True, msg="Failed to find any services. This can be due to privileges or some other configuration issue.")
     else:
-        results = dict(ansible_facts=dict(services=all_services))
+        service_facts_var = module.params['service_facts_var']
+        results = dict(ansible_facts=dict({service_facts_var: all_services}))
     module.exit_json(**results)
 
 
