@@ -5,6 +5,7 @@ fedora become=sudo provider=aws arch=x86_64
 freebsd/13.2 python=3.9,3.11 python_dir=/usr/local/bin become=su_sudo provider=aws arch=x86_64
 freebsd python_dir=/usr/local/bin become=su_sudo provider=aws arch=x86_64
 macos/13.2 python=3.11 python_dir=/usr/local/bin become=sudo provider=parallels arch=x86_64
+macos/14.3 python=3.11 python_dir=/usr/local/bin become=sudo provider=parallels arch=x86_64
 macos python_dir=/usr/local/bin become=sudo provider=parallels arch=x86_64
 rhel/9.3 python=3.9,3.11 become=sudo provider=aws arch=x86_64
 rhel become=sudo provider=aws arch=x86_64
