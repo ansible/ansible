@@ -1,0 +1,7 @@
+- name: uninstall gpg
+  command: brew uninstall gpg
+  become: yes
+  become_user: >-
+    {{ brew_stat.stat.pw_name }}
+  environment:
+    HOMEBREW_NO_AUTO_UPDATE: True
