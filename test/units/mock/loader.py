@@ -35,7 +35,7 @@ class DictDataLoader(DataLoader):
         self._build_known_directories()
         self._vault_secrets = None
 
-    def load_from_file(self, path, cache=True, unsafe=False):
+    def load_from_file(self, path, cache='all', unsafe=False):
         data = None
         path = to_text(path)
         if path in self._file_mapping:

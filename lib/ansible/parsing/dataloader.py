@@ -56,6 +56,7 @@ class DataLoader:
         # NOTE: not effective with forks as the main copy does not get updated.
         # avoids rereading files
         self._FILE_CACHE = dict()
+        self._FILE_CACHE_VAULTED = dict()
 
         # NOTE: not thread safe, also issues with forks not returning data to main proc
         #       so they need to be cleaned independently. See WorkerProcess for example.
@@ -77,16 +78,22 @@ class DataLoader:
         '''Backwards compat for now'''
         return from_yaml(data, file_name, show_content, self._vault.secrets, json_only=json_only)
 
-    def load_from_file(self, file_name: str, cache: bool = True, unsafe: bool = False, json_only: bool = False) -> t.Any:
-        ''' Loads data from a file, which can contain either JSON or YAML.  '''
+    def load_from_file(self, file_name: str, cache: str = 'all', unsafe: bool = False, json_only: bool = False) -> t.Any:
+        '''
+        Loads data from a file, which can contain either JSON or YAML.
+
+        :arg cache: none|all|vaulted - if and for what the file cache should be used
+        '''
 
         file_name = self.path_dwim(file_name)
         display.debug("Loading data from %s" % file_name)
 
         # if the file has already been read in and cached, we'll
         # return those results to avoid more file/vault operations
-        if cache and file_name in self._FILE_CACHE:
+        if cache == 'all' and file_name in self._FILE_CACHE:
             parsed_data = self._FILE_CACHE[file_name]
+        elif cache == 'vaulted' and file_name in self._FILE_CACHE_VAULTED:
+            parsed_data = self._FILE_CACHE_VAULTED[file_name]
         else:
             # read the file contents and load the data structure from them
             (b_file_data, show_content) = self._get_file_contents(file_name)
@@ -95,7 +102,10 @@ class DataLoader:
             parsed_data = self.load(data=file_data, file_name=file_name, show_content=show_content, json_only=json_only)
 
             # cache the file contents for next time
-            self._FILE_CACHE[file_name] = parsed_data
+            if show_content:
+                self._FILE_CACHE[file_name] = parsed_data
+            else:
+                self._FILE_CACHE_VAULTED[file_name] = parsed_data
 
         if unsafe:
             return parsed_data

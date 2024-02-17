@@ -1,2 +1,2 @@
 bugfixes:
-  - Re-enable file cache during vars lookup to fix a strong performance penalty while using vaults. 
+  - Enable file cache for vaulted files during vars lookup to fix a strong performance penalty in huge and complex playbboks. 
