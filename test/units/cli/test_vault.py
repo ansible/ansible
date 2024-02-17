@@ -21,7 +21,7 @@ from __future__ import annotations
 import os
 import pytest
 
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, MagicMock
 from units.mock.vault_helper import TextVaultSecret
 

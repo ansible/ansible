@@ -1,0 +1,23 @@
+{
+    "platform.dist": ["", "", ""],
+    "distro": {
+        "codename": "",
+        "id": "alp-dolomite",
+        "name": "SUSE ALP Dolomite",
+        "version": "1.0",
+        "version_best": "1.0",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+      "/etc/os-release": "NAME=\"ALP-Dolomite\"\nVERSION=\"1.0\"\nID=alp-dolomite\nID_LIKE=\"suse\"\nVERSION_ID=\"1.0\"\nPRETTY_NAME=\"SUSE ALP Dolomite 1.0\"\nANSI_COLOR=\"0;32\"\nCPE_NAME=\"cpe:/o:suse:alp-dolomite:1.0\"\nHOME_URL=\"https://susealp.io/\"\nDOCUMENTATION_URL=\"https://documentation.suse.com/#alp\"\nLOGO=\"distributor-logo\"\n"
+    },
+    "name": "SUSE ALP Dolomite 1.0",
+    "result": {
+        "distribution_release": "NA",
+        "distribution": "ALP-Dolomite",
+        "distribution_major_version": "1",
+        "os_family": "Suse",
+        "distribution_version": "1.0"
+    }
+}

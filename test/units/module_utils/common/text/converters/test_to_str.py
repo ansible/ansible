@@ -9,8 +9,6 @@ import itertools
 
 import pytest
 
-from ansible.module_utils.six import PY3
-
 from ansible.module_utils.common.text.converters import to_text, to_bytes, to_native
 
 
@@ -42,8 +40,8 @@ def test_to_bytes(in_string, encoding, expected):
 
 
 @pytest.mark.parametrize('in_string, encoding, expected',
-                         itertools.chain(((d[0], d[2], d[1] if PY3 else d[0]) for d in VALID_STRINGS),
-                                         ((d[1], d[2], d[1] if PY3 else d[0]) for d in VALID_STRINGS)))
+                         itertools.chain(((d[0], d[2], d[1]) for d in VALID_STRINGS),
+                                         ((d[1], d[2], d[1]) for d in VALID_STRINGS)))
 def test_to_native(in_string, encoding, expected):
     """test happy path of encoding to native strings"""
     assert to_native(in_string, encoding) == expected

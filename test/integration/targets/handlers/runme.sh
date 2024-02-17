@@ -69,6 +69,9 @@ done
 # Notify handler listen
 ansible-playbook test_handlers_listen.yml -i inventory.handlers -v "$@"
 
+# https://github.com/ansible/ansible/issues/82363
+ansible-playbook test_multiple_handlers_with_recursive_notification.yml -i inventory.handlers -v "$@"
+
 # Notify inexistent handlers results in error
 set +e
 result="$(ansible-playbook test_handlers_inexistent_notify.yml -i inventory.handlers "$@" 2>&1)"
@@ -198,3 +201,18 @@ ansible-playbook test_include_tasks_in_include_role.yml "$@" 2>&1 | tee out.txt
 
 ansible-playbook test_run_once.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'handler ran once')" = "1" ]
+
+ansible-playbook force_handlers_blocks_81533-1.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'task1')" = "1" ]
+[ "$(grep out.txt -ce 'task2')" = "1" ]
+[ "$(grep out.txt -ce 'hosts_left')" = "1" ]
+
+ansible-playbook force_handlers_blocks_81533-2.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'hosts_left')" = "1" ]
+
+ansible-playbook nested_flush_handlers_failure_force.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'flush_handlers_rescued')" = "1" ]
+[ "$(grep out.txt -ce 'flush_handlers_always')" = "2" ]
+
+ansible-playbook 82241.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'included_task_from_tasks_dir')" = "1" ]

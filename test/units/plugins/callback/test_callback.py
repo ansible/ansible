@@ -22,7 +22,7 @@ import re
 import textwrap
 import types
 
-from units.compat import unittest
+import unittest
 from unittest.mock import MagicMock
 
 from ansible.executor.task_result import TaskResult

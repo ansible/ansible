@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from ansible.module_utils.facts.network import fc_wwn
-from units.compat.mock import Mock
+from unittest.mock import Mock
 
 
 # AIX lsdev

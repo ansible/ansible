@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from units.mock.procenv import ModuleTestCase
 
-from units.compat.mock import patch, MagicMock
-from ansible.module_utils.six.moves import builtins
+from unittest.mock import patch, MagicMock
+import builtins
 
 realimport = builtins.__import__
 
@@ -48,8 +48,6 @@ class TestOtherFilesystem(ModuleTestCase):
 
         def _mock_ismount(path):
             if path == b'/subdir/mount':
-                return True
-            if path == b'/':
                 return True
             return False
 

@@ -1119,7 +1119,6 @@ def create_sanity_virtualenv(
         controller=True,
         command=None,
         ansible=False,
-        cryptography=False,
         coverage=coverage,
         minimize=minimize,
         sanity=name,

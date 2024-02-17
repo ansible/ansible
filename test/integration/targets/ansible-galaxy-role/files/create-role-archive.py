@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import pathlib
 import tarfile
 import tempfile
@@ -17,6 +18,15 @@ def main() -> None:
     args = parser.parse_args()
 
     create_archive(args.archive, args.content, args.target)
+
+
+def generate_files_from_path(path):
+    if os.path.isdir(path):
+        for subpath in os.listdir(path):
+            _path = os.path.join(path, subpath)
+            yield from generate_files_from_path(_path)
+    elif os.path.isfile(path):
+        yield pathlib.Path(path)
 
 
 def create_archive(archive_path: pathlib.Path, content_path: pathlib.Path, target_path: pathlib.Path) -> None:
@@ -36,10 +46,15 @@ def create_archive(archive_path: pathlib.Path, content_path: pathlib.Path, targe
         role_archive.add(meta_main_path)
         role_archive.add(symlink_path)
 
-        content_tarinfo = role_archive.gettarinfo(content_path, str(symlink_path))
+        for path in generate_files_from_path(content_path):
+            if path == content_path:
+                arcname = str(symlink_path)
+            else:
+                arcname = os.path.join(temp_dir_path, path)
 
-        with content_path.open('rb') as content_file:
-            role_archive.addfile(content_tarinfo, content_file)
+            content_tarinfo = role_archive.gettarinfo(path, arcname)
+            with path.open('rb') as file_content:
+                role_archive.addfile(content_tarinfo, file_content)
 
 
 if __name__ == '__main__':

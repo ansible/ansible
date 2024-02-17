@@ -10,8 +10,8 @@ import sys
 
 from units.mock.procenv import ModuleTestCase
 
-from units.compat.mock import patch
-from ansible.module_utils.six.moves import builtins
+from unittest.mock import patch
+import builtins
 
 realimport = builtins.__import__
 

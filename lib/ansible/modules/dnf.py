@@ -21,7 +21,7 @@ options:
     description:
       - By default, this module will select the backend based on the C(ansible_pkg_mgr) fact.
     default: "auto"
-    choices: [ auto, dnf4, dnf5 ]
+    choices: [ auto, yum, yum4, dnf4, dnf5 ]
     type: str
     version_added: 2.15
   name:
@@ -206,8 +206,8 @@ options:
     version_added: "2.7"
   install_repoquery:
     description:
-      - This is effectively a no-op in DNF as it is not needed with DNF, but is an accepted parameter for feature
-        parity/compatibility with the M(ansible.builtin.yum) module.
+      - This is effectively a no-op in DNF as it is not needed with DNF.
+      - This option is deprecated and will be removed in ansible-core 2.20.
     type: bool
     default: "yes"
     version_added: "2.7"
@@ -245,11 +245,19 @@ options:
     version_added: "2.10"
   nobest:
     description:
-      - Set best option to False, so that transactions are not limited to best candidates only.
+      - This is the opposite of the O(best) option kept for backwards compatibility.
+      - Since ansible-core 2.17 the default value is set by the operating system distribution.
     required: false
     type: bool
-    default: "no"
     version_added: "2.11"
+  best:
+    description:
+      - When set to V(true), either use a package with the highest version available or fail.
+      - When set to V(false), if the latest version cannot be installed go with the lower version.
+      - Default is set by the operating system distribution.
+    required: false
+    type: bool
+    version_added: "2.17"
   cacheonly:
     description:
       - Tells dnf to run entirely from system cache; does not download or update metadata.
@@ -261,7 +269,7 @@ extends_documentation_fragment:
 - action_common_attributes.flow
 attributes:
     action:
-        details: In the case of dnf, it has 2 action plugins that use it under the hood, M(ansible.builtin.yum) and M(ansible.builtin.package).
+        details: dnf has 2 action plugins that use it under the hood, M(ansible.builtin.dnf) and M(ansible.builtin.package).
         support: partial
     async:
         support: none
@@ -409,22 +417,12 @@ class DnfModule(YumDnf):
         super(DnfModule, self).__init__(module)
 
         self._ensure_dnf()
-        self.lockfile = "/var/cache/dnf/*_lock.pid"
         self.pkg_mgr_name = "dnf"
 
         try:
             self.with_modules = dnf.base.WITH_MODULES
         except AttributeError:
             self.with_modules = False
-
-        # DNF specific args that are not part of YumDnf
-        self.allowerasing = self.module.params['allowerasing']
-        self.nobest = self.module.params['nobest']
-
-    def is_lockfile_pid_valid(self):
-        # FIXME? it looks like DNF takes care of invalid lock files itself?
-        # https://github.com/ansible/ansible/issues/57189
-        return True
 
     def _sanitize_dnf_error_msg_install(self, spec, error):
         """
@@ -467,7 +465,7 @@ class DnfModule(YumDnf):
             'version': package.version,
             'repo': package.repoid}
 
-        # envra format for alignment with the yum module
+        # envra format for backwards compat
         result['envra'] = '{epoch}:{name}-{version}-{release}.{arch}'.format(**result)
 
         # keep nevra key for backwards compat as it was previously
@@ -688,9 +686,11 @@ class DnfModule(YumDnf):
         if self.skip_broken:
             conf.strict = 0
 
-        # Set best
-        if self.nobest:
-            conf.best = 0
+        # best and nobest are mutually exclusive
+        if self.nobest is not None:
+            conf.best = not self.nobest
+        elif self.best is not None:
+            conf.best = self.best
 
         if self.download_only:
             conf.downloadonly = True
@@ -722,6 +722,11 @@ class DnfModule(YumDnf):
             if repo_pattern:
                 for repo in repos.get_matching(repo_pattern):
                     repo.enable()
+
+        for repo in base.repos.iter_enabled():
+            if self.disable_gpg_check:
+                repo.gpgcheck = False
+                repo.repo_gpgcheck = False
 
     def _base(self, conf_file, disable_gpg_check, disablerepo, enablerepo, installroot, sslverify):
         """Return a fully configured dnf Base object."""
@@ -850,6 +855,7 @@ class DnfModule(YumDnf):
         """Mark the package for install."""
         is_newer_version_installed = self._is_newer_version_installed(pkg_spec)
         is_installed = self._is_installed(pkg_spec)
+        msg = ''
         try:
             if is_newer_version_installed:
                 if self.allow_downgrade:
@@ -883,18 +889,16 @@ class DnfModule(YumDnf):
                     pass
             else:  # Case 7, The package is not installed, simply install it
                 self.base.install(pkg_spec, strict=self.base.conf.strict)
-
-            return {'failed': False, 'msg': '', 'failure': '', 'rc': 0}
-
         except dnf.exceptions.MarkingError as e:
-            return {
-                'failed': True,
-                'msg': "No package {0} available.".format(pkg_spec),
-                'failure': " ".join((pkg_spec, to_native(e))),
-                'rc': 1,
-                "results": []
-            }
-
+            msg = "No package {0} available.".format(pkg_spec)
+            if self.base.conf.strict:
+                return {
+                    'failed': True,
+                    'msg': msg,
+                    'failure': " ".join((pkg_spec, to_native(e))),
+                    'rc': 1,
+                    "results": []
+                }
         except dnf.exceptions.DepsolveError as e:
             return {
                 'failed': True,
@@ -903,7 +907,6 @@ class DnfModule(YumDnf):
                 'rc': 1,
                 "results": []
             }
-
         except dnf.exceptions.Error as e:
             if to_text("already installed") in to_text(e):
                 return {'failed': False, 'msg': '', 'failure': ''}
@@ -915,6 +918,8 @@ class DnfModule(YumDnf):
                     'rc': 1,
                     "results": []
                 }
+
+        return {'failed': False, 'msg': msg, 'failure': '', 'rc': 0}
 
     def _whatprovides(self, filepath):
         self.base.read_all_repos()
@@ -1200,13 +1205,6 @@ class DnfModule(YumDnf):
                         response['results'].append("Packages providing %s not installed due to update_only specified" % spec)
                 else:
                     for pkg_spec in pkg_specs:
-                        # Previously we forced base.conf.best=True here.
-                        # However in 2.11+ there is a self.nobest option, so defer to that.
-                        # Note, however, that just because nobest isn't set, doesn't mean that
-                        # base.conf.best is actually true. We only force it false in
-                        # _configure_base(), we never set it to true, and it can default to false.
-                        # Thus, we still need to explicitly set it here.
-                        self.base.conf.best = not self.nobest
                         install_result = self._mark_package_install(pkg_spec, upgrade=True)
                         if install_result['failed']:
                             if install_result['msg']:
@@ -1456,11 +1454,7 @@ def main():
     #   list=repos
     #   list=pkgspec
 
-    # Extend yumdnf_argument_spec with dnf-specific features that will never be
-    # backported to yum because yum is now in "maintenance mode" upstream
-    yumdnf_argument_spec['argument_spec']['allowerasing'] = dict(default=False, type='bool')
-    yumdnf_argument_spec['argument_spec']['nobest'] = dict(default=False, type='bool')
-    yumdnf_argument_spec['argument_spec']['use_backend'] = dict(default='auto', choices=['auto', 'dnf4', 'dnf5'])
+    yumdnf_argument_spec['argument_spec']['use_backend'] = dict(default='auto', choices=['auto', 'yum', 'yum4', 'dnf4', 'dnf5'])
 
     module = AnsibleModule(
         **yumdnf_argument_spec

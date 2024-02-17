@@ -475,37 +475,17 @@
       - password_hash_2 is failed
       - "'not support' in password_hash_2.msg"
 
-- name: install passlib if needed
-  pip:
-    name: passlib
-    state: present
-  register: installed_passlib
-
 - name: test using passlib with an unsupported hash type
   set_fact:
     foo: '{{"hey"|password_hash("msdcc")}}'
   ignore_errors: yes
   register: unsupported_hash_type
 
-- name: remove passlib if it was installed
-  pip:
-    name: passlib
-    state: absent
-  when: installed_passlib.changed
-
 - assert:
     that:
       - unsupported_hash_type.msg == msg
   vars:
     msg: "msdcc is not in the list of supported passlib algorithms: md5, blowfish, sha256, sha512"
-
-- name: test password_hash can work with bcrypt without passlib installed
-  debug:
-    msg: "{{ 'somestring'|password_hash('bcrypt') }}"
-  register: crypt_bcrypt
-  # Some implementations of crypt do not fail outright and return some short value.
-  failed_when: crypt_bcrypt is failed or (crypt_bcrypt.msg|length|int) != 60
-  when: ansible_facts.os_family in ['RedHat', 'Debian']
 
 - name: Verify to_uuid throws on weird namespace
   set_fact:

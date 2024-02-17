@@ -119,8 +119,9 @@ BECOME_ALLOW_SAME_USER:
   name: Allow becoming the same user
   default: False
   description:
-    - This setting controls if become is skipped when the remote user and become user are the same. In other words root sudo to root.
-    - If executable, it will be run and the resulting stdout will be used as the password.
+    - When ``False``(default), Ansible will skip using become if the remote user is the same as the become user, as this is normally a redundant operation.
+      In other words root sudo to root.
+    - If ``True``, this forces Ansible to use the become plugin anyways as there are cases in which this is needed.
   env: [{name: ANSIBLE_BECOME_ALLOW_SAME_USER}]
   ini:
   - {key: become_allow_same_user, section: privilege_escalation}
@@ -384,6 +385,15 @@ LOCALHOST_WARNING:
   - {key: localhost_warning, section: defaults}
   type: boolean
   version_added: "2.6"
+LOG_VERBOSITY:
+  name: Default log verbosity
+  description:
+    - This will set log verbosity if higher than the normal display verbosity, otherwise it will match that.
+  env: [{name: ANSIBLE_LOG_VERBOSITY}]
+  ini:
+  - {key: log_verbosity, section: defaults}
+  type: int
+  version_added: "2.17"
 INVENTORY_UNPARSED_WARNING:
   name: Warning when no inventory files can be parsed, resulting in an implicit inventory with only localhost
   default: True
@@ -934,10 +944,12 @@ DEFAULT_PRIVATE_ROLE_VARS:
   name: Private role variables
   default: False
   description:
-    - Makes role variables inaccessible from other roles.
-    - This was introduced as a way to reset role variables to default values if
-      a role is used more than once in a playbook.
-    - Starting in version '2.17' M(ansible.builtin.include_roles) and M(ansible.builtin.import_roles) can override this via the C(public) parameter.
+    - By default, imported roles publish their variables to the play and other roles, this setting can avoid that.
+    - This was introduced as a way to reset role variables to default values if a role is used more than once
+      in a playbook.
+    - Starting in version '2.17' M(ansible.builtin.include_roles) and M(ansible.builtin.import_roles) can
+      indivudually override this via the C(public) parameter.
+    - Included roles only make their variables public at execution, unlike imported roles which happen at playbook compile time.
   env: [{name: ANSIBLE_PRIVATE_ROLE_VARS}]
   ini:
   - {key: private_role_vars, section: defaults}
@@ -1499,11 +1511,13 @@ GALAXY_REQUIRED_VALID_SIGNATURE_COUNT:
   - This should be a positive integer or all to indicate all signatures must successfully validate the collection.
   - Prepend + to the value to fail if no valid signatures are found for the collection.
 HOST_KEY_CHECKING:
-  # note: constant not in use by ssh plugin anymore
+  # NOTE: constant not in use by ssh/paramiko plugins anymore, but they do support the same configuration sources
   # TODO: check non ssh connection plugins for use/migration
-  name: Check host keys
+  name: Toggle host/key check
   default: True
-  description: 'Set this to "False" if you want to avoid host key checking by the underlying tools Ansible uses to connect to the host'
+  description:
+    - Set this to "False" if you want to avoid host key checking by the underlying connection plugin Ansible uses to connect to the host.
+    - Please read the documentation of the specific connection plugin used for details.
   env: [{name: ANSIBLE_HOST_KEY_CHECKING}]
   ini:
   - {key: host_key_checking, section: defaults}
@@ -1539,18 +1553,9 @@ INTERPRETER_PYTHON:
 _INTERPRETER_PYTHON_DISTRO_MAP:
   name: Mapping of known included platform pythons for various Linux distros
   default:
-    redhat:
-      '6': /usr/bin/python
-      '8': /usr/libexec/platform-python
-      '9': /usr/bin/python3
-    debian:
-      '8': /usr/bin/python
-      '10': /usr/bin/python3
-    fedora:
-      '23': /usr/bin/python3
-    ubuntu:
-      '14': /usr/bin/python
-      '16': /usr/bin/python3
+    # Entry only for testing
+    ansible test:
+      '99': /usr/bin/python99
   version_added: "2.8"
   # FUTURE: add inventory override once we're sure it can't be abused by a rogue target
   # FUTURE: add a platform layer to the map so we could use for, eg, freebsd/macos/etc?
@@ -1564,9 +1569,7 @@ INTERPRETER_PYTHON_FALLBACK:
   - python3.8
   - python3.7
   - /usr/bin/python3
-  - /usr/libexec/platform-python
-  - /usr/bin/python
-  - python
+  - python3
   vars:
     - name: ansible_interpreter_python_fallback
   type: list
@@ -1957,6 +1960,15 @@ TAGS_SKIP:
   ini:
   - {key: skip, section: tags}
   version_added: "2.5"
+TARGET_LOG_INFO:
+  name: Target log info
+  description: A string to insert into target logging for tracking purposes
+  env: [{name: ANSIBLE_TARGET_LOG_INFO}]
+  ini:
+  - {key: target_log_info, section: defaults}
+  vars:
+  - name: ansible_target_log_info
+  version_added: "2.17"
 TASK_TIMEOUT:
   name: Task Timeout
   default: 0

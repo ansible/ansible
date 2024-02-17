@@ -264,6 +264,7 @@
         name:
           - broken-a
         state: latest
+        best: true
       ignore_errors: true
       register: dnf_fail
 
@@ -304,7 +305,26 @@
         that:
           - res is not changed
 
-  # Case 7 is already tested quite extensively above in the earlier tests.
+    # Case 7 is already tested quite extensively above in the earlier tests.
+    # ######################################################################
+
+    - block:
+        - name: Test available package is installed while unavailable one is skipped due to skip_broken=true
+          dnf:
+            name:
+              - dinginessentail
+              - not-in-repo
+            skip_broken: true
+          register: res
+
+        - assert:
+            that:
+              - res is changed
+      # There is a change in dnf5 that splits skip_broken into two options:
+      # skip_broken and skip_unavailable.
+      # TODO: for this test to pass on dnf5 the skip_unavailable option would have to be
+      # added to the dnf5 module and used here instead of skip_broken.
+      when: not dnf5|default(false)
 
   always:
     - name: Remove test yum repo
@@ -313,7 +333,8 @@
         state: absent
 
     - name: Remove all test packages installed
-      yum:
+      dnf:
         name:
           - broken-*
+          - dinginessentail
         state: absent

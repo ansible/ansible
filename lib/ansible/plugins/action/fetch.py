@@ -41,7 +41,7 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         try:
-            if self._play_context.check_mode:
+            if self._task.check_mode:
                 raise AnsibleActionSkip('check mode not (yet) supported for this module')
 
             source = self._task.args.get('src', None)

@@ -1,0 +1,2 @@
+minor_changes:
+  - "ansible-doc - treat double newlines in documentation strings as paragraph breaks. This is useful to create multi-paragraph notes in module/plugin documentation (https://github.com/ansible/ansible/pull/82465)."

@@ -25,7 +25,7 @@
     fail_msg: "Was expecting 'foo:bar' in base64, but received: {{ response_failed }}"
     success_msg: "Expected to fail because netrc is using Basic authentication by default"
 
-- name: Test Bearer authorization is successfull with use_netrc=False
+- name: Test Bearer authorization is successful with use_netrc=False
   uri:
     url: https://{{ httpbin_host }}/bearer
     use_netrc: false
@@ -36,14 +36,14 @@
     NETRC: "{{ remote_tmp_dir }}/netrc"
   register: response
 
-- name: assert Test Bearer authorization is successfull with use_netrc=False
+- name: assert Test Bearer authorization is successful with use_netrc=False
   assert:
     that:
     - response.status == 200
     - response.json.token == 'foobar'
     - response.url == 'https://{{ httpbin_host }}/bearer'
     fail_msg: "Was expecting successful Bearer authentication, but received: {{ response }}"
-    success_msg: "Bearer authentication successfull when netrc is ignored."
+    success_msg: "Bearer authentication successful when netrc is ignored."
 
 - name: Clean up
   file:

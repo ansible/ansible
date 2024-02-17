@@ -1,0 +1,4 @@
+bugfixes:
+- >-
+  ``ansible-test sanity --test runtime-metadata`` - add ``action_plugin`` as a valid field
+  for modules in the schema (https://github.com/ansible/ansible/pull/82562).

@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import ast
 import datetime
+import functools
 import os
 import pwd
 import re
@@ -295,23 +296,7 @@ def _unroll_iterator(func):
             return list(ret)
         return ret
 
-    return _update_wrapper(wrapper, func)
-
-
-def _update_wrapper(wrapper, func):
-    # This code is duplicated from ``functools.update_wrapper`` from Py3.7.
-    # ``functools.update_wrapper`` was failing when the func was ``functools.partial``
-    for attr in ('__module__', '__name__', '__qualname__', '__doc__', '__annotations__'):
-        try:
-            value = getattr(func, attr)
-        except AttributeError:
-            pass
-        else:
-            setattr(wrapper, attr, value)
-    for attr in ('__dict__',):
-        getattr(wrapper, attr).update(getattr(func, attr, {}))
-    wrapper.__wrapped__ = func
-    return wrapper
+    return functools.update_wrapper(wrapper, func)
 
 
 def _wrap_native_text(func):
@@ -324,7 +309,7 @@ def _wrap_native_text(func):
         ret = func(*args, **kwargs)
         return NativeJinjaText(ret)
 
-    return _update_wrapper(wrapper, func)
+    return functools.update_wrapper(wrapper, func)
 
 
 class AnsibleUndefined(StrictUndefined):
@@ -960,7 +945,7 @@ class Templar:
 
             try:
                 t = myenv.from_string(data)
-            except TemplateSyntaxError as e:
+            except (TemplateSyntaxError, SyntaxError) as e:
                 raise AnsibleError("template error while templating string: %s. String: %s" % (to_native(e), to_native(data)), orig_exc=e)
             except Exception as e:
                 if 'recursion' in to_native(e):
@@ -1026,12 +1011,16 @@ class Templar:
                     if unsafe:
                         res = wrap_var(res)
             return res
-        except (UndefinedError, AnsibleUndefinedVariable) as e:
+        except UndefinedError as e:
             if fail_on_undefined:
-                raise AnsibleUndefinedVariable(e, orig_exc=e)
-            else:
-                display.debug("Ignoring undefined failure: %s" % to_text(e))
-                return data
+                raise AnsibleUndefinedVariable(e)
+            display.debug("Ignoring undefined failure: %s" % to_text(e))
+            return data
+        except AnsibleUndefinedVariable as e:
+            if fail_on_undefined:
+                raise
+            display.debug("Ignoring undefined failure: %s" % to_text(e))
+            return data
 
     # for backwards compatibility in case anyone is using old private method directly
     _do_template = do_template

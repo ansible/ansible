@@ -16,6 +16,11 @@ DOCUMENTATION = r"""
       col:
         description:  column to return (0 indexed).
         default: "1"
+      keycol:
+        description:  column to search in (0 indexed).
+        default: 0
+        type: int
+        version_added: "2.17"
       default:
         description: what to return if the value is not found in the file.
       delimiter:
@@ -82,7 +87,7 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native, to_
 
 class CSVRecoder:
     """
-    Iterator that reads an encoded stream and reencodes the input to UTF-8
+    Iterator that reads an encoded stream and encodes the input to UTF-8
     """
     def __init__(self, f, encoding='utf-8'):
         self.reader = codecs.getreader(encoding)(f)
@@ -122,14 +127,14 @@ class CSVReader:
 
 class LookupModule(LookupBase):
 
-    def read_csv(self, filename, key, delimiter, encoding='utf-8', dflt=None, col=1):
+    def read_csv(self, filename, key, delimiter, encoding='utf-8', dflt=None, col=1, keycol=0):
 
         try:
             f = open(to_bytes(filename), 'rb')
             creader = CSVReader(f, delimiter=to_native(delimiter), encoding=encoding)
 
             for row in creader:
-                if len(row) and row[0] == key:
+                if len(row) and row[keycol] == key:
                     return row[int(col)]
         except Exception as e:
             raise AnsibleError("csvfile: %s" % to_native(e))
@@ -155,6 +160,7 @@ class LookupModule(LookupBase):
 
             # parameters override per term using k/v
             try:
+                reset_params = False
                 for name, value in kv.items():
                     if name == '_raw_params':
                         continue
@@ -162,7 +168,11 @@ class LookupModule(LookupBase):
                         raise AnsibleAssertionError('%s is not a valid option' % name)
 
                     self._deprecate_inline_kv()
-                    paramvals[name] = value
+                    self.set_option(name, value)
+                    reset_params = True
+
+                if reset_params:
+                    paramvals = self.get_options()
 
             except (ValueError, AssertionError) as e:
                 raise AnsibleError(e)
@@ -172,7 +182,7 @@ class LookupModule(LookupBase):
                 paramvals['delimiter'] = "\t"
 
             lookupfile = self.find_file_in_search_path(variables, 'files', paramvals['file'])
-            var = self.read_csv(lookupfile, key, paramvals['delimiter'], paramvals['encoding'], paramvals['default'], paramvals['col'])
+            var = self.read_csv(lookupfile, key, paramvals['delimiter'], paramvals['encoding'], paramvals['default'], paramvals['col'], paramvals['keycol'])
             if var is not None:
                 if isinstance(var, MutableSequence):
                     for v in var:

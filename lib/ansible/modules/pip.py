@@ -110,6 +110,13 @@ options:
         to specify desired umask mode as an octal string, (e.g., "0022").
     type: str
     version_added: "2.1"
+  break_system_packages:
+    description:
+      - Allow pip to modify an externally-managed Python installation as defined by PEP 668.
+      - This is typically required when installing packages outside a virtual environment on modern systems.
+    type: bool
+    default: false
+    version_added: "2.17"
 extends_documentation_fragment:
   -  action_common_attributes
 attributes:
@@ -120,6 +127,8 @@ attributes:
     platform:
         platforms: posix
 notes:
+   - Python installations marked externally-managed (as defined by PEP668) cannot be updated by pip versions >= 23.0.1 without the use of
+     a virtual environment or setting the O(break_system_packages) option.
    - The virtualenv (U(http://www.virtualenv.org/)) must be
      installed on the remote host if the virtualenv parameter is specified and
      the virtualenv needs to be created.
@@ -233,6 +242,26 @@ EXAMPLES = '''
     name: bottle
     umask: "0022"
   become: True
+
+- name: Run a module inside a virtual environment
+  block:
+    - name: Ensure the virtual environment exists
+      pip:
+        name: psutil
+        virtualenv: "{{ venv_dir }}"
+        # On Debian-based systems the correct python*-venv package must be installed to use the `venv` module.
+        virtualenv_command: "{{ ansible_python_interpreter }} -m venv"
+
+    - name: Run a module inside the virtual environment
+      wait_for:
+        port: 22
+      vars:
+        # Alternatively, use a block to affect multiple tasks, or use set_fact to affect the remainder of the playbook.
+        ansible_python_interpreter: "{{ venv_python }}"
+
+  vars:
+    venv_dir: /tmp/pick-a-better-venv-path
+    venv_python: "{{ venv_dir }}/bin/python"
 '''
 
 RETURN = '''
@@ -295,7 +324,6 @@ except Exception:
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.basic import AnsibleModule, is_executable, missing_required_lib
 from ansible.module_utils.common.locale import get_best_parsable_locale
-from ansible.module_utils.six import PY3
 
 
 #: Python one-liners to be run at the command line that will determine the
@@ -422,15 +450,7 @@ def _is_present(module, req, installed_pkgs, pkg_command):
 
 
 def _get_pip(module, env=None, executable=None):
-    # Older pip only installed under the "/usr/bin/pip" name.  Many Linux
-    # distros install it there.
-    # By default, we try to use pip required for the current python
-    # interpreter, so people can use pip to install modules dependencies
-    candidate_pip_basenames = ('pip2', 'pip')
-    if PY3:
-        # pip under python3 installs the "/usr/bin/pip3" name
-        candidate_pip_basenames = ('pip3',)
-
+    candidate_pip_basenames = ('pip3',)
     pip = None
     if executable is not None:
         if os.path.isabs(executable):
@@ -571,13 +591,10 @@ def setup_virtualenv(module, env, chdir, out, err):
     if not _is_venv_command(module.params['virtualenv_command']):
         if virtualenv_python:
             cmd.append('-p%s' % virtualenv_python)
-        elif PY3:
-            # Ubuntu currently has a patch making virtualenv always
-            # try to use python2.  Since Ubuntu16 works without
-            # python2 installed, this is a problem.  This code mimics
-            # the upstream behaviour of using the python which invoked
-            # virtualenv to determine which python is used inside of
-            # the virtualenv (when none are specified).
+        else:
+            # This code mimics the upstream behaviour of using the python
+            # which invoked virtualenv to determine which python is used
+            # inside of the virtualenv (when none are specified).
             cmd.append('-p%s' % sys.executable)
 
     # if venv or pyvenv are used and virtualenv_python is defined, then
@@ -683,6 +700,7 @@ def main():
             chdir=dict(type='path'),
             executable=dict(type='path'),
             umask=dict(type='str'),
+            break_system_packages=dict(type='bool', default=False),
         ),
         required_one_of=[['name', 'requirements']],
         mutually_exclusive=[['name', 'requirements'], ['executable', 'virtualenv']],
@@ -786,6 +804,11 @@ def main():
 
         if extra_args:
             cmd.extend(shlex.split(extra_args))
+
+        if module.params['break_system_packages']:
+            # Using an env var instead of the `--break-system-packages` option, to avoid failing under pip 23.0.0 and earlier.
+            # See: https://github.com/pypa/pip/pull/11780
+            os.environ['PIP_BREAK_SYSTEM_PACKAGES'] = '1'
 
         if name:
             cmd.extend(to_native(p) for p in packages)

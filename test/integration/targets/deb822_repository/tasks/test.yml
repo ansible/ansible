@@ -53,6 +53,19 @@
     date_max_future: 10
   register: deb822_create_1_idem
 
+- name: Create deb822 repo (changed order of parameters) idempotency
+  deb822_repository:
+    uris: http://us.archive.ubuntu.com/ubuntu
+    name: ansible-test focal archive
+    date_max_future: 10
+    components:
+      - main
+      - restricted
+    suites:
+      - focal
+      - focal-updates
+  register: deb822_create_2_idem
+
 - name: Create deb822 repo - check_mode
   deb822_repository:
     name: ansible-test focal archive
@@ -97,18 +110,19 @@
       - deb822_create_1.repo|trim == focal_archive_expected
 
       - deb822_create_1_idem is not changed
+      - deb822_create_2_idem is not changed
 
       - deb822_create_1_mode is changed
       - deb822_create_1_stat_1.stat.mode == '0644'
       - deb822_create_1_stat_2.stat.mode == '0600'
   vars:
     focal_archive_expected: |-
-      X-Repolib-Name: ansible-test focal archive
-      URIs: http://us.archive.ubuntu.com/ubuntu
-      Suites: focal focal-updates
       Components: main restricted
       Date-Max-Future: 10
+      X-Repolib-Name: ansible-test focal archive
+      Suites: focal focal-updates
       Types: deb
+      URIs: http://us.archive.ubuntu.com/ubuntu
 
 - name: Remove repos
   deb822_repository:
@@ -177,11 +191,8 @@
         'BEGIN' not in signed_by_url.repo
   vars:
     signed_by_inline_expected: |-
-      X-Repolib-Name: ansible-test
-      Types: deb
-      URIs: https://deb.debian.org
-      Suites: stable
       Components: main contrib non-free
+      X-Repolib-Name: ansible-test
       Signed-By:
           -----BEGIN PGP PUBLIC KEY BLOCK-----
           .
@@ -192,6 +203,9 @@
           3bHcln8DMpIJVXht78sL
           =IE0r
           -----END PGP PUBLIC KEY BLOCK-----
+      Suites: stable
+      Types: deb
+      URIs: https://deb.debian.org
 
 - name: remove ansible-test repo
   deb822_repository:

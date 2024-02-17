@@ -19,6 +19,8 @@ DOCUMENTATION = '''
         - connection_pipelining
     version_added: historical
     notes:
+        - This plugin is mostly a wrapper to the ``ssh`` CLI utility and the exact behavior of the options depends on this tool.
+          This means that the documentation provided here is subject to be overridden by the CLI tool itself.
         - Many options default to V(None) here but that only means we do not override the SSH tool's defaults and/or configuration.
           For example, if you specify the port in this plugin it will override any C(Port) entry in your C(.ssh/config).
         - The ssh CLI tool uses return code 255 as a 'connection error', this can conflict with commands/tools that
@@ -35,7 +37,7 @@ DOCUMENTATION = '''
                - name: delegated_vars['ansible_host']
                - name: delegated_vars['ansible_ssh_host']
       host_key_checking:
-          description: Determines if SSH should check host keys.
+          description: Determines if SSH should reject or not a connection after checking host keys.
           default: True
           type: boolean
           ini:
@@ -745,8 +747,8 @@ class Connection(ConnectionBase):
                 self._add_args(b_command, b_args, u'disable batch mode for sshpass')
             b_command += [b'-b', b'-']
 
-        if display.verbosity > 3:
-            b_command.append(b'-vvv')
+        if display.verbosity:
+            b_command.append(b'-' + (b'v' * display.verbosity))
 
         # Next, we add ssh_args
         ssh_args = self.get_option('ssh_args')

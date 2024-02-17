@@ -22,7 +22,7 @@ from collections import defaultdict
 import pprint
 
 # for testing
-from units.compat import unittest
+import unittest
 
 from ansible.module_utils.facts import collector
 

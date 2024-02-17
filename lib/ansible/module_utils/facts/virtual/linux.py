@@ -175,7 +175,7 @@ class LinuxVirtual(Virtual):
                     virtual_facts['virtualization_type'] = 'RHEV'
                     found_virt = True
 
-        if product_name in ('VMware Virtual Platform', 'VMware7,1'):
+        if product_name in ('VMware Virtual Platform', 'VMware7,1', 'VMware20,1'):
             guest_tech.add('VMware')
             if not found_virt:
                 virtual_facts['virtualization_type'] = 'VMware'

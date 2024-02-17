@@ -496,6 +496,12 @@ def make_context(cafile=None, cadata=None, capath=None, ciphers=None, validate_c
         context.set_ciphers(':'.join(map(to_native, ciphers)))
 
     if client_cert:
+        # TLS 1.3 needs this to be set to True to allow post handshake cert
+        # authentication. This functionality was added in Python 3.8 and was
+        # backported to 3.6.7, and 3.7.1 so needs a check for now.
+        if hasattr(context, "post_handshake_auth"):
+            context.post_handshake_auth = True
+
         context.load_cert_chain(client_cert, keyfile=client_key)
 
     return context
@@ -625,6 +631,74 @@ def rfc2822_date_string(timetuple, zone='-0000'):
          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][timetuple[1] - 1],
         timetuple[0], timetuple[3], timetuple[4], timetuple[5],
         zone)
+
+
+def _configure_auth(url, url_username, url_password, use_gssapi, force_basic_auth, use_netrc):
+    headers = {}
+    handlers = []
+
+    parsed = urlparse(url)
+    if parsed.scheme == 'ftp':
+        return url, headers, handlers
+
+    username = url_username
+    password = url_password
+
+    if username:
+        netloc = parsed.netloc
+    elif '@' in parsed.netloc:
+        credentials, netloc = parsed.netloc.split('@', 1)
+        if ':' in credentials:
+            username, password = credentials.split(':', 1)
+        else:
+            username = credentials
+            password = ''
+        username = unquote(username)
+        password = unquote(password)
+
+        # reconstruct url without credentials
+        url = urlunparse(parsed._replace(netloc=netloc))
+
+    if use_gssapi:
+        if HTTPGSSAPIAuthHandler:  # type: ignore[truthy-function]
+            handlers.append(HTTPGSSAPIAuthHandler(username, password))
+        else:
+            imp_err_msg = missing_required_lib('gssapi', reason='for use_gssapi=True',
+                                               url='https://pypi.org/project/gssapi/')
+            raise MissingModuleError(imp_err_msg, import_traceback=GSSAPI_IMP_ERR)
+
+    elif username and not force_basic_auth:
+        passman = urllib.request.HTTPPasswordMgrWithDefaultRealm()
+
+        # this creates a password manager
+        passman.add_password(None, netloc, username, password)
+
+        # because we have put None at the start it will always
+        # use this username/password combination for  urls
+        # for which `theurl` is a super-url
+        authhandler = urllib.request.HTTPBasicAuthHandler(passman)
+        digest_authhandler = urllib.request.HTTPDigestAuthHandler(passman)
+
+        # create the AuthHandler
+        handlers.append(authhandler)
+        handlers.append(digest_authhandler)
+
+    elif username and force_basic_auth:
+        headers["Authorization"] = basic_auth_header(username, password)
+
+    elif use_netrc:
+        try:
+            rc = netrc.netrc(os.environ.get('NETRC'))
+            login = rc.authenticators(parsed.hostname)
+        except IOError:
+            login = None
+
+        if login:
+            username, dummy, password = login
+            if username and password:
+                headers["Authorization"] = basic_auth_header(username, password)
+
+    return url, headers, handlers
 
 
 class Request:
@@ -766,62 +840,9 @@ class Request:
         if unix_socket:
             handlers.append(UnixHTTPHandler(unix_socket))
 
-        parsed = urlparse(url)
-        if parsed.scheme != 'ftp':
-            username = url_username
-            password = url_password
-
-            if username:
-                netloc = parsed.netloc
-            elif '@' in parsed.netloc:
-                credentials, netloc = parsed.netloc.split('@', 1)
-                if ':' in credentials:
-                    username, password = credentials.split(':', 1)
-                else:
-                    username = credentials
-                    password = ''
-
-                # reconstruct url without credentials
-                url = urlunparse(parsed._replace(netloc=netloc))
-
-            if use_gssapi:
-                if HTTPGSSAPIAuthHandler:  # type: ignore[truthy-function]
-                    handlers.append(HTTPGSSAPIAuthHandler(username, password))
-                else:
-                    imp_err_msg = missing_required_lib('gssapi', reason='for use_gssapi=True',
-                                                       url='https://pypi.org/project/gssapi/')
-                    raise MissingModuleError(imp_err_msg, import_traceback=GSSAPI_IMP_ERR)
-
-            elif username and not force_basic_auth:
-                passman = urllib.request.HTTPPasswordMgrWithDefaultRealm()
-
-                # this creates a password manager
-                passman.add_password(None, netloc, username, password)
-
-                # because we have put None at the start it will always
-                # use this username/password combination for  urls
-                # for which `theurl` is a super-url
-                authhandler = urllib.request.HTTPBasicAuthHandler(passman)
-                digest_authhandler = urllib.request.HTTPDigestAuthHandler(passman)
-
-                # create the AuthHandler
-                handlers.append(authhandler)
-                handlers.append(digest_authhandler)
-
-            elif username and force_basic_auth:
-                headers["Authorization"] = basic_auth_header(username, password)
-
-            elif use_netrc:
-                try:
-                    rc = netrc.netrc(os.environ.get('NETRC'))
-                    login = rc.authenticators(parsed.hostname)
-                except IOError:
-                    login = None
-
-                if login:
-                    username, dummy, password = login
-                    if username and password:
-                        headers["Authorization"] = basic_auth_header(username, password)
+        url, auth_headers, auth_handlers = _configure_auth(url, url_username, url_password, use_gssapi, force_basic_auth, use_netrc)
+        headers.update(auth_headers)
+        handlers.extend(auth_handlers)
 
         if not use_proxy:
             proxyhandler = urllib.request.ProxyHandler({})

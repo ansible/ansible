@@ -1,16 +1,13 @@
-> TESTNS.TESTCOL.FAKEMODULE    (./collections/ansible_collections/testns/testcol/plugins/modules/fakemodule.py)
+> MODULE testns.testcol.fakemodule (./collections/ansible_collections/testns/testcol/plugins/modules/fakemodule.py)
 
-        this is a fake module
+  this is a fake module
 
-ADDED IN: version 1.0.0 of testns.testcol
+OPTIONS (= inicates it is required):
 
-OPTIONS (= is mandatory):
-
-- _notreal
-        really not a real option
+- _notreal  really not a real option
         default: null
-
 
 AUTHOR: me
 
 SHORT_DESCIPTION: fake module
+

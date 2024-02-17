@@ -89,7 +89,7 @@ class IncludedFile:
                     except KeyError:
                         task_vars = task_vars_cache[cache_key] = variable_manager.get_vars(play=iterator._play, host=original_host, task=original_task)
 
-                    include_args = include_result.get('include_args', dict())
+                    include_args = include_result.pop('include_args', dict())
                     special_vars = {}
                     loop_var = include_result.get('ansible_loop_var', 'item')
                     index_var = include_result.get('ansible_index_var')
@@ -147,8 +147,8 @@ class IncludedFile:
                                     dirname = 'handlers' if isinstance(original_task, Handler) else 'tasks'
                                     new_basedir = os.path.join(original_task._role._role_path, dirname, cumulative_path)
                                     candidates = [
-                                        loader.path_dwim_relative(original_task._role._role_path, dirname, include_target),
-                                        loader.path_dwim_relative(new_basedir, dirname, include_target)
+                                        loader.path_dwim_relative(original_task._role._role_path, dirname, include_target, is_role=True),
+                                        loader.path_dwim_relative(new_basedir, dirname, include_target, is_role=True)
                                     ]
                                     for include_file in candidates:
                                         try:

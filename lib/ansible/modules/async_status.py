@@ -54,17 +54,17 @@ author:
 
 EXAMPLES = r'''
 ---
-- name: Asynchronous yum task
-  ansible.builtin.yum:
+- name: Asynchronous dnf task
+  ansible.builtin.dnf:
     name: docker-io
     state: present
   async: 1000
   poll: 0
-  register: yum_sleeper
+  register: dnf_sleeper
 
 - name: Wait for asynchronous job to end
   ansible.builtin.async_status:
-    jid: '{{ yum_sleeper.ansible_job_id }}'
+    jid: '{{ dnf_sleeper.ansible_job_id }}'
   register: job_result
   until: job_result.finished
   retries: 100
@@ -72,7 +72,7 @@ EXAMPLES = r'''
 
 - name: Clean up async file
   ansible.builtin.async_status:
-    jid: '{{ yum_sleeper.ansible_job_id }}'
+    jid: '{{ dnf_sleeper.ansible_job_id }}'
     mode: cleanup
 '''
 

@@ -17,7 +17,7 @@ import yaml
 from io import BytesIO, StringIO
 from unittest.mock import MagicMock, patch
 
-import ansible.module_utils.six.moves.urllib.error as urllib_error
+import urllib.error
 
 from ansible import context
 from ansible.cli.galaxy import GalaxyCLI
@@ -549,7 +549,7 @@ def test_build_requirement_from_name_missing(galaxy_server, monkeypatch, tmp_pat
 
 def test_build_requirement_from_name_401_unauthorized(galaxy_server, monkeypatch, tmp_path_factory):
     mock_open = MagicMock()
-    mock_open.side_effect = api.GalaxyError(urllib_error.HTTPError('https://galaxy.server.com', 401, 'msg', {},
+    mock_open.side_effect = api.GalaxyError(urllib.error.HTTPError('https://galaxy.server.com', 401, 'msg', {},
                                                                    StringIO()), "error")
 
     monkeypatch.setattr(galaxy_server, 'get_collection_versions', mock_open)

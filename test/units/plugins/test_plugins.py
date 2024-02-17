@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import os
 
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, MagicMock
 from ansible.plugins.loader import PluginLoader, PluginPathContext
 

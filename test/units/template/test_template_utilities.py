@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 import jinja2
-from units.compat import unittest
+import unittest
 
 from ansible.template import AnsibleUndefined, _escape_backslashes, _count_newlines_from_end
 

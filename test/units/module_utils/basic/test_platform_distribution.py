@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import pytest
 
-from units.compat.mock import patch
+from unittest.mock import patch
 
-from ansible.module_utils.six.moves import builtins
+import builtins
 
 # Functions being tested
 from ansible.module_utils.basic import get_platform

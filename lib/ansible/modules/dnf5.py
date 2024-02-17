@@ -151,7 +151,7 @@ options:
   validate_certs:
     description:
       - This is effectively a no-op in the dnf5 module as dnf5 itself handles downloading a https url as the source of the rpm,
-        but is an accepted parameter for feature parity/compatibility with the M(ansible.builtin.yum) module.
+        but is an accepted parameter for feature parity/compatibility with the M(ansible.builtin.dnf) module.
     type: bool
     default: "yes"
   sslverify:
@@ -174,8 +174,8 @@ options:
     default: "no"
   install_repoquery:
     description:
-      - This is effectively a no-op in DNF as it is not needed with DNF, but is an accepted parameter for feature
-        parity/compatibility with the M(ansible.builtin.yum) module.
+      - This is effectively a no-op in DNF as it is not needed with DNF.
+      - This option is deprecated and will be removed in ansible-core 2.20.
     type: bool
     default: "yes"
   download_only:
@@ -208,10 +208,18 @@ options:
     default: "no"
   nobest:
     description:
-      - Set best option to False, so that transactions are not limited to best candidates only.
+      - This is the opposite of the O(best) option kept for backwards compatibility.
+      - Since ansible-core 2.17 the default value is set by the operating system distribution.
     required: false
     type: bool
-    default: "no"
+  best:
+    description:
+      - When set to V(true), either use a package with the highest version available or fail.
+      - When set to V(false), if the latest version cannot be installed go with the lower version.
+      - Default is set by the operating system distribution.
+    required: false
+    type: bool
+    version_added: "2.17"
   cacheonly:
     description:
       - Tells dnf to run entirely from system cache; does not download or update metadata.
@@ -222,7 +230,7 @@ extends_documentation_fragment:
 - action_common_attributes.flow
 attributes:
     action:
-        details: In the case of dnf, it has 2 action plugins that use it under the hood, M(ansible.builtin.yum) and M(ansible.builtin.package).
+        details: dnf5 has 2 action plugins that use it under the hood, M(ansible.builtin.dnf) and M(ansible.builtin.package).
         support: partial
     async:
         support: none
@@ -408,13 +416,7 @@ class Dnf5Module(YumDnf):
         super(Dnf5Module, self).__init__(module)
         self._ensure_dnf()
 
-        # FIXME https://github.com/rpm-software-management/dnf5/issues/402
-        self.lockfile = ""
         self.pkg_mgr_name = "dnf5"
-
-        # DNF specific args that are not part of YumDnf
-        self.allowerasing = self.module.params["allowerasing"]
-        self.nobest = self.module.params["nobest"]
 
     def _ensure_dnf(self):
         locale = get_best_parsable_locale(self.module)
@@ -456,10 +458,6 @@ class Dnf5Module(YumDnf):
             ),
             failures=[],
         )
-
-    def is_lockfile_pid_valid(self):
-        # FIXME https://github.com/rpm-software-management/dnf5/issues/402
-        return True
 
     def run(self):
         if sys.version_info.major < 3:
@@ -508,7 +506,11 @@ class Dnf5Module(YumDnf):
                 self.disable_excludes = "*"
             conf.disable_excludes = self.disable_excludes
         conf.skip_broken = self.skip_broken
-        conf.best = not self.nobest
+        # best and nobest are mutually exclusive
+        if self.nobest is not None:
+            conf.best = not self.nobest
+        elif self.best is not None:
+            conf.best = self.best
         conf.install_weak_deps = self.install_weak_deps
         conf.gpgcheck = not self.disable_gpg_check
         conf.localpkg_gpgcheck = not self.disable_gpg_check
@@ -702,10 +704,6 @@ class Dnf5Module(YumDnf):
 
 
 def main():
-    # Extend yumdnf_argument_spec with dnf-specific features that will never be
-    # backported to yum because yum is now in "maintenance mode" upstream
-    yumdnf_argument_spec["argument_spec"]["allowerasing"] = dict(default=False, type="bool")
-    yumdnf_argument_spec["argument_spec"]["nobest"] = dict(default=False, type="bool")
     Dnf5Module(AnsibleModule(**yumdnf_argument_spec)).run()
 
 
