@@ -352,7 +352,7 @@ class VariableManager:
                                 )
                             try:
                                 play_search_stack = play.get_search_path()
-                                found_file = real_file = self._loader.path_dwim_relative_stack(play_search_stack, 'vars', vars_file)
+                                found_file = self._loader.path_dwim_relative_stack(play_search_stack, 'vars', vars_file)
                                 data = preprocess_vars(self._loader.load_from_file(found_file, unsafe=True, cache=True))
                                 if data is not None:
                                     for item in data:
