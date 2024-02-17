@@ -56,7 +56,6 @@ class DataLoader:
         # NOTE: not effective with forks as the main copy does not get updated.
         # avoids rereading files
         self._FILE_CACHE = dict()
-        self._FILE_CACHE_VAULTED = dict()
 
         # NOTE: not thread safe, also issues with forks not returning data to main proc
         #       so they need to be cleaned independently. See WorkerProcess for example.
@@ -90,10 +89,8 @@ class DataLoader:
 
         # if the file has already been read in and cached, we'll
         # return those results to avoid more file/vault operations
-        if cache == 'all' and file_name in self._FILE_CACHE:
+        if cache != 'none' and file_name in self._FILE_CACHE:
             parsed_data = self._FILE_CACHE[file_name]
-        elif cache == 'vaulted' and file_name in self._FILE_CACHE_VAULTED:
-            parsed_data = self._FILE_CACHE_VAULTED[file_name]
         else:
             # read the file contents and load the data structure from them
             (b_file_data, show_content) = self._get_file_contents(file_name)
@@ -102,10 +99,10 @@ class DataLoader:
             parsed_data = self.load(data=file_data, file_name=file_name, show_content=show_content, json_only=json_only)
 
             # cache the file contents for next time
-            if show_content:
+            if cache == 'all':
                 self._FILE_CACHE[file_name] = parsed_data
-            else:
-                self._FILE_CACHE_VAULTED[file_name] = parsed_data
+            elif cache == 'vaulted' and not show_content:
+                self._FILE_CACHE[file_name] = parsed_data
 
         if unsafe:
             return parsed_data
