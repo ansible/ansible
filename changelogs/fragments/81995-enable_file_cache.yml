@@ -1,3 +1,2 @@
 bugfixes:
   - Re-enable file cache during vars lookup to fix a strong performance penalty while using vaults. 
-
