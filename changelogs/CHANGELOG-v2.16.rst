@@ -5,6 +5,24 @@ ansible-core 2.16 "All My Love" Release Notes
 .. contents:: Topics
 
 
+v2.16.4rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2024-02-19
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+
+Bugfixes
+--------
+
+- Fix loading vars_plugins in roles (https://github.com/ansible/ansible/issues/82239).
+- expect - fix argument spec error using timeout=null (https://github.com/ansible/ansible/issues/80982).
+- include_vars - fix calculating ``depth`` relative to the root and ensure all files are included (https://github.com/ansible/ansible/issues/80987).
+- templating - ensure syntax errors originating from a template being compiled into Python code object result in a failure (https://github.com/ansible/ansible/issues/82606)
+
 v2.16.3
 =======
 
