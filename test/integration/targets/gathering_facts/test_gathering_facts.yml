@@ -534,3 +534,16 @@
             - "{{ output_dir }}/empty_file"
             - "{{ output_dir }}/1charsep"
             - "{{ output_dir }}/2charsep"
+
+- hosts: facthost1
+  gather_facts: no
+  tasks:
+    - name: check parallel works in check mode
+      gather_facts:
+        parallel: true
+      check_mode: true
+
+    - name: assert result of check parallel works in check mode
+      assert:
+        that:
+        - 'ansible_user_id|default("UNDEF_MIN") != "UNDEF_MIN"'
