@@ -168,7 +168,6 @@ class ActionModule(ActionBase):
             finally:
                 self._task.check_mode = check_mode
 
-
         # restore value for post processing
         if self._task.async_val != async_val:
             self._task.async_val = async_val
