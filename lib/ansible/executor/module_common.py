@@ -419,6 +419,21 @@ NEW_STYLE_PYTHON_MODULE_RE = re.compile(
     br'import +ansible\.module_utils\.)'
 )
 
+NEW_STYLE_POWERSHELL_MODULE_RE = re.compile(
+    br'''(?:
+        \#Requires\ -Module
+        |
+        \#Requires\ -Version
+        |
+        \#AnsibleRequires\ -OSVersion
+        |
+        \#AnsibleRequires\ -Powershell
+        |
+        \#AnsibleRequires\ -CSharpUtil
+    )''',
+    flags=re.VERBOSE | re.IGNORECASE,
+)
+
 
 class ModuleDepFinder(ast.NodeVisitor):
     def __init__(self, module_fqn, tree, is_pkg_init=False, *args, **kwargs):
@@ -1228,7 +1243,7 @@ def _make_python_ansiballz(module_name, remote_module_fqn, b_module_data, module
     return zipoutput.getvalue(), shebang
 
 
-def _determine_module_style(b_module_data):
+def _determine_module_style(module_name, b_module_data):
     module_substyle = module_style = 'old'
 
     # module_style is something important to calling code (ActionBase).  It
@@ -1240,26 +1255,21 @@ def _determine_module_style(b_module_data):
     if _is_binary(b_module_data):
         module_substyle = module_style = 'binary'
     elif REPLACER in b_module_data:
-        # Do REPLACER before from ansible.module_utils because we need make sure
-        # we substitute "from ansible.module_utils basic" for REPLACER
+        display.deprecated(f'{module_name!r} is utilizing old style module {REPLACER!r} strings.', version='2.20')
         module_style = 'new'
         module_substyle = 'python'
-        b_module_data = b_module_data.replace(REPLACER, b'from ansible.module_utils.basic import *')
     elif NEW_STYLE_PYTHON_MODULE_RE.search(b_module_data):
         module_style = 'new'
         module_substyle = 'python'
     elif REPLACER_WINDOWS in b_module_data:
+        display.deprecated(f'{module_name!r} is utilizing old style module {REPLACER_WINDOWS!r} strings.', version='2.20')
         module_style = 'new'
         module_substyle = 'powershell'
-        b_module_data = b_module_data.replace(REPLACER_WINDOWS, b'#Requires -Module Ansible.ModuleUtils.Legacy')
-    elif re.search(b'#Requires -Module', b_module_data, re.IGNORECASE) \
-            or re.search(b'#Requires -Version', b_module_data, re.IGNORECASE)\
-            or re.search(b'#AnsibleRequires -OSVersion', b_module_data, re.IGNORECASE) \
-            or re.search(b'#AnsibleRequires -Powershell', b_module_data, re.IGNORECASE) \
-            or re.search(b'#AnsibleRequires -CSharpUtil', b_module_data, re.IGNORECASE):
+    elif NEW_STYLE_POWERSHELL_MODULE_RE.search(b_module_data):
         module_style = 'new'
         module_substyle = 'powershell'
     elif REPLACER_JSONARGS in b_module_data:
+        display.deprecated(f'{module_name!r} is utilizing old style module {REPLACER_JSONARGS!r} strings.', version='2.20')
         module_style = 'new'
         module_substyle = 'jsonargs'
     elif b'WANT_JSON' in b_module_data:
@@ -1274,7 +1284,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     Given the source of the module, convert it to a Jinja2 template to insert
     module code and return whether it's a new or old style module.
     """
-    module_style, module_substyle = _determine_module_style(b_module_data)
+    module_style, module_substyle = _determine_module_style(module_name, b_module_data)
 
     shebang = None
     # Neither old-style, non_native_want_json nor binary modules should be modified
@@ -1294,10 +1304,13 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         remote_module_fqn = 'ansible.modules.%s' % module_name
 
     if module_substyle == 'python':
+        b_module_data = b_module_data.replace(REPLACER, b'from ansible.module_utils.basic import *')
         b_module_data, shebang = _make_python_ansiballz(module_name, remote_module_fqn, b_module_data, module_args,
                                                         task_vars, templar, module_compression, remote_is_local, pipelining)
 
     elif module_substyle == 'powershell':
+        b_module_data = b_module_data.replace(REPLACER_WINDOWS, b'#Requires -Module Ansible.ModuleUtils.Legacy')
+
         # Powershell/winrm don't actually make use of shebang so we can
         # safely set this here.  If we let the fallback code handle this
         # it can fail in the presence of the UTF8 BOM commonly added by
