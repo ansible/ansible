@@ -1,6 +1,6 @@
 %(shebang)s
 %(coding)s
-_ANSIBALLZ_WRAPPER = True # For test-module.py script to tell this is a ANSIBALLZ_WRAPPER
+_ANSIBALLZ_WRAPPER = True  # For test-module.py script to tell this is a ANSIBALLZ_WRAPPER
 # This code is part of Ansible, but is an independent component.
 # The code in this particular templatable string, and this templatable string
 # only, is BSD licensed.  Modules which end up using this snippet, which is
@@ -28,9 +28,20 @@ _ANSIBALLZ_WRAPPER = True # For test-module.py script to tell this is a ANSIBALL
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
 def _ansiballz_main():
+    import __main__
+    import base64
     import os
     import os.path
+    import resource
+    import runpy
+    import shutil
+    import sys
+    import tempfile
+    import zipfile
+    import zipimport
 
     # Access to the working directory is required by Python when using pipelining, as well as for the coverage module.
     # Some platforms, such as macOS, may not allow querying the working directory when using become to drop privileges.
@@ -41,8 +52,6 @@ def _ansiballz_main():
             os.chdir(os.path.expanduser('~'))
         except OSError:
             os.chdir('/')
-
-    import resource
 
     rlimit_nofile = %(rlimit_nofile)d
     if rlimit_nofile:
@@ -57,9 +66,6 @@ def _ansiballz_main():
             except ValueError:
                 # some platforms (eg macOS) lie about their hard limit
                 pass
-
-    import sys
-    import __main__
 
     # For some distros and python versions we pick up this script in the temporary
     # directory.  This leads to problems when the ansible module masks a python
@@ -89,22 +95,11 @@ def _ansiballz_main():
         pass
 
     # Strip cwd from sys.path to avoid potential permissions issues
-    excludes = set(('', '.', scriptdir))
+    excludes = {'', '.', scriptdir}
     sys.path = [p for p in sys.path if p not in excludes]
 
-    import base64
-    import runpy
-    import shutil
-    import tempfile
-    import zipfile
-    import zipimport
-
-    if sys.version_info < (3,):
-        PY3 = False
-    else:
-        PY3 = True
-
     module_fqn = %(module_fqn)r
+    # ZIPDATA only used with pipelining
     ZIPDATA = %(zipdata)r
 
     # Note: temp_path isn't needed once we switch to zipimport
@@ -180,7 +175,6 @@ def _ansiballz_main():
         #   $ /usr/bin/python /home/badger/.ansible/tmp/ansible-tmp-1461173013.93-9076457629738/ping execute
 
         basedir = os.path.join(os.path.abspath(os.path.dirname(zipped_mod)), 'debug_dir')
-        args_path = os.path.join(basedir, 'args')
 
         if command == 'explode':
             # transform the ZIPDATA into an exploded directory of code and then
@@ -260,6 +254,7 @@ def _ansiballz_main():
             # tempdir creation probably failed
             pass
     sys.exit(exitcode)
+
 
 if __name__ == '__main__':
     _ansiballz_main()
