@@ -31,17 +31,8 @@ _ANSIBALLZ_WRAPPER = True  # For test-module.py script to tell this is a ANSIBAL
 
 
 def _ansiballz_main():
-    import __main__
-    import base64
     import os
     import os.path
-    import resource
-    import runpy
-    import shutil
-    import sys
-    import tempfile
-    import zipfile
-    import zipimport
 
     # Access to the working directory is required by Python when using pipelining, as well as for the coverage module.
     # Some platforms, such as macOS, may not allow querying the working directory when using become to drop privileges.
@@ -52,6 +43,16 @@ def _ansiballz_main():
             os.chdir(os.path.expanduser('~'))
         except OSError:
             os.chdir('/')
+
+    import __main__
+    import base64
+    import resource
+    import runpy
+    import shutil
+    import sys
+    import tempfile
+    import zipfile
+    import zipimport
 
     rlimit_nofile = %(rlimit_nofile)d
     if rlimit_nofile:
