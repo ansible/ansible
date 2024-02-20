@@ -890,7 +890,16 @@ def _make_python_ansiballz(module_name, remote_module_fqn, b_module_data, module
     zf = zipfile.ZipFile(zipoutput, mode='a', compression=compression_method)
     zf.writestr(
         _make_zinfo('sitecustomize.py', date_time, zf=zf),
-        b"import os\nimport sys\nroot = os.path.dirname(__file__)\nif root[-4:-1] == '.py':\n    root = root[:-1]\nsys.path.insert(0, root)\n"
+        to_bytes(
+            textwrap.dedent('''
+                import os
+                import sys
+                root = os.path.dirname(__file__)
+                if root[-4:-1] == '.py':
+                    root = root[:-1]
+                sys.path.insert(0, root)
+            ''')
+        )
     )
     zf.writestr(
         _make_zinfo('_ansiballz.py', date_time, zf=zf),

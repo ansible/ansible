@@ -71,7 +71,7 @@ except ImportError:
 NoneType = type(None)
 
 try:
-    from _ansiballz import ANSIBALLZ_PARAMS
+    from _ansiballz import ANSIBALLZ_PARAMS  # type: ignore[import]
 except ImportError:
     ANSIBALLZ_PARAMS = None
 
@@ -335,7 +335,6 @@ def _load_params():
     try:
         params = json.loads(buffer.decode('utf-8'))
     except ValueError:
-        raise
         # This helper is used too early for fail_json to work.
         print('\n{"msg": "Error: Module unable to decode stdin/parameters as valid JSON. Unable to parse what parameters were passed", "failed": true}')
         sys.exit(1)
