@@ -314,7 +314,7 @@ def _load_params():
     if _ANSIBLE_ARGS is not None:
         buffer = _ANSIBLE_ARGS
     elif ANSIBALLZ_PARAMS is not None:
-        buffer = ANSIBALLZ_PARAMS
+        buffer = _ANSIBLE_ARGS = ANSIBALLZ_PARAMS
     else:
         # debug overrides to read args from file or cmdline
 

@@ -69,7 +69,7 @@ def probe_interpreters_for_module(interpreter_paths, module_name):
 
 def _create_payload():
     try:
-        from _ansiballz import ANSIBALLZ_PARAMS as smuggled_args
+        from _ansiballz import ANSIBALLZ_PARAMS as smuggled_args  # type: ignore[import]
     except ImportError:
         from ansible.module_utils import basic
         smuggled_args = getattr(basic, '_ANSIBLE_ARGS')
