@@ -70,6 +70,11 @@ except ImportError:
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
 
+try:
+    from _ansiballz import ANSIBALLZ_PARAMS
+except ImportError:
+    ANSIBALLZ_PARAMS = None
+
 from ._text import to_native, to_bytes, to_text
 from ansible.module_utils.common.text.converters import (
     jsonify,
@@ -308,6 +313,8 @@ def _load_params():
     global _ANSIBLE_ARGS
     if _ANSIBLE_ARGS is not None:
         buffer = _ANSIBLE_ARGS
+    elif ANSIBALLZ_PARAMS is not None:
+        buffer = ANSIBALLZ_PARAMS
     else:
         # debug overrides to read args from file or cmdline
 
@@ -328,6 +335,7 @@ def _load_params():
     try:
         params = json.loads(buffer.decode('utf-8'))
     except ValueError:
+        raise
         # This helper is used too early for fail_json to work.
         print('\n{"msg": "Error: Module unable to decode stdin/parameters as valid JSON. Unable to parse what parameters were passed", "failed": true}')
         sys.exit(1)
