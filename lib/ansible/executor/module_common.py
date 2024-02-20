@@ -878,14 +878,6 @@ def _make_python_ansiballz(module_name, remote_module_fqn, b_module_data, module
                 except IOError:
                     raise AnsibleError('A different worker process failed to create module file. '
                                        'Look at traceback for that process for debugging information.')
-    if pipelining:
-        zipdata = to_text(
-            base64.b64encode(zipoutput.getvalue()),
-            errors='surrogate_or_strict'
-        )
-    else:
-        zipdata = ''
-
     # FUTURE: the module cache entry should be invalidated if we got this value from a host-dependent source
     rlimit_nofile = C.config.get_config_value('PYTHON_MODULE_RLIMIT_NOFILE', variables=task_vars)
 
@@ -911,6 +903,14 @@ def _make_python_ansiballz(module_name, remote_module_fqn, b_module_data, module
         }
     )
     zf.close()
+
+    if pipelining:
+        zipdata = to_text(
+            base64.b64encode(zipoutput.getvalue()),
+            errors='surrogate_or_strict'
+        )
+    else:
+        zipdata = ''
 
     b_data = to_bytes(ACTIVE_ANSIBALLZ_TEMPLATE % dict(
         zipdata=zipdata,

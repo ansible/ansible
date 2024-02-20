@@ -49,7 +49,7 @@ def _ansiballz_main():
         existing_soft, existing_hard = resource.getrlimit(resource.RLIMIT_NOFILE)
 
         # adjust soft limit subject to existing hard limit
-        requested_soft = min(existing_hard, _ansiballz.RLIMIT_NOFILE)
+        requested_soft = min(existing_hard, rlimit_nofile)
 
         if requested_soft != existing_soft:
             try:
