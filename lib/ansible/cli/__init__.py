@@ -254,6 +254,10 @@ class CLI(ABC):
 
         last_exception = found_vault_secret = None
         for vault_id_slug in vault_ids:
+            if not vault_id_slug:
+                # silently ignore empty values
+                continue
+
             vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
             if vault_id_value in ['prompt', 'prompt_ask_vault_pass']:
 

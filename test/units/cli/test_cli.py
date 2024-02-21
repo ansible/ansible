@@ -22,6 +22,7 @@ from unittest.mock import patch, MagicMock
 
 from units.mock.loader import DictDataLoader
 
+from ansible.errors import AnsibleError
 from ansible.release import __version__
 from ansible.parsing import vault
 from ansible import cli
@@ -357,3 +358,20 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
         self.assertIsInstance(res, list)
         match = vault.match_secrets(res, ['some_vault_id'])[0][1]
         self.assertEqual(match.bytes, b'prompt1_password')
+
+    def test_empty_id(self):
+        res = cli.CLI.setup_vault_secrets(loader=self.fake_loader,
+                                          vault_ids=[''])
+        self.assertIsInstance(res, list)
+        self.assertEqual(0, len(res))
+
+    @patch('ansible.cli.get_file_vault_secret')
+    def test_empty_file_part(self, mock_file_secret):
+        mock_file_secret.side_effect = AnsibleError('There is something wrong with your vault file')
+
+        self.assertRaisesRegex(AnsibleError,
+                               '.*There is something wrong with your vault file.*',
+                               cli.CLI.setup_vault_secrets,
+                               loader=self.fake_loader,
+                               vault_ids=['foo@'])
+        mock_file_secret.assert_called_once()
