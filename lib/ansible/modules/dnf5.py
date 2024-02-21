@@ -374,19 +374,37 @@ def is_newer_version_installed(base, spec):
         spec_nevra = next(iter(libdnf5.rpm.Nevra.parse(spec)))
     except (RuntimeError, StopIteration):
         return False
-    spec_name = spec_nevra.get_name()
-    v = spec_nevra.get_version()
-    r = spec_nevra.get_release()
-    if not v or not r:
+
+    spec_version = spec_nevra.get_version()
+    if not spec_version:
         return False
-    spec_evr = "{}:{}-{}".format(spec_nevra.get_epoch() or "0", v, r)
 
-    query = libdnf5.rpm.PackageQuery(base)
-    query.filter_installed()
-    query.filter_name([spec_name])
-    query.filter_evr([spec_evr], libdnf5.common.QueryCmp_GT)
+    installed = libdnf5.rpm.PackageQuery(base)
+    installed.filter_installed()
+    installed.filter_name([spec_nevra.get_name()])
+    installed.filter_latest_evr()
+    try:
+        installed_package = list(installed)[-1]
+    except IndexError:
+        return False
 
-    return query.size() > 0
+    target = libdnf5.rpm.PackageQuery(base)
+    target.filter_name([spec_nevra.get_name()])
+    target.filter_version([spec_version])
+    spec_release = spec_nevra.get_release()
+    if spec_release:
+        target.filter_release([spec_release])
+    spec_epoch = spec_nevra.get_epoch()
+    if spec_epoch:
+        target.filter_epoch([spec_epoch])
+    target.filter_latest_evr()
+    try:
+        target_package = list(target)[-1]
+    except IndexError:
+        return False
+
+    # FIXME https://github.com/rpm-software-management/dnf5/issues/1104
+    return libdnf5.rpm.rpmvercmp(installed_package.get_evr(), target_package.get_evr()) == 1
 
 
 def package_to_dict(package):
@@ -604,13 +622,7 @@ class Dnf5Module(YumDnf):
             for spec in self.names:
                 if is_newer_version_installed(base, spec):
                     if self.allow_downgrade:
-                        if upgrade:
-                            if is_installed(base, spec):
-                                goal.add_upgrade(spec, settings)
-                            else:
-                                goal.add_install(spec, settings)
-                        else:
-                            goal.add_install(spec, settings)
+                        goal.add_install(spec, settings)
                 elif is_installed(base, spec):
                     if upgrade:
                         goal.add_upgrade(spec, settings)
