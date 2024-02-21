@@ -487,6 +487,8 @@
 - assert:
     that:
       - "'msdcc is not in the list of supported passlib algorithms' in unsupported_hash_type.msg"
+  vars:
+    msg: "msdcc is not in the list of supported passlib algorithms: md5, blowfish, sha256, sha512. user must be unicode or bytes, not None"
 
 - name: Verify to_uuid throws on weird namespace
   set_fact:
