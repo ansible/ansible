@@ -375,7 +375,7 @@ class TestGetFileVaultSecret(unittest.TestCase):
 
         self.assertEqual(secret.bytes, to_bytes(password))
 
-    def test_file_not_a_directory(self):
+    def test_file_path_part_not_a_directory(self):
         filename = '/dev/null/foobar'
 
         self.assertRaisesRegex(errors.AnsibleError,
@@ -391,6 +391,44 @@ class TestGetFileVaultSecret(unittest.TestCase):
                                '.*The vault password file %s was not found.*' % filename,
                                vault.get_file_vault_secret,
                                filename=filename)
+
+    def test_file_not_a_directory(self):
+        filename = '/dev'
+
+        self.assertRaisesRegex(errors.AnsibleError,
+                               '.*The vault password file %s is not a file.*' % filename,
+                               vault.get_file_vault_secret,
+                               filename=filename)
+
+    def test_file_is_symlink_to_file(self):
+        with tempfile.NamedTemporaryFile(suffix='symlink') as tmp_file:
+            symlink_filename = os.path.realpath(tmp_file.name)
+
+        try:
+            with tempfile.NamedTemporaryFile(suffix='target') as tmp_file:
+                target_filename = tmp_file.name
+                os.symlink(target_filename, symlink_filename)
+
+                secret = vault.get_file_vault_secret(filename=symlink_filename, loader=self.fake_loader)
+                self.assertIsInstance(secret, vault.FileVaultSecret)
+                self.assertEqual(secret.filename, symlink_filename)
+        finally:
+            os.remove(symlink_filename)
+
+    def test_file_is_symlink_to_directory(self):
+        with tempfile.NamedTemporaryFile(suffix='symlink') as tmp_file:
+            symlink_filename = os.path.realpath(tmp_file.name)
+
+        try:
+            with tempfile.TemporaryDirectory(suffix='target') as target_filename:
+                os.symlink(target_filename, symlink_filename)
+
+                self.assertRaisesRegex(errors.AnsibleError,
+                                       '.*The vault password file %s is not a file.*' % symlink_filename,
+                                       vault.get_file_vault_secret,
+                                       filename=symlink_filename)
+        finally:
+            os.remove(symlink_filename)
 
 
 class TestVaultIsEncrypted(unittest.TestCase):
