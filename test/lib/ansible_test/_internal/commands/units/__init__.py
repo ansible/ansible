@@ -261,6 +261,7 @@ def command_units(args: UnitsConfig) -> None:
             '--junit-xml', os.path.join(ResultType.JUNIT.path, 'python%s-%s-units.xml' % (python.version, test_context)),
             '--strict-markers',  # added in pytest 4.5.0
             '--rootdir', data_context().content.root,
+            '--confcutdir', data_context().content.root,  # avoid permission errors when running from an installed version and using pytest >= 8
         ]  # fmt:skip
 
         if not data_context().content.collection:
