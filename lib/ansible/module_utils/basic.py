@@ -311,26 +311,30 @@ def _load_params():
     inside it as a copy in your own code.
     '''
     global _ANSIBLE_ARGS
-    if _ANSIBLE_ARGS is not None:
+
+    try:
+        stdin_ready = bool(select.select([sys.stdin], [], [], 0)[0])
+    except Exception:
+        stdin_ready = False
+
+    if stdin_ready and (buffer := sys.stdin.buffer.read()):
+        _ANSIBLE_ARGS = buffer
+    elif len(sys.argv) > 1:
+        # Avoid tracebacks when locale is non-utf8
+        # We control the args and we pass them as utf8
+        if os.path.isfile(sys.argv[1]):
+            fd = open(sys.argv[1], 'rb')
+            buffer = fd.read()
+            fd.close()
+        else:
+            buffer = sys.argv[1].encode('utf-8', errors='surrogateescape')
+        _ANSIBLE_ARGS = buffer
+    elif _ANSIBLE_ARGS is not None:
         buffer = _ANSIBLE_ARGS
     elif ANSIBALLZ_PARAMS is not None:
         buffer = _ANSIBLE_ARGS = ANSIBALLZ_PARAMS
     else:
-        # debug overrides to read args from file or cmdline
-
-        # Avoid tracebacks when locale is non-utf8
-        # We control the args and we pass them as utf8
-        if len(sys.argv) > 1:
-            if os.path.isfile(sys.argv[1]):
-                fd = open(sys.argv[1], 'rb')
-                buffer = fd.read()
-                fd.close()
-            else:
-                buffer = sys.argv[1].encode('utf-8', errors='surrogateescape')
-        # default case, read from stdin
-        else:
-            buffer = sys.stdin.buffer.read()
-        _ANSIBLE_ARGS = buffer
+        buffer = ''
 
     try:
         params = json.loads(buffer.decode('utf-8'))
