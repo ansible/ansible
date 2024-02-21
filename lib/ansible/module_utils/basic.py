@@ -317,24 +317,26 @@ def _load_params():
     except Exception:
         stdin_ready = False
 
-    if stdin_ready and (buffer := sys.stdin.buffer.read()):
-        _ANSIBLE_ARGS = buffer
-    elif len(sys.argv) > 1:
-        # Avoid tracebacks when locale is non-utf8
-        # We control the args and we pass them as utf8
-        if os.path.isfile(sys.argv[1]):
-            fd = open(sys.argv[1], 'rb')
-            buffer = fd.read()
-            fd.close()
-        else:
-            buffer = sys.argv[1].encode('utf-8', errors='surrogateescape')
-        _ANSIBLE_ARGS = buffer
-    elif _ANSIBLE_ARGS is not None:
-        buffer = _ANSIBLE_ARGS
-    elif ANSIBALLZ_PARAMS is not None:
-        buffer = _ANSIBLE_ARGS = ANSIBALLZ_PARAMS
-    else:
-        buffer = ''
+    buffer = ''
+    if stdin_ready:
+        buffer = sys.stdin.buffer.read()
+
+    if not buffer:
+        if len(sys.argv) > 1:
+            # Avoid tracebacks when locale is non-utf8
+            # We control the args and we pass them as utf8
+            if os.path.isfile(sys.argv[1]):
+                fd = open(sys.argv[1], 'rb')
+                buffer = fd.read()
+                fd.close()
+            else:
+                buffer = sys.argv[1].encode('utf-8', errors='surrogateescape')
+        elif _ANSIBLE_ARGS is not None:
+            buffer = _ANSIBLE_ARGS
+        elif ANSIBALLZ_PARAMS is not None:
+            buffer = ANSIBALLZ_PARAMS
+
+    _ANSIBLE_ARGS = buffer
 
     try:
         params = json.loads(buffer.decode('utf-8'))
