@@ -358,6 +358,9 @@ class TestScriptIsClient(unittest.TestCase):
 
 
 class TestGetFileVaultSecret(unittest.TestCase):
+    def setUp(self):
+        self.fake_loader = DictDataLoader({})
+
     def test_file(self):
         password = 'some password'
 
@@ -365,9 +368,7 @@ class TestGetFileVaultSecret(unittest.TestCase):
         tmp_file.write(to_bytes(password))
         tmp_file.close()
 
-        fake_loader = DictDataLoader({tmp_file.name: 'sdfadf'})
-
-        secret = vault.get_file_vault_secret(filename=tmp_file.name, loader=fake_loader)
+        secret = vault.get_file_vault_secret(filename=tmp_file.name, loader=self.fake_loader)
         secret.load()
 
         os.unlink(tmp_file.name)
@@ -376,26 +377,20 @@ class TestGetFileVaultSecret(unittest.TestCase):
 
     def test_file_not_a_directory(self):
         filename = '/dev/null/foobar'
-        fake_loader = DictDataLoader({filename: 'sdfadf'})
 
         self.assertRaisesRegex(errors.AnsibleError,
                                '.*The vault password file %s was not found.*' % filename,
                                vault.get_file_vault_secret,
-                               filename=filename,
-                               loader=fake_loader)
+                               filename=filename)
 
     def test_file_not_found(self):
-        tmp_file = tempfile.NamedTemporaryFile()
-        filename = os.path.realpath(tmp_file.name)
-        tmp_file.close()
-
-        fake_loader = DictDataLoader({filename: 'sdfadf'})
+        with tempfile.NamedTemporaryFile() as tmp_file:
+            filename = os.path.realpath(tmp_file.name)
 
         self.assertRaisesRegex(errors.AnsibleError,
                                '.*The vault password file %s was not found.*' % filename,
                                vault.get_file_vault_secret,
-                               filename=filename,
-                               loader=fake_loader)
+                               filename=filename)
 
 
 class TestVaultIsEncrypted(unittest.TestCase):
