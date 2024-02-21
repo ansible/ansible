@@ -479,7 +479,7 @@ class TaskExecutor:
                 # Display the error from the conditional as well to prevent
                 # losing information useful for debugging.
                 display.v(to_text(e))
-                raise self._loop_eval_error  # pylint: disable=raising-bad-type
+                raise self._loop_eval_error from e  # pylint: disable=raising-bad-type
             raise
 
         # Not skipping, if we had loop error raised earlier we need to raise it now to halt the execution of this task
@@ -495,7 +495,7 @@ class TaskExecutor:
                     raiseit = False
                 elif isinstance(context_validation_error, AnsibleParserError):
                     # parser error, might be cause by undef too
-                    orig_exc = getattr(context_validation_error, 'orig_exc', None)
+                    orig_exc = context_validation_error.__cause__
                     if isinstance(orig_exc, AnsibleUndefinedVariable):
                         raiseit = False
             if raiseit:
