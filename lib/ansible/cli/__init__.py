@@ -426,9 +426,8 @@ class CLI(ABC):
             options.skip_tags = list(skip_tags)
 
         # Make sure path argument doesn't have a backslash
-        if hasattr(options, 'action') and (options.action == 'install' or options.action == 'download'):
-            if hasattr(options, 'args') and len(options.args) > 0:
-                options.args = [path.rstrip("/") for path in options.args]
+        if hasattr(options, 'action') and options.action in ['install', 'download'] and hasattr(options, 'args'):
+            options.args = [path.rstrip("/") for path in options.args]
 
         # process inventory options except for CLIs that require their own processing
         if hasattr(options, 'inventory') and not self.SKIP_INVENTORY_DEFAULTS:
