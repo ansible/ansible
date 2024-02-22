@@ -73,7 +73,8 @@
     recurse: true
   register: r
 
-- assert:
+- name: verify that RPM cache is cleared after installation as keepcache is off by default
+  assert:
     that:
       - r.matched == 0
 
