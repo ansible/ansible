@@ -1438,8 +1438,10 @@ class DnfModule(YumDnf):
 
             if self.with_modules:
                 self.module_base = dnf.module.module_base.ModuleBase(self.base)
-
-            self.ensure()
+            try:
+                self.ensure()
+            finally:
+                self.base.close()
 
 
 def main():
