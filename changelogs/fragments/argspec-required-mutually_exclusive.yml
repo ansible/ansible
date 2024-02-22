@@ -1,12 +1,12 @@
 deprecated_features:
-- "For Python modules, the behavior of ``required_by`` to treat an explicit value of ``none`` as 'not specified' is deprecated.
-   From ansible-base 2.15 on, an explicit ``none`` will no longer be treated as 'not specified'. Then the behavior of ``required_by``
-   will be the same as for all other ``required`` and ``required_*`` checks."
+- >-
+  The ``required_by`` feature for Python modules treats an explicit parameter passed in as ``None`` as "not specified".
+  This is deprecated because it is inconsistent with the other ``required`` and ``required_*`` checks.
+- >-
+  The ``required``, ``required_if``, ``required_together``, ``required_one_of``, and ``required_by`` checks for Python modules
+  warn when a module parameter is passed in as ``None``, but still accept that value.
 
-minor_changes:
-- "For Python modules, the checks for ``required``, ``required_if``, ``required_together``, ``required_one_of``, and ``required_by`` warn when an explicit ``none`` value is passed for them, but still accept that value.
-   This behavior will be deprecated in ansible-base 2.12 and disabled in ansible-base 2.16.
-
-   Module authors can explicitly request the old behavior (explicit ``none`` counts as specified) by setting ``allow_none_value=True`` in the argument spec for that option,
-   and can explicitly request the new behavior  from ansible-base 2.16 (explicit ``none`` counts as error) by setting ``allow_none_value=False`` in the argument spec for that option
-   (https://github.com/ansible/ansible/issues/69190)."
+  The module can opt into the intended behavior by setting ``allow_none_value`` to ``True`` or ``False`` for the option in the
+  argument spec.
+  
+  (https://github.com/ansible/ansible/issues/69190)

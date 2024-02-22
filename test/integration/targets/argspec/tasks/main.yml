@@ -623,13 +623,13 @@
     that:
       - argspec_required_fail is failed
       - argspec_required_fail_none is succeeded
-      - "'required parameter required is none (null)' in argspec_required_fail_none.warnings"
+      - "'required parameter required is none (null)' == argspec_required_fail_none.deprecations[0]['msg']"
 
       - argspec_required_one_of_fail is failed
       - argspec_required_one_of_fail_none is succeeded
-      - "'required parameter required_one_of_one is none (null)' in argspec_required_one_of_fail_none.warnings"
+      - "'required parameter required_one_of_one is none (null)' == argspec_required_one_of_fail_none.deprecations[0]['msg']"
 
-      - "'Module did not set no_log for maybe_password' in argspec_required_one_of_explicitly_allowed.warnings and argspec_required_one_of_explicitly_allowed.warnings | length == 1"
+      - argspec_required_one_of_explicitly_allowed.deprecations is undefined
       - argspec_required_one_of_explicitly_disallowed is failed
       - argspec_required_one_of_explicitly_disallowed.msg == 'required parameter required_one_of_four cannot be none (null)'
 
@@ -645,7 +645,7 @@
 
       - argspec_required_if_fail is failed
       - argspec_required_if_fail_none is succeeded
-      - "'required parameter path is none (null)' in argspec_required_if_fail_none.warnings"
+      - "'required parameter path is none (null)' == argspec_required_if_fail_none.deprecations[0]['msg']"
 
       - argspec_mutually_exclusive_fail is failed
       - argspec_mutually_exclusive_fail_none is failed
@@ -668,15 +668,15 @@
 
       - argspec_required_together_fail is failed
       - argspec_required_together_fail_none is succeeded
-      - "'required parameter other is none (null) found in required_together' in argspec_required_together_fail_none.warnings"
+      - "'required parameter other is none (null) found in required_together' == argspec_required_together_fail_none.deprecations[0]['msg']"
 
       - argspec_required_if_fail_2 is failed
       - argspec_required_if_fail_2_none is succeeded
-      - "'required parameter other is none (null) found in required_if' in argspec_required_if_fail_2_none.warnings"
+      - "'required parameter other is none (null) found in required_if' == argspec_required_if_fail_2_none.deprecations[0]['msg']"
 
       - argspec_required_one_of_fail_2 is failed
       - argspec_required_one_of_fail_2_none is succeeded
-      - "'required parameter thing is none (null) found in required_one_of' in argspec_required_one_of_fail_2_none.warnings"
+      - "'required parameter thing is none (null) found in required_one_of' == argspec_required_one_of_fail_2_none.deprecations[0]['msg']"
 
       - argspec_required_by_fail_2 is failed
       - argspec_required_by_fail_2_none_1 is failed
@@ -700,7 +700,7 @@
 
       - argspec_fail_required_together_2 is failed
       - argspec_fail_required_together_2_none is succeeded
-      - "'required parameter required_together_two is none (null)' in argspec_fail_required_together_2_none.warnings"
+      - "'required parameter required_together_two is none (null)' == argspec_fail_required_together_2_none.deprecations[0]['msg']"
 
       - >-
         argspec_suboptions_list_no_elements.suboptions_list_no_elements.0 == {'thing': 'foo'}

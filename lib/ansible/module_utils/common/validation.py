@@ -13,7 +13,7 @@ from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.text.converters import jsonify
 from ansible.module_utils.common.text.formatters import human_to_bytes
-from ansible.module_utils.common.warnings import warn, deprecate
+from ansible.module_utils.common.warnings import deprecate
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import (
     binary_type,
@@ -387,7 +387,7 @@ def check_required_none(required_options, argument_spec, parameters, options_con
         if allow_none_value is False:
             raise TypeError(to_native(msg))
         else:
-            warn(msg)
+            deprecate(msg, version='2.20')
 
 
 def check_missing_parameters(parameters, required_parameters=None):
