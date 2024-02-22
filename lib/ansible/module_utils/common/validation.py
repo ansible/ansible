@@ -195,11 +195,8 @@ def check_required_by(requirements, parameters, options_context=None, add_requir
     if requirements is None:
         return result
 
-    deprecation_fmt = (
-        'The explicit none (null) value specified to %s' +
-        (' found in {0}'.format(' -> '.join(options_context)) if options_context else '') +
-        ' will not be treated as "not specified" in the future'
-    )
+    found_in = " found in %s" % " -> ".join(options_context) if options_context else ''
+    deprecation_fmt = f'The explicit none (null) value specified to %s{found_in} will not be treated as "not specified" in the future'
 
     for (key, value) in requirements.items():
         if key not in parameters or parameters[key] is None:
@@ -377,13 +374,8 @@ def check_required_none(required_options, argument_spec, parameters, options_con
         if allow_none_value:
             continue
 
-        if allow_none_value is False:
-            msg = "required parameter %s cannot be none (null)" % (required_option, )
-        else:
-            msg = "required parameter %s is none (null)" % (required_option, )
-        if options_context:
-            msg += " found in %s" % " -> ".join(options_context)
-
+        found_in = " found in %s" % " -> ".join(options_context) if options_context else ''
+        msg = f"required parameter {required_option}{found_in} {'cannot be' if allow_none_value is False else 'is'} none (null)"
         if allow_none_value is False:
             raise TypeError(to_native(msg))
         else:
