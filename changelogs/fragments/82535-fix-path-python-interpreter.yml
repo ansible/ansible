@@ -1,0 +1,3 @@
+bugfixes:
+  - plugins/shell - The fix ensures correct handling of path to python interpreter by use of “shlex.join()” and removal of empty strings from “cmd_path”
+(https://github.com/ansible/ansible/issues/82535).
