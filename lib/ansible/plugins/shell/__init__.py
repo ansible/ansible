@@ -207,7 +207,6 @@ class ShellBase(AnsiblePlugin):
         return 'echo %spwd%s' % (self._SHELL_SUB_LEFT, self._SHELL_SUB_RIGHT)
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None):
-        
         cmd_parts = []
         if shebang:
             shebang = shebang.replace("#!", "").strip()
