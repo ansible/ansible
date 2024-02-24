@@ -494,6 +494,31 @@ def flatten(mylist, levels=None, skip_nulls=True):
 
     return ret
 
+def dict_normalize(d, **kwargs):
+    level = kwargs.pop('level', 1)
+    separator = kwargs.pop('separator', '/')
+    if kwargs:
+        raise AnsibleFilterError("'separator' and 'level' are the only valid keyword arguments")
+    if not isinstance(d, dict):
+        raise AnsibleError('Variable must be a dict! You pass %s.' % type(d))
+    df = json_normalize(d, sep = separator)
+    normalized_dict = df.to_dict('records')[0] # Return {key: value}
+    if level == 1:
+        return normalized_dict
+    elif level == 2:
+        result_dict = {}
+        for normalized_key, normalized_value in normalized_dict.items():
+            try:
+                parent_key, child_key = normalized_key.rsplit(separator, 1)
+                if parent_key in result_dict:
+                    result_dict[parent_key] = result_dict[parent_key] | {child_key: normalized_value}
+                else:
+                    result_dict[parent_key] = {child_key: normalized_value}
+            except:
+                result_dict[normalized_key] = normalized_value
+        return(result_dict)
+    else:
+        raise AnsibleFilterError("Unknown 'level' (%s), it must be 1 or 2" % level)
 
 def subelements(obj, subelements, skip_missing=False):
     '''Accepts a dict or list of dicts, and a dotted accessor and produces a product
@@ -689,4 +714,5 @@ class FilterModule(object):
             'items2dict': list_of_dict_key_value_elements_to_dict,
             'subelements': subelements,
             'split': partial(unicode_wrap, text_type.split),
+            'dict_normalize': dict_normalize,
         }
