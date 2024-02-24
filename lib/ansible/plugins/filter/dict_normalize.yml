@@ -1,0 +1,40 @@
+DOCUMENTATION:
+  name: dict_normalize
+  author: Vitaly Kargin (@superset1)
+  version_added: '2.17'
+  short_description: Normalize a multi-level dictionary with nested dictionaries into a single-level dictionary.
+  description:
+    - Converts an Ansible dict with nested dicts into one-level dict.
+    - Filter has 2 levels.
+    - Level 1 simplifies iterating through multi-level dictionaries using loops.
+    - Level 2 is useful, for example, for generating a Vault URL from dictionary keys and put value as dict.
+    - It helps to iterate through a multi-level dictionary using loops.
+    - This filter uses pandas.json_normalize function.
+  positional: _input
+  options:
+    _input:
+      description: A variable or expression that returns a dict.
+      type: dict
+      required: true
+    level:
+      description: Level 1 returns value like string, level 2 returns value like dict.
+      type: int
+      default: '1'
+    separator:
+      description: The separator to be used between dictionary keys.
+      type: str
+      default: '/'
+
+EXAMPLES: |
+  # dict1: {'a':1, 'b':{'bb':2}, 'c':{'cc1':{'ccc1':3},'cc2':{'ccc2':4}}}
+  {{ dict1 | dict_normalize(separator="_", level=1) }}
+  # => {"a":1,"b_bb":2,"c_cc1_ccc1":3,"c_cc2_ccc2":4}
+
+  # dict2: {'secret1':{'key1':'value1'}, 'path':{'sub_path':{'secret2':{'key2':'value2'},'secret3':{'key3':'value3','key4':'value4'}}}}
+  {{ dict2 | dict_normalize(level=2) }}
+  # => {"secret1":{"key1":"value1"},"path/sub_path/secret2":{"key2":"value2"},"path/sub_path/secret3":{"key3":"value3","key4":"value4"}}
+
+RETURN:
+  _value:
+    description: The single-level dictionary.
+    type: dict
