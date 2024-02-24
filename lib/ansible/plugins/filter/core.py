@@ -501,8 +501,8 @@ def dict_normalize(d, **kwargs):
         raise AnsibleFilterError("'separator' and 'level' are the only valid keyword arguments")
     if not isinstance(d, dict):
         raise AnsibleError('Variable must be a dict! You pass %s.' % type(d))
-    df = json_normalize(d, sep = separator)
-    normalized_dict = df.to_dict('records')[0] # Return {key: value}
+    jn = json_normalize(d, sep = separator)
+    normalized_dict = jn.to_dict('records')[0] # Return {key: value}
     if level == 1:
         return normalized_dict
     elif level == 2:
