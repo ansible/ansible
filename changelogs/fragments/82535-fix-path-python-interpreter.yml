@@ -1,3 +1,4 @@
+---
 bugfixes:
   - >-
     plugins/shell - The fix ensures Python interpreter path is handled
