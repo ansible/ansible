@@ -900,6 +900,17 @@ releases:
     - role_fixes.yml
     - unsafe-intern.yml
     release_date: '2024-01-22'
+  2.16.4:
+    changes:
+      release_summary: '| Release Date: 2024-02-26
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+    codename: All My Love
+    fragments:
+    - 2.16.4_summary.yaml
+    release_date: '2024-02-26'
   2.16.4rc1:
     changes:
       bugfixes:
