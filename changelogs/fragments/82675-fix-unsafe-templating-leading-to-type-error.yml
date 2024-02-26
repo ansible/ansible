@@ -1,0 +1,2 @@
+bugfixes:
+  - template - Fix error when templating an unsafe string which corresponds to an invalid type in Python (https://github.com/ansible/ansible/issues/82600).
