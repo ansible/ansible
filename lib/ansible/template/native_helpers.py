@@ -65,7 +65,7 @@ def ansible_eval_concat(nodes):
                     )
                 )
             )
-        except (ValueError, SyntaxError, MemoryError):
+        except (TypeError, ValueError, SyntaxError, MemoryError):
             pass
 
     return out
@@ -127,7 +127,7 @@ def ansible_native_concat(nodes):
             # parse the string ourselves without removing leading spaces/tabs.
             ast.parse(out, mode='eval')
         )
-    except (ValueError, SyntaxError, MemoryError):
+    except (TypeError, ValueError, SyntaxError, MemoryError):
         return out
 
     if isinstance(evaled, string_types):
