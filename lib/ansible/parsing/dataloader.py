@@ -11,6 +11,8 @@ import re
 import tempfile
 import typing as t
 
+from importlib.util import module_from_spec, spec_from_file_location
+
 from ansible import constants as C
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible.module_utils.basic import is_executable
@@ -79,7 +81,7 @@ class DataLoader:
 
     def load_from_file(self, file_name: str, cache: str = 'all', unsafe: bool = False, json_only: bool = False) -> t.Any:
         '''
-        Loads data from a file, which can contain either JSON or YAML.
+        Loads data from a file, which can contain JSON, Python, or YAML.
 
         :param file_name: The name of the file to load data from.
         :param cache: Options for caching: none|all|vaulted
@@ -93,6 +95,16 @@ class DataLoader:
 
         # Log the file being loaded
         display.debug("Loading data from %s" % file_name)
+
+        # Attempt Python import
+        if file_name.endswith('.py'):
+            try:
+                specification = spec_from_file_location('', file_name)
+                module = module_from_spec(specification)
+                specification.loader.exec_module(module)
+                return module.playbook
+            except Exception as e:
+                display.warning("Python import of '%s' failed: %s" % (file_name, to_native(e)))
 
         # Check if the file has been cached and use the cached data if available
         if cache != 'none' and file_name in self._FILE_CACHE:
