@@ -270,6 +270,16 @@
     path: '{{ galaxy_dir }}/ansible_collections/ansible_test/verify/plugins/modules/test_new_dir'
     state: directory
 
+- name: create a new ignore directory
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/ansible_test/verify/plugins/modules/__pycache__'
+    state: directory
+
+- name: create a new ignore file
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/ansible_test/verify/plugins/modules/__pycache__/test.cpython-311.pyc'
+    state: touch
+
 - name: verify modified collection locally-only (should fail)
   command: ansible-galaxy collection verify --offline ansible_test.verify
   register: verify
@@ -282,6 +292,7 @@
       - "'plugins/modules/test_module.py' in verify.stdout"
       - "'plugins/modules/test_new_file.py' in verify.stdout"
       - "'plugins/modules/test_new_dir' in verify.stdout"
+      - "'plugins/modules/__pycache__/test.cpython-311.pyc' not in verify.stdout"
 
 # TODO: add a test for offline Galaxy signature metadata
 
