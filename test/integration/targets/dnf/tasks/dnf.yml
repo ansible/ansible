@@ -67,6 +67,17 @@
     update_cache: True
   register: dnf_result
 
+- find:
+    paths: /var/cache/dnf
+    patterns: "*.rpm"
+    recurse: true
+  register: r
+
+- name: verify that RPM cache is cleared after installation as keepcache is off by default
+  assert:
+    that:
+      - r.matched == 0
+
 - name: check sos with rpm
   shell: rpm -q sos
   failed_when: False

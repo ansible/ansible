@@ -1,0 +1,2 @@
+bugfixes:
+  - "dnf - fix an issue when cached RPMs were left in the cache directory even when the keepcache setting was unset (https://github.com/ansible/ansible/issues/81954)"
