@@ -1,0 +1,3 @@
+---
+bugfixes:
+- galaxy - skip verification for unwanted Python compiled bytecode files (https://github.com/ansible/ansible/issues/81628).

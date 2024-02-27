@@ -333,11 +333,18 @@ def verify_local_collection(local_collection, remote_collection, artifacts_manag
                 os.path.join(b_collection_path, to_bytes(name, errors='surrogate_or_strict'))
             )
 
+    b_ignore_patterns = [
+        b'*.pyc',
+    ]
+
     # Find any paths not in the FILES.json
     for root, dirs, files in os.walk(b_collection_path):
         for name in files:
             full_path = os.path.join(root, name)
             path = to_text(full_path[len(b_collection_path) + 1::], errors='surrogate_or_strict')
+            if any(fnmatch.fnmatch(full_path, b_pattern) for b_pattern in b_ignore_patterns):
+                display.v("Ignoring verification for %s" % full_path)
+                continue
 
             if full_path not in collection_files:
                 modified_content.append(
