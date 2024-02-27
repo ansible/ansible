@@ -70,12 +70,14 @@ options:
       - The type of the value supplied.
       - It is highly recommended to add C(no_log=True) to task while specifying O(vtype=password).
       - V(seen) was added in Ansible 2.2.
+      - After Ansible 2.17, user can specify C(value) as a list, if C(vtype) is set as V(multiselect).
     type: str
     choices: [ boolean, error, multiselect, note, password, seen, select, string, text, title ]
   value:
     description:
-      -  Value to set the configuration to.
-    type: str
+      - Value to set the configuration to.
+      - After Ansible 2.17, C(value) is of type 'raw'.
+    type: raw
     aliases: [ answer ]
   unseen:
     description:
@@ -184,7 +186,7 @@ def main():
             name=dict(type='str', required=True, aliases=['pkg']),
             question=dict(type='str', aliases=['selection', 'setting']),
             vtype=dict(type='str', choices=['boolean', 'error', 'multiselect', 'note', 'password', 'seen', 'select', 'string', 'text', 'title']),
-            value=dict(type='str', aliases=['answer']),
+            value=dict(type='raw', aliases=['answer']),
             unseen=dict(type='bool', default=False),
         ),
         required_together=(['question', 'vtype', 'value'],),
@@ -217,15 +219,19 @@ def main():
             if vtype == 'boolean':
                 value = to_text(value).lower()
                 existing = to_text(prev[question]).lower()
-
-            if vtype == 'password':
+            elif vtype == 'password':
                 existing = get_password_value(module, pkg, question, vtype)
+            elif vtype == 'multiselect' and isinstance(value, list):
+                value = sorted(value)
+                existing = sorted([i.strip() for i in existing.split(",")])
 
             if value != existing:
                 changed = True
 
     if changed:
         if not module.check_mode:
+            if vtype == 'multiselect' and isinstance(value, list):
+                value = ", ".join(value)
             rc, msg, e = set_selection(module, pkg, question, vtype, value, unseen)
             if rc:
                 module.fail_json(msg=e)

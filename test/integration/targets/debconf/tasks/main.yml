@@ -66,6 +66,68 @@
       assert:
           that:
               - not debconf_test2.changed
+
+    - name: Multiselect value
+      debconf:
+        name: libnss-ldapd
+        question: libnss-ldapd/nsswitch
+        vtype: multiselect
+        value:
+          - passwd
+          - group
+          - shadow
+      register: debconf_multiselect_test
+
+    - name: validate results for multiselect test
+      assert:
+        that:
+          - debconf_multiselect_test.changed
+
+    - name: Multiselect value again (idempotency)
+      debconf:
+        name: libnss-ldapd
+        question: libnss-ldapd/nsswitch
+        vtype: multiselect
+        value:
+          - passwd
+          - group
+          - shadow
+      register: debconf_multiselect_test_idem
+
+    - name: validate results for multiselect test (idempotency)
+      assert:
+        that:
+          - not debconf_multiselect_test_idem.changed
+
+    - name: Multiselect value again to check if ordered value
+      debconf:
+        name: libnss-ldapd
+        question: libnss-ldapd/nsswitch
+        vtype: multiselect
+        value:
+          - group
+          - shadow
+          - passwd
+      register: debconf_multiselect_test_idem_2
+
+    - name: validate results for multiselect test for ordered value
+      assert:
+        that:
+          - not debconf_multiselect_test_idem_2.changed
+
+    - name: Multiselect value again to check backward compatibility
+      debconf:
+        name: libnss-ldapd
+        question: libnss-ldapd/nsswitch
+        vtype: multiselect
+        value: group, shadow, passwd
+      register: debconf_multiselect_test_idem_3
+
+    - name: validate results for multiselect test for backward compatibility
+      assert:
+        that:
+          - debconf_multiselect_test_idem_3.changed
+
   always:
     - name: uninstall debconf-utils
       apt:
