@@ -125,7 +125,7 @@ EXAMPLES = r'''
 
 RETURN = r'''#'''
 
-from ansible.module_utils.common.text.converters import to_text
+from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -222,7 +222,10 @@ def main():
             elif vtype == 'password':
                 existing = get_password_value(module, pkg, question, vtype)
             elif vtype == 'multiselect' and isinstance(value, list):
-                value = sorted(value)
+                try:
+                    value = sorted(value)
+                except TypeError as exc:
+                    module.fail_json(msg="Invalid value provided for 'multiselect': %s" % to_native(exc))
                 existing = sorted([i.strip() for i in existing.split(",")])
 
             if value != existing:
@@ -231,7 +234,10 @@ def main():
     if changed:
         if not module.check_mode:
             if vtype == 'multiselect' and isinstance(value, list):
-                value = ", ".join(value)
+                try:
+                    value = ", ".join(value)
+                except TypeError as exc:
+                    module.fail_json(msg="Invalid value provided for 'multiselect': %s" % to_native(exc))
             rc, msg, e = set_selection(module, pkg, question, vtype, value, unseen)
             if rc:
                 module.fail_json(msg=e)

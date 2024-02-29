@@ -99,7 +99,7 @@
         that:
           - not debconf_multiselect_test_idem.changed
 
-    - name: Multiselect value again to check if ordered value
+    - name: Multiselect value to check if ordered value
       debconf:
         name: libnss-ldapd
         question: libnss-ldapd/nsswitch
@@ -115,7 +115,7 @@
         that:
           - not debconf_multiselect_test_idem_2.changed
 
-    - name: Multiselect value again to check backward compatibility
+    - name: Multiselect value to check backward compatibility
       debconf:
         name: libnss-ldapd
         question: libnss-ldapd/nsswitch
@@ -127,6 +127,24 @@
       assert:
         that:
           - debconf_multiselect_test_idem_3.changed
+
+    - name: Multiselect value to check if value contains invalid user input
+      debconf:
+        name: libnss-ldapd
+        question: libnss-ldapd/nsswitch
+        vtype: multiselect
+        value:
+          - group
+          - 1
+          - passwd
+      register: debconf_multiselect_test_idem_4
+      ignore_errors: yes
+
+    - name: validate results for multiselect test for invalid value
+      assert:
+        that:
+          - not debconf_multiselect_test_idem_4.changed
+          - '"Invalid value provided" in debconf_multiselect_test_idem_4.msg'
 
   always:
     - name: uninstall debconf-utils
