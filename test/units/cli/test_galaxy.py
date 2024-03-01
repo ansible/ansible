@@ -37,6 +37,7 @@ from ansible.cli.galaxy import GalaxyCLI
 from ansible.galaxy import collection
 from ansible.galaxy.api import GalaxyAPI
 from ansible.errors import AnsibleError
+from ansible.module_utils.common.file import _READ_WRITE_READ_ONLY_PERM_BITS
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
@@ -660,7 +661,7 @@ def test_collection_build(collection_artifact):
             if member.isdir() or member.name == 'runme.sh':
                 assert member.mode == 0o0755
             else:
-                assert member.mode == 0o0644
+                assert member.mode == _READ_WRITE_READ_ONLY_PERM_BITS
 
         manifest_file = tar.extractfile(tar_members[0])
         try:

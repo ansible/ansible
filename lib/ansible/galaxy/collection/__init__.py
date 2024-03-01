@@ -124,6 +124,7 @@ from ansible.galaxy.dependency_resolution.dataclasses import (
 )
 from ansible.galaxy.dependency_resolution.versioning import meets_requirements
 from ansible.plugins.loader import get_all_plugin_loaders
+from ansible.module_utils.common.file import _EXEC_PERM_BITS, _READ_WRITE_READ_ONLY_PERM_BITS
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.yaml import yaml_dump
@@ -1317,7 +1318,7 @@ def _build_collection_tar(
                 tar_info = tarfile.TarInfo(name)
                 tar_info.size = len(b)
                 tar_info.mtime = int(time.time())
-                tar_info.mode = 0o0644
+                tar_info.mode = _READ_WRITE_READ_ONLY_PERM_BITS
                 tar_file.addfile(tarinfo=tar_info, fileobj=b_io)
 
             for file_info in file_manifest['files']:  # type: ignore[union-attr]
@@ -1331,7 +1332,7 @@ def _build_collection_tar(
                 def reset_stat(tarinfo):
                     if tarinfo.type != tarfile.SYMTYPE:
                         existing_is_exec = tarinfo.mode & stat.S_IXUSR
-                        tarinfo.mode = 0o0755 if existing_is_exec or tarinfo.isdir() else 0o0644
+                        tarinfo.mode = 0o0755 if existing_is_exec or tarinfo.isdir() else _READ_WRITE_READ_ONLY_PERM_BITS
                     tarinfo.uid = tarinfo.gid = 0
                     tarinfo.uname = tarinfo.gname = ''
 
@@ -1385,7 +1386,7 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
         with open(b_path, 'wb') as file_obj, BytesIO(b) as b_io:
             shutil.copyfileobj(b_io, file_obj)
 
-        os.chmod(b_path, 0o0644)
+        os.chmod(b_path, _READ_WRITE_READ_ONLY_PERM_BITS)
 
     base_directories = []
     for file_info in sorted(file_manifest['files'], key=lambda x: x['name']):
@@ -1396,7 +1397,7 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
         dest_file = os.path.join(b_collection_output, to_bytes(file_info['name'], errors='surrogate_or_strict'))
 
         existing_is_exec = os.stat(src_file, follow_symlinks=False).st_mode & stat.S_IXUSR
-        mode = 0o0755 if existing_is_exec else 0o0644
+        mode = 0o0755 if existing_is_exec else _READ_WRITE_READ_ONLY_PERM_BITS
 
         # ensure symlinks to dirs are not translated to empty dirs
         if os.path.isdir(src_file) and not os.path.islink(src_file):
@@ -1552,7 +1553,7 @@ def write_source_metadata(collection, b_collection_path, artifacts_manager):
         os.mkdir(b_info_dir, mode=0o0755)
         with open(b_info_dest, mode='w+b') as fd:
             fd.write(b_yaml_source_data)
-        os.chmod(b_info_dest, 0o0644)
+        os.chmod(b_info_dest, _READ_WRITE_READ_ONLY_PERM_BITS)
     except Exception:
         # Ensure we don't leave the dir behind in case of a failure.
         if os.path.isdir(b_info_dir):
@@ -1737,9 +1738,9 @@ def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
 
             # Default to rw-r--r-- and only add execute if the tar file has execute.
             tar_member = tar.getmember(to_native(filename, errors='surrogate_or_strict'))
-            new_mode = 0o644
+            new_mode = _READ_WRITE_READ_ONLY_PERM_BITS
             if stat.S_IMODE(tar_member.mode) & stat.S_IXUSR:
-                new_mode |= 0o0111
+                new_mode |= _EXEC_PERM_BITS
 
             os.chmod(b_dest_filepath, new_mode)
 

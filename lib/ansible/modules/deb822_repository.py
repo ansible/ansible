@@ -236,6 +236,7 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.common.file import _READ_WRITE_READ_ONLY_PERM_BITS
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.six import raise_from  # type: ignore[attr-defined]
@@ -353,7 +354,7 @@ def write_signed_by_key(module, v, slug):
             module.atomic_move(tmpfile, filename)
         changed |= True
 
-    changed |= module.set_mode_if_different(filename, 0o0644, False)
+    changed |= module.set_mode_if_different(filename, _READ_WRITE_READ_ONLY_PERM_BITS, False)
 
     return changed, filename, None
 
