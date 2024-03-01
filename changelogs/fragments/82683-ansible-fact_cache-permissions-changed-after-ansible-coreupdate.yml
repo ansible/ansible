@@ -1,0 +1,2 @@
+bugfixes:
+  - Fixes permission for cache json file from 600 to 644 (https://github.com/ansible/ansible/issues/82683).
