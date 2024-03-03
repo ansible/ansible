@@ -111,6 +111,7 @@ notes:
   - Option O(ignore:follow) has been removed in Ansible 2.5, because this module modifies the contents of the file
     so O(ignore:follow=no) does not make sense.
   - When more than one block should be handled in one file you must change the O(marker) per task.
+  - Option O(validate) is not considered when C(backup) is set to C(no).
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.files
