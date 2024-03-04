@@ -14,7 +14,7 @@ from itertools import product
 import pytest
 
 from ansible.module_utils import basic
-from ansible.module_utils.common.file import _READ_WRITE_READ_ONLY_PERM_BITS
+from ansible.module_utils.common.file import FilePermissions
 
 
 @pytest.fixture
@@ -64,7 +64,7 @@ def atomic_mocks(mocker, monkeypatch):
 @pytest.fixture
 def fake_stat(mocker):
     stat1 = mocker.MagicMock()
-    stat1.st_mode = _READ_WRITE_READ_ONLY_PERM_BITS
+    stat1.st_mode = FilePermissions.S_IRWU_RG_RO
     stat1.st_uid = 0
     stat1.st_gid = 0
     stat1.st_flags = 0

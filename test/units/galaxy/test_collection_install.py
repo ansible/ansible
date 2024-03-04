@@ -24,7 +24,7 @@ from ansible.cli.galaxy import GalaxyCLI
 from ansible.errors import AnsibleError
 from ansible.galaxy import collection, api, dependency_resolution
 from ansible.galaxy.dependency_resolution.dataclasses import Candidate, Requirement
-from ansible.module_utils.common.file import _READ_WRITE_READ_ONLY_PERM_BITS
+from ansible.module_utils.common.file import FilePermissions
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.process import get_bin_path
 from ansible.utils import context_objects as co
@@ -346,7 +346,7 @@ def test_build_requirement_from_tar_no_manifest(tmp_path_factory):
         b_io = BytesIO(json_data)
         tar_info = tarfile.TarInfo('FILES.json')
         tar_info.size = len(json_data)
-        tar_info.mode = _READ_WRITE_READ_ONLY_PERM_BITS
+        tar_info.mode = FilePermissions.S_IRWU_RG_RO
         tfile.addfile(tarinfo=tar_info, fileobj=b_io)
 
     concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(test_dir, validate_certs=False)
@@ -370,7 +370,7 @@ def test_build_requirement_from_tar_no_files(tmp_path_factory):
         b_io = BytesIO(json_data)
         tar_info = tarfile.TarInfo('MANIFEST.json')
         tar_info.size = len(json_data)
-        tar_info.mode = _READ_WRITE_READ_ONLY_PERM_BITS
+        tar_info.mode = FilePermissions.S_IRWU_RG_RO
         tfile.addfile(tarinfo=tar_info, fileobj=b_io)
 
     concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(test_dir, validate_certs=False)
@@ -388,7 +388,7 @@ def test_build_requirement_from_tar_invalid_manifest(tmp_path_factory):
         b_io = BytesIO(json_data)
         tar_info = tarfile.TarInfo('MANIFEST.json')
         tar_info.size = len(json_data)
-        tar_info.mode = _READ_WRITE_READ_ONLY_PERM_BITS
+        tar_info.mode = FilePermissions.S_IRWU_RG_RO
         tfile.addfile(tarinfo=tar_info, fileobj=b_io)
 
     concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(test_dir, validate_certs=False)
@@ -785,9 +785,9 @@ def test_install_collection(collection_artifact, monkeypatch):
     assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
                             b'runme.sh']
 
-    assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'plugins')).st_mode) == 0o0755
-    assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'README.md')).st_mode) == _READ_WRITE_READ_ONLY_PERM_BITS
-    assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'runme.sh')).st_mode) == 0o0755
+    assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'plugins')).st_mode) == FilePermissions.S_IRWXU_RXG_RXO
+    assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'README.md')).st_mode) == FilePermissions.S_IRWU_RG_RO
+    assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'runme.sh')).st_mode) == FilePermissions.S_IRWXU_RXG_RXO
 
     assert mock_display.call_count == 2
     assert mock_display.mock_calls[0][1][0] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" \

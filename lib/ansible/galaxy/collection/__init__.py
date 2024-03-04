@@ -124,7 +124,7 @@ from ansible.galaxy.dependency_resolution.dataclasses import (
 )
 from ansible.galaxy.dependency_resolution.versioning import meets_requirements
 from ansible.plugins.loader import get_all_plugin_loaders
-from ansible.module_utils.common.file import _EXEC_PERM_BITS, _READ_WRITE_READ_ONLY_PERM_BITS
+from ansible.module_utils.common.file import FilePermissions
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.yaml import yaml_dump
@@ -1318,7 +1318,7 @@ def _build_collection_tar(
                 tar_info = tarfile.TarInfo(name)
                 tar_info.size = len(b)
                 tar_info.mtime = int(time.time())
-                tar_info.mode = _READ_WRITE_READ_ONLY_PERM_BITS
+                tar_info.mode = FilePermissions.S_IRWU_RG_RO
                 tar_file.addfile(tarinfo=tar_info, fileobj=b_io)
 
             for file_info in file_manifest['files']:  # type: ignore[union-attr]
@@ -1332,7 +1332,7 @@ def _build_collection_tar(
                 def reset_stat(tarinfo):
                     if tarinfo.type != tarfile.SYMTYPE:
                         existing_is_exec = tarinfo.mode & stat.S_IXUSR
-                        tarinfo.mode = 0o0755 if existing_is_exec or tarinfo.isdir() else _READ_WRITE_READ_ONLY_PERM_BITS
+                        tarinfo.mode = FilePermissions.S_IRWXU_RXG_RXO if existing_is_exec or tarinfo.isdir() else FilePermissions.S_IRWU_RG_RO
                     tarinfo.uid = tarinfo.gid = 0
                     tarinfo.uname = tarinfo.gname = ''
 
@@ -1374,7 +1374,7 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
 
     This should follow the same pattern as _build_collection_tar.
     """
-    os.makedirs(b_collection_output, mode=0o0755)
+    os.makedirs(b_collection_output, mode=FilePermissions.S_IRWXU_RXG_RXO)
 
     files_manifest_json = to_bytes(json.dumps(file_manifest, indent=True), errors='surrogate_or_strict')
     collection_manifest['file_manifest_file']['chksum_sha256'] = secure_hash_s(files_manifest_json, hash_func=sha256)
@@ -1386,7 +1386,7 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
         with open(b_path, 'wb') as file_obj, BytesIO(b) as b_io:
             shutil.copyfileobj(b_io, file_obj)
 
-        os.chmod(b_path, _READ_WRITE_READ_ONLY_PERM_BITS)
+        os.chmod(b_path, FilePermissions.S_IRWU_RG_RO)
 
     base_directories = []
     for file_info in sorted(file_manifest['files'], key=lambda x: x['name']):
@@ -1397,11 +1397,11 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
         dest_file = os.path.join(b_collection_output, to_bytes(file_info['name'], errors='surrogate_or_strict'))
 
         existing_is_exec = os.stat(src_file, follow_symlinks=False).st_mode & stat.S_IXUSR
-        mode = 0o0755 if existing_is_exec else _READ_WRITE_READ_ONLY_PERM_BITS
+        mode = FilePermissions.S_IRWXU_RXG_RXO if existing_is_exec else FilePermissions.S_IRWU_RG_RO
 
         # ensure symlinks to dirs are not translated to empty dirs
         if os.path.isdir(src_file) and not os.path.islink(src_file):
-            mode = 0o0755
+            mode = FilePermissions.S_IRWXU_RXG_RXO
             base_directories.append(src_file)
             os.mkdir(dest_file, mode)
         else:
@@ -1550,10 +1550,10 @@ def write_source_metadata(collection, b_collection_path, artifacts_manager):
         shutil.rmtree(b_info_dir)
 
     try:
-        os.mkdir(b_info_dir, mode=0o0755)
+        os.mkdir(b_info_dir, mode=FilePermissions.S_IRWXU_RXG_RXO)
         with open(b_info_dest, mode='w+b') as fd:
             fd.write(b_yaml_source_data)
-        os.chmod(b_info_dest, _READ_WRITE_READ_ONLY_PERM_BITS)
+        os.chmod(b_info_dest, FilePermissions.S_IRWU_RG_RO)
     except Exception:
         # Ensure we don't leave the dir behind in case of a failure.
         if os.path.isdir(b_info_dir):
@@ -1682,7 +1682,7 @@ def _extract_tar_dir(tar, dirname, b_dest):
 
     b_parent_path = os.path.dirname(b_dir_path)
     try:
-        os.makedirs(b_parent_path, mode=0o0755)
+        os.makedirs(b_parent_path, mode=FilePermissions.S_IRWXU_RXG_RXO)
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
@@ -1697,7 +1697,7 @@ def _extract_tar_dir(tar, dirname, b_dest):
 
     else:
         if not os.path.isdir(b_dir_path):
-            os.mkdir(b_dir_path, 0o0755)
+            os.mkdir(b_dir_path, FilePermissions.S_IRWXU_RXG_RXO)
 
 
 def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
@@ -1723,7 +1723,7 @@ def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
         if not os.path.exists(b_parent_dir):
             # Seems like Galaxy does not validate if all file entries have a corresponding dir ftype entry. This check
             # makes sure we create the parent directory even if it wasn't set in the metadata.
-            os.makedirs(b_parent_dir, mode=0o0755)
+            os.makedirs(b_parent_dir, mode=FilePermissions.S_IRWXU_RXG_RXO)
 
         if tar_member.type == tarfile.SYMTYPE:
             b_link_path = to_bytes(tar_member.linkname, errors='surrogate_or_strict')
@@ -1738,9 +1738,9 @@ def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
 
             # Default to rw-r--r-- and only add execute if the tar file has execute.
             tar_member = tar.getmember(to_native(filename, errors='surrogate_or_strict'))
-            new_mode = _READ_WRITE_READ_ONLY_PERM_BITS
+            new_mode = FilePermissions.S_IRWU_RG_RO
             if stat.S_IMODE(tar_member.mode) & stat.S_IXUSR:
-                new_mode |= _EXEC_PERM_BITS
+                new_mode |= FilePermissions.S_IXANY
 
             os.chmod(b_dest_filepath, new_mode)
 
