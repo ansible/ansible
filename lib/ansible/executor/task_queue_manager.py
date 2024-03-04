@@ -47,6 +47,10 @@ from dataclasses import dataclass
 
 __all__ = ['TaskQueueManager']
 
+STDIN_FILENO = 0
+STDOUT_FILENO = 1
+STDERR_FILENO = 2
+
 display = Display()
 
 
@@ -161,6 +165,13 @@ class TaskQueueManager:
             self._final_q = FinalQueue()
         except OSError as e:
             raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_native(e))
+
+        try:
+            # Done in tqm, and not display, because this is only needed for commands that execute tasks
+            for fd in (STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO):
+                os.set_inheritable(fd, False)
+        except Exception as ex:
+            self.warning(f"failed to set stdio as non inheritable: {ex}")
 
         self._callback_lock = threading.Lock()
 

@@ -75,16 +75,14 @@ class TestConnectionBaseClass(unittest.TestCase):
 
     def test_plugins_connection_ssh__build_command(self):
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('ssh', pc, new_stdin)
+        conn = connection_loader.get('ssh', pc)
         conn.get_option = MagicMock()
         conn.get_option.return_value = ""
         conn._build_command('ssh', 'ssh')
 
     def test_plugins_connection_ssh_exec_command(self):
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('ssh', pc, new_stdin)
+        conn = connection_loader.get('ssh', pc)
 
         conn._build_command = MagicMock()
         conn._build_command.return_value = 'ssh something something'
@@ -98,10 +96,9 @@ class TestConnectionBaseClass(unittest.TestCase):
 
     def test_plugins_connection_ssh__examine_output(self):
         pc = PlayContext()
-        new_stdin = StringIO()
         become_success_token = b'BECOME-SUCCESS-abcdefghijklmnopqrstuvxyz'
 
-        conn = connection_loader.get('ssh', pc, new_stdin)
+        conn = connection_loader.get('ssh', pc)
         conn.set_become_plugin(become_loader.get('sudo'))
 
         conn.become.check_password_prompt = MagicMock()
@@ -230,8 +227,7 @@ class TestConnectionBaseClass(unittest.TestCase):
     @patch('os.path.exists')
     def test_plugins_connection_ssh_put_file(self, mock_ospe, mock_sleep):
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('ssh', pc, new_stdin)
+        conn = connection_loader.get('ssh', pc)
         conn._build_command = MagicMock()
         conn._bare_run = MagicMock()
 
@@ -282,8 +278,7 @@ class TestConnectionBaseClass(unittest.TestCase):
     @patch('time.sleep')
     def test_plugins_connection_ssh_fetch_file(self, mock_sleep):
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('ssh', pc, new_stdin)
+        conn = connection_loader.get('ssh', pc)
         conn._build_command = MagicMock()
         conn._bare_run = MagicMock()
         conn._load_name = 'ssh'
@@ -348,9 +343,8 @@ class MockSelector(object):
 @pytest.fixture
 def mock_run_env(request, mocker):
     pc = PlayContext()
-    new_stdin = StringIO()
 
-    conn = connection_loader.get('ssh', pc, new_stdin)
+    conn = connection_loader.get('ssh', pc)
     conn.set_become_plugin(become_loader.get('sudo'))
     conn._send_initial_data = MagicMock()
     conn._examine_output = MagicMock()
