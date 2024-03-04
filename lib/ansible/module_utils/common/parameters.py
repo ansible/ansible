@@ -347,7 +347,7 @@ def _list_no_log_values(argument_spec, params):
                             sub_param = check_type_dict(sub_param)
 
                         if not isinstance(sub_param, Mapping):
-                            raise TypeError("Value '{1}' in the sub parameter field '{0}' must by a {2}, "
+                            raise TypeError("Value '{1}' in the sub parameter field '{0}' must be a {2}, "
                                             "not '{1.__class__.__name__}'".format(arg_name, sub_param, wanted_type))
 
                         no_log_values.update(_list_no_log_values(sub_argument_spec, sub_param))
