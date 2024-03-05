@@ -45,12 +45,6 @@ USERS_RE = re.compile(r'[^ugo]')
 PERMS_RE = re.compile(r'[^rwxXstugo]')
 
 
-# For backward compatibility
-_PERM_BITS = 0o7777          # file mode permission bits
-_EXEC_PERM_BITS = FilePermissions.S_IXANY  # execute permission bits
-_DEFAULT_PERM = FilePermissions.S_IRWU_RWG_RWO  # default file permission bits
-
-
 class FilePermissions(Enum):
     S_IRANY = 0o0444  # read by user, group, others
     S_IWANY = 0o0222  # write by user, group, others
@@ -58,6 +52,12 @@ class FilePermissions(Enum):
     S_IRWU_RWG_RWO = S_IRANY | S_IWANY  # read, write by user, group, others
     S_IRWU_RG_RO = S_IRANY | stat.S_IWUSR  # read by user, group, others and write only by user
     S_IRWXU_RXG_RXO = S_IRANY | S_IXANY | stat.S_IWUSR  # read, execute by user, group, others and write only by user
+
+
+# For backward compatibility
+_PERM_BITS = 0o7777          # file mode permission bits
+_EXEC_PERM_BITS = FilePermissions.S_IXANY  # execute permission bits
+_DEFAULT_PERM = FilePermissions.S_IRWU_RWG_RWO  # default file permission bits
 
 
 def is_executable(path):
@@ -81,7 +81,7 @@ def is_executable(path):
     # These are all bitfields so first bitwise-or all the permissions we're
     # looking for, then bitwise-and with the file's mode to determine if any
     # execute bits are set.
-    return ((stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & os.stat(path)[stat.ST_MODE])
+    return (FilePermissions.S_IXANY & os.stat(path)[stat.ST_MODE])
 
 
 def format_attributes(attributes):
