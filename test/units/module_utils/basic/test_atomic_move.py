@@ -15,6 +15,7 @@ from itertools import product
 import pytest
 
 from ansible.module_utils import basic
+from ansible.module_utils.common.file import S_IRWU_RG_RO
 
 
 @pytest.fixture
@@ -64,7 +65,7 @@ def atomic_mocks(mocker, monkeypatch):
 @pytest.fixture
 def fake_stat(mocker):
     stat1 = mocker.MagicMock()
-    stat1.st_mode = 0o0644
+    stat1.st_mode = S_IRWU_RG_RO
     stat1.st_uid = 0
     stat1.st_gid = 0
     stat1.st_flags = 0
