@@ -62,15 +62,26 @@ class CoverageVersion:
     """Details about a coverage version and its supported Python versions."""
 
     coverage_version: str
+    covdefaults_version: str
     schema_version: int
     min_python: tuple[int, int]
     max_python: tuple[int, int]
 
+    @property
+    def covdefaults_spec(self) -> str:
+        """Return a pip-consumable pinned ``covdefaults`` spec."""
+        return f'covdefaults == {self.covdefaults_version !s}'
+
+    @property
+    def coverage_spec(self) -> str:
+        """Return a pip-consumable pinned ``coverage`` spec."""
+        return f'coverage == {self.coverage_version !s}'
+
 
 COVERAGE_VERSIONS = (
     # IMPORTANT: Keep this in sync with the ansible-test.txt requirements file.
-    CoverageVersion('7.3.2', 7, (3, 8), (3, 12)),
-    CoverageVersion('6.5.0', 7, (3, 7), (3, 7)),
+    CoverageVersion('7.3.2', '2.3.0', 7, (3, 8), (3, 12)),
+    CoverageVersion('6.5.0', '2.3.0', 7, (3, 7), (3, 7)),
 )
 """
 This tuple specifies the coverage version to use for Python version ranges.
@@ -254,6 +265,7 @@ concurrency =
     multiprocessing
     thread
 parallel = True
+plugins = covdefaults
 
 omit =
     */python*/dist-packages/*
@@ -277,8 +289,10 @@ concurrency =
     multiprocessing
     thread
 parallel = True
+plugins = covdefaults
 disable_warnings =
     no-data-collected
+source =
 '''
 
     if isinstance(args, IntegrationConfig):

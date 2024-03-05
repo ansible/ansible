@@ -8,8 +8,9 @@
   pip:
     name:
       - packaging
-      # coverage is needed when ansible-test is invoked with --coverage
+      # coverage deps are needed when ansible-test is invoked with --coverage
       # and using a custom ansible_python_interpreter below
+      - '{{ pip_coverage.stdout_lines|select("match", "covdefaults")|first }}'
       - '{{ pip_coverage.stdout_lines|select("match", "coverage==")|first }}'
     virtualenv: "{{ remote_tmp_dir }}/no_setuptools"
 

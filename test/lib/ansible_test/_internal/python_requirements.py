@@ -195,7 +195,13 @@ def collect_requirements(
     commands: list[PipCommand] = []
 
     if coverage:
-        commands.extend(collect_package_install(packages=[f'coverage=={get_coverage_version(python.version).coverage_version}'], constraints=False))
+        commands.extend(collect_package_install(
+            packages=[
+                get_coverage_version(python.version).coverage_spec,
+                get_coverage_version(python.version).covdefaults_spec,
+            ],
+            constraints=False,
+        ))
 
     if ansible or command:
         commands.extend(collect_general_install(command, ansible))
