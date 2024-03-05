@@ -181,6 +181,7 @@ import random
 import time
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.file import S_IRWU_RG_RO as DEFAULT_SOURCES_PERM
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY3
@@ -202,7 +203,6 @@ except ImportError:
     HAVE_PYTHON_APT = False
 
 APT_KEY_DIRS = ['/etc/apt/keyrings', '/etc/apt/trusted.gpg.d', '/usr/share/keyrings']
-DEFAULT_SOURCES_PERM = 0o0644
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
 
 
