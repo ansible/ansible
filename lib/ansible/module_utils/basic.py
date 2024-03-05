@@ -120,11 +120,13 @@ from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.file import (
     _PERM_BITS as PERM_BITS,
+    _DEFAULT_PERM as DEFAULT_PERM,
     is_executable,
     format_attributes,
     get_flags_from_attributes,
     FILE_ATTRIBUTES,
-    FilePermissions,
+    S_IXANY,
+    S_IRWU_RWG_RWO,
 )
 from ansible.module_utils.common.sys_info import (
     get_distribution,
@@ -1020,7 +1022,7 @@ class AnsibleModule(object):
         if prev_mode is None:
             prev_mode = stat.S_IMODE(path_stat.st_mode)
         is_directory = stat.S_ISDIR(path_stat.st_mode)
-        has_x_permissions = (prev_mode & FilePermissions.S_IXANY) > 0
+        has_x_permissions = (prev_mode & S_IXANY) > 0
         apply_X_permission = is_directory or has_x_permissions
 
         # Get the umask, if the 'user' part is empty, the effect is as if (a) were
@@ -1693,7 +1695,7 @@ class AnsibleModule(object):
             # based on the current value of umask
             umask = os.umask(0)
             os.umask(umask)
-            os.chmod(b_dest, FilePermissions.S_IRWU_RWG_RWO & ~umask)
+            os.chmod(b_dest, S_IRWU_RWG_RWO & ~umask)
             try:
                 os.chown(b_dest, os.geteuid(), os.getegid())
             except OSError:

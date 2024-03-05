@@ -180,7 +180,7 @@ import random
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.file import FilePermissions
+from ansible.module_utils.common.file import S_IRWU_RG_RO as DEFAULT_SOURCES_PERM
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.urls import fetch_url
@@ -202,7 +202,6 @@ except ImportError:
 
 APT_KEY_DIRS = ['/etc/apt/keyrings', '/etc/apt/trusted.gpg.d', '/usr/share/keyrings']
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
-DEFAULT_SOURCES_PERM = FilePermissions.S_IRWU_RG_RO
 
 
 def install_python_apt(module, apt_pkg_name):

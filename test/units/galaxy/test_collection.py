@@ -23,7 +23,7 @@ from ansible.cli.galaxy import GalaxyCLI
 from ansible.errors import AnsibleError
 from ansible.galaxy import api, collection, token
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.module_utils.common.file import FilePermissions
+from ansible.module_utils.common.file import S_IRWU_RG_RO
 import builtins
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
@@ -79,7 +79,7 @@ def collection_artifact(monkeypatch, tmp_path_factory):
         b_io = BytesIO(b"\x00\x01\x02\x03")
         tar_info = tarfile.TarInfo('test')
         tar_info.size = 4
-        tar_info.mode = FilePermissions.S_IRWU_RG_RO
+        tar_info.mode = S_IRWU_RG_RO
         tfile.addfile(tarinfo=tar_info, fileobj=b_io)
 
     return input_file, mock_open
@@ -107,14 +107,14 @@ def tmp_tarfile(tmp_path_factory, manifest_info):
         b_io = BytesIO(data)
         tar_info = tarfile.TarInfo(filename)
         tar_info.size = len(data)
-        tar_info.mode = FilePermissions.S_IRWU_RG_RO
+        tar_info.mode = S_IRWU_RG_RO
         tfile.addfile(tarinfo=tar_info, fileobj=b_io)
 
         b_data = to_bytes(json.dumps(manifest_info, indent=True), errors='surrogate_or_strict')
         b_io = BytesIO(b_data)
         tar_info = tarfile.TarInfo('MANIFEST.json')
         tar_info.size = len(b_data)
-        tar_info.mode = FilePermissions.S_IRWU_RG_RO
+        tar_info.mode = S_IRWU_RG_RO
         tfile.addfile(tarinfo=tar_info, fileobj=b_io)
 
     sha256_hash = sha256()
@@ -963,7 +963,7 @@ def test_extract_tar_file_outside_dir(tmp_path_factory):
         b_io = BytesIO(data)
         tar_info = tarfile.TarInfo(tar_filename)
         tar_info.size = len(data)
-        tar_info.mode = FilePermissions.S_IRWU_RG_RO
+        tar_info.mode = S_IRWU_RG_RO
         tfile.addfile(tarinfo=tar_info, fileobj=b_io)
 
     expected = re.escape("Cannot extract tar entry '%s' as it will be placed outside the collection directory"

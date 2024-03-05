@@ -22,7 +22,7 @@ from ansible.errors import AnsibleError
 from ansible.galaxy import api as galaxy_api
 from ansible.galaxy.api import CollectionVersionMetadata, GalaxyAPI, GalaxyError
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken
-from ansible.module_utils.common.file import FilePermissions
+from ansible.module_utils.common.file import S_IRWU_RG_RO
 from ansible.module_utils.common.text.converters import to_native, to_text
 import urllib.error
 from ansible.utils import context_objects as co
@@ -48,7 +48,7 @@ def collection_artifact(tmp_path_factory):
         b_io = BytesIO(b"\x00\x01\x02\x03")
         tar_info = tarfile.TarInfo('test')
         tar_info.size = 4
-        tar_info.mode = FilePermissions.S_IRWU_RG_RO
+        tar_info.mode = S_IRWU_RG_RO
         tfile.addfile(tarinfo=tar_info, fileobj=b_io)
 
     yield tar_path

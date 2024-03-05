@@ -11,7 +11,7 @@ import json
 import os
 import sys
 import tarfile
-from ansible.module_utils.common.file import FilePermissions
+from ansible.module_utils.common.file import S_IRWXU_RXG_RXO
 
 manifest = {
     'collection_info': {
@@ -47,7 +47,7 @@ files = {
 def add_file(tar_file, filename, b_content, update_files=True):
     tar_info = tarfile.TarInfo(filename)
     tar_info.size = len(b_content)
-    tar_info.mode = FilePermissions.S_IRWXU_RXG_RXO
+    tar_info.mode = S_IRWXU_RXG_RXO
     tar_file.addfile(tarinfo=tar_info, fileobj=io.BytesIO(b_content))
 
     if update_files:
