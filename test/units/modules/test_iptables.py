@@ -135,7 +135,7 @@ def test_policy_table(mocker):
         )
     ]
 )
-def test_policy_table(mocker, test_input, commands_results):
+def test_policy_table_flush(mocker, test_input, commands_results):
     """Test flush without parameters and change == false."""
     set_module_args(test_input)
     run_command = mocker.patch(
