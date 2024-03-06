@@ -34,3 +34,5 @@ done
 
 # test config loading
 ansible-playbook use_coll_name.yml -i ../../inventory -e 'ansible_connection=ansible.builtin.ssh' "$@"
+
+ANSIBLE_COLLECTIONS_PATH=$PWD/collections ansible-playbook unsafe_plugin_name.yml "$@"
