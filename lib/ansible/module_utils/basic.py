@@ -1595,22 +1595,7 @@ class AnsibleModule(object):
         b_dest = to_bytes(dest, errors='surrogate_or_strict')
         if os.path.exists(b_dest):
             try:
-                dest_stat = os.stat(b_dest)
-
-                # copy mode and ownership
-                os.chmod(b_src, dest_stat.st_mode & PERM_BITS)
-                os.chown(b_src, dest_stat.st_uid, dest_stat.st_gid)
-
-                # try to copy flags if possible
-                if hasattr(os, 'chflags') and hasattr(dest_stat, 'st_flags'):
-                    try:
-                        os.chflags(b_src, dest_stat.st_flags)
-                    except OSError as e:
-                        for err in 'EOPNOTSUPP', 'ENOTSUP':
-                            if hasattr(errno, err) and e.errno == getattr(errno, err):
-                                break
-                        else:
-                            raise
+                shutil.copystat(b_dest, b_src)
             except OSError as e:
                 if e.errno != errno.EPERM:
                     raise
