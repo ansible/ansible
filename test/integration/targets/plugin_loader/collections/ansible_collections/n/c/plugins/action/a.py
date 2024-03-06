@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ansible.plugins.action import ActionBase
 
 
