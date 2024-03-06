@@ -1,8 +1,7 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import copy
 import operator
@@ -29,6 +28,16 @@ class SortingHelpFormatter(argparse.HelpFormatter):
     def add_arguments(self, actions):
         actions = sorted(actions, key=operator.attrgetter('option_strings'))
         super(SortingHelpFormatter, self).add_arguments(actions)
+
+
+class ArgumentParser(argparse.ArgumentParser):
+    def add_argument(self, *args, **kwargs):
+        action = kwargs.get('action')
+        help = kwargs.get('help')
+        if help and action in {'append', 'append_const', 'count', 'extend', PrependListAction}:
+            help = f'{help.rstrip(".")}. This argument may be specified multiple times.'
+        kwargs['help'] = help
+        return super().add_argument(*args, **kwargs)
 
 
 class AnsibleVersion(argparse.Action):
@@ -192,7 +201,7 @@ def create_base_parser(prog, usage="", desc=None, epilog=None):
     Create an options parser for all ansible scripts
     """
     # base opts
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParser(
         prog=prog,
         formatter_class=SortingHelpFormatter,
         epilog=epilog,
@@ -383,7 +392,7 @@ def add_vault_options(parser):
     parser.add_argument('--vault-id', default=[], dest='vault_ids', action='append', type=str,
                         help='the vault identity to use')
     base_group = parser.add_mutually_exclusive_group()
-    base_group.add_argument('--ask-vault-password', '--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
+    base_group.add_argument('-J', '--ask-vault-password', '--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
                             help='ask for vault password')
     base_group.add_argument('--vault-password-file', '--vault-pass-file', default=[], dest='vault_password_files',
                             help="vault password file", type=unfrack_path(follow=False), action='append')

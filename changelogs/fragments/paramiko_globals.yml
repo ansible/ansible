@@ -1,0 +1,3 @@
+deprecated_features:
+    - paramiko connection plugin, configuration items in the global scope are being deprecated and will be removed in favor or the existing same options in the plugin itself.
+      Users should not need to change anything (how to configure them are the same) but plugin authors using the global constants should move to using the plugin's get_option().

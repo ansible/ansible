@@ -14,8 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible.errors import AnsibleError
 from ansible.playbook.conditional import Conditional
@@ -27,7 +26,8 @@ from ansible.module_utils.parsing.convert_bool import boolean
 class ActionModule(ActionBase):
     ''' Fail with custom message '''
 
-    TRANSFERS_FILES = False
+    _requires_connection = False
+
     _VALID_ARGS = frozenset(('fail_msg', 'msg', 'quiet', 'success_msg', 'that'))
 
     def run(self, tmp=None, task_vars=None):

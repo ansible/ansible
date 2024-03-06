@@ -6,8 +6,7 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -26,6 +25,8 @@ attributes:
         platforms: debian
 notes:
     - This module supports Debian Squeeze (version 6) as well as its successors and derivatives.
+seealso:
+  - module: ansible.builtin.deb822_repository
 options:
     repo:
         description:
@@ -52,19 +53,19 @@ options:
         aliases: [ update-cache ]
     update_cache_retries:
         description:
-        - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
+        - Amount of retries if the cache update fails. Also see O(update_cache_retry_max_delay).
         type: int
         default: 5
         version_added: '2.10'
     update_cache_retry_max_delay:
         description:
-        - Use an exponential backoff delay for each retry (see I(update_cache_retries)) up to this max delay in seconds.
+        - Use an exponential backoff delay for each retry (see O(update_cache_retries)) up to this max delay in seconds.
         type: int
         default: 12
         version_added: '2.10'
     validate_certs:
         description:
-            - If C(false), SSL certificates for the target repo will not be validated. This should only be used
+            - If V(false), SSL certificates for the target repo will not be validated. This should only be used
               on personally controlled sites using self-signed certificates.
         type: bool
         default: 'yes'
@@ -89,7 +90,7 @@ options:
               Without this library, the module does not work.
             - Runs C(apt-get install python-apt) for Python 2, and C(apt-get install python3-apt) for Python 3.
             - Only works with the system Python 2 or Python 3. If you are using a Python on the remote that is not
-               the system Python, set I(install_python_apt=false) and ensure that the Python apt library
+               the system Python, set O(install_python_apt=false) and ensure that the Python apt library
                for your Python version is installed some other way.
         type: bool
         default: true
@@ -179,9 +180,9 @@ import random
 import time
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.file import S_IRWU_RG_RO as DEFAULT_SOURCES_PERM
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.six import PY3
 from ansible.module_utils.urls import fetch_url
 
 from ansible.module_utils.common.locale import get_best_parsable_locale
@@ -200,7 +201,6 @@ except ImportError:
     HAVE_PYTHON_APT = False
 
 APT_KEY_DIRS = ['/etc/apt/keyrings', '/etc/apt/trusted.gpg.d', '/usr/share/keyrings']
-DEFAULT_SOURCES_PERM = 0o0644
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
 
 
@@ -229,6 +229,7 @@ class SourcesList(object):
     def __init__(self, module):
         self.module = module
         self.files = {}  # group sources by file
+        self.files_mapping = {}  # internal DS for tracking symlinks
         # Repositories that we're adding -- used to implement mode param
         self.new_repos = set()
         self.default_file = self._apt_cfg_file('Dir::Etc::sourcelist')
@@ -239,6 +240,8 @@ class SourcesList(object):
 
         # read sources.list.d
         for file in glob.iglob('%s/*.list' % self._apt_cfg_dir('Dir::Etc::sourceparts')):
+            if os.path.islink(file):
+                self.files_mapping[file] = os.readlink(file)
             self.load(file)
 
     def __iter__(self):
@@ -371,7 +374,11 @@ class SourcesList(object):
                         f.write(line)
                     except IOError as ex:
                         self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, to_native(ex)))
-                self.module.atomic_move(tmp_path, filename)
+                if filename in self.files_mapping:
+                    # Write to symlink target instead of replacing symlink as a normal file
+                    self.module.atomic_move(tmp_path, self.files_mapping[filename])
+                else:
+                    self.module.atomic_move(tmp_path, filename)
 
                 # allow the user to override the default mode
                 if filename in self.new_repos:
@@ -416,7 +423,7 @@ class SourcesList(object):
     def _add_valid_source(self, source_new, comment_new, file):
         # We'll try to reuse disabled source if we have it.
         # If we have more than one entry, we will enable them all - no advanced logic, remember.
-        self.module.log('ading source file: %s | %s | %s' % (source_new, comment_new, file))
+        self.module.log('adding source file: %s | %s | %s' % (source_new, comment_new, file))
         found = False
         for filename, n, enabled, source, comment in self:
             if source == source_new:
@@ -455,7 +462,10 @@ class SourcesList(object):
 
 class UbuntuSourcesList(SourcesList):
 
-    LP_API = 'https://launchpad.net/api/1.0/~%s/+archive/%s'
+    # prefer api.launchpad.net over launchpad.net/api
+    # see: https://github.com/ansible/ansible/pull/81978#issuecomment-1767062178
+    LP_API = 'https://api.launchpad.net/1.0/~%s/+archive/%s'
+    PPA_URI = 'https://ppa.launchpadcontent.net'
 
     def __init__(self, module):
         self.module = module
@@ -487,7 +497,7 @@ class UbuntuSourcesList(SourcesList):
         except IndexError:
             ppa_name = 'ppa'
 
-        line = 'deb http://ppa.launchpad.net/%s/%s/ubuntu %s main' % (ppa_owner, ppa_name, self.codename)
+        line = 'deb %s/%s/%s/ubuntu %s main' % (self.PPA_URI, ppa_owner, ppa_name, self.codename)
         return line, ppa_owner, ppa_name
 
     def _key_already_exists(self, key_fingerprint):
@@ -654,13 +664,13 @@ def main():
         #    made any more complex than it already is to try and cover more, eg, custom interpreters taking over
         #    system locations)
 
-        apt_pkg_name = 'python3-apt' if PY3 else 'python-apt'
+        apt_pkg_name = 'python3-apt'
 
         if has_respawned():
             # this shouldn't be possible; short-circuit early if it happens...
             module.fail_json(msg="{0} must be installed and visible from {1}.".format(apt_pkg_name, sys.executable))
 
-        interpreters = ['/usr/bin/python3', '/usr/bin/python2', '/usr/bin/python']
+        interpreters = ['/usr/bin/python3', '/usr/bin/python']
 
         interpreter = probe_interpreters_for_module(interpreters, 'apt')
 

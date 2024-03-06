@@ -1,6 +1,4 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations  # pragma: nocover
 
 
-def module_code():
-    return "hello from amodule.py"
+raise Exception('hello from amodule.py, this code should never execute')  # pragma: nocover

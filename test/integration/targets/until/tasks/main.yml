@@ -82,3 +82,37 @@
   register: counter
   delay: 0.5
   until: counter.rc == 0
+
+- name: test retries without explicit until, defaults to "until task succeeds"
+  block:
+    - name: EXPECTED FAILURE
+      fail:
+      retries: 3
+      delay: 0.1
+      register: r
+      ignore_errors: true
+
+    - assert:
+        that:
+          - r.attempts == 3
+
+    - vars:
+        test_file: "{{ lookup('env', 'OUTPUT_DIR') }}/until_success_test_file"
+      block:
+        - file:
+            name: "{{ test_file }}"
+            state: absent
+
+        - name: fail on the first invocation, succeed on the second
+          shell: "[ -f {{ test_file }}  ] || (touch {{ test_file }} && false)"
+          retries: 5
+          delay: 0.1
+          register: r
+      always:
+        - file:
+            name: "{{ test_file }}"
+            state: absent
+
+    - assert:
+        that:
+          - r.attempts == 2

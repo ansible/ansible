@@ -16,13 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, MagicMock
 from ansible.plugins.loader import PluginLoader, PluginPathContext
 
@@ -46,14 +44,14 @@ class TestErrors(unittest.TestCase):
         # python library, and then uses the __file__ attribute of
         # the result for that to get the library path, so we mock
         # that here and patch the builtin to use our mocked result
-        foo = MagicMock()
-        bar = MagicMock()
+        foo_pkg = MagicMock()
+        bar_pkg = MagicMock()
         bam = MagicMock()
         bam.__file__ = '/path/to/my/foo/bar/bam/__init__.py'
-        bar.bam = bam
-        foo.return_value.bar = bar
+        bar_pkg.bam = bam
+        foo_pkg.return_value.bar = bar_pkg
         pl = PluginLoader('test', 'foo.bar.bam', 'test', 'test_plugin')
-        with patch('builtins.__import__', foo):
+        with patch('builtins.__import__', foo_pkg):
             self.assertEqual(pl._get_package_paths(), ['/path/to/my/foo/bar/bam'])
 
     def test_plugins__get_paths(self):

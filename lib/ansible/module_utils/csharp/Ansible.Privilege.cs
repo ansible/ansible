@@ -3,7 +3,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
@@ -92,7 +91,6 @@ namespace Ansible.Privilege
         {
             base.SetHandle(handle);
         }
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         protected override bool ReleaseHandle()
         {
             Marshal.FreeHGlobal(handle);
@@ -104,7 +102,7 @@ namespace Ansible.Privilege
     {
         public SafeNativeHandle() : base(true) { }
         public SafeNativeHandle(IntPtr handle) : base(true) { this.handle = handle; }
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
+
         protected override bool ReleaseHandle()
         {
             return NativeMethods.CloseHandle(handle);

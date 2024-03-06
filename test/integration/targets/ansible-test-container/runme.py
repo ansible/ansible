@@ -127,6 +127,16 @@ def main() -> None:
         sys.exit(1)
 
 
+def get_container_completion_entries() -> dict[str, dict[str, str]]:
+    """Parse and return the ansible-test container completion entries."""
+    completion_lines = pathlib.Path(os.environ['PYTHONPATH'], '../test/lib/ansible_test/_data/completion/docker.txt').read_text().splitlines()
+
+    # TODO: consider including testing for the collection default image
+    entries = {name: value for name, value in (parse_completion_entry(line) for line in completion_lines) if name != 'default'}
+
+    return entries
+
+
 def get_test_scenarios() -> list[TestScenario]:
     """Generate and return a list of test scenarios."""
 
@@ -136,10 +146,7 @@ def get_test_scenarios() -> list[TestScenario]:
     if not available_engines:
         raise ApplicationError(f'No supported container engines found: {", ".join(supported_engines)}')
 
-    completion_lines = pathlib.Path(os.environ['PYTHONPATH'], '../test/lib/ansible_test/_data/completion/docker.txt').read_text().splitlines()
-
-    # TODO: consider including testing for the collection default image
-    entries = {name: value for name, value in (parse_completion_entry(line) for line in completion_lines) if name != 'default'}
+    entries = get_container_completion_entries()
 
     unprivileged_user = User.get(UNPRIVILEGED_USER_NAME)
 
@@ -226,16 +233,19 @@ def run_test(scenario: TestScenario) -> TestResult:
     if scenario.probe_cgroups:
         target_only_options = ['--dev-probe-cgroups', str(LOG_PATH)]
 
+    entries = get_container_completion_entries()
+    alpine_container = [name for name in entries if name.startswith('alpine')][0]
+
     commands = [
         # The cgroup probe is only performed for the first test of the target.
         # There's no need to repeat the probe again for the same target.
         # The controller will be tested separately as a target.
         # This ensures that both the probe and no-probe code paths are functional.
         [*integration, *integration_options, *target_only_options],
-        # For the split test we'll use alpine3 as the controller. There are two reasons for this:
+        # For the split test we'll use Alpine Linux as the controller. There are two reasons for this:
         # 1) It doesn't require the cgroup v1 hack, so we can test a target that doesn't need that.
         # 2) It doesn't require disabling selinux, so we can test a target that doesn't need that.
-        [*integration, '--controller', 'docker:alpine3', *integration_options],
+        [*integration, '--controller', f'docker:{alpine_container}', *integration_options],
     ]
 
     common_env: dict[str, str] = {}
@@ -950,6 +960,15 @@ class DnfBootstrapper(Bootstrapper):
             # See: https://github.com/containers/netavark/issues/491
             packages.append('netavark-1.0.2')
 
+        if os_release.id == 'fedora' and os_release.version_id == '39':
+            # In Fedora 39, the current version of containerd, 1.6.23, prevents Docker from working.
+            # The previously tested version, 1.6.19, did not have this issue.
+            # See: https://bugzilla.redhat.com/show_bug.cgi?id=2237396
+            run_command(
+                'dnf', 'install', '-y',
+                'https://kojipkgs.fedoraproject.org/packages/containerd/1.6.19/2.fc39/x86_64/containerd-1.6.19-2.fc39.x86_64.rpm'
+            )
+
         if os_release.id == 'rhel':
             # As of the release of RHEL 9.1, installing podman on RHEL 9.0 results in a non-fatal error at install time:
             #
@@ -996,7 +1015,7 @@ class AptBootstrapper(Bootstrapper):
     @classmethod
     def install_podman(cls) -> bool:
         """Return True if podman will be installed."""
-        return not (os_release.id == 'ubuntu' and os_release.version_id == '20.04')
+        return not (os_release.id == 'ubuntu' and os_release.version_id in {'20.04', '22.04'})
 
     @classmethod
     def install_docker(cls) -> bool:
@@ -1050,9 +1069,17 @@ class ApkBootstrapper(Bootstrapper):
     def run(cls) -> None:
         """Run the bootstrapper."""
         # The `openssl` package is used to generate hashed passwords.
-        packages = ['docker', 'podman', 'openssl']
+        # crun added as podman won't install it as dep if runc is present
+        # but we don't want runc as it fails
+        # The edge `crun` package installed below requires ip6tables, and in
+        # edge, the `iptables` package includes `ip6tables`, but in 3.18 they
+        # are separate. Remove `ip6tables` once we update to 3.19.
+        packages = ['docker', 'podman', 'openssl', 'crun', 'ip6tables']
 
         run_command('apk', 'add', *packages)
+        # 3.18 only contains crun 1.8.4, to get 1.9.2 to resolve the run/shm issue, install crun from edge
+        # Remove once we update to 3.19
+        run_command('apk', 'upgrade', '-U', '--repository=http://dl-cdn.alpinelinux.org/alpine/edge/community', 'crun')
         run_command('service', 'docker', 'start')
         run_command('modprobe', 'tun')
 

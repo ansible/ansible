@@ -16,5 +16,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: The Python 'type' of the I(_input) provided.
+    description: The Python 'type' of the O(_input) provided.
     type: string

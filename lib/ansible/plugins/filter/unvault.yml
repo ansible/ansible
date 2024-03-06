@@ -23,12 +23,12 @@ DOCUMENTATION:
 EXAMPLES: |
   # simply decrypt my key from a vault
   vars:
-    mykey: "{{ myvaultedkey|unvault(passphrase) }} "
+    mykey: "{{ myvaultedkey | unvault(passphrase) }} "
 
   - name: save templated unvaulted data
     template: src=dump_template_data.j2 dest=/some/key/clear.txt
     vars:
-      template_data: '{{ secretdata|unvault(vaultsecret) }}'
+      template_data: '{{ secretdata | unvault(vaultsecret) }}'
 
 RETURN:
   _value:

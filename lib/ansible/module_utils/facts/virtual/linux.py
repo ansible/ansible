@@ -13,8 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import glob
 import os
@@ -176,7 +175,7 @@ class LinuxVirtual(Virtual):
                     virtual_facts['virtualization_type'] = 'RHEV'
                     found_virt = True
 
-        if product_name in ('VMware Virtual Platform', 'VMware7,1'):
+        if product_name in ('VMware Virtual Platform', 'VMware7,1', 'VMware20,1'):
             guest_tech.add('VMware')
             if not found_virt:
                 virtual_facts['virtualization_type'] = 'VMware'

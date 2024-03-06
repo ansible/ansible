@@ -2,11 +2,10 @@
 # Copyright: (c) 2019, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 
+import json
 import os
 import functools
 import pytest
@@ -24,7 +23,7 @@ def call_galaxy_cli(args):
     orig = co.GlobalCLIArgs._Singleton__instance
     co.GlobalCLIArgs._Singleton__instance = None
     try:
-        GalaxyCLI(args=['ansible-galaxy', 'role'] + args).run()
+        return GalaxyCLI(args=['ansible-galaxy', 'role'] + args).run()
     finally:
         co.GlobalCLIArgs._Singleton__instance = orig
 
@@ -118,6 +117,22 @@ def test_role_download_github_no_download_url_for_version(init_mock_temp_file, m
 
     assert mock_role_download_api.call_count == 1
     assert mock_role_download_api.mock_calls[0][1][0] == 'https://github.com/test_owner/test_role/archive/0.0.1.tar.gz'
+
+
+@pytest.mark.parametrize(
+    'state,rc',
+    [('SUCCESS', 0), ('FAILED', 1),]
+)
+def test_role_import(state, rc, mocker, galaxy_server, monkeypatch):
+    responses = [
+        {"available_versions": {"v1": "v1/"}},
+        {"results": [{'id': 12345, 'github_user': 'user', 'github_repo': 'role', 'github_reference': None, 'summary_fields': {'role': {'name': 'role'}}}]},
+        {"results": [{'state': 'WAITING', 'id': 12345, 'summary_fields': {'task_messages': []}}]},
+        {"results": [{'state': state, 'id': 12345, 'summary_fields': {'task_messages': []}}]},
+    ]
+    mock_api = mocker.MagicMock(side_effect=[StringIO(json.dumps(rsp)) for rsp in responses])
+    monkeypatch.setattr(api, 'open_url', mock_api)
+    assert call_galaxy_cli(['import', 'user', 'role']) == rc
 
 
 def test_role_download_url(init_mock_temp_file, mocker, galaxy_server, mock_role_download_api, monkeypatch):

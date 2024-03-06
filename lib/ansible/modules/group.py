@@ -3,8 +3,7 @@
 # Copyright: (c) 2012, Stephen Fromm <sfromm@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -44,7 +43,7 @@ options:
         version_added: "2.15"
     system:
         description:
-            - If I(yes), indicates that the group created is a system group.
+            - If V(yes), indicates that the group created is a system group.
         type: bool
         default: no
     local:
@@ -58,7 +57,7 @@ options:
         version_added: "2.6"
     non_unique:
         description:
-            - This option allows to change the group ID to a non-unique value. Requires C(gid).
+            - This option allows to change the group ID to a non-unique value. Requires O(gid).
             - Not supported on macOS or BusyBox distributions.
         type: bool
         default: no
@@ -94,7 +93,7 @@ EXAMPLES = '''
 RETURN = r'''
 gid:
   description: Group ID of the group.
-  returned: When C(state) is 'present'
+  returned: When O(state) is C(present)
   type: int
   sample: 1001
 name:
@@ -109,7 +108,7 @@ state:
   sample: 'absent'
 system:
   description: Whether the group is a system group or not.
-  returned: When C(state) is 'present'
+  returned: When O(state) is C(present)
   type: bool
   sample: False
 '''
@@ -227,14 +226,7 @@ class Group(object):
                     if line.startswith(to_bytes(name_test)):
                         exists = True
                         break
-
-            if not exists:
-                self.module.warn(
-                    "'local: true' specified and group was not found in {file}. "
-                    "The local group may already exist if the local group database exists somewhere other than {file}.".format(file=self.GROUPFILE))
-
             return exists
-
         else:
             try:
                 if grp.getgrnam(self.name):

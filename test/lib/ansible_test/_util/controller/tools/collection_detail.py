@@ -50,7 +50,7 @@ def read_manifest_json(collection_path):
         )
         validate_version(result['version'])
     except Exception as ex:  # pylint: disable=broad-except
-        raise Exception('{0}: {1}'.format(os.path.basename(manifest_path), ex))
+        raise Exception('{0}: {1}'.format(os.path.basename(manifest_path), ex)) from None
 
     return result
 
@@ -71,7 +71,7 @@ def read_galaxy_yml(collection_path):
         )
         validate_version(result['version'])
     except Exception as ex:  # pylint: disable=broad-except
-        raise Exception('{0}: {1}'.format(os.path.basename(galaxy_path), ex))
+        raise Exception('{0}: {1}'.format(os.path.basename(galaxy_path), ex)) from None
 
     return result
 

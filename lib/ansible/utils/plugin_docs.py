@@ -1,8 +1,7 @@
 # Copyright: (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from collections.abc import MutableMapping, MutableSet, MutableSequence
 from pathlib import Path
@@ -128,7 +127,7 @@ def add_fragments(doc, filename, fragment_loader, is_module=False):
     fragments = doc.pop('extends_documentation_fragment', [])
 
     if isinstance(fragments, string_types):
-        fragments = [fragments]
+        fragments = fragments.split(',')
 
     unknown_fragments = []
 
@@ -138,7 +137,7 @@ def add_fragments(doc, filename, fragment_loader, is_module=False):
     # as-specified. If failure, assume the right-most component is a var, split it off,
     # and retry the load.
     for fragment_slug in fragments:
-        fragment_name = fragment_slug
+        fragment_name = fragment_slug.strip()
         fragment_var = 'DOCUMENTATION'
 
         fragment_class = fragment_loader.get(fragment_name)
@@ -314,7 +313,7 @@ def find_plugin_docfile(plugin, plugin_type, loader):
     if filename is None:
         raise AnsibleError('%s cannot contain DOCUMENTATION nor does it have a companion documentation file' % (plugin))
 
-    return filename, context.plugin_resolved_collection
+    return filename, context
 
 
 def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
@@ -323,7 +322,8 @@ def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
 
     # find plugin doc file, if it doesn't exist this will throw error, we let it through
     # can raise exception and short circuit when 'not found'
-    filename, collection_name = find_plugin_docfile(plugin, plugin_type, loader)
+    filename, context = find_plugin_docfile(plugin, plugin_type, loader)
+    collection_name = context.plugin_resolved_collection
 
     try:
         docs = get_docstring(filename, fragment_loader, verbose=verbose, collection_name=collection_name, plugin_type=plugin_type)
@@ -347,5 +347,6 @@ def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
     else:
         docs[0]['filename'] = filename
         docs[0]['collection'] = collection_name
+        docs[0]['plugin_name'] = context.resolved_fqcn
 
     return docs

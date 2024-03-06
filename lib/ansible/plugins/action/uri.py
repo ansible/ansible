@@ -3,9 +3,7 @@
 # (c) 2018, Matt Martz  <matt@sivel.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -22,6 +20,7 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
         self._supports_async = True
+        self._supports_check_mode = False
 
         if task_vars is None:
             task_vars = dict()

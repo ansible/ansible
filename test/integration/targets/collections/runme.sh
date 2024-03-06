@@ -6,6 +6,7 @@ export ANSIBLE_COLLECTIONS_PATH=$PWD/collection_root_user:$PWD/collection_root_s
 export ANSIBLE_GATHERING=explicit
 export ANSIBLE_GATHER_SUBSET=minimal
 export ANSIBLE_HOST_PATTERN_MISMATCH=error
+export NO_COLOR=1
 unset ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH
 
 # ensure we can call collection module
@@ -72,8 +73,11 @@ cat out.txt
 
 test "$(grep out.txt -ce 'deprecation1' -ce 'deprecation2' -ce 'deprecation3')" == 3
 grep out.txt -e 'redirecting (type: filter) testns.testredirect.multi_redirect_filter to testns.testredirect.redirect_filter1'
+grep out.txt -e 'Filter "testns.testredirect.multi_redirect_filter"'
 grep out.txt -e 'redirecting (type: filter) testns.testredirect.redirect_filter1 to testns.testredirect.redirect_filter2'
+grep out.txt -e 'Filter "testns.testredirect.redirect_filter1"'
 grep out.txt -e 'redirecting (type: filter) testns.testredirect.redirect_filter2 to testns.testcoll.testfilter'
+grep out.txt -e 'Filter "testns.testredirect.redirect_filter2"'
 
 echo "--- validating collections support in playbooks/roles"
 # run test playbooks
@@ -148,3 +152,12 @@ fi
 ./vars_plugin_tests.sh
 
 ./test_task_resolved_plugin.sh
+
+# Test tombstoned module/action plugins include the location of the fatal task
+cat <<EOF > test_dead_ping_error.yml
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - dead_ping:
+EOF
+ansible-playbook test_dead_ping_error.yml 2>&1 >/dev/null | grep -e 'line 4, column 5'

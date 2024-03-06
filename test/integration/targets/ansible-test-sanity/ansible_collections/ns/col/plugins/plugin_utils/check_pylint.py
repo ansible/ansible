@@ -2,8 +2,7 @@
 These test cases verify ansible-test version constraints for pylint and its dependencies across Python versions.
 The initial test cases were discovered while testing various Python versions against ansible/ansible.
 """
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 # Python 3.8 fails with astroid 2.2.5 but works on 2.3.3
 #   syntax-error: Cannot import 'string' due to syntax error 'invalid syntax (&lt;unknown&gt;, line 109)'

@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-galaxy - reduce API calls to servers by fetching signatures only for final candidates.

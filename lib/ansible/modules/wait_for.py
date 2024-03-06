@@ -3,8 +3,7 @@
 # Copyright: (c) 2012, Jeroen Hoekx <jeroen@hoekx.be>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -12,7 +11,7 @@ DOCUMENTATION = r'''
 module: wait_for
 short_description: Waits for a condition before continuing
 description:
-     - You can wait for a set amount of time C(timeout), this is the default if nothing is specified or just C(timeout) is specified.
+     - You can wait for a set amount of time O(timeout), this is the default if nothing is specified or just O(timeout) is specified.
        This does not produce an error.
      - Waiting for a port to become available is useful for when services are not immediately available after their init scripts return
        which is true of certain Java application servers.
@@ -49,7 +48,7 @@ options:
   port:
     description:
       - Port number to poll.
-      - C(path) and C(port) are mutually exclusive parameters.
+      - O(path) and O(port) are mutually exclusive parameters.
     type: int
   active_connection_states:
     description:
@@ -60,17 +59,17 @@ options:
     version_added: "2.3"
   state:
     description:
-      - Either C(present), C(started), or C(stopped), C(absent), or C(drained).
-      - When checking a port C(started) will ensure the port is open, C(stopped) will check that it is closed, C(drained) will check for active connections.
-      - When checking for a file or a search string C(present) or C(started) will ensure that the file or string is present before continuing,
-        C(absent) will check that file is absent or removed.
+      - Either V(present), V(started), or V(stopped), V(absent), or V(drained).
+      - When checking a port V(started) will ensure the port is open, V(stopped) will check that it is closed, V(drained) will check for active connections.
+      - When checking for a file or a search string V(present) or V(started) will ensure that the file or string is present before continuing,
+        V(absent) will check that file is absent or removed.
     type: str
     choices: [ absent, drained, present, started, stopped ]
     default: started
   path:
     description:
       - Path to a file on the filesystem that must exist before continuing.
-      - C(path) and C(port) are mutually exclusive parameters.
+      - O(path) and O(port) are mutually exclusive parameters.
     type: path
     version_added: "1.4"
   search_regex:
@@ -81,7 +80,7 @@ options:
     version_added: "1.4"
   exclude_hosts:
     description:
-      - List of hosts or IPs to ignore when looking for active TCP connections for C(drained) state.
+      - List of hosts or IPs to ignore when looking for active TCP connections for V(drained) state.
     type: list
     elements: str
     version_added: "1.8"
@@ -238,7 +237,8 @@ import traceback
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.common.sys_info import get_platform_subclass
-from ansible.module_utils.common.text.converters import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes, to_native
+from ansible.module_utils.compat.datetime import utcnow
 
 
 HAS_PSUTIL = False
@@ -532,7 +532,7 @@ def main():
         except Exception:
             module.fail_json(msg="unknown active_connection_state (%s) defined" % _connection_state, elapsed=0)
 
-    start = datetime.datetime.utcnow()
+    start = utcnow()
 
     if delay:
         time.sleep(delay)
@@ -543,7 +543,7 @@ def main():
         # first wait for the stop condition
         end = start + datetime.timedelta(seconds=timeout)
 
-        while datetime.datetime.utcnow() < end:
+        while utcnow() < end:
             if path:
                 try:
                     if not os.access(b_path, os.F_OK):
@@ -560,7 +560,7 @@ def main():
             # Conditions not yet met, wait and try again
             time.sleep(module.params['sleep'])
         else:
-            elapsed = datetime.datetime.utcnow() - start
+            elapsed = utcnow() - start
             if port:
                 module.fail_json(msg=msg or "Timeout when waiting for %s:%s to stop." % (host, port), elapsed=elapsed.seconds)
             elif path:
@@ -569,14 +569,14 @@ def main():
     elif state in ['started', 'present']:
         # wait for start condition
         end = start + datetime.timedelta(seconds=timeout)
-        while datetime.datetime.utcnow() < end:
+        while utcnow() < end:
             if path:
                 try:
                     os.stat(b_path)
                 except OSError as e:
                     # If anything except file not present, throw an error
                     if e.errno != 2:
-                        elapsed = datetime.datetime.utcnow() - start
+                        elapsed = utcnow() - start
                         module.fail_json(msg=msg or "Failed to stat %s, %s" % (path, e.strerror), elapsed=elapsed.seconds)
                     # file doesn't exist yet, so continue
                 else:
@@ -584,21 +584,34 @@ def main():
                     if not b_compiled_search_re:
                         # nope, succeed!
                         break
+
                     try:
                         with open(b_path, 'rb') as f:
-                            with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as mm:
-                                search = b_compiled_search_re.search(mm)
+                            try:
+                                with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as mm:
+                                    search = b_compiled_search_re.search(mm)
+                                    if search:
+                                        if search.groupdict():
+                                            match_groupdict = search.groupdict()
+                                        if search.groups():
+                                            match_groups = search.groups()
+                                        break
+                            except (ValueError, OSError) as e:
+                                module.debug('wait_for failed to use mmap on "%s": %s. Falling back to file read().' % (path, to_native(e)))
+                                # cannot mmap this file, try normal read
+                                search = re.search(b_compiled_search_re, f.read())
                                 if search:
                                     if search.groupdict():
                                         match_groupdict = search.groupdict()
                                     if search.groups():
                                         match_groups = search.groups()
-
                                     break
+                            except Exception as e:
+                                module.warn('wait_for failed on "%s", unexpected exception(%s): %s.).' % (path, to_native(e.__class__), to_native(e)))
                     except IOError:
                         pass
             elif port:
-                alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.utcnow()))
+                alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - utcnow()))
                 try:
                     s = socket.create_connection((host, port), min(connect_timeout, alt_connect_timeout))
                 except Exception:
@@ -609,8 +622,8 @@ def main():
                     if b_compiled_search_re:
                         b_data = b''
                         matched = False
-                        while datetime.datetime.utcnow() < end:
-                            max_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.utcnow()))
+                        while utcnow() < end:
+                            max_timeout = math.ceil(_timedelta_total_seconds(end - utcnow()))
                             readable = select.select([s], [], [], max_timeout)[0]
                             if not readable:
                                 # No new data.  Probably means our timeout
@@ -654,7 +667,7 @@ def main():
 
         else:   # while-else
             # Timeout expired
-            elapsed = datetime.datetime.utcnow() - start
+            elapsed = utcnow() - start
             if port:
                 if search_regex:
                     module.fail_json(msg=msg or "Timeout when waiting for search string %s in %s:%s" % (search_regex, host, port), elapsed=elapsed.seconds)
@@ -670,17 +683,17 @@ def main():
         # wait until all active connections are gone
         end = start + datetime.timedelta(seconds=timeout)
         tcpconns = TCPConnectionInfo(module)
-        while datetime.datetime.utcnow() < end:
+        while utcnow() < end:
             if tcpconns.get_active_connections_count() == 0:
                 break
 
             # Conditions not yet met, wait and try again
             time.sleep(module.params['sleep'])
         else:
-            elapsed = datetime.datetime.utcnow() - start
+            elapsed = utcnow() - start
             module.fail_json(msg=msg or "Timeout when waiting for %s:%s to drain" % (host, port), elapsed=elapsed.seconds)
 
-    elapsed = datetime.datetime.utcnow() - start
+    elapsed = utcnow() - start
     module.exit_json(state=state, port=port, search_regex=search_regex, match_groups=match_groups, match_groupdict=match_groupdict, path=path,
                      elapsed=elapsed.seconds)
 

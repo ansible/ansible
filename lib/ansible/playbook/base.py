@@ -2,8 +2,7 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import itertools
 import operator
@@ -561,7 +560,7 @@ class FieldAttributeBase:
                 setattr(self, name, value)
             except (TypeError, ValueError) as e:
                 value = getattr(self, name)
-                raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s."
+                raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s. "
                                          "The error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds(), orig_exc=e)
             except (AnsibleUndefinedVariable, UndefinedError) as e:
                 if templar._fail_on_undefined_errors and name != 'name':
@@ -637,7 +636,7 @@ class FieldAttributeBase:
         else:
             combined = value + new_value
 
-        return [i for i, _ in itertools.groupby(combined) if i is not None]
+        return [i for i, dummy in itertools.groupby(combined) if i is not None]
 
     def dump_attrs(self):
         '''
@@ -731,7 +730,7 @@ class Base(FieldAttributeBase):
 
     # flags and misc. settings
     environment = FieldAttribute(isa='list', extend=True, prepend=True)
-    no_log = FieldAttribute(isa='bool')
+    no_log = FieldAttribute(isa='bool', default=C.DEFAULT_NO_LOG)
     run_once = FieldAttribute(isa='bool')
     ignore_errors = FieldAttribute(isa='bool')
     ignore_unreachable = FieldAttribute(isa='bool')

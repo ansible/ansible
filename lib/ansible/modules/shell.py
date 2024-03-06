@@ -7,8 +7,7 @@
 # it runs the 'command' module with special arguments and it behaves differently.
 # See the command source and the comment "#USE_SHELL".
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -16,8 +15,8 @@ DOCUMENTATION = r'''
 module: shell
 short_description: Execute shell commands on targets
 description:
-     - The C(shell) module takes the command name followed by a list of space-delimited arguments.
-     - Either a free form command or C(cmd) parameter is required, see the examples.
+     - The M(ansible.builtin.shell) module takes the command name followed by a list of space-delimited arguments.
+     - Either a free form command or O(cmd) parameter is required, see the examples.
      - It is almost exactly like the M(ansible.builtin.command) module but runs
        the command through a shell (C(/bin/sh)) on the remote node.
      - For Windows targets, use the M(ansible.windows.win_shell) module instead.
@@ -69,7 +68,7 @@ extends_documentation_fragment:
     - action_common_attributes.raw
 attributes:
     check_mode:
-        details: while the command itself is arbitrary and cannot be subject to the check mode semantics it adds C(creates)/C(removes) options as a workaround
+        details: while the command itself is arbitrary and cannot be subject to the check mode semantics it adds O(creates)/O(removes) options as a workaround
         support: partial
     diff_mode:
         support: none

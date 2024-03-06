@@ -3,8 +3,7 @@
 # (c) 2013, Maykel Moya <mmoya@speedyrails.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: password
@@ -28,17 +27,18 @@ DOCUMENTATION = """
          required: True
       encrypt:
         description:
-           - Which hash scheme to encrypt the returning password, should be one hash scheme from C(passlib.hash; md5_crypt, bcrypt, sha256_crypt, sha512_crypt).
+           - Which hash scheme to encrypt the returning password, should be one hash scheme from C(passlib.hash);
+             V(md5_crypt), V(bcrypt), V(sha256_crypt), V(sha512_crypt).
            - If not provided, the password will be returned in plain text.
            - Note that the password is always stored as plain text, only the returning password is encrypted.
            - Encrypt also forces saving the salt value for idempotence.
            - Note that before 2.6 this option was incorrectly labeled as a boolean for a long time.
       ident:
         description:
-          - Specify version of Bcrypt algorithm to be used while using C(encrypt) as C(bcrypt).
-          - The parameter is only available for C(bcrypt) - U(https://passlib.readthedocs.io/en/stable/lib/passlib.hash.bcrypt.html#passlib.hash.bcrypt).
+          - Specify version of Bcrypt algorithm to be used while using O(encrypt) as V(bcrypt).
+          - The parameter is only available for V(bcrypt) - U(https://passlib.readthedocs.io/en/stable/lib/passlib.hash.bcrypt.html#passlib.hash.bcrypt).
           - Other hash types will simply ignore this parameter.
-          - 'Valid values for this parameter are: C(2), C(2a), C(2y), C(2b).'
+          - 'Valid values for this parameter are: V(2), V(2a), V(2y), V(2b).'
         type: string
         version_added: "2.12"
       chars:
@@ -46,8 +46,7 @@ DOCUMENTATION = """
         description:
           - A list of names that compose a custom character set in the generated passwords.
           - This parameter defines the possible character sets in the resulting password, not the required character sets.
-            If you want to require certain character sets for passwords, you can use the C(community.general.random_string lookup) plugin -
-            P(community.general.random_string#lookup).
+            If you want to require certain character sets for passwords, you can use the P(community.general.random_string#lookup) lookup plugin.
           - 'By default generated passwords contain a random mix of upper and lowercase ASCII letters, the numbers 0-9, and punctuation (". , : - _").'
           - "They can be either parts of Python's string module attributes or represented literally ( :, -)."
           - "Though string modules can vary by Python version, valid values for both major releases include:
@@ -332,28 +331,31 @@ class LookupModule(LookupBase):
         if invalid_params:
             raise AnsibleError('Unrecognized parameter(s) given to password lookup: %s' % ', '.join(invalid_params))
 
-        # Set defaults
-        params['length'] = int(params.get('length', self.get_option('length')))
-        params['encrypt'] = params.get('encrypt', self.get_option('encrypt'))
-        params['ident'] = params.get('ident', self.get_option('ident'))
-        params['seed'] = params.get('seed', self.get_option('seed'))
+        # update options with what we got
+        if params:
+            self.set_options(direct=params)
 
-        params['chars'] = params.get('chars', self.get_option('chars'))
-        if params['chars'] and isinstance(params['chars'], string_types):
+        # chars still might need more
+        chars = params.get('chars', self.get_option('chars'))
+        if chars and isinstance(chars, string_types):
             tmp_chars = []
-            if u',,' in params['chars']:
+            if u',,' in chars:
                 tmp_chars.append(u',')
-            tmp_chars.extend(c for c in params['chars'].replace(u',,', u',').split(u',') if c)
-            params['chars'] = tmp_chars
+            tmp_chars.extend(c for c in chars.replace(u',,', u',').split(u',') if c)
+            self.set_option('chars', tmp_chars)
+
+        # return processed params
+        for field in VALID_PARAMS:
+            params[field] = self.get_option(field)
 
         return relpath, params
 
     def run(self, terms, variables, **kwargs):
         ret = []
 
-        self.set_options(var_options=variables, direct=kwargs)
-
         for term in terms:
+
+            self.set_options(var_options=variables, direct=kwargs)
 
             changed = None
             relpath, params = self._parse_parameters(term)

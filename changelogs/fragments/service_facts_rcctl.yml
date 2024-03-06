@@ -1,2 +1,0 @@
-minor_changes:
-  - service_facts now returns more info for rcctl managed systesm (OpenBSD).

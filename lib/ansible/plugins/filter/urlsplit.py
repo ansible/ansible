@@ -2,8 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = r'''
   name: urlsplit
@@ -53,7 +52,7 @@ RETURN = r'''
   _value:
     description:
       - A dictionary with components as keyword and their value.
-      - If I(query) is provided, a string or integer will be returned instead, depending on I(query).
+      - If O(query) is provided, a string or integer will be returned instead, depending on O(query).
     type: any
 '''
 

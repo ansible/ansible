@@ -2,24 +2,23 @@
 # Copyright 2023 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
+from __future__ import annotations
 
-__metaclass__ = type
 
 DOCUMENTATION = """
 module: dnf5
 author: Ansible Core Team
 description:
   - Installs, upgrade, removes, and lists packages and groups with the I(dnf5) package manager.
-  - "WARNING: The I(dnf5) package manager is still under development and not all features that the existing I(dnf) module
-    provides are implemented in I(dnf5), please consult specific options for more information."
+  - "WARNING: The I(dnf5) package manager is still under development and not all features that the existing M(ansible.builtin.dnf) module
+    provides are implemented in M(ansible.builtin.dnf5), please consult specific options for more information."
 short_description: Manages packages with the I(dnf5) package manager
 options:
   name:
     description:
       - "A package name or package specifier with version, like C(name-1.0).
         When using state=latest, this can be '*' which means run: dnf -y update.
-        You can also pass a url or a local path to a rpm file.
+        You can also pass a url or a local path to an rpm file.
         To operate on several packages this can accept a comma separated string of packages or a list of packages."
       - Comparison operators for package version are valid here C(>), C(<), C(>=), C(<=). Example - C(name >= 1.0).
         Spaces around the operator are required.
@@ -33,13 +32,13 @@ options:
   list:
     description:
       - Various (non-idempotent) commands for usage with C(/usr/bin/ansible) and I(not) playbooks.
-        Use M(ansible.builtin.package_facts) instead of the C(list) argument as a best practice.
+        Use M(ansible.builtin.package_facts) instead of the O(list) argument as a best practice.
     type: str
   state:
     description:
-      - Whether to install (C(present), C(latest)), or remove (C(absent)) a package.
-      - Default is C(None), however in effect the default action is C(present) unless the C(autoremove) option is
-        enabled for this module, then C(absent) is inferred.
+      - Whether to install (V(present), V(latest)), or remove (V(absent)) a package.
+      - Default is V(None), however in effect the default action is V(present) unless the V(autoremove) option is
+        enabled for this module, then V(absent) is inferred.
     choices: ['absent', 'present', 'installed', 'removed', 'latest']
     type: str
   enablerepo:
@@ -65,7 +64,7 @@ options:
   disable_gpg_check:
     description:
       - Whether to disable the GPG checking of signatures of packages being
-        installed. Has an effect only if state is I(present) or I(latest).
+        installed. Has an effect only if O(state) is V(present) or V(latest).
       - This setting affects packages installed from a repository as well as
         "local" packages installed from the filesystem or a URL.
     type: bool
@@ -83,9 +82,9 @@ options:
     type: str
   autoremove:
     description:
-      - If C(true), removes all "leaf" packages from the system that were originally
+      - If V(true), removes all "leaf" packages from the system that were originally
         installed as dependencies of user-installed packages but which are no longer
-        required by any such package. Should be used alone or when state is I(absent)
+        required by any such package. Should be used alone or when O(state) is V(absent)
     type: bool
     default: "no"
   exclude:
@@ -104,25 +103,25 @@ options:
   update_cache:
     description:
       - Force dnf to check if cache is out of date and redownload if needed.
-        Has an effect only if state is I(present) or I(latest).
+        Has an effect only if O(state) is V(present) or V(latest).
     type: bool
     default: "no"
     aliases: [ expire-cache ]
   update_only:
     description:
       - When using latest, only update installed packages. Do not install packages.
-      - Has an effect only if state is I(latest)
+      - Has an effect only if O(state) is V(latest)
     default: "no"
     type: bool
   security:
     description:
-      - If set to C(true), and C(state=latest) then only installs updates that have been marked security related.
+      - If set to V(true), and O(state=latest) then only installs updates that have been marked security related.
       - Note that, similar to C(dnf upgrade-minimal), this filter applies to dependencies as well.
     type: bool
     default: "no"
   bugfix:
     description:
-      - If set to C(true), and C(state=latest) then only installs updates that have been marked bugfix related.
+      - If set to V(true), and O(state=latest) then only installs updates that have been marked bugfix related.
       - Note that, similar to C(dnf upgrade-minimal), this filter applies to dependencies as well.
     default: "no"
     type: bool
@@ -145,20 +144,20 @@ options:
   disable_excludes:
     description:
       - Disable the excludes defined in DNF config files.
-      - If set to C(all), disables all excludes.
-      - If set to C(main), disable excludes defined in [main] in dnf.conf.
-      - If set to C(repoid), disable excludes defined for given repo id.
+      - If set to V(all), disables all excludes.
+      - If set to V(main), disable excludes defined in [main] in dnf.conf.
+      - If set to V(repoid), disable excludes defined for given repo id.
     type: str
   validate_certs:
     description:
       - This is effectively a no-op in the dnf5 module as dnf5 itself handles downloading a https url as the source of the rpm,
-        but is an accepted parameter for feature parity/compatibility with the I(yum) module.
+        but is an accepted parameter for feature parity/compatibility with the M(ansible.builtin.dnf) module.
     type: bool
     default: "yes"
   sslverify:
     description:
       - Disables SSL validation of the repository server for this transaction.
-      - This should be set to C(false) if one of the configured repositories is using an untrusted or self-signed certificate.
+      - This should be set to V(false) if one of the configured repositories is using an untrusted or self-signed certificate.
     type: bool
     default: "yes"
   allow_downgrade:
@@ -175,8 +174,8 @@ options:
     default: "no"
   install_repoquery:
     description:
-      - This is effectively a no-op in DNF as it is not needed with DNF, but is an accepted parameter for feature
-        parity/compatibility with the I(yum) module.
+      - This is effectively a no-op in DNF as it is not needed with DNF.
+      - This option is deprecated and will be removed in ansible-core 2.20.
     type: bool
     default: "yes"
   download_only:
@@ -199,23 +198,30 @@ options:
   download_dir:
     description:
       - Specifies an alternate directory to store packages.
-      - Has an effect only if I(download_only) is specified.
+      - Has an effect only if O(download_only) is specified.
     type: str
   allowerasing:
     description:
-      - If C(true) it allows  erasing  of  installed  packages to resolve dependencies.
+      - If V(true) it allows  erasing  of  installed  packages to resolve dependencies.
     required: false
     type: bool
     default: "no"
   nobest:
     description:
-      - Set best option to False, so that transactions are not limited to best candidates only.
+      - This is the opposite of the O(best) option kept for backwards compatibility.
+      - Since ansible-core 2.17 the default value is set by the operating system distribution.
     required: false
     type: bool
-    default: "no"
+  best:
+    description:
+      - When set to V(true), either use a package with the highest version available or fail.
+      - When set to V(false), if the latest version cannot be installed go with the lower version.
+      - Default is set by the operating system distribution.
+    required: false
+    type: bool
+    version_added: "2.17"
   cacheonly:
     description:
-      - This is currently no-op as dnf5 does not implement the feature.
       - Tells dnf to run entirely from system cache; does not download or update metadata.
     type: bool
     default: "no"
@@ -224,7 +230,7 @@ extends_documentation_fragment:
 - action_common_attributes.flow
 attributes:
     action:
-        details: In the case of dnf, it has 2 action plugins that use it under the hood, M(ansible.builtin.yum) and M(ansible.builtin.package).
+        details: dnf5 has 2 action plugins that use it under the hood, M(ansible.builtin.dnf) and M(ansible.builtin.package).
         support: partial
     async:
         support: none
@@ -358,9 +364,15 @@ def is_installed(base, spec):
 
 
 def is_newer_version_installed(base, spec):
+    # FIXME investigate whether this function can be replaced by dnf5's allow_downgrade option
+    if "/" in spec:
+        spec = spec.split("/")[-1]
+        if spec.endswith(".rpm"):
+            spec = spec[:-4]
+
     try:
         spec_nevra = next(iter(libdnf5.rpm.Nevra.parse(spec)))
-    except RuntimeError:
+    except (RuntimeError, StopIteration):
         return False
     spec_name = spec_nevra.get_name()
     v = spec_nevra.get_version()
@@ -404,13 +416,7 @@ class Dnf5Module(YumDnf):
         super(Dnf5Module, self).__init__(module)
         self._ensure_dnf()
 
-        # FIXME https://github.com/rpm-software-management/dnf5/issues/402
-        self.lockfile = ""
         self.pkg_mgr_name = "dnf5"
-
-        # DNF specific args that are not part of YumDnf
-        self.allowerasing = self.module.params["allowerasing"]
-        self.nobest = self.module.params["nobest"]
 
     def _ensure_dnf(self):
         locale = get_best_parsable_locale(self.module)
@@ -452,10 +458,6 @@ class Dnf5Module(YumDnf):
             ),
             failures=[],
         )
-
-    def is_lockfile_pid_valid(self):
-        # FIXME https://github.com/rpm-software-management/dnf5/issues/402
-        return True
 
     def run(self):
         if sys.version_info.major < 3:
@@ -504,7 +506,11 @@ class Dnf5Module(YumDnf):
                 self.disable_excludes = "*"
             conf.disable_excludes = self.disable_excludes
         conf.skip_broken = self.skip_broken
-        conf.best = not self.nobest
+        # best and nobest are mutually exclusive
+        if self.nobest is not None:
+            conf.best = not self.nobest
+        elif self.best is not None:
+            conf.best = self.best
         conf.install_weak_deps = self.install_weak_deps
         conf.gpgcheck = not self.disable_gpg_check
         conf.localpkg_gpgcheck = not self.disable_gpg_check
@@ -512,7 +518,9 @@ class Dnf5Module(YumDnf):
         conf.clean_requirements_on_remove = self.autoremove
         conf.installroot = self.installroot
         conf.use_host_config = True  # needed for installroot
-        conf.cacheonly = self.cacheonly
+        conf.cacheonly = "all" if self.cacheonly else "none"
+        if self.download_dir:
+            conf.destdir = self.download_dir
 
         base.setup()
 
@@ -667,18 +675,17 @@ class Dnf5Module(YumDnf):
             if results:
                 msg = "Check mode: No changes made, but would have if not in check mode"
         else:
-            transaction.download(self.download_dir or "")
+            transaction.download()
             if not self.download_only:
-                if not self.disable_gpg_check and not transaction.check_gpg_signatures():
+                transaction.set_description("ansible dnf5 module")
+                result = transaction.run()
+                if result == libdnf5.base.Transaction.TransactionRunResult_ERROR_GPG_CHECK:
                     self.module.fail_json(
                         msg="Failed to validate GPG signatures: {}".format(",".join(transaction.get_gpg_signature_problems())),
                         failures=[],
                         rc=1,
                     )
-
-                transaction.set_description("ansible dnf5 module")
-                result = transaction.run()
-                if result != libdnf5.base.Transaction.TransactionRunResult_SUCCESS:
+                elif result != libdnf5.base.Transaction.TransactionRunResult_SUCCESS:
                     self.module.fail_json(
                         msg="Failed to install some of the specified packages",
                         failures=["{}: {}".format(transaction.transaction_result_to_string(result), log) for log in transaction.get_transaction_problems()],
@@ -697,10 +704,6 @@ class Dnf5Module(YumDnf):
 
 
 def main():
-    # Extend yumdnf_argument_spec with dnf-specific features that will never be
-    # backported to yum because yum is now in "maintenance mode" upstream
-    yumdnf_argument_spec["argument_spec"]["allowerasing"] = dict(default=False, type="bool")
-    yumdnf_argument_spec["argument_spec"]["nobest"] = dict(default=False, type="bool")
     Dnf5Module(AnsibleModule(**yumdnf_argument_spec)).run()
 
 

@@ -57,7 +57,8 @@
     that:
     - 'result is changed'
     - 'known_hosts.stdout_lines[0].startswith("example.com")'
-    - 'known_hosts.stdout_lines[4].startswith("# example.net")'
+    - 'known_hosts.stdout_lines[4].startswith("@cert-authority")'
+    - 'known_hosts.stdout_lines[5].startswith("# example.net")'
     - 'known_hosts.stdout_lines[-1].strip() == example_org_rsa_key.strip()'
 
 # test idempotence of addition
@@ -222,7 +223,7 @@
     that:
     - 'result is changed'
     - 'known_hosts_v5.stdout_lines[0].startswith("example.com")'
-    - 'known_hosts_v5.stdout_lines[4].startswith("# example.net")'
+    - 'known_hosts_v5.stdout_lines[5].startswith("# example.net")'
     - 'known_hosts_v5.stdout_lines[-1].strip().startswith("|1|")'
     - 'known_hosts_v5.stdout_lines[-1].strip().endswith(example_org_rsa_key.strip().split()[-1])'
 
@@ -342,7 +343,7 @@
 - name: assert the plaintext host is there
   assert:
     that:
-      - 'known_hosts_v10.stdout_lines[5].strip() == example_org_rsa_key.strip()'
+      - 'known_hosts_v10.stdout_lines[6].strip() == example_org_rsa_key.strip()'
 
 # ... and remove the host again for the next test
 
@@ -377,6 +378,105 @@
   assert:
     that:
       - 'known_hosts_v11.stdout_lines[-1].strip().endswith("RANDOM=")'
+
+- name: add the ed25519 host key
+  known_hosts:
+    name: host.example.com
+    key: "{{ host_example_com_ed25519_key }}"
+    state: present
+    path: "{{remote_tmp_dir}}/known_hosts"
+  register: result
+
+- name: get the file content
+  command: "cat {{remote_tmp_dir}}/known_hosts"
+  register: known_hosts_v12
+
+- name: assert that the key was added and ordering preserved
+  assert:
+    that:
+    - 'result is changed'
+    - 'known_hosts_v12.stdout_lines[0].startswith("example.com")'
+    - 'known_hosts_v12.stdout_lines[4].startswith("@cert-authority")'
+    - 'known_hosts_v12.stdout_lines[5].startswith("# example.net")'
+    - 'known_hosts_v12.stdout_lines[-1].strip() == host_example_com_ed25519_key.strip()'
+
+- name: add the ed25519 ca key
+  known_hosts:
+    name: '*.example.com'
+    key: "{{ example_com_ed25519_ca }}"
+    state: present
+    path: "{{remote_tmp_dir}}/known_hosts"
+  register: result
+
+- name: get the file content
+  command: "cat {{remote_tmp_dir}}/known_hosts"
+  register: known_hosts_v13
+
+- name: assert that the key was added and ordering preserved
+  assert:
+    that:
+    - 'result is changed'
+    - 'known_hosts_v13.stdout_lines[0].startswith("example.com")'
+    - 'known_hosts_v13.stdout_lines[4].startswith("@cert-authority")'
+    - 'known_hosts_v13.stdout_lines[5].startswith("# example.net")'
+    - 'known_hosts_v13.stdout_lines[-1].strip() == example_com_ed25519_ca.strip()'
+
+- name: Remove the ed25519 ca key
+  known_hosts:
+    name: '*.example.com'
+    key: "{{ example_com_ed25519_ca }}"
+    state: absent
+    path: "{{remote_tmp_dir}}/known_hosts"
+  register: result
+
+- name: get the file content
+  command: "cat {{remote_tmp_dir}}/known_hosts"
+  register: known_hosts_v14
+
+- name: assert that the key was removed and ordering preserved
+  assert:
+    that:
+    - 'result is changed'
+    - 'known_hosts_v12.stdout == known_hosts_v14.stdout'
+
+- name: add the revoked ed25519 host key
+  known_hosts:
+    name: 'host.example.com'
+    key: "@revoked {{ host_example_com_ed25519_signedhost }}"
+    state: present
+    path: "{{remote_tmp_dir}}/known_hosts"
+  register: result
+
+- name: get the file content
+  command: "cat {{remote_tmp_dir}}/known_hosts"
+  register: known_hosts_v15
+
+- name: assert that the key was added and ordering preserved
+  assert:
+    that:
+    - 'result is changed'
+    - 'known_hosts_v15.stdout_lines[0].startswith("example.com")'
+    - 'known_hosts_v15.stdout_lines[4].startswith("@cert-authority")'
+    - 'known_hosts_v15.stdout_lines[5].startswith("# example.net")'
+    - 'known_hosts_v15.stdout_lines[-1].strip() == "@revoked " ~ host_example_com_ed25519_signedhost.strip()'
+
+- name: remove the revoked ed25519 host key
+  known_hosts:
+    name: 'host.example.com'
+    key: "@revoked {{ host_example_com_ed25519_signedhost }}"
+    state: absent
+    path: "{{remote_tmp_dir}}/known_hosts"
+  register: result
+
+- name: get the file content
+  command: "cat {{remote_tmp_dir}}/known_hosts"
+  register: known_hosts_v16
+
+- name: assert that the key was removed and ordering preserved
+  assert:
+    that:
+    - 'result is changed'
+    - 'known_hosts_v12.stdout == known_hosts_v16.stdout'
 
 # test errors
 

@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -15,7 +14,7 @@ description:
   - To pause/wait/sleep per host, use the M(ansible.builtin.wait_for) module.
   - You can use C(ctrl+c) if you wish to advance a pause earlier than it is set to expire or if you need to abort a playbook run entirely.
     To continue early press C(ctrl+c) and then C(c). To abort a playbook press C(ctrl+c) and then C(a).
-  - Prompting for a set amount of time is not supported. Pausing playbook execution is interruptable but does not return user input.
+  - Prompting for a set amount of time is not supported. Pausing playbook execution is interruptible but does not return user input.
   - The pause module integrates into async/parallelized playbooks without any special considerations (see Rolling Updates).
     When using pauses with the C(serial) playbook parameter (as in rolling updates) you are only prompted once for the current group of hosts.
   - This module is also supported for Windows targets.
@@ -30,11 +29,11 @@ options:
   prompt:
     description:
       - Optional text to use for the prompt message.
-      - User input is only returned if I(seconds=None) and I(minutes=None), otherwise this is just a custom message before playbook execution is paused.
+      - User input is only returned if O(seconds=None) and O(minutes=None), otherwise this is just a custom message before playbook execution is paused.
   echo:
     description:
       - Controls whether or not keyboard input is shown when typing.
-      - Only has effect if I(seconds=None) and I(minutes=None).
+      - Only has effect if O(seconds=None) and O(minutes=None).
     type: bool
     default: 'yes'
     version_added: 2.5

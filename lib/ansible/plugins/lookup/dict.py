@@ -1,8 +1,7 @@
 # (c) 2014, Kent R. Spillner <kspillner@acm.org>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: dict
@@ -49,7 +48,7 @@ tasks:
 RETURN = """
   _list:
     description:
-      - list of composed dictonaries with key and value
+      - list of composed dictionaries with key and value
     type: list
 """
 

@@ -16,11 +16,9 @@
 #
 # Copyright 2016, Adrian Likins <alikins@redhat.com>
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from units.compat import unittest
+import unittest
 
 from ansible.errors import AnsibleError
 
@@ -104,11 +102,6 @@ class TestAnsibleVaultEncryptedUnicode(unittest.TestCase, YamlTestUtils):
     def _from_plaintext(self, seq):
         id_secret = vault.match_encrypt_secret(self.good_vault_secrets)
         return objects.AnsibleVaultEncryptedUnicode.from_plaintext(seq, vault=self.vault, secret=id_secret[1])
-
-    def _from_ciphertext(self, ciphertext):
-        avu = objects.AnsibleVaultEncryptedUnicode(ciphertext)
-        avu.vault = self.vault
-        return avu
 
     def test_empty_init(self):
         self.assertRaises(TypeError, objects.AnsibleVaultEncryptedUnicode)

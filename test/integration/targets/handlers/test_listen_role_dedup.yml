@@ -1,0 +1,5 @@
+- hosts: localhost
+  gather_facts: false
+  roles:
+    - test_listen_role_dedup_role1
+    - test_listen_role_dedup_role2

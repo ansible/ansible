@@ -1,5 +1,5 @@
 - name: Test missing binaries
-  when: ansible_pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')
+  when: ansible_pkg_mgr in ('dnf', 'apt', 'pkgng')
   block:
     - name: Remove zip binaries
       package:

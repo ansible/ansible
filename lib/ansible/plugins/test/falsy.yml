@@ -12,7 +12,7 @@ DOCUMENTATION:
       type: string
       required: True
     convert_bool:
-      description: Attempts to convert the result to a strict Python boolean vs normally acceptable values (C(yes)/C(no), C(on)/C(off), C(0)/C(1), etc).
+      description: Attempts to convert the result to a strict Python boolean vs normally acceptable values (V(yes)/V(no), V(on)/V(off), V(0)/V(1), etc).
       type: bool
       default: false
 EXAMPLES: |
@@ -20,5 +20,5 @@ EXAMPLES: |
     thisistrue: '{{ "" is falsy }}'
 RETURN:
   _value:
-    description: Returns C(False) if the condition is not "Python truthy", C(True) otherwise.
+    description: Returns V(False) if the condition is not "Python truthy", V(True) otherwise.
     type: boolean

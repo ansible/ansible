@@ -45,6 +45,26 @@
       - result is not failed
       - '"FOOBAR-CHAIN" in result.stdout'
 
+- name: add rule to foobar chain
+  become: true
+  iptables:
+    chain: FOOBAR-CHAIN
+    source: 0.0.0.0
+    destination: 0.0.0.0
+    jump: DROP
+    comment: "FOOBAR-CHAIN RULE"
+
+- name: get the state of the iptable rules after rule is added to foobar chain
+  become: true
+  shell: "{{ iptables_bin }} -L"
+  register: result
+
+- name: assert rule is present in foobar chain
+  assert:
+    that:
+      - result is not failed
+      - '"FOOBAR-CHAIN RULE" in result.stdout'
+
 - name: flush the foobar chain
   become: true
   iptables:
@@ -68,4 +88,3 @@
     that:
       - result is not failed
       - '"FOOBAR-CHAIN" not in result.stdout'
-      - '"FOOBAR-RULE" not in result.stdout'

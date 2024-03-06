@@ -19,7 +19,6 @@ from . import (
 from ...constants import (
     CONTROLLER_PYTHON_VERSIONS,
     REMOTE_ONLY_PYTHON_VERSIONS,
-    SUPPORTED_PYTHON_VERSIONS,
 )
 
 from ...test import (
@@ -37,7 +36,6 @@ from ...util import (
     ANSIBLE_TEST_CONTROLLER_ROOT,
     ApplicationError,
     is_subdir,
-    str_to_version,
 )
 
 from ...util_common import (
@@ -66,23 +64,14 @@ class MypyTest(SanityMultipleVersion):
     vendored_paths = (
         'lib/ansible/module_utils/six/__init__.py',
         'lib/ansible/module_utils/distro/_distro.py',
-        'lib/ansible/module_utils/compat/_selectors2.py',
     )
 
     def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         return [target for target in targets if os.path.splitext(target.path)[1] == '.py' and target.path not in self.vendored_paths and (
                 target.path.startswith('lib/ansible/') or target.path.startswith('test/lib/ansible_test/_internal/')
+                or target.path.startswith('packaging/')
                 or target.path.startswith('test/lib/ansible_test/_util/target/sanity/import/'))]
-
-    @property
-    def supported_python_versions(self) -> t.Optional[tuple[str, ...]]:
-        """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
-        # mypy 0.981 dropped support for Python 2
-        # see: https://mypy-lang.blogspot.com/2022/09/mypy-0981-released.html
-        # cryptography dropped support for Python 3.5 in version 3.3
-        # see: https://cryptography.io/en/latest/changelog/#v3-3
-        return tuple(version for version in SUPPORTED_PYTHON_VERSIONS if str_to_version(version) >= (3, 6))
 
     @property
     def error_code(self) -> t.Optional[str]:
@@ -116,6 +105,7 @@ class MypyTest(SanityMultipleVersion):
             MyPyContext('ansible-test', ['test/lib/ansible_test/_internal/'], controller_python_versions),
             MyPyContext('ansible-core', ['lib/ansible/'], controller_python_versions),
             MyPyContext('modules', ['lib/ansible/modules/', 'lib/ansible/module_utils/'], remote_only_python_versions),
+            MyPyContext('packaging', ['packaging/'], controller_python_versions),
         )
 
         unfiltered_messages: list[SanityMessage] = []
@@ -167,6 +157,9 @@ class MypyTest(SanityMultipleVersion):
         # Imports in our code are followed by mypy in order to perform its analysis, which is important for accurate results.
         # However, it will also report issues on those files, which is not the desired behavior.
         messages = [message for message in messages if message.path in paths_set]
+
+        if args.explain:
+            return SanitySuccess(self.name, python_version=python.version)
 
         results = settings.process_errors(messages, paths)
 
@@ -250,7 +243,7 @@ class MypyTest(SanityMultipleVersion):
 
         pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+):((?P<column>[0-9]+):)? (?P<level>[^:]+): (?P<message>.*)$'
 
-        parsed = parse_to_list_of_dict(pattern, stdout)
+        parsed = parse_to_list_of_dict(pattern, stdout or '')
 
         messages = [SanityMessage(
             level=r['level'],

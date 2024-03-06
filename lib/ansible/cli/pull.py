@@ -4,8 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # PYTHON_ARGCOMPLETE_OK
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
@@ -28,6 +27,7 @@ from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.plugins.loader import module_loader
 from ansible.utils.cmd_functions import run_cmd
 from ansible.utils.display import Display
+
 
 display = Display()
 
@@ -56,9 +56,9 @@ class PullCLI(CLI):
         1: 'File does not exist',
         2: 'File is not readable',
     }
-    ARGUMENTS = {'playbook.yml': 'The name of one the YAML format files to run as an Ansible playbook.'
-                                 'This can be a relative path within the checkout. By default, Ansible will'
-                                 "look for a playbook based on the host's fully-qualified domain name,"
+    ARGUMENTS = {'playbook.yml': 'The name of one the YAML format files to run as an Ansible playbook. '
+                                 'This can be a relative path within the checkout. By default, Ansible will '
+                                 "look for a playbook based on the host's fully-qualified domain name, "
                                  'on the host hostname and finally a playbook named *local.yml*.', }
 
     SKIP_INVENTORY_DEFAULTS = True
@@ -80,7 +80,7 @@ class PullCLI(CLI):
 
         super(PullCLI, self).init_parser(
             usage='%prog -U <repository> [options] [<playbook.yml>]',
-            desc="pulls playbooks from a VCS repo and executes them for the local host")
+            desc="pulls playbooks from a VCS repo and executes them on target host")
 
         # Do not add check_options as there's a conflict with --checkout/-C
         opt_help.add_connect_options(self.parser)
@@ -102,8 +102,8 @@ class PullCLI(CLI):
                                       'This is a useful way to disperse git requests')
         self.parser.add_argument('-f', '--force', dest='force', default=False, action='store_true',
                                  help='run the playbook even if the repository could not be updated')
-        self.parser.add_argument('-d', '--directory', dest='dest', default=None,
-                                 help='absolute path of repository checkout directory (relative paths are not supported)')
+        self.parser.add_argument('-d', '--directory', dest='dest', default=None, type=opt_help.unfrack_path(),
+                                 help='path to the directory to which Ansible will checkout the repository.')
         self.parser.add_argument('-U', '--url', dest='url', default=None, help='URL of the playbook repository')
         self.parser.add_argument('--full', dest='fullclone', action='store_true', help='Do a full clone, instead of a shallow one.')
         self.parser.add_argument('-C', '--checkout', dest='checkout',
@@ -134,7 +134,6 @@ class PullCLI(CLI):
             hostname = socket.getfqdn()
             # use a hostname dependent directory, in case of $HOME on nfs
             options.dest = os.path.join(C.ANSIBLE_HOME, 'pull', hostname)
-        options.dest = os.path.expandvars(os.path.expanduser(options.dest))
 
         if os.path.exists(options.dest) and not os.path.isdir(options.dest):
             raise AnsibleOptionsError("%s is not a valid or accessible directory." % options.dest)
@@ -275,8 +274,15 @@ class PullCLI(CLI):
             for vault_id in context.CLIARGS['vault_ids']:
                 cmd += " --vault-id=%s" % vault_id
 
+        if context.CLIARGS['become_password_file']:
+            cmd += " --become-password-file=%s" % context.CLIARGS['become_password_file']
+
+        if context.CLIARGS['connection_password_file']:
+            cmd += " --connection-password-file=%s" % context.CLIARGS['connection_password_file']
+
         for ev in context.CLIARGS['extra_vars']:
             cmd += ' -e %s' % shlex.quote(ev)
+
         if context.CLIARGS['become_ask_pass']:
             cmd += ' --ask-become-pass'
         if context.CLIARGS['skip_tags']:
@@ -307,6 +313,7 @@ class PullCLI(CLI):
         if context.CLIARGS['purge']:
             os.chdir('/')
             try:
+                display.debug("removing: %s" % context.CLIARGS['dest'])
                 shutil.rmtree(context.CLIARGS['dest'])
             except Exception as e:
                 display.error(u"Failed to remove %s: %s" % (context.CLIARGS['dest'], to_text(e)))

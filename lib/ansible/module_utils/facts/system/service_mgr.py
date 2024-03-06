@@ -15,8 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import platform
@@ -47,7 +46,7 @@ class ServiceMgrFactCollector(BaseFactCollector):
         # tools must be installed
         if module.get_bin_path('systemctl'):
 
-            # this should show if systemd is the boot init system, if checking init faild to mark as systemd
+            # this should show if systemd is the boot init system, if checking init failed to mark as systemd
             # these mirror systemd's own sd_boot test http://www.freedesktop.org/software/systemd/man/sd_booted.html
             for canary in ["/run/systemd/system/", "/dev/.run/systemd/", "/dev/.systemd/"]:
                 if os.path.exists(canary):
@@ -131,6 +130,8 @@ class ServiceMgrFactCollector(BaseFactCollector):
             service_mgr_name = 'smf'
         elif collected_facts.get('ansible_distribution') == 'OpenWrt':
             service_mgr_name = 'openwrt_init'
+        elif collected_facts.get('ansible_distribution') == 'SMGL':
+            service_mgr_name = 'simpleinit_msb'
         elif collected_facts.get('ansible_system') == 'Linux':
             # FIXME: mv is_systemd_managed
             if self.is_systemd_managed(module=module):

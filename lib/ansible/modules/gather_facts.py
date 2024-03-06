@@ -2,8 +2,7 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -33,7 +32,7 @@ attributes:
     action:
         support: full
     async:
-        details: while this action does not support the task 'async' keywords it can do its own parallel processing using the C(parallel) option.
+        details: while this action does not support the task 'async' keywords it can do its own parallel processing using the O(parallel) option.
         support: none
     bypass_host_loop:
         support: none

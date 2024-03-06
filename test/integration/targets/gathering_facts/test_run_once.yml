@@ -24,7 +24,7 @@
         - name: "Check that run_once doesn't prevent fact gathering (#39453)"
           assert:
             that: 'hostvars.facthost1.ansible_local.uuid != hostvars.facthost2.ansible_local.uuid'
-            msg: "{{ 'Same value for ansible_local.uuid on both hosts: ' ~ hostvars.facthost1.ansible_local.uuid }}"
+            msg: "{{ 'Same value for ansible_local.uuid on both hosts: ' ~ hostvars.facthost1.ansible_local.uuid }}"
       always:
         - name: remove test local facts
           file:

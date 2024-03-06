@@ -3,8 +3,7 @@
 # Copyright:  Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -23,14 +22,14 @@ options:
     version_added: '2.7'
   apply:
     description:
-      - Accepts a hash of task keywords (e.g. C(tags), C(become)) that will be applied to the tasks within the include.
+      - Accepts a hash of task keywords (for example C(tags), C(become)) that will be applied to the tasks within the include.
     type: str
     version_added: '2.7'
   free-form:
     description:
       - |
         Specifies the name of the imported file directly without any other option C(- include_tasks: file.yml).
-      - Is the equivalent of specifying an argument for the I(file) parameter.
+      - Is the equivalent of specifying an argument for the O(file) parameter.
       - Most keywords, including loop, with_items, and conditionals, apply to this statement unlike M(ansible.builtin.import_tasks).
       - The do-until loop is not supported.
 extends_documentation_fragment:
@@ -49,7 +48,7 @@ seealso:
 - module: ansible.builtin.import_role
 - module: ansible.builtin.import_tasks
 - module: ansible.builtin.include_role
-- ref: playbooks_reuse_includes
+- ref: playbooks_reuse
   description: More information related to including and importing playbooks, roles and tasks.
 '''
 

@@ -3,8 +3,7 @@
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -21,8 +20,8 @@ description:
     - This module is a proxy for multiple more specific service manager modules
       (such as M(ansible.builtin.systemd) and M(ansible.builtin.sysvinit)).
       This allows management of a heterogeneous environment of machines without creating a specific task for
-      each service manager. The module to be executed is determined by the I(use) option, which defaults to the
-      service manager discovered by M(ansible.builtin.setup).  If C(setup) was not yet run, this module may run it.
+      each service manager. The module to be executed is determined by the O(use) option, which defaults to the
+      service manager discovered by M(ansible.builtin.setup).  If M(ansible.builtin.setup) was not yet run, this module may run it.
     - For Windows targets, use the M(ansible.windows.win_service) module instead.
 options:
     name:
@@ -32,10 +31,10 @@ options:
         required: true
     state:
         description:
-          - C(started)/C(stopped) are idempotent actions that will not run
+          - V(started)/V(stopped) are idempotent actions that will not run
             commands unless necessary.
-          - C(restarted) will always bounce the service.
-          - C(reloaded) will always reload.
+          - V(restarted) will always bounce the service.
+          - V(reloaded) will always reload.
           - B(At least one of state and enabled are required.)
           - Note that reloaded will start the service if it is not already started,
             even if your chosen init system wouldn't normally.
@@ -43,7 +42,7 @@ options:
         choices: [ reloaded, restarted, started, stopped ]
     sleep:
         description:
-        - If the service is being C(restarted) then sleep this many seconds
+        - If the service is being V(restarted) then sleep this many seconds
           between the stop and start command.
         - This helps to work around badly-behaving init scripts that exit immediately
           after signaling a process to stop.
@@ -82,6 +81,7 @@ options:
         description:
         - The service module actually uses system specific modules, normally through auto detection, this setting can force a specific module.
         - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
+        - The 'old service module' still uses autodetection and in no way does it correspond to the C(service) command.
         type: str
         default: auto
         version_added: 2.2
@@ -106,6 +106,9 @@ attributes:
         platforms: all
 notes:
     - For AIX, group subsystem names can be used.
+    - The C(service) command line utility is not part of any service manager system but a convenience.
+      It does not have a standard implementation across systems, and this action cannot use it directly.
+      Though it might be used if found in certain circumstances, the detected system service manager is normally preferred.
 seealso:
     - module: ansible.windows.win_service
 author:
@@ -176,7 +179,7 @@ from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.sys_info import get_platform_subclass
-from ansible.module_utils.service import fail_if_missing
+from ansible.module_utils.service import fail_if_missing, is_systemd_managed
 from ansible.module_utils.six import PY2, b
 
 
@@ -481,24 +484,7 @@ class LinuxService(Service):
 
             # tools must be installed
             if location.get('systemctl', False):
-
-                # this should show if systemd is the boot init system
-                # these mirror systemd's own sd_boot test http://www.freedesktop.org/software/systemd/man/sd_booted.html
-                for canary in ["/run/systemd/system/", "/dev/.run/systemd/", "/dev/.systemd/"]:
-                    if os.path.exists(canary):
-                        return True
-
-                # If all else fails, check if init is the systemd command, using comm as cmdline could be symlink
-                try:
-                    f = open('/proc/1/comm', 'r')
-                except IOError:
-                    # If comm doesn't exist, old kernel, no systemd
-                    return False
-
-                for line in f:
-                    if 'systemd' in line:
-                        return True
-
+                return is_systemd_managed(self.module)
             return False
 
         # Locate a tool to enable/disable a service

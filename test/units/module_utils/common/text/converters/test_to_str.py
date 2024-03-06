@@ -3,14 +3,11 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import itertools
 
 import pytest
-
-from ansible.module_utils.six import PY3
 
 from ansible.module_utils.common.text.converters import to_text, to_bytes, to_native
 
@@ -43,8 +40,8 @@ def test_to_bytes(in_string, encoding, expected):
 
 
 @pytest.mark.parametrize('in_string, encoding, expected',
-                         itertools.chain(((d[0], d[2], d[1] if PY3 else d[0]) for d in VALID_STRINGS),
-                                         ((d[1], d[2], d[1] if PY3 else d[0]) for d in VALID_STRINGS)))
+                         itertools.chain(((d[0], d[2], d[1]) for d in VALID_STRINGS),
+                                         ((d[1], d[2], d[1]) for d in VALID_STRINGS)))
 def test_to_native(in_string, encoding, expected):
     """test happy path of encoding to native strings"""
     assert to_native(in_string, encoding) == expected

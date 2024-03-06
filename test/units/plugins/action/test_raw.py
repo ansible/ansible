@@ -15,13 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
-from ansible.errors import AnsibleActionFail
-from units.compat import unittest
+import unittest
 from unittest.mock import MagicMock, Mock
 from ansible.plugins.action.raw import ActionModule
 from ansible.playbook.task import Task
@@ -38,6 +36,16 @@ class TestCopyResultExclude(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def _build_task(self):
+
+        task = MagicMock(Task)
+        task.async_val = False
+        task.diff = False
+        task.check_mode = False
+        task.environment = None
+        task.args = {'_raw_params': 'Args1'}
+
+        return task
     # The current behavior of the raw aciton in regards to executable is currently in question;
     # the test_raw_executable_is_not_empty_string verifies the current behavior (whether it is desireed or not.
     # Please refer to the following for context:
@@ -46,11 +54,7 @@ class TestCopyResultExclude(unittest.TestCase):
 
     def test_raw_executable_is_not_empty_string(self):
 
-        task = MagicMock(Task)
-        task.async_val = False
-
-        task.args = {'_raw_params': 'Args1'}
-        self.play_context.check_mode = False
+        task = self._build_task()
 
         self.mock_am = ActionModule(task, self.connection, self.play_context, loader=None, templar=None, shared_loader_obj=None)
         self.mock_am._low_level_execute_command = Mock(return_value={})
@@ -62,25 +66,14 @@ class TestCopyResultExclude(unittest.TestCase):
 
     def test_raw_check_mode_is_True(self):
 
-        task = MagicMock(Task)
-        task.async_val = False
+        task = self._build_task()
+        task.check_mode = True
 
-        task.args = {'_raw_params': 'Args1'}
-        self.play_context.check_mode = True
-
-        try:
-            self.mock_am = ActionModule(task, self.connection, self.play_context, loader=None, templar=None, shared_loader_obj=None)
-        except AnsibleActionFail:
-            pass
+        self.mock_am = ActionModule(task, self.connection, self.play_context, loader=None, templar=None, shared_loader_obj=None)
 
     def test_raw_test_environment_is_None(self):
 
-        task = MagicMock(Task)
-        task.async_val = False
-
-        task.args = {'_raw_params': 'Args1'}
-        task.environment = None
-        self.play_context.check_mode = False
+        task = self._build_task()
 
         self.mock_am = ActionModule(task, self.connection, self.play_context, loader=None, templar=None, shared_loader_obj=None)
         self.mock_am._low_level_execute_command = Mock(return_value={})
@@ -90,12 +83,7 @@ class TestCopyResultExclude(unittest.TestCase):
 
     def test_raw_task_vars_is_not_None(self):
 
-        task = MagicMock(Task)
-        task.async_val = False
-
-        task.args = {'_raw_params': 'Args1'}
-        task.environment = None
-        self.play_context.check_mode = False
+        task = self._build_task()
 
         self.mock_am = ActionModule(task, self.connection, self.play_context, loader=None, templar=None, shared_loader_obj=None)
         self.mock_am._low_level_execute_command = Mock(return_value={})

@@ -1,0 +1,59 @@
+- name: Get the pip version
+  command: "{{ ansible_python_interpreter }} -c 'import pip; print(pip.__version__)'"
+  register: pip_version
+
+- when: pip_version.stdout is version("23.0.1", ">=")
+  block:
+    - name: Locate the Python externally-managed marker file
+      command: |
+        {{ ansible_python_interpreter }} -c 'import sys, sysconfig; print(f"""{sysconfig.get_path("stdlib", sysconfig.get_default_scheme()
+        if sys.version_info >= (3, 10) else sysconfig._get_default_scheme())}/EXTERNALLY-MANAGED""")'
+      register: externally_managed_marker
+
+    - name: Detect if Python is externally-managed
+      stat:
+        path: "{{ externally_managed_marker.stdout }}"
+      register: externally_managed
+
+    - name: Mark Python as externally managed
+      file:
+        path: "{{ externally_managed_marker.stdout }}"
+        state: touch
+      when: not externally_managed.stat.exists
+
+    - block:
+      - name: Copy the sample project to the target
+        copy:
+          src: sample-project/
+          dest: "{{ remote_sample_project }}"
+
+      - name: Attempt to pip install the sample project without a venv
+        pip:
+          name: "{{ remote_sample_project }}"
+        register: pip_install
+        failed_when: pip_install is success
+
+      - name: Attempt to pip install the sample project without a venv using break_system_packages
+        pip:
+          name: "{{ remote_sample_project }}"
+          break_system_packages: true
+
+      - name: Remove the sample project without using break_system_packages
+        pip:
+          name: sample-project
+          state: absent
+        register: pip_uninstall
+        failed_when: pip_uninstall is success
+
+      - name: Remove the sample project using break_system_packages
+        pip:
+          name: sample-project
+          state: absent
+          break_system_packages: true
+
+      always:
+        - name: Unmark Python as externally managed
+          file:
+            path: "{{ externally_managed_marker.stdout }}"
+            state: absent
+          when: not externally_managed.stat.exists

@@ -87,7 +87,7 @@ body:
 
 
       [collections org]: /ansible-collections
-    placeholder: dnf, apt, yum, pip, user etc.
+    placeholder: dnf, apt, pip, user etc.
   validations:
     required: true
 
@@ -249,7 +249,7 @@ body:
 
 
       [ansibot help]:
-      /ansible/ansibullbot/blob/master/ISSUE_HELP.md#for-issue-submitters
+      /ansible/ansibotmini#ansibotmini
 
 
 - type: checkboxes

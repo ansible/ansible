@@ -30,8 +30,18 @@ DOCUMENTATION:
 EXAMPLES: |
 
   # items => [ { "key": "a", "value": 1 }, { "key": "b", "value": 2 } ]
-  items: "{{ {'a': 1, 'b': 2}| dict2items}}"
+  items: "{{ {'a': 1, 'b': 2}| dict2items }}"
 
+  # files_dicts: [
+  #       {
+  #           "file": "users",
+  #           "path": "/etc/passwd"
+  #       },
+  #       {
+  #           "file": "groups",
+  #           "path": "/etc/group"
+  #       }
+  # ]
   vars:
     files:
       users: /etc/passwd

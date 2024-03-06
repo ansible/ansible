@@ -4,8 +4,7 @@
 """Dependency structs."""
 # FIXME: add caching all over the place
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import typing as t
@@ -216,12 +215,15 @@ class _ComputedReqKindsMixin:
             return cls.from_dir_path_implicit(dir_path)
 
     @classmethod
-    def from_dir_path(cls, dir_path, art_mgr):
+    def from_dir_path(  # type: ignore[misc]
+            cls,  # type: t.Type[Collection]
+            dir_path,  # type: bytes
+            art_mgr,  # type: ConcreteArtifactsManager
+    ):  # type: (...)  -> Collection
         """Make collection from an directory with metadata."""
         if dir_path.endswith(to_bytes(os.path.sep)):
             dir_path = dir_path.rstrip(to_bytes(os.path.sep))
-        b_dir_path = to_bytes(dir_path, errors='surrogate_or_strict')
-        if not _is_collection_dir(b_dir_path):
+        if not _is_collection_dir(dir_path):
             display.warning(
                 u"Collection at '{path!s}' does not have a {manifest_json!s} "
                 u'file, nor has it {galaxy_yml!s}: cannot detect version.'.
@@ -460,8 +462,8 @@ class _ComputedReqKindsMixin:
     def __unicode__(self):
         if self.fqcn is None:
             return (
-                u'"virtual collection Git repo"' if self.is_scm
-                else u'"virtual collection namespace"'
+                f'{self.type} collection from a Git repo' if self.is_scm
+                else f'{self.type} collection from a namespace'
             )
 
         return (
@@ -501,14 +503,14 @@ class _ComputedReqKindsMixin:
     @property
     def namespace(self):
         if self.is_virtual:
-            raise TypeError('Virtual collections do not have a namespace')
+            raise TypeError(f'{self.type} collections do not have a namespace')
 
         return self._get_separate_ns_n_name()[0]
 
     @property
     def name(self):
         if self.is_virtual:
-            raise TypeError('Virtual collections do not have a name')
+            raise TypeError(f'{self.type} collections do not have a name')
 
         return self._get_separate_ns_n_name()[-1]
 
@@ -560,6 +562,27 @@ class _ComputedReqKindsMixin:
     @property
     def is_online_index_pointer(self):
         return not self.is_concrete_artifact
+
+    @property
+    def is_pinned(self):
+        """Indicate if the version set is considered pinned.
+
+        This essentially computes whether the version field of the current
+        requirement explicitly requests a specific version and not an allowed
+        version range.
+
+        It is then used to help the resolvelib-based dependency resolver judge
+        whether it's acceptable to consider a pre-release candidate version
+        despite pre-release installs not being requested by the end-user
+        explicitly.
+
+        See https://github.com/ansible/ansible/pull/81606 for extra context.
+        """
+        version_string = self.ver[0]
+        return version_string.isdigit() or not (
+            version_string == '*' or
+            version_string.startswith(('<', '>', '!='))
+        )
 
     @property
     def source_info(self):

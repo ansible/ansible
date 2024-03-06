@@ -3,9 +3,7 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import base64
 import json
@@ -63,6 +61,13 @@ class ActionBase(ABC):
     # A set of valid arguments
     _VALID_ARGS = frozenset([])  # type: frozenset[str]
 
+    # behavioral attributes
+    BYPASS_HOST_LOOP = False
+    TRANSFERS_FILES = False
+    _requires_connection = True
+    _supports_check_mode = True
+    _supports_async = False
+
     def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj):
         self._task = task
         self._connection = connection
@@ -72,19 +77,15 @@ class ActionBase(ABC):
         self._shared_loader_obj = shared_loader_obj
         self._cleanup_remote_tmp = False
 
-        self._supports_check_mode = True
-        self._supports_async = False
-
         # interpreter discovery state
         self._discovered_interpreter_key = None
         self._discovered_interpreter = False
         self._discovery_deprecation_warnings = []
         self._discovery_warnings = []
+        self._used_interpreter = None
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
-
-        self._used_interpreter = None
 
     @abstractmethod
     def run(self, tmp=None, task_vars=None):
@@ -99,7 +100,7 @@ class ActionBase(ABC):
             etc) associated with this task.
         :returns: dictionary of results from the module
 
-        Implementors of action modules may find the following variables especially useful:
+        Implementers of action modules may find the following variables especially useful:
 
         * Module parameters.  These are stored in self._task.args
         """
@@ -114,11 +115,11 @@ class ActionBase(ABC):
         del tmp
 
         if self._task.async_val and not self._supports_async:
-            raise AnsibleActionFail('async is not supported for this task.')
+            raise AnsibleActionFail('This action (%s) does not support async.' % self._task.action)
         elif self._task.check_mode and not self._supports_check_mode:
-            raise AnsibleActionSkip('check mode is not supported for this task.')
+            raise AnsibleActionSkip('This action (%s) does not support check mode.' % self._task.action)
         elif self._task.async_val and self._task.check_mode:
-            raise AnsibleActionFail('check mode and async cannot be used on same task.')
+            raise AnsibleActionFail('"check mode" and "async" cannot be used on same task.')
 
         # Error if invalid argument is passed
         if self._VALID_ARGS:
@@ -736,8 +737,7 @@ class ActionBase(ABC):
             return remote_paths
 
         # we'll need this down here
-        become_link = get_versioned_doclink('user_guide/become.html')
-
+        become_link = get_versioned_doclink('playbook_guide/playbooks_privilege_escalation.html')
         # Step 3f: Common group
         # Otherwise, we're a normal user. We failed to chown the paths to the
         # unprivileged user, but if we have a common group with them, we should
@@ -849,10 +849,13 @@ class ActionBase(ABC):
             path=path,
             follow=follow,
             get_checksum=checksum,
+            get_size=False,  # ansible.windows.win_stat added this in 1.11.0
             checksum_algorithm='sha1',
         )
+        # Unknown opts are ignored as module_args could be specific for the
+        # module that is being executed.
         mystat = self._execute_module(module_name='ansible.legacy.stat', module_args=module_args, task_vars=all_vars,
-                                      wrap_async=False)
+                                      wrap_async=False, ignore_unknown_opts=True)
 
         if mystat.get('failed'):
             msg = mystat.get('module_stderr')
@@ -936,7 +939,7 @@ class ActionBase(ABC):
             data = re.sub(r'^((\r)?\n)?BECOME-SUCCESS.*(\r)?\n', '', data)
         return data
 
-    def _update_module_args(self, module_name, module_args, task_vars):
+    def _update_module_args(self, module_name, module_args, task_vars, ignore_unknown_opts: bool = False):
 
         # set check mode in the module arguments, if required
         if self._task.check_mode:
@@ -994,7 +997,14 @@ class ActionBase(ABC):
         # make sure the remote_tmp value is sent through in case modules needs to create their own
         module_args['_ansible_remote_tmp'] = self.get_shell_option('remote_tmp', default='~/.ansible/tmp')
 
-    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False):
+        # tells the module to ignore options that are not in its argspec.
+        module_args['_ansible_ignore_unknown_opts'] = ignore_unknown_opts
+
+        # allow user to insert string to add context to remote loggging
+        module_args['_ansible_target_log_info'] = C.config.get_config_value('TARGET_LOG_INFO', variables=task_vars)
+
+    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False,
+                        ignore_unknown_opts: bool = False):
         '''
         Transfer and run a module along with its arguments.
         '''
@@ -1030,7 +1040,7 @@ class ActionBase(ABC):
         if module_args is None:
             module_args = self._task.args
 
-        self._update_module_args(module_name, module_args, task_vars)
+        self._update_module_args(module_name, module_args, task_vars, ignore_unknown_opts=ignore_unknown_opts)
 
         remove_async_dir = None
         if wrap_async or self._task.async_val:
@@ -1155,7 +1165,7 @@ class ActionBase(ABC):
         if data.pop("_ansible_suppress_tmpdir_delete", False):
             self._cleanup_remote_tmp = False
 
-        # NOTE: yum returns results .. but that made it 'compatible' with squashing, so we allow mappings, for now
+        # NOTE: dnf returns results .. but that made it 'compatible' with squashing, so we allow mappings, for now
         if 'results' in data and (not isinstance(data['results'], Sequence) or isinstance(data['results'], string_types)):
             data['ansible_module_results'] = data['results']
             del data['results']
@@ -1337,7 +1347,7 @@ class ActionBase(ABC):
         display.debug(u"_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, out, err))
         return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err, stderr_lines=err.splitlines())
 
-    def _get_diff_data(self, destination, source, task_vars, source_file=True):
+    def _get_diff_data(self, destination, source, task_vars, content=None, source_file=True):
 
         # Note: Since we do not diff the source and destination before we transform from bytes into
         # text the diff between source and destination may not be accurate.  To fix this, we'd need
@@ -1395,7 +1405,10 @@ class ActionBase(ABC):
                     if b"\x00" in src_contents:
                         diff['src_binary'] = 1
                     else:
-                        diff['after_header'] = source
+                        if content:
+                            diff['after_header'] = destination
+                        else:
+                            diff['after_header'] = source
                         diff['after'] = to_text(src_contents)
             else:
                 display.debug(u"source of file passed in")

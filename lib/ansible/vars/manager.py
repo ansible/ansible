@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import sys
@@ -184,6 +182,9 @@ class VariableManager:
 
             See notes in the VarsWithSources docstring for caveats and limitations of the source tracking
             '''
+            if new_data == {}:
+                return data
+
             if C.DEFAULT_DEBUG:
                 # Populate var sources dict
                 for key in new_data:
@@ -196,13 +197,10 @@ class VariableManager:
             basedirs = [self._loader.get_basedir()]
 
         if play:
-            if not C.DEFAULT_PRIVATE_ROLE_VARS:
-                # first we compile any vars specified in defaults/main.yml
-                # for all roles within the specified play
-                for role in play.get_roles():
-                    # role from roles or include_role+public or import_role and completed
-                    if not role.from_include or role.public or (role.static and role._completed.get(to_text(host), False)):
-                        all_vars = _combine_and_track(all_vars, role.get_default_vars(), "role '%s' defaults" % role.name)
+            # get role defaults (lowest precedence)
+            for role in play.roles:
+                if role.public:
+                    all_vars = _combine_and_track(all_vars, role.get_default_vars(), "role '%s' defaults" % role.name)
 
         if task:
             # set basedirs
@@ -219,8 +217,7 @@ class VariableManager:
             # (v1) made sure each task had a copy of its roles default vars
             # TODO: investigate why we need play or include_role check?
             if task._role is not None and (play or task.action in C._ACTION_INCLUDE_ROLE):
-                all_vars = _combine_and_track(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()),
-                                              "role '%s' defaults" % task._role.name)
+                all_vars = _combine_and_track(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()), "role '%s' defaults" % task._role.name)
 
         if host:
             # THE 'all' group and the rest of groups for a host, used below
@@ -386,19 +383,17 @@ class VariableManager:
                 raise AnsibleParserError("Error while reading vars files - please supply a list of file names. "
                                          "Got '%s' of type %s" % (vars_files, type(vars_files)))
 
-            # By default, we now merge in all exported vars from all roles in the play,
-            # unless the user has disabled this via a config option
-            if not C.DEFAULT_PRIVATE_ROLE_VARS:
-                for role in play.get_roles():
-                    if not role.from_include or role.public or (role.static and role._completed.get(to_text(host), False)):
-                        all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), "role '%s' exported vars" % role.name)
+            # We now merge in all exported vars from all roles in the play (very high precedence)
+            for role in play.roles:
+                if role.public:
+                    all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), "role '%s' exported vars" % role.name)
 
         # next, we merge in the vars from the role, which will specifically
         # follow the role dependency chain, and then we merge in the tasks
         # vars (which will look at parent blocks/task includes)
         if task:
             if task._role:
-                all_vars = _combine_and_track(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=True, only_exports=False),
+                all_vars = _combine_and_track(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False, only_exports=False),
                                               "role '%s' all vars" % task._role.name)
             all_vars = _combine_and_track(all_vars, task.get_vars(), "task vars")
 
@@ -415,6 +410,8 @@ class VariableManager:
             # special case for include tasks, where the include params
             # may be specified in the vars field for the task, which should
             # have higher precedence than the vars/np facts above
+            if task._role:
+                all_vars = _combine_and_track(all_vars, task._role.get_role_params(task.get_dep_chain()), "role params")
             all_vars = _combine_and_track(all_vars, task.get_include_params(), "include params")
 
         # extra vars
@@ -457,9 +454,8 @@ class VariableManager:
         variables['ansible_config_file'] = C.CONFIG_FILE
 
         if play:
-            # This is a list of all role names of all dependencies for all roles for this play
+            # using role_cache as play.roles only has 'public' roles for vars exporting
             dependency_role_names = list({d.get_name() for r in play.roles for d in r.get_all_dependencies()})
-            # This is a list of all role names of all roles for this play
             play_role_names = [r.get_name() for r in play.roles]
 
             # ansible_role_names includes all role names, dependent or directly referenced by the play
@@ -471,7 +467,7 @@ class VariableManager:
             # dependencies that are also explicitly named as roles are included in this list
             variables['ansible_dependent_role_names'] = dependency_role_names
 
-            # DEPRECATED: role_names should be deprecated in favor of ansible_role_names or ansible_play_role_names
+            # TODO: data tagging!!! DEPRECATED: role_names should be deprecated in favor of ansible_ prefixed ones
             variables['role_names'] = variables['ansible_play_role_names']
 
             variables['ansible_play_name'] = play.get_name()
@@ -527,27 +523,35 @@ class VariableManager:
         delegated_host_name = None
         if task.delegate_to:
             delegated_host_name = templar.template(task.delegate_to, fail_on_undefined=False)
-            delegated_host = self._inventory.get_host(delegated_host_name)
-            if delegated_host is None:
-                for h in self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
-                    # check if the address matches, or if both the delegated_to host
-                    # and the current host are in the list of localhost aliases
-                    if h.address == delegated_host_name:
-                        delegated_host = h
-                        break
-                else:
-                    delegated_host = Host(name=delegated_host_name)
 
-            delegated_vars['ansible_delegated_vars'] = {
-                delegated_host_name: self.get_vars(
-                    play=task.get_play(),
-                    host=delegated_host,
-                    task=task,
-                    include_delegate_to=False,
-                    include_hostvars=True,
-                )
-            }
-            delegated_vars['ansible_delegated_vars'][delegated_host_name]['inventory_hostname'] = variables.get('inventory_hostname')
+            # no need to do work if omitted
+            if delegated_host_name != self._omit_token:
+
+                if not delegated_host_name:
+                    raise AnsibleError('Empty hostname produced from delegate_to: "%s"' % task.delegate_to)
+
+                delegated_host = self._inventory.get_host(delegated_host_name)
+                if delegated_host is None:
+                    for h in self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
+                        # check if the address matches, or if both the delegated_to host
+                        # and the current host are in the list of localhost aliases
+                        if h.address == delegated_host_name:
+                            delegated_host = h
+                            break
+                    else:
+                        delegated_host = Host(name=delegated_host_name)
+
+                delegated_vars['ansible_delegated_vars'] = {
+                    delegated_host_name: self.get_vars(
+                        play=task.get_play(),
+                        host=delegated_host,
+                        task=task,
+                        include_delegate_to=False,
+                        include_hostvars=True,
+                    )
+                }
+                delegated_vars['ansible_delegated_vars'][delegated_host_name]['inventory_hostname'] = variables.get('inventory_hostname')
+
         return delegated_vars, delegated_host_name
 
     def _get_delegated_vars(self, play, task, existing_variables):
@@ -786,3 +790,22 @@ class VarsWithSources(MutableMapping):
 
     def copy(self):
         return VarsWithSources.new_vars_with_sources(self.data.copy(), self.sources.copy())
+
+    def __or__(self, other):
+        if isinstance(other, MutableMapping):
+            c = self.data.copy()
+            c.update(other)
+            return c
+        return NotImplemented
+
+    def __ror__(self, other):
+        if isinstance(other, MutableMapping):
+            c = self.__class__()
+            c.update(other)
+            c.update(self.data)
+            return c
+        return NotImplemented
+
+    def __ior__(self, other):
+        self.data.update(other)
+        return self.data

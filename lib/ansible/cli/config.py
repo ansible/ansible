@@ -3,8 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # PYTHON_ARGCOMPLETE_OK
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
@@ -67,7 +66,7 @@ class ConfigCLI(CLI):
             desc="View ansible configuration.",
         )
 
-        common = opt_help.argparse.ArgumentParser(add_help=False)
+        common = opt_help.ArgumentParser(add_help=False)
         opt_help.add_verbosity_options(common)
         common.add_argument('-c', '--config', dest='config_file',
                             help="path to configuration file, defaults to first file found in precedence.")
@@ -314,7 +313,7 @@ class ConfigCLI(CLI):
 
         return data
 
-    def _get_settings_ini(self, settings):
+    def _get_settings_ini(self, settings, seen):
 
         sections = {}
         for o in sorted(settings.keys()):
@@ -327,7 +326,7 @@ class ConfigCLI(CLI):
 
             if not opt.get('description'):
                 # its a plugin
-                new_sections = self._get_settings_ini(opt)
+                new_sections = self._get_settings_ini(opt, seen)
                 for s in new_sections:
                     if s in sections:
                         sections[s].extend(new_sections[s])
@@ -343,36 +342,45 @@ class ConfigCLI(CLI):
 
             if 'ini' in opt and opt['ini']:
                 entry = opt['ini'][-1]
+                if entry['section'] not in seen:
+                    seen[entry['section']] = []
                 if entry['section'] not in sections:
                     sections[entry['section']] = []
 
-                default = opt.get('default', '')
-                if opt.get('type', '') == 'list' and not isinstance(default, string_types):
-                    # python lists are not valid ini ones
-                    default = ', '.join(default)
-                elif default is None:
-                    default = ''
+                # avoid dupes
+                if entry['key'] not in seen[entry['section']]:
+                    seen[entry['section']].append(entry['key'])
 
-                if context.CLIARGS['commented']:
-                    entry['key'] = ';%s' % entry['key']
+                    default = opt.get('default', '')
+                    if opt.get('type', '') == 'list' and not isinstance(default, string_types):
+                        # python lists are not valid ini ones
+                        default = ', '.join(default)
+                    elif default is None:
+                        default = ''
 
-                key = desc + '\n%s=%s' % (entry['key'], default)
-                sections[entry['section']].append(key)
+                    if context.CLIARGS['commented']:
+                        entry['key'] = ';%s' % entry['key']
+
+                    key = desc + '\n%s=%s' % (entry['key'], default)
+
+                    sections[entry['section']].append(key)
 
         return sections
 
     def execute_init(self):
+        """Create initial configuration"""
 
+        seen = {}
         data = []
         config_entries = self._list_entries_from_args()
         plugin_types = config_entries.pop('PLUGINS', None)
 
         if context.CLIARGS['format'] == 'ini':
-            sections = self._get_settings_ini(config_entries)
+            sections = self._get_settings_ini(config_entries, seen)
 
             if plugin_types:
                 for ptype in plugin_types:
-                    plugin_sections = self._get_settings_ini(plugin_types[ptype])
+                    plugin_sections = self._get_settings_ini(plugin_types[ptype], seen)
                     for s in plugin_sections:
                         if s in sections:
                             sections[s].extend(plugin_sections[s])

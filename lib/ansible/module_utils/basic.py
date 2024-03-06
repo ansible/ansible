@@ -2,46 +2,21 @@
 # Copyright (c), Toshio Kuratomi <tkuratomi@ansible.com> 2016
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
+import json
 import sys
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
-_PY3_MIN = sys.version_info >= (3, 5)
-_PY2_MIN = (2, 7) <= sys.version_info < (3,)
-_PY_MIN = _PY3_MIN or _PY2_MIN
+_PY_MIN = (3, 7)
 
-if not _PY_MIN:
-    print(
-        '\n{"failed": true, '
-        '"msg": "ansible-core requires a minimum of Python2 version 2.7 or Python3 version 3.5. Current version: %s"}' % ''.join(sys.version.splitlines())
-    )
+if sys.version_info < _PY_MIN:
+    print(json.dumps(dict(
+        failed=True,
+        msg=f"ansible-core requires a minimum of Python version {'.'.join(map(str, _PY_MIN))}. Current version: {''.join(sys.version.splitlines())}",
+    )))
     sys.exit(1)
-
-FILE_ATTRIBUTES = {
-    'A': 'noatime',
-    'a': 'append',
-    'c': 'compressed',
-    'C': 'nocow',
-    'd': 'nodump',
-    'D': 'dirsync',
-    'e': 'extents',
-    'E': 'encrypted',
-    'h': 'blocksize',
-    'i': 'immutable',
-    'I': 'indexed',
-    'j': 'journalled',
-    'N': 'inline',
-    's': 'zero',
-    'S': 'synchronous',
-    't': 'notail',
-    'T': 'blockroot',
-    'u': 'undelete',
-    'X': 'compressedraw',
-    'Z': 'compresseddirty',
-}
 
 # Ansible modules can be written in any language.
 # The functions available here can be used to do many common tasks,
@@ -50,7 +25,6 @@ FILE_ATTRIBUTES = {
 import __main__
 import atexit
 import errno
-import datetime
 import grp
 import fcntl
 import locale
@@ -59,17 +33,16 @@ import pwd
 import platform
 import re
 import select
+import selectors
 import shlex
 import shutil
-import signal
 import stat
 import subprocess
 import tempfile
 import time
 import traceback
-import types
 
-from itertools import chain, repeat
+from functools import reduce
 
 try:
     import syslog
@@ -97,8 +70,6 @@ except ImportError:
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
 
-from ansible.module_utils.compat import selectors
-
 from ._text import to_native, to_bytes, to_text
 from ansible.module_utils.common.text.converters import (
     jsonify,
@@ -120,21 +91,9 @@ import hashlib
 
 def _get_available_hash_algorithms():
     """Return a dictionary of available hash function names and their associated function."""
-    try:
-        # Algorithms available in Python 2.7.9+ and Python 3.2+
-        # https://docs.python.org/2.7/library/hashlib.html#hashlib.algorithms_available
-        # https://docs.python.org/3.2/library/hashlib.html#hashlib.algorithms_available
-        algorithm_names = hashlib.algorithms_available
-    except AttributeError:
-        # Algorithms in Python 2.7.x (used only for Python 2.7.0 through 2.7.8)
-        # https://docs.python.org/2.7/library/hashlib.html#hashlib.hashlib.algorithms
-        algorithm_names = set(hashlib.algorithms)
-
     algorithms = {}
-
-    for algorithm_name in algorithm_names:
+    for algorithm_name in hashlib.algorithms_available:
         algorithm_func = getattr(hashlib, algorithm_name, None)
-
         if algorithm_func:
             try:
                 # Make sure the algorithm is actually available for use.
@@ -151,12 +110,6 @@ def _get_available_hash_algorithms():
 
 AVAILABLE_HASH_ALGORITHMS = _get_available_hash_algorithms()
 
-try:
-    from ansible.module_utils.common._json_compat import json
-except ImportError as e:
-    print('\n{{"msg": "Error: ansible requires the stdlib json: {0}", "failed": true}}'.format(to_native(e)))
-    sys.exit(1)
-
 from ansible.module_utils.six.moves.collections_abc import (
     KeysView,
     Mapping, MutableMapping,
@@ -167,18 +120,19 @@ from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.file import (
     _PERM_BITS as PERM_BITS,
-    _EXEC_PERM_BITS as EXEC_PERM_BITS,
     _DEFAULT_PERM as DEFAULT_PERM,
     is_executable,
     format_attributes,
     get_flags_from_attributes,
+    FILE_ATTRIBUTES,
+    S_IXANY,
+    S_IRWU_RWG_RWO,
 )
 from ansible.module_utils.common.sys_info import (
     get_distribution,
     get_distribution_version,
     get_platform_subclass,
 )
-from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
     env_fallback,
     remove_values,
@@ -189,17 +143,6 @@ from ansible.module_utils.common.parameters import (
 )
 
 from ansible.module_utils.errors import AnsibleFallbackNotFound, AnsibleValidationErrorMultiple, UnsupportedError
-from ansible.module_utils.six import (
-    PY2,
-    PY3,
-    b,
-    binary_type,
-    integer_types,
-    iteritems,
-    string_types,
-    text_type,
-)
-from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils.common.validation import (
     check_missing_parameters,
     safe_eval,
@@ -220,24 +163,6 @@ SEQUENCETYPE = frozenset, KeysView, Sequence
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
 
 imap = map
-
-try:
-    # Python 2
-    unicode  # type: ignore[used-before-def]  # pylint: disable=used-before-assignment
-except NameError:
-    # Python 3
-    unicode = text_type
-
-try:
-    # Python 2
-    basestring  # type: ignore[used-before-def,has-type]  # pylint: disable=used-before-assignment
-except NameError:
-    # Python 3
-    basestring = string_types
-
-_literal_eval = literal_eval
-
-# End of deprecated names
 
 # Internal global holding passed in params.  This is consulted in case
 # multiple AnsibleModules are created.  Otherwise each AnsibleModule would
@@ -395,33 +320,25 @@ def _load_params():
                 buffer = fd.read()
                 fd.close()
             else:
-                buffer = sys.argv[1]
-                if PY3:
-                    buffer = buffer.encode('utf-8', errors='surrogateescape')
+                buffer = sys.argv[1].encode('utf-8', errors='surrogateescape')
         # default case, read from stdin
         else:
-            if PY2:
-                buffer = sys.stdin.read()
-            else:
-                buffer = sys.stdin.buffer.read()
+            buffer = sys.stdin.buffer.read()
         _ANSIBLE_ARGS = buffer
 
     try:
         params = json.loads(buffer.decode('utf-8'))
     except ValueError:
-        # This helper used too early for fail_json to work.
-        print('\n{"msg": "Error: Module unable to decode valid JSON on stdin.  Unable to figure out what parameters were passed", "failed": true}')
+        # This helper is used too early for fail_json to work.
+        print('\n{"msg": "Error: Module unable to decode stdin/parameters as valid JSON. Unable to parse what parameters were passed", "failed": true}')
         sys.exit(1)
-
-    if PY2:
-        params = json_dict_unicode_to_bytes(params)
 
     try:
         return params['ANSIBLE_MODULE_ARGS']
     except KeyError:
         # This helper does not have access to fail_json so we have to print
         # json output on our own.
-        print('\n{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS in json data from stdin.  Unable to figure out what parameters were passed", '
+        print('\n{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS in JSON data from stdin. Unable to figure out what parameters were passed", '
               '"failed": true}')
         sys.exit(1)
 
@@ -514,6 +431,8 @@ class AnsibleModule(object):
 
         try:
             error = self.validation_result.errors[0]
+            if isinstance(error, UnsupportedError) and self._ignore_unknown_opts:
+                error = None
         except IndexError:
             error = None
 
@@ -590,7 +509,7 @@ class AnsibleModule(object):
             raise AssertionError("implementation error -- version and date must not both be set")
         deprecate(msg, version=version, date=date, collection_name=collection_name)
         # For compatibility, we accept that neither version nor date is set,
-        # and treat that the same as if version would haven been set
+        # and treat that the same as if version would not have been set
         if date is not None:
             self.log('[DEPRECATION WARNING] %s %s' % (msg, date))
         else:
@@ -717,7 +636,7 @@ class AnsibleModule(object):
 
     def find_mount_point(self, path):
         '''
-            Takes a path and returns it's mount point
+            Takes a path and returns its mount point
 
         :param path: a string type with a filesystem path
         :returns: the path to the mount point as a text type
@@ -913,7 +832,7 @@ class AnsibleModule(object):
                                    details=to_native(e))
 
                 if mode != stat.S_IMODE(mode):
-                    # prevent mode from having extra info orbeing invalid long number
+                    # prevent mode from having extra info or being invalid long number
                     path = to_text(b_path)
                     self.fail_json(path=path, msg="Invalid mode supplied, only permission info is allowed", details=mode)
 
@@ -990,7 +909,7 @@ class AnsibleModule(object):
             attr_mod = attributes[0]
             attributes = attributes[1:]
 
-        if existing.get('attr_flags', '') != attributes or attr_mod == '-':
+        if attributes and (existing.get('attr_flags', '') != attributes or attr_mod == '-'):
             attrcmd = self.get_bin_path('chattr')
             if attrcmd:
                 attrcmd = [attrcmd, '%s%s' % (attr_mod, attributes), b_path]
@@ -1103,7 +1022,7 @@ class AnsibleModule(object):
         if prev_mode is None:
             prev_mode = stat.S_IMODE(path_stat.st_mode)
         is_directory = stat.S_ISDIR(path_stat.st_mode)
-        has_x_permissions = (prev_mode & EXEC_PERM_BITS) > 0
+        has_x_permissions = (prev_mode & S_IXANY) > 0
         apply_X_permission = is_directory or has_x_permissions
 
         # Get the umask, if the 'user' part is empty, the effect is as if (a) were
@@ -1301,7 +1220,7 @@ class AnsibleModule(object):
                 facility = getattr(syslog, self._syslog_facility, syslog.LOG_USER)
                 syslog.openlog(str(module), 0, facility)
                 syslog.syslog(syslog.LOG_INFO, msg)
-            except TypeError as e:
+            except (TypeError, ValueError) as e:
                 self.fail_json(
                     msg='Failed to log to syslog (%s). To proceed anyway, '
                         'disable syslog logging by setting no_target_syslog '
@@ -1322,25 +1241,26 @@ class AnsibleModule(object):
                 log_args = dict()
 
             module = 'ansible-%s' % self._name
-            if isinstance(module, binary_type):
+            if isinstance(module, bytes):
                 module = module.decode('utf-8', 'replace')
 
             # 6655 - allow for accented characters
-            if not isinstance(msg, (binary_type, text_type)):
+            if not isinstance(msg, (bytes, str)):
                 raise TypeError("msg should be a string (got %s)" % type(msg))
 
             # We want journal to always take text type
             # syslog takes bytes on py2, text type on py3
-            if isinstance(msg, binary_type):
-                journal_msg = remove_values(msg.decode('utf-8', 'replace'), self.no_log_values)
+            if isinstance(msg, bytes):
+                journal_msg = msg.decode('utf-8', 'replace')
             else:
                 # TODO: surrogateescape is a danger here on Py3
-                journal_msg = remove_values(msg, self.no_log_values)
+                journal_msg = msg
 
-            if PY3:
-                syslog_msg = journal_msg
-            else:
-                syslog_msg = journal_msg.encode('utf-8', 'replace')
+            if self._target_log_info:
+                journal_msg = ' '.join([self._target_log_info, journal_msg])
+
+            # ensure we clean up secrets!
+            journal_msg = remove_values(journal_msg, self.no_log_values)
 
             if has_journal:
                 journal_args = [("MODULE", os.path.basename(__file__))]
@@ -1371,9 +1291,9 @@ class AnsibleModule(object):
                                      **dict(journal_args))
                 except IOError:
                     # fall back to syslog since logging to journal failed
-                    self._log_to_syslog(syslog_msg)
+                    self._log_to_syslog(journal_msg)
             else:
-                self._log_to_syslog(syslog_msg)
+                self._log_to_syslog(journal_msg)
 
     def _log_invocation(self):
         ''' log that ansible ran the module '''
@@ -1394,9 +1314,9 @@ class AnsibleModule(object):
                 log_args[param] = 'NOT_LOGGING_PARAMETER'
             else:
                 param_val = self.params[param]
-                if not isinstance(param_val, (text_type, binary_type)):
+                if not isinstance(param_val, (str, bytes)):
                     param_val = str(param_val)
-                elif isinstance(param_val, text_type):
+                elif isinstance(param_val, str):
                     param_val = param_val.encode('utf-8')
                 log_args[param] = heuristic_log_sanitize(param_val, self.no_log_values)
 
@@ -1511,7 +1431,19 @@ class AnsibleModule(object):
         if deprecations:
             kwargs['deprecations'] = deprecations
 
+        # preserve bools/none from no_log
+        # TODO: once python version on target high enough, dict comprh
+        preserved = {}
+        for k, v in kwargs.items():
+            if v is None or isinstance(v, bool):
+                preserved[k] = v
+
+        # strip no_log collisions
         kwargs = remove_values(kwargs, self.no_log_values)
+
+        # return preserved
+        kwargs.update(preserved)
+
         print('\n%s' % self.jsonify(kwargs))
 
     def exit_json(self, **kwargs):
@@ -1530,12 +1462,7 @@ class AnsibleModule(object):
         # Add traceback if debug or high verbosity and it is missing
         # NOTE: Badly named as exception, it really always has been a traceback
         if 'exception' not in kwargs and sys.exc_info()[2] and (self._debug or self._verbosity >= 3):
-            if PY2:
-                # On Python 2 this is the last (stack frame) exception and as such may be unrelated to the failure
-                kwargs['exception'] = 'WARNING: The below traceback may *not* be related to the actual failure.\n' +\
-                                      ''.join(traceback.format_tb(sys.exc_info()[2]))
-            else:
-                kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
+            kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
 
         self.do_cleanup_files()
         self._return_formatted(kwargs)
@@ -1715,14 +1642,6 @@ class AnsibleModule(object):
                     tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=b'.ansible_tmp', dir=b_dest_dir, suffix=b_suffix)
                 except (OSError, IOError) as e:
                     error_msg = 'The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), to_native(e))
-                except TypeError:
-                    # We expect that this is happening because python3.4.x and
-                    # below can't handle byte strings in mkstemp().
-                    # Traceback would end in something like:
-                    #     file = _os.path.join(dir, pre + name + suf)
-                    # TypeError: can't concat bytes to str
-                    error_msg = ('Failed creating tmp file for atomic move.  This usually happens when using Python3 less than Python3.5. '
-                                 'Please use Python2.x or Python3.5 or greater.')
                 finally:
                     if error_msg:
                         if unsafe_writes:
@@ -1776,7 +1695,7 @@ class AnsibleModule(object):
             # based on the current value of umask
             umask = os.umask(0)
             os.umask(umask)
-            os.chmod(b_dest, DEFAULT_PERM & ~umask)
+            os.chmod(b_dest, S_IRWU_RWG_RWO & ~umask)
             try:
                 os.chown(b_dest, os.geteuid(), os.getegid())
             except OSError:
@@ -1812,13 +1731,9 @@ class AnsibleModule(object):
             # create a printable version of the command for use in reporting later,
             # which strips out things like passwords from the args list
             to_clean_args = args
-            if PY2:
-                if isinstance(args, text_type):
-                    to_clean_args = to_bytes(args)
-            else:
-                if isinstance(args, binary_type):
-                    to_clean_args = to_text(args)
-            if isinstance(args, (text_type, binary_type)):
+            if isinstance(args, bytes):
+                to_clean_args = to_text(args)
+            if isinstance(args, (str, bytes)):
                 to_clean_args = shlex.split(to_clean_args)
 
             clean_args = []
@@ -1837,20 +1752,23 @@ class AnsibleModule(object):
                         is_passwd = True
                 arg = heuristic_log_sanitize(arg, self.no_log_values)
                 clean_args.append(arg)
-            self._clean = ' '.join(shlex_quote(arg) for arg in clean_args)
+            self._clean = ' '.join(shlex.quote(arg) for arg in clean_args)
 
         return self._clean
-
-    def _restore_signal_handlers(self):
-        # Reset SIGPIPE to SIG_DFL, otherwise in Python2.7 it gets ignored in subprocesses.
-        if PY2 and sys.platform != 'win32':
-            signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
                     expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None, ignore_invalid_cwd=True, handle_exceptions=True):
         '''
         Execute a command, returns rc, stdout, and stderr.
+
+        The mechanism of this method for reading stdout and stderr differs from
+        that of CPython subprocess.Popen.communicate, in that this method will
+        stop reading once the spawned command has exited and stdout and stderr
+        have been consumed, as opposed to waiting until stdout/stderr are
+        closed. This can be an important distinction, when taken into account
+        that a forked or backgrounded process may hold stdout or stderr open
+        for longer than the spawned command.
 
         :arg args: is the command to run
             * If args is a list, the command will be run with shell=False.
@@ -1914,7 +1832,7 @@ class AnsibleModule(object):
         # used by clean args later on
         self._clean = None
 
-        if not isinstance(args, (list, binary_type, text_type)):
+        if not isinstance(args, (list, bytes, str)):
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)
 
@@ -1923,7 +1841,7 @@ class AnsibleModule(object):
 
             # stringify args for unsafe/direct shell usage
             if isinstance(args, list):
-                args = b" ".join([to_bytes(shlex_quote(x), errors='surrogate_or_strict') for x in args])
+                args = b" ".join([to_bytes(shlex.quote(x), errors='surrogate_or_strict') for x in args])
             else:
                 args = to_bytes(args, errors='surrogate_or_strict')
 
@@ -1937,14 +1855,8 @@ class AnsibleModule(object):
                 shell = True
         else:
             # ensure args are a list
-            if isinstance(args, (binary_type, text_type)):
-                # On python2.6 and below, shlex has problems with text type
-                # On python3, shlex needs a text type.
-                if PY2:
-                    args = to_bytes(args, errors='surrogate_or_strict')
-                elif PY3:
-                    args = to_text(args, errors='surrogateescape')
-                args = shlex.split(args)
+            if isinstance(args, (bytes, str)):
+                args = shlex.split(to_text(args, errors='surrogateescape'))
 
             # expand ``~`` in paths, and all environment vars
             if expand_user_and_vars:
@@ -1954,11 +1866,8 @@ class AnsibleModule(object):
 
         prompt_re = None
         if prompt_regex:
-            if isinstance(prompt_regex, text_type):
-                if PY3:
-                    prompt_regex = to_bytes(prompt_regex, errors='surrogateescape')
-                elif PY2:
-                    prompt_regex = to_bytes(prompt_regex, errors='surrogate_or_strict')
+            if isinstance(prompt_regex, str):
+                prompt_regex = to_bytes(prompt_regex, errors='surrogateescape')
             try:
                 prompt_re = re.compile(prompt_regex, re.MULTILINE)
             except re.error:
@@ -1997,7 +1906,6 @@ class AnsibleModule(object):
             st_in = subprocess.PIPE
 
         def preexec():
-            self._restore_signal_handlers()
             if umask:
                 os.umask(umask)
 
@@ -2011,10 +1919,8 @@ class AnsibleModule(object):
             preexec_fn=preexec,
             env=env,
         )
-        if PY3 and pass_fds:
+        if pass_fds:
             kwargs["pass_fds"] = pass_fds
-        elif PY2 and pass_fds:
-            kwargs['close_fds'] = False
 
         # make sure we're in the right working directory
         if cwd:
@@ -2031,71 +1937,76 @@ class AnsibleModule(object):
             if before_communicate_callback:
                 before_communicate_callback(cmd)
 
-            # the communication logic here is essentially taken from that
-            # of the _communicate() function in ssh.py
-
             stdout = b''
             stderr = b''
-            try:
-                selector = selectors.DefaultSelector()
-            except (IOError, OSError):
-                # Failed to detect default selector for the given platform
-                # Select PollSelector which is supported by major platforms
+
+            # Mirror the CPython subprocess logic and preference for the selector to use.
+            # poll/select have the advantage of not requiring any extra file
+            # descriptor, contrarily to epoll/kqueue (also, they require a single
+            # syscall).
+            if hasattr(selectors, 'PollSelector'):
                 selector = selectors.PollSelector()
+            else:
+                selector = selectors.SelectSelector()
 
             if data:
                 if not binary_data:
                     data += '\n'
-                if isinstance(data, text_type):
+                if isinstance(data, str):
                     data = to_bytes(data)
 
-            if not prompt_re:
-                stdout, stderr = cmd.communicate(input=data)
-            else:
-                # We only need this to look for a prompt, to abort instead of hanging
-                selector.register(cmd.stdout, selectors.EVENT_READ)
-                selector.register(cmd.stderr, selectors.EVENT_READ)
-                if os.name == 'posix':
-                    fcntl.fcntl(cmd.stdout.fileno(), fcntl.F_SETFL, fcntl.fcntl(cmd.stdout.fileno(), fcntl.F_GETFL) | os.O_NONBLOCK)
-                    fcntl.fcntl(cmd.stderr.fileno(), fcntl.F_SETFL, fcntl.fcntl(cmd.stderr.fileno(), fcntl.F_GETFL) | os.O_NONBLOCK)
+            selector.register(cmd.stdout, selectors.EVENT_READ)
+            selector.register(cmd.stderr, selectors.EVENT_READ)
 
-                if data:
-                    cmd.stdin.write(data)
-                    cmd.stdin.close()
+            if os.name == 'posix':
+                fcntl.fcntl(cmd.stdout.fileno(), fcntl.F_SETFL, fcntl.fcntl(cmd.stdout.fileno(), fcntl.F_GETFL) | os.O_NONBLOCK)
+                fcntl.fcntl(cmd.stderr.fileno(), fcntl.F_SETFL, fcntl.fcntl(cmd.stderr.fileno(), fcntl.F_GETFL) | os.O_NONBLOCK)
 
-                while True:
-                    events = selector.select(1)
-                    for key, event in events:
-                        b_chunk = key.fileobj.read()
-                        if b_chunk == b(''):
-                            selector.unregister(key.fileobj)
-                        if key.fileobj == cmd.stdout:
-                            stdout += b_chunk
-                        elif key.fileobj == cmd.stderr:
-                            stderr += b_chunk
-                    # if we're checking for prompts, do it now
-                    if prompt_re:
-                        if prompt_re.search(stdout) and not data:
-                            if encoding:
-                                stdout = to_native(stdout, encoding=encoding, errors=errors)
-                            return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
-                    # only break out if no pipes are left to read or
-                    # the pipes are completely read and
-                    # the process is terminated
-                    if (not events or not selector.get_map()) and cmd.poll() is not None:
-                        break
-                    # No pipes are left to read but process is not yet terminated
-                    # Only then it is safe to wait for the process to be finished
-                    # NOTE: Actually cmd.poll() is always None here if no selectors are left
-                    elif not selector.get_map() and cmd.poll() is None:
-                        cmd.wait()
-                        # The process is terminated. Since no pipes to read from are
-                        # left, there is no need to call select() again.
-                        break
+            if data:
+                cmd.stdin.write(data)
+                cmd.stdin.close()
 
-                cmd.stdout.close()
-                cmd.stderr.close()
-                selector.close()
+            while True:
+                # A timeout of 1 is both a little short and a little long.
+                # With None we could deadlock, with a lower value we would
+                # waste cycles. As it is, this is a mild inconvenience if
+                # we need to exit, and likely doesn't waste too many cycles
+                events = selector.select(1)
+                stdout_changed = False
+                for key, event in events:
+                    b_chunk = key.fileobj.read(32768)
+                    if not b_chunk:
+                        selector.unregister(key.fileobj)
+                    elif key.fileobj == cmd.stdout:
+                        stdout += b_chunk
+                        stdout_changed = True
+                    elif key.fileobj == cmd.stderr:
+                        stderr += b_chunk
+
+                # if we're checking for prompts, do it now, but only if stdout
+                # actually changed since the last loop
+                if prompt_re and stdout_changed and prompt_re.search(stdout) and not data:
+                    if encoding:
+                        stdout = to_native(stdout, encoding=encoding, errors=errors)
+                    return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
+
+                # break out if no pipes are left to read or the pipes are completely read
+                # and the process is terminated
+                if (not events or not selector.get_map()) and cmd.poll() is not None:
+                    break
+
+                # No pipes are left to read but process is not yet terminated
+                # Only then it is safe to wait for the process to be finished
+                # NOTE: Actually cmd.poll() is always None here if no selectors are left
+                elif not selector.get_map() and cmd.poll() is None:
+                    cmd.wait()
+                    # The process is terminated. Since no pipes to read from are
+                    # left, there is no need to call select() again.
+                    break
+
+            cmd.stdout.close()
+            cmd.stderr.close()
+            selector.close()
 
             rc = cmd.returncode
         except (OSError, IOError) as e:
@@ -2160,3 +2071,52 @@ class AnsibleModule(object):
 
 def get_module_path():
     return os.path.dirname(os.path.realpath(__file__))
+
+
+def __getattr__(importable_name):
+    """Inject import-time deprecation warnings."""
+    if importable_name == 'get_exception':
+        from ansible.module_utils.pycompat24 import get_exception
+        importable = get_exception
+    elif importable_name in {'literal_eval', '_literal_eval'}:
+        from ast import literal_eval
+        importable = literal_eval
+    elif importable_name == 'datetime':
+        import datetime
+        importable = datetime
+    elif importable_name == 'signal':
+        import signal
+        importable = signal
+    elif importable_name == 'types':
+        import types
+        importable = types
+    elif importable_name == 'chain':
+        from itertools import chain
+        importable = chain
+    elif importable_name == 'repeat':
+        from itertools import repeat
+        importable = repeat
+    elif importable_name in {
+        'PY2', 'PY3', 'b', 'binary_type', 'integer_types',
+        'iteritems', 'string_types', 'test_type'
+    }:
+        import importlib
+        importable = getattr(
+            importlib.import_module('ansible.module_utils.six'),
+            importable_name
+        )
+    elif importable_name == 'map':
+        importable = map
+    elif importable_name == 'shlex_quote':
+        importable = shlex.quote
+    else:
+        raise AttributeError(
+            f'cannot import name {importable_name !r} '
+            f"from '{__name__}' ({__file__ !s})"
+        )
+
+    deprecate(
+        msg=f"Importing '{importable_name}' from '{__name__}' is deprecated.",
+        version="2.21",
+    )
+    return importable

@@ -3,10 +3,9 @@
 # (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
-from units.compat import unittest
+import unittest
 
 from ansible.module_utils.basic import remove_values
 from ansible.module_utils.common.parameters import _return_datastructure_name
@@ -147,7 +146,7 @@ class TestRemoveValues(unittest.TestCase):
 
         levels = 0
         inner_list = actual_data_list
-        while inner_list:
+        while True:
             if isinstance(inner_list, list):
                 self.assertEqual(len(inner_list), 1)
             else:

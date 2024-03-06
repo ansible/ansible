@@ -3,8 +3,7 @@
 # Copyright: (c) 2020, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -77,6 +76,7 @@ RETURN = '''
 #
 '''
 
+import datetime
 import os
 import subprocess
 import tarfile
@@ -90,7 +90,7 @@ from multiprocessing import dummy as threading
 from multiprocessing import TimeoutError
 
 
-COLLECTIONS_BUILD_AND_PUBLISH_TIMEOUT = 120
+COLLECTIONS_BUILD_AND_PUBLISH_TIMEOUT = 180
 
 
 def publish_collection(module, collection):
@@ -104,6 +104,7 @@ def publish_collection(module, collection):
     collection_dir = os.path.join(module.tmpdir, "%s-%s-%s" % (namespace, name, version))
     b_collection_dir = to_bytes(collection_dir, errors='surrogate_or_strict')
     os.mkdir(b_collection_dir)
+    os.mkdir(os.path.join(b_collection_dir, b'meta'))
 
     with open(os.path.join(b_collection_dir, b'README.md'), mode='wb') as fd:
         fd.write(b"Collection readme")
@@ -120,6 +121,8 @@ def publish_collection(module, collection):
     }
     with open(os.path.join(b_collection_dir, b'galaxy.yml'), mode='wb') as fd:
         fd.write(to_bytes(yaml.safe_dump(galaxy_meta), errors='surrogate_or_strict'))
+    with open(os.path.join(b_collection_dir, b'meta/runtime.yml'), mode='wb') as fd:
+        fd.write(b'requires_ansible: ">=1.0.0"')
 
     with tempfile.NamedTemporaryFile(mode='wb') as temp_fd:
         temp_fd.write(b"data")
@@ -152,7 +155,12 @@ def publish_collection(module, collection):
 
             # Extract the tarfile to sign the MANIFEST.json
             with tarfile.open(collection_path, mode='r') as collection_tar:
-                collection_tar.extractall(path=os.path.join(collection_dir, '%s-%s-%s' % (namespace, name, version)))
+                # deprecated: description='extractall fallback without filter' python_version='3.11'
+                # Replace 'tar_filter' with 'data_filter' and 'filter=tar' with 'filter=data' once Python 3.12 is minimum requirement.
+                if hasattr(tarfile, 'tar_filter'):
+                    collection_tar.extractall(path=os.path.join(collection_dir, '%s-%s-%s' % (namespace, name, version)), filter='tar')
+                else:
+                    collection_tar.extractall(path=os.path.join(collection_dir, '%s-%s-%s' % (namespace, name, version)))
 
             manifest_path = os.path.join(collection_dir, '%s-%s-%s' % (namespace, name, version), 'MANIFEST.json')
             signature_path = os.path.join(module.params['signature_dir'], '%s-%s-%s-MANIFEST.json.asc' % (namespace, name, version))
@@ -241,7 +249,8 @@ def run_module():
         supports_check_mode=False
     )
 
-    result = dict(changed=True, results=[])
+    start = datetime.datetime.now()
+    result = dict(changed=True, results=[], start=str(start))
 
     pool = threading.Pool(4)
     publish_func = partial(publish_collection, module)
@@ -258,7 +267,9 @@ def run_module():
         r['build']['rc'] + r['publish']['rc'] for r in result['results']
     ))
 
-    module.exit_json(failed=failed, **result)
+    end = datetime.datetime.now()
+    delta = end - start
+    module.exit_json(failed=failed, end=str(end), delta=str(delta), **result)
 
 
 def main():

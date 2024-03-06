@@ -16,8 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from abc import abstractmethod
 from functools import wraps
@@ -276,7 +275,7 @@ class CliconfBase(AnsiblePlugin):
                 'diff_replace': [list of supported replace values],
                 'output': [list of supported command output format]
             }
-        :return: capability as json string
+        :return: capability as dict
         """
         result = {}
         result['rpc'] = self.get_base_rpc()

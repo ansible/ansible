@@ -1,7 +1,6 @@
 """Payload management for sending Ansible files and test content to other systems (VMs, containers)."""
 from __future__ import annotations
 
-import atexit
 import os
 import stat
 import tarfile
@@ -32,6 +31,7 @@ from .data import (
 
 from .util_common import (
     CommonConfig,
+    ExitHandler,
 )
 
 # improve performance by disabling uid/gid lookups
@@ -192,7 +192,7 @@ def create_temporary_bin_files(args: CommonConfig) -> tuple[tuple[str, str], ...
         temp_path = '/tmp/ansible-tmp-bin'
     else:
         temp_path = tempfile.mkdtemp(prefix='ansible', suffix='bin')
-        atexit.register(remove_tree, temp_path)
+        ExitHandler.register(remove_tree, temp_path)
 
         for name, dest in ANSIBLE_BIN_SYMLINK_MAP.items():
             path = os.path.join(temp_path, name)

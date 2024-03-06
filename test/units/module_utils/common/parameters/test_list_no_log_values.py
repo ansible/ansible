@@ -2,8 +2,7 @@
 # Copyright (c) 2019 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
 
@@ -79,7 +78,7 @@ def test_list_no_log_values_invalid_suboptions(argument_spec, module_parameters,
         }
     }
 
-    with pytest.raises(TypeError, match=r"(Value '.*?' in the sub parameter field '.*?' must by a dict, not '.*?')"
+    with pytest.raises(TypeError, match=r"(Value '.*?' in the sub parameter field '.*?' must be a dict, not '.*?')"
                                         r"|(dictionary requested, could not parse JSON or key=value)"):
         _list_no_log_values(argument_spec(extra_opts), module_parameters(extra_params))
 

@@ -2,8 +2,7 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible import constants as C
 from ansible.parsing.dataloader import DataLoader
@@ -55,7 +54,7 @@ class TaskResult:
         if 'results' in self._result:
             results = self._result['results']
             # Loop tasks are only considered skipped if all items were skipped.
-            # some squashed results (eg, yum) are not dicts and can't be skipped individually
+            # some squashed results (eg, dnf) are not dicts and can't be skipped individually
             if results and all(isinstance(res, dict) and res.get('skipped', False) for res in results):
                 return True
 

@@ -1,0 +1,3 @@
+minor_changes:
+  - ansible-test - Removed the ``no-unicode-literals`` sanity test.
+                   The test is unnecessary now that Python 3 is required and the ``unicode_literals`` feature has no effect.

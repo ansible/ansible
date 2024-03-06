@@ -4,8 +4,7 @@
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -21,9 +20,9 @@ description:
 options:
   async:
     description:
-      - If set to C(true) Yum will download packages and metadata from this
+      - If set to V(true) Yum will download packages and metadata from this
         repo in parallel, if possible.
-      - In ansible-core 2.11, 2.12, and 2.13 the default value is C(true).
+      - In ansible-core 2.11, 2.12, and 2.13 the default value is V(true).
       - This option has been deprecated in RHEL 8. If you're using one of the
         versions listed above, you can set this option to None to avoid passing an
         unknown configuration option.
@@ -31,20 +30,19 @@ options:
   bandwidth:
     description:
       - Maximum available network bandwidth in bytes/second. Used with the
-        I(throttle) option.
-      - If I(throttle) is a percentage and bandwidth is C(0) then bandwidth
-        throttling will be disabled. If I(throttle) is expressed as a data rate
-        (bytes/sec) then this option is ignored. Default is C(0) (no bandwidth
+        O(throttle) option.
+      - If O(throttle) is a percentage and bandwidth is V(0) then bandwidth
+        throttling will be disabled. If O(throttle) is expressed as a data rate
+        (bytes/sec) then this option is ignored. Default is V(0) (no bandwidth
         throttling).
     type: str
-    default: '0'
   baseurl:
     description:
       - URL to the directory where the yum repository's 'repodata' directory
         lives.
       - It can also be a list of multiple URLs.
-      - This, the I(metalink) or I(mirrorlist) parameters are required if I(state) is set to
-        C(present).
+      - This, the O(metalink) or O(mirrorlist) parameters are required if O(state) is set to
+        V(present).
     type: list
     elements: str
   cost:
@@ -52,61 +50,57 @@ options:
       - Relative cost of accessing this repository. Useful for weighing one
         repo's packages as greater/less than any other.
     type: str
-    default: '1000'
   deltarpm_metadata_percentage:
     description:
       - When the relative size of deltarpm metadata vs pkgs is larger than
         this, deltarpm metadata is not downloaded from the repo. Note that you
-        can give values over C(100), so C(200) means that the metadata is
-        required to be half the size of the packages. Use C(0) to turn off
+        can give values over V(100), so V(200) means that the metadata is
+        required to be half the size of the packages. Use V(0) to turn off
         this check, and always download metadata.
     type: str
-    default: '100'
   deltarpm_percentage:
     description:
       - When the relative size of delta vs pkg is larger than this, delta is
-        not used. Use C(0) to turn off delta rpm processing. Local repositories
-        (with file:// I(baseurl)) have delta rpms turned off by default.
+        not used. Use V(0) to turn off delta rpm processing. Local repositories
+        (with file://O(baseurl)) have delta rpms turned off by default.
     type: str
-    default: '75'
   description:
     description:
-      - A human readable string describing the repository. This option corresponds to the "name" property in the repo file.
-      - This parameter is only required if I(state) is set to C(present).
+      - A human-readable string describing the repository. This option corresponds to the "name" property in the repo file.
+      - This parameter is only required if O(state) is set to V(present).
     type: str
   enabled:
     description:
       - This tells yum whether or not use this repository.
-      - Yum default value is C(true).
+      - Yum default value is V(true).
     type: bool
   enablegroups:
     description:
       - Determines whether yum will allow the use of package groups for this
         repository.
-      - Yum default value is C(true).
+      - Yum default value is V(true).
     type: bool
   exclude:
     description:
       - List of packages to exclude from updates or installs. This should be a
-        space separated list. Shell globs using wildcards (eg. C(*) and C(?))
+        space separated list. Shell globs using wildcards (for example V(*) and V(?))
         are allowed.
       - The list can also be a regular YAML array.
     type: list
     elements: str
   failovermethod:
     choices: [roundrobin, priority]
-    default: roundrobin
     description:
-      - C(roundrobin) randomly selects a URL out of the list of URLs to start
+      - V(roundrobin) randomly selects a URL out of the list of URLs to start
         with and proceeds through each of them as it encounters a failure
         contacting the host.
-      - C(priority) starts from the first I(baseurl) listed and reads through
+      - V(priority) starts from the first O(baseurl) listed and reads through
         them sequentially.
     type: str
   file:
     description:
       - File name without the C(.repo) extension to save the repo in. Defaults
-        to the value of I(name).
+        to the value of O(name).
     type: str
   gpgcakey:
     description:
@@ -117,7 +111,7 @@ options:
       - Tells yum whether or not it should perform a GPG signature check on
         packages.
       - No default setting. If the value is not set, the system setting from
-        C(/etc/yum.conf) or system default of C(false) will be used.
+        C(/etc/yum.conf) or system default of V(false) will be used.
     type: bool
   gpgkey:
     description:
@@ -128,32 +122,31 @@ options:
   module_hotfixes:
     description:
       - Disable module RPM filtering and make all RPMs from the repository
-        available. The default is C(None).
+        available. The default is V(None).
     version_added: '2.11'
     type: bool
   http_caching:
     description:
       - Determines how upstream HTTP caches are instructed to handle any HTTP
         downloads that Yum does.
-      - C(all) means that all HTTP downloads should be cached.
-      - C(packages) means that only RPM package downloads should be cached (but
+      - V(all) means that all HTTP downloads should be cached.
+      - V(packages) means that only RPM package downloads should be cached (but
          not repository metadata downloads).
-      - C(none) means that no HTTP downloads should be cached.
+      - V(none) means that no HTTP downloads should be cached.
     choices: [all, packages, none]
     type: str
-    default: all
   include:
     description:
       - Include external configuration file. Both, local path and URL is
         supported. Configuration file will be inserted at the position of the
-        I(include=) line. Included files may contain further include lines.
+        C(include=) line. Included files may contain further include lines.
         Yum will abort with an error if an inclusion loop is detected.
     type: str
   includepkgs:
     description:
       - List of packages you want to only use from a repository. This should be
-        a space separated list. Shell globs using wildcards (eg. C(*) and C(?))
-        are allowed. Substitution variables (e.g. C($releasever)) are honored
+        a space separated list. Shell globs using wildcards (for example V(*) and V(?))
+        are allowed. Substitution variables (for example V($releasever)) are honored
         here.
       - The list can also be a regular YAML array.
     type: list
@@ -161,65 +154,61 @@ options:
   ip_resolve:
     description:
       - Determines how yum resolves host names.
-      - C(4) or C(IPv4) - resolve to IPv4 addresses only.
-      - C(6) or C(IPv6) - resolve to IPv6 addresses only.
+      - V(4) or V(IPv4) - resolve to IPv4 addresses only.
+      - V(6) or V(IPv6) - resolve to IPv6 addresses only.
     choices: ['4', '6', IPv4, IPv6, whatever]
     type: str
-    default: whatever
   keepalive:
     description:
       - This tells yum whether or not HTTP/1.1 keepalive should be used with
         this repository. This can improve transfer speeds by using one
         connection when downloading multiple files from a repository.
     type: bool
-    default: 'no'
   keepcache:
     description:
-      - Either C(1) or C(0). Determines whether or not yum keeps the cache of
+      - Either V(1) or V(0). Determines whether or not yum keeps the cache of
         headers and packages after successful installation.
+      - This parameter is deprecated and will be removed in version 2.20.
     choices: ['0', '1']
     type: str
-    default: '1'
   metadata_expire:
     description:
       - Time (in seconds) after which the metadata will expire.
       - Default value is 6 hours.
     type: str
-    default: '21600'
   metadata_expire_filter:
     description:
-      - Filter the I(metadata_expire) time, allowing a trade of speed for
+      - Filter the O(metadata_expire) time, allowing a trade of speed for
         accuracy if a command doesn't require it. Each yum command can specify
         that it requires a certain level of timeliness quality from the remote
         repos. from "I'm about to install/upgrade, so this better be current"
         to "Anything that's available is good enough".
-      - C(never) - Nothing is filtered, always obey I(metadata_expire).
-      - C(read-only:past) - Commands that only care about past information are
-        filtered from metadata expiring. Eg. I(yum history) info (if history
+      - V(never) - Nothing is filtered, always obey O(metadata_expire).
+      - V(read-only:past) - Commands that only care about past information are
+        filtered from metadata expiring. Eg. C(yum history) info (if history
         needs to lookup anything about a previous transaction, then by
         definition the remote package was available in the past).
-      - C(read-only:present) - Commands that are balanced between past and
-        future. Eg. I(yum list yum).
-      - C(read-only:future) - Commands that are likely to result in running
+      - V(read-only:present) - Commands that are balanced between past and
+        future. Eg. C(yum list yum).
+      - V(read-only:future) - Commands that are likely to result in running
         other commands which will require the latest metadata. Eg.
-        I(yum check-update).
+        C(yum check-update).
       - Note that this option does not override "yum clean expire-cache".
     choices: [never, 'read-only:past', 'read-only:present', 'read-only:future']
     type: str
-    default: 'read-only:present'
   metalink:
     description:
       - Specifies a URL to a metalink file for the repomd.xml, a list of
         mirrors for the entire repository are generated by converting the
-        mirrors for the repomd.xml file to a I(baseurl).
-      - This, the I(baseurl) or I(mirrorlist) parameters are required if I(state) is set to
-        C(present).
+        mirrors for the repomd.xml file to a O(baseurl).
+      - This, the O(baseurl) or O(mirrorlist) parameters are required if O(state) is set to
+        V(present).
     type: str
   mirrorlist:
     description:
       - Specifies a URL to a file containing a list of baseurls.
-      - This, the I(baseurl) or I(metalink) parameters are required if I(state) is set to
-        C(present).
+      - This, the O(baseurl) or O(metalink) parameters are required if O(state) is set to
+        V(present).
     type: str
   mirrorlist_expire:
     description:
@@ -227,12 +216,11 @@ options:
         expire.
       - Default value is 6 hours.
     type: str
-    default: '21600'
   name:
     description:
       - Unique repository ID. This option builds the section name of the repository in the repo file.
-      - This parameter is only required if I(state) is set to C(present) or
-        C(absent).
+      - This parameter is only required if O(state) is set to V(present) or
+        V(absent).
     type: str
     required: true
   password:
@@ -245,15 +233,13 @@ options:
         from 1 to 99.
       - This option only works if the YUM Priorities plugin is installed.
     type: str
-    default: '99'
   protect:
     description:
       - Protect packages from updates from other repositories.
     type: bool
-    default: 'no'
   proxy:
     description:
-      - URL to the proxy server that yum should use. Set to C(_none_) to
+      - URL to the proxy server that yum should use. Set to V(_none_) to
         disable the global proxy setting.
     type: str
   proxy_password:
@@ -269,7 +255,6 @@ options:
       - This tells yum whether or not it should perform a GPG signature check
         on the repodata from this repository.
     type: bool
-    default: 'no'
   reposdir:
     description:
       - Directory where the C(.repo) files will be stored.
@@ -278,32 +263,28 @@ options:
   retries:
     description:
       - Set the number of times any attempt to retrieve a file should retry
-        before returning an error. Setting this to C(0) makes yum try forever.
+        before returning an error. Setting this to V(0) makes yum try forever.
     type: str
-    default: '10'
   s3_enabled:
     description:
       - Enables support for S3 repositories.
       - This option only works if the YUM S3 plugin is installed.
     type: bool
-    default: 'no'
   skip_if_unavailable:
     description:
-      - If set to C(true) yum will continue running if this repository cannot be
+      - If set to V(true) yum will continue running if this repository cannot be
         contacted for any reason. This should be set carefully as all repos are
         consulted for any given command.
     type: bool
-    default: 'no'
   ssl_check_cert_permissions:
     description:
       - Whether yum should check the permissions on the paths for the
         certificates on the repository (both remote and local).
       - If we can't read any of the files then yum will force
-        I(skip_if_unavailable) to be C(true). This is most useful for non-root
+        O(skip_if_unavailable) to be V(true). This is most useful for non-root
         processes which use yum on repos that have client cert files which are
         readable only by root.
     type: bool
-    default: 'no'
   sslcacert:
     description:
       - Path to the directory containing the databases of the certificate
@@ -326,7 +307,6 @@ options:
     description:
       - Defines whether yum should verify SSL certificates/hosts at all.
     type: bool
-    default: 'yes'
     aliases: [ validate_certs ]
   state:
     description:
@@ -344,14 +324,12 @@ options:
     description:
       - Number of seconds to wait for a connection before timing out.
     type: str
-    default: '30'
   ui_repoid_vars:
     description:
       - When a repository id is displayed, append these yum variables to the
-        string if they are used in the I(baseurl)/etc. Variables are appended
+        string if they are used in the O(baseurl)/etc. Variables are appended
         in the order listed (and found).
     type: str
-    default: releasever basearch
   username:
     description:
       - Username to use for basic authentication to a repo or really any url.
@@ -375,7 +353,7 @@ notes:
   - The repo file will be automatically deleted if it contains no repository.
   - When removing a repository, beware that the metadata cache may still remain
     on disk until you run C(yum clean all). Use a notification handler for this.
-  - "The C(params) parameter was removed in Ansible 2.5 due to circumventing Ansible's parameter
+  - "The O(ignore:params) parameter was removed in Ansible 2.5 due to circumventing Ansible's parameter
     handling"
 '''
 
@@ -549,6 +527,11 @@ class YumRepo(object):
 
             # Set the value only if it was defined (default is None)
             if value is not None and key in self.allowed_params:
+                if key == 'keepcache':
+                    self.module.deprecate(
+                        "'keepcache' parameter is deprecated.",
+                        version='2.20'
+                    )
                 self.repofile.set(self.section, key, value)
 
     def save(self):
@@ -627,7 +610,6 @@ def main():
         mirrorlist=dict(),
         mirrorlist_expire=dict(),
         name=dict(required=True),
-        params=dict(type='dict'),
         password=dict(no_log=True),
         priority=dict(),
         protect=dict(type='bool'),
@@ -658,11 +640,6 @@ def main():
         add_file_common_args=True,
         supports_check_mode=True,
     )
-
-    # Params was removed
-    # https://meetbot.fedoraproject.org/ansible-meeting/2017-09-28/ansible_dev_meeting.2017-09-28-15.00.log.html
-    if module.params['params']:
-        module.fail_json(msg="The params option to yum_repository was removed in Ansible 2.5 since it circumvents Ansible's option handling")
 
     name = module.params['name']
     state = module.params['state']

@@ -3,8 +3,7 @@
 # Copyright: (c) 2016, Ansible RedHat, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -28,7 +27,7 @@ options:
     default: no
   aggregate:
     description:
-        - Whether the provided value is aggregated to the existing stat C(true) or will replace it C(false).
+        - Whether the provided value is aggregated to the existing stat V(true) or will replace it V(false).
     type: bool
     default: yes
 extends_documentation_fragment:
@@ -55,7 +54,7 @@ attributes:
         support: none
 notes:
     - In order for custom stats to be displayed, you must set C(show_custom_stats) in section C([defaults]) in C(ansible.cfg)
-      or by defining environment variable C(ANSIBLE_SHOW_CUSTOM_STATS) to C(true). See the C(default) callback plugin for details.
+      or by defining environment variable C(ANSIBLE_SHOW_CUSTOM_STATS) to V(true). See the P(ansible.builtin.default#callback) callback plugin for details.
 version_added: "2.3"
 '''
 

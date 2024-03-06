@@ -15,11 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, MagicMock
 
 from ansible.executor.play_iterator import HostState, PlayIterator, IteratingStates, FailedStates
@@ -86,7 +84,8 @@ class TestPlayIterator(unittest.TestCase):
               always:
               - name: role always task
                 debug: msg="always task in block in role"
-            - include: foo.yml
+            - name: role include_tasks
+              include_tasks: foo.yml
             - name: role task after include
               debug: msg="after include in role"
             - block:
@@ -171,12 +170,12 @@ class TestPlayIterator(unittest.TestCase):
         self.assertIsNotNone(task)
         self.assertEqual(task.name, "role always task")
         self.assertIsNotNone(task._role)
-        # role include task
-        # (host_state, task) = itr.get_next_task_for_host(hosts[0])
-        # self.assertIsNotNone(task)
-        # self.assertEqual(task.action, 'debug')
-        # self.assertEqual(task.name, "role included task")
-        # self.assertIsNotNone(task._role)
+        # role include_tasks
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.action, 'include_tasks')
+        self.assertEqual(task.name, "role include_tasks")
+        self.assertIsNotNone(task._role)
         # role task after include
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
@@ -429,9 +428,9 @@ class TestPlayIterator(unittest.TestCase):
         )
 
         # iterate past first task
-        _, task = itr.get_next_task_for_host(hosts[0])
+        dummy, task = itr.get_next_task_for_host(hosts[0])
         while (task and task.action != 'debug'):
-            _, task = itr.get_next_task_for_host(hosts[0])
+            dummy, task = itr.get_next_task_for_host(hosts[0])
 
         self.assertIsNotNone(task, 'iterated past end of play while looking for place to insert tasks')
 

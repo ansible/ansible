@@ -207,7 +207,10 @@ if ($null -ne $rc) {
 # with the trap handler that's now in place, this should only write to the output if
 # $ErrorActionPreference != "Stop", that's ok because this is sent to the stderr output
 # for a user to manually debug if something went horribly wrong
-if ($ps.HadErrors -or ($PSVersionTable.PSVersion.Major -lt 4 -and $ps.Streams.Error.Count -gt 0)) {
+if (
+    $ps.Streams.Error.Count -and
+    ($ps.HadErrors -or $PSVersionTable.PSVersion.Major -lt 4)
+) {
     Write-AnsibleLog "WARN - module had errors, outputting error info $ModuleName" "module_wrapper"
     # if the rc wasn't explicitly set, we return an exit code of 1
     if ($null -eq $rc) {

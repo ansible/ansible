@@ -71,6 +71,7 @@ from ...executor import (
 )
 
 from ...python_requirements import (
+    PipCommand,
     PipInstall,
     collect_requirements,
     run_pip,
@@ -263,7 +264,7 @@ def command_sanity(args: SanityConfig) -> None:
                         virtualenv_python = create_sanity_virtualenv(args, test_profile.python, test.name)
 
                         if virtualenv_python:
-                            virtualenv_yaml = check_sanity_virtualenv_yaml(virtualenv_python)
+                            virtualenv_yaml = args.explain or check_sanity_virtualenv_yaml(virtualenv_python)
 
                             if test.require_libyaml and not virtualenv_yaml:
                                 result = SanitySkipped(test.name)
@@ -764,11 +765,6 @@ class SanityTest(metaclass=abc.ABCMeta):
         return False
 
     @property
-    def py2_compat(self) -> bool:
-        """True if the test only applies to code that runs on Python 2.x."""
-        return False
-
-    @property
     def supported_python_versions(self) -> t.Optional[tuple[str, ...]]:
         """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
         return CONTROLLER_PYTHON_VERSIONS
@@ -785,22 +781,10 @@ class SanityTest(metaclass=abc.ABCMeta):
 
     def filter_targets_by_version(self, args: SanityConfig, targets: list[TestTarget], python_version: str) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test, taking into account the Python version."""
+        del args  # args is not used here, but derived classes may make use of it
         del python_version  # python_version is not used here, but derived classes may make use of it
 
         targets = self.filter_targets(targets)
-
-        if self.py2_compat:
-            # This sanity test is a Python 2.x compatibility test.
-            content_config = get_content_config(args)
-
-            if content_config.py2_support:
-                # This collection supports Python 2.x.
-                # Filter targets to include only those that require support for remote-only Python versions.
-                targets = self.filter_remote_targets(targets)
-            else:
-                # This collection does not support Python 2.x.
-                # There are no targets to test.
-                targets = []
 
         return targets
 
@@ -877,7 +861,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
             self.__no_targets: bool = self.config.get('no_targets')
             self.__include_directories: bool = self.config.get('include_directories')
             self.__include_symlinks: bool = self.config.get('include_symlinks')
-            self.__py2_compat: bool = self.config.get('py2_compat', False)
+            self.__error_code: str | None = self.config.get('error_code', None)
         else:
             self.output = None
             self.extensions = []
@@ -892,7 +876,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
             self.__no_targets = True
             self.__include_directories = False
             self.__include_symlinks = False
-            self.__py2_compat = False
+            self.__error_code = None
 
         if self.no_targets:
             mutually_exclusive = (
@@ -910,6 +894,11 @@ class SanityCodeSmellTest(SanitySingleVersion):
 
             if problems:
                 raise ApplicationError('Sanity test "%s" option "no_targets" is mutually exclusive with options: %s' % (self.name, ', '.join(problems)))
+
+    @property
+    def error_code(self) -> t.Optional[str]:
+        """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
+        return self.__error_code
 
     @property
     def all_targets(self) -> bool:
@@ -930,11 +919,6 @@ class SanityCodeSmellTest(SanitySingleVersion):
     def include_symlinks(self) -> bool:
         """True if the test targets should include symlinks."""
         return self.__include_symlinks
-
-    @property
-    def py2_compat(self) -> bool:
-        """True if the test only applies to code that runs on Python 2.x."""
-        return self.__py2_compat
 
     @property
     def supported_python_versions(self) -> t.Optional[tuple[str, ...]]:
@@ -995,6 +979,8 @@ class SanityCodeSmellTest(SanitySingleVersion):
                 pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
             elif self.output == 'path-message':
                 pattern = '^(?P<path>[^:]*): (?P<message>.*)$'
+            elif self.output == 'path-line-column-code-message':
+                pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<code>[^:]*): (?P<message>.*)$'
             else:
                 raise ApplicationError('Unsupported output type: %s' % self.output)
 
@@ -1024,6 +1010,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
                     path=m['path'],
                     line=int(m.get('line', 0)),
                     column=int(m.get('column', 0)),
+                    code=m.get('code'),
                 ) for m in matches]
 
                 messages = settings.process_errors(messages, paths)
@@ -1130,10 +1117,8 @@ def create_sanity_virtualenv(
     commands = collect_requirements(  # create_sanity_virtualenv()
         python=python,
         controller=True,
-        virtualenv=False,
         command=None,
         ansible=False,
-        cryptography=False,
         coverage=coverage,
         minimize=minimize,
         sanity=name,
@@ -1147,7 +1132,7 @@ def create_sanity_virtualenv(
     # The path to the virtual environment must be kept short to avoid the 127 character shebang length limit on Linux.
     # If the limit is exceeded, generated entry point scripts from pip installed packages will fail with syntax errors.
     virtualenv_install = json.dumps([command.serialize() for command in commands], indent=4)
-    virtualenv_hash = hashlib.sha256(to_bytes(virtualenv_install)).hexdigest()[:8]
+    virtualenv_hash = hash_pip_commands(commands)
     virtualenv_cache = os.path.join(os.path.expanduser('~/.ansible/test/venv'))
     virtualenv_path = os.path.join(virtualenv_cache, label, f'{python.version}', virtualenv_hash)
     virtualenv_marker = os.path.join(virtualenv_path, 'marker.txt')
@@ -1169,22 +1154,58 @@ def create_sanity_virtualenv(
 
         run_pip(args, virtualenv_python, commands, None)  # create_sanity_virtualenv()
 
-        write_text_file(meta_install, virtualenv_install)
+        if not args.explain:
+            write_text_file(meta_install, virtualenv_install)
 
         # false positive: pylint: disable=no-member
         if any(isinstance(command, PipInstall) and command.has_package('pyyaml') for command in commands):
-            virtualenv_yaml = yamlcheck(virtualenv_python)
+            virtualenv_yaml = yamlcheck(virtualenv_python, args.explain)
         else:
             virtualenv_yaml = None
 
-        write_json_file(meta_yaml, virtualenv_yaml)
+        if not args.explain:
+            write_json_file(meta_yaml, virtualenv_yaml)
 
         created_venvs.append(f'{label}-{python.version}')
 
-    # touch the marker to keep track of when the virtualenv was last used
-    pathlib.Path(virtualenv_marker).touch()
+    if not args.explain:
+        # touch the marker to keep track of when the virtualenv was last used
+        pathlib.Path(virtualenv_marker).touch()
 
     return virtualenv_python
+
+
+def hash_pip_commands(commands: list[PipCommand]) -> str:
+    """Return a short hash unique to the given list of pip commands, suitable for identifying the resulting sanity test environment."""
+    serialized_commands = json.dumps([make_pip_command_hashable(command) for command in commands], indent=4)
+
+    return hashlib.sha256(to_bytes(serialized_commands)).hexdigest()[:8]
+
+
+def make_pip_command_hashable(command: PipCommand) -> tuple[str, dict[str, t.Any]]:
+    """Return a serialized version of the given pip command that is suitable for hashing."""
+    if isinstance(command, PipInstall):
+        # The pre-build instructions for pip installs must be omitted, so they do not affect the hash.
+        # This is allows the pre-build commands to be added without breaking sanity venv caching.
+        # It is safe to omit these from the hash since they only affect packages used during builds, not what is installed in the venv.
+        command = PipInstall(
+            requirements=[omit_pre_build_from_requirement(*req) for req in command.requirements],
+            constraints=list(command.constraints),
+            packages=list(command.packages),
+        )
+
+    return command.serialize()
+
+
+def omit_pre_build_from_requirement(path: str, requirements: str) -> tuple[str, str]:
+    """Return the given requirements with pre-build instructions omitted."""
+    lines = requirements.splitlines(keepends=True)
+
+    # CAUTION: This code must be kept in sync with the code which processes pre-build instructions in:
+    #          test/lib/ansible_test/_util/target/setup/requirements.py
+    lines = [line for line in lines if not line.startswith('# pre-build ')]
+
+    return path, ''.join(lines)
 
 
 def check_sanity_virtualenv_yaml(python: VirtualPythonConfig) -> t.Optional[bool]:

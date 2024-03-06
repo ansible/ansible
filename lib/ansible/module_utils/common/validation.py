@@ -2,15 +2,14 @@
 # Copyright (c) 2019 Ansible Project
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
+import json
 import os
 import re
 
 from ast import literal_eval
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.common._json_compat import json
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.text.converters import jsonify
 from ansible.module_utils.common.text.formatters import human_to_bytes
@@ -543,7 +542,7 @@ def check_type_raw(value):
 def check_type_bytes(value):
     """Convert a human-readable string value to bytes
 
-    Raises :class:`TypeError` if unable to covert the value
+    Raises :class:`TypeError` if unable to convert the value
     """
     try:
         return human_to_bytes(value)
@@ -556,7 +555,7 @@ def check_type_bits(value):
 
     Example: ``check_type_bits('1Mb')`` returns integer 1048576.
 
-    Raises :class:`TypeError` if unable to covert the value.
+    Raises :class:`TypeError` if unable to convert the value.
     """
     try:
         return human_to_bytes(value, isbits=True)
@@ -568,7 +567,7 @@ def check_type_jsonarg(value):
     """Return a jsonified string. Sometimes the controller turns a json string
     into a dict/list so transform it back into json here
 
-    Raises :class:`TypeError` if unable to covert the value
+    Raises :class:`TypeError` if unable to convert the value
 
     """
     if isinstance(value, (text_type, binary_type)):

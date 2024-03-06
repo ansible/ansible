@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import ansible.constants as C
 from ansible.errors import AnsibleParserError, AnsibleError, AnsibleAssertionError
@@ -48,7 +46,6 @@ RAW_PARAM_MODULES = FREEFORM_ACTIONS.union(add_internal_fqcns((
 
 BUILTIN_TASKS = frozenset(add_internal_fqcns((
     'meta',
-    'include',
     'include_tasks',
     'include_role',
     'import_tasks',
@@ -182,7 +179,11 @@ class ModuleArgsParser:
             for arg in args:
                 arg = to_text(arg)
                 if arg.startswith('_ansible_'):
-                    raise AnsibleError("invalid parameter specified for action '%s': '%s'" % (action, arg))
+                    err_msg = (
+                        f"Invalid parameter specified beginning with keyword '_ansible_' for action '{action !s}': '{arg !s}'. "
+                        "The prefix '_ansible_' is reserved for internal use only."
+                    )
+                    raise AnsibleError(err_msg)
 
         # finally, update the args we're going to return with the ones
         # which were normalized above
@@ -304,9 +305,14 @@ class ModuleArgsParser:
             elif skip_action_validation:
                 is_action_candidate = True
             else:
-                context = action_loader.find_plugin_with_context(item, collection_list=self._collection_list)
-                if not context.resolved:
-                    context = module_loader.find_plugin_with_context(item, collection_list=self._collection_list)
+                try:
+                    context = action_loader.find_plugin_with_context(item, collection_list=self._collection_list)
+                    if not context.resolved:
+                        context = module_loader.find_plugin_with_context(item, collection_list=self._collection_list)
+                except AnsibleError as e:
+                    if e.obj is None:
+                        e.obj = self._task_ds
+                    raise e
 
                 is_action_candidate = context.resolved and bool(context.redirect_list)
 

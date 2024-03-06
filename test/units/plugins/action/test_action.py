@@ -16,21 +16,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import re
 from importlib import import_module
 
 from ansible import constants as C
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, MagicMock, mock_open
 
 from ansible.errors import AnsibleError, AnsibleAuthenticationFailure
-from ansible.module_utils.six import text_type
-from ansible.module_utils.six.moves import shlex_quote, builtins
+import builtins
+import shlex
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.action import ActionBase
@@ -197,7 +195,7 @@ class TestActionBase(unittest.TestCase):
 
         # create a mock connection, so we don't actually try and connect to things
         def env_prefix(**args):
-            return ' '.join(['%s=%s' % (k, shlex_quote(text_type(v))) for k, v in args.items()])
+            return ' '.join(['%s=%s' % (k, shlex.quote(str(v))) for k, v in args.items()])
         mock_connection = MagicMock()
         mock_connection._shell.env_prefix.side_effect = env_prefix
 
@@ -269,11 +267,8 @@ class TestActionBase(unittest.TestCase):
 
         def get_shell_opt(opt):
 
-            ret = None
-            if opt == 'admin_users':
-                ret = ['root', 'toor', 'Administrator']
-            elif opt == 'remote_tmp':
-                ret = '~/.ansible/tmp'
+            assert opt == 'admin_users'
+            ret = ['root', 'toor', 'Administrator']
 
             return ret
 
@@ -669,17 +664,10 @@ class TestActionBase(unittest.TestCase):
         mock_task.no_log = False
 
         # create a mock connection, so we don't actually try and connect to things
-        def build_module_command(env_string, shebang, cmd, arg_path=None):
-            to_run = [env_string, cmd]
-            if arg_path:
-                to_run.append(arg_path)
-            return " ".join(to_run)
-
         def get_option(option):
             return {'admin_users': ['root', 'toor']}.get(option)
 
         mock_connection = MagicMock()
-        mock_connection.build_module_command.side_effect = build_module_command
         mock_connection.socket_path = None
         mock_connection._shell.get_remote_filename.return_value = 'copy.py'
         mock_connection._shell.join_path.side_effect = os.path.join
@@ -806,41 +794,7 @@ class TestActionBase(unittest.TestCase):
 
 class TestActionBaseCleanReturnedData(unittest.TestCase):
     def test(self):
-
-        fake_loader = DictDataLoader({
-        })
-        mock_module_loader = MagicMock()
-        mock_shared_loader_obj = MagicMock()
-        mock_shared_loader_obj.module_loader = mock_module_loader
-        connection_loader_paths = ['/tmp/asdfadf', '/usr/lib64/whatever',
-                                   'dfadfasf',
-                                   'foo.py',
-                                   '.*',
-                                   # FIXME: a path with parans breaks the regex
-                                   # '(.*)',
-                                   '/path/to/ansible/lib/ansible/plugins/connection/custom_connection.py',
-                                   '/path/to/ansible/lib/ansible/plugins/connection/ssh.py']
-
-        def fake_all(path_only=None):
-            for path in connection_loader_paths:
-                yield path
-
-        mock_connection_loader = MagicMock()
-        mock_connection_loader.all = fake_all
-
-        mock_shared_loader_obj.connection_loader = mock_connection_loader
-        mock_connection = MagicMock()
-        # mock_connection._shell.env_prefix.side_effect = env_prefix
-
-        # action_base = DerivedActionBase(mock_task, mock_connection, play_context, None, None, None)
-        action_base = DerivedActionBase(task=None,
-                                        connection=mock_connection,
-                                        play_context=None,
-                                        loader=fake_loader,
-                                        templar=None,
-                                        shared_loader_obj=mock_shared_loader_obj)
         data = {'ansible_playbook_python': '/usr/bin/python',
-                # 'ansible_rsync_path': '/usr/bin/rsync',
                 'ansible_python_interpreter': '/usr/bin/python',
                 'ansible_ssh_some_var': 'whatever',
                 'ansible_ssh_host_key_somehost': 'some key here',

@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import difflib
 import json
@@ -167,7 +165,7 @@ class CallbackBase(AnsiblePlugin):
     _copy_result = deepcopy
 
     def set_option(self, k, v):
-        self._plugin_options[k] = v
+        self._plugin_options[k] = C.config.get_config_value(k, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={k: v})
 
     def get_option(self, k):
         return self._plugin_options[k]

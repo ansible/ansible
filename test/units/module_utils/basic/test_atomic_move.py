@@ -4,8 +4,7 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import errno
@@ -15,6 +14,7 @@ from itertools import product
 import pytest
 
 from ansible.module_utils import basic
+from ansible.module_utils.common.file import S_IRWU_RG_RO
 
 
 @pytest.fixture
@@ -64,7 +64,7 @@ def atomic_mocks(mocker, monkeypatch):
 @pytest.fixture
 def fake_stat(mocker):
     stat1 = mocker.MagicMock()
-    stat1.st_mode = 0o0644
+    stat1.st_mode = S_IRWU_RG_RO
     stat1.st_uid = 0
     stat1.st_gid = 0
     stat1.st_flags = 0

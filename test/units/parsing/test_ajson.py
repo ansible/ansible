@@ -2,8 +2,7 @@
 # Copyright 2019, Andrew Klychkov @Andersson007 <aaklychkov@mail.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import json
@@ -109,7 +108,11 @@ class TestAnsibleJSONEncoder:
             def __len__(self):
                 return len(self.__dict__)
 
-        return M(request.param)
+        mapping = M(request.param)
+
+        assert isinstance(len(mapping), int)   # ensure coverage of __len__
+
+        return mapping
 
     @pytest.fixture
     def ansible_json_encoder(self):

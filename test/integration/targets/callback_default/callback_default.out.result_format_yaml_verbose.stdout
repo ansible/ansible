@@ -173,7 +173,7 @@ changed: [testhost] =>
     mode: '0644'
     owner: root
     size: 3
-    src: .../source
+    src: .../.source.txt
     state: file
     uid: 0
 

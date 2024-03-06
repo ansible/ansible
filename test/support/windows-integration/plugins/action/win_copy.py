@@ -3,9 +3,7 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import base64
 import json
@@ -439,7 +437,7 @@ class ActionModule(ActionBase):
                 source_full = self._loader.get_real_file(source, decrypt=decrypt)
             except AnsibleFileNotFound as e:
                 result['failed'] = True
-                result['msg'] = "could not find src=%s, %s" % (source_full, to_text(e))
+                result['msg'] = "could not find src=%s, %s" % (source, to_text(e))
                 return result
 
             original_basename = os.path.basename(source)

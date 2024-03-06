@@ -2,8 +2,7 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -36,7 +35,7 @@ options:
     description:
       - Algorithm to determine checksum of file.
       - Will throw an error if the host is unable to use specified algorithm.
-      - The remote host has to support the hashing method specified, C(md5)
+      - The remote host has to support the hashing method specified, V(md5)
         can be unavailable if the host is FIPS-140 compliant.
     type: str
     choices: [ md5, sha1, sha224, sha256, sha384, sha512 ]
@@ -47,8 +46,8 @@ options:
     description:
       - Use file magic and return data about the nature of the file. this uses
         the 'file' utility found on most Linux/Unix systems.
-      - This will add both C(mime_type) and C(charset) fields to the return, if possible.
-      - In Ansible 2.3 this option changed from I(mime) to I(get_mime) and the default changed to C(true).
+      - This will add both RV(stat.mimetype) and RV(stat.charset) fields to the return, if possible.
+      - In Ansible 2.3 this option changed from O(mime) to O(get_mime) and the default changed to V(true).
     type: bool
     default: yes
     aliases: [ mime, mime_type, mime-type ]
@@ -144,7 +143,7 @@ RETURN = r'''
 stat:
     description: Dictionary containing all the stat data, some platforms might add additional fields.
     returned: success
-    type: complex
+    type: dict
     contains:
         exists:
             description: If the destination path actually exists or not
@@ -307,13 +306,6 @@ stat:
             type: str
             sample: ../foobar/21102015-1445431274-908472971
             version_added: 2.4
-        md5:
-            description: md5 hash of the file; this will be removed in Ansible 2.9 in
-                favor of the checksum return value
-            returned: success, path exists and user can read stats and path
-                supports hashing and md5 is supported
-            type: str
-            sample: f88fa92d8cf2eeecf4c0a50ccc96d0c0
         checksum:
             description: hash of the file
             returned: success, path exists, user can read stats, path supports
@@ -333,15 +325,15 @@ stat:
         mimetype:
             description: file magic data or mime-type
             returned: success, path exists and user can read stats and
-                installed python supports it and the I(mime) option was true, will
-                return C(unknown) on error.
+                installed python supports it and the O(get_mime) option was V(true), will
+                return V(unknown) on error.
             type: str
             sample: application/pdf; charset=binary
         charset:
             description: file character set or encoding
             returned: success, path exists and user can read stats and
-                installed python supports it and the I(mime) option was true, will
-                return C(unknown) on error.
+                installed python supports it and the O(get_mime) option was V(true), will
+                return V(unknown) on error.
             type: str
             sample: us-ascii
         readable:
@@ -454,7 +446,6 @@ def main():
         argument_spec=dict(
             path=dict(type='path', required=True, aliases=['dest', 'name']),
             follow=dict(type='bool', default=False),
-            get_md5=dict(type='bool', default=False),
             get_checksum=dict(type='bool', default=True),
             get_mime=dict(type='bool', default=True, aliases=['mime', 'mime_type', 'mime-type']),
             get_attributes=dict(type='bool', default=True, aliases=['attr', 'attributes']),
@@ -472,10 +463,6 @@ def main():
     get_attr = module.params.get('get_attributes')
     get_checksum = module.params.get('get_checksum')
     checksum_algorithm = module.params.get('checksum_algorithm')
-
-    # NOTE: undocumented option since 2.9 to be removed at a later date if possible (3.0+)
-    # no real reason for keeping other than fear we may break older content.
-    get_md5 = module.params.get('get_md5')
 
     # main stat data
     try:
@@ -516,15 +503,6 @@ def main():
 
     # checksums
     if output.get('isreg') and output.get('readable'):
-
-        # NOTE: see above about get_md5
-        if get_md5:
-            # Will fail on FIPS-140 compliant systems
-            try:
-                output['md5'] = module.md5(b_path)
-            except ValueError:
-                output['md5'] = None
-
         if get_checksum:
             output['checksum'] = module.digest_from_file(b_path, checksum_algorithm)
 

@@ -2,8 +2,7 @@
 # Copyright: Contributors to the Ansible project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = '''
 author: 'Ansible Core Team (@ansible)'
@@ -97,7 +96,7 @@ options:
         - >-
           Suite can specify an exact path in relation to the URI(s) provided,
           in which case the Components: must be omitted and suite must end
-          with a slash C( / ). Alternatively, it may take the form of a
+          with a slash (C(/)). Alternatively, it may take the form of a
           distribution version (e.g. a version codename like disco or artful).
           If the suite does not specify a path, at least one component must
           be present.
@@ -124,7 +123,7 @@ options:
         elements: str
         description:
         - Which types of packages to look for from a given source; either
-          binary C(deb) or source code C(deb-src)
+          binary V(deb) or source code V(deb-src)
     uris:
         description:
         - The URIs must specify the base of the Debian distribution archive,
@@ -237,11 +236,13 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.common.file import S_IRWXU_RXG_RXO, S_IRWU_RG_RO
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.six import raise_from  # type: ignore[attr-defined]
 from ansible.module_utils.urls import generic_urlparse
 from ansible.module_utils.urls import open_url
+from ansible.module_utils.urls import get_user_agent
 from ansible.module_utils.urls import urlparse
 
 HAS_DEBIAN = True
@@ -259,7 +260,7 @@ def ensure_keyrings_dir(module):
     changed = False
     if not os.path.isdir(KEYRINGS_DIR):
         if not module.check_mode:
-            os.mkdir(KEYRINGS_DIR, 0o755)
+            os.mkdir(KEYRINGS_DIR, S_IRWXU_RXG_RXO)
         changed |= True
 
     changed |= module.set_fs_attributes_if_different(
@@ -325,7 +326,7 @@ def write_signed_by_key(module, v, slug):
     parts = generic_urlparse(urlparse(v))
     if parts.scheme:
         try:
-            r = open_url(v)
+            r = open_url(v, http_agent=get_user_agent())
         except Exception as exc:
             raise_from(RuntimeError(to_native(exc)), exc)
         else:
@@ -353,7 +354,7 @@ def write_signed_by_key(module, v, slug):
             module.atomic_move(tmpfile, filename)
         changed |= True
 
-    changed |= module.set_mode_if_different(filename, 0o0644, False)
+    changed |= module.set_mode_if_different(filename, S_IRWU_RG_RO, False)
 
     return changed, filename, None
 
@@ -500,7 +501,7 @@ def main():
 
     deb822 = Deb822()
     signed_by_filename = None
-    for key, value in params.items():
+    for key, value in sorted(params.items()):
         if value is None:
             continue
 

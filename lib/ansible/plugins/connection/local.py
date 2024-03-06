@@ -2,8 +2,7 @@
 # (c) 2015, 2017 Toshio Kuratomi <tkuratomi@ansible.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = '''
     name: local
@@ -22,12 +21,13 @@ import fcntl
 import getpass
 import os
 import pty
+import selectors
 import shutil
 import subprocess
+import typing as t
 
 import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
-from ansible.module_utils.compat import selectors
 from ansible.module_utils.six import text_type, binary_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
@@ -43,7 +43,7 @@ class Connection(ConnectionBase):
     transport = 'local'
     has_pipelining = True
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
 
         super(Connection, self).__init__(*args, **kwargs)
         self.cwd = None
@@ -53,7 +53,7 @@ class Connection(ConnectionBase):
             display.vv("Current user (uid=%s) does not seem to exist on this system, leaving user empty." % os.getuid())
             self.default_user = ""
 
-    def _connect(self):
+    def _connect(self) -> Connection:
         ''' connect to the local host; nothing to do here '''
 
         # Because we haven't made any remote connection we're running as
@@ -65,7 +65,7 @@ class Connection(ConnectionBase):
             self._connected = True
         return self
 
-    def exec_command(self, cmd, in_data=None, sudoable=True):
+    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
         ''' run a command on the local host '''
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
@@ -89,7 +89,7 @@ class Connection(ConnectionBase):
         master = None
         stdin = subprocess.PIPE
         if sudoable and self.become and self.become.expect_prompt() and not self.get_option('pipelining'):
-            # Create a pty if sudoable for privlege escalation that needs it.
+            # Create a pty if sudoable for privilege escalation that needs it.
             # Falls back to using a standard pipe if this fails, which may
             # cause the command to fail in certain situations where we are escalating
             # privileges or the command otherwise needs a pty.
@@ -163,7 +163,7 @@ class Connection(ConnectionBase):
         display.debug("done with local.exec_command()")
         return (p.returncode, stdout, stderr)
 
-    def put_file(self, in_path, out_path):
+    def put_file(self, in_path: str, out_path: str) -> None:
         ''' transfer a file from local to local '''
 
         super(Connection, self).put_file(in_path, out_path)
@@ -181,7 +181,7 @@ class Connection(ConnectionBase):
         except IOError as e:
             raise AnsibleError("failed to transfer file to {0}: {1}".format(to_native(out_path), to_native(e)))
 
-    def fetch_file(self, in_path, out_path):
+    def fetch_file(self, in_path: str, out_path: str) -> None:
         ''' fetch a file from local to local -- for compatibility '''
 
         super(Connection, self).fetch_file(in_path, out_path)
@@ -189,6 +189,6 @@ class Connection(ConnectionBase):
         display.vvv(u"FETCH {0} TO {1}".format(in_path, out_path), host=self._play_context.remote_addr)
         self.put_file(in_path, out_path)
 
-    def close(self):
+    def close(self) -> None:
         ''' terminate the connection; nothing to do here '''
         self._connected = False

@@ -14,11 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
-from os.path import basename
+from __future__ import annotations
 
 import ansible.constants as C
 from ansible.errors import AnsibleParserError
@@ -49,10 +45,10 @@ class IncludeRole(TaskInclude):
 
     # =================================================================================
     # ATTRIBUTES
+    public = NonInheritableFieldAttribute(isa='bool', default=None, private=False, always_post_validate=True)
 
     # private as this is a 'module options' vs a task property
     allow_duplicates = NonInheritableFieldAttribute(isa='bool', default=True, private=True, always_post_validate=True)
-    public = NonInheritableFieldAttribute(isa='bool', default=False, private=True, always_post_validate=True)
     rolespec_validate = NonInheritableFieldAttribute(isa='bool', default=True, private=True, always_post_validate=True)
 
     def __init__(self, block=None, role=None, task_include=None):
@@ -88,11 +84,11 @@ class IncludeRole(TaskInclude):
 
         # build role
         actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=from_files,
-                                from_include=True, validate=self.rolespec_validate, public=self.public)
+                                from_include=True, validate=self.rolespec_validate, public=self.public, static=self.statically_loaded)
         actual_role._metadata.allow_duplicates = self.allow_duplicates
 
-        if self.statically_loaded or self.public:
-            myplay.roles.append(actual_role)
+        # add role to play
+        myplay.roles.append(actual_role)
 
         # save this for later use
         self._role_path = actual_role._role_path
@@ -113,7 +109,7 @@ class IncludeRole(TaskInclude):
             b.collections = actual_role.collections
 
         # updated available handlers in play
-        handlers = actual_role.get_handler_blocks(play=myplay)
+        handlers = actual_role.get_handler_blocks(play=myplay, dep_chain=dep_chain)
         for h in handlers:
             h._parent = p_block
         myplay.handlers = myplay.handlers + handlers
@@ -124,10 +120,6 @@ class IncludeRole(TaskInclude):
 
         ir = IncludeRole(block, role, task_include=task_include).load_data(data, variable_manager=variable_manager, loader=loader)
 
-        # dyanmic role!
-        if ir.action in C._ACTION_INCLUDE_ROLE:
-            ir.static = False
-
         # Validate options
         my_arg_names = frozenset(ir.args.keys())
 
@@ -135,10 +127,6 @@ class IncludeRole(TaskInclude):
         ir._role_name = ir.args.get('name', ir.args.get('role'))
         if ir._role_name is None:
             raise AnsibleParserError("'name' is a required field for %s." % ir.action, obj=data)
-
-        # public is only valid argument for includes, imports are always 'public' (after they run)
-        if 'public' in ir.args and ir.action not in C._ACTION_INCLUDE_ROLE:
-            raise AnsibleParserError('Invalid options for %s: public' % ir.action, obj=data)
 
         # validate bad args, otherwise we silently ignore
         bad_opts = my_arg_names.difference(IncludeRole.VALID_ARGS)
@@ -151,7 +139,7 @@ class IncludeRole(TaskInclude):
             args_value = ir.args.get(key)
             if not isinstance(args_value, string_types):
                 raise AnsibleParserError('Expected a string for %s but got %s instead' % (key, type(args_value)))
-            ir._from_files[from_key] = basename(args_value)
+            ir._from_files[from_key] = args_value
 
         # apply is only valid for includes, not imports as they inherit directly
         apply_attrs = ir.args.get('apply', {})

@@ -31,11 +31,6 @@ from termios import TIOCGWINSZ
 # CAUTION: Avoid third-party imports in this module whenever possible.
 #          Any third-party imports occurring here will result in an error if they are vendored by ansible-core.
 
-try:
-    from typing_extensions import TypeGuard  # TypeGuard was added in Python 3.10
-except ImportError:
-    TypeGuard = None
-
 from .locale_util import (
     LOCALE_WARNING,
     CONFIGURED_LOCALE,
@@ -74,14 +69,12 @@ ANSIBLE_TEST_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # assume running from install
 ANSIBLE_ROOT = os.path.dirname(ANSIBLE_TEST_ROOT)
-ANSIBLE_BIN_PATH = os.path.dirname(os.path.abspath(sys.argv[0]))
 ANSIBLE_LIB_ROOT = os.path.join(ANSIBLE_ROOT, 'ansible')
 ANSIBLE_SOURCE_ROOT = None
 
 if not os.path.exists(ANSIBLE_LIB_ROOT):
     # running from source
     ANSIBLE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(ANSIBLE_TEST_ROOT)))
-    ANSIBLE_BIN_PATH = os.path.join(ANSIBLE_ROOT, 'bin')
     ANSIBLE_LIB_ROOT = os.path.join(ANSIBLE_ROOT, 'lib', 'ansible')
     ANSIBLE_SOURCE_ROOT = ANSIBLE_ROOT
 
@@ -438,7 +431,7 @@ def raw_command(
     display.info(f'{description}: {escaped_cmd}', verbosity=cmd_verbosity, truncate=True)
     display.info('Working directory: %s' % cwd, verbosity=2)
 
-    program = find_executable(cmd[0], cwd=cwd, path=env['PATH'], required='warning')
+    program = find_executable(cmd[0], cwd=cwd, path=env['PATH'], required=False)
 
     if program:
         display.info('Program found: %s' % program, verbosity=2)
@@ -1157,7 +1150,7 @@ def verify_sys_executable(path: str) -> t.Optional[str]:
     return expected_executable
 
 
-def type_guard(sequence: c.Sequence[t.Any], guard_type: t.Type[C]) -> TypeGuard[c.Sequence[C]]:
+def type_guard(sequence: c.Sequence[t.Any], guard_type: t.Type[C]) -> t.TypeGuard[c.Sequence[C]]:
     """
     Raises an exception if any item in the given sequence does not match the specified guard type.
     Use with assert so that type checkers are aware of the type guard.

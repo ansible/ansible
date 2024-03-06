@@ -6,8 +6,14 @@ import typing as t
 
 import astroid
 
+# support pylint 2.x and 3.x -- remove when supporting only 3.x
+try:
+    from pylint.interfaces import IAstroidChecker
+except ImportError:
+    class IAstroidChecker:
+        """Backwards compatibility for 2.x / 3.x support."""
+
 from pylint.checkers import BaseChecker
-from pylint.interfaces import IAstroidChecker
 
 ANSIBLE_TEST_MODULES_PATH = os.environ['ANSIBLE_TEST_MODULES_PATH']
 ANSIBLE_TEST_MODULE_UTILS_PATH = os.environ['ANSIBLE_TEST_MODULE_UTILS_PATH']

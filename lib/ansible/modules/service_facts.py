@@ -3,8 +3,7 @@
 # originally copied from AWX's scan_services module to bring this functionality
 # into Core
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -28,7 +27,7 @@ attributes:
     platform:
         platforms: posix
 notes:
-  - When accessing the C(ansible_facts.services) facts collected by this module,
+  - When accessing the RV(ansible_facts.services) facts collected by this module,
     it is recommended to not use "dot notation" because services can have a C(-)
     character in their name which would result in invalid "dot notation", such as
     C(ansible_facts.services.zuul-gateway). It is instead recommended to
@@ -57,19 +56,20 @@ ansible_facts:
     services:
       description: States of the services with service name as key.
       returned: always
-      type: complex
+      type: list
+      elements: dict
       contains:
         source:
           description:
           - Init system of the service.
-          - One of C(rcctl), C(systemd), C(sysv), C(upstart), C(src).
+          - One of V(rcctl), V(systemd), V(sysv), V(upstart), V(src).
           returned: always
           type: str
           sample: sysv
         state:
           description:
           - State of the service.
-          - 'This commonly includes (but is not limited to) the following: C(failed), C(running), C(stopped) or C(unknown).'
+          - 'This commonly includes (but is not limited to) the following: V(failed), V(running), V(stopped) or V(unknown).'
           - Depending on the used init system additional states might be returned.
           returned: always
           type: str
@@ -77,7 +77,7 @@ ansible_facts:
         status:
           description:
           - State of the service.
-          - Either C(enabled), C(disabled), C(static), C(indirect) or C(unknown).
+          - Either V(enabled), V(disabled), V(static), V(indirect) or V(unknown).
           returned: systemd systems or RedHat/SUSE flavored sysvinit/upstart or OpenBSD
           type: str
           sample: enabled
@@ -94,6 +94,7 @@ import platform
 import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
+from ansible.module_utils.service import is_systemd_managed
 
 
 class BaseService(object):
@@ -244,16 +245,7 @@ class SystemctlScanService(BaseService):
     BAD_STATES = frozenset(['not-found', 'masked', 'failed'])
 
     def systemd_enabled(self):
-        # Check if init is the systemd command, using comm as cmdline could be symlink
-        try:
-            f = open('/proc/1/comm', 'r')
-        except IOError:
-            # If comm doesn't exist, old kernel, no systemd
-            return False
-        for line in f:
-            if 'systemd' in line:
-                return True
-        return False
+        return is_systemd_managed(self.module)
 
     def _list_from_units(self, systemctl_path, services):
 

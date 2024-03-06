@@ -16,20 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from io import StringIO
+from selectors import SelectorKey, EVENT_READ
 import pytest
 
 
 from ansible.errors import AnsibleAuthenticationFailure
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, MagicMock, PropertyMock
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
-from ansible.module_utils.compat.selectors import SelectorKey, EVENT_READ
-from ansible.module_utils.six.moves import shlex_quote
+import shlex
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ssh
@@ -141,9 +139,8 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn.become.check_missing_password = MagicMock(side_effect=_check_missing_password)
 
         def get_option(option):
-            if option == 'become_pass':
-                return 'password'
-            return None
+            assert option == 'become_pass'
+            return 'password'
 
         conn.become.get_option = get_option
         output, unprocessed = conn._examine_output(u'source', u'state', b'line 1\nline 2\nfoo\nline 3\nthis should be the remainder', False)
@@ -249,7 +246,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         # Test with SCP_IF_SSH set to smart
         # Test when SFTP works
         conn.set_option('scp_if_ssh', 'smart')
-        expected_in_data = b' '.join((b'put', to_bytes(shlex_quote('/path/to/in/file')), to_bytes(shlex_quote('/path/to/dest/file')))) + b'\n'
+        expected_in_data = b' '.join((b'put', to_bytes(shlex.quote('/path/to/in/file')), to_bytes(shlex.quote('/path/to/dest/file')))) + b'\n'
         conn.put_file('/path/to/in/file', '/path/to/dest/file')
         conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
@@ -269,13 +266,13 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # test with SCPP_IF_SSH disabled
         conn.set_option('scp_if_ssh', False)
-        expected_in_data = b' '.join((b'put', to_bytes(shlex_quote('/path/to/in/file')), to_bytes(shlex_quote('/path/to/dest/file')))) + b'\n'
+        expected_in_data = b' '.join((b'put', to_bytes(shlex.quote('/path/to/in/file')), to_bytes(shlex.quote('/path/to/dest/file')))) + b'\n'
         conn.put_file('/path/to/in/file', '/path/to/dest/file')
         conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         expected_in_data = b' '.join((b'put',
-                                      to_bytes(shlex_quote('/path/to/in/file/with/unicode-fö〩')),
-                                      to_bytes(shlex_quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
+                                      to_bytes(shlex.quote('/path/to/in/file/with/unicode-fö〩')),
+                                      to_bytes(shlex.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
         conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
         conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
@@ -307,7 +304,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         # Test with SCP_IF_SSH set to smart
         # Test when SFTP works
         conn.set_option('scp_if_ssh', 'smart')
-        expected_in_data = b' '.join((b'get', to_bytes(shlex_quote('/path/to/in/file')), to_bytes(shlex_quote('/path/to/dest/file')))) + b'\n'
+        expected_in_data = b' '.join((b'get', to_bytes(shlex.quote('/path/to/in/file')), to_bytes(shlex.quote('/path/to/dest/file')))) + b'\n'
         conn.set_options({})
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
         conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
@@ -329,13 +326,13 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # test with SCP_IF_SSH disabled
         conn.set_option('scp_if_ssh', False)
-        expected_in_data = b' '.join((b'get', to_bytes(shlex_quote('/path/to/in/file')), to_bytes(shlex_quote('/path/to/dest/file')))) + b'\n'
+        expected_in_data = b' '.join((b'get', to_bytes(shlex.quote('/path/to/in/file')), to_bytes(shlex.quote('/path/to/dest/file')))) + b'\n'
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
         conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         expected_in_data = b' '.join((b'get',
-                                      to_bytes(shlex_quote('/path/to/in/file/with/unicode-fö〩')),
-                                      to_bytes(shlex_quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
+                                      to_bytes(shlex.quote('/path/to/in/file/with/unicode-fö〩')),
+                                      to_bytes(shlex.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
         conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
         conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
@@ -350,7 +347,7 @@ class MockSelector(object):
         self.register = MagicMock(side_effect=self._register)
         self.unregister = MagicMock(side_effect=self._unregister)
         self.close = MagicMock()
-        self.get_map = MagicMock(side_effect=self._get_map)
+        self.get_map = MagicMock()
         self.select = MagicMock()
 
     def _register(self, *args, **kwargs):
@@ -358,9 +355,6 @@ class MockSelector(object):
 
     def _unregister(self, *args, **kwargs):
         self.files_watched -= 1
-
-    def _get_map(self, *args, **kwargs):
-        return self.files_watched
 
 
 @pytest.fixture
@@ -395,7 +389,7 @@ def mock_run_env(request, mocker):
     request.cls.mock_popen = mock_popen
 
     request.cls.mock_selector = MockSelector()
-    mocker.patch('ansible.module_utils.compat.selectors.DefaultSelector', lambda: request.cls.mock_selector)
+    mocker.patch('selectors.DefaultSelector', lambda: request.cls.mock_selector)
 
     request.cls.mock_openpty = mocker.patch('pty.openpty')
 
@@ -456,7 +450,8 @@ class TestSSHConnectionRun(object):
     def _password_with_prompt_examine_output(self, sourice, state, b_chunk, sudoable):
         if state == 'awaiting_prompt':
             self.conn._flags['become_prompt'] = True
-        elif state == 'awaiting_escalation':
+        else:
+            assert state == 'awaiting_escalation'
             self.conn._flags['become_success'] = True
         return (b'', b'')
 
@@ -545,7 +540,6 @@ class TestSSHConnectionRetries(object):
     def test_incorrect_password(self, monkeypatch):
         self.conn.set_option('host_key_checking', False)
         self.conn.set_option('reconnection_retries', 5)
-        monkeypatch.setattr('time.sleep', lambda x: None)
 
         self.mock_popen_res.stdout.read.side_effect = [b'']
         self.mock_popen_res.stderr.read.side_effect = [b'Permission denied, please try again.\r\n']
@@ -668,7 +662,6 @@ class TestSSHConnectionRetries(object):
         self.conn.set_option('reconnection_retries', 3)
 
         monkeypatch.setattr('time.sleep', lambda x: None)
-        monkeypatch.setattr('ansible.plugins.connection.ssh.os.path.exists', lambda x: True)
 
         self.mock_popen_res.stdout.read.side_effect = [b"", b"my_stdout\n", b"second_line"]
         self.mock_popen_res.stderr.read.side_effect = [b"", b"my_stderr"]

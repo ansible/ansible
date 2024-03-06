@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import cmd
 import functools
@@ -54,8 +52,8 @@ from ansible.plugins import loader as plugin_loader
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
-from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.utils.unsafe_proxy import wrap_var
+from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars, isidentifier
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
@@ -117,7 +115,8 @@ def results_thread_main(strategy):
             if isinstance(result, StrategySentinel):
                 break
             elif isinstance(result, DisplaySend):
-                display.display(*result.args, **result.kwargs)
+                dmethod = getattr(display, result.method)
+                dmethod(*result.args, **result.kwargs)
             elif isinstance(result, CallbackSend):
                 for arg in result.args:
                     if isinstance(arg, TaskResult):
@@ -509,8 +508,11 @@ class StrategyBase:
 
     def search_handlers_by_notification(self, notification: str, iterator: PlayIterator) -> t.Generator[Handler, None, None]:
         templar = Templar(None)
+        handlers = [h for b in reversed(iterator._play.handlers) for h in b.block]
         # iterate in reversed order since last handler loaded with the same name wins
-        for handler in (h for b in reversed(iterator._play.handlers) for h in b.block if h.name):
+        for handler in handlers:
+            if not handler.name:
+                continue
             if not handler.cached_name:
                 if templar.is_template(handler.name):
                     templar.available_variables = self._variable_manager.get_vars(
@@ -548,7 +550,8 @@ class StrategyBase:
                 break
 
         templar.available_variables = {}
-        for handler in (h for b in iterator._play.handlers for h in b.block):
+        seen = []
+        for handler in handlers:
             if listeners := handler.listen:
                 if notification in handler.get_validated_value(
                     'listen',
@@ -556,6 +559,9 @@ class StrategyBase:
                     listeners,
                     templar,
                 ):
+                    if handler.name and handler.name in seen:
+                        continue
+                    seen.append(handler.name)
                     yield handler
 
     @debug_closure
@@ -564,10 +570,7 @@ class StrategyBase:
         Reads results off the final queue and takes appropriate action
         based on the result (executing callbacks, updating state, etc.).
         '''
-
         ret_results = []
-        handler_templar = Templar(self._loader)
-
         cur_pass = 0
         while True:
             try:
@@ -598,7 +601,7 @@ class StrategyBase:
                     else:
                         iterator.mark_host_failed(original_host)
 
-                    state, _ = iterator.get_next_task_for_host(original_host, peek=True)
+                    state, dummy = iterator.get_next_task_for_host(original_host, peek=True)
 
                     if iterator.is_failed(original_host) and state and state.run_state == IteratingStates.COMPLETE:
                         self._tqm._failed_hosts[original_host.name] = True
@@ -652,20 +655,29 @@ class StrategyBase:
                         # only ensure that notified handlers exist, if so save the notifications for when
                         # handlers are actually flushed so the last defined handlers are exexcuted,
                         # otherwise depending on the setting either error or warn
+                        host_state = iterator.get_state_for_host(original_host.name)
                         for notification in result_item['_ansible_notify']:
-                            if any(self.search_handlers_by_notification(notification, iterator)):
-                                iterator.add_notification(original_host.name, notification)
-                                display.vv(f"Notification for handler {notification} has been saved.")
-                                continue
-
-                            msg = (
-                                f"The requested handler '{notification}' was not found in either the main handlers"
-                                " list nor in the listening handlers list"
-                            )
-                            if C.ERROR_ON_MISSING_HANDLER:
-                                raise AnsibleError(msg)
-                            else:
-                                display.warning(msg)
+                            handler = Sentinel
+                            for handler in self.search_handlers_by_notification(notification, iterator):
+                                if host_state.run_state == IteratingStates.HANDLERS:
+                                    # we're currently iterating handlers, so we need to expand this now
+                                    if handler.notify_host(original_host):
+                                        # NOTE even with notifications deduplicated this can still happen in case of handlers being
+                                        # notified multiple times using different names, like role name or fqcn
+                                        self._tqm.send_callback('v2_playbook_on_notify', handler, original_host)
+                                else:
+                                    iterator.add_notification(original_host.name, notification)
+                                    display.vv(f"Notification for handler {notification} has been saved.")
+                                    break
+                            if handler is Sentinel:
+                                msg = (
+                                    f"The requested handler '{notification}' was not found in either the main handlers"
+                                    " list nor in the listening handlers list"
+                                )
+                                if C.ERROR_ON_MISSING_HANDLER:
+                                    raise AnsibleError(msg)
+                                else:
+                                    display.warning(msg)
 
                     if 'add_host' in result_item:
                         # this task added a new host (add_host module)
@@ -687,7 +699,7 @@ class StrategyBase:
                         else:
                             all_task_vars = found_task_vars
                         all_task_vars[original_task.register] = wrap_var(result_item)
-                        post_process_whens(result_item, original_task, handler_templar, all_task_vars)
+                        post_process_whens(result_item, original_task, Templar(self._loader), all_task_vars)
                         if original_task.loop or original_task.loop_with:
                             new_item_result = TaskResult(
                                 task_result._host,
@@ -788,10 +800,6 @@ class StrategyBase:
 
             ret_results.append(task_result)
 
-            if isinstance(original_task, Handler):
-                for handler in (h for b in iterator._play.handlers for h in b.block if h._uuid == original_task._uuid):
-                    handler.remove_host(original_host)
-
             if one_pass or max_passes is not None and (cur_pass + 1) >= max_passes:
                 break
 
@@ -835,7 +843,7 @@ class StrategyBase:
 
         return ti_copy
 
-    def _load_included_file(self, included_file, iterator, is_handler=False):
+    def _load_included_file(self, included_file, iterator, is_handler=False, handle_stats_and_callbacks=True):
         '''
         Loads an included YAML file of tasks, applying the optional set of variables.
 
@@ -843,6 +851,15 @@ class StrategyBase:
         in such case the caller is responsible for marking the host(s) as failed
         using PlayIterator.mark_host_failed().
         '''
+        if handle_stats_and_callbacks:
+            display.deprecated(
+                "Reporting play recap stats and running callbacks functionality for "
+                "``include_tasks`` in ``StrategyBase._load_included_file`` is deprecated. "
+                "See ``https://github.com/ansible/ansible/pull/79260`` for guidance on how to "
+                "move the reporting into specific strategy plugins to account for "
+                "``include_role`` tasks as well.",
+                version="2.21"
+            )
         display.debug("loading included file: %s" % included_file._filename)
         try:
             data = self._loader.load_from_file(included_file._filename)
@@ -862,11 +879,9 @@ class StrategyBase:
                 loader=self._loader,
                 variable_manager=self._variable_manager,
             )
-
-            # since we skip incrementing the stats when the task result is
-            # first processed, we do so now for each host in the list
-            for host in included_file._hosts:
-                self._tqm._stats.increment('ok', host.name)
+            if handle_stats_and_callbacks:
+                for host in included_file._hosts:
+                    self._tqm._stats.increment('ok', host.name)
         except AnsibleParserError:
             raise
         except AnsibleError as e:
@@ -874,18 +889,18 @@ class StrategyBase:
                 reason = "Could not find or access '%s' on the Ansible Controller." % to_text(e.file_name)
             else:
                 reason = to_text(e)
+            if handle_stats_and_callbacks:
+                for r in included_file._results:
+                    r._result['failed'] = True
 
-            for r in included_file._results:
-                r._result['failed'] = True
-
-            for host in included_file._hosts:
-                tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=reason))
-                self._tqm._stats.increment('failures', host.name)
-                self._tqm.send_callback('v2_runner_on_failed', tr)
+                for host in included_file._hosts:
+                    tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=reason))
+                    self._tqm._stats.increment('failures', host.name)
+                    self._tqm.send_callback('v2_runner_on_failed', tr)
             raise AnsibleError(reason) from e
 
-        # finally, send the callback and return the list of blocks loaded
-        self._tqm.send_callback('v2_playbook_on_include', included_file)
+        if handle_stats_and_callbacks:
+            self._tqm.send_callback('v2_playbook_on_include', included_file)
         display.debug("done processing included file")
         return block_list
 
@@ -1021,8 +1036,9 @@ class StrategyBase:
             # How would this work with allow_duplicates??
             if task.implicit:
                 role_obj = self._get_cached_role(task, iterator._play)
-                role_obj._completed[target_host.name] = True
-                msg = 'role_complete for %s' % target_host.name
+                if target_host.name in role_obj._had_task_run:
+                    role_obj._completed[target_host.name] = True
+                    msg = 'role_complete for %s' % target_host.name
         elif meta_action == 'reset_connection':
             all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task,
                                                        _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
@@ -1077,9 +1093,6 @@ class StrategyBase:
         if not task.implicit:
             header = skip_reason if skipped else msg
             display.vv(f"META: {header}")
-
-        if isinstance(task, Handler):
-            task.remove_host(target_host)
 
         res = TaskResult(target_host, task, result)
         if skipped:

@@ -47,11 +47,6 @@ from ...ansible_util import (
     ansible_environment,
 )
 
-from ...python_requirements import (
-    PipUnavailableError,
-    install_requirements,
-)
-
 from ...config import (
     SanityConfig,
 )
@@ -66,10 +61,6 @@ from ...data import (
 
 from ...host_configs import (
     PythonConfig,
-)
-
-from ...venv import (
-    get_virtualenv_version,
 )
 
 
@@ -109,15 +100,6 @@ class ImportTest(SanityMultipleVersion):
 
         paths = [target.path for target in targets.include]
 
-        if python.version.startswith('2.') and (get_virtualenv_version(args, python.path) or (0,)) < (13,):
-            # hack to make sure that virtualenv is available under Python 2.x
-            # on Python 3.x we can use the built-in venv
-            # version 13+ is required to use the `--no-wheel` option
-            try:
-                install_requirements(args, python, virtualenv=True, controller=False)  # sanity (import)
-            except PipUnavailableError as ex:
-                display.warning(str(ex))
-
         temp_root = os.path.join(ResultType.TMP.path, 'sanity', 'import')
 
         messages = []
@@ -127,20 +109,26 @@ class ImportTest(SanityMultipleVersion):
             ('plugin', _get_module_test(False)),
         ):
             if import_type == 'plugin' and python.version in REMOTE_ONLY_PYTHON_VERSIONS:
-                continue
+                # Plugins are not supported on remote-only Python versions.
+                # However, the collection loader is used by the import sanity test and unit tests on remote-only Python versions.
+                # To support this, it is tested as a plugin, but using a venv which installs no requirements.
+                # Filtering of paths relevant to the Python version tested has already been performed by filter_remote_targets.
+                venv_type = 'empty'
+            else:
+                venv_type = import_type
 
             data = '\n'.join([path for path in paths if test(path)])
 
             if not data and not args.prime_venvs:
                 continue
 
-            virtualenv_python = create_sanity_virtualenv(args, python, f'{self.name}.{import_type}', coverage=args.coverage, minimize=True)
+            virtualenv_python = create_sanity_virtualenv(args, python, f'{self.name}.{venv_type}', coverage=args.coverage, minimize=True)
 
             if not virtualenv_python:
                 display.warning(f'Skipping sanity test "{self.name}" on Python {python.version} due to missing virtual environment support.')
                 return SanitySkipped(self.name, python.version)
 
-            virtualenv_yaml = check_sanity_virtualenv_yaml(virtualenv_python)
+            virtualenv_yaml = args.explain or check_sanity_virtualenv_yaml(virtualenv_python)
 
             if virtualenv_yaml is False:
                 display.warning(f'Sanity test "{self.name}" ({import_type}) on Python {python.version} may be slow due to missing libyaml support in PyYAML.')

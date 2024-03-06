@@ -25,7 +25,7 @@
 
 - name: show jinja2 version
   debug:
-     msg: "{{ lookup('pipe', '{{ ansible_python[\"executable\"] }} -c \"import jinja2; print(jinja2.__version__)\"') }}"
+     msg: "{{ lookup('pipe', ansible_python.executable ~ ' -c \"import jinja2; print(jinja2.__version__)\"') }}"
 
 - name: get default group
   shell: id -gn
@@ -714,7 +714,7 @@
 
 - name: check that proper error message is emitted when in operator is used
   assert:
-    that: "\"'y' is undefined\" in error.msg"
+    that: "\"The error was: 'y' is undefined\n\n\" in error.msg"
 
 - template:
     src: template_import_macro_globals.j2
@@ -760,7 +760,7 @@
     that:
       - test
   vars:
-    test: "{{ lookup('file', '{{ output_dir }}/empty_template.templated')|length == 0 }}"
+    test: "{{ lookup('file', output_dir ~ '/empty_template.templated')|length == 0 }}"
 
 - name: test jinja2 override without colon throws proper error
   block:

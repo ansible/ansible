@@ -5,9 +5,12 @@
     chdir: '{{ galaxy_dir }}'
   register: publish_collection
 
+- name: ensure we can download the published collection - {{ test_name }}
+  command: ansible-galaxy collection install -s {{ test_name }} -p "{{ remote_tmp_dir }}/publish/{{ test_name }}" ansible_test.my_collection==1.0.0 {{ galaxy_verbosity }}
+
 - name: get result of publish collection - {{ test_name }}
   uri:
-    url: '{{ test_server }}{{ vX }}collections/ansible_test/my_collection/versions/1.0.0/'
+    url: '{{ test_api_server }}v3/plugin/ansible/content/primary/collections/index/ansible_test/my_collection/versions/1.0.0/'
     return_content: yes
     user: '{{ pulp_user }}'
     password: '{{ pulp_password }}'

@@ -1,2 +1,0 @@
-removed_features:
-  - inventory_cache - remove deprecated ``default.fact_caching_prefix`` ini configuration option, use ``defaults.fact_caching_prefix`` instead.

@@ -17,11 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import binascii
 import io
 import os
 import tempfile
@@ -29,11 +26,10 @@ import tempfile
 from binascii import hexlify
 import pytest
 
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, MagicMock
 
 from ansible import errors
-from ansible.module_utils import six
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.parsing import vault
 
@@ -508,7 +504,7 @@ class TestVaultCipherAes256(unittest.TestCase):
         b_password = b'hunter42'
         b_salt = os.urandom(32)
         b_key_cryptography = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
-        self.assertIsInstance(b_key_cryptography, six.binary_type)
+        self.assertIsInstance(b_key_cryptography, bytes)
 
     def test_create_key_known_cryptography(self):
         b_password = b'hunter42'
@@ -516,13 +512,13 @@ class TestVaultCipherAes256(unittest.TestCase):
         # A fixed salt
         b_salt = b'q' * 32  # q is the most random letter.
         b_key_1 = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
-        self.assertIsInstance(b_key_1, six.binary_type)
+        self.assertIsInstance(b_key_1, bytes)
 
         # verify we get the same answer
         # we could potentially run a few iterations of this and time it to see if it's roughly constant time
         #  and or that it exceeds some minimal time, but that would likely cause unreliable fails, esp in CI
         b_key_2 = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
-        self.assertIsInstance(b_key_2, six.binary_type)
+        self.assertIsInstance(b_key_2, bytes)
         self.assertEqual(b_key_1, b_key_2)
 
     def test_is_equal_is_equal(self):
@@ -606,9 +602,6 @@ class TestVaultLib(unittest.TestCase):
                               ('test_id', text_secret)]
         self.v = vault.VaultLib(self.vault_secrets)
 
-    def _vault_secrets(self, vault_id, secret):
-        return [(vault_id, secret)]
-
     def _vault_secrets_from_password(self, vault_id, password):
         return [(vault_id, TextVaultSecret(password))]
 
@@ -616,7 +609,7 @@ class TestVaultLib(unittest.TestCase):
         plaintext = u'Some text to encrypt in a café'
         b_vaulttext = self.v.encrypt(plaintext)
 
-        self.assertIsInstance(b_vaulttext, six.binary_type)
+        self.assertIsInstance(b_vaulttext, bytes)
 
         b_header = b'$ANSIBLE_VAULT;1.1;AES256\n'
         self.assertEqual(b_vaulttext[:len(b_header)], b_header)
@@ -625,7 +618,7 @@ class TestVaultLib(unittest.TestCase):
         plaintext = u'Some text to encrypt in a café'
         b_vaulttext = self.v.encrypt(plaintext, vault_id='test_id')
 
-        self.assertIsInstance(b_vaulttext, six.binary_type)
+        self.assertIsInstance(b_vaulttext, bytes)
 
         b_header = b'$ANSIBLE_VAULT;1.2;AES256;test_id\n'
         self.assertEqual(b_vaulttext[:len(b_header)], b_header)
@@ -635,7 +628,7 @@ class TestVaultLib(unittest.TestCase):
         plaintext = to_bytes(u'Some text to encrypt in a café')
         b_vaulttext = self.v.encrypt(plaintext)
 
-        self.assertIsInstance(b_vaulttext, six.binary_type)
+        self.assertIsInstance(b_vaulttext, bytes)
 
         b_header = b'$ANSIBLE_VAULT;1.1;AES256\n'
         self.assertEqual(b_vaulttext[:len(b_header)], b_header)
@@ -778,43 +771,6 @@ class TestVaultLib(unittest.TestCase):
         b_vaulttext = to_bytes(vaulttext, encoding='ascii', errors='strict')
         b_plaintext = self.v.decrypt(b_vaulttext)
         self.assertEqual(b_plaintext, b_orig_plaintext, msg="decryption failed")
-
-    # FIXME This test isn't working quite yet.
-    @pytest.mark.skip(reason='This test is not ready yet')
-    def test_encrypt_decrypt_aes256_bad_hmac(self):
-
-        self.v.cipher_name = 'AES256'
-        # plaintext = "Setec Astronomy"
-        enc_data = '''$ANSIBLE_VAULT;1.1;AES256
-33363965326261303234626463623963633531343539616138316433353830356566396130353436
-3562643163366231316662386565383735653432386435610a306664636137376132643732393835
-63383038383730306639353234326630666539346233376330303938323639306661313032396437
-6233623062366136310a633866373936313238333730653739323461656662303864663666653563
-3138'''
-        b_data = to_bytes(enc_data, errors='strict', encoding='utf-8')
-        b_data = self.v._split_header(b_data)
-        foo = binascii.unhexlify(b_data)
-        lines = foo.splitlines()
-        # line 0 is salt, line 1 is hmac, line 2+ is ciphertext
-        b_salt = lines[0]
-        b_hmac = lines[1]
-        b_ciphertext_data = b'\n'.join(lines[2:])
-
-        b_ciphertext = binascii.unhexlify(b_ciphertext_data)
-        # b_orig_ciphertext = b_ciphertext[:]
-
-        # now muck with the text
-        # b_munged_ciphertext = b_ciphertext[:10] + b'\x00' + b_ciphertext[11:]
-        # b_munged_ciphertext = b_ciphertext
-        # assert b_orig_ciphertext != b_munged_ciphertext
-
-        b_ciphertext_data = binascii.hexlify(b_ciphertext)
-        b_payload = b'\n'.join([b_salt, b_hmac, b_ciphertext_data])
-        # reformat
-        b_invalid_ciphertext = self.v._format_output(b_payload)
-
-        # assert we throw an error
-        self.v.decrypt(b_invalid_ciphertext)
 
     def test_decrypt_and_get_vault_id(self):
         b_expected_plaintext = to_bytes('foo bar\n')

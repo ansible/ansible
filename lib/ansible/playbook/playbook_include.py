@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -48,7 +46,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
     def load(data, basedir, variable_manager=None, loader=None):
         return PlaybookInclude().load_data(ds=data, basedir=basedir, variable_manager=variable_manager, loader=loader)
 
-    def load_data(self, ds, basedir, variable_manager=None, loader=None):
+    def load_data(self, ds, variable_manager=None, loader=None, basedir=None):
         '''
         Overrides the base load_data(), as we're actually going to return a new
         Playbook() object rather than a PlaybookInclude object

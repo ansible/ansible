@@ -15,7 +15,7 @@
     that:
       - "testing == 789"
       - "base_dir == 'environments/development'"
-      - "{{ included_one_file.ansible_included_var_files | length }} == 1"
+      - "{{ included_one_file.ansible_included_var_files | length }} == 1"
       - "'vars/environments/development/all.yml' in included_one_file.ansible_included_var_files[0]"
 
 - name: include the vars/environments/development/all.yml and save results in all
@@ -67,7 +67,7 @@
       - "testing == 456"
       - "base_dir == 'services'"
       - "webapp_containers == 10"
-      - "{{ include_every_dir.ansible_included_var_files | length }} == 7"
+      - "{{ include_every_dir.ansible_included_var_files | length }} == 7"
       - "'vars/all/all.yml' in include_every_dir.ansible_included_var_files[0]"
       - "'vars/environments/development/all.yml' in include_every_dir.ansible_included_var_files[1]"
       - "'vars/environments/development/services/webapp.yml' in include_every_dir.ansible_included_var_files[2]"
@@ -88,7 +88,7 @@
     that:
       - "testing == 789"
       - "base_dir == 'environments/development'"
-      - "{{ include_without_webapp.ansible_included_var_files | length }} == 4"
+      - "{{ include_without_webapp.ansible_included_var_files | length }} == 4"
       - "'webapp.yml' not in '{{ include_without_webapp.ansible_included_var_files | join(' ') }}'"
       - "'file_without_extension' not in '{{ include_without_webapp.ansible_included_var_files | join(' ') }}'"
 
@@ -104,7 +104,7 @@
       - "testing == 101112"
       - "base_dir == 'development/services'"
       - "webapp_containers == 20"
-      - "{{ include_match_webapp.ansible_included_var_files | length }} == 1"
+      - "{{ include_match_webapp.ansible_included_var_files | length }} == 1"
       - "'vars/environments/development/services/webapp.yml' in include_match_webapp.ansible_included_var_files[0]"
       - "'all.yml' not in '{{ include_match_webapp.ansible_included_var_files | join(' ') }}'"
 
@@ -255,3 +255,15 @@
   vars:
     hash1: "{{ role_path }}/test_symlink/symlink/hashes/hash1.yml"
     hash2: "{{ role_path }}/test_symlink/symlink/hashes/hash2.yml"
+
+- name: Test include_vars includes everything to the correct depth
+  ansible.builtin.include_vars:
+    dir: "{{ role_path }}/files/test_depth"
+    depth: 3
+    name: test_depth_var
+  register: test_depth
+
+- assert:
+    that:
+      - "test_depth.ansible_included_var_files|length == 8"
+      - "test_depth_var.keys()|length == 8"

@@ -18,8 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 ########################################################################
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import base64
 import os
@@ -69,7 +68,7 @@ class KeycloakToken(object):
 
         # - build a request to POST to auth_url
         #  - body is form encoded
-        #    - 'request_token' is the offline token stored in ansible.cfg
+        #    - 'refresh_token' is the offline token stored in ansible.cfg
         #    - 'grant_type' is 'refresh_token'
         #    - 'client_id' is 'cloud-services'
         #       - should probably be based on the contents of the

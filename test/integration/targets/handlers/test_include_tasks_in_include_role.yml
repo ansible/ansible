@@ -1,0 +1,5 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - include_role:
+        name: include_role_include_tasks_handler

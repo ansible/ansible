@@ -5,8 +5,7 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -27,22 +26,24 @@ attributes:
     platform:
         platforms: debian
 notes:
-    - The apt-key command has been deprecated and suggests to 'manage keyring files in trusted.gpg.d instead'. See the Debian wiki for details.
+    - The apt-key command used by this module has been deprecated. See the L(Debian wiki,https://wiki.debian.org/DebianRepository/UseThirdParty) for details.
       This module is kept for backwards compatibility for systems that still use apt-key as the main way to manage apt repository keys.
     - As a sanity check, downloaded key id must match the one specified.
     - "Use full fingerprint (40 characters) key ids to avoid key collisions.
       To generate a full-fingerprint imported key: C(apt-key adv --list-public-keys --with-fingerprint --with-colons)."
-    - If you specify both the key id and the URL with C(state=present), the task can verify or add the key as needed.
+    - If you specify both the key id and the URL with O(state=present), the task can verify or add the key as needed.
     - Adding a new key requires an apt cache update (e.g. using the M(ansible.builtin.apt) module's update_cache option).
 requirements:
     - gpg
+seealso:
+  - module: ansible.builtin.deb822_repository
 options:
     id:
         description:
             - The identifier of the key.
             - Including this allows check mode to correctly report the changed state.
             - If specifying a subkey's id be aware that apt-key does not understand how to remove keys via a subkey id.  Specify the primary key's id instead.
-            - This parameter is required when C(state) is set to C(absent).
+            - This parameter is required when O(state) is set to V(absent).
         type: str
     data:
         description:
@@ -74,19 +75,20 @@ options:
         default: present
     validate_certs:
         description:
-            - If C(false), SSL certificates for the target url will not be validated. This should only be used
+            - If V(false), SSL certificates for the target url will not be validated. This should only be used
               on personally controlled sites using self-signed certificates.
         type: bool
         default: 'yes'
 '''
 
 EXAMPLES = '''
-- name: One way to avoid apt_key once it is removed from your distro
+- name: One way to avoid apt_key once it is removed from your distro, armored keys should use .asc extension, binary should use .gpg
   block:
-    - name: somerepo |no apt key
+    - name: somerepo | no apt key
       ansible.builtin.get_url:
-        url: https://download.example.com/linux/ubuntu/gpg
-        dest: /etc/apt/keyrings/somerepo.asc
+        url: https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x36a1d7869245c8950f966e92d8576a8ba88d21e9
+        dest: /etc/apt/keyrings/myrepo.asc
+        checksum: sha256:bb42f0db45d46bab5f9ec619e1a47360b94c27142e57aa71f7050d08672309e0
 
     - name: somerepo | apt source
       ansible.builtin.apt_repository:

@@ -15,8 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible.errors import AnsibleUndefinedVariable
 from ansible.module_utils.six import string_types
@@ -29,6 +28,7 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
     _VALID_ARGS = frozenset(('msg', 'var', 'verbosity'))
+    _requires_connection = False
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:

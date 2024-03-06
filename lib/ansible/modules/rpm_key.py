@@ -5,8 +5,7 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -33,7 +32,7 @@ options:
       choices: [ absent, present ]
     validate_certs:
       description:
-        - If C(false) and the C(key) is a url starting with https, SSL certificates will not be validated.
+        - If V(false) and the O(key) is a url starting with V(https), SSL certificates will not be validated.
         - This should only be used on personally controlled sites using self-signed certificates.
       type: bool
       default: 'yes'

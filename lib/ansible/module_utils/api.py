@@ -23,8 +23,7 @@ The 'api' module provides the following common argument specs:
         - retries: number of attempts
         - retry_pause: delay between attempts in seconds
 """
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import copy
 import functools

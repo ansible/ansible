@@ -4,8 +4,7 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -26,8 +25,8 @@ options:
     state:
         choices: [ 'started', 'stopped', 'restarted', 'reloaded' ]
         description:
-            - C(started)/C(stopped) are idempotent actions that will not run commands unless necessary.
-              Not all init scripts support C(restarted) nor C(reloaded) natively, so these will both trigger a stop and start as needed.
+            - V(started)/V(stopped) are idempotent actions that will not run commands unless necessary.
+              Not all init scripts support V(restarted) nor V(reloaded) natively, so these will both trigger a stop and start as needed.
         type: str
     enabled:
         type: bool
@@ -36,7 +35,7 @@ options:
     sleep:
         default: 1
         description:
-            - If the service is being C(restarted) or C(reloaded) then sleep this many seconds between the stop and start command.
+            - If the service is being V(restarted) or V(reloaded) then sleep this many seconds between the stop and start command.
               This helps to workaround badly behaving services.
         type: int
     pattern:
@@ -87,6 +86,12 @@ EXAMPLES = '''
       state: started
       enabled: yes
 
+- name: Sleep for 5 seconds between stop and start command of badly behaving service
+  ansible.builtin.sysvinit:
+    name: apache2
+    state: restarted
+    sleep: 5
+
 - name: Make sure apache2 is started on runlevels 3 and 5
   ansible.builtin.sysvinit:
       name: apache2
@@ -102,24 +107,29 @@ results:
     description: results from actions taken
     returned: always
     type: complex
-    sample: {
-            "attempts": 1,
-            "changed": true,
-            "name": "apache2",
-            "status": {
-                "enabled": {
-                    "changed": true,
-                    "rc": 0,
-                    "stderr": "",
-                    "stdout": ""
-                },
-                "stopped": {
-                    "changed": true,
-                    "rc": 0,
-                    "stderr": "",
-                    "stdout": "Stopping web server: apache2.\n"
-                }
-            }
+    contains:
+      name:
+        description: Name of the service
+        type: str
+        returned: always
+        sample: "apache2"
+      status:
+        description: Status of the service
+        type: dict
+        returned: changed
+        sample: {
+          "enabled": {
+             "changed": true,
+             "rc": 0,
+             "stderr": "",
+             "stdout": ""
+          },
+          "stopped": {
+             "changed": true,
+             "rc": 0,
+             "stderr": "",
+             "stdout": "Stopping web server: apache2.\n"
+          }
         }
 '''
 

@@ -70,13 +70,12 @@ from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.parameters import DEFAULT_TYPE_VALIDATORS
 from ansible.module_utils.compat.version import StrictVersion, LooseVersion
 from ansible.module_utils.basic import to_bytes
-from ansible.module_utils.six import PY3, with_metaclass, string_types
 from ansible.plugins.loader import fragment_loader
 from ansible.plugins.list import IGNORE as REJECTLIST
 from ansible.utils.plugin_docs import add_collection_to_versions_and_dates, add_fragments, get_docstring
 from ansible.utils.version import SemanticVersion
 
-from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, get_argument_spec
+from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, get_py_argument_spec, get_ps_argument_spec
 
 from .schema import (
     ansible_module_kwargs_schema,
@@ -87,18 +86,14 @@ from .schema import (
 from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, parse_yaml, parse_isodate
 
 
-if PY3:
-    # Because there is no ast.TryExcept in Python 3 ast module
-    TRY_EXCEPT = ast.Try
-    # REPLACER_WINDOWS from ansible.executor.module_common is byte
-    # string but we need unicode for Python 3
-    REPLACER_WINDOWS = REPLACER_WINDOWS.decode('utf-8')
-else:
-    TRY_EXCEPT = ast.TryExcept
+# Because there is no ast.TryExcept in Python 3 ast module
+TRY_EXCEPT = ast.Try
+# REPLACER_WINDOWS from ansible.executor.module_common is byte
+# string but we need unicode for Python 3
+REPLACER_WINDOWS = REPLACER_WINDOWS.decode('utf-8')
 
 REJECTLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
-TYPE_REGEX = re.compile(r'.*(if|or)(\s+[^"\']*|\s+)(?<!_)(?<!str\()type\([^)].*')
 SYS_EXIT_REGEX = re.compile(r'[^#]*sys.exit\s*\(.*')
 NO_LOG_REGEX = re.compile(r'(?:pass(?!ive)|secret|token|key)', re.I)
 
@@ -269,7 +264,7 @@ class Reporter:
         return 3 if sum(ret) else 0
 
 
-class Validator(with_metaclass(abc.ABCMeta, object)):
+class Validator(metaclass=abc.ABCMeta):
     """Validator instances are intended to be run on a single object.  if you
     are scanning multiple objects for problems, you'll want to have a separate
     Validator for each one."""
@@ -335,8 +330,6 @@ class ModuleValidator(Validator):
         self.git_cache = git_cache
         self.base_module = self.git_cache.get_original_path(self.path)
 
-        self._python_module_override = False
-
         with open(path) as f:
             self.text = f.read()
         self.length = len(self.text.splitlines())
@@ -383,7 +376,7 @@ class ModuleValidator(Validator):
         pass
 
     def _python_module(self):
-        if self.path.endswith('.py') or self._python_module_override:
+        if self.path.endswith('.py'):
             return True
         return False
 
@@ -421,7 +414,7 @@ class ModuleValidator(Validator):
         return self.git_cache.is_new(self.path)
 
     def _check_interpreter(self, powershell=False):
-        if powershell:
+        if self._powershell_module():
             if not self.text.startswith('#!powershell\n'):
                 self.reporter.error(
                     path=self.object_path,
@@ -430,34 +423,20 @@ class ModuleValidator(Validator):
                 )
             return
 
-        missing_python_interpreter = False
+        if self._python_module():
+            missing_python_interpreter = False
 
-        if not self.text.startswith('#!/usr/bin/python'):
-            if NEW_STYLE_PYTHON_MODULE_RE.search(to_bytes(self.text)):
-                missing_python_interpreter = self.text.startswith('#!')  # shebang optional, but if present must match
-            else:
-                missing_python_interpreter = True  # shebang required
+            if not self.text.startswith('#!/usr/bin/python'):
+                if NEW_STYLE_PYTHON_MODULE_RE.search(to_bytes(self.text)):
+                    missing_python_interpreter = self.text.startswith('#!')  # shebang optional, but if present must match
+                else:
+                    missing_python_interpreter = True  # shebang required
 
-        if missing_python_interpreter:
-            self.reporter.error(
-                path=self.object_path,
-                code='missing-python-interpreter',
-                msg='Interpreter line is not "#!/usr/bin/python"',
-            )
-
-    def _check_type_instead_of_isinstance(self, powershell=False):
-        if powershell:
-            return
-        for line_no, line in enumerate(self.text.splitlines()):
-            typekeyword = TYPE_REGEX.match(line)
-            if typekeyword:
-                # TODO: add column
+            if missing_python_interpreter:
                 self.reporter.error(
                     path=self.object_path,
-                    code='unidiomatic-typecheck',
-                    msg=('Type comparison using type() found. '
-                         'Use isinstance() instead'),
-                    line=line_no + 1
+                    code='missing-python-interpreter',
+                    msg='Interpreter line is not "#!/usr/bin/python"',
                 )
 
     def _check_for_sys_exit(self):
@@ -808,22 +787,22 @@ class ModuleValidator(Validator):
                         continue
 
                     if grandchild.id == 'DOCUMENTATION':
-                        docs['DOCUMENTATION']['value'] = child.value.s
+                        docs['DOCUMENTATION']['value'] = child.value.value
                         docs['DOCUMENTATION']['lineno'] = child.lineno
                         docs['DOCUMENTATION']['end_lineno'] = (
-                            child.lineno + len(child.value.s.splitlines())
+                            child.lineno + len(child.value.value.splitlines())
                         )
                     elif grandchild.id == 'EXAMPLES':
-                        docs['EXAMPLES']['value'] = child.value.s
+                        docs['EXAMPLES']['value'] = child.value.value
                         docs['EXAMPLES']['lineno'] = child.lineno
                         docs['EXAMPLES']['end_lineno'] = (
-                            child.lineno + len(child.value.s.splitlines())
+                            child.lineno + len(child.value.value.splitlines())
                         )
                     elif grandchild.id == 'RETURN':
-                        docs['RETURN']['value'] = child.value.s
+                        docs['RETURN']['value'] = child.value.value
                         docs['RETURN']['lineno'] = child.lineno
                         docs['RETURN']['end_lineno'] = (
-                            child.lineno + len(child.value.s.splitlines())
+                            child.lineno + len(child.value.value.splitlines())
                         )
 
         return docs
@@ -1193,7 +1172,7 @@ class ModuleValidator(Validator):
             for entry in object:
                 self._validate_semantic_markup(entry)
             return
-        if not isinstance(object, string_types):
+        if not isinstance(object, str):
             return
 
         if self.collection:
@@ -1312,7 +1291,12 @@ class ModuleValidator(Validator):
 
     def _validate_ansible_module_call(self, docs):
         try:
-            spec, kwargs = get_argument_spec(self.path, self.collection)
+            if self._python_module():
+                spec, kwargs = get_py_argument_spec(self.path, self.collection)
+            elif self._powershell_module():
+                spec, kwargs = get_ps_argument_spec(self.path, self.collection)
+            else:
+                raise NotImplementedError()
         except AnsibleModuleNotInitialized:
             self.reporter.error(
                 path=self.object_path,
@@ -1374,7 +1358,7 @@ class ModuleValidator(Validator):
                 continue
             bad_term = False
             for term in check:
-                if not isinstance(term, string_types):
+                if not isinstance(term, str):
                     msg = name
                     if context:
                         msg += " found in %s" % " -> ".join(context)
@@ -1442,7 +1426,7 @@ class ModuleValidator(Validator):
                 continue
             bad_term = False
             for term in requirements:
-                if not isinstance(term, string_types):
+                if not isinstance(term, str):
                     msg = "required_if"
                     if context:
                         msg += " found in %s" % " -> ".join(context)
@@ -1525,13 +1509,13 @@ class ModuleValidator(Validator):
             # This is already reported by schema checking
             return
         for key, value in terms.items():
-            if isinstance(value, string_types):
+            if isinstance(value, str):
                 value = [value]
             if not isinstance(value, (list, tuple)):
                 # This is already reported by schema checking
                 continue
             for term in value:
-                if not isinstance(term, string_types):
+                if not isinstance(term, str):
                     # This is already reported by schema checking
                     continue
             if len(set(value)) != len(value) or key in value:
@@ -2268,7 +2252,6 @@ class ModuleValidator(Validator):
                      'extension for python modules or a .ps1 '
                      'for powershell modules')
             )
-            self._python_module_override = True
 
         if self._python_module() and self.ast is None:
             self.reporter.error(
@@ -2380,10 +2363,7 @@ class ModuleValidator(Validator):
         self._check_gpl3_header()
         if not self._just_docs() and not self._sidecar_doc() and not end_of_deprecation_should_be_removed_only:
             if self.plugin_type == 'module':
-                self._check_interpreter(powershell=self._powershell_module())
-            self._check_type_instead_of_isinstance(
-                powershell=self._powershell_module()
-            )
+                self._check_interpreter()
 
 
 class PythonPackageValidator(Validator):

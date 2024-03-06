@@ -4,8 +4,7 @@
 # Copyright: Ansible Team
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -59,8 +58,8 @@ attributes:
     platform:
         platforms: all
 notes:
-- The alias C(host) of the parameter C(name) is only available on Ansible 2.4 and newer.
-- Since Ansible 2.4, the C(inventory_dir) variable is now set to C(None) instead of the 'global inventory source',
+- The alias O(host) of the parameter O(name) is only available on Ansible 2.4 and newer.
+- Since Ansible 2.4, the C(inventory_dir) variable is now set to V(None) instead of the 'global inventory source',
   because you can now have multiple sources.  An example was added that shows how to partially restore the previous behaviour.
 - Though this module does not change the remote host, we do provide 'changed' status as it can be useful for those trying to track inventory changes.
 - The hosts added will not bypass the C(--limit) from the command line, so both of those need to be in agreement to make them available as play targets.

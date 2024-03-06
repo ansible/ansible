@@ -1,8 +1,7 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import ast
 import tokenize
@@ -151,10 +150,10 @@ def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
                             if theid == 'EXAMPLES':
                                 # examples 'can' be yaml, but even if so, we dont want to parse as such here
                                 # as it can create undesired 'objects' that don't display well as docs.
-                                data[varkey] = to_text(child.value.s)
+                                data[varkey] = to_text(child.value.value)
                             else:
                                 # string should be yaml if already not a dict
-                                data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
+                                data[varkey] = AnsibleLoader(child.value.value, file_name=filename).get_single_data()
 
                         display.debug('Documentation assigned: %s' % varkey)
 

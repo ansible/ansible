@@ -1,25 +1,9 @@
-from __future__ import absolute_import, division, print_function
-
-__metaclass__ = type
+from __future__ import annotations
 
 
 import pytest
 
 from ansible.modules.unarchive import ZipArchive, TgzArchive
-
-
-class AnsibleModuleExit(Exception):
-    def __init__(self, *args, **kwargs):
-        self.args = args
-        self.kwargs = kwargs
-
-
-class ExitJson(AnsibleModuleExit):
-    pass
-
-
-class FailJson(AnsibleModuleExit):
-    pass
 
 
 @pytest.fixture
@@ -31,12 +15,6 @@ class FakeAnsibleModule:
     def __init__(self):
         self.params = {}
         self.tmpdir = None
-
-    def exit_json(self, *args, **kwargs):
-        raise ExitJson(*args, **kwargs)
-
-    def fail_json(self, *args, **kwargs):
-        raise FailJson(*args, **kwargs)
 
 
 class TestCaseZipArchive:

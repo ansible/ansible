@@ -1,8 +1,7 @@
 # (c) 2012, Jan-Piet Mens <jpmens(at)gmail.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: env
@@ -23,7 +22,7 @@ DOCUMENTATION = """
         default: ''
         version_added: '2.13'
     notes:
-        - You can pass the C(Undefined) object as C(default) to force an undefined error
+        - You can pass the C(Undefined) object as O(default) to force an undefined error
 """
 
 EXAMPLES = """

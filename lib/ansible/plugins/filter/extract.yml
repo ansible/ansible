@@ -12,12 +12,12 @@ DOCUMENTATION:
       description: Index or key to extract.
       type: raw
       required: true
-    contianer:
+    container:
       description: Dictionary or list from which to extract a value.
       type: raw
       required: true
     morekeys:
-      description: Indicies or keys to extract from the initial result (subkeys/subindices).
+      description: Indices or keys to extract from the initial result (subkeys/subindices).
       type: list
       elements: dictionary
       required: true

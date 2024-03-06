@@ -2,8 +2,7 @@
 # Copyright (c) 2019 Ansible Project
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import datetime
 import os
@@ -83,14 +82,17 @@ _ADDITIONAL_CHECKS = (
 
 # if adding boolean attribute, also add to PASS_BOOL
 # some of this dupes defaults from controller config
+# keep in sync with copy in lib/ansible/module_utils/csharp/Ansible.Basic.cs
 PASS_VARS = {
     'check_mode': ('check_mode', False),
     'debug': ('_debug', False),
     'diff': ('_diff', False),
     'keep_remote_files': ('_keep_remote_files', False),
+    'ignore_unknown_opts': ('_ignore_unknown_opts', False),
     'module_name': ('_name', None),
     'no_log': ('no_log', False),
     'remote_tmp': ('_remote_tmp', None),
+    'target_log_info': ('_target_log_info', None),
     'selinux_special_fs': ('_selinux_special_fs', ['fuse', 'nfs', 'vboxsf', 'ramfs', '9p', 'vfat']),
     'shell_executable': ('_shell', '/bin/sh'),
     'socket': ('_socket_path', None),
@@ -101,7 +103,7 @@ PASS_VARS = {
     'version': ('ansible_version', '0.0'),
 }
 
-PASS_BOOLS = ('check_mode', 'debug', 'diff', 'keep_remote_files', 'no_log')
+PASS_BOOLS = ('check_mode', 'debug', 'diff', 'keep_remote_files', 'ignore_unknown_opts', 'no_log')
 
 DEFAULT_TYPE_VALIDATORS = {
     'str': check_type_str,
@@ -345,7 +347,7 @@ def _list_no_log_values(argument_spec, params):
                             sub_param = check_type_dict(sub_param)
 
                         if not isinstance(sub_param, Mapping):
-                            raise TypeError("Value '{1}' in the sub parameter field '{0}' must by a {2}, "
+                            raise TypeError("Value '{1}' in the sub parameter field '{0}' must be a {2}, "
                                             "not '{1.__class__.__name__}'".format(arg_name, sub_param, wanted_type))
 
                         no_log_values.update(_list_no_log_values(sub_argument_spec, sub_param))

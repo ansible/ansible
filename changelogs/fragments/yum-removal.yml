@@ -1,0 +1,2 @@
+removed_features:
+  - "With the removal of Python 2 support, the yum module and yum action plugin are removed and redirected to ``dnf``."

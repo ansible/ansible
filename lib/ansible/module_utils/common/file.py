@@ -1,8 +1,7 @@
 # Copyright (c) 2018, Ansible Project
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import stat
@@ -45,9 +44,15 @@ USERS_RE = re.compile(r'[^ugo]')
 PERMS_RE = re.compile(r'[^rwxXstugo]')
 
 
-_PERM_BITS = 0o7777          # file mode permission bits
-_EXEC_PERM_BITS = 0o0111     # execute permission bits
-_DEFAULT_PERM = 0o0666       # default file permission bits
+S_IRANY = 0o0444  # read by user, group, others
+S_IWANY = 0o0222  # write by user, group, others
+S_IXANY = 0o0111  # execute by user, group, others
+S_IRWU_RWG_RWO = S_IRANY | S_IWANY  # read, write by user, group, others
+S_IRWU_RG_RO = S_IRANY | stat.S_IWUSR  # read by user, group, others and write only by user
+S_IRWXU_RXG_RXO = S_IRANY | S_IXANY | stat.S_IWUSR  # read, execute by user, group, others and write only by user
+_PERM_BITS = 0o7777             # file mode permission bits
+_EXEC_PERM_BITS = S_IXANY       # execute permission bits
+_DEFAULT_PERM = S_IRWU_RWG_RWO  # default file permission bits
 
 
 def is_executable(path):
