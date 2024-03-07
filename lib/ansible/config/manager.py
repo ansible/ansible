@@ -22,7 +22,6 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.quoting import unquote
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
-from ansible.utils import py3compat
 from ansible.utils.path import cleanup_tmp_file, makedirs_safe, unfrackpath
 
 
@@ -512,7 +511,7 @@ class ConfigManager(object):
 
             # env vars are next precedence
             if value is None and defs[config].get('env'):
-                value, origin = self._loop_entries(py3compat.environ, defs[config]['env'])
+                value, origin = self._loop_entries(os.environ, defs[config]['env'])
                 origin = 'env: %s' % origin
 
             # try config file entries next, if we have one
