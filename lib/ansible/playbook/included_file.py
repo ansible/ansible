@@ -95,8 +95,10 @@ class IncludedFile:
                     index_var = include_result.get('ansible_index_var')
                     if loop_var in include_result:
                         task_vars[loop_var] = special_vars[loop_var] = include_result[loop_var]
+                        task_vars['ansible_loop_var'] = special_vars['ansible_loop_var'] = loop_var
                     if index_var and index_var in include_result:
                         task_vars[index_var] = special_vars[index_var] = include_result[index_var]
+                        task_vars['ansible_index_var'] = special_vars['ansible_index_var'] = index_var
                     if '_ansible_item_label' in include_result:
                         task_vars['_ansible_item_label'] = special_vars['_ansible_item_label'] = include_result['_ansible_item_label']
                     if 'ansible_loop' in include_result:
