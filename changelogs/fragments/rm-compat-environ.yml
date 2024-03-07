@@ -1,0 +1,2 @@
+minor_changes:
+- py3compat - Remove ``ansible.utils.py3compat`` as it is no longer necessary
