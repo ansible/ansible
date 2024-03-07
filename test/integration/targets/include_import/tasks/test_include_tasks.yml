@@ -42,3 +42,10 @@
 
     - name: include_tasks + action
       action: include_tasks tasks1.yml
+
+    - name: Test ansible_loop_var and ansible_index_var within included_tasks
+      include_tasks: task_ansible_loop_index_var.yml
+      loop: ['does not matter', 'dont care']
+      loop_control:
+        loop_var: should_show_up_loop
+        index_var: should_show_up_index

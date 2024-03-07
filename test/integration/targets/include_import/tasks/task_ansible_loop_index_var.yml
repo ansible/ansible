@@ -1,0 +1,5 @@
+- name: Assert ansible_loop_var and ansible_index_var are defined with correct values
+  assert:
+    that:
+      - ansible_loop_var is defined and ansible_index_var is defined
+      - ansible_loop_var == "should_show_up_loop" and ansible_index_var == "should_show_up_index"
