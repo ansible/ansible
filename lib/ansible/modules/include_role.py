@@ -135,5 +135,5 @@ EXAMPLES = r'''
 
 RETURN = r'''
 n/a:
-    description: This module does not return anything except tasks to execute.
+    description: This module does not return anything except tasks to execute.  In a loop, the return value includes loop variables not valid after the end of the loop, so attempting to register and enumerate the return value from include_role in a loop will cause errors.
 '''
