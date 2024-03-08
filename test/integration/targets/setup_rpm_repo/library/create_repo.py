@@ -49,6 +49,10 @@ SPECS = [
     RPM('noarchfake', '1.0', '1', None, None, None, 'noarch'),
     RPM('provides_foo_a', '1.0', '1', None, None, 'foo.so', 'noarch'),
     RPM('provides_foo_b', '1.0', '1', None, None, 'foo.so', 'noarch'),
+    RPM('number-11-name', '11.0', '1', None, None, None, None),
+    RPM('number-11-name', '11.1', '1', None, None, None, None),
+    RPM('epochone', '1.0', '1', '1', None, None, "noarch"),
+    RPM('epochone', '1.1', '1', '1', None, None, "noarch"),
 ]
 
 

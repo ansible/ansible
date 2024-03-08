@@ -467,3 +467,56 @@
         state: absent
       loop:
         - provides_foo_b
+
+- name: ensure that a package named "$str-$number-$str" is parsed correctly
+  block:
+    - dnf:
+        name: number-11-name-11.0
+        state: "{{ item }}"
+      loop:
+        - absent
+        - present
+
+    - dnf:
+        name: number-11-name
+        state: present
+      register: dnf_result
+
+    - assert:
+        that:
+          - dnf_result is not changed
+
+    - dnf:
+        name: number-11-name
+        state: latest
+        update_only: true
+      register: dnf_result
+
+    - assert:
+        that:
+          - dnf_result is changed
+  always:
+    - name: Clean up
+      dnf:
+        name: number-11-name
+        state: absent
+
+- name: test that epochs are handled the same way as via DNF on the command line
+  block:
+    - dnf:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - "epochone-1.0-1.noarch"
+        - "epochone-1.1-1.noarch"
+      register: dnf_results
+
+    - assert:
+        that:
+          - dnf_results["results"][0] is changed
+          - dnf_results["results"][1] is changed
+  always:
+    - name: Clean up
+      dnf:
+        name: epochone
+        state: absent
