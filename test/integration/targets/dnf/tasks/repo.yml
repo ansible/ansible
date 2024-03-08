@@ -307,3 +307,35 @@
         - dinginessentail-with-weak-dep
         - dinginessentail-weak-dep
         state: absent
+
+- name: >
+    test that when a package providing a file is installed then installing by specifying the file doesn't result in
+    installing a different package providing the same file
+  block:
+    - dnf:
+        name: provides_foo_b
+        state: "{{ item }}"
+      loop:
+        - absent
+        - present
+
+    - dnf:
+        name: /foo.so
+        state: present
+      register: dnf_result
+
+    - command: rpm -q package_foo_a
+      ignore_errors: true
+      register: rpm_result
+
+    - assert:
+        that:
+          - dnf_result is not changed
+          - rpm_result.rc == 1
+  always:
+    - name: Clean up
+      dnf:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - provides_foo_b
