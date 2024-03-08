@@ -134,6 +134,9 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-none:
-    description: This module does not return anything except tasks to execute.  In a loop, the return value includes loop variables not valid after the loop.
+# This module does not return anything except tasks to execute.
+include_args:
+    description:   Args passed to the included role.  May be contain invalid references after this module is called in a loop.
+    returned: nothing except tasks to execute
+    type: dict
 '''
