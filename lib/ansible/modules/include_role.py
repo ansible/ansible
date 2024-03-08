@@ -134,6 +134,6 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-n/a:
+none:
     description: This module does not return anything except tasks to execute.  In a loop, the return value includes loop variables not valid after the loop.
 '''
