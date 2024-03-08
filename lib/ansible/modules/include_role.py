@@ -134,5 +134,6 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-# This module does not return anything except tasks to execute.
+n/a:
+    description: This module does not return anything except tasks to execute.
 '''
