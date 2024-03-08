@@ -136,7 +136,7 @@ EXAMPLES = r'''
 RETURN = r'''
 # This module does not return anything except tasks to execute.
 include_args:
-    description:   Args passed to the included role.  May contain invalid references to loop variables after this module is called in a loop.
+    description: Args passed to the included role.  May contain invalid references to loop variables after this module is called in a loop.
     returned: nothing except tasks to execute
     type: dict
 '''
