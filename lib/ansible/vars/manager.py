@@ -514,7 +514,7 @@ class VariableManager:
         return variables
 
     def get_delegated_vars_and_hostname(self, templar, task, variables):
-        """Get the delegated_vars for an individual task invocation, which may be be in the context
+        """Get the delegated_vars for an individual task invocation, which may be in the context
         of an individual loop iteration.
 
         Not used directly be VariableManager, but used primarily within TaskExecutor
