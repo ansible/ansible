@@ -291,7 +291,7 @@ ADD_TESTS = [
     ),
     (
         # Return values
-        True,  # this value is is ignored
+        True,  # this value is ignored
         True,
         {
             'rv1': {
