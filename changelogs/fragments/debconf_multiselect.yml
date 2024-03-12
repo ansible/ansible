@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - debconf - allow user to specify a list for value when vtype is multiselect (https://github.com/ansible/ansible/issues/81345).
