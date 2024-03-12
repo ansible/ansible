@@ -603,6 +603,6 @@ ansible-vault encrypt salted_test3 --vault-password-file example1_password "$@"
 out=$(diff salted_test1 salted_test2)
 [ "${out}" == "" ]
 
-# shoudl be diff
+# should be diff
 out=$(diff salted_test1 salted_test3 || true)
 [ "${out}" != "" ]

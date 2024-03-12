@@ -2,7 +2,7 @@ plugin_routing:
   action:
     # Backwards compat for modules-redirected-as-actions:
     # By default, each module_defaults entry is resolved as an action plugin,
-    # and if it does not exist, it is resolved a a module.
+    # and if it does not exist, it is resolved a module.
     # All modules that redirect to the same action will resolve to the same action.
     module_uses_action_defaults:
       redirect: testns.testcoll.eos

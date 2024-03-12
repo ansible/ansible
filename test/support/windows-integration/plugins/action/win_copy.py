@@ -153,7 +153,7 @@ def _walk_dirs(topdir, loader, decrypt=True, base_path=None, local_follow=False,
                                 new_parents.add((parent_stat.st_dev, parent_stat.st_ino))
 
                             if (dir_stats.st_dev, dir_stats.st_ino) in new_parents:
-                                # This was a a circular symlink.  So add it as
+                                # This was a circular symlink.  So add it as
                                 # a symlink
                                 r_files['symlinks'].append({"src": os.readlink(dirpath), "dest": dest_dirpath})
                             else:
