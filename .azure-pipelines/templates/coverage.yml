@@ -27,3 +27,14 @@ jobs:
         displayName: Publish to codecov.io
         condition: gt(variables.coverageFileCount, 0)
         continueOnError: true
+      - task: UseDotNet@2
+        displayName: Install coverage publishing prerequisites
+        inputs:
+          packageType: runtime
+        condition: gt(variables.coverageFileCount, 0)
+      - task: PublishCodeCoverageResults@2
+        displayName: Publish to Azure DevOps
+        inputs:
+          summaryFileLocation: $(outputPath)/reports/coverage*.xml
+        condition: gt(variables.coverageFileCount, 0)
+        continueOnError: true
