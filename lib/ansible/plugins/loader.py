@@ -35,6 +35,7 @@ from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleColl
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder, _get_collection_metadata
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import add_fragments
+from ansible.utils.unsafe_proxy import _is_unsafe
 
 # TODO: take the packaging dep, or vendor SpecifierSet?
 
@@ -860,6 +861,17 @@ class PluginLoader:
 
     def get_with_context(self, name, *args, **kwargs):
         ''' instantiates a plugin of the given name using arguments '''
+        if _is_unsafe(name):
+            # Objects constructed using the name wrapped as unsafe remain
+            # (correctly) unsafe. Using such unsafe objects in places
+            # where underlying types (builtin string in this case) are
+            # expected can cause problems.
+            # One such case is importlib.abc.Loader.exec_module failing
+            # with "ValueError: unmarshallable object" because the module
+            # object is created with the __path__ attribute being wrapped
+            # as unsafe which isn't marshallable.
+            # Manually removing the unsafe wrapper prevents such issues.
+            name = name._strip_unsafe()
 
         found_in_cache = True
         class_only = kwargs.pop('class_only', False)
