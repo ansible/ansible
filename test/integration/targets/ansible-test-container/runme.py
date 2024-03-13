@@ -1058,8 +1058,8 @@ class ApkBootstrapper(Bootstrapper):
         packages = ['docker', 'podman', 'openssl', 'crun', 'ip6tables']
 
         run_command('apk', 'add', *packages)
-        # 3.16 only contains crun 1.4.5, to get 1.9.2 to resolve the run/shm issue, install crun from edge
-        run_command('apk', 'upgrade', '-U', '--repository=http://dl-cdn.alpinelinux.org/alpine/edge/community', 'crun')
+        # 3.16 only contains crun 1.4.5, to get 1.9.2 to resolve the run/shm issue, install crun from 3.19
+        run_command('apk', 'upgrade', '-U', '--repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/community', 'crun')
         run_command('service', 'docker', 'start')
         run_command('modprobe', 'tun')
 
