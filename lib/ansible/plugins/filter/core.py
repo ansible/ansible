@@ -592,7 +592,7 @@ def commonpath(paths):
     :rtype: str
     """
     if not is_sequence(paths):
-        raise AnsibleFilterTypeError("|path_join expects sequence, got %s instead." % type(paths))
+        raise AnsibleFilterTypeError("|commonpath expects sequence, got %s instead." % type(paths))
 
     return os.path.commonpath(paths)
 
