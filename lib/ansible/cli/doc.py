@@ -1307,6 +1307,14 @@ class DocCLI(CLI, RoleMixin):
                 DocCLI.add_fields(text, doc.pop('options'), limit, opt_indent)
 
             if doc.get('attributes', False):
+                display.deprecated(
+                    f'The role {role}\'s argument spec {entry_point} contains the key "attributes", '
+                    'which will not be displayed by ansible-doc in the future. '
+                    'This was unintentionally allowed when plugin attributes were added, '
+                    'but the feature does not map well to role argument specs.',
+                    version='2.20',
+                    collection_name='ansible.builtin',
+                )
                 text.append("")
                 text.append(_format("ATTRIBUTES:", 'bold'))
                 for k in doc['attributes'].keys():
