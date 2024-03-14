@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - Python interpreter discovery now works out of the box on Flatcar hosts.

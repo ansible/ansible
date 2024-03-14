@@ -1570,6 +1570,7 @@ INTERPRETER_PYTHON_FALLBACK:
   - python3.7
   - /usr/bin/python3
   - python3
+  - /opt/bin/python
   vars:
     - name: ansible_interpreter_python_fallback
   type: list
