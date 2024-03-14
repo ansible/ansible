@@ -6,6 +6,8 @@ DOCUMENTATION:
     - Replace a substring defined by a regular expression with another defined by another regular expression based on the first match.
   notes:
     - Maps to Python's C(re.sub).
+    - 'The substring matched by the group is accessible via the symbolic group name or
+      the ``\{number}`` special sequence. See examples section.'
   positional: _input, _regex_match, _regex_replace
   options:
     _input:
