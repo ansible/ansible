@@ -29,7 +29,6 @@ from collections.abc import MutableMapping
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils.common.file import S_IRWU_RG_RO
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.loader import cache_loader
@@ -166,7 +165,7 @@ class BaseFileCacheModule(BaseCacheModule):
                 display.warning("error in '%s' cache plugin while trying to write to '%s' : %s" % (self.plugin_name, tmpfile_path, to_bytes(e)))
             try:
                 os.rename(tmpfile_path, cachefile)
-                os.chmod(cachefile, mode=S_IRWU_RG_RO)
+                os.chmod(cachefile, mode=0o644)
             except (OSError, IOError) as e:
                 display.warning("error in '%s' cache plugin while trying to move '%s' to '%s' : %s" % (self.plugin_name, tmpfile_path, cachefile, to_bytes(e)))
         finally:
