@@ -1,0 +1,7 @@
+- hosts: testgroup
+  gather_facts: no
+  vars_files:
+    -
+      - '{{ missing }}'
+  tasks:
+    - debug:
