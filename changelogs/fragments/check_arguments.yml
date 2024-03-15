@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - handle exception raised while validating with elements='int' and value is not within choices (https://github.com/ansible/ansible/issues/82776).

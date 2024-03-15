@@ -1015,7 +1015,7 @@ class AptBootstrapper(Bootstrapper):
     @classmethod
     def install_podman(cls) -> bool:
         """Return True if podman will be installed."""
-        return not (os_release.id == 'ubuntu' and os_release.version_id == '20.04')
+        return not (os_release.id == 'ubuntu' and os_release.version_id in {'20.04', '22.04'})
 
     @classmethod
     def install_docker(cls) -> bool:
@@ -1077,9 +1077,9 @@ class ApkBootstrapper(Bootstrapper):
         packages = ['docker', 'podman', 'openssl', 'crun', 'ip6tables']
 
         run_command('apk', 'add', *packages)
-        # 3.18 only contains crun 1.8.4, to get 1.9.2 to resolve the run/shm issue, install crun from edge
+        # 3.18 only contains crun 1.8.4, to get 1.9.2 to resolve the run/shm issue, install crun from 3.19
         # Remove once we update to 3.19
-        run_command('apk', 'upgrade', '-U', '--repository=http://dl-cdn.alpinelinux.org/alpine/edge/community', 'crun')
+        run_command('apk', 'upgrade', '-U', '--repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/community', 'crun')
         run_command('service', 'docker', 'start')
         run_command('modprobe', 'tun')
 

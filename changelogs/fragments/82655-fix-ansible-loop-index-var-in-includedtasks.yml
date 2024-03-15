@@ -1,0 +1,2 @@
+bugfixes:
+    - include_tasks - include `ansible_loop_var` and `ansible_index_var` in a loop (https://github.com/ansible/ansible/issues/82655).

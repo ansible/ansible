@@ -352,8 +352,8 @@ class VariableManager:
                                 )
                             try:
                                 play_search_stack = play.get_search_path()
-                                found_file = real_file = self._loader.path_dwim_relative_stack(play_search_stack, 'vars', vars_file)
-                                data = preprocess_vars(self._loader.load_from_file(found_file, unsafe=True, cache=False))
+                                found_file = self._loader.path_dwim_relative_stack(play_search_stack, 'vars', vars_file)
+                                data = preprocess_vars(self._loader.load_from_file(found_file, unsafe=True, cache='vaulted'))
                                 if data is not None:
                                     for item in data:
                                         all_vars = _combine_and_track(all_vars, item, "play vars_files from '%s'" % vars_file)
@@ -514,7 +514,7 @@ class VariableManager:
         return variables
 
     def get_delegated_vars_and_hostname(self, templar, task, variables):
-        """Get the delegated_vars for an individual task invocation, which may be be in the context
+        """Get the delegated_vars for an individual task invocation, which may be in the context
         of an individual loop iteration.
 
         Not used directly be VariableManager, but used primarily within TaskExecutor

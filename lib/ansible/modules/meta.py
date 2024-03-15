@@ -62,6 +62,8 @@ attributes:
     connection:
       details: Most options in this action do not use a connection, except V(reset_connection) which still does not connect to the remote
       support: partial
+    until:
+      support: none
 notes:
     - V(clear_facts) will remove the persistent facts from M(ansible.builtin.set_fact) using O(ansible.builtin.set_fact#module:cacheable=True),
       but not the current host variable it creates for the current run.

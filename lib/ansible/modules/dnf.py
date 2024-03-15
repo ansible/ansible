@@ -387,7 +387,6 @@ EXAMPLES = '''
 '''
 
 import os
-import re
 import sys
 
 from ansible.module_utils.common.text.converters import to_native, to_text
@@ -479,94 +478,6 @@ class DnfModule(YumDnf):
 
         return result
 
-    def _split_package_arch(self, packagename):
-        # This list was auto generated on a Fedora 28 system with the following one-liner
-        #   printf '[ '; for arch in $(ls /usr/lib/rpm/platform); do  printf '"%s", ' ${arch%-linux}; done; printf ']\n'
-        redhat_rpm_arches = [
-            "aarch64", "alphaev56", "alphaev5", "alphaev67", "alphaev6", "alpha",
-            "alphapca56", "amd64", "armv3l", "armv4b", "armv4l", "armv5tejl", "armv5tel",
-            "armv5tl", "armv6hl", "armv6l", "armv7hl", "armv7hnl", "armv7l", "athlon",
-            "geode", "i386", "i486", "i586", "i686", "ia32e", "ia64", "m68k", "mips64el",
-            "mips64", "mips64r6el", "mips64r6", "mipsel", "mips", "mipsr6el", "mipsr6",
-            "noarch", "pentium3", "pentium4", "ppc32dy4", "ppc64iseries", "ppc64le", "ppc64",
-            "ppc64p7", "ppc64pseries", "ppc8260", "ppc8560", "ppciseries", "ppc", "ppcpseries",
-            "riscv64", "s390", "s390x", "sh3", "sh4a", "sh4", "sh", "sparc64", "sparc64v",
-            "sparc", "sparcv8", "sparcv9", "sparcv9v", "x86_64"
-        ]
-
-        name, delimiter, arch = packagename.rpartition('.')
-        if name and arch and arch in redhat_rpm_arches:
-            return name, arch
-        return packagename, None
-
-    def _packagename_dict(self, packagename):
-        """
-        Return a dictionary of information for a package name string or None
-        if the package name doesn't contain at least all NVR elements
-        """
-
-        if packagename[-4:] == '.rpm':
-            packagename = packagename[:-4]
-
-        rpm_nevr_re = re.compile(r'(\S+)-(?:(\d*):)?(.*)-(~?\w+[\w.+]*)')
-        try:
-            arch = None
-            nevr, arch = self._split_package_arch(packagename)
-            if arch:
-                packagename = nevr
-            rpm_nevr_match = rpm_nevr_re.match(packagename)
-            if rpm_nevr_match:
-                name, epoch, version, release = rpm_nevr_re.match(packagename).groups()
-                if not version or not version.split('.')[0].isdigit():
-                    return None
-            else:
-                return None
-        except AttributeError as e:
-            self.module.fail_json(
-                msg='Error attempting to parse package: %s, %s' % (packagename, to_native(e)),
-                rc=1,
-                results=[]
-            )
-
-        if not epoch:
-            epoch = "0"
-
-        if ':' in name:
-            epoch_name = name.split(":")
-
-            epoch = epoch_name[0]
-            name = ''.join(epoch_name[1:])
-
-        result = {
-            'name': name,
-            'epoch': epoch,
-            'release': release,
-            'version': version,
-        }
-
-        return result
-
-    # Original implementation from yum.rpmUtils.miscutils (GPLv2+)
-    #   http://yum.baseurl.org/gitweb?p=yum.git;a=blob;f=rpmUtils/miscutils.py
-    def _compare_evr(self, e1, v1, r1, e2, v2, r2):
-        # return 1: a is newer than b
-        # 0: a and b are the same version
-        # -1: b is newer than a
-        if e1 is None:
-            e1 = '0'
-        else:
-            e1 = str(e1)
-        v1 = str(v1)
-        r1 = str(r1)
-        if e2 is None:
-            e2 = '0'
-        else:
-            e2 = str(e2)
-        v2 = str(v2)
-        r2 = str(r2)
-        rc = dnf.rpm.rpm.labelCompare((e1, v1, r1), (e2, v2, r2))
-        return rc
-
     def _ensure_dnf(self):
         locale = get_best_parsable_locale(self.module)
         os.environ['LC_ALL'] = os.environ['LC_MESSAGES'] = locale
@@ -575,7 +486,6 @@ class DnfModule(YumDnf):
         global dnf
         try:
             import dnf
-            import dnf.cli
             import dnf.const
             import dnf.exceptions
             import dnf.package
@@ -813,43 +723,22 @@ class DnfModule(YumDnf):
         self.module.exit_json(msg="", results=results)
 
     def _is_installed(self, pkg):
-        installed = self.base.sack.query().installed()
-
-        package_spec = {}
-        name, arch = self._split_package_arch(pkg)
-        if arch:
-            package_spec['arch'] = arch
-
-        package_details = self._packagename_dict(pkg)
-        if package_details:
-            package_details['epoch'] = int(package_details['epoch'])
-            package_spec.update(package_details)
-        else:
-            package_spec['name'] = name
-
-        return bool(installed.filter(**package_spec))
+        return bool(
+            dnf.subject.Subject(pkg).get_best_query(sack=self.base.sack).installed().run()
+        )
 
     def _is_newer_version_installed(self, pkg_name):
-        candidate_pkg = self._packagename_dict(pkg_name)
-        if not candidate_pkg:
-            # The user didn't provide a versioned rpm, so version checking is
-            # not required
+        try:
+            if isinstance(pkg_name, dnf.package.Package):
+                available = pkg_name
+            else:
+                available = sorted(
+                    dnf.subject.Subject(pkg_name).get_best_query(sack=self.base.sack).available().run()
+                )[-1]
+            installed = sorted(self.base.sack.query().installed().filter(name=available.name).run())[-1]
+        except IndexError:
             return False
-
-        installed = self.base.sack.query().installed()
-        installed_pkg = installed.filter(name=candidate_pkg['name']).run()
-        if installed_pkg:
-            installed_pkg = installed_pkg[0]
-
-            # this looks weird but one is a dict and the other is a dnf.Package
-            evr_cmp = self._compare_evr(
-                installed_pkg.epoch, installed_pkg.version, installed_pkg.release,
-                candidate_pkg['epoch'], candidate_pkg['version'], candidate_pkg['release'],
-            )
-
-            return evr_cmp == 1
-        else:
-            return False
+        return installed > available
 
     def _mark_package_install(self, pkg_spec, upgrade=False):
         """Mark the package for install."""
@@ -921,17 +810,6 @@ class DnfModule(YumDnf):
 
         return {'failed': False, 'msg': msg, 'failure': '', 'rc': 0}
 
-    def _whatprovides(self, filepath):
-        self.base.read_all_repos()
-        available = self.base.sack.query().available()
-        # Search in file
-        files_filter = available.filter(file=filepath)
-        # And Search in provides
-        pkg_spec = files_filter.union(available.filter(provides=filepath)).run()
-
-        if pkg_spec:
-            return pkg_spec[0].name
-
     def _parse_spec_group_file(self):
         pkg_specs, grp_specs, module_specs, filenames = [], [], [], []
         already_loaded_comps = False  # Only load this if necessary, it's slow
@@ -943,11 +821,13 @@ class DnfModule(YumDnf):
             elif name.endswith(".rpm"):
                 filenames.append(name)
             elif name.startswith('/'):
-                # like "dnf install /usr/bin/vi"
-                pkg_spec = self._whatprovides(name)
-                if pkg_spec:
-                    pkg_specs.append(pkg_spec)
-                    continue
+                # dnf install /usr/bin/vi
+                installed = self.base.sack.query().filter(provides=name, file=name).installed().run()
+                if installed:
+                    pkg_specs.append(installed[0].name)  # should be only one?
+                elif not self.update_only:
+                    # not installed, pass the filename for dnf to process
+                    pkg_specs.append(name)
             elif name.startswith("@") or ('/' in name):
                 if not already_loaded_comps:
                     self.base.read_comps()
@@ -1009,7 +889,7 @@ class DnfModule(YumDnf):
         else:
             for pkg in pkgs:
                 try:
-                    if self._is_newer_version_installed(self._package_dict(pkg)['nevra']):
+                    if self._is_newer_version_installed(pkg):
                         if self.allow_downgrade:
                             self.base.package_install(pkg, strict=self.base.conf.strict)
                     else:
@@ -1438,8 +1318,10 @@ class DnfModule(YumDnf):
 
             if self.with_modules:
                 self.module_base = dnf.module.module_base.ModuleBase(self.base)
-
-            self.ensure()
+            try:
+                self.ensure()
+            finally:
+                self.base.close()
 
 
 def main():
