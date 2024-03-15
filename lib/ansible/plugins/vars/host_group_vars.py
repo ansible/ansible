@@ -36,6 +36,15 @@ DOCUMENTATION = '''
             section: vars_host_group_vars
         env:
           - name: ANSIBLE_VARS_PLUGIN_STAGE
+      vault_error_behavior:
+        description:
+          - Action to take when encountering ansible-vault decryption errors from files in host_vars or group_vars folders.
+          - This includes the case when no vault secrets exist to decrypt.
+        default: error
+        env:
+          - name: ANSIBLE_HOST_GROUP_VARS_VAULT_ERROR_BEHAVIOR
+        type: string
+        choices: ['error', 'warn', 'ignore']
       _valid_extensions:
         default: [".yml", ".yaml", ".json"]
         description:
@@ -58,6 +67,7 @@ from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.vars import BaseVarsPlugin
 from ansible.utils.path import basedir
 from ansible.inventory.group import InventoryObjectType
+from ansible.parsing.vault import AnsibleVaultError
 from ansible.utils.vars import combine_vars
 
 CANONICAL_PATHS = {}  # type: dict[str, str]
@@ -73,7 +83,14 @@ class VarsModule(BaseVarsPlugin):
 
     def load_found_files(self, loader, data, found_files):
         for found in found_files:
-            new_data = loader.load_from_file(found, cache=True, unsafe=True)
+            new_data = {}
+            try:
+                new_data = loader.load_from_file(found, cache=True, unsafe=True)
+            except AnsibleVaultError as exc:
+                if self.get_option('vault_error_behavior') == 'error':
+                    raise
+                elif self.get_option('vault_error_behavior') == 'warn':
+                    self._display.error("Ignoring vault error processing file %s, error: %s" % (found, exc))
             if new_data:  # ignore empty files
                 data = combine_vars(data, new_data)
         return data
