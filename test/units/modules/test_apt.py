@@ -1,45 +1,45 @@
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
 import collections
 
-from unittest.mock import Mock
-import unittest
+from ansible.modules.apt import expand_pkgspec_from_fnmatches
+import pytest
 
-from ansible.modules.apt import (
-    expand_pkgspec_from_fnmatches,
+FakePackage = collections.namedtuple("Package", ("name",))
+fake_cache = [
+    FakePackage("apt"),
+    FakePackage("apt-utils"),
+    FakePackage("not-selected"),
+]
+
+
+@pytest.mark.parametrize(
+    ("test_input", "expected"),
+    [
+        pytest.param(
+            ["apt"],
+            ["apt"],
+            id="trivial",
+        ),
+        pytest.param(
+            ["apt=1.0*"],
+            ["apt=1.0*"],
+            id="version-wildcard",
+        ),
+        pytest.param(
+            ["apt*=1.0*"],
+            ["apt", "apt-utils"],
+            id="pkgname-wildcard-version",
+        ),
+        pytest.param(
+            ["apt*"],
+            ["apt", "apt-utils"],
+            id="pkgname-expands",
+        ),
+    ],
 )
-
-
-class AptExpandPkgspecTestCase(unittest.TestCase):
-
-    def setUp(self):
-        FakePackage = collections.namedtuple("Package", ("name",))
-        self.fake_cache = [
-            FakePackage("apt"),
-            FakePackage("apt-utils"),
-            FakePackage("not-selected"),
-        ]
-
-    def test_trivial(self):
-        pkg = ["apt"]
-        self.assertEqual(
-            expand_pkgspec_from_fnmatches(None, pkg, self.fake_cache), pkg)
-
-    def test_version_wildcard(self):
-        pkg = ["apt=1.0*"]
-        self.assertEqual(
-            expand_pkgspec_from_fnmatches(None, pkg, self.fake_cache), pkg)
-
-    def test_pkgname_wildcard_version_wildcard(self):
-        pkg = ["apt*=1.0*"]
-        m_mock = Mock()
-        self.assertEqual(
-            expand_pkgspec_from_fnmatches(m_mock, pkg, self.fake_cache),
-            ['apt', 'apt-utils'])
-
-    def test_pkgname_expands(self):
-        pkg = ["apt*"]
-        m_mock = Mock()
-        self.assertEqual(
-            expand_pkgspec_from_fnmatches(m_mock, pkg, self.fake_cache),
-            ["apt", "apt-utils"])
+def test_expand_pkgspec_from_fnmatches(test_input, expected):
+    """Test positive cases of ``expand_pkgspec_from_fnmatches``."""
+    assert expand_pkgspec_from_fnmatches(None, test_input, fake_cache) == expected
