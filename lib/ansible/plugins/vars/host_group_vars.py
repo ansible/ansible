@@ -73,7 +73,7 @@ class VarsModule(BaseVarsPlugin):
 
     def load_found_files(self, loader, data, found_files):
         for found in found_files:
-            new_data = loader.load_from_file(found, cache=True, unsafe=True)
+            new_data = loader.load_from_file(found, cache='all', unsafe=True)
             if new_data:  # ignore empty files
                 data = combine_vars(data, new_data)
         return data
