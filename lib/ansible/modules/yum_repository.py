@@ -54,7 +54,7 @@ options:
     description:
       - Whether a special flag should be added to a randomly chosen query each week.
       - Default value is V(false).
-      type: bool
+    type: bool
   deltarpm_metadata_percentage:
     description:
       - When the relative size of deltarpm metadata vs pkgs is larger than
