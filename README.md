@@ -46,7 +46,7 @@ in the Ansible community if you want to run the `devel` branch.
   kinds of ways to contribute to and interact with the project,
   including mailing list information and how to submit bug reports and
   code to Ansible.
-* Join a [Working Group](https://github.com/ansible/community/wiki),
+* Join a [Working Group](https://docs.ansible.com/ansible/devel/community/communication.html#working-groups),
   an organized community devoted to a specific technology domain or platform.
 * Submit a proposed code update through a pull request to the `devel` branch.
 * Talk to us before making larger changes
@@ -54,7 +54,7 @@ in the Ansible community if you want to run the `devel` branch.
   know what is going on, but it also helps save time and effort if we decide
   some changes are needed.
 * For a list of email lists, IRC channels and Working Groups, see the
-  [Communication page](https://docs.ansible.com/ansible/latest/community/communication.html)
+  [Communication page](https://docs.ansible.com/ansible/devel/community/communication.html)
 
 ## Coding Guidelines
 
