@@ -1,0 +1,2 @@
+minor_changes:
+  - "sort the FILES.json for ansible galaxy build based on name with ASCII2 ordering (https://github.com/ansible/ansible/issues/82792)."
