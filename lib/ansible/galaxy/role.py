@@ -297,7 +297,7 @@ class GalaxyRole(object):
                     # are no versions in the list, we'll grab the head
                     # of the master branch
                     if len(role_versions) > 0:
-                        loose_versions = [LooseVersion(a.get('name', None)) for a in role_versions]
+                        loose_versions = [v for a in role_versions if (v := LooseVersion()) and v.parse(a.get('name') or '') is None]
                         try:
                             loose_versions.sort()
                         except TypeError:
