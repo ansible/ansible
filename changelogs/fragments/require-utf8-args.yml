@@ -1,0 +1,2 @@
+bugfixes:
+- module arguments - Ensure that module arguments are utf-8 adhereing to JSON RFC and expectations of the core code.
