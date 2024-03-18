@@ -292,6 +292,15 @@ class ActionBase(ABC):
             become_kwargs['become_flags'] = self._connection.become.get_option('become_flags',
                                                                                playcontext=self._play_context)
 
+        try:
+            _validate_utf8_json(module_args)
+        except UnicodeEncodeError as e:
+            display.deprecated(
+                f'Module arguments for "{self._task.resolved_action or self._task.action}" includes non-UTF8 '
+                'data. This will become an error in the future',
+                version='2.20',
+            )
+
         # modify_module will exit early if interpreter discovery is required; re-run after if necessary
         for dummy in (1, 2):
             try:
