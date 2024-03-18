@@ -236,7 +236,7 @@ class LookupModule(LookupBase):
 
             # exit if we find one!
             if path is not None:
-                return [unfrackpath(path)]
+                return [unfrackpath(path, follow=False)]
 
         # if we get here, no file was found
         if skip:
