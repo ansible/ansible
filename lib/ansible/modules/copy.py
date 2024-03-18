@@ -300,10 +300,6 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native
 from ansible.module_utils.basic import AnsibleModule
 
 
-# The AnsibleModule object
-module = None
-
-
 class AnsibleModuleError(Exception):
     def __init__(self, results):
         self.results = results
@@ -508,8 +504,6 @@ def copy_common_dirs(src, dest, module):
 
 
 def main():
-
-    global module
 
     module = AnsibleModule(
         # not checking because of daisy chain to file module
