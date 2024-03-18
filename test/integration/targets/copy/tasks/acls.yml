@@ -20,7 +20,9 @@
   - name: Check that there are no ACLs leftovers
     assert:
       that:
-        - "'user:{{ remote_unprivileged_user }}:r-x\t#effective:r--' not in acls.stdout_lines"
+        - leftovers not in acls.stdout_lines
+    vars:
+      leftovers: 'user:{{ remote_unprivileged_user }}:r-x\t#effective:r--'
 
   - name: Check that permissions match with what was set in the mode param
     assert:

@@ -24,6 +24,7 @@ def atomic_am(am, mocker):
     am.selinux_default_context = mocker.MagicMock()
     am.set_context_if_different = mocker.MagicMock()
     am._unsafe_writes = mocker.MagicMock()
+    am.get_bin_path = mocker.MagicMock(return_value=None)
 
     yield am
 
@@ -32,6 +33,7 @@ def atomic_am(am, mocker):
 def atomic_mocks(mocker, monkeypatch):
     environ = dict()
     mocks = {
+        'copystat': mocker.patch('shutil.copystat'),
         'chmod': mocker.patch('os.chmod'),
         'chown': mocker.patch('os.chown'),
         'close': mocker.patch('os.close'),
@@ -102,7 +104,7 @@ def test_existing_file(atomic_am, atomic_mocks, fake_stat, mocker, selinux):
     atomic_am.atomic_move('/path/to/src', '/path/to/dest')
 
     atomic_mocks['rename'].assert_called_with(b'/path/to/src', b'/path/to/dest')
-    assert atomic_mocks['chmod'].call_args_list == [mocker.call(b'/path/to/src', basic.DEFAULT_PERM & ~18)]
+    assert atomic_mocks['copystat'].call_args_list == [mocker.call(b'/path/to/dest', b'/path/to/src')]
 
     if selinux:
         assert atomic_am.set_context_if_different.call_args_list == [mocker.call('/path/to/dest', mock_context, False)]
@@ -125,7 +127,7 @@ def test_no_tty_fallback(atomic_am, atomic_mocks, fake_stat, mocker):
     atomic_am.atomic_move('/path/to/src', '/path/to/dest')
 
     atomic_mocks['rename'].assert_called_with(b'/path/to/src', b'/path/to/dest')
-    assert atomic_mocks['chmod'].call_args_list == [mocker.call(b'/path/to/src', basic.DEFAULT_PERM & ~18)]
+    assert atomic_mocks['copystat'].call_args_list == [mocker.call(b'/path/to/dest', b'/path/to/src')]
 
     assert atomic_am.set_context_if_different.call_args_list == [mocker.call('/path/to/dest', mock_context, False)]
     assert atomic_am.selinux_context.call_args_list == [mocker.call('/path/to/dest')]
