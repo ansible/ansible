@@ -933,3 +933,30 @@ releases:
     - fix-expect-indefinite-timeout.yml
     - fix-vars-plugins-in-roles.yml
     release_date: '2024-02-19'
+  2.16.5rc1:
+    changes:
+      bugfixes:
+      - 'Fix an issue when setting a plugin name from an unsafe source resulted in
+        ``ValueError: unmarshallable object`` (https://github.com/ansible/ansible/issues/82708)'
+      - Harden python templates for respawn and ansiballz around str literal quoting
+      - template - Fix error when templating an unsafe string which corresponds to
+        an invalid type in Python (https://github.com/ansible/ansible/issues/82600).
+      - winrm - does not hang when attempting to get process output when stdin write
+        failed
+      minor_changes:
+      - ansible-test - Add a work-around for permission denied errors when using ``pytest
+        >= 8`` on multi-user systems with an installed version of ``ansible-test``.
+      release_summary: '| Release Date: 2024-03-18
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+    codename: All My Love
+    fragments:
+    - 2.16.5rc1_summary.yaml
+    - 82675-fix-unsafe-templating-leading-to-type-error.yml
+    - 82708-unsafe-plugin-name-error.yml
+    - ansible-test-pytest-8.yml
+    - py-tmpl-hardening.yml
+    - winrm-timeout.yml
+    release_date: '2024-03-18'
