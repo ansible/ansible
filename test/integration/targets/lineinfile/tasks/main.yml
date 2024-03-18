@@ -965,9 +965,6 @@
       The search string is an empty string, which will match every line in the file.
       This may have unintended consequences, such as replacing the last line in the file rather than appending.
 
-- name: meta
-  meta: end_play
-
 ###################################################################
 ## Issue #58923
 ## Using firstmatch with insertafter and ensure multiple lines are not inserted
@@ -1445,3 +1442,7 @@
       that:
         - result1 is changed
         - result2.stat.exists
+
+- name: Integration test for issue 72929
+  import_tasks: acls.yml
+  when: ansible_system == 'Linux'

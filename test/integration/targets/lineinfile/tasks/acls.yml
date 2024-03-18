@@ -1,0 +1,54 @@
+- block:
+  - name: Install the acl package on Ubuntu
+    apt:
+      name: acl
+    when: ansible_distribution in ('Ubuntu')
+    register: setup_acl
+
+  - name: Create file
+    copy:
+      content: "TEST"
+      mode: 0644
+      dest: "~/test.txt"
+
+  - shell: setfacl -m nobody:rwx ~/test.txt
+
+  - shell: getfacl ~/test.txt
+    register: acls
+
+  - name: Check that permissions match with the copy mode and setfacl command
+    assert:
+      that:
+        - "'user::rw-' in acls.stdout_lines"
+        - "'user:nobody:rwx' in acls.stdout_lines"
+        - "'group::r--' in acls.stdout_lines"
+        - "'other::r--' in acls.stdout_lines"
+
+  - name: test atomic_move via lineinfile doesn't delete extended acls
+    lineinfile:
+      path: "~/test.txt"
+      regexp: "TEST"
+      line: "UPDATE"
+
+  - shell: getfacl ~/test.txt
+    register: acls
+
+  - name: Validate the acls are unmodified
+    assert:
+      that:
+        - "'user::rw-' in acls.stdout_lines"
+        - "'user:nobody:rwx' in acls.stdout_lines"
+        - "'group::r--' in acls.stdout_lines"
+        - "'other::r--' in acls.stdout_lines"
+
+  always:
+    - name: Remove the acl package on Ubuntu
+      apt:
+        name: acl
+        state: absent
+      when: setup_acl is changed
+
+    - name: Clean up
+      file:
+        path: "~/test.txt"
+        state: absent

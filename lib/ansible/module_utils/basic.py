@@ -1585,7 +1585,7 @@ class AnsibleModule(object):
         current_attribs = current_attribs.get('attr_flags', '')
         self.set_attributes_if_different(dest, current_attribs, True)
 
-    def atomic_move(self, src, dest, unsafe_writes=False):
+    def atomic_move(self, src, dest, unsafe_writes=False, keep_dest_attrs=True):
         '''atomically move src to dest, copying attributes from dest, returns true on success
         it uses os.rename to ensure this as it is an atomic operation, rest of the function is
         to work around limitations, corner cases and ensure selinux context is saved if possible'''
@@ -1593,24 +1593,11 @@ class AnsibleModule(object):
         dest_stat = None
         b_src = to_bytes(src, errors='surrogate_or_strict')
         b_dest = to_bytes(dest, errors='surrogate_or_strict')
-        if os.path.exists(b_dest):
+        if os.path.exists(b_dest) and keep_dest_attrs:
             try:
                 dest_stat = os.stat(b_dest)
-
-                # copy mode and ownership
-                os.chmod(b_src, dest_stat.st_mode & PERM_BITS)
                 os.chown(b_src, dest_stat.st_uid, dest_stat.st_gid)
-
-                # try to copy flags if possible
-                if hasattr(os, 'chflags') and hasattr(dest_stat, 'st_flags'):
-                    try:
-                        os.chflags(b_src, dest_stat.st_flags)
-                    except OSError as e:
-                        for err in 'EOPNOTSUPP', 'ENOTSUP':
-                            if hasattr(errno, err) and e.errno == getattr(errno, err):
-                                break
-                        else:
-                            raise
+                shutil.copystat(b_dest, b_src)
             except OSError as e:
                 if e.errno != errno.EPERM:
                     raise
@@ -1658,18 +1645,21 @@ class AnsibleModule(object):
                             os.close(tmp_dest_fd)
                             # leaves tmp file behind when sudo and not root
                             try:
-                                shutil.move(b_src, b_tmp_dest_name)
+                                shutil.move(b_src, b_tmp_dest_name, copy_function=shutil.copy if keep_dest_attrs else shutil.copy2)
                             except OSError:
                                 # cleanup will happen by 'rm' of tmpdir
                                 # copy2 will preserve some metadata
-                                shutil.copy2(b_src, b_tmp_dest_name)
+                                if keep_dest_attrs:
+                                    shutil.copy(b_src, b_tmp_dest_name)
+                                else:
+                                    shutil.copy2(b_src, b_tmp_dest_name)
 
                             if self.selinux_enabled():
                                 self.set_context_if_different(
                                     b_tmp_dest_name, context, False)
                             try:
                                 tmp_stat = os.stat(b_tmp_dest_name)
-                                if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
+                                if keep_dest_attrs and dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
                                     os.chown(b_tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
                             except OSError as e:
                                 if e.errno != errno.EPERM:
