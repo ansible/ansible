@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - apt - install recommended packages when installing package via deb file (https://github.com/ansible/ansible/issues/29726).
