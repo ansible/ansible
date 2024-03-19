@@ -22,6 +22,7 @@ from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.module_utils.facts.system.pkg_mgr import PKG_MGRS
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
+from ansible.utils.vars import combine_vars
 
 display = Display()
 
