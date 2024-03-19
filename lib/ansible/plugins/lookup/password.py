@@ -130,6 +130,7 @@ import os
 import string
 import time
 import hashlib
+import errno
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
@@ -276,7 +277,7 @@ def _get_lock(b_path):
             os.close(fd)
             first_process = True
         except OSError as e:
-            if e.strerror != 'File exists':
+            if e.errno != errno.EEXIST:
                 raise
 
     counter = 0
