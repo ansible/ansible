@@ -254,10 +254,6 @@ class CLI(ABC):
 
         last_exception = found_vault_secret = None
         for vault_id_slug in vault_ids:
-            if not vault_id_slug:
-                # silently ignore empty values
-                continue
-
             vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
             if vault_id_value in ['prompt', 'prompt_ask_vault_pass']:
 
@@ -286,6 +282,10 @@ class CLI(ABC):
                 # update loader with new secrets incrementally, so we can load a vault password
                 # that is encrypted with a vault secret provided earlier
                 loader.set_vault_secrets(vault_secrets)
+                continue
+
+            if not vault_id_value:
+                # silently ignore empty filenames
                 continue
 
             # assuming anything else is a password file

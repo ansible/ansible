@@ -359,19 +359,21 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
         match = vault.match_secrets(res, ['some_vault_id'])[0][1]
         self.assertEqual(match.bytes, b'prompt1_password')
 
-    def test_empty_id(self):
+    def test_empty_slug(self):
         res = cli.CLI.setup_vault_secrets(loader=self.fake_loader,
                                           vault_ids=[''])
         self.assertIsInstance(res, list)
         self.assertEqual(0, len(res))
 
-    @patch('ansible.cli.get_file_vault_secret')
-    def test_empty_file_part(self, mock_file_secret):
-        mock_file_secret.side_effect = AnsibleError('There is something wrong with your vault file')
-
+    def test_empty_name_part(self):
         self.assertRaisesRegex(AnsibleError,
-                               '.*There is something wrong with your vault file.*',
+                               '.*The vault password file .*/foo was not found.*',
                                cli.CLI.setup_vault_secrets,
                                loader=self.fake_loader,
-                               vault_ids=['foo@'])
-        mock_file_secret.assert_called_once()
+                               vault_ids=['@foo'])
+
+    def test_empty_value_part(self):
+        res = cli.CLI.setup_vault_secrets(loader=self.fake_loader,
+                                          vault_ids=['foo@'])
+        self.assertIsInstance(res, list)
+        self.assertEqual(0, len(res))
