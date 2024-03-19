@@ -196,8 +196,8 @@ class PlaybookExecutor:
 
                             # update the previous counts so they don't accumulate incorrectly
                             # over multiple serial batches
-                            previously_failed += len(self._tqm._failed_hosts) - previously_failed
-                            previously_unreachable += len(self._tqm._unreachable_hosts) - previously_unreachable
+                            previously_failed = len(self._tqm._failed_hosts)
+                            previously_unreachable = len(self._tqm._unreachable_hosts)
 
                             # save the unreachable hosts from this batch
                             self._unreachable_hosts.update(self._tqm._unreachable_hosts)
