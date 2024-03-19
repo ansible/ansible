@@ -53,7 +53,7 @@ options:
   countme:
     description:
       - Whether a special flag should be added to a randomly chosen query each week.
-      - Default value is V(false).
+    default: ~
     type: bool
     version_added: '2.17'
   deltarpm_metadata_percentage:
