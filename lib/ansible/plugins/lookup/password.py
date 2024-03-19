@@ -4,6 +4,7 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
+import errno
 
 DOCUMENTATION = """
     name: password
@@ -276,7 +277,7 @@ def _get_lock(b_path):
             os.close(fd)
             first_process = True
         except OSError as e:
-            if e.strerror != 'File exists':
+            if e.errno != errno.EEXIST:
                 raise
 
     counter = 0
