@@ -886,6 +886,11 @@ def install_deb(
         except Exception as e:
             m.fail_json(msg="Unable to install package: %s" % to_native(e))
 
+        # Install 'Recommends' of this deb file
+        if install_recommends:
+            pkg_recommends = get_field_of_deb(m, deb_file, "Recommends")
+            deps_to_install.extend([pkg_name.strip() for pkg_name in pkg_recommends.split()])
+
         # and add this deb to the list of packages to install
         pkgs_to_install.append(deb_file)
 
