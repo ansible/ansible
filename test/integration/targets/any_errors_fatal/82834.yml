@@ -1,0 +1,18 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - add_host:
+        hostname: unreachable_host
+        ansible_connection: ssh
+        ansible_host: 127.0.0.1
+        ansible_port: 1011  # IANA Reserved port
+
+- hosts: unreachable_host, localhost
+  gather_facts: false
+  any_errors_fatal: true
+  serial:
+    - 1
+  tasks:
+    - command: echo
+    - debug:
+        msg: SHOULD NOT HAPPEN
