@@ -19,7 +19,7 @@
       - not ansible_facts.python.has_sslcontext
   - name: unarchive a tar from an URL
     unarchive:
-      src: "https://releases.ansible.com/ansible/ansible-latest.tar.gz"
+      src: https://files.pythonhosted.org/packages/source/a/ansible-core/ansible-core-2.16.5rc1.tar.gz
       dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
       mode: "0700"
       remote_src: yes
