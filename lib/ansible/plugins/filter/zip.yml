@@ -34,7 +34,7 @@ EXAMPLES: |
     shorter: "{{ [1,2,3] | zip(['a','b','c','d','e','f']) }}"
 
     # compose dict from lists of keys and values
-    mydcit: "{{ dict(keys_list | zip(values_list)) }}"
+    mydict: "{{ dict(keys_list | zip(values_list)) }}"
 
 RETURN:
   _value:
