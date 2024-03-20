@@ -1,0 +1,8 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Async in check mode task disabled test
+    command: sleep 5
+    async: 6
+    poll: 1
+    check_mode: False

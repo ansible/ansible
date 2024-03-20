@@ -1,0 +1,4 @@
+bugfixes:
+- >-
+  async - Fix bug that stopped running async task in ``--check`` when ``check_mode: False`` was set as a task attribute
+  - https://github.com/ansible/ansible/issues/82811
