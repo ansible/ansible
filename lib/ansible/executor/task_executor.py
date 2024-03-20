@@ -917,6 +917,7 @@ class TaskExecutor:
                         'jid': async_jid,
                         'mode': 'cleanup',
                     },
+                    'check_mode': self._task.check_mode,
                     'environment': self._task.environment,
                 }
             )
