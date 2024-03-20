@@ -1,0 +1,2 @@
+bugfixes:
+- winrm - Do not raise another exception during cleanup when a task is timed out - https://github.com/ansible/ansible/issues/81095
