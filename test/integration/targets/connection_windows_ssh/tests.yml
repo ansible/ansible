@@ -30,3 +30,15 @@
       - win_ssh_async.rc == 0
       - win_ssh_async.stdout == "café\n"
       - win_ssh_async.stderr == ""
+
+  # Ensures the connection plugin can handle a timeout
+  # without raising another error.
+  - name: run command with timeout
+    win_shell: Start-Sleep -Seconds 10
+    timeout: 5
+    register: timeout_cmd
+    ignore_errors: true
+
+  - assert:
+      that:
+      - timeout_cmd.msg == 'The win_shell action failed to execute in the expected time frame (5) and was terminated'
