@@ -365,12 +365,10 @@ def _return_datastructure_name(obj):
         return
     elif isinstance(obj, Mapping):
         for element in obj.items():
-            for subelement in _return_datastructure_name(element[1]):
-                yield subelement
+            yield from _return_datastructure_name(element[1])
     elif is_iterable(obj):
         for element in obj:
-            for subelement in _return_datastructure_name(element):
-                yield subelement
+            yield from _return_datastructure_name(element)
     elif obj is None or isinstance(obj, bool):
         # This must come before int because bools are also ints
         return

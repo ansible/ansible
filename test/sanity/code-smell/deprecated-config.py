@@ -55,8 +55,7 @@ def find_deprecations(obj, path=None):
         this_path.append(key)
 
         if key != 'deprecated':
-            for result in find_deprecations(value, path=this_path):
-                yield result
+            yield from find_deprecations(value, path=this_path)
         else:
             try:
                 version = value['version']
