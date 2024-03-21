@@ -1,0 +1,2 @@
+bugfixes:
+  - unarchive modules now uses zipinfo options without relying on implementation defaults, making it more compatible with all OS/distributions.
