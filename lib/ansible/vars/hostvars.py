@@ -27,6 +27,7 @@ STATIC_VARS = [
     'ansible_dependent_role_names',
     'ansible_play_role_names',
     'ansible_role_names',
+    'ansible_play_strategy',
     'inventory_hostname',
     'inventory_hostname_short',
     'inventory_file',
