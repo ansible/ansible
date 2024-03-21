@@ -978,7 +978,7 @@ class TarZstdArchive(TgzArchive):
 class ZipZArchive(ZipArchive):
     def __init__(self, src, b_dest, file_args, module):
         super(ZipZArchive, self).__init__(src, b_dest, file_args, module)
-        self.zipinfoflag = '-Z'
+        self.zipinfoflag = '-Zl'
         self.binaries = (
             ('unzip', 'cmd_path'),
             ('unzip', 'zipinfo_cmd_path'),
