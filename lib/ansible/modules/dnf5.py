@@ -425,8 +425,7 @@ def get_unneeded_pkgs(base):
     query = libdnf5.rpm.PackageQuery(base)
     query.filter_installed()
     query.filter_unneeded()
-    for pkg in query:
-        yield pkg
+    yield from query
 
 
 class Dnf5Module(YumDnf):
