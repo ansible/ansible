@@ -1,0 +1,2 @@
+bugfixes:
+  - "ansible-test ansible-doc sanity test - do not remove underscores from plugin names in collections before calling ``ansible-doc`` (https://github.com/ansible/ansible/pull/82574)."
