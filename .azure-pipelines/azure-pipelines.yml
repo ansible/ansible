@@ -83,8 +83,10 @@ stages:
               test: rhel/9.3@3.9
             - name: RHEL 9.3 py311
               test: rhel/9.3@3.11
-            - name: FreeBSD 13.2
-              test: freebsd/13.2
+            - name: FreeBSD 13.3
+              test: freebsd/13.3
+            - name: FreeBSD 14.0
+              test: freebsd/14.0
           groups:
             - 1
             - 2
@@ -95,8 +97,10 @@ stages:
               test: macos/14.3
             - name: RHEL 9.3
               test: rhel/9.3
-            - name: FreeBSD 13.2
-              test: freebsd/13.2
+            - name: FreeBSD 13.3
+              test: freebsd/13.3
+            - name: FreeBSD 14.0
+              test: freebsd/14.0
           groups:
             - 3
             - 4

@@ -114,7 +114,7 @@
     path: "{{remote_tmp_dir}}/utf16.txt"
     search_regex: completed
 
-- name: test non mmapable file
+- name: test non mmapable file, skip OSs w/o /sys
   wait_for:
     path: "/sys/class/net/lo/carrier"
     search_regex: "1"
@@ -165,9 +165,9 @@
       - waitfor is not changed
       - "waitfor.port == {{ http_port }}"
 
-- name: install psutil using pip (non-Linux only)
+- name: install psutil using pip (non-Linux)
   pip:
-    name: psutil==5.8.0
+    name: psutil==5.9.8
   when: ansible_system != 'Linux'
 
 - name: Copy zombie.py
