@@ -1,0 +1,2 @@
+deprecated_features:
+  - "ansible-doc - role entrypoint attributes are deprecated and eventually will no longer be shown in ansible-doc from ansible-core 2.20 on (https://github.com/ansible/ansible/issues/82639, https://github.com/ansible/ansible/pull/82678)."
