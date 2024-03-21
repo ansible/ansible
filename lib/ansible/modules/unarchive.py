@@ -978,7 +978,6 @@ class TarZstdArchive(TgzArchive):
 class ZipZArchive(ZipArchive):
     def __init__(self, src, b_dest, file_args, module):
         super(ZipZArchive, self).__init__(src, b_dest, file_args, module)
-        # NOTE: adds 'l', which is default on most linux but not all implementations
         self.zipinfoflag = '-Zl'
         self.binaries = (
             ('unzip', 'cmd_path'),
