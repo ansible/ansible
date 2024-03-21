@@ -151,4 +151,4 @@
 - name: Make sure skip works in 'mixed' argument passing
   assert:
     that:
-      - "{{q('first_found', ['/nonexistant'], skip=True)}}"
+      - q('first_found', ['/nonexistant'], skip=True) == []
