@@ -114,7 +114,7 @@ class HostVarsVars(Mapping):
     def __init__(self, variables, loader):
         self._vars = variables
         self._loader = loader
-        #NOTE: this only has access to the host's own vars,
+        # NOTE: this only has access to the host's own vars,
         # so templates that depend on vars in other scopes will not work.
         self._templar = Templar(variables=self._vars, loader=self._loader)
 
