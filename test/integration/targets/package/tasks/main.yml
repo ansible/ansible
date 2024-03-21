@@ -240,3 +240,21 @@
           - "result is changed"
 
   when: ansible_distribution == "Fedora"
+
+# Verify unsafe delegate_to is functional
+- block:
+    - command: echo {{ inventory_hostname }}
+      register: unsafe_host
+
+    - name: install at
+      package:
+        name: at
+        state: present
+        use: auto
+      delegate_to: '{{ unsafe_host.stdout_lines|first }}'
+  always:
+    - name: remove apt
+      package:
+        name: at
+        state: absent
+  when: ansible_distribution in package_distros

@@ -16,6 +16,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import annotations
 
+from collections import ChainMap
+
 from ansible.errors import AnsibleAction, AnsibleActionFail
 from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.module_utils.facts.system.pkg_mgr import PKG_MGRS
@@ -45,7 +47,10 @@ class ActionModule(ActionBase):
         if module == 'auto':
             try:
                 if self._task.delegate_to:  # if we delegate, we should use delegated host's facts
-                    module = self._templar.template("{{hostvars['%s']['ansible_facts']['pkg_mgr']}}" % self._task.delegate_to)
+                    module = self._template_with_locals(
+                        "{{hostvars[__dt]['ansible_facts']['pkg_mgr']}}",
+                        {'__dt': self._task.delegate_to}
+                    )
                 else:
                     module = self._templar.template('{{ansible_facts.pkg_mgr}}')
             except Exception:
@@ -93,3 +98,12 @@ class ActionModule(ActionBase):
                 self._remove_tmp_path(self._connection._shell.tmpdir)
 
         return result
+
+    def _template_with_locals(self, template, template_locals):
+        temp_vars = ChainMap(
+            template_locals,
+            self._templar.available_variables
+        )
+        set_temporary_context = self._templar.set_temporary_context
+        with set_temporary_context(available_variables=temp_vars) as templar:
+            return templar.template(template)
