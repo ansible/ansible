@@ -46,8 +46,8 @@ def get_partition_uuid(partname):
         return
 
     for uuid in uuids:
-        dev = os.path.realpath("/dev/disk/by-uuid/" + uuid)
-        if dev == ("/dev/" + partname):
+        dev = os.path.realpath(f"/dev/disk/by-uuid/{uuid}")
+        if dev == f"/dev/{partname}":
             return uuid
 
     return None
@@ -657,7 +657,7 @@ class LinuxHardware(Hardware):
             for folder in os.listdir(sysdir + "/holders"):
                 if not folder.startswith("dm-"):
                     continue
-                name = get_file_content(sysdir + "/holders/" + folder + "/dm/name")
+                name = get_file_content(f"{sysdir}/holders/{folder}/dm/name")
                 if name:
                     block_dev_dict['holders'].append(name)
                 else:
@@ -728,7 +728,7 @@ class LinuxHardware(Hardware):
                 d['links'][link_type] = link_values.get(block, [])
             diskname = os.path.basename(sysdir)
             for key in ['vendor', 'model', 'sas_address', 'sas_device_handle']:
-                d[key] = get_file_content(sysdir + "/device/" + key)
+                d[key] = get_file_content(f"{sysdir}/device/{key}")
 
             sg_inq = self.module.get_bin_path('sg_inq')
 
@@ -758,7 +758,7 @@ class LinuxHardware(Hardware):
                 if m:
                     part = {}
                     partname = m.group(1)
-                    part_sysdir = sysdir + "/" + partname
+                    part_sysdir = f"{sysdir}/{partname}"
 
                     part['links'] = {}
                     for (link_type, link_values) in iteritems(links):
