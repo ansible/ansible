@@ -110,6 +110,8 @@ stages:
           targets:
             - name: Alpine 3.18
               test: alpine/3.18
+            - name: Alpine 3.19
+              test: alpine/3.19
             - name: Fedora 39
               test: fedora/39
             - name: RHEL 9.3
