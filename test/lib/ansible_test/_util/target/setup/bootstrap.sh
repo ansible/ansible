@@ -7,7 +7,7 @@ remove_externally_managed_marker()
     "${python_interpreter}" -c '
 import pathlib
 import sysconfig
-path = pathlib.Path(sysconfig.get_path("stdlib", sysconfig.get_default_scheme())) / "EXTERNALLY-MANAGED"
+path = pathlib.Path(sysconfig.get_path("stdlib")) / "EXTERNALLY-MANAGED"
 path.unlink(missing_ok=True)
 '
 }
