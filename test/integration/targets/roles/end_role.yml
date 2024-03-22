@@ -1,0 +1,25 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    # FIXME more tests
+    - import_role:
+        name: end_role_inside
+        allow_duplicates: true
+
+    - import_role:
+        name: end_role_inside
+        allow_duplicates: true
+
+    - import_role:
+        name: end_role_inside
+        allow_duplicates: false
+
+    - set_fact:
+        plays_life_after_end_role: true
+  post_tasks:
+    - assert:
+        that:
+          - role_executed|int == 2
+          - after_end_role is undefined
+          - plays_life_after_end_role is defined
+          - role_handler_ran is defined

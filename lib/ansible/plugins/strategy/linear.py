@@ -166,14 +166,6 @@ class StrategyModule(StrategyBase):
                     run_once = False
                     work_to_do = True
 
-                    # check to see if this task should be skipped, due to it being a member of a
-                    # role which has already run (and whether that role allows duplicate execution)
-                    if not isinstance(task, Handler) and task._role:
-                        role_obj = self._get_cached_role(task, iterator._play)
-                        if role_obj.has_run(host) and task._role._metadata.allow_duplicates is False:
-                            display.debug("'%s' skipped because role has already run" % task)
-                            continue
-
                     display.debug("getting variables")
                     task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task,
                                                                 _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
@@ -198,7 +190,7 @@ class StrategyModule(StrategyBase):
                         # for the linear strategy, we run meta tasks just once and for
                         # all hosts currently being iterated over rather than one host
                         results.extend(self._execute_meta(task, play_context, iterator, host))
-                        if task.args.get('_raw_params', None) not in ('noop', 'reset_connection', 'end_host', 'role_complete', 'flush_handlers'):
+                        if task.args.get('_raw_params', None) not in ('noop', 'reset_connection', 'end_host', 'end_role', 'flush_handlers'):
                             run_once = True
                         if (task.any_errors_fatal or run_once) and not task.ignore_errors:
                             any_errors_fatal = True

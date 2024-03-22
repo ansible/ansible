@@ -1,0 +1,3 @@
+- name: role_handler
+  set_fact:
+    role_handler_ran: true

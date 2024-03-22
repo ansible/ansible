@@ -583,7 +583,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         Returns true if this role has been iterated over completely and
         at least one task was run
         '''
-
+        # FIXME unused
         return host.name in self._completed
 
     def compile(self, play, dep_chain=None):
@@ -626,7 +626,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         eor_task = Task(block=eor_block)
         eor_task._role = self
         eor_task.action = 'meta'
-        eor_task.args = {'_raw_params': 'role_complete'}
+        eor_task.args = {'_raw_params': 'end_role'}
         eor_task.implicit = True
         eor_task.tags = ['always']
         eor_task.when = True

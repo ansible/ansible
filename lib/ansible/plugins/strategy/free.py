@@ -171,15 +171,6 @@ class StrategyModule(StrategyBase):
                                 display.warning("Using run_once with the free strategy is not currently supported. This task will still be "
                                                 "executed for every host in the inventory list.")
 
-                        # check to see if this task should be skipped, due to it being a member of a
-                        # role which has already run (and whether that role allows duplicate execution)
-                        if not isinstance(task, Handler) and task._role:
-                            role_obj = self._get_cached_role(task, iterator._play)
-                            if role_obj.has_run(host) and task._role._metadata.allow_duplicates is False:
-                                display.debug("'%s' skipped because role has already run" % task, host=host_name)
-                                del self._blocked_hosts[host_name]
-                                continue
-
                         if task.action in C._ACTION_META:
                             self._execute_meta(task, play_context, iterator, target_host=host)
                             self._blocked_hosts[host_name] = False
