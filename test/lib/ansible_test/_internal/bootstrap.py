@@ -28,7 +28,7 @@ class Bootstrap:
     """Base class for bootstrapping systems."""
 
     controller: bool
-    python_versions: list[str]
+    python_interpreters: dict[str, str]
     ssh_key: SshKey
 
     @property
@@ -41,7 +41,7 @@ class Bootstrap:
         return dict(
             bootstrap_type=self.bootstrap_type,
             controller='yes' if self.controller else '',
-            python_versions=self.python_versions,
+            python_interpreters=[f'{key}:{value}' for key, value in self.python_interpreters.items()],
             ssh_key_type=self.ssh_key.KEY_TYPE,
             ssh_private_key=self.ssh_key.key_contents,
             ssh_public_key=self.ssh_key.pub_contents,
