@@ -42,6 +42,7 @@ class IteratingStates(IntEnum):
     ALWAYS = 3
     HANDLERS = 4
     COMPLETE = 5
+    SKIP_ROLE = 6
 
 
 class FailedStates(IntFlag):
@@ -440,14 +441,28 @@ class PlayIterator:
                     else:
                         state.cur_handlers_task += 1
                         if task.is_host_notified(host):
-                            break
+                            return state, task
+
+            elif state.run_state == IteratingStates.SKIP_ROLE:
+                state.run_state = state.pre_flushing_run_state
+                while True:
+                    state, task = self._get_next_task_from_state(state, host=host)
+                    if task.implicit and task.args.get("_raw_params") == "end_role":
+                        return state, task
+                    display.debug("'%s' skipped because role has been ended via 'end_role'" % task)
 
             elif state.run_state == IteratingStates.COMPLETE:
                 return (state, None)
 
-            # if something above set the task, break out of the loop now
             if task:
-                break
+                if (
+                    (role := task._role)
+                    and role._metadata.allow_duplicates is False
+                    and host.name in self._play._get_cached_role(role)._completed
+                ):
+                    display.debug("'%s' skipped because role has already run" % task)
+                else:
+                    break
 
         return (state, task)
 
@@ -620,7 +635,11 @@ class PlayIterator:
     def set_run_state_for_host(self, hostname: str, run_state: IteratingStates) -> None:
         if not isinstance(run_state, IteratingStates):
             raise AnsibleAssertionError('Expected run_state to be a IteratingStates but was %s' % (type(run_state)))
-        self._host_states[hostname].run_state = run_state
+        host_state = self._host_states[hostname]
+        if run_state in (IteratingStates.HANDLERS, IteratingStates.SKIP_ROLE):
+            # FIXME abusing pre_flushing_run_state for SKIP_ROLE
+            host_state.pre_flushing_run_state = host_state.run_state
+        host_state.run_state = run_state
 
     def set_fail_state_for_host(self, hostname: str, fail_state: FailedStates) -> None:
         if not isinstance(fail_state, FailedStates):

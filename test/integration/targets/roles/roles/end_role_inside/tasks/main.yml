@@ -1,0 +1,10 @@
+- set_fact:
+    role_executed: "{{ role_executed|default(0)|int + 1 }}"
+
+- command: echo
+  notify: role_handler
+
+- meta: end_role
+
+- set_fact:
+    after_end_role: true

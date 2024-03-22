@@ -53,3 +53,5 @@ ansible-playbook role_dep_chain.yml -i ../../inventory "$@"
 ANSIBLE_PRIVATE_ROLE_VARS=1 ansible-playbook privacy.yml -e @vars/privacy_vars.yml "$@"
 ANSIBLE_PRIVATE_ROLE_VARS=0 ansible-playbook privacy.yml -e @vars/privacy_vars.yml "$@"
 ansible-playbook privacy.yml -e @vars/privacy_vars.yml "$@"
+
+ansible-playbook end_role.yml "$@"

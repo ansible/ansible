@@ -33,7 +33,8 @@ options:
         - V(end_host) (added in Ansible 2.8) is a per-host variation of V(end_play). Causes the play to end for the current host without failing it.
         - V(end_batch) (added in Ansible 2.12) causes the current batch (see C(serial)) to end without failing the host(s).
           Note that with C(serial=0) or undefined this behaves the same as V(end_play).
-    choices: [ clear_facts, clear_host_errors, end_host, end_play, flush_handlers, noop, refresh_inventory, reset_connection, end_batch ]
+        - V(end_role) (added in Ansible?) FIXME
+    choices: [ clear_facts, clear_host_errors, end_host, end_play, flush_handlers, noop, refresh_inventory, reset_connection, end_batch, end_role ]
     required: true
 extends_documentation_fragment:
     - action_common_attributes
