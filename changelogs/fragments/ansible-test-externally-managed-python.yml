@@ -1,0 +1,4 @@
+minor_changes:
+  - ansible-test - Containers and remotes managed by ansible-test will have their Python ``EXTERNALLY-MANAGED`` marker (PEP668) removed.
+    This provides backwards compatibility for existing tests running in newer environments which mark their Python as externally managed.
+    A future version of ansible-test may change this behavior, requiring tests to be adapted to such environments.

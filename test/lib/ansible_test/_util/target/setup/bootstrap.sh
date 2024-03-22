@@ -2,6 +2,16 @@
 
 set -eu
 
+remove_externally_managed_marker()
+{
+    "${python_interpreter}" -c '
+import pathlib
+import sysconfig
+path = pathlib.Path(sysconfig.get_path("stdlib")) / "EXTERNALLY-MANAGED"
+path.unlink(missing_ok=True)
+'
+}
+
 install_ssh_keys()
 {
     if [ ! -f "${ssh_private_key_path}" ]; then
@@ -340,14 +350,27 @@ bootstrap_docker()
 {
     # Required for newer mysql-server packages to install/upgrade on Ubuntu 16.04.
     rm -f /usr/sbin/policy-rc.d
+
+    for key_value in ${python_interpreters}; do
+        IFS=':' read -r python_version python_interpreter << EOF
+${key_value}
+EOF
+
+        echo "Bootstrapping Python ${python_version} at: ${python_interpreter}"
+
+        remove_externally_managed_marker
+    done
 }
 
 bootstrap_remote()
 {
-    for python_version in ${python_versions}; do
-        echo "Bootstrapping Python ${python_version}"
+    for key_value in ${python_interpreters}; do
+        IFS=':' read -r python_version python_interpreter << EOF
+${key_value}
+EOF
 
-        python_interpreter="python${python_version}"
+        echo "Bootstrapping Python ${python_version} at: ${python_interpreter}"
+
         python_package_version="$(echo "${python_version}" | tr -d '.')"
 
         case "${platform}" in
@@ -358,6 +381,8 @@ bootstrap_remote()
             "rhel") bootstrap_remote_rhel ;;
             "ubuntu") bootstrap_remote_ubuntu ;;
         esac
+
+        remove_externally_managed_marker
     done
 }
 
@@ -384,7 +409,7 @@ bootstrap_type=#{bootstrap_type}
 controller=#{controller}
 platform=#{platform}
 platform_version=#{platform_version}
-python_versions=#{python_versions}
+python_interpreters=#{python_interpreters}
 ssh_key_type=#{ssh_key_type}
 ssh_private_key=#{ssh_private_key}
 ssh_public_key=#{ssh_public_key}
