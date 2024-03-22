@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - The ``libexpat`` package is automatically upgraded during remote bootstrapping to maintain compatibility with newer Python packages.

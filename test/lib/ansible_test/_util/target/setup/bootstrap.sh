@@ -111,6 +111,15 @@ bootstrap_remote_alpine()
         echo "Failed to install packages. Sleeping before trying again..."
         sleep 10
     done
+
+    # Upgrade the `expat` package to ensure that an upgraded Python (`pyexpat`) continues to work.
+    while true; do
+        # shellcheck disable=SC2086
+        apk upgrade -q expat \
+        && break
+        echo "Failed to upgrade expat. Sleeping before trying again..."
+        sleep 10
+    done
 }
 
 bootstrap_remote_fedora()
