@@ -373,8 +373,6 @@ EOF
 
         python_package_version="$(echo "${python_version}" | tr -d '.')"
 
-        remove_externally_managed_marker
-
         case "${platform}" in
             "alpine") bootstrap_remote_alpine ;;
             "fedora") bootstrap_remote_fedora ;;
@@ -383,6 +381,8 @@ EOF
             "rhel") bootstrap_remote_rhel ;;
             "ubuntu") bootstrap_remote_ubuntu ;;
         esac
+
+        remove_externally_managed_marker
     done
 }
 
