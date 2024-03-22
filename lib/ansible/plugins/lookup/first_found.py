@@ -147,6 +147,7 @@ from jinja2.exceptions import UndefinedError
 from ansible.errors import AnsibleLookupError, AnsibleUndefinedVariable
 from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase
+from ansible.utils.path import unfrackpath
 
 
 def _split_on(terms, spliters=','):
@@ -206,8 +207,9 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
 
+        self.set_options(var_options=variables, direct=kwargs)
+
         if not terms:
-            self.set_options(var_options=variables, direct=kwargs)
             terms = self.get_option('files')
 
         total_search, skip = self._process_terms(terms, variables, kwargs)
@@ -234,7 +236,7 @@ class LookupModule(LookupBase):
 
             # exit if we find one!
             if path is not None:
-                return [path]
+                return [unfrackpath(path, follow=False)]
 
         # if we get here, no file was found
         if skip:
