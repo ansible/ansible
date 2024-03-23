@@ -264,7 +264,30 @@ DOCUMENTATION = '''
           cli:
             - name: private_key_file
               option: '--private-key'
-
+      private_key:
+          description:
+            - private key contents in PEM format. Requires the SSH_AGENT configuration to be enabled.
+          type: string
+          ini:
+            - section: defaults
+              key: private_key
+          env:
+            - name: ANSIBLE_PRIVATE_KEY
+          vars:
+            - name: ansible_private_key
+          version_added: '2.17'
+      private_key_passphrase:
+          description:
+            - private key passphrase, dependent on ``private_key``.
+          type: string
+          ini:
+            - section: defaults
+              key: private_key_passphrase
+          env:
+            - name: ANSIBLE_PRIVATE_KEY_PASSPHRASE
+          vars:
+            - name: ansible_private_key_passphrase
+          version_added: '2.17'
       control_path:
         description:
           - This is the location to save SSH's ControlPath sockets, it uses SSH's variable substitution.
@@ -397,12 +420,14 @@ import time
 import typing as t
 
 from functools import wraps
+
 from ansible.errors import (
     AnsibleAuthenticationFailure,
     AnsibleConnectionFailure,
     AnsibleError,
     AnsibleFileNotFound,
 )
+from ansible import constants as C
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils.six import PY3, text_type, binary_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
@@ -411,6 +436,15 @@ from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.plugins.shell.powershell import _parse_clixml
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath, makedirs_safe
+from ansible.utils.ssh_agent import load_private_key, Client, PublicKeyMsg
+
+try:
+    from cryptography.hazmat.primitives import serialization
+except ImportError:
+    HAS_CRYPTOGRAPHY = False
+else:
+    HAS_CRYPTOGRAPHY = True
+
 
 display = Display()
 
@@ -602,6 +636,8 @@ class Connection(ConnectionBase):
             self.module_implementation_preferences = ('.ps1', '.exe', '')
             self.allow_executable = False
 
+        self._populated_agent = None
+
     # The connection is created by running ssh/scp/sftp from the exec_command,
     # put_file, and fetch_file methods, so we don't need to do any connection
     # management here.
@@ -682,6 +718,49 @@ class Connection(ConnectionBase):
         """
         display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a) for a in b_args)), host=self.host)
         b_command += b_args
+
+    def _populate_agent(self):
+        if self._populated_agent:
+            return self._populated_agent
+
+        if (auth_sock := C.config.get_config_value('SSH_AGENT')) == 'none':
+            raise AnsibleError('Cannot utilize private_key with SSH_AGENT disabled')
+
+        key_data = self.get_option('private_key')
+        passphrase = self.get_option('private_key_passphrase')
+        private_key = load_private_key(
+            to_bytes(key_data),
+            to_bytes(passphrase) if passphrase else None
+        )
+        public_key = private_key.public_key()
+        pubkey_msg = PublicKeyMsg.from_public_key(public_key)
+        fingerprint = pubkey_msg.fingerprint()
+        with Client(auth_sock) as client:
+            if (public_key := private_key.public_key()) not in client:
+                display.vvv(f'SSH: SSH_AGENT adding {fingerprint} to agent', host=self.host)
+                client.add(
+                    private_key,
+                    '[added by ansible]',
+                    C.config.get_config_value('SSH_AGENT_KEY_LIFETIME'),
+                )
+            else:
+                display.vvv(f'SSH: SSH_AGENT {fingerprint} exists in agent', host=self.host)
+        # Write the public key to disk, to be provided as IdentityFile.
+        # This allows ssh to pick an explicit key in the agent to use,
+        # preventing ssh from attempting all keys in the agent.
+        pubkey_path = self._populated_agent = os.path.join(
+            C.DEFAULT_LOCAL_TMP,
+            fingerprint.replace('/', '-') + '.pub'
+        )
+        if os.path.exists(pubkey_path):
+            return pubkey_path
+        fd = os.open(pubkey_path, os.O_CREAT | os.O_WRONLY, mode=0o400)
+        with os.fdopen(fd, 'wb') as f:
+            f.write(public_key.public_bytes(
+                encoding=serialization.Encoding.OpenSSH,
+                format=serialization.PublicFormat.OpenSSH
+            ))
+        return self._populated_agent
 
     def _build_command(self, binary: str, subsystem: str, *other_args: bytes | str) -> list[bytes]:
         '''
@@ -767,8 +846,12 @@ class Connection(ConnectionBase):
             b_args = (b"-o", b"Port=" + to_bytes(self.port, nonstring='simplerepr', errors='surrogate_or_strict'))
             self._add_args(b_command, b_args, u"ANSIBLE_REMOTE_PORT/remote_port/ansible_port set")
 
-        key = self.get_option('private_key_file')
-        if key:
+        if self.get_option('private_key'):
+            key = self._populate_agent()
+            b_args = (b'-o', b'IdentitiesOnly=yes', b'-o', b'IdentityFile="' + to_bytes(key, errors='surrogate_or_strict') + b'"')
+            self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY/private_key set")
+
+        elif (key := self.get_option('private_key_file')):
             b_args = (b"-o", b'IdentityFile="' + to_bytes(os.path.expanduser(key), errors='surrogate_or_strict') + b'"')
             self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set")
 

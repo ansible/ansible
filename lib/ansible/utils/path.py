@@ -19,7 +19,7 @@ from __future__ import annotations
 import os
 import shutil
 
-from errno import EEXIST
+from errno import EEXIST, ENOENT
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 
@@ -124,7 +124,7 @@ def cleanup_tmp_file(path, warn=False):
                 elif os.path.isfile(path):
                     os.unlink(path)
             except Exception as e:
-                if warn:
+                if warn and getattr(e, 'errno', None) != ENOENT:
                     # Importing here to avoid circular import
                     from ansible.utils.display import Display
                     display = Display()

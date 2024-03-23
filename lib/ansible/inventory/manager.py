@@ -18,11 +18,13 @@
 #############################################
 from __future__ import annotations
 
+import atexit
 import fnmatch
 import os
 import sys
 import re
 import itertools
+import subprocess
 import traceback
 
 from operator import attrgetter
@@ -32,12 +34,14 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.inventory.data import InventoryData
 from ansible.module_utils.six import string_types
+from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins.loader import inventory_loader
 from ansible.utils.helpers import deduplicate_list
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
+from ansible.utils.ssh_agent import Client
 from ansible.utils.vars import combine_vars
 from ansible.vars.plugins import get_vars_from_inventory_sources
 
@@ -161,12 +165,58 @@ class InventoryManager(object):
         else:
             self._sources = sources
 
+        self._launch_ssh_agent()
+
         # get to work!
         if parse:
             self.parse_sources(cache=cache)
 
         self._cached_dynamic_hosts = []
         self._cached_dynamic_grouping = []
+
+    def _launch_ssh_agent(self):
+        ssh_agent_cfg = C.config.get_config_value('SSH_AGENT')
+        match ssh_agent_cfg:
+            case 'none':
+                return
+            case 'auto':
+                ssh_agent_dir = os.path.join(C.DEFAULT_LOCAL_TMP, 'ssh_agent')
+                os.mkdir(ssh_agent_dir, 0o700)
+                try:
+                    ssh_agent_bin = get_bin_path('ssh-agent', required=True)
+                except ValueError as e:
+                    raise AnsibleError('SSH_AGENT set to auto, but cannot find ssh-agent binary') from e
+                sock = os.path.join(ssh_agent_dir, 'agent.sock')
+                p = subprocess.Popen(
+                    [ssh_agent_bin, '-D', '-s', '-a', sock],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+                if p.poll() is not None:
+                    raise AnsibleError(
+                        f'Could not start ssh-agent: (rc={p.returncode}) {p.stderr}'
+                    )
+                if (stdout := p.stdout.read(13)) != b'SSH_AUTH_SOCK':
+                    display.warn(
+                        f'The first 13 characters of stdout did not match the '
+                        f'expected SSH_AUTH_SOCK. This may not be the right binary, '
+                        f'or an incompatible agent: {stdout.decode()}'
+                    )
+                display.vvv(f'SSH_AGENT: ssh-agent[{p.pid}] started and bound to {sock}')
+                atexit.register(p.terminate)
+            case _:
+                sock = ssh_agent_cfg
+
+        try:
+            with Client(sock) as client:
+                client.list()
+        except Exception as e:
+            raise AnsibleError(
+                f'Could not communicate with ssh-agent using auth sock {sock}: {e}'
+            )
+
+        os.environ['SSH_AUTH_SOCK'] = os.environ['ANSIBLE_SSH_AGENT'] = sock
 
     @property
     def localhost(self):
