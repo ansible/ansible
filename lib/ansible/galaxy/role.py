@@ -415,7 +415,7 @@ class GalaxyRole(object):
                                 if not is_subpath(abs_path, boundary):
                                     if attr == 'name':
                                         # this member is outside of the role, skip
-                                        continue
+                                        break
                                     raise AnsibleError(f"Invalid {attr} for tarfile member: path {abs_path} is not a subpath of the role {boundary}")
 
                                 if attr == 'name' or '..' not in attr_value:
