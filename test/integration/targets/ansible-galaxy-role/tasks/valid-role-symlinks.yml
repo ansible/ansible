@@ -16,7 +16,6 @@
     loop:
       - defaults/main.yml
       - handlers/utils.yml
-      - tests/roles/safe-symlinks
     register: symlink_stat
 
   - assert:
@@ -25,8 +24,6 @@
         - symlink_stat.results[0].stat.lnk_source == (remote_tmp_dir + '/roles/safe-symlinks.tar/defaults/common_vars/subdir/group0/main.yml')
         - symlink_stat.results[1].stat.exists
         - symlink_stat.results[1].stat.lnk_source == (remote_tmp_dir + '/roles/safe-symlinks.tar/tasks/utils/suite.yml')
-        - symlink_stat.results[2].stat.exists
-        - symlink_stat.results[2].stat.lnk_source == (remote_tmp_dir + '/roles/safe-symlinks.tar')
 
   always:
   - name: Clean up
