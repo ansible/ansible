@@ -1,3 +1,5 @@
 bugfixes:
   - first found lookup has been updated to use the normalized argument parsing (pythonic) matching the documented examples.
   - first found lookup, fixed an issue with subsequent items clobbering information from previous ones.
+  - first_found lookup now always takes into account k=v options
+  - first_found lookup now always returns a full (absolute) and normalized path
