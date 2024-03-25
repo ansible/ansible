@@ -1,0 +1,2 @@
+minor_changes:
+  - async_status now supports check mode, there was never a reason it should not as it does not modify the system.
