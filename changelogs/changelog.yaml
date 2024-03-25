@@ -868,6 +868,21 @@ releases:
     fragments:
     - 2.15.1_summary.yaml
     release_date: '2023-06-20'
+  2.15.10:
+    changes:
+      bugfixes:
+      - ansible-test - The ``libexpat`` package is automatically upgraded during remote
+        bootstrapping to maintain compatibility with newer Python packages.
+      release_summary: '| Release Date: 2024-03-25
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+        '
+    codename: Ten Years Gone
+    fragments:
+    - 2.15.10_summary.yaml
+    - ansible-test-alpine-libexpat.yml
+    release_date: '2024-03-25'
   2.15.10rc1:
     changes:
       bugfixes:
