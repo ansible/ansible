@@ -121,7 +121,7 @@ def main():
         mode=dict(type='str', default='status', choices=['cleanup', 'status']),
         # passed in from the async_status action plugin
         _async_dir=dict(type='path', required=True),
-        )
+        ),
         supports_check_mode=True,
     )
 
