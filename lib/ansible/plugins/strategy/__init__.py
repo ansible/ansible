@@ -1038,10 +1038,6 @@ class StrategyBase:
                 # TODO: Nix msg here? Left for historical reasons, but skip_reason exists now.
                 msg = "end_host conditional evaluated to false, continuing execution for %s" % target_host.name
         elif meta_action == 'end_role':
-            if task._role is None:  # FIXME fail during parsing time?
-                raise AnsibleError("Cannot execute 'end_role' from outside of a role")
-            if isinstance(task, Handler):  # FIXME fail during parsing time?
-                raise AnsibleError("Cannot execute 'end_role' from a handler")
             if task.implicit:
                 role_obj = self._get_cached_role(task, iterator._play)
                 if target_host.name in role_obj._had_task_run:
