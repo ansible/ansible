@@ -5,13 +5,13 @@ ansible-core 2.16 "All My Love" Release Notes
 .. contents:: Topics
 
 
-v2.16.5rc1
-==========
+v2.16.5
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2024-03-18
+| Release Date: 2024-03-25
 | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
 
 
@@ -25,6 +25,7 @@ Bugfixes
 
 - Fix an issue when setting a plugin name from an unsafe source resulted in ``ValueError: unmarshallable object`` (https://github.com/ansible/ansible/issues/82708)
 - Harden python templates for respawn and ansiballz around str literal quoting
+- ansible-test - The ``libexpat`` package is automatically upgraded during remote bootstrapping to maintain compatibility with newer Python packages.
 - template - Fix error when templating an unsafe string which corresponds to an invalid type in Python (https://github.com/ansible/ansible/issues/82600).
 - winrm - does not hang when attempting to get process output when stdin write failed
 
