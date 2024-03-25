@@ -33,7 +33,10 @@ options:
         - V(end_host) (added in Ansible 2.8) is a per-host variation of V(end_play). Causes the play to end for the current host without failing it.
         - V(end_batch) (added in Ansible 2.12) causes the current batch (see C(serial)) to end without failing the host(s).
           Note that with C(serial=0) or undefined this behaves the same as V(end_play).
-        - V(end_role) (added in Ansible?) FIXME
+        - V(end_role) (added in Ansible 2.17) causes the currently executing role to end without failing the host(s).
+          Effectively all tasks from within a role after V(end_role) is executed are ignored. Since handlers live in a global,
+          play scope, all handlers added via the role are unaffected and are still executed if notified. It is an error
+          to call V(end_role) from outside of a role or from a handler.
     choices: [ clear_facts, clear_host_errors, end_host, end_play, flush_handlers, noop, refresh_inventory, reset_connection, end_batch, end_role ]
     required: true
 extends_documentation_fragment:
