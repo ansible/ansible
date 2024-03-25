@@ -370,6 +370,7 @@ import tempfile
 import time
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.file import S_IRWXU_RXG_RXO
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 from ansible.module_utils.common.text.converters import to_native, to_text
@@ -446,7 +447,7 @@ class PolicyRcD(object):
             with open('/usr/sbin/policy-rc.d', 'w') as policy_rc_d:
                 policy_rc_d.write('#!/bin/sh\nexit %d\n' % self.m.params['policy_rc_d'])
 
-            os.chmod('/usr/sbin/policy-rc.d', 0o0755)
+            os.chmod('/usr/sbin/policy-rc.d', S_IRWXU_RXG_RXO)
         except Exception:
             self.m.fail_json(msg="Failed to create or chmod /usr/sbin/policy-rc.d")
 
