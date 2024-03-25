@@ -27,6 +27,7 @@ from ansible.errors import AnsibleError
 from ansible.galaxy import collection, api, dependency_resolution
 from ansible.galaxy.dependency_resolution.dataclasses import Candidate, Requirement
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.file import S_IRWU_RG_RO, S_IRWXU_RXG_RXO
 from ansible.module_utils.common.process import get_bin_path
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
@@ -398,7 +399,7 @@ def test_build_requirement_from_tar_no_manifest(tmp_path_factory):
         b_io = BytesIO(json_data)
         tar_info = tarfile.TarInfo('FILES.json')
         tar_info.size = len(json_data)
-        tar_info.mode = 0o0644
+        tar_info.mode = S_IRWU_RG_RO
         tfile.addfile(tarinfo=tar_info, fileobj=b_io)
 
     concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(test_dir, validate_certs=False)
@@ -422,7 +423,7 @@ def test_build_requirement_from_tar_no_files(tmp_path_factory):
         b_io = BytesIO(json_data)
         tar_info = tarfile.TarInfo('MANIFEST.json')
         tar_info.size = len(json_data)
-        tar_info.mode = 0o0644
+        tar_info.mode = S_IRWU_RG_RO
         tfile.addfile(tarinfo=tar_info, fileobj=b_io)
 
     concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(test_dir, validate_certs=False)
@@ -440,7 +441,7 @@ def test_build_requirement_from_tar_invalid_manifest(tmp_path_factory):
         b_io = BytesIO(json_data)
         tar_info = tarfile.TarInfo('MANIFEST.json')
         tar_info.size = len(json_data)
-        tar_info.mode = 0o0644
+        tar_info.mode = S_IRWU_RG_RO
         tfile.addfile(tarinfo=tar_info, fileobj=b_io)
 
     concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(test_dir, validate_certs=False)
@@ -837,9 +838,9 @@ def test_install_collection(collection_artifact, monkeypatch):
     assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
                             b'runme.sh']
 
-    assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'plugins')).st_mode) == 0o0755
-    assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'README.md')).st_mode) == 0o0644
-    assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'runme.sh')).st_mode) == 0o0755
+    assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'plugins')).st_mode) == S_IRWXU_RXG_RXO
+    assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'README.md')).st_mode) == S_IRWU_RG_RO
+    assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'runme.sh')).st_mode) == S_IRWXU_RXG_RXO
 
     assert mock_display.call_count == 2
     assert mock_display.mock_calls[0][1][0] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" \
