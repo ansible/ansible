@@ -58,3 +58,6 @@ for strategy in linear free; do
   ANSIBLE_STRATEGY=$strategy ansible-playbook end_role.yml "$@"
   ANSIBLE_STRATEGY=$strategy ansible-playbook -i host1,host2 end_role_nested.yml "$@"
 done
+
+[ $(ansible localhost -m meta -a "end_role" 2>&1 | grep -c "ERROR! Cannot execute 'end_role' from outside of a role") -eq 1 ]
+[ $(ansible-playbook end_role_handler_error.yml 2>&1 | grep -c "ERROR! Cannot execute 'end_role' from a handler") -eq 1 ]
