@@ -583,7 +583,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         Returns true if this role has been iterated over completely and
         at least one task was run
         '''
-        # FIXME unused
+        # FIXME unused, deprecate?
         return host.name in self._completed and not self._metadata.allow_duplicates
 
     def compile(self, play, dep_chain=None):
