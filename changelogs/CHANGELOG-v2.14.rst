@@ -5,13 +5,13 @@ ansible-core 2.14 "C'mon Everybody" Release Notes
 .. contents:: Topics
 
 
-v2.14.15rc1
-===========
+v2.14.15
+========
 
 Release Summary
 ---------------
 
-| Release Date: 2024-03-18
+| Release Date: 2024-03-25
 | `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
 
 
@@ -24,6 +24,7 @@ Bugfixes
 --------
 
 - Fix an issue when setting a plugin name from an unsafe source resulted in ``ValueError: unmarshallable object`` (https://github.com/ansible/ansible/issues/82708)
+- ansible-test - The ``libexpat`` package is automatically upgraded during remote bootstrapping to maintain compatibility with newer Python packages.
 
 v2.14.14
 ========
