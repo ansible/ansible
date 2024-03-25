@@ -933,6 +933,21 @@ releases:
     - fix-expect-indefinite-timeout.yml
     - fix-vars-plugins-in-roles.yml
     release_date: '2024-02-19'
+  2.16.5:
+    changes:
+      bugfixes:
+      - ansible-test - The ``libexpat`` package is automatically upgraded during remote
+        bootstrapping to maintain compatibility with newer Python packages.
+      release_summary: '| Release Date: 2024-03-25
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+    codename: All My Love
+    fragments:
+    - 2.16.5_summary.yaml
+    - ansible-test-alpine-libexpat.yml
+    release_date: '2024-03-25'
   2.16.5rc1:
     changes:
       bugfixes:
