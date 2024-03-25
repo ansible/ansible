@@ -50,7 +50,9 @@ class ActionModule(ActionBase):
                     module = C.config.get_config_value('PACKAGE_MANAGER_OVERRIDE', variables=combine_vars(self._task.vars, task_vars.get('delegated_vars', {})))
                     if module is None:
                         dh = '%s' % self._task.delegate_to
-                        module = self._templar.template(f"{{hostvars['{dh}']['ansible_local']['overrides']]['pkg_mgr']|default(hostvars['{dh}']['ansible_facts']['pkg_mgr'])}}")
+                        module = self._templar.template(
+                            f"{{hostvars['{dh}']['ansible_local']['overrides']]['pkg_mgr']|default(hostvars['{dh}']['ansible_facts']['pkg_mgr'])}}"
+                        )
                 else:
                     module = C.config.get_config_value('PACKAGE_MANAGER_OVERRIDE', variables=task_vars)
                     if module is None:
