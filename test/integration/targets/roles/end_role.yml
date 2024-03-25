@@ -1,25 +1,31 @@
 - hosts: localhost
   gather_facts: false
+  pre_tasks:
+    - set_fact:
+        play_checkpoint: 1
+  roles:
+    - end_role_inside
   tasks:
-    # FIXME more tests
-    - import_role:
-        name: end_role_inside
-        allow_duplicates: true
+    - set_fact:
+        play_checkpoint: "{{ play_checkpoint|int + 1 }}"
 
     - import_role:
         name: end_role_inside
         allow_duplicates: true
 
-    - import_role:
+    - set_fact:
+        play_checkpoint: "{{ play_checkpoint|int + 1 }}"
+
+    - include_role:
         name: end_role_inside
         allow_duplicates: false
 
     - set_fact:
-        plays_life_after_end_role: true
+        play_checkpoint: "{{ play_checkpoint|int + 1 }}"
   post_tasks:
     - assert:
         that:
           - role_executed|int == 2
           - after_end_role is undefined
-          - plays_life_after_end_role is defined
+          - play_checkpoint|int == 4
           - role_handler_ran is defined
