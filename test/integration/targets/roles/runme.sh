@@ -54,4 +54,7 @@ ANSIBLE_PRIVATE_ROLE_VARS=1 ansible-playbook privacy.yml -e @vars/privacy_vars.y
 ANSIBLE_PRIVATE_ROLE_VARS=0 ansible-playbook privacy.yml -e @vars/privacy_vars.yml "$@"
 ansible-playbook privacy.yml -e @vars/privacy_vars.yml "$@"
 
-ansible-playbook end_role.yml "$@"
+for strategy in linear free; do
+  ANSIBLE_STRATEGY=$strategy ansible-playbook end_role.yml "$@"
+  ANSIBLE_STRATEGY=$strategy ansible-playbook -i host1,host2 end_role_nested.yml "$@"
+done
