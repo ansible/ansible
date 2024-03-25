@@ -37,6 +37,7 @@ attributes:
         support: none
     check_mode:
         support: full
+        version_added: '2.17'
     diff_mode:
         support: none
     bypass_host_loop:
