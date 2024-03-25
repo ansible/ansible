@@ -29,3 +29,7 @@
           - after_end_role is undefined
           - play_checkpoint|int == 4
           - role_handler_ran is defined
+
+    - name: when running this playbook check this appears on stdout to ensure the above assert wasn't skipped
+      debug:
+        msg: CHECKPOINT
