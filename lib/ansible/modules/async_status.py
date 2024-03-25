@@ -116,12 +116,13 @@ from ansible.module_utils.common.text.converters import to_native
 
 def main():
 
-    module = AnsibleModule(argument_spec=dict(
-        jid=dict(type='str', required=True),
-        mode=dict(type='str', default='status', choices=['cleanup', 'status']),
-        # passed in from the async_status action plugin
-        _async_dir=dict(type='path', required=True),
-        ),
+    module = AnsibleModule(
+        argument_spec=dict(
+            jid=dict(type="str", required=True),
+            mode=dict(type="str", default="status", choices=["cleanup", "status"]),
+            # passed in from the async_status action plugin
+            _async_dir=dict(type="path", required=True),
+         ),
         supports_check_mode=True,
     )
 
