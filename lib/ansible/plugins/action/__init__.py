@@ -102,6 +102,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
+        self._found = {}
+
     @abstractmethod
     def run(self, tmp: str | None = None, task_vars: dict[str, t.Any] | None = None) -> dict[str, t.Any]:
         """ Action Plugins should implement this method to perform their
@@ -254,7 +256,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             return True
         return False
 
-    def _get_module(self, module_name: str) -> PluginLoadContext:
+    def _get_module(self, module_name: str, module_args: dict | None = None) -> PluginLoadContext:
 
         if module_name not in self._found:
             split_module_name = module_name.split('.')
