@@ -87,6 +87,8 @@ class ActionBase(ABC):
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
+        self._found = {}
+
     @abstractmethod
     def run(self, tmp=None, task_vars=None):
         """ Action Plugins should implement this method to perform their
@@ -218,7 +220,7 @@ class ActionBase(ABC):
             return True
         return False
 
-    def _get_module(self, module_name):
+    def _get_module(self, module_name, module_args):
 
         if module_name not in self._found:
 
