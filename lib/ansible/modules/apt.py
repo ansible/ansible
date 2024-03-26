@@ -1254,6 +1254,15 @@ def main():
     )
     module.run_command_environ_update = APT_ENV_VARS
 
+    global APTITUDE_CMD
+    APTITUDE_CMD = module.get_bin_path("aptitude", False)
+    global APT_GET_CMD
+    APT_GET_CMD = module.get_bin_path("apt-get")
+
+    p = module.params
+    install_recommends = p['install_recommends']
+    dpkg_options = expand_dpkg_options(p['dpkg_options'])
+
     if not HAS_PYTHON_APT:
         # This interpreter can't see the apt Python library- we'll do the following to try and fix that:
         # 1) look in common locations for system-owned interpreters that can see it; if we find one, respawn under it
@@ -1292,10 +1301,18 @@ def main():
             module.warn("Auto-installing missing dependency without updating cache: %s" % apt_pkg_name)
         else:
             module.warn("Updating cache and auto-installing missing dependency: %s" % apt_pkg_name)
-            module.run_command(['apt-get', 'update'], check_rc=True)
+            module.run_command([APT_GET_CMD, 'update'], check_rc=True)
 
         # try to install the apt Python binding
-        module.run_command(['apt-get', 'install', '--no-install-recommends', apt_pkg_name, '-y', '-q'], check_rc=True)
+        apt_pkg_cmd = [APT_GET_CMD, 'install', apt_pkg_name, '-y', '-q', dpkg_options]
+
+        if install_recommends is False:
+            apt_pkg_cmd.extend(["-o", "APT::Install-Recommends=no"])
+        elif install_recommends is True:
+            apt_pkg_cmd.extend(["-o", "APT::Install-Recommends=yes"])
+        # install_recommends is None uses the OS default
+
+        module.run_command(apt_pkg_cmd, check_rc=True)
 
         # try again to find the bindings in common places
         interpreter = probe_interpreters_for_module(interpreters, 'apt')
@@ -1308,13 +1325,6 @@ def main():
         else:
             # we've done all we can do; just tell the user it's busted and get out
             module.fail_json(msg="{0} must be installed and visible from {1}.".format(apt_pkg_name, sys.executable))
-
-    global APTITUDE_CMD
-    APTITUDE_CMD = module.get_bin_path("aptitude", False)
-    global APT_GET_CMD
-    APT_GET_CMD = module.get_bin_path("apt-get")
-
-    p = module.params
 
     if p['clean'] is True:
         aptclean_stdout, aptclean_stderr, aptclean_diff = aptclean(module)
@@ -1339,11 +1349,9 @@ def main():
 
     updated_cache = False
     updated_cache_time = 0
-    install_recommends = p['install_recommends']
     allow_unauthenticated = p['allow_unauthenticated']
     allow_downgrade = p['allow_downgrade']
     allow_change_held_packages = p['allow_change_held_packages']
-    dpkg_options = expand_dpkg_options(p['dpkg_options'])
     autoremove = p['autoremove']
     fail_on_autoremove = p['fail_on_autoremove']
     autoclean = p['autoclean']
