@@ -68,7 +68,7 @@ class HostState:
         self.cur_handlers_task = 0
         self.run_state = IteratingStates.SETUP
         self.fail_state = FailedStates.NONE
-        self.pre_flushing_run_state = None
+        self.prior_run_state = None
         self.update_handlers = True
         self.pending_setup = False
         self.tasks_child_state = None
@@ -82,7 +82,7 @@ class HostState:
 
     def __str__(self):
         return ("HOST STATE: block=%d, task=%d, rescue=%d, always=%d, handlers=%d, run_state=%s, fail_state=%s, "
-                "pre_flushing_run_state=%s, update_handlers=%s, pending_setup=%s, "
+                "prior_run_state=%s, update_handlers=%s, pending_setup=%s, "
                 "tasks child state? (%s), rescue child state? (%s), always child state? (%s), "
                 "did rescue? %s, did start at task? %s" % (
                     self.cur_block,
@@ -92,7 +92,7 @@ class HostState:
                     self.cur_handlers_task,
                     self.run_state,
                     self.fail_state,
-                    self.pre_flushing_run_state,
+                    self.prior_run_state,
                     self.update_handlers,
                     self.pending_setup,
                     self.tasks_child_state,
@@ -108,7 +108,7 @@ class HostState:
 
         for attr in ('_blocks',
                      'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task', 'cur_handlers_task',
-                     'run_state', 'fail_state', 'pre_flushing_run_state', 'update_handlers', 'pending_setup',
+                     'run_state', 'fail_state', 'prior_run_state', 'update_handlers', 'pending_setup',
                      'tasks_child_state', 'rescue_child_state', 'always_child_state'):
             if getattr(self, attr) != getattr(other, attr):
                 return False
@@ -129,7 +129,7 @@ class HostState:
         new_state.cur_handlers_task = self.cur_handlers_task
         new_state.run_state = self.run_state
         new_state.fail_state = self.fail_state
-        new_state.pre_flushing_run_state = self.pre_flushing_run_state
+        new_state.prior_run_state = self.prior_run_state
         new_state.update_handlers = self.update_handlers
         new_state.pending_setup = self.pending_setup
         new_state.did_rescue = self.did_rescue
@@ -435,7 +435,7 @@ class PlayIterator:
                     except IndexError:
                         task = None
                         state.cur_handlers_task = 0
-                        state.run_state = state.pre_flushing_run_state
+                        state.run_state = state.prior_run_state
                         state.update_handlers = True
                         break
                     else:
@@ -444,7 +444,7 @@ class PlayIterator:
                             return state, task
 
             elif state.run_state == IteratingStates.SKIP_ROLE:
-                state.run_state = state.pre_flushing_run_state
+                state.run_state = state.prior_run_state
                 while True:
                     state, task = self._get_next_task_from_state(state, host=host)
                     if task.implicit and task.args.get("_raw_params") == "end_role":
@@ -504,7 +504,7 @@ class PlayIterator:
         if s.run_state == IteratingStates.HANDLERS:
             # we are failing `meta: flush_handlers`, so just reset the state to whatever
             # it was before and let `_set_failed_state` figure out the next state
-            s.run_state = s.pre_flushing_run_state
+            s.run_state = s.prior_run_state
             s.update_handlers = True
         s = self._set_failed_state(s)
         display.debug("^ failed state is now: %s" % s)
@@ -637,8 +637,7 @@ class PlayIterator:
             raise AnsibleAssertionError('Expected run_state to be a IteratingStates but was %s' % (type(run_state)))
         host_state = self._host_states[hostname]
         if run_state in (IteratingStates.HANDLERS, IteratingStates.SKIP_ROLE):
-            # FIXME abusing pre_flushing_run_state for SKIP_ROLE
-            host_state.pre_flushing_run_state = host_state.run_state
+            host_state.prior_run_state = host_state.run_state
         host_state.run_state = run_state
 
     def set_fail_state_for_host(self, hostname: str, fail_state: FailedStates) -> None:
