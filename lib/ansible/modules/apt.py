@@ -1305,10 +1305,12 @@ def main():
 
         # try to install the apt Python binding
         apt_pkg_cmd = [APT_GET_CMD, 'install', apt_pkg_name, '-y', '-q', dpkg_options]
-        if install_recommends:
-            apt_pkg_cmd.append('--install-recommends')
-        else:
-            apt_pkg_cmd.append('--no-install-recommends')
+
+        if install_recommends is False:
+            apt_pkg_cmd.extend(["-o", "APT::Install-Recommends=no"])
+        elif install_recommends is True:
+            apt_pkg_cmd.extend(["-o", "APT::Install-Recommends=yes"])
+        # install_recommends is None uses the OS default
 
         module.run_command(apt_pkg_cmd, check_rc=True)
 
