@@ -316,6 +316,7 @@
     parallel: true
   timeout: 60
   check_mode: true
+  when: "ansible_facts['os_distribution'] != 'Darwin'"
   vars:
     ansible_facts_modules:
       - setup
