@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix condition for unquoting configuration strings from ini files (https://github.com/ansible/ansible/issues/82387).
