@@ -435,7 +435,7 @@ class PlayIterator:
                     except IndexError:
                         task = None
                         state.cur_handlers_task = 0
-                        state.run_state = state.prior_run_state
+                        state.run_state, state.prior_run_state = state.prior_run_state, None
                         state.update_handlers = True
                         break
                     else:
@@ -444,7 +444,7 @@ class PlayIterator:
                             return state, task
 
             elif state.run_state == IteratingStates.SKIP_ROLE:
-                state.run_state = state.prior_run_state
+                state.run_state, state.prior_run_state = state.prior_run_state, None
                 while True:
                     state, task = self._get_next_task_from_state(state, host=host)
                     if task.implicit and task.args.get("_raw_params") == "end_role":
@@ -504,7 +504,7 @@ class PlayIterator:
         if s.run_state == IteratingStates.HANDLERS:
             # we are failing `meta: flush_handlers`, so just reset the state to whatever
             # it was before and let `_set_failed_state` figure out the next state
-            s.run_state = s.prior_run_state
+            s.run_state, s.prior_run_state = s.prior_run_state, None
             s.update_handlers = True
         s = self._set_failed_state(s)
         display.debug("^ failed state is now: %s" % s)
