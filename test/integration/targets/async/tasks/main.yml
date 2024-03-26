@@ -322,3 +322,18 @@
       - setup
       - package_facts
       - service_facts
+
+- name: test async in check mode
+  check_mode: true
+  block:
+    - setup:
+      async: 60
+      poll: 0
+      register: gf_async
+    - async_status:
+        jid: "{{ gf_async['ansible_job_id'] }}"
+      register: gf_done
+      until: gf_done is finished
+      retries: 100
+      delay: 10
+      timeout: 30
