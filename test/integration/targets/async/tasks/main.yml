@@ -310,3 +310,14 @@
 - assert:
     that:
     - '"ASYNC OK on localhost" in check_task_disabled_output.stdout'
+
+- name: test 'hidden' async, gather_facts does internal on parallel true. Ensure it won't freeze in check_mode due to async_status not supporting it.
+  gather_facts:
+    parallel: true
+  timeout: 60
+  check_mode: true
+  vars:
+    ansible_facts_modules:
+      - setup
+      - package_facts
+      - service_facts
