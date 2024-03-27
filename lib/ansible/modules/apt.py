@@ -484,7 +484,8 @@ class PolicyRcD(object):
 def package_split(pkgspec):
     parts = re.split(r'(>?=)', pkgspec, 1)
     if len(parts) > 1:
-        return parts
+        # Remove extraneous single or double quotes from the string before returning
+        return [i.strip('\'"') for i in parts]
     return parts[0], None, None
 
 

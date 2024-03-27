@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import collections
 
-from ansible.modules.apt import expand_pkgspec_from_fnmatches
+from ansible.modules.apt import expand_pkgspec_from_fnmatches, package_split
 import pytest
 
 FakePackage = collections.namedtuple("Package", ("name",))
@@ -43,3 +43,33 @@ fake_cache = [
 def test_expand_pkgspec_from_fnmatches(test_input, expected):
     """Test positive cases of ``expand_pkgspec_from_fnmatches``."""
     assert expand_pkgspec_from_fnmatches(None, test_input, fake_cache) == expected
+
+
+@pytest.mark.parametrize(
+    ("test_input", "expected"),
+    [
+        pytest.param(
+            "apt",
+            ("apt", None, None),
+            id="trivial",
+        ),
+        pytest.param(
+            "base-files>=2.1.12",
+            ['base-files', '>=', '2.1.12'],
+            id="version-gt",
+        ),
+        pytest.param(
+            "docker-ce-cli='5:25.0.3-1~ubuntu.22.04~jammy'",
+            ['docker-ce-cli', '=', '5:25.0.3-1~ubuntu.22.04~jammy'],
+            id="with-extraneous-single-quote",
+        ),
+        pytest.param(
+            'docker-ce-cli="5:25.0.3-1~ubuntu.22.04~jammy"',
+            ['docker-ce-cli', '=', '5:25.0.3-1~ubuntu.22.04~jammy'],
+            id="with-extraneous-double-quote",
+        ),
+    ],
+)
+def test_package_split(test_input, expected):
+    """Test positive cases of ``package_split``."""
+    assert package_split(test_input) == expected
