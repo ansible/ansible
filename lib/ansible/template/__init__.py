@@ -50,7 +50,8 @@ from ansible.module_utils.common.collections import is_sequence
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.native_helpers import ansible_native_concat, ansible_eval_concat, ansible_concat
 from ansible.template.template import AnsibleJ2Template
-from ansible.template.vars import AnsibleJ2Vars
+from ansible.template.vars import AnsibleJ2Vars, AutoVars, is_unsafe
+from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.native_jinja import NativeJinjaText
@@ -352,27 +353,8 @@ class AnsibleContext(Context):
         super(AnsibleContext, self).__init__(*args, **kwargs)
         self.unsafe = False
 
-    def _is_unsafe(self, val):
-        '''
-        Our helper function, which will also recursively check dict and
-        list entries due to the fact that they may be repr'd and contain
-        a key or value which contains jinja2 syntax and would otherwise
-        lose the AnsibleUnsafe value.
-        '''
-        if isinstance(val, dict):
-            for key in val.keys():
-                if self._is_unsafe(val[key]):
-                    return True
-        elif isinstance(val, list):
-            for item in val:
-                if self._is_unsafe(item):
-                    return True
-        elif getattr(val, '__UNSAFE__', False) is True:
-            return True
-        return False
-
     def _update_unsafe(self, val):
-        if val is not None and not self.unsafe and self._is_unsafe(val):
+        if val is not None and not self.unsafe and is_unsafe(val):
             self.unsafe = True
 
     def resolve_or_missing(self, key):
@@ -583,6 +565,7 @@ class Templar:
         self.environment.globals['query'] = self.environment.globals['q'] = self._query_lookup
         self.environment.globals['now'] = self._now_datetime
         self.environment.globals['undef'] = self._make_undefined
+        self.environment.globals['vars'] = AutoVars(self)
 
         # the current rendering context under which the templar class is working
         self.cur_context = None
@@ -956,7 +939,7 @@ class Templar:
             if disable_lookups:
                 t.globals['query'] = t.globals['q'] = t.globals['lookup'] = self._fail_lookup
 
-            jvars = AnsibleJ2Vars(self, t.globals)
+            jvars = AnsibleJ2Vars(self, t.globals, {'vars': AutoVars(self)})
 
             # In case this is a recursive call to do_template we need to
             # save/restore cur_context to prevent overriding __UNSAFE__.

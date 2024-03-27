@@ -8,9 +8,51 @@ from jinja2.utils import missing
 
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.common.text.converters import to_native
+from ansible.module_utils.common._collections_compat import Mapping, Sequence
+
+STATIC_VARS = [
+    'ansible_version',
+    'ansible_play_hosts',
+    'ansible_dependent_role_names',
+    'ansible_play_role_names',
+    'ansible_role_names',
+    'inventory_hostname',
+    'inventory_hostname_short',
+    'inventory_file',
+    'inventory_dir',
+    'groups',
+    'group_names',
+    'omit',
+    'playbook_dir',
+    'play_hosts',
+    'role_names',
+    'ungrouped',
+]
+
+__all__ = ['AnsibleJ2Vars', 'AutoVars', 'is_unsafe']
 
 
-__all__ = ['AnsibleJ2Vars']
+def is_unsafe(val):
+    '''
+    Our helper function, which will also recursively check dict and
+    list entries due to the fact that they may be repr'd and contain
+    a key or value which contains jinja2 syntax and would otherwise
+    lose the AnsibleUnsafe value.
+    '''
+
+    if isinstance(val, Mapping):
+        for key in val.keys():
+            if is_unsafe(val[key]):
+                return True
+    elif isinstance(val, Sequence):
+        for item in val:
+            if is_unsafe(item):
+                return True
+    elif getattr(val, '__UNSAFE__', False) is True:
+        # TODO: should we change to 'unsafe' class check?
+        return True
+
+    return False
 
 
 def _process_locals(_l):
@@ -37,8 +79,10 @@ class AnsibleJ2Vars(ChainMap):
     def __getitem__(self, varname):
         variable = super().__getitem__(varname)
 
+        # HostVars and AutoVars are special self templting returns.
+        # this is how 'vars' and 'hostvars' magic variables are implemented.
         from ansible.vars.hostvars import HostVars
-        if (varname == "vars" and isinstance(variable, dict)) or isinstance(variable, HostVars) or hasattr(variable, '__UNSAFE__'):
+        if (varname == "vars" and isinstance(variable, dict)) or isinstance(variable, (AutoVars, HostVars)) or hasattr(variable, '__UNSAFE__'):
             return variable
 
         try:
@@ -75,3 +119,50 @@ class AnsibleJ2Vars(ChainMap):
         new_locals = current_locals | locals
 
         return AnsibleJ2Vars(self._templar, current_globals, locals=new_locals)
+
+
+class AutoVars(Mapping):
+    ''' A special view of template vars on demand. '''
+
+    def __init__(self, templar, myvars=None):
+
+        self._t = templar
+
+        # this allows for vars that are part of this object to be
+        # resolved even if they depend on vars not contained within.
+        if myvars is None:
+            self._vars = self._t._available_variables
+        else:
+            self._vars = myvars
+
+    def __getitem__(self, var):
+        from ansible.vars.hostvars import HostVars
+        if is_unsafe(self._vars[var]) or isinstance(self._vars[var], (HostVars, AnsibleJ2Vars, AutoVars)):
+            res = self._vars[var]
+        else:
+            res = self._t.template(self._vars[var], fail_on_undefined=False, static_vars=STATIC_VARS)
+        return res
+
+    def __contains__(self, var):
+        return (var in self._vars)
+
+    def __iter__(self):
+        for var in self._vars.keys():
+            yield self.__getitem__(var)
+
+    def __len__(self):
+        return len(self._vars.keys())
+
+    def __repr__(self):
+        return repr(self.__iter__())
+
+    def __readonly__(self, *args, **kwargs):
+        raise RuntimeError("Cannot modify this variable, it is read only.")
+
+    __setitem__ = __readonly__
+    __delitem__ = __readonly__
+    pop = __readonly__
+    popitem = __readonly__
+    clear = __readonly__
+    update = __readonly__
+    setdefault = __readonly__
