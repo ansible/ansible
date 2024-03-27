@@ -1224,14 +1224,11 @@ class Connection(ConnectionBase):
 
         # Use the transfer_method option if set
         ssh_transfer_method = self.get_option('ssh_transfer_method')
-        if ssh_transfer_method is None:
-            ssh_transfer_method = 'smart'
 
-        if ssh_transfer_method is not None:
-            if ssh_transfer_method == 'smart':
-                methods = smart_methods
-            else:
-                methods = [ssh_transfer_method]
+        if ssh_transfer_method == 'smart':
+            methods = smart_methods
+        else:
+            methods = [ssh_transfer_method]
 
         for method in methods:
             returncode = stdout = stderr = None
