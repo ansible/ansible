@@ -328,6 +328,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._bare_run.return_value = (256, 'stdout', 'some errors')
         self.assertRaises(AnsibleError, conn.fetch_file, '/path/to/bad/file', '/remote/path/to/file')
 
+
 class MockSelector(object):
     def __init__(self):
         self.files_watched = 0
