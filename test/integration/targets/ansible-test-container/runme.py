@@ -23,7 +23,8 @@ import time
 import typing as t
 
 UNPRIVILEGED_USER_NAME = 'ansible-test'
-CGROUP_SYSTEMD = pathlib.Path('/sys/fs/cgroup/systemd')
+CGROUP_ROOT = pathlib.Path('/sys/fs/cgroup')
+CGROUP_SYSTEMD = CGROUP_ROOT / 'systemd'
 LOG_PATH = pathlib.Path('/tmp/results')
 
 # The value of /proc/*/loginuid when it is not set.
@@ -127,6 +128,16 @@ def main() -> None:
         sys.exit(1)
 
 
+def get_container_completion_entries() -> dict[str, dict[str, str]]:
+    """Parse and return the ansible-test container completion entries."""
+    completion_lines = pathlib.Path(os.environ['PYTHONPATH'], '../test/lib/ansible_test/_data/completion/docker.txt').read_text().splitlines()
+
+    # TODO: consider including testing for the collection default image
+    entries = {name: value for name, value in (parse_completion_entry(line) for line in completion_lines) if name != 'default'}
+
+    return entries
+
+
 def get_test_scenarios() -> list[TestScenario]:
     """Generate and return a list of test scenarios."""
 
@@ -136,10 +147,7 @@ def get_test_scenarios() -> list[TestScenario]:
     if not available_engines:
         raise ApplicationError(f'No supported container engines found: {", ".join(supported_engines)}')
 
-    completion_lines = pathlib.Path(os.environ['PYTHONPATH'], '../test/lib/ansible_test/_data/completion/docker.txt').read_text().splitlines()
-
-    # TODO: consider including testing for the collection default image
-    entries = {name: value for name, value in (parse_completion_entry(line) for line in completion_lines) if name != 'default'}
+    entries = get_container_completion_entries()
 
     unprivileged_user = User.get(UNPRIVILEGED_USER_NAME)
 
@@ -160,7 +168,6 @@ def get_test_scenarios() -> list[TestScenario]:
         for engine in available_engines:
             # TODO: figure out how to get tests passing using docker without disabling selinux
             disable_selinux = os_release.id == 'fedora' and engine == 'docker' and cgroup != 'none'
-            expose_cgroup_v1 = cgroup == 'v1-only' and get_docker_info(engine).cgroup_version != 1
             debug_systemd = cgroup != 'none'
 
             # The sleep+pkill used to support the cgroup probe causes problems with the centos6 container.
@@ -173,8 +180,7 @@ def get_test_scenarios() -> list[TestScenario]:
             # See: https://access.redhat.com/solutions/6816771
             enable_sha1 = os_release.id == 'rhel' and os_release.version_id.startswith('9.') and container_name == 'centos6'
 
-            if cgroup != 'none' and get_docker_info(engine).cgroup_version == 1 and not have_cgroup_systemd():
-                expose_cgroup_v1 = True  # the host uses cgroup v1 but there is no systemd cgroup and the container requires cgroup support
+            cgroup_version = get_docker_info(engine).cgroup_version
 
             user_scenarios = [
                 # TODO: test rootless docker
@@ -193,6 +199,20 @@ def get_test_scenarios() -> list[TestScenario]:
                     user_scenarios.append(UserScenario())
 
             for user_scenario in user_scenarios:
+                expose_cgroup_version: int | None = None  # by default the host is assumed to provide sufficient cgroup support for the container and scenario
+
+                if cgroup == 'v1-only' and cgroup_version != 1:
+                    expose_cgroup_version = 1  # the container requires cgroup v1 support and the host does not use cgroup v1
+                elif cgroup != 'none' and not have_systemd():
+                    # the container requires cgroup support and the host does not use systemd
+                    if cgroup_version == 1:
+                        expose_cgroup_version = 1  # cgroup v1 mount required
+                    elif cgroup_version == 2 and engine == 'podman' and user_scenario.actual != ROOT_USER:
+                        # Running a systemd container on a non-systemd host with cgroup v2 fails for rootless podman.
+                        # It may be possible to support this scenario, but the necessary configuration to do so is unknown.
+                        display.warning(f'Skipping testing of {container_name!r} with rootless podman because the host uses cgroup v2 without systemd.')
+                        continue
+
                 scenarios.append(
                     TestScenario(
                         user_scenario=user_scenario,
@@ -200,7 +220,7 @@ def get_test_scenarios() -> list[TestScenario]:
                         container_name=container_name,
                         image=image,
                         disable_selinux=disable_selinux,
-                        expose_cgroup_v1=expose_cgroup_v1,
+                        expose_cgroup_version=expose_cgroup_version,
                         enable_sha1=enable_sha1,
                         debug_systemd=debug_systemd,
                         probe_cgroups=probe_cgroups,
@@ -226,16 +246,19 @@ def run_test(scenario: TestScenario) -> TestResult:
     if scenario.probe_cgroups:
         target_only_options = ['--dev-probe-cgroups', str(LOG_PATH)]
 
+    entries = get_container_completion_entries()
+    alpine_container = [name for name in entries if name.startswith('alpine')][0]
+
     commands = [
         # The cgroup probe is only performed for the first test of the target.
         # There's no need to repeat the probe again for the same target.
         # The controller will be tested separately as a target.
         # This ensures that both the probe and no-probe code paths are functional.
         [*integration, *integration_options, *target_only_options],
-        # For the split test we'll use alpine3 as the controller. There are two reasons for this:
+        # For the split test we'll use Alpine Linux as the controller. There are two reasons for this:
         # 1) It doesn't require the cgroup v1 hack, so we can test a target that doesn't need that.
         # 2) It doesn't require disabling selinux, so we can test a target that doesn't need that.
-        [*integration, '--controller', 'docker:alpine3', *integration_options],
+        [*integration, '--controller', f'docker:{alpine_container}', *integration_options],
     ]
 
     common_env: dict[str, str] = {}
@@ -282,7 +305,7 @@ def run_test(scenario: TestScenario) -> TestResult:
 
     message = ''
 
-    if scenario.expose_cgroup_v1:
+    if scenario.expose_cgroup_version == 1:
         prepare_cgroup_systemd(scenario.user_scenario.actual.name, scenario.engine)
 
     try:
@@ -307,7 +330,7 @@ def run_test(scenario: TestScenario) -> TestResult:
         if scenario.disable_selinux:
             run_command('setenforce', 'enforcing')
 
-        if scenario.expose_cgroup_v1:
+        if scenario.expose_cgroup_version == 1:
             dirs = remove_cgroup_systemd()
         else:
             dirs = list_group_systemd()
@@ -398,9 +421,9 @@ def cleanup_podman() -> tuple[str, ...]:
     return tuple(sorted(set(cleanup)))
 
 
-def have_cgroup_systemd() -> bool:
-    """Return True if the container host has a systemd cgroup."""
-    return pathlib.Path(CGROUP_SYSTEMD).is_dir()
+def have_systemd() -> bool:
+    """Return True if the host uses systemd."""
+    return pathlib.Path('/run/systemd/system').is_dir()
 
 
 def prepare_cgroup_systemd(username: str, engine: str) -> None:
@@ -556,7 +579,7 @@ class TestScenario:
     container_name: str
     image: str
     disable_selinux: bool
-    expose_cgroup_v1: bool
+    expose_cgroup_version: int | None
     enable_sha1: bool
     debug_systemd: bool
     probe_cgroups: bool
@@ -574,8 +597,8 @@ class TestScenario:
         if self.disable_selinux:
             tags.append('selinux: permissive')
 
-        if self.expose_cgroup_v1:
-            tags.append('cgroup: v1')
+        if self.expose_cgroup_version is not None:
+            tags.append(f'cgroup: {self.expose_cgroup_version}')
 
         if self.enable_sha1:
             tags.append('sha1: enabled')
@@ -1005,7 +1028,7 @@ class AptBootstrapper(Bootstrapper):
     @classmethod
     def install_podman(cls) -> bool:
         """Return True if podman will be installed."""
-        return not (os_release.id == 'ubuntu' and os_release.version_id == '20.04')
+        return not (os_release.id == 'ubuntu' and os_release.version_id in {'20.04', '22.04'})
 
     @classmethod
     def install_docker(cls) -> bool:
@@ -1059,17 +1082,22 @@ class ApkBootstrapper(Bootstrapper):
     def run(cls) -> None:
         """Run the bootstrapper."""
         # The `openssl` package is used to generate hashed passwords.
-        # crun added as podman won't install it as dep if runc is present
-        # but we don't want runc as it fails
-        # The edge `crun` package installed below requires ip6tables, and in
-        # edge, the `iptables` package includes `ip6tables`, but in 3.18 they
-        # are separate. Remove `ip6tables` once we update to 3.19.
-        packages = ['docker', 'podman', 'openssl', 'crun', 'ip6tables']
+        # The `crun` package must be explicitly installed since podman won't install it as dep if `runc` is present.
+        packages = ['docker', 'podman', 'openssl', 'crun']
+
+        if os_release.version_id.startswith('3.18.'):
+            # The 3.19 `crun` package installed below requires `ip6tables`, but depends on the `iptables` package.
+            # In 3.19, the `iptables` package includes `ip6tables`, but in 3.18 they are separate packages.
+            # Remove once 3.18 is no longer tested.
+            packages.append('ip6tables')
 
         run_command('apk', 'add', *packages)
-        # 3.18 only contains crun 1.8.4, to get 1.9.2 to resolve the run/shm issue, install crun from edge
-        # Remove once we update to 3.19
-        run_command('apk', 'upgrade', '-U', '--repository=http://dl-cdn.alpinelinux.org/alpine/edge/community', 'crun')
+
+        if os_release.version_id.startswith('3.18.'):
+            # 3.18 only contains `crun` 1.8.4, to get a newer version that resolves the run/shm issue, install `crun` from 3.19.
+            # Remove once 3.18 is no longer tested.
+            run_command('apk', 'upgrade', '-U', '--repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/community', 'crun')
+
         run_command('service', 'docker', 'start')
         run_command('modprobe', 'tun')
 

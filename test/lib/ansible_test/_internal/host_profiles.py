@@ -958,7 +958,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         """Perform out-of-band setup before delegation."""
         bootstrapper = BootstrapDocker(
             controller=self.controller,
-            python_versions=[self.python.version],
+            python_interpreters={self.python.version: self.python.path},
             ssh_key=SshKey(self.args),
         )
 
@@ -1214,8 +1214,9 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
     def configure(self) -> None:
         """Perform in-band configuration. Executed before delegation for the controller and after delegation for targets."""
         # a target uses a single python version, but a controller may include additional versions for targets running on the controller
-        python_versions = [self.python.version] + [target.python.version for target in self.targets if isinstance(target, ControllerConfig)]
-        python_versions = sorted_versions(list(set(python_versions)))
+        python_interpreters = {self.python.version: self.python.path}
+        python_interpreters.update({target.python.version: target.python.path for target in self.targets if isinstance(target, ControllerConfig)})
+        python_interpreters = {version: python_interpreters[version] for version in sorted_versions(list(python_interpreters.keys()))}
 
         core_ci = self.wait_for_instance()
         pwd = self.wait_until_ready()
@@ -1226,7 +1227,7 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
             controller=self.controller,
             platform=self.config.platform,
             platform_version=self.config.version,
-            python_versions=python_versions,
+            python_interpreters=python_interpreters,
             ssh_key=core_ci.ssh_key,
         )
 

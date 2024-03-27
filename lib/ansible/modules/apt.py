@@ -213,6 +213,9 @@ notes:
    - When used with a C(loop:) each package will be processed individually, it is much more efficient to pass the list directly to the O(name) option.
    - When O(default_release) is used, an implicit priority of 990 is used. This is the same behavior as C(apt-get -t).
    - When an exact version is specified, an implicit priority of 1001 is used.
+   - If the interpreter can't import ``python-apt``/``python3-apt`` the module will check for it in system-owned interpreters as well.
+     If the dependency can't be found, the module will attempt to install it.
+     If the dependency is found or installed, the module will be respawned under the correct interpreter.
 '''
 
 EXAMPLES = '''
@@ -321,7 +324,7 @@ EXAMPLES = '''
     purge: true
 
 - name: Run the equivalent of "apt-get clean" as a separate step
-  apt:
+  ansible.builtin.apt:
     clean: yes
 '''
 
@@ -369,10 +372,11 @@ import tempfile
 import time
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.file import S_IRWXU_RXG_RXO
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 from ansible.module_utils.common.text.converters import to_native, to_text
-from ansible.module_utils.six import PY3, string_types
+from ansible.module_utils.six import string_types
 from ansible.module_utils.urls import fetch_file
 
 DPKG_OPTIONS = 'force-confdef,force-confold'
@@ -445,7 +449,7 @@ class PolicyRcD(object):
             with open('/usr/sbin/policy-rc.d', 'w') as policy_rc_d:
                 policy_rc_d.write('#!/bin/sh\nexit %d\n' % self.m.params['policy_rc_d'])
 
-            os.chmod('/usr/sbin/policy-rc.d', 0o0755)
+            os.chmod('/usr/sbin/policy-rc.d', S_IRWXU_RXG_RXO)
         except Exception:
             self.m.fail_json(msg="Failed to create or chmod /usr/sbin/policy-rc.d")
 
@@ -882,6 +886,11 @@ def install_deb(
         except Exception as e:
             m.fail_json(msg="Unable to install package: %s" % to_native(e))
 
+        # Install 'Recommends' of this deb file
+        if install_recommends:
+            pkg_recommends = get_field_of_deb(m, deb_file, "Recommends")
+            deps_to_install.extend([pkg_name.strip() for pkg_name in pkg_recommends.split()])
+
         # and add this deb to the list of packages to install
         pkgs_to_install.append(deb_file)
 
@@ -1245,6 +1254,15 @@ def main():
     )
     module.run_command_environ_update = APT_ENV_VARS
 
+    global APTITUDE_CMD
+    APTITUDE_CMD = module.get_bin_path("aptitude", False)
+    global APT_GET_CMD
+    APT_GET_CMD = module.get_bin_path("apt-get")
+
+    p = module.params
+    install_recommends = p['install_recommends']
+    dpkg_options = expand_dpkg_options(p['dpkg_options'])
+
     if not HAS_PYTHON_APT:
         # This interpreter can't see the apt Python library- we'll do the following to try and fix that:
         # 1) look in common locations for system-owned interpreters that can see it; if we find one, respawn under it
@@ -1257,13 +1275,13 @@ def main():
         #    made any more complex than it already is to try and cover more, eg, custom interpreters taking over
         #    system locations)
 
-        apt_pkg_name = 'python3-apt' if PY3 else 'python-apt'
+        apt_pkg_name = 'python3-apt'
 
         if has_respawned():
             # this shouldn't be possible; short-circuit early if it happens...
             module.fail_json(msg="{0} must be installed and visible from {1}.".format(apt_pkg_name, sys.executable))
 
-        interpreters = ['/usr/bin/python3', '/usr/bin/python2', '/usr/bin/python']
+        interpreters = ['/usr/bin/python3', '/usr/bin/python']
 
         interpreter = probe_interpreters_for_module(interpreters, 'apt')
 
@@ -1283,10 +1301,18 @@ def main():
             module.warn("Auto-installing missing dependency without updating cache: %s" % apt_pkg_name)
         else:
             module.warn("Updating cache and auto-installing missing dependency: %s" % apt_pkg_name)
-            module.run_command(['apt-get', 'update'], check_rc=True)
+            module.run_command([APT_GET_CMD, 'update'], check_rc=True)
 
         # try to install the apt Python binding
-        module.run_command(['apt-get', 'install', '--no-install-recommends', apt_pkg_name, '-y', '-q'], check_rc=True)
+        apt_pkg_cmd = [APT_GET_CMD, 'install', apt_pkg_name, '-y', '-q', dpkg_options]
+
+        if install_recommends is False:
+            apt_pkg_cmd.extend(["-o", "APT::Install-Recommends=no"])
+        elif install_recommends is True:
+            apt_pkg_cmd.extend(["-o", "APT::Install-Recommends=yes"])
+        # install_recommends is None uses the OS default
+
+        module.run_command(apt_pkg_cmd, check_rc=True)
 
         # try again to find the bindings in common places
         interpreter = probe_interpreters_for_module(interpreters, 'apt')
@@ -1300,18 +1326,11 @@ def main():
             # we've done all we can do; just tell the user it's busted and get out
             module.fail_json(msg="{0} must be installed and visible from {1}.".format(apt_pkg_name, sys.executable))
 
-    global APTITUDE_CMD
-    APTITUDE_CMD = module.get_bin_path("aptitude", False)
-    global APT_GET_CMD
-    APT_GET_CMD = module.get_bin_path("apt-get")
-
-    p = module.params
-
     if p['clean'] is True:
         aptclean_stdout, aptclean_stderr, aptclean_diff = aptclean(module)
         # If there is nothing else to do exit. This will set state as
         #  changed based on if the cache was updated.
-        if not p['package'] and not p['upgrade'] and not p['deb']:
+        if not p['package'] and p['upgrade'] == 'no' and not p['deb']:
             module.exit_json(
                 changed=True,
                 msg=aptclean_stdout,
@@ -1330,11 +1349,9 @@ def main():
 
     updated_cache = False
     updated_cache_time = 0
-    install_recommends = p['install_recommends']
     allow_unauthenticated = p['allow_unauthenticated']
     allow_downgrade = p['allow_downgrade']
     allow_change_held_packages = p['allow_change_held_packages']
-    dpkg_options = expand_dpkg_options(p['dpkg_options'])
     autoremove = p['autoremove']
     fail_on_autoremove = p['fail_on_autoremove']
     autoclean = p['autoclean']

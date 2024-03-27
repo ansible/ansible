@@ -2,6 +2,12 @@
   gather_facts: no
   environment:
     ANSIBLE_LIBRARY: "{{ playbook_dir }}/library"
+    ANSIBLE_NOCOLOR: 1
+    ANSIBLE_DEPRECATION_WARNINGS: 1
+  vars:
+    # avoid header that has full path and won't work across random paths for tests
+    actual_output_clean: '{{ actual_output.splitlines()[1:] }}'
+    expected_output_clean: '{{ expected_output.splitlines()[1:] }}'
   tasks:
     - name: module with missing description return docs
       command: ansible-doc test_docs_missing_description
@@ -16,34 +22,32 @@
             in result.stderr
 
     - name: module with suboptions (avoid first line as it has full path)
-      shell: ansible-doc test_docs_suboptions| tail -n +2
+      shell: ansible-doc test_docs_suboptions| tail -n +3
       register: result
       ignore_errors: true
 
     - set_fact:
-        actual_output: >-
-          {{ result.stdout | regex_replace('^(> [A-Z_]+ +\().+library/([a-z_]+.py)\)$', '\1library/\2)', multiline=true) }}
+        actual_output: "{{ result.stdout }}"
         expected_output: "{{ lookup('file', 'test_docs_suboptions.output') }}"
 
     - assert:
         that:
           - result is succeeded
-          - actual_output == expected_output
+          - actual_output_clean == expected_output_clean
 
     - name: module with return docs
-      shell: ansible-doc test_docs_returns| tail -n +2
+      shell: ansible-doc test_docs_returns| tail -n +3
       register: result
       ignore_errors: true
 
     - set_fact:
-        actual_output: >-
-          {{ result.stdout | regex_replace('^(> [A-Z_]+ +\().+library/([a-z_]+.py)\)$', '\1library/\2)', multiline=true) }}
+        actual_output: "{{ result.stdout }}"
         expected_output: "{{ lookup('file', 'test_docs_returns.output') }}"
 
     - assert:
         that:
           - result is succeeded
-          - actual_output == expected_output
+          - actual_output_clean == expected_output_clean
 
     - name: module with broken return docs
       command: ansible-doc test_docs_returns_broken
@@ -68,7 +72,7 @@
     - assert:
         that:
           - '"WARNING" not in result.stderr'
-          - '"TEST_DOCS " in result.stdout'
+          - '"test_docs" in result.stdout'
           - '"AUTHOR: Ansible Core Team" in result.stdout'
 
     - name: documented module without metadata
@@ -77,7 +81,7 @@
     - assert:
         that:
           - '"WARNING" not in result.stderr'
-          - '"TEST_DOCS_NO_METADATA " in result.stdout'
+          - '"test_docs_no_metadata " in result.stdout'
           - '"AUTHOR: Ansible Core Team" in result.stdout'
 
     - name: documented module with no status in metadata
@@ -86,7 +90,7 @@
     - assert:
         that:
           - '"WARNING" not in result.stderr'
-          - '"TEST_DOCS_NO_STATUS " in result.stdout'
+          - '"test_docs_no_status " in result.stdout'
           - '"AUTHOR: Ansible Core Team" in result.stdout'
 
     - name: documented module with non-iterable status in metadata
@@ -95,7 +99,7 @@
     - assert:
         that:
           - '"WARNING" not in result.stderr'
-          - '"TEST_DOCS_NON_ITERABLE_STATUS " in result.stdout'
+          - '"test_docs_non_iterable_status " in result.stdout'
           - '"AUTHOR: Ansible Core Team" in result.stdout'
 
     - name: documented module with removed status
@@ -105,7 +109,7 @@
     - assert:
         that:
           - '"WARNING" not in result.stderr'
-          - '"TEST_DOCS_REMOVED_STATUS " in result.stdout'
+          - '"test_docs_removed_status " in result.stdout'
           - '"AUTHOR: Ansible Core Team" in result.stdout'
 
     - name: empty module
@@ -138,15 +142,18 @@
           - '"Alternatives: new_module" in result.stdout'
 
     - name: documented module with YAML anchors
-      shell: ansible-doc test_docs_yaml_anchors |tail -n +2
+      shell: ansible-doc test_docs_yaml_anchors |tail -n +3
       register: result
+
     - set_fact:
         actual_output: >-
           {{ result.stdout | regex_replace('^(> [A-Z_]+ +\().+library/([a-z_]+.py)\)$', '\1library/\2)', multiline=true) }}
         expected_output: "{{ lookup('file', 'test_docs_yaml_anchors.output') }}"
+
     - assert:
         that:
           - actual_output == expected_output
+          - actual_output_clean == expected_output_clean
 
     - name: ensure 'donothing' adjacent filter is loaded
       assert:
@@ -154,19 +161,23 @@
           - "'x' == ('x'|donothing)"
 
     - name: docs for deprecated plugin
-      command: ansible-doc deprecated_with_docs -t lookup
+      command: ansible-doc deprecated_with_docs -t lookup --playbook-dir ./
       register: result
+
     - assert:
         that:
-          - '"WARNING" not in result.stderr'
-          - '"DEPRECATED_WITH_DOCS " in result.stdout'
+          - '"[WARNING]" not in result.stderr'
+          - '"[DEPRECATION WARNING]" in result.stderr'
+          - '"deprecated_with_docs " in result.stdout'
           - '"AUTHOR: Ansible Core Team" in result.stdout'
 
     - name: adjacent docs for deprecated plugin
-      command: ansible-doc deprecated_with_adj_docs -t lookup
+      command: ansible-doc deprecated_with_adj_docs -t lookup --playbook-dir ./
       register: result
+
     - assert:
         that:
-          - '"WARNING" not in result.stderr'
-          - '"DEPRECATED_WITH_ADJ_DOCS " in result.stdout'
+          - '"[WARNING]" not in result.stderr'
+          - '"[DEPRECATION WARNING]" in result.stderr'
+          - '"deprecated_with_adj_docs " in result.stdout'
           - '"AUTHOR: Ansible Core Team" in result.stdout'

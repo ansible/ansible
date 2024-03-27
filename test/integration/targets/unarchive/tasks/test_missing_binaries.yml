@@ -1,5 +1,5 @@
 - name: Test missing binaries
-  when: ansible_pkg_mgr in ('yum', 'dnf', 'apt', 'pkgng')
+  when: ansible_pkg_mgr in ('dnf', 'apt', 'pkgng')
   block:
     - name: Remove zip binaries
       package:
@@ -39,7 +39,7 @@
       environment:
         PATH: "{{ ENV_PATH }}"
       vars:
-        ENV_PATH: "{{ lookup('env', 'PATH') | regex_replace(re, '') }}"
+        ENV_PATH: "{{ ansible_env['PATH']| regex_replace(re, '') }}"
         re: "[^A-Za-z](\/usr\/bin:?)"
 
     - name: Ensure tasks worked as expected

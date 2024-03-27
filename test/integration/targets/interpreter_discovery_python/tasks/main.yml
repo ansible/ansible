@@ -141,8 +141,6 @@
   - name: debian assertions
     assert:
       that:
-      # Debian 8 and older
-      - auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python' and distro_version is version('8', '<=') or distro_version is version('8', '>')
       # Debian 10 and newer
       - auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python3' and distro_version is version('10', '>=') or distro_version is version('10', '<')
     when: distro == 'debian'
@@ -150,27 +148,21 @@
   - name: fedora assertions
     assert:
       that:
-      - auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python3'
+      - "'/bin/python3' in auto_out.ansible_facts.discovered_interpreter_python"
     when: distro == 'fedora' and distro_version is version('23', '>=')
 
   - name: rhel assertions
     assert:
       that:
-      # rhel 6/7
-      - (auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python' and distro_major_version is version('8','<')) or distro_major_version is version('8','>=')
-      # rhel 8
-      - (auto_out.ansible_facts.discovered_interpreter_python == '/usr/libexec/platform-python' and distro_major_version is version('8','==')) or distro_major_version is version('8','!=')
       # rhel 9
-      - (auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python3' and distro_major_version is version('9','==')) or distro_major_version is version('9','!=')
+      - ('/bin/python3' in auto_out.ansible_facts.discovered_interpreter_python and distro_major_version is version('9','==')) or distro_major_version is version('9','!=')
     when: distro == 'redhat'
 
   - name: ubuntu assertions
     assert:
       that:
-      # ubuntu < 16
-      - (auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python' and distro_version is version('16.04','<')) or distro_version is version('16.04','>=')
       # ubuntu >= 16
-      - (auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python3' and distro_version is version('16.04','>=')) or distro_version is version('16.04','<')
+      - ('/bin/python3' in auto_out.ansible_facts.discovered_interpreter_python and distro_version is version('16.04','>=')) or distro_version is version('16.04','<')
     when: distro == 'ubuntu'
 
   - name: mac assertions

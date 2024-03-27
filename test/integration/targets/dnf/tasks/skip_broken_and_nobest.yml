@@ -264,6 +264,7 @@
         name:
           - broken-a
         state: latest
+        best: true
       ignore_errors: true
       register: dnf_fail
 
@@ -332,7 +333,7 @@
         state: absent
 
     - name: Remove all test packages installed
-      yum:
+      dnf:
         name:
           - broken-*
           - dinginessentail

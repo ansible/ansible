@@ -154,16 +154,20 @@ class LookupModule(LookupBase):
                 params = _parse_params(term, paramvals)
                 try:
                     updated_key = False
+                    updated_options = False
                     for param in params:
                         if '=' in param:
                             name, value = param.split('=')
                             if name not in paramvals:
                                 raise AnsibleLookupError('%s is not a valid option.' % name)
-                            paramvals[name] = value
+                            self.set_option(name, value)
+                            updated_options = True
                         elif key == term:
                             # only take first, this format never supported multiple keys inline
                             key = param
                             updated_key = True
+                    if updated_options:
+                        paramvals = self.get_options()
                 except ValueError as e:
                     # bad params passed
                     raise AnsibleLookupError("Could not use '%s' from '%s': %s" % (param, params, to_native(e)), orig_exc=e)

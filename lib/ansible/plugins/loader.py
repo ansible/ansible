@@ -237,10 +237,7 @@ class PluginLoader:
         self._module_cache = MODULE_CACHE[class_name]
         self._paths = PATH_CACHE[class_name]
         self._plugin_path_cache = PLUGIN_PATH_CACHE[class_name]
-        try:
-            self._plugin_instance_cache = {} if self.type == 'vars' else None
-        except ValueError:
-            self._plugin_instance_cache = None
+        self._plugin_instance_cache = {} if self.subdir == 'vars_plugins' else None
 
         self._searched_paths = set()
 
@@ -265,7 +262,7 @@ class PluginLoader:
             self._module_cache = MODULE_CACHE[self.class_name]
             self._paths = PATH_CACHE[self.class_name]
             self._plugin_path_cache = PLUGIN_PATH_CACHE[self.class_name]
-            self._plugin_instance_cache = {} if self.type == 'vars' else None
+            self._plugin_instance_cache = {} if self.subdir == 'vars_plugins' else None
             self._searched_paths = set()
 
     def __setstate__(self, data):
@@ -871,12 +868,12 @@ class PluginLoader:
         if name in self.aliases:
             name = self.aliases[name]
 
-        if self._plugin_instance_cache and (cached_load_result := self._plugin_instance_cache.get(name)):
+        if (cached_result := (self._plugin_instance_cache or {}).get(name)) and cached_result[1].resolved:
             # Resolving the FQCN is slow, even if we've passed in the resolved FQCN.
             # Short-circuit here if we've previously resolved this name.
             # This will need to be restricted if non-vars plugins start using the cache, since
             # some non-fqcn plugin need to be resolved again with the collections list.
-            return get_with_context_result(*cached_load_result)
+            return get_with_context_result(*cached_result)
 
         plugin_load_context = self.find_plugin_with_context(name, collection_list=collection_list)
         if not plugin_load_context.resolved or not plugin_load_context.plugin_resolved_path:
@@ -888,10 +885,10 @@ class PluginLoader:
             fq_name = '.'.join((plugin_load_context.plugin_resolved_collection, fq_name))
         resolved_type_name = plugin_load_context.plugin_resolved_name
         path = plugin_load_context.plugin_resolved_path
-        if self._plugin_instance_cache and (cached_load_result := self._plugin_instance_cache.get(fq_name)):
+        if (cached_result := (self._plugin_instance_cache or {}).get(fq_name)) and cached_result[1].resolved:
             # This is unused by vars plugins, but it's here in case the instance cache expands to other plugin types.
             # We get here if we've seen this plugin before, but it wasn't called with the resolved FQCN.
-            return get_with_context_result(*cached_load_result)
+            return get_with_context_result(*cached_result)
         redirected_names = plugin_load_context.redirect_list or []
 
         if path not in self._module_cache:
@@ -934,8 +931,10 @@ class PluginLoader:
 
         self._update_object(obj, resolved_type_name, path, redirected_names, fq_name)
         if self._plugin_instance_cache is not None and getattr(obj, 'is_stateless', False):
-            # store under both the originally requested name and the resolved FQ name
-            self._plugin_instance_cache[name] = self._plugin_instance_cache[fq_name] = (obj, plugin_load_context)
+            self._plugin_instance_cache[fq_name] = (obj, plugin_load_context)
+        elif self._plugin_instance_cache is not None:
+            # The cache doubles as the load order, so record the FQCN even if the plugin hasn't set is_stateless = True
+            self._plugin_instance_cache[fq_name] = (None, PluginLoadContext())
         return get_with_context_result(obj, plugin_load_context)
 
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
@@ -1041,9 +1040,9 @@ class PluginLoader:
             else:
                 fqcn = f"ansible.builtin.{basename}"
 
-            if self._plugin_instance_cache is not None and fqcn in self._plugin_instance_cache:
+            if (cached_result := (self._plugin_instance_cache or {}).get(fqcn)) and cached_result[1].resolved:
                 # Here just in case, but we don't call all() multiple times for vars plugins, so this should not be used.
-                yield self._plugin_instance_cache[basename][0]
+                yield cached_result[0]
                 continue
 
             if path not in self._module_cache:
@@ -1095,9 +1094,17 @@ class PluginLoader:
 
             self._update_object(obj, basename, path, resolved=fqcn)
 
-            if self._plugin_instance_cache is not None and fqcn not in self._plugin_instance_cache:
-                # Use get_with_context to cache the plugin the first time we see it.
-                self.get_with_context(fqcn)[0]
+            if self._plugin_instance_cache is not None:
+                needs_enabled = False
+                if hasattr(obj, 'REQUIRES_ENABLED'):
+                    needs_enabled = obj.REQUIRES_ENABLED
+                elif hasattr(obj, 'REQUIRES_WHITELIST'):
+                    needs_enabled = obj.REQUIRES_WHITELIST
+                    display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
+                                       "Use 'REQUIRES_ENABLED' instead.", version=2.18)
+                if not needs_enabled:
+                    # Use get_with_context to cache the plugin the first time we see it.
+                    self.get_with_context(fqcn)[0]
 
             yield obj
 
@@ -1283,6 +1290,8 @@ class Jinja2Loader(PluginLoader):
                         if plugin:
                             context = plugin_impl.plugin_load_context
                             self._update_object(plugin, src_name, plugin_impl.object._original_path, resolved=fq_name)
+                            # context will have filename, which for tests/filters might not be correct
+                            context._resolved_fqcn = plugin.ansible_name
                             # FIXME: once we start caching these results, we'll be missing functions that would have loaded later
                             break  # go to next file as it can override if dupe (dont break both loops)
 

@@ -945,7 +945,7 @@ class Templar:
 
             try:
                 t = myenv.from_string(data)
-            except TemplateSyntaxError as e:
+            except (TemplateSyntaxError, SyntaxError) as e:
                 raise AnsibleError("template error while templating string: %s. String: %s" % (to_native(e), to_native(data)), orig_exc=e)
             except Exception as e:
                 if 'recursion' in to_native(e):
@@ -1011,12 +1011,16 @@ class Templar:
                     if unsafe:
                         res = wrap_var(res)
             return res
-        except (UndefinedError, AnsibleUndefinedVariable) as e:
+        except UndefinedError as e:
             if fail_on_undefined:
-                raise AnsibleUndefinedVariable(e, orig_exc=e)
-            else:
-                display.debug("Ignoring undefined failure: %s" % to_text(e))
-                return data
+                raise AnsibleUndefinedVariable(e)
+            display.debug("Ignoring undefined failure: %s" % to_text(e))
+            return data
+        except AnsibleUndefinedVariable as e:
+            if fail_on_undefined:
+                raise
+            display.debug("Ignoring undefined failure: %s" % to_text(e))
+            return data
 
     # for backwards compatibility in case anyone is using old private method directly
     _do_template = do_template

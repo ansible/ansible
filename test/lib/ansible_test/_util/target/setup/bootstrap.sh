@@ -2,6 +2,16 @@
 
 set -eu
 
+remove_externally_managed_marker()
+{
+    "${python_interpreter}" -c '
+import pathlib
+import sysconfig
+path = pathlib.Path(sysconfig.get_path("stdlib")) / "EXTERNALLY-MANAGED"
+path.unlink(missing_ok=True)
+'
+}
+
 install_ssh_keys()
 {
     if [ ! -f "${ssh_private_key_path}" ]; then
@@ -96,6 +106,15 @@ bootstrap_remote_alpine()
         echo "Failed to install packages. Sleeping before trying again..."
         sleep 10
     done
+
+    # Upgrade the `libexpat` package to ensure that an upgraded Python (`pyexpat`) continues to work.
+    while true; do
+        # shellcheck disable=SC2086
+        apk upgrade -q libexpat \
+        && break
+        echo "Failed to upgrade libexpat. Sleeping before trying again..."
+        sleep 10
+    done
 }
 
 bootstrap_remote_fedora()
@@ -144,19 +163,39 @@ bootstrap_remote_freebsd()
         jinja2_pkg="py${python_package_version}-jinja2"
         cryptography_pkg="py${python_package_version}-cryptography"
         pyyaml_pkg="py${python_package_version}-yaml"
+        packaging_pkg="py${python_package_version}-packaging"
 
         # Declare platform/python version combinations which do not have supporting OS packages available.
         # For these combinations ansible-test will use pip to install the requirements instead.
         case "${platform_version}/${python_version}" in
-            *)
+            13.3/3.9)
+                # defaults above 'just work'TM
+                ;;
+            13.3/3.11)
                 jinja2_pkg=""  # not available
                 cryptography_pkg=""  # not available
                 pyyaml_pkg=""  # not available
+                ;;
+            14.0/3.9)
+                # defaults above 'just work'TM
+                ;;
+            14.0/3.11)
+                cryptography_pkg=""  # not available
+                jinja2_pkg=""  # not available
+                pyyaml_pkg=""  # not available
+                ;;
+            *)
+                # just assume nothing is available
+                jinja2_pkg=""  # not available
+                cryptography_pkg=""  # not available
+                pyyaml_pkg=""  # not available
+                packaging_pkg="" # not available
                 ;;
         esac
 
         packages="
             ${packages}
+            ${packaging_pkg}
             libyaml
             ${pyyaml_pkg}
             ${jinja2_pkg}
@@ -320,14 +359,27 @@ bootstrap_docker()
 {
     # Required for newer mysql-server packages to install/upgrade on Ubuntu 16.04.
     rm -f /usr/sbin/policy-rc.d
+
+    for key_value in ${python_interpreters}; do
+        IFS=':' read -r python_version python_interpreter << EOF
+${key_value}
+EOF
+
+        echo "Bootstrapping Python ${python_version} at: ${python_interpreter}"
+
+        remove_externally_managed_marker
+    done
 }
 
 bootstrap_remote()
 {
-    for python_version in ${python_versions}; do
-        echo "Bootstrapping Python ${python_version}"
+    for key_value in ${python_interpreters}; do
+        IFS=':' read -r python_version python_interpreter << EOF
+${key_value}
+EOF
 
-        python_interpreter="python${python_version}"
+        echo "Bootstrapping Python ${python_version} at: ${python_interpreter}"
+
         python_package_version="$(echo "${python_version}" | tr -d '.')"
 
         case "${platform}" in
@@ -338,6 +390,8 @@ bootstrap_remote()
             "rhel") bootstrap_remote_rhel ;;
             "ubuntu") bootstrap_remote_ubuntu ;;
         esac
+
+        remove_externally_managed_marker
     done
 }
 
@@ -364,7 +418,7 @@ bootstrap_type=#{bootstrap_type}
 controller=#{controller}
 platform=#{platform}
 platform_version=#{platform_version}
-python_versions=#{python_versions}
+python_interpreters=#{python_interpreters}
 ssh_key_type=#{ssh_key_type}
 ssh_private_key=#{ssh_private_key}
 ssh_public_key=#{ssh_public_key}

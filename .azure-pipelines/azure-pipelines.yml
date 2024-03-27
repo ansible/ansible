@@ -77,24 +77,30 @@ stages:
       - template: templates/matrix.yml  # context/target
         parameters:
           targets:
+            - name: macOS 14.3
+              test: macos/14.3
             - name: RHEL 9.3 py39
               test: rhel/9.3@3.9
             - name: RHEL 9.3 py311
               test: rhel/9.3@3.11
-            - name: FreeBSD 13.2
-              test: freebsd/13.2
+            - name: FreeBSD 13.3
+              test: freebsd/13.3
+            - name: FreeBSD 14.0
+              test: freebsd/14.0
           groups:
             - 1
             - 2
       - template: templates/matrix.yml  # context/controller
         parameters:
           targets:
-            - name: macOS 13.2
-              test: macos/13.2
+            - name: macOS 14.3
+              test: macos/14.3
             - name: RHEL 9.3
               test: rhel/9.3
-            - name: FreeBSD 13.2
-              test: freebsd/13.2
+            - name: FreeBSD 13.3
+              test: freebsd/13.3
+            - name: FreeBSD 14.0
+              test: freebsd/14.0
           groups:
             - 3
             - 4
@@ -102,8 +108,8 @@ stages:
       - template: templates/matrix.yml  # context/controller (ansible-test container management)
         parameters:
           targets:
-            - name: Alpine 3.18
-              test: alpine/3.18
+            - name: Alpine 3.19
+              test: alpine/3.19
             - name: Fedora 39
               test: fedora/39
             - name: RHEL 9.3
@@ -119,8 +125,8 @@ stages:
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Alpine 3
-              test: alpine3
+            - name: Alpine 3.19
+              test: alpine319
             - name: Fedora 39
               test: fedora39
             - name: Ubuntu 20.04
@@ -134,8 +140,8 @@ stages:
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Alpine 3
-              test: alpine3
+            - name: Alpine 3.19
+              test: alpine319
             - name: Fedora 39
               test: fedora39
             - name: Ubuntu 22.04

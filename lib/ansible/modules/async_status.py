@@ -36,7 +36,8 @@ attributes:
     async:
         support: none
     check_mode:
-        support: none
+        support: full
+        version_added: '2.17'
     diff_mode:
         support: none
     bypass_host_loop:
@@ -54,17 +55,17 @@ author:
 
 EXAMPLES = r'''
 ---
-- name: Asynchronous yum task
-  ansible.builtin.yum:
+- name: Asynchronous dnf task
+  ansible.builtin.dnf:
     name: docker-io
     state: present
   async: 1000
   poll: 0
-  register: yum_sleeper
+  register: dnf_sleeper
 
 - name: Wait for asynchronous job to end
   ansible.builtin.async_status:
-    jid: '{{ yum_sleeper.ansible_job_id }}'
+    jid: '{{ dnf_sleeper.ansible_job_id }}'
   register: job_result
   until: job_result.finished
   retries: 100
@@ -72,7 +73,7 @@ EXAMPLES = r'''
 
 - name: Clean up async file
   ansible.builtin.async_status:
-    jid: '{{ yum_sleeper.ansible_job_id }}'
+    jid: '{{ dnf_sleeper.ansible_job_id }}'
     mode: cleanup
 '''
 
@@ -116,12 +117,15 @@ from ansible.module_utils.common.text.converters import to_native
 
 def main():
 
-    module = AnsibleModule(argument_spec=dict(
-        jid=dict(type='str', required=True),
-        mode=dict(type='str', default='status', choices=['cleanup', 'status']),
-        # passed in from the async_status action plugin
-        _async_dir=dict(type='path', required=True),
-    ))
+    module = AnsibleModule(
+        argument_spec=dict(
+            jid=dict(type="str", required=True),
+            mode=dict(type="str", default="status", choices=["cleanup", "status"]),
+            # passed in from the async_status action plugin
+            _async_dir=dict(type="path", required=True),
+        ),
+        supports_check_mode=True,
+    )
 
     mode = module.params['mode']
     jid = module.params['jid']

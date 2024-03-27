@@ -10,7 +10,7 @@ class ModuleDocFragment(object):
     DOCUMENTATION = r'''
 attributes:
     check_mode:
-      description: Can run in check_mode and return changed status prediction without modifying target
+      description: Can run in check_mode and return changed status prediction without modifying target, if not supported the action will be skipped.
     diff_mode:
       description: Will return details on what has changed (or possibly needs changing in check_mode), when in diff mode
     platform:

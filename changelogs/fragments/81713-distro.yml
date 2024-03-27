@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - distro - bump bundled distro version from 1.6.0 to 1.8.0 (https://github.com/ansible/ansible/issues/81713).

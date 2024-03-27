@@ -443,11 +443,10 @@ import json
 import os
 import re
 import shutil
-import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule, sanitize_keys
-from ansible.module_utils.six import PY2, PY3, binary_type, iteritems, string_types
+from ansible.module_utils.six import binary_type, iteritems, string_types
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.compat.datetime import utcnow, utcfromtimestamp
@@ -585,7 +584,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
                            ca_path=ca_path, unredirected_headers=unredirected_headers,
                            use_proxy=module.params['use_proxy'], decompress=decompress,
-                           ciphers=ciphers, use_netrc=use_netrc, **kwargs)
+                           ciphers=ciphers, use_netrc=use_netrc, force=module.params['force'], **kwargs)
 
     if src:
         # Try to close the open file handle
@@ -719,7 +718,7 @@ def main():
 
     if maybe_output:
         try:
-            if PY3 and (r.fp is None or r.closed):
+            if r.fp is None or r.closed:
                 raise TypeError
             content = r.read()
         except (AttributeError, TypeError):
@@ -770,8 +769,7 @@ def main():
                 js = json.loads(u_content)
                 uresp['json'] = js
             except Exception:
-                if PY2:
-                    sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
+                ...
     else:
         u_content = None
 

@@ -1,0 +1,2 @@
+bugfixes:
+  - All core lookups now use set_option(s) even when doing their own custom parsing. This ensures that the options are always the proper type.

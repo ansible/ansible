@@ -133,6 +133,15 @@ def g_connect(versions):
                                    % (method.__name__, ", ".join(versions), ", ".join(available_versions),
                                       self.name, self.api_server))
 
+            # Warn only when we know we are talking to a collections API
+            if common_versions == {'v2'}:
+                display.deprecated(
+                    'The v2 Ansible Galaxy API is deprecated and no longer supported. '
+                    'Ensure that you have configured the ansible-galaxy CLI to utilize an '
+                    'updated and supported version of Ansible Galaxy.',
+                    version='2.20'
+                )
+
             return method(self, *args, **kwargs)
         return wrapped
     return decorator
@@ -482,8 +491,6 @@ class GalaxyAPI:
         }
         if role_name:
             args['alternate_role_name'] = role_name
-        elif github_repo.startswith('ansible-role'):
-            args['alternate_role_name'] = github_repo[len('ansible-role') + 1:]
         data = self._call_galaxy(url, args=urlencode(args), method="POST")
         if data.get('results', None):
             return data['results']

@@ -1,0 +1,36 @@
+---
+- name: test multiple handlers with recursive notification
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: notify handler 1
+      command: echo
+      changed_when: true
+      notify: handler 1
+
+    - meta: flush_handlers
+
+    - name: verify handlers
+      assert:
+        that:
+          - "ran_handler_1  is defined"
+          - "ran_handler_2a is defined"
+          - "ran_handler_2b is defined"
+
+  handlers:
+    - name: handler 1
+      set_fact:
+        ran_handler_1: True
+      changed_when: true
+      notify: handler_2
+
+    - name: handler 2a
+      set_fact:
+        ran_handler_2a: True
+      listen: handler_2
+
+    - name: handler 2b
+      set_fact:
+        ran_handler_2b: True
+      listen: handler_2

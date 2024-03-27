@@ -37,7 +37,6 @@ lib/ansible/modules/git.py use-argspec-type-path
 lib/ansible/modules/git.py validate-modules:doc-required-mismatch
 lib/ansible/modules/lineinfile.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/lineinfile.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/lineinfile.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/package_facts.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/replace.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/replace.py pylint:used-before-assignment  # false positive detection by pylint
@@ -48,7 +47,6 @@ lib/ansible/modules/systemd_service.py validate-modules:parameter-invalid
 lib/ansible/modules/uri.py validate-modules:doc-required-mismatch
 lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/user.py validate-modules:use-run-command-not-popen
-lib/ansible/modules/yum.py validate-modules:parameter-invalid
 lib/ansible/module_utils/basic.py no-get-exception  # only referenced in deprecation code
 lib/ansible/module_utils/basic.py pylint:unused-import  # deferring resolution to allow enabling the rule now
 lib/ansible/module_utils/compat/selinux.py import-3.7!skip # pass/fail depends on presence of libselinux.so
@@ -60,8 +58,6 @@ lib/ansible/module_utils/compat/selinux.py import-3.12!skip # pass/fail depends 
 lib/ansible/module_utils/compat/selinux.py pylint:unidiomatic-typecheck
 lib/ansible/module_utils/distro/_distro.py no-assert
 lib/ansible/module_utils/distro/_distro.py pep8!skip # bundled code we don't want to modify
-lib/ansible/module_utils/distro/_distro.py pylint:undefined-variable # ignore bundled
-lib/ansible/module_utils/distro/_distro.py pylint:using-constant-test # bundled code we don't want to modify
 lib/ansible/module_utils/distro/__init__.py empty-init # breaks namespacing, bundled, do not override
 lib/ansible/module_utils/facts/__init__.py empty-init # breaks namespacing, deprecate and eventually remove
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.ArgvParser.psm1 pslint:PSUseApprovedVerbs
@@ -103,6 +99,8 @@ test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/un
 test/integration/targets/ansible-test-no-tty/ansible_collections/ns/col/vendored_pty.py pep8!skip # vendored code
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/modules/my_module.py pylint:relative-beyond-top-level
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util2.py pylint:relative-beyond-top-level
+test/integration/targets/config/lookup_plugins/casting.py pylint:unidiomatic-typecheck
+test/integration/targets/config/lookup_plugins/casting_individual.py pylint:unidiomatic-typecheck
 test/integration/targets/fork_safe_stdio/vendored_pty.py pep8!skip # vendored code
 test/integration/targets/gathering_facts/library/bogus_facts shebang
 test/integration/targets/gathering_facts/library/dummy1 shebang
@@ -113,15 +111,19 @@ test/integration/targets/incidental_win_reboot/templates/post_reboot.ps1 pslint!
 test/integration/targets/json_cleanup/library/bad_json shebang
 test/integration/targets/lookup_csvfile/files/crlf.csv line-endings
 test/integration/targets/lookup_ini/lookup-8859-15.ini no-smart-quotes
+test/integration/targets/lookup_ini/lookup-8859-15.ini no-unwanted-characters
 test/integration/targets/module_precedence/lib_with_extension/a.ini shebang
 test/integration/targets/module_precedence/lib_with_extension/ping.ini shebang
 test/integration/targets/module_precedence/roles_with_extension/foo/library/a.ini shebang
 test/integration/targets/module_precedence/roles_with_extension/foo/library/ping.ini shebang
 test/integration/targets/old_style_modules_posix/library/helloworld.sh shebang
 test/integration/targets/template/files/encoding_1252_utf-8.expected no-smart-quotes
+test/integration/targets/template/files/encoding_1252_utf-8.expected no-unwanted-characters
 test/integration/targets/template/files/encoding_1252_windows-1252.expected no-smart-quotes
+test/integration/targets/template/files/encoding_1252_windows-1252.expected no-unwanted-characters
 test/integration/targets/template/files/foo.dos.txt line-endings
 test/integration/targets/template/templates/encoding_1252.j2 no-smart-quotes
+test/integration/targets/template/templates/encoding_1252.j2 no-unwanted-characters
 test/integration/targets/unicode/unicode.yml no-smart-quotes
 test/integration/targets/windows-minimal/library/win_ping_syntax_error.ps1 pslint!skip
 test/integration/targets/win_exec_wrapper/library/test_fail.ps1 pslint:PSCustomUseLiteralPath
@@ -192,4 +194,5 @@ README.md pymarkdown:line-length
 test/integration/targets/ansible-vault/invalid_format/README.md pymarkdown:no-bare-urls
 test/support/README.md pymarkdown:no-bare-urls
 test/units/cli/test_data/role_skeleton/README.md pymarkdown:line-length
-lib/ansible/utils/encrypt.py pylint:ansible-deprecated-version  # 2.17 deprecation
+test/integration/targets/find/files/hello_world.gbk no-smart-quotes
+test/integration/targets/find/files/hello_world.gbk no-unwanted-characters
