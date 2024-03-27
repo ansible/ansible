@@ -32,7 +32,7 @@ def get_plugin_vars(loader, plugin, path, entities):
     try:
         data = plugin.get_vars(loader, path, entities)
     except AttributeError:
-        if hasattr(plugin, 'get_host_vars') or hasattr(plugin, 'get_group_vars'):
+        if hasattr(plugin, "get_host_vars") or hasattr(plugin, "get_group_vars"):
             display.deprecated(
                 f"The vars plugin {plugin.ansible_name} from {plugin._original_path} is relying "
                 "on the deprecated entrypoints 'get_host_vars' and 'get_group_vars'. "
@@ -47,10 +47,16 @@ def get_plugin_vars(loader, plugin, path, entities):
                 else:
                     data |= plugin.get_group_vars(entity.name)
         except AttributeError:
-            if hasattr(plugin, 'run'):
-                raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
+            if hasattr(plugin, "run"):
+                raise AnsibleError(
+                    "Cannot use v1 type vars plugin %s from %s"
+                    % (plugin._load_name, plugin._original_path)
+                )
             else:
-                raise AnsibleError("Invalid vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
+                raise AnsibleError(
+                    "Invalid vars plugin %s from %s"
+                    % (plugin._load_name, plugin._original_path)
+                )
     return data
 
 
@@ -62,18 +68,18 @@ def _plugin_should_run(plugin, stage):
     allowed_stages = None
 
     try:
-        allowed_stages = plugin.get_option('stage')
+        allowed_stages = plugin.get_option("stage")
     except (AttributeError, KeyError):
         pass
 
     if allowed_stages:
-        return allowed_stages in ('all', stage)
+        return allowed_stages in ("all", stage)
 
     # plugin didn't declare a preference; consult global config
     config_stage_override = C.RUN_VARS_PLUGINS
-    if config_stage_override == 'demand' and stage == 'inventory':
+    if config_stage_override == "demand" and stage == "inventory":
         return False
-    elif config_stage_override == 'start' and stage == 'task':
+    elif config_stage_override == "start" and stage == "task":
         return False
     return True
 
@@ -88,9 +94,13 @@ def get_vars_from_path(loader, path, entities, stage):
         if (plugin := vars_loader.get(plugin_name)) is None:
             continue
 
-        collection = '.' in plugin.ansible_name and not plugin.ansible_name.startswith('ansible.builtin.')
+        collection = "." in plugin.ansible_name and not plugin.ansible_name.startswith(
+            "ansible.builtin."
+        )
         # Warn if a collection plugin has REQUIRES_ENABLED because it has no effect.
-        if collection and (hasattr(plugin, 'REQUIRES_ENABLED') or hasattr(plugin, 'REQUIRES_WHITELIST')):
+        if collection and (
+            hasattr(plugin, "REQUIRES_ENABLED") or hasattr(plugin, "REQUIRES_WHITELIST")
+        ):
             display.warning(
                 "Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED is not supported. "
                 "This should be removed from the plugin %s." % plugin.ansible_name
@@ -112,7 +122,7 @@ def get_vars_from_inventory_sources(loader, sources, entities, stage):
 
         if path is None:
             continue
-        if ',' in path and not os.path.exists(path):  # skip host lists
+        if "," in path and not os.path.exists(path):  # skip host lists
             continue
         elif not os.path.isdir(path):
             # always pass the directory of the inventory source file

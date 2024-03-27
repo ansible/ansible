@@ -26,7 +26,9 @@ except ImportError:
 
 try:
     # optional import from a legit collection
-    from ansible_collections.testns.testcoll.plugins.module_utils.legit import importme as yep3
+    from ansible_collections.testns.testcoll.plugins.module_utils.legit import (
+        importme as yep3,
+    )
 except ImportError:
     yep3 = None
 
@@ -43,6 +45,7 @@ else:
 
 try:
     import ansible.module_utils.verybogus
+
     nope1 = ansible.module_utils.verybogus
 except ImportError:
     nope1 = None
@@ -68,16 +71,18 @@ except ImportError:
 
 try:
     # optional import from a bogus collection
-    from ansible_collections.bogusns.boguscoll.plugins.module_utils.bogus import collnope2
+    from ansible_collections.bogusns.boguscoll.plugins.module_utils.bogus import (
+        collnope2,
+    )
 except ImportError:
     collnope2 = None
 
 module = AnsibleModule(argument_spec={})
 
 if not all([yep1, yep2, yep3]):
-    module.fail_json(msg='one or more existing optional imports did not resolve')
+    module.fail_json(msg="one or more existing optional imports did not resolve")
 
 if any([fromnope1, fromnope2, nope1, nope2, collnope1, collnope2]):
-    module.fail_json(msg='one or more missing optional imports resolved unexpectedly')
+    module.fail_json(msg="one or more missing optional imports resolved unexpectedly")
 
-module.exit_json(msg='all missing optional imports behaved as expected')
+module.exit_json(msg="all missing optional imports behaved as expected")

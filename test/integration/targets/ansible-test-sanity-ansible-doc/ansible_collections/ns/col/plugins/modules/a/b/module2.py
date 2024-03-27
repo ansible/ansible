@@ -3,20 +3,20 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: module2
 short_description: Hello test module
 description: Hello test module.
 options: {}
 author:
   - Ansible Core Team
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - minimal:
-'''
+"""
 
-RETURN = ''''''
+RETURN = """"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -29,5 +29,5 @@ def main():
     module.exit_json()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -1,4 +1,5 @@
 """Command line parsing for the `coverage analyze targets generate` command."""
+
 from __future__ import annotations
 
 import argparse
@@ -23,9 +24,9 @@ def do_generate(
 ):
     """Command line parsing for the `coverage analyze targets generate` command."""
     parser: argparse.ArgumentParser = subparsers.add_parser(
-        'generate',
+        "generate",
         parents=[parent],
-        help='aggregate coverage by integration test target',
+        help="aggregate coverage by integration test target",
     )
 
     parser.set_defaults(
@@ -33,17 +34,19 @@ def do_generate(
         config=CoverageAnalyzeTargetsGenerateConfig,
     )
 
-    targets_generate = parser.add_argument_group(title='coverage arguments')
+    targets_generate = parser.add_argument_group(title="coverage arguments")
 
     targets_generate.add_argument(
-        'input_dir',
-        nargs='?',
-        help='directory to read coverage from',
+        "input_dir",
+        nargs="?",
+        help="directory to read coverage from",
     )
 
     targets_generate.add_argument(
-        'output_file',
-        help='output file for aggregated coverage',
+        "output_file",
+        help="output file for aggregated coverage",
     )
 
-    add_environments(parser, completer, ControllerMode.ORIGIN, TargetMode.NO_TARGETS)  # coverage analyze targets generate
+    add_environments(
+        parser, completer, ControllerMode.ORIGIN, TargetMode.NO_TARGETS
+    )  # coverage analyze targets generate

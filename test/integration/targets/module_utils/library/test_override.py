@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from ansible.module_utils.basic import AnsibleModule
+
 # overridden
 from ansible.module_utils.ansible_release import data
 

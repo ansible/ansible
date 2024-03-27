@@ -25,8 +25,7 @@ from ansible_collections.vyos.vyos.plugins.module_utils.network.vyos.argspec.lld
 
 
 class Lldp_interfacesFacts(object):
-    """ The vyos lldp_interfaces fact class
-    """
+    """The vyos lldp_interfaces fact class"""
 
     def __init__(self, module, subspec="config", options="options"):
         self._module = module
@@ -43,7 +42,7 @@ class Lldp_interfacesFacts(object):
         self.generated_spec = utils.generate_dict(facts_argument_spec)
 
     def populate_facts(self, connection, ansible_facts, data=None):
-        """ Populate the facts for lldp_interfaces
+        """Populate the facts for lldp_interfaces
         :param connection: the device connection
         :param ansible_facts: Facts dictionary
         :param data: previously collected conf
@@ -86,9 +85,7 @@ class Lldp_interfacesFacts(object):
 
         civic_conf = "\n".join(filter(lambda x: ("civic-based" in x), conf))
         elin_conf = "\n".join(filter(lambda x: ("elin" in x), conf))
-        coordinate_conf = "\n".join(
-            filter(lambda x: ("coordinate-based" in x), conf)
-        )
+        coordinate_conf = "\n".join(filter(lambda x: ("coordinate-based" in x), conf))
         disable = "\n".join(filter(lambda x: ("disable" in x), conf))
 
         coordinate_based_conf = self.parse_attribs(
@@ -136,9 +133,7 @@ class Lldp_interfacesFacts(object):
                     c_add["ca_value"] = ca[2].strip("'")
                     civic_info_list.append(c_add)
 
-                country_code = search(
-                    r"^.*civic-based country-code (.+)", conf, M
-                )
+                country_code = search(r"^.*civic-based country-code (.+)", conf, M)
                 civic_based = {}
                 civic_based["ca_info"] = civic_info_list
                 civic_based["country_code"] = country_code.group(1).strip("'")

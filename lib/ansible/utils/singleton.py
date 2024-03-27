@@ -11,6 +11,7 @@ class Singleton(type):
     functionality.  If an instance of the class exists, it's returned,
     otherwise a single instance is instantiated and returned.
     """
+
     def __init__(cls, name, bases, dct):
         super(Singleton, cls).__init__(name, bases, dct)
         cls.__instance = None

@@ -126,12 +126,12 @@ _raw:
   elements: str
 """
 
+import hashlib
 import os
 import string
 import time
-import hashlib
 
-from ansible.errors import AnsibleError, AnsibleAssertionError
+from ansible.errors import AnsibleAssertionError, AnsibleError
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.six import string_types
 from ansible.parsing.splitter import parse_kv
@@ -139,8 +139,7 @@ from ansible.plugins.lookup import LookupBase
 from ansible.utils.encrypt import BaseHash, do_encrypt, random_password, random_salt
 from ansible.utils.path import makedirs_safe
 
-
-VALID_PARAMS = frozenset(('length', 'encrypt', 'chars', 'ident', 'seed'))
+VALID_PARAMS = frozenset(("length", "encrypt", "chars", "ident", "seed"))
 
 
 def _read_password_file(b_path):
@@ -152,15 +151,15 @@ def _read_password_file(b_path):
     content = None
 
     if os.path.exists(b_path):
-        with open(b_path, 'rb') as f:
+        with open(b_path, "rb") as f:
             b_content = f.read().rstrip()
-        content = to_text(b_content, errors='surrogate_or_strict')
+        content = to_text(b_content, errors="surrogate_or_strict")
 
     return content
 
 
 def _gen_candidate_chars(characters):
-    '''Generate a string containing all valid chars as defined by ``characters``
+    """Generate a string containing all valid chars as defined by ``characters``
 
     :arg characters: A list of character specs. The character specs are
         shorthand names for sets of characters like 'digits', 'ascii_letters',
@@ -181,36 +180,38 @@ def _gen_candidate_chars(characters):
     the question mark and pipe characters directly. Return will be the string::
 
         u'0123456789?|'
-    '''
+    """
     chars = []
     for chars_spec in characters:
         # getattr from string expands things like "ascii_letters" and "digits"
         # into a set of characters.
-        chars.append(to_text(getattr(string, to_native(chars_spec), chars_spec), errors='strict'))
-    chars = u''.join(chars).replace(u'"', u'').replace(u"'", u'')
+        chars.append(
+            to_text(getattr(string, to_native(chars_spec), chars_spec), errors="strict")
+        )
+    chars = "".join(chars).replace('"', "").replace("'", "")
     return chars
 
 
 def _parse_content(content):
-    '''parse our password data format into password and salt
+    """parse our password data format into password and salt
 
     :arg content: The data read from the file
     :returns: password and salt
-    '''
+    """
     password = content
     salt = None
     ident = None
 
-    salt_slug = u' salt='
-    ident_slug = u' ident='
-    rem = u''
+    salt_slug = " salt="
+    ident_slug = " ident="
+    rem = ""
     try:
         sep = content.rindex(salt_slug)
     except ValueError:
         # No salt
         pass
     else:
-        rem = content[sep + len(salt_slug):]
+        rem = content[sep + len(salt_slug) :]
         password = content[:sep]
 
     if rem:
@@ -220,7 +221,7 @@ def _parse_content(content):
             # no ident
             salt = rem
         else:
-            ident = rem[sep + len(ident_slug):]
+            ident = rem[sep + len(ident_slug) :]
             salt = rem[:sep]
 
     return password, salt, ident
@@ -246,20 +247,22 @@ def _format_content(password, salt, encrypt=None, ident=None):
 
     # At this point, the calling code should have assured us that there is a salt value.
     if not salt:
-        raise AnsibleAssertionError('_format_content was called with encryption requested but no salt value')
+        raise AnsibleAssertionError(
+            "_format_content was called with encryption requested but no salt value"
+        )
 
     if ident:
-        return u'%s salt=%s ident=%s' % (password, salt, ident)
-    return u'%s salt=%s' % (password, salt)
+        return "%s salt=%s ident=%s" % (password, salt, ident)
+    return "%s salt=%s" % (password, salt)
 
 
 def _write_password_file(b_path, content):
     b_pathdir = os.path.dirname(b_path)
     makedirs_safe(b_pathdir, mode=0o700)
 
-    with open(b_path, 'wb') as f:
+    with open(b_path, "wb") as f:
         os.chmod(b_path, 0o600)
-        b_content = to_bytes(content, errors='surrogate_or_strict') + b'\n'
+        b_content = to_bytes(content, errors="surrogate_or_strict") + b"\n"
         f.write(b_content)
 
 
@@ -269,24 +272,27 @@ def _get_lock(b_path):
     b_pathdir = os.path.dirname(b_path)
     lockfile_name = to_bytes("%s.ansible_lockfile" % hashlib.sha1(b_path).hexdigest())
     lockfile = os.path.join(b_pathdir, lockfile_name)
-    if not os.path.exists(lockfile) and b_path != to_bytes('/dev/null'):
+    if not os.path.exists(lockfile) and b_path != to_bytes("/dev/null"):
         try:
             makedirs_safe(b_pathdir, mode=0o700)
             fd = os.open(lockfile, os.O_CREAT | os.O_EXCL)
             os.close(fd)
             first_process = True
         except OSError as e:
-            if e.strerror != 'File exists':
+            if e.strerror != "File exists":
                 raise
 
     counter = 0
     # if the lock is got by other process, wait until it's released
     while os.path.exists(lockfile) and not first_process:
-        time.sleep(2 ** counter)
+        time.sleep(2**counter)
         if counter >= 2:
-            raise AnsibleError("Password lookup cannot get the lock in 7 seconds, abort..."
-                               "This may caused by un-removed lockfile"
-                               "you can manually remove it from controller machine at %s and try again" % lockfile)
+            raise AnsibleError(
+                "Password lookup cannot get the lock in 7 seconds, abort..."
+                "This may caused by un-removed lockfile"
+                "you can manually remove it from controller machine at %s and try again"
+                % lockfile
+            )
         counter += 1
     return first_process, lockfile
 
@@ -305,7 +311,7 @@ class LookupModule(LookupBase):
         See https://github.com/ansible/ansible-modules-core/issues/1968#issuecomment-136842156
         and the first_found lookup For how we want to fix this later
         """
-        first_split = term.split(' ', 1)
+        first_split = term.split(" ", 1)
         if len(first_split) <= 1:
             # Only a single argument given, therefore it's a path
             relpath = term
@@ -313,36 +319,41 @@ class LookupModule(LookupBase):
         else:
             relpath = first_split[0]
             params = parse_kv(first_split[1])
-            if '_raw_params' in params:
+            if "_raw_params" in params:
                 # Spaces in the path?
-                relpath = u' '.join((relpath, params['_raw_params']))
-                del params['_raw_params']
+                relpath = " ".join((relpath, params["_raw_params"]))
+                del params["_raw_params"]
 
                 # Check that we parsed the params correctly
                 if not term.startswith(relpath):
                     # Likely, the user had a non parameter following a parameter.
                     # Reject this as a user typo
-                    raise AnsibleError('Unrecognized value after key=value parameters given to password lookup')
+                    raise AnsibleError(
+                        "Unrecognized value after key=value parameters given to password lookup"
+                    )
             # No _raw_params means we already found the complete path when
             # we split it initially
 
         # Check for invalid parameters.  Probably a user typo
         invalid_params = frozenset(params.keys()).difference(VALID_PARAMS)
         if invalid_params:
-            raise AnsibleError('Unrecognized parameter(s) given to password lookup: %s' % ', '.join(invalid_params))
+            raise AnsibleError(
+                "Unrecognized parameter(s) given to password lookup: %s"
+                % ", ".join(invalid_params)
+            )
 
         # update options with what we got
         if params:
             self.set_options(direct=params)
 
         # chars still might need more
-        chars = params.get('chars', self.get_option('chars'))
+        chars = params.get("chars", self.get_option("chars"))
         if chars and isinstance(chars, string_types):
             tmp_chars = []
-            if u',,' in chars:
-                tmp_chars.append(u',')
-            tmp_chars.extend(c for c in chars.replace(u',,', u',').split(u',') if c)
-            self.set_option('chars', tmp_chars)
+            if ",," in chars:
+                tmp_chars.append(",")
+            tmp_chars.extend(c for c in chars.replace(",,", ",").split(",") if c)
+            self.set_option("chars", tmp_chars)
 
         # return processed params
         for field in VALID_PARAMS:
@@ -360,8 +371,8 @@ class LookupModule(LookupBase):
             changed = None
             relpath, params = self._parse_parameters(term)
             path = self._loader.path_dwim(relpath)
-            b_path = to_bytes(path, errors='surrogate_or_strict')
-            chars = _gen_candidate_chars(params['chars'])
+            b_path = to_bytes(path, errors="surrogate_or_strict")
+            chars = _gen_candidate_chars(params["chars"])
             ident = None
             first_process = None
             lockfile = None
@@ -372,14 +383,16 @@ class LookupModule(LookupBase):
 
                 content = _read_password_file(b_path)
 
-                if content is None or b_path == to_bytes('/dev/null'):
-                    plaintext_password = random_password(params['length'], chars, params['seed'])
+                if content is None or b_path == to_bytes("/dev/null"):
+                    plaintext_password = random_password(
+                        params["length"], chars, params["seed"]
+                    )
                     salt = None
                     changed = True
                 else:
                     plaintext_password, salt, ident = _parse_content(content)
 
-                encrypt = params['encrypt']
+                encrypt = params["encrypt"]
                 if encrypt and not salt:
                     changed = True
                     try:
@@ -388,9 +401,12 @@ class LookupModule(LookupBase):
                         salt = random_salt()
 
                 if not ident:
-                    ident = params['ident']
-                elif params['ident'] and ident != params['ident']:
-                    raise AnsibleError('The ident parameter provided (%s) does not match the stored one (%s).' % (ident, params['ident']))
+                    ident = params["ident"]
+                elif params["ident"] and ident != params["ident"]:
+                    raise AnsibleError(
+                        "The ident parameter provided (%s) does not match the stored one (%s)."
+                        % (ident, params["ident"])
+                    )
 
                 if encrypt and not ident:
                     try:
@@ -400,8 +416,10 @@ class LookupModule(LookupBase):
                     if ident:
                         changed = True
 
-                if changed and b_path != to_bytes('/dev/null'):
-                    content = _format_content(plaintext_password, salt, encrypt=encrypt, ident=ident)
+                if changed and b_path != to_bytes("/dev/null"):
+                    content = _format_content(
+                        plaintext_password, salt, encrypt=encrypt, ident=ident
+                    )
                     _write_password_file(b_path, content)
 
             finally:
@@ -410,7 +428,9 @@ class LookupModule(LookupBase):
                     _release_lock(lockfile)
 
             if encrypt:
-                password = do_encrypt(plaintext_password, encrypt, salt=salt, ident=ident)
+                password = do_encrypt(
+                    plaintext_password, encrypt, salt=salt, ident=ident
+                )
                 ret.append(password)
             else:
                 ret.append(plaintext_password)

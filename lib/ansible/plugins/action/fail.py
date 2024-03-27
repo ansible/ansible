@@ -21,10 +21,10 @@ from ansible.plugins.action import ActionBase
 
 
 class ActionModule(ActionBase):
-    ''' Fail with custom message '''
+    """Fail with custom message"""
 
     TRANSFERS_FILES = False
-    _VALID_ARGS = frozenset(('msg',))
+    _VALID_ARGS = frozenset(("msg",))
     _requires_connection = False
 
     def run(self, tmp=None, task_vars=None):
@@ -34,10 +34,10 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
-        msg = 'Failed as requested from task'
-        if self._task.args and 'msg' in self._task.args:
-            msg = self._task.args.get('msg')
+        msg = "Failed as requested from task"
+        if self._task.args and "msg" in self._task.args:
+            msg = self._task.args.get("msg")
 
-        result['failed'] = True
-        result['msg'] = msg
+        result["failed"] = True
+        result["msg"] = msg
         return result

@@ -34,7 +34,7 @@ from ansible.parsing.splitter import parse_kv
 
 ADDITIONAL_PY2_KEYWORDS = frozenset(("True", "False", "None"))
 
-_MAXSIZE = 2 ** 32
+_MAXSIZE = 2**32
 cur_id = 0
 node_mac = ("%012x" % uuid.getnode())[:12]
 random_int = ("%08x" % random.randint(0, _MAXSIZE))[:8]
@@ -43,13 +43,15 @@ random_int = ("%08x" % random.randint(0, _MAXSIZE))[:8]
 def get_unique_id():
     global cur_id
     cur_id += 1
-    return "-".join([
-        node_mac[0:8],
-        node_mac[8:12],
-        random_int[0:4],
-        random_int[4:8],
-        ("%012x" % cur_id)[:12],
-    ])
+    return "-".join(
+        [
+            node_mac[0:8],
+            node_mac[8:12],
+            random_int[0:4],
+            random_int[4:8],
+            ("%012x" % cur_id)[:12],
+        ]
+    )
 
 
 def _validate_mutable_mappings(a, b):
@@ -71,8 +73,10 @@ def _validate_mutable_mappings(a, b):
                 myvars.append(dumps(x))
             except Exception:
                 myvars.append(to_native(x))
-        raise AnsibleError("failed to combine variables, expected dicts but got a '{0}' and a '{1}': \n{2}\n{3}".format(
-            a.__class__.__name__, b.__class__.__name__, myvars[0], myvars[1])
+        raise AnsibleError(
+            "failed to combine variables, expected dicts but got a '{0}' and a '{1}': \n{2}\n{3}".format(
+                a.__class__.__name__, b.__class__.__name__, myvars[0], myvars[1]
+            )
         )
 
 
@@ -90,14 +94,23 @@ def combine_vars(a, b, merge=None):
     return result
 
 
-def merge_hash(x, y, recursive=True, list_merge='replace'):
+def merge_hash(x, y, recursive=True, list_merge="replace"):
     """
     Return a new dictionary result of the merges of y into x,
     so that keys from y take precedence over keys from x.
     (x and y aren't modified)
     """
-    if list_merge not in ('replace', 'keep', 'append', 'prepend', 'append_rp', 'prepend_rp'):
-        raise AnsibleError("merge_hash: 'list_merge' argument can only be equal to 'replace', 'keep', 'append', 'prepend', 'append_rp' or 'prepend_rp'")
+    if list_merge not in (
+        "replace",
+        "keep",
+        "append",
+        "prepend",
+        "append_rp",
+        "prepend_rp",
+    ):
+        raise AnsibleError(
+            "merge_hash: 'list_merge' argument can only be equal to 'replace', 'keep', 'append', 'prepend', 'append_rp' or 'prepend_rp'"
+        )
 
     # verify x & y are dicts
     _validate_mutable_mappings(x, y)
@@ -117,7 +130,7 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
     # to speed things up: use dict.update if possible
     # (this `if` can be remove without impact on the function
     #  except performance)
-    if not recursive and list_merge == 'replace':
+    if not recursive and list_merge == "replace":
         x.update(y)
         return x
 
@@ -151,22 +164,24 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
         # if both x's element and y's element are lists
         # "merge" them depending on the `list_merge` argument
         # and move on to the next element of y
-        if isinstance(x_value, MutableSequence) and isinstance(y_value, MutableSequence):
-            if list_merge == 'replace':
+        if isinstance(x_value, MutableSequence) and isinstance(
+            y_value, MutableSequence
+        ):
+            if list_merge == "replace":
                 # replace x value by y's one as it has higher priority
                 x[key] = y_value
-            elif list_merge == 'append':
+            elif list_merge == "append":
                 x[key] = x_value + y_value
-            elif list_merge == 'prepend':
+            elif list_merge == "prepend":
                 x[key] = y_value + x_value
-            elif list_merge == 'append_rp':
+            elif list_merge == "append_rp":
                 # append all elements from y_value (high prio) to x_value (low prio)
                 # and remove x_value elements that are also in y_value
                 # we don't remove elements from x_value nor y_value that were already in double
                 # (we assume that there is a reason if there where such double elements)
                 # _rp stands for "remove present"
                 x[key] = [z for z in x_value if z not in y_value] + y_value
-            elif list_merge == 'prepend_rp':
+            elif list_merge == "prepend_rp":
                 # same as 'append_rp' but y_value elements are prepend
                 x[key] = y_value + [z for z in x_value if z not in y_value]
             # else 'keep'
@@ -182,20 +197,22 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
 
 def load_extra_vars(loader):
 
-    if not getattr(load_extra_vars, 'extra_vars', None):
+    if not getattr(load_extra_vars, "extra_vars", None):
         extra_vars = {}
-        for extra_vars_opt in context.CLIARGS.get('extra_vars', tuple()):
+        for extra_vars_opt in context.CLIARGS.get("extra_vars", tuple()):
             data = None
-            extra_vars_opt = to_text(extra_vars_opt, errors='surrogate_or_strict')
+            extra_vars_opt = to_text(extra_vars_opt, errors="surrogate_or_strict")
             if extra_vars_opt is None or not extra_vars_opt:
                 continue
 
-            if extra_vars_opt.startswith(u"@"):
+            if extra_vars_opt.startswith("@"):
                 # Argument is a YAML file (JSON is a subset of YAML)
                 data = loader.load_from_file(extra_vars_opt[1:])
-            elif extra_vars_opt[0] in [u'/', u'.']:
-                raise AnsibleOptionsError("Please prepend extra_vars filename '%s' with '@'" % extra_vars_opt)
-            elif extra_vars_opt[0] in [u'[', u'{']:
+            elif extra_vars_opt[0] in ["/", "."]:
+                raise AnsibleOptionsError(
+                    "Please prepend extra_vars filename '%s' with '@'" % extra_vars_opt
+                )
+            elif extra_vars_opt[0] in ["[", "{"]:
                 # Arguments as YAML
                 data = loader.load(extra_vars_opt)
             else:
@@ -205,34 +222,39 @@ def load_extra_vars(loader):
             if isinstance(data, MutableMapping):
                 extra_vars = combine_vars(extra_vars, data)
             else:
-                raise AnsibleOptionsError("Invalid extra vars data supplied. '%s' could not be made into a dictionary" % extra_vars_opt)
+                raise AnsibleOptionsError(
+                    "Invalid extra vars data supplied. '%s' could not be made into a dictionary"
+                    % extra_vars_opt
+                )
 
-        setattr(load_extra_vars, 'extra_vars', extra_vars)
+        setattr(load_extra_vars, "extra_vars", extra_vars)
 
     return load_extra_vars.extra_vars
 
 
 def load_options_vars(version):
 
-    if not getattr(load_options_vars, 'options_vars', None):
+    if not getattr(load_options_vars, "options_vars", None):
         if version is None:
-            version = 'Unknown'
-        options_vars = {'ansible_version': version}
-        attrs = {'check': 'check_mode',
-                 'diff': 'diff_mode',
-                 'forks': 'forks',
-                 'inventory': 'inventory_sources',
-                 'skip_tags': 'skip_tags',
-                 'subset': 'limit',
-                 'tags': 'run_tags',
-                 'verbosity': 'verbosity'}
+            version = "Unknown"
+        options_vars = {"ansible_version": version}
+        attrs = {
+            "check": "check_mode",
+            "diff": "diff_mode",
+            "forks": "forks",
+            "inventory": "inventory_sources",
+            "skip_tags": "skip_tags",
+            "subset": "limit",
+            "tags": "run_tags",
+            "verbosity": "verbosity",
+        }
 
         for attr, alias in attrs.items():
             opt = context.CLIARGS.get(attr)
             if opt is not None:
-                options_vars['ansible_%s' % alias] = opt
+                options_vars["ansible_%s" % alias] = opt
 
-        setattr(load_options_vars, 'options_vars', options_vars)
+        setattr(load_options_vars, "options_vars", options_vars)
 
     return load_options_vars.options_vars
 

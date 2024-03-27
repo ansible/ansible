@@ -44,6 +44,6 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
 
         self.set_options(var_options=variables, direct=kwargs)
-        dump = self.get_option('test_list')
+        dump = self.get_option("test_list")
 
         return terms

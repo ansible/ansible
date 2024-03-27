@@ -30,7 +30,7 @@ from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.six import text_type, string_types
 from ansible.plugins import AnsiblePlugin
 
-_USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
+_USER_HOME_PATH_RE = re.compile(r"^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$")
 
 
 class ShellBase(AnsiblePlugin):
@@ -46,30 +46,39 @@ class ShellBase(AnsiblePlugin):
         # Normalize the tmp directory strings. We don't use expanduser/expandvars because those
         # can vary between remote user and become user.  Therefore the safest practice will be for
         # this to always be specified as full paths)
-        normalized_paths = [d.rstrip('/') for d in self.get_option('system_tmpdirs')]
+        normalized_paths = [d.rstrip("/") for d in self.get_option("system_tmpdirs")]
 
         # Make sure all system_tmpdirs are absolute otherwise they'd be relative to the login dir
         # which is almost certainly going to fail in a cornercase.
         if not all(os.path.isabs(d) for d in normalized_paths):
-            raise AnsibleError('The configured system_tmpdirs contains a relative path: {0}. All'
-                               ' system_tmpdirs must be absolute'.format(to_native(normalized_paths)))
+            raise AnsibleError(
+                "The configured system_tmpdirs contains a relative path: {0}. All"
+                " system_tmpdirs must be absolute".format(to_native(normalized_paths))
+            )
 
-        self.set_option('system_tmpdirs', normalized_paths)
+        self.set_option("system_tmpdirs", normalized_paths)
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
 
-        super(ShellBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+        super(ShellBase, self).set_options(
+            task_keys=task_keys, var_options=var_options, direct=direct
+        )
 
         # set env if needed, deal with environment's 'dual nature' list of dicts or dict
         # TODO: config system should already resolve this so we should be able to just iterate over dicts
-        env = self.get_option('environment')
+        env = self.get_option("environment")
         if isinstance(env, string_types):
-            raise AnsibleError('The "environment" keyword takes a list of dictionaries or a dictionary, not a string')
+            raise AnsibleError(
+                'The "environment" keyword takes a list of dictionaries or a dictionary, not a string'
+            )
         if not isinstance(env, Sequence):
             env = [env]
         for env_dict in env:
             if not isinstance(env_dict, Mapping):
-                raise AnsibleError('The "environment" keyword takes a list of dictionaries (or single dictionary), but got a "%s" instead' % type(env_dict))
+                raise AnsibleError(
+                    'The "environment" keyword takes a list of dictionaries (or single dictionary), but got a "%s" instead'
+                    % type(env_dict)
+                )
             self.env.update(env_dict)
 
         # We can remove the try: except in the future when we make ShellBase a proper subset of
@@ -82,10 +91,16 @@ class ShellBase(AnsiblePlugin):
 
     @staticmethod
     def _generate_temp_dir_name():
-        return 'ansible-tmp-%s-%s-%s' % (time.time(), os.getpid(), random.randint(0, 2**48))
+        return "ansible-tmp-%s-%s-%s" % (
+            time.time(),
+            os.getpid(),
+            random.randint(0, 2**48),
+        )
 
     def env_prefix(self, **kwargs):
-        return ' '.join(['%s=%s' % (k, shlex.quote(text_type(v))) for k, v in kwargs.items()])
+        return " ".join(
+            ["%s=%s" % (k, shlex.quote(text_type(v))) for k, v in kwargs.items()]
+        )
 
     def join_path(self, *args):
         return os.path.join(*args)
@@ -96,47 +111,47 @@ class ShellBase(AnsiblePlugin):
         return base_name.strip()
 
     def path_has_trailing_slash(self, path):
-        return path.endswith('/')
+        return path.endswith("/")
 
     def chmod(self, paths, mode):
-        cmd = ['chmod', mode]
+        cmd = ["chmod", mode]
         cmd.extend(paths)
         cmd = [shlex.quote(c) for c in cmd]
 
-        return ' '.join(cmd)
+        return " ".join(cmd)
 
     def chown(self, paths, user):
-        cmd = ['chown', user]
+        cmd = ["chown", user]
         cmd.extend(paths)
         cmd = [shlex.quote(c) for c in cmd]
 
-        return ' '.join(cmd)
+        return " ".join(cmd)
 
     def chgrp(self, paths, group):
-        cmd = ['chgrp', group]
+        cmd = ["chgrp", group]
         cmd.extend(paths)
         cmd = [shlex.quote(c) for c in cmd]
 
-        return ' '.join(cmd)
+        return " ".join(cmd)
 
     def set_user_facl(self, paths, user, mode):
         """Only sets acls for users as that's really all we need"""
-        cmd = ['setfacl', '-m', 'u:%s:%s' % (user, mode)]
+        cmd = ["setfacl", "-m", "u:%s:%s" % (user, mode)]
         cmd.extend(paths)
         cmd = [shlex.quote(c) for c in cmd]
 
-        return ' '.join(cmd)
+        return " ".join(cmd)
 
     def remove(self, path, recurse=False):
         path = shlex.quote(path)
-        cmd = 'rm -f '
+        cmd = "rm -f "
         if recurse:
-            cmd += '-r '
+            cmd += "-r "
         return cmd + "%s %s" % (path, self._SHELL_REDIRECT_ALLNULL)
 
     def exists(self, path):
-        cmd = ['test', '-e', shlex.quote(path)]
-        return ' '.join(cmd)
+        cmd = ["test", "-e", shlex.quote(path)]
+        return " ".join(cmd)
 
     def mkdtemp(self, basefile=None, system=False, mode=0o700, tmpdir=None):
         if not basefile:
@@ -153,35 +168,56 @@ class ShellBase(AnsiblePlugin):
 
         if system:
             if tmpdir:
-                tmpdir = tmpdir.rstrip('/')
+                tmpdir = tmpdir.rstrip("/")
 
-            if tmpdir in self.get_option('system_tmpdirs'):
+            if tmpdir in self.get_option("system_tmpdirs"):
                 basetmpdir = tmpdir
             else:
-                basetmpdir = self.get_option('system_tmpdirs')[0]
+                basetmpdir = self.get_option("system_tmpdirs")[0]
         else:
             if tmpdir is None:
-                basetmpdir = self.get_option('remote_tmp')
+                basetmpdir = self.get_option("remote_tmp")
             else:
                 basetmpdir = tmpdir
 
         basetmp = self.join_path(basetmpdir, basefile)
 
         # use mkdir -p to ensure parents exist, but mkdir fullpath to ensure last one is created by us
-        cmd = 'mkdir -p %s echo %s %s' % (self._SHELL_SUB_LEFT, basetmpdir, self._SHELL_SUB_RIGHT)
-        cmd += '%s mkdir %s echo %s %s' % (self._SHELL_AND, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
-        cmd += ' %s echo %s=%s echo %s %s' % (self._SHELL_AND, basefile, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
+        cmd = "mkdir -p %s echo %s %s" % (
+            self._SHELL_SUB_LEFT,
+            basetmpdir,
+            self._SHELL_SUB_RIGHT,
+        )
+        cmd += "%s mkdir %s echo %s %s" % (
+            self._SHELL_AND,
+            self._SHELL_SUB_LEFT,
+            basetmp,
+            self._SHELL_SUB_RIGHT,
+        )
+        cmd += " %s echo %s=%s echo %s %s" % (
+            self._SHELL_AND,
+            basefile,
+            self._SHELL_SUB_LEFT,
+            basetmp,
+            self._SHELL_SUB_RIGHT,
+        )
 
         # change the umask in a subshell to achieve the desired mode
         # also for directories created with `mkdir -p`
         if mode:
             tmp_umask = 0o777 & ~mode
-            cmd = '%s umask %o %s %s %s' % (self._SHELL_GROUP_LEFT, tmp_umask, self._SHELL_AND, cmd, self._SHELL_GROUP_RIGHT)
+            cmd = "%s umask %o %s %s %s" % (
+                self._SHELL_GROUP_LEFT,
+                tmp_umask,
+                self._SHELL_AND,
+                cmd,
+                self._SHELL_GROUP_RIGHT,
+            )
 
         return cmd
 
-    def expand_user(self, user_home_path, username=''):
-        ''' Return a command to expand tildes in a path
+    def expand_user(self, user_home_path, username=""):
+        """Return a command to expand tildes in a path
 
         It can be either "~" or "~username". We just ignore $HOME
         We use the POSIX definition of a username:
@@ -189,10 +225,10 @@ class ShellBase(AnsiblePlugin):
             http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap03.html#tag_03_276
 
             Falls back to 'current working directory' as we assume 'home is where the remote user ends up'
-        '''
+        """
 
         # Check that the user_path to expand is safe
-        if user_home_path != '~':
+        if user_home_path != "~":
             if not _USER_HOME_PATH_RE.match(user_home_path):
                 # shlex.quote will make the shell return the string verbatim
                 user_home_path = shlex.quote(user_home_path)
@@ -200,15 +236,15 @@ class ShellBase(AnsiblePlugin):
             # if present the user name is appended to resolve "that user's home"
             user_home_path += username
 
-        return 'echo %s' % user_home_path
+        return "echo %s" % user_home_path
 
     def pwd(self):
         """Return the working directory after connecting"""
-        return 'echo %spwd%s' % (self._SHELL_SUB_LEFT, self._SHELL_SUB_RIGHT)
+        return "echo %spwd%s" % (self._SHELL_SUB_LEFT, self._SHELL_SUB_RIGHT)
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None):
         # don't quote the cmd if it's an empty string, because this will break pipelining mode
-        if cmd.strip() != '':
+        if cmd.strip() != "":
             cmd = shlex.quote(cmd)
 
         cmd_parts = []
@@ -226,7 +262,7 @@ class ShellBase(AnsiblePlugin):
         """Append an additional command if supported by the shell"""
 
         if self._SHELL_AND:
-            cmd += ' %s %s' % (self._SHELL_AND, cmd_to_append)
+            cmd += " %s %s" % (self._SHELL_AND, cmd_to_append)
 
         return cmd
 

@@ -16,12 +16,12 @@ def main():
         # Compensate for macOS being unable to access cwd as an unprivileged user.
         # This test is a no-op in this case.
         # Testing for os.getcwd() failures is handled by the test_cwd_missing module.
-        cwd = '/'
+        cwd = "/"
         os.chdir(cwd)
 
     module = AnsibleModule(argument_spec=dict())
     module.exit_json(before=cwd, after=os.getcwd())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -27,8 +27,7 @@ from __future__ import annotations
 
 
 class Lldp_globalArgs(object):  # pylint: disable=R0903
-    """The arg spec for the vyos_lldp_global module
-    """
+    """The arg spec for the vyos_lldp_global module"""
 
     def __init__(self, **kwargs):
         pass

@@ -1,4 +1,5 @@
 """Linux control group constants, classes and utilities."""
+
 from __future__ import annotations
 
 import codecs
@@ -10,17 +11,17 @@ import re
 class CGroupPath:
     """Linux cgroup path constants."""
 
-    ROOT = '/sys/fs/cgroup'
-    SYSTEMD = '/sys/fs/cgroup/systemd'
-    SYSTEMD_RELEASE_AGENT = '/sys/fs/cgroup/systemd/release_agent'
+    ROOT = "/sys/fs/cgroup"
+    SYSTEMD = "/sys/fs/cgroup/systemd"
+    SYSTEMD_RELEASE_AGENT = "/sys/fs/cgroup/systemd/release_agent"
 
 
 class MountType:
     """Linux filesystem mount type constants."""
 
-    TMPFS = 'tmpfs'
-    CGROUP_V1 = 'cgroup'
-    CGROUP_V2 = 'cgroup2'
+    TMPFS = "tmpfs"
+    CGROUP_V1 = "cgroup"
+    CGROUP_V2 = "cgroup2"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -39,16 +40,16 @@ class CGroupEntry:
     @property
     def full_path(self) -> pathlib.PurePosixPath:
         """The full path for this cgroup subsystem."""
-        return pathlib.PurePosixPath(self.root_path, str(self.path).lstrip('/'))
+        return pathlib.PurePosixPath(self.root_path, str(self.path).lstrip("/"))
 
     @classmethod
     def parse(cls, value: str) -> CGroupEntry:
         """Parse the given cgroup line from the proc filesystem and return a cgroup entry."""
-        cid, subsystem, path = value.split(':', maxsplit=2)
+        cid, subsystem, path = value.split(":", maxsplit=2)
 
         return cls(
             id=int(cid),
-            subsystem=subsystem.removeprefix('name='),
+            subsystem=subsystem.removeprefix("name="),
             path=pathlib.PurePosixPath(path),
         )
 
@@ -79,13 +80,15 @@ class MountEntry:
         """Parse the given mount info line from the proc filesystem and return a mount entry."""
         # See: https://man7.org/linux/man-pages/man5/proc.5.html
         # See: https://github.com/torvalds/linux/blob/aea23e7c464bfdec04b52cf61edb62030e9e0d0a/fs/proc_namespace.c#L135
-        mount_id, parent_id, device_major_minor, root, path, options, *remainder = value.split(' ')
+        mount_id, parent_id, device_major_minor, root, path, options, *remainder = (
+            value.split(" ")
+        )
         fields = remainder[:-4]
         separator, mtype, source, super_options = remainder[-4:]
 
-        assert separator == '-'
+        assert separator == "-"
 
-        device_major, device_minor = device_major_minor.split(':')
+        device_major, device_minor = device_major_minor.split(":")
 
         return cls(
             mount_id=int(mount_id),
@@ -94,11 +97,11 @@ class MountEntry:
             device_minor=int(device_minor),
             root=_decode_path(root),
             path=_decode_path(path),
-            options=tuple(options.split(',')),
+            options=tuple(options.split(",")),
             fields=tuple(fields),
             type=mtype,
             source=_decode_path(source),
-            super_options=tuple(super_options.split(',')),
+            super_options=tuple(super_options.split(",")),
         )
 
     @classmethod
@@ -110,5 +113,9 @@ class MountEntry:
 def _decode_path(value: str) -> pathlib.PurePosixPath:
     """Decode and return a path which may contain octal escape sequences."""
     # See: https://github.com/torvalds/linux/blob/aea23e7c464bfdec04b52cf61edb62030e9e0d0a/fs/proc_namespace.c#L150
-    path = re.sub(r'(\\[0-7]{3})', lambda m: codecs.decode(m.group(0).encode('ascii'), 'unicode_escape'), value)
+    path = re.sub(
+        r"(\\[0-7]{3})",
+        lambda m: codecs.decode(m.group(0).encode("ascii"), "unicode_escape"),
+        value,
+    )
     return pathlib.PurePosixPath(path)

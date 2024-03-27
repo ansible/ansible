@@ -69,11 +69,13 @@ class LookupModule(LookupBase):
         self.set_options(var_options=variables, direct=kwargs)
 
         ret = []
-        d = self.get_option('default')
+        d = self.get_option("default")
         for term in terms:
             var = term.split()[0]
             val = os.environ.get(var, d)
             if isinstance(val, Undefined):
-                raise AnsibleUndefinedVariable('The "env" lookup, found an undefined variable: %s' % var)
+                raise AnsibleUndefinedVariable(
+                    'The "env" lookup, found an undefined variable: %s' % var
+                )
             ret.append(val)
         return ret

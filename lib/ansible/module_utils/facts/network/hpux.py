@@ -25,11 +25,12 @@ class HPUXNetwork(Network):
     - interfaces (a list of interface names)
     - interface_<name> dictionary of ipv4 address information.
     """
-    platform = 'HP-UX'
+
+    platform = "HP-UX"
 
     def populate(self, collected_facts=None):
         network_facts = {}
-        netstat_path = self.module.get_bin_path('netstat')
+        netstat_path = self.module.get_bin_path("netstat")
 
         if netstat_path is None:
             return network_facts
@@ -38,7 +39,7 @@ class HPUXNetwork(Network):
         network_facts.update(default_interfaces_facts)
 
         interfaces = self.get_interfaces_info()
-        network_facts['interfaces'] = interfaces.keys()
+        network_facts["interfaces"] = interfaces.keys()
         for iface in interfaces:
             network_facts[iface] = interfaces[iface]
 
@@ -51,9 +52,9 @@ class HPUXNetwork(Network):
         for line in lines:
             words = line.split()
             if len(words) > 1:
-                if words[0] == 'default':
-                    default_interfaces['default_interface'] = words[4]
-                    default_interfaces['default_gateway'] = words[1]
+                if words[0] == "default":
+                    default_interfaces["default_interface"] = words[4]
+                    default_interfaces["default_gateway"] = words[1]
 
         return default_interfaces
 
@@ -64,18 +65,20 @@ class HPUXNetwork(Network):
         for line in lines:
             words = line.split()
             for i in range(len(words) - 1):
-                if words[i][:3] == 'lan':
+                if words[i][:3] == "lan":
                     device = words[i]
-                    interfaces[device] = {'device': device}
+                    interfaces[device] = {"device": device}
                     address = words[i + 3]
-                    interfaces[device]['ipv4'] = {'address': address}
+                    interfaces[device]["ipv4"] = {"address": address}
                     network = words[i + 2]
-                    interfaces[device]['ipv4'] = {'network': network,
-                                                  'interface': device,
-                                                  'address': address}
+                    interfaces[device]["ipv4"] = {
+                        "network": network,
+                        "interface": device,
+                        "address": address,
+                    }
         return interfaces
 
 
 class HPUXNetworkCollector(NetworkCollector):
     _fact_class = HPUXNetwork
-    _platform = 'HP-UX'
+    _platform = "HP-UX"

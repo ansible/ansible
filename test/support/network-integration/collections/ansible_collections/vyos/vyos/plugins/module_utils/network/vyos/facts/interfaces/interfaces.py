@@ -24,8 +24,7 @@ from ansible_collections.vyos.vyos.plugins.module_utils.network.vyos.argspec.int
 
 
 class InterfacesFacts(object):
-    """ The vyos interfaces fact class
-    """
+    """The vyos interfaces fact class"""
 
     def __init__(self, module, subspec="config", options="options"):
         self._module = module
@@ -42,7 +41,7 @@ class InterfacesFacts(object):
         self.generated_spec = utils.generate_dict(facts_argument_spec)
 
     def populate_facts(self, connection, ansible_facts, data=None):
-        """ Populate the facts for interfaces
+        """Populate the facts for interfaces
         :param connection: the device connection
         :param ansible_facts: Facts dictionary
         :param data: previously collected conf
@@ -69,9 +68,7 @@ class InterfacesFacts(object):
         facts = {}
         if objs:
             facts["interfaces"] = []
-            params = utils.validate_config(
-                self.argument_spec, {"config": objs}
-            )
+            params = utils.validate_config(self.argument_spec, {"config": objs})
             for cfg in params["config"]:
                 facts["interfaces"].append(utils.remove_empties(cfg))
 
@@ -90,9 +87,7 @@ class InterfacesFacts(object):
         """
         vif_conf = "\n".join(filter(lambda x: ("vif" in x), conf))
         eth_conf = "\n".join(filter(lambda x: ("vif" not in x), conf))
-        config = self.parse_attribs(
-            ["description", "speed", "mtu", "duplex"], eth_conf
-        )
+        config = self.parse_attribs(["description", "speed", "mtu", "duplex"], eth_conf)
         config["vifs"] = self.parse_vifs(vif_conf)
 
         return utils.remove_empties(config)

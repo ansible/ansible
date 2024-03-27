@@ -46,9 +46,9 @@ class TestBlock(unittest.TestCase):
 
     def test_load_block_with_tasks(self):
         ds = dict(
-            block=[dict(action='block')],
-            rescue=[dict(action='rescue')],
-            always=[dict(action='always')],
+            block=[dict(action="block")],
+            rescue=[dict(action="rescue")],
+            always=[dict(action="always")],
             # otherwise=[dict(action='otherwise')],
         )
         b = Block.load(ds)
@@ -63,18 +63,18 @@ class TestBlock(unittest.TestCase):
         # self.assertIsInstance(b.otherwise[0], Task)
 
     def test_load_implicit_block(self):
-        ds = [dict(action='foo')]
+        ds = [dict(action="foo")]
         b = Block.load(ds)
         self.assertEqual(len(b.block), 1)
         self.assertIsInstance(b.block[0], Task)
 
     def test_deserialize(self):
         ds = dict(
-            block=[dict(action='block')],
-            rescue=[dict(action='rescue')],
-            always=[dict(action='always')],
+            block=[dict(action="block")],
+            rescue=[dict(action="rescue")],
+            always=[dict(action="always")],
         )
         b = Block.load(ds)
-        data = dict(parent=ds, parent_type='Block')
+        data = dict(parent=ds, parent_type="Block")
         b.deserialize(data)
         self.assertIsInstance(b._parent, Block)

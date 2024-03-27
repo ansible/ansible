@@ -20,8 +20,8 @@ import json
 
 
 def main():
-    print(json.dumps(dict(changed=False, source='testns.testcol.fakemodule')))
+    print(json.dumps(dict(changed=False, source="testns.testcol.fakemodule")))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

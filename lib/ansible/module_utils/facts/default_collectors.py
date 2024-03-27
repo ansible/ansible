@@ -95,7 +95,7 @@ from ansible.module_utils.facts.virtual.sunos import SunOSVirtualCollector
 _base = [
     PlatformFactCollector,
     DistributionFactCollector,
-    LSBFactCollector
+    LSBFactCollector,
 ]  # type: t.List[t.Type[BaseFactCollector]]
 
 # These restrict what is possible in others
@@ -103,7 +103,7 @@ _restrictive = [
     SelinuxFactCollector,
     ApparmorFactCollector,
     ChrootFactCollector,
-    FipsFactCollector
+    FipsFactCollector,
 ]  # type: t.List[t.Type[BaseFactCollector]]
 
 # general info, not required but probably useful for other facts
@@ -118,7 +118,7 @@ _general = [
     EnvFactCollector,
     LoadAvgFactCollector,
     SshPubKeyFactCollector,
-    UserFactCollector
+    UserFactCollector,
 ]  # type: t.List[t.Type[BaseFactCollector]]
 
 # virtual, this might also limit hardware/networking
@@ -130,7 +130,7 @@ _virtual = [
     OpenBSDVirtualCollector,
     NetBSDVirtualCollector,
     SunOSVirtualCollector,
-    HPUXVirtualCollector
+    HPUXVirtualCollector,
 ]  # type: t.List[t.Type[BaseFactCollector]]
 
 _hardware = [
@@ -144,7 +144,7 @@ _hardware = [
     LinuxHardwareCollector,
     NetBSDHardwareCollector,
     OpenBSDHardwareCollector,
-    SunOSHardwareCollector
+    SunOSHardwareCollector,
 ]  # type: t.List[t.Type[BaseFactCollector]]
 
 _network = [
@@ -162,15 +162,17 @@ _network = [
     LinuxNetworkCollector,
     NetBSDNetworkCollector,
     OpenBSDNetworkCollector,
-    SunOSNetworkCollector
+    SunOSNetworkCollector,
 ]  # type: t.List[t.Type[BaseFactCollector]]
 
 # other fact sources
 _extra_facts = [
     LocalFactCollector,
     FacterFactCollector,
-    OhaiFactCollector
+    OhaiFactCollector,
 ]  # type: t.List[t.Type[BaseFactCollector]]
 
 # TODO: make config driven
-collectors = _base + _restrictive + _general + _virtual + _hardware + _network + _extra_facts
+collectors = (
+    _base + _restrictive + _general + _virtual + _hardware + _network + _extra_facts
+)

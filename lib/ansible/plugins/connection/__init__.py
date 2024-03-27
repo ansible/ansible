@@ -27,12 +27,12 @@ from ansible.utils.path import unfrackpath
 display = Display()
 
 
-__all__ = ['ConnectionBase', 'ensure_connect']
+__all__ = ["ConnectionBase", "ensure_connect"]
 
 BUFSIZE = 65536
 
-P = t.ParamSpec('P')
-T = t.TypeVar('T')
+P = t.ParamSpec("P")
+T = t.TypeVar("T")
 
 
 def ensure_connect(
@@ -43,13 +43,14 @@ def ensure_connect(
         if not self._connected:
             self._connect()
         return func(self, *args, **kwargs)
+
     return wrapped
 
 
 class ConnectionBase(AnsiblePlugin):
-    '''
+    """
     A base class for connections to contain common code.
-    '''
+    """
 
     has_pipelining = False
     has_native_async = False  # eg, winrm
@@ -58,7 +59,7 @@ class ConnectionBase(AnsiblePlugin):
     # When running over this connection type, prefer modules written in a certain language
     # as discovered by the specified file extension.  An empty string as the
     # language means any language.
-    module_implementation_preferences = ('',)  # type: t.Iterable[str]
+    module_implementation_preferences = ("",)  # type: t.Iterable[str]
     allow_executable = True
 
     # the following control whether or not the connection supports the
@@ -80,13 +81,13 @@ class ConnectionBase(AnsiblePlugin):
         super(ConnectionBase, self).__init__()
 
         # All these hasattrs allow subclasses to override these parameters
-        if not hasattr(self, '_play_context'):
+        if not hasattr(self, "_play_context"):
             # Backwards compat: self._play_context isn't really needed, using set_options/get_option
             self._play_context = play_context
         # Delete once the deprecation period is over for WorkerProcess._new_stdin
-        if not hasattr(self, '__new_stdin'):
+        if not hasattr(self, "__new_stdin"):
             self.__new_stdin = new_stdin
-        if not hasattr(self, '_display'):
+        if not hasattr(self, "_display"):
             # Backwards compat: self._display isn't really needed, just import the global display and use that.
             self._display = display
 
@@ -100,8 +101,14 @@ class ConnectionBase(AnsiblePlugin):
 
         # we always must have shell
         if not self._shell:
-            shell_type = play_context.shell if play_context.shell else getattr(self, '_shell_type', None)
-            self._shell = get_shell_plugin(shell_type=shell_type, executable=self._play_context.executable)
+            shell_type = (
+                play_context.shell
+                if play_context.shell
+                else getattr(self, "_shell_type", None)
+            )
+            self._shell = get_shell_plugin(
+                shell_type=shell_type, executable=self._play_context.executable
+            )
 
         self.become: BecomeBase | None = None
 
@@ -110,7 +117,7 @@ class ConnectionBase(AnsiblePlugin):
         display.deprecated(
             "The connection's stdin object is deprecated. "
             "Call display.prompt_until(msg) instead.",
-            version='2.19',
+            version="2.19",
         )
         return self.__new_stdin
 
@@ -119,12 +126,12 @@ class ConnectionBase(AnsiblePlugin):
 
     @property
     def connected(self) -> bool:
-        '''Read-only property holding whether the connection to the remote host is active or closed.'''
+        """Read-only property holding whether the connection to the remote host is active or closed."""
         return self._connected
 
     @property
     def socket_path(self) -> str | None:
-        '''Read-only property holding the connection socket path for this remote host'''
+        """Read-only property holding the connection socket path for this remote host"""
         return self._socket_path
 
     @staticmethod
@@ -149,7 +156,9 @@ class ConnectionBase(AnsiblePlugin):
 
     @ensure_connect
     @abstractmethod
-    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
+    def exec_command(
+        self, cmd: str, in_data: bytes | None = None, sudoable: bool = True
+    ) -> tuple[int, bytes, bytes]:
         """Run a command on the remote host.
 
         :arg cmd: byte string containing the command
@@ -234,43 +243,56 @@ class ConnectionBase(AnsiblePlugin):
 
     def connection_lock(self) -> None:
         f = self._play_context.connection_lockfd
-        display.vvvv('CONNECTION: pid %d waiting for lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
+        display.vvvv(
+            "CONNECTION: pid %d waiting for lock on %d" % (os.getpid(), f),
+            host=self._play_context.remote_addr,
+        )
         fcntl.lockf(f, fcntl.LOCK_EX)
-        display.vvvv('CONNECTION: pid %d acquired lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
+        display.vvvv(
+            "CONNECTION: pid %d acquired lock on %d" % (os.getpid(), f),
+            host=self._play_context.remote_addr,
+        )
 
     def connection_unlock(self) -> None:
         f = self._play_context.connection_lockfd
         fcntl.lockf(f, fcntl.LOCK_UN)
-        display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
+        display.vvvv(
+            "CONNECTION: pid %d released lock on %d" % (os.getpid(), f),
+            host=self._play_context.remote_addr,
+        )
 
     def reset(self) -> None:
         display.warning("Reset is not implemented for this connection")
 
     def update_vars(self, variables: dict[str, t.Any]) -> None:
-        '''
+        """
         Adds 'magic' variables relating to connections to the variable dictionary provided.
         In case users need to access from the play, this is a legacy from runner.
-        '''
+        """
         for varname in C.COMMON_CONNECTION_VARS:
             value = None
             if varname in variables:
                 # dont update existing
                 continue
-            elif 'password' in varname or 'passwd' in varname:
+            elif "password" in varname or "passwd" in varname:
                 # no secrets!
                 continue
-            elif varname == 'ansible_connection':
+            elif varname == "ansible_connection":
                 # its me mom!
                 value = self._load_name
-            elif varname == 'ansible_shell_type' and self._shell:
+            elif varname == "ansible_shell_type" and self._shell:
                 # its my cousin ...
                 value = self._shell._load_name
             else:
                 # deal with generic options if the plugin supports em (for example not all connections have a remote user)
-                options = C.config.get_plugin_options_from_var('connection', self._load_name, varname)
+                options = C.config.get_plugin_options_from_var(
+                    "connection", self._load_name, varname
+                )
                 if options:
-                    value = self.get_option(options[0])  # for these variables there should be only one option
-                elif 'become' not in varname:
+                    value = self.get_option(
+                        options[0]
+                    )  # for these variables there should be only one option
+                elif "become" not in varname:
                     # fallback to play_context, unless become related  TODO: in the end, should come from task/play and not pc
                     for prop, var_list in C.MAGIC_VARIABLE_MAPPING.items():
                         if varname in var_list:
@@ -282,7 +304,7 @@ class ConnectionBase(AnsiblePlugin):
                                 continue
 
             if value is not None:
-                display.debug('Set connection var {0} to {1}'.format(varname, value))
+                display.debug("Set connection var {0} to {1}".format(varname, value))
                 variables[varname] = value
 
 
@@ -302,35 +324,41 @@ class NetworkConnectionBase(ConnectionBase):
         *args: t.Any,
         **kwargs: t.Any,
     ) -> None:
-        super(NetworkConnectionBase, self).__init__(play_context, new_stdin, *args, **kwargs)
+        super(NetworkConnectionBase, self).__init__(
+            play_context, new_stdin, *args, **kwargs
+        )
         self._messages: list[tuple[str, str]] = []
         self._conn_closed = False
 
         self._network_os = self._play_context.network_os
 
-        self._local = connection_loader.get('local', play_context, '/dev/null')
+        self._local = connection_loader.get("local", play_context, "/dev/null")
         self._local.set_options()
 
         self._sub_plugin: dict[str, t.Any] = {}
         self._cached_variables = (None, None, None)
 
         # reconstruct the socket_path and set instance values accordingly
-        self._ansible_playbook_pid = kwargs.get('ansible_playbook_pid')
+        self._ansible_playbook_pid = kwargs.get("ansible_playbook_pid")
         self._update_connection_state()
 
     def __getattr__(self, name):
         try:
             return self.__dict__[name]
         except KeyError:
-            if not name.startswith('_'):
-                plugin = self._sub_plugin.get('obj')
+            if not name.startswith("_"):
+                plugin = self._sub_plugin.get("obj")
                 if plugin:
                     method = getattr(plugin, name, None)
                     if method is not None:
                         return method
-            raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
+            raise AttributeError(
+                "'%s' object has no attribute '%s'" % (self.__class__.__name__, name)
+            )
 
-    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
+    def exec_command(
+        self, cmd: str, in_data: bytes | None = None, sudoable: bool = True
+    ) -> tuple[int, bytes, bytes]:
         return self._local.exec_command(cmd, in_data, sudoable)
 
     def queue_message(self, level: str, message: str) -> None:
@@ -356,13 +384,17 @@ class NetworkConnectionBase(ConnectionBase):
         return self._local.fetch_file(in_path, out_path)
 
     def reset(self) -> None:
-        '''
+        """
         Reset the connection
-        '''
+        """
         if self._socket_path:
-            self.queue_message('vvvv', 'resetting persistent connection for socket_path %s' % self._socket_path)
+            self.queue_message(
+                "vvvv",
+                "resetting persistent connection for socket_path %s"
+                % self._socket_path,
+            )
             self.close()
-        self.queue_message('vvvv', 'reset call on connection instance')
+        self.queue_message("vvvv", "reset call on connection instance")
 
     def close(self) -> None:
         self._conn_closed = True
@@ -375,34 +407,47 @@ class NetworkConnectionBase(ConnectionBase):
         var_options: dict[str, t.Any] | None = None,
         direct: dict[str, t.Any] | None = None,
     ) -> None:
-        super(NetworkConnectionBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
-        if self.get_option('persistent_log_messages'):
-            warning = "Persistent connection logging is enabled for %s. This will log ALL interactions" % self._play_context.remote_addr
-            logpath = getattr(C, 'DEFAULT_LOG_PATH')
+        super(NetworkConnectionBase, self).set_options(
+            task_keys=task_keys, var_options=var_options, direct=direct
+        )
+        if self.get_option("persistent_log_messages"):
+            warning = (
+                "Persistent connection logging is enabled for %s. This will log ALL interactions"
+                % self._play_context.remote_addr
+            )
+            logpath = getattr(C, "DEFAULT_LOG_PATH")
             if logpath is not None:
                 warning += " to %s" % logpath
-            self.queue_message('warning', "%s and WILL NOT redact sensitive configuration like passwords. USE WITH CAUTION!" % warning)
+            self.queue_message(
+                "warning",
+                "%s and WILL NOT redact sensitive configuration like passwords. USE WITH CAUTION!"
+                % warning,
+            )
 
-        if self._sub_plugin.get('obj') and self._sub_plugin.get('type') != 'external':
+        if self._sub_plugin.get("obj") and self._sub_plugin.get("type") != "external":
             try:
-                self._sub_plugin['obj'].set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+                self._sub_plugin["obj"].set_options(
+                    task_keys=task_keys, var_options=var_options, direct=direct
+                )
             except AttributeError:
                 pass
 
     def _update_connection_state(self) -> None:
-        '''
+        """
         Reconstruct the connection socket_path and check if it exists
 
         If the socket path exists then the connection is active and set
         both the _socket_path value to the path and the _connected value
         to True.  If the socket path doesn't exist, leave the socket path
         value to None and the _connected value to False
-        '''
-        ssh = connection_loader.get('ssh', class_only=True)
+        """
+        ssh = connection_loader.get("ssh", class_only=True)
         control_path = ssh._create_control_path(
-            self._play_context.remote_addr, self._play_context.port,
-            self._play_context.remote_user, self._play_context.connection,
-            self._ansible_playbook_pid
+            self._play_context.remote_addr,
+            self._play_context.port,
+            self._play_context.remote_user,
+            self._play_context.connection,
+            self._ansible_playbook_pid,
         )
 
         tmp_path = unfrackpath(C.PERSISTENT_CONTROL_PATH_DIR)
@@ -413,5 +458,5 @@ class NetworkConnectionBase(ConnectionBase):
             self._socket_path = socket_path
 
     def _log_messages(self, message: str) -> None:
-        if self.get_option('persistent_log_messages'):
-            self.queue_message('log', message)
+        if self.get_option("persistent_log_messages"):
+            self.queue_message("log", message)

@@ -1,4 +1,5 @@
 """Composite argument value parsers used by other parsers."""
+
 from __future__ import annotations
 
 import collections.abc as c
@@ -71,14 +72,14 @@ class PythonParser(Parser):
         version_choices = list(versions)
 
         if allow_default:
-            version_choices.append('default')
+            version_choices.append("default")
 
         first_choices = list(version_choices)
 
         if allow_venv:
-            first_choices.append('venv/')
+            first_choices.append("venv/")
 
-        venv_choices = list(version_choices) + ['system-site-packages/']
+        venv_choices = list(version_choices) + ["system-site-packages/"]
 
         self.versions = versions
         self.allow_default = allow_default
@@ -92,28 +93,30 @@ class PythonParser(Parser):
         """Parse the input from the given state and return the result."""
         boundary: ParserBoundary
 
-        with state.delimit('@/', required=False) as boundary:
+        with state.delimit("@/", required=False) as boundary:
             version = ChoicesParser(self.first_choices).parse(state)
 
         python: PythonConfig
 
-        if version == 'venv':
-            with state.delimit('@/', required=False) as boundary:
+        if version == "venv":
+            with state.delimit("@/", required=False) as boundary:
                 version = ChoicesParser(self.venv_choices).parse(state)
 
-            if version == 'system-site-packages':
+            if version == "system-site-packages":
                 system_site_packages = True
 
-                with state.delimit('@', required=False) as boundary:
+                with state.delimit("@", required=False) as boundary:
                     version = ChoicesParser(self.version_choices).parse(state)
             else:
                 system_site_packages = False
 
-            python = VirtualPythonConfig(version=version, system_site_packages=system_site_packages)
+            python = VirtualPythonConfig(
+                version=version, system_site_packages=system_site_packages
+            )
         else:
             python = NativePythonConfig(version=version)
 
-        if boundary.match == '@':
+        if boundary.match == "@":
             # FUTURE: For OriginConfig or ControllerConfig->OriginConfig the path could be validated with an absolute path parser (file or directory).
             python.path = AbsolutePathParser().parse(state)
 
@@ -122,14 +125,14 @@ class PythonParser(Parser):
     def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
 
-        docs = '[venv/[system-site-packages/]]' if self.allow_venv else ''
+        docs = "[venv/[system-site-packages/]]" if self.allow_venv else ""
 
         if self.versions:
-            docs += '|'.join(self.version_choices)
+            docs += "|".join(self.version_choices)
         else:
-            docs += '{X.Y}'
+            docs += "{X.Y}"
 
-        docs += '[@{path|dir/}]'
+        docs += "[@{path|dir/}]"
 
         return docs
 
@@ -138,14 +141,16 @@ class PlatformParser(ChoicesParser):
     """Composite argument parser for "{platform}/{version}" formatted choices."""
 
     def __init__(self, choices: list[str]) -> None:
-        super().__init__(choices, conditions=MatchConditions.CHOICE | MatchConditions.ANY)
+        super().__init__(
+            choices, conditions=MatchConditions.CHOICE | MatchConditions.ANY
+        )
 
     def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         value = super().parse(state)
 
-        if len(value.split('/')) != 2:
-            raise ParserError(f'invalid platform format: {value}')
+        if len(value.split("/")) != 2:
+            raise ParserError(f"invalid platform format: {value}")
 
         return value
 
@@ -156,25 +161,29 @@ class SshConnectionParser(Parser):
     Format: user@host[:port]
     """
 
-    EXPECTED_FORMAT = '{user}@{host}[:{port}]'
+    EXPECTED_FORMAT = "{user}@{host}[:{port}]"
 
     def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         namespace = state.current_namespace
 
-        with state.delimit('@'):
-            user = AnyParser(no_match_message=f'Expected {{user}} from: {self.EXPECTED_FORMAT}').parse(state)
+        with state.delimit("@"):
+            user = AnyParser(
+                no_match_message=f"Expected {{user}} from: {self.EXPECTED_FORMAT}"
+            ).parse(state)
 
-        setattr(namespace, 'user', user)
+        setattr(namespace, "user", user)
 
-        with state.delimit(':', required=False) as colon:  # type: ParserBoundary
-            host = AnyParser(no_match_message=f'Expected {{host}} from: {self.EXPECTED_FORMAT}').parse(state)
+        with state.delimit(":", required=False) as colon:  # type: ParserBoundary
+            host = AnyParser(
+                no_match_message=f"Expected {{host}} from: {self.EXPECTED_FORMAT}"
+            ).parse(state)
 
-        setattr(namespace, 'host', host)
+        setattr(namespace, "host", host)
 
         if colon.match:
             port = IntegerParser(65535).parse(state)
-            setattr(namespace, 'port', port)
+            setattr(namespace, "port", port)
 
         return namespace
 

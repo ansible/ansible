@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: slurp
 version_added: historical
@@ -39,9 +39,9 @@ seealso:
 author:
     - Ansible Core Team
     - Michael DeHaan (@mpdehaan)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Find out what the remote machine's mounts are
   ansible.builtin.slurp:
     src: /proc/mounts
@@ -61,9 +61,9 @@ EXAMPLES = r'''
 # }
 # $ echo MjE3OQo= | base64 -d
 # 2179
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 content:
     description: Encoded file content
     returned: success
@@ -79,7 +79,7 @@ source:
     returned: success
     type: str
     sample: "/var/run/sshd.pid"
-'''
+"""
 
 import base64
 import errno
@@ -91,14 +91,14 @@ from ansible.module_utils.common.text.converters import to_native
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            src=dict(type='path', required=True, aliases=['path']),
+            src=dict(type="path", required=True, aliases=["path"]),
         ),
         supports_check_mode=True,
     )
-    source = module.params['src']
+    source = module.params["src"]
 
     try:
-        with open(source, 'rb') as source_fh:
+        with open(source, "rb") as source_fh:
             source_content = source_fh.read()
     except (IOError, OSError) as e:
         if e.errno == errno.ENOENT:
@@ -108,14 +108,16 @@ def main():
         elif e.errno == errno.EISDIR:
             msg = "source is a directory and must be a file: %s" % source
         else:
-            msg = "unable to slurp file: %s" % to_native(e, errors='surrogate_then_replace')
+            msg = "unable to slurp file: %s" % to_native(
+                e, errors="surrogate_then_replace"
+            )
 
         module.fail_json(msg)
 
     data = base64.b64encode(source_content)
 
-    module.exit_json(content=data, source=source, encoding='base64')
+    module.exit_json(content=data, source=source, encoding="base64")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

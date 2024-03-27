@@ -1,4 +1,5 @@
 """Command line parsing for the `network-integration` command."""
+
 from __future__ import annotations
 
 import argparse
@@ -42,9 +43,9 @@ def do_network_integration(
 ):
     """Command line parsing for the `network-integration` command."""
     parser: argparse.ArgumentParser = subparsers.add_parser(
-        'network-integration',
+        "network-integration",
         parents=[parent],
-        help='network integration tests',
+        help="network integration tests",
     )
 
     parser.set_defaults(
@@ -53,20 +54,30 @@ def do_network_integration(
         config=NetworkIntegrationConfig,
     )
 
-    network_integration = t.cast(argparse.ArgumentParser, parser.add_argument_group(title='network integration test arguments'))
+    network_integration = t.cast(
+        argparse.ArgumentParser,
+        parser.add_argument_group(title="network integration test arguments"),
+    )
 
     add_integration_common(network_integration)
 
-    register_completer(network_integration.add_argument(
-        '--testcase',
-        metavar='TESTCASE',
-        help='limit a test to a specified testcase',
-    ), complete_network_testcase)
+    register_completer(
+        network_integration.add_argument(
+            "--testcase",
+            metavar="TESTCASE",
+            help="limit a test to a specified testcase",
+        ),
+        complete_network_testcase,
+    )
 
-    add_environments(parser, completer, ControllerMode.DELEGATED, TargetMode.NETWORK_INTEGRATION)  # network-integration
+    add_environments(
+        parser, completer, ControllerMode.DELEGATED, TargetMode.NETWORK_INTEGRATION
+    )  # network-integration
 
 
-def complete_network_testcase(prefix: str, parsed_args: argparse.Namespace, **_) -> list[str]:
+def complete_network_testcase(
+    prefix: str, parsed_args: argparse.Namespace, **_
+) -> list[str]:
     """Return a list of test cases matching the given prefix if only one target was parsed from the command line, otherwise return an empty list."""
     testcases = []
 
@@ -76,12 +87,17 @@ def complete_network_testcase(prefix: str, parsed_args: argparse.Namespace, **_)
         return []
 
     target = parsed_args.include[0]
-    test_dir = os.path.join(data_context().content.integration_targets_path, target, 'tests')
+    test_dir = os.path.join(
+        data_context().content.integration_targets_path, target, "tests"
+    )
     connection_dirs = data_context().content.get_dirs(test_dir)
 
     for connection_dir in connection_dirs:
-        for testcase in [os.path.basename(path) for path in data_context().content.get_files(connection_dir)]:
+        for testcase in [
+            os.path.basename(path)
+            for path in data_context().content.get_files(connection_dir)
+        ]:
             if testcase.startswith(prefix):
-                testcases.append(testcase.split('.', 1)[0])
+                testcases.append(testcase.split(".", 1)[0])
 
     return testcases

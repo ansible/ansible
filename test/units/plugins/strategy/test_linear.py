@@ -19,10 +19,11 @@ from units.mock.path import mock_unfrackpath_noop
 
 class TestStrategyLinear(unittest.TestCase):
 
-    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    @patch("ansible.playbook.role.definition.unfrackpath", mock_unfrackpath_noop)
     def test_noop(self):
-        fake_loader = DictDataLoader({
-            "test_play.yml": """
+        fake_loader = DictDataLoader(
+            {
+                "test_play.yml": """
             - hosts: all
               gather_facts: no
               tasks:
@@ -42,26 +43,29 @@ class TestStrategyLinear(unittest.TestCase):
                        - name: rescue2
                          debug: msg='rescue2'
             """,
-        })
+            }
+        )
 
         mock_var_manager = MagicMock()
         mock_var_manager._fact_cache = dict()
         mock_var_manager.get_vars.return_value = dict()
 
-        p = Playbook.load('test_play.yml', loader=fake_loader, variable_manager=mock_var_manager)
+        p = Playbook.load(
+            "test_play.yml", loader=fake_loader, variable_manager=mock_var_manager
+        )
 
         inventory = MagicMock()
         inventory.hosts = {}
         hosts = []
         for i in range(0, 2):
             host = MagicMock()
-            host.name = host.get_name.return_value = 'host%02d' % i
+            host.name = host.get_name.return_value = "host%02d" % i
             hosts.append(host)
             inventory.hosts[host.name] = host
         inventory.get_hosts.return_value = hosts
         inventory.filter_hosts.return_value = hosts
 
-        mock_var_manager._fact_cache['host00'] = dict()
+        mock_var_manager._fact_cache["host00"] = dict()
 
         play_context = PlayContext(play=p._entries[0])
 
@@ -92,8 +96,8 @@ class TestStrategyLinear(unittest.TestCase):
         host2_task = hosts_tasks[1][1]
         self.assertIsNotNone(host1_task)
         self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'meta')
-        self.assertEqual(host2_task.action, 'meta')
+        self.assertEqual(host1_task.action, "meta")
+        self.assertEqual(host2_task.action, "meta")
 
         # debug: task1, debug: task1
         hosts_left = strategy.get_hosts_left(itr)
@@ -102,10 +106,10 @@ class TestStrategyLinear(unittest.TestCase):
         host2_task = hosts_tasks[1][1]
         self.assertIsNotNone(host1_task)
         self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'debug')
-        self.assertEqual(host2_task.action, 'debug')
-        self.assertEqual(host1_task.name, 'task1')
-        self.assertEqual(host2_task.name, 'task1')
+        self.assertEqual(host1_task.action, "debug")
+        self.assertEqual(host2_task.action, "debug")
+        self.assertEqual(host1_task.name, "task1")
+        self.assertEqual(host2_task.name, "task1")
 
         # mark the second host failed
         itr.mark_host_failed(hosts[1])
@@ -117,10 +121,10 @@ class TestStrategyLinear(unittest.TestCase):
         host2_task = hosts_tasks[1][1]
         self.assertIsNotNone(host1_task)
         self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'debug')
-        self.assertEqual(host2_task.action, 'meta')
-        self.assertEqual(host1_task.name, 'task2')
-        self.assertEqual(host2_task.name, '')
+        self.assertEqual(host1_task.action, "debug")
+        self.assertEqual(host2_task.action, "meta")
+        self.assertEqual(host1_task.name, "task2")
+        self.assertEqual(host2_task.name, "")
 
         # meta: noop, debug: rescue1
         hosts_left = strategy.get_hosts_left(itr)
@@ -129,10 +133,10 @@ class TestStrategyLinear(unittest.TestCase):
         host2_task = hosts_tasks[1][1]
         self.assertIsNotNone(host1_task)
         self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'meta')
-        self.assertEqual(host2_task.action, 'debug')
-        self.assertEqual(host1_task.name, '')
-        self.assertEqual(host2_task.name, 'rescue1')
+        self.assertEqual(host1_task.action, "meta")
+        self.assertEqual(host2_task.action, "debug")
+        self.assertEqual(host1_task.name, "")
+        self.assertEqual(host2_task.name, "rescue1")
 
         # meta: noop, debug: rescue2
         hosts_left = strategy.get_hosts_left(itr)
@@ -141,10 +145,10 @@ class TestStrategyLinear(unittest.TestCase):
         host2_task = hosts_tasks[1][1]
         self.assertIsNotNone(host1_task)
         self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'meta')
-        self.assertEqual(host2_task.action, 'debug')
-        self.assertEqual(host1_task.name, '')
-        self.assertEqual(host2_task.name, 'rescue2')
+        self.assertEqual(host1_task.action, "meta")
+        self.assertEqual(host2_task.action, "debug")
+        self.assertEqual(host1_task.name, "")
+        self.assertEqual(host2_task.name, "rescue2")
 
         # implicit meta: flush_handlers
         hosts_left = strategy.get_hosts_left(itr)
@@ -153,8 +157,8 @@ class TestStrategyLinear(unittest.TestCase):
         host2_task = hosts_tasks[1][1]
         self.assertIsNotNone(host1_task)
         self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'meta')
-        self.assertEqual(host2_task.action, 'meta')
+        self.assertEqual(host1_task.action, "meta")
+        self.assertEqual(host2_task.action, "meta")
 
         # implicit meta: flush_handlers
         hosts_left = strategy.get_hosts_left(itr)
@@ -163,8 +167,8 @@ class TestStrategyLinear(unittest.TestCase):
         host2_task = hosts_tasks[1][1]
         self.assertIsNotNone(host1_task)
         self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'meta')
-        self.assertEqual(host2_task.action, 'meta')
+        self.assertEqual(host1_task.action, "meta")
+        self.assertEqual(host2_task.action, "meta")
 
         # end of iteration
         hosts_left = strategy.get_hosts_left(itr)
@@ -175,8 +179,9 @@ class TestStrategyLinear(unittest.TestCase):
         self.assertIsNone(host2_task)
 
     def test_noop_64999(self):
-        fake_loader = DictDataLoader({
-            "test_play.yml": """
+        fake_loader = DictDataLoader(
+            {
+                "test_play.yml": """
             - hosts: all
               gather_facts: no
               tasks:
@@ -197,26 +202,29 @@ class TestStrategyLinear(unittest.TestCase):
                           debug:
                             msg: "after_rescue1"
             """,
-        })
+            }
+        )
 
         mock_var_manager = MagicMock()
         mock_var_manager._fact_cache = dict()
         mock_var_manager.get_vars.return_value = dict()
 
-        p = Playbook.load('test_play.yml', loader=fake_loader, variable_manager=mock_var_manager)
+        p = Playbook.load(
+            "test_play.yml", loader=fake_loader, variable_manager=mock_var_manager
+        )
 
         inventory = MagicMock()
         inventory.hosts = {}
         hosts = []
         for i in range(0, 2):
             host = MagicMock()
-            host.name = host.get_name.return_value = 'host%02d' % i
+            host.name = host.get_name.return_value = "host%02d" % i
             hosts.append(host)
             inventory.hosts[host.name] = host
         inventory.get_hosts.return_value = hosts
         inventory.filter_hosts.return_value = hosts
 
-        mock_var_manager._fact_cache['host00'] = dict()
+        mock_var_manager._fact_cache["host00"] = dict()
 
         play_context = PlayContext(play=p._entries[0])
 
@@ -247,8 +255,8 @@ class TestStrategyLinear(unittest.TestCase):
         host2_task = hosts_tasks[1][1]
         self.assertIsNotNone(host1_task)
         self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'meta')
-        self.assertEqual(host2_task.action, 'meta')
+        self.assertEqual(host1_task.action, "meta")
+        self.assertEqual(host2_task.action, "meta")
 
         # debug: task1, debug: task1
         hosts_left = strategy.get_hosts_left(itr)
@@ -257,10 +265,10 @@ class TestStrategyLinear(unittest.TestCase):
         host2_task = hosts_tasks[1][1]
         self.assertIsNotNone(host1_task)
         self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'debug')
-        self.assertEqual(host2_task.action, 'debug')
-        self.assertEqual(host1_task.name, 'task1')
-        self.assertEqual(host2_task.name, 'task1')
+        self.assertEqual(host1_task.action, "debug")
+        self.assertEqual(host2_task.action, "debug")
+        self.assertEqual(host1_task.name, "task1")
+        self.assertEqual(host2_task.name, "task1")
 
         # mark the second host failed
         itr.mark_host_failed(hosts[1])
@@ -272,10 +280,10 @@ class TestStrategyLinear(unittest.TestCase):
         host2_task = hosts_tasks[1][1]
         self.assertIsNotNone(host1_task)
         self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'meta')
-        self.assertEqual(host2_task.action, 'debug')
-        self.assertEqual(host1_task.name, '')
-        self.assertEqual(host2_task.name, 'rescue1')
+        self.assertEqual(host1_task.action, "meta")
+        self.assertEqual(host2_task.action, "debug")
+        self.assertEqual(host1_task.name, "")
+        self.assertEqual(host2_task.name, "rescue1")
 
         # debug: after_rescue1, debug: after_rescue1
         hosts_left = strategy.get_hosts_left(itr)
@@ -284,10 +292,10 @@ class TestStrategyLinear(unittest.TestCase):
         host2_task = hosts_tasks[1][1]
         self.assertIsNotNone(host1_task)
         self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'debug')
-        self.assertEqual(host2_task.action, 'debug')
-        self.assertEqual(host1_task.name, 'after_rescue1')
-        self.assertEqual(host2_task.name, 'after_rescue1')
+        self.assertEqual(host1_task.action, "debug")
+        self.assertEqual(host2_task.action, "debug")
+        self.assertEqual(host1_task.name, "after_rescue1")
+        self.assertEqual(host2_task.name, "after_rescue1")
 
         # implicit meta: flush_handlers
         hosts_left = strategy.get_hosts_left(itr)
@@ -296,8 +304,8 @@ class TestStrategyLinear(unittest.TestCase):
         host2_task = hosts_tasks[1][1]
         self.assertIsNotNone(host1_task)
         self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'meta')
-        self.assertEqual(host2_task.action, 'meta')
+        self.assertEqual(host1_task.action, "meta")
+        self.assertEqual(host2_task.action, "meta")
 
         # implicit meta: flush_handlers
         hosts_left = strategy.get_hosts_left(itr)
@@ -306,8 +314,8 @@ class TestStrategyLinear(unittest.TestCase):
         host2_task = hosts_tasks[1][1]
         self.assertIsNotNone(host1_task)
         self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'meta')
-        self.assertEqual(host2_task.action, 'meta')
+        self.assertEqual(host1_task.action, "meta")
+        self.assertEqual(host2_task.action, "meta")
 
         # end of iteration
         hosts_left = strategy.get_hosts_left(itr)

@@ -30,7 +30,7 @@ from ansible.playbook.play_context import PlayContext
 def play_context():
     play_context = PlayContext()
     play_context.prompt = (
-        '[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: '
+        "[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: "
     )
 
     return play_context
@@ -43,13 +43,14 @@ def in_stream():
 
 def test_paramiko_connection_module(play_context, in_stream):
     assert isinstance(
-        connection_loader.get('paramiko_ssh', play_context, in_stream),
-        paramiko_ssh_module.Connection)
+        connection_loader.get("paramiko_ssh", play_context, in_stream),
+        paramiko_ssh_module.Connection,
+    )
 
 
 def test_paramiko_connect(play_context, in_stream, mocker):
-    paramiko_ssh = connection_loader.get('paramiko_ssh', play_context, in_stream)
-    mocker.patch.object(paramiko_ssh, '_connect_uncached')
+    paramiko_ssh = connection_loader.get("paramiko_ssh", play_context, in_stream)
+    mocker.patch.object(paramiko_ssh, "_connect_uncached")
     connection = paramiko_ssh._connect()
 
     assert isinstance(connection, paramiko_ssh_module.Connection)

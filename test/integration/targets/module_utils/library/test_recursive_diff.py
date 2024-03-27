@@ -11,18 +11,18 @@ from ansible.module_utils.common.dict_transformations import recursive_diff
 def main():
     module = AnsibleModule(
         {
-            'a': {'type': 'dict'},
-            'b': {'type': 'dict'},
+            "a": {"type": "dict"},
+            "b": {"type": "dict"},
         }
     )
 
     module.exit_json(
         the_diff=recursive_diff(
-            module.params['a'],
-            module.params['b'],
+            module.params["a"],
+            module.params["b"],
         ),
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

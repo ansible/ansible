@@ -1,4 +1,5 @@
 """Monkey patch os._exit when running under coverage so we don't lose coverage data in forks, such as with `pytest --boxed`. PYTEST_DONT_REWRITE"""
+
 from __future__ import annotations
 
 
@@ -33,12 +34,12 @@ def pytest_configure():
             coverage_instances.append(obj)
 
     if not coverage_instances:
-        coverage_config = os.environ.get('COVERAGE_CONF')
+        coverage_config = os.environ.get("COVERAGE_CONF")
 
         if not coverage_config:
             return
 
-        coverage_output = os.environ.get('COVERAGE_FILE')
+        coverage_output = os.environ.get("COVERAGE_FILE")
 
         if not coverage_output:
             return

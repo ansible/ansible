@@ -25,17 +25,17 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 
 
 class CmdLineFactCollector(BaseFactCollector):
-    name = 'cmdline'
+    name = "cmdline"
     _fact_ids = set()  # type: t.Set[str]
 
     def _get_proc_cmdline(self):
-        return get_file_content('/proc/cmdline')
+        return get_file_content("/proc/cmdline")
 
     def _parse_proc_cmdline(self, data):
         cmdline_dict = {}
         try:
             for piece in shlex.split(data, posix=False):
-                item = piece.split('=', 1)
+                item = piece.split("=", 1)
                 if len(item) == 1:
                     cmdline_dict[item[0]] = True
                 else:
@@ -49,7 +49,7 @@ class CmdLineFactCollector(BaseFactCollector):
         cmdline_dict = {}
         try:
             for piece in shlex.split(data, posix=False):
-                item = piece.split('=', 1)
+                item = piece.split("=", 1)
                 if len(item) == 1:
                     cmdline_dict[item[0]] = True
                 else:
@@ -74,7 +74,7 @@ class CmdLineFactCollector(BaseFactCollector):
         if not data:
             return cmdline_facts
 
-        cmdline_facts['cmdline'] = self._parse_proc_cmdline(data)
-        cmdline_facts['proc_cmdline'] = self._parse_proc_cmdline_facts(data)
+        cmdline_facts["cmdline"] = self._parse_proc_cmdline(data)
+        cmdline_facts["proc_cmdline"] = self._parse_proc_cmdline_facts(data)
 
         return cmdline_facts

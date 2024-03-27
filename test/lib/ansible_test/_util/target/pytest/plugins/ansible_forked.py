@@ -1,4 +1,5 @@
 """Run each test in its own fork. PYTEST_DONT_REWRITE"""
+
 # MIT License (see licenses/MIT-license.txt or https://opensource.org/licenses/MIT)
 # Based on code originally from:
 # https://github.com/pytest-dev/pytest-forked
@@ -17,11 +18,17 @@ from _pytest.runner import runtestprotocol
 
 
 @hookimpl(tryfirst=True)
-def pytest_runtest_protocol(item, nextitem):  # type: (Item, Item | None) -> object | None
+def pytest_runtest_protocol(
+    item, nextitem
+):  # type: (Item, Item | None) -> object | None
     """Entry point for enabling this plugin."""
     # This is needed because pytest-xdist creates an OS thread (using execnet).
     # See: https://github.com/pytest-dev/execnet/blob/d6aa1a56773c2e887515d63e50b1d08338cb78a7/execnet/gateway_base.py#L51
-    warnings.filterwarnings("ignore", "^This process .* is multi-threaded, use of .* may lead to deadlocks in the child.$", DeprecationWarning)
+    warnings.filterwarnings(
+        "ignore",
+        "^This process .* is multi-threaded, use of .* may lead to deadlocks in the child.$",
+        DeprecationWarning,
+    )
 
     item_hook = item.ihook
     item_hook.pytest_runtest_logstart(nodeid=item.nodeid, location=item.location)
@@ -65,7 +72,15 @@ def run_parent(item, pid, result_path):  # type: (Item, int, str) -> list[TestRe
 
     if exit_code:
         reason = "Test CRASHED with exit code {}.".format(exit_code)
-        report = TestReport(item.nodeid, item.location, {x: 1 for x in item.keywords}, "failed", reason, "call", user_properties=item.user_properties)
+        report = TestReport(
+            item.nodeid,
+            item.location,
+            {x: 1 for x in item.keywords},
+            "failed",
+            reason,
+            "call",
+            user_properties=item.user_properties,
+        )
 
         if item.get_closest_marker("xfail"):
             report.outcome = "skipped"
@@ -74,10 +89,14 @@ def run_parent(item, pid, result_path):  # type: (Item, int, str) -> list[TestRe
         reports = [report]
     else:
         with open(result_path, "rb") as result_file:
-            reports, captured_warnings = pickle.load(result_file)  # type: list[TestReport], list[warnings.WarningMessage]
+            reports, captured_warnings = pickle.load(
+                result_file
+            )  # type: list[TestReport], list[warnings.WarningMessage]
 
         for warning in captured_warnings:
-            warnings.warn_explicit(warning.message, warning.category, warning.filename, warning.lineno)
+            warnings.warn_explicit(
+                warning.message, warning.category, warning.filename, warning.lineno
+            )
 
     return reports
 

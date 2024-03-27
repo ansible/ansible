@@ -61,16 +61,17 @@ class TestTaskQueueManagerCallbacks(unittest.TestCase):
             This is a callback module with the current
             method signature for `v2_playbook_on_start`.
             """
+
             CALLBACK_VERSION = 2.0
-            CALLBACK_TYPE = 'notification'
-            CALLBACK_NAME = 'current_module'
+            CALLBACK_TYPE = "notification"
+            CALLBACK_NAME = "current_module"
 
             def v2_playbook_on_start(self, playbook):
                 register(self, playbook)
 
         callback_module = CallbackModule()
         self._tqm._callback_plugins.append(callback_module)
-        self._tqm.send_callback('v2_playbook_on_start', self._playbook)
+        self._tqm.send_callback("v2_playbook_on_start", self._playbook)
         register.assert_called_once_with(callback_module, self._playbook)
 
     def test_task_queue_manager_callbacks_v2_playbook_on_start_wrapped(self):
@@ -104,9 +105,10 @@ class TestTaskQueueManagerCallbacks(unittest.TestCase):
             method signature for `v2_playbook_on_start`
             wrapped in order to change the signature.
             """
+
             CALLBACK_VERSION = 2.0
-            CALLBACK_TYPE = 'notification'
-            CALLBACK_NAME = 'current_module'
+            CALLBACK_TYPE = "notification"
+            CALLBACK_NAME = "current_module"
 
             @wrap_callback
             def v2_playbook_on_start(self, playbook):
@@ -114,5 +116,5 @@ class TestTaskQueueManagerCallbacks(unittest.TestCase):
 
         callback_module = WrappedCallbackModule()
         self._tqm._callback_plugins.append(callback_module)
-        self._tqm.send_callback('v2_playbook_on_start', self._playbook)
+        self._tqm.send_callback("v2_playbook_on_start", self._playbook)
         register.assert_called_once_with(callback_module, self._playbook)

@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-'''
+"""
 Compat distro library.
-'''
+"""
 from __future__ import annotations
 
 # The following makes it easier for us to script updates of the bundled code
@@ -42,8 +42,9 @@ else:
     # PYTHONPATH. Rather than erroring out in this case, just fall back to ours.
     # We require more functions than distro.id(), but this is probably a decent
     # test that we have something we can reasonably use.
-    if not hasattr(_system_distro, 'id') or \
-       not isinstance(_system_distro.id, types.FunctionType):
+    if not hasattr(_system_distro, "id") or not isinstance(
+        _system_distro.id, types.FunctionType
+    ):
         _system_distro = None
 
 if _system_distro:
@@ -52,4 +53,4 @@ else:
     # Our bundled copy
     from ansible.module_utils.distro import _distro as distro
 
-sys.modules['ansible.module_utils.distro'] = distro
+sys.modules["ansible.module_utils.distro"] = distro

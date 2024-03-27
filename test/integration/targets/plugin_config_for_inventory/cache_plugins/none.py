@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from ansible.plugins.cache import BaseCacheModule
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     cache: none
     short_description: write-only cache (no cache)
     description:
@@ -24,14 +24,14 @@ DOCUMENTATION = '''
           - key: fact_caching_timeout
             section: defaults
         type: integer
-'''
+"""
 
 
 class CacheModule(BaseCacheModule):
     def __init__(self, *args, **kwargs):
         super(CacheModule, self).__init__(*args, **kwargs)
         self.empty = {}
-        self._timeout = self.get_option('_timeout')
+        self._timeout = self.get_option("_timeout")
 
     def get(self, key):
         return self.empty.get(key)

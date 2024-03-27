@@ -1,4 +1,5 @@
 """Command line parsing for all `coverage analyze targets` commands."""
+
 from __future__ import annotations
 
 import argparse
@@ -35,11 +36,11 @@ def do_targets(
 ) -> None:
     """Command line parsing for all `coverage analyze targets` commands."""
     targets = subparsers.add_parser(
-        'targets',
-        help='analyze integration test target coverage',
+        "targets",
+        help="analyze integration test target coverage",
     )
 
-    targets_subparsers = targets.add_subparsers(metavar='COMMAND', required=True)
+    targets_subparsers = targets.add_subparsers(metavar="COMMAND", required=True)
 
     do_generate(targets_subparsers, parent, completer)
     do_expand(targets_subparsers, parent, completer)

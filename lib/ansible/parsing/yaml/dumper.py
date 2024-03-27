@@ -21,18 +21,28 @@ import yaml
 
 from ansible.module_utils.six import text_type, binary_type
 from ansible.module_utils.common.yaml import SafeDumper
-from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping, AnsibleVaultEncryptedUnicode
-from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes, NativeJinjaUnsafeText, NativeJinjaText
+from ansible.parsing.yaml.objects import (
+    AnsibleUnicode,
+    AnsibleSequence,
+    AnsibleMapping,
+    AnsibleVaultEncryptedUnicode,
+)
+from ansible.utils.unsafe_proxy import (
+    AnsibleUnsafeText,
+    AnsibleUnsafeBytes,
+    NativeJinjaUnsafeText,
+    NativeJinjaText,
+)
 from ansible.template import AnsibleUndefined
 from ansible.vars.hostvars import HostVars, HostVarsVars
 from ansible.vars.manager import VarsWithSources
 
 
 class AnsibleDumper(SafeDumper):
-    '''
+    """
     A simple stub class that allows us to add representers
     for our overridden object types.
-    '''
+    """
 
 
 def represent_hostvars(self, data):
@@ -41,7 +51,7 @@ def represent_hostvars(self, data):
 
 # Note: only want to represent the encrypted data
 def represent_vault_encrypted_unicode(self, data):
-    return self.represent_scalar(u'!vault', data._ciphertext.decode(), style='|')
+    return self.represent_scalar("!vault", data._ciphertext.decode(), style="|")
 
 
 def represent_unicode(self, data):

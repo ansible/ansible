@@ -2,11 +2,9 @@ from __future__ import annotations
 
 
 def testtest(data):
-    return data == 'from_user'
+    return data == "from_user"
 
 
 class TestModule(object):
     def tests(self):
-        return {
-            'testtest': testtest
-        }
+        return {"testtest": testtest}

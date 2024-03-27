@@ -22,4 +22,4 @@ from ansible.module_utils.facts.hardware.freebsd import FreeBSDHardware
 class DragonFlyHardwareCollector(HardwareCollector):
     # Note: This uses the freebsd fact class, there is no dragonfly hardware fact class
     _fact_class = FreeBSDHardware
-    _platform = 'DragonFly'
+    _platform = "DragonFly"

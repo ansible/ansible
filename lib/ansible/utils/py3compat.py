@@ -16,17 +16,17 @@ display = Display()
 
 
 def __getattr__(name):
-    if name != 'environ':
+    if name != "environ":
         raise AttributeError(name)
 
     caller = inspect.stack()[1]
 
     display.deprecated(
         (
-            'ansible.utils.py3compat.environ is deprecated in favor of os.environ. '
-            f'Accessed by {caller.filename} line number {caller.lineno}'
+            "ansible.utils.py3compat.environ is deprecated in favor of os.environ. "
+            f"Accessed by {caller.filename} line number {caller.lineno}"
         ),
-        version='2.20',
+        version="2.20",
     )
 
     return os.environ

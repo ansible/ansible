@@ -13,25 +13,28 @@ from ansible.module_utils.common.validation import check_mutually_exclusive
 @pytest.fixture
 def mutually_exclusive_terms():
     return [
-        ('string1', 'string2',),
-        ('box', 'fox', 'socks'),
+        (
+            "string1",
+            "string2",
+        ),
+        ("box", "fox", "socks"),
     ]
 
 
 def test_check_mutually_exclusive(mutually_exclusive_terms):
     params = {
-        'string1': 'cat',
-        'fox': 'hat',
+        "string1": "cat",
+        "fox": "hat",
     }
     assert check_mutually_exclusive(mutually_exclusive_terms, params) == []
 
 
 def test_check_mutually_exclusive_found(mutually_exclusive_terms):
     params = {
-        'string1': 'cat',
-        'string2': 'hat',
-        'fox': 'red',
-        'socks': 'blue',
+        "string1": "cat",
+        "string2": "hat",
+        "fox": "red",
+        "socks": "blue",
     }
     expected = "parameters are mutually exclusive: string1|string2, box|fox|socks"
 
@@ -44,8 +47,8 @@ def test_check_mutually_exclusive_found(mutually_exclusive_terms):
 def test_check_mutually_exclusive_none():
     terms = None
     params = {
-        'string1': 'cat',
-        'fox': 'hat',
+        "string1": "cat",
+        "fox": "hat",
     }
     assert check_mutually_exclusive(terms, params) == []
 

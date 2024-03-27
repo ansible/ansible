@@ -22,30 +22,30 @@ from collections.abc import Mapping
 from ansible.template import Templar, AnsibleUndefined
 
 STATIC_VARS = [
-    'ansible_version',
-    'ansible_play_hosts',
-    'ansible_dependent_role_names',
-    'ansible_play_role_names',
-    'ansible_role_names',
-    'inventory_hostname',
-    'inventory_hostname_short',
-    'inventory_file',
-    'inventory_dir',
-    'groups',
-    'group_names',
-    'omit',
-    'playbook_dir',
-    'play_hosts',
-    'role_names',
-    'ungrouped',
+    "ansible_version",
+    "ansible_play_hosts",
+    "ansible_dependent_role_names",
+    "ansible_play_role_names",
+    "ansible_role_names",
+    "inventory_hostname",
+    "inventory_hostname_short",
+    "inventory_file",
+    "inventory_dir",
+    "groups",
+    "group_names",
+    "omit",
+    "playbook_dir",
+    "play_hosts",
+    "role_names",
+    "ungrouped",
 ]
 
-__all__ = ['HostVars', 'HostVarsVars']
+__all__ = ["HostVars", "HostVarsVars"]
 
 
 # Note -- this is a Mapping, not a MutableMapping
 class HostVars(Mapping):
-    ''' A special view of vars_cache that adds values from the inventory when needed. '''
+    """A special view of vars_cache that adds values from the inventory when needed."""
 
     def __init__(self, inventory, variable_manager, loader):
         self._inventory = inventory
@@ -65,10 +65,10 @@ class HostVars(Mapping):
         return self._inventory.get_host(host_name)
 
     def raw_get(self, host_name):
-        '''
+        """
         Similar to __getitem__, however the returned data is not run through
         the templating engine to expand variables in the hostvars.
-        '''
+        """
         host = self._find_host(host_name)
         if host is None:
             return AnsibleUndefined(name="hostvars['%s']" % host_name)
@@ -134,10 +134,12 @@ class HostVarsVars(Mapping):
 
     def __getitem__(self, var):
         templar = Templar(variables=self._vars, loader=self._loader)
-        return templar.template(self._vars[var], fail_on_undefined=False, static_vars=STATIC_VARS)
+        return templar.template(
+            self._vars[var], fail_on_undefined=False, static_vars=STATIC_VARS
+        )
 
     def __contains__(self, var):
-        return (var in self._vars)
+        return var in self._vars
 
     def __iter__(self):
         yield from self._vars.keys()
@@ -147,4 +149,8 @@ class HostVarsVars(Mapping):
 
     def __repr__(self):
         templar = Templar(variables=self._vars, loader=self._loader)
-        return repr(templar.template(self._vars, fail_on_undefined=False, static_vars=STATIC_VARS))
+        return repr(
+            templar.template(
+                self._vars, fail_on_undefined=False, static_vars=STATIC_VARS
+            )
+        )

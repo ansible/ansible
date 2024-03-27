@@ -1,4 +1,5 @@
 """Scaleway plugin for integration tests."""
+
 from __future__ import annotations
 
 import configparser
@@ -42,14 +43,14 @@ class ScalewayCloudEnvironment(CloudEnvironment):
         parser.read(self.config_path)
 
         env_vars = dict(
-            SCW_API_KEY=parser.get('default', 'key'),
-            SCW_ORG=parser.get('default', 'org'),
+            SCW_API_KEY=parser.get("default", "key"),
+            SCW_ORG=parser.get("default", "org"),
         )
 
-        display.sensitive.add(env_vars['SCW_API_KEY'])
+        display.sensitive.add(env_vars["SCW_API_KEY"])
 
         ansible_vars = dict(
-            scw_org=parser.get('default', 'org'),
+            scw_org=parser.get("default", "org"),
         )
 
         return CloudEnvironmentConfig(

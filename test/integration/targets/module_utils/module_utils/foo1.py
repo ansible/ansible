@@ -1,1 +1,1 @@
-data = 'foo1'
+data = "foo1"

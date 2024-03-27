@@ -13,5 +13,5 @@ def main():
     module.exit_json(**dict(found=sys.executable))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

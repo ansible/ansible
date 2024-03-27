@@ -24,7 +24,8 @@ class NetBSDNetwork(GenericBsdIfconfigNetwork):
     This is the NetBSD Network Class.
     It uses the GenericBsdIfconfigNetwork
     """
-    platform = 'NetBSD'
+
+    platform = "NetBSD"
 
     def parse_media_line(self, words, current_if, ips):
         # example of line:
@@ -35,13 +36,13 @@ class NetBSDNetwork(GenericBsdIfconfigNetwork):
         #    address: 00:20:91:45:00:78
         #    media: Ethernet 10baseT full-duplex
         #    inet 192.168.156.29 netmask 0xffffff00 broadcast 192.168.156.255
-        current_if['media'] = words[1]
+        current_if["media"] = words[1]
         if len(words) > 2:
-            current_if['media_type'] = words[2]
+            current_if["media_type"] = words[2]
         if len(words) > 3:
-            current_if['media_options'] = words[3].split(',')
+            current_if["media_options"] = words[3].split(",")
 
 
 class NetBSDNetworkCollector(NetworkCollector):
     _fact_class = NetBSDNetwork
-    _platform = 'NetBSD'
+    _platform = "NetBSD"

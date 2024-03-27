@@ -1,4 +1,5 @@
 """Code for finding content."""
+
 from __future__ import annotations
 
 import abc
@@ -26,7 +27,9 @@ class Layout:
         self.root = root
 
         self.__paths = paths  # contains both file paths and symlinked directory paths (ending with os.path.sep)
-        self.__files = [path for path in paths if not path.endswith(os.path.sep)]  # contains only file paths
+        self.__files = [
+            path for path in paths if not path.endswith(os.path.sep)
+        ]  # contains only file paths
         self.__paths_tree = paths_to_tree(self.__paths)
         self.__files_tree = paths_to_tree(self.__files)
 
@@ -37,7 +40,9 @@ class Layout:
 
         return self.__files
 
-    def walk_files(self, directory: str, include_symlinked_directories: bool = False) -> list[str]:
+    def walk_files(
+        self, directory: str, include_symlinked_directories: bool = False
+    ) -> list[str]:
         """Return a list of file paths found recursively under the given directory."""
         if include_symlinked_directories:
             tree = self.__paths_tree
@@ -123,33 +128,33 @@ class ContentLayout(Layout):
         if self.collection:
             return self.collection.prefix
 
-        return ''
+        return ""
 
     @property
     def module_path(self) -> t.Optional[str]:
         """Return the path where modules are found, if any."""
-        return self.plugin_paths.get('modules')
+        return self.plugin_paths.get("modules")
 
     @property
     def module_utils_path(self) -> t.Optional[str]:
         """Return the path where module_utils are found, if any."""
-        return self.plugin_paths.get('module_utils')
+        return self.plugin_paths.get("module_utils")
 
     @property
     def module_utils_powershell_path(self) -> t.Optional[str]:
         """Return the path where powershell module_utils are found, if any."""
         if self.is_ansible:
-            return os.path.join(self.plugin_paths['module_utils'], 'powershell')
+            return os.path.join(self.plugin_paths["module_utils"], "powershell")
 
-        return self.plugin_paths.get('module_utils')
+        return self.plugin_paths.get("module_utils")
 
     @property
     def module_utils_csharp_path(self) -> t.Optional[str]:
         """Return the path where csharp module_utils are found, if any."""
         if self.is_ansible:
-            return os.path.join(self.plugin_paths['module_utils'], 'csharp')
+            return os.path.join(self.plugin_paths["module_utils"], "csharp")
 
-        return self.plugin_paths.get('module_utils')
+        return self.plugin_paths.get("module_utils")
 
 
 class LayoutMessages:
@@ -173,38 +178,38 @@ class CollectionDetail:
         self.name = name
         self.namespace = namespace
         self.root = root
-        self.full_name = '%s.%s' % (namespace, name)
-        self.prefix = '%s.' % self.full_name
-        self.directory = os.path.join('ansible_collections', namespace, name)
+        self.full_name = "%s.%s" % (namespace, name)
+        self.prefix = "%s." % self.full_name
+        self.directory = os.path.join("ansible_collections", namespace, name)
 
 
 class LayoutProvider(PathProvider):
     """Base class for layout providers."""
 
     PLUGIN_TYPES = (
-        'action',
-        'become',
-        'cache',
-        'callback',
-        'cliconf',
-        'connection',
-        'doc_fragments',
-        'filter',
-        'httpapi',
-        'inventory',
-        'lookup',
-        'module_utils',
-        'modules',
-        'netconf',
-        'shell',
-        'strategy',
-        'terminal',
-        'test',
-        'vars',
+        "action",
+        "become",
+        "cache",
+        "callback",
+        "cliconf",
+        "connection",
+        "doc_fragments",
+        "filter",
+        "httpapi",
+        "inventory",
+        "lookup",
+        "module_utils",
+        "modules",
+        "netconf",
+        "shell",
+        "strategy",
+        "terminal",
+        "test",
+        "vars",
         # The following are plugin directories not directly supported by ansible-core, but used in collections
         # (https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst#modules--plugins)
-        'plugin_utils',
-        'sub_plugins',
+        "plugin_utils",
+        "sub_plugins",
     )
 
     @abc.abstractmethod
@@ -231,7 +236,9 @@ def paths_to_tree(paths: list[str]) -> tuple[dict[str, t.Any], list[str]]:
     return tree
 
 
-def get_tree_item(tree: tuple[dict[str, t.Any], list[str]], parts: list[str]) -> t.Optional[tuple[dict[str, t.Any], list[str]]]:
+def get_tree_item(
+    tree: tuple[dict[str, t.Any], list[str]], parts: list[str]
+) -> t.Optional[tuple[dict[str, t.Any], list[str]]]:
     """Return the portion of the tree found under the path given by parts, or None if it does not exist."""
     root = tree
 

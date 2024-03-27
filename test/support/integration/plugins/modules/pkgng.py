@@ -12,12 +12,14 @@
 from __future__ import annotations
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    "metadata_version": "1.1",
+    "status": ["preview"],
+    "supported_by": "community",
+}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: pkgng
 short_description: Package manager for FreeBSD >= 9.0
@@ -88,9 +90,9 @@ notes:
   - When using pkgsite, be careful that already in cache packages won't be downloaded again.
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Install package foo
   pkgng:
     name: foo
@@ -111,7 +113,7 @@ EXAMPLES = '''
   pkgng:
     name: baz
     state: latest
-'''
+"""
 
 
 import re
@@ -120,7 +122,9 @@ from ansible.module_utils.basic import AnsibleModule
 
 def query_package(module, pkgng_path, name, dir_arg):
 
-    rc, out, err = module.run_command("%s %s info -g -e %s" % (pkgng_path, dir_arg, name))
+    rc, out, err = module.run_command(
+        "%s %s info -g -e %s" % (pkgng_path, dir_arg, name)
+    )
 
     if rc == 0:
         return True
@@ -134,9 +138,13 @@ def query_update(module, pkgng_path, name, dir_arg, old_pkgng, pkgsite):
     # rc = 0, no updates available or package not installed
     # rc = 1, updates available
     if old_pkgng:
-        rc, out, err = module.run_command("%s %s upgrade -g -n %s" % (pkgsite, pkgng_path, name))
+        rc, out, err = module.run_command(
+            "%s %s upgrade -g -n %s" % (pkgsite, pkgng_path, name)
+        )
     else:
-        rc, out, err = module.run_command("%s %s upgrade %s -g -n %s" % (pkgng_path, dir_arg, pkgsite, name))
+        rc, out, err = module.run_command(
+            "%s %s upgrade %s -g -n %s" % (pkgng_path, dir_arg, pkgsite, name)
+        )
 
     if rc == 1:
         return True
@@ -147,7 +155,7 @@ def query_update(module, pkgng_path, name, dir_arg, old_pkgng, pkgsite):
 def pkgng_older_than(module, pkgng_path, compare_version):
 
     rc, out, err = module.run_command("%s -v" % pkgng_path)
-    version = [int(x) for x in re.split(r'[\._]', out)]
+    version = [int(x) for x in re.split(r"[\._]", out)]
 
     i = 0
     new_pkgng = True
@@ -171,9 +179,13 @@ def remove_packages(module, pkgng_path, packages, dir_arg):
             continue
 
         if not module.check_mode:
-            rc, out, err = module.run_command("%s %s delete -y %s" % (pkgng_path, dir_arg, package))
+            rc, out, err = module.run_command(
+                "%s %s delete -y %s" % (pkgng_path, dir_arg, package)
+            )
 
-        if not module.check_mode and query_package(module, pkgng_path, package, dir_arg):
+        if not module.check_mode and query_package(
+            module, pkgng_path, package, dir_arg
+        ):
             module.fail_json(msg="failed to remove %s: %s" % (package, out))
 
         remove_c += 1
@@ -200,7 +212,7 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite, dir_arg, sta
 
     # This environment variable skips mid-install prompts,
     # setting them to their default values.
-    batch_var = 'env BATCH=yes'
+    batch_var = "env BATCH=yes"
 
     if not module.check_mode and not cached:
         if old_pkgng:
@@ -208,14 +220,18 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite, dir_arg, sta
         else:
             rc, out, err = module.run_command("%s %s update" % (pkgng_path, dir_arg))
         if rc != 0:
-            module.fail_json(msg="Could not update catalogue [%d]: %s %s" % (rc, out, err))
+            module.fail_json(
+                msg="Could not update catalogue [%d]: %s %s" % (rc, out, err)
+            )
 
     for package in packages:
         already_installed = query_package(module, pkgng_path, package, dir_arg)
         if already_installed and state == "present":
             continue
 
-        update_available = query_update(module, pkgng_path, package, dir_arg, old_pkgng, pkgsite)
+        update_available = query_update(
+            module, pkgng_path, package, dir_arg, old_pkgng, pkgsite
+        )
         if not update_available and already_installed and state == "latest":
             continue
 
@@ -225,12 +241,22 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite, dir_arg, sta
             else:
                 action = "install"
             if old_pkgng:
-                rc, out, err = module.run_command("%s %s %s %s -g -U -y %s" % (batch_var, pkgsite, pkgng_path, action, package))
+                rc, out, err = module.run_command(
+                    "%s %s %s %s -g -U -y %s"
+                    % (batch_var, pkgsite, pkgng_path, action, package)
+                )
             else:
-                rc, out, err = module.run_command("%s %s %s %s %s -g -U -y %s" % (batch_var, pkgng_path, dir_arg, action, pkgsite, package))
+                rc, out, err = module.run_command(
+                    "%s %s %s %s %s -g -U -y %s"
+                    % (batch_var, pkgng_path, dir_arg, action, pkgsite, package)
+                )
 
-        if not module.check_mode and not query_package(module, pkgng_path, package, dir_arg):
-            module.fail_json(msg="failed to %s %s: %s" % (action, package, out), stderr=err)
+        if not module.check_mode and not query_package(
+            module, pkgng_path, package, dir_arg
+        ):
+            module.fail_json(
+                msg="failed to %s %s: %s" % (action, package, out), stderr=err
+            )
 
         install_c += 1
 
@@ -241,10 +267,14 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite, dir_arg, sta
 
 
 def annotation_query(module, pkgng_path, package, tag, dir_arg):
-    rc, out, err = module.run_command("%s %s info -g -A %s" % (pkgng_path, dir_arg, package))
-    match = re.search(r'^\s*(?P<tag>%s)\s*:\s*(?P<value>\w+)' % tag, out, flags=re.MULTILINE)
+    rc, out, err = module.run_command(
+        "%s %s info -g -A %s" % (pkgng_path, dir_arg, package)
+    )
+    match = re.search(
+        r"^\s*(?P<tag>%s)\s*:\s*(?P<value>\w+)" % tag, out, flags=re.MULTILINE
+    )
     if match:
-        return match.group('value')
+        return match.group("value")
     return False
 
 
@@ -252,17 +282,21 @@ def annotation_add(module, pkgng_path, package, tag, value, dir_arg):
     _value = annotation_query(module, pkgng_path, package, tag, dir_arg)
     if not _value:
         # Annotation does not exist, add it.
-        rc, out, err = module.run_command('%s %s annotate -y -A %s %s "%s"'
-                                          % (pkgng_path, dir_arg, package, tag, value))
+        rc, out, err = module.run_command(
+            '%s %s annotate -y -A %s %s "%s"'
+            % (pkgng_path, dir_arg, package, tag, value)
+        )
         if rc != 0:
-            module.fail_json(msg="could not annotate %s: %s"
-                             % (package, out), stderr=err)
+            module.fail_json(
+                msg="could not annotate %s: %s" % (package, out), stderr=err
+            )
         return True
     elif _value != value:
         # Annotation exists, but value differs
         module.fail_json(
             mgs="failed to annotate %s, because %s is already set to %s, but should be set to %s"
-            % (package, tag, _value, value))
+            % (package, tag, _value, value)
+        )
         return False
     else:
         # Annotation exists, nothing to do
@@ -272,11 +306,13 @@ def annotation_add(module, pkgng_path, package, tag, value, dir_arg):
 def annotation_delete(module, pkgng_path, package, tag, value, dir_arg):
     _value = annotation_query(module, pkgng_path, package, tag, dir_arg)
     if _value:
-        rc, out, err = module.run_command('%s %s annotate -y -D %s %s'
-                                          % (pkgng_path, dir_arg, package, tag))
+        rc, out, err = module.run_command(
+            "%s %s annotate -y -D %s %s" % (pkgng_path, dir_arg, package, tag)
+        )
         if rc != 0:
-            module.fail_json(msg="could not delete annotation to %s: %s"
-                             % (package, out), stderr=err)
+            module.fail_json(
+                msg="could not delete annotation to %s: %s" % (package, out), stderr=err
+            )
         return True
     return False
 
@@ -285,36 +321,42 @@ def annotation_modify(module, pkgng_path, package, tag, value, dir_arg):
     _value = annotation_query(module, pkgng_path, package, tag, dir_arg)
     if not value:
         # No such tag
-        module.fail_json(msg="could not change annotation to %s: tag %s does not exist"
-                         % (package, tag))
+        module.fail_json(
+            msg="could not change annotation to %s: tag %s does not exist"
+            % (package, tag)
+        )
     elif _value == value:
         # No change in value
         return False
     else:
-        rc, out, err = module.run_command('%s %s annotate -y -M %s %s "%s"'
-                                          % (pkgng_path, dir_arg, package, tag, value))
+        rc, out, err = module.run_command(
+            '%s %s annotate -y -M %s %s "%s"'
+            % (pkgng_path, dir_arg, package, tag, value)
+        )
         if rc != 0:
-            module.fail_json(msg="could not change annotation annotation to %s: %s"
-                             % (package, out), stderr=err)
+            module.fail_json(
+                msg="could not change annotation annotation to %s: %s" % (package, out),
+                stderr=err,
+            )
         return True
 
 
 def annotate_packages(module, pkgng_path, packages, annotation, dir_arg):
     annotate_c = 0
-    annotations = map(lambda _annotation:
-                      re.match(r'(?P<operation>[\+-:])(?P<tag>\w+)(=(?P<value>\w+))?',
-                               _annotation).groupdict(),
-                      re.split(r',', annotation))
+    annotations = map(
+        lambda _annotation: re.match(
+            r"(?P<operation>[\+-:])(?P<tag>\w+)(=(?P<value>\w+))?", _annotation
+        ).groupdict(),
+        re.split(r",", annotation),
+    )
 
-    operation = {
-        '+': annotation_add,
-        '-': annotation_delete,
-        ':': annotation_modify
-    }
+    operation = {"+": annotation_add, "-": annotation_delete, ":": annotation_modify}
 
     for package in packages:
         for _annotation in annotations:
-            if operation[_annotation['operation']](module, pkgng_path, package, _annotation['tag'], _annotation['value']):
+            if operation[_annotation["operation"]](
+                module, pkgng_path, package, _annotation["tag"], _annotation["value"]
+            ):
                 annotate_c += 1
 
     if annotate_c > 0:
@@ -327,7 +369,11 @@ def autoremove_packages(module, pkgng_path, dir_arg):
 
     autoremove_c = 0
 
-    match = re.search('^Deinstallation has been requested for the following ([0-9]+) packages', out, re.MULTILINE)
+    match = re.search(
+        "^Deinstallation has been requested for the following ([0-9]+) packages",
+        out,
+        re.MULTILINE,
+    )
     if match:
         autoremove_c = int(match.group(1))
 
@@ -343,19 +389,25 @@ def autoremove_packages(module, pkgng_path, dir_arg):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default="present", choices=["present", "latest", "absent"], required=False),
-            name=dict(aliases=["pkg"], required=True, type='list'),
-            cached=dict(default=False, type='bool'),
+            state=dict(
+                default="present",
+                choices=["present", "latest", "absent"],
+                required=False,
+            ),
+            name=dict(aliases=["pkg"], required=True, type="list"),
+            cached=dict(default=False, type="bool"),
             annotation=dict(default="", required=False),
             pkgsite=dict(default="", required=False),
-            rootdir=dict(default="", required=False, type='path'),
-            chroot=dict(default="", required=False, type='path'),
-            jail=dict(default="", required=False, type='str'),
-            autoremove=dict(default=False, type='bool')),
+            rootdir=dict(default="", required=False, type="path"),
+            chroot=dict(default="", required=False, type="path"),
+            jail=dict(default="", required=False, type="str"),
+            autoremove=dict(default=False, type="bool"),
+        ),
         supports_check_mode=True,
-        mutually_exclusive=[["rootdir", "chroot", "jail"]])
+        mutually_exclusive=[["rootdir", "chroot", "jail"]],
+    )
 
-    pkgng_path = module.get_bin_path('pkg', True)
+    pkgng_path = module.get_bin_path("pkg", True)
 
     p = module.params
 
@@ -368,18 +420,22 @@ def main():
     if p["rootdir"] != "":
         old_pkgng = pkgng_older_than(module, pkgng_path, [1, 5, 0])
         if old_pkgng:
-            module.fail_json(msg="To use option 'rootdir' pkg version must be 1.5 or greater")
+            module.fail_json(
+                msg="To use option 'rootdir' pkg version must be 1.5 or greater"
+            )
         else:
             dir_arg = "--rootdir %s" % (p["rootdir"])
 
     if p["chroot"] != "":
-        dir_arg = '--chroot %s' % (p["chroot"])
+        dir_arg = "--chroot %s" % (p["chroot"])
 
     if p["jail"] != "":
-        dir_arg = '--jail %s' % (p["jail"])
+        dir_arg = "--jail %s" % (p["jail"])
 
     if p["state"] in ("present", "latest"):
-        _changed, _msg = install_packages(module, pkgng_path, pkgs, p["cached"], p["pkgsite"], dir_arg, p["state"])
+        _changed, _msg = install_packages(
+            module, pkgng_path, pkgs, p["cached"], p["pkgsite"], dir_arg, p["state"]
+        )
         changed = changed or _changed
         msgs.append(_msg)
 
@@ -394,12 +450,14 @@ def main():
         msgs.append(_msg)
 
     if p["annotation"]:
-        _changed, _msg = annotate_packages(module, pkgng_path, pkgs, p["annotation"], dir_arg)
+        _changed, _msg = annotate_packages(
+            module, pkgng_path, pkgs, p["annotation"], dir_arg
+        )
         changed = changed or _changed
         msgs.append(_msg)
 
     module.exit_json(changed=changed, msg=", ".join(msgs))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

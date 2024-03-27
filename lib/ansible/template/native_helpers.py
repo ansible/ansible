@@ -41,7 +41,7 @@ def ansible_eval_concat(nodes):
     head = list(islice(nodes, 2))
 
     if not head:
-        return ''
+        return ""
 
     if len(head) == 1:
         out = head[0]
@@ -53,16 +53,14 @@ def ansible_eval_concat(nodes):
     else:
         if isinstance(nodes, GeneratorType):
             nodes = chain(head, nodes)
-        out = ''.join([to_text(v) for v in nodes])
+        out = "".join([to_text(v) for v in nodes])
 
     # if this looks like a dictionary, list or bool, convert it to such
-    if out.startswith(('{', '[')) or out in ('True', 'False'):
+    if out.startswith(("{", "[")) or out in ("True", "False"):
         try:
             out = ast.literal_eval(
                 ast.fix_missing_locations(
-                    Json2Python().visit(
-                        ast.parse(out, mode='eval')
-                    )
+                    Json2Python().visit(ast.parse(out, mode="eval"))
                 )
             )
         except (TypeError, ValueError, SyntaxError, MemoryError):
@@ -78,7 +76,7 @@ def ansible_concat(nodes):
 
     Used in Templar.template() when jinja2_native=False and convert_data=False.
     """
-    return ''.join([to_text(v) for v in nodes])
+    return "".join([to_text(v) for v in nodes])
 
 
 def ansible_native_concat(nodes):
@@ -118,20 +116,20 @@ def ansible_native_concat(nodes):
     else:
         if isinstance(nodes, GeneratorType):
             nodes = chain(head, nodes)
-        out = ''.join([to_text(v) for v in nodes])
+        out = "".join([to_text(v) for v in nodes])
 
     try:
         evaled = ast.literal_eval(
             # In Python 3.10+ ast.literal_eval removes leading spaces/tabs
             # from the given string. For backwards compatibility we need to
             # parse the string ourselves without removing leading spaces/tabs.
-            ast.parse(out, mode='eval')
+            ast.parse(out, mode="eval")
         )
     except (TypeError, ValueError, SyntaxError, MemoryError):
         return out
 
     if isinstance(evaled, string_types):
         quote = out[0]
-        return f'{quote}{evaled}{quote}'
+        return f"{quote}{evaled}{quote}"
 
     return evaled

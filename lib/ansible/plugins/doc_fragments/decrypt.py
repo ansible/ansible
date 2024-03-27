@@ -8,7 +8,7 @@ from __future__ import annotations
 class ModuleDocFragment(object):
 
     # Standard files documentation fragment
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
 options:
   decrypt:
     description:
@@ -16,4 +16,4 @@ options:
     type: bool
     default: yes
     version_added: '2.4'
-'''
+"""

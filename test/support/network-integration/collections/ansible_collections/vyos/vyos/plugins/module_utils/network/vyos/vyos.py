@@ -39,18 +39,14 @@ vyos_provider_spec = {
     "host": dict(),
     "port": dict(type="int"),
     "username": dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"])),
-    "password": dict(
-        fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True
-    ),
+    "password": dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
     "ssh_keyfile": dict(
         fallback=(env_fallback, ["ANSIBLE_NET_SSH_KEYFILE"]), type="path"
     ),
     "timeout": dict(type="int"),
 }
 vyos_argument_spec = {
-    "provider": dict(
-        type="dict", options=vyos_provider_spec, removed_in_version=2.14
-    ),
+    "provider": dict(type="dict", options=vyos_provider_spec, removed_in_version=2.14),
 }
 
 
@@ -105,9 +101,7 @@ def get_config(module, flags=None, format=None):
 def run_commands(module, commands, check_rc=True):
     connection = get_connection(module)
     try:
-        response = connection.run_commands(
-            commands=commands, check_rc=check_rc
-        )
+        response = connection.run_commands(commands=commands, check_rc=check_rc)
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc, errors="surrogate_then_replace"))
     return response

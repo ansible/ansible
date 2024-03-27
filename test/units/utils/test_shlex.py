@@ -28,7 +28,7 @@ class TestSplit(unittest.TestCase):
         self.assertEqual(shlex_split("a b c"), ["a", "b", "c"])
 
     def test_unicode(self):
-        self.assertEqual(shlex_split(u"a b \u010D"), [u"a", u"b", u"\u010D"])
+        self.assertEqual(shlex_split("a b \u010D"), ["a", "b", "\u010D"])
 
     def test_quoted(self):
         self.assertEqual(shlex_split('"a b" c'), ["a b", "c"])

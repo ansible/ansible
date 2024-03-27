@@ -19,12 +19,15 @@ class FakeAnsibleModule:
 
 class TestCaseZipArchive:
     @pytest.mark.parametrize(
-        'side_effect, expected_reason', (
-            ([ValueError, '/bin/zipinfo'], "Unable to find required 'unzip'"),
+        "side_effect, expected_reason",
+        (
+            ([ValueError, "/bin/zipinfo"], "Unable to find required 'unzip'"),
             (ValueError, "Unable to find required 'unzip' or 'zipinfo'"),
-        )
+        ),
     )
-    def test_no_zip_zipinfo_binary(self, mocker, fake_ansible_module, side_effect, expected_reason):
+    def test_no_zip_zipinfo_binary(
+        self, mocker, fake_ansible_module, side_effect, expected_reason
+    ):
         mocker.patch("ansible.modules.unarchive.get_bin_path", side_effect=side_effect)
         fake_ansible_module.params = {
             "extra_opts": "",
@@ -66,6 +69,6 @@ class TestCaseTgzArchive:
         can_handle, reason = t.can_handle_archive()
 
         assert can_handle is False
-        assert 'Unable to find required' in reason
+        assert "Unable to find required" in reason
         assert t.cmd_path is None
         assert t.tar_type is None

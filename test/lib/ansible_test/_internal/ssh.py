@@ -1,4 +1,5 @@
 """High level functions for working with SSH."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -55,7 +56,7 @@ class SshConnectionDetail:
             # OpenSSH 8.8, released on 2021-09-26, deprecated using RSA with the SHA-1 hash algorithm (ssh-rsa).
             # OpenSSH 7.2, released on 2016-02-29, added support for using RSA with SHA-256/512 hash algorithms.
             # See: https://www.openssh.com/txt/release-8.8
-            algorithms = '+ssh-rsa'  # append the algorithm to the default list, requires OpenSSH 7.0 or later
+            algorithms = "+ssh-rsa"  # append the algorithm to the default list, requires OpenSSH 7.0 or later
 
             options.update(
                 # Host key signature algorithms that the client wants to use.
@@ -106,7 +107,10 @@ class SshProcess:
         """Collect port assignments for dynamic SSH port forwards."""
         errors: list[str] = []
 
-        display.info('Collecting %d SSH port forward(s).' % len(self.pending_forwards), verbosity=2)
+        display.info(
+            "Collecting %d SSH port forward(s)." % len(self.pending_forwards),
+            verbosity=2,
+        )
 
         while self.pending_forwards:
             if self._process:
@@ -114,28 +118,36 @@ class SshProcess:
 
                 if not line_bytes:
                     if errors:
-                        details = ':\n%s' % '\n'.join(errors)
+                        details = ":\n%s" % "\n".join(errors)
                     else:
-                        details = '.'
+                        details = "."
 
-                    raise ApplicationError('SSH port forwarding failed%s' % details)
+                    raise ApplicationError("SSH port forwarding failed%s" % details)
 
                 line = to_text(line_bytes).strip()
 
-                match = re.search(r'^Allocated port (?P<src_port>[0-9]+) for remote forward to (?P<dst_host>[^:]+):(?P<dst_port>[0-9]+)$', line)
+                match = re.search(
+                    r"^Allocated port (?P<src_port>[0-9]+) for remote forward to (?P<dst_host>[^:]+):(?P<dst_port>[0-9]+)$",
+                    line,
+                )
 
                 if not match:
-                    if re.search(r'^Warning: Permanently added .* to the list of known hosts\.$', line):
+                    if re.search(
+                        r"^Warning: Permanently added .* to the list of known hosts\.$",
+                        line,
+                    ):
                         continue
 
-                    display.warning('Unexpected SSH port forwarding output: %s' % line, verbosity=2)
+                    display.warning(
+                        "Unexpected SSH port forwarding output: %s" % line, verbosity=2
+                    )
 
                     errors.append(line)
                     continue
 
-                src_port = int(match.group('src_port'))
-                dst_host = str(match.group('dst_host'))
-                dst_port = int(match.group('dst_port'))
+                src_port = int(match.group("src_port"))
+                dst_host = str(match.group("dst_host"))
+                dst_port = int(match.group("dst_port"))
 
                 dst = (dst_host, dst_port)
             else:
@@ -146,8 +158,17 @@ class SshProcess:
             self.pending_forwards.remove(dst)
             self.forwards[dst] = src_port
 
-        display.info('Collected %d SSH port forward(s):\n%s' % (
-            len(self.forwards), '\n'.join('%s -> %s:%s' % (src_port, dst[0], dst[1]) for dst, src_port in sorted(self.forwards.items()))), verbosity=2)
+        display.info(
+            "Collected %d SSH port forward(s):\n%s"
+            % (
+                len(self.forwards),
+                "\n".join(
+                    "%s -> %s:%s" % (src_port, dst[0], dst[1])
+                    for dst, src_port in sorted(self.forwards.items())
+                ),
+            ),
+            verbosity=2,
+        )
 
         return self.forwards
 
@@ -166,22 +187,22 @@ def create_ssh_command(
     ]  # fmt: skip
 
     if not command:
-        cmd.append('-N')  # do not execute a remote command
+        cmd.append("-N")  # do not execute a remote command
 
     if ssh.port:
-        cmd.extend(['-p', str(ssh.port)])  # port to connect to on the remote host
+        cmd.extend(["-p", str(ssh.port)])  # port to connect to on the remote host
 
     if ssh.user:
-        cmd.extend(['-l', ssh.user])  # user to log in as on the remote machine
+        cmd.extend(["-l", ssh.user])  # user to log in as on the remote machine
 
     ssh_options: dict[str, t.Union[int, str]] = dict(
-        BatchMode='yes',
-        ExitOnForwardFailure='yes',
-        LogLevel='ERROR',
+        BatchMode="yes",
+        ExitOnForwardFailure="yes",
+        LogLevel="ERROR",
         ServerAliveCountMax=4,
         ServerAliveInterval=15,
-        StrictHostKeyChecking='no',
-        UserKnownHostsFile='/dev/null',
+        StrictHostKeyChecking="no",
+        UserKnownHostsFile="/dev/null",
     )
 
     ssh_options.update(options or {})
@@ -196,14 +217,20 @@ def create_ssh_command(
     return cmd
 
 
-def ssh_options_to_list(options: t.Union[dict[str, t.Union[int, str]], dict[str, str]]) -> list[str]:
+def ssh_options_to_list(
+    options: t.Union[dict[str, t.Union[int, str]], dict[str, str]]
+) -> list[str]:
     """Format a dictionary of SSH options as a list suitable for passing to the `ssh` command."""
-    return list(itertools.chain.from_iterable(
-        ('-o', f'{key}={value}') for key, value in sorted(options.items())
-    ))
+    return list(
+        itertools.chain.from_iterable(
+            ("-o", f"{key}={value}") for key, value in sorted(options.items())
+        )
+    )
 
 
-def ssh_options_to_str(options: t.Union[dict[str, t.Union[int, str]], dict[str, str]]) -> str:
+def ssh_options_to_str(
+    options: t.Union[dict[str, t.Union[int, str]], dict[str, str]]
+) -> str:
     """Format a dictionary of SSH options as a string suitable for passing as `ansible_ssh_extra_args` in inventory."""
     return shlex.join(ssh_options_to_list(options))
 
@@ -220,7 +247,7 @@ def run_ssh_command(
     env = common_environment()
 
     cmd_show = shlex.join(cmd)
-    display.info('Run background command: %s' % cmd_show, verbosity=1, truncate=True)
+    display.info("Run background command: %s" % cmd_show, verbosity=1, truncate=True)
 
     cmd_bytes = [to_bytes(arg) for arg in cmd]
     env_bytes = dict((to_bytes(k), to_bytes(v)) for k, v in env.items())
@@ -228,8 +255,16 @@ def run_ssh_command(
     if args.explain:
         process = SshProcess(None)
     else:
-        process = SshProcess(subprocess.Popen(cmd_bytes, env=env_bytes, bufsize=-1,  # pylint: disable=consider-using-with
-                                              stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
+        process = SshProcess(
+            subprocess.Popen(
+                cmd_bytes,
+                env=env_bytes,
+                bufsize=-1,  # pylint: disable=consider-using-with
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        )
 
     return process
 
@@ -244,14 +279,14 @@ def create_ssh_port_forwards(
     Port bindings will be automatically assigned by SSH and must be collected with a subsequent call to collect_port_forwards.
     """
     options: dict[str, t.Union[str, int]] = dict(
-        LogLevel='INFO',  # info level required to get messages on stderr indicating the ports assigned to each forward
-        ControlPath='none',  # if the user has ControlPath set up for every host, it will prevent creation of forwards
+        LogLevel="INFO",  # info level required to get messages on stderr indicating the ports assigned to each forward
+        ControlPath="none",  # if the user has ControlPath set up for every host, it will prevent creation of forwards
     )
 
     cli_args = []
 
     for forward_host, forward_port in forwards:
-        cli_args.extend(['-R', ':'.join([str(0), forward_host, str(forward_port)])])
+        cli_args.extend(["-R", ":".join([str(0), forward_host, str(forward_port)])])
 
     process = run_ssh_command(args, ssh, options, cli_args)
     process.pending_forwards = forwards
@@ -269,7 +304,9 @@ def create_ssh_port_redirects(
     cli_args = []
 
     for bind_port, target_host, target_port in redirects:
-        cli_args.extend(['-R', ':'.join([str(bind_port), target_host, str(target_port)])])
+        cli_args.extend(
+            ["-R", ":".join([str(bind_port), target_host, str(target_port)])]
+        )
 
     process = run_ssh_command(args, ssh, options, cli_args)
 
@@ -280,23 +317,35 @@ def generate_ssh_inventory(ssh_connections: list[SshConnectionDetail]) -> str:
     """Return an inventory file in JSON format, created from the provided SSH connection details."""
     inventory = dict(
         all=dict(
-            hosts=dict((ssh.name, exclude_none_values(dict(
-                ansible_host=ssh.host,
-                ansible_port=ssh.port,
-                ansible_user=ssh.user,
-                ansible_ssh_private_key_file=os.path.abspath(ssh.identity_file),
-                ansible_connection='ssh',
-                ansible_pipelining='yes',
-                ansible_python_interpreter=ssh.python_interpreter,
-                ansible_shell_type=ssh.shell_type,
-                ansible_ssh_extra_args=ssh_options_to_str(dict(UserKnownHostsFile='/dev/null', **ssh.options)),  # avoid changing the test environment
-                ansible_ssh_host_key_checking='no',
-            ))) for ssh in ssh_connections),
+            hosts=dict(
+                (
+                    ssh.name,
+                    exclude_none_values(
+                        dict(
+                            ansible_host=ssh.host,
+                            ansible_port=ssh.port,
+                            ansible_user=ssh.user,
+                            ansible_ssh_private_key_file=os.path.abspath(
+                                ssh.identity_file
+                            ),
+                            ansible_connection="ssh",
+                            ansible_pipelining="yes",
+                            ansible_python_interpreter=ssh.python_interpreter,
+                            ansible_shell_type=ssh.shell_type,
+                            ansible_ssh_extra_args=ssh_options_to_str(
+                                dict(UserKnownHostsFile="/dev/null", **ssh.options)
+                            ),  # avoid changing the test environment
+                            ansible_ssh_host_key_checking="no",
+                        )
+                    ),
+                )
+                for ssh in ssh_connections
+            ),
         ),
     )
 
     inventory_text = json.dumps(inventory, indent=4, sort_keys=True)
 
-    display.info('>>> SSH Inventory\n%s' % inventory_text, verbosity=3)
+    display.info(">>> SSH Inventory\n%s" % inventory_text, verbosity=3)
 
     return inventory_text

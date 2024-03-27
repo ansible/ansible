@@ -11,11 +11,11 @@ import pytest
 
 def test_set_options_credential_exposure():
     def send(data):
-        return '{'
+        return "{"
 
     c = connection.Connection(connection.__file__)
     c.send = send
     with pytest.raises(connection.ConnectionError) as excinfo:
-        c._exec_jsonrpc('set_options', become_pass='password')
+        c._exec_jsonrpc("set_options", become_pass="password")
 
-    assert 'password' not in str(excinfo.value)
+    assert "password" not in str(excinfo.value)

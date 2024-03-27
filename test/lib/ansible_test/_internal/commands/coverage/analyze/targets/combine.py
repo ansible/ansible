@@ -1,4 +1,5 @@
 """Combine integration test target code coverage reports."""
+
 from __future__ import annotations
 import typing as t
 
@@ -36,7 +37,9 @@ class CoverageAnalyzeTargetsCombineConfig(CoverageAnalyzeTargetsConfig):
         self.output_file: str = args.output_file
 
 
-def command_coverage_analyze_targets_combine(args: CoverageAnalyzeTargetsCombineConfig) -> None:
+def command_coverage_analyze_targets_combine(
+    args: CoverageAnalyzeTargetsCombineConfig,
+) -> None:
     """Combine integration test target code coverage reports."""
     host_state = prepare_profiles(args)  # coverage analyze targets combine
 
@@ -48,12 +51,26 @@ def command_coverage_analyze_targets_combine(args: CoverageAnalyzeTargetsCombine
     combined_path_lines: Lines = {}
 
     for report_path in args.input_files:
-        covered_targets, covered_path_arcs, covered_path_lines = read_report(report_path)
+        covered_targets, covered_path_arcs, covered_path_lines = read_report(
+            report_path
+        )
 
-        merge_indexes(covered_path_arcs, covered_targets, combined_path_arcs, combined_target_indexes)
-        merge_indexes(covered_path_lines, covered_targets, combined_path_lines, combined_target_indexes)
+        merge_indexes(
+            covered_path_arcs,
+            covered_targets,
+            combined_path_arcs,
+            combined_target_indexes,
+        )
+        merge_indexes(
+            covered_path_lines,
+            covered_targets,
+            combined_path_lines,
+            combined_target_indexes,
+        )
 
-    report = make_report(combined_target_indexes, combined_path_arcs, combined_path_lines)
+    report = make_report(
+        combined_target_indexes, combined_path_arcs, combined_path_lines
+    )
 
     write_report(args, report, args.output_file)
 
@@ -72,4 +89,6 @@ def merge_indexes(
             combined_point = combined_points.setdefault(covered_point, set())
 
             for covered_target_index in covered_target_indexes:
-                combined_point.add(get_target_index(source_index[covered_target_index], combined_index))
+                combined_point.add(
+                    get_target_index(source_index[covered_target_index], combined_index)
+                )

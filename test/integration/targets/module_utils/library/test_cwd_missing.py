@@ -18,7 +18,7 @@ def main():
     # This avoids race conditions in the test, including timing cwd deletion between AnsiballZ wrapper execution and AnsibleModule instantiation.
     # The timing issue with AnsiballZ is due to cwd checking in the wrapper when code coverage is enabled.
 
-    temp = os.path.abspath('temp')
+    temp = os.path.abspath("temp")
 
     os.mkdir(temp)
     os.chdir(temp)
@@ -28,5 +28,5 @@ def main():
     module.exit_json(before=temp, after=os.getcwd())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

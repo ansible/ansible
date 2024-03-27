@@ -1,4 +1,5 @@
 """Show availability of PyYAML and libyaml support."""
+
 from __future__ import annotations
 
 import json
@@ -13,7 +14,11 @@ try:
 except ImportError:
     CLoader = None
 
-print(json.dumps(dict(
-    yaml=bool(yaml),
-    cloader=bool(CLoader),
-)))
+print(
+    json.dumps(
+        dict(
+            yaml=bool(yaml),
+            cloader=bool(CLoader),
+        )
+    )
+)

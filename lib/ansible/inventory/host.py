@@ -24,11 +24,12 @@ from ansible.parsing.utils.addresses import patterns
 from ansible.utils.vars import combine_vars, get_unique_id
 
 
-__all__ = ['Host']
+__all__ = ["Host"]
 
 
 class Host:
-    ''' a single ansible host '''
+    """a single ansible host"""
+
     base_type = InventoryObjectType.HOST
 
     # __slots__ = [ 'name', 'vars', 'groups' ]
@@ -71,15 +72,17 @@ class Host:
         )
 
     def deserialize(self, data):
-        self.__init__(gen_uuid=False)  # used by __setstate__ to deserialize in place  # pylint: disable=unnecessary-dunder-call
+        self.__init__(
+            gen_uuid=False
+        )  # used by __setstate__ to deserialize in place  # pylint: disable=unnecessary-dunder-call
 
-        self.name = data.get('name')
-        self.vars = data.get('vars', dict())
-        self.address = data.get('address', '')
-        self._uuid = data.get('uuid', None)
-        self.implicit = data.get('implicit', False)
+        self.name = data.get("name")
+        self.vars = data.get("vars", dict())
+        self.address = data.get("address", "")
+        self._uuid = data.get("uuid", None)
+        self.implicit = data.get("implicit", False)
 
-        groups = data.get('groups', [])
+        groups = data.get("groups", [])
         for group_data in groups:
             g = Group()
             g.deserialize(group_data)
@@ -95,7 +98,7 @@ class Host:
         self.address = name
 
         if port:
-            self.set_variable('ansible_port', int(port))
+            self.set_variable("ansible_port", int(port))
 
         if gen_uuid:
             self._uuid = get_unique_id()
@@ -135,7 +138,7 @@ class Host:
 
             # remove exclusive ancestors, xcept all!
             for oldg in group.get_ancestors():
-                if oldg.name != 'all':
+                if oldg.name != "all":
                     for childg in self.groups:
                         if oldg in childg.get_ancestors():
                             break
@@ -144,7 +147,11 @@ class Host:
         return removed
 
     def set_variable(self, key, value):
-        if key in self.vars and isinstance(self.vars[key], MutableMapping) and isinstance(value, Mapping):
+        if (
+            key in self.vars
+            and isinstance(self.vars[key], MutableMapping)
+            and isinstance(value, Mapping)
+        ):
             self.vars = combine_vars(self.vars, {key: value})
         else:
             self.vars[key] = value
@@ -154,13 +161,15 @@ class Host:
 
     def get_magic_vars(self):
         results = {}
-        results['inventory_hostname'] = self.name
-        if patterns['ipv4'].match(self.name) or patterns['ipv6'].match(self.name):
-            results['inventory_hostname_short'] = self.name
+        results["inventory_hostname"] = self.name
+        if patterns["ipv4"].match(self.name) or patterns["ipv6"].match(self.name):
+            results["inventory_hostname_short"] = self.name
         else:
-            results['inventory_hostname_short'] = self.name.split('.')[0]
+            results["inventory_hostname_short"] = self.name.split(".")[0]
 
-        results['group_names'] = sorted([g.name for g in self.get_groups() if g.name != 'all'])
+        results["group_names"] = sorted(
+            [g.name for g in self.get_groups() if g.name != "all"]
+        )
 
         return results
 

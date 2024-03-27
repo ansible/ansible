@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: test_docs_yaml_anchors
 short_description: Test module with YAML anchors in docs
@@ -37,13 +37,13 @@ options:
     type: list
     elements: dict
     suboptions: *sub_anchor
-'''
+"""
 
-EXAMPLES = '''
-'''
+EXAMPLES = """
+"""
 
-RETURN = '''
-'''
+RETURN = """
+"""
 
 
 from ansible.module_utils.basic import AnsibleModule
@@ -52,19 +52,27 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            at_the_top=dict(type='str', default='some string'),
-            last_one=dict(type='str', default='some string'),
-            egress=dict(type='list', elements='dict', options=dict(
-                port=dict(type='int', required=True),
-            )),
-            ingress=dict(type='list', elements='dict', options=dict(
-                port=dict(type='int', required=True),
-            )),
+            at_the_top=dict(type="str", default="some string"),
+            last_one=dict(type="str", default="some string"),
+            egress=dict(
+                type="list",
+                elements="dict",
+                options=dict(
+                    port=dict(type="int", required=True),
+                ),
+            ),
+            ingress=dict(
+                type="list",
+                elements="dict",
+                options=dict(
+                    port=dict(type="int", required=True),
+                ),
+            ),
         ),
     )
 
     module.exit_json()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

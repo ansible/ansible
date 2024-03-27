@@ -17,7 +17,7 @@
 #############################################
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: host_group_vars
     version_added: "2.4"
     short_description: In charge of loading group_vars and host_vars
@@ -50,7 +50,7 @@ DOCUMENTATION = '''
         elements: string
     extends_documentation_fragment:
       - vars_plugin_staging
-'''
+"""
 
 import os
 from ansible.errors import AnsibleParserError
@@ -73,13 +73,13 @@ class VarsModule(BaseVarsPlugin):
 
     def load_found_files(self, loader, data, found_files):
         for found in found_files:
-            new_data = loader.load_from_file(found, cache='all', unsafe=True)
+            new_data = loader.load_from_file(found, cache="all", unsafe=True)
             if new_data:  # ignore empty files
                 data = combine_vars(data, new_data)
         return data
 
     def get_vars(self, loader, path, entities, cache=True):
-        ''' parses the inventory file '''
+        """parses the inventory file"""
 
         if not isinstance(entities, list):
             entities = [entities]
@@ -95,12 +95,18 @@ class VarsModule(BaseVarsPlugin):
             try:
                 entity_name = entity.name
             except AttributeError:
-                raise AnsibleParserError("Supplied entity must be Host or Group, got %s instead" % (type(entity)))
+                raise AnsibleParserError(
+                    "Supplied entity must be Host or Group, got %s instead"
+                    % (type(entity))
+                )
 
             try:
                 first_char = entity_name[0]
             except (TypeError, IndexError, KeyError):
-                raise AnsibleParserError("Supplied entity must be Host or Group, got %s instead" % (type(entity)))
+                raise AnsibleParserError(
+                    "Supplied entity must be Host or Group, got %s instead"
+                    % (type(entity))
+                )
 
             # avoid 'chroot' type inventory hostnames /path/to/chroot
             if first_char != os.path.sep:
@@ -110,38 +116,53 @@ class VarsModule(BaseVarsPlugin):
                     try:
                         entity_type = entity.base_type
                     except AttributeError:
-                        raise AnsibleParserError("Supplied entity must be Host or Group, got %s instead" % (type(entity)))
+                        raise AnsibleParserError(
+                            "Supplied entity must be Host or Group, got %s instead"
+                            % (type(entity))
+                        )
 
                     if entity_type is InventoryObjectType.HOST:
-                        subdir = 'host_vars'
+                        subdir = "host_vars"
                     elif entity_type is InventoryObjectType.GROUP:
-                        subdir = 'group_vars'
+                        subdir = "group_vars"
                     else:
-                        raise AnsibleParserError("Supplied entity must be Host or Group, got %s instead" % (type(entity)))
+                        raise AnsibleParserError(
+                            "Supplied entity must be Host or Group, got %s instead"
+                            % (type(entity))
+                        )
 
                     if cache:
                         try:
                             opath = PATH_CACHE[(realpath_basedir, subdir)]
                         except KeyError:
-                            opath = PATH_CACHE[(realpath_basedir, subdir)] = os.path.join(realpath_basedir, subdir)
+                            opath = PATH_CACHE[(realpath_basedir, subdir)] = (
+                                os.path.join(realpath_basedir, subdir)
+                            )
 
                         if opath in NAK:
                             continue
-                        key = '%s.%s' % (entity_name, opath)
+                        key = "%s.%s" % (entity_name, opath)
                         if key in FOUND:
                             data = self.load_found_files(loader, data, FOUND[key])
                             continue
                     else:
-                        opath = PATH_CACHE[(realpath_basedir, subdir)] = os.path.join(realpath_basedir, subdir)
+                        opath = PATH_CACHE[(realpath_basedir, subdir)] = os.path.join(
+                            realpath_basedir, subdir
+                        )
 
                     if os.path.isdir(opath):
                         self._display.debug("\tprocessing dir %s" % opath)
-                        FOUND[key] = found_files = loader.find_vars_files(opath, entity_name)
+                        FOUND[key] = found_files = loader.find_vars_files(
+                            opath, entity_name
+                        )
                     elif not os.path.exists(opath):
                         # cache missing dirs so we don't have to keep looking for things beneath the
                         NAK.add(opath)
                     else:
-                        self._display.warning("Found %s that is not a directory, skipping: %s" % (subdir, opath))
+                        self._display.warning(
+                            "Found %s that is not a directory, skipping: %s"
+                            % (subdir, opath)
+                        )
                         # cache non-directory matches
                         NAK.add(opath)
 

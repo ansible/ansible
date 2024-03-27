@@ -17,32 +17,42 @@ from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 from ansible.parsing.ajson import AnsibleJSONDecoder
 
 
-__all__ = ('from_yaml',)
+__all__ = ("from_yaml",)
 
 
 def _handle_error(json_exc, yaml_exc, file_name, show_content):
-    '''
+    """
     Optionally constructs an object (AnsibleBaseYAMLObject) to encapsulate the
     file name/position where a YAML exception occurred, and raises an AnsibleParserError
     to display the syntax exception information.
-    '''
+    """
 
     # if the YAML exception contains a problem mark, use it to construct
     # an object the error class can use to display the faulty line
     err_obj = None
-    if hasattr(yaml_exc, 'problem_mark'):
+    if hasattr(yaml_exc, "problem_mark"):
         err_obj = AnsibleBaseYAMLObject()
-        err_obj.ansible_pos = (file_name, yaml_exc.problem_mark.line + 1, yaml_exc.problem_mark.column + 1)
+        err_obj.ansible_pos = (
+            file_name,
+            yaml_exc.problem_mark.line + 1,
+            yaml_exc.problem_mark.column + 1,
+        )
 
-    n_yaml_syntax_error = YAML_SYNTAX_ERROR % to_native(getattr(yaml_exc, 'problem', u''))
-    n_err_msg = 'We were unable to read either as JSON nor YAML, these are the errors we got from each:\n' \
-                'JSON: %s\n\n%s' % (to_native(json_exc), n_yaml_syntax_error)
+    n_yaml_syntax_error = YAML_SYNTAX_ERROR % to_native(
+        getattr(yaml_exc, "problem", "")
+    )
+    n_err_msg = (
+        "We were unable to read either as JSON nor YAML, these are the errors we got from each:\n"
+        "JSON: %s\n\n%s" % (to_native(json_exc), n_yaml_syntax_error)
+    )
 
-    raise AnsibleParserError(n_err_msg, obj=err_obj, show_content=show_content, orig_exc=yaml_exc)
+    raise AnsibleParserError(
+        n_err_msg, obj=err_obj, show_content=show_content, orig_exc=yaml_exc
+    )
 
 
 def _safe_load(stream, file_name=None, vault_secrets=None):
-    ''' Implements yaml.safe_load(), except using our custom loader class. '''
+    """Implements yaml.safe_load(), except using our custom loader class."""
 
     loader = AnsibleLoader(stream, file_name, vault_secrets)
     try:
@@ -54,11 +64,13 @@ def _safe_load(stream, file_name=None, vault_secrets=None):
             pass  # older versions of yaml don't have dispose function, ignore
 
 
-def from_yaml(data, file_name='<string>', show_content=True, vault_secrets=None, json_only=False):
-    '''
+def from_yaml(
+    data, file_name="<string>", show_content=True, vault_secrets=None, json_only=False
+):
+    """
     Creates a python datastructure from the given data, which can be either
     a JSON or YAML string.
-    '''
+    """
     new_data = None
 
     try:
@@ -75,7 +87,9 @@ def from_yaml(data, file_name='<string>', show_content=True, vault_secrets=None,
 
         # must not be JSON, let the rest try
         try:
-            new_data = _safe_load(data, file_name=file_name, vault_secrets=vault_secrets)
+            new_data = _safe_load(
+                data, file_name=file_name, vault_secrets=vault_secrets
+            )
         except YAMLError as yaml_exc:
             _handle_error(json_exc, yaml_exc, file_name, show_content)
 

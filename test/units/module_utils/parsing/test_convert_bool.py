@@ -24,11 +24,11 @@ class TestBoolean:
         assert boolean(0) is False
         assert boolean(0.0) is False
 
-# Current boolean() doesn't consider these to be true values
-#    def test_other_numbers(self):
-#        assert boolean(2) is True
-#        assert boolean(-1) is True
-#        assert boolean(0.1) is True
+    # Current boolean() doesn't consider these to be true values
+    #    def test_other_numbers(self):
+    #        assert boolean(2) is True
+    #        assert boolean(-1) is True
+    #        assert boolean(0.1) is True
 
     def test_strings(self):
         assert boolean("true") is True

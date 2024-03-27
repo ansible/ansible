@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: convert_snake_case
 short_description: test converting data to snake_case
@@ -25,7 +25,7 @@ options:
     description: list of top level keys that should not have their contents converted
     type: list
     default: []
-'''
+"""
 
 
 from ansible.module_utils.basic import AnsibleModule
@@ -35,20 +35,18 @@ from ansible.module_utils.common.dict_transformations import camel_dict_to_snake
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            data=dict(type='dict', required=True),
-            reversible=dict(type='bool', default=False),
-            ignore_list=dict(type='list', default=[]),
+            data=dict(type="dict", required=True),
+            reversible=dict(type="bool", default=False),
+            ignore_list=dict(type="list", default=[]),
         ),
     )
 
     result = camel_dict_to_snake_dict(
-        module.params['data'],
-        module.params['reversible'],
-        module.params['ignore_list']
+        module.params["data"], module.params["reversible"], module.params["ignore_list"]
     )
 
     module.exit_json(data=result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

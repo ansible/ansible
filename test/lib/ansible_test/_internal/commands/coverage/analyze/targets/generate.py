@@ -1,4 +1,5 @@
 """Analyze code coverage data to determine which integration test targets provide coverage for each arc or line."""
+
 from __future__ import annotations
 
 import os
@@ -60,7 +61,9 @@ class CoverageAnalyzeTargetsGenerateConfig(CoverageAnalyzeTargetsConfig):
         self.output_file: str = args.output_file
 
 
-def command_coverage_analyze_targets_generate(args: CoverageAnalyzeTargetsGenerateConfig) -> None:
+def command_coverage_analyze_targets_generate(
+    args: CoverageAnalyzeTargetsGenerateConfig,
+) -> None:
     """Analyze code coverage data to determine which integration test targets provide coverage for each arc or line."""
     host_state = prepare_profiles(args)  # coverage analyze targets generate
 
@@ -69,8 +72,18 @@ def command_coverage_analyze_targets_generate(args: CoverageAnalyzeTargetsGenera
 
     root = data_context().content.root
     target_indexes: TargetIndexes = {}
-    arcs = dict((os.path.relpath(path, root), data) for path, data in analyze_python_coverage(args, host_state, args.input_dir, target_indexes).items())
-    lines = dict((os.path.relpath(path, root), data) for path, data in analyze_powershell_coverage(args, args.input_dir, target_indexes).items())
+    arcs = dict(
+        (os.path.relpath(path, root), data)
+        for path, data in analyze_python_coverage(
+            args, host_state, args.input_dir, target_indexes
+        ).items()
+    )
+    lines = dict(
+        (os.path.relpath(path, root), data)
+        for path, data in analyze_powershell_coverage(
+            args, args.input_dir, target_indexes
+        ).items()
+    )
     report = make_report(target_indexes, arcs, lines)
     write_report(args, report, args.output_file)
 
@@ -95,7 +108,9 @@ def analyze_python_coverage(
         target_name = get_target_name(python_file)
         target_index = get_target_index(target_name, target_indexes)
 
-        for filename, covered_arcs in enumerate_python_arcs(python_file, coverage, modules, collection_search_re, collection_sub_re):
+        for filename, covered_arcs in enumerate_python_arcs(
+            python_file, coverage, modules, collection_search_re, collection_sub_re
+        ):
             arcs = results.setdefault(filename, {})
 
             for covered_arc in covered_arcs:
@@ -124,7 +139,9 @@ def analyze_powershell_coverage(
         target_name = get_target_name(powershell_file)
         target_index = get_target_index(target_name, target_indexes)
 
-        for filename, hits in enumerate_powershell_lines(powershell_file, collection_search_re, collection_sub_re):
+        for filename, hits in enumerate_powershell_lines(
+            powershell_file, collection_search_re, collection_sub_re
+        ):
             lines = results.setdefault(filename, {})
 
             for covered_line in hits:
@@ -151,9 +168,13 @@ def prune_invalid_filenames(
 
 def get_target_name(path: str) -> str:
     """Extract the test target name from the given coverage path."""
-    return to_text(os.path.basename(path).split('=')[1])
+    return to_text(os.path.basename(path).split("=")[1])
 
 
 def is_integration_coverage_file(path: str) -> bool:
     """Returns True if the coverage file came from integration tests, otherwise False."""
-    return os.path.basename(path).split('=')[0] in ('integration', 'windows-integration', 'network-integration')
+    return os.path.basename(path).split("=")[0] in (
+        "integration",
+        "windows-integration",
+        "network-integration",
+    )

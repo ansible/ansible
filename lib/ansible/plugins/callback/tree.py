@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: tree
     type: notification
     requirements:
@@ -25,7 +25,7 @@ DOCUMENTATION = '''
     description:
         - "This callback is used by the Ansible (adhoc) command line option C(-t|--tree)."
         - This produces a JSON dump of events in a directory, a file for each host, the directory used MUST be passed as a command line option.
-'''
+"""
 
 import os
 
@@ -36,44 +36,53 @@ from ansible.utils.path import makedirs_safe, unfrackpath
 
 
 class CallbackModule(CallbackBase):
-    '''
+    """
     This callback puts results into a host specific file in a directory in json format.
-    '''
+    """
 
     CALLBACK_VERSION = 2.0
-    CALLBACK_TYPE = 'aggregate'
-    CALLBACK_NAME = 'tree'
+    CALLBACK_TYPE = "aggregate"
+    CALLBACK_NAME = "tree"
     CALLBACK_NEEDS_ENABLED = True
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
-        ''' override to set self.tree '''
+        """override to set self.tree"""
 
-        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+        super(CallbackModule, self).set_options(
+            task_keys=task_keys, var_options=var_options, direct=direct
+        )
 
         if TREE_DIR:
             # TREE_DIR comes from the CLI option --tree, only available for adhoc
             self.tree = unfrackpath(TREE_DIR)
         else:
-            self.tree = self.get_option('directory')
+            self.tree = self.get_option("directory")
 
     def write_tree_file(self, hostname, buf):
-        ''' write something into treedir/hostname '''
+        """write something into treedir/hostname"""
 
         buf = to_bytes(buf)
         try:
             makedirs_safe(self.tree)
         except (OSError, IOError) as e:
-            self._display.warning(u"Unable to access or create the configured directory (%s): %s" % (to_text(self.tree), to_text(e)))
+            self._display.warning(
+                "Unable to access or create the configured directory (%s): %s"
+                % (to_text(self.tree), to_text(e))
+            )
 
         try:
             path = to_bytes(os.path.join(self.tree, hostname))
-            with open(path, 'wb+') as fd:
+            with open(path, "wb+") as fd:
                 fd.write(buf)
         except (OSError, IOError) as e:
-            self._display.warning(u"Unable to write to %s's file: %s" % (hostname, to_text(e)))
+            self._display.warning(
+                "Unable to write to %s's file: %s" % (hostname, to_text(e))
+            )
 
     def result_to_tree(self, result):
-        self.write_tree_file(result._host.get_name(), self._dump_results(result._result))
+        self.write_tree_file(
+            result._host.get_name(), self._dump_results(result._result)
+        )
 
     def v2_runner_on_ok(self, result):
         self.result_to_tree(result)

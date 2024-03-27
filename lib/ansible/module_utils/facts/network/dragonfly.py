@@ -24,9 +24,10 @@ class DragonFlyNetwork(GenericBsdIfconfigNetwork):
     This is the DragonFly Network Class.
     It uses the GenericBsdIfconfigNetwork unchanged.
     """
-    platform = 'DragonFly'
+
+    platform = "DragonFly"
 
 
 class DragonFlyNetworkCollector(NetworkCollector):
     _fact_class = DragonFlyNetwork
-    _platform = 'DragonFly'
+    _platform = "DragonFly"

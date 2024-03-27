@@ -13,18 +13,29 @@ from ansible.utils.vars import isidentifier
 
 
 @pytest.mark.parametrize(
-    "identifier", [
-        "foo", "foo1_23",
-    ]
+    "identifier",
+    [
+        "foo",
+        "foo1_23",
+    ],
 )
 def test_valid_identifier(identifier):
     assert isidentifier(identifier)
 
 
 @pytest.mark.parametrize(
-    "identifier", [
-        "pass", "foo ", " foo", "1234", "1234abc", "", "   ", "foo bar", "no-dashed-names-for-you",
-    ]
+    "identifier",
+    [
+        "pass",
+        "foo ",
+        " foo",
+        "1234",
+        "1234abc",
+        "",
+        "   ",
+        "foo bar",
+        "no-dashed-names-for-you",
+    ],
 )
 def test_invalid_identifier(identifier):
     assert not isidentifier(identifier)

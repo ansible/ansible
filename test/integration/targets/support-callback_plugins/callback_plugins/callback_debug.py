@@ -10,14 +10,14 @@ from ansible.plugins.callback import CallbackBase
 
 class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
-    CALLBACK_TYPE = 'stdout'
-    CALLBACK_NAME = 'callback_debug'
+    CALLBACK_TYPE = "stdout"
+    CALLBACK_NAME = "callback_debug"
 
     def __init__(self, *args, **kwargs):
         super(CallbackModule, self).__init__(*args, **kwargs)
-        self._display.display('__init__')
+        self._display.display("__init__")
 
-        for name in (cb for cb in dir(self) if cb.startswith('v2_')):
+        for name in (cb for cb in dir(self) if cb.startswith("v2_")):
             setattr(self, name, functools.partial(self.handle_v2, name))
 
     def handle_v2(self, name, *args, **kwargs):

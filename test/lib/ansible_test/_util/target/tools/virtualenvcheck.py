@@ -1,4 +1,5 @@
 """Detect the real python interpreter when running in a virtual environment created by the 'virtualenv' module."""
+
 from __future__ import annotations
 
 import json
@@ -15,6 +16,10 @@ try:
 except ImportError:
     base_exec_prefix = None
 
-print(json.dumps(dict(
-    real_prefix=real_prefix or base_exec_prefix,
-)))
+print(
+    json.dumps(
+        dict(
+            real_prefix=real_prefix or base_exec_prefix,
+        )
+    )
+)

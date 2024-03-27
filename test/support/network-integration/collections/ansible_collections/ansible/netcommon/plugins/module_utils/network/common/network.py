@@ -46,20 +46,14 @@ NET_TRANSPORT_ARGS = dict(
     host=dict(required=True),
     port=dict(type="int"),
     username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"])),
-    password=dict(
-        no_log=True, fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"])
-    ),
-    ssh_keyfile=dict(
-        fallback=(env_fallback, ["ANSIBLE_NET_SSH_KEYFILE"]), type="path"
-    ),
+    password=dict(no_log=True, fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"])),
+    ssh_keyfile=dict(fallback=(env_fallback, ["ANSIBLE_NET_SSH_KEYFILE"]), type="path"),
     authorize=dict(
         default=False,
         fallback=(env_fallback, ["ANSIBLE_NET_AUTHORIZE"]),
         type="bool",
     ),
-    auth_pass=dict(
-        no_log=True, fallback=(env_fallback, ["ANSIBLE_NET_AUTH_PASS"])
-    ),
+    auth_pass=dict(no_log=True, fallback=(env_fallback, ["ANSIBLE_NET_AUTH_PASS"])),
     provider=dict(type="dict", no_log=True),
     transport=dict(choices=list()),
     timeout=dict(default=10, type="int"),
@@ -143,13 +137,9 @@ class NetworkModule(AnsibleModule):
             cls = NET_CONNECTIONS[transport]
             self.connection = cls()
         except KeyError:
-            self.fail_json(
-                msg="Unknown transport or no default transport specified"
-            )
+            self.fail_json(msg="Unknown transport or no default transport specified")
         except (TypeError, NetworkError) as exc:
-            self.fail_json(
-                msg=to_native(exc), exception=traceback.format_exc()
-            )
+            self.fail_json(msg=to_native(exc), exception=traceback.format_exc())
 
         if connect_on_load:
             self.connect()
@@ -200,9 +190,7 @@ class NetworkModule(AnsibleModule):
                     )
                 )
         except NetworkError as exc:
-            self.fail_json(
-                msg=to_native(exc), exception=traceback.format_exc()
-            )
+            self.fail_json(msg=to_native(exc), exception=traceback.format_exc())
 
     def disconnect(self):
         try:
@@ -210,9 +198,7 @@ class NetworkModule(AnsibleModule):
                 self.connection.disconnect()
             self.log("disconnected from %s" % self.params["host"])
         except NetworkError as exc:
-            self.fail_json(
-                msg=to_native(exc), exception=traceback.format_exc()
-            )
+            self.fail_json(msg=to_native(exc), exception=traceback.format_exc())
 
 
 def register_transport(transport, default=False):
@@ -244,9 +230,7 @@ def get_resource_connection(module):
         # Set the connection to a fake connection so it fails sensibly.
         module._connection = LocalResourceConnection(module)
     else:
-        module.fail_json(
-            msg="Invalid connection type {0!s}".format(network_api)
-        )
+        module.fail_json(msg="Invalid connection type {0!s}".format(network_api))
 
     return module._connection
 

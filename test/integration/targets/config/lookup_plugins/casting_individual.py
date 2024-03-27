@@ -48,11 +48,13 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
 
         for cast in (list, int, bool, str):
-            option = 'test_%s' % str(cast).replace("<class '", '').replace("'>", '')
+            option = "test_%s" % str(cast).replace("<class '", "").replace("'>", "")
             if option in kwargs:
                 self.set_option(option, kwargs[option])
                 value = self.get_option(option)
                 if type(value) is not cast:
-                    raise Exception('%s is not a %s: got %s/%s' % (option, cast, type(value), value))
+                    raise Exception(
+                        "%s is not a %s: got %s/%s" % (option, cast, type(value), value)
+                    )
 
         return terms

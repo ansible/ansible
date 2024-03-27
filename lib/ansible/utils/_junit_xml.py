@@ -2,6 +2,7 @@
 Dataclasses for creating JUnit XML files.
 See: https://github.com/junit-team/junit5/blob/main/platform-tests/src/test/resources/jenkins-junit.xsd
 """
+
 from __future__ import annotations
 
 import abc
@@ -54,7 +55,7 @@ class TestFailure(TestResult):
     @property
     def tag(self) -> str:
         """Tag name for the XML element created by this result type."""
-        return 'failure'
+        return "failure"
 
 
 @dataclasses.dataclass
@@ -64,7 +65,7 @@ class TestError(TestResult):
     @property
     def tag(self) -> str:
         """Tag name for the XML element created by this result type."""
-        return 'error'
+        return "error"
 
 
 @dataclasses.dataclass
@@ -112,19 +113,19 @@ class TestCase:
 
     def get_xml_element(self) -> ET.Element:
         """Return an XML element representing this instance."""
-        element = ET.Element('testcase', self.get_attributes())
+        element = ET.Element("testcase", self.get_attributes())
 
         if self.skipped:
-            ET.SubElement(element, 'skipped').text = self.skipped
+            ET.SubElement(element, "skipped").text = self.skipped
 
         element.extend([error.get_xml_element() for error in self.errors])
         element.extend([failure.get_xml_element() for failure in self.failures])
 
         if self.system_out:
-            ET.SubElement(element, 'system-out').text = self.system_out
+            ET.SubElement(element, "system-out").text = self.system_out
 
         if self.system_err:
-            ET.SubElement(element, 'system-err').text = self.system_err
+            ET.SubElement(element, "system-err").text = self.system_err
 
         return element
 
@@ -146,7 +147,7 @@ class TestSuite:
 
     def __post_init__(self):
         if self.timestamp and self.timestamp.tzinfo != datetime.timezone.utc:
-            raise ValueError(f'timestamp.tzinfo must be {datetime.timezone.utc!r}')
+            raise ValueError(f"timestamp.tzinfo must be {datetime.timezone.utc!r}")
 
     @property
     def disabled(self) -> int:
@@ -191,23 +192,32 @@ class TestSuite:
             skipped=self.skipped,
             tests=self.tests,
             time=self.time,
-            timestamp=self.timestamp.replace(tzinfo=None).isoformat(timespec='seconds') if self.timestamp else None,
+            timestamp=(
+                self.timestamp.replace(tzinfo=None).isoformat(timespec="seconds")
+                if self.timestamp
+                else None
+            ),
         )
 
     def get_xml_element(self) -> ET.Element:
         """Return an XML element representing this instance."""
-        element = ET.Element('testsuite', self.get_attributes())
+        element = ET.Element("testsuite", self.get_attributes())
 
         if self.properties:
-            ET.SubElement(element, 'properties').extend([ET.Element('property', dict(name=name, value=value)) for name, value in self.properties.items()])
+            ET.SubElement(element, "properties").extend(
+                [
+                    ET.Element("property", dict(name=name, value=value))
+                    for name, value in self.properties.items()
+                ]
+            )
 
         element.extend([test_case.get_xml_element() for test_case in self.cases])
 
         if self.system_out:
-            ET.SubElement(element, 'system-out').text = self.system_out
+            ET.SubElement(element, "system-out").text = self.system_out
 
         if self.system_err:
-            ET.SubElement(element, 'system-err').text = self.system_err
+            ET.SubElement(element, "system-err").text = self.system_err
 
         return element
 
@@ -258,7 +268,7 @@ class TestSuites:
 
     def get_xml_element(self) -> ET.Element:
         """Return an XML element representing this instance."""
-        element = ET.Element('testsuites', self.get_attributes())
+        element = ET.Element("testsuites", self.get_attributes())
         element.extend([suite.get_xml_element() for suite in self.suites])
 
         return element
@@ -275,4 +285,4 @@ def _attributes(**kwargs) -> dict[str, str]:
 
 def _pretty_xml(element: ET.Element) -> str:
     """Return a pretty formatted XML string representing the given element."""
-    return minidom.parseString(ET.tostring(element, encoding='unicode')).toprettyxml()
+    return minidom.parseString(ET.tostring(element, encoding="unicode")).toprettyxml()

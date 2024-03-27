@@ -11,7 +11,7 @@ from __future__ import annotations
 
 ANSIBLE_METADATA = {
     "metadata_version": "1.1",
-    "status": [u"preview"],
+    "status": ["preview"],
     "supported_by": "network",
 }
 
@@ -153,9 +153,7 @@ def main():
     argument_spec = FactsArgs.argument_spec
     argument_spec.update(vyos_argument_spec)
 
-    module = AnsibleModule(
-        argument_spec=argument_spec, supports_check_mode=True
-    )
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = []
     if module.params["gather_subset"] == "!config":

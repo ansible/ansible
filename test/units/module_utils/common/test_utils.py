@@ -11,6 +11,7 @@ from ansible.module_utils.common.sys_info import get_all_subclasses
 # Tests for get_all_subclasses
 #
 
+
 class TestGetAllSubclasses:
     class Base:
         pass
@@ -37,9 +38,18 @@ class TestGetAllSubclasses:
         assert get_all_subclasses(self.BranchIIB) == set()
 
     def test_one_inheritance(self):
-        assert set(get_all_subclasses(self.BranchII)) == set([self.BranchIIA, self.BranchIIB])
+        assert set(get_all_subclasses(self.BranchII)) == set(
+            [self.BranchIIA, self.BranchIIB]
+        )
 
     def test_toplevel(self):
-        assert set(get_all_subclasses(self.Base)) == set([self.BranchI, self.BranchII,
-                                                          self.BranchIA, self.BranchIB,
-                                                          self.BranchIIA, self.BranchIIB])
+        assert set(get_all_subclasses(self.Base)) == set(
+            [
+                self.BranchI,
+                self.BranchII,
+                self.BranchIA,
+                self.BranchIB,
+                self.BranchIIA,
+                self.BranchIIB,
+            ]
+        )

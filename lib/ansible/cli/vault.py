@@ -25,7 +25,7 @@ display = Display()
 
 
 class VaultCLI(CLI):
-    ''' can encrypt any structured data file used by Ansible.
+    """can encrypt any structured data file used by Ansible.
     This can include *group_vars/* or *host_vars/* inventory variables,
     variables loaded by *include_vars* or *vars_files*, or variable files
     passed on the ansible-playbook command line with *-e @file.yml* or *-e @file.json*.
@@ -33,9 +33,9 @@ class VaultCLI(CLI):
 
     Because Ansible tasks, handlers, and other objects are data, these can also be encrypted with vault.
     If you'd like to not expose what variables you are using, you can keep an individual task file entirely encrypted.
-    '''
+    """
 
-    name = 'ansible-vault'
+    name = "ansible-vault"
 
     FROM_STDIN = "stdin"
     FROM_ARGS = "the command line args"
@@ -57,72 +57,143 @@ class VaultCLI(CLI):
     def init_parser(self):
         super(VaultCLI, self).init_parser(
             desc="encryption/decryption utility for Ansible data files",
-            epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
+            epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n"
+            % os.path.basename(sys.argv[0]),
         )
 
         common = opt_help.ArgumentParser(add_help=False)
         opt_help.add_vault_options(common)
         opt_help.add_verbosity_options(common)
 
-        subparsers = self.parser.add_subparsers(dest='action')
+        subparsers = self.parser.add_subparsers(dest="action")
         subparsers.required = True
 
         output = opt_help.ArgumentParser(add_help=False)
-        output.add_argument('--output', default=None, dest='output_file',
-                            help='output file name for encrypt or decrypt; use - for stdout',
-                            type=opt_help.unfrack_path())
+        output.add_argument(
+            "--output",
+            default=None,
+            dest="output_file",
+            help="output file name for encrypt or decrypt; use - for stdout",
+            type=opt_help.unfrack_path(),
+        )
 
         # For encrypting actions, we can also specify which of multiple vault ids should be used for encrypting
         vault_id = opt_help.ArgumentParser(add_help=False)
-        vault_id.add_argument('--encrypt-vault-id', default=[], dest='encrypt_vault_id',
-                              action='store', type=str,
-                              help='the vault id used to encrypt (required if more than one vault-id is provided)')
+        vault_id.add_argument(
+            "--encrypt-vault-id",
+            default=[],
+            dest="encrypt_vault_id",
+            action="store",
+            type=str,
+            help="the vault id used to encrypt (required if more than one vault-id is provided)",
+        )
 
-        create_parser = subparsers.add_parser('create', help='Create new vault encrypted file', parents=[vault_id, common])
+        create_parser = subparsers.add_parser(
+            "create", help="Create new vault encrypted file", parents=[vault_id, common]
+        )
         create_parser.set_defaults(func=self.execute_create)
-        create_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
-        create_parser.add_argument('--skip-tty-check', default=False, help='allows editor to be opened when no tty attached',
-                                   dest='skip_tty_check', action='store_true')
+        create_parser.add_argument(
+            "args", help="Filename", metavar="file_name", nargs="*"
+        )
+        create_parser.add_argument(
+            "--skip-tty-check",
+            default=False,
+            help="allows editor to be opened when no tty attached",
+            dest="skip_tty_check",
+            action="store_true",
+        )
 
-        decrypt_parser = subparsers.add_parser('decrypt', help='Decrypt vault encrypted file', parents=[output, common])
+        decrypt_parser = subparsers.add_parser(
+            "decrypt", help="Decrypt vault encrypted file", parents=[output, common]
+        )
         decrypt_parser.set_defaults(func=self.execute_decrypt)
-        decrypt_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
+        decrypt_parser.add_argument(
+            "args", help="Filename", metavar="file_name", nargs="*"
+        )
 
-        edit_parser = subparsers.add_parser('edit', help='Edit vault encrypted file', parents=[vault_id, common])
+        edit_parser = subparsers.add_parser(
+            "edit", help="Edit vault encrypted file", parents=[vault_id, common]
+        )
         edit_parser.set_defaults(func=self.execute_edit)
-        edit_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
+        edit_parser.add_argument(
+            "args", help="Filename", metavar="file_name", nargs="*"
+        )
 
-        view_parser = subparsers.add_parser('view', help='View vault encrypted file', parents=[common])
+        view_parser = subparsers.add_parser(
+            "view", help="View vault encrypted file", parents=[common]
+        )
         view_parser.set_defaults(func=self.execute_view)
-        view_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
+        view_parser.add_argument(
+            "args", help="Filename", metavar="file_name", nargs="*"
+        )
 
-        encrypt_parser = subparsers.add_parser('encrypt', help='Encrypt YAML file', parents=[common, output, vault_id])
+        encrypt_parser = subparsers.add_parser(
+            "encrypt", help="Encrypt YAML file", parents=[common, output, vault_id]
+        )
         encrypt_parser.set_defaults(func=self.execute_encrypt)
-        encrypt_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
+        encrypt_parser.add_argument(
+            "args", help="Filename", metavar="file_name", nargs="*"
+        )
 
-        enc_str_parser = subparsers.add_parser('encrypt_string', help='Encrypt a string', parents=[common, output, vault_id])
+        enc_str_parser = subparsers.add_parser(
+            "encrypt_string",
+            help="Encrypt a string",
+            parents=[common, output, vault_id],
+        )
         enc_str_parser.set_defaults(func=self.execute_encrypt_string)
-        enc_str_parser.add_argument('args', help='String to encrypt', metavar='string_to_encrypt', nargs='*')
-        enc_str_parser.add_argument('-p', '--prompt', dest='encrypt_string_prompt',
-                                    action='store_true',
-                                    help="Prompt for the string to encrypt")
-        enc_str_parser.add_argument('--show-input', dest='show_string_input', default=False, action='store_true',
-                                    help='Do not hide input when prompted for the string to encrypt')
-        enc_str_parser.add_argument('-n', '--name', dest='encrypt_string_names',
-                                    action='append',
-                                    help="Specify the variable name")
-        enc_str_parser.add_argument('--stdin-name', dest='encrypt_string_stdin_name',
-                                    default=None,
-                                    help="Specify the variable name for stdin")
+        enc_str_parser.add_argument(
+            "args", help="String to encrypt", metavar="string_to_encrypt", nargs="*"
+        )
+        enc_str_parser.add_argument(
+            "-p",
+            "--prompt",
+            dest="encrypt_string_prompt",
+            action="store_true",
+            help="Prompt for the string to encrypt",
+        )
+        enc_str_parser.add_argument(
+            "--show-input",
+            dest="show_string_input",
+            default=False,
+            action="store_true",
+            help="Do not hide input when prompted for the string to encrypt",
+        )
+        enc_str_parser.add_argument(
+            "-n",
+            "--name",
+            dest="encrypt_string_names",
+            action="append",
+            help="Specify the variable name",
+        )
+        enc_str_parser.add_argument(
+            "--stdin-name",
+            dest="encrypt_string_stdin_name",
+            default=None,
+            help="Specify the variable name for stdin",
+        )
 
-        rekey_parser = subparsers.add_parser('rekey', help='Re-key a vault encrypted file', parents=[common, vault_id])
+        rekey_parser = subparsers.add_parser(
+            "rekey", help="Re-key a vault encrypted file", parents=[common, vault_id]
+        )
         rekey_parser.set_defaults(func=self.execute_rekey)
         rekey_new_group = rekey_parser.add_mutually_exclusive_group()
-        rekey_new_group.add_argument('--new-vault-password-file', default=None, dest='new_vault_password_file',
-                                     help="new vault password file for rekey", type=opt_help.unfrack_path())
-        rekey_new_group.add_argument('--new-vault-id', default=None, dest='new_vault_id', type=str,
-                                     help='the new vault identity to use for rekey')
-        rekey_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
+        rekey_new_group.add_argument(
+            "--new-vault-password-file",
+            default=None,
+            dest="new_vault_password_file",
+            help="new vault password file for rekey",
+            type=opt_help.unfrack_path(),
+        )
+        rekey_new_group.add_argument(
+            "--new-vault-id",
+            default=None,
+            dest="new_vault_id",
+            type=str,
+            help="the new vault identity to use for rekey",
+        )
+        rekey_parser.add_argument(
+            "args", help="Filename", metavar="file_name", nargs="*"
+        )
 
     def post_process_args(self, options):
         options = super(VaultCLI, self).post_process_args(options)
@@ -131,19 +202,30 @@ class VaultCLI(CLI):
 
         if options.vault_ids:
             for vault_id in options.vault_ids:
-                if u';' in vault_id:
-                    raise AnsibleOptionsError("'%s' is not a valid vault id. The character ';' is not allowed in vault ids" % vault_id)
+                if ";" in vault_id:
+                    raise AnsibleOptionsError(
+                        "'%s' is not a valid vault id. The character ';' is not allowed in vault ids"
+                        % vault_id
+                    )
 
-        if getattr(options, 'output_file', None) and len(options.args) > 1:
-            raise AnsibleOptionsError("At most one input file may be used with the --output option")
+        if getattr(options, "output_file", None) and len(options.args) > 1:
+            raise AnsibleOptionsError(
+                "At most one input file may be used with the --output option"
+            )
 
-        if options.action == 'encrypt_string':
-            if '-' in options.args or not options.args or options.encrypt_string_stdin_name:
+        if options.action == "encrypt_string":
+            if (
+                "-" in options.args
+                or not options.args
+                or options.encrypt_string_stdin_name
+            ):
                 self.encrypt_string_read_stdin = True
 
             # TODO: prompting from stdin and reading from stdin seem mutually exclusive, but verify that.
             if options.encrypt_string_prompt and self.encrypt_string_read_stdin:
-                raise AnsibleOptionsError('The --prompt option is not supported if also reading input from stdin')
+                raise AnsibleOptionsError(
+                    "The --prompt option is not supported if also reading input from stdin"
+                )
 
         return options
 
@@ -154,7 +236,7 @@ class VaultCLI(CLI):
         # set default restrictive umask
         old_umask = os.umask(0o077)
 
-        vault_ids = list(context.CLIARGS['vault_ids'])
+        vault_ids = list(context.CLIARGS["vault_ids"])
 
         # there are 3 types of actions, those that just 'read' (decrypt, view) and only
         # need to ask for a password once, and those that 'write' (create, encrypt) that
@@ -164,49 +246,65 @@ class VaultCLI(CLI):
         default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST
         vault_ids = default_vault_ids + vault_ids
 
-        action = context.CLIARGS['action']
+        action = context.CLIARGS["action"]
 
         # TODO: instead of prompting for these before, we could let VaultEditor
         #       call a callback when it needs it.
-        if action in ['decrypt', 'view', 'rekey', 'edit']:
-            vault_secrets = self.setup_vault_secrets(loader, vault_ids=vault_ids,
-                                                     vault_password_files=list(context.CLIARGS['vault_password_files']),
-                                                     ask_vault_pass=context.CLIARGS['ask_vault_pass'])
+        if action in ["decrypt", "view", "rekey", "edit"]:
+            vault_secrets = self.setup_vault_secrets(
+                loader,
+                vault_ids=vault_ids,
+                vault_password_files=list(context.CLIARGS["vault_password_files"]),
+                ask_vault_pass=context.CLIARGS["ask_vault_pass"],
+            )
             if not vault_secrets:
-                raise AnsibleOptionsError("A vault password is required to use Ansible's Vault")
+                raise AnsibleOptionsError(
+                    "A vault password is required to use Ansible's Vault"
+                )
 
-        if action in ['encrypt', 'encrypt_string', 'create']:
+        if action in ["encrypt", "encrypt_string", "create"]:
 
             encrypt_vault_id = None
             # no --encrypt-vault-id context.CLIARGS['encrypt_vault_id'] for 'edit'
-            if action not in ['edit']:
-                encrypt_vault_id = context.CLIARGS['encrypt_vault_id'] or C.DEFAULT_VAULT_ENCRYPT_IDENTITY
+            if action not in ["edit"]:
+                encrypt_vault_id = (
+                    context.CLIARGS["encrypt_vault_id"]
+                    or C.DEFAULT_VAULT_ENCRYPT_IDENTITY
+                )
 
             vault_secrets = None
-            vault_secrets = \
-                self.setup_vault_secrets(loader,
-                                         vault_ids=vault_ids,
-                                         vault_password_files=list(context.CLIARGS['vault_password_files']),
-                                         ask_vault_pass=context.CLIARGS['ask_vault_pass'],
-                                         create_new_password=True)
+            vault_secrets = self.setup_vault_secrets(
+                loader,
+                vault_ids=vault_ids,
+                vault_password_files=list(context.CLIARGS["vault_password_files"]),
+                ask_vault_pass=context.CLIARGS["ask_vault_pass"],
+                create_new_password=True,
+            )
 
             if len(vault_secrets) > 1 and not encrypt_vault_id:
-                raise AnsibleOptionsError("The vault-ids %s are available to encrypt. Specify the vault-id to encrypt with --encrypt-vault-id" %
-                                          ','.join([x[0] for x in vault_secrets]))
+                raise AnsibleOptionsError(
+                    "The vault-ids %s are available to encrypt. Specify the vault-id to encrypt with --encrypt-vault-id"
+                    % ",".join([x[0] for x in vault_secrets])
+                )
 
             if not vault_secrets:
-                raise AnsibleOptionsError("A vault password is required to use Ansible's Vault")
+                raise AnsibleOptionsError(
+                    "A vault password is required to use Ansible's Vault"
+                )
 
-            encrypt_secret = match_encrypt_secret(vault_secrets,
-                                                  encrypt_vault_id=encrypt_vault_id)
+            encrypt_secret = match_encrypt_secret(
+                vault_secrets, encrypt_vault_id=encrypt_vault_id
+            )
 
             # only one secret for encrypt for now, use the first vault_id and use its first secret
             # TODO: exception if more than one?
             self.encrypt_vault_id = encrypt_secret[0]
             self.encrypt_secret = encrypt_secret[1]
 
-        if action in ['rekey']:
-            encrypt_vault_id = context.CLIARGS['encrypt_vault_id'] or C.DEFAULT_VAULT_ENCRYPT_IDENTITY
+        if action in ["rekey"]:
+            encrypt_vault_id = (
+                context.CLIARGS["encrypt_vault_id"] or C.DEFAULT_VAULT_ENCRYPT_IDENTITY
+            )
             # print('encrypt_vault_id: %s' % encrypt_vault_id)
             # print('default_encrypt_vault_id: %s' % default_encrypt_vault_id)
 
@@ -215,27 +313,33 @@ class VaultCLI(CLI):
             new_vault_ids = []
             if encrypt_vault_id:
                 new_vault_ids = default_vault_ids
-            if context.CLIARGS['new_vault_id']:
-                new_vault_ids.append(context.CLIARGS['new_vault_id'])
+            if context.CLIARGS["new_vault_id"]:
+                new_vault_ids.append(context.CLIARGS["new_vault_id"])
 
             new_vault_password_files = []
-            if context.CLIARGS['new_vault_password_file']:
-                new_vault_password_files.append(context.CLIARGS['new_vault_password_file'])
+            if context.CLIARGS["new_vault_password_file"]:
+                new_vault_password_files.append(
+                    context.CLIARGS["new_vault_password_file"]
+                )
 
-            new_vault_secrets = \
-                self.setup_vault_secrets(loader,
-                                         vault_ids=new_vault_ids,
-                                         vault_password_files=new_vault_password_files,
-                                         ask_vault_pass=context.CLIARGS['ask_vault_pass'],
-                                         create_new_password=True)
+            new_vault_secrets = self.setup_vault_secrets(
+                loader,
+                vault_ids=new_vault_ids,
+                vault_password_files=new_vault_password_files,
+                ask_vault_pass=context.CLIARGS["ask_vault_pass"],
+                create_new_password=True,
+            )
 
             if not new_vault_secrets:
-                raise AnsibleOptionsError("A new vault password is required to use Ansible's Vault rekey")
+                raise AnsibleOptionsError(
+                    "A new vault password is required to use Ansible's Vault rekey"
+                )
 
             # There is only one new_vault_id currently and one new_vault_secret, or we
             # use the id specified in --encrypt-vault-id
-            new_encrypt_secret = match_encrypt_secret(new_vault_secrets,
-                                                      encrypt_vault_id=encrypt_vault_id)
+            new_encrypt_secret = match_encrypt_secret(
+                new_vault_secrets, encrypt_vault_id=encrypt_vault_id
+            )
 
             self.new_encrypt_vault_id = new_encrypt_secret[0]
             self.new_encrypt_secret = new_encrypt_secret[1]
@@ -246,22 +350,25 @@ class VaultCLI(CLI):
         vault = VaultLib(vault_secrets)
         self.editor = VaultEditor(vault)
 
-        context.CLIARGS['func']()
+        context.CLIARGS["func"]()
 
         # and restore umask
         os.umask(old_umask)
 
     def execute_encrypt(self):
-        ''' encrypt the supplied file using the provided vault secret '''
+        """encrypt the supplied file using the provided vault secret"""
 
-        if not context.CLIARGS['args'] and sys.stdin.isatty():
+        if not context.CLIARGS["args"] and sys.stdin.isatty():
             display.display("Reading plaintext input from stdin", stderr=True)
 
-        for f in context.CLIARGS['args'] or ['-']:
+        for f in context.CLIARGS["args"] or ["-"]:
             # Fixme: use the correct vau
-            self.editor.encrypt_file(f, self.encrypt_secret,
-                                     vault_id=self.encrypt_vault_id,
-                                     output_file=context.CLIARGS['output_file'])
+            self.editor.encrypt_file(
+                f,
+                self.encrypt_secret,
+                vault_id=self.encrypt_vault_id,
+                output_file=context.CLIARGS["output_file"],
+            )
 
         if sys.stdout.isatty():
             display.display("Encryption successful", stderr=True)
@@ -280,13 +387,13 @@ class VaultCLI(CLI):
 
         lines.append(block_format_header)
         for line in vault_ciphertext.splitlines():
-            lines.append('%s%s' % (' ' * indent, line))
+            lines.append("%s%s" % (" " * indent, line))
 
-        yaml_ciphertext = '\n'.join(lines)
+        yaml_ciphertext = "\n".join(lines)
         return yaml_ciphertext
 
     def execute_encrypt_string(self):
-        ''' encrypt the supplied string using the provided vault secret '''
+        """encrypt the supplied string using the provided vault secret"""
         b_plaintext = None
 
         # Holds tuples (the_text, the_source_of_the_string, the variable name if its provided).
@@ -294,14 +401,14 @@ class VaultCLI(CLI):
 
         # remove the non-option '-' arg (used to indicate 'read from stdin') from the candidate args so
         # we don't add it to the plaintext list
-        args = [x for x in context.CLIARGS['args'] if x != '-']
+        args = [x for x in context.CLIARGS["args"] if x != "-"]
 
         # We can prompt and read input, or read from stdin, but not both.
-        if context.CLIARGS['encrypt_string_prompt']:
+        if context.CLIARGS["encrypt_string_prompt"]:
             msg = "String to encrypt: "
 
             name = None
-            name_prompt_response = display.prompt('Variable name (enter for no name): ')
+            name_prompt_response = display.prompt("Variable name (enter for no name): ")
 
             # TODO: enforce var naming rules?
             if name_prompt_response != "":
@@ -309,7 +416,7 @@ class VaultCLI(CLI):
 
             # TODO: could prompt for which vault_id to use for each plaintext string
             #       currently, it will just be the default
-            hide_input = not context.CLIARGS['show_string_input']
+            hide_input = not context.CLIARGS["show_string_input"]
             if hide_input:
                 msg = "String to encrypt (hidden): "
             else:
@@ -317,8 +424,10 @@ class VaultCLI(CLI):
 
             prompt_response = display.prompt(msg, private=hide_input)
 
-            if prompt_response == '':
-                raise AnsibleOptionsError('The plaintext provided from the prompt was empty, not encrypting')
+            if prompt_response == "":
+                raise AnsibleOptionsError(
+                    "The plaintext provided from the prompt was empty, not encrypting"
+                )
 
             b_plaintext = to_bytes(prompt_response)
             b_plaintext_list.append((b_plaintext, self.FROM_PROMPT, name))
@@ -326,11 +435,14 @@ class VaultCLI(CLI):
         # read from stdin
         if self.encrypt_string_read_stdin:
             if sys.stdout.isatty():
-                display.display("Reading plaintext input from stdin. (ctrl-d to end input, twice if your content does not already have a newline)", stderr=True)
+                display.display(
+                    "Reading plaintext input from stdin. (ctrl-d to end input, twice if your content does not already have a newline)",
+                    stderr=True,
+                )
 
             stdin_text = sys.stdin.read()
-            if stdin_text == '':
-                raise AnsibleOptionsError('stdin was empty, not encrypting')
+            if stdin_text == "":
+                raise AnsibleOptionsError("stdin was empty, not encrypting")
 
             if sys.stdout.isatty() and not stdin_text.endswith("\n"):
                 display.display("\n")
@@ -338,25 +450,31 @@ class VaultCLI(CLI):
             b_plaintext = to_bytes(stdin_text)
 
             # defaults to None
-            name = context.CLIARGS['encrypt_string_stdin_name']
+            name = context.CLIARGS["encrypt_string_stdin_name"]
             b_plaintext_list.append((b_plaintext, self.FROM_STDIN, name))
 
         # use any leftover args as strings to encrypt
         # Try to match args up to --name options
-        if context.CLIARGS.get('encrypt_string_names', False):
-            name_and_text_list = list(zip(context.CLIARGS['encrypt_string_names'], args))
+        if context.CLIARGS.get("encrypt_string_names", False):
+            name_and_text_list = list(
+                zip(context.CLIARGS["encrypt_string_names"], args)
+            )
 
             # Some but not enough --name's to name each var
             if len(args) > len(name_and_text_list):
                 # Trying to avoid ever showing the plaintext in the output, so this warning is vague to avoid that.
-                display.display('The number of --name options do not match the number of args.',
-                                stderr=True)
-                display.display('The last named variable will be "%s". The rest will not have'
-                                ' names.' % context.CLIARGS['encrypt_string_names'][-1],
-                                stderr=True)
+                display.display(
+                    "The number of --name options do not match the number of args.",
+                    stderr=True,
+                )
+                display.display(
+                    'The last named variable will be "%s". The rest will not have'
+                    " names." % context.CLIARGS["encrypt_string_names"][-1],
+                    stderr=True,
+                )
 
             # Add the rest of the args without specifying a name
-            for extra_arg in args[len(name_and_text_list):]:
+            for extra_arg in args[len(name_and_text_list) :]:
                 name_and_text_list.append((None, extra_arg))
 
         # if no --names are provided, just use the args without a name.
@@ -367,20 +485,24 @@ class VaultCLI(CLI):
         for name_and_text in name_and_text_list:
             name, plaintext = name_and_text
 
-            if plaintext == '':
-                raise AnsibleOptionsError('The plaintext provided from the command line args was empty, not encrypting')
+            if plaintext == "":
+                raise AnsibleOptionsError(
+                    "The plaintext provided from the command line args was empty, not encrypting"
+                )
 
             b_plaintext = to_bytes(plaintext)
             b_plaintext_list.append((b_plaintext, self.FROM_ARGS, name))
 
         # TODO: specify vault_id per string?
         # Format the encrypted strings and any corresponding stderr output
-        outputs = self._format_output_vault_strings(b_plaintext_list, vault_id=self.encrypt_vault_id)
+        outputs = self._format_output_vault_strings(
+            b_plaintext_list, vault_id=self.encrypt_vault_id
+        )
 
         b_outs = []
         for output in outputs:
-            err = output.get('err', None)
-            out = output.get('out', '')
+            err = output.get("err", None)
+            out = output.get("out", "")
             if err:
                 sys.stderr.write(err)
             b_outs.append(to_bytes(out))
@@ -389,8 +511,10 @@ class VaultCLI(CLI):
         # Refs:
         # * https://stackoverflow.com/a/729795/595220
         # * https://github.com/ansible/ansible/issues/78932
-        b_outs.append(b'')
-        self.editor.write_data(b'\n'.join(b_outs), context.CLIARGS['output_file'] or '-')
+        b_outs.append(b"")
+        self.editor.write_data(
+            b"\n".join(b_outs), context.CLIARGS["output_file"] or "-"
+        )
 
         if sys.stdout.isatty():
             display.display("Encryption successful", stderr=True)
@@ -414,7 +538,9 @@ class VaultCLI(CLI):
             # (the text itself, which input it came from, its name)
             b_plaintext, src, name = b_plaintext_info
 
-            b_ciphertext = self.editor.encrypt_bytes(b_plaintext, self.encrypt_secret, vault_id=vault_id)
+            b_ciphertext = self.editor.encrypt_bytes(
+                b_plaintext, self.encrypt_secret, vault_id=vault_id
+            )
 
             # block formatting
             yaml_text = self.format_ciphertext_yaml(b_ciphertext, name=name)
@@ -423,46 +549,57 @@ class VaultCLI(CLI):
             if show_delimiter:
                 human_index = index + 1
                 if name:
-                    err_msg = '# The encrypted version of variable ("%s", the string #%d from %s).\n' % (name, human_index, src)
+                    err_msg = (
+                        '# The encrypted version of variable ("%s", the string #%d from %s).\n'
+                        % (name, human_index, src)
+                    )
                 else:
-                    err_msg = '# The encrypted version of the string #%d from %s.)\n' % (human_index, src)
-            output.append({'out': yaml_text, 'err': err_msg})
+                    err_msg = (
+                        "# The encrypted version of the string #%d from %s.)\n"
+                        % (human_index, src)
+                    )
+            output.append({"out": yaml_text, "err": err_msg})
 
         return output
 
     def execute_decrypt(self):
-        ''' decrypt the supplied file using the provided vault secret '''
+        """decrypt the supplied file using the provided vault secret"""
 
-        if not context.CLIARGS['args'] and sys.stdin.isatty():
+        if not context.CLIARGS["args"] and sys.stdin.isatty():
             display.display("Reading ciphertext input from stdin", stderr=True)
 
-        for f in context.CLIARGS['args'] or ['-']:
-            self.editor.decrypt_file(f, output_file=context.CLIARGS['output_file'])
+        for f in context.CLIARGS["args"] or ["-"]:
+            self.editor.decrypt_file(f, output_file=context.CLIARGS["output_file"])
 
         if sys.stdout.isatty():
             display.display("Decryption successful", stderr=True)
 
     def execute_create(self):
-        ''' create and open a file in an editor that will be encrypted with the provided vault secret when closed'''
+        """create and open a file in an editor that will be encrypted with the provided vault secret when closed"""
 
-        if len(context.CLIARGS['args']) != 1:
-            raise AnsibleOptionsError("ansible-vault create can take only one filename argument")
+        if len(context.CLIARGS["args"]) != 1:
+            raise AnsibleOptionsError(
+                "ansible-vault create can take only one filename argument"
+            )
 
-        if sys.stdout.isatty() or context.CLIARGS['skip_tty_check']:
-            self.editor.create_file(context.CLIARGS['args'][0], self.encrypt_secret,
-                                    vault_id=self.encrypt_vault_id)
+        if sys.stdout.isatty() or context.CLIARGS["skip_tty_check"]:
+            self.editor.create_file(
+                context.CLIARGS["args"][0],
+                self.encrypt_secret,
+                vault_id=self.encrypt_vault_id,
+            )
         else:
             raise AnsibleOptionsError("not a tty, editor cannot be opened")
 
     def execute_edit(self):
-        ''' open and decrypt an existing vaulted file in an editor, that will be encrypted again when closed'''
-        for f in context.CLIARGS['args']:
+        """open and decrypt an existing vaulted file in an editor, that will be encrypted again when closed"""
+        for f in context.CLIARGS["args"]:
             self.editor.edit_file(f)
 
     def execute_view(self):
-        ''' open, decrypt and view an existing vaulted file using a pager using the supplied vault secret '''
+        """open, decrypt and view an existing vaulted file using a pager using the supplied vault secret"""
 
-        for f in context.CLIARGS['args']:
+        for f in context.CLIARGS["args"]:
             # Note: vault should return byte strings because it could encrypt
             # and decrypt binary files.  We are responsible for changing it to
             # unicode here because we are displaying it and therefore can make
@@ -472,11 +609,12 @@ class VaultCLI(CLI):
             self.pager(to_text(plaintext))
 
     def execute_rekey(self):
-        ''' re-encrypt a vaulted file with a new secret, the previous secret is required '''
-        for f in context.CLIARGS['args']:
+        """re-encrypt a vaulted file with a new secret, the previous secret is required"""
+        for f in context.CLIARGS["args"]:
             # FIXME: plumb in vault_id, use the default new_vault_secret for now
-            self.editor.rekey_file(f, self.new_encrypt_secret,
-                                   self.new_encrypt_vault_id)
+            self.editor.rekey_file(
+                f, self.new_encrypt_secret, self.new_encrypt_vault_id
+            )
 
         display.display("Rekey successful", stderr=True)
 
@@ -485,5 +623,5 @@ def main(args=None):
     VaultCLI.cli_executor(args)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -60,7 +60,7 @@ from ansible.module_utils.six import binary_type, text_type
 from ansible.utils.native_jinja import NativeJinjaText
 
 
-__all__ = ['AnsibleUnsafe', 'wrap_var']
+__all__ = ["AnsibleUnsafe", "wrap_var"]
 
 
 class AnsibleUnsafe(object):
@@ -70,13 +70,17 @@ class AnsibleUnsafe(object):
 class AnsibleUnsafeBytes(binary_type, AnsibleUnsafe):
     def decode(self, *args, **kwargs):
         """Wrapper method to ensure type conversions maintain unsafe context"""
-        return AnsibleUnsafeText(super(AnsibleUnsafeBytes, self).decode(*args, **kwargs))
+        return AnsibleUnsafeText(
+            super(AnsibleUnsafeBytes, self).decode(*args, **kwargs)
+        )
 
 
 class AnsibleUnsafeText(text_type, AnsibleUnsafe):
     def encode(self, *args, **kwargs):
         """Wrapper method to ensure type conversions maintain unsafe context"""
-        return AnsibleUnsafeBytes(super(AnsibleUnsafeText, self).encode(*args, **kwargs))
+        return AnsibleUnsafeBytes(
+            super(AnsibleUnsafeText, self).encode(*args, **kwargs)
+        )
 
 
 class NativeJinjaUnsafeText(NativeJinjaText, AnsibleUnsafeText):

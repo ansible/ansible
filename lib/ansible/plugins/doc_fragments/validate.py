@@ -7,7 +7,7 @@ from __future__ import annotations
 
 class ModuleDocFragment(object):
     # Standard documentation fragment
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
 options:
   validate:
     description:
@@ -17,4 +17,4 @@ options:
     - For an example on how to handle more complex validation than what this
       option provides, see R(handling complex validation,complex_configuration_validation).
     type: str
-'''
+"""

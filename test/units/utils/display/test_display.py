@@ -10,10 +10,10 @@ from ansible.utils.display import Display
 
 def test_display_basic_message(capsys, mocker):
     # Disable logging
-    mocker.patch('ansible.utils.display.logger', return_value=None)
+    mocker.patch("ansible.utils.display.logger", return_value=None)
 
     d = Display()
-    d.display(u'Some displayed message')
+    d.display("Some displayed message")
     out, err = capsys.readouterr()
-    assert out == 'Some displayed message\n'
-    assert err == ''
+    assert out == "Some displayed message\n"
+    assert err == ""

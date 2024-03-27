@@ -16,34 +16,36 @@ display = Display()
 
 
 string_to_vars = {
-    'DOCUMENTATION': 'doc',
-    'EXAMPLES': 'plainexamples',
-    'RETURN': 'returndocs',
-    'ANSIBLE_METADATA': 'metadata',  # NOTE: now unused, but kept for backwards compat
+    "DOCUMENTATION": "doc",
+    "EXAMPLES": "plainexamples",
+    "RETURN": "returndocs",
+    "ANSIBLE_METADATA": "metadata",  # NOTE: now unused, but kept for backwards compat
 }
 
 
 def _var2string(value):
-    ''' reverse lookup of the dict above '''
+    """reverse lookup of the dict above"""
     for k, v in string_to_vars.items():
         if v == value:
             return k
 
 
 def _init_doc_dict():
-    ''' initialize a return dict for docs with the expected structure '''
+    """initialize a return dict for docs with the expected structure"""
     return {k: None for k in string_to_vars.values()}
 
 
 def read_docstring_from_yaml_file(filename, verbose=True, ignore_errors=True):
-    ''' Read docs from 'sidecar' yaml file doc for a plugin '''
+    """Read docs from 'sidecar' yaml file doc for a plugin"""
 
     data = _init_doc_dict()
     file_data = {}
 
     try:
-        with open(filename, 'rb') as yamlfile:
-            file_data = AnsibleLoader(yamlfile.read(), file_name=filename).get_single_data()
+        with open(filename, "rb") as yamlfile:
+            file_data = AnsibleLoader(
+                yamlfile.read(), file_name=filename
+            ).get_single_data()
     except Exception as e:
         msg = "Unable to parse yaml file '%s': %s" % (filename, to_native(e))
         if not ignore_errors:
@@ -76,7 +78,11 @@ def read_docstring_from_python_module(filename, verbose=True, ignore_errors=True
             if token.type == tokenize.NAME:
 
                 # label is expected value, in correct place and has not been seen before
-                if token.start == 1 and token.string in string_to_vars and token.string not in seen:
+                if (
+                    token.start == 1
+                    and token.string in string_to_vars
+                    and token.string not in seen
+                ):
                     # next token that is string has the docs
                     next_string = string_to_vars[token.string]
                     continue
@@ -90,22 +96,28 @@ def read_docstring_from_python_module(filename, verbose=True, ignore_errors=True
                 value = token.string
 
                 # strip string modifiers/delimiters
-                if value.startswith(('r', 'b')):
-                    value = value.lstrip('rb')
+                if value.startswith(("r", "b")):
+                    value = value.lstrip("rb")
 
                 if value.startswith(("'", '"')):
                     value = value.strip("'\"")
 
                 # actually use the data
-                if next_string == 'plainexamples':
+                if next_string == "plainexamples":
                     # keep as string, can be yaml, but we let caller deal with it
                     data[next_string] = to_text(value)
                 else:
                     # yaml load the data
                     try:
-                        data[next_string] = AnsibleLoader(value, file_name=filename).get_single_data()
+                        data[next_string] = AnsibleLoader(
+                            value, file_name=filename
+                        ).get_single_data()
                     except Exception as e:
-                        msg = "Unable to parse docs '%s' in python file '%s': %s" % (_var2string(next_string), filename, to_native(e))
+                        msg = "Unable to parse docs '%s' in python file '%s': %s" % (
+                            _var2string(next_string),
+                            filename,
+                            to_native(e),
+                        )
                         if not ignore_errors:
                             raise AnsibleParserError(msg, orig_exc=e)
                         elif verbose:
@@ -129,7 +141,7 @@ def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
     data = _init_doc_dict()
 
     try:
-        with open(filename, 'rb') as b_module_data:
+        with open(filename, "rb") as b_module_data:
             M = ast.parse(b_module_data.read())
 
         for child in M.body:
@@ -139,7 +151,10 @@ def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
                         theid = t.id
                     except AttributeError:
                         # skip errors can happen when trying to use the normal code
-                        display.warning("Building documentation, failed to assign id for %s on %s, skipping" % (t, filename))
+                        display.warning(
+                            "Building documentation, failed to assign id for %s on %s, skipping"
+                            % (t, filename)
+                        )
                         continue
 
                     if theid in string_to_vars:
@@ -147,18 +162,23 @@ def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
                         if isinstance(child.value, ast.Dict):
                             data[varkey] = ast.literal_eval(child.value)
                         else:
-                            if theid == 'EXAMPLES':
+                            if theid == "EXAMPLES":
                                 # examples 'can' be yaml, but even if so, we dont want to parse as such here
                                 # as it can create undesired 'objects' that don't display well as docs.
                                 data[varkey] = to_text(child.value.value)
                             else:
                                 # string should be yaml if already not a dict
-                                data[varkey] = AnsibleLoader(child.value.value, file_name=filename).get_single_data()
+                                data[varkey] = AnsibleLoader(
+                                    child.value.value, file_name=filename
+                                ).get_single_data()
 
-                        display.debug('Documentation assigned: %s' % varkey)
+                        display.debug("Documentation assigned: %s" % varkey)
 
     except Exception as e:
-        msg = "Unable to parse documentation in python file '%s': %s" % (filename, to_native(e))
+        msg = "Unable to parse documentation in python file '%s': %s" % (
+            filename,
+            to_native(e),
+        )
         if not ignore_errors:
             raise AnsibleParserError(msg, orig_exc=e)
         elif verbose:
@@ -168,22 +188,28 @@ def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
 
 
 def read_docstring(filename, verbose=True, ignore_errors=True):
-    ''' returns a documentation dictionary from Ansible plugin docstrings '''
+    """returns a documentation dictionary from Ansible plugin docstrings"""
 
     # NOTE: adjacency of doc file to code file is responsibility of caller
     if filename.endswith(C.YAML_DOC_EXTENSIONS):
-        docstring = read_docstring_from_yaml_file(filename, verbose=verbose, ignore_errors=ignore_errors)
+        docstring = read_docstring_from_yaml_file(
+            filename, verbose=verbose, ignore_errors=ignore_errors
+        )
     elif filename.endswith(C.PYTHON_DOC_EXTENSIONS):
-        docstring = read_docstring_from_python_module(filename, verbose=verbose, ignore_errors=ignore_errors)
+        docstring = read_docstring_from_python_module(
+            filename, verbose=verbose, ignore_errors=ignore_errors
+        )
     elif not ignore_errors:
         raise AnsibleError("Unknown documentation format: %s" % to_native(filename))
 
     if not docstring and not ignore_errors:
-        raise AnsibleError("Unable to parse documentation for: %s" % to_native(filename))
+        raise AnsibleError(
+            "Unable to parse documentation for: %s" % to_native(filename)
+        )
 
     # cause seealso is specially processed from 'doc' later on
     # TODO: stop any other 'overloaded' implementation in main doc
-    docstring['seealso'] = None
+    docstring["seealso"] = None
 
     return docstring
 
@@ -197,10 +223,10 @@ def read_docstub(filename):
 
     in_documentation = False
     capturing = False
-    indent_detection = ''
+    indent_detection = ""
     doc_stub = []
 
-    with open(filename, 'r') as t_module_data:
+    with open(filename, "r") as t_module_data:
         for line in t_module_data:
             if in_documentation:
                 # start capturing the stub until indentation returns
@@ -210,17 +236,17 @@ def read_docstub(filename):
                 elif capturing and not line.startswith(indent_detection):
                     break
 
-                elif line.lstrip().startswith('short_description:'):
+                elif line.lstrip().startswith("short_description:"):
                     capturing = True
                     # Detect that the short_description continues on the next line if it's indented more
                     # than short_description itself.
-                    indent_detection = ' ' * (len(line) - len(line.lstrip()) + 1)
+                    indent_detection = " " * (len(line) - len(line.lstrip()) + 1)
                     doc_stub.append(line)
 
-            elif line.startswith('DOCUMENTATION') and ('=' in line or ':' in line):
+            elif line.startswith("DOCUMENTATION") and ("=" in line or ":" in line):
                 in_documentation = True
 
-    short_description = r''.join(doc_stub).strip().rstrip('.')
+    short_description = r"".join(doc_stub).strip().rstrip(".")
     data = AnsibleLoader(short_description, file_name=filename).get_single_data()
 
     return data

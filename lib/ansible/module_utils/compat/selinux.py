@@ -10,9 +10,9 @@ from ansible.module_utils.common.text.converters import to_native, to_bytes
 from ctypes import CDLL, c_char_p, c_int, byref, POINTER, get_errno
 
 try:
-    _selinux_lib = CDLL('libselinux.so.1', use_errno=True)
+    _selinux_lib = CDLL("libselinux.so.1", use_errno=True)
 except OSError:
-    raise ImportError('unable to load libselinux.so')
+    raise ImportError("unable to load libselinux.so")
 
 
 def _module_setup():
@@ -22,7 +22,7 @@ def _module_setup():
             raise OSError(errno, os.strerror(errno))
         return rc
 
-    binary_char_type = type(b'')
+    binary_char_type = type(b"")
 
     class _to_char_p:
         @classmethod
@@ -37,9 +37,13 @@ def _module_setup():
     _funcmap = dict(
         is_selinux_enabled={},
         is_selinux_mls_enabled={},
-        lgetfilecon_raw=dict(argtypes=[_to_char_p, POINTER(c_char_p)], restype=_check_rc),
+        lgetfilecon_raw=dict(
+            argtypes=[_to_char_p, POINTER(c_char_p)], restype=_check_rc
+        ),
         # NB: matchpathcon is deprecated and should be rewritten on selabel_lookup (but will be a PITA)
-        matchpathcon=dict(argtypes=[_to_char_p, c_int, POINTER(c_char_p)], restype=_check_rc),
+        matchpathcon=dict(
+            argtypes=[_to_char_p, c_int, POINTER(c_char_p)], restype=_check_rc
+        ),
         security_policyvers={},
         selinux_getenforcemode=dict(argtypes=[POINTER(c_int)]),
         security_getenforce={},
@@ -53,25 +57,30 @@ def _module_setup():
         fn = getattr(_selinux_lib, fname, None)
 
         if not fn:
-            raise ImportError('missing selinux function: {0}'.format(fname))
+            raise ImportError("missing selinux function: {0}".format(fname))
 
         # all ctypes pointers share the same base type
         base_ptr_type = type(POINTER(c_int))
-        fn.argtypes = cfg.get('argtypes', None)
-        fn.restype = cfg.get('restype', c_int)
+        fn.argtypes = cfg.get("argtypes", None)
+        fn.restype = cfg.get("restype", c_int)
 
         # just patch simple directly callable functions directly onto the module
-        if not fn.argtypes or not any(argtype for argtype in fn.argtypes if type(argtype) is base_ptr_type):
+        if not fn.argtypes or not any(
+            argtype for argtype in fn.argtypes if type(argtype) is base_ptr_type
+        ):
             setattr(_thismod, fname, fn)
             continue
 
     # NB: this validation code must run after all the wrappers have been declared
     unimplemented_funcs = set(_funcmap).difference(dir(_thismod))
     if unimplemented_funcs:
-        raise NotImplementedError('implementation is missing functions: {0}'.format(unimplemented_funcs))
+        raise NotImplementedError(
+            "implementation is missing functions: {0}".format(unimplemented_funcs)
+        )
 
 
 # begin wrapper function impls
+
 
 def selinux_getenforcemode():
     enforcemode = c_int()

@@ -208,8 +208,7 @@ from ansible.module_utils.common.text.converters import to_text
 
 
 def validate_args(module, device_operations):
-    """validate param if it is supported on the platform
-    """
+    """validate param if it is supported on the platform"""
     feature_list = [
         "replace",
         "rollback",
@@ -236,9 +235,7 @@ def validate_args(module, device_operations):
                 )
 
 
-def run(
-    module, device_operations, connection, candidate, running, rollback_id
-):
+def run(module, device_operations, connection, candidate, running, rollback_id):
     result = {}
     resp = {}
     config_diff = []
@@ -258,11 +255,7 @@ def run(
     elif replace in ("no", "false", "False"):
         replace = False
 
-    if (
-        replace is not None
-        and replace not in [True, False]
-        and candidate is not None
-    ):
+    if replace is not None and replace not in [True, False] and candidate is not None:
         module.fail_json(
             msg="Replace value '%s' is a configuration file path already"
             " present on the device. Hence 'replace' and 'config' options"
@@ -276,13 +269,9 @@ def run(
 
     elif device_operations.get("supports_onbox_diff"):
         if diff_replace:
-            module.warn(
-                "diff_replace is ignored as the device supports onbox diff"
-            )
+            module.warn("diff_replace is ignored as the device supports onbox diff")
         if diff_match:
-            module.warn(
-                "diff_mattch is ignored as the device supports onbox diff"
-            )
+            module.warn("diff_mattch is ignored as the device supports onbox diff")
         if diff_ignore_lines:
             module.warn(
                 "diff_ignore_lines is ignored as the device supports onbox diff"
@@ -361,8 +350,7 @@ def run(
 
 
 def main():
-    """main entry point for execution
-    """
+    """main entry point for execution"""
     backup_spec = dict(filename=dict(), dir_path=dict(type="path"))
     argument_spec = dict(
         backup=dict(default=False, type="bool"),
@@ -410,9 +398,7 @@ def main():
 
     candidate = module.params["config"]
     candidate = (
-        to_text(candidate, errors="surrogate_then_replace")
-        if candidate
-        else None
+        to_text(candidate, errors="surrogate_then_replace") if candidate else None
     )
     running = connection.get_config(flags=flags)
     rollback_id = module.params["rollback"]

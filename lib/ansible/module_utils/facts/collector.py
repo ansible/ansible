@@ -38,13 +38,14 @@ from ansible.module_utils.facts import timeout
 
 
 class CycleFoundInFactDeps(Exception):
-    '''Indicates there is a cycle in fact collector deps
+    """Indicates there is a cycle in fact collector deps
 
     If collector-B requires collector-A, and collector-A requires
     collector-B, that is a cycle. In that case, there is no ordering
     that will satisfy B before A and A and before B. That will cause this
     error to be raised.
-    '''
+    """
+
     pass
 
 
@@ -59,14 +60,14 @@ class CollectorNotFoundError(KeyError):
 class BaseFactCollector:
     _fact_ids = set()  # type: t.Set[str]
 
-    _platform = 'Generic'
+    _platform = "Generic"
     name = None  # type: str | None
     required_facts = set()  # type: t.Set[str]
 
     def __init__(self, collectors=None, namespace=None):
-        '''Base class for things that collect facts.
+        """Base class for things that collect facts.
 
-        'collectors' is an optional list of other FactCollectors for composing.'''
+        'collectors' is an optional list of other FactCollectors for composing."""
         self.collectors = collectors or []
 
         # self.namespace is a object with a 'transform' method that transforms
@@ -78,7 +79,7 @@ class BaseFactCollector:
 
     @classmethod
     def platform_match(cls, platform_info):
-        if platform_info.get('system', None) == cls._platform:
+        if platform_info.get("system", None) == cls._platform:
             return cls
         return None
 
@@ -88,7 +89,7 @@ class BaseFactCollector:
         return key_name
 
     def _transform_dict_keys(self, fact_dict):
-        '''update a dicts keys to use new names as transformed by self._transform_name'''
+        """update a dicts keys to use new names as transformed by self._transform_name"""
 
         for old_key in list(fact_dict.keys()):
             new_key = self._transform_name(old_key)
@@ -105,7 +106,7 @@ class BaseFactCollector:
         return facts_dict
 
     def collect(self, module=None, collected_facts=None):
-        '''do the fact collection
+        """do the fact collection
 
         'collected_facts' is a object (a dict, likely) that holds all previously
           facts. This is intended to be used if a FactCollector needs to reference
@@ -113,25 +114,27 @@ class BaseFactCollector:
 
           Returns a dict of facts.
 
-          '''
+        """
         facts_dict = {}
         return facts_dict
 
 
-def get_collector_names(valid_subsets=None,
-                        minimal_gather_subset=None,
-                        gather_subset=None,
-                        aliases_map=None,
-                        platform_info=None):
-    '''return a set of FactCollector names based on gather_subset spec.
+def get_collector_names(
+    valid_subsets=None,
+    minimal_gather_subset=None,
+    gather_subset=None,
+    aliases_map=None,
+    platform_info=None,
+):
+    """return a set of FactCollector names based on gather_subset spec.
 
     gather_subset is a spec describing which facts to gather.
     valid_subsets is a frozenset of potential matches for gather_subset ('all', 'network') etc
     minimal_gather_subsets is a frozenset of matches to always use, even for gather_subset='!all'
-    '''
+    """
 
     # Retrieve module parameters
-    gather_subset = gather_subset or ['all']
+    gather_subset = gather_subset or ["all"]
 
     # the list of everything that 'all' expands to
     valid_subsets = valid_subsets or frozenset()
@@ -149,7 +152,7 @@ def get_collector_names(valid_subsets=None,
     # adds of the additions in gather_subset, then
     # excludes all of the excludes, then add any explicitly
     # requested subsets.
-    gather_subset_with_min = ['min']
+    gather_subset_with_min = ["min"]
     gather_subset_with_min.extend(gather_subset)
 
     # subsets we mention in gather_subset explicitly, except for 'all'/'min'
@@ -157,18 +160,18 @@ def get_collector_names(valid_subsets=None,
 
     for subset in gather_subset_with_min:
         subset_id = subset
-        if subset_id == 'min':
+        if subset_id == "min":
             additional_subsets.update(minimal_gather_subset)
             continue
-        if subset_id == 'all':
+        if subset_id == "all":
             additional_subsets.update(valid_subsets)
             continue
-        if subset_id.startswith('!'):
+        if subset_id.startswith("!"):
             subset = subset[1:]
-            if subset == 'min':
+            if subset == "min":
                 exclude_subsets.update(minimal_gather_subset)
                 continue
-            if subset == 'all':
+            if subset == "all":
                 exclude_subsets.update(valid_subsets - minimal_gather_subset)
                 continue
             exclude = True
@@ -183,8 +186,10 @@ def get_collector_names(valid_subsets=None,
             # NOTE: this only considers adding an unknown gather subsetup an error. Asking to
             #       exclude an unknown gather subset is ignored.
             if subset_id not in valid_subsets:
-                raise TypeError("Bad subset '%s' given to Ansible. gather_subset options allowed: all, %s" %
-                                (subset, ", ".join(sorted(valid_subsets))))
+                raise TypeError(
+                    "Bad subset '%s' given to Ansible. gather_subset options allowed: all, %s"
+                    % (subset, ", ".join(sorted(valid_subsets)))
+                )
 
             explicitly_added.add(subset)
             additional_subsets.add(subset)
@@ -265,15 +270,17 @@ def _get_requires_by_collector_name(collector_name, all_fact_subsets):
 
 
 def find_unresolved_requires(collector_names, all_fact_subsets):
-    '''Find any collector names that have unresolved requires
+    """Find any collector names that have unresolved requires
 
     Returns a list of collector names that correspond to collector
     classes whose .requires_facts() are not in collector_names.
-    '''
+    """
     unresolved = set()
 
     for collector_name in collector_names:
-        required_facts = _get_requires_by_collector_name(collector_name, all_fact_subsets)
+        required_facts = _get_requires_by_collector_name(
+            collector_name, all_fact_subsets
+        )
         for required_fact in required_facts:
             if required_fact not in collector_names:
                 unresolved.add(required_fact)
@@ -291,7 +298,7 @@ def resolve_requires(unresolved_requires, all_fact_subsets):
             failed.append(unresolved)
 
     if failed:
-        raise UnresolvedFactDep('unresolved fact dep %s' % ','.join(failed))
+        raise UnresolvedFactDep("unresolved fact dep %s" % ",".join(failed))
     return new_names
 
 
@@ -323,7 +330,10 @@ def tsort(dep_map):
                 sorted_list.append((node, edges))
 
         if not acyclic:
-            raise CycleFoundInFactDeps('Unable to tsort deps, there was a cycle in the graph. sorted=%s' % sorted_list)
+            raise CycleFoundInFactDeps(
+                "Unable to tsort deps, there was a cycle in the graph. sorted=%s"
+                % sorted_list
+            )
 
     return sorted_list
 
@@ -343,13 +353,15 @@ def _solve_deps(collector_names, all_fact_subsets):
     return solutions
 
 
-def collector_classes_from_gather_subset(all_collector_classes=None,
-                                         valid_subsets=None,
-                                         minimal_gather_subset=None,
-                                         gather_subset=None,
-                                         gather_timeout=None,
-                                         platform_info=None):
-    '''return a list of collector classes that match the args'''
+def collector_classes_from_gather_subset(
+    all_collector_classes=None,
+    valid_subsets=None,
+    minimal_gather_subset=None,
+    gather_subset=None,
+    gather_timeout=None,
+    platform_info=None,
+):
+    """return a list of collector classes that match the args"""
 
     # use gather_name etc to get the list of collectors
 
@@ -357,7 +369,7 @@ def collector_classes_from_gather_subset(all_collector_classes=None,
 
     minimal_gather_subset = minimal_gather_subset or frozenset()
 
-    platform_info = platform_info or {'system': platform.system()}
+    platform_info = platform_info or {"system": platform.system()}
 
     gather_timeout = gather_timeout or timeout.DEFAULT_GATHER_TIMEOUT
 
@@ -370,23 +382,29 @@ def collector_classes_from_gather_subset(all_collector_classes=None,
     # like 'devices' and 'dmi'
     aliases_map = defaultdict(set)
 
-    compat_platforms = [platform_info, {'system': 'Generic'}]
+    compat_platforms = [platform_info, {"system": "Generic"}]
 
-    collectors_for_platform = find_collectors_for_platform(all_collector_classes, compat_platforms)
+    collectors_for_platform = find_collectors_for_platform(
+        all_collector_classes, compat_platforms
+    )
 
     # all_facts_subsets maps the subset name ('hardware') to the class that provides it.
 
     # TODO: name collisions here? are there facts with the same name as a gather_subset (all, network, hardware, virtual, ohai, facter)
-    all_fact_subsets, aliases_map = build_fact_id_to_collector_map(collectors_for_platform)
+    all_fact_subsets, aliases_map = build_fact_id_to_collector_map(
+        collectors_for_platform
+    )
 
     all_valid_subsets = frozenset(all_fact_subsets.keys())
 
     # expand any fact_id/collectorname/gather_subset term ('all', 'env', etc) to the list of names that represents
-    collector_names = get_collector_names(valid_subsets=all_valid_subsets,
-                                          minimal_gather_subset=minimal_gather_subset,
-                                          gather_subset=gather_subset,
-                                          aliases_map=aliases_map,
-                                          platform_info=platform_info)
+    collector_names = get_collector_names(
+        valid_subsets=all_valid_subsets,
+        minimal_gather_subset=minimal_gather_subset,
+        gather_subset=gather_subset,
+        aliases_map=aliases_map,
+        platform_info=platform_info,
+    )
 
     complete_collector_names = _solve_deps(collector_names, all_fact_subsets)
 
@@ -395,7 +413,8 @@ def collector_classes_from_gather_subset(all_collector_classes=None,
     ordered_deps = tsort(dep_map)
     ordered_collector_names = [x[0] for x in ordered_deps]
 
-    selected_collector_classes = select_collector_classes(ordered_collector_names,
-                                                          all_fact_subsets)
+    selected_collector_classes = select_collector_classes(
+        ordered_collector_names, all_fact_subsets
+    )
 
     return selected_collector_classes

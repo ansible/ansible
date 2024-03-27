@@ -9,7 +9,7 @@ from urllib.parse import urlparse, urlunparse
 
 
 def test_generic_urlparse():
-    url = 'https://ansible.com/blog'
+    url = "https://ansible.com/blog"
     parts = urlparse(url)
     generic_parts = generic_urlparse(parts)
     assert generic_parts.as_list() == list(parts)
@@ -18,10 +18,10 @@ def test_generic_urlparse():
 
 
 def test_generic_urlparse_netloc():
-    url = 'https://ansible.com:443/blog'
+    url = "https://ansible.com:443/blog"
     parts = urlparse(url)
     generic_parts = generic_urlparse(parts)
     assert generic_parts.hostname == parts.hostname
-    assert generic_parts.hostname == 'ansible.com'
+    assert generic_parts.hostname == "ansible.com"
     assert generic_parts.port == 443
     assert urlunparse(generic_parts.as_list()) == url

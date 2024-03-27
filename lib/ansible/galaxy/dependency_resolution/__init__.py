@@ -21,14 +21,14 @@ from ansible.galaxy.dependency_resolution.resolvers import CollectionDependencyR
 
 
 def build_collection_dependency_resolver(
-        galaxy_apis,  # type: t.Iterable[GalaxyAPI]
-        concrete_artifacts_manager,  # type: ConcreteArtifactsManager
-        preferred_candidates=None,  # type: t.Iterable[Candidate]
-        with_deps=True,  # type: bool
-        with_pre_releases=False,  # type: bool
-        upgrade=False,  # type: bool
-        include_signatures=True,  # type: bool
-        offline=False,  # type: bool
+    galaxy_apis,  # type: t.Iterable[GalaxyAPI]
+    concrete_artifacts_manager,  # type: ConcreteArtifactsManager
+    preferred_candidates=None,  # type: t.Iterable[Candidate]
+    with_deps=True,  # type: bool
+    with_pre_releases=False,  # type: bool
+    upgrade=False,  # type: bool
+    include_signatures=True,  # type: bool
+    offline=False,  # type: bool
 ):  # type: (...) -> CollectionDependencyResolver
     """Return a collection dependency resolver.
 
@@ -37,7 +37,9 @@ def build_collection_dependency_resolver(
     """
     return CollectionDependencyResolver(
         CollectionDependencyProvider(
-            apis=MultiGalaxyAPIProxy(galaxy_apis, concrete_artifacts_manager, offline=offline),
+            apis=MultiGalaxyAPIProxy(
+                galaxy_apis, concrete_artifacts_manager, offline=offline
+            ),
             concrete_artifacts_manager=concrete_artifacts_manager,
             preferred_candidates=preferred_candidates,
             with_deps=with_deps,

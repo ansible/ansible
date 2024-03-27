@@ -7,11 +7,13 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    "metadata_version": "1.1",
+    "status": ["preview"],
+    "supported_by": "community",
+}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_whoami
 version_added: "2.5"
@@ -30,14 +32,14 @@ seealso:
 - module: win_user_right
 author:
 - Jordan Borean (@jborean93)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Get whoami information
   win_whoami:
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 authentication_package:
   description: The name of the authentication package used to authenticate the
     user in the session.
@@ -200,4 +202,4 @@ token_type:
   returned: success
   type: str
   sample: TokenPrimary
-'''
+"""

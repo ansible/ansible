@@ -19,11 +19,11 @@ from __future__ import annotations
 
 from unittest.mock import Mock, patch
 
-from .. base import BaseFactsTest
+from ..base import BaseFactsTest
 
 from ansible.module_utils.facts.other.facter import FacterFactCollector
 
-facter_json_output = '''
+facter_json_output = """
 {
   "operatingsystemmajrelease": "25",
   "hardwareisa": "x86_64",
@@ -177,31 +177,35 @@ facter_json_output = '''
   "uptime_hours": 432,
   "kernelversion": "4.9.14"
 }
-'''
+"""
 
 
 class TestFacterCollector(BaseFactsTest):
     __test__ = True
-    gather_subset = ['!all', 'facter']
-    valid_subsets = ['facter']
-    fact_namespace = 'ansible_facter'
+    gather_subset = ["!all", "facter"]
+    valid_subsets = ["facter"]
+    fact_namespace = "ansible_facter"
     collector_class = FacterFactCollector
 
     def _mock_module(self):
         mock_module = Mock()
-        mock_module.params = {'gather_subset': self.gather_subset,
-                              'gather_timeout': 10,
-                              'filter': '*'}
-        mock_module.get_bin_path = Mock(return_value='/not/actually/facter')
-        mock_module.run_command = Mock(return_value=(0, facter_json_output, ''))
+        mock_module.params = {
+            "gather_subset": self.gather_subset,
+            "gather_timeout": 10,
+            "filter": "*",
+        }
+        mock_module.get_bin_path = Mock(return_value="/not/actually/facter")
+        mock_module.run_command = Mock(return_value=(0, facter_json_output, ""))
         return mock_module
 
-    @patch('ansible.module_utils.facts.other.facter.FacterFactCollector.get_facter_output')
+    @patch(
+        "ansible.module_utils.facts.other.facter.FacterFactCollector.get_facter_output"
+    )
     def test_bogus_json(self, mock_get_facter_output):
         module = self._mock_module()
 
         # bogus json
-        mock_get_facter_output.return_value = '{'
+        mock_get_facter_output.return_value = "{"
 
         fact_collector = self.collector_class()
         facts_dict = fact_collector.collect(module=module)
@@ -209,12 +213,12 @@ class TestFacterCollector(BaseFactsTest):
         self.assertIsInstance(facts_dict, dict)
         self.assertEqual(facts_dict, {})
 
-    @patch('ansible.module_utils.facts.other.facter.FacterFactCollector.run_facter')
+    @patch("ansible.module_utils.facts.other.facter.FacterFactCollector.run_facter")
     def test_facter_non_zero_return_code(self, mock_run_facter):
         module = self._mock_module()
 
         # bogus json
-        mock_run_facter.return_value = (1, '{}', '')
+        mock_run_facter.return_value = (1, "{}", "")
 
         fact_collector = self.collector_class()
         facts_dict = fact_collector.collect(module=module)
@@ -222,5 +226,5 @@ class TestFacterCollector(BaseFactsTest):
         self.assertIsInstance(facts_dict, dict)
 
         # This assumes no 'facter' entry at all is correct
-        self.assertNotIn('facter', facts_dict)
+        self.assertNotIn("facter", facts_dict)
         self.assertEqual(facts_dict, {})

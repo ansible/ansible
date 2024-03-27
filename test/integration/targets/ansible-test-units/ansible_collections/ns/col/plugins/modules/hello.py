@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: hello
 short_description: Hello test module
 description: Hello test module.
@@ -13,13 +13,13 @@ options:
     type: str
 author:
   - Ansible Core Team
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - hello:
-'''
+"""
 
-RETURN = ''''''
+RETURN = """"""
 
 from ansible.module_utils.basic import AnsibleModule
 from ..module_utils.my_util import hello
@@ -28,11 +28,11 @@ from ..module_utils.my_util import hello
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='str'),
+            name=dict(type="str"),
         ),
     )
 
-    module.exit_json(**say_hello(module.params['name']))
+    module.exit_json(**say_hello(module.params["name"]))
 
 
 def say_hello(name):
@@ -41,5 +41,5 @@ def say_hello(name):
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

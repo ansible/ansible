@@ -1,4 +1,5 @@
 """PyYAML compatibility."""
+
 from __future__ import annotations
 
 import typing as t
@@ -16,7 +17,9 @@ except ImportError as ex:
     YAML_IMPORT_ERROR = ex
 else:
     try:
-        _SafeLoader: t.Union[t.Type[_yaml.CSafeLoader], t.Type[_yaml.SafeLoader]] = _yaml.CSafeLoader
+        _SafeLoader: t.Union[t.Type[_yaml.CSafeLoader], t.Type[_yaml.SafeLoader]] = (
+            _yaml.CSafeLoader
+        )
     except AttributeError:
         _SafeLoader = _yaml.SafeLoader
 

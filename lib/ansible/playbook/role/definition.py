@@ -34,16 +34,23 @@ from ansible.utils.collection_loader._collection_finder import _get_collection_r
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
 
-__all__ = ['RoleDefinition']
+__all__ = ["RoleDefinition"]
 
 display = Display()
 
 
 class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
-    role = NonInheritableFieldAttribute(isa='string')
+    role = NonInheritableFieldAttribute(isa="string")
 
-    def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=None):
+    def __init__(
+        self,
+        play=None,
+        role_basedir=None,
+        variable_manager=None,
+        loader=None,
+        collection_list=None,
+    ):
 
         super(RoleDefinition, self).__init__()
 
@@ -70,7 +77,11 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         if isinstance(ds, int):
             ds = "%s" % ds
 
-        if not isinstance(ds, dict) and not isinstance(ds, string_types) and not isinstance(ds, AnsibleBaseYAMLObject):
+        if (
+            not isinstance(ds, dict)
+            and not isinstance(ds, string_types)
+            and not isinstance(ds, AnsibleBaseYAMLObject)
+        ):
             raise AnsibleAssertionError()
 
         if isinstance(ds, dict):
@@ -101,7 +112,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
             self._role_params = role_params
 
         # set the role name in the new ds
-        new_ds['role'] = role_name
+        new_ds["role"] = role_name
 
         # we store the role path internally
         self._role_path = role_path
@@ -110,18 +121,18 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         return new_ds
 
     def _load_role_name(self, ds):
-        '''
+        """
         Returns the role name (either the role: or name: field) from
         the role definition, or (when the role definition is a simple
         string), just that string
-        '''
+        """
 
         if isinstance(ds, string_types):
             return ds
 
-        role_name = ds.get('role', ds.get('name'))
+        role_name = ds.get("role", ds.get("name"))
         if not role_name or not isinstance(role_name, string_types):
-            raise AnsibleError('role definitions must contain a role name', obj=ds)
+            raise AnsibleError("role definitions must contain a role name", obj=ds)
 
         # if we have the required datastructures, and if the role_name
         # contains a variable, try and template it now
@@ -133,12 +144,12 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         return role_name
 
     def _load_role_path(self, role_name):
-        '''
+        """
         the 'role', as specified in the ds (or as a bare string), can either
         be a simple name or a full path. If it is a full path, we use the
         basename as the role name, otherwise we take the name as-given and
         append it to the default role path
-        '''
+        """
 
         # create a templar class to template the dependency names, in
         # case they contain variables
@@ -167,7 +178,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
         # we always start the search for roles in the base directory of the playbook
         role_search_paths = [
-            os.path.join(self._loader.get_basedir(), u'roles'),
+            os.path.join(self._loader.get_basedir(), "roles"),
         ]
 
         # also search in the configured roles path
@@ -198,18 +209,21 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
             return (role_name, role_path)
 
         searches = (self._collection_list or []) + role_search_paths
-        raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(searches)), obj=self._ds)
+        raise AnsibleError(
+            "the role '%s' was not found in %s" % (role_name, ":".join(searches)),
+            obj=self._ds,
+        )
 
     def _split_role_params(self, ds):
-        '''
+        """
         Splits any random role params off from the role spec and store
         them in a dictionary of params for parsing later
-        '''
+        """
 
         role_def = dict()
         role_params = dict()
         base_attribute_names = frozenset(self.fattributes)
-        for (key, value) in ds.items():
+        for key, value in ds.items():
             # use the list of FieldAttribute values to determine what is and is not
             # an extra parameter for this role (or sub-class of this role)
             # FIXME: hard-coded list of exception key names here corresponds to the
@@ -234,5 +248,5 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
     def get_name(self, include_role_fqcn=True):
         if include_role_fqcn:
-            return '.'.join(x for x in (self._role_collection, self.role) if x)
+            return ".".join(x for x in (self._role_collection, self.role) if x)
         return self.role

@@ -24,7 +24,9 @@ from ansible.module_utils.six import string_types
 
 class Handler(Task):
 
-    listen = NonInheritableFieldAttribute(isa='list', default=list, listof=string_types, static=True)
+    listen = NonInheritableFieldAttribute(
+        isa="list", default=list, listof=string_types, static=True
+    )
 
     def __init__(self, block=None, role=None, task_include=None):
         self.notified_hosts = []
@@ -34,11 +36,18 @@ class Handler(Task):
         super(Handler, self).__init__(block=block, role=role, task_include=task_include)
 
     def __repr__(self):
-        ''' returns a human-readable representation of the handler '''
+        """returns a human-readable representation of the handler"""
         return "HANDLER: %s" % self.get_name()
 
     @staticmethod
-    def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
+    def load(
+        data,
+        block=None,
+        role=None,
+        task_include=None,
+        variable_manager=None,
+        loader=None,
+    ):
         t = Handler(block=block, role=role, task_include=task_include)
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
@@ -59,5 +68,5 @@ class Handler(Task):
 
     def serialize(self):
         result = super(Handler, self).serialize()
-        result['is_handler'] = True
+        result["is_handler"] = True
         return result

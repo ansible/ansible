@@ -19,25 +19,25 @@ def stdin(mocker, request):
     old_args = ansible.module_utils.basic._ANSIBLE_ARGS
     ansible.module_utils.basic._ANSIBLE_ARGS = None
     old_argv = sys.argv
-    sys.argv = ['ansible_unittest']
+    sys.argv = ["ansible_unittest"]
 
     if isinstance(request.param, str):
         args = request.param
     elif isinstance(request.param, MutableMapping):
-        if 'ANSIBLE_MODULE_ARGS' not in request.param:
-            request.param = {'ANSIBLE_MODULE_ARGS': request.param}
-        if '_ansible_remote_tmp' not in request.param['ANSIBLE_MODULE_ARGS']:
-            request.param['ANSIBLE_MODULE_ARGS']['_ansible_remote_tmp'] = '/tmp'
-        if '_ansible_keep_remote_files' not in request.param['ANSIBLE_MODULE_ARGS']:
-            request.param['ANSIBLE_MODULE_ARGS']['_ansible_keep_remote_files'] = False
+        if "ANSIBLE_MODULE_ARGS" not in request.param:
+            request.param = {"ANSIBLE_MODULE_ARGS": request.param}
+        if "_ansible_remote_tmp" not in request.param["ANSIBLE_MODULE_ARGS"]:
+            request.param["ANSIBLE_MODULE_ARGS"]["_ansible_remote_tmp"] = "/tmp"
+        if "_ansible_keep_remote_files" not in request.param["ANSIBLE_MODULE_ARGS"]:
+            request.param["ANSIBLE_MODULE_ARGS"]["_ansible_keep_remote_files"] = False
         args = json.dumps(request.param)
     else:
-        raise Exception('Malformed data to the stdin pytest fixture')
+        raise Exception("Malformed data to the stdin pytest fixture")
 
-    fake_stdin = BytesIO(to_bytes(args, errors='surrogate_or_strict'))
+    fake_stdin = BytesIO(to_bytes(args, errors="surrogate_or_strict"))
 
-    mocker.patch('ansible.module_utils.basic.sys.stdin', mocker.MagicMock())
-    mocker.patch('ansible.module_utils.basic.sys.stdin.buffer', fake_stdin)
+    mocker.patch("ansible.module_utils.basic.sys.stdin", mocker.MagicMock())
+    mocker.patch("ansible.module_utils.basic.sys.stdin.buffer", fake_stdin)
 
     yield fake_stdin
 
@@ -50,17 +50,17 @@ def am(stdin, request):
     old_args = ansible.module_utils.basic._ANSIBLE_ARGS
     ansible.module_utils.basic._ANSIBLE_ARGS = None
     old_argv = sys.argv
-    sys.argv = ['ansible_unittest']
+    sys.argv = ["ansible_unittest"]
 
     argspec = {}
-    if hasattr(request, 'param'):
+    if hasattr(request, "param"):
         if isinstance(request.param, dict):
             argspec = request.param
 
     am = ansible.module_utils.basic.AnsibleModule(
         argument_spec=argspec,
     )
-    am._name = 'ansible_unittest'
+    am._name = "ansible_unittest"
 
     yield am
 

@@ -1,4 +1,5 @@
 """Inventory creation from host profiles."""
+
 from __future__ import annotations
 
 import shutil
@@ -30,14 +31,16 @@ from .ssh import (
 )
 
 
-def create_controller_inventory(args: EnvironmentConfig, path: str, controller_host: ControllerHostProfile) -> None:
+def create_controller_inventory(
+    args: EnvironmentConfig, path: str, controller_host: ControllerHostProfile
+) -> None:
     """Create and return inventory for use in controller-only integration tests."""
     inventory = Inventory(
         host_groups=dict(
             testgroup=dict(
                 testhost=dict(
-                    ansible_connection='local',
-                    ansible_pipelining='yes',
+                    ansible_connection="local",
+                    ansible_pipelining="yes",
                     ansible_python_interpreter=controller_host.python.path,
                 ),
             ),
@@ -47,7 +50,9 @@ def create_controller_inventory(args: EnvironmentConfig, path: str, controller_h
     inventory.write(args, path)
 
 
-def create_windows_inventory(args: EnvironmentConfig, path: str, target_hosts: list[HostProfile]) -> None:
+def create_windows_inventory(
+    args: EnvironmentConfig, path: str, target_hosts: list[HostProfile]
+) -> None:
     """Create and return inventory for use in target Windows integration tests."""
     first = target_hosts[0]
 
@@ -63,8 +68,14 @@ def create_windows_inventory(args: EnvironmentConfig, path: str, target_hosts: l
         return
 
     target_hosts = t.cast(list[WindowsRemoteProfile], target_hosts)
-    hosts = [(target_host, target_host.wait_for_instance().connection) for target_host in target_hosts]
-    windows_hosts = {sanitize_host_name(host.config.name): host.get_inventory_variables() for host, connection in hosts}
+    hosts = [
+        (target_host, target_host.wait_for_instance().connection)
+        for target_host in target_hosts
+    ]
+    windows_hosts = {
+        sanitize_host_name(host.config.name): host.get_inventory_variables()
+        for host, connection in hosts
+    }
 
     inventory = Inventory(
         host_groups=dict(
@@ -73,8 +84,8 @@ def create_windows_inventory(args: EnvironmentConfig, path: str, target_hosts: l
         # The `testhost` group is needed to support the `binary_modules_winrm` integration test.
         # The test should be updated to remove the need for this.
         extra_groups={
-            'testhost:children': [
-                'windows',
+            "testhost:children": [
+                "windows",
             ],
         },
     )
@@ -82,7 +93,9 @@ def create_windows_inventory(args: EnvironmentConfig, path: str, target_hosts: l
     inventory.write(args, path)
 
 
-def create_network_inventory(args: EnvironmentConfig, path: str, target_hosts: list[HostProfile]) -> None:
+def create_network_inventory(
+    args: EnvironmentConfig, path: str, target_hosts: list[HostProfile]
+) -> None:
     """Create and return inventory for use in target network integration tests."""
     first = target_hosts[0]
 
@@ -98,10 +111,14 @@ def create_network_inventory(args: EnvironmentConfig, path: str, target_hosts: l
         return
 
     target_hosts = t.cast(list[NetworkRemoteProfile], target_hosts)
-    host_groups: dict[str, dict[str, dict[str, t.Union[str, int]]]] = {target_host.config.platform: {} for target_host in target_hosts}
+    host_groups: dict[str, dict[str, dict[str, t.Union[str, int]]]] = {
+        target_host.config.platform: {} for target_host in target_hosts
+    }
 
     for target_host in target_hosts:
-        host_groups[target_host.config.platform][sanitize_host_name(target_host.config.name)] = target_host.get_inventory_variables()
+        host_groups[target_host.config.platform][
+            sanitize_host_name(target_host.config.name)
+        ] = target_host.get_inventory_variables()
 
     inventory = Inventory(
         host_groups=host_groups,
@@ -109,14 +126,19 @@ def create_network_inventory(args: EnvironmentConfig, path: str, target_hosts: l
         # see: https://github.com/ansible/ansible/pull/34661
         # see: https://github.com/ansible/ansible/pull/34707
         extra_groups={
-            'net:children': sorted(host_groups),
+            "net:children": sorted(host_groups),
         },
     )
 
     inventory.write(args, path)
 
 
-def create_posix_inventory(args: EnvironmentConfig, path: str, target_hosts: list[HostProfile], needs_ssh: bool = False) -> None:
+def create_posix_inventory(
+    args: EnvironmentConfig,
+    path: str,
+    target_hosts: list[HostProfile],
+    needs_ssh: bool = False,
+) -> None:
     """Create and return inventory for use in POSIX integration tests."""
     target_hosts = t.cast(list[SshTargetHostProfile], target_hosts)
 
@@ -130,8 +152,8 @@ def create_posix_inventory(args: EnvironmentConfig, path: str, target_hosts: lis
             host_groups=dict(
                 testgroup=dict(
                     testhost=dict(
-                        ansible_connection='local',
-                        ansible_pipelining='yes',
+                        ansible_connection="local",
+                        ansible_pipelining="yes",
                         ansible_python_interpreter=target_host.python.path,
                     ),
                 ),
@@ -146,8 +168,8 @@ def create_posix_inventory(args: EnvironmentConfig, path: str, target_hosts: lis
         ssh = connections[0]
 
         testhost: dict[str, t.Optional[t.Union[str, int]]] = dict(
-            ansible_connection='ssh',
-            ansible_pipelining='yes',
+            ansible_connection="ssh",
+            ansible_pipelining="yes",
             ansible_python_interpreter=ssh.settings.python_interpreter,
             ansible_host=ssh.settings.host,
             ansible_port=ssh.settings.port,
@@ -158,7 +180,7 @@ def create_posix_inventory(args: EnvironmentConfig, path: str, target_hosts: lis
 
         if ssh.become:
             testhost.update(
-                ansible_become='yes',
+                ansible_become="yes",
                 ansible_become_method=ssh.become.method,
             )
 

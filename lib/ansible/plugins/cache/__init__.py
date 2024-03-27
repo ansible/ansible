@@ -80,12 +80,13 @@ class BaseFileCacheModule(BaseCacheModule):
     """
     A caching module backed by file based storage.
     """
+
     def __init__(self, *args, **kwargs):
 
         try:
             super(BaseFileCacheModule, self).__init__(*args, **kwargs)
-            self._cache_dir = self._get_cache_connection(self.get_option('_uri'))
-            self._timeout = float(self.get_option('_timeout'))
+            self._cache_dir = self._get_cache_connection(self.get_option("_uri"))
+            self._timeout = float(self.get_option("_timeout"))
         except KeyError:
             self._cache_dir = self._get_cache_connection(C.CACHE_PLUGIN_CONNECTION)
             self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
@@ -102,22 +103,29 @@ class BaseFileCacheModule(BaseCacheModule):
 
     def validate_cache_connection(self):
         if not self._cache_dir:
-            raise AnsibleError("error, '%s' cache plugin requires the 'fact_caching_connection' config option "
-                               "to be set (to a writeable directory path)" % self.plugin_name)
+            raise AnsibleError(
+                "error, '%s' cache plugin requires the 'fact_caching_connection' config option "
+                "to be set (to a writeable directory path)" % self.plugin_name
+            )
 
         if not os.path.exists(self._cache_dir):
             try:
                 os.makedirs(self._cache_dir)
             except (OSError, IOError) as e:
-                raise AnsibleError("error in '%s' cache plugin while trying to create cache dir %s : %s" % (self.plugin_name, self._cache_dir, to_bytes(e)))
+                raise AnsibleError(
+                    "error in '%s' cache plugin while trying to create cache dir %s : %s"
+                    % (self.plugin_name, self._cache_dir, to_bytes(e))
+                )
         else:
             for x in (os.R_OK, os.W_OK, os.X_OK):
                 if not os.access(self._cache_dir, x):
-                    raise AnsibleError("error in '%s' cache, configured path (%s) does not have necessary permissions (rwx), disabling plugin" % (
-                        self.plugin_name, self._cache_dir))
+                    raise AnsibleError(
+                        "error in '%s' cache, configured path (%s) does not have necessary permissions (rwx), disabling plugin"
+                        % (self.plugin_name, self._cache_dir)
+                    )
 
     def _get_cache_file_name(self, key):
-        prefix = self.get_option('_prefix')
+        prefix = self.get_option("_prefix")
         if prefix:
             cachefile = "%s/%s%s" % (self._cache_dir, prefix, key)
         else:
@@ -125,9 +133,9 @@ class BaseFileCacheModule(BaseCacheModule):
         return cachefile
 
     def get(self, key):
-        """ This checks the in memory cache first as the fact was not expired at 'gather time'
+        """This checks the in memory cache first as the fact was not expired at 'gather time'
         and it would be problematic if the key did expire after some long running tasks and
-        user gets 'undefined' error in the same play """
+        user gets 'undefined' error in the same play"""
 
         if key not in self._cache:
 
@@ -139,16 +147,28 @@ class BaseFileCacheModule(BaseCacheModule):
                 value = self._load(cachefile)
                 self._cache[key] = value
             except ValueError as e:
-                display.warning("error in '%s' cache plugin while trying to read %s : %s. "
-                                "Most likely a corrupt file, so erasing and failing." % (self.plugin_name, cachefile, to_bytes(e)))
+                display.warning(
+                    "error in '%s' cache plugin while trying to read %s : %s. "
+                    "Most likely a corrupt file, so erasing and failing."
+                    % (self.plugin_name, cachefile, to_bytes(e))
+                )
                 self.delete(key)
-                raise AnsibleError("The cache file %s was corrupt, or did not otherwise contain valid data. "
-                                   "It has been removed, so you can re-run your command now." % cachefile)
+                raise AnsibleError(
+                    "The cache file %s was corrupt, or did not otherwise contain valid data. "
+                    "It has been removed, so you can re-run your command now."
+                    % cachefile
+                )
             except (OSError, IOError) as e:
-                display.warning("error in '%s' cache plugin while trying to read %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
+                display.warning(
+                    "error in '%s' cache plugin while trying to read %s : %s"
+                    % (self.plugin_name, cachefile, to_bytes(e))
+                )
                 raise KeyError
             except Exception as e:
-                raise AnsibleError("Error while decoding the cache file %s: %s" % (cachefile, to_bytes(e)))
+                raise AnsibleError(
+                    "Error while decoding the cache file %s: %s"
+                    % (cachefile, to_bytes(e))
+                )
 
         return self._cache.get(key)
 
@@ -162,12 +182,18 @@ class BaseFileCacheModule(BaseCacheModule):
             try:
                 self._dump(value, tmpfile_path)
             except (OSError, IOError) as e:
-                display.warning("error in '%s' cache plugin while trying to write to '%s' : %s" % (self.plugin_name, tmpfile_path, to_bytes(e)))
+                display.warning(
+                    "error in '%s' cache plugin while trying to write to '%s' : %s"
+                    % (self.plugin_name, tmpfile_path, to_bytes(e))
+                )
             try:
                 os.rename(tmpfile_path, cachefile)
                 os.chmod(cachefile, mode=S_IRWU_RG_RO)
             except (OSError, IOError) as e:
-                display.warning("error in '%s' cache plugin while trying to move '%s' to '%s' : %s" % (self.plugin_name, tmpfile_path, cachefile, to_bytes(e)))
+                display.warning(
+                    "error in '%s' cache plugin while trying to move '%s' to '%s' : %s"
+                    % (self.plugin_name, tmpfile_path, cachefile, to_bytes(e))
+                )
         finally:
             try:
                 os.unlink(tmpfile_path)
@@ -186,7 +212,10 @@ class BaseFileCacheModule(BaseCacheModule):
             if e.errno == errno.ENOENT:
                 return False
             else:
-                display.warning("error in '%s' cache plugin while trying to stat %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
+                display.warning(
+                    "error in '%s' cache plugin while trying to stat %s : %s"
+                    % (self.plugin_name, cachefile, to_bytes(e))
+                )
                 return False
 
         if time.time() - st.st_mtime <= self._timeout:
@@ -200,11 +229,11 @@ class BaseFileCacheModule(BaseCacheModule):
         # When using a prefix we must remove it from the key name before
         # checking the expiry and returning it to the caller. Keys that do not
         # share the same prefix cannot be fetched from the cache.
-        prefix = self.get_option('_prefix')
+        prefix = self.get_option("_prefix")
         prefix_length = len(prefix)
         keys = []
         for k in os.listdir(self._cache_dir):
-            if k.startswith('.') or not k.startswith(prefix):
+            if k.startswith(".") or not k.startswith(prefix):
                 continue
 
             k = k[prefix_length:]
@@ -228,7 +257,10 @@ class BaseFileCacheModule(BaseCacheModule):
             if e.errno == errno.ENOENT:
                 return False
             else:
-                display.warning("error in '%s' cache plugin while trying to stat %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
+                display.warning(
+                    "error in '%s' cache plugin while trying to stat %s : %s"
+                    % (self.plugin_name, cachefile, to_bytes(e))
+                )
 
     def delete(self, key):
         try:
@@ -285,13 +317,14 @@ class CachePluginAdjudicator(MutableMapping):
     """
     Intermediary between a cache dictionary and a CacheModule
     """
-    def __init__(self, plugin_name='memory', **kwargs):
+
+    def __init__(self, plugin_name="memory", **kwargs):
         self._cache = {}
         self._retrieved = {}
 
         self._plugin = cache_loader.get(plugin_name, **kwargs)
         if not self._plugin:
-            raise AnsibleError('Unable to load the cache plugin (%s).' % plugin_name)
+            raise AnsibleError("Unable to load the cache plugin (%s)." % plugin_name)
 
         self._plugin_name = plugin_name
 
@@ -319,12 +352,14 @@ class CachePluginAdjudicator(MutableMapping):
 
     def _do_load_key(self, key):
         load = False
-        if all([
-            key not in self._cache,
-            key not in self._retrieved,
-            self._plugin_name != 'memory',
-            self._plugin.contains(key),
-        ]):
+        if all(
+            [
+                key not in self._cache,
+                key not in self._retrieved,
+                self._plugin_name != "memory",
+                self._plugin.contains(key),
+            ]
+        ):
             load = True
         return load
 

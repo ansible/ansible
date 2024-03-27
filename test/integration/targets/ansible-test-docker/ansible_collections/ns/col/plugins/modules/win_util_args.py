@@ -5,11 +5,13 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
+ANSIBLE_METADATA = {
+    "metadata_version": "1.1",
+    "status": ["stableinterface"],
+    "supported_by": "core",
+}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_util_args
 short_description: Short description
@@ -26,14 +28,14 @@ extends_documentation_fragment:
 
 author:
 - Ansible Test (@ansible)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - win_util_args:
     option1: test
     my_opt: test
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 #
-'''
+"""

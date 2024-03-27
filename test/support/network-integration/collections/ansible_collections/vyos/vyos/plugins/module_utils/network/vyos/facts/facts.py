@@ -52,8 +52,7 @@ FACT_RESOURCE_SUBSETS = dict(
 
 
 class Facts(FactsBase):
-    """ The fact class for vyos
-    """
+    """The fact class for vyos"""
 
     VALID_LEGACY_GATHER_SUBSETS = frozenset(FACT_LEGACY_SUBSETS.keys())
     VALID_RESOURCE_SUBSETS = frozenset(FACT_RESOURCE_SUBSETS.keys())
@@ -61,10 +60,8 @@ class Facts(FactsBase):
     def __init__(self, module):
         super(Facts, self).__init__(module)
 
-    def get_facts(
-        self, legacy_facts_type=None, resource_facts_type=None, data=None
-    ):
-        """ Collect the facts for vyos
+    def get_facts(self, legacy_facts_type=None, resource_facts_type=None, data=None):
+        """Collect the facts for vyos
         :param legacy_facts_type: List of legacy facts types
         :param resource_facts_type: List of resource fact types
         :param data: previously collected conf
@@ -76,7 +73,5 @@ class Facts(FactsBase):
                 FACT_RESOURCE_SUBSETS, resource_facts_type, data
             )
         if self.VALID_LEGACY_GATHER_SUBSETS:
-            self.get_network_legacy_facts(
-                FACT_LEGACY_SUBSETS, legacy_facts_type
-            )
+            self.get_network_legacy_facts(FACT_LEGACY_SUBSETS, legacy_facts_type)
         return self.ansible_facts, self._warnings

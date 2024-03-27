@@ -150,10 +150,10 @@ from ansible.plugins.lookup import LookupBase
 from ansible.utils.path import unfrackpath
 
 
-def _split_on(terms, spliters=','):
+def _split_on(terms, spliters=","):
     termlist = []
     if isinstance(terms, string_types):
-        termlist = re.split(r'[%s]' % ''.join(map(re.escape, spliters)), terms)
+        termlist = re.split(r"[%s]" % "".join(map(re.escape, spliters)), terms)
     else:
         # added since options will already listify
         for t in terms:
@@ -172,7 +172,7 @@ class LookupModule(LookupBase):
         for term in terms:
             if isinstance(term, Mapping):
                 self.set_options(var_options=variables, direct=term)
-                files = self.get_option('files')
+                files = self.get_option("files")
             elif isinstance(term, string_types):
                 files = [term]
             elif isinstance(term, Sequence):
@@ -180,16 +180,19 @@ class LookupModule(LookupBase):
                 total_search.extend(partial)
                 continue
             else:
-                raise AnsibleLookupError("Invalid term supplied, can handle string, mapping or list of strings but got: %s for %s" % (type(term), term))
+                raise AnsibleLookupError(
+                    "Invalid term supplied, can handle string, mapping or list of strings but got: %s for %s"
+                    % (type(term), term)
+                )
 
-            paths = self.get_option('paths')
+            paths = self.get_option("paths")
 
             # NOTE: this is used as 'global' but  can be set many times?!?!?
-            skip = self.get_option('skip')
+            skip = self.get_option("skip")
 
             # magic extra splitting to create lists
-            filelist = _split_on(files, ',;')
-            pathlist = _split_on(paths, ',:;')
+            filelist = _split_on(files, ",;")
+            pathlist = _split_on(paths, ",:;")
 
             # create search structure
             if pathlist:
@@ -210,7 +213,7 @@ class LookupModule(LookupBase):
         self.set_options(var_options=variables, direct=kwargs)
 
         if not terms:
-            terms = self.get_option('files')
+            terms = self.get_option("files")
 
         total_search, skip = self._process_terms(terms, variables, kwargs)
 
@@ -219,7 +222,7 @@ class LookupModule(LookupBase):
         # see other notes below.
 
         # actually search
-        subdir = getattr(self, '_subdir', 'files')
+        subdir = getattr(self, "_subdir", "files")
 
         path = None
         for fn in total_search:
@@ -232,7 +235,9 @@ class LookupModule(LookupBase):
                 continue
 
             # get subdir if set by task executor, default to files otherwise
-            path = self.find_file_in_search_path(variables, subdir, fn, ignore_missing=True)
+            path = self.find_file_in_search_path(
+                variables, subdir, fn, ignore_missing=True
+            )
 
             # exit if we find one!
             if path is not None:

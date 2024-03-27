@@ -34,7 +34,7 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 
 
 class Hardware:
-    platform = 'Generic'
+    platform = "Generic"
 
     # FIXME: remove load_on_init when we can
     def __init__(self, module, load_on_init=False):
@@ -45,13 +45,17 @@ class Hardware:
 
 
 class HardwareCollector(BaseFactCollector):
-    name = 'hardware'
-    _fact_ids = set(['processor',
-                     'processor_cores',
-                     'processor_count',
-                     # TODO: mounts isnt exactly hardware
-                     'mounts',
-                     'devices'])  # type: t.Set[str]
+    name = "hardware"
+    _fact_ids = set(
+        [
+            "processor",
+            "processor_cores",
+            "processor_count",
+            # TODO: mounts isnt exactly hardware
+            "mounts",
+            "devices",
+        ]
+    )  # type: t.Set[str]
     _fact_class = Hardware
 
     def collect(self, module=None, collected_facts=None):

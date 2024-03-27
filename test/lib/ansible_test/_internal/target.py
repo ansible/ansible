@@ -1,4 +1,5 @@
 """Test target identification, iteration and inclusion/exclusion."""
+
 from __future__ import annotations
 
 import collections
@@ -31,33 +32,43 @@ from .data import (
     content_plugins,
 )
 
-MODULE_EXTENSIONS = '.py', '.ps1'
+MODULE_EXTENSIONS = ".py", ".ps1"
 
 
-def find_target_completion(target_func: c.Callable[[], c.Iterable[CompletionTarget]], prefix: str, short: bool) -> list[str]:
+def find_target_completion(
+    target_func: c.Callable[[], c.Iterable[CompletionTarget]], prefix: str, short: bool
+) -> list[str]:
     """Return a list of targets from the given target function which match the given prefix."""
     try:
         targets = target_func()
         matches = list(walk_completion_targets(targets, prefix, short))
         return matches
     except Exception as ex:  # pylint: disable=locally-disabled, broad-except
-        return ['%s' % ex]
+        return ["%s" % ex]
 
 
-def walk_completion_targets(targets: c.Iterable[CompletionTarget], prefix: str, short: bool = False) -> tuple[str, ...]:
+def walk_completion_targets(
+    targets: c.Iterable[CompletionTarget], prefix: str, short: bool = False
+) -> tuple[str, ...]:
     """Return a tuple of targets from the given target iterable which match the given prefix."""
     aliases = set(alias for target in targets for alias in target.aliases)
 
-    if prefix.endswith('/') and prefix in aliases:
+    if prefix.endswith("/") and prefix in aliases:
         aliases.remove(prefix)
 
-    matches = [alias for alias in aliases if alias.startswith(prefix) and '/' not in alias[len(prefix):-1]]
+    matches = [
+        alias
+        for alias in aliases
+        if alias.startswith(prefix) and "/" not in alias[len(prefix) : -1]
+    ]
 
     if short:
         offset = len(os.path.dirname(prefix))
         if offset:
             offset += 1
-            relative_matches = [match[offset:] for match in matches if len(match) > offset]
+            relative_matches = [
+                match[offset:] for match in matches if len(match) > offset
+            ]
             if len(relative_matches) > 1:
                 matches = relative_matches
 
@@ -73,16 +84,25 @@ def walk_internal_targets(
     """Return a tuple of matching completion targets."""
     targets = tuple(targets)
 
-    include_targets = sorted(filter_targets(targets, includes), key=lambda include_target: include_target.name)
+    include_targets = sorted(
+        filter_targets(targets, includes),
+        key=lambda include_target: include_target.name,
+    )
 
     if requires:
         require_targets = set(filter_targets(targets, requires))
-        include_targets = [require_target for require_target in include_targets if require_target in require_targets]
+        include_targets = [
+            require_target
+            for require_target in include_targets
+            if require_target in require_targets
+        ]
 
     if excludes:
         list(filter_targets(targets, excludes, include=False))
 
-    internal_targets = set(filter_targets(include_targets, excludes, errors=False, include=False))
+    internal_targets = set(
+        filter_targets(include_targets, excludes, errors=False, include=False)
+    )
     return tuple(sorted(internal_targets, key=lambda sort_target: sort_target.name))
 
 
@@ -94,7 +114,9 @@ def filter_targets(
 ) -> c.Iterable[TCompletionTarget]:
     """Iterate over the given targets and filter them based on the supplied arguments."""
     unmatched = set(patterns or ())
-    compiled_patterns = dict((p, re.compile('^%s$' % p)) for p in patterns) if patterns else None
+    compiled_patterns = (
+        dict((p, re.compile("^%s$" % p)) for p in patterns) if patterns else None
+    )
 
     for target in targets:
         matched_directories = set()
@@ -111,7 +133,7 @@ def filter_targets(
                         except KeyError:
                             pass
 
-                        if alias.endswith('/'):
+                        if alias.endswith("/"):
                             if target.base_path and len(target.base_path) > len(alias):
                                 matched_directories.add(target.base_path)
                             else:
@@ -119,9 +141,9 @@ def filter_targets(
         elif include:
             match = True
             if not target.base_path:
-                matched_directories.add('.')
+                matched_directories.add(".")
             for alias in target.aliases:
-                if alias.endswith('/'):
+                if alias.endswith("/"):
                     if target.base_path and len(target.base_path) > len(alias):
                         matched_directories.add(target.base_path)
                     else:
@@ -139,7 +161,11 @@ def filter_targets(
 
 def walk_module_targets() -> c.Iterable[TestTarget]:
     """Iterate through the module test targets."""
-    for target in walk_test_targets(path=data_context().content.module_path, module_path=data_context().content.module_path, extensions=MODULE_EXTENSIONS):
+    for target in walk_test_targets(
+        path=data_context().content.module_path,
+        module_path=data_context().content.module_path,
+        extensions=MODULE_EXTENSIONS,
+    ):
         if not target.module:
             continue
 
@@ -148,42 +174,72 @@ def walk_module_targets() -> c.Iterable[TestTarget]:
 
 def walk_units_targets() -> c.Iterable[TestTarget]:
     """Return an iterable of units targets."""
-    return walk_test_targets(path=data_context().content.unit_path, module_path=data_context().content.unit_module_path, extensions=('.py',), prefix='test_')
+    return walk_test_targets(
+        path=data_context().content.unit_path,
+        module_path=data_context().content.unit_module_path,
+        extensions=(".py",),
+        prefix="test_",
+    )
 
 
 def walk_compile_targets(include_symlinks: bool = True) -> c.Iterable[TestTarget]:
     """Return an iterable of compile targets."""
-    return walk_test_targets(module_path=data_context().content.module_path, extensions=('.py',), extra_dirs=('bin',), include_symlinks=include_symlinks)
+    return walk_test_targets(
+        module_path=data_context().content.module_path,
+        extensions=(".py",),
+        extra_dirs=("bin",),
+        include_symlinks=include_symlinks,
+    )
 
 
 def walk_powershell_targets(include_symlinks: bool = True) -> c.Iterable[TestTarget]:
     """Return an iterable of PowerShell targets."""
-    return walk_test_targets(module_path=data_context().content.module_path, extensions=('.ps1', '.psm1'), include_symlinks=include_symlinks)
+    return walk_test_targets(
+        module_path=data_context().content.module_path,
+        extensions=(".ps1", ".psm1"),
+        include_symlinks=include_symlinks,
+    )
 
 
 def walk_sanity_targets() -> c.Iterable[TestTarget]:
     """Return an iterable of sanity targets."""
-    return walk_test_targets(module_path=data_context().content.module_path, include_symlinks=True, include_symlinked_directories=True)
+    return walk_test_targets(
+        module_path=data_context().content.module_path,
+        include_symlinks=True,
+        include_symlinked_directories=True,
+    )
 
 
-def walk_posix_integration_targets(include_hidden: bool = False) -> c.Iterable[IntegrationTarget]:
+def walk_posix_integration_targets(
+    include_hidden: bool = False,
+) -> c.Iterable[IntegrationTarget]:
     """Return an iterable of POSIX integration targets."""
     for target in walk_integration_targets():
-        if 'posix/' in target.aliases or (include_hidden and 'hidden/posix/' in target.aliases):
+        if "posix/" in target.aliases or (
+            include_hidden and "hidden/posix/" in target.aliases
+        ):
             yield target
 
 
-def walk_network_integration_targets(include_hidden: bool = False) -> c.Iterable[IntegrationTarget]:
+def walk_network_integration_targets(
+    include_hidden: bool = False,
+) -> c.Iterable[IntegrationTarget]:
     """Return an iterable of network integration targets."""
     for target in walk_integration_targets():
-        if 'network/' in target.aliases or (include_hidden and 'hidden/network/' in target.aliases):
+        if "network/" in target.aliases or (
+            include_hidden and "hidden/network/" in target.aliases
+        ):
             yield target
 
 
-def walk_windows_integration_targets(include_hidden: bool = False) -> c.Iterable[IntegrationTarget]:
+def walk_windows_integration_targets(
+    include_hidden: bool = False,
+) -> c.Iterable[IntegrationTarget]:
     """Return an iterable of windows integration targets."""
     for target in walk_integration_targets():
-        if 'windows/' in target.aliases or (include_hidden and 'hidden/windows/' in target.aliases):
+        if "windows/" in target.aliases or (
+            include_hidden and "hidden/windows/" in target.aliases
+        ):
             yield target
 
 
@@ -196,18 +252,18 @@ def walk_integration_targets() -> c.Iterable[IntegrationTarget]:
     targets_path_tuple = tuple(path.split(os.path.sep))
 
     entry_dirs = (
-        'defaults',
-        'files',
-        'handlers',
-        'meta',
-        'tasks',
-        'templates',
-        'vars',
+        "defaults",
+        "files",
+        "handlers",
+        "meta",
+        "tasks",
+        "templates",
+        "vars",
     )
 
     entry_files = (
-        'main.yml',
-        'main.yaml',
+        "main.yml",
+        "main.yaml",
     )
 
     entry_points = []
@@ -217,12 +273,14 @@ def walk_integration_targets() -> c.Iterable[IntegrationTarget]:
             entry_points.append(os.path.join(os.path.sep, entry_dir, entry_file))
 
     # any directory with at least one file is a target
-    path_tuples = set(tuple(os.path.dirname(p).split(os.path.sep))
-                      for p in paths)
+    path_tuples = set(tuple(os.path.dirname(p).split(os.path.sep)) for p in paths)
 
     # also detect targets which are ansible roles, looking for standard entry points
-    path_tuples.update(tuple(os.path.dirname(os.path.dirname(p)).split(os.path.sep))
-                       for p in paths if any(p.endswith(entry_point) for entry_point in entry_points))
+    path_tuples.update(
+        tuple(os.path.dirname(os.path.dirname(p)).split(os.path.sep))
+        for p in paths
+        if any(p.endswith(entry_point) for entry_point in entry_points)
+    )
 
     # remove the top-level directory if it was included
     if targets_path_tuple in path_tuples:
@@ -232,7 +290,10 @@ def walk_integration_targets() -> c.Iterable[IntegrationTarget]:
     paths = []
 
     for path_tuple in sorted(path_tuples):
-        if previous_path_tuple and previous_path_tuple == path_tuple[:len(previous_path_tuple)]:
+        if (
+            previous_path_tuple
+            and previous_path_tuple == path_tuple[: len(previous_path_tuple)]
+        ):
             # ignore nested directories
             continue
 
@@ -246,12 +307,18 @@ def walk_integration_targets() -> c.Iterable[IntegrationTarget]:
 def load_integration_prefixes() -> dict[str, str]:
     """Load and return the integration test prefixes."""
     path = data_context().content.integration_path
-    file_paths = sorted(f for f in data_context().content.get_files(path) if os.path.splitext(os.path.basename(f))[0] == 'target-prefixes')
+    file_paths = sorted(
+        f
+        for f in data_context().content.get_files(path)
+        if os.path.splitext(os.path.basename(f))[0] == "target-prefixes"
+    )
     prefixes = {}
 
     for file_path in file_paths:
         prefix = os.path.splitext(file_path)[1][1:]
-        prefixes.update(dict((k, prefix) for k in read_text_file(file_path).splitlines()))
+        prefixes.update(
+            dict((k, prefix) for k in read_text_file(file_path).splitlines())
+        )
 
     return prefixes
 
@@ -267,9 +334,13 @@ def walk_test_targets(
 ) -> c.Iterable[TestTarget]:
     """Iterate over available test targets."""
     if path:
-        file_paths = data_context().content.walk_files(path, include_symlinked_directories=include_symlinked_directories)
+        file_paths = data_context().content.walk_files(
+            path, include_symlinked_directories=include_symlinked_directories
+        )
     else:
-        file_paths = data_context().content.all_files(include_symlinked_directories=include_symlinked_directories)
+        file_paths = data_context().content.all_files(
+            include_symlinked_directories=include_symlinked_directories
+        )
 
     for file_path in file_paths:
         name, ext = os.path.splitext(os.path.basename(file_path))
@@ -303,12 +374,18 @@ def walk_test_targets(
         yield TestTarget(file_path, module_path, prefix, path, symlink)
 
 
-def analyze_integration_target_dependencies(integration_targets: list[IntegrationTarget]) -> dict[str, set[str]]:
+def analyze_integration_target_dependencies(
+    integration_targets: list[IntegrationTarget],
+) -> dict[str, set[str]]:
     """Analyze the given list of integration test targets and return a dictionary expressing target names and the target names which depend on them."""
-    real_target_root = os.path.realpath(data_context().content.integration_targets_path) + '/'
+    real_target_root = (
+        os.path.realpath(data_context().content.integration_targets_path) + "/"
+    )
 
-    role_targets = [target for target in integration_targets if target.type == 'role']
-    hidden_role_target_names = set(target.name for target in role_targets if 'hidden/' in target.aliases)
+    role_targets = [target for target in integration_targets if target.type == "role"]
+    hidden_role_target_names = set(
+        target.name for target in role_targets if "hidden/" in target.aliases
+    )
 
     dependencies: collections.defaultdict[str, set[str]] = collections.defaultdict(set)
 
@@ -334,7 +411,7 @@ def analyze_integration_target_dependencies(integration_targets: list[Integratio
             if not real_link_path.startswith(real_target_root):
                 continue
 
-            link_target = real_link_path[len(real_target_root):].split('/')[0]
+            link_target = real_link_path[len(real_target_root) :].split("/")[0]
 
             if link_target == target.name:
                 continue
@@ -344,7 +421,7 @@ def analyze_integration_target_dependencies(integration_targets: list[Integratio
     # intentionally primitive analysis of role meta to avoid a dependency on pyyaml
     # script based targets are scanned as they may execute a playbook with role dependencies
     for target in integration_targets:
-        meta_dir = os.path.join(target.path, 'meta')
+        meta_dir = os.path.join(target.path, "meta")
 
         if not os.path.isdir(meta_dir):
             continue
@@ -360,7 +437,7 @@ def analyze_integration_target_dependencies(integration_targets: list[Integratio
                     continue
 
                 for meta_line in meta_lines:
-                    if re.search(r'^ *#.*$', meta_line):
+                    if re.search(r"^ *#.*$", meta_line):
                         continue
 
                     if not meta_line.strip():
@@ -392,10 +469,10 @@ def analyze_integration_target_dependencies(integration_targets: list[Integratio
         if not consumers:
             continue
 
-        display.info('%s:' % target_name, verbosity=4)
+        display.info("%s:" % target_name, verbosity=4)
 
         for consumer in sorted(consumers):
-            display.info('  %s' % consumer, verbosity=4)
+            display.info("  %s" % consumer, verbosity=4)
 
     return dependencies
 
@@ -404,8 +481,8 @@ class CompletionTarget(metaclass=abc.ABCMeta):
     """Command-line argument completion target base class."""
 
     def __init__(self) -> None:
-        self.name = ''
-        self.path = ''
+        self.name = ""
+        self.path = ""
         self.base_path: t.Optional[str] = None
         self.modules: tuple[str, ...] = tuple()
         self.aliases: tuple[str, ...] = tuple()
@@ -430,7 +507,7 @@ class CompletionTarget(metaclass=abc.ABCMeta):
 
     def __repr__(self):
         if self.modules:
-            return '%s (%s)' % (self.name, ', '.join(self.modules))
+            return "%s (%s)" % (self.name, ", ".join(self.modules))
 
         return self.name
 
@@ -453,23 +530,28 @@ class TestTarget(CompletionTarget):
 
         self.name = path
         self.path = path
-        self.base_path = base_path + '/' if base_path else None
+        self.base_path = base_path + "/" if base_path else None
         self.symlink = symlink
 
         name, ext = os.path.splitext(os.path.basename(self.path))
 
-        if module_path and is_subdir(path, module_path) and name != '__init__' and ext in MODULE_EXTENSIONS:
-            self.module = name[len(module_prefix or ''):].lstrip('_')
+        if (
+            module_path
+            and is_subdir(path, module_path)
+            and name != "__init__"
+            and ext in MODULE_EXTENSIONS
+        ):
+            self.module = name[len(module_prefix or "") :].lstrip("_")
             self.modules = (self.module,)
         else:
             self.module = None
             self.modules = tuple()
 
         aliases = [self.path, self.module]
-        parts = self.path.split('/')
+        parts = self.path.split("/")
 
         for i in range(1, len(parts)):
-            alias = '%s/' % '/'.join(parts[:i])
+            alias = "%s/" % "/".join(parts[:i])
             aliases.append(alias)
 
         aliases = [a for a in aliases if a]
@@ -492,18 +574,18 @@ def extract_plugin_references(name: str, aliases: list[str]) -> list[tuple[str, 
     found: list[tuple[str, str]] = []
 
     for alias in [name] + aliases:
-        plugin_type = 'modules'
+        plugin_type = "modules"
         plugin_name = alias
 
         if plugin_name in plugins.get(plugin_type, {}):
             found.append((plugin_type, plugin_name))
 
-        parts = alias.split('_')
+        parts = alias.split("_")
 
         for type_length in (1, 2):
             if len(parts) > type_length:
-                plugin_type = '_'.join(parts[:type_length])
-                plugin_name = '_'.join(parts[type_length:])
+                plugin_type = "_".join(parts[:type_length])
+                plugin_name = "_".join(parts[type_length:])
 
                 if plugin_name in plugins.get(plugin_type, {}):
                     found.append((plugin_type, plugin_name))
@@ -511,10 +593,17 @@ def extract_plugin_references(name: str, aliases: list[str]) -> list[tuple[str, 
     return found
 
 
-def categorize_integration_test(name: str, aliases: list[str], force_target: bool) -> tuple[IntegrationTargetType, IntegrationTargetType]:
+def categorize_integration_test(
+    name: str, aliases: list[str], force_target: bool
+) -> tuple[IntegrationTargetType, IntegrationTargetType]:
     """Return the integration test target types (used and actual) based on the given target name and aliases."""
-    context_controller = f'context/{IntegrationTargetType.CONTROLLER.name.lower()}' in aliases
-    context_target = f'context/{IntegrationTargetType.TARGET.name.lower()}' in aliases or force_target
+    context_controller = (
+        f"context/{IntegrationTargetType.CONTROLLER.name.lower()}" in aliases
+    )
+    context_target = (
+        f"context/{IntegrationTargetType.TARGET.name.lower()}" in aliases
+        or force_target
+    )
     actual_type = None
     strict_mode = data_context().content.is_ansible
 
@@ -525,8 +614,14 @@ def categorize_integration_test(name: str, aliases: list[str], force_target: boo
     elif context_target and not context_controller:
         target_type = IntegrationTargetType.TARGET
     else:
-        target_types = {IntegrationTargetType.TARGET if plugin_type in ('modules', 'module_utils') else IntegrationTargetType.CONTROLLER
-                        for plugin_type, plugin_name in extract_plugin_references(name, aliases)}
+        target_types = {
+            (
+                IntegrationTargetType.TARGET
+                if plugin_type in ("modules", "module_utils")
+                else IntegrationTargetType.CONTROLLER
+            )
+            for plugin_type, plugin_name in extract_plugin_references(name, aliases)
+        }
 
         if len(target_types) == 1:
             target_type = target_types.pop()
@@ -541,43 +636,57 @@ def categorize_integration_test(name: str, aliases: list[str], force_target: boo
 
 class IntegrationTarget(CompletionTarget):
     """Integration test target."""
-    non_posix = frozenset((
-        'network',
-        'windows',
-    ))
 
-    categories = frozenset(non_posix | frozenset((
-        'posix',
-        'module',
-        'needs',
-        'skip',
-    )))
+    non_posix = frozenset(
+        (
+            "network",
+            "windows",
+        )
+    )
 
-    def __init__(self, path: str, modules: frozenset[str], prefixes: dict[str, str]) -> None:
+    categories = frozenset(
+        non_posix
+        | frozenset(
+            (
+                "posix",
+                "module",
+                "needs",
+                "skip",
+            )
+        )
+    )
+
+    def __init__(
+        self, path: str, modules: frozenset[str], prefixes: dict[str, str]
+    ) -> None:
         super().__init__()
 
-        self.relative_path = os.path.relpath(path, data_context().content.integration_targets_path)
-        self.name = self.relative_path.replace(os.path.sep, '.')
+        self.relative_path = os.path.relpath(
+            path, data_context().content.integration_targets_path
+        )
+        self.name = self.relative_path.replace(os.path.sep, ".")
         self.path = path
 
         # script_path and type
 
         file_paths = data_context().content.get_files(path)
-        runme_path = os.path.join(path, 'runme.sh')
+        runme_path = os.path.join(path, "runme.sh")
 
         if runme_path in file_paths:
-            self.type = 'script'
+            self.type = "script"
             self.script_path = runme_path
         else:
-            self.type = 'role'  # ansible will consider these empty roles, so ansible-test should as well
+            self.type = "role"  # ansible will consider these empty roles, so ansible-test should as well
             self.script_path = None
 
         # static_aliases
 
-        aliases_path = os.path.join(path, 'aliases')
+        aliases_path = os.path.join(path, "aliases")
 
         if aliases_path in file_paths:
-            static_aliases = tuple(read_lines_without_comments(aliases_path, remove_blank_lines=True))
+            static_aliases = tuple(
+                read_lines_without_comments(aliases_path, remove_blank_lines=True)
+            )
         else:
             static_aliases = tuple()
 
@@ -585,109 +694,139 @@ class IntegrationTarget(CompletionTarget):
 
         if self.name in modules:
             module_name = self.name
-        elif self.name.startswith('win_') and self.name[4:] in modules:
+        elif self.name.startswith("win_") and self.name[4:] in modules:
             module_name = self.name[4:]
         else:
             module_name = None
 
-        self.modules = tuple(sorted(a for a in static_aliases + tuple([module_name]) if a in modules))
+        self.modules = tuple(
+            sorted(a for a in static_aliases + tuple([module_name]) if a in modules)
+        )
 
         # groups
 
         groups = [self.type]
         groups += [a for a in static_aliases if a not in modules]
-        groups += ['module/%s' % m for m in self.modules]
+        groups += ["module/%s" % m for m in self.modules]
 
-        if data_context().content.is_ansible and (self.name == 'ansible-test' or self.name.startswith('ansible-test-')):
-            groups.append('ansible-test')
+        if data_context().content.is_ansible and (
+            self.name == "ansible-test" or self.name.startswith("ansible-test-")
+        ):
+            groups.append("ansible-test")
 
         if not self.modules:
-            groups.append('non_module')
+            groups.append("non_module")
 
-        if 'destructive' not in groups:
-            groups.append('non_destructive')
+        if "destructive" not in groups:
+            groups.append("non_destructive")
 
-        if 'needs/httptester' in groups:
-            groups.append('cloud/httptester')  # backwards compatibility for when it was not a cloud plugin
+        if "needs/httptester" in groups:
+            groups.append(
+                "cloud/httptester"
+            )  # backwards compatibility for when it was not a cloud plugin
 
         for prefix, group in prefixes.items():
-            if not self.name.startswith(f'{prefix}_'):
+            if not self.name.startswith(f"{prefix}_"):
                 continue
 
             if group != prefix:
-                group = '%s/%s' % (group, prefix)
+                group = "%s/%s" % (group, prefix)
 
             groups.append(group)
 
-        if self.name.startswith('win_'):
-            groups.append('windows')
+        if self.name.startswith("win_"):
+            groups.append("windows")
 
-        if self.name.startswith('connection_'):
-            groups.append('connection')
+        if self.name.startswith("connection_"):
+            groups.append("connection")
 
-        if self.name.startswith('setup_') or self.name.startswith('prepare_'):
-            groups.append('hidden')
+        if self.name.startswith("setup_") or self.name.startswith("prepare_"):
+            groups.append("hidden")
 
-        if self.type not in ('script', 'role'):
-            groups.append('hidden')
+        if self.type not in ("script", "role"):
+            groups.append("hidden")
 
         targets_relative_path = data_context().content.integration_targets_path
 
         # Collect skip entries before group expansion to avoid registering more specific skip entries as less specific versions.
-        self.skips = tuple(g for g in groups if g.startswith('skip/'))
+        self.skips = tuple(g for g in groups if g.startswith("skip/"))
 
         # Collect file paths before group expansion to avoid including the directories.
         # Ignore references to test targets, as those must be defined using `needs/target/*` or other target references.
-        self.needs_file = tuple(sorted(set('/'.join(g.split('/')[2:]) for g in groups if
-                                           g.startswith('needs/file/') and not g.startswith('needs/file/%s/' % targets_relative_path))))
+        self.needs_file = tuple(
+            sorted(
+                set(
+                    "/".join(g.split("/")[2:])
+                    for g in groups
+                    if g.startswith("needs/file/")
+                    and not g.startswith("needs/file/%s/" % targets_relative_path)
+                )
+            )
+        )
 
         # network platform
-        networks = [g.split('/')[1] for g in groups if g.startswith('network/')]
+        networks = [g.split("/")[1] for g in groups if g.startswith("network/")]
         self.network_platform = networks[0] if networks else None
 
         for group in itertools.islice(groups, 0, len(groups)):
-            if '/' in group:
-                parts = group.split('/')
+            if "/" in group:
+                parts = group.split("/")
                 for i in range(1, len(parts)):
-                    groups.append('/'.join(parts[:i]))
+                    groups.append("/".join(parts[:i]))
 
         if not any(g in self.non_posix for g in groups):
-            groups.append('posix')
+            groups.append("posix")
 
         # target type
 
         # targets which are non-posix test against the target, even if they also support posix
         force_target = any(group in self.non_posix for group in groups)
 
-        target_type, actual_type = categorize_integration_test(self.name, list(static_aliases), force_target)
+        target_type, actual_type = categorize_integration_test(
+            self.name, list(static_aliases), force_target
+        )
 
-        groups.extend(['context/', f'context/{target_type.name.lower()}'])
+        groups.extend(["context/", f"context/{target_type.name.lower()}"])
 
         if target_type != actual_type:
             # allow users to query for the actual type
-            groups.extend(['context/', f'context/{actual_type.name.lower()}'])
+            groups.extend(["context/", f"context/{actual_type.name.lower()}"])
 
         self.target_type = target_type
         self.actual_type = actual_type
 
         # aliases
 
-        aliases = [self.name] + \
-                  ['%s/' % g for g in groups] + \
-                  ['%s/%s' % (g, self.name) for g in groups if g not in self.categories]
+        aliases = (
+            [self.name]
+            + ["%s/" % g for g in groups]
+            + ["%s/%s" % (g, self.name) for g in groups if g not in self.categories]
+        )
 
-        if 'hidden/' in aliases:
-            aliases = ['hidden/'] + ['hidden/%s' % a for a in aliases if not a.startswith('hidden/')]
+        if "hidden/" in aliases:
+            aliases = ["hidden/"] + [
+                "hidden/%s" % a for a in aliases if not a.startswith("hidden/")
+            ]
 
         self.aliases = tuple(sorted(set(aliases)))
 
         # configuration
 
-        self.retry_never = 'retry/never/' in self.aliases
+        self.retry_never = "retry/never/" in self.aliases
 
-        self.setup_once = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/once/'))))
-        self.setup_always = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/always/'))))
-        self.needs_target = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('needs/target/'))))
+        self.setup_once = tuple(
+            sorted(set(g.split("/")[2] for g in groups if g.startswith("setup/once/")))
+        )
+        self.setup_always = tuple(
+            sorted(
+                set(g.split("/")[2] for g in groups if g.startswith("setup/always/"))
+            )
+        )
+        self.needs_target = tuple(
+            sorted(
+                set(g.split("/")[2] for g in groups if g.startswith("needs/target/"))
+            )
+        )
 
 
 class TargetPatternsNotMatched(ApplicationError):
@@ -697,12 +836,12 @@ class TargetPatternsNotMatched(ApplicationError):
         self.patterns = sorted(patterns)
 
         if len(patterns) > 1:
-            message = 'Target patterns not matched:\n%s' % '\n'.join(self.patterns)
+            message = "Target patterns not matched:\n%s" % "\n".join(self.patterns)
         else:
-            message = 'Target pattern not matched: %s' % self.patterns[0]
+            message = "Target pattern not matched: %s" % self.patterns[0]
 
         super().__init__(message)
 
 
-TCompletionTarget = t.TypeVar('TCompletionTarget', bound=CompletionTarget)
-TIntegrationTarget = t.TypeVar('TIntegrationTarget', bound=IntegrationTarget)
+TCompletionTarget = t.TypeVar("TCompletionTarget", bound=CompletionTarget)
+TIntegrationTarget = t.TypeVar("TIntegrationTarget", bound=IntegrationTarget)

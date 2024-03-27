@@ -1,4 +1,5 @@
 """Execute Ansible tests."""
+
 from __future__ import annotations
 
 import typing as t
@@ -71,7 +72,7 @@ def detect_changes(args: TestConfig) -> t.Optional[list[str]]:
     if paths is None:
         return None  # act as though change detection not enabled, do not filter targets
 
-    display.info('Detected changes in %d file(s).' % len(paths))
+    display.info("Detected changes in %d file(s)." % len(paths))
 
     for path in paths:
         display.info(path, verbosity=1)
@@ -83,20 +84,25 @@ class NoChangesDetected(ApplicationWarning):
     """Exception when change detection was performed, but no changes were found."""
 
     def __init__(self) -> None:
-        super().__init__('No changes detected.')
+        super().__init__("No changes detected.")
 
 
 class NoTestsForChanges(ApplicationWarning):
     """Exception when changes detected, but no tests trigger as a result."""
 
     def __init__(self) -> None:
-        super().__init__('No tests found for detected changes.')
+        super().__init__("No tests found for detected changes.")
 
 
 class Delegate(Exception):
     """Trigger command delegation."""
 
-    def __init__(self, host_state: HostState, exclude: list[str] = None, require: list[str] = None) -> None:
+    def __init__(
+        self,
+        host_state: HostState,
+        exclude: list[str] = None,
+        require: list[str] = None,
+    ) -> None:
         super().__init__()
 
         self.host_state = host_state
@@ -117,4 +123,4 @@ class AllTargetsSkipped(ApplicationWarning):
     """All targets skipped."""
 
     def __init__(self) -> None:
-        super().__init__('All targets skipped.')
+        super().__init__("All targets skipped.")

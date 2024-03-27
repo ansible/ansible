@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: gather_facts
 version_added: 2.8
@@ -55,7 +55,7 @@ notes:
       Order is not guaranteed, when doing parallel gathering on multiple modules.
 author:
     - "Ansible Core Team"
-'''
+"""
 
 RETURN = """
 # depends on the fact module called

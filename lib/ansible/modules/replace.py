@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: replace
 author: Evan Kaufman (@EvanK)
@@ -110,9 +110,9 @@ notes:
     See U(https://github.com/ansible/ansible/issues/31354) for details.
   - Option O(ignore:follow) has been removed in Ansible 2.5, because this module modifies the contents of the file
     so O(ignore:follow=no) does not make sense.
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Replace old hostname with new hostname (requires Ansible >= 2.4)
   ansible.builtin.replace:
     path: /etc/hosts
@@ -179,9 +179,9 @@ EXAMPLES = r'''
     path: /etc/ssh/sshd_config
     regexp: '^(?P<dctv>ListenAddress[ ]+)(?P<host>[^\n]+)$'
     replace: '#\g<dctv>\g<host>\n\g<dctv>0.0.0.0'
-'''
+"""
 
-RETURN = r'''#'''
+RETURN = r"""#"""
 
 import os
 import re
@@ -195,11 +195,11 @@ from ansible.module_utils.basic import AnsibleModule
 def write_changes(module, contents, path):
 
     tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
-    f = os.fdopen(tmpfd, 'wb')
+    f = os.fdopen(tmpfd, "wb")
     f.write(contents)
     f.close()
 
-    validate = module.params.get('validate', None)
+    validate = module.params.get("validate", None)
     valid = not validate
     if validate:
         if "%s" not in validate:
@@ -207,10 +207,9 @@ def write_changes(module, contents, path):
         (rc, out, err) = module.run_command(validate % tmpfile)
         valid = rc == 0
         if rc != 0:
-            module.fail_json(msg='failed to validate: '
-                                 'rc:%s error:%s' % (rc, err))
+            module.fail_json(msg="failed to validate: " "rc:%s error:%s" % (rc, err))
     if valid:
-        module.atomic_move(tmpfile, path, unsafe_writes=module.params['unsafe_writes'])
+        module.atomic_move(tmpfile, path, unsafe_writes=module.params["unsafe_writes"])
 
 
 def check_file_attrs(module, changed, message):
@@ -229,96 +228,116 @@ def check_file_attrs(module, changed, message):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            path=dict(type='path', required=True, aliases=['dest', 'destfile', 'name']),
-            regexp=dict(type='str', required=True),
-            replace=dict(type='str', default=''),
-            after=dict(type='str'),
-            before=dict(type='str'),
-            backup=dict(type='bool', default=False),
-            validate=dict(type='str'),
-            encoding=dict(type='str', default='utf-8'),
+            path=dict(type="path", required=True, aliases=["dest", "destfile", "name"]),
+            regexp=dict(type="str", required=True),
+            replace=dict(type="str", default=""),
+            after=dict(type="str"),
+            before=dict(type="str"),
+            backup=dict(type="bool", default=False),
+            validate=dict(type="str"),
+            encoding=dict(type="str", default="utf-8"),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
     )
 
     params = module.params
-    path = params['path']
-    encoding = params['encoding']
+    path = params["path"]
+    encoding = params["encoding"]
     res_args = dict(rc=0)
 
-    params['after'] = to_text(params['after'], errors='surrogate_or_strict', nonstring='passthru')
-    params['before'] = to_text(params['before'], errors='surrogate_or_strict', nonstring='passthru')
-    params['regexp'] = to_text(params['regexp'], errors='surrogate_or_strict', nonstring='passthru')
-    params['replace'] = to_text(params['replace'], errors='surrogate_or_strict', nonstring='passthru')
+    params["after"] = to_text(
+        params["after"], errors="surrogate_or_strict", nonstring="passthru"
+    )
+    params["before"] = to_text(
+        params["before"], errors="surrogate_or_strict", nonstring="passthru"
+    )
+    params["regexp"] = to_text(
+        params["regexp"], errors="surrogate_or_strict", nonstring="passthru"
+    )
+    params["replace"] = to_text(
+        params["replace"], errors="surrogate_or_strict", nonstring="passthru"
+    )
 
     if os.path.isdir(path):
-        module.fail_json(rc=256, msg='Path %s is a directory !' % path)
+        module.fail_json(rc=256, msg="Path %s is a directory !" % path)
 
     if not os.path.exists(path):
-        module.fail_json(rc=257, msg='Path %s does not exist !' % path)
+        module.fail_json(rc=257, msg="Path %s does not exist !" % path)
     else:
         try:
-            with open(path, 'rb') as f:
-                contents = to_text(f.read(), errors='surrogate_or_strict', encoding=encoding)
+            with open(path, "rb") as f:
+                contents = to_text(
+                    f.read(), errors="surrogate_or_strict", encoding=encoding
+                )
         except (OSError, IOError) as e:
-            module.fail_json(msg='Unable to read the contents of %s: %s' % (path, to_text(e)),
-                             exception=format_exc())
+            module.fail_json(
+                msg="Unable to read the contents of %s: %s" % (path, to_text(e)),
+                exception=format_exc(),
+            )
 
-    pattern = u''
-    if params['after'] and params['before']:
-        pattern = u'%s(?P<subsection>.*?)%s' % (params['after'], params['before'])
-    elif params['after']:
-        pattern = u'%s(?P<subsection>.*)' % params['after']
-    elif params['before']:
-        pattern = u'(?P<subsection>.*)%s' % params['before']
+    pattern = ""
+    if params["after"] and params["before"]:
+        pattern = "%s(?P<subsection>.*?)%s" % (params["after"], params["before"])
+    elif params["after"]:
+        pattern = "%s(?P<subsection>.*)" % params["after"]
+    elif params["before"]:
+        pattern = "(?P<subsection>.*)%s" % params["before"]
 
     if pattern:
         section_re = re.compile(pattern, re.DOTALL)
         match = re.search(section_re, contents)
         if match:
-            section = match.group('subsection')
-            indices = [match.start('subsection'), match.end('subsection')]
+            section = match.group("subsection")
+            indices = [match.start("subsection"), match.end("subsection")]
         else:
-            res_args['msg'] = 'Pattern for before/after params did not match the given file: %s' % pattern
-            res_args['changed'] = False
+            res_args["msg"] = (
+                "Pattern for before/after params did not match the given file: %s"
+                % pattern
+            )
+            res_args["changed"] = False
             module.exit_json(**res_args)
     else:
         section = contents
 
-    mre = re.compile(params['regexp'], re.MULTILINE)
+    mre = re.compile(params["regexp"], re.MULTILINE)
     try:
-        result = re.subn(mre, params['replace'], section, 0)
+        result = re.subn(mre, params["replace"], section, 0)
     except re.error as e:
-        module.fail_json(msg="Unable to process replace due to error: %s" % to_text(e),
-                         exception=format_exc())
+        module.fail_json(
+            msg="Unable to process replace due to error: %s" % to_text(e),
+            exception=format_exc(),
+        )
 
     if result[1] > 0 and section != result[0]:
         if pattern:
-            result = (contents[:indices[0]] + result[0] + contents[indices[1]:], result[1])
-        msg = '%s replacements made' % result[1]
+            result = (
+                contents[: indices[0]] + result[0] + contents[indices[1] :],
+                result[1],
+            )
+        msg = "%s replacements made" % result[1]
         changed = True
         if module._diff:
-            res_args['diff'] = {
-                'before_header': path,
-                'before': contents,
-                'after_header': path,
-                'after': result[0],
+            res_args["diff"] = {
+                "before_header": path,
+                "before": contents,
+                "after_header": path,
+                "after": result[0],
             }
     else:
-        msg = ''
+        msg = ""
         changed = False
 
     if changed and not module.check_mode:
-        if params['backup'] and os.path.exists(path):
-            res_args['backup_file'] = module.backup_local(path)
+        if params["backup"] and os.path.exists(path):
+            res_args["backup_file"] = module.backup_local(path)
         # We should always follow symlinks so that we change the real file
         path = os.path.realpath(path)
         write_changes(module, to_bytes(result[0], encoding=encoding), path)
 
-    res_args['msg'], res_args['changed'] = check_file_attrs(module, changed, msg)
+    res_args["msg"], res_args["changed"] = check_file_attrs(module, changed, msg)
     module.exit_json(**res_args)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

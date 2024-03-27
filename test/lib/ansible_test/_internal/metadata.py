@@ -1,4 +1,5 @@
 """Test metadata for passing data to delegated tests."""
+
 from __future__ import annotations
 import typing as t
 
@@ -24,7 +25,9 @@ class Metadata:
     def __init__(self) -> None:
         """Initialize metadata."""
         self.changes: dict[str, tuple[tuple[int, int], ...]] = {}
-        self.cloud_config: t.Optional[dict[str, dict[str, t.Union[int, str, bool]]]] = None
+        self.cloud_config: t.Optional[dict[str, dict[str, t.Union[int, str, bool]]]] = (
+            None
+        )
         self.change_description: t.Optional[ChangeDescription] = None
         self.ci_provider: t.Optional[str] = None
         self.session_id = generate_name()
@@ -34,9 +37,17 @@ class Metadata:
         patches = parse_diff(diff)
         patches: list[FileDiff] = sorted(patches, key=lambda k: k.new.path)
 
-        self.changes = dict((patch.new.path, tuple(patch.new.ranges)) for patch in patches)
+        self.changes = dict(
+            (patch.new.path, tuple(patch.new.ranges)) for patch in patches
+        )
 
-        renames = [patch.old.path for patch in patches if patch.old.path != patch.new.path and patch.old.exists and patch.new.exists]
+        renames = [
+            patch.old.path
+            for patch in patches
+            if patch.old.path != patch.new.path
+            and patch.old.exists
+            and patch.new.exists
+        ]
         deletes = [patch.old.path for patch in patches if not patch.new.exists]
 
         # make sure old paths which were renamed or deleted are registered in changes
@@ -62,7 +73,7 @@ class Metadata:
         """Write the metadata to the specified file."""
         data = self.to_dict()
 
-        display.info('>>> Metadata: %s\n%s' % (path, data), verbosity=3)
+        display.info(">>> Metadata: %s\n%s" % (path, data), verbosity=3)
 
         write_json_file(path, data)
 
@@ -76,11 +87,13 @@ class Metadata:
     def from_dict(data: dict[str, t.Any]) -> Metadata:
         """Return metadata loaded from the specified dictionary."""
         metadata = Metadata()
-        metadata.changes = data['changes']
-        metadata.cloud_config = data['cloud_config']
-        metadata.ci_provider = data['ci_provider']
-        metadata.change_description = ChangeDescription.from_dict(data['change_description'])
-        metadata.session_id = data['session_id']
+        metadata.changes = data["changes"]
+        metadata.cloud_config = data["cloud_config"]
+        metadata.ci_provider = data["ci_provider"]
+        metadata.change_description = ChangeDescription.from_dict(
+            data["change_description"]
+        )
+        metadata.session_id = data["session_id"]
 
         return metadata
 
@@ -89,7 +102,7 @@ class ChangeDescription:
     """Description of changes."""
 
     def __init__(self) -> None:
-        self.command: str = ''
+        self.command: str = ""
         self.changed_paths: list[str] = []
         self.deleted_paths: list[str] = []
         self.regular_command_targets: dict[str, list[str]] = {}
@@ -121,11 +134,11 @@ class ChangeDescription:
     def from_dict(data: dict[str, t.Any]) -> ChangeDescription:
         """Return a change description loaded from the given dictionary."""
         changes = ChangeDescription()
-        changes.command = data['command']
-        changes.changed_paths = data['changed_paths']
-        changes.deleted_paths = data['deleted_paths']
-        changes.regular_command_targets = data['regular_command_targets']
-        changes.focused_command_targets = data['focused_command_targets']
-        changes.no_integration_paths = data['no_integration_paths']
+        changes.command = data["command"]
+        changes.changed_paths = data["changed_paths"]
+        changes.deleted_paths = data["deleted_paths"]
+        changes.regular_command_targets = data["regular_command_targets"]
+        changes.focused_command_targets = data["focused_command_targets"]
+        changes.no_integration_paths = data["no_integration_paths"]
 
         return changes

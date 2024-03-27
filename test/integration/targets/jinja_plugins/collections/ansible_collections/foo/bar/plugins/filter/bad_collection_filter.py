@@ -6,4 +6,4 @@ from __future__ import annotations
 
 class FilterModule:
     def filters(self):
-        raise TypeError('bad_collection_filter')
+        raise TypeError("bad_collection_filter")

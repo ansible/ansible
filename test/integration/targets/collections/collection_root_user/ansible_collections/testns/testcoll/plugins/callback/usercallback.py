@@ -2,19 +2,19 @@ from __future__ import annotations
 
 from ansible.plugins.callback import CallbackBase
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     callback: usercallback
     callback_type: notification
     short_description: does stuff
     description:
       - does some stuff
-'''
+"""
 
 
 class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
-    CALLBACK_TYPE = 'aggregate'
-    CALLBACK_NAME = 'usercallback'
+    CALLBACK_TYPE = "aggregate"
+    CALLBACK_NAME = "usercallback"
 
     def __init__(self):
 

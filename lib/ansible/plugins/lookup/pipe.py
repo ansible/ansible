@@ -65,10 +65,18 @@ class LookupModule(LookupBase):
             # https://github.com/ansible/ansible/issues/6550
             term = str(term)
 
-            p = subprocess.Popen(term, cwd=self._loader.get_basedir(), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            p = subprocess.Popen(
+                term,
+                cwd=self._loader.get_basedir(),
+                shell=True,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+            )
             (stdout, stderr) = p.communicate()
             if p.returncode == 0:
                 ret.append(stdout.decode("utf-8").rstrip())
             else:
-                raise AnsibleError("lookup_plugin.pipe(%s) returned %d" % (term, p.returncode))
+                raise AnsibleError(
+                    "lookup_plugin.pipe(%s) returned %d" % (term, p.returncode)
+                )
         return ret

@@ -17,7 +17,7 @@ import pytest
 def compress(data):
     buf = io.BytesIO()
     try:
-        f = gzip.GzipFile(fileobj=buf, mode='wb')
+        f = gzip.GzipFile(fileobj=buf, mode="wb")
         f.write(data)
     finally:
         f.close()
@@ -31,40 +31,45 @@ class Sock(io.BytesIO):
 
 @pytest.fixture
 def urlopen_mock(mocker):
-    return mocker.patch('ansible.module_utils.urls.urllib.request.urlopen')
+    return mocker.patch("ansible.module_utils.urls.urllib.request.urlopen")
 
 
 JSON_DATA = b'{"foo": "bar", "baz": "qux", "sandwich": "ham", "tech_level": "pickle", "pop": "corn", "ansible": "awesome"}'
 
 
-RESP = b'''HTTP/1.1 200 OK
+RESP = (
+    b"""HTTP/1.1 200 OK
 Content-Type: application/json; charset=utf-8
 Set-Cookie: foo
 Set-Cookie: bar
 Content-Length: 108
 
-%s''' % JSON_DATA
+%s"""
+    % JSON_DATA
+)
 
-GZIP_RESP = b'''HTTP/1.1 200 OK
+GZIP_RESP = b"""HTTP/1.1 200 OK
 Content-Type: application/json; charset=utf-8
 Set-Cookie: foo
 Set-Cookie: bar
 Content-Encoding: gzip
 Content-Length: 100
 
-%s''' % compress(JSON_DATA)
+%s""" % compress(
+    JSON_DATA
+)
 
 
 def test_Request_open_gzip(urlopen_mock):
     h = http.client.HTTPResponse(
         Sock(GZIP_RESP),
-        method='GET',
+        method="GET",
     )
     h.begin()
 
     urlopen_mock.return_value = h
 
-    r = Request().open('GET', 'https://ansible.com/')
+    r = Request().open("GET", "https://ansible.com/")
     assert isinstance(r.fp, GzipDecodedReader)
     assert r.read() == JSON_DATA
 
@@ -72,13 +77,13 @@ def test_Request_open_gzip(urlopen_mock):
 def test_Request_open_not_gzip(urlopen_mock):
     h = http.client.HTTPResponse(
         Sock(RESP),
-        method='GET',
+        method="GET",
     )
     h.begin()
 
     urlopen_mock.return_value = h
 
-    r = Request().open('GET', 'https://ansible.com/')
+    r = Request().open("GET", "https://ansible.com/")
     assert not isinstance(r.fp, GzipDecodedReader)
     assert r.read() == JSON_DATA
 
@@ -86,30 +91,30 @@ def test_Request_open_not_gzip(urlopen_mock):
 def test_Request_open_decompress_false(urlopen_mock):
     h = http.client.HTTPResponse(
         Sock(RESP),
-        method='GET',
+        method="GET",
     )
     h.begin()
 
     urlopen_mock.return_value = h
 
-    r = Request().open('GET', 'https://ansible.com/', decompress=False)
+    r = Request().open("GET", "https://ansible.com/", decompress=False)
     assert not isinstance(r.fp, GzipDecodedReader)
     assert r.read() == JSON_DATA
 
 
 def test_GzipDecodedReader_no_gzip(monkeypatch, mocker):
-    monkeypatch.delitem(sys.modules, 'gzip')
-    monkeypatch.delitem(sys.modules, 'ansible.module_utils.urls')
+    monkeypatch.delitem(sys.modules, "gzip")
+    monkeypatch.delitem(sys.modules, "ansible.module_utils.urls")
 
     orig_import = __import__
 
     def _import(*args):
-        if args[0] == 'gzip':
+        if args[0] == "gzip":
             raise ImportError
         return orig_import(*args)
 
-    mocker.patch('builtins.__import__', _import)
+    mocker.patch("builtins.__import__", _import)
 
-    mod = __import__('ansible.module_utils.urls').module_utils.urls
+    mod = __import__("ansible.module_utils.urls").module_utils.urls
     assert mod.HAS_GZIP is False
     pytest.raises(mod.MissingModuleError, mod.GzipDecodedReader, None)

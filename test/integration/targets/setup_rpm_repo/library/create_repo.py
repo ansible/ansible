@@ -7,7 +7,11 @@ import tempfile
 from collections import namedtuple
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
+from ansible.module_utils.common.respawn import (
+    has_respawned,
+    probe_interpreters_for_module,
+    respawn_module,
+)
 
 HAS_RPMFLUFF = True
 can_use_rpm_weak_deps = None
@@ -34,29 +38,39 @@ if HAS_RPMFLUFF:
             pass
 
 
-RPM = namedtuple('RPM', ['name', 'version', 'release', 'epoch', 'recommends', 'file', 'arch'])
+RPM = namedtuple(
+    "RPM", ["name", "version", "release", "epoch", "recommends", "file", "arch"]
+)
 
 SPECS = [
-    RPM('dinginessentail', '1.0', '1', None, None, None, None),
-    RPM('dinginessentail', '1.0', '2', '1', None, None, None),
-    RPM('dinginessentail', '1.1', '1', '1', None, None, None),
-    RPM('dinginessentail-olive', '1.0', '1', None, None, None, None),
-    RPM('dinginessentail-olive', '1.1', '1', None, None, None, None),
-    RPM('landsidescalping', '1.0', '1', None, None, None, None),
-    RPM('landsidescalping', '1.1', '1', None, None, None, None),
-    RPM('dinginessentail-with-weak-dep', '1.0', '1', None, ['dinginessentail-weak-dep'], None, None),
-    RPM('dinginessentail-weak-dep', '1.0', '1', None, None, None, None),
-    RPM('noarchfake', '1.0', '1', None, None, None, 'noarch'),
-    RPM('provides_foo_a', '1.0', '1', None, None, 'foo.so', 'noarch'),
-    RPM('provides_foo_b', '1.0', '1', None, None, 'foo.so', 'noarch'),
-    RPM('number-11-name', '11.0', '1', None, None, None, None),
-    RPM('number-11-name', '11.1', '1', None, None, None, None),
-    RPM('epochone', '1.0', '1', '1', None, None, "noarch"),
-    RPM('epochone', '1.1', '1', '1', None, None, "noarch"),
+    RPM("dinginessentail", "1.0", "1", None, None, None, None),
+    RPM("dinginessentail", "1.0", "2", "1", None, None, None),
+    RPM("dinginessentail", "1.1", "1", "1", None, None, None),
+    RPM("dinginessentail-olive", "1.0", "1", None, None, None, None),
+    RPM("dinginessentail-olive", "1.1", "1", None, None, None, None),
+    RPM("landsidescalping", "1.0", "1", None, None, None, None),
+    RPM("landsidescalping", "1.1", "1", None, None, None, None),
+    RPM(
+        "dinginessentail-with-weak-dep",
+        "1.0",
+        "1",
+        None,
+        ["dinginessentail-weak-dep"],
+        None,
+        None,
+    ),
+    RPM("dinginessentail-weak-dep", "1.0", "1", None, None, None, None),
+    RPM("noarchfake", "1.0", "1", None, None, None, "noarch"),
+    RPM("provides_foo_a", "1.0", "1", None, None, "foo.so", "noarch"),
+    RPM("provides_foo_b", "1.0", "1", None, None, "foo.so", "noarch"),
+    RPM("number-11-name", "11.0", "1", None, None, None, None),
+    RPM("number-11-name", "11.1", "1", None, None, None, None),
+    RPM("epochone", "1.0", "1", "1", None, None, "noarch"),
+    RPM("epochone", "1.1", "1", "1", None, None, "noarch"),
 ]
 
 
-def create_repo(arch='x86_64'):
+def create_repo(arch="x86_64"):
     pkgs = []
     for spec in SPECS:
         pkg = SimpleRpmBuild(spec.name, spec.version, spec.release, [spec.arch or arch])
@@ -72,16 +86,13 @@ def create_repo(arch='x86_64'):
 
         if spec.file:
             pkg.add_installed_file(
-                "/" + spec.file,
-                GeneratedSourceFile(
-                    spec.file, make_elf()
-                )
+                "/" + spec.file, GeneratedSourceFile(spec.file, make_elf())
             )
 
         pkgs.append(pkg)
 
     repo = YumRepoBuild(pkgs)
-    repo.make(arch, 'noarch')
+    repo.make(arch, "noarch")
 
     for pkg in pkgs:
         pkg.clean()
@@ -92,23 +103,29 @@ def create_repo(arch='x86_64'):
 def main():
     module = AnsibleModule(
         argument_spec={
-            'arch': {'required': True},
-            'tempdir': {'type': 'path'},
+            "arch": {"required": True},
+            "tempdir": {"type": "path"},
         }
     )
 
     if not HAS_RPMFLUFF:
-        system_interpreters = ['/usr/libexec/platform-python', '/usr/bin/python3', '/usr/bin/python']
+        system_interpreters = [
+            "/usr/libexec/platform-python",
+            "/usr/bin/python3",
+            "/usr/bin/python",
+        ]
 
-        interpreter = probe_interpreters_for_module(system_interpreters, 'rpmfluff')
+        interpreter = probe_interpreters_for_module(system_interpreters, "rpmfluff")
 
         if not interpreter or has_respawned():
-            module.fail_json('unable to find rpmfluff; tried {0}'.format(system_interpreters))
+            module.fail_json(
+                "unable to find rpmfluff; tried {0}".format(system_interpreters)
+            )
 
         respawn_module(interpreter)
 
-    arch = module.params['arch']
-    tempdir = module.params['tempdir']
+    arch = module.params["arch"]
+    tempdir = module.params["tempdir"]
 
     # Save current temp dir so we can set it back later
     original_tempdir = tempfile.tempdir

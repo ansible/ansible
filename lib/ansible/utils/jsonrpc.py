@@ -20,16 +20,16 @@ class JsonRpcServer(object):
     _objects = set()  # type: set[object]
 
     def handle_request(self, request):
-        request = json.loads(to_text(request, errors='surrogate_then_replace'))
+        request = json.loads(to_text(request, errors="surrogate_then_replace"))
 
-        method = request.get('method')
+        method = request.get("method")
 
-        if method.startswith('rpc.') or method.startswith('_'):
+        if method.startswith("rpc.") or method.startswith("_"):
             error = self.invalid_request()
             return json.dumps(error)
 
-        args, kwargs = request.get('params')
-        setattr(self, '_identifier', request.get('id'))
+        args, kwargs = request.get("params")
+        setattr(self, "_identifier", request.get("id"))
 
         rpc_method = None
         for obj in self._objects:
@@ -52,10 +52,12 @@ class JsonRpcServer(object):
                 response = json.dumps(error)
             except Exception as exc:
                 display.vvv(traceback.format_exc())
-                error = self.internal_error(data=to_text(exc, errors='surrogate_then_replace'))
+                error = self.internal_error(
+                    data=to_text(exc, errors="surrogate_then_replace")
+                )
                 response = json.dumps(error)
             else:
-                if isinstance(result, dict) and 'jsonrpc' in result:
+                if isinstance(result, dict) and "jsonrpc" in result:
                     response = result
                 else:
                     response = self.response(result)
@@ -64,10 +66,12 @@ class JsonRpcServer(object):
                     response = json.dumps(response)
                 except Exception as exc:
                     display.vvv(traceback.format_exc())
-                    error = self.internal_error(data=to_text(exc, errors='surrogate_then_replace'))
+                    error = self.internal_error(
+                        data=to_text(exc, errors="surrogate_then_replace")
+                    )
                     response = json.dumps(error)
 
-        delattr(self, '_identifier')
+        delattr(self, "_identifier")
 
         return response
 
@@ -75,7 +79,7 @@ class JsonRpcServer(object):
         self._objects.add(obj)
 
     def header(self):
-        return {'jsonrpc': '2.0', 'id': self._identifier}
+        return {"jsonrpc": "2.0", "id": self._identifier}
 
     def response(self, result=None):
         response = self.header()
@@ -84,29 +88,29 @@ class JsonRpcServer(object):
         if not isinstance(result, text_type):
             response["result_type"] = "pickle"
             result = to_text(pickle.dumps(result, protocol=0))
-        response['result'] = result
+        response["result"] = result
         return response
 
     def error(self, code, message, data=None):
         response = self.header()
-        error = {'code': code, 'message': message}
+        error = {"code": code, "message": message}
         if data:
-            error['data'] = data
-        response['error'] = error
+            error["data"] = data
+        response["error"] = error
         return response
 
     # json-rpc standard errors (-32768 .. -32000)
     def parse_error(self, data=None):
-        return self.error(-32700, 'Parse error', data)
+        return self.error(-32700, "Parse error", data)
 
     def method_not_found(self, data=None):
-        return self.error(-32601, 'Method not found', data)
+        return self.error(-32601, "Method not found", data)
 
     def invalid_request(self, data=None):
-        return self.error(-32600, 'Invalid request', data)
+        return self.error(-32600, "Invalid request", data)
 
     def invalid_params(self, data=None):
-        return self.error(-32602, 'Invalid params', data)
+        return self.error(-32602, "Invalid params", data)
 
     def internal_error(self, data=None):
-        return self.error(-32603, 'Internal error', data)
+        return self.error(-32603, "Internal error", data)

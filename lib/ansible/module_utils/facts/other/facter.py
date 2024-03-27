@@ -12,18 +12,18 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 
 
 class FacterFactCollector(BaseFactCollector):
-    name = 'facter'
-    _fact_ids = set(['facter'])  # type: t.Set[str]
+    name = "facter"
+    _fact_ids = set(["facter"])  # type: t.Set[str]
 
     def __init__(self, collectors=None, namespace=None):
-        namespace = PrefixFactNamespace(namespace_name='facter',
-                                        prefix='facter_')
-        super(FacterFactCollector, self).__init__(collectors=collectors,
-                                                  namespace=namespace)
+        namespace = PrefixFactNamespace(namespace_name="facter", prefix="facter_")
+        super(FacterFactCollector, self).__init__(
+            collectors=collectors, namespace=namespace
+        )
 
     def find_facter(self, module):
-        facter_path = module.get_bin_path('facter', opt_dirs=['/opt/puppetlabs/bin'])
-        cfacter_path = module.get_bin_path('cfacter', opt_dirs=['/opt/puppetlabs/bin'])
+        facter_path = module.get_bin_path("facter", opt_dirs=["/opt/puppetlabs/bin"])
+        cfacter_path = module.get_bin_path("cfacter", opt_dirs=["/opt/puppetlabs/bin"])
 
         # Prefer to use cfacter if available
         if cfacter_path is not None:

@@ -36,15 +36,13 @@ display = Display()
 
 
 class Connection(ConnectionBase):
-    """ Local based connections """
+    """Local based connections"""
 
     transport = "ansible.netcommon.persistent"
     has_pipelining = False
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
-        super(Connection, self).__init__(
-            play_context, new_stdin, *args, **kwargs
-        )
+        super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
         self._task_uuid = to_text(kwargs.get("task_uuid", ""))
 
     def _connect(self):
@@ -81,13 +79,9 @@ class Connection(ConnectionBase):
             host=self._play_context.remote_addr,
         )
         variables = {
-            "ansible_command_timeout": self.get_option(
-                "persistent_command_timeout"
-            )
+            "ansible_command_timeout": self.get_option("persistent_command_timeout")
         }
-        socket_path = start_connection(
-            self._play_context, variables, self._task_uuid
-        )
+        socket_path = start_connection(self._play_context, variables, self._task_uuid)
         display.vvvv(
             "local domain socket path is %s" % socket_path,
             host=self._play_context.remote_addr,

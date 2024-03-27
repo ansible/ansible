@@ -8,4 +8,4 @@ class VarsModule(BaseVarsPlugin):
     # REQUIRES_ENABLED = False
 
     def get_vars(self, loader, path, entities):
-        return {'auto_role_var': True}
+        return {"auto_role_var": True}

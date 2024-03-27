@@ -18,18 +18,18 @@ from ansible.module_utils.six import (
 )
 
 try:
-    codecs.lookup_error('surrogateescape')
+    codecs.lookup_error("surrogateescape")
     HAS_SURROGATEESCAPE = True
 except LookupError:
     HAS_SURROGATEESCAPE = False
 
 
-_COMPOSED_ERROR_HANDLERS = frozenset((None, 'surrogate_or_replace',
-                                      'surrogate_or_strict',
-                                      'surrogate_then_replace'))
+_COMPOSED_ERROR_HANDLERS = frozenset(
+    (None, "surrogate_or_replace", "surrogate_or_strict", "surrogate_then_replace")
+)
 
 
-def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
+def to_bytes(obj, encoding="utf-8", errors=None, nonstring="simplerepr"):
     """Make sure that a string is a byte string
 
     :arg obj: An object to make sure is a byte string.  In most cases this
@@ -101,30 +101,30 @@ def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
     original_errors = errors
     if errors in _COMPOSED_ERROR_HANDLERS:
         if HAS_SURROGATEESCAPE:
-            errors = 'surrogateescape'
-        elif errors == 'surrogate_or_strict':
-            errors = 'strict'
+            errors = "surrogateescape"
+        elif errors == "surrogate_or_strict":
+            errors = "strict"
         else:
-            errors = 'replace'
+            errors = "replace"
 
     if isinstance(obj, text_type):
         try:
             # Try this first as it's the fastest
             return obj.encode(encoding, errors)
         except UnicodeEncodeError:
-            if original_errors in (None, 'surrogate_then_replace'):
+            if original_errors in (None, "surrogate_then_replace"):
                 # We should only reach this if encoding was non-utf8 original_errors was
                 # surrogate_then_escape and errors was surrogateescape
 
                 # Slow but works
-                return_string = obj.encode('utf-8', 'surrogateescape')
-                return_string = return_string.decode('utf-8', 'replace')
-                return return_string.encode(encoding, 'replace')
+                return_string = obj.encode("utf-8", "surrogateescape")
+                return_string = return_string.decode("utf-8", "replace")
+                return return_string.encode(encoding, "replace")
             raise
 
     # Note: We do these last even though we have to call to_bytes again on the
     # value because we're optimizing the common case
-    if nonstring == 'simplerepr':
+    if nonstring == "simplerepr":
         try:
             value = str(obj)
         except UnicodeError:
@@ -132,21 +132,23 @@ def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
                 value = repr(obj)
             except UnicodeError:
                 # Giving up
-                return to_bytes('')
-    elif nonstring == 'passthru':
+                return to_bytes("")
+    elif nonstring == "passthru":
         return obj
-    elif nonstring == 'empty':
+    elif nonstring == "empty":
         # python2.4 doesn't have b''
-        return to_bytes('')
-    elif nonstring == 'strict':
-        raise TypeError('obj must be a string type')
+        return to_bytes("")
+    elif nonstring == "strict":
+        raise TypeError("obj must be a string type")
     else:
-        raise TypeError('Invalid value %s for to_bytes\' nonstring parameter' % nonstring)
+        raise TypeError(
+            "Invalid value %s for to_bytes' nonstring parameter" % nonstring
+        )
 
     return to_bytes(value, encoding, errors)
 
 
-def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
+def to_text(obj, encoding="utf-8", errors=None, nonstring="simplerepr"):
     """Make sure that a string is a text string
 
     :arg obj: An object to make sure is a text string.  In most cases this
@@ -202,11 +204,11 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
 
     if errors in _COMPOSED_ERROR_HANDLERS:
         if HAS_SURROGATEESCAPE:
-            errors = 'surrogateescape'
-        elif errors == 'surrogate_or_strict':
-            errors = 'strict'
+            errors = "surrogateescape"
+        elif errors == "surrogate_or_strict":
+            errors = "strict"
         else:
-            errors = 'replace'
+            errors = "replace"
 
     if isinstance(obj, binary_type):
         # Note: We don't need special handling for surrogate_then_replace
@@ -216,7 +218,7 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
 
     # Note: We do these last even though we have to call to_text again on the
     # value because we're optimizing the common case
-    if nonstring == 'simplerepr':
+    if nonstring == "simplerepr":
         try:
             value = str(obj)
         except UnicodeError:
@@ -224,15 +226,17 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
                 value = repr(obj)
             except UnicodeError:
                 # Giving up
-                return u''
-    elif nonstring == 'passthru':
+                return ""
+    elif nonstring == "passthru":
         return obj
-    elif nonstring == 'empty':
-        return u''
-    elif nonstring == 'strict':
-        raise TypeError('obj must be a string type')
+    elif nonstring == "empty":
+        return ""
+    elif nonstring == "strict":
+        raise TypeError("obj must be a string type")
     else:
-        raise TypeError('Invalid value %s for to_text\'s nonstring parameter' % nonstring)
+        raise TypeError(
+            "Invalid value %s for to_text's nonstring parameter" % nonstring
+        )
 
     return to_text(value, encoding, errors)
 
@@ -274,15 +278,15 @@ def jsonify(data, **kwargs):
         except UnicodeDecodeError:
             continue
         return json.dumps(new_data, default=_json_encode_fallback, **kwargs)
-    raise UnicodeError('Invalid unicode encoding encountered')
+    raise UnicodeError("Invalid unicode encoding encountered")
 
 
-def container_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
-    ''' Recursively convert dict keys and values to byte str
+def container_to_bytes(d, encoding="utf-8", errors="surrogate_or_strict"):
+    """Recursively convert dict keys and values to byte str
 
-        Specialized for json return because this only handles, lists, tuples,
-        and dict container types (the containers that the json module returns)
-    '''
+    Specialized for json return because this only handles, lists, tuples,
+    and dict container types (the containers that the json module returns)
+    """
 
     if isinstance(d, text_type):
         return to_bytes(d, encoding=encoding, errors=errors)
@@ -296,7 +300,7 @@ def container_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
         return d
 
 
-def container_to_text(d, encoding='utf-8', errors='surrogate_or_strict'):
+def container_to_text(d, encoding="utf-8", errors="surrogate_or_strict"):
     """Recursively convert dict keys and values to text str
 
     Specialized for json return because this only handles, lists, tuples,

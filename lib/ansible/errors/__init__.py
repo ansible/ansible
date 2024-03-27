@@ -36,7 +36,7 @@ from ansible.module_utils.common.text.converters import to_native, to_text
 
 
 class AnsibleError(Exception):
-    '''
+    """
     This is the base class for all errors raised from Ansible code,
     and can be instantiated with two optional parameters beyond the
     error message to control whether detailed information is displayed
@@ -48,9 +48,16 @@ class AnsibleError(Exception):
 
     Where "obj" is some subclass of ansible.parsing.yaml.objects.AnsibleBaseYAMLObject,
     which should be returned by the DataLoader() class.
-    '''
+    """
 
-    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None):
+    def __init__(
+        self,
+        message="",
+        obj=None,
+        show_content=True,
+        suppress_extended_error=False,
+        orig_exc=None,
+    ):
         super(AnsibleError, self).__init__(message)
 
         self._show_content = show_content
@@ -69,13 +76,11 @@ class AnsibleError(Exception):
         if isinstance(self.obj, AnsibleBaseYAMLObject):
             extended_error = self._get_extended_error()
             if extended_error and not self._suppress_extended_error:
-                message.append(
-                    '\n\n%s' % to_native(extended_error)
-                )
+                message.append("\n\n%s" % to_native(extended_error))
         elif self.orig_exc:
-            message.append('. %s' % to_native(self.orig_exc))
+            message.append(". %s" % to_native(self.orig_exc))
 
-        return ''.join(message)
+        return "".join(message)
 
     @message.setter
     def message(self, val):
@@ -88,16 +93,16 @@ class AnsibleError(Exception):
         return self.message
 
     def _get_error_lines_from_file(self, file_name, line_number):
-        '''
+        """
         Returns the line in the file which corresponds to the reported error
         location, as well as the line preceding it (if the error did not
         occur on the first line), to provide context to the error.
-        '''
+        """
 
-        target_line = ''
-        prev_line = ''
+        target_line = ""
+        prev_line = ""
 
-        with open(file_name, 'r') as f:
+        with open(file_name, "r") as f:
             lines = f.readlines()
 
             # In case of a YAML loading error, PyYAML will report the very last line
@@ -121,7 +126,7 @@ class AnsibleError(Exception):
         return (target_line, prev_line)
 
     def _get_extended_error(self):
-        '''
+        """
         Given an object reporting the location of the exception in a file, return
         detailed information regarding it including:
 
@@ -130,15 +135,17 @@ class AnsibleError(Exception):
 
         If this error was created with show_content=False, the reporting of content
         is suppressed, as the file contents may be sensitive (ie. vault data).
-        '''
+        """
 
-        error_message = ''
+        error_message = ""
 
         try:
             (src_file, line_number, col_number) = self.obj.ansible_pos
             error_message += YAML_POSITION_DETAILS % (src_file, line_number, col_number)
-            if src_file not in ('<string>', '<unicode>') and self._show_content:
-                (target_line, prev_line) = self._get_error_lines_from_file(src_file, line_number - 1)
+            if src_file not in ("<string>", "<unicode>") and self._show_content:
+                (target_line, prev_line) = self._get_error_lines_from_file(
+                    src_file, line_number - 1
+                )
                 target_line = to_text(target_line)
                 prev_line = to_text(prev_line)
                 if target_line:
@@ -146,32 +153,46 @@ class AnsibleError(Exception):
 
                     # Check for k=v syntax in addition to YAML syntax and set the appropriate error position,
                     # arrow index
-                    if re.search(r'\w+(\s+)?=(\s+)?[\w/-]+', prev_line):
-                        error_position = prev_line.rstrip().find('=')
+                    if re.search(r"\w+(\s+)?=(\s+)?[\w/-]+", prev_line):
+                        error_position = prev_line.rstrip().find("=")
                         arrow_line = (" " * error_position) + "^ here"
-                        error_message = YAML_POSITION_DETAILS % (src_file, line_number - 1, error_position + 1)
-                        error_message += "\nThe offending line appears to be:\n\n%s\n%s\n\n" % (prev_line.rstrip(), arrow_line)
+                        error_message = YAML_POSITION_DETAILS % (
+                            src_file,
+                            line_number - 1,
+                            error_position + 1,
+                        )
+                        error_message += (
+                            "\nThe offending line appears to be:\n\n%s\n%s\n\n"
+                            % (prev_line.rstrip(), arrow_line)
+                        )
                         error_message += YAML_AND_SHORTHAND_ERROR
                     else:
                         arrow_line = (" " * (col_number - 1)) + "^ here"
-                        error_message += "\nThe offending line appears to be:\n\n%s\n%s\n%s\n" % (prev_line.rstrip(), target_line.rstrip(), arrow_line)
+                        error_message += (
+                            "\nThe offending line appears to be:\n\n%s\n%s\n%s\n"
+                            % (prev_line.rstrip(), target_line.rstrip(), arrow_line)
+                        )
 
                     # TODO: There may be cases where there is a valid tab in a line that has other errors.
-                    if '\t' in target_line:
+                    if "\t" in target_line:
                         error_message += YAML_COMMON_LEADING_TAB_ERROR
                     # common error/remediation checking here:
                     # check for unquoted vars starting lines
-                    if ('{{' in target_line and '}}' in target_line) and ('"{{' not in target_line or "'{{" not in target_line):
+                    if ("{{" in target_line and "}}" in target_line) and (
+                        '"{{' not in target_line or "'{{" not in target_line
+                    ):
                         error_message += YAML_COMMON_UNQUOTED_VARIABLE_ERROR
                     # check for common dictionary mistakes
                     elif ":{{" in stripped_line and "}}" in stripped_line:
                         error_message += YAML_COMMON_DICT_ERROR
                     # check for common unquoted colon mistakes
-                    elif (len(target_line) and
-                            len(target_line) > 1 and
-                            len(target_line) > col_number and
-                            target_line[col_number] == ":" and
-                            target_line.count(':') > 1):
+                    elif (
+                        len(target_line)
+                        and len(target_line) > 1
+                        and len(target_line) > col_number
+                        and target_line[col_number] == ":"
+                        and target_line.count(":") > 1
+                    ):
                         error_message += YAML_COMMON_UNQUOTED_COLON_ERROR
                     # otherwise, check for some common quoting mistakes
                     else:
@@ -189,11 +210,13 @@ class AnsibleError(Exception):
                             elif middle.startswith('"') and not middle.endswith('"'):
                                 match = True
 
-                            if (len(middle) > 0 and
-                                    middle[0] in ['"', "'"] and
-                                    middle[-1] in ['"', "'"] and
-                                    target_line.count("'") > 2 or
-                                    target_line.count('"') > 2):
+                            if (
+                                len(middle) > 0
+                                and middle[0] in ['"', "'"]
+                                and middle[-1] in ['"', "'"]
+                                and target_line.count("'") > 2
+                                or target_line.count('"') > 2
+                            ):
                                 unbalanced = True
 
                             if match:
@@ -202,90 +225,112 @@ class AnsibleError(Exception):
                                 error_message += YAML_COMMON_UNBALANCED_QUOTES_ERROR
 
         except (IOError, TypeError):
-            error_message += '\n(could not open file to display line)'
+            error_message += "\n(could not open file to display line)"
         except IndexError:
-            error_message += '\n(specified line no longer in file, maybe it changed?)'
+            error_message += "\n(specified line no longer in file, maybe it changed?)"
 
         return error_message
 
 
 class AnsiblePromptInterrupt(AnsibleError):
-    '''User interrupt'''
+    """User interrupt"""
 
 
 class AnsiblePromptNoninteractive(AnsibleError):
-    '''Unable to get user input'''
+    """Unable to get user input"""
 
 
 class AnsibleAssertionError(AnsibleError, AssertionError):
-    '''Invalid assertion'''
+    """Invalid assertion"""
+
     pass
 
 
 class AnsibleOptionsError(AnsibleError):
-    ''' bad or incomplete options passed '''
+    """bad or incomplete options passed"""
+
     pass
 
 
 class AnsibleParserError(AnsibleError):
-    ''' something was detected early that is wrong about a playbook or data file '''
+    """something was detected early that is wrong about a playbook or data file"""
+
     pass
 
 
 class AnsibleInternalError(AnsibleError):
-    ''' internal safeguards tripped, something happened in the code that should never happen '''
+    """internal safeguards tripped, something happened in the code that should never happen"""
+
     pass
 
 
 class AnsibleRuntimeError(AnsibleError):
-    ''' ansible had a problem while running a playbook '''
+    """ansible had a problem while running a playbook"""
+
     pass
 
 
 class AnsibleModuleError(AnsibleRuntimeError):
-    ''' a module failed somehow '''
+    """a module failed somehow"""
+
     pass
 
 
 class AnsibleConnectionFailure(AnsibleRuntimeError):
-    ''' the transport / connection_plugin had a fatal error '''
+    """the transport / connection_plugin had a fatal error"""
+
     pass
 
 
 class AnsibleAuthenticationFailure(AnsibleConnectionFailure):
-    '''invalid username/password/key'''
+    """invalid username/password/key"""
+
     pass
 
 
 class AnsibleCallbackError(AnsibleRuntimeError):
-    ''' a callback failure '''
+    """a callback failure"""
+
     pass
 
 
 class AnsibleTemplateError(AnsibleRuntimeError):
-    '''A template related error'''
+    """A template related error"""
+
     pass
 
 
 class AnsibleFilterError(AnsibleTemplateError):
-    ''' a templating failure '''
+    """a templating failure"""
+
     pass
 
 
 class AnsibleLookupError(AnsibleTemplateError):
-    ''' a lookup failure '''
+    """a lookup failure"""
+
     pass
 
 
 class AnsibleUndefinedVariable(AnsibleTemplateError):
-    ''' a templating failure '''
+    """a templating failure"""
+
     pass
 
 
 class AnsibleFileNotFound(AnsibleRuntimeError):
-    ''' a file missing failure '''
+    """a file missing failure"""
 
-    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, paths=None, file_name=None):
+    def __init__(
+        self,
+        message="",
+        obj=None,
+        show_content=True,
+        suppress_extended_error=False,
+        orig_exc=None,
+        paths=None,
+        file_name=None,
+    ):
 
         self.file_name = file_name
         self.paths = paths
@@ -298,27 +343,45 @@ class AnsibleFileNotFound(AnsibleRuntimeError):
             message += "Could not find file"
 
         if self.paths and isinstance(self.paths, Sequence):
-            searched = to_text('\n\t'.join(self.paths))
+            searched = to_text("\n\t".join(self.paths))
             if message:
                 message += "\n"
             message += "Searched in:\n\t%s" % searched
 
         message += " on the Ansible Controller.\nIf you are using a module and expect the file to exist on the remote, see the remote_src option"
 
-        super(AnsibleFileNotFound, self).__init__(message=message, obj=obj, show_content=show_content,
-                                                  suppress_extended_error=suppress_extended_error, orig_exc=orig_exc)
+        super(AnsibleFileNotFound, self).__init__(
+            message=message,
+            obj=obj,
+            show_content=show_content,
+            suppress_extended_error=suppress_extended_error,
+            orig_exc=orig_exc,
+        )
 
 
 # These Exceptions are temporary, using them as flow control until we can get a better solution.
 # DO NOT USE as they will probably be removed soon.
 # We will port the action modules in our tree to use a context manager instead.
 class AnsibleAction(AnsibleRuntimeError):
-    ''' Base Exception for Action plugin flow control '''
+    """Base Exception for Action plugin flow control"""
 
-    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, result=None):
+    def __init__(
+        self,
+        message="",
+        obj=None,
+        show_content=True,
+        suppress_extended_error=False,
+        orig_exc=None,
+        result=None,
+    ):
 
-        super(AnsibleAction, self).__init__(message=message, obj=obj, show_content=show_content,
-                                            suppress_extended_error=suppress_extended_error, orig_exc=orig_exc)
+        super(AnsibleAction, self).__init__(
+            message=message,
+            obj=obj,
+            show_content=show_content,
+            suppress_extended_error=suppress_extended_error,
+            orig_exc=orig_exc,
+        )
         if result is None:
             self.result = {}
         else:
@@ -326,54 +389,92 @@ class AnsibleAction(AnsibleRuntimeError):
 
 
 class AnsibleActionSkip(AnsibleAction):
-    ''' an action runtime skip'''
+    """an action runtime skip"""
 
-    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, result=None):
-        super(AnsibleActionSkip, self).__init__(message=message, obj=obj, show_content=show_content,
-                                                suppress_extended_error=suppress_extended_error, orig_exc=orig_exc, result=result)
-        self.result.update({'skipped': True, 'msg': message})
+    def __init__(
+        self,
+        message="",
+        obj=None,
+        show_content=True,
+        suppress_extended_error=False,
+        orig_exc=None,
+        result=None,
+    ):
+        super(AnsibleActionSkip, self).__init__(
+            message=message,
+            obj=obj,
+            show_content=show_content,
+            suppress_extended_error=suppress_extended_error,
+            orig_exc=orig_exc,
+            result=result,
+        )
+        self.result.update({"skipped": True, "msg": message})
 
 
 class AnsibleActionFail(AnsibleAction):
-    ''' an action runtime failure'''
-    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, result=None):
-        super(AnsibleActionFail, self).__init__(message=message, obj=obj, show_content=show_content,
-                                                suppress_extended_error=suppress_extended_error, orig_exc=orig_exc, result=result)
-        self.result.update({'failed': True, 'msg': message, 'exception': traceback.format_exc()})
+    """an action runtime failure"""
+
+    def __init__(
+        self,
+        message="",
+        obj=None,
+        show_content=True,
+        suppress_extended_error=False,
+        orig_exc=None,
+        result=None,
+    ):
+        super(AnsibleActionFail, self).__init__(
+            message=message,
+            obj=obj,
+            show_content=show_content,
+            suppress_extended_error=suppress_extended_error,
+            orig_exc=orig_exc,
+            result=result,
+        )
+        self.result.update(
+            {"failed": True, "msg": message, "exception": traceback.format_exc()}
+        )
 
 
 class _AnsibleActionDone(AnsibleAction):
-    ''' an action runtime early exit'''
+    """an action runtime early exit"""
+
     pass
 
 
 class AnsiblePluginError(AnsibleError):
-    ''' base class for Ansible plugin-related errors that do not need AnsibleError contextual data '''
+    """base class for Ansible plugin-related errors that do not need AnsibleError contextual data"""
+
     def __init__(self, message=None, plugin_load_context=None):
         super(AnsiblePluginError, self).__init__(message)
         self.plugin_load_context = plugin_load_context
 
 
 class AnsiblePluginRemovedError(AnsiblePluginError):
-    ''' a requested plugin has been removed '''
+    """a requested plugin has been removed"""
+
     pass
 
 
 class AnsiblePluginCircularRedirect(AnsiblePluginError):
-    '''a cycle was detected in plugin redirection'''
+    """a cycle was detected in plugin redirection"""
+
     pass
 
 
 class AnsibleCollectionUnsupportedVersionError(AnsiblePluginError):
-    '''a collection is not supported by this version of Ansible'''
+    """a collection is not supported by this version of Ansible"""
+
     pass
 
 
 class AnsibleFilterTypeError(AnsibleTemplateError, TypeError):
-    ''' a Jinja filter templating failure due to bad type'''
+    """a Jinja filter templating failure due to bad type"""
+
     pass
 
 
 class AnsiblePluginNotFound(AnsiblePluginError):
-    ''' Indicates we did not find an Ansible plugin '''
+    """Indicates we did not find an Ansible plugin"""
+
     pass

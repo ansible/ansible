@@ -1,4 +1,5 @@
 """Compatibility layer for the `typing` module, providing all Python versions access to the newest type-hinting features."""
+
 from __future__ import annotations
 
 # pylint: disable=wildcard-import,unused-wildcard-import
@@ -20,5 +21,6 @@ except Exception:  # pylint: disable=broad-except
 try:
     cast  # type: ignore[used-before-def]
 except NameError:
+
     def cast(typ, val):  # type: ignore[no-redef]
         return val

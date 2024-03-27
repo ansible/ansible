@@ -1,4 +1,5 @@
 """Combine code coverage files."""
+
 from __future__ import annotations
 
 import collections.abc as c
@@ -62,7 +63,7 @@ from . import (
     PathChecker,
 )
 
-TValue = t.TypeVar('TValue')
+TValue = t.TypeVar("TValue")
 
 
 def command_coverage_combine(args: CoverageCombineConfig) -> None:
@@ -71,21 +72,34 @@ def command_coverage_combine(args: CoverageCombineConfig) -> None:
     combine_coverage_files(args, host_state)
 
 
-def combine_coverage_files(args: CoverageCombineConfig, host_state: HostState) -> list[str]:
+def combine_coverage_files(
+    args: CoverageCombineConfig, host_state: HostState
+) -> list[str]:
     """Combine coverage and return a list of the resulting files."""
     if args.delegate:
         if isinstance(args.controller, (DockerConfig, RemoteConfig)):
             paths = get_all_coverage_files()
-            exported_paths = [path for path in paths if os.path.basename(path).split('=')[-1].split('.')[:2] == ['coverage', 'combined']]
+            exported_paths = [
+                path
+                for path in paths
+                if os.path.basename(path).split("=")[-1].split(".")[:2]
+                == ["coverage", "combined"]
+            ]
 
             if not exported_paths:
                 raise ExportedCoverageDataNotFound()
 
-            pairs = [(path, os.path.relpath(path, data_context().content.root)) for path in exported_paths]
+            pairs = [
+                (path, os.path.relpath(path, data_context().content.root))
+                for path in exported_paths
+            ]
 
             def coverage_callback(payload_config: PayloadConfig) -> None:
                 """Add the coverage files to the payload file list."""
-                display.info('Including %d exported coverage file(s) in payload.' % len(pairs), verbosity=1)
+                display.info(
+                    "Including %d exported coverage file(s) in payload." % len(pairs),
+                    verbosity=1,
+                )
                 files = payload_config.files
                 files.extend(pairs)
 
@@ -93,10 +107,12 @@ def combine_coverage_files(args: CoverageCombineConfig, host_state: HostState) -
 
         raise Delegate(host_state=host_state)
 
-    paths = _command_coverage_combine_powershell(args) + _command_coverage_combine_python(args, host_state)
+    paths = _command_coverage_combine_powershell(
+        args
+    ) + _command_coverage_combine_python(args, host_state)
 
     for path in paths:
-        display.info('Generated combined output: %s' % path, verbosity=1)
+        display.info("Generated combined output: %s" % path, verbosity=1)
 
     return paths
 
@@ -106,13 +122,16 @@ class ExportedCoverageDataNotFound(ApplicationError):
 
     def __init__(self) -> None:
         super().__init__(
-            'Coverage data must be exported before processing with the `--docker` or `--remote` option.\n'
-            'Export coverage with `ansible-test coverage combine` using the `--export` option.\n'
-            'The exported files must be in the directory: %s/' % ResultType.COVERAGE.relative_path
+            "Coverage data must be exported before processing with the `--docker` or `--remote` option.\n"
+            "Export coverage with `ansible-test coverage combine` using the `--export` option.\n"
+            "The exported files must be in the directory: %s/"
+            % ResultType.COVERAGE.relative_path
         )
 
 
-def _command_coverage_combine_python(args: CoverageCombineConfig, host_state: HostState) -> list[str]:
+def _command_coverage_combine_python(
+    args: CoverageCombineConfig, host_state: HostState
+) -> list[str]:
     """Combine Python coverage files and return a list of the output files."""
     coverage = initialize_coverage(args, host_state)
 
@@ -131,17 +150,23 @@ def _command_coverage_combine_python(args: CoverageCombineConfig, host_state: Ho
 
     for coverage_file in coverage_files:
         counter += 1
-        display.info('[%4d/%4d] %s' % (counter, len(coverage_files), coverage_file), verbosity=2)
+        display.info(
+            "[%4d/%4d] %s" % (counter, len(coverage_files), coverage_file), verbosity=2
+        )
 
         group = get_coverage_group(args, coverage_file)
 
         if group is None:
-            display.warning('Unexpected name for coverage file: %s' % coverage_file)
+            display.warning("Unexpected name for coverage file: %s" % coverage_file)
             continue
 
-        for filename, arcs in enumerate_python_arcs(coverage_file, coverage, modules, collection_search_re, collection_sub_re):
+        for filename, arcs in enumerate_python_arcs(
+            coverage_file, coverage, modules, collection_search_re, collection_sub_re
+        ):
             if args.export:
-                filename = os.path.relpath(filename)  # exported paths must be relative since absolute paths may differ between systems
+                filename = os.path.relpath(
+                    filename
+                )  # exported paths must be relative since absolute paths may differ between systems
 
             if group not in groups:
                 groups[group] = {}
@@ -156,11 +181,13 @@ def _command_coverage_combine_python(args: CoverageCombineConfig, host_state: Ho
     output_files = []
 
     if args.export:
-        coverage_file = os.path.join(args.export, '')
-        suffix = '=coverage.combined'
+        coverage_file = os.path.join(args.export, "")
+        suffix = "=coverage.combined"
     else:
-        coverage_file = os.path.join(ResultType.COVERAGE.path, COVERAGE_OUTPUT_FILE_NAME)
-        suffix = ''
+        coverage_file = os.path.join(
+            ResultType.COVERAGE.path, COVERAGE_OUTPUT_FILE_NAME
+        )
+        suffix = ""
 
     path_checker = PathChecker(args, collection_search_re)
 
@@ -198,12 +225,12 @@ def _command_coverage_combine_powershell(args: CoverageCombineConfig) -> list[st
     coverage_files = get_powershell_coverage_files()
 
     def _default_stub_value(source_paths: list[str]) -> dict[str, dict[int, int]]:
-        cmd = ['pwsh', os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'coverage_stub.ps1')]
+        cmd = ["pwsh", os.path.join(ANSIBLE_TEST_TOOLS_ROOT, "coverage_stub.ps1")]
         cmd.extend(source_paths)
 
         stubs = json.loads(raw_command(cmd, capture=True)[0])
 
-        return dict((d['Path'], dict((line, 0) for line in d['Lines'])) for d in stubs)
+        return dict((d["Path"], dict((line, 0) for line in d["Lines"])) for d in stubs)
 
     counter = 0
     sources = _get_coverage_targets(args, walk_powershell_targets)
@@ -213,17 +240,23 @@ def _command_coverage_combine_powershell(args: CoverageCombineConfig) -> list[st
 
     for coverage_file in coverage_files:
         counter += 1
-        display.info('[%4d/%4d] %s' % (counter, len(coverage_files), coverage_file), verbosity=2)
+        display.info(
+            "[%4d/%4d] %s" % (counter, len(coverage_files), coverage_file), verbosity=2
+        )
 
         group = get_coverage_group(args, coverage_file)
 
         if group is None:
-            display.warning('Unexpected name for coverage file: %s' % coverage_file)
+            display.warning("Unexpected name for coverage file: %s" % coverage_file)
             continue
 
-        for filename, hits in enumerate_powershell_lines(coverage_file, collection_search_re, collection_sub_re):
+        for filename, hits in enumerate_powershell_lines(
+            coverage_file, collection_search_re, collection_sub_re
+        ):
             if args.export:
-                filename = os.path.relpath(filename)  # exported paths must be relative since absolute paths may differ between systems
+                filename = os.path.relpath(
+                    filename
+                )  # exported paths must be relative since absolute paths may differ between systems
 
             if group not in groups:
                 groups[group] = {}
@@ -243,22 +276,32 @@ def _command_coverage_combine_powershell(args: CoverageCombineConfig) -> list[st
     path_checker = PathChecker(args)
 
     for group in sorted(groups):
-        coverage_data = dict((filename, data) for filename, data in groups[group].items() if path_checker.check_path(filename))
+        coverage_data = dict(
+            (filename, data)
+            for filename, data in groups[group].items()
+            if path_checker.check_path(filename)
+        )
 
         if args.all:
-            missing_sources = [source for source, _source_line_count in sources if source not in coverage_data]
+            missing_sources = [
+                source
+                for source, _source_line_count in sources
+                if source not in coverage_data
+            ]
             coverage_data.update(_default_stub_value(missing_sources))
 
         if not args.explain:
             if args.export:
-                output_file = os.path.join(args.export, group + '=coverage.combined')
+                output_file = os.path.join(args.export, group + "=coverage.combined")
                 write_json_file(output_file, coverage_data, formatted=False)
                 output_files.append(output_file)
                 continue
 
-            output_file = COVERAGE_OUTPUT_FILE_NAME + group + '-powershell'
+            output_file = COVERAGE_OUTPUT_FILE_NAME + group + "-powershell"
 
-            write_json_test_results(ResultType.COVERAGE, output_file, coverage_data, formatted=False)
+            write_json_test_results(
+                ResultType.COVERAGE, output_file, coverage_data, formatted=False
+            )
 
             output_files.append(os.path.join(ResultType.COVERAGE.path, output_file))
 
@@ -267,7 +310,9 @@ def _command_coverage_combine_powershell(args: CoverageCombineConfig) -> list[st
     return sorted(output_files)
 
 
-def _get_coverage_targets(args: CoverageCombineConfig, walk_func: c.Callable) -> list[tuple[str, int]]:
+def _get_coverage_targets(
+    args: CoverageCombineConfig, walk_func: c.Callable
+) -> list[tuple[str, int]]:
     """Return a list of files to cover and the number of lines in each file, using the given function as the source of the files."""
     sources = []
 
@@ -316,16 +361,18 @@ def _build_stub_groups(
             if not stub_group:
                 continue
 
-            groups['=stub-%02d' % (stub_index + 1)] = default_stub_value(stub_group)
+            groups["=stub-%02d" % (stub_index + 1)] = default_stub_value(stub_group)
 
     return groups
 
 
-def get_coverage_group(args: CoverageCombineConfig, coverage_file: str) -> t.Optional[str]:
+def get_coverage_group(
+    args: CoverageCombineConfig, coverage_file: str
+) -> t.Optional[str]:
     """Return the name of the coverage group for the specified coverage file, or None if no group was found."""
-    parts = os.path.basename(coverage_file).split('=', 4)
+    parts = os.path.basename(coverage_file).split("=", 4)
 
-    if len(parts) != 5 or not parts[4].startswith('coverage.'):
+    if len(parts) != 5 or not parts[4].startswith("coverage."):
         return None
 
     names = dict(
@@ -339,16 +386,16 @@ def get_coverage_group(args: CoverageCombineConfig, coverage_file: str) -> t.Opt
         version=parts[3],
     )
 
-    group = ''
+    group = ""
 
     for part in COVERAGE_GROUPS:
         if part in args.group_by:
-            group += '=%s' % names[part]
+            group += "=%s" % names[part]
         elif args.export:
-            group += '=%s' % export_names.get(part, 'various')
+            group += "=%s" % export_names.get(part, "various")
 
     if args.export:
-        group = group.lstrip('=')
+        group = group.lstrip("=")
 
     return group
 
@@ -359,9 +406,11 @@ class CoverageCombineConfig(CoverageConfig):
     def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
-        self.group_by: frozenset[str] = frozenset(args.group_by) if args.group_by else frozenset()
+        self.group_by: frozenset[str] = (
+            frozenset(args.group_by) if args.group_by else frozenset()
+        )
         self.all: bool = args.all
         self.stub: bool = args.stub
 
         # only available to coverage combine
-        self.export: str = args.export if 'export' in args else False
+        self.export: str = args.export if "export" in args else False

@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: junit
     type: aggregate
     short_description: write playbook output to a JUnit file.
@@ -80,7 +80,7 @@ DOCUMENTATION = '''
           - name: JUNIT_TEST_CASE_PREFIX
     requirements:
       - enable in configuration
-'''
+"""
 
 import os
 import time
@@ -132,22 +132,30 @@ class CallbackModule(CallbackBase):
     """
 
     CALLBACK_VERSION = 2.0
-    CALLBACK_TYPE = 'aggregate'
-    CALLBACK_NAME = 'junit'
+    CALLBACK_TYPE = "aggregate"
+    CALLBACK_NAME = "junit"
     CALLBACK_NEEDS_ENABLED = True
 
     def __init__(self):
         super(CallbackModule, self).__init__()
 
-        self._output_dir = os.getenv('JUNIT_OUTPUT_DIR', os.path.expanduser('~/.ansible.log'))
-        self._task_class = os.getenv('JUNIT_TASK_CLASS', 'False').lower()
-        self._task_relative_path = os.getenv('JUNIT_TASK_RELATIVE_PATH', '')
-        self._fail_on_change = os.getenv('JUNIT_FAIL_ON_CHANGE', 'False').lower()
-        self._fail_on_ignore = os.getenv('JUNIT_FAIL_ON_IGNORE', 'False').lower()
-        self._include_setup_tasks_in_report = os.getenv('JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT', 'True').lower()
-        self._hide_task_arguments = os.getenv('JUNIT_HIDE_TASK_ARGUMENTS', 'False').lower()
-        self._test_case_prefix = os.getenv('JUNIT_TEST_CASE_PREFIX', '')
-        self._replace_out_of_tree_path = os.getenv('JUNIT_REPLACE_OUT_OF_TREE_PATH', None)
+        self._output_dir = os.getenv(
+            "JUNIT_OUTPUT_DIR", os.path.expanduser("~/.ansible.log")
+        )
+        self._task_class = os.getenv("JUNIT_TASK_CLASS", "False").lower()
+        self._task_relative_path = os.getenv("JUNIT_TASK_RELATIVE_PATH", "")
+        self._fail_on_change = os.getenv("JUNIT_FAIL_ON_CHANGE", "False").lower()
+        self._fail_on_ignore = os.getenv("JUNIT_FAIL_ON_IGNORE", "False").lower()
+        self._include_setup_tasks_in_report = os.getenv(
+            "JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT", "True"
+        ).lower()
+        self._hide_task_arguments = os.getenv(
+            "JUNIT_HIDE_TASK_ARGUMENTS", "False"
+        ).lower()
+        self._test_case_prefix = os.getenv("JUNIT_TEST_CASE_PREFIX", "")
+        self._replace_out_of_tree_path = os.getenv(
+            "JUNIT_REPLACE_OUT_OF_TREE_PATH", None
+        )
         self._playbook_path = None
         self._playbook_name = None
         self._play_name = None
@@ -164,7 +172,7 @@ class CallbackModule(CallbackBase):
             os.makedirs(self._output_dir)
 
     def _start_task(self, task):
-        """ record the start of a task for one or more hosts """
+        """record the start of a task for one or more hosts"""
 
         uuid = task._uuid
 
@@ -176,102 +184,126 @@ class CallbackModule(CallbackBase):
         path = task.get_path()
         action = task.action
 
-        if not task.no_log and self._hide_task_arguments == 'false':
-            args = ', '.join(('%s=%s' % a for a in task.args.items()))
+        if not task.no_log and self._hide_task_arguments == "false":
+            args = ", ".join(("%s=%s" % a for a in task.args.items()))
             if args:
-                name += ' ' + args
+                name += " " + args
 
         self._task_data[uuid] = TaskData(uuid, name, path, play, action)
 
     def _finish_task(self, status, result):
-        """ record the results of a task for a single host """
+        """record the results of a task for a single host"""
 
         task_uuid = result._task._uuid
 
-        if hasattr(result, '_host'):
+        if hasattr(result, "_host"):
             host_uuid = result._host._uuid
             host_name = result._host.name
         else:
-            host_uuid = 'include'
-            host_name = 'include'
+            host_uuid = "include"
+            host_name = "include"
 
         task_data = self._task_data[task_uuid]
 
-        if self._fail_on_change == 'true' and status == 'ok' and result._result.get('changed', False):
-            status = 'failed'
+        if (
+            self._fail_on_change == "true"
+            and status == "ok"
+            and result._result.get("changed", False)
+        ):
+            status = "failed"
 
         # ignore failure if expected and toggle result if asked for
-        if status == 'failed' and 'EXPECTED FAILURE' in task_data.name:
-            status = 'ok'
-        elif 'TOGGLE RESULT' in task_data.name:
-            if status == 'failed':
-                status = 'ok'
-            elif status == 'ok':
-                status = 'failed'
+        if status == "failed" and "EXPECTED FAILURE" in task_data.name:
+            status = "ok"
+        elif "TOGGLE RESULT" in task_data.name:
+            if status == "failed":
+                status = "ok"
+            elif status == "ok":
+                status = "failed"
 
-        if task_data.name.startswith(self._test_case_prefix) or status == 'failed':
+        if task_data.name.startswith(self._test_case_prefix) or status == "failed":
             task_data.add_host(HostData(host_uuid, host_name, status, result))
 
     def _build_test_case(self, task_data, host_data):
-        """ build a TestCase from the given TaskData and HostData """
+        """build a TestCase from the given TaskData and HostData"""
 
-        name = '[%s] %s: %s' % (host_data.name, task_data.play, task_data.name)
+        name = "[%s] %s: %s" % (host_data.name, task_data.play, task_data.name)
         duration = host_data.finish - task_data.start
 
         if self._task_relative_path and task_data.path:
-            junit_classname = to_text(os.path.relpath(to_bytes(task_data.path), to_bytes(self._task_relative_path)))
+            junit_classname = to_text(
+                os.path.relpath(
+                    to_bytes(task_data.path), to_bytes(self._task_relative_path)
+                )
+            )
         else:
             junit_classname = task_data.path
 
-        if self._replace_out_of_tree_path is not None and junit_classname.startswith('../'):
-            junit_classname = self._replace_out_of_tree_path + to_text(os.path.basename(to_bytes(junit_classname)))
+        if self._replace_out_of_tree_path is not None and junit_classname.startswith(
+            "../"
+        ):
+            junit_classname = self._replace_out_of_tree_path + to_text(
+                os.path.basename(to_bytes(junit_classname))
+            )
 
-        if self._task_class == 'true':
-            junit_classname = re.sub(r'\.yml:[0-9]+$', '', junit_classname)
+        if self._task_class == "true":
+            junit_classname = re.sub(r"\.yml:[0-9]+$", "", junit_classname)
 
-        if host_data.status == 'included':
-            return TestCase(name=name, classname=junit_classname, time=duration, system_out=str(host_data.result))
+        if host_data.status == "included":
+            return TestCase(
+                name=name,
+                classname=junit_classname,
+                time=duration,
+                system_out=str(host_data.result),
+            )
 
         res = host_data.result._result
-        rc = res.get('rc', 0)
+        rc = res.get("rc", 0)
         dump = self._dump_results(res, indent=0)
         dump = self._cleanse_string(dump)
 
-        if host_data.status == 'ok':
-            return TestCase(name=name, classname=junit_classname, time=duration, system_out=dump)
+        if host_data.status == "ok":
+            return TestCase(
+                name=name, classname=junit_classname, time=duration, system_out=dump
+            )
 
         test_case = TestCase(name=name, classname=junit_classname, time=duration)
 
-        if host_data.status == 'failed':
-            if 'exception' in res:
-                message = res['exception'].strip().split('\n')[-1]
-                output = res['exception']
+        if host_data.status == "failed":
+            if "exception" in res:
+                message = res["exception"].strip().split("\n")[-1]
+                output = res["exception"]
                 test_case.errors.append(TestError(message=message, output=output))
-            elif 'msg' in res:
-                message = res['msg']
+            elif "msg" in res:
+                message = res["msg"]
                 test_case.failures.append(TestFailure(message=message, output=dump))
             else:
-                test_case.failures.append(TestFailure(message='rc=%s' % rc, output=dump))
-        elif host_data.status == 'skipped':
-            if 'skip_reason' in res:
-                message = res['skip_reason']
+                test_case.failures.append(
+                    TestFailure(message="rc=%s" % rc, output=dump)
+                )
+        elif host_data.status == "skipped":
+            if "skip_reason" in res:
+                message = res["skip_reason"]
             else:
-                message = 'skipped'
+                message = "skipped"
             test_case.skipped = message
 
         return test_case
 
     def _cleanse_string(self, value):
-        """ convert surrogate escapes to the unicode replacement character to avoid XML encoding errors """
-        return to_text(to_bytes(value, errors='surrogateescape'), errors='replace')
+        """convert surrogate escapes to the unicode replacement character to avoid XML encoding errors"""
+        return to_text(to_bytes(value, errors="surrogateescape"), errors="replace")
 
     def _generate_report(self):
-        """ generate a TestSuite report from the collected TaskData and HostData """
+        """generate a TestSuite report from the collected TaskData and HostData"""
 
         test_cases = []
 
         for task_uuid, task_data in self._task_data.items():
-            if task_data.action in C._ACTION_SETUP and self._include_setup_tasks_in_report == 'false':
+            if (
+                task_data.action in C._ACTION_SETUP
+                and self._include_setup_tasks_in_report == "false"
+            ):
                 continue
 
             for host_uuid, host_data in task_data.host_data.items():
@@ -281,10 +313,12 @@ class CallbackModule(CallbackBase):
         test_suites = TestSuites(suites=[test_suite])
         report = test_suites.to_pretty_xml()
 
-        output_file = os.path.join(self._output_dir, '%s-%s.xml' % (self._playbook_name, time.time()))
+        output_file = os.path.join(
+            self._output_dir, "%s-%s.xml" % (self._playbook_name, time.time())
+        )
 
-        with open(output_file, 'wb') as xml:
-            xml.write(to_bytes(report, errors='surrogate_or_strict'))
+        with open(output_file, "wb") as xml:
+            xml.write(to_bytes(report, errors="surrogate_or_strict"))
 
     def v2_playbook_on_start(self, playbook):
         self._playbook_path = playbook._file_name
@@ -306,19 +340,19 @@ class CallbackModule(CallbackBase):
         self._start_task(task)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
-        if ignore_errors and self._fail_on_ignore != 'true':
-            self._finish_task('ok', result)
+        if ignore_errors and self._fail_on_ignore != "true":
+            self._finish_task("ok", result)
         else:
-            self._finish_task('failed', result)
+            self._finish_task("failed", result)
 
     def v2_runner_on_ok(self, result):
-        self._finish_task('ok', result)
+        self._finish_task("ok", result)
 
     def v2_runner_on_skipped(self, result):
-        self._finish_task('skipped', result)
+        self._finish_task("skipped", result)
 
     def v2_playbook_on_include(self, included_file):
-        self._finish_task('included', included_file)
+        self._finish_task("included", included_file)
 
     def v2_playbook_on_stats(self, stats):
         self._generate_report()
@@ -341,11 +375,14 @@ class TaskData:
 
     def add_host(self, host):
         if host.uuid in self.host_data:
-            if host.status == 'included':
+            if host.status == "included":
                 # concatenate task include output from multiple items
-                host.result = '%s\n%s' % (self.host_data[host.uuid].result, host.result)
+                host.result = "%s\n%s" % (self.host_data[host.uuid].result, host.result)
             else:
-                raise Exception('%s: %s: %s: duplicate host callback: %s' % (self.path, self.play, self.name, host.name))
+                raise Exception(
+                    "%s: %s: %s: duplicate host callback: %s"
+                    % (self.path, self.play, self.name, host.name)
+                )
 
         self.host_data[host.uuid] = host
 

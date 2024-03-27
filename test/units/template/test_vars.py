@@ -26,7 +26,7 @@ def test_globals_empty():
 
 
 def test_globals():
-    res = dict(AnsibleJ2Vars(Templar(None), {'foo': 'bar', 'blip': [1, 2, 3]}))
+    res = dict(AnsibleJ2Vars(Templar(None), {"foo": "bar", "blip": [1, 2, 3]}))
     assert isinstance(res, dict)
-    assert 'foo' in res
-    assert res['foo'] == 'bar'
+    assert "foo" in res
+    assert res["foo"] == "bar"

@@ -40,8 +40,9 @@ class FreeBSDHardware(Hardware):
     - devices
     - uptime_seconds
     """
-    platform = 'FreeBSD'
-    DMESG_BOOT = '/var/run/dmesg.boot'
+
+    platform = "FreeBSD"
+    DMESG_BOOT = "/var/run/dmesg.boot"
 
     def populate(self, collected_facts=None):
         hardware_facts = {}
@@ -69,46 +70,52 @@ class FreeBSDHardware(Hardware):
 
     def get_cpu_facts(self):
         cpu_facts = {}
-        cpu_facts['processor'] = []
-        sysctl = self.module.get_bin_path('sysctl')
+        cpu_facts["processor"] = []
+        sysctl = self.module.get_bin_path("sysctl")
         if sysctl:
-            rc, out, err = self.module.run_command("%s -n hw.ncpu" % sysctl, check_rc=False)
-            cpu_facts['processor_count'] = out.strip()
+            rc, out, err = self.module.run_command(
+                "%s -n hw.ncpu" % sysctl, check_rc=False
+            )
+            cpu_facts["processor_count"] = out.strip()
 
         dmesg_boot = get_file_content(FreeBSDHardware.DMESG_BOOT)
         if not dmesg_boot:
             try:
-                rc, dmesg_boot, err = self.module.run_command(self.module.get_bin_path("dmesg"), check_rc=False)
+                rc, dmesg_boot, err = self.module.run_command(
+                    self.module.get_bin_path("dmesg"), check_rc=False
+                )
             except Exception:
-                dmesg_boot = ''
+                dmesg_boot = ""
 
         for line in dmesg_boot.splitlines():
-            if 'CPU:' in line:
-                cpu = re.sub(r'CPU:\s+', r"", line)
-                cpu_facts['processor'].append(cpu.strip())
-            if 'Logical CPUs per core' in line:
-                cpu_facts['processor_cores'] = line.split()[4]
+            if "CPU:" in line:
+                cpu = re.sub(r"CPU:\s+", r"", line)
+                cpu_facts["processor"].append(cpu.strip())
+            if "Logical CPUs per core" in line:
+                cpu_facts["processor_cores"] = line.split()[4]
 
         return cpu_facts
 
     def get_memory_facts(self):
         memory_facts = {}
 
-        sysctl = self.module.get_bin_path('sysctl')
+        sysctl = self.module.get_bin_path("sysctl")
         if sysctl:
-            rc, out, err = self.module.run_command("%s vm.stats" % sysctl, check_rc=False)
+            rc, out, err = self.module.run_command(
+                "%s vm.stats" % sysctl, check_rc=False
+            )
             for line in out.splitlines():
                 data = line.split()
-                if 'vm.stats.vm.v_page_size' in line:
+                if "vm.stats.vm.v_page_size" in line:
                     pagesize = int(data[1])
-                if 'vm.stats.vm.v_page_count' in line:
+                if "vm.stats.vm.v_page_count" in line:
                     pagecount = int(data[1])
-                if 'vm.stats.vm.v_free_count' in line:
+                if "vm.stats.vm.v_free_count" in line:
                     freecount = int(data[1])
-            memory_facts['memtotal_mb'] = pagesize * pagecount // 1024 // 1024
-            memory_facts['memfree_mb'] = pagesize * freecount // 1024 // 1024
+            memory_facts["memtotal_mb"] = pagesize * pagecount // 1024 // 1024
+            memory_facts["memfree_mb"] = pagesize * freecount // 1024 // 1024
 
-        swapinfo = self.module.get_bin_path('swapinfo')
+        swapinfo = self.module.get_bin_path("swapinfo")
         if swapinfo:
             # Get swapinfo.  swapinfo output looks like:
             # Device          1M-blocks     Used    Avail Capacity
@@ -119,122 +126,128 @@ class FreeBSDHardware(Hardware):
             if len(lines[-1]) == 0:
                 lines.pop()
             data = lines[-1].split()
-            if data[0] != 'Device':
-                memory_facts['swaptotal_mb'] = int(data[1]) // 1024
-                memory_facts['swapfree_mb'] = int(data[3]) // 1024
+            if data[0] != "Device":
+                memory_facts["swaptotal_mb"] = int(data[1]) // 1024
+                memory_facts["swapfree_mb"] = int(data[3]) // 1024
 
         return memory_facts
 
     def get_uptime_facts(self):
         # On FreeBSD, the default format is annoying to parse.
         # Use -b to get the raw value and decode it.
-        sysctl_cmd = self.module.get_bin_path('sysctl')
-        cmd = [sysctl_cmd, '-b', 'kern.boottime']
+        sysctl_cmd = self.module.get_bin_path("sysctl")
+        cmd = [sysctl_cmd, "-b", "kern.boottime"]
 
         # We need to get raw bytes, not UTF-8.
         rc, out, err = self.module.run_command(cmd, encoding=None)
 
         # kern.boottime returns seconds and microseconds as two 64-bits
         # fields, but we are only interested in the first field.
-        struct_format = '@L'
+        struct_format = "@L"
         struct_size = struct.calcsize(struct_format)
         if rc != 0 or len(out) < struct_size:
             return {}
 
-        (kern_boottime, ) = struct.unpack(struct_format, out[:struct_size])
+        (kern_boottime,) = struct.unpack(struct_format, out[:struct_size])
 
         return {
-            'uptime_seconds': int(time.time() - kern_boottime),
+            "uptime_seconds": int(time.time() - kern_boottime),
         }
 
     @timeout()
     def get_mount_facts(self):
         mount_facts = {}
 
-        mount_facts['mounts'] = []
-        fstab = get_file_content('/etc/fstab')
+        mount_facts["mounts"] = []
+        fstab = get_file_content("/etc/fstab")
         if fstab:
             for line in fstab.splitlines():
-                if line.startswith('#') or line.strip() == '':
+                if line.startswith("#") or line.strip() == "":
                     continue
-                fields = re.sub(r'\s+', ' ', line).split()
+                fields = re.sub(r"\s+", " ", line).split()
                 mount_statvfs_info = get_mount_size(fields[1])
-                mount_info = {'mount': fields[1],
-                              'device': fields[0],
-                              'fstype': fields[2],
-                              'options': fields[3]}
+                mount_info = {
+                    "mount": fields[1],
+                    "device": fields[0],
+                    "fstype": fields[2],
+                    "options": fields[3],
+                }
                 mount_info.update(mount_statvfs_info)
-                mount_facts['mounts'].append(mount_info)
+                mount_facts["mounts"].append(mount_info)
 
         return mount_facts
 
     def get_device_facts(self):
         device_facts = {}
 
-        sysdir = '/dev'
-        device_facts['devices'] = {}
-        drives = re.compile(r'(ada?\d+|da\d+|a?cd\d+)')  # TODO: rc, disks, err = self.module.run_command("/sbin/sysctl kern.disks")
-        slices = re.compile(r'(ada?\d+s\d+\w*|da\d+s\d+\w*)')
+        sysdir = "/dev"
+        device_facts["devices"] = {}
+        drives = re.compile(
+            r"(ada?\d+|da\d+|a?cd\d+)"
+        )  # TODO: rc, disks, err = self.module.run_command("/sbin/sysctl kern.disks")
+        slices = re.compile(r"(ada?\d+s\d+\w*|da\d+s\d+\w*)")
         if os.path.isdir(sysdir):
             dirlist = sorted(os.listdir(sysdir))
             for device in dirlist:
                 d = drives.match(device)
                 if d:
-                    device_facts['devices'][d.group(1)] = []
+                    device_facts["devices"][d.group(1)] = []
                 s = slices.match(device)
                 if s:
-                    device_facts['devices'][d.group(1)].append(s.group(1))
+                    device_facts["devices"][d.group(1)].append(s.group(1))
 
         return device_facts
 
     def get_dmi_facts(self):
-        ''' learn dmi facts from system
+        """learn dmi facts from system
 
-        Use dmidecode executable if available'''
+        Use dmidecode executable if available"""
 
         dmi_facts = {}
 
         # Fall back to using dmidecode, if available
-        dmi_bin = self.module.get_bin_path('dmidecode')
+        dmi_bin = self.module.get_bin_path("dmidecode")
         DMI_DICT = {
-            'bios_date': 'bios-release-date',
-            'bios_vendor': 'bios-vendor',
-            'bios_version': 'bios-version',
-            'board_asset_tag': 'baseboard-asset-tag',
-            'board_name': 'baseboard-product-name',
-            'board_serial': 'baseboard-serial-number',
-            'board_vendor': 'baseboard-manufacturer',
-            'board_version': 'baseboard-version',
-            'chassis_asset_tag': 'chassis-asset-tag',
-            'chassis_serial': 'chassis-serial-number',
-            'chassis_vendor': 'chassis-manufacturer',
-            'chassis_version': 'chassis-version',
-            'form_factor': 'chassis-type',
-            'product_name': 'system-product-name',
-            'product_serial': 'system-serial-number',
-            'product_uuid': 'system-uuid',
-            'product_version': 'system-version',
-            'system_vendor': 'system-manufacturer',
+            "bios_date": "bios-release-date",
+            "bios_vendor": "bios-vendor",
+            "bios_version": "bios-version",
+            "board_asset_tag": "baseboard-asset-tag",
+            "board_name": "baseboard-product-name",
+            "board_serial": "baseboard-serial-number",
+            "board_vendor": "baseboard-manufacturer",
+            "board_version": "baseboard-version",
+            "chassis_asset_tag": "chassis-asset-tag",
+            "chassis_serial": "chassis-serial-number",
+            "chassis_vendor": "chassis-manufacturer",
+            "chassis_version": "chassis-version",
+            "form_factor": "chassis-type",
+            "product_name": "system-product-name",
+            "product_serial": "system-serial-number",
+            "product_uuid": "system-uuid",
+            "product_version": "system-version",
+            "system_vendor": "system-manufacturer",
         }
-        for (k, v) in DMI_DICT.items():
+        for k, v in DMI_DICT.items():
             if dmi_bin is not None:
-                (rc, out, err) = self.module.run_command('%s -s %s' % (dmi_bin, v))
+                (rc, out, err) = self.module.run_command("%s -s %s" % (dmi_bin, v))
                 if rc == 0:
                     # Strip out commented lines (specific dmidecode output)
                     # FIXME: why add the fact and then test if it is json?
-                    dmi_facts[k] = ''.join([line for line in out.splitlines() if not line.startswith('#')])
+                    dmi_facts[k] = "".join(
+                        [line for line in out.splitlines() if not line.startswith("#")]
+                    )
                     try:
                         json.dumps(dmi_facts[k])
                     except UnicodeDecodeError:
-                        dmi_facts[k] = 'NA'
+                        dmi_facts[k] = "NA"
                 else:
-                    dmi_facts[k] = 'NA'
+                    dmi_facts[k] = "NA"
             else:
-                dmi_facts[k] = 'NA'
+                dmi_facts[k] = "NA"
 
         return dmi_facts
 
 
 class FreeBSDHardwareCollector(HardwareCollector):
     _fact_class = FreeBSDHardware
-    _platform = 'FreeBSD'
+    _platform = "FreeBSD"

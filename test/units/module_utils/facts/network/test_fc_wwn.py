@@ -91,46 +91,50 @@ FCMSUTIL_OUT = """
 
 def mock_get_bin_path(cmd, required=False, opt_dirs=None):
     result = None
-    if cmd == 'lsdev':
-        result = '/usr/sbin/lsdev'
-    elif cmd == 'lscfg':
-        result = '/usr/sbin/lscfg'
-    elif cmd == 'fcinfo':
-        result = '/usr/sbin/fcinfo'
-    elif cmd == 'ioscan':
-        result = '/usr/bin/ioscan'
-    elif cmd == 'fcmsutil':
-        result = '/opt/fcms/bin/fcmsutil'
+    if cmd == "lsdev":
+        result = "/usr/sbin/lsdev"
+    elif cmd == "lscfg":
+        result = "/usr/sbin/lscfg"
+    elif cmd == "fcinfo":
+        result = "/usr/sbin/fcinfo"
+    elif cmd == "ioscan":
+        result = "/usr/bin/ioscan"
+    elif cmd == "fcmsutil":
+        result = "/opt/fcms/bin/fcmsutil"
     return result
 
 
 def mock_run_command(cmd):
     rc = 0
-    if 'lsdev' in cmd:
+    if "lsdev" in cmd:
         result = LSDEV_OUTPUT
-    elif 'lscfg' in cmd:
+    elif "lscfg" in cmd:
         result = LSCFG_OUTPUT
-    elif 'fcinfo' in cmd:
+    elif "fcinfo" in cmd:
         result = FCINFO_OUTPUT
-    elif 'ioscan' in cmd:
+    elif "ioscan" in cmd:
         result = IOSCAN_OUT
-    elif 'fcmsutil' in cmd:
+    elif "fcmsutil" in cmd:
         result = FCMSUTIL_OUT
     else:
         rc = 1
-        result = 'Error'
-    return (rc, result, '')
+        result = "Error"
+    return (rc, result, "")
 
 
 def test_get_fc_wwn_info(mocker):
     module = Mock()
     inst = fc_wwn.FcWwnInitiatorFactCollector()
 
-    mocker.patch.object(module, 'get_bin_path', side_effect=mock_get_bin_path)
-    mocker.patch.object(module, 'run_command', side_effect=mock_run_command)
+    mocker.patch.object(module, "get_bin_path", side_effect=mock_get_bin_path)
+    mocker.patch.object(module, "run_command", side_effect=mock_run_command)
 
-    d = {'aix6': ['10000090FA551508'], 'sunos5': ['10000090fa1658de'], 'hp-ux11': ['0x50060b00006975ec']}
+    d = {
+        "aix6": ["10000090FA551508"],
+        "sunos5": ["10000090fa1658de"],
+        "hp-ux11": ["0x50060b00006975ec"],
+    }
     for key, value in d.items():
-        mocker.patch('sys.platform', key)
+        mocker.patch("sys.platform", key)
         wwn_expected = {"fibre_channel_wwn": value}
         assert wwn_expected == inst.collect(module=module)

@@ -15,14 +15,19 @@ def test_su(mocker, parser, reset_cli_args):
     options = parser.parse_args([])
     context._init_global_context(options)
 
-    su = become_loader.get('su')
-    sh = shell_loader.get('sh')
+    su = become_loader.get("su")
+    sh = shell_loader.get("sh")
     sh.executable = "/bin/bash"
 
-    su.set_options(direct={
-        'become_user': 'foo',
-        'become_flags': '',
-    })
+    su.set_options(
+        direct={
+            "become_user": "foo",
+            "become_flags": "",
+        }
+    )
 
-    cmd = su.build_become_command('/bin/foo', sh)
-    assert re.match(r"""su\s+foo -c '/bin/bash -c '"'"'echo BECOME-SUCCESS-.+?; /bin/foo'"'"''""", cmd)
+    cmd = su.build_become_command("/bin/foo", sh)
+    assert re.match(
+        r"""su\s+foo -c '/bin/bash -c '"'"'echo BECOME-SUCCESS-.+?; /bin/foo'"'"''""",
+        cmd,
+    )

@@ -20,7 +20,12 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch, MagicMock
 
-from ansible.executor.play_iterator import HostState, PlayIterator, IteratingStates, FailedStates
+from ansible.executor.play_iterator import (
+    HostState,
+    PlayIterator,
+    IteratingStates,
+    FailedStates,
+)
 from ansible.playbook import Playbook
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import init_plugin_loader
@@ -48,10 +53,11 @@ class TestPlayIterator(unittest.TestCase):
 
         new_hs = hs.copy()
 
-    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    @patch("ansible.playbook.role.definition.unfrackpath", mock_unfrackpath_noop)
     def test_play_iterator(self):
-        fake_loader = DictDataLoader({
-            "test_play.yml": """
+        fake_loader = DictDataLoader(
+            {
+                "test_play.yml": """
             - hosts: all
               gather_facts: false
               roles:
@@ -75,7 +81,7 @@ class TestPlayIterator(unittest.TestCase):
               post_tasks:
               - debug: msg="this is a post_task"
             """,
-            '/etc/ansible/roles/test_role/tasks/main.yml': """
+                "/etc/ansible/roles/test_role/tasks/main.yml": """
             - name: role task
               debug: msg="this is a role task"
             - block:
@@ -112,25 +118,28 @@ class TestPlayIterator(unittest.TestCase):
               - name: end of role nested block 2
                 debug:
             """,
-            '/etc/ansible/roles/test_role/tasks/foo.yml': """
+                "/etc/ansible/roles/test_role/tasks/foo.yml": """
             - name: role included task
               debug: msg="this is task in an include from a role"
-            """
-        })
+            """,
+            }
+        )
 
         mock_var_manager = MagicMock()
         mock_var_manager._fact_cache = dict()
         mock_var_manager.get_vars.return_value = dict()
 
-        p = Playbook.load('test_play.yml', loader=fake_loader, variable_manager=mock_var_manager)
+        p = Playbook.load(
+            "test_play.yml", loader=fake_loader, variable_manager=mock_var_manager
+        )
 
         hosts = []
         for i in range(0, 10):
             host = MagicMock()
-            host.name = host.get_name.return_value = 'host%02d' % i
+            host.name = host.get_name.return_value = "host%02d" % i
             hosts.append(host)
 
-        mock_var_manager._fact_cache['host00'] = dict()
+        mock_var_manager._fact_cache["host00"] = dict()
 
         inventory = MagicMock()
         inventory.get_hosts.return_value = hosts
@@ -149,15 +158,15 @@ class TestPlayIterator(unittest.TestCase):
         # pre task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'debug')
+        self.assertEqual(task.action, "debug")
         # implicit meta: flush_handlers
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'meta')
+        self.assertEqual(task.action, "meta")
         # role task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'debug')
+        self.assertEqual(task.action, "debug")
         self.assertEqual(task.name, "role task")
         self.assertIsNotNone(task._role)
         # role block task
@@ -173,7 +182,7 @@ class TestPlayIterator(unittest.TestCase):
         # role include_tasks
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'include_tasks')
+        self.assertEqual(task.action, "include_tasks")
         self.assertEqual(task.name, "role include_tasks")
         self.assertIsNotNone(task._role)
         # role task after include
@@ -225,57 +234,57 @@ class TestPlayIterator(unittest.TestCase):
         # implicit meta: role_complete
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'meta')
+        self.assertEqual(task.action, "meta")
         self.assertIsNotNone(task._role)
         # regular play task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'debug')
+        self.assertEqual(task.action, "debug")
         self.assertIsNone(task._role)
         # block task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'debug')
+        self.assertEqual(task.action, "debug")
         self.assertEqual(task.args, dict(msg="this is a block task"))
         # sub-block task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'debug')
+        self.assertEqual(task.action, "debug")
         self.assertEqual(task.args, dict(msg="this is a sub-block in a block"))
         # mark the host failed
         itr.mark_host_failed(hosts[0])
         # block rescue task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'debug')
+        self.assertEqual(task.action, "debug")
         self.assertEqual(task.args, dict(msg="this is a rescue task"))
         # sub-block rescue task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'debug')
+        self.assertEqual(task.action, "debug")
         self.assertEqual(task.args, dict(msg="this is a sub-block in a rescue"))
         # block always task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'debug')
+        self.assertEqual(task.action, "debug")
         self.assertEqual(task.args, dict(msg="this is an always task"))
         # sub-block always task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'debug')
+        self.assertEqual(task.action, "debug")
         self.assertEqual(task.args, dict(msg="this is a sub-block in an always"))
         # implicit meta: flush_handlers
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'meta')
+        self.assertEqual(task.action, "meta")
         # post task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'debug')
+        self.assertEqual(task.action, "debug")
         # implicit meta: flush_handlers
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'meta')
+        self.assertEqual(task.action, "meta")
         # end of iteration
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNone(task)
@@ -287,8 +296,9 @@ class TestPlayIterator(unittest.TestCase):
 
     def test_play_iterator_nested_blocks(self):
         init_plugin_loader()
-        fake_loader = DictDataLoader({
-            "test_play.yml": """
+        fake_loader = DictDataLoader(
+            {
+                "test_play.yml": """
             - hosts: all
               gather_facts: false
               tasks:
@@ -312,18 +322,21 @@ class TestPlayIterator(unittest.TestCase):
                         - block:
                           - debug: msg="this is the always task"
             """,
-        })
+            }
+        )
 
         mock_var_manager = MagicMock()
         mock_var_manager._fact_cache = dict()
         mock_var_manager.get_vars.return_value = dict()
 
-        p = Playbook.load('test_play.yml', loader=fake_loader, variable_manager=mock_var_manager)
+        p = Playbook.load(
+            "test_play.yml", loader=fake_loader, variable_manager=mock_var_manager
+        )
 
         hosts = []
         for i in range(0, 10):
             host = MagicMock()
-            host.name = host.get_name.return_value = 'host%02d' % i
+            host.name = host.get_name.return_value = "host%02d" % i
             hosts.append(host)
 
         inventory = MagicMock()
@@ -343,59 +356,63 @@ class TestPlayIterator(unittest.TestCase):
         # implicit meta: flush_handlers
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'meta')
-        self.assertEqual(task.args, dict(_raw_params='flush_handlers'))
+        self.assertEqual(task.action, "meta")
+        self.assertEqual(task.args, dict(_raw_params="flush_handlers"))
         # get the first task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'debug')
-        self.assertEqual(task.args, dict(msg='this is the first task'))
+        self.assertEqual(task.action, "debug")
+        self.assertEqual(task.args, dict(msg="this is the first task"))
         # fail the host
         itr.mark_host_failed(hosts[0])
         # get the resuce task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'debug')
-        self.assertEqual(task.args, dict(msg='this is the rescue task'))
+        self.assertEqual(task.action, "debug")
+        self.assertEqual(task.args, dict(msg="this is the rescue task"))
         # get the always task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'debug')
-        self.assertEqual(task.args, dict(msg='this is the always task'))
+        self.assertEqual(task.action, "debug")
+        self.assertEqual(task.args, dict(msg="this is the always task"))
         # implicit meta: flush_handlers
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'meta')
-        self.assertEqual(task.args, dict(_raw_params='flush_handlers'))
+        self.assertEqual(task.action, "meta")
+        self.assertEqual(task.args, dict(_raw_params="flush_handlers"))
         # implicit meta: flush_handlers
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
-        self.assertEqual(task.action, 'meta')
-        self.assertEqual(task.args, dict(_raw_params='flush_handlers'))
+        self.assertEqual(task.action, "meta")
+        self.assertEqual(task.args, dict(_raw_params="flush_handlers"))
         # end of iteration
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNone(task)
 
     def test_play_iterator_add_tasks(self):
-        fake_loader = DictDataLoader({
-            'test_play.yml': """
+        fake_loader = DictDataLoader(
+            {
+                "test_play.yml": """
             - hosts: all
               gather_facts: no
               tasks:
               - debug: msg="dummy task"
             """,
-        })
+            }
+        )
 
         mock_var_manager = MagicMock()
         mock_var_manager._fact_cache = dict()
         mock_var_manager.get_vars.return_value = dict()
 
-        p = Playbook.load('test_play.yml', loader=fake_loader, variable_manager=mock_var_manager)
+        p = Playbook.load(
+            "test_play.yml", loader=fake_loader, variable_manager=mock_var_manager
+        )
 
         hosts = []
         for i in range(0, 10):
             host = MagicMock()
-            host.name = host.get_name.return_value = 'host%02d' % i
+            host.name = host.get_name.return_value = "host%02d" % i
             hosts.append(host)
 
         inventory = MagicMock()
@@ -429,10 +446,12 @@ class TestPlayIterator(unittest.TestCase):
 
         # iterate past first task
         dummy, task = itr.get_next_task_for_host(hosts[0])
-        while (task and task.action != 'debug'):
+        while task and task.action != "debug":
             dummy, task = itr.get_next_task_for_host(hosts[0])
 
-        self.assertIsNotNone(task, 'iterated past end of play while looking for place to insert tasks')
+        self.assertIsNotNone(
+            task, "iterated past end of play while looking for place to insert tasks"
+        )
 
         # get the current host state and copy it so we can mutate it
         s = itr.get_host_state(hosts[0])

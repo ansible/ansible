@@ -1,4 +1,5 @@
 """Connection abstraction for interacting with test hosts."""
+
 from __future__ import annotations
 
 import abc
@@ -64,7 +65,7 @@ class Connection(metaclass=abc.ABCMeta):
         src: t.IO[bytes],
     ):
         """Extract the given archive file stream in the specified directory."""
-        tar_cmd = ['tar', 'oxzf', '-', '-C', chdir]
+        tar_cmd = ["tar", "oxzf", "-", "-C", chdir]
 
         retry(lambda: self.run(tar_cmd, stdin=src, capture=True))
 
@@ -76,18 +77,18 @@ class Connection(metaclass=abc.ABCMeta):
         exclude: t.Optional[str] = None,
     ):
         """Create the specified archive file stream from the specified directory, including the given name and optionally excluding the given name."""
-        tar_cmd = ['tar', 'cf', '-', '-C', chdir]
-        gzip_cmd = ['gzip']
+        tar_cmd = ["tar", "cf", "-", "-C", chdir]
+        gzip_cmd = ["gzip"]
 
         if exclude:
-            tar_cmd += ['--exclude', exclude]
+            tar_cmd += ["--exclude", exclude]
 
         tar_cmd.append(name)
 
         # Using gzip to compress the archive allows this to work on all POSIX systems we support.
         commands = [tar_cmd, gzip_cmd]
 
-        sh_cmd = ['sh', '-c', ' | '.join(shlex.join(command) for command in commands)]
+        sh_cmd = ["sh", "-c", " | ".join(shlex.join(command) for command in commands)]
 
         retry(lambda: self.run(sh_cmd, stdout=dst, capture=True))
 
@@ -124,17 +125,22 @@ class LocalConnection(Connection):
 class SshConnection(Connection):
     """Connect to a host using SSH."""
 
-    def __init__(self, args: EnvironmentConfig, settings: SshConnectionDetail, become: t.Optional[Become] = None) -> None:
+    def __init__(
+        self,
+        args: EnvironmentConfig,
+        settings: SshConnectionDetail,
+        become: t.Optional[Become] = None,
+    ) -> None:
         self.args = args
         self.settings = settings
         self.become = become
 
-        self.options = ['-i', settings.identity_file]
+        self.options = ["-i", settings.identity_file]
 
         ssh_options: dict[str, t.Union[int, str]] = dict(
-            BatchMode='yes',
-            StrictHostKeyChecking='no',
-            UserKnownHostsFile='/dev/null',
+            BatchMode="yes",
+            StrictHostKeyChecking="no",
+            UserKnownHostsFile="/dev/null",
             ServerAliveInterval=15,
             ServerAliveCountMax=4,
         )
@@ -159,18 +165,20 @@ class SshConnection(Connection):
         if self.become:
             command = self.become.prepare_command(command)
 
-        options.append('-q')
+        options.append("-q")
 
         if interactive:
-            options.append('-tt')
+            options.append("-tt")
 
-        with tempfile.NamedTemporaryFile(prefix='ansible-test-ssh-debug-', suffix='.log') as ssh_logfile:
-            options.extend(['-vvv', '-E', ssh_logfile.name])
+        with tempfile.NamedTemporaryFile(
+            prefix="ansible-test-ssh-debug-", suffix=".log"
+        ) as ssh_logfile:
+            options.extend(["-vvv", "-E", ssh_logfile.name])
 
             if self.settings.port:
-                options.extend(['-p', str(self.settings.port)])
+                options.extend(["-p", str(self.settings.port)])
 
-            options.append(f'{self.settings.user}@{self.settings.host}')
+            options.append(f"{self.settings.user}@{self.settings.host}")
             options.append(shlex.join(command))
 
             def error_callback(ex: SubprocessError) -> None:
@@ -179,7 +187,7 @@ class SshConnection(Connection):
 
             return run_command(
                 args=self.args,
-                cmd=['ssh'] + options,
+                cmd=["ssh"] + options,
                 capture=capture,
                 data=data,
                 stdin=stdin,
@@ -196,12 +204,12 @@ class SshConnection(Connection):
             return
 
         markers = [
-            'debug1: Connection Established',
-            'debug1: Authentication successful',
-            'debug1: Entering interactive session',
-            'debug1: Sending command',
-            'debug2: PTY allocation request accepted',
-            'debug2: exec request accepted',
+            "debug1: Connection Established",
+            "debug1: Authentication successful",
+            "debug1: Entering interactive session",
+            "debug1: Sending command",
+            "debug2: PTY allocation request accepted",
+            "debug2: exec request accepted",
         ]
 
         file_contents = read_text_file(path)
@@ -213,16 +221,18 @@ class SshConnection(Connection):
             if any(line.startswith(marker) for marker in markers):
                 break
 
-        message = '\n'.join(reversed(messages))
+        message = "\n".join(reversed(messages))
 
-        ex.message += '>>> SSH Debug Output\n'
-        ex.message += '%s%s\n' % (message.strip(), Display.clear)
+        ex.message += ">>> SSH Debug Output\n"
+        ex.message += "%s%s\n" % (message.strip(), Display.clear)
 
 
 class DockerConnection(Connection):
     """Connect to a host using Docker."""
 
-    def __init__(self, args: EnvironmentConfig, container_id: str, user: t.Optional[str] = None) -> None:
+    def __init__(
+        self, args: EnvironmentConfig, container_id: str, user: t.Optional[str] = None
+    ) -> None:
         self.args = args
         self.container_id = container_id
         self.user: t.Optional[str] = user
@@ -241,10 +251,10 @@ class DockerConnection(Connection):
         options = []
 
         if self.user:
-            options.extend(['--user', self.user])
+            options.extend(["--user", self.user])
 
         if interactive:
-            options.append('-it')
+            options.append("-it")
 
         return docker_exec(
             args=self.args,

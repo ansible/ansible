@@ -53,9 +53,7 @@ class Cliconf(CliconfBase):
     @enable_mode
     def get_config(self, source="running", flags=None, format=None):
         if source not in ("running", "startup"):
-            raise ValueError(
-                "fetching configuration from %s is not supported" % source
-            )
+            raise ValueError("fetching configuration from %s is not supported" % source)
 
         if format:
             raise ValueError(
@@ -122,9 +120,7 @@ class Cliconf(CliconfBase):
         option_values = self.get_option_values()
 
         if candidate is None and device_operations["supports_generate_diff"]:
-            raise ValueError(
-                "candidate configuration is required to generate diff"
-            )
+            raise ValueError("candidate configuration is required to generate diff")
 
         if diff_match not in option_values["diff_match"]:
             raise ValueError(
@@ -165,9 +161,7 @@ class Cliconf(CliconfBase):
         return diff
 
     @enable_mode
-    def edit_config(
-        self, candidate=None, commit=True, replace=None, comment=None
-    ):
+    def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
         resp = {}
         operations = self.get_device_operations()
         self.check_edit_config_capability(
@@ -195,9 +189,7 @@ class Cliconf(CliconfBase):
         resp["response"] = results
         return resp
 
-    def edit_macro(
-        self, candidate=None, commit=True, replace=None, comment=None
-    ):
+    def edit_macro(self, candidate=None, commit=True, replace=None, comment=None):
         """
         ios_config:
           lines: "{{ macro_lines }}"
@@ -251,9 +243,7 @@ class Cliconf(CliconfBase):
         if not command:
             raise ValueError("must provide value of command to execute")
         if output:
-            raise ValueError(
-                "'output' value %s is not supported for get" % output
-            )
+            raise ValueError("'output' value %s is not supported for get" % output)
 
         return self.send_command(
             command=command,
@@ -331,9 +321,7 @@ class Cliconf(CliconfBase):
         result.update(self.get_option_values())
         return json.dumps(result)
 
-    def edit_banner(
-        self, candidate=None, multiline_delimiter="@", commit=True
-    ):
+    def edit_banner(self, candidate=None, multiline_delimiter="@", commit=True):
         """
         Edit banner on remote device
         :param banners: Banners to be loaded in json format
@@ -380,8 +368,7 @@ class Cliconf(CliconfBase):
             output = cmd.pop("output", None)
             if output:
                 raise ValueError(
-                    "'output' value %s is not supported for run_commands"
-                    % output
+                    "'output' value %s is not supported for run_commands" % output
                 )
 
             try:
@@ -424,9 +411,8 @@ class Cliconf(CliconfBase):
 
             if out is None:
                 raise AnsibleConnectionFailure(
-                    message=u"cli prompt is not identified from the last received"
-                    u" response window: %s"
-                    % self._connection._last_recv_window
+                    message="cli prompt is not identified from the last received"
+                    " response window: %s" % self._connection._last_recv_window
                 )
 
             if re.search(

@@ -1,4 +1,5 @@
 """Command line parsing for the `coverage html` command."""
+
 from __future__ import annotations
 
 import argparse
@@ -26,9 +27,9 @@ def do_html(
 ) -> None:
     """Command line parsing for the `coverage html` command."""
     parser: argparse.ArgumentParser = subparsers.add_parser(
-        'html',
+        "html",
         parents=[parent],
-        help='generate html coverage report',
+        help="generate html coverage report",
     )
 
     parser.set_defaults(
@@ -36,8 +37,12 @@ def do_html(
         config=CoverageHtmlConfig,
     )
 
-    coverage_combine = t.cast(argparse.ArgumentParser, parser.add_argument_group(title='coverage arguments'))
+    coverage_combine = t.cast(
+        argparse.ArgumentParser, parser.add_argument_group(title="coverage arguments")
+    )
 
     add_coverage_common(coverage_combine)
 
-    add_environments(parser, completer, ControllerMode.DELEGATED, TargetMode.NO_TARGETS)  # coverage html
+    add_environments(
+        parser, completer, ControllerMode.DELEGATED, TargetMode.NO_TARGETS
+    )  # coverage html

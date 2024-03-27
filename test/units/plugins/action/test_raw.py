@@ -30,8 +30,8 @@ class TestCopyResultExclude(unittest.TestCase):
 
     def setUp(self):
         self.play_context = Mock()
-        self.play_context.shell = 'sh'
-        self.connection = connection_loader.get('local', self.play_context, os.devnull)
+        self.play_context.shell = "sh"
+        self.connection = connection_loader.get("local", self.play_context, os.devnull)
 
     def tearDown(self):
         pass
@@ -43,9 +43,10 @@ class TestCopyResultExclude(unittest.TestCase):
         task.diff = False
         task.check_mode = False
         task.environment = None
-        task.args = {'_raw_params': 'Args1'}
+        task.args = {"_raw_params": "Args1"}
 
         return task
+
     # The current behavior of the raw aciton in regards to executable is currently in question;
     # the test_raw_executable_is_not_empty_string verifies the current behavior (whether it is desireed or not.
     # Please refer to the following for context:
@@ -56,26 +57,49 @@ class TestCopyResultExclude(unittest.TestCase):
 
         task = self._build_task()
 
-        self.mock_am = ActionModule(task, self.connection, self.play_context, loader=None, templar=None, shared_loader_obj=None)
+        self.mock_am = ActionModule(
+            task,
+            self.connection,
+            self.play_context,
+            loader=None,
+            templar=None,
+            shared_loader_obj=None,
+        )
         self.mock_am._low_level_execute_command = Mock(return_value={})
         self.mock_am.display = Mock()
-        self.mock_am._admin_users = ['root', 'toor']
+        self.mock_am._admin_users = ["root", "toor"]
 
         self.mock_am.run()
-        self.mock_am._low_level_execute_command.assert_called_with('Args1', executable=False)
+        self.mock_am._low_level_execute_command.assert_called_with(
+            "Args1", executable=False
+        )
 
     def test_raw_check_mode_is_True(self):
 
         task = self._build_task()
         task.check_mode = True
 
-        self.mock_am = ActionModule(task, self.connection, self.play_context, loader=None, templar=None, shared_loader_obj=None)
+        self.mock_am = ActionModule(
+            task,
+            self.connection,
+            self.play_context,
+            loader=None,
+            templar=None,
+            shared_loader_obj=None,
+        )
 
     def test_raw_test_environment_is_None(self):
 
         task = self._build_task()
 
-        self.mock_am = ActionModule(task, self.connection, self.play_context, loader=None, templar=None, shared_loader_obj=None)
+        self.mock_am = ActionModule(
+            task,
+            self.connection,
+            self.play_context,
+            loader=None,
+            templar=None,
+            shared_loader_obj=None,
+        )
         self.mock_am._low_level_execute_command = Mock(return_value={})
         self.mock_am.display = Mock()
 
@@ -85,9 +109,16 @@ class TestCopyResultExclude(unittest.TestCase):
 
         task = self._build_task()
 
-        self.mock_am = ActionModule(task, self.connection, self.play_context, loader=None, templar=None, shared_loader_obj=None)
+        self.mock_am = ActionModule(
+            task,
+            self.connection,
+            self.play_context,
+            loader=None,
+            templar=None,
+            shared_loader_obj=None,
+        )
         self.mock_am._low_level_execute_command = Mock(return_value={})
         self.mock_am.display = Mock()
 
-        self.mock_am.run(task_vars={'a': 'b'})
+        self.mock_am.run(task_vars={"a": "b"})
         self.assertEqual(task.environment, None)

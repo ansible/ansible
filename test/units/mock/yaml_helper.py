@@ -8,6 +8,7 @@ from ansible.parsing.yaml.dumper import AnsibleDumper
 
 class YamlTestUtils(object):
     """Mixin class to combine with a unittest.TestCase subclass."""
+
     def _loader(self, stream):
         """Vault related tests will want to override this.
 
@@ -33,8 +34,7 @@ class YamlTestUtils(object):
         obj_2 = loader.get_data()
 
         # dump the gen 2 objects directory to strings
-        string_from_object_dump_2 = self._dump_string(obj_2,
-                                                      dumper=AnsibleDumper)
+        string_from_object_dump_2 = self._dump_string(obj_2, dumper=AnsibleDumper)
 
         # The gen 1 and gen 2 yaml strings
         self.assertEqual(string_from_object_dump, string_from_object_dump_2)

@@ -6,12 +6,12 @@ import locale
 import sys
 import typing as t
 
-STANDARD_LOCALE = 'en_US.UTF-8'
+STANDARD_LOCALE = "en_US.UTF-8"
 """
 The standard locale used by ansible-test and its subprocesses and delegated instances.
 """
 
-FALLBACK_LOCALE = 'C.UTF-8'
+FALLBACK_LOCALE = "C.UTF-8"
 """
 The fallback locale to use when the standard locale is not available.
 This was added in ansible-core 2.14 to allow testing in environments without the standard locale.
@@ -23,14 +23,16 @@ class LocaleError(SystemExit):
     """Exception to raise when locale related errors occur."""
 
     def __init__(self, message: str) -> None:
-        super().__init__(f'ERROR: {message}')
+        super().__init__(f"ERROR: {message}")
 
 
 def configure_locale() -> tuple[str, t.Optional[str]]:
     """Configure the locale, returning the selected locale and an optional warning."""
 
-    if (fs_encoding := sys.getfilesystemencoding()).lower() != 'utf-8':
-        raise LocaleError(f'ansible-test requires the filesystem encoding to be UTF-8, but "{fs_encoding}" was detected.')
+    if (fs_encoding := sys.getfilesystemencoding()).lower() != "utf-8":
+        raise LocaleError(
+            f'ansible-test requires the filesystem encoding to be UTF-8, but "{fs_encoding}" was detected.'
+        )
 
     candidate_locales = STANDARD_LOCALE, FALLBACK_LOCALE
 
@@ -49,12 +51,16 @@ def configure_locale() -> tuple[str, t.Optional[str]]:
             break
 
     if not configured_locale:
-        raise LocaleError('ansible-test could not initialize a supported locale:\n' +
-                          '\n'.join(f'{key}: {value}' for key, value in errors.items()))
+        raise LocaleError(
+            "ansible-test could not initialize a supported locale:\n"
+            + "\n".join(f"{key}: {value}" for key, value in errors.items())
+        )
 
     if configured_locale != STANDARD_LOCALE:
-        warning = (f'Using locale "{configured_locale}" instead of "{STANDARD_LOCALE}". '
-                   'Tests which depend on the locale may behave unexpectedly.')
+        warning = (
+            f'Using locale "{configured_locale}" instead of "{STANDARD_LOCALE}". '
+            "Tests which depend on the locale may behave unexpectedly."
+        )
 
     return configured_locale, warning
 

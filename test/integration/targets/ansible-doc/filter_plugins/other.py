@@ -12,12 +12,12 @@ def donothing(a):
 
 
 class FilterModule(object):
-    ''' Ansible core jinja2 filters '''
+    """Ansible core jinja2 filters"""
 
     def filters(self):
         return {
-            'donothing': donothing,
-            'nodocs': donothing,
-            'split': donothing,
-            'b64decode': donothing,
+            "donothing": donothing,
+            "nodocs": donothing,
+            "split": donothing,
+            "b64decode": donothing,
         }

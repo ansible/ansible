@@ -1,4 +1,5 @@
 """Configuration classes."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -36,7 +37,7 @@ from .host_configs import (
     VirtualPythonConfig,
 )
 
-THostConfig = t.TypeVar('THostConfig', bound=HostConfig)
+THostConfig = t.TypeVar("THostConfig", bound=HostConfig)
 
 
 class TerminateMode(enum.Enum):
@@ -97,7 +98,8 @@ class EnvironmentConfig(CommonConfig):
             self.delegate = (
                 not isinstance(self.controller, OriginConfig)
                 or isinstance(self.controller.python, VirtualPythonConfig)
-                or self.controller.python.version != version_to_str(sys.version_info[:2])
+                or self.controller.python.version
+                != version_to_str(sys.version_info[:2])
                 or bool(verify_sys_executable(self.controller.python.path))
             )
 
@@ -122,9 +124,9 @@ class EnvironmentConfig(CommonConfig):
             config = self
 
             if config.host_path:
-                settings_path = os.path.join(config.host_path, 'settings.dat')
-                state_path = os.path.join(config.host_path, 'state.dat')
-                config_path = os.path.join(config.host_path, 'config.dat')
+                settings_path = os.path.join(config.host_path, "settings.dat")
+                state_path = os.path.join(config.host_path, "state.dat")
+                config_path = os.path.join(config.host_path, "config.dat")
 
                 files = payload_config.files
 
@@ -152,12 +154,12 @@ class EnvironmentConfig(CommonConfig):
         targets = list(self.targets)
 
         if len(targets) != 1:
-            raise Exception('There must be exactly one target.')
+            raise Exception("There must be exactly one target.")
 
         target = targets.pop()
 
         if not isinstance(target, target_type):
-            raise Exception(f'Target is {type(target_type)} instead of {target_type}.')
+            raise Exception(f"Target is {type(target_type)} instead of {target_type}.")
 
         return target
 
@@ -167,7 +169,7 @@ class EnvironmentConfig(CommonConfig):
         Requires that there are one or more targets, all the specified type.
         """
         if not self.targets:
-            raise Exception('There must be one or more targets.')
+            raise Exception("There must be one or more targets.")
 
         assert type_guard(self.targets, target_type)
 
@@ -183,7 +185,7 @@ class EnvironmentConfig(CommonConfig):
         target_types = set(type(target) for target in self.targets)
 
         if len(target_types) != 1:
-            raise Exception('There must be one or more targets, all of the same type.')
+            raise Exception("There must be one or more targets, all of the same type.")
 
         target_type = target_types.pop()
 
@@ -215,11 +217,13 @@ class TestConfig(EnvironmentConfig):
         self.changed_path: list[str] = args.changed_path
         self.base_branch: str = args.base_branch
 
-        self.lint: bool = getattr(args, 'lint', False)
-        self.junit: bool = getattr(args, 'junit', False)
-        self.failure_ok: bool = getattr(args, 'failure_ok', False)
+        self.lint: bool = getattr(args, "lint", False)
+        self.junit: bool = getattr(args, "junit", False)
+        self.failure_ok: bool = getattr(args, "failure_ok", False)
 
-        self.metadata = Metadata.from_file(args.metadata) if args.metadata else Metadata()
+        self.metadata = (
+            Metadata.from_file(args.metadata) if args.metadata else Metadata()
+        )
         self.metadata_path: t.Optional[str] = None
 
         if self.coverage_check:
@@ -231,7 +235,9 @@ class TestConfig(EnvironmentConfig):
             files = payload_config.files
 
             if config.metadata_path:
-                files.append((os.path.abspath(config.metadata_path), config.metadata_path))
+                files.append(
+                    (os.path.abspath(config.metadata_path), config.metadata_path)
+                )
 
         data_context().register_payload_callback(metadata_callback)
 
@@ -240,12 +246,16 @@ class ShellConfig(EnvironmentConfig):
     """Configuration for the shell command."""
 
     def __init__(self, args: t.Any) -> None:
-        super().__init__(args, 'shell')
+        super().__init__(args, "shell")
 
         self.cmd: list[str] = args.cmd
         self.raw: bool = args.raw
-        self.check_layout = self.delegate  # allow shell to be used without a valid layout as long as no delegation is required
-        self.interactive = sys.stdin.isatty() and not args.cmd  # delegation should only be interactive when stdin is a TTY and no command was given
+        self.check_layout = (
+            self.delegate
+        )  # allow shell to be used without a valid layout as long as no delegation is required
+        self.interactive = (
+            sys.stdin.isatty() and not args.cmd
+        )  # delegation should only be interactive when stdin is a TTY and no command was given
         self.export: t.Optional[str] = args.export
         self.display_stderr = True
 
@@ -254,7 +264,7 @@ class SanityConfig(TestConfig):
     """Configuration for the sanity command."""
 
     def __init__(self, args: t.Any) -> None:
-        super().__init__(args, 'sanity')
+        super().__init__(args, "sanity")
 
         self.test: list[str] = args.test
         self.skip_test: list[str] = args.skip_test
@@ -298,8 +308,12 @@ class IntegrationConfig(TestConfig):
 
     def get_ansible_config(self) -> str:
         """Return the path to the Ansible config for the given config."""
-        ansible_config_relative_path = os.path.join(data_context().content.integration_path, '%s.cfg' % self.command)
-        ansible_config_path = os.path.join(data_context().content.root, ansible_config_relative_path)
+        ansible_config_relative_path = os.path.join(
+            data_context().content.integration_path, "%s.cfg" % self.command
+        )
+        ansible_config_path = os.path.join(
+            data_context().content.root, ansible_config_relative_path
+        )
 
         if not os.path.exists(ansible_config_path):
             # use the default empty configuration unless one has been provided
@@ -308,28 +322,28 @@ class IntegrationConfig(TestConfig):
         return ansible_config_path
 
 
-TIntegrationConfig = t.TypeVar('TIntegrationConfig', bound=IntegrationConfig)
+TIntegrationConfig = t.TypeVar("TIntegrationConfig", bound=IntegrationConfig)
 
 
 class PosixIntegrationConfig(IntegrationConfig):
     """Configuration for the posix integration command."""
 
     def __init__(self, args: t.Any) -> None:
-        super().__init__(args, 'integration')
+        super().__init__(args, "integration")
 
 
 class WindowsIntegrationConfig(IntegrationConfig):
     """Configuration for the windows integration command."""
 
     def __init__(self, args: t.Any) -> None:
-        super().__init__(args, 'windows-integration')
+        super().__init__(args, "windows-integration")
 
 
 class NetworkIntegrationConfig(IntegrationConfig):
     """Configuration for the network integration command."""
 
     def __init__(self, args: t.Any) -> None:
-        super().__init__(args, 'network-integration')
+        super().__init__(args, "network-integration")
 
         self.testcase: str = args.testcase
 
@@ -338,14 +352,14 @@ class UnitsConfig(TestConfig):
     """Configuration for the units command."""
 
     def __init__(self, args: t.Any) -> None:
-        super().__init__(args, 'units')
+        super().__init__(args, "units")
 
         self.collect_only: bool = args.collect_only
         self.num_workers: int = args.num_workers
 
-        self.requirements_mode: str = getattr(args, 'requirements_mode', '')
+        self.requirements_mode: str = getattr(args, "requirements_mode", "")
 
-        if self.requirements_mode == 'only':
+        if self.requirements_mode == "only":
             self.requirements = True
-        elif self.requirements_mode == 'skip':
+        elif self.requirements_mode == "skip":
             self.requirements = False

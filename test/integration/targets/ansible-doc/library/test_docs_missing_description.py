@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: test_docs_returns
 short_description: Test module
@@ -13,13 +13,13 @@ author:
 options:
     test:
         type: str
-'''
+"""
 
-EXAMPLES = '''
-'''
+EXAMPLES = """
+"""
 
-RETURN = '''
-'''
+RETURN = """
+"""
 
 
 from ansible.module_utils.basic import AnsibleModule
@@ -28,12 +28,12 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            test=dict(type='str'),
+            test=dict(type="str"),
         ),
     )
 
     module.exit_json()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -26,8 +26,7 @@ from ansible_collections.vyos.vyos.plugins.module_utils.network.vyos.utils.utils
 
 
 class Static_routesFacts(object):
-    """ The vyos static_routes fact class
-    """
+    """The vyos static_routes fact class"""
 
     def __init__(self, module, subspec="config", options="options"):
         self._module = module
@@ -47,7 +46,7 @@ class Static_routesFacts(object):
         return connection.get_config()
 
     def populate_facts(self, connection, ansible_facts, data=None):
-        """ Populate the facts for static_routes
+        """Populate the facts for static_routes
         :param connection: the device connection
         :param ansible_facts: Facts dictionary
         :param data: previously collected conf
@@ -63,9 +62,7 @@ class Static_routesFacts(object):
         r_v4 = []
         r_v6 = []
         af = []
-        static_routes = findall(
-            r"set protocols static route(6)? (\S+)", data, M
-        )
+        static_routes = findall(r"set protocols static route(6)? (\S+)", data, M)
         if static_routes:
             for route in set(static_routes):
                 route_regex = r" %s .+$" % route[1]
@@ -91,9 +88,7 @@ class Static_routesFacts(object):
         facts = {}
         if objs:
             facts["static_routes"] = []
-            params = utils.validate_config(
-                self.argument_spec, {"config": objs}
-            )
+            params = utils.validate_config(self.argument_spec, {"config": objs})
             for cfg in params["config"]:
                 facts["static_routes"].append(utils.remove_empties(cfg))
 
@@ -151,9 +146,7 @@ class Static_routesFacts(object):
 
                     dis = hop.find("disable")
                     hop_info = hop.split(" ")
-                    nh_info = {
-                        "forward_router_address": hop_info[0].strip("'")
-                    }
+                    nh_info = {"forward_router_address": hop_info[0].strip("'")}
                     if interface:
                         nh_info["interface"] = interface.group(1).strip("'")
                     if distance:
@@ -169,9 +162,7 @@ class Static_routesFacts(object):
                             if "interface" in nh_info.keys():
                                 element["interface"] = nh_info["interface"]
                             if "admin_distance" in nh_info.keys():
-                                element["admin_distance"] = nh_info[
-                                    "admin_distance"
-                                ]
+                                element["admin_distance"] = nh_info["admin_distance"]
                             if "enabled" in nh_info.keys():
                                 element["enabled"] = nh_info["enabled"]
                             nh_info = None

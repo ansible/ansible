@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: iptables
 short_description: Modify iptables rules
@@ -394,9 +394,9 @@ options:
     type: bool
     default: false
     version_added: "2.15"
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Block specific IP
   ansible.builtin.iptables:
     chain: INPUT
@@ -543,7 +543,7 @@ EXAMPLES = r'''
       - "443"
       - "8081:8083"
     jump: ACCEPT
-'''
+"""
 
 import re
 
@@ -552,18 +552,18 @@ from ansible.module_utils.compat.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule
 
 
-IPTABLES_WAIT_SUPPORT_ADDED = '1.4.20'
+IPTABLES_WAIT_SUPPORT_ADDED = "1.4.20"
 
-IPTABLES_WAIT_WITH_SECONDS_SUPPORT_ADDED = '1.6.0'
+IPTABLES_WAIT_WITH_SECONDS_SUPPORT_ADDED = "1.6.0"
 
 BINS = dict(
-    ipv4='iptables',
-    ipv6='ip6tables',
+    ipv4="iptables",
+    ipv6="ip6tables",
 )
 
 ICMP_TYPE_OPTIONS = dict(
-    ipv4='--icmp-type',
-    ipv6='--icmpv6-type',
+    ipv4="--icmp-type",
+    ipv6="--icmpv6-type",
 )
 
 
@@ -573,38 +573,38 @@ def append_param(rule, param, flag, is_list):
             append_param(rule, item, flag, False)
     else:
         if param is not None:
-            if param[0] == '!':
-                rule.extend(['!', flag, param[1:]])
+            if param[0] == "!":
+                rule.extend(["!", flag, param[1:]])
             else:
                 rule.extend([flag, param])
 
 
 def append_tcp_flags(rule, param, flag):
     if param:
-        if 'flags' in param and 'flags_set' in param:
-            rule.extend([flag, ','.join(param['flags']), ','.join(param['flags_set'])])
+        if "flags" in param and "flags_set" in param:
+            rule.extend([flag, ",".join(param["flags"]), ",".join(param["flags_set"])])
 
 
 def append_match_flag(rule, param, flag, negatable):
-    if param == 'match':
+    if param == "match":
         rule.extend([flag])
-    elif negatable and param == 'negate':
-        rule.extend(['!', flag])
+    elif negatable and param == "negate":
+        rule.extend(["!", flag])
 
 
 def append_csv(rule, param, flag):
     if param:
-        rule.extend([flag, ','.join(param)])
+        rule.extend([flag, ",".join(param)])
 
 
 def append_match(rule, param, match):
     if param:
-        rule.extend(['-m', match])
+        rule.extend(["-m", match])
 
 
 def append_jump(rule, param, jump):
     if param:
-        rule.extend(['-j', jump])
+        rule.extend(["-j", jump])
 
 
 def append_wait(rule, param, flag):
@@ -614,163 +614,157 @@ def append_wait(rule, param, flag):
 
 def construct_rule(params):
     rule = []
-    append_wait(rule, params['wait'], '-w')
-    append_param(rule, params['protocol'], '-p', False)
-    append_param(rule, params['source'], '-s', False)
-    append_param(rule, params['destination'], '-d', False)
-    append_param(rule, params['match'], '-m', True)
-    append_tcp_flags(rule, params['tcp_flags'], '--tcp-flags')
-    append_param(rule, params['jump'], '-j', False)
-    if params.get('jump') and params['jump'].lower() == 'tee':
-        append_param(rule, params['gateway'], '--gateway', False)
-    append_param(rule, params['log_prefix'], '--log-prefix', False)
-    append_param(rule, params['log_level'], '--log-level', False)
-    append_param(rule, params['to_destination'], '--to-destination', False)
-    append_match(rule, params['destination_ports'], 'multiport')
-    append_csv(rule, params['destination_ports'], '--dports')
-    append_param(rule, params['to_source'], '--to-source', False)
-    append_param(rule, params['goto'], '-g', False)
-    append_param(rule, params['in_interface'], '-i', False)
-    append_param(rule, params['out_interface'], '-o', False)
-    append_param(rule, params['fragment'], '-f', False)
-    append_param(rule, params['set_counters'], '-c', False)
-    append_param(rule, params['source_port'], '--source-port', False)
-    append_param(rule, params['destination_port'], '--destination-port', False)
-    append_param(rule, params['to_ports'], '--to-ports', False)
-    append_param(rule, params['set_dscp_mark'], '--set-dscp', False)
-    if params.get('set_dscp_mark') and params.get('jump').lower() != 'dscp':
-        append_jump(rule, params['set_dscp_mark'], 'DSCP')
+    append_wait(rule, params["wait"], "-w")
+    append_param(rule, params["protocol"], "-p", False)
+    append_param(rule, params["source"], "-s", False)
+    append_param(rule, params["destination"], "-d", False)
+    append_param(rule, params["match"], "-m", True)
+    append_tcp_flags(rule, params["tcp_flags"], "--tcp-flags")
+    append_param(rule, params["jump"], "-j", False)
+    if params.get("jump") and params["jump"].lower() == "tee":
+        append_param(rule, params["gateway"], "--gateway", False)
+    append_param(rule, params["log_prefix"], "--log-prefix", False)
+    append_param(rule, params["log_level"], "--log-level", False)
+    append_param(rule, params["to_destination"], "--to-destination", False)
+    append_match(rule, params["destination_ports"], "multiport")
+    append_csv(rule, params["destination_ports"], "--dports")
+    append_param(rule, params["to_source"], "--to-source", False)
+    append_param(rule, params["goto"], "-g", False)
+    append_param(rule, params["in_interface"], "-i", False)
+    append_param(rule, params["out_interface"], "-o", False)
+    append_param(rule, params["fragment"], "-f", False)
+    append_param(rule, params["set_counters"], "-c", False)
+    append_param(rule, params["source_port"], "--source-port", False)
+    append_param(rule, params["destination_port"], "--destination-port", False)
+    append_param(rule, params["to_ports"], "--to-ports", False)
+    append_param(rule, params["set_dscp_mark"], "--set-dscp", False)
+    if params.get("set_dscp_mark") and params.get("jump").lower() != "dscp":
+        append_jump(rule, params["set_dscp_mark"], "DSCP")
 
-    append_param(
-        rule,
-        params['set_dscp_mark_class'],
-        '--set-dscp-class',
-        False)
-    if params.get('set_dscp_mark_class') and params.get('jump').lower() != 'dscp':
-        append_jump(rule, params['set_dscp_mark_class'], 'DSCP')
-    append_match_flag(rule, params['syn'], '--syn', True)
-    if 'conntrack' in params['match']:
-        append_csv(rule, params['ctstate'], '--ctstate')
-    elif 'state' in params['match']:
-        append_csv(rule, params['ctstate'], '--state')
-    elif params['ctstate']:
-        append_match(rule, params['ctstate'], 'conntrack')
-        append_csv(rule, params['ctstate'], '--ctstate')
-    if 'iprange' in params['match']:
-        append_param(rule, params['src_range'], '--src-range', False)
-        append_param(rule, params['dst_range'], '--dst-range', False)
-    elif params['src_range'] or params['dst_range']:
-        append_match(rule, params['src_range'] or params['dst_range'], 'iprange')
-        append_param(rule, params['src_range'], '--src-range', False)
-        append_param(rule, params['dst_range'], '--dst-range', False)
-    if 'set' in params['match']:
-        append_param(rule, params['match_set'], '--match-set', False)
-        append_match_flag(rule, 'match', params['match_set_flags'], False)
-    elif params['match_set']:
-        append_match(rule, params['match_set'], 'set')
-        append_param(rule, params['match_set'], '--match-set', False)
-        append_match_flag(rule, 'match', params['match_set_flags'], False)
-    append_match(rule, params['limit'] or params['limit_burst'], 'limit')
-    append_param(rule, params['limit'], '--limit', False)
-    append_param(rule, params['limit_burst'], '--limit-burst', False)
-    append_match(rule, params['uid_owner'], 'owner')
-    append_match_flag(rule, params['uid_owner'], '--uid-owner', True)
-    append_param(rule, params['uid_owner'], '--uid-owner', False)
-    append_match(rule, params['gid_owner'], 'owner')
-    append_match_flag(rule, params['gid_owner'], '--gid-owner', True)
-    append_param(rule, params['gid_owner'], '--gid-owner', False)
-    if params['jump'] is None:
-        append_jump(rule, params['reject_with'], 'REJECT')
-        append_jump(rule, params['set_dscp_mark_class'], 'DSCP')
-        append_jump(rule, params['set_dscp_mark'], 'DSCP')
+    append_param(rule, params["set_dscp_mark_class"], "--set-dscp-class", False)
+    if params.get("set_dscp_mark_class") and params.get("jump").lower() != "dscp":
+        append_jump(rule, params["set_dscp_mark_class"], "DSCP")
+    append_match_flag(rule, params["syn"], "--syn", True)
+    if "conntrack" in params["match"]:
+        append_csv(rule, params["ctstate"], "--ctstate")
+    elif "state" in params["match"]:
+        append_csv(rule, params["ctstate"], "--state")
+    elif params["ctstate"]:
+        append_match(rule, params["ctstate"], "conntrack")
+        append_csv(rule, params["ctstate"], "--ctstate")
+    if "iprange" in params["match"]:
+        append_param(rule, params["src_range"], "--src-range", False)
+        append_param(rule, params["dst_range"], "--dst-range", False)
+    elif params["src_range"] or params["dst_range"]:
+        append_match(rule, params["src_range"] or params["dst_range"], "iprange")
+        append_param(rule, params["src_range"], "--src-range", False)
+        append_param(rule, params["dst_range"], "--dst-range", False)
+    if "set" in params["match"]:
+        append_param(rule, params["match_set"], "--match-set", False)
+        append_match_flag(rule, "match", params["match_set_flags"], False)
+    elif params["match_set"]:
+        append_match(rule, params["match_set"], "set")
+        append_param(rule, params["match_set"], "--match-set", False)
+        append_match_flag(rule, "match", params["match_set_flags"], False)
+    append_match(rule, params["limit"] or params["limit_burst"], "limit")
+    append_param(rule, params["limit"], "--limit", False)
+    append_param(rule, params["limit_burst"], "--limit-burst", False)
+    append_match(rule, params["uid_owner"], "owner")
+    append_match_flag(rule, params["uid_owner"], "--uid-owner", True)
+    append_param(rule, params["uid_owner"], "--uid-owner", False)
+    append_match(rule, params["gid_owner"], "owner")
+    append_match_flag(rule, params["gid_owner"], "--gid-owner", True)
+    append_param(rule, params["gid_owner"], "--gid-owner", False)
+    if params["jump"] is None:
+        append_jump(rule, params["reject_with"], "REJECT")
+        append_jump(rule, params["set_dscp_mark_class"], "DSCP")
+        append_jump(rule, params["set_dscp_mark"], "DSCP")
 
-    append_param(rule, params['reject_with'], '--reject-with', False)
+    append_param(rule, params["reject_with"], "--reject-with", False)
     append_param(
-        rule,
-        params['icmp_type'],
-        ICMP_TYPE_OPTIONS[params['ip_version']],
-        False)
-    append_match(rule, params['comment'], 'comment')
-    append_param(rule, params['comment'], '--comment', False)
+        rule, params["icmp_type"], ICMP_TYPE_OPTIONS[params["ip_version"]], False
+    )
+    append_match(rule, params["comment"], "comment")
+    append_param(rule, params["comment"], "--comment", False)
     return rule
 
 
 def push_arguments(iptables_path, action, params, make_rule=True):
     cmd = [iptables_path]
-    cmd.extend(['-t', params['table']])
-    cmd.extend([action, params['chain']])
-    if action == '-I' and params['rule_num']:
-        cmd.extend([params['rule_num']])
+    cmd.extend(["-t", params["table"]])
+    cmd.extend([action, params["chain"]])
+    if action == "-I" and params["rule_num"]:
+        cmd.extend([params["rule_num"]])
     if make_rule:
         cmd.extend(construct_rule(params))
     return cmd
 
 
 def check_rule_present(iptables_path, module, params):
-    cmd = push_arguments(iptables_path, '-C', params)
+    cmd = push_arguments(iptables_path, "-C", params)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
-    return (rc == 0)
+    return rc == 0
 
 
 def append_rule(iptables_path, module, params):
-    cmd = push_arguments(iptables_path, '-A', params)
+    cmd = push_arguments(iptables_path, "-A", params)
     module.run_command(cmd, check_rc=True)
 
 
 def insert_rule(iptables_path, module, params):
-    cmd = push_arguments(iptables_path, '-I', params)
+    cmd = push_arguments(iptables_path, "-I", params)
     module.run_command(cmd, check_rc=True)
 
 
 def remove_rule(iptables_path, module, params):
-    cmd = push_arguments(iptables_path, '-D', params)
+    cmd = push_arguments(iptables_path, "-D", params)
     module.run_command(cmd, check_rc=True)
 
 
 def flush_table(iptables_path, module, params):
-    cmd = push_arguments(iptables_path, '-F', params, make_rule=False)
+    cmd = push_arguments(iptables_path, "-F", params, make_rule=False)
     module.run_command(cmd, check_rc=True)
 
 
 def set_chain_policy(iptables_path, module, params):
-    cmd = push_arguments(iptables_path, '-P', params, make_rule=False)
-    cmd.append(params['policy'])
+    cmd = push_arguments(iptables_path, "-P", params, make_rule=False)
+    cmd.append(params["policy"])
     module.run_command(cmd, check_rc=True)
 
 
 def get_chain_policy(iptables_path, module, params):
-    cmd = push_arguments(iptables_path, '-L', params, make_rule=False)
-    if module.params['numeric']:
-        cmd.append('--numeric')
+    cmd = push_arguments(iptables_path, "-L", params, make_rule=False)
+    if module.params["numeric"]:
+        cmd.append("--numeric")
     rc, out, err = module.run_command(cmd, check_rc=True)
     chain_header = out.split("\n")[0]
-    result = re.search(r'\(policy ([A-Z]+)\)', chain_header)
+    result = re.search(r"\(policy ([A-Z]+)\)", chain_header)
     if result:
         return result.group(1)
     return None
 
 
 def get_iptables_version(iptables_path, module):
-    cmd = [iptables_path, '--version']
+    cmd = [iptables_path, "--version"]
     rc, out, err = module.run_command(cmd, check_rc=True)
-    return out.split('v')[1].rstrip('\n')
+    return out.split("v")[1].rstrip("\n")
 
 
 def create_chain(iptables_path, module, params):
-    cmd = push_arguments(iptables_path, '-N', params, make_rule=False)
+    cmd = push_arguments(iptables_path, "-N", params, make_rule=False)
     module.run_command(cmd, check_rc=True)
 
 
 def check_chain_present(iptables_path, module, params):
-    cmd = push_arguments(iptables_path, '-L', params, make_rule=False)
-    if module.params['numeric']:
-        cmd.append('--numeric')
+    cmd = push_arguments(iptables_path, "-L", params, make_rule=False)
+    if module.params["numeric"]:
+        cmd.append("--numeric")
     rc, out, err = module.run_command(cmd, check_rc=False)
-    return (rc == 0)
+    return rc == 0
 
 
 def delete_chain(iptables_path, module, params):
-    cmd = push_arguments(iptables_path, '-X', params, make_rule=False)
+    cmd = push_arguments(iptables_path, "-X", params, make_rule=False)
     module.run_command(cmd, check_rc=True)
 
 
@@ -778,160 +772,184 @@ def main():
     module = AnsibleModule(
         supports_check_mode=True,
         argument_spec=dict(
-            table=dict(type='str', default='filter', choices=['filter', 'nat', 'mangle', 'raw', 'security']),
-            state=dict(type='str', default='present', choices=['absent', 'present']),
-            action=dict(type='str', default='append', choices=['append', 'insert']),
-            ip_version=dict(type='str', default='ipv4', choices=['ipv4', 'ipv6']),
-            chain=dict(type='str'),
-            rule_num=dict(type='str'),
-            protocol=dict(type='str'),
-            wait=dict(type='str'),
-            source=dict(type='str'),
-            to_source=dict(type='str'),
-            destination=dict(type='str'),
-            to_destination=dict(type='str'),
-            match=dict(type='list', elements='str', default=[]),
-            tcp_flags=dict(type='dict',
-                           options=dict(
-                                flags=dict(type='list', elements='str'),
-                                flags_set=dict(type='list', elements='str'))
-                           ),
-            jump=dict(type='str'),
-            gateway=dict(type='str'),
-            log_prefix=dict(type='str'),
-            log_level=dict(type='str',
-                           choices=['0', '1', '2', '3', '4', '5', '6', '7',
-                                    'emerg', 'alert', 'crit', 'error',
-                                    'warning', 'notice', 'info', 'debug'],
-                           default=None,
-                           ),
-            goto=dict(type='str'),
-            in_interface=dict(type='str'),
-            out_interface=dict(type='str'),
-            fragment=dict(type='str'),
-            set_counters=dict(type='str'),
-            source_port=dict(type='str'),
-            destination_port=dict(type='str'),
-            destination_ports=dict(type='list', elements='str', default=[]),
-            to_ports=dict(type='str'),
-            set_dscp_mark=dict(type='str'),
-            set_dscp_mark_class=dict(type='str'),
-            comment=dict(type='str'),
-            ctstate=dict(type='list', elements='str', default=[]),
-            src_range=dict(type='str'),
-            dst_range=dict(type='str'),
-            match_set=dict(type='str'),
-            match_set_flags=dict(
-                type='str',
-                choices=['src', 'dst', 'src,dst', 'dst,src', 'src,src', 'dst,dst']
+            table=dict(
+                type="str",
+                default="filter",
+                choices=["filter", "nat", "mangle", "raw", "security"],
             ),
-            limit=dict(type='str'),
-            limit_burst=dict(type='str'),
-            uid_owner=dict(type='str'),
-            gid_owner=dict(type='str'),
-            reject_with=dict(type='str'),
-            icmp_type=dict(type='str'),
-            syn=dict(type='str', default='ignore', choices=['ignore', 'match', 'negate']),
-            flush=dict(type='bool', default=False),
-            policy=dict(type='str', choices=['ACCEPT', 'DROP', 'QUEUE', 'RETURN']),
-            chain_management=dict(type='bool', default=False),
-            numeric=dict(type='bool', default=False),
+            state=dict(type="str", default="present", choices=["absent", "present"]),
+            action=dict(type="str", default="append", choices=["append", "insert"]),
+            ip_version=dict(type="str", default="ipv4", choices=["ipv4", "ipv6"]),
+            chain=dict(type="str"),
+            rule_num=dict(type="str"),
+            protocol=dict(type="str"),
+            wait=dict(type="str"),
+            source=dict(type="str"),
+            to_source=dict(type="str"),
+            destination=dict(type="str"),
+            to_destination=dict(type="str"),
+            match=dict(type="list", elements="str", default=[]),
+            tcp_flags=dict(
+                type="dict",
+                options=dict(
+                    flags=dict(type="list", elements="str"),
+                    flags_set=dict(type="list", elements="str"),
+                ),
+            ),
+            jump=dict(type="str"),
+            gateway=dict(type="str"),
+            log_prefix=dict(type="str"),
+            log_level=dict(
+                type="str",
+                choices=[
+                    "0",
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                    "6",
+                    "7",
+                    "emerg",
+                    "alert",
+                    "crit",
+                    "error",
+                    "warning",
+                    "notice",
+                    "info",
+                    "debug",
+                ],
+                default=None,
+            ),
+            goto=dict(type="str"),
+            in_interface=dict(type="str"),
+            out_interface=dict(type="str"),
+            fragment=dict(type="str"),
+            set_counters=dict(type="str"),
+            source_port=dict(type="str"),
+            destination_port=dict(type="str"),
+            destination_ports=dict(type="list", elements="str", default=[]),
+            to_ports=dict(type="str"),
+            set_dscp_mark=dict(type="str"),
+            set_dscp_mark_class=dict(type="str"),
+            comment=dict(type="str"),
+            ctstate=dict(type="list", elements="str", default=[]),
+            src_range=dict(type="str"),
+            dst_range=dict(type="str"),
+            match_set=dict(type="str"),
+            match_set_flags=dict(
+                type="str",
+                choices=["src", "dst", "src,dst", "dst,src", "src,src", "dst,dst"],
+            ),
+            limit=dict(type="str"),
+            limit_burst=dict(type="str"),
+            uid_owner=dict(type="str"),
+            gid_owner=dict(type="str"),
+            reject_with=dict(type="str"),
+            icmp_type=dict(type="str"),
+            syn=dict(
+                type="str", default="ignore", choices=["ignore", "match", "negate"]
+            ),
+            flush=dict(type="bool", default=False),
+            policy=dict(type="str", choices=["ACCEPT", "DROP", "QUEUE", "RETURN"]),
+            chain_management=dict(type="bool", default=False),
+            numeric=dict(type="bool", default=False),
         ),
         mutually_exclusive=(
-            ['set_dscp_mark', 'set_dscp_mark_class'],
-            ['flush', 'policy'],
+            ["set_dscp_mark", "set_dscp_mark_class"],
+            ["flush", "policy"],
         ),
         required_by=dict(
-            set_dscp_mark=('jump',),
-            set_dscp_mark_class=('jump',),
+            set_dscp_mark=("jump",),
+            set_dscp_mark_class=("jump",),
         ),
         required_if=[
-            ['jump', 'TEE', ['gateway']],
-            ['jump', 'tee', ['gateway']],
-        ]
+            ["jump", "TEE", ["gateway"]],
+            ["jump", "tee", ["gateway"]],
+        ],
     )
     args = dict(
         changed=False,
         failed=False,
-        ip_version=module.params['ip_version'],
-        table=module.params['table'],
-        chain=module.params['chain'],
-        flush=module.params['flush'],
-        rule=' '.join(construct_rule(module.params)),
-        state=module.params['state'],
-        chain_management=module.params['chain_management'],
+        ip_version=module.params["ip_version"],
+        table=module.params["table"],
+        chain=module.params["chain"],
+        flush=module.params["flush"],
+        rule=" ".join(construct_rule(module.params)),
+        state=module.params["state"],
+        chain_management=module.params["chain_management"],
     )
 
-    ip_version = module.params['ip_version']
+    ip_version = module.params["ip_version"]
     iptables_path = module.get_bin_path(BINS[ip_version], True)
 
     # Check if chain option is required
-    if args['flush'] is False and args['chain'] is None:
+    if args["flush"] is False and args["chain"] is None:
         module.fail_json(msg="Either chain or flush parameter must be specified.")
 
-    if module.params.get('log_prefix', None) or module.params.get('log_level', None):
-        if module.params['jump'] is None:
-            module.params['jump'] = 'LOG'
-        elif module.params['jump'] != 'LOG':
-            module.fail_json(msg="Logging options can only be used with the LOG jump target.")
+    if module.params.get("log_prefix", None) or module.params.get("log_level", None):
+        if module.params["jump"] is None:
+            module.params["jump"] = "LOG"
+        elif module.params["jump"] != "LOG":
+            module.fail_json(
+                msg="Logging options can only be used with the LOG jump target."
+            )
 
     # Check if wait option is supported
     iptables_version = LooseVersion(get_iptables_version(iptables_path, module))
 
     if iptables_version >= LooseVersion(IPTABLES_WAIT_SUPPORT_ADDED):
         if iptables_version < LooseVersion(IPTABLES_WAIT_WITH_SECONDS_SUPPORT_ADDED):
-            module.params['wait'] = ''
+            module.params["wait"] = ""
     else:
-        module.params['wait'] = None
+        module.params["wait"] = None
 
     # Flush the table
-    if args['flush'] is True:
-        args['changed'] = True
+    if args["flush"] is True:
+        args["changed"] = True
         if not module.check_mode:
             flush_table(iptables_path, module, module.params)
 
     # Set the policy
-    elif module.params['policy']:
+    elif module.params["policy"]:
         current_policy = get_chain_policy(iptables_path, module, module.params)
         if not current_policy:
-            module.fail_json(msg='Can\'t detect current policy')
+            module.fail_json(msg="Can't detect current policy")
 
-        changed = current_policy != module.params['policy']
-        args['changed'] = changed
+        changed = current_policy != module.params["policy"]
+        args["changed"] = changed
         if changed and not module.check_mode:
             set_chain_policy(iptables_path, module, module.params)
 
     # Delete the chain if there is no rule in the arguments
-    elif (args['state'] == 'absent') and not args['rule']:
-        chain_is_present = check_chain_present(
-            iptables_path, module, module.params
-        )
-        args['changed'] = chain_is_present
+    elif (args["state"] == "absent") and not args["rule"]:
+        chain_is_present = check_chain_present(iptables_path, module, module.params)
+        args["changed"] = chain_is_present
 
-        if (chain_is_present and args['chain_management'] and not module.check_mode):
+        if chain_is_present and args["chain_management"] and not module.check_mode:
             delete_chain(iptables_path, module, module.params)
 
     else:
         # Create the chain if there are no rule arguments
-        if (args['state'] == 'present') and not args['rule']:
-            chain_is_present = check_chain_present(
-                iptables_path, module, module.params
-            )
-            args['changed'] = not chain_is_present
+        if (args["state"] == "present") and not args["rule"]:
+            chain_is_present = check_chain_present(iptables_path, module, module.params)
+            args["changed"] = not chain_is_present
 
-            if (not chain_is_present and args['chain_management'] and not module.check_mode):
+            if (
+                not chain_is_present
+                and args["chain_management"]
+                and not module.check_mode
+            ):
                 create_chain(iptables_path, module, module.params)
 
         else:
-            insert = (module.params['action'] == 'insert')
-            rule_is_present = check_rule_present(
-                iptables_path, module, module.params
-            )
+            insert = module.params["action"] == "insert"
+            rule_is_present = check_rule_present(iptables_path, module, module.params)
 
-            should_be_present = (args['state'] == 'present')
+            should_be_present = args["state"] == "present"
             # Check if target is up to date
-            args['changed'] = (rule_is_present != should_be_present)
-            if args['changed'] is False:
+            args["changed"] = rule_is_present != should_be_present
+            if args["changed"] is False:
                 # Target is already up to date
                 module.exit_json(**args)
 
@@ -948,5 +966,5 @@ def main():
     module.exit_json(**args)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

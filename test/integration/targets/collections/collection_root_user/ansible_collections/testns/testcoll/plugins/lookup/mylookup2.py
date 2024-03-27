@@ -8,4 +8,4 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
 
-        return ['mylookup2_from_user_dir']
+        return ["mylookup2_from_user_dir"]

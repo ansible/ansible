@@ -37,7 +37,9 @@ from ansible.parsing.yaml.loader import AnsibleLoader
 
 class AnsibleTextIOWrapper(TextIOWrapper):
     def write(self, s):
-        super(AnsibleTextIOWrapper, self).write(to_text(s, self.encoding, errors='replace'))
+        super(AnsibleTextIOWrapper, self).write(
+            to_text(s, self.encoding, errors="replace")
+        )
 
 
 def find_executable(executable, cwd=None, path=None):
@@ -53,7 +55,7 @@ def find_executable(executable, cwd=None, path=None):
         if os.path.exists(target) and os.access(target, os.F_OK | os.X_OK):
             match = executable
     else:
-        path = os.environ.get('PATH', os.path.defpath)
+        path = os.environ.get("PATH", os.path.defpath)
 
         path_dirs = path.split(os.path.pathsep)
         seen_dirs = set()
@@ -79,7 +81,7 @@ def find_executable(executable, cwd=None, path=None):
 def find_globals(g, tree):
     """Uses AST to find globals in an ast tree"""
     for child in tree:
-        if hasattr(child, 'body') and isinstance(child.body, list):
+        if hasattr(child, "body") and isinstance(child.body, list):
             find_globals(g, child.body)
         elif isinstance(child, (ast.FunctionDef, ast.ClassDef)):
             g.add(child.name)
@@ -94,19 +96,23 @@ def find_globals(g, tree):
         elif isinstance(child, ast.ImportFrom):
             for name in child.names:
                 g_name = name.asname or name.name
-                if g_name == '*':
+                if g_name == "*":
                     continue
                 g.add(g_name)
 
 
-class CaptureStd():
+class CaptureStd:
     """Context manager to handle capturing stderr and stdout"""
 
     def __enter__(self):
         self.sys_stdout = sys.stdout
         self.sys_stderr = sys.stderr
-        sys.stdout = self.stdout = AnsibleTextIOWrapper(BytesIO(), encoding=self.sys_stdout.encoding)
-        sys.stderr = self.stderr = AnsibleTextIOWrapper(BytesIO(), encoding=self.sys_stderr.encoding)
+        sys.stdout = self.stdout = AnsibleTextIOWrapper(
+            BytesIO(), encoding=self.sys_stdout.encoding
+        )
+        sys.stderr = self.stderr = AnsibleTextIOWrapper(
+            BytesIO(), encoding=self.sys_stderr.encoding
+        )
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -127,9 +133,9 @@ def get_module_name_from_filename(filename, collection):
         path = os.path.join(collection, filename)
     else:
         # filename is a relative path, example: lib/ansible/modules/system/ping.py
-        path = os.path.relpath(filename, 'lib')
+        path = os.path.relpath(filename, "lib")
 
-    name = os.path.splitext(path)[0].replace(os.path.sep, '.')
+    name = os.path.splitext(path)[0].replace(os.path.sep, ".")
 
     return name
 
@@ -154,26 +160,31 @@ def parse_yaml(value, lineno, module, name, load_all=False, ansible_loader=False
         if load_all:
             data = list(data)
     except yaml.MarkedYAMLError as e:
-        errors.append({
-            'msg': '%s is not valid YAML' % name,
-            'line': e.problem_mark.line + lineno,
-            'column': e.problem_mark.column + 1
-        })
+        errors.append(
+            {
+                "msg": "%s is not valid YAML" % name,
+                "line": e.problem_mark.line + lineno,
+                "column": e.problem_mark.column + 1,
+            }
+        )
         traces.append(e)
     except yaml.reader.ReaderError as e:
         traces.append(e)
         # TODO: Better line/column detection
-        errors.append({
-            'msg': ('%s is not valid YAML. Character '
-                    '0x%x at position %d.' % (name, e.character, e.position)),
-            'line': lineno
-        })
+        errors.append(
+            {
+                "msg": (
+                    "%s is not valid YAML. Character "
+                    "0x%x at position %d." % (name, e.character, e.position)
+                ),
+                "line": lineno,
+            }
+        )
     except yaml.YAMLError as e:
         traces.append(e)
-        errors.append({
-            'msg': '%s is not valid YAML: %s: %s' % (name, type(e), e),
-            'line': lineno
-        })
+        errors.append(
+            {"msg": "%s is not valid YAML: %s: %s" % (name, type(e), e), "line": lineno}
+        )
 
     return data, errors, traces
 
@@ -199,24 +210,30 @@ class NoArgsAnsibleModule(AnsibleModule):
     """AnsibleModule that does not actually load params. This is used to get access to the
     methods within AnsibleModule without having to fake a bunch of data
     """
+
     def _load_params(self):
-        self.params = {'_ansible_selinux_special_fs': [], '_ansible_remote_tmp': '/tmp', '_ansible_keep_remote_files': False, '_ansible_check_mode': False}
+        self.params = {
+            "_ansible_selinux_special_fs": [],
+            "_ansible_remote_tmp": "/tmp",
+            "_ansible_keep_remote_files": False,
+            "_ansible_check_mode": False,
+        }
 
 
 def parse_isodate(v, allow_date):
     if allow_date:
         if isinstance(v, datetime.date):
             return v
-        msg = 'Expected ISO 8601 date string (YYYY-MM-DD) or YAML date'
+        msg = "Expected ISO 8601 date string (YYYY-MM-DD) or YAML date"
     else:
-        msg = 'Expected ISO 8601 date string (YYYY-MM-DD)'
+        msg = "Expected ISO 8601 date string (YYYY-MM-DD)"
     if not isinstance(v, string_types):
         raise ValueError(msg)
     # From Python 3.7 in, there is datetime.date.fromisoformat(). For older versions,
     # we have to do things manually.
-    if not re.match('^[0-9]{4}-[0-9]{2}-[0-9]{2}$', v):
+    if not re.match("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", v):
         raise ValueError(msg)
     try:
-        return datetime.datetime.strptime(v, '%Y-%m-%d').date()
+        return datetime.datetime.strptime(v, "%Y-%m-%d").date()
     except ValueError:
         raise ValueError(msg)

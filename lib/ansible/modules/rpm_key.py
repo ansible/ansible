@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: rpm_key
 author:
@@ -51,9 +51,9 @@ attributes:
         support: none
     platform:
         platforms: rhel
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Import a key from a url
   ansible.builtin.rpm_key:
     state: present
@@ -73,9 +73,9 @@ EXAMPLES = '''
   ansible.builtin.rpm_key:
     key: /path/to/RPM-GPG-KEY.dag.txt
     fingerprint: EBC6 E12C 62B1 C734 026B  2122 A20E 5214 6B8D 79E6
-'''
+"""
 
-RETURN = r'''#'''
+RETURN = r"""#"""
 
 import re
 import os.path
@@ -90,7 +90,9 @@ from ansible.module_utils.common.text.converters import to_native
 def is_pubkey(string):
     """Verifies if string is a pubkey"""
     pgp_regex = ".*?(-----BEGIN PGP PUBLIC KEY BLOCK-----.*?-----END PGP PUBLIC KEY BLOCK-----).*"
-    return bool(re.match(pgp_regex, to_native(string, errors='surrogate_or_strict'), re.DOTALL))
+    return bool(
+        re.match(pgp_regex, to_native(string, errors="surrogate_or_strict"), re.DOTALL)
+    )
 
 
 class RpmKey(object):
@@ -101,18 +103,18 @@ class RpmKey(object):
         keyfile = None
         should_cleanup_keyfile = False
         self.module = module
-        self.rpm = self.module.get_bin_path('rpm', True)
-        state = module.params['state']
-        key = module.params['key']
-        fingerprint = module.params['fingerprint']
+        self.rpm = self.module.get_bin_path("rpm", True)
+        state = module.params["state"]
+        key = module.params["key"]
+        fingerprint = module.params["fingerprint"]
         if fingerprint:
-            fingerprint = fingerprint.replace(' ', '').upper()
+            fingerprint = fingerprint.replace(" ", "").upper()
 
-        self.gpg = self.module.get_bin_path('gpg')
+        self.gpg = self.module.get_bin_path("gpg")
         if not self.gpg:
-            self.gpg = self.module.get_bin_path('gpg2', required=True)
+            self.gpg = self.module.get_bin_path("gpg2", required=True)
 
-        if '://' in key:
+        if "://" in key:
             keyfile = self.fetch_key(key)
             keyid = self.getkeyid(keyfile)
             should_cleanup_keyfile = True
@@ -125,17 +127,20 @@ class RpmKey(object):
             self.module.fail_json(msg="Not a valid key %s" % key)
         keyid = self.normalize_keyid(keyid)
 
-        if state == 'present':
+        if state == "present":
             if self.is_key_imported(keyid):
                 module.exit_json(changed=False)
             else:
                 if not keyfile:
-                    self.module.fail_json(msg="When importing a key, a valid file must be given")
+                    self.module.fail_json(
+                        msg="When importing a key, a valid file must be given"
+                    )
                 if fingerprint:
                     has_fingerprint = self.getfingerprint(keyfile)
                     if fingerprint != has_fingerprint:
                         self.module.fail_json(
-                            msg="The specified fingerprint, '%s', does not match the key fingerprint '%s'" % (fingerprint, has_fingerprint)
+                            msg="The specified fingerprint, '%s', does not match the key fingerprint '%s'"
+                            % (fingerprint, has_fingerprint)
                         )
                 self.import_key(keyfile)
                 if should_cleanup_keyfile:
@@ -151,8 +156,10 @@ class RpmKey(object):
     def fetch_key(self, url):
         """Downloads a key from url, returns a valid path to a gpg key"""
         rsp, info = fetch_url(self.module, url)
-        if info['status'] != 200:
-            self.module.fail_json(msg="failed to fetch key at %s , error was: %s" % (url, info['msg']))
+        if info["status"] != 200:
+            self.module.fail_json(
+                msg="failed to fetch key at %s , error was: %s" % (url, info["msg"])
+            )
 
         key = rsp.read()
         if not is_pubkey(key):
@@ -167,30 +174,46 @@ class RpmKey(object):
     def normalize_keyid(self, keyid):
         """Ensure a keyid doesn't have a leading 0x, has leading or trailing whitespace, and make sure is uppercase"""
         ret = keyid.strip().upper()
-        if ret.startswith('0x'):
+        if ret.startswith("0x"):
             return ret[2:]
-        elif ret.startswith('0X'):
+        elif ret.startswith("0X"):
             return ret[2:]
         else:
             return ret
 
     def getkeyid(self, keyfile):
-        stdout, stderr = self.execute_command([self.gpg, '--no-tty', '--batch', '--with-colons', '--fixed-list-mode', keyfile])
+        stdout, stderr = self.execute_command(
+            [
+                self.gpg,
+                "--no-tty",
+                "--batch",
+                "--with-colons",
+                "--fixed-list-mode",
+                keyfile,
+            ]
+        )
         for line in stdout.splitlines():
             line = line.strip()
-            if line.startswith('pub:'):
-                return line.split(':')[4]
+            if line.startswith("pub:"):
+                return line.split(":")[4]
 
         self.module.fail_json(msg="Unexpected gpg output")
 
     def getfingerprint(self, keyfile):
-        stdout, stderr = self.execute_command([
-            self.gpg, '--no-tty', '--batch', '--with-colons',
-            '--fixed-list-mode', '--with-fingerprint', keyfile
-        ])
+        stdout, stderr = self.execute_command(
+            [
+                self.gpg,
+                "--no-tty",
+                "--batch",
+                "--with-colons",
+                "--fixed-list-mode",
+                "--with-fingerprint",
+                keyfile,
+            ]
+        )
         for line in stdout.splitlines():
             line = line.strip()
-            if line.startswith('fpr:'):
+            if line.startswith("fpr:"):
                 # As mentioned here,
                 #
                 # https://git.gnupg.org/cgi-bin/gitweb.cgi?p=gnupg.git;a=blob_plain;f=doc/DETAILS
@@ -199,13 +222,13 @@ class RpmKey(object):
                 #
                 # "fpr :: Fingerprint (fingerprint is in field 10)"
                 #
-                return line.split(':')[9]
+                return line.split(":")[9]
 
         self.module.fail_json(msg="Unexpected gpg output")
 
     def is_keyid(self, keystr):
         """Verifies if a key, as provided by the user is a keyid"""
-        return re.match('(0x)?[0-9a-f]{8}', keystr, flags=re.IGNORECASE)
+        return re.match("(0x)?[0-9a-f]{8}", keystr, flags=re.IGNORECASE)
 
     def execute_command(self, cmd):
         rc, stdout, stderr = self.module.run_command(cmd, use_unsafe_shell=True)
@@ -214,33 +237,44 @@ class RpmKey(object):
         return stdout, stderr
 
     def is_key_imported(self, keyid):
-        cmd = self.rpm + ' -q  gpg-pubkey'
+        cmd = self.rpm + " -q  gpg-pubkey"
         rc, stdout, stderr = self.module.run_command(cmd)
         if rc != 0:  # No key is installed on system
             return False
-        cmd += ' --qf "%{description}" | ' + self.gpg + ' --no-tty --batch --with-colons --fixed-list-mode -'
+        cmd += (
+            ' --qf "%{description}" | '
+            + self.gpg
+            + " --no-tty --batch --with-colons --fixed-list-mode -"
+        )
         stdout, stderr = self.execute_command(cmd)
         for line in stdout.splitlines():
-            if keyid in line.split(':')[4]:
+            if keyid in line.split(":")[4]:
                 return True
         return False
 
     def import_key(self, keyfile):
         if not self.module.check_mode:
-            self.execute_command([self.rpm, '--import', keyfile])
+            self.execute_command([self.rpm, "--import", keyfile])
 
     def drop_key(self, keyid):
         if not self.module.check_mode:
-            self.execute_command([self.rpm, '--erase', '--allmatches', "gpg-pubkey-%s" % keyid[-8:].lower()])
+            self.execute_command(
+                [
+                    self.rpm,
+                    "--erase",
+                    "--allmatches",
+                    "gpg-pubkey-%s" % keyid[-8:].lower(),
+                ]
+            )
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', default='present', choices=['absent', 'present']),
-            key=dict(type='str', required=True, no_log=False),
-            fingerprint=dict(type='str'),
-            validate_certs=dict(type='bool', default=True),
+            state=dict(type="str", default="present", choices=["absent", "present"]),
+            key=dict(type="str", required=True, no_log=False),
+            fingerprint=dict(type="str"),
+            validate_certs=dict(type="bool", default=True),
         ),
         supports_check_mode=True,
     )
@@ -248,5 +282,5 @@ def main():
     RpmKey(module)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -23,8 +23,7 @@ from ansible_collections.vyos.vyos.plugins.module_utils.network.vyos.argspec.lag
 
 
 class Lag_interfacesFacts(object):
-    """ The vyos lag_interfaces fact class
-    """
+    """The vyos lag_interfaces fact class"""
 
     def __init__(self, module, subspec="config", options="options"):
         self._module = module
@@ -41,7 +40,7 @@ class Lag_interfacesFacts(object):
         self.generated_spec = utils.generate_dict(facts_argument_spec)
 
     def populate_facts(self, connection, ansible_facts, data=None):
-        """ Populate the facts for lag_interfaces
+        """Populate the facts for lag_interfaces
         :param module: the module instance
         :param connection: the device connection
         :param data: previously collected conf
@@ -85,9 +84,7 @@ class Lag_interfacesFacts(object):
         facts = {}
         if objs:
             facts["lag_interfaces"] = []
-            params = utils.validate_config(
-                self.argument_spec, {"config": objs}
-            )
+            params = utils.validate_config(self.argument_spec, {"config": objs})
             for cfg in params["config"]:
                 facts["lag_interfaces"].append(utils.remove_empties(cfg))
 
@@ -104,12 +101,8 @@ class Lag_interfacesFacts(object):
         :rtype: dictionary
         :returns: The generated config
         """
-        arp_monitor_conf = "\n".join(
-            filter(lambda x: ("arp-monitor" in x), conf)
-        )
-        hash_policy_conf = "\n".join(
-            filter(lambda x: ("hash-policy" in x), conf)
-        )
+        arp_monitor_conf = "\n".join(filter(lambda x: ("arp-monitor" in x), conf))
+        hash_policy_conf = "\n".join(filter(lambda x: ("hash-policy" in x), conf))
         lag_conf = "\n".join(filter(lambda x: ("bond" in x), conf))
         config = self.parse_attribs(["mode", "primary"], lag_conf)
         config["arp_monitor"] = self.parse_arp_monitor(arp_monitor_conf)

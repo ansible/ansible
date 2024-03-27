@@ -1,1 +1,1 @@
-data = 'mork'
+data = "mork"

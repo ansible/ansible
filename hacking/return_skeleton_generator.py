@@ -45,27 +45,27 @@ def represent_ordereddict(dumper, data):
 
         value.append((node_key, node_value))
 
-    return yaml.nodes.MappingNode(u'tag:yaml.org,2002:map', value)
+    return yaml.nodes.MappingNode("tag:yaml.org,2002:map", value)
 
 
 def get_return_data(key, value):
     # The OrderedDict here is so that, for complex objects, the
     # summary data is at the top before the contains information
     returns_info = {key: OrderedDict()}
-    returns_info[key]['description'] = "FIXME *** add description for %s" % key
-    returns_info[key]['returned'] = "always"
+    returns_info[key]["description"] = "FIXME *** add description for %s" % key
+    returns_info[key]["returned"] = "always"
     if isinstance(value, dict):
-        returns_info[key]['type'] = 'complex'
-        returns_info[key]['contains'] = get_all_items(value)
+        returns_info[key]["type"] = "complex"
+        returns_info[key]["contains"] = get_all_items(value)
     elif isinstance(value, list) and value and isinstance(value[0], dict):
-        returns_info[key]['type'] = 'complex'
-        returns_info[key]['contains'] = get_all_items(value[0])
+        returns_info[key]["type"] = "complex"
+        returns_info[key]["contains"] = get_all_items(value[0])
     else:
-        returns_info[key]['type'] = type(value).__name__
-        returns_info[key]['sample'] = value
+        returns_info[key]["type"] = type(value).__name__
+        returns_info[key]["sample"] = value
         # override python unicode type to set to string for docs
-        if returns_info[key]['type'] == 'unicode':
-            returns_info[key]['type'] = 'str'
+        if returns_info[key]["type"] == "unicode":
+            returns_info[key]["type"] = "str"
     return returns_info
 
 
@@ -88,10 +88,10 @@ def main(args):
 
     data = json.load(src, strict=False)
     docs = get_all_items(data)
-    if 'invocation' in docs:
-        del docs['invocation']
+    if "invocation" in docs:
+        del docs["invocation"]
     print(yaml.safe_dump(docs, default_flow_style=False))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(sys.argv[1:])

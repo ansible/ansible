@@ -78,17 +78,13 @@ class ActionModule(ActionBase):
         sock_timeout = conn.get_option("persistent_command_timeout")
 
         try:
-            changed = self._handle_existing_file(
-                conn, src, dest, proto, sock_timeout
-            )
+            changed = self._handle_existing_file(conn, src, dest, proto, sock_timeout)
             if changed is False:
                 result["changed"] = changed
                 result["destination"] = dest
                 return result
         except Exception as exc:
-            result["msg"] = (
-                "Warning: %s idempotency check failed. Check dest" % exc
-            )
+            result["msg"] = "Warning: %s idempotency check failed. Check dest" % exc
 
         try:
             conn.get_file(
@@ -191,8 +187,6 @@ class ActionModule(ActionBase):
             display.vvvv("Getting network OS from fact")
             network_os = task_vars["ansible_facts"]["network_os"]
         else:
-            raise AnsibleError(
-                "ansible_network_os must be specified on this host"
-            )
+            raise AnsibleError("ansible_network_os must be specified on this host")
 
         return network_os

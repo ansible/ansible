@@ -23,11 +23,15 @@ from ansible.parsing.yaml.constructor import AnsibleConstructor
 from ansible.module_utils.common.yaml import HAS_LIBYAML, Parser
 
 if HAS_LIBYAML:
+
     class AnsibleLoader(Parser, AnsibleConstructor, Resolver):  # type: ignore[misc] # pylint: disable=inconsistent-mro
         def __init__(self, stream, file_name=None, vault_secrets=None):
             Parser.__init__(self, stream)
-            AnsibleConstructor.__init__(self, file_name=file_name, vault_secrets=vault_secrets)
+            AnsibleConstructor.__init__(
+                self, file_name=file_name, vault_secrets=vault_secrets
+            )
             Resolver.__init__(self)
+
 else:
     from yaml.composer import Composer
     from yaml.reader import Reader
@@ -39,5 +43,7 @@ else:
             Scanner.__init__(self)
             Parser.__init__(self)
             Composer.__init__(self)
-            AnsibleConstructor.__init__(self, file_name=file_name, vault_secrets=vault_secrets)
+            AnsibleConstructor.__init__(
+                self, file_name=file_name, vault_secrets=vault_secrets
+            )
             Resolver.__init__(self)

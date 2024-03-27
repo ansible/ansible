@@ -19,11 +19,11 @@ from __future__ import annotations
 
 from unittest.mock import Mock, patch
 
-from .. base import BaseFactsTest
+from ..base import BaseFactsTest
 
 from ansible.module_utils.facts.other.ohai import OhaiFactCollector
 
-ohai_json_output = r'''
+ohai_json_output = r"""
 {
   "kernel": {
     "name": "Linux",
@@ -6717,31 +6717,33 @@ ohai_json_output = r'''
   "cloud_v2": null,
   "cloud": null
 }
-'''  # noqa
+"""  # noqa
 
 
 class TestOhaiCollector(BaseFactsTest):
     __test__ = True
-    gather_subset = ['!all', 'ohai']
-    valid_subsets = ['ohai']
-    fact_namespace = 'ansible_ohai'
+    gather_subset = ["!all", "ohai"]
+    valid_subsets = ["ohai"]
+    fact_namespace = "ansible_ohai"
     collector_class = OhaiFactCollector
 
     def _mock_module(self):
         mock_module = Mock()
-        mock_module.params = {'gather_subset': self.gather_subset,
-                              'gather_timeout': 10,
-                              'filter': '*'}
-        mock_module.get_bin_path = Mock(return_value='/not/actually/ohai')
-        mock_module.run_command = Mock(return_value=(0, ohai_json_output, ''))
+        mock_module.params = {
+            "gather_subset": self.gather_subset,
+            "gather_timeout": 10,
+            "filter": "*",
+        }
+        mock_module.get_bin_path = Mock(return_value="/not/actually/ohai")
+        mock_module.run_command = Mock(return_value=(0, ohai_json_output, ""))
         return mock_module
 
-    @patch('ansible.module_utils.facts.other.ohai.OhaiFactCollector.get_ohai_output')
+    @patch("ansible.module_utils.facts.other.ohai.OhaiFactCollector.get_ohai_output")
     def test_bogus_json(self, mock_get_ohai_output):
         module = self._mock_module()
 
         # bogus json
-        mock_get_ohai_output.return_value = '{'
+        mock_get_ohai_output.return_value = "{"
 
         fact_collector = self.collector_class()
         facts_dict = fact_collector.collect(module=module)
@@ -6749,12 +6751,12 @@ class TestOhaiCollector(BaseFactsTest):
         self.assertIsInstance(facts_dict, dict)
         self.assertEqual(facts_dict, {})
 
-    @patch('ansible.module_utils.facts.other.ohai.OhaiFactCollector.run_ohai')
+    @patch("ansible.module_utils.facts.other.ohai.OhaiFactCollector.run_ohai")
     def test_ohai_non_zero_return_code(self, mock_run_ohai):
         module = self._mock_module()
 
         # bogus json
-        mock_run_ohai.return_value = (1, '{}', '')
+        mock_run_ohai.return_value = (1, "{}", "")
 
         fact_collector = self.collector_class()
         facts_dict = fact_collector.collect(module=module)
@@ -6762,5 +6764,5 @@ class TestOhaiCollector(BaseFactsTest):
         self.assertIsInstance(facts_dict, dict)
 
         # This assumes no 'ohai' entry at all is correct
-        self.assertNotIn('ohai', facts_dict)
+        self.assertNotIn("ohai", facts_dict)
         self.assertEqual(facts_dict, {})

@@ -30,8 +30,7 @@ from __future__ import annotations
 
 
 class L3_interfacesArgs(object):  # pylint: disable=R0903
-    """The arg spec for the vyos_l3_interfaces module
-    """
+    """The arg spec for the vyos_l3_interfaces module"""
 
     def __init__(self, **kwargs):
         pass

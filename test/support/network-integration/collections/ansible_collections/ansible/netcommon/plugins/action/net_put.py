@@ -113,9 +113,7 @@ class ActionModule(ActionBase):
                 result["destination"] = dest
                 return result
         except Exception as exc:
-            result["msg"] = (
-                "Warning: %s idempotency check failed. Check dest" % exc
-            )
+            result["msg"] = "Warning: %s idempotency check failed. Check dest" % exc
 
         try:
             conn.copy_file(
@@ -129,9 +127,9 @@ class ActionModule(ActionBase):
                 if network_os == "iosxr":
                     # IOSXR sometimes closes socket prematurely after completion
                     # of file transfer
-                    result[
-                        "msg"
-                    ] = "Warning: iosxr scp server pre close issue. Please check dest"
+                    result["msg"] = (
+                        "Warning: iosxr scp server pre close issue. Please check dest"
+                    )
             else:
                 result["failed"] = True
                 result["msg"] = "Exception received: %s" % exc
@@ -196,9 +194,7 @@ class ActionModule(ActionBase):
         if os.path.isabs(src) or urlsplit("src").scheme:
             source = src
         else:
-            source = self._loader.path_dwim_relative(
-                working_path, "templates", src
-            )
+            source = self._loader.path_dwim_relative(working_path, "templates", src)
             if not source:
                 source = self._loader.path_dwim_relative(working_path, src)
 
@@ -227,8 +223,6 @@ class ActionModule(ActionBase):
             display.vvvv("Getting network OS from fact")
             network_os = task_vars["ansible_facts"]["network_os"]
         else:
-            raise AnsibleError(
-                "ansible_network_os must be specified on this host"
-            )
+            raise AnsibleError("ansible_network_os must be specified on this host")
 
         return network_os

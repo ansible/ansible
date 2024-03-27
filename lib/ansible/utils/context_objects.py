@@ -54,6 +54,7 @@ class _ABCSingleton(Singleton, ABCMeta):
     Combine Singleton and ABCMeta so we have a metaclass that unambiguously knows which can override
     the other.  Useful for making new types of containers which are also Singletons.
     """
+
     pass
 
 
@@ -68,6 +69,7 @@ class CLIArgs(ImmutableDict):
     in the future, they would use CLIArgs instead of GlobalCLIArgs to store their version of command
     line flags.
     """
+
     def __init__(self, mapping):
         toplevel = {}
         for key, value in mapping.items():
@@ -86,4 +88,5 @@ class GlobalCLIArgs(CLIArgs):
 
     Only one of these exist per program as it is for global context
     """
+
     pass

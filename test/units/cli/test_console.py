@@ -25,25 +25,27 @@ from ansible.cli.console import ConsoleCLI
 
 class TestConsoleCLI(unittest.TestCase):
     def test_parse(self):
-        cli = ConsoleCLI(['ansible test'])
+        cli = ConsoleCLI(["ansible test"])
         cli.parse()
         self.assertTrue(cli.parser is not None)
 
     def test_module_args(self):
-        cli = ConsoleCLI(['ansible test'])
+        cli = ConsoleCLI(["ansible test"])
         cli.parse()
-        res = cli.module_args('copy')
+        res = cli.module_args("copy")
         self.assertTrue(cli.parser is not None)
-        self.assertIn('src', res)
-        self.assertIn('backup', res)
+        self.assertIn("src", res)
+        self.assertIn("backup", res)
         self.assertIsInstance(res, list)
 
-    @patch('ansible.utils.display.Display.display')
+    @patch("ansible.utils.display.Display.display")
     def test_helpdefault(self, mock_display):
-        cli = ConsoleCLI(['ansible test'])
+        cli = ConsoleCLI(["ansible test"])
         cli.parse()
-        cli.modules = set(['copy'])
-        cli.helpdefault('copy')
+        cli.modules = set(["copy"])
+        cli.helpdefault("copy")
         self.assertTrue(cli.parser is not None)
-        self.assertTrue(len(mock_display.call_args_list) > 0,
-                        "display.display should have been called but was not")
+        self.assertTrue(
+            len(mock_display.call_args_list) > 0,
+            "display.display should have been called but was not",
+        )

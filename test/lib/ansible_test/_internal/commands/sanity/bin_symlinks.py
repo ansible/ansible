@@ -1,4 +1,5 @@
 """Sanity test for symlinks in the bin directory."""
+
 from __future__ import annotations
 
 import os
@@ -52,17 +53,19 @@ class BinSymlinksTest(SanityVersionNeutral):
         return True
 
     def test(self, args: SanityConfig, targets: SanityTargets) -> TestResult:
-        bin_root = os.path.join(ANSIBLE_SOURCE_ROOT, 'bin')
+        bin_root = os.path.join(ANSIBLE_SOURCE_ROOT, "bin")
         bin_names = os.listdir(bin_root)
         bin_paths = sorted(os.path.join(bin_root, path) for path in bin_names)
 
         errors: list[tuple[str, str]] = []
 
-        symlink_map_path = os.path.relpath(symlink_map_full_path, data_context().content.root)
+        symlink_map_path = os.path.relpath(
+            symlink_map_full_path, data_context().content.root
+        )
 
         for bin_path in bin_paths:
             if not os.path.islink(bin_path):
-                errors.append((bin_path, 'not a symbolic link'))
+                errors.append((bin_path, "not a symbolic link"))
                 continue
 
             dest = os.readlink(bin_path)
@@ -78,11 +81,23 @@ class BinSymlinksTest(SanityVersionNeutral):
             map_dest = ANSIBLE_BIN_SYMLINK_MAP.get(os.path.basename(bin_path))
 
             if not map_dest:
-                errors.append((bin_path, 'missing from ANSIBLE_BIN_SYMLINK_MAP in file "%s"' % symlink_map_path))
+                errors.append(
+                    (
+                        bin_path,
+                        'missing from ANSIBLE_BIN_SYMLINK_MAP in file "%s"'
+                        % symlink_map_path,
+                    )
+                )
                 continue
 
             if dest != map_dest:
-                errors.append((bin_path, 'points to "%s" instead of "%s" from ANSIBLE_BIN_SYMLINK_MAP in file "%s"' % (dest, map_dest, symlink_map_path)))
+                errors.append(
+                    (
+                        bin_path,
+                        'points to "%s" instead of "%s" from ANSIBLE_BIN_SYMLINK_MAP in file "%s"'
+                        % (dest, map_dest, symlink_map_path),
+                    )
+                )
                 continue
 
             if not os.access(bin_path, os.X_OK):
@@ -92,9 +107,22 @@ class BinSymlinksTest(SanityVersionNeutral):
         for bin_name, dest in ANSIBLE_BIN_SYMLINK_MAP.items():
             if bin_name not in bin_names:
                 bin_path = os.path.join(bin_root, bin_name)
-                errors.append((bin_path, 'missing symlink to "%s" defined in ANSIBLE_BIN_SYMLINK_MAP in file "%s"' % (dest, symlink_map_path)))
+                errors.append(
+                    (
+                        bin_path,
+                        'missing symlink to "%s" defined in ANSIBLE_BIN_SYMLINK_MAP in file "%s"'
+                        % (dest, symlink_map_path),
+                    )
+                )
 
-        messages = [SanityMessage(message=message, path=os.path.relpath(path, data_context().content.root), confidence=100) for path, message in errors]
+        messages = [
+            SanityMessage(
+                message=message,
+                path=os.path.relpath(path, data_context().content.root),
+                confidence=100,
+            )
+            for path, message in errors
+        ]
 
         if errors:
             return SanityFailure(self.name, messages=messages)

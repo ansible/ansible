@@ -36,17 +36,17 @@ def meets_requirements(version, requirements):
     Each requirement is delimited by ','.
     """
     op_map = {
-        '!=': operator.ne,
-        '==': operator.eq,
-        '=': operator.eq,
-        '>=': operator.ge,
-        '>': operator.gt,
-        '<=': operator.le,
-        '<': operator.lt,
+        "!=": operator.ne,
+        "==": operator.eq,
+        "=": operator.eq,
+        ">=": operator.ge,
+        ">": operator.gt,
+        "<=": operator.le,
+        "<": operator.lt,
     }
 
-    for req in requirements.split(','):
-        op_pos = 2 if len(req) > 1 and req[1] == '=' else 1
+    for req in requirements.split(","):
+        op_pos = 2 if len(req) > 1 and req[1] == "=" else 1
         op = op_map.get(req[:op_pos])
 
         requirement = req[op_pos:]
@@ -54,12 +54,12 @@ def meets_requirements(version, requirements):
             requirement = req
             op = operator.eq
 
-        if requirement == '*' or version == '*':
+        if requirement == "*" or version == "*":
             continue
 
         if not op(
-                SemanticVersion(version),
-                SemanticVersion.from_loose_version(LooseVersion(requirement)),
+            SemanticVersion(version),
+            SemanticVersion.from_loose_version(LooseVersion(requirement)),
         ):
             break
     else:

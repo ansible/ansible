@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: test_docs_suboptions
 short_description: Test module
@@ -31,13 +31,13 @@ options:
             a_first:
                 description: The first suboption.
                 type: str
-'''
+"""
 
-EXAMPLES = '''
-'''
+EXAMPLES = """
+"""
 
-RETURN = '''
-'''
+RETURN = """
+"""
 
 
 from ansible.module_utils.basic import AnsibleModule
@@ -47,16 +47,14 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             test_docs_suboptions=dict(
-                type='dict',
+                type="dict",
                 options=dict(
-                    a_first=dict(type='str'),
+                    a_first=dict(type="str"),
                     m_middle=dict(
-                        type='dict',
-                        options=dict(
-                            a_suboption=dict(type='str')
-                        ),
+                        type="dict",
+                        options=dict(a_suboption=dict(type="str")),
                     ),
-                    z_last=dict(type='str'),
+                    z_last=dict(type="str"),
                 ),
             ),
         ),
@@ -65,5 +63,5 @@ def main():
     module.exit_json()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

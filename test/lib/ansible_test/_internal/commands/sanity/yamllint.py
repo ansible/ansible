@@ -1,4 +1,5 @@
 """Sanity test using yamllint."""
+
 from __future__ import annotations
 
 import json
@@ -51,7 +52,7 @@ class YamllintTest(SanitySingleVersion):
     @property
     def error_code(self) -> t.Optional[str]:
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
-        return 'ansible-test'
+        return "ansible-test"
 
     @property
     def require_libyaml(self) -> bool:
@@ -60,20 +61,33 @@ class YamllintTest(SanitySingleVersion):
 
     def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
-        yaml_targets = [target for target in targets if os.path.splitext(target.path)[1] in ('.yml', '.yaml')]
+        yaml_targets = [
+            target
+            for target in targets
+            if os.path.splitext(target.path)[1] in (".yml", ".yaml")
+        ]
 
-        for plugin_type, plugin_path in sorted(data_context().content.plugin_paths.items()):
-            if plugin_type == 'module_utils':
+        for plugin_type, plugin_path in sorted(
+            data_context().content.plugin_paths.items()
+        ):
+            if plugin_type == "module_utils":
                 continue
 
-            yaml_targets.extend([target for target in targets if
-                                 os.path.splitext(target.path)[1] == '.py' and
-                                 os.path.basename(target.path) != '__init__.py' and
-                                 is_subdir(target.path, plugin_path)])
+            yaml_targets.extend(
+                [
+                    target
+                    for target in targets
+                    if os.path.splitext(target.path)[1] == ".py"
+                    and os.path.basename(target.path) != "__init__.py"
+                    and is_subdir(target.path, plugin_path)
+                ]
+            )
 
         return yaml_targets
 
-    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
+    def test(
+        self, args: SanityConfig, targets: SanityTargets, python: PythonConfig
+    ) -> TestResult:
         settings = self.load_processor(args)
 
         paths = [target.path for target in targets.include]
@@ -87,14 +101,16 @@ class YamllintTest(SanitySingleVersion):
         return SanitySuccess(self.name)
 
     @staticmethod
-    def test_paths(args: SanityConfig, paths: list[str], python: PythonConfig) -> list[SanityMessage]:
+    def test_paths(
+        args: SanityConfig, paths: list[str], python: PythonConfig
+    ) -> list[SanityMessage]:
         """Test the specified paths using the given Python and return the results."""
         cmd = [
             python.path,
-            os.path.join(SANITY_ROOT, 'yamllint', 'yamllinter.py'),
+            os.path.join(SANITY_ROOT, "yamllint", "yamllinter.py"),
         ]
 
-        data = '\n'.join(paths)
+        data = "\n".join(paths)
 
         display.info(data, verbosity=4)
 
@@ -112,15 +128,18 @@ class YamllintTest(SanitySingleVersion):
         if args.explain:
             return []
 
-        results = json.loads(stdout)['messages']
+        results = json.loads(stdout)["messages"]
 
-        results = [SanityMessage(
-            code=r['code'],
-            message=r['message'],
-            path=r['path'],
-            line=int(r['line']),
-            column=int(r['column']),
-            level=r['level'],
-        ) for r in results]
+        results = [
+            SanityMessage(
+                code=r["code"],
+                message=r["message"],
+                path=r["path"],
+                line=int(r["line"]),
+                column=int(r["column"]),
+                level=r["level"],
+            )
+            for r in results
+        ]
 
         return results

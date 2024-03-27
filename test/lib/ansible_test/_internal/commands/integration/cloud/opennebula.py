@@ -1,4 +1,5 @@
 """OpenNebula plugin for integration tests."""
+
 from __future__ import annotations
 
 import configparser
@@ -27,15 +28,15 @@ class OpenNebulaCloudProvider(CloudProvider):
         self.uses_config = True
 
     def _setup_dynamic(self) -> None:
-        display.info('No config file provided, will run test from fixtures')
+        display.info("No config file provided, will run test from fixtures")
 
         config = self._read_config_template()
         values = dict(
             URL="http://localhost/RPC2",
-            USERNAME='oneadmin',
-            PASSWORD='onepass',
-            FIXTURES='true',
-            REPLAY='true',
+            USERNAME="oneadmin",
+            PASSWORD="onepass",
+            FIXTURES="true",
+            REPLAY="true",
         )
         config = self._populate_config_template(config, values)
         self._write_config(config)
@@ -53,9 +54,9 @@ class OpenNebulaCloudEnvironment(CloudEnvironment):
             resource_prefix=self.resource_prefix,
         )
 
-        ansible_vars.update(dict(parser.items('default')))
+        ansible_vars.update(dict(parser.items("default")))
 
-        display.sensitive.add(ansible_vars.get('opennebula_password'))
+        display.sensitive.add(ansible_vars.get("opennebula_password"))
 
         return CloudEnvironmentConfig(
             ansible_vars=ansible_vars,

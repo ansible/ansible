@@ -34,7 +34,7 @@ import packaging.specifiers
 from ansible.module_utils.urls import open_url
 
 
-BUNDLED_RE = re.compile(b'\\b_BUNDLED_METADATA\\b')
+BUNDLED_RE = re.compile(b"\\b_BUNDLED_METADATA\\b")
 
 
 def get_bundled_libs(paths):
@@ -46,13 +46,13 @@ def get_bundled_libs(paths):
         library consists of multiple files, this should be the file which has metadata included.
     """
     bundled_libs = set()
-    for filename in fnmatch.filter(paths, 'lib/ansible/compat/*/__init__.py'):
+    for filename in fnmatch.filter(paths, "lib/ansible/compat/*/__init__.py"):
         bundled_libs.add(filename)
 
-    bundled_libs.add('lib/ansible/module_utils/distro/__init__.py')
-    bundled_libs.add('lib/ansible/module_utils/six/__init__.py')
+    bundled_libs.add("lib/ansible/module_utils/distro/__init__.py")
+    bundled_libs.add("lib/ansible/module_utils/six/__init__.py")
     # backports.ssl_match_hostname should be moved to its own file in the future
-    bundled_libs.add('lib/ansible/module_utils/urls.py')
+    bundled_libs.add("lib/ansible/module_utils/urls.py")
 
     return bundled_libs
 
@@ -67,7 +67,7 @@ def get_files_with_bundled_metadata(paths):
 
     with_metadata = set()
     for path in paths:
-        with open(path, 'rb') as f:
+        with open(path, "rb") as f:
             body = f.read()
 
         if BUNDLED_RE.search(body):
@@ -84,24 +84,27 @@ def get_bundled_metadata(filename):
     :raises ValueError: If we're unable to extract metadata from the file
     :returns: The metadata from the python file
     """
-    with open(filename, 'r') as module:
+    with open(filename, "r") as module:
         for line in module:
-            if line.strip().startswith('# NOT_BUNDLED'):
+            if line.strip().startswith("# NOT_BUNDLED"):
                 return None
 
-            if line.strip().startswith('# CANT_UPDATE'):
+            if line.strip().startswith("# CANT_UPDATE"):
                 print(
-                    '{0} marked as CANT_UPDATE, so skipping. Manual '
-                    'check for CVEs required.'.format(filename))
+                    "{0} marked as CANT_UPDATE, so skipping. Manual "
+                    "check for CVEs required.".format(filename)
+                )
                 return None
 
-            if line.strip().startswith('_BUNDLED_METADATA'):
-                data = line[line.index('{'):].strip()
+            if line.strip().startswith("_BUNDLED_METADATA"):
+                data = line[line.index("{") :].strip()
                 break
         else:
-            raise ValueError('Unable to check bundled library for update.  Please add'
-                             ' _BUNDLED_METADATA dictionary to the library file with'
-                             ' information on pypi name and bundled version.')
+            raise ValueError(
+                "Unable to check bundled library for update.  Please add"
+                " _BUNDLED_METADATA dictionary to the library file with"
+                " information on pypi name and bundled version."
+            )
         metadata = json.loads(data)
     return metadata
 
@@ -118,12 +121,12 @@ def get_latest_applicable_version(pypi_data, constraints=None):
     latest_version = "0"
     if constraints:
         version_specification = packaging.specifiers.SpecifierSet(constraints)
-        for version in pypi_data['releases']:
+        for version in pypi_data["releases"]:
             if version in version_specification:
                 if LooseVersion(version) > LooseVersion(latest_version):
                     latest_version = version
     else:
-        latest_version = pypi_data['info']['version']
+        latest_version = pypi_data["info"]["version"]
 
     return latest_version
 
@@ -137,41 +140,50 @@ def main():
     files_with_bundled_metadata = get_files_with_bundled_metadata(paths)
 
     for filename in files_with_bundled_metadata.difference(bundled_libs):
-        if filename.startswith('test/support/'):
+        if filename.startswith("test/support/"):
             continue  # bundled support code does not need to be updated or tracked
 
-        print('{0}: ERROR: File contains _BUNDLED_METADATA but needs to be added to'
-              ' test/sanity/code-smell/update-bundled.py'.format(filename))
+        print(
+            "{0}: ERROR: File contains _BUNDLED_METADATA but needs to be added to"
+            " test/sanity/code-smell/update-bundled.py".format(filename)
+        )
 
     for filename in bundled_libs:
         try:
             metadata = get_bundled_metadata(filename)
         except ValueError as e:
-            print('{0}: ERROR: {1}'.format(filename, e))
+            print("{0}: ERROR: {1}".format(filename, e))
             continue
         except (IOError, OSError) as e:
             if e.errno == 2:
-                print('{0}: ERROR: {1}.  Perhaps the bundled library has been removed'
-                      ' or moved and the bundled library test needs to be modified as'
-                      ' well?'.format(filename, e))
+                print(
+                    "{0}: ERROR: {1}.  Perhaps the bundled library has been removed"
+                    " or moved and the bundled library test needs to be modified as"
+                    " well?".format(filename, e)
+                )
 
         if metadata is None:
             continue
 
-        pypi_fh = open_url('https://pypi.org/pypi/{0}/json'.format(metadata['pypi_name']))
-        pypi_data = json.loads(pypi_fh.read().decode('utf-8'))
+        pypi_fh = open_url(
+            "https://pypi.org/pypi/{0}/json".format(metadata["pypi_name"])
+        )
+        pypi_data = json.loads(pypi_fh.read().decode("utf-8"))
 
-        constraints = metadata.get('version_constraints', None)
+        constraints = metadata.get("version_constraints", None)
         latest_version = get_latest_applicable_version(pypi_data, constraints)
 
-        if LooseVersion(metadata['version']) < LooseVersion(latest_version):
-            print('{0}: UPDATE {1} from {2} to {3} {4}'.format(
-                filename,
-                metadata['pypi_name'],
-                metadata['version'],
-                latest_version,
-                'https://pypi.org/pypi/{0}/json'.format(metadata['pypi_name'])))
+        if LooseVersion(metadata["version"]) < LooseVersion(latest_version):
+            print(
+                "{0}: UPDATE {1} from {2} to {3} {4}".format(
+                    filename,
+                    metadata["pypi_name"],
+                    metadata["version"],
+                    latest_version,
+                    "https://pypi.org/pypi/{0}/json".format(metadata["pypi_name"]),
+                )
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

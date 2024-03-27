@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: local
     short_description: execute on controller
     description:
@@ -15,7 +15,7 @@ DOCUMENTATION = '''
         - connection_pipelining
     notes:
         - The remote user is ignored, the user with which the ansible CLI was executed is used instead.
-'''
+"""
 
 import fcntl
 import getpass
@@ -38,9 +38,9 @@ display = Display()
 
 
 class Connection(ConnectionBase):
-    ''' Local based connections '''
+    """Local based connections"""
 
-    transport = 'local'
+    transport = "local"
     has_pipelining = True
 
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
@@ -50,23 +50,33 @@ class Connection(ConnectionBase):
         try:
             self.default_user = getpass.getuser()
         except KeyError:
-            display.vv("Current user (uid=%s) does not seem to exist on this system, leaving user empty." % os.getuid())
+            display.vv(
+                "Current user (uid=%s) does not seem to exist on this system, leaving user empty."
+                % os.getuid()
+            )
             self.default_user = ""
 
     def _connect(self) -> Connection:
-        ''' connect to the local host; nothing to do here '''
+        """connect to the local host; nothing to do here"""
 
         # Because we haven't made any remote connection we're running as
         # the local user, rather than as whatever is configured in remote_user.
         self._play_context.remote_user = self.default_user
 
         if not self._connected:
-            display.vvv(u"ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
+            display.vvv(
+                "ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(
+                    self._play_context.remote_user
+                ),
+                host=self._play_context.remote_addr,
+            )
             self._connected = True
         return self
 
-    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
-        ''' run a command on the local host '''
+    def exec_command(
+        self, cmd: str, in_data: bytes | None = None, sudoable: bool = True
+    ) -> tuple[int, bytes, bytes]:
+        """run a command on the local host"""
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
@@ -74,11 +84,15 @@ class Connection(ConnectionBase):
 
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else None
 
-        if not os.path.exists(to_bytes(executable, errors='surrogate_or_strict')):
-            raise AnsibleError("failed to find the executable specified %s."
-                               " Please verify if the executable exists and re-try." % executable)
+        if not os.path.exists(to_bytes(executable, errors="surrogate_or_strict")):
+            raise AnsibleError(
+                "failed to find the executable specified %s."
+                " Please verify if the executable exists and re-try." % executable
+            )
 
-        display.vvv(u"EXEC {0}".format(to_text(cmd)), host=self._play_context.remote_addr)
+        display.vvv(
+            "EXEC {0}".format(to_text(cmd)), host=self._play_context.remote_addr
+        )
         display.debug("opening command with Popen()")
 
         if isinstance(cmd, (text_type, binary_type)):
@@ -88,7 +102,12 @@ class Connection(ConnectionBase):
 
         master = None
         stdin = subprocess.PIPE
-        if sudoable and self.become and self.become.expect_prompt() and not self.get_option('pipelining'):
+        if (
+            sudoable
+            and self.become
+            and self.become.expect_prompt()
+            and not self.get_option("pipelining")
+        ):
             # Create a pty if sudoable for privilege escalation that needs it.
             # Falls back to using a standard pipe if this fails, which may
             # cause the command to fail in certain situations where we are escalating
@@ -115,19 +134,32 @@ class Connection(ConnectionBase):
         display.debug("done running command with Popen()")
 
         if self.become and self.become.expect_prompt() and sudoable:
-            fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
-            fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
+            fcntl.fcntl(
+                p.stdout,
+                fcntl.F_SETFL,
+                fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK,
+            )
+            fcntl.fcntl(
+                p.stderr,
+                fcntl.F_SETFL,
+                fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK,
+            )
             selector = selectors.DefaultSelector()
             selector.register(p.stdout, selectors.EVENT_READ)
             selector.register(p.stderr, selectors.EVENT_READ)
 
-            become_output = b''
+            become_output = b""
             try:
-                while not self.become.check_success(become_output) and not self.become.check_password_prompt(become_output):
+                while not self.become.check_success(
+                    become_output
+                ) and not self.become.check_password_prompt(become_output):
                     events = selector.select(self._play_context.timeout)
                     if not events:
                         stdout, stderr = p.communicate()
-                        raise AnsibleError('timeout waiting for privilege escalation password prompt:\n' + to_native(become_output))
+                        raise AnsibleError(
+                            "timeout waiting for privilege escalation password prompt:\n"
+                            + to_native(become_output)
+                        )
 
                     for key, event in events:
                         if key.fileobj == p.stdout:
@@ -137,20 +169,38 @@ class Connection(ConnectionBase):
 
                     if not chunk:
                         stdout, stderr = p.communicate()
-                        raise AnsibleError('privilege output closed while waiting for password prompt:\n' + to_native(become_output))
+                        raise AnsibleError(
+                            "privilege output closed while waiting for password prompt:\n"
+                            + to_native(become_output)
+                        )
                     become_output += chunk
             finally:
                 selector.close()
 
             if not self.become.check_success(become_output):
-                become_pass = self.become.get_option('become_pass', playcontext=self._play_context)
+                become_pass = self.become.get_option(
+                    "become_pass", playcontext=self._play_context
+                )
                 if master is None:
-                    p.stdin.write(to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
+                    p.stdin.write(
+                        to_bytes(become_pass, errors="surrogate_or_strict") + b"\n"
+                    )
                 else:
-                    os.write(master, to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
+                    os.write(
+                        master,
+                        to_bytes(become_pass, errors="surrogate_or_strict") + b"\n",
+                    )
 
-            fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
-            fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
+            fcntl.fcntl(
+                p.stdout,
+                fcntl.F_SETFL,
+                fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK,
+            )
+            fcntl.fcntl(
+                p.stderr,
+                fcntl.F_SETFL,
+                fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK,
+            )
 
         display.debug("getting output with communicate()")
         stdout, stderr = p.communicate(in_data)
@@ -164,31 +214,50 @@ class Connection(ConnectionBase):
         return (p.returncode, stdout, stderr)
 
     def put_file(self, in_path: str, out_path: str) -> None:
-        ''' transfer a file from local to local '''
+        """transfer a file from local to local"""
 
         super(Connection, self).put_file(in_path, out_path)
 
         in_path = unfrackpath(in_path, basedir=self.cwd)
         out_path = unfrackpath(out_path, basedir=self.cwd)
 
-        display.vvv(u"PUT {0} TO {1}".format(in_path, out_path), host=self._play_context.remote_addr)
-        if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
-            raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_native(in_path)))
+        display.vvv(
+            "PUT {0} TO {1}".format(in_path, out_path),
+            host=self._play_context.remote_addr,
+        )
+        if not os.path.exists(to_bytes(in_path, errors="surrogate_or_strict")):
+            raise AnsibleFileNotFound(
+                "file or module does not exist: {0}".format(to_native(in_path))
+            )
         try:
-            shutil.copyfile(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
+            shutil.copyfile(
+                to_bytes(in_path, errors="surrogate_or_strict"),
+                to_bytes(out_path, errors="surrogate_or_strict"),
+            )
         except shutil.Error:
-            raise AnsibleError("failed to copy: {0} and {1} are the same".format(to_native(in_path), to_native(out_path)))
+            raise AnsibleError(
+                "failed to copy: {0} and {1} are the same".format(
+                    to_native(in_path), to_native(out_path)
+                )
+            )
         except IOError as e:
-            raise AnsibleError("failed to transfer file to {0}: {1}".format(to_native(out_path), to_native(e)))
+            raise AnsibleError(
+                "failed to transfer file to {0}: {1}".format(
+                    to_native(out_path), to_native(e)
+                )
+            )
 
     def fetch_file(self, in_path: str, out_path: str) -> None:
-        ''' fetch a file from local to local -- for compatibility '''
+        """fetch a file from local to local -- for compatibility"""
 
         super(Connection, self).fetch_file(in_path, out_path)
 
-        display.vvv(u"FETCH {0} TO {1}".format(in_path, out_path), host=self._play_context.remote_addr)
+        display.vvv(
+            "FETCH {0} TO {1}".format(in_path, out_path),
+            host=self._play_context.remote_addr,
+        )
         self.put_file(in_path, out_path)
 
     def close(self) -> None:
-        ''' terminate the connection; nothing to do here '''
+        """terminate the connection; nothing to do here"""
         self._connected = False

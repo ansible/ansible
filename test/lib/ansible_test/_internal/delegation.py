@@ -1,4 +1,5 @@
 """Delegate test execution to another environment."""
+
 from __future__ import annotations
 
 import collections.abc as c
@@ -86,20 +87,28 @@ from .content_config import (
 
 
 @contextlib.contextmanager
-def delegation_context(args: EnvironmentConfig, host_state: HostState) -> c.Iterator[None]:
+def delegation_context(
+    args: EnvironmentConfig, host_state: HostState
+) -> c.Iterator[None]:
     """Context manager for serialized host state during delegation."""
     make_dirs(ResultType.TMP.path)
 
     # noinspection PyUnusedLocal
-    python = host_state.controller_profile.python  # make sure the python interpreter has been initialized before serializing host state
+    python = (
+        host_state.controller_profile.python
+    )  # make sure the python interpreter has been initialized before serializing host state
     del python
 
-    with tempfile.TemporaryDirectory(prefix='host-', dir=ResultType.TMP.path) as host_dir:
-        args.host_settings.serialize(os.path.join(host_dir, 'settings.dat'))
-        host_state.serialize(os.path.join(host_dir, 'state.dat'))
-        serialize_content_config(args, os.path.join(host_dir, 'config.dat'))
+    with tempfile.TemporaryDirectory(
+        prefix="host-", dir=ResultType.TMP.path
+    ) as host_dir:
+        args.host_settings.serialize(os.path.join(host_dir, "settings.dat"))
+        host_state.serialize(os.path.join(host_dir, "state.dat"))
+        serialize_content_config(args, os.path.join(host_dir, "config.dat"))
 
-        args.host_path = os.path.join(ResultType.TMP.relative_path, os.path.basename(host_dir))
+        args.host_path = os.path.join(
+            ResultType.TMP.relative_path, os.path.basename(host_dir)
+        )
 
         try:
             yield
@@ -107,7 +116,9 @@ def delegation_context(args: EnvironmentConfig, host_state: HostState) -> c.Iter
             args.host_path = None
 
 
-def delegate(args: CommonConfig, host_state: HostState, exclude: list[str], require: list[str]) -> None:
+def delegate(
+    args: CommonConfig, host_state: HostState, exclude: list[str], require: list[str]
+) -> None:
     """Delegate execution of ansible-test to another environment."""
     assert isinstance(args, EnvironmentConfig)
 
@@ -117,8 +128,12 @@ def delegate(args: CommonConfig, host_state: HostState, exclude: list[str], requ
 
             make_dirs(ResultType.TMP.path)
 
-            with tempfile.NamedTemporaryFile(prefix='metadata-', suffix='.json', dir=ResultType.TMP.path) as metadata_fd:
-                args.metadata_path = os.path.join(ResultType.TMP.relative_path, os.path.basename(metadata_fd.name))
+            with tempfile.NamedTemporaryFile(
+                prefix="metadata-", suffix=".json", dir=ResultType.TMP.path
+            ) as metadata_fd:
+                args.metadata_path = os.path.join(
+                    ResultType.TMP.relative_path, os.path.basename(metadata_fd.name)
+                )
                 args.metadata.to_file(args.metadata_path)
 
                 try:
@@ -129,7 +144,12 @@ def delegate(args: CommonConfig, host_state: HostState, exclude: list[str], requ
             delegate_command(args, host_state, exclude, require)
 
 
-def delegate_command(args: EnvironmentConfig, host_state: HostState, exclude: list[str], require: list[str]) -> None:
+def delegate_command(
+    args: EnvironmentConfig,
+    host_state: HostState,
+    exclude: list[str],
+    require: list[str],
+) -> None:
     """Delegate execution based on the provided host state."""
     con = host_state.controller_profile.get_origin_controller_connection()
     working_directory = host_state.controller_profile.get_working_directory()
@@ -137,20 +157,31 @@ def delegate_command(args: EnvironmentConfig, host_state: HostState, exclude: li
 
     if host_delegation:
         if data_context().content.collection:
-            content_root = os.path.join(working_directory, data_context().content.collection.directory)
+            content_root = os.path.join(
+                working_directory, data_context().content.collection.directory
+            )
         else:
-            content_root = os.path.join(working_directory, 'ansible')
+            content_root = os.path.join(working_directory, "ansible")
 
-        ansible_bin_path = os.path.join(working_directory, 'ansible', 'bin')
+        ansible_bin_path = os.path.join(working_directory, "ansible", "bin")
 
-        with tempfile.NamedTemporaryFile(prefix='ansible-source-', suffix='.tgz') as payload_file:
+        with tempfile.NamedTemporaryFile(
+            prefix="ansible-source-", suffix=".tgz"
+        ) as payload_file:
             create_payload(args, payload_file.name)
             con.extract_archive(chdir=working_directory, src=payload_file)
     else:
         content_root = working_directory
         ansible_bin_path = get_ansible_bin_path(args)
 
-    command = generate_command(args, host_state.controller_profile.python, ansible_bin_path, content_root, exclude, require)
+    command = generate_command(
+        args,
+        host_state.controller_profile.python,
+        ansible_bin_path,
+        content_root,
+        exclude,
+        require,
+    )
 
     if isinstance(con, SshConnection):
         ssh = con.settings
@@ -159,30 +190,39 @@ def delegate_command(args: EnvironmentConfig, host_state: HostState, exclude: li
 
     options = []
 
-    if isinstance(args, IntegrationConfig) and args.controller.is_managed and all(target.is_managed for target in args.targets):
+    if (
+        isinstance(args, IntegrationConfig)
+        and args.controller.is_managed
+        and all(target.is_managed for target in args.targets)
+    ):
         if not args.allow_destructive:
-            options.append('--allow-destructive')
+            options.append("--allow-destructive")
 
-    with support_container_context(args, ssh) as containers:  # type: t.Optional[ContainerDatabase]
+    with support_container_context(
+        args, ssh
+    ) as containers:  # type: t.Optional[ContainerDatabase]
         if containers:
-            options.extend(['--containers', json.dumps(containers.to_dict())])
+            options.extend(["--containers", json.dumps(containers.to_dict())])
 
         # Run unit tests unprivileged to prevent stray writes to the source tree.
         # Also disconnect from the network once requirements have been installed.
         if isinstance(args, UnitsConfig) and isinstance(con, DockerConnection):
-            pytest_user = 'pytest'
+            pytest_user = "pytest"
 
             writable_dirs = [
                 os.path.join(content_root, ResultType.JUNIT.relative_path),
                 os.path.join(content_root, ResultType.COVERAGE.relative_path),
             ]
 
-            con.run(['mkdir', '-p'] + writable_dirs, capture=True)
-            con.run(['chmod', '777'] + writable_dirs, capture=True)
-            con.run(['chmod', '755', working_directory], capture=True)
-            con.run(['useradd', pytest_user, '--create-home'], capture=True)
+            con.run(["mkdir", "-p"] + writable_dirs, capture=True)
+            con.run(["chmod", "777"] + writable_dirs, capture=True)
+            con.run(["chmod", "755", working_directory], capture=True)
+            con.run(["useradd", pytest_user, "--create-home"], capture=True)
 
-            con.run(insert_options(command, options + ['--requirements-mode', 'only']), capture=False)
+            con.run(
+                insert_options(command, options + ["--requirements-mode", "only"]),
+                capture=False,
+            )
 
             container = con.inspect()
             networks = container.get_network_names()
@@ -194,14 +234,16 @@ def delegate_command(args: EnvironmentConfig, host_state: HostState, exclude: li
                     except SubprocessError:
                         display.warning(
                             'Unable to disconnect network "%s" (this is normal under podman). '
-                            'Tests will not be isolated from the network. Network-related tests may '
-                            'misbehave.' % (network,)
+                            "Tests will not be isolated from the network. Network-related tests may "
+                            "misbehave." % (network,)
                         )
             else:
-                display.warning('Network disconnection is not supported (this is normal under podman). '
-                                'Tests will not be isolated from the network. Network-related tests may misbehave.')
+                display.warning(
+                    "Network disconnection is not supported (this is normal under podman). "
+                    "Tests will not be isolated from the network. Network-related tests may misbehave."
+                )
 
-            options.extend(['--requirements-mode', 'skip'])
+            options.extend(["--requirements-mode", "skip"])
 
             con.user = pytest_user
 
@@ -213,8 +255,17 @@ def delegate_command(args: EnvironmentConfig, host_state: HostState, exclude: li
             # 1) Display output is being sent to stderr. This indicates the output on stdout must be kept separate from stderr.
             # 2) The delegation is non-interactive. Interactive mode, which generally uses a TTY, is not compatible with intercepting stdout/stderr.
             # The downside to having separate streams is that individual lines of output from each are more likely to appear out-of-order.
-            output_stream = OutputStream.ORIGINAL if args.display_stderr and not args.interactive else None
-            con.run(insert_options(command, options), capture=False, interactive=args.interactive, output_stream=output_stream)
+            output_stream = (
+                OutputStream.ORIGINAL
+                if args.display_stderr and not args.interactive
+                else None
+            )
+            con.run(
+                insert_options(command, options),
+                capture=False,
+                interactive=args.interactive,
+                output_stream=output_stream,
+            )
             success = True
         except SubprocessError as ex:
             status = ex.status
@@ -233,7 +284,7 @@ def insert_options(command: list[str], options: list[str]) -> list[str]:
     result = []
 
     for arg in command:
-        if options and arg.startswith('--'):
+        if options and arg.startswith("--"):
             result.extend(options)
             options = None
 
@@ -242,25 +293,42 @@ def insert_options(command: list[str], options: list[str]) -> list[str]:
     return result
 
 
-def download_results(args: EnvironmentConfig, con: Connection, content_root: str, success: bool) -> None:
+def download_results(
+    args: EnvironmentConfig, con: Connection, content_root: str, success: bool
+) -> None:
     """Download results from a delegated controller."""
-    remote_results_root = os.path.join(content_root, data_context().content.results_path)
-    local_test_root = os.path.dirname(os.path.join(data_context().content.root, data_context().content.results_path))
+    remote_results_root = os.path.join(
+        content_root, data_context().content.results_path
+    )
+    local_test_root = os.path.dirname(
+        os.path.join(data_context().content.root, data_context().content.results_path)
+    )
 
     remote_test_root = os.path.dirname(remote_results_root)
     remote_results_name = os.path.basename(remote_results_root)
 
-    make_dirs(local_test_root)  # make sure directory exists for collections which have no tests
+    make_dirs(
+        local_test_root
+    )  # make sure directory exists for collections which have no tests
 
-    with tempfile.NamedTemporaryFile(prefix='ansible-test-result-', suffix='.tgz') as result_file:
+    with tempfile.NamedTemporaryFile(
+        prefix="ansible-test-result-", suffix=".tgz"
+    ) as result_file:
         try:
-            con.create_archive(chdir=remote_test_root, name=remote_results_name, dst=result_file, exclude=ResultType.TMP.name)
+            con.create_archive(
+                chdir=remote_test_root,
+                name=remote_results_name,
+                dst=result_file,
+                exclude=ResultType.TMP.name,
+            )
         except SubprocessError as ex:
             if success:
                 raise  # download errors are fatal if tests succeeded
 
             # surface download failures as a warning here to avoid masking test failures
-            display.warning(f'Failed to download results while handling an exception: {ex}')
+            display.warning(
+                f"Failed to download results while handling an exception: {ex}"
+            )
         else:
             result_file.seek(0)
 
@@ -277,7 +345,7 @@ def generate_command(
     require: list[str],
 ) -> list[str]:
     """Generate the command necessary to delegate ansible-test."""
-    cmd = [os.path.join(ansible_bin_path, 'ansible-test')]
+    cmd = [os.path.join(ansible_bin_path, "ansible-test")]
     cmd = [python.path] + cmd
 
     env_vars = dict(
@@ -289,8 +357,8 @@ def generate_command(
         # This is only required when delegation is used on the origin host.
         library_path = process_scoped_temporary_directory(args)
 
-        os.symlink(ANSIBLE_LIB_ROOT, os.path.join(library_path, 'ansible'))
-        os.symlink(ANSIBLE_TEST_ROOT, os.path.join(library_path, 'ansible_test'))
+        os.symlink(ANSIBLE_LIB_ROOT, os.path.join(library_path, "ansible"))
+        os.symlink(ANSIBLE_TEST_ROOT, os.path.join(library_path, "ansible_test"))
 
         env_vars.update(
             PYTHONPATH=library_path,
@@ -306,16 +374,18 @@ def generate_command(
 
     # Propagate the TERM environment variable to the remote host when using the shell command.
     if isinstance(args, ShellConfig):
-        term = os.environ.get('TERM')
+        term = os.environ.get("TERM")
 
         if term is not None:
             env_vars.update(TERM=term)
 
-    env_args = ['%s=%s' % (key, env_vars[key]) for key in sorted(env_vars)]
+    env_args = ["%s=%s" % (key, env_vars[key]) for key in sorted(env_vars)]
 
-    cmd = ['/usr/bin/env'] + env_args + cmd
+    cmd = ["/usr/bin/env"] + env_args + cmd
 
-    cmd += list(filter_options(args, args.host_settings.filtered_args, exclude, require))
+    cmd += list(
+        filter_options(args, args.host_settings.filtered_args, exclude, require)
+    )
 
     return cmd
 
@@ -328,33 +398,37 @@ def filter_options(
 ) -> c.Iterable[str]:
     """Return an iterable that filters out unwanted CLI options and injects new ones as requested."""
     replace: list[tuple[str, int, t.Optional[t.Union[bool, str, list[str]]]]] = [
-        ('--truncate', 1, str(args.truncate)),
-        ('--color', 1, 'yes' if args.color else 'no'),
-        ('--redact', 0, False),
-        ('--no-redact', 0, not args.redact),
-        ('--host-path', 1, args.host_path),
+        ("--truncate", 1, str(args.truncate)),
+        ("--color", 1, "yes" if args.color else "no"),
+        ("--redact", 0, False),
+        ("--no-redact", 0, not args.redact),
+        ("--host-path", 1, args.host_path),
     ]
 
     if isinstance(args, TestConfig):
-        replace.extend([
-            ('--changed', 0, False),
-            ('--tracked', 0, False),
-            ('--untracked', 0, False),
-            ('--ignore-committed', 0, False),
-            ('--ignore-staged', 0, False),
-            ('--ignore-unstaged', 0, False),
-            ('--changed-from', 1, False),
-            ('--changed-path', 1, False),
-            ('--metadata', 1, args.metadata_path),
-            ('--exclude', 1, exclude),
-            ('--require', 1, require),
-            ('--base-branch', 1, False),
-        ])
+        replace.extend(
+            [
+                ("--changed", 0, False),
+                ("--tracked", 0, False),
+                ("--untracked", 0, False),
+                ("--ignore-committed", 0, False),
+                ("--ignore-staged", 0, False),
+                ("--ignore-unstaged", 0, False),
+                ("--changed-from", 1, False),
+                ("--changed-path", 1, False),
+                ("--metadata", 1, args.metadata_path),
+                ("--exclude", 1, exclude),
+                ("--require", 1, require),
+                ("--base-branch", 1, False),
+            ]
+        )
 
     pass_through_args: list[str] = []
 
-    for arg in filter_args(argv, {option: count for option, count, replacement in replace}):
-        if arg == '--' or pass_through_args:
+    for arg in filter_args(
+        argv, {option: count for option, count, replacement in replace}
+    ):
+        if arg == "--" or pass_through_args:
             pass_through_args.append(arg)
             continue
 

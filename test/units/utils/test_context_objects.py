@@ -12,30 +12,38 @@ from ansible.module_utils.common.collections import ImmutableDict
 from ansible.utils import context_objects as co
 
 
-MAKE_IMMUTABLE_DATA = ((u'くらとみ', u'くらとみ'),
-                       (42, 42),
-                       ({u'café': u'くらとみ'}, ImmutableDict({u'café': u'くらとみ'})),
-                       ([1, u'café', u'くらとみ'], (1, u'café', u'くらとみ')),
-                       (set((1, u'café', u'くらとみ')), frozenset((1, u'café', u'くらとみ'))),
-                       ({u'café': [1, set(u'ñ')]},
-                        ImmutableDict({u'café': (1, frozenset(u'ñ'))})),
-                       ([set((1, 2)), {u'くらとみ': 3}],
-                        (frozenset((1, 2)), ImmutableDict({u'くらとみ': 3}))),
-                       )
+MAKE_IMMUTABLE_DATA = (
+    ("くらとみ", "くらとみ"),
+    (42, 42),
+    ({"café": "くらとみ"}, ImmutableDict({"café": "くらとみ"})),
+    ([1, "café", "くらとみ"], (1, "café", "くらとみ")),
+    (set((1, "café", "くらとみ")), frozenset((1, "café", "くらとみ"))),
+    ({"café": [1, set("ñ")]}, ImmutableDict({"café": (1, frozenset("ñ"))})),
+    (
+        [set((1, 2)), {"くらとみ": 3}],
+        (frozenset((1, 2)), ImmutableDict({"くらとみ": 3})),
+    ),
+)
 
 
-@pytest.mark.parametrize('data, expected', MAKE_IMMUTABLE_DATA)
+@pytest.mark.parametrize("data, expected", MAKE_IMMUTABLE_DATA)
 def test_make_immutable(data, expected):
     assert co._make_immutable(data) == expected
 
 
 def test_cliargs_from_dict():
-    old_dict = {'tags': [u'production', u'webservers'],
-                'check_mode': True,
-                'start_at_task': u'Start with くらとみ'}
-    expected = frozenset((('tags', (u'production', u'webservers')),
-                          ('check_mode', True),
-                          ('start_at_task', u'Start with くらとみ')))
+    old_dict = {
+        "tags": ["production", "webservers"],
+        "check_mode": True,
+        "start_at_task": "Start with くらとみ",
+    }
+    expected = frozenset(
+        (
+            ("tags", ("production", "webservers")),
+            ("check_mode", True),
+            ("start_at_task", "Start with くらとみ"),
+        )
+    )
 
     assert frozenset(co.CLIArgs(old_dict).items()) == expected
 
@@ -43,27 +51,42 @@ def test_cliargs_from_dict():
 def test_cliargs():
     class FakeOptions:
         pass
-    options = FakeOptions()
-    options.tags = [u'production', u'webservers']
-    options.check_mode = True
-    options.start_at_task = u'Start with くらとみ'
 
-    expected = frozenset((('tags', (u'production', u'webservers')),
-                          ('check_mode', True),
-                          ('start_at_task', u'Start with くらとみ')))
+    options = FakeOptions()
+    options.tags = ["production", "webservers"]
+    options.check_mode = True
+    options.start_at_task = "Start with くらとみ"
+
+    expected = frozenset(
+        (
+            ("tags", ("production", "webservers")),
+            ("check_mode", True),
+            ("start_at_task", "Start with くらとみ"),
+        )
+    )
 
     assert frozenset(co.CLIArgs.from_options(options).items()) == expected
 
 
 def test_cliargs_argparse():
-    parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('integers', metavar='N', type=int, nargs='+',
-                        help='an integer for the accumulator')
-    parser.add_argument('--sum', dest='accumulate', action='store_const',
-                        const=sum, default=max,
-                        help='sum the integers (default: find the max)')
-    args = parser.parse_args([u'--sum', u'1', u'2'])
+    parser = argparse.ArgumentParser(description="Process some integers.")
+    parser.add_argument(
+        "integers",
+        metavar="N",
+        type=int,
+        nargs="+",
+        help="an integer for the accumulator",
+    )
+    parser.add_argument(
+        "--sum",
+        dest="accumulate",
+        action="store_const",
+        const=sum,
+        default=max,
+        help="sum the integers (default: find the max)",
+    )
+    args = parser.parse_args(["--sum", "1", "2"])
 
-    expected = frozenset((('accumulate', sum), ('integers', (1, 2))))
+    expected = frozenset((("accumulate", sum), ("integers", (1, 2))))
 
     assert frozenset(co.CLIArgs.from_options(args).items()) == expected

@@ -32,28 +32,36 @@ class TestPlaybook(unittest.TestCase):
         p = Playbook(loader=fake_loader)
 
     def test_basic_playbook(self):
-        fake_loader = DictDataLoader({
-            "test_file.yml": """
+        fake_loader = DictDataLoader(
+            {
+                "test_file.yml": """
             - hosts: all
             """,
-        })
+            }
+        )
         p = Playbook.load("test_file.yml", loader=fake_loader)
         plays = p.get_plays()
 
     def test_bad_playbook_files(self):
-        fake_loader = DictDataLoader({
-            # represents a playbook which is not a list of plays
-            "bad_list.yml": """
+        fake_loader = DictDataLoader(
+            {
+                # represents a playbook which is not a list of plays
+                "bad_list.yml": """
             foo: bar
 
             """,
-            # represents a playbook where a play entry is mis-formatted
-            "bad_entry.yml": """
+                # represents a playbook where a play entry is mis-formatted
+                "bad_entry.yml": """
             -
               - "This should be a mapping..."
 
             """,
-        })
+            }
+        )
         vm = VariableManager()
-        self.assertRaises(AnsibleParserError, Playbook.load, "bad_list.yml", vm, fake_loader)
-        self.assertRaises(AnsibleParserError, Playbook.load, "bad_entry.yml", vm, fake_loader)
+        self.assertRaises(
+            AnsibleParserError, Playbook.load, "bad_list.yml", vm, fake_loader
+        )
+        self.assertRaises(
+            AnsibleParserError, Playbook.load, "bad_entry.yml", vm, fake_loader
+        )

@@ -87,17 +87,17 @@ from ansible.plugins.lookup import LookupBase
 # shortcut format
 NUM = "(0?x?[0-9a-f]+)"
 SHORTCUT = re_compile(
-    "^(" +        # Group 0
-    NUM +         # Group 1: Start
-    "-)?" +
-    NUM +         # Group 2: End
-    "(/" +        # Group 3
-    NUM +         # Group 4: Stride
-    ")?" +
-    "(:(.+))?$",  # Group 5, Group 6: Format String
-    IGNORECASE
+    "^("  # Group 0
+    + NUM  # Group 1: Start
+    + "-)?"
+    + NUM  # Group 2: End
+    + "(/"  # Group 3
+    + NUM  # Group 4: Stride
+    + ")?"
+    + "(:(.+))?$",  # Group 5, Group 6: Format String
+    IGNORECASE,
 )
-FIELDS = frozenset(('start', 'end', 'stride', 'count', 'format'))
+FIELDS = frozenset(("start", "end", "stride", "count", "format"))
 
 
 class LookupModule(LookupBase):
@@ -147,8 +147,7 @@ class LookupModule(LookupBase):
                 self.set_option(arg, value)
         if args:
             raise AnsibleError(
-                "unrecognized arguments to with_sequence: %s"
-                % list(args.keys())
+                "unrecognized arguments to with_sequence: %s" % list(args.keys())
             )
 
     def parse_simple_args(self, term):
@@ -188,7 +187,7 @@ class LookupModule(LookupBase):
             raise AnsibleError("to count backwards make stride negative")
         if self.stride < 0 and self.end > self.start:
             raise AnsibleError("to count forward don't make stride negative")
-        if self.format.count('%') != 1:
+        if self.format.count("%") != 1:
             raise AnsibleError("bad formatting string: %s" % self.format)
 
     def generate_sequence(self):
@@ -203,9 +202,7 @@ class LookupModule(LookupBase):
                 formatted = self.format % i
                 yield formatted
             except (ValueError, TypeError):
-                raise AnsibleError(
-                    "problem formatting %r with %r" % (i, self.format)
-                )
+                raise AnsibleError("problem formatting %r with %r" % (i, self.format))
 
     def run(self, terms, variables, **kwargs):
         results = []
@@ -220,7 +217,10 @@ class LookupModule(LookupBase):
                 except AnsibleError:
                     raise
                 except Exception as e:
-                    raise AnsibleError("unknown error parsing with_sequence arguments: %r. Error was: %s" % (term, e))
+                    raise AnsibleError(
+                        "unknown error parsing with_sequence arguments: %r. Error was: %s"
+                        % (term, e)
+                    )
 
                 self.set_fields()
                 self.sanity_check()
@@ -230,8 +230,6 @@ class LookupModule(LookupBase):
             except AnsibleError:
                 raise
             except Exception as e:
-                raise AnsibleError(
-                    "unknown error generating sequence: %s" % e
-                )
+                raise AnsibleError("unknown error generating sequence: %s" % e)
 
         return results

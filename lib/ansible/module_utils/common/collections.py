@@ -7,11 +7,17 @@ from __future__ import annotations
 
 
 from ansible.module_utils.six import binary_type, text_type
-from ansible.module_utils.six.moves.collections_abc import Hashable, Mapping, MutableMapping, Sequence  # pylint: disable=unused-import
+from ansible.module_utils.six.moves.collections_abc import (
+    Hashable,
+    Mapping,
+    MutableMapping,
+    Sequence,
+)  # pylint: disable=unused-import
 
 
 class ImmutableDict(Hashable, Mapping):
     """Dictionary that cannot be updated"""
+
     def __init__(self, *args, **kwargs):
         self._store = dict(*args, **kwargs)
 
@@ -37,7 +43,7 @@ class ImmutableDict(Hashable, Mapping):
         return False
 
     def __repr__(self):
-        return 'ImmutableDict({0})'.format(repr(self._store))
+        return "ImmutableDict({0})".format(repr(self._store))
 
     def union(self, overriding_mapping):
         """
@@ -67,7 +73,9 @@ class ImmutableDict(Hashable, Mapping):
 def is_string(seq):
     """Identify whether the input has a string-like type (inclding bytes)."""
     # AnsibleVaultEncryptedUnicode inherits from Sequence, but is expected to be a string like object
-    return isinstance(seq, (text_type, binary_type)) or getattr(seq, '__ENCRYPTED__', False)
+    return isinstance(seq, (text_type, binary_type)) or getattr(
+        seq, "__ENCRYPTED__", False
+    )
 
 
 def is_iterable(seq, include_strings=False):
@@ -104,7 +112,7 @@ def count(seq):
     deprecated and replaced when support for Python < 2.7 is dropped.
     """
     if not is_iterable(seq):
-        raise Exception('Argument provided  is not an iterable')
+        raise Exception("Argument provided  is not an iterable")
     counters = dict()
     for elem in seq:
         counters[elem] = counters.get(elem, 0) + 1

@@ -19,22 +19,24 @@ DOCUMENTATION = """
 
 
 class Connection(ConnectionBase):
-    transport = 'local'
+    transport = "local"
     has_pipelining = True
 
     def _connect(self):
         return self
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
-        stdout = 'localconn ran {0}'.format(to_native(cmd))
-        stderr = 'connectionvar is {0}'.format(to_native(self.get_option('connectionvar')))
+        stdout = "localconn ran {0}".format(to_native(cmd))
+        stderr = "connectionvar is {0}".format(
+            to_native(self.get_option("connectionvar"))
+        )
         return (0, stdout, stderr)
 
     def put_file(self, in_path, out_path):
-        raise NotImplementedError('just a test')
+        raise NotImplementedError("just a test")
 
     def fetch_file(self, in_path, out_path):
-        raise NotImplementedError('just a test')
+        raise NotImplementedError("just a test")
 
     def close(self):
         self._connected = False

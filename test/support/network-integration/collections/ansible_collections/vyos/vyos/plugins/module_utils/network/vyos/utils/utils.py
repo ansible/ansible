@@ -20,8 +20,7 @@ def search_obj_in_list(name, lst, key="name"):
 
 
 def get_interface_type(interface):
-    """Gets the type of interface
-    """
+    """Gets the type of interface"""
     if interface.startswith("eth"):
         return "ethernet"
     elif interface.startswith("bond"):
@@ -102,11 +101,7 @@ def get_lst_same_for_dicts(want, have, lst):
     if want and have:
         want_list = want.get(lst) or {}
         have_list = have.get(lst) or {}
-        diff = [
-            i
-            for i in want_list and have_list
-            if i in have_list and i in want_list
-        ]
+        diff = [i for i in want_list and have_list if i in have_list and i in want_list]
     return diff
 
 
@@ -124,9 +119,7 @@ def list_diff_have_only(want_list, have_list):
         diff = None
     else:
         diff = [
-            i
-            for i in have_list + want_list
-            if i in have_list and i not in want_list
+            i for i in have_list + want_list if i in have_list and i not in want_list
         ]
     return diff
 
@@ -145,9 +138,7 @@ def list_diff_want_only(want_list, have_list):
         diff = want_list
     else:
         diff = [
-            i
-            for i in have_list + want_list
-            if i in want_list and i not in have_list
+            i for i in have_list + want_list if i in want_list and i not in have_list
         ]
     return diff
 
@@ -163,11 +154,7 @@ def search_dict_tv_in_list(d_val1, d_val2, lst, key1, key2):
     :return:
     """
     obj = next(
-        (
-            item
-            for item in lst
-            if item[key1] == d_val1 and item[key2] == d_val2
-        ),
+        (item for item in lst if item[key1] == d_val1 and item[key2] == d_val2),
         None,
     )
     if obj:

@@ -319,7 +319,7 @@ Are you sure you want to continue connecting (yes/no)?
 """
 
 # SSH Options Regex
-SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
+SETTINGS_REGEX = re.compile(r"(\w+)(?:\s*=\s*|\s+)(.+)")
 
 MissingHostKeyPolicy: type = object
 if paramiko:
@@ -342,22 +342,34 @@ class MyAddPolicy(MissingHostKeyPolicy):
 
     def missing_host_key(self, client, hostname, key) -> None:
 
-        if all((self.connection.get_option('host_key_checking'), not self.connection.get_option('host_key_auto_add'))):
+        if all(
+            (
+                self.connection.get_option("host_key_checking"),
+                not self.connection.get_option("host_key_auto_add"),
+            )
+        ):
 
             fingerprint = hexlify(key.get_fingerprint())
             ktype = key.get_name()
 
-            if self.connection.get_option('use_persistent_connections') or self.connection.force_persistence:
+            if (
+                self.connection.get_option("use_persistent_connections")
+                or self.connection.force_persistence
+            ):
                 # don't print the prompt string since the user cannot respond
                 # to the question anyway
-                raise AnsibleError(AUTHENTICITY_MSG[1:92] % (hostname, ktype, fingerprint))
+                raise AnsibleError(
+                    AUTHENTICITY_MSG[1:92] % (hostname, ktype, fingerprint)
+                )
 
             inp = to_text(
-                display.prompt_until(AUTHENTICITY_MSG % (hostname, ktype, fingerprint), private=False),
-                errors='surrogate_or_strict'
+                display.prompt_until(
+                    AUTHENTICITY_MSG % (hostname, ktype, fingerprint), private=False
+                ),
+                errors="surrogate_or_strict",
             )
 
-            if inp not in ['yes', 'y', '']:
+            if inp not in ["yes", "y", ""]:
                 raise AnsibleError("host connection rejected by user")
 
         key._added_by_ansible_this_time = True
@@ -376,13 +388,16 @@ SFTP_CONNECTION_CACHE: dict[str, paramiko.sftp_client.SFTPClient] = {}
 
 
 class Connection(ConnectionBase):
-    ''' SSH based connections with Paramiko '''
+    """SSH based connections with Paramiko"""
 
-    transport = 'paramiko'
+    transport = "paramiko"
     _log_channel: str | None = None
 
     def _cache_key(self) -> str:
-        return "%s__%s__" % (self.get_option('remote_addr'), self.get_option('remote_user'))
+        return "%s__%s__" % (
+            self.get_option("remote_addr"),
+            self.get_option("remote_user"),
+        )
 
     def _connect(self) -> Connection:
         cache_key = self._cache_key()
@@ -395,78 +410,94 @@ class Connection(ConnectionBase):
         return self
 
     def _set_log_channel(self, name: str) -> None:
-        '''Mimic paramiko.SSHClient.set_log_channel'''
+        """Mimic paramiko.SSHClient.set_log_channel"""
         self._log_channel = name
 
     def _parse_proxy_command(self, port: int = 22) -> dict[str, t.Any]:
         proxy_command = None
         # Parse ansible_ssh_common_args, specifically looking for ProxyCommand
         ssh_args = [
-            self.get_option('ssh_extra_args'),
-            self.get_option('ssh_common_args'),
-            self.get_option('ssh_args', ''),
+            self.get_option("ssh_extra_args"),
+            self.get_option("ssh_common_args"),
+            self.get_option("ssh_args", ""),
         ]
 
-        args = self._split_ssh_args(' '.join(ssh_args))
+        args = self._split_ssh_args(" ".join(ssh_args))
         for i, arg in enumerate(args):
-            if arg.lower() == 'proxycommand':
+            if arg.lower() == "proxycommand":
                 # _split_ssh_args split ProxyCommand from the command itself
                 proxy_command = args[i + 1]
             else:
                 # ProxyCommand and the command itself are a single string
                 match = SETTINGS_REGEX.match(arg)
                 if match:
-                    if match.group(1).lower() == 'proxycommand':
+                    if match.group(1).lower() == "proxycommand":
                         proxy_command = match.group(2)
 
             if proxy_command:
                 break
 
-        proxy_command = self.get_option('proxy_command') or proxy_command
+        proxy_command = self.get_option("proxy_command") or proxy_command
 
         sock_kwarg = {}
         if proxy_command:
             replacers = {
-                '%h': self.get_option('remote_addr'),
-                '%p': port,
-                '%r': self.get_option('remote_user')
+                "%h": self.get_option("remote_addr"),
+                "%p": port,
+                "%r": self.get_option("remote_user"),
             }
             for find, replace in replacers.items():
                 proxy_command = proxy_command.replace(find, str(replace))
             try:
-                sock_kwarg = {'sock': paramiko.ProxyCommand(proxy_command)}
-                display.vvv("CONFIGURE PROXY COMMAND FOR CONNECTION: %s" % proxy_command, host=self.get_option('remote_addr'))
+                sock_kwarg = {"sock": paramiko.ProxyCommand(proxy_command)}
+                display.vvv(
+                    "CONFIGURE PROXY COMMAND FOR CONNECTION: %s" % proxy_command,
+                    host=self.get_option("remote_addr"),
+                )
             except AttributeError:
-                display.warning('Paramiko ProxyCommand support unavailable. '
-                                'Please upgrade to Paramiko 1.9.0 or newer. '
-                                'Not using configured ProxyCommand')
+                display.warning(
+                    "Paramiko ProxyCommand support unavailable. "
+                    "Please upgrade to Paramiko 1.9.0 or newer. "
+                    "Not using configured ProxyCommand"
+                )
 
         return sock_kwarg
 
     def _connect_uncached(self) -> paramiko.SSHClient:
-        ''' activates the connection object '''
+        """activates the connection object"""
 
         if paramiko is None:
-            raise AnsibleError("paramiko is not installed: %s" % to_native(PARAMIKO_IMPORT_ERR))
+            raise AnsibleError(
+                "paramiko is not installed: %s" % to_native(PARAMIKO_IMPORT_ERR)
+            )
 
-        port = self.get_option('port')
-        display.vvv("ESTABLISH PARAMIKO SSH CONNECTION FOR USER: %s on PORT %s TO %s" % (self.get_option('remote_user'), port, self.get_option('remote_addr')),
-                    host=self.get_option('remote_addr'))
+        port = self.get_option("port")
+        display.vvv(
+            "ESTABLISH PARAMIKO SSH CONNECTION FOR USER: %s on PORT %s TO %s"
+            % (self.get_option("remote_user"), port, self.get_option("remote_addr")),
+            host=self.get_option("remote_addr"),
+        )
 
         ssh = paramiko.SSHClient()
 
         # Set pubkey and hostkey algorithms to disable, the only manipulation allowed currently
         # is keeping or omitting rsa-sha2 algorithms
         # default_keys: t.Tuple[str] = ()
-        paramiko_preferred_pubkeys = getattr(paramiko.Transport, '_preferred_pubkeys', ())
-        paramiko_preferred_hostkeys = getattr(paramiko.Transport, '_preferred_keys', ())
-        use_rsa_sha2_algorithms = self.get_option('use_rsa_sha2_algorithms')
+        paramiko_preferred_pubkeys = getattr(
+            paramiko.Transport, "_preferred_pubkeys", ()
+        )
+        paramiko_preferred_hostkeys = getattr(paramiko.Transport, "_preferred_keys", ())
+        use_rsa_sha2_algorithms = self.get_option("use_rsa_sha2_algorithms")
         disabled_algorithms: t.Dict[str, t.Iterable[str]] = {}
         if not use_rsa_sha2_algorithms:
             if paramiko_preferred_pubkeys:
-                disabled_algorithms['pubkeys'] = tuple(a for a in paramiko_preferred_pubkeys if 'rsa-sha2' in a)
+                disabled_algorithms["pubkeys"] = tuple(
+                    a for a in paramiko_preferred_pubkeys if "rsa-sha2" in a
+                )
             if paramiko_preferred_hostkeys:
-                disabled_algorithms['keys'] = tuple(a for a in paramiko_preferred_hostkeys if 'rsa-sha2' in a)
+                disabled_algorithms["keys"] = tuple(
+                    a for a in paramiko_preferred_hostkeys if "rsa-sha2" in a
+                )
 
         # override paramiko's default logger name
         if self._log_channel is not None:
@@ -474,8 +505,11 @@ class Connection(ConnectionBase):
 
         self.keyfile = os.path.expanduser("~/.ssh/known_hosts")
 
-        if self.get_option('host_key_checking'):
-            for ssh_known_hosts in ("/etc/ssh/ssh_known_hosts", "/etc/openssh/ssh_known_hosts"):
+        if self.get_option("host_key_checking"):
+            for ssh_known_hosts in (
+                "/etc/ssh/ssh_known_hosts",
+                "/etc/openssh/ssh_known_hosts",
+            ):
                 try:
                     # TODO: check if we need to look at several possible locations, possible for loop
                     ssh.load_system_host_keys(ssh_known_hosts)
@@ -488,7 +522,7 @@ class Connection(ConnectionBase):
 
         ssh.set_missing_host_key_policy(MyAddPolicy(self))
 
-        conn_password = self.get_option('password')
+        conn_password = self.get_option("password")
 
         allow_agent = True
 
@@ -497,54 +531,67 @@ class Connection(ConnectionBase):
 
         try:
             key_filename = None
-            if self.get_option('private_key_file'):
-                key_filename = os.path.expanduser(self.get_option('private_key_file'))
+            if self.get_option("private_key_file"):
+                key_filename = os.path.expanduser(self.get_option("private_key_file"))
 
             # paramiko 2.2 introduced auth_timeout parameter
-            if LooseVersion(paramiko.__version__) >= LooseVersion('2.2.0'):
-                ssh_connect_kwargs['auth_timeout'] = self.get_option('timeout')
+            if LooseVersion(paramiko.__version__) >= LooseVersion("2.2.0"):
+                ssh_connect_kwargs["auth_timeout"] = self.get_option("timeout")
 
             # paramiko 1.15 introduced banner timeout parameter
-            if LooseVersion(paramiko.__version__) >= LooseVersion('1.15.0'):
-                ssh_connect_kwargs['banner_timeout'] = self.get_option('banner_timeout')
+            if LooseVersion(paramiko.__version__) >= LooseVersion("1.15.0"):
+                ssh_connect_kwargs["banner_timeout"] = self.get_option("banner_timeout")
 
             ssh.connect(
-                self.get_option('remote_addr').lower(),
-                username=self.get_option('remote_user'),
+                self.get_option("remote_addr").lower(),
+                username=self.get_option("remote_user"),
                 allow_agent=allow_agent,
-                look_for_keys=self.get_option('look_for_keys'),
+                look_for_keys=self.get_option("look_for_keys"),
                 key_filename=key_filename,
                 password=conn_password,
-                timeout=self.get_option('timeout'),
+                timeout=self.get_option("timeout"),
                 port=port,
                 disabled_algorithms=disabled_algorithms,
                 **ssh_connect_kwargs,
             )
         except paramiko.ssh_exception.BadHostKeyException as e:
-            raise AnsibleConnectionFailure('host key mismatch for %s' % e.hostname)
+            raise AnsibleConnectionFailure("host key mismatch for %s" % e.hostname)
         except paramiko.ssh_exception.AuthenticationException as e:
-            msg = 'Failed to authenticate: {0}'.format(to_text(e))
+            msg = "Failed to authenticate: {0}".format(to_text(e))
             raise AnsibleAuthenticationFailure(msg)
         except Exception as e:
             msg = to_text(e)
-            if u"PID check failed" in msg:
-                raise AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
-            elif u"Private key file is encrypted" in msg:
-                msg = 'ssh %s@%s:%s : %s\nTo connect as a different user, use -u <username>.' % (
-                    self.get_option('remote_user'), self.get_options('remote_addr'), port, msg)
+            if "PID check failed" in msg:
+                raise AnsibleError(
+                    "paramiko version issue, please upgrade paramiko on the machine running ansible"
+                )
+            elif "Private key file is encrypted" in msg:
+                msg = (
+                    "ssh %s@%s:%s : %s\nTo connect as a different user, use -u <username>."
+                    % (
+                        self.get_option("remote_user"),
+                        self.get_options("remote_addr"),
+                        port,
+                        msg,
+                    )
+                )
                 raise AnsibleConnectionFailure(msg)
             else:
                 raise AnsibleConnectionFailure(msg)
 
         return ssh
 
-    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
-        ''' run a command on the remote host '''
+    def exec_command(
+        self, cmd: str, in_data: bytes | None = None, sudoable: bool = True
+    ) -> tuple[int, bytes, bytes]:
+        """run a command on the remote host"""
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
         if in_data:
-            raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
+            raise AnsibleError(
+                "Internal Error: this module does not support optimized module pipelining"
+            )
 
         bufsize = 4096
 
@@ -553,24 +600,28 @@ class Connection(ConnectionBase):
             chan = self.ssh.get_transport().open_session()
         except Exception as e:
             text_e = to_text(e)
-            msg = u"Failed to open session"
+            msg = "Failed to open session"
             if text_e:
-                msg += u": %s" % text_e
+                msg += ": %s" % text_e
             raise AnsibleConnectionFailure(to_native(msg))
 
         # sudo usually requires a PTY (cf. requiretty option), therefore
         # we give it one by default (pty=True in ansible.cfg), and we try
         # to initialise from the calling environment when sudoable is enabled
-        if self.get_option('pty') and sudoable:
-            chan.get_pty(term=os.getenv('TERM', 'vt100'), width=int(os.getenv('COLUMNS', 0)), height=int(os.getenv('LINES', 0)))
+        if self.get_option("pty") and sudoable:
+            chan.get_pty(
+                term=os.getenv("TERM", "vt100"),
+                width=int(os.getenv("COLUMNS", 0)),
+                height=int(os.getenv("LINES", 0)),
+            )
 
-        display.vvv("EXEC %s" % cmd, host=self.get_option('remote_addr'))
+        display.vvv("EXEC %s" % cmd, host=self.get_option("remote_addr"))
 
-        cmd = to_bytes(cmd, errors='surrogate_or_strict')
+        cmd = to_bytes(cmd, errors="surrogate_or_strict")
 
-        no_prompt_out = b''
-        no_prompt_err = b''
-        become_output = b''
+        no_prompt_out = b""
+        no_prompt_err = b""
+        become_output = b""
 
         try:
             chan.exec_command(cmd)
@@ -578,14 +629,16 @@ class Connection(ConnectionBase):
                 passprompt = False
                 become_sucess = False
                 while not (become_sucess or passprompt):
-                    display.debug('Waiting for Privilege Escalation input')
+                    display.debug("Waiting for Privilege Escalation input")
 
                     chunk = chan.recv(bufsize)
                     display.debug("chunk is: %r" % chunk)
                     if not chunk:
-                        if b'unknown user' in become_output:
-                            n_become_user = to_native(self.become.get_option('become_user'))
-                            raise AnsibleError('user %s does not exist' % n_become_user)
+                        if b"unknown user" in become_output:
+                            n_become_user = to_native(
+                                self.become.get_option("become_user")
+                            )
+                            raise AnsibleError("user %s does not exist" % n_become_user)
                         else:
                             break
                             # raise AnsibleError('ssh connection closed waiting for password prompt')
@@ -603,29 +656,38 @@ class Connection(ConnectionBase):
 
                 if passprompt:
                     if self.become:
-                        become_pass = self.become.get_option('become_pass')
-                        chan.sendall(to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
+                        become_pass = self.become.get_option("become_pass")
+                        chan.sendall(
+                            to_bytes(become_pass, errors="surrogate_or_strict") + b"\n"
+                        )
                     else:
-                        raise AnsibleError("A password is required but none was supplied")
+                        raise AnsibleError(
+                            "A password is required but none was supplied"
+                        )
                 else:
                     no_prompt_out += become_output
                     no_prompt_err += become_output
         except socket.timeout:
-            raise AnsibleError('ssh timed out waiting for privilege escalation.\n' + to_text(become_output))
+            raise AnsibleError(
+                "ssh timed out waiting for privilege escalation.\n"
+                + to_text(become_output)
+            )
 
-        stdout = b''.join(chan.makefile('rb', bufsize))
-        stderr = b''.join(chan.makefile_stderr('rb', bufsize))
+        stdout = b"".join(chan.makefile("rb", bufsize))
+        stderr = b"".join(chan.makefile_stderr("rb", bufsize))
 
         return (chan.recv_exit_status(), no_prompt_out + stdout, no_prompt_out + stderr)
 
     def put_file(self, in_path: str, out_path: str) -> None:
-        ''' transfer a file from local to remote '''
+        """transfer a file from local to remote"""
 
         super(Connection, self).put_file(in_path, out_path)
 
-        display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.get_option('remote_addr'))
+        display.vvv(
+            "PUT %s TO %s" % (in_path, out_path), host=self.get_option("remote_addr")
+        )
 
-        if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
+        if not os.path.exists(to_bytes(in_path, errors="surrogate_or_strict")):
             raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
 
         try:
@@ -634,13 +696,19 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to open a SFTP connection (%s)" % e)
 
         try:
-            self.sftp.put(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
+            self.sftp.put(
+                to_bytes(in_path, errors="surrogate_or_strict"),
+                to_bytes(out_path, errors="surrogate_or_strict"),
+            )
         except IOError:
             raise AnsibleError("failed to transfer file to %s" % out_path)
 
     def _connect_sftp(self) -> paramiko.sftp_client.SFTPClient:
 
-        cache_key = "%s__%s__" % (self.get_option('remote_addr'), self.get_option('remote_user'))
+        cache_key = "%s__%s__" % (
+            self.get_option("remote_addr"),
+            self.get_option("remote_user"),
+        )
         if cache_key in SFTP_CONNECTION_CACHE:
             return SFTP_CONNECTION_CACHE[cache_key]
         else:
@@ -648,11 +716,13 @@ class Connection(ConnectionBase):
             return result
 
     def fetch_file(self, in_path: str, out_path: str) -> None:
-        ''' save a remote file to the specified path '''
+        """save a remote file to the specified path"""
 
         super(Connection, self).fetch_file(in_path, out_path)
 
-        display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.get_option('remote_addr'))
+        display.vvv(
+            "FETCH %s TO %s" % (in_path, out_path), host=self.get_option("remote_addr")
+        )
 
         try:
             self.sftp = self._connect_sftp()
@@ -660,7 +730,10 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to open a SFTP connection (%s)" % to_native(e))
 
         try:
-            self.sftp.get(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
+            self.sftp.get(
+                to_bytes(in_path, errors="surrogate_or_strict"),
+                to_bytes(out_path, errors="surrogate_or_strict"),
+            )
         except IOError:
             raise AnsibleError("failed to transfer file from %s" % in_path)
 
@@ -668,16 +741,16 @@ class Connection(ConnectionBase):
 
         for hostname, keys in self.ssh._host_keys.items():
             for keytype, key in keys.items():
-                added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                added_this_time = getattr(key, "_added_by_ansible_this_time", False)
                 if added_this_time:
                     return True
         return False
 
     def _save_ssh_host_keys(self, filename: str) -> None:
-        '''
+        """
         not using the paramiko save_ssh_host_keys function as we want to add new SSH keys at the bottom so folks
         don't complain about it :)
-        '''
+        """
 
         if not self._any_keys_added():
             return
@@ -685,21 +758,21 @@ class Connection(ConnectionBase):
         path = os.path.expanduser("~/.ssh")
         makedirs_safe(path)
 
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
 
             for hostname, keys in self.ssh._host_keys.items():
 
                 for keytype, key in keys.items():
 
                     # was f.write
-                    added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                    added_this_time = getattr(key, "_added_by_ansible_this_time", False)
                     if not added_this_time:
                         f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
 
             for hostname, keys in self.ssh._host_keys.items():
 
                 for keytype, key in keys.items():
-                    added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                    added_this_time = getattr(key, "_added_by_ansible_this_time", False)
                     if added_this_time:
                         f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
 
@@ -710,17 +783,21 @@ class Connection(ConnectionBase):
         self._connect()
 
     def close(self) -> None:
-        ''' terminate the connection '''
+        """terminate the connection"""
 
         cache_key = self._cache_key()
         SSH_CONNECTION_CACHE.pop(cache_key, None)
         SFTP_CONNECTION_CACHE.pop(cache_key, None)
 
-        if hasattr(self, 'sftp'):
+        if hasattr(self, "sftp"):
             if self.sftp is not None:
                 self.sftp.close()
 
-        if self.get_option('host_key_checking') and self.get_option('record_host_keys') and self._any_keys_added():
+        if (
+            self.get_option("host_key_checking")
+            and self.get_option("record_host_keys")
+            and self._any_keys_added()
+        ):
 
             # add any new SSH host keys -- warning -- this could be slow
             # (This doesn't acquire the connection lock because it needs
@@ -730,7 +807,7 @@ class Connection(ConnectionBase):
             dirname = os.path.dirname(self.keyfile)
             makedirs_safe(dirname)
 
-            KEY_LOCK = open(lockfile, 'w')
+            KEY_LOCK = open(lockfile, "w")
             fcntl.lockf(KEY_LOCK, fcntl.LOCK_EX)
 
             try:

@@ -1,4 +1,5 @@
 """Code coverage support for integration tests."""
+
 from __future__ import annotations
 
 import abc
@@ -77,13 +78,15 @@ from ...inventory import (
     create_posix_inventory,
 )
 
-THostConfig = t.TypeVar('THostConfig', bound=HostConfig)
+THostConfig = t.TypeVar("THostConfig", bound=HostConfig)
 
 
 class CoverageHandler(t.Generic[THostConfig], metaclass=abc.ABCMeta):
     """Base class for configuring hosts for integration test code coverage."""
 
-    def __init__(self, args: IntegrationConfig, host_state: HostState, inventory_path: str) -> None:
+    def __init__(
+        self, args: IntegrationConfig, host_state: HostState, inventory_path: str
+    ) -> None:
         self.args = args
         self.host_state = host_state
         self.inventory_path = inventory_path
@@ -92,7 +95,11 @@ class CoverageHandler(t.Generic[THostConfig], metaclass=abc.ABCMeta):
     def get_profiles(self) -> list[HostProfile]:
         """Return a list of profiles relevant for this handler."""
         profile_type = get_generic_type(type(self), HostConfig)
-        profiles = [profile for profile in self.host_state.target_profiles if isinstance(profile.config, profile_type)]
+        profiles = [
+            profile
+            for profile in self.host_state.target_profiles
+            if isinstance(profile.config, profile_type)
+        ]
 
         return profiles
 
@@ -114,29 +121,39 @@ class CoverageHandler(t.Generic[THostConfig], metaclass=abc.ABCMeta):
         """Create inventory, if needed."""
 
     @abc.abstractmethod
-    def get_environment(self, target_name: str, aliases: tuple[str, ...]) -> dict[str, str]:
+    def get_environment(
+        self, target_name: str, aliases: tuple[str, ...]
+    ) -> dict[str, str]:
         """Return a dictionary of environment variables for running tests with code coverage."""
 
     def run_playbook(self, playbook: str, variables: dict[str, str]) -> None:
         """Run the specified playbook using the current inventory."""
         self.create_inventory()
-        run_playbook(self.args, self.inventory_path, playbook, capture=False, variables=variables)
+        run_playbook(
+            self.args, self.inventory_path, playbook, capture=False, variables=variables
+        )
 
 
 class PosixCoverageHandler(CoverageHandler[PosixConfig]):
     """Configure integration test code coverage for POSIX hosts."""
 
-    def __init__(self, args: IntegrationConfig, host_state: HostState, inventory_path: str) -> None:
+    def __init__(
+        self, args: IntegrationConfig, host_state: HostState, inventory_path: str
+    ) -> None:
         super().__init__(args, host_state, inventory_path)
 
         # Common temporary directory used on all POSIX hosts that will be created world writeable.
-        self.common_temp_path = f'/tmp/ansible-test-{generate_name()}'
+        self.common_temp_path = f"/tmp/ansible-test-{generate_name()}"
 
     def get_profiles(self) -> list[HostProfile]:
         """Return a list of profiles relevant for this handler."""
         profiles = super().get_profiles()
-        profiles = [profile for profile in profiles if not isinstance(profile, ControllerProfile) or
-                    profile.python.path != self.host_state.controller_profile.python.path]
+        profiles = [
+            profile
+            for profile in profiles
+            if not isinstance(profile, ControllerProfile)
+            or profile.python.path != self.host_state.controller_profile.python.path
+        ]
 
         return profiles
 
@@ -163,7 +180,9 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
     def setup_controller(self) -> None:
         """Perform setup for code coverage on the controller."""
         coverage_config_path = os.path.join(self.common_temp_path, COVERAGE_CONFIG_NAME)
-        coverage_output_path = os.path.join(self.common_temp_path, ResultType.COVERAGE.name)
+        coverage_output_path = os.path.join(
+            self.common_temp_path, ResultType.COVERAGE.name
+        )
 
         coverage_config = generate_coverage_config(self.args)
 
@@ -181,15 +200,23 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
         if isinstance(self.target_profile, ControllerProfile):
             return
 
-        self.run_playbook('posix_coverage_setup.yml', self.get_playbook_variables())
+        self.run_playbook("posix_coverage_setup.yml", self.get_playbook_variables())
 
     def teardown_controller(self) -> None:
         """Perform teardown for code coverage on the controller."""
-        coverage_temp_path = os.path.join(self.common_temp_path, ResultType.COVERAGE.name)
+        coverage_temp_path = os.path.join(
+            self.common_temp_path, ResultType.COVERAGE.name
+        )
         platform = get_coverage_platform(self.args.controller)
 
         for filename in os.listdir(coverage_temp_path):
-            shutil.copyfile(os.path.join(coverage_temp_path, filename), os.path.join(ResultType.COVERAGE.path, update_coverage_filename(filename, platform)))
+            shutil.copyfile(
+                os.path.join(coverage_temp_path, filename),
+                os.path.join(
+                    ResultType.COVERAGE.path,
+                    update_coverage_filename(filename, platform),
+                ),
+            )
 
         remove_tree(self.common_temp_path)
 
@@ -205,11 +232,17 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
         platform = get_coverage_platform(profile.config)
         con = profile.get_controller_target_connections()[0]
 
-        with tempfile.NamedTemporaryFile(prefix='ansible-test-coverage-', suffix='.tgz') as coverage_tgz:
+        with tempfile.NamedTemporaryFile(
+            prefix="ansible-test-coverage-", suffix=".tgz"
+        ) as coverage_tgz:
             try:
-                con.create_archive(chdir=self.common_temp_path, name=ResultType.COVERAGE.name, dst=coverage_tgz)
+                con.create_archive(
+                    chdir=self.common_temp_path,
+                    name=ResultType.COVERAGE.name,
+                    dst=coverage_tgz,
+                )
             except SubprocessError as ex:
-                display.warning(f'Failed to download coverage results: {ex}')
+                display.warning(f"Failed to download coverage results: {ex}")
             else:
                 coverage_tgz.seek(0)
 
@@ -220,11 +253,19 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
                     base_dir = os.path.join(temp_dir, ResultType.COVERAGE.name)
 
                     for filename in os.listdir(base_dir):
-                        shutil.copyfile(os.path.join(base_dir, filename), os.path.join(ResultType.COVERAGE.path, update_coverage_filename(filename, platform)))
+                        shutil.copyfile(
+                            os.path.join(base_dir, filename),
+                            os.path.join(
+                                ResultType.COVERAGE.path,
+                                update_coverage_filename(filename, platform),
+                            ),
+                        )
 
-        self.run_playbook('posix_coverage_teardown.yml', self.get_playbook_variables())
+        self.run_playbook("posix_coverage_teardown.yml", self.get_playbook_variables())
 
-    def get_environment(self, target_name: str, aliases: tuple[str, ...]) -> dict[str, str]:
+    def get_environment(
+        self, target_name: str, aliases: tuple[str, ...]
+    ) -> dict[str, str]:
         """Return a dictionary of environment variables for running tests with code coverage."""
 
         # Enable code coverage collection on Ansible modules (both local and remote).
@@ -233,11 +274,15 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
 
         # Include the command, target and platform marker so the remote host can create a filename with that info.
         # The generated AnsiballZ wrapper is responsible for adding '=python-{X.Y}=coverage.{hostname}.{pid}.{id}'
-        coverage_file = os.path.join(self.common_temp_path, ResultType.COVERAGE.name, '='.join((self.args.command, target_name, 'platform')))
+        coverage_file = os.path.join(
+            self.common_temp_path,
+            ResultType.COVERAGE.name,
+            "=".join((self.args.command, target_name, "platform")),
+        )
 
         if self.args.coverage_check:
             # cause the 'coverage' module to be found, but not imported or enabled
-            coverage_file = ''
+            coverage_file = ""
 
         variables = dict(
             _ANSIBLE_COVERAGE_CONFIG=config_file,
@@ -248,29 +293,37 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
 
     def create_inventory(self) -> None:
         """Create inventory."""
-        create_posix_inventory(self.args, self.inventory_path, self.host_state.target_profiles)
+        create_posix_inventory(
+            self.args, self.inventory_path, self.host_state.target_profiles
+        )
 
     def get_playbook_variables(self) -> dict[str, str]:
         """Return a dictionary of variables for setup and teardown of POSIX coverage."""
         return dict(
             common_temp_dir=self.common_temp_path,
             coverage_config=generate_coverage_config(self.args),
-            coverage_config_path=os.path.join(self.common_temp_path, COVERAGE_CONFIG_NAME),
-            coverage_output_path=os.path.join(self.common_temp_path, ResultType.COVERAGE.name),
-            mode_directory=f'{MODE_DIRECTORY:04o}',
-            mode_directory_write=f'{MODE_DIRECTORY_WRITE:04o}',
-            mode_file=f'{MODE_FILE:04o}',
+            coverage_config_path=os.path.join(
+                self.common_temp_path, COVERAGE_CONFIG_NAME
+            ),
+            coverage_output_path=os.path.join(
+                self.common_temp_path, ResultType.COVERAGE.name
+            ),
+            mode_directory=f"{MODE_DIRECTORY:04o}",
+            mode_directory_write=f"{MODE_DIRECTORY_WRITE:04o}",
+            mode_file=f"{MODE_FILE:04o}",
         )
 
 
 class WindowsCoverageHandler(CoverageHandler[WindowsConfig]):
     """Configure integration test code coverage for Windows hosts."""
 
-    def __init__(self, args: IntegrationConfig, host_state: HostState, inventory_path: str) -> None:
+    def __init__(
+        self, args: IntegrationConfig, host_state: HostState, inventory_path: str
+    ) -> None:
         super().__init__(args, host_state, inventory_path)
 
         # Common temporary directory used on all Windows hosts that will be created writable by everyone.
-        self.remote_temp_path = f'C:\\ansible_test_coverage_{generate_name()}'
+        self.remote_temp_path = f"C:\\ansible_test_coverage_{generate_name()}"
 
     @property
     def is_active(self) -> bool:
@@ -279,7 +332,7 @@ class WindowsCoverageHandler(CoverageHandler[WindowsConfig]):
 
     def setup(self) -> None:
         """Perform setup for code coverage."""
-        self.run_playbook('windows_coverage_setup.yml', self.get_playbook_variables())
+        self.run_playbook("windows_coverage_setup.yml", self.get_playbook_variables())
 
     def teardown(self) -> None:
         """Perform teardown for code coverage."""
@@ -289,44 +342,66 @@ class WindowsCoverageHandler(CoverageHandler[WindowsConfig]):
                 local_temp_path=local_temp_path,
             )
 
-            self.run_playbook('windows_coverage_teardown.yml', variables)
+            self.run_playbook("windows_coverage_teardown.yml", variables)
 
             for filename in os.listdir(local_temp_path):
-                if all(isinstance(profile.config, WindowsRemoteConfig) for profile in self.profiles):
-                    prefix = 'remote'
-                elif all(isinstance(profile.config, WindowsInventoryConfig) for profile in self.profiles):
-                    prefix = 'inventory'
+                if all(
+                    isinstance(profile.config, WindowsRemoteConfig)
+                    for profile in self.profiles
+                ):
+                    prefix = "remote"
+                elif all(
+                    isinstance(profile.config, WindowsInventoryConfig)
+                    for profile in self.profiles
+                ):
+                    prefix = "inventory"
                 else:
                     raise NotImplementedError()
 
-                platform = f'{prefix}-{sanitize_host_name(os.path.splitext(filename)[0])}'
+                platform = (
+                    f"{prefix}-{sanitize_host_name(os.path.splitext(filename)[0])}"
+                )
 
-                with zipfile.ZipFile(os.path.join(local_temp_path, filename)) as coverage_zip:
+                with zipfile.ZipFile(
+                    os.path.join(local_temp_path, filename)
+                ) as coverage_zip:
                     for item in coverage_zip.infolist():
                         if item.is_dir():
-                            raise Exception(f'Unexpected directory in zip file: {item.filename}')
+                            raise Exception(
+                                f"Unexpected directory in zip file: {item.filename}"
+                            )
 
-                        item.filename = update_coverage_filename(item.filename, platform)
+                        item.filename = update_coverage_filename(
+                            item.filename, platform
+                        )
 
                         coverage_zip.extract(item, ResultType.COVERAGE.path)
 
-    def get_environment(self, target_name: str, aliases: tuple[str, ...]) -> dict[str, str]:
+    def get_environment(
+        self, target_name: str, aliases: tuple[str, ...]
+    ) -> dict[str, str]:
         """Return a dictionary of environment variables for running tests with code coverage."""
 
         # Include the command, target and platform marker so the remote host can create a filename with that info.
         # The remote is responsible for adding '={language-version}=coverage.{hostname}.{pid}.{id}'
-        coverage_name = '='.join((self.args.command, target_name, 'platform'))
+        coverage_name = "=".join((self.args.command, target_name, "platform"))
 
         variables = dict(
-            _ANSIBLE_COVERAGE_REMOTE_OUTPUT=os.path.join(self.remote_temp_path, coverage_name),
-            _ANSIBLE_COVERAGE_REMOTE_PATH_FILTER=os.path.join(data_context().content.root, '*'),
+            _ANSIBLE_COVERAGE_REMOTE_OUTPUT=os.path.join(
+                self.remote_temp_path, coverage_name
+            ),
+            _ANSIBLE_COVERAGE_REMOTE_PATH_FILTER=os.path.join(
+                data_context().content.root, "*"
+            ),
         )
 
         return variables
 
     def create_inventory(self) -> None:
         """Create inventory."""
-        create_windows_inventory(self.args, self.inventory_path, self.host_state.target_profiles)
+        create_windows_inventory(
+            self.args, self.inventory_path, self.host_state.target_profiles
+        )
 
     def get_playbook_variables(self) -> dict[str, str]:
         """Return a dictionary of variables for setup and teardown of Windows coverage."""
@@ -338,18 +413,28 @@ class WindowsCoverageHandler(CoverageHandler[WindowsConfig]):
 class CoverageManager:
     """Manager for code coverage configuration and state."""
 
-    def __init__(self, args: IntegrationConfig, host_state: HostState, inventory_path: str) -> None:
+    def __init__(
+        self, args: IntegrationConfig, host_state: HostState, inventory_path: str
+    ) -> None:
         self.args = args
         self.host_state = host_state
         self.inventory_path = inventory_path
 
         if self.args.coverage:
-            handler_types = set(get_handler_type(type(profile.config)) for profile in host_state.profiles)
+            handler_types = set(
+                get_handler_type(type(profile.config))
+                for profile in host_state.profiles
+            )
             handler_types.discard(None)
         else:
             handler_types = set()
 
-        handlers = [handler_type(args=args, host_state=host_state, inventory_path=inventory_path) for handler_type in handler_types]
+        handlers = [
+            handler_type(
+                args=args, host_state=host_state, inventory_path=inventory_path
+            )
+            for handler_type in handler_types
+        ]
 
         self.handlers = [handler for handler in handlers if handler.is_active]
 
@@ -369,9 +454,11 @@ class CoverageManager:
         for handler in self.handlers:
             handler.teardown()
 
-    def get_environment(self, target_name: str, aliases: tuple[str, ...]) -> dict[str, str]:
+    def get_environment(
+        self, target_name: str, aliases: tuple[str, ...]
+    ) -> dict[str, str]:
         """Return a dictionary of environment variables for running tests with code coverage."""
-        if not self.args.coverage or 'non_local/' in aliases:
+        if not self.args.coverage or "non_local/" in aliases:
             return {}
 
         env = {}
@@ -388,7 +475,9 @@ def get_config_handler_type_map() -> dict[t.Type[HostConfig], t.Type[CoverageHan
     return get_type_map(CoverageHandler, HostConfig)
 
 
-def get_handler_type(config_type: t.Type[HostConfig]) -> t.Optional[t.Type[CoverageHandler]]:
+def get_handler_type(
+    config_type: t.Type[HostConfig],
+) -> t.Optional[t.Type[CoverageHandler]]:
     """Return the coverage handler type associated with the given host config type if found, otherwise return None."""
     queue = [config_type]
     type_map = get_config_handler_type_map()
@@ -407,15 +496,22 @@ def get_handler_type(config_type: t.Type[HostConfig]) -> t.Optional[t.Type[Cover
 
 def update_coverage_filename(original_filename: str, platform: str) -> str:
     """Validate the given filename and insert the specified platform, then return the result."""
-    parts = original_filename.split('=')
+    parts = original_filename.split("=")
 
-    if original_filename != os.path.basename(original_filename) or len(parts) != 5 or parts[2] != 'platform':
-        raise Exception(f'Unexpected coverage filename: {original_filename}')
+    if (
+        original_filename != os.path.basename(original_filename)
+        or len(parts) != 5
+        or parts[2] != "platform"
+    ):
+        raise Exception(f"Unexpected coverage filename: {original_filename}")
 
     parts[2] = platform
 
-    updated_filename = '='.join(parts)
+    updated_filename = "=".join(parts)
 
-    display.info(f'Coverage file for platform "{platform}": {original_filename} -> {updated_filename}', verbosity=3)
+    display.info(
+        f'Coverage file for platform "{platform}": {original_filename} -> {updated_filename}',
+        verbosity=3,
+    )
 
     return updated_filename

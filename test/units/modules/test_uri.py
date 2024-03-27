@@ -6,7 +6,12 @@
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
-from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
+from units.modules.utils import (
+    AnsibleExitJson,
+    AnsibleFailJson,
+    ModuleTestCase,
+    set_module_args,
+)
 from ansible.modules import uri
 
 

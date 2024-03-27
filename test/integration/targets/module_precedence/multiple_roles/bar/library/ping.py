@@ -21,12 +21,14 @@
 
 from __future__ import annotations
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
+ANSIBLE_METADATA = {
+    "metadata_version": "1.1",
+    "status": ["stableinterface"],
+    "supported_by": "core",
+}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: ping
 version_added: historical
@@ -40,12 +42,12 @@ options: {}
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 # Test we can logon to 'webservers' and execute python with json lib.
 ansible webservers -m ping
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -55,16 +57,16 @@ def main():
         argument_spec=dict(
             data=dict(required=False, default=None),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
-    result = dict(ping='pong')
-    if module.params['data']:
-        if module.params['data'] == 'crash':
+    result = dict(ping="pong")
+    if module.params["data"]:
+        if module.params["data"] == "crash":
             raise Exception("boom")
-        result['ping'] = module.params['data']
-    result['location'] = 'role: bar'
+        result["ping"] = module.params["data"]
+    result["location"] = "role: bar"
     module.exit_json(**result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

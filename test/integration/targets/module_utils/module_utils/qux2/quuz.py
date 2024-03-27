@@ -1,1 +1,1 @@
-data = 'qux2:quuz'
+data = "qux2:quuz"

@@ -1,4 +1,5 @@
 """Functions for disk IO."""
+
 from __future__ import annotations
 
 import io
@@ -42,12 +43,16 @@ def write_json_file(
     encoder: t.Optional[t.Type[json.JSONEncoder]] = None,
 ) -> str:
     """Write the given json content to the specified path, optionally creating missing directories."""
-    text_content = json.dumps(content,
-                              sort_keys=formatted,
-                              indent=4 if formatted else None,
-                              separators=(', ', ': ') if formatted else (',', ':'),
-                              cls=encoder,
-                              ) + '\n'
+    text_content = (
+        json.dumps(
+            content,
+            sort_keys=formatted,
+            indent=4 if formatted else None,
+            separators=(", ", ": ") if formatted else (",", ":"),
+            cls=encoder,
+        )
+        + "\n"
+    )
 
     write_text_file(path, text_content, create_directories=create_directories)
 
@@ -59,21 +64,23 @@ def write_text_file(path: str, content: str, create_directories: bool = False) -
     if create_directories:
         make_dirs(os.path.dirname(path))
 
-    with open_binary_file(path, 'wb') as file_obj:
+    with open_binary_file(path, "wb") as file_obj:
         file_obj.write(to_bytes(content))
 
 
-def open_text_file(path: str, mode: str = 'r') -> t.IO[str]:
+def open_text_file(path: str, mode: str = "r") -> t.IO[str]:
     """Open the given path for text access."""
-    if 'b' in mode:
+    if "b" in mode:
         raise Exception('mode cannot include "b" for text files: %s' % mode)
 
-    return io.open(to_bytes(path), mode, encoding=ENCODING)  # pylint: disable=consider-using-with
+    return io.open(
+        to_bytes(path), mode, encoding=ENCODING
+    )  # pylint: disable=consider-using-with
 
 
-def open_binary_file(path: str, mode: str = 'rb') -> t.IO[bytes]:
+def open_binary_file(path: str, mode: str = "rb") -> t.IO[bytes]:
     """Open the given path for binary access."""
-    if 'b' not in mode:
+    if "b" not in mode:
         raise Exception('mode must include "b" for binary files: %s' % mode)
 
     return io.open(to_bytes(path), mode)  # pylint: disable=consider-using-with

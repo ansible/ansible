@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: constructed
     version_added: "2.4"
     short_description: Uses Jinja2 to construct vars and groups based on existing inventory.
@@ -33,9 +33,9 @@ DOCUMENTATION = '''
             version_added: '2.11'
     extends_documentation_fragment:
       - constructed
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
     # inventory.config file in YAML format
     plugin: ansible.builtin.constructed
     strict: False
@@ -77,7 +77,7 @@ EXAMPLES = r'''
         # this creates a common parent group for all ec2 availability zones
         - key: placement.availability_zone
           parent_group: all_ec2_zones
-'''
+"""
 
 import os
 
@@ -92,9 +92,9 @@ from ansible.vars.plugins import get_vars_from_inventory_sources
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable):
-    """ constructs groups and vars using Jinja2 template expressions """
+    """constructs groups and vars using Jinja2 template expressions"""
 
-    NAME = 'constructed'
+    NAME = "constructed"
 
     def __init__(self):
 
@@ -108,35 +108,45 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         if super(InventoryModule, self).verify_file(path):
             file_name, ext = os.path.splitext(path)
 
-            if not ext or ext in ['.config'] + C.YAML_FILENAME_EXTENSIONS:
+            if not ext or ext in [".config"] + C.YAML_FILENAME_EXTENSIONS:
                 valid = True
 
         return valid
 
     def get_all_host_vars(self, host, loader, sources):
-        ''' requires host object '''
-        return combine_vars(self.host_groupvars(host, loader, sources), self.host_vars(host, loader, sources))
+        """requires host object"""
+        return combine_vars(
+            self.host_groupvars(host, loader, sources),
+            self.host_vars(host, loader, sources),
+        )
 
     def host_groupvars(self, host, loader, sources):
-        ''' requires host object '''
+        """requires host object"""
         gvars = get_group_vars(host.get_groups())
 
-        if self.get_option('use_vars_plugins'):
-            gvars = combine_vars(gvars, get_vars_from_inventory_sources(loader, sources, host.get_groups(), 'all'))
+        if self.get_option("use_vars_plugins"):
+            gvars = combine_vars(
+                gvars,
+                get_vars_from_inventory_sources(
+                    loader, sources, host.get_groups(), "all"
+                ),
+            )
 
         return gvars
 
     def host_vars(self, host, loader, sources):
-        ''' requires host object '''
+        """requires host object"""
         hvars = host.get_vars()
 
-        if self.get_option('use_vars_plugins'):
-            hvars = combine_vars(hvars, get_vars_from_inventory_sources(loader, sources, [host], 'all'))
+        if self.get_option("use_vars_plugins"):
+            hvars = combine_vars(
+                hvars, get_vars_from_inventory_sources(loader, sources, [host], "all")
+            )
 
         return hvars
 
     def parse(self, inventory, loader, path, cache=False):
-        ''' parses the inventory file '''
+        """parses the inventory file"""
 
         super(InventoryModule, self).parse(inventory, loader, path, cache=cache)
 
@@ -146,33 +156,55 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         try:
             sources = inventory.processed_sources
         except AttributeError:
-            if self.get_option('use_vars_plugins'):
-                raise AnsibleOptionsError("The option use_vars_plugins requires ansible >= 2.11.")
+            if self.get_option("use_vars_plugins"):
+                raise AnsibleOptionsError(
+                    "The option use_vars_plugins requires ansible >= 2.11."
+                )
 
-        strict = self.get_option('strict')
+        strict = self.get_option("strict")
         fact_cache = FactCache()
         try:
             # Go over hosts (less var copies)
             for host in inventory.hosts:
 
                 # get available variables to templar
-                hostvars = self.get_all_host_vars(inventory.hosts[host], loader, sources)
+                hostvars = self.get_all_host_vars(
+                    inventory.hosts[host], loader, sources
+                )
                 if host in fact_cache:  # adds facts if cache is active
                     hostvars = combine_vars(hostvars, fact_cache[host])
 
                 # create composite vars
-                self._set_composite_vars(self.get_option('compose'), hostvars, host, strict=strict)
+                self._set_composite_vars(
+                    self.get_option("compose"), hostvars, host, strict=strict
+                )
 
                 # refetch host vars in case new ones have been created above
-                hostvars = self.get_all_host_vars(inventory.hosts[host], loader, sources)
+                hostvars = self.get_all_host_vars(
+                    inventory.hosts[host], loader, sources
+                )
                 if host in self._cache:  # adds facts if cache is active
                     hostvars = combine_vars(hostvars, self._cache[host])
 
                 # constructed groups based on conditionals
-                self._add_host_to_composed_groups(self.get_option('groups'), hostvars, host, strict=strict, fetch_hostvars=False)
+                self._add_host_to_composed_groups(
+                    self.get_option("groups"),
+                    hostvars,
+                    host,
+                    strict=strict,
+                    fetch_hostvars=False,
+                )
 
                 # constructed groups based variable values
-                self._add_host_to_keyed_groups(self.get_option('keyed_groups'), hostvars, host, strict=strict, fetch_hostvars=False)
+                self._add_host_to_keyed_groups(
+                    self.get_option("keyed_groups"),
+                    hostvars,
+                    host,
+                    strict=strict,
+                    fetch_hostvars=False,
+                )
 
         except Exception as e:
-            raise AnsibleParserError("failed to parse %s: %s " % (to_native(path), to_native(e)), orig_exc=e)
+            raise AnsibleParserError(
+                "failed to parse %s: %s " % (to_native(path), to_native(e)), orig_exc=e
+            )

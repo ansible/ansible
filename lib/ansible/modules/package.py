@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: package
 version_added: 2.0
@@ -65,8 +65,8 @@ attributes:
 notes:
     - While M(ansible.builtin.package) abstracts package managers to ease dealing with multiple distributions, package name often differs for the same software.
 
-'''
-EXAMPLES = '''
+"""
+EXAMPLES = """
 - name: Install ntpdate
   ansible.builtin.package:
     name: ntpdate
@@ -84,4 +84,4 @@ EXAMPLES = '''
       - httpd
       - mariadb-server
     state: latest
-'''
+"""

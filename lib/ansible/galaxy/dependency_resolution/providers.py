@@ -31,30 +31,33 @@ try:
     from resolvelib import AbstractProvider
     from resolvelib import __version__ as resolvelib_version
 except ImportError:
+
     class AbstractProvider:  # type: ignore[no-redef]
         pass
 
-    resolvelib_version = '0.0.0'
+    resolvelib_version = "0.0.0"
 
 
 # TODO: add python requirements to ansible-test's ansible-core distribution info and remove the hardcoded lowerbound/upperbound fallback
 RESOLVELIB_LOWERBOUND = SemanticVersion("0.5.3")
 RESOLVELIB_UPPERBOUND = SemanticVersion("1.1.0")
-RESOLVELIB_VERSION = SemanticVersion.from_loose_version(LooseVersion(resolvelib_version))
+RESOLVELIB_VERSION = SemanticVersion.from_loose_version(
+    LooseVersion(resolvelib_version)
+)
 
 
 class CollectionDependencyProviderBase(AbstractProvider):
     """Delegate providing a requirement interface for the resolver."""
 
     def __init__(
-            self,  # type: CollectionDependencyProviderBase
-            apis,  # type: MultiGalaxyAPIProxy
-            concrete_artifacts_manager=None,  # type: ConcreteArtifactsManager
-            preferred_candidates=None,  # type: t.Iterable[Candidate]
-            with_deps=True,  # type: bool
-            with_pre_releases=False,  # type: bool
-            upgrade=False,  # type: bool
-            include_signatures=True,  # type: bool
+        self,  # type: CollectionDependencyProviderBase
+        apis,  # type: MultiGalaxyAPIProxy
+        concrete_artifacts_manager=None,  # type: ConcreteArtifactsManager
+        preferred_candidates=None,  # type: t.Iterable[Candidate]
+        with_deps=True,  # type: bool
+        with_pre_releases=False,  # type: bool
+        upgrade=False,  # type: bool
+        include_signatures=True,  # type: bool
     ):  # type: (...) -> None
         r"""Initialize helper attributes.
 
@@ -183,13 +186,10 @@ class CollectionDependencyProviderBase(AbstractProvider):
 
     def _get_preference(self, candidates):
         # type: (list[Candidate]) -> t.Union[float, int]
-        if any(
-                candidate in self._preferred_candidates
-                for candidate in candidates
-        ):
+        if any(candidate in self._preferred_candidates for candidate in candidates):
             # NOTE: Prefer pre-installed candidates over newer versions
             # NOTE: available from Galaxy or other sources.
-            return float('-inf')
+            return float("-inf")
         return len(candidates)
 
     def find_matches(self, *args, **kwargs):
@@ -243,14 +243,22 @@ class CollectionDependencyProviderBase(AbstractProvider):
         # If we're upgrading collections, we can't calculate preinstalled_candidates until the latest matches are found.
         # Otherwise, we can potentially avoid a Galaxy API call by doing this first.
         preinstalled_candidates = set()
-        if not self._upgrade and first_req.type == 'galaxy':
+        if not self._upgrade and first_req.type == "galaxy":
             preinstalled_candidates = {
-                candidate for candidate in self._preferred_candidates
-                if candidate.fqcn == fqcn and
-                all(self.is_satisfied_by(requirement, candidate) for requirement in requirements)
+                candidate
+                for candidate in self._preferred_candidates
+                if candidate.fqcn == fqcn
+                and all(
+                    self.is_satisfied_by(requirement, candidate)
+                    for requirement in requirements
+                )
             }
         try:
-            coll_versions = [] if preinstalled_candidates else self._api_proxy.get_collection_versions(first_req)  # type: t.Iterable[t.Tuple[str, GalaxyAPI]]
+            coll_versions = (
+                []
+                if preinstalled_candidates
+                else self._api_proxy.get_collection_versions(first_req)
+            )  # type: t.Iterable[t.Tuple[str, GalaxyAPI]]
         except TypeError as exc:
             if first_req.is_concrete_artifact:
                 # Non hashable versions will cause a TypeError
@@ -280,7 +288,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
                 # NOTE: after the conversion to string.
                 if not isinstance(version, string_types):
                     raise ValueError(version_err)
-                elif version != '*':
+                elif version != "*":
                     try:
                         SemanticVersion(version)
                     except ValueError as ex:
@@ -303,24 +311,29 @@ class CollectionDependencyProviderBase(AbstractProvider):
         # NOTE: The optimization of conditionally looping over the requirements
         # NOTE: is used to skip having to compute the pinned status of all
         # NOTE: requirements and apply version normalization to the found ones.
-        all_pinned_requirement_version_numbers = {
-            # NOTE: Pinned versions can start with a number, but also with an
-            # NOTE: equals sign. Stripping it at the beginning should be
-            # NOTE: enough. If there's a space after equals, the second strip
-            # NOTE: will take care of it.
-            # NOTE: Without this conversion, requirements versions like
-            # NOTE: '1.2.3-alpha.4' work, but '=1.2.3-alpha.4' don't.
-            requirement.ver.lstrip('=').strip()
-            for requirement in requirements
-            if requirement.is_pinned
-        } if discarding_pre_releases_acceptable else set()
+        all_pinned_requirement_version_numbers = (
+            {
+                # NOTE: Pinned versions can start with a number, but also with an
+                # NOTE: equals sign. Stripping it at the beginning should be
+                # NOTE: enough. If there's a space after equals, the second strip
+                # NOTE: will take care of it.
+                # NOTE: Without this conversion, requirements versions like
+                # NOTE: '1.2.3-alpha.4' work, but '=1.2.3-alpha.4' don't.
+                requirement.ver.lstrip("=").strip()
+                for requirement in requirements
+                if requirement.is_pinned
+            }
+            if discarding_pre_releases_acceptable
+            else set()
+        )
 
         for version, src_server in coll_versions:
-            tmp_candidate = Candidate(fqcn, version, src_server, 'galaxy', None)
+            tmp_candidate = Candidate(fqcn, version, src_server, "galaxy", None)
 
             for requirement in requirements:
                 candidate_satisfies_requirement = self.is_satisfied_by(
-                    requirement, tmp_candidate,
+                    requirement,
+                    tmp_candidate,
                 )
                 if not candidate_satisfies_requirement:
                     break
@@ -371,27 +384,39 @@ class CollectionDependencyProviderBase(AbstractProvider):
                     for extra_source in extra_signature_sources:
                         signatures.append(get_signature_from_source(extra_source))
                 latest_matches.append(
-                    Candidate(fqcn, version, src_server, 'galaxy', frozenset(signatures))
+                    Candidate(
+                        fqcn, version, src_server, "galaxy", frozenset(signatures)
+                    )
                 )
 
         latest_matches.sort(
             key=lambda candidate: (
-                SemanticVersion(candidate.ver), candidate.src,
+                SemanticVersion(candidate.ver),
+                candidate.src,
             ),
             reverse=True,  # prefer newer versions over older ones
         )
 
         if not preinstalled_candidates:
             preinstalled_candidates = {
-                candidate for candidate in self._preferred_candidates
-                if candidate.fqcn == fqcn and
-                (
+                candidate
+                for candidate in self._preferred_candidates
+                if candidate.fqcn == fqcn
+                and (
                     # check if an upgrade is necessary
-                    all(self.is_satisfied_by(requirement, candidate) for requirement in requirements) and
-                    (
-                        not self._upgrade or
+                    all(
+                        self.is_satisfied_by(requirement, candidate)
+                        for requirement in requirements
+                    )
+                    and (
+                        not self._upgrade
+                        or
                         # check if an upgrade is preferred
-                        all(SemanticVersion(latest.ver) <= SemanticVersion(candidate.ver) for latest in latest_matches)
+                        all(
+                            SemanticVersion(latest.ver)
+                            <= SemanticVersion(candidate.ver)
+                            for latest in latest_matches
+                        )
                     )
                 )
             }
@@ -413,11 +438,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
         """
         # NOTE: This is a set of Pipenv-inspired optimizations. Ref:
         # https://github.com/sarugaku/passa/blob/2ac00f1/src/passa/models/providers.py#L58-L74
-        if (
-                requirement.is_virtual or
-                candidate.is_virtual or
-                requirement.ver == '*'
-        ):
+        if requirement.is_virtual or candidate.is_virtual or requirement.ver == "*":
             return True
 
         return meets_requirements(
@@ -454,7 +475,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
             return []
 
         return [
-            self._make_req_from_dict({'name': dep_name, 'version': dep_req})
+            self._make_req_from_dict({"name": dep_name, "version": dep_req})
             for dep_name, dep_req in req_map.items()
         ]
 
@@ -474,8 +495,11 @@ class CollectionDependencyProvider060(CollectionDependencyProviderBase):
     def find_matches(self, identifier, requirements, incompatibilities):  # type: ignore[override]
         # type: (str, t.Mapping[str, t.Iterator[Requirement]], t.Mapping[str, t.Iterator[Requirement]]) -> list[Candidate]
         return [
-            match for match in self._find_matches(list(requirements[identifier]))
-            if not any(match.ver == incompat.ver for incompat in incompatibilities[identifier])
+            match
+            for match in self._find_matches(list(requirements[identifier]))
+            if not any(
+                match.ver == incompat.ver for incompat in incompatibilities[identifier]
+            )
         ]
 
     def get_preference(self, resolution, candidates, information):  # type: ignore[override]

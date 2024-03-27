@@ -12,26 +12,26 @@ from ansible.module_utils.common.text.formatters import lenient_lowercase
 
 
 INPUT_LIST = [
-    u'HELLO',
-    u'Ёлка',
-    u'cafÉ',
-    u'くらとみ',
-    b'HELLO',
+    "HELLO",
+    "Ёлка",
+    "cafÉ",
+    "くらとみ",
+    b"HELLO",
     1,
-    {1: 'Dict'},
+    {1: "Dict"},
     True,
     [1],
     3.14159,
 ]
 
 EXPECTED_LIST = [
-    u'hello',
-    u'ёлка',
-    u'café',
-    u'くらとみ',
-    b'hello',
+    "hello",
+    "ёлка",
+    "café",
+    "くらとみ",
+    b"hello",
     1,
-    {1: 'Dict'},
+    {1: "Dict"},
     True,
     [1],
     3.14159,
@@ -41,7 +41,7 @@ result_list = lenient_lowercase(INPUT_LIST)
 
 
 @pytest.mark.parametrize(
-    'input_value,expected_outcome',
+    "input_value,expected_outcome",
     [
         (result_list[0], EXPECTED_LIST[0]),
         (result_list[1], EXPECTED_LIST[1]),
@@ -53,15 +53,24 @@ result_list = lenient_lowercase(INPUT_LIST)
         (result_list[7], EXPECTED_LIST[7]),
         (result_list[8], EXPECTED_LIST[8]),
         (result_list[9], EXPECTED_LIST[9]),
-    ]
+    ],
 )
 def test_lenient_lowercase(input_value, expected_outcome):
     """Test that lenient_lowercase() proper results."""
     assert input_value == expected_outcome
 
 
-@pytest.mark.parametrize('input_data', [1, False, 1.001, 1j, datetime.now(), ])
+@pytest.mark.parametrize(
+    "input_data",
+    [
+        1,
+        False,
+        1.001,
+        1j,
+        datetime.now(),
+    ],
+)
 def test_lenient_lowercase_illegal_data_type(input_data):
     """Test passing objects of illegal types to lenient_lowercase()."""
-    with pytest.raises(TypeError, match='object is not iterable'):
+    with pytest.raises(TypeError, match="object is not iterable"):
         lenient_lowercase(input_data)

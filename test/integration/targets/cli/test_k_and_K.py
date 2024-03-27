@@ -8,18 +8,18 @@ import sys
 
 import pexpect
 
-os.environ['ANSIBLE_NOCOLOR'] = '1'
+os.environ["ANSIBLE_NOCOLOR"] = "1"
 
 out = pexpect.run(
-    'ansible -c ssh -i localhost, -u cliuser1 -e ansible_python_interpreter={0} '
-    '-m command -a whoami -Kkb --become-user cliuser2 localhost'.format(sys.argv[1]),
+    "ansible -c ssh -i localhost, -u cliuser1 -e ansible_python_interpreter={0} "
+    "-m command -a whoami -Kkb --become-user cliuser2 localhost".format(sys.argv[1]),
     events={
-        'SSH password:': 'secretpassword\n',
-        'BECOME password': 'secretpassword\n',
+        "SSH password:": "secretpassword\n",
+        "BECOME password": "secretpassword\n",
     },
-    timeout=10
+    timeout=10,
 )
 
 print(out)
 
-assert b'cliuser2' in out
+assert b"cliuser2" in out

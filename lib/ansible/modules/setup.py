@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: setup
 version_added: historical
@@ -110,7 +110,7 @@ notes:
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"
-'''
+"""
 
 EXAMPLES = r"""
 # Display facts from all hosts and store them indexed by `hostname` at `/tmp/facts`.
@@ -175,48 +175,77 @@ from ..module_utils.basic import AnsibleModule
 
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.facts import ansible_collector, default_collectors
-from ansible.module_utils.facts.collector import CollectorNotFoundError, CycleFoundInFactDeps, UnresolvedFactDep
+from ansible.module_utils.facts.collector import (
+    CollectorNotFoundError,
+    CycleFoundInFactDeps,
+    UnresolvedFactDep,
+)
 from ansible.module_utils.facts.namespace import PrefixFactNamespace
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            gather_subset=dict(default=["all"], required=False, type='list', elements='str'),
-            gather_timeout=dict(default=10, required=False, type='int'),
-            filter=dict(default=[], required=False, type='list', elements='str'),
-            fact_path=dict(default='/etc/ansible/facts.d', required=False, type='path'),
+            gather_subset=dict(
+                default=["all"], required=False, type="list", elements="str"
+            ),
+            gather_timeout=dict(default=10, required=False, type="int"),
+            filter=dict(default=[], required=False, type="list", elements="str"),
+            fact_path=dict(default="/etc/ansible/facts.d", required=False, type="path"),
         ),
         supports_check_mode=True,
     )
 
-    gather_subset = module.params['gather_subset']
-    gather_timeout = module.params['gather_timeout']
-    filter_spec = module.params['filter']
+    gather_subset = module.params["gather_subset"]
+    gather_timeout = module.params["gather_timeout"]
+    filter_spec = module.params["filter"]
 
     # TODO: this mimics existing behavior where gather_subset=["!all"] actually means
     #       to collect nothing except for the below list
     # TODO: decide what '!all' means, I lean towards making it mean none, but likely needs
     #       some tweaking on how gather_subset operations are performed
-    minimal_gather_subset = frozenset(['apparmor', 'caps', 'cmdline', 'date_time',
-                                       'distribution', 'dns', 'env', 'fips', 'local',
-                                       'lsb', 'pkg_mgr', 'platform', 'python', 'selinux',
-                                       'service_mgr', 'ssh_pub_keys', 'user'])
+    minimal_gather_subset = frozenset(
+        [
+            "apparmor",
+            "caps",
+            "cmdline",
+            "date_time",
+            "distribution",
+            "dns",
+            "env",
+            "fips",
+            "local",
+            "lsb",
+            "pkg_mgr",
+            "platform",
+            "python",
+            "selinux",
+            "service_mgr",
+            "ssh_pub_keys",
+            "user",
+        ]
+    )
 
     all_collector_classes = default_collectors.collectors
 
     # rename namespace_name to root_key?
-    namespace = PrefixFactNamespace(namespace_name='ansible',
-                                    prefix='ansible_')
+    namespace = PrefixFactNamespace(namespace_name="ansible", prefix="ansible_")
 
     try:
-        fact_collector = ansible_collector.get_ansible_collector(all_collector_classes=all_collector_classes,
-                                                                 namespace=namespace,
-                                                                 filter_spec=filter_spec,
-                                                                 gather_subset=gather_subset,
-                                                                 gather_timeout=gather_timeout,
-                                                                 minimal_gather_subset=minimal_gather_subset)
-    except (TypeError, CollectorNotFoundError, CycleFoundInFactDeps, UnresolvedFactDep) as e:
+        fact_collector = ansible_collector.get_ansible_collector(
+            all_collector_classes=all_collector_classes,
+            namespace=namespace,
+            filter_spec=filter_spec,
+            gather_subset=gather_subset,
+            gather_timeout=gather_timeout,
+            minimal_gather_subset=minimal_gather_subset,
+        )
+    except (
+        TypeError,
+        CollectorNotFoundError,
+        CycleFoundInFactDeps,
+        UnresolvedFactDep,
+    ) as e:
         # bad subset given, collector, idk, deps declared but not found
         module.fail_json(msg=to_text(e))
 
@@ -225,5 +254,5 @@ def main():
     module.exit_json(ansible_facts=facts_dict)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

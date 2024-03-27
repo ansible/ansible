@@ -28,35 +28,63 @@ class TestINILookup(unittest.TestCase):
     old_style_params_data = (
         # Simple case
         dict(
-            term=u'keyA section=sectionA file=/path/to/file',
-            expected=[u'file=/path/to/file', u'keyA', u'section=sectionA'],
+            term="keyA section=sectionA file=/path/to/file",
+            expected=["file=/path/to/file", "keyA", "section=sectionA"],
         ),
         dict(
-            term=u'keyB section=sectionB with space file=/path/with/embedded spaces and/file',
-            expected=[u'file=/path/with/embedded spaces and/file', u'keyB', u'section=sectionB with space'],
+            term="keyB section=sectionB with space file=/path/with/embedded spaces and/file",
+            expected=[
+                "file=/path/with/embedded spaces and/file",
+                "keyB",
+                "section=sectionB with space",
+            ],
         ),
         dict(
-            term=u'keyC section=sectionC file=/path/with/equals/cn=com.ansible',
-            expected=[u'file=/path/with/equals/cn=com.ansible', u'keyC', u'section=sectionC'],
+            term="keyC section=sectionC file=/path/with/equals/cn=com.ansible",
+            expected=[
+                "file=/path/with/equals/cn=com.ansible",
+                "keyC",
+                "section=sectionC",
+            ],
         ),
         dict(
-            term=u'keyD section=sectionD file=/path/with space and/equals/cn=com.ansible',
-            expected=[u'file=/path/with space and/equals/cn=com.ansible', u'keyD', u'section=sectionD'],
+            term="keyD section=sectionD file=/path/with space and/equals/cn=com.ansible",
+            expected=[
+                "file=/path/with space and/equals/cn=com.ansible",
+                "keyD",
+                "section=sectionD",
+            ],
         ),
         dict(
-            term=u'keyE section=sectionE file=/path/with/unicode/くらとみ/file',
-            expected=[u'file=/path/with/unicode/くらとみ/file', u'keyE', u'section=sectionE'],
+            term="keyE section=sectionE file=/path/with/unicode/くらとみ/file",
+            expected=[
+                "file=/path/with/unicode/くらとみ/file",
+                "keyE",
+                "section=sectionE",
+            ],
         ),
         dict(
-            term=u'keyF section=sectionF file=/path/with/utf 8 and spaces/くらとみ/file',
-            expected=[u'file=/path/with/utf 8 and spaces/くらとみ/file', u'keyF', u'section=sectionF'],
+            term="keyF section=sectionF file=/path/with/utf 8 and spaces/くらとみ/file",
+            expected=[
+                "file=/path/with/utf 8 and spaces/くらとみ/file",
+                "keyF",
+                "section=sectionF",
+            ],
         ),
     )
 
     def test_parse_parameters(self):
-        pvals = {'file': '', 'section': '', 'key': '', 'type': '', 're': '', 'default': '', 'encoding': ''}
+        pvals = {
+            "file": "",
+            "section": "",
+            "key": "",
+            "type": "",
+            "re": "",
+            "default": "",
+            "encoding": "",
+        }
         for testcase in self.old_style_params_data:
             # print(testcase)
-            params = _parse_params(testcase['term'], pvals)
+            params = _parse_params(testcase["term"], pvals)
             params.sort()
-            self.assertEqual(params, testcase['expected'])
+            self.assertEqual(params, testcase["expected"])

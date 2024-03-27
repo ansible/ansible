@@ -14,10 +14,16 @@ from ansible.cli.galaxy import GalaxyCLI
 def test_execute_list_role_called(mocker):
     """Make sure the correct method is called for a role"""
 
-    gc = GalaxyCLI(['ansible-galaxy', 'role', 'list'])
-    context.CLIARGS._store = {'type': 'role'}
-    execute_list_role_mock = mocker.patch('ansible.cli.galaxy.GalaxyCLI.execute_list_role', side_effect=AttributeError('raised intentionally'))
-    execute_list_collection_mock = mocker.patch('ansible.cli.galaxy.GalaxyCLI.execute_list_collection', side_effect=AttributeError('raised intentionally'))
+    gc = GalaxyCLI(["ansible-galaxy", "role", "list"])
+    context.CLIARGS._store = {"type": "role"}
+    execute_list_role_mock = mocker.patch(
+        "ansible.cli.galaxy.GalaxyCLI.execute_list_role",
+        side_effect=AttributeError("raised intentionally"),
+    )
+    execute_list_collection_mock = mocker.patch(
+        "ansible.cli.galaxy.GalaxyCLI.execute_list_collection",
+        side_effect=AttributeError("raised intentionally"),
+    )
     with pytest.raises(AttributeError):
         gc.execute_list()
 
@@ -28,10 +34,16 @@ def test_execute_list_role_called(mocker):
 def test_execute_list_collection_called(mocker):
     """Make sure the correct method is called for a collection"""
 
-    gc = GalaxyCLI(['ansible-galaxy', 'collection', 'list'])
-    context.CLIARGS._store = {'type': 'collection'}
-    execute_list_role_mock = mocker.patch('ansible.cli.galaxy.GalaxyCLI.execute_list_role', side_effect=AttributeError('raised intentionally'))
-    execute_list_collection_mock = mocker.patch('ansible.cli.galaxy.GalaxyCLI.execute_list_collection', side_effect=AttributeError('raised intentionally'))
+    gc = GalaxyCLI(["ansible-galaxy", "collection", "list"])
+    context.CLIARGS._store = {"type": "collection"}
+    execute_list_role_mock = mocker.patch(
+        "ansible.cli.galaxy.GalaxyCLI.execute_list_role",
+        side_effect=AttributeError("raised intentionally"),
+    )
+    execute_list_collection_mock = mocker.patch(
+        "ansible.cli.galaxy.GalaxyCLI.execute_list_collection",
+        side_effect=AttributeError("raised intentionally"),
+    )
     with pytest.raises(AttributeError):
         gc.execute_list()
 

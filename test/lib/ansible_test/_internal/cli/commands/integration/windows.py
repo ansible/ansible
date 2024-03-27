@@ -1,4 +1,5 @@
 """Command line parsing for the `windows-integration` command."""
+
 from __future__ import annotations
 
 import argparse
@@ -33,9 +34,9 @@ def do_windows_integration(
 ):
     """Command line parsing for the `windows-integration` command."""
     parser: argparse.ArgumentParser = subparsers.add_parser(
-        'windows-integration',
+        "windows-integration",
         parents=[parent],
-        help='windows integration tests',
+        help="windows integration tests",
     )
 
     parser.set_defaults(
@@ -44,8 +45,13 @@ def do_windows_integration(
         config=WindowsIntegrationConfig,
     )
 
-    windows_integration = t.cast(argparse.ArgumentParser, parser.add_argument_group(title='windows integration test arguments'))
+    windows_integration = t.cast(
+        argparse.ArgumentParser,
+        parser.add_argument_group(title="windows integration test arguments"),
+    )
 
     add_integration_common(windows_integration)
 
-    add_environments(parser, completer, ControllerMode.DELEGATED, TargetMode.WINDOWS_INTEGRATION)  # windows-integration
+    add_environments(
+        parser, completer, ControllerMode.DELEGATED, TargetMode.WINDOWS_INTEGRATION
+    )  # windows-integration

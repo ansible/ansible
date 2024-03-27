@@ -82,11 +82,14 @@ from ansible.plugins.become import BecomeBase
 
 class BecomeModule(BecomeBase):
 
-    name = 'sudo'
+    name = "sudo"
 
     # messages for detecting prompted password issues
-    fail = ('Sorry, try again.',)
-    missing = ('Sorry, a password is required to run sudo', 'sudo: a password is required')
+    fail = ("Sorry, try again.",)
+    missing = (
+        "Sorry, a password is required to run sudo",
+        "sudo: a password is required",
+    )
 
     def build_become_command(self, cmd, shell):
         super(BecomeModule, self).build_become_command(cmd, shell)
@@ -94,27 +97,31 @@ class BecomeModule(BecomeBase):
         if not cmd:
             return cmd
 
-        becomecmd = self.get_option('become_exe') or self.name
+        becomecmd = self.get_option("become_exe") or self.name
 
-        flags = self.get_option('become_flags') or ''
-        prompt = ''
-        if self.get_option('become_pass'):
-            self.prompt = '[sudo via ansible, key=%s] password:' % self._id
-            if flags:  # this could be simplified, but kept as is for now for backwards string matching
+        flags = self.get_option("become_flags") or ""
+        prompt = ""
+        if self.get_option("become_pass"):
+            self.prompt = "[sudo via ansible, key=%s] password:" % self._id
+            if (
+                flags
+            ):  # this could be simplified, but kept as is for now for backwards string matching
                 reflag = []
                 for flag in shlex.split(flags):
-                    if flag in ('-n', '--non-interactive'):
+                    if flag in ("-n", "--non-interactive"):
                         continue
-                    elif not flag.startswith('--'):
+                    elif not flag.startswith("--"):
                         # handle -XnxxX flags only
-                        flag = re.sub(r'^(-\w*)n(\w*.*)', r'\1\2', flag)
+                        flag = re.sub(r"^(-\w*)n(\w*.*)", r"\1\2", flag)
                     reflag.append(flag)
                 flags = shlex.join(reflag)
 
             prompt = '-p "%s"' % (self.prompt)
 
-        user = self.get_option('become_user') or ''
+        user = self.get_option("become_user") or ""
         if user:
-            user = '-u %s' % (user)
+            user = "-u %s" % (user)
 
-        return ' '.join([becomecmd, flags, prompt, user, self._build_success_command(cmd, shell)])
+        return " ".join(
+            [becomecmd, flags, prompt, user, self._build_success_command(cmd, shell)]
+        )

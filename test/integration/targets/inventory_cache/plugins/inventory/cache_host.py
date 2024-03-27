@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     inventory: cache_host
     short_description: add a host to inventory and cache it
     description: add a host to inventory and cache it
@@ -13,7 +13,7 @@ DOCUMENTATION = '''
       plugin:
         required: true
         description: name of the plugin (cache_host)
-'''
+"""
 
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 import random
@@ -21,10 +21,15 @@ import random
 
 class InventoryModule(BaseInventoryPlugin, Cacheable):
 
-    NAME = 'cache_host'
+    NAME = "cache_host"
 
     def verify_file(self, path):
-        if not path.endswith(('cache_host.yml', 'cache_host.yaml',)):
+        if not path.endswith(
+            (
+                "cache_host.yml",
+                "cache_host.yaml",
+            )
+        ):
             return False
         return super(InventoryModule, self).verify_file(path)
 
@@ -34,9 +39,9 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         cache_key = self.get_cache_key(path)
         # user has enabled cache and the cache is not being flushed
-        read_cache = self.get_option('cache') and cache
+        read_cache = self.get_option("cache") and cache
         # user has enabled cache and the cache is being flushed
-        update_cache = self.get_option('cache') and not cache
+        update_cache = self.get_option("cache") and not cache
 
         host = None
         if read_cache:
@@ -47,9 +52,9 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 update_cache = True
 
         if host is None:
-            host = 'testhost{0}'.format(random.randint(0, 50))
+            host = "testhost{0}".format(random.randint(0, 50))
 
-        self.inventory.add_host(host, 'all')
+        self.inventory.add_host(host, "all")
 
         if update_cache:
             self._cache[cache_key] = host

@@ -6,7 +6,7 @@ from ansible.module_utils.compat.datetime import utcnow, utcfromtimestamp, UTC
 
 
 def test_utc():
-    assert UTC.tzname(None) == 'UTC'
+    assert UTC.tzname(None) == "UTC"
     assert UTC.utcoffset(None) == datetime.timedelta(0)
     assert UTC.dst(None) is None
 

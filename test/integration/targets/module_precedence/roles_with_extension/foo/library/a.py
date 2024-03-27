@@ -5,8 +5,8 @@ import json
 
 
 def main():
-    print(json.dumps(dict(changed=False, location='role: foo, a.py')))
+    print(json.dumps(dict(changed=False, location="role: foo, a.py")))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

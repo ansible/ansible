@@ -1,4 +1,5 @@
 """Sanity test which executes mypy."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -64,21 +65,31 @@ class MypyTest(SanityMultipleVersion):
     ansible_only = True
 
     vendored_paths = (
-        'lib/ansible/module_utils/six/__init__.py',
-        'lib/ansible/module_utils/distro/_distro.py',
+        "lib/ansible/module_utils/six/__init__.py",
+        "lib/ansible/module_utils/distro/_distro.py",
     )
 
     def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
-        return [target for target in targets if os.path.splitext(target.path)[1] == '.py' and target.path not in self.vendored_paths and (
-                target.path.startswith('lib/ansible/') or target.path.startswith('test/lib/ansible_test/_internal/')
-                or target.path.startswith('packaging/')
-                or target.path.startswith('test/lib/ansible_test/_util/target/sanity/import/'))]
+        return [
+            target
+            for target in targets
+            if os.path.splitext(target.path)[1] == ".py"
+            and target.path not in self.vendored_paths
+            and (
+                target.path.startswith("lib/ansible/")
+                or target.path.startswith("test/lib/ansible_test/_internal/")
+                or target.path.startswith("packaging/")
+                or target.path.startswith(
+                    "test/lib/ansible_test/_util/target/sanity/import/"
+                )
+            )
+        ]
 
     @property
     def error_code(self) -> t.Optional[str]:
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
-        return 'ansible-test'
+        return "ansible-test"
 
     @property
     def needs_pypi(self) -> bool:
@@ -90,31 +101,53 @@ class MypyTest(SanityMultipleVersion):
         """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
         # Because the version of typeshed mypy use in 1.9 doesn't support 3.7, neither does mypy 1.9.
         # see: https://mypy-lang.blogspot.com/2024/03/mypy-19-released.html
-        return tuple(version for version in SUPPORTED_PYTHON_VERSIONS if str_to_version(version) >= (3, 8))
+        return tuple(
+            version
+            for version in SUPPORTED_PYTHON_VERSIONS
+            if str_to_version(version) >= (3, 8)
+        )
 
-    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
+    def test(
+        self, args: SanityConfig, targets: SanityTargets, python: PythonConfig
+    ) -> TestResult:
         settings = self.load_processor(args, python.version)
 
         paths = [target.path for target in targets.include]
 
-        virtualenv_python = create_sanity_virtualenv(args, args.controller_python, self.name)
+        virtualenv_python = create_sanity_virtualenv(
+            args, args.controller_python, self.name
+        )
 
         if args.prime_venvs:
             return SanitySkipped(self.name, python_version=python.version)
 
         if not virtualenv_python:
-            display.warning(f'Skipping sanity test "{self.name}" due to missing virtual environment support on Python {args.controller_python.version}.')
+            display.warning(
+                f'Skipping sanity test "{self.name}" due to missing virtual environment support on Python {args.controller_python.version}.'
+            )
             return SanitySkipped(self.name, python.version)
 
         controller_python_versions = CONTROLLER_PYTHON_VERSIONS
         remote_only_python_versions = REMOTE_ONLY_PYTHON_VERSIONS
 
         contexts = (
-            MyPyContext('ansible-test', ['test/lib/ansible_test/_util/target/sanity/import/'], controller_python_versions),
-            MyPyContext('ansible-test', ['test/lib/ansible_test/_internal/'], controller_python_versions),
-            MyPyContext('ansible-core', ['lib/ansible/'], controller_python_versions),
-            MyPyContext('modules', ['lib/ansible/modules/', 'lib/ansible/module_utils/'], remote_only_python_versions),
-            MyPyContext('packaging', ['packaging/'], controller_python_versions),
+            MyPyContext(
+                "ansible-test",
+                ["test/lib/ansible_test/_util/target/sanity/import/"],
+                controller_python_versions,
+            ),
+            MyPyContext(
+                "ansible-test",
+                ["test/lib/ansible_test/_internal/"],
+                controller_python_versions,
+            ),
+            MyPyContext("ansible-core", ["lib/ansible/"], controller_python_versions),
+            MyPyContext(
+                "modules",
+                ["lib/ansible/modules/", "lib/ansible/module_utils/"],
+                remote_only_python_versions,
+            ),
+            MyPyContext("packaging", ["packaging/"], controller_python_versions),
         )
 
         unfiltered_messages: list[SanityMessage] = []
@@ -123,26 +156,30 @@ class MypyTest(SanityMultipleVersion):
             if python.version not in context.python_versions:
                 continue
 
-            unfiltered_messages.extend(self.test_context(args, virtualenv_python, python, context, paths))
+            unfiltered_messages.extend(
+                self.test_context(args, virtualenv_python, python, context, paths)
+            )
 
         notices = []
         messages = []
 
         for message in unfiltered_messages:
-            if message.level != 'error':
+            if message.level != "error":
                 notices.append(message)
                 continue
 
-            match = re.search(r'^(?P<message>.*) {2}\[(?P<code>.*)]$', message.message)
+            match = re.search(r"^(?P<message>.*) {2}\[(?P<code>.*)]$", message.message)
 
-            messages.append(SanityMessage(
-                message=match.group('message'),
-                path=message.path,
-                line=message.line,
-                column=message.column,
-                level=message.level,
-                code=match.group('code'),
-            ))
+            messages.append(
+                SanityMessage(
+                    message=match.group("message"),
+                    path=message.path,
+                    line=message.line,
+                    column=message.column,
+                    level=message.level,
+                    code=match.group("code"),
+                )
+            )
 
         for notice in notices:
             display.info(notice.format(), verbosity=3)
@@ -150,15 +187,19 @@ class MypyTest(SanityMultipleVersion):
         # The following error codes from mypy indicate that results are incomplete.
         # That prevents the test from completing successfully, just as if mypy were to traceback or generate unexpected output.
         fatal_error_codes = {
-            'import',
-            'syntax',
+            "import",
+            "syntax",
         }
 
-        fatal_errors = [message for message in messages if message.code in fatal_error_codes]
+        fatal_errors = [
+            message for message in messages if message.code in fatal_error_codes
+        ]
 
         if fatal_errors:
-            error_message = '\n'.join(error.format() for error in fatal_errors)
-            raise ApplicationError(f'Encountered {len(fatal_errors)} fatal errors reported by mypy:\n{error_message}')
+            error_message = "\n".join(error.format() for error in fatal_errors)
+            raise ApplicationError(
+                f"Encountered {len(fatal_errors)} fatal errors reported by mypy:\n{error_message}"
+            )
 
         paths_set = set(paths)
 
@@ -173,7 +214,9 @@ class MypyTest(SanityMultipleVersion):
         results = settings.process_errors(messages, paths)
 
         if results:
-            return SanityFailure(self.name, messages=results, python_version=python.version)
+            return SanityFailure(
+                self.name, messages=results, python_version=python.version
+            )
 
         return SanitySuccess(self.name, python_version=python.version)
 
@@ -186,17 +229,23 @@ class MypyTest(SanityMultipleVersion):
         paths: list[str],
     ) -> list[SanityMessage]:
         """Run mypy tests for the specified context."""
-        context_paths = [path for path in paths if any(is_subdir(path, match_path) for match_path in context.paths)]
+        context_paths = [
+            path
+            for path in paths
+            if any(is_subdir(path, match_path) for match_path in context.paths)
+        ]
 
         if not context_paths:
             return []
 
-        config_path = os.path.join(ANSIBLE_TEST_CONTROLLER_ROOT, 'sanity', 'mypy', f'{context.name}.ini')
+        config_path = os.path.join(
+            ANSIBLE_TEST_CONTROLLER_ROOT, "sanity", "mypy", f"{context.name}.ini"
+        )
 
         display.info(f'Checking context "{context.name}"', verbosity=1)
 
         env = ansible_environment(args, color=False)
-        env['MYPYPATH'] = env['PYTHONPATH']
+        env["MYPYPATH"] = env["PYTHONPATH"]
 
         # The --no-site-packages option should not be used, as it will prevent loading of type stubs from the sanity test virtual environment.
 
@@ -240,7 +289,9 @@ class MypyTest(SanityMultipleVersion):
         cmd.extend(context_paths)
 
         try:
-            stdout, stderr = intercept_python(args, virtualenv_python, cmd, env, capture=True)
+            stdout, stderr = intercept_python(
+                args, virtualenv_python, cmd, env, capture=True
+            )
 
             if stdout or stderr:
                 raise SubprocessError(cmd, stdout=stdout, stderr=stderr)
@@ -250,17 +301,20 @@ class MypyTest(SanityMultipleVersion):
 
             stdout = ex.stdout
 
-        pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+):((?P<column>[0-9]+):)? (?P<level>[^:]+): (?P<message>.*)$'
+        pattern = r"^(?P<path>[^:]*):(?P<line>[0-9]+):((?P<column>[0-9]+):)? (?P<level>[^:]+): (?P<message>.*)$"
 
-        parsed = parse_to_list_of_dict(pattern, stdout or '')
+        parsed = parse_to_list_of_dict(pattern, stdout or "")
 
-        messages = [SanityMessage(
-            level=r['level'],
-            message=r['message'],
-            path=r['path'],
-            line=int(r['line']),
-            column=int(r.get('column') or '0'),
-        ) for r in parsed]
+        messages = [
+            SanityMessage(
+                level=r["level"],
+                message=r["message"],
+                path=r["path"],
+                line=int(r["line"]),
+                column=int(r.get("column") or "0"),
+            )
+            for r in parsed
+        ]
 
         return messages
 

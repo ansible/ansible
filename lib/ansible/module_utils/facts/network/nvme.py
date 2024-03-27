@@ -26,7 +26,7 @@ from ansible.module_utils.facts.network.base import NetworkCollector
 
 
 class NvmeInitiatorNetworkCollector(NetworkCollector):
-    name = 'nvme'
+    name = "nvme"
     _fact_ids = set()  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
@@ -44,12 +44,12 @@ class NvmeInitiatorNetworkCollector(NetworkCollector):
         """
 
         nvme_facts = {}
-        nvme_facts['hostnqn'] = ""
-        if sys.platform.startswith('linux'):
-            for line in get_file_content('/etc/nvme/hostnqn', '').splitlines():
-                if line.startswith('#') or line.startswith(';') or line.strip() == '':
+        nvme_facts["hostnqn"] = ""
+        if sys.platform.startswith("linux"):
+            for line in get_file_content("/etc/nvme/hostnqn", "").splitlines():
+                if line.startswith("#") or line.startswith(";") or line.strip() == "":
                     continue
-                if line.startswith('nqn.'):
-                    nvme_facts['hostnqn'] = line
+                if line.startswith("nqn."):
+                    nvme_facts["hostnqn"] = line
                     break
         return nvme_facts

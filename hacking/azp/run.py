@@ -47,7 +47,7 @@ def main():
 
     args = parse_args()
 
-    key = os.environ.get('AZP_TOKEN', None)
+    key = os.environ.get("AZP_TOKEN", None)
     if not key:
         sys.stderr.write("please set you AZP token in AZP_TOKEN")
         sys.exit(1)
@@ -58,16 +58,24 @@ def main():
 def parse_args():
     """Parse and return args."""
 
-    parser = argparse.ArgumentParser(description='Start a new CI run.')
+    parser = argparse.ArgumentParser(description="Start a new CI run.")
 
-    parser.add_argument('-p', '--pipeline-id', type=int, default=20, help='pipeline to download the job from')
-    parser.add_argument('--ref', help='git ref name to run on')
+    parser.add_argument(
+        "-p",
+        "--pipeline-id",
+        type=int,
+        default=20,
+        help="pipeline to download the job from",
+    )
+    parser.add_argument("--ref", help="git ref name to run on")
 
-    parser.add_argument('--env',
-                        nargs=2,
-                        metavar=('KEY', 'VALUE'),
-                        action='append',
-                        help='environment variable to pass')
+    parser.add_argument(
+        "--env",
+        nargs=2,
+        metavar=("KEY", "VALUE"),
+        action="append",
+        help="environment variable to pass",
+    )
 
     if argcomplete:
         argcomplete.autocomplete(parser)
@@ -80,14 +88,19 @@ def parse_args():
 def start_run(args, key):
     """Start a new CI run."""
 
-    url = "https://dev.azure.com/ansible/ansible/_apis/pipelines/%s/runs?api-version=6.0-preview.1" % args.pipeline_id
+    url = (
+        "https://dev.azure.com/ansible/ansible/_apis/pipelines/%s/runs?api-version=6.0-preview.1"
+        % args.pipeline_id
+    )
     payload = {"resources": {"repositories": {"self": {"refName": args.ref}}}}
 
-    resp = requests.post(url, auth=requests.auth.HTTPBasicAuth('user', key), data=payload)
+    resp = requests.post(
+        url, auth=requests.auth.HTTPBasicAuth("user", key), data=payload
+    )
     resp.raise_for_status()
 
     print(json.dumps(resp.json(), indent=4, sort_keys=True))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

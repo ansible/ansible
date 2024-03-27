@@ -1,4 +1,5 @@
 """Command line parsing for the `coverage combine` command."""
+
 from __future__ import annotations
 
 import argparse
@@ -26,9 +27,9 @@ def do_combine(
 ) -> None:
     """Command line parsing for the `coverage combine` command."""
     parser: argparse.ArgumentParser = subparsers.add_parser(
-        'combine',
+        "combine",
         parents=[parent],
-        help='combine coverage data and rewrite remote paths',
+        help="combine coverage data and rewrite remote paths",
     )
 
     parser.set_defaults(
@@ -36,14 +37,18 @@ def do_combine(
         config=CoverageCombineConfig,
     )
 
-    coverage_combine = t.cast(argparse.ArgumentParser, parser.add_argument_group(title='coverage arguments'))
+    coverage_combine = t.cast(
+        argparse.ArgumentParser, parser.add_argument_group(title="coverage arguments")
+    )
 
     add_coverage_common(coverage_combine)
 
     coverage_combine.add_argument(
-        '--export',
-        metavar='DIR',
-        help='directory to export combined coverage files to',
+        "--export",
+        metavar="DIR",
+        help="directory to export combined coverage files to",
     )
 
-    add_environments(parser, completer, ControllerMode.DELEGATED, TargetMode.NO_TARGETS)  # coverage combine
+    add_environments(
+        parser, completer, ControllerMode.DELEGATED, TargetMode.NO_TARGETS
+    )  # coverage combine

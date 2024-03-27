@@ -9,5 +9,5 @@ from ansible.module_utils.common.network import is_mac
 class TestModule(object):
     def tests(self):
         return {
-            'is_mac': is_mac,
+            "is_mac": is_mac,
         }

@@ -24,11 +24,11 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 
 
-__all__ = ['unfrackpath', 'makedirs_safe']
+__all__ = ["unfrackpath", "makedirs_safe"]
 
 
 def unfrackpath(path, follow=True, basedir=None):
-    '''
+    """
     Returns a path that is free of symlinks (if follow=True), environment variables, relative path traversals and symbols (~)
 
     :arg path: A byte or text string representing a path to be canonicalized
@@ -41,16 +41,18 @@ def unfrackpath(path, follow=True, basedir=None):
 
     example::
         '$HOME/../../var/mail' becomes '/var/spool/mail'
-    '''
+    """
 
-    b_basedir = to_bytes(basedir, errors='surrogate_or_strict', nonstring='passthru')
+    b_basedir = to_bytes(basedir, errors="surrogate_or_strict", nonstring="passthru")
 
     if b_basedir is None:
-        b_basedir = to_bytes(os.getcwd(), errors='surrogate_or_strict')
+        b_basedir = to_bytes(os.getcwd(), errors="surrogate_or_strict")
     elif os.path.isfile(b_basedir):
         b_basedir = os.path.dirname(b_basedir)
 
-    b_final_path = os.path.expanduser(os.path.expandvars(to_bytes(path, errors='surrogate_or_strict')))
+    b_final_path = os.path.expanduser(
+        os.path.expandvars(to_bytes(path, errors="surrogate_or_strict"))
+    )
 
     if not os.path.isabs(b_final_path):
         b_final_path = os.path.join(b_basedir, b_final_path)
@@ -58,11 +60,11 @@ def unfrackpath(path, follow=True, basedir=None):
     if follow:
         b_final_path = os.path.realpath(b_final_path)
 
-    return to_text(os.path.normpath(b_final_path), errors='surrogate_or_strict')
+    return to_text(os.path.normpath(b_final_path), errors="surrogate_or_strict")
 
 
 def makedirs_safe(path, mode=None):
-    '''
+    """
     A *potentially insecure* way to ensure the existence of a directory chain. The "safe" in this function's name
     refers only to its ability to ignore `EEXIST` in the case of multiple callers operating on the same part of
     the directory chain. This function is not safe to use under world-writable locations when the first level of the
@@ -74,7 +76,7 @@ def makedirs_safe(path, mode=None):
     :kwarg mode: If given, the mode to set the directory to
     :raises AnsibleError: If the directory cannot be created and does not already exist.
     :raises UnicodeDecodeError: if the path is not decodable in the utf-8 encoding.
-    '''
+    """
 
     rpath = unfrackpath(path)
     b_rpath = to_bytes(rpath)
@@ -86,16 +88,19 @@ def makedirs_safe(path, mode=None):
                 os.makedirs(b_rpath)
         except OSError as e:
             if e.errno != EEXIST:
-                raise AnsibleError("Unable to create local directories(%s): %s" % (to_native(rpath), to_native(e)))
+                raise AnsibleError(
+                    "Unable to create local directories(%s): %s"
+                    % (to_native(rpath), to_native(e))
+                )
 
 
 def basedir(source):
-    """ returns directory for inventory or playbook """
-    source = to_bytes(source, errors='surrogate_or_strict')
+    """returns directory for inventory or playbook"""
+    source = to_bytes(source, errors="surrogate_or_strict")
     dname = None
     if os.path.isdir(source):
         dname = source
-    elif source in [None, '', '.']:
+    elif source in [None, "", "."]:
         dname = os.getcwd()
     elif os.path.isfile(source):
         dname = os.path.dirname(source)
@@ -104,7 +109,7 @@ def basedir(source):
         # don't follow symlinks for basedir, enables source re-use
         dname = os.path.abspath(dname)
 
-    return to_text(dname, errors='surrogate_or_strict')
+    return to_text(dname, errors="surrogate_or_strict")
 
 
 def cleanup_tmp_file(path, warn=False):
@@ -127,8 +132,11 @@ def cleanup_tmp_file(path, warn=False):
                 if warn:
                     # Importing here to avoid circular import
                     from ansible.utils.display import Display
+
                     display = Display()
-                    display.display(u'Unable to remove temporary file {0}'.format(to_text(e)))
+                    display.display(
+                        "Unable to remove temporary file {0}".format(to_text(e))
+                    )
     except Exception:
         pass
 
@@ -138,7 +146,7 @@ def is_subpath(child, parent, real=False):
     Compares paths to check if one is contained in the other
     :arg: child: Path to test
     :arg parent; Path to test against
-     """
+    """
     test = False
 
     abs_child = unfrackpath(child, follow=False)
@@ -152,7 +160,7 @@ def is_subpath(child, parent, real=False):
     p = abs_parent.split(os.path.sep)
 
     try:
-        test = c[:len(p)] == p
+        test = c[: len(p)] == p
     except IndexError:
         # child is shorter than parent so cannot be subpath
         pass

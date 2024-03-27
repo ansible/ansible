@@ -1,1 +1,1 @@
-eggs = 'spam7:eggs'
+eggs = "spam7:eggs"

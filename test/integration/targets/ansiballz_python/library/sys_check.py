@@ -13,10 +13,8 @@ def main():
     module = AnsibleModule({})
 
     this_module = sys.modules[__name__]
-    module.exit_json(
-        failed=not getattr(this_module, 'AnsibleModule', False)
-    )
+    module.exit_json(failed=not getattr(this_module, "AnsibleModule", False))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

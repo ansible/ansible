@@ -12,51 +12,49 @@ test_data = [
     (
         "crashkernel=auto rd.lvm.lv=fedora_test-elementary-os/root rd.lvm.lv=fedora_test-elementary-os/swap rhgb quiet",
         {
-            'crashkernel': 'auto',
-            'quiet': True,
-            'rd.lvm.lv': [
-                'fedora_test-elementary-os/root',
-                'fedora_test-elementary-os/swap',
+            "crashkernel": "auto",
+            "quiet": True,
+            "rd.lvm.lv": [
+                "fedora_test-elementary-os/root",
+                "fedora_test-elementary-os/swap",
             ],
-            'rhgb': True
-        }
+            "rhgb": True,
+        },
     ),
     (
         "root=/dev/mapper/vg_ssd-root ro rd.lvm.lv=fedora_xenon/root rd.lvm.lv=fedora_xenon/swap rhgb quiet "
         "resume=/dev/mapper/fedora_xenon-swap crashkernel=128M zswap.enabled=1",
         {
-            'crashkernel': '128M',
-            'quiet': True,
-            'rd.lvm.lv': [
-                'fedora_xenon/root',
-                'fedora_xenon/swap'
-            ],
-            'resume': '/dev/mapper/fedora_xenon-swap',
-            'rhgb': True,
-            'ro': True,
-            'root': '/dev/mapper/vg_ssd-root',
-            'zswap.enabled': '1'
-        }
+            "crashkernel": "128M",
+            "quiet": True,
+            "rd.lvm.lv": ["fedora_xenon/root", "fedora_xenon/swap"],
+            "resume": "/dev/mapper/fedora_xenon-swap",
+            "rhgb": True,
+            "ro": True,
+            "root": "/dev/mapper/vg_ssd-root",
+            "zswap.enabled": "1",
+        },
     ),
-    (
-        "rhgb",
-        {
-            "rhgb": True
-        }
-    ),
+    ("rhgb", {"rhgb": True}),
     (
         "root=/dev/mapper/vg_ssd-root",
         {
-            'root': '/dev/mapper/vg_ssd-root',
-        }
+            "root": "/dev/mapper/vg_ssd-root",
+        },
     ),
     (
         "",
         {},
-    )
+    ),
 ]
 
-test_ids = ['lvm_1', 'lvm_2', 'single_without_equal_sign', 'single_with_equal_sign', 'blank_cmdline']
+test_ids = [
+    "lvm_1",
+    "lvm_2",
+    "single_without_equal_sign",
+    "single_with_equal_sign",
+    "blank_cmdline",
+]
 
 
 @pytest.mark.parametrize("cmdline, cmdline_dict", test_data, ids=test_ids)

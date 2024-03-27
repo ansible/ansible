@@ -6,7 +6,9 @@ from __future__ import annotations
 import json
 
 # Imported for backwards compat
-from ansible.module_utils.common.json import AnsibleJSONEncoder  # pylint: disable=unused-import
+from ansible.module_utils.common.json import (
+    AnsibleJSONEncoder,
+)  # pylint: disable=unused-import
 
 from ansible.parsing.vault import VaultLib
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
@@ -18,23 +20,23 @@ class AnsibleJSONDecoder(json.JSONDecoder):
     _vaults = {}  # type: dict[str, VaultLib]
 
     def __init__(self, *args, **kwargs):
-        kwargs['object_hook'] = self.object_hook
+        kwargs["object_hook"] = self.object_hook
         super(AnsibleJSONDecoder, self).__init__(*args, **kwargs)
 
     @classmethod
     def set_secrets(cls, secrets):
-        cls._vaults['default'] = VaultLib(secrets=secrets)
+        cls._vaults["default"] = VaultLib(secrets=secrets)
 
     def object_hook(self, pairs):
         for key in pairs:
             value = pairs[key]
 
-            if key == '__ansible_vault':
+            if key == "__ansible_vault":
                 value = AnsibleVaultEncryptedUnicode(value)
                 if self._vaults:
-                    value.vault = self._vaults['default']
+                    value.vault = self._vaults["default"]
                 return value
-            elif key == '__ansible_unsafe':
+            elif key == "__ansible_unsafe":
                 return wrap_var(value)
 
         return pairs

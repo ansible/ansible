@@ -10,7 +10,9 @@ import sys
 try:
     mod = sys.modules[__name__]
 except KeyError:
-    raise Exception(f'module {__name__} is not accessible via sys.modules, likely a pluginloader bug')
+    raise Exception(
+        f"module {__name__} is not accessible via sys.modules, likely a pluginloader bug"
+    )
 
 
 class ActionModule(ActionBase):
@@ -23,6 +25,6 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
-        result['changed'] = False
-        result['msg'] = 'self-referential action loaded and ran successfully'
+        result["changed"] = False
+        result["msg"] = "self-referential action loaded and ran successfully"
         return result

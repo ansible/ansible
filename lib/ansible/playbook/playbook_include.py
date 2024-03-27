@@ -30,7 +30,10 @@ from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.utils.collection_loader import AnsibleCollectionConfig
-from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
+from ansible.utils.collection_loader._collection_finder import (
+    _get_collection_name_from_path,
+    _get_collection_playbook_path,
+)
 from ansible.template import Templar
 from ansible.utils.display import Display
 
@@ -39,18 +42,20 @@ display = Display()
 
 class PlaybookInclude(Base, Conditional, Taggable):
 
-    import_playbook = NonInheritableFieldAttribute(isa='string')
-    vars_val = NonInheritableFieldAttribute(isa='dict', default=dict, alias='vars')
+    import_playbook = NonInheritableFieldAttribute(isa="string")
+    vars_val = NonInheritableFieldAttribute(isa="dict", default=dict, alias="vars")
 
     @staticmethod
     def load(data, basedir, variable_manager=None, loader=None):
-        return PlaybookInclude().load_data(ds=data, basedir=basedir, variable_manager=variable_manager, loader=loader)
+        return PlaybookInclude().load_data(
+            ds=data, basedir=basedir, variable_manager=variable_manager, loader=loader
+        )
 
     def load_data(self, ds, variable_manager=None, loader=None, basedir=None):
-        '''
+        """
         Overrides the base load_data(), as we're actually going to return a new
         Playbook() object rather than a PlaybookInclude object
-        '''
+        """
 
         # import here to avoid a dependency loop
         from ansible.playbook import Playbook
@@ -91,9 +96,15 @@ class PlaybookInclude(Base, Conditional, Taggable):
             AnsibleCollectionConfig.default_collection = playbook_collection
         else:
             # it is NOT a collection playbook, setup adjecent paths
-            AnsibleCollectionConfig.playbook_paths.append(os.path.dirname(os.path.abspath(to_bytes(playbook, errors='surrogate_or_strict'))))
+            AnsibleCollectionConfig.playbook_paths.append(
+                os.path.dirname(
+                    os.path.abspath(to_bytes(playbook, errors="surrogate_or_strict"))
+                )
+            )
 
-        pb._load_playbook_data(file_name=playbook, variable_manager=variable_manager, vars=self.vars.copy())
+        pb._load_playbook_data(
+            file_name=playbook, variable_manager=variable_manager, vars=self.vars.copy()
+        )
 
         # finally, update each loaded playbook entry with any variables specified
         # on the included playbook and/or any tags which may have been set
@@ -104,9 +115,9 @@ class PlaybookInclude(Base, Conditional, Taggable):
                 entry._included_conditional = new_obj.when[:]
 
             temp_vars = entry.vars | new_obj.vars
-            param_tags = temp_vars.pop('tags', None)
+            param_tags = temp_vars.pop("tags", None)
             if param_tags is not None:
-                entry.tags.extend(param_tags.split(','))
+                entry.tags.extend(param_tags.split(","))
             entry.vars = temp_vars
             entry.tags = list(set(entry.tags).union(new_obj.tags))
             if entry._included_path is None:
@@ -116,19 +127,23 @@ class PlaybookInclude(Base, Conditional, Taggable):
             # plays. If so, we can take a shortcut here and simply prepend them to
             # those attached to each block (if any)
             if new_obj.when:
-                for task_block in (entry.pre_tasks + entry.roles + entry.tasks + entry.post_tasks):
+                for task_block in (
+                    entry.pre_tasks + entry.roles + entry.tasks + entry.post_tasks
+                ):
                     task_block._when = new_obj.when[:] + task_block.when[:]
 
         return pb
 
     def preprocess_data(self, ds):
-        '''
+        """
         Regorganizes the data for a PlaybookInclude datastructure to line
         up with what we expect the proper attributes to be
-        '''
+        """
 
         if not isinstance(ds, dict):
-            raise AnsibleAssertionError('ds (%s) should be a dict but was a %s' % (ds, type(ds)))
+            raise AnsibleAssertionError(
+                "ds (%s) should be a dict but was a %s" % (ds, type(ds))
+            )
 
         # the new, cleaned datastructure, which will have legacy
         # items reduced to a standard structure
@@ -136,34 +151,47 @@ class PlaybookInclude(Base, Conditional, Taggable):
         if isinstance(ds, AnsibleBaseYAMLObject):
             new_ds.ansible_pos = ds.ansible_pos
 
-        for (k, v) in ds.items():
+        for k, v in ds.items():
             if k in C._ACTION_IMPORT_PLAYBOOK:
                 self._preprocess_import(ds, new_ds, k, v)
             else:
                 # some basic error checking, to make sure vars are properly
                 # formatted and do not conflict with k=v parameters
-                if k == 'vars':
-                    if 'vars' in new_ds:
-                        raise AnsibleParserError("import_playbook parameters cannot be mixed with 'vars' entries for import statements", obj=ds)
+                if k == "vars":
+                    if "vars" in new_ds:
+                        raise AnsibleParserError(
+                            "import_playbook parameters cannot be mixed with 'vars' entries for import statements",
+                            obj=ds,
+                        )
                     elif not isinstance(v, dict):
-                        raise AnsibleParserError("vars for import_playbook statements must be specified as a dictionary", obj=ds)
+                        raise AnsibleParserError(
+                            "vars for import_playbook statements must be specified as a dictionary",
+                            obj=ds,
+                        )
                 new_ds[k] = v
 
         return super(PlaybookInclude, self).preprocess_data(new_ds)
 
     def _preprocess_import(self, ds, new_ds, k, v):
-        '''
+        """
         Splits the playbook import line up into filename and parameters
-        '''
+        """
         if v is None:
             raise AnsibleParserError("playbook import parameter is missing", obj=ds)
         elif not isinstance(v, string_types):
-            raise AnsibleParserError("playbook import parameter must be a string indicating a file path, got %s instead" % type(v), obj=ds)
+            raise AnsibleParserError(
+                "playbook import parameter must be a string indicating a file path, got %s instead"
+                % type(v),
+                obj=ds,
+            )
 
         # The import_playbook line must include at least one item, which is the filename
         # to import. Anything after that should be regarded as a parameter to the import
         items = split_args(v)
         if len(items) == 0:
-            raise AnsibleParserError("import_playbook statements must specify the file name to import", obj=ds)
+            raise AnsibleParserError(
+                "import_playbook statements must specify the file name to import",
+                obj=ds,
+            )
 
-        new_ds['import_playbook'] = items[0].strip()
+        new_ds["import_playbook"] = items[0].strip()

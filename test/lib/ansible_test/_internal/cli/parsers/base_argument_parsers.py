@@ -1,4 +1,5 @@
 """Base classes for the primary parsers for composite command line arguments."""
+
 from __future__ import annotations
 
 import abc
@@ -17,7 +18,7 @@ class ControllerNamespaceParser(NamespaceParser, metaclass=abc.ABCMeta):
     @property
     def dest(self) -> str:
         """The name of the attribute where the value should be stored."""
-        return 'controller'
+        return "controller"
 
     def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
@@ -33,12 +34,12 @@ class TargetNamespaceParser(NamespaceParser, metaclass=abc.ABCMeta):
     @property
     def option_name(self) -> str:
         """The option name used for this parser."""
-        return '--target'
+        return "--target"
 
     @property
     def dest(self) -> str:
         """The name of the attribute where the value should be stored."""
-        return 'targets'
+        return "targets"
 
     @property
     def use_list(self) -> bool:
@@ -57,12 +58,12 @@ class TargetsNamespaceParser(NamespaceParser, metaclass=abc.ABCMeta):
     @property
     def option_name(self) -> str:
         """The option name used for this parser."""
-        return '--target'
+        return "--target"
 
     @property
     def dest(self) -> str:
         """The name of the attribute where the value should be stored."""
-        return 'targets'
+        return "targets"
 
     @property
     def use_list(self) -> bool:
@@ -74,4 +75,6 @@ class ControllerRequiredFirstError(CompletionError):
     """Exception raised when controller and target options are specified out-of-order."""
 
     def __init__(self) -> None:
-        super().__init__('The `--controller` option must be specified before `--target` option(s).')
+        super().__init__(
+            "The `--controller` option must be specified before `--target` option(s)."
+        )

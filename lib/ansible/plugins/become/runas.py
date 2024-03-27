@@ -66,7 +66,7 @@ from ansible.plugins.become import BecomeBase
 
 class BecomeModule(BecomeBase):
 
-    name = 'runas'
+    name = "runas"
 
     def build_become_command(self, cmd, shell):
         # this is a noop, the 'real' runas is implemented

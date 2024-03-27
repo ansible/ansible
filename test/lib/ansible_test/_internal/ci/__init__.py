@@ -1,4 +1,5 @@
 """Support code for CI environments."""
+
 from __future__ import annotations
 
 import abc
@@ -87,9 +88,12 @@ def get_ci_provider() -> CIProvider:
     """Return a CI provider instance for the current environment."""
     provider = None
 
-    import_plugins('ci')
+    import_plugins("ci")
 
-    candidates = sorted(get_subclasses(CIProvider), key=lambda subclass: (subclass.priority, subclass.__name__))
+    candidates = sorted(
+        get_subclasses(CIProvider),
+        key=lambda subclass: (subclass.priority, subclass.__name__),
+    )
 
     for candidate in candidates:
         if candidate.is_supported():
@@ -97,7 +101,7 @@ def get_ci_provider() -> CIProvider:
             break
 
     if provider.code:
-        display.info('Detected CI provider: %s' % provider.name)
+        display.info("Detected CI provider: %s" % provider.name)
 
     return provider
 
@@ -118,7 +122,7 @@ class AuthHelper(metaclass=abc.ABCMeta):
         Initialize and publish a new key pair (if needed) and return the private key.
         The private key is cached across ansible-test invocations, so it is only generated and published once per CI job.
         """
-        path = os.path.expanduser('~/.ansible-core-ci-private.key')
+        path = os.path.expanduser("~/.ansible-core-ci-private.key")
 
         if os.path.exists(to_bytes(path)):
             private_key_pem = read_text_file(path)
@@ -153,7 +157,9 @@ class CryptographyAuthHelper(AuthHelper, metaclass=abc.ABCMeta):
         from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
         private_key_pem = self.initialize_private_key()
-        private_key = load_pem_private_key(to_bytes(private_key_pem), None, default_backend())
+        private_key = load_pem_private_key(
+            to_bytes(private_key_pem), None, default_backend()
+        )
 
         assert isinstance(private_key, ec.EllipticCurvePrivateKey)
 
@@ -171,16 +177,20 @@ class CryptographyAuthHelper(AuthHelper, metaclass=abc.ABCMeta):
         private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
         public_key = private_key.public_key()
 
-        private_key_pem = to_text(private_key.private_bytes(  # type: ignore[attr-defined]  # documented method, but missing from type stubs
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption(),
-        ))
+        private_key_pem = to_text(
+            private_key.private_bytes(  # type: ignore[attr-defined]  # documented method, but missing from type stubs
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        )
 
-        public_key_pem = to_text(public_key.public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo,
-        ))
+        public_key_pem = to_text(
+            public_key.public_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
+            )
+        )
 
         self.publish_public_key(public_key_pem)
 
@@ -203,15 +213,32 @@ class OpenSSLAuthHelper(AuthHelper, metaclass=abc.ABCMeta):
                 payload_file.flush()
 
                 with tempfile.NamedTemporaryFile() as signature_file:
-                    raw_command(['openssl', 'dgst', '-sha256', '-sign', private_key_file.name, '-out', signature_file.name, payload_file.name], capture=True)
+                    raw_command(
+                        [
+                            "openssl",
+                            "dgst",
+                            "-sha256",
+                            "-sign",
+                            private_key_file.name,
+                            "-out",
+                            signature_file.name,
+                            payload_file.name,
+                        ],
+                        capture=True,
+                    )
                     signature_raw_bytes = signature_file.read()
 
         return signature_raw_bytes
 
     def generate_private_key(self) -> str:
         """Generate a new key pair, publishing the public key and returning the private key."""
-        private_key_pem = raw_command(['openssl', 'ecparam', '-genkey', '-name', 'secp384r1', '-noout'], capture=True)[0]
-        public_key_pem = raw_command(['openssl', 'ec', '-pubout'], data=private_key_pem, capture=True)[0]
+        private_key_pem = raw_command(
+            ["openssl", "ecparam", "-genkey", "-name", "secp384r1", "-noout"],
+            capture=True,
+        )[0]
+        public_key_pem = raw_command(
+            ["openssl", "ec", "-pubout"], data=private_key_pem, capture=True
+        )[0]
 
         self.publish_public_key(public_key_pem)
 

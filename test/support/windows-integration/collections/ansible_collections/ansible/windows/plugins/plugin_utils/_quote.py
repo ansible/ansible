@@ -21,13 +21,13 @@ import re
 from ansible.module_utils.six import text_type
 
 
-_UNSAFE_C = re.compile(u'[\\s\t"]')
-_UNSAFE_CMD = re.compile(u'[\\s\\(\\)\\^\\|%!"<>&]')
+_UNSAFE_C = re.compile('[\\s\t"]')
+_UNSAFE_CMD = re.compile('[\\s\\(\\)\\^\\|%!"<>&]')
 
 # PowerShell has 5 characters it uses as a single quote, we need to double up on all of them.
 # https://github.com/PowerShell/PowerShell/blob/b7cb335f03fe2992d0cbd61699de9d9aafa1d7c1/src/System.Management.Automation/engine/parser/CharTraits.cs#L265-L272
 # https://github.com/PowerShell/PowerShell/blob/b7cb335f03fe2992d0cbd61699de9d9aafa1d7c1/src/System.Management.Automation/engine/parser/CharTraits.cs#L18-L21
-_UNSAFE_PWSH = re.compile(u"(['\u2018\u2019\u201a\u201b])")
+_UNSAFE_PWSH = re.compile("(['\u2018\u2019\u201a\u201b])")
 
 
 def quote_c(s):  # type: (text_type) -> text_type
@@ -44,7 +44,7 @@ def quote_c(s):  # type: (text_type) -> text_type
     """
     # https://docs.microsoft.com/en-us/archive/blogs/twistylittlepassagesallalike/everyone-quotes-command-line-arguments-the-wrong-way
     if not s:
-        return u'""'
+        return '""'
 
     if not _UNSAFE_C.search(s):
         return s
@@ -53,13 +53,13 @@ def quote_c(s):  # type: (text_type) -> text_type
     s = s.replace('"', '\\"')
 
     # We need to double up on any '\' chars that preceded a double quote (now '\"').
-    s = re.sub(r'(\\+)\\"', r'\1\1\"', s)
+    s = re.sub(r'(\\+)\\"', r"\1\1\"", s)
 
     # Double up '\' at the end of the argument so it doesn't escape out end quote.
-    s = re.sub(r'(\\+)$', r'\1\1', s)
+    s = re.sub(r"(\\+)$", r"\1\1", s)
 
     # Finally wrap the entire argument in double quotes now we've escaped the double quotes within.
-    return u'"{0}"'.format(s)
+    return '"{0}"'.format(s)
 
 
 def quote_cmd(s):  # type: (text_type) -> text_type
@@ -75,7 +75,7 @@ def quote_cmd(s):  # type: (text_type) -> text_type
     """
     # https://docs.microsoft.com/en-us/archive/blogs/twistylittlepassagesallalike/everyone-quotes-command-line-arguments-the-wrong-way#a-better-method-of-quoting
     if not s:
-        return u'""'
+        return '""'
 
     if not _UNSAFE_CMD.search(s):
         return s
@@ -84,12 +84,12 @@ def quote_cmd(s):  # type: (text_type) -> text_type
     # 'file &whoami.exe' would result in 'whoami.exe' being executed and then that output being used as the argument
     # instead of the literal string.
     # https://stackoverflow.com/questions/3411771/multiple-character-replace-with-python
-    for c in u'^()%!"<>&|':  # '^' must be the first char that we scan and replace
+    for c in '^()%!"<>&|':  # '^' must be the first char that we scan and replace
         if c in s:
             # I can't find any docs that explicitly say this but to escape ", it needs to be prefixed with \^.
-            s = s.replace(c, (u"\\^" if c == u'"' else u"^") + c)
+            s = s.replace(c, ("\\^" if c == '"' else "^") + c)
 
-    return u'^"{0}^"'.format(s)
+    return '^"{0}^"'.format(s)
 
 
 def quote_pwsh(s):  # type: (text_type) -> text_type
@@ -106,8 +106,8 @@ def quote_pwsh(s):  # type: (text_type) -> text_type
     """
     # https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_quoting_rules?view=powershell-5.1
     if not s:
-        return u"''"
+        return "''"
 
     # We should always quote values in PowerShell as it has conflicting rules where strings can and can't be quoted.
     # This means we quote the entire arg with single quotes and just double up on the single quote equivalent chars.
-    return u"'{0}'".format(_UNSAFE_PWSH.sub(u'\\1\\1', s))
+    return "'{0}'".format(_UNSAFE_PWSH.sub("\\1\\1", s))

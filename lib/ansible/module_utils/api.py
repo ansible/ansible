@@ -37,10 +37,10 @@ import ansible.module_utils.compat.typing as t
 
 def rate_limit_argument_spec(spec=None):
     """Creates an argument spec for working with rate limiting"""
-    arg_spec = (dict(
-        rate=dict(type='int'),
-        rate_limit=dict(type='int'),
-    ))
+    arg_spec = dict(
+        rate=dict(type="int"),
+        rate_limit=dict(type="int"),
+    )
     if spec:
         arg_spec.update(spec)
     return arg_spec
@@ -48,22 +48,22 @@ def rate_limit_argument_spec(spec=None):
 
 def retry_argument_spec(spec=None):
     """Creates an argument spec for working with retrying"""
-    arg_spec = (dict(
-        retries=dict(type='int'),
-        retry_pause=dict(type='float', default=1),
-    ))
+    arg_spec = dict(
+        retries=dict(type="int"),
+        retry_pause=dict(type="float", default=1),
+    )
     if spec:
         arg_spec.update(spec)
     return arg_spec
 
 
 def basic_auth_argument_spec(spec=None):
-    arg_spec = (dict(
-        api_username=dict(type='str'),
-        api_password=dict(type='str', no_log=True),
-        api_url=dict(type='str'),
-        validate_certs=dict(type='bool', default=True)
-    ))
+    arg_spec = dict(
+        api_username=dict(type="str"),
+        api_password=dict(type="str", no_log=True),
+        api_url=dict(type="str"),
+        validate_certs=dict(type="bool", default=True),
+    )
     if spec:
         arg_spec.update(spec)
     return arg_spec
@@ -93,11 +93,13 @@ def rate_limit(rate=None, rate_limit=None):
             return ret
 
         return ratelimited
+
     return wrapper
 
 
 def retry(retries=None, retry_pause=1):
     """Retry decorator"""
+
     def wrapper(f):
 
         def retried(*args, **kwargs):
@@ -118,6 +120,7 @@ def retry(retries=None, retry_pause=1):
                 return ret
 
         return retried
+
     return wrapper
 
 
@@ -131,7 +134,7 @@ def generate_jittered_backoff(retries=10, delay_base=3, delay_threshold=60):
     :param delay_threshold: The maximum time in seconds for any delay.
     """
     for retry in range(0, retries):
-        yield random.randint(0, min(delay_threshold, delay_base * 2 ** retry))
+        yield random.randint(0, min(delay_threshold, delay_base * 2**retry))
 
 
 def retry_never(exception_or_result):
@@ -144,12 +147,16 @@ def retry_with_delays_and_condition(backoff_iterator, should_retry_error=None):
     :param backoff_iterator: An iterable of delays in seconds.
     :param should_retry_error: A callable that takes an exception of the decorated function and decides whether to retry or not (returns a bool).
     """
-    def _emit_isolated_iterator_copies(original_iterator):  # type: (t.Iterable[t.Any]) -> t.Generator
+
+    def _emit_isolated_iterator_copies(
+        original_iterator,
+    ):  # type: (t.Iterable[t.Any]) -> t.Generator
         # Ref: https://stackoverflow.com/a/30232619/595220
         _copiable_iterator, _first_iterator_copy = itertools.tee(original_iterator)
         yield _first_iterator_copy
         while True:
             yield copy.copy(_copiable_iterator)
+
     backoff_iterator_generator = _emit_isolated_iterator_copies(backoff_iterator)
     del backoff_iterator  # prevent accidental use elsewhere
 
@@ -174,5 +181,7 @@ def retry_with_delays_and_condition(backoff_iterator, should_retry_error=None):
 
             # Only or final attempt
             return call_retryable_function()
+
         return run_function
+
     return function_wrapper

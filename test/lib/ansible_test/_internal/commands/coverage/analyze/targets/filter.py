@@ -1,4 +1,5 @@
 """Filter an aggregated coverage file, keeping only the specified targets."""
+
 from __future__ import annotations
 
 import collections.abc as c
@@ -43,21 +44,29 @@ class CoverageAnalyzeTargetsFilterConfig(CoverageAnalyzeTargetsConfig):
         self.exclude_path: t.Optional[str] = args.exclude_path
 
 
-def command_coverage_analyze_targets_filter(args: CoverageAnalyzeTargetsFilterConfig) -> None:
+def command_coverage_analyze_targets_filter(
+    args: CoverageAnalyzeTargetsFilterConfig,
+) -> None:
     """Filter target names in an aggregated coverage file."""
     host_state = prepare_profiles(args)  # coverage analyze targets filter
 
     if args.delegate:
         raise Delegate(host_state=host_state)
 
-    covered_targets, covered_path_arcs, covered_path_lines = read_report(args.input_file)
+    covered_targets, covered_path_arcs, covered_path_lines = read_report(
+        args.input_file
+    )
 
     def pass_target_key(value: TargetKey) -> TargetKey:
         """Return the given target key unmodified."""
         return value
 
-    filtered_path_arcs = expand_indexes(covered_path_arcs, covered_targets, pass_target_key)
-    filtered_path_lines = expand_indexes(covered_path_lines, covered_targets, pass_target_key)
+    filtered_path_arcs = expand_indexes(
+        covered_path_arcs, covered_targets, pass_target_key
+    )
+    filtered_path_lines = expand_indexes(
+        covered_path_lines, covered_targets, pass_target_key
+    )
 
     include_targets = set(args.include_targets) if args.include_targets else None
     exclude_targets = set(args.exclude_targets) if args.exclude_targets else None
@@ -85,8 +94,12 @@ def command_coverage_analyze_targets_filter(args: CoverageAnalyzeTargetsFilterCo
 
         return targets
 
-    filtered_path_arcs = filter_data(filtered_path_arcs, path_filter_func, target_filter_func)
-    filtered_path_lines = filter_data(filtered_path_lines, path_filter_func, target_filter_func)
+    filtered_path_arcs = filter_data(
+        filtered_path_arcs, path_filter_func, target_filter_func
+    )
+    filtered_path_lines = filter_data(
+        filtered_path_lines, path_filter_func, target_filter_func
+    )
 
     target_indexes: TargetIndexes = {}
     indexed_path_arcs = generate_indexes(target_indexes, filtered_path_arcs)

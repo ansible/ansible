@@ -1,4 +1,5 @@
 """Sanity test using shellcheck."""
+
 from __future__ import annotations
 
 import os
@@ -48,21 +49,27 @@ class ShellcheckTest(SanityVersionNeutral):
     @property
     def error_code(self) -> t.Optional[str]:
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
-        return 'AT1000'
+        return "AT1000"
 
     def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
-        return [target for target in targets if os.path.splitext(target.path)[1] == '.sh']
+        return [
+            target for target in targets if os.path.splitext(target.path)[1] == ".sh"
+        ]
 
     def test(self, args: SanityConfig, targets: SanityTargets) -> TestResult:
-        exclude_file = os.path.join(SANITY_ROOT, 'shellcheck', 'exclude.txt')
-        exclude = set(read_lines_without_comments(exclude_file, remove_blank_lines=True, optional=True))
+        exclude_file = os.path.join(SANITY_ROOT, "shellcheck", "exclude.txt")
+        exclude = set(
+            read_lines_without_comments(
+                exclude_file, remove_blank_lines=True, optional=True
+            )
+        )
 
         settings = self.load_processor(args)
 
         paths = [target.path for target in targets.include]
 
-        if not find_executable('shellcheck', required='warning'):
+        if not find_executable("shellcheck", required="warning"):
             return SanitySkipped(self.name)
 
         cmd = [
@@ -92,14 +99,16 @@ class ShellcheckTest(SanityVersionNeutral):
 
         for item in root:
             for entry in item:
-                results.append(SanityMessage(
-                    message=entry.attrib['message'],
-                    path=item.attrib['name'],
-                    line=int(entry.attrib['line']),
-                    column=int(entry.attrib['column']),
-                    level=entry.attrib['severity'],
-                    code=entry.attrib['source'].replace('ShellCheck.', ''),
-                ))
+                results.append(
+                    SanityMessage(
+                        message=entry.attrib["message"],
+                        path=item.attrib["name"],
+                        line=int(entry.attrib["line"]),
+                        column=int(entry.attrib["column"]),
+                        level=entry.attrib["severity"],
+                        code=entry.attrib["source"].replace("ShellCheck.", ""),
+                    )
+                )
 
         results = settings.process_errors(results, paths)
 

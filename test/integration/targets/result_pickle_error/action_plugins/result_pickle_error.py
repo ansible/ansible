@@ -11,4 +11,4 @@ from jinja2 import Undefined
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
-        return {'obj': Undefined('obj')}
+        return {"obj": Undefined("obj")}

@@ -29,8 +29,9 @@ class OpenBSDVirtual(Virtual, VirtualSysctlDetectionMixin):
     - virtualization_type
     - virtualization_role
     """
-    platform = 'OpenBSD'
-    DMESG_BOOT = '/var/run/dmesg.boot'
+
+    platform = "OpenBSD"
+    DMESG_BOOT = "/var/run/dmesg.boot"
 
     def get_virtual_facts(self):
         virtual_facts = {}
@@ -38,36 +39,36 @@ class OpenBSDVirtual(Virtual, VirtualSysctlDetectionMixin):
         guest_tech = set()
 
         # Set empty values as default
-        virtual_facts['virtualization_type'] = ''
-        virtual_facts['virtualization_role'] = ''
+        virtual_facts["virtualization_type"] = ""
+        virtual_facts["virtualization_role"] = ""
 
-        virtual_product_facts = self.detect_virt_product('hw.product')
-        guest_tech.update(virtual_product_facts['virtualization_tech_guest'])
-        host_tech.update(virtual_product_facts['virtualization_tech_host'])
+        virtual_product_facts = self.detect_virt_product("hw.product")
+        guest_tech.update(virtual_product_facts["virtualization_tech_guest"])
+        host_tech.update(virtual_product_facts["virtualization_tech_host"])
         virtual_facts.update(virtual_product_facts)
 
-        virtual_vendor_facts = self.detect_virt_vendor('hw.vendor')
-        guest_tech.update(virtual_vendor_facts['virtualization_tech_guest'])
-        host_tech.update(virtual_vendor_facts['virtualization_tech_host'])
+        virtual_vendor_facts = self.detect_virt_vendor("hw.vendor")
+        guest_tech.update(virtual_vendor_facts["virtualization_tech_guest"])
+        host_tech.update(virtual_vendor_facts["virtualization_tech_host"])
 
-        if virtual_facts['virtualization_type'] == '':
+        if virtual_facts["virtualization_type"] == "":
             virtual_facts.update(virtual_vendor_facts)
 
         # Check the dmesg if vmm(4) attached, indicating the host is
         # capable of virtualization.
         dmesg_boot = get_file_content(OpenBSDVirtual.DMESG_BOOT)
         for line in dmesg_boot.splitlines():
-            match = re.match('^vmm0 at mainbus0: (SVM/RVI|VMX/EPT)$', line)
+            match = re.match("^vmm0 at mainbus0: (SVM/RVI|VMX/EPT)$", line)
             if match:
-                host_tech.add('vmm')
-                virtual_facts['virtualization_type'] = 'vmm'
-                virtual_facts['virtualization_role'] = 'host'
+                host_tech.add("vmm")
+                virtual_facts["virtualization_type"] = "vmm"
+                virtual_facts["virtualization_role"] = "host"
 
-        virtual_facts['virtualization_tech_guest'] = guest_tech
-        virtual_facts['virtualization_tech_host'] = host_tech
+        virtual_facts["virtualization_tech_guest"] = guest_tech
+        virtual_facts["virtualization_tech_host"] = host_tech
         return virtual_facts
 
 
 class OpenBSDVirtualCollector(VirtualCollector):
     _fact_class = OpenBSDVirtual
-    _platform = 'OpenBSD'
+    _platform = "OpenBSD"

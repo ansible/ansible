@@ -24,6 +24,7 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 try:
     # Check if we have SSLContext support
     from ssl import create_default_context, SSLContext
+
     del create_default_context
     del SSLContext
     HAS_SSLCONTEXT = True
@@ -32,30 +33,30 @@ except ImportError:
 
 
 class PythonFactCollector(BaseFactCollector):
-    name = 'python'
+    name = "python"
     _fact_ids = set()  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         python_facts = {}
-        python_facts['python'] = {
-            'version': {
-                'major': sys.version_info[0],
-                'minor': sys.version_info[1],
-                'micro': sys.version_info[2],
-                'releaselevel': sys.version_info[3],
-                'serial': sys.version_info[4]
+        python_facts["python"] = {
+            "version": {
+                "major": sys.version_info[0],
+                "minor": sys.version_info[1],
+                "micro": sys.version_info[2],
+                "releaselevel": sys.version_info[3],
+                "serial": sys.version_info[4],
             },
-            'version_info': list(sys.version_info),
-            'executable': sys.executable,
-            'has_sslcontext': HAS_SSLCONTEXT
+            "version_info": list(sys.version_info),
+            "executable": sys.executable,
+            "has_sslcontext": HAS_SSLCONTEXT,
         }
 
         try:
-            python_facts['python']['type'] = sys.subversion[0]
+            python_facts["python"]["type"] = sys.subversion[0]
         except AttributeError:
             try:
-                python_facts['python']['type'] = sys.implementation.name
+                python_facts["python"]["type"] = sys.implementation.name
             except AttributeError:
-                python_facts['python']['type'] = None
+                python_facts["python"]["type"] = None
 
         return python_facts

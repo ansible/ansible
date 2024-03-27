@@ -1,4 +1,5 @@
 """Test runner for all Ansible tests."""
+
 from __future__ import annotations
 
 import os
@@ -79,7 +80,7 @@ def main_internal(cli_args: t.Optional[list[str]] = None) -> None:
         configure_timeout(config)
         report_locale(isinstance(config, TestConfig) and not config.delegate)
 
-        display.info('RLIMIT_NOFILE: %s' % (CURRENT_RLIMIT_NOFILE,), verbosity=2)
+        display.info("RLIMIT_NOFILE: %s" % (CURRENT_RLIMIT_NOFILE,), verbosity=2)
 
         delegate_args = None
         target_names = None
@@ -112,13 +113,13 @@ def main_internal(cli_args: t.Optional[list[str]] = None) -> None:
         ex.run_callback()
         sys.exit(STATUS_HOST_CONNECTION_ERROR)
     except ApplicationWarning as ex:
-        display.warning('%s' % ex)
+        display.warning("%s" % ex)
         sys.exit(0)
     except ApplicationError as ex:
-        display.fatal('%s' % ex)
+        display.fatal("%s" % ex)
         sys.exit(1)
     except TimeoutExpiredError as ex:
-        display.fatal('%s' % ex)
+        display.fatal("%s" % ex)
         sys.exit(1)
     except KeyboardInterrupt:
         sys.exit(2)

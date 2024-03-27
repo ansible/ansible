@@ -8,4 +8,7 @@ def thingtocall():
     if secondary != ansible_collections.testns.testcoll.plugins.module_utils.secondary:
         raise Exception()
 
-    return "thingtocall in base called " + ansible_collections.testns.testcoll.plugins.module_utils.secondary.thingtocall()
+    return (
+        "thingtocall in base called "
+        + ansible_collections.testns.testcoll.plugins.module_utils.secondary.thingtocall()
+    )

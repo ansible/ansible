@@ -21,11 +21,11 @@ from ansible.module_utils.six import string_types
 
 
 class ActionModule(ActionBase):
-    ''' Create inventory groups based on variables '''
+    """Create inventory groups based on variables"""
 
     # We need to be able to modify the inventory
     TRANSFERS_FILES = False
-    _VALID_ARGS = frozenset(('key', 'parents'))
+    _VALID_ARGS = frozenset(("key", "parents"))
     _requires_connection = False
 
     def run(self, tmp=None, task_vars=None):
@@ -35,17 +35,17 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
-        if 'key' not in self._task.args:
-            result['failed'] = True
-            result['msg'] = "the 'key' param is required when using group_by"
+        if "key" not in self._task.args:
+            result["failed"] = True
+            result["msg"] = "the 'key' param is required when using group_by"
             return result
 
-        group_name = self._task.args.get('key')
-        parent_groups = self._task.args.get('parents', ['all'])
+        group_name = self._task.args.get("key")
+        parent_groups = self._task.args.get("parents", ["all"])
         if isinstance(parent_groups, string_types):
             parent_groups = [parent_groups]
 
-        result['changed'] = False
-        result['add_group'] = group_name.replace(' ', '-')
-        result['parent_groups'] = [name.replace(' ', '-') for name in parent_groups]
+        result["changed"] = False
+        result["add_group"] = group_name.replace(" ", "-")
+        result["parent_groups"] = [name.replace(" ", "-") for name in parent_groups]
         return result

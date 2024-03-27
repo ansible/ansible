@@ -36,12 +36,13 @@ class DarwinHardware(Hardware):
     - osrevision
     - uptime_seconds
     """
-    platform = 'Darwin'
+
+    platform = "Darwin"
 
     def populate(self, collected_facts=None):
         hardware_facts = {}
 
-        self.sysctl = get_sysctl(self.module, ['hw', 'machdep', 'kern'])
+        self.sysctl = get_sysctl(self.module, ["hw", "machdep", "kern"])
         mac_facts = self.get_mac_facts()
         cpu_facts = self.get_cpu_facts()
         memory_facts = self.get_memory_facts()
@@ -55,49 +56,58 @@ class DarwinHardware(Hardware):
         return hardware_facts
 
     def get_system_profile(self):
-        rc, out, err = self.module.run_command(["/usr/sbin/system_profiler", "SPHardwareDataType"])
+        rc, out, err = self.module.run_command(
+            ["/usr/sbin/system_profiler", "SPHardwareDataType"]
+        )
         if rc != 0:
             return dict()
         system_profile = dict()
         for line in out.splitlines():
-            if ': ' in line:
-                (key, value) = line.split(': ', 1)
-                system_profile[key.strip()] = ' '.join(value.strip().split())
+            if ": " in line:
+                (key, value) = line.split(": ", 1)
+                system_profile[key.strip()] = " ".join(value.strip().split())
         return system_profile
 
     def get_mac_facts(self):
         mac_facts = {}
         rc, out, err = self.module.run_command("sysctl hw.model")
         if rc == 0:
-            mac_facts['model'] = mac_facts['product_name'] = out.splitlines()[-1].split()[1]
-        mac_facts['osversion'] = self.sysctl['kern.osversion']
-        mac_facts['osrevision'] = self.sysctl['kern.osrevision']
+            mac_facts["model"] = mac_facts["product_name"] = out.splitlines()[
+                -1
+            ].split()[1]
+        mac_facts["osversion"] = self.sysctl["kern.osversion"]
+        mac_facts["osrevision"] = self.sysctl["kern.osrevision"]
 
         return mac_facts
 
     def get_cpu_facts(self):
         cpu_facts = {}
-        if 'machdep.cpu.brand_string' in self.sysctl:  # Intel
-            cpu_facts['processor'] = self.sysctl['machdep.cpu.brand_string']
-            cpu_facts['processor_cores'] = self.sysctl['machdep.cpu.core_count']
+        if "machdep.cpu.brand_string" in self.sysctl:  # Intel
+            cpu_facts["processor"] = self.sysctl["machdep.cpu.brand_string"]
+            cpu_facts["processor_cores"] = self.sysctl["machdep.cpu.core_count"]
         else:  # PowerPC
             system_profile = self.get_system_profile()
-            cpu_facts['processor'] = '%s @ %s' % (system_profile['Processor Name'], system_profile['Processor Speed'])
-            cpu_facts['processor_cores'] = self.sysctl['hw.physicalcpu']
-        cpu_facts['processor_vcpus'] = self.sysctl.get('hw.logicalcpu') or self.sysctl.get('hw.ncpu') or ''
+            cpu_facts["processor"] = "%s @ %s" % (
+                system_profile["Processor Name"],
+                system_profile["Processor Speed"],
+            )
+            cpu_facts["processor_cores"] = self.sysctl["hw.physicalcpu"]
+        cpu_facts["processor_vcpus"] = (
+            self.sysctl.get("hw.logicalcpu") or self.sysctl.get("hw.ncpu") or ""
+        )
 
         return cpu_facts
 
     def get_memory_facts(self):
         memory_facts = {
-            'memtotal_mb': int(self.sysctl['hw.memsize']) // 1024 // 1024,
-            'memfree_mb': 0,
+            "memtotal_mb": int(self.sysctl["hw.memsize"]) // 1024 // 1024,
+            "memfree_mb": 0,
         }
 
         total_used = 0
         page_size = 4096
         try:
-            vm_stat_command = get_bin_path('vm_stat')
+            vm_stat_command = get_bin_path("vm_stat")
         except ValueError:
             return memory_facts
 
@@ -106,7 +116,7 @@ class DarwinHardware(Hardware):
             # Free = Total - (Wired + active + inactive)
             # Get a generator of tuples from the command output so we can later
             # turn it into a dictionary
-            memory_stats = (line.rstrip('.').split(':', 1) for line in out.splitlines())
+            memory_stats = (line.rstrip(".").split(":", 1) for line in out.splitlines())
 
             # Strip extra left spaces from the value
             memory_stats = dict((k, v.lstrip()) for k, v in memory_stats)
@@ -119,40 +129,42 @@ class DarwinHardware(Hardware):
                     # not convert to an integer, just leave it alone.
                     pass
 
-            if memory_stats.get('Pages wired down'):
-                total_used += memory_stats['Pages wired down'] * page_size
-            if memory_stats.get('Pages active'):
-                total_used += memory_stats['Pages active'] * page_size
-            if memory_stats.get('Pages inactive'):
-                total_used += memory_stats['Pages inactive'] * page_size
+            if memory_stats.get("Pages wired down"):
+                total_used += memory_stats["Pages wired down"] * page_size
+            if memory_stats.get("Pages active"):
+                total_used += memory_stats["Pages active"] * page_size
+            if memory_stats.get("Pages inactive"):
+                total_used += memory_stats["Pages inactive"] * page_size
 
-            memory_facts['memfree_mb'] = memory_facts['memtotal_mb'] - (total_used // 1024 // 1024)
+            memory_facts["memfree_mb"] = memory_facts["memtotal_mb"] - (
+                total_used // 1024 // 1024
+            )
 
         return memory_facts
 
     def get_uptime_facts(self):
         # On Darwin, the default format is annoying to parse.
         # Use -b to get the raw value and decode it.
-        sysctl_cmd = self.module.get_bin_path('sysctl')
-        cmd = [sysctl_cmd, '-b', 'kern.boottime']
+        sysctl_cmd = self.module.get_bin_path("sysctl")
+        cmd = [sysctl_cmd, "-b", "kern.boottime"]
 
         # We need to get raw bytes, not UTF-8.
         rc, out, err = self.module.run_command(cmd, encoding=None)
 
         # kern.boottime returns seconds and microseconds as two 64-bits
         # fields, but we are only interested in the first field.
-        struct_format = '@L'
+        struct_format = "@L"
         struct_size = struct.calcsize(struct_format)
         if rc != 0 or len(out) < struct_size:
             return {}
 
-        (kern_boottime, ) = struct.unpack(struct_format, out[:struct_size])
+        (kern_boottime,) = struct.unpack(struct_format, out[:struct_size])
 
         return {
-            'uptime_seconds': int(time.time() - kern_boottime),
+            "uptime_seconds": int(time.time() - kern_boottime),
         }
 
 
 class DarwinHardwareCollector(HardwareCollector):
     _fact_class = DarwinHardware
-    _platform = 'Darwin'
+    _platform = "Darwin"

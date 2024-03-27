@@ -22,21 +22,25 @@ from threading import Thread
 
 class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
-    CALLBACK_NAME = 'spewstdio'
+    CALLBACK_NAME = "spewstdio"
 
     def __init__(self):
         super().__init__()
         self.display = Display()
 
-        if os.environ.get('SPEWSTDIO_ENABLED', '0') != '1':
-            self.display.warning('spewstdio test plugin loaded but disabled; set SPEWSTDIO_ENABLED=1 to enable')
+        if os.environ.get("SPEWSTDIO_ENABLED", "0") != "1":
+            self.display.warning(
+                "spewstdio test plugin loaded but disabled; set SPEWSTDIO_ENABLED=1 to enable"
+            )
             return
 
         self.display = Display()
         self._keep_spewing = True
 
         # cause the child to write directly to stdout immediately post-fork
-        os.register_at_fork(after_in_child=lambda: print(f"hi from forked child pid {os.getpid()}"))
+        os.register_at_fork(
+            after_in_child=lambda: print(f"hi from forked child pid {os.getpid()}")
+        )
 
         # in passing cases, stop spewing when the controller is exiting to prevent fatal errors on final flush
         atexit.register(self.stop_spew)
@@ -54,7 +58,7 @@ class CallbackModule(CallbackBase):
         while self._keep_spewing:
             # dump a non-printing control character directly to stdout to avoid junking up the screen while still
             # doing lots of writes and flushes.
-            sys.stdout.write('\x1b[K')
+            sys.stdout.write("\x1b[K")
             sys.stdout.flush()
 
         self.display.warning("spewstdio STOPPING SPEW")

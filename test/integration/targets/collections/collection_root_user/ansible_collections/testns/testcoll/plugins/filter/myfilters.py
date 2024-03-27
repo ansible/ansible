@@ -8,6 +8,4 @@ def testfilter(data):
 class FilterModule(object):
 
     def filters(self):
-        return {
-            'testfilter': testfilter
-        }
+        return {"testfilter": testfilter}

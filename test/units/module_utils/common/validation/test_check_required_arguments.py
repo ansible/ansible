@@ -13,14 +13,14 @@ from ansible.module_utils.common.validation import check_required_arguments
 @pytest.fixture
 def arguments_terms():
     return {
-        'foo': {
-            'required': True,
+        "foo": {
+            "required": True,
         },
-        'bar': {
-            'required': False,
+        "bar": {
+            "required": False,
         },
-        'tomato': {
-            'irrelevant': 72,
+        "tomato": {
+            "irrelevant": 72,
         },
     }
 
@@ -28,29 +28,29 @@ def arguments_terms():
 @pytest.fixture
 def arguments_terms_multiple():
     return {
-        'foo': {
-            'required': True,
+        "foo": {
+            "required": True,
         },
-        'bar': {
-            'required': True,
+        "bar": {
+            "required": True,
         },
-        'tomato': {
-            'irrelevant': 72,
+        "tomato": {
+            "irrelevant": 72,
         },
     }
 
 
 def test_check_required_arguments(arguments_terms):
     params = {
-        'foo': 'hello',
-        'bar': 'haha',
+        "foo": "hello",
+        "bar": "haha",
     }
     assert check_required_arguments(arguments_terms, params) == []
 
 
 def test_check_required_arguments_missing(arguments_terms):
     params = {
-        'apples': 'woohoo',
+        "apples": "woohoo",
     }
     expected = "missing required arguments: foo"
 
@@ -62,7 +62,7 @@ def test_check_required_arguments_missing(arguments_terms):
 
 def test_check_required_arguments_missing_multiple(arguments_terms_multiple):
     params = {
-        'apples': 'woohoo',
+        "apples": "woohoo",
     }
     expected = "missing required arguments: bar, foo"
 
@@ -75,8 +75,8 @@ def test_check_required_arguments_missing_multiple(arguments_terms_multiple):
 def test_check_required_arguments_missing_none():
     terms = None
     params = {
-        'foo': 'bar',
-        'baz': 'buzz',
+        "foo": "bar",
+        "baz": "buzz",
     }
     assert check_required_arguments(terms, params) == []
 

@@ -1,1 +1,1 @@
-data = 'baz2'
+data = "baz2"

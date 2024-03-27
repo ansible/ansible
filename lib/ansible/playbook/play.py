@@ -37,11 +37,10 @@ from ansible.utils.display import Display
 display = Display()
 
 
-__all__ = ['Play']
+__all__ = ["Play"]
 
 
 class Play(Base, Taggable, CollectionSearch):
-
     """
     A play is a language feature that represents a list of roles and/or
     task/handler blocks to execute on a given set of hosts.
@@ -53,35 +52,62 @@ class Play(Base, Taggable, CollectionSearch):
     """
 
     # =================================================================================
-    hosts = NonInheritableFieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True, priority=-2)
+    hosts = NonInheritableFieldAttribute(
+        isa="list",
+        required=True,
+        listof=string_types,
+        always_post_validate=True,
+        priority=-2,
+    )
 
     # Facts
-    gather_facts = NonInheritableFieldAttribute(isa='bool', default=None, always_post_validate=True)
+    gather_facts = NonInheritableFieldAttribute(
+        isa="bool", default=None, always_post_validate=True
+    )
 
     # defaults to be deprecated, should be 'None' in future
-    gather_subset = NonInheritableFieldAttribute(isa='list', default=(lambda: C.DEFAULT_GATHER_SUBSET), listof=string_types, always_post_validate=True)
-    gather_timeout = NonInheritableFieldAttribute(isa='int', default=C.DEFAULT_GATHER_TIMEOUT, always_post_validate=True)
-    fact_path = NonInheritableFieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
+    gather_subset = NonInheritableFieldAttribute(
+        isa="list",
+        default=(lambda: C.DEFAULT_GATHER_SUBSET),
+        listof=string_types,
+        always_post_validate=True,
+    )
+    gather_timeout = NonInheritableFieldAttribute(
+        isa="int", default=C.DEFAULT_GATHER_TIMEOUT, always_post_validate=True
+    )
+    fact_path = NonInheritableFieldAttribute(isa="string", default=C.DEFAULT_FACT_PATH)
 
     # Variable Attributes
-    vars_files = NonInheritableFieldAttribute(isa='list', default=list, priority=99)
-    vars_prompt = NonInheritableFieldAttribute(isa='list', default=list, always_post_validate=False)
+    vars_files = NonInheritableFieldAttribute(isa="list", default=list, priority=99)
+    vars_prompt = NonInheritableFieldAttribute(
+        isa="list", default=list, always_post_validate=False
+    )
 
     # Role Attributes
-    roles = NonInheritableFieldAttribute(isa='list', default=list, priority=90)
+    roles = NonInheritableFieldAttribute(isa="list", default=list, priority=90)
 
     # Block (Task) Lists Attributes
-    handlers = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
-    pre_tasks = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
-    post_tasks = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
-    tasks = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
+    handlers = NonInheritableFieldAttribute(isa="list", default=list, priority=-1)
+    pre_tasks = NonInheritableFieldAttribute(isa="list", default=list, priority=-1)
+    post_tasks = NonInheritableFieldAttribute(isa="list", default=list, priority=-1)
+    tasks = NonInheritableFieldAttribute(isa="list", default=list, priority=-1)
 
     # Flag/Setting Attributes
-    force_handlers = NonInheritableFieldAttribute(isa='bool', default=context.cliargs_deferred_get('force_handlers'), always_post_validate=True)
-    max_fail_percentage = NonInheritableFieldAttribute(isa='percent', always_post_validate=True)
-    serial = NonInheritableFieldAttribute(isa='list', default=list, always_post_validate=True)
-    strategy = NonInheritableFieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
-    order = NonInheritableFieldAttribute(isa='string', always_post_validate=True)
+    force_handlers = NonInheritableFieldAttribute(
+        isa="bool",
+        default=context.cliargs_deferred_get("force_handlers"),
+        always_post_validate=True,
+    )
+    max_fail_percentage = NonInheritableFieldAttribute(
+        isa="percent", always_post_validate=True
+    )
+    serial = NonInheritableFieldAttribute(
+        isa="list", default=list, always_post_validate=True
+    )
+    strategy = NonInheritableFieldAttribute(
+        isa="string", default=C.DEFAULT_STRATEGY, always_post_validate=True
+    )
+    order = NonInheritableFieldAttribute(isa="string", always_post_validate=True)
 
     # =================================================================================
 
@@ -93,8 +119,8 @@ class Play(Base, Taggable, CollectionSearch):
         self._removed_hosts = []
         self.role_cache = {}
 
-        self.only_tags = set(context.CLIARGS.get('tags', [])) or frozenset(('all',))
-        self.skip_tags = set(context.CLIARGS.get('skip_tags', []))
+        self.only_tags = set(context.CLIARGS.get("tags", [])) or frozenset(("all",))
+        self.skip_tags = set(context.CLIARGS.get("skip_tags", []))
 
         self._action_groups = {}
         self._group_actions = {}
@@ -104,11 +130,10 @@ class Play(Base, Taggable, CollectionSearch):
 
     @property
     def ROLE_CACHE(self):
-        """Backwards compat for custom strategies using ``play.ROLE_CACHE``
-        """
+        """Backwards compat for custom strategies using ``play.ROLE_CACHE``"""
         display.deprecated(
-            'Play.ROLE_CACHE is deprecated in favor of Play.role_cache, or StrategyBase._get_cached_role',
-            version='2.18',
+            "Play.ROLE_CACHE is deprecated in favor of Play.role_cache, or StrategyBase._get_cached_role",
+            version="2.18",
         )
         cache = {}
         for path, roles in self.role_cache.items():
@@ -120,30 +145,40 @@ class Play(Base, Taggable, CollectionSearch):
 
     def _validate_hosts(self, attribute, name, value):
         # Only validate 'hosts' if a value was passed in to original data set.
-        if 'hosts' in self._ds:
+        if "hosts" in self._ds:
             if not value:
-                raise AnsibleParserError("Hosts list cannot be empty. Please check your playbook")
+                raise AnsibleParserError(
+                    "Hosts list cannot be empty. Please check your playbook"
+                )
 
             if is_sequence(value):
                 # Make sure each item in the sequence is a valid string
                 for entry in value:
                     if entry is None:
-                        raise AnsibleParserError("Hosts list cannot contain values of 'None'. Please check your playbook")
+                        raise AnsibleParserError(
+                            "Hosts list cannot contain values of 'None'. Please check your playbook"
+                        )
                     elif not isinstance(entry, (binary_type, text_type)):
-                        raise AnsibleParserError("Hosts list contains an invalid host value: '{host!s}'".format(host=entry))
+                        raise AnsibleParserError(
+                            "Hosts list contains an invalid host value: '{host!s}'".format(
+                                host=entry
+                            )
+                        )
 
             elif not isinstance(value, (binary_type, text_type)):
-                raise AnsibleParserError("Hosts list must be a sequence or string. Please check your playbook.")
+                raise AnsibleParserError(
+                    "Hosts list must be a sequence or string. Please check your playbook."
+                )
 
     def get_name(self):
-        ''' return the name of the Play '''
+        """return the name of the Play"""
         if self.name:
             return self.name
 
         if is_sequence(self.hosts):
-            self.name = ','.join(self.hosts)
+            self.name = ",".join(self.hosts)
         else:
-            self.name = self.hosts or ''
+            self.name = self.hosts or ""
 
         return self.name
 
@@ -155,86 +190,139 @@ class Play(Base, Taggable, CollectionSearch):
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def preprocess_data(self, ds):
-        '''
+        """
         Adjusts play datastructure to cleanup old/legacy items
-        '''
+        """
 
         if not isinstance(ds, dict):
-            raise AnsibleAssertionError('while preprocessing data (%s), ds should be a dict but was a %s' % (ds, type(ds)))
+            raise AnsibleAssertionError(
+                "while preprocessing data (%s), ds should be a dict but was a %s"
+                % (ds, type(ds))
+            )
 
         # The use of 'user' in the Play datastructure was deprecated to
         # line up with the same change for Tasks, due to the fact that
         # 'user' conflicted with the user module.
-        if 'user' in ds:
+        if "user" in ds:
             # this should never happen, but error out with a helpful message
             # to the user if it does...
-            if 'remote_user' in ds:
-                raise AnsibleParserError("both 'user' and 'remote_user' are set for this play. "
-                                         "The use of 'user' is deprecated, and should be removed", obj=ds)
+            if "remote_user" in ds:
+                raise AnsibleParserError(
+                    "both 'user' and 'remote_user' are set for this play. "
+                    "The use of 'user' is deprecated, and should be removed",
+                    obj=ds,
+                )
 
-            ds['remote_user'] = ds['user']
-            del ds['user']
+            ds["remote_user"] = ds["user"]
+            del ds["user"]
 
         return super(Play, self).preprocess_data(ds)
 
     def _load_tasks(self, attr, ds):
-        '''
+        """
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
-        '''
+        """
         try:
-            return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+            return load_list_of_blocks(
+                ds=ds,
+                play=self,
+                variable_manager=self._variable_manager,
+                loader=self._loader,
+            )
         except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading tasks: %s" % to_native(e), obj=self._ds, orig_exc=e)
+            raise AnsibleParserError(
+                "A malformed block was encountered while loading tasks: %s"
+                % to_native(e),
+                obj=self._ds,
+                orig_exc=e,
+            )
 
     def _load_pre_tasks(self, attr, ds):
-        '''
+        """
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
-        '''
+        """
         try:
-            return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+            return load_list_of_blocks(
+                ds=ds,
+                play=self,
+                variable_manager=self._variable_manager,
+                loader=self._loader,
+            )
         except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading pre_tasks", obj=self._ds, orig_exc=e)
+            raise AnsibleParserError(
+                "A malformed block was encountered while loading pre_tasks",
+                obj=self._ds,
+                orig_exc=e,
+            )
 
     def _load_post_tasks(self, attr, ds):
-        '''
+        """
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
-        '''
+        """
         try:
-            return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+            return load_list_of_blocks(
+                ds=ds,
+                play=self,
+                variable_manager=self._variable_manager,
+                loader=self._loader,
+            )
         except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading post_tasks", obj=self._ds, orig_exc=e)
+            raise AnsibleParserError(
+                "A malformed block was encountered while loading post_tasks",
+                obj=self._ds,
+                orig_exc=e,
+            )
 
     def _load_handlers(self, attr, ds):
-        '''
+        """
         Loads a list of blocks from a list which may be mixed handlers/blocks.
         Bare handlers outside of a block are given an implicit block.
-        '''
+        """
         try:
             return self._extend_value(
                 self.handlers,
-                load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader),
-                prepend=True
+                load_list_of_blocks(
+                    ds=ds,
+                    play=self,
+                    use_handlers=True,
+                    variable_manager=self._variable_manager,
+                    loader=self._loader,
+                ),
+                prepend=True,
             )
         except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading handlers", obj=self._ds, orig_exc=e)
+            raise AnsibleParserError(
+                "A malformed block was encountered while loading handlers",
+                obj=self._ds,
+                orig_exc=e,
+            )
 
     def _load_roles(self, attr, ds):
-        '''
+        """
         Loads and returns a list of RoleInclude objects from the datastructure
         list of role definitions and creates the Role from those objects
-        '''
+        """
 
         if ds is None:
             ds = []
 
         try:
-            role_includes = load_list_of_roles(ds, play=self, variable_manager=self._variable_manager,
-                                               loader=self._loader, collection_search_list=self.collections)
+            role_includes = load_list_of_roles(
+                ds,
+                play=self,
+                variable_manager=self._variable_manager,
+                loader=self._loader,
+                collection_search_list=self.collections,
+            )
         except AssertionError as e:
-            raise AnsibleParserError("A malformed role declaration was encountered.", obj=self._ds, orig_exc=e)
+            raise AnsibleParserError(
+                "A malformed role declaration was encountered.",
+                obj=self._ds,
+                orig_exc=e,
+            )
 
         roles = []
         for ri in role_includes:
@@ -249,22 +337,38 @@ class Play(Base, Taggable, CollectionSearch):
         vars_prompts = []
         if new_ds is not None:
             for prompt_data in new_ds:
-                if 'name' not in prompt_data:
-                    raise AnsibleParserError("Invalid vars_prompt data structure, missing 'name' key", obj=ds)
+                if "name" not in prompt_data:
+                    raise AnsibleParserError(
+                        "Invalid vars_prompt data structure, missing 'name' key", obj=ds
+                    )
                 for key in prompt_data:
-                    if key not in ('name', 'prompt', 'default', 'private', 'confirm', 'encrypt', 'salt_size', 'salt', 'unsafe'):
-                        raise AnsibleParserError("Invalid vars_prompt data structure, found unsupported key '%s'" % key, obj=ds)
+                    if key not in (
+                        "name",
+                        "prompt",
+                        "default",
+                        "private",
+                        "confirm",
+                        "encrypt",
+                        "salt_size",
+                        "salt",
+                        "unsafe",
+                    ):
+                        raise AnsibleParserError(
+                            "Invalid vars_prompt data structure, found unsupported key '%s'"
+                            % key,
+                            obj=ds,
+                        )
                 vars_prompts.append(prompt_data)
         return vars_prompts
 
     def _compile_roles(self):
-        '''
+        """
         Handles the role compilation step, returning a flat list of tasks
         with the lowest level dependencies first. For example, if a role R
         has a dependency D1, which also has a dependency D2, the tasks from
         D2 are merged first, followed by D1, and lastly by the tasks from
         the parent role R last. This is done for all roles in the Play.
-        '''
+        """
 
         block_list = []
 
@@ -279,10 +383,10 @@ class Play(Base, Taggable, CollectionSearch):
         return block_list
 
     def compile_roles_handlers(self):
-        '''
+        """
         Handles the role handler compilation step, returning a flat list of Handlers
         This is done for all roles in the Play.
-        '''
+        """
 
         block_list = []
 
@@ -295,20 +399,20 @@ class Play(Base, Taggable, CollectionSearch):
         return block_list
 
     def compile(self):
-        '''
+        """
         Compiles and returns the task list for this play, compiled from the
         roles (which are themselves compiled recursively) and/or the list of
         tasks specified in the play.
-        '''
+        """
 
         # create a block containing a single flush handlers meta
         # task, so we can be sure to run handlers at certain points
         # of the playbook execution
         flush_block = Block.load(
-            data={'meta': 'flush_handlers'},
+            data={"meta": "flush_handlers"},
             play=self,
             variable_manager=self._variable_manager,
-            loader=self._loader
+            loader=self._loader,
         )
 
         for task in flush_block.block:
@@ -317,8 +421,8 @@ class Play(Base, Taggable, CollectionSearch):
         block_list = []
         if self.force_handlers:
             noop_task = Task()
-            noop_task.action = 'meta'
-            noop_task.args['_raw_params'] = 'noop'
+            noop_task.action = "meta"
+            noop_task.args["_raw_params"] = "noop"
             noop_task.implicit = True
             noop_task.set_loader(self._loader)
 
@@ -381,29 +485,29 @@ class Play(Base, Taggable, CollectionSearch):
         roles = []
         for role in self.get_roles():
             roles.append(role.serialize())
-        data['roles'] = roles
-        data['included_path'] = self._included_path
-        data['action_groups'] = self._action_groups
-        data['group_actions'] = self._group_actions
+        data["roles"] = roles
+        data["included_path"] = self._included_path
+        data["action_groups"] = self._action_groups
+        data["group_actions"] = self._group_actions
 
         return data
 
     def deserialize(self, data):
         super(Play, self).deserialize(data)
 
-        self._included_path = data.get('included_path', None)
-        self._action_groups = data.get('action_groups', {})
-        self._group_actions = data.get('group_actions', {})
-        if 'roles' in data:
-            role_data = data.get('roles', [])
+        self._included_path = data.get("included_path", None)
+        self._action_groups = data.get("action_groups", {})
+        self._group_actions = data.get("group_actions", {})
+        if "roles" in data:
+            role_data = data.get("roles", [])
             roles = []
             for role in role_data:
                 r = Role()
                 r.deserialize(role)
                 roles.append(r)
 
-            setattr(self, 'roles', roles)
-            del data['roles']
+            setattr(self, "roles", roles)
+            del data["roles"]
 
     def copy(self):
         new_me = super(Play, self).copy()

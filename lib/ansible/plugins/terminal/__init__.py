@@ -19,14 +19,11 @@
 from __future__ import annotations
 
 import re
-
-from abc import ABC, abstractmethod
-
-from ansible.errors import AnsibleConnectionFailure
+from abc import ABC
 
 
 class TerminalBase(ABC):
-    '''
+    """
     A base class for implementing cli connections
 
     .. note:: Unlike most of Ansible, nearly all strings in
@@ -36,7 +33,7 @@ class TerminalBase(ABC):
         :func:`~ansible.module_utils.common.text.converters.to_bytes` and
         :func:`~ansible.module_utils.common.text.converters.to_text` to avoid unexpected
         problems.
-    '''
+    """
 
     #: compiled bytes regular expressions as stdout
     terminal_stdout_re = []  # type: list[re.Pattern]
@@ -46,9 +43,9 @@ class TerminalBase(ABC):
 
     #: compiled bytes regular expressions to remove ANSI codes
     ansi_re = [
-        re.compile(br'\x1b\[\?1h\x1b='),  # CSI ? 1 h ESC =
-        re.compile(br'\x08.'),            # [Backspace] .
-        re.compile(br"\x1b\[m"),          # ANSI reset code
+        re.compile(rb"\x1b\[\?1h\x1b="),  # CSI ? 1 h ESC =
+        re.compile(rb"\x08."),  # [Backspace] .
+        re.compile(rb"\x1b\[m"),  # ANSI reset code
     ]
 
     #: terminal initial prompt
@@ -64,11 +61,11 @@ class TerminalBase(ABC):
         self._connection = connection
 
     def _exec_cli_command(self, cmd, check_rc=True):
-        '''
+        """
         Executes the CLI command on the remote device and returns the output
 
         :arg cmd: Byte string command to be executed
-        '''
+        """
         return self._connection.exec_command(cmd)
 
     def _get_prompt(self):
@@ -127,6 +124,5 @@ class TerminalBase(ABC):
         return self.on_become(passwd)
 
     def on_deauthorize(self):
-        """Deprecated method for privilege deescalation
-        """
+        """Deprecated method for privilege deescalation"""
         return self.on_unbecome()

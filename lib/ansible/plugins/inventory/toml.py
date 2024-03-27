@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
     name: toml
     version_added: "2.8"
     short_description: Uses a specific TOML file as an inventory source.
@@ -13,9 +13,9 @@ DOCUMENTATION = r'''
     notes:
         - >
           Requires one of the following python libraries: 'toml', 'tomli', or 'tomllib'
-'''
+"""
 
-EXAMPLES = r'''# fmt: toml
+EXAMPLES = r"""# fmt: toml
 # Example 1
 [all.vars]
 has_java = false
@@ -84,7 +84,7 @@ host4 = {}
 
 [g2.hosts]
 host4 = {}
-'''
+"""
 
 import os
 import typing as t
@@ -103,6 +103,7 @@ from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes, AnsibleUnsafeText
 HAS_TOML = False
 try:
     import toml
+
     HAS_TOML = True
 except ImportError:
     pass
@@ -110,6 +111,7 @@ except ImportError:
 HAS_TOMLIW = False
 try:
     import tomli_w  # type: ignore[import]
+
     HAS_TOMLIW = True
 except ImportError:
     pass
@@ -117,10 +119,12 @@ except ImportError:
 HAS_TOMLLIB = False
 try:
     import tomllib  # type: ignore[import]
+
     HAS_TOMLLIB = True
 except ImportError:
     try:
         import tomli as tomllib  # type: ignore[no-redef]
+
         HAS_TOMLLIB = True
     except ImportError:
         pass
@@ -129,19 +133,24 @@ display = Display()
 
 
 # dumps
-if HAS_TOML and hasattr(toml, 'TomlEncoder'):
+if HAS_TOML and hasattr(toml, "TomlEncoder"):
     # toml>=0.10.0
     class AnsibleTomlEncoder(toml.TomlEncoder):
         def __init__(self, *args, **kwargs):
             super(AnsibleTomlEncoder, self).__init__(*args, **kwargs)
             # Map our custom YAML object types to dump_funcs from ``toml``
-            self.dump_funcs.update({
-                AnsibleSequence: self.dump_funcs.get(list),
-                AnsibleUnicode: self.dump_funcs.get(str),
-                AnsibleUnsafeBytes: self.dump_funcs.get(str),
-                AnsibleUnsafeText: self.dump_funcs.get(str),
-            })
-    toml_dumps = partial(toml.dumps, encoder=AnsibleTomlEncoder())  # type: t.Callable[[t.Any], str]
+            self.dump_funcs.update(
+                {
+                    AnsibleSequence: self.dump_funcs.get(list),
+                    AnsibleUnicode: self.dump_funcs.get(str),
+                    AnsibleUnsafeBytes: self.dump_funcs.get(str),
+                    AnsibleUnsafeText: self.dump_funcs.get(str),
+                }
+            )
+
+    toml_dumps = partial(
+        toml.dumps, encoder=AnsibleTomlEncoder()
+    )  # type: t.Callable[[t.Any], str]
 else:
     # toml<0.10.0
     # tomli-w
@@ -153,6 +162,7 @@ else:
         raise AnsibleRuntimeError(
             'The python "toml" or "tomli-w" library is required when using the TOML output format'
         )
+
 
 # loads
 if HAS_TOML:
@@ -191,11 +201,13 @@ def convert_yaml_objects_to_native(obj):
 
 
 class InventoryModule(BaseFileInventoryPlugin):
-    NAME = 'toml'
+    NAME = "toml"
 
     def _parse_group(self, group, group_data):
         if group_data is not None and not isinstance(group_data, MutableMapping):
-            self.display.warning("Skipping '%s' as this is not a valid group definition" % group)
+            self.display.warning(
+                "Skipping '%s' as this is not a valid group definition" % group
+            )
             return
 
         group = self.inventory.add_group(group)
@@ -203,38 +215,38 @@ class InventoryModule(BaseFileInventoryPlugin):
             return
 
         for key, data in group_data.items():
-            if key == 'vars':
+            if key == "vars":
                 if not isinstance(data, MutableMapping):
                     raise AnsibleParserError(
-                        'Invalid "vars" entry for "%s" group, requires a dict, found "%s" instead.' %
-                        (group, type(data))
+                        'Invalid "vars" entry for "%s" group, requires a dict, found "%s" instead.'
+                        % (group, type(data))
                     )
                 for var, value in data.items():
                     self.inventory.set_variable(group, var, value)
 
-            elif key == 'children':
+            elif key == "children":
                 if not isinstance(data, MutableSequence):
                     raise AnsibleParserError(
-                        'Invalid "children" entry for "%s" group, requires a list, found "%s" instead.' %
-                        (group, type(data))
+                        'Invalid "children" entry for "%s" group, requires a list, found "%s" instead.'
+                        % (group, type(data))
                     )
                 for subgroup in data:
                     self._parse_group(subgroup, {})
                     self.inventory.add_child(group, subgroup)
 
-            elif key == 'hosts':
+            elif key == "hosts":
                 if not isinstance(data, MutableMapping):
                     raise AnsibleParserError(
-                        'Invalid "hosts" entry for "%s" group, requires a dict, found "%s" instead.' %
-                        (group, type(data))
+                        'Invalid "hosts" entry for "%s" group, requires a dict, found "%s" instead.'
+                        % (group, type(data))
                     )
                 for host_pattern, value in data.items():
                     hosts, port = self._expand_hostpattern(host_pattern)
                     self._populate_host_vars(hosts, value, group, port)
             else:
                 self.display.warning(
-                    'Skipping unexpected key "%s" in group "%s", only "vars", "children" and "hosts" are valid' %
-                    (key, group)
+                    'Skipping unexpected key "%s" in group "%s", only "vars", "children" and "hosts" are valid'
+                    % (key, group)
                 )
 
     def _load_file(self, file_name):
@@ -243,29 +255,32 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         b_file_name = to_bytes(self.loader.path_dwim(file_name))
         if not self.loader.path_exists(b_file_name):
-            raise AnsibleFileNotFound("Unable to retrieve file contents", file_name=file_name)
+            raise AnsibleFileNotFound(
+                "Unable to retrieve file contents", file_name=file_name
+            )
 
         try:
             (b_data, private) = self.loader._get_file_contents(file_name)
-            return toml_loads(to_text(b_data, errors='surrogate_or_strict'))
+            return toml_loads(to_text(b_data, errors="surrogate_or_strict"))
         except TOMLDecodeError as e:
             raise AnsibleParserError(
-                'TOML file (%s) is invalid: %s' % (file_name, to_native(e)),
-                orig_exc=e
+                "TOML file (%s) is invalid: %s" % (file_name, to_native(e)), orig_exc=e
             )
         except (IOError, OSError) as e:
             raise AnsibleParserError(
-                "An error occurred while trying to read the file '%s': %s" % (file_name, to_native(e)),
-                orig_exc=e
+                "An error occurred while trying to read the file '%s': %s"
+                % (file_name, to_native(e)),
+                orig_exc=e,
             )
         except Exception as e:
             raise AnsibleParserError(
-                "An unexpected error occurred while parsing the file '%s': %s" % (file_name, to_native(e)),
-                orig_exc=e
+                "An unexpected error occurred while parsing the file '%s': %s"
+                % (file_name, to_native(e)),
+                orig_exc=e,
             )
 
     def parse(self, inventory, loader, path, cache=True):
-        ''' parses the inventory file '''
+        """parses the inventory file"""
         if not HAS_TOMLLIB and not HAS_TOML:
             # tomllib works here too, but we don't call it out in the error,
             # since you either have it or not as part of cpython stdlib >= 3.11
@@ -282,9 +297,11 @@ class InventoryModule(BaseFileInventoryPlugin):
             raise AnsibleParserError(e)
 
         if not data:
-            raise AnsibleParserError('Parsed empty TOML file')
-        elif data.get('plugin'):
-            raise AnsibleParserError('Plugin configuration TOML file, not TOML inventory')
+            raise AnsibleParserError("Parsed empty TOML file")
+        elif data.get("plugin"):
+            raise AnsibleParserError(
+                "Plugin configuration TOML file, not TOML inventory"
+            )
 
         for group_name in data:
             self._parse_group(group_name, data[group_name])
@@ -292,6 +309,6 @@ class InventoryModule(BaseFileInventoryPlugin):
     def verify_file(self, path):
         if super(InventoryModule, self).verify_file(path):
             file_name, ext = os.path.splitext(path)
-            if ext == '.toml':
+            if ext == ".toml":
                 return True
         return False

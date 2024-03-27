@@ -24,8 +24,8 @@ except ImportError:
 
 from ansible.release import __version__
 
-MAJOR_MINOR_VERSION = '.'.join(__version__.split('.')[:2])
-PROJECT = f'ansible-core {MAJOR_MINOR_VERSION}'
+MAJOR_MINOR_VERSION = ".".join(__version__.split(".")[:2])
+PROJECT = f"ansible-core {MAJOR_MINOR_VERSION}"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -37,11 +37,21 @@ class Issue:
     labels: list[str] | None = None
 
     def create(self) -> str:
-        cmd = ['gh', 'issue', 'create', '--title', self.title, '--body', self.body, '--project', self.project]
+        cmd = [
+            "gh",
+            "issue",
+            "create",
+            "--title",
+            self.title,
+            "--body",
+            self.body,
+            "--project",
+            self.project,
+        ]
 
         if self.labels:
             for label in self.labels:
-                cmd.extend(('--label', label))
+                cmd.extend(("--label", label))
 
         process = subprocess.run(cmd, capture_output=True, check=True)
         url = process.stdout.decode().strip()
@@ -57,22 +67,24 @@ class Feature:
 
     @staticmethod
     def from_dict(data: dict[str, t.Any]) -> Feature:
-        title = data.get('title')
-        summary = data.get('summary')
-        component = data.get('component')
-        labels = data.get('labels')
+        title = data.get("title")
+        summary = data.get("summary")
+        component = data.get("component")
+        labels = data.get("labels")
 
         if not isinstance(title, str):
-            raise RuntimeError(f'`title` is not `str`: {title}')
+            raise RuntimeError(f"`title` is not `str`: {title}")
 
         if not isinstance(summary, str):
-            raise RuntimeError(f'`summary` is not `str`: {summary}')
+            raise RuntimeError(f"`summary` is not `str`: {summary}")
 
         if not isinstance(component, str):
-            raise RuntimeError(f'`component` is not `str`: {component}')
+            raise RuntimeError(f"`component` is not `str`: {component}")
 
-        if not isinstance(labels, list) or not all(isinstance(item, str) for item in labels):
-            raise RuntimeError(f'`labels` is not `list[str]`: {labels}')
+        if not isinstance(labels, list) or not all(
+            isinstance(item, str) for item in labels
+        ):
+            raise RuntimeError(f"`labels` is not `list[str]`: {labels}")
 
         return Feature(
             title=title,
@@ -82,7 +94,7 @@ class Feature:
         )
 
     def create_issue(self, project: str) -> Issue:
-        body = f'''
+        body = f"""
 ### Summary
 
 {self.summary}
@@ -94,7 +106,7 @@ Feature Idea
 ### Component Name
 
 `{self.component}`
-'''
+"""
 
         return Issue(
             title=self.title,
@@ -113,7 +125,7 @@ class BugReport:
     labels: list[str] | None = None
 
     def create_issue(self, project: str) -> Issue:
-        body = f'''
+        body = f"""
 ### Summary
 
 {self.summary}
@@ -149,7 +161,7 @@ N/A
 ### Actual Results
 
 N/A
-'''
+"""
 
         return Issue(
             title=self.title,
@@ -180,21 +192,24 @@ class DeprecatedConfig(Deprecation):
 
     @staticmethod
     def parse(message: str) -> DeprecatedConfig:
-        match = re.search('^(?P<path>.*):[0-9]+:[0-9]+: (?P<config>.*) is scheduled for removal in (?P<version>[0-9.]+)$', message)
+        match = re.search(
+            "^(?P<path>.*):[0-9]+:[0-9]+: (?P<config>.*) is scheduled for removal in (?P<version>[0-9.]+)$",
+            message,
+        )
 
         if not match:
-            raise Exception(f'Unable to parse: {message}')
+            raise Exception(f"Unable to parse: {message}")
 
         return DeprecatedConfig(
-            path=match.group('path'),
-            config=match.group('config'),
-            version=match.group('version'),
+            path=match.group("path"),
+            config=match.group("config"),
+            version=match.group("version"),
         )
 
     def create_bug_report(self) -> BugReport:
         return BugReport(
-            title=f'Remove deprecated {self.config}',
-            summary=f'The config option `{self.config}` should be removed from `{self.path}`. It was scheduled for removal in {self.version}.',
+            title=f"Remove deprecated {self.config}",
+            summary=f"The config option `{self.config}` should be removed from `{self.path}`. It was scheduled for removal in {self.version}.",
             component=self.path,
         )
 
@@ -206,37 +221,40 @@ class UpdateBundled(Deprecation):
     old_version: str
     new_version: str
     json_link: str
-    link: str = dataclasses.field(default='', init=False)
+    link: str = dataclasses.field(default="", init=False)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, 'link', re.sub('/json$', '', self.json_link))
+        object.__setattr__(self, "link", re.sub("/json$", "", self.json_link))
 
     @staticmethod
     def parse(message: str) -> UpdateBundled:
-        match = re.search('^(?P<path>.*):[0-9]+:[0-9]+: UPDATE (?P<package>.*) from (?P<old>[0-9.]+) to (?P<new>[0-9.]+) (?P<link>https://.*)$', message)
+        match = re.search(
+            "^(?P<path>.*):[0-9]+:[0-9]+: UPDATE (?P<package>.*) from (?P<old>[0-9.]+) to (?P<new>[0-9.]+) (?P<link>https://.*)$",
+            message,
+        )
 
         if not match:
-            raise Exception(f'Unable to parse: {message}')
+            raise Exception(f"Unable to parse: {message}")
 
         return UpdateBundled(
-            path=match.group('path'),
-            package=match.group('package'),
-            old_version=match.group('old'),
-            new_version=match.group('new'),
-            json_link=match.group('link'),
+            path=match.group("path"),
+            package=match.group("package"),
+            old_version=match.group("old"),
+            new_version=match.group("new"),
+            json_link=match.group("link"),
         )
 
     def create_bug_report(self) -> BugReport:
         return BugReport(
-            title=f'Update bundled {self.package} to {self.new_version}',
-            summary=f'Update the bundled package [{self.package}]({self.link}) from `{self.old_version}` to `{self.new_version}`.',
+            title=f"Update bundled {self.package} to {self.new_version}",
+            summary=f"Update the bundled package [{self.package}]({self.link}) from `{self.old_version}` to `{self.new_version}`.",
             component=self.path,
         )
 
 
 TEST_OPTIONS = {
-    'update-bundled': UpdateBundled,
-    'deprecated-config': DeprecatedConfig,
+    "update-bundled": UpdateBundled,
+    "deprecated-config": DeprecatedConfig,
 }
 
 
@@ -281,31 +299,31 @@ def parse_args() -> Args:
 
 
 def create_deprecation_parser(subparser) -> None:
-    parser: argparse.ArgumentParser = subparser.add_parser('deprecation')
+    parser: argparse.ArgumentParser = subparser.add_parser("deprecation")
     parser.set_defaults(type=DeprecationArgs)
     parser.set_defaults(command=deprecated_command)
 
     parser.add_argument(
-        '--test',
-        dest='tests',
+        "--test",
+        dest="tests",
         choices=tuple(TEST_OPTIONS),
-        action='append',
-        help='sanity test name',
+        action="append",
+        help="sanity test name",
     )
 
     create_common_arguments(parser)
 
 
 def create_feature_parser(subparser) -> None:
-    parser: argparse.ArgumentParser = subparser.add_parser('feature')
+    parser: argparse.ArgumentParser = subparser.add_parser("feature")
     parser.set_defaults(type=FeatureArgs)
     parser.set_defaults(command=feature_command)
 
     parser.add_argument(
-        '--source',
+        "--source",
         type=pathlib.Path,
-        default=pathlib.Path('issues.yml'),
-        help='YAML file containing issue details (default: %(default)s)',
+        default=pathlib.Path("issues.yml"),
+        help="YAML file containing issue details (default: %(default)s)",
     )
 
     create_common_arguments(parser)
@@ -313,16 +331,16 @@ def create_feature_parser(subparser) -> None:
 
 def create_common_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
-        '--create',
-        action='store_true',
-        help='create issues on GitHub',
+        "--create",
+        action="store_true",
+        help="create issues on GitHub",
     )
 
     parser.add_argument(
-        '-v',
-        dest='verbose',
-        action='store_true',
-        help='verbose output',
+        "-v",
+        dest="verbose",
+        action="store_true",
+        help="verbose output",
     )
 
 
@@ -344,11 +362,13 @@ def invoke_parser(parser: argparse.ArgumentParser) -> Args:
 
 
 def run_sanity_test(test_name: str) -> list[str]:
-    cmd = ['ansible-test', 'sanity', '--test', test_name, '--lint', '--failure-ok']
-    skip_path = 'test/sanity/code-smell/skip.txt'
-    skip_temp_path = skip_path + '.tmp'
+    cmd = ["ansible-test", "sanity", "--test", test_name, "--lint", "--failure-ok"]
+    skip_path = "test/sanity/code-smell/skip.txt"
+    skip_temp_path = skip_path + ".tmp"
 
-    os.rename(skip_path, skip_temp_path)  # make sure ansible-test isn't configured to skip any tests
+    os.rename(
+        skip_path, skip_temp_path
+    )  # make sure ansible-test isn't configured to skip any tests
 
     try:
         process = subprocess.run(cmd, capture_output=True, check=True)
@@ -360,7 +380,9 @@ def run_sanity_test(test_name: str) -> list[str]:
     return messages
 
 
-def create_issues_from_deprecation_messages(test_type: t.Type[Deprecation], messages: list[str]) -> list[Issue]:
+def create_issues_from_deprecation_messages(
+    test_type: t.Type[Deprecation], messages: list[str]
+) -> list[Issue]:
     deprecations = [test_type.parse(message) for message in messages]
     bug_reports = [deprecation.create_bug_report() for deprecation in deprecations]
     issues = [bug_report.create_issue(PROJECT) for bug_report in bug_reports]
@@ -392,14 +414,14 @@ def feature_command(args: FeatureArgs) -> None:
     with args.source.open() as source_file:
         source = yaml.safe_load(source_file)
 
-    default: dict[str, t.Any] = source.get('default', {})
-    features: list[dict[str, t.Any]] = source.get('features', [])
+    default: dict[str, t.Any] = source.get("default", {})
+    features: list[dict[str, t.Any]] = source.get("features", [])
 
     if not isinstance(default, dict):
-        raise RuntimeError('`default` must be `dict[str, ...]`')
+        raise RuntimeError("`default` must be `dict[str, ...]`")
 
     if not isinstance(features, list):
-        raise RuntimeError('`features` must be `list[dict[str, ...]]`')
+        raise RuntimeError("`features` must be `list[dict[str, ...]]`")
 
     issues: list[Issue] = []
 
@@ -415,18 +437,18 @@ def feature_command(args: FeatureArgs) -> None:
 
 def create_issues(args: Args, issues: list[Issue]) -> None:
     if not issues:
-        info('No issues found.')
+        info("No issues found.")
         return
 
-    info(f'Found {len(issues)} issue(s) to report:')
+    info(f"Found {len(issues)} issue(s) to report:")
 
     for issue in issues:
-        info(f'[{issue.title}] {issue.summary}')
+        info(f"[{issue.title}] {issue.summary}")
 
         if args.verbose:
-            info('>>>')
+            info(">>>")
             info(issue.body)
-            info('>>>')
+            info(">>>")
 
         if args.create:
             url = issue.create()
@@ -436,5 +458,5 @@ def create_issues(args: Args, issues: list[Issue]) -> None:
         info('Pass the "--create" option to create these issues on GitHub.')
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -43,14 +43,14 @@ from ansible.vars.plugins import get_vars_from_inventory_sources
 
 display = Display()
 
-IGNORED_ALWAYS = [br"^\.", b"^host_vars$", b"^group_vars$", b"^vars_plugins$"]
+IGNORED_ALWAYS = [rb"^\.", b"^host_vars$", b"^group_vars$", b"^vars_plugins$"]
 IGNORED_PATTERNS = [to_bytes(x) for x in C.INVENTORY_IGNORE_PATTERNS]
-IGNORED_EXTS = [b'%s$' % to_bytes(re.escape(x)) for x in C.INVENTORY_IGNORE_EXTS]
+IGNORED_EXTS = [b"%s$" % to_bytes(re.escape(x)) for x in C.INVENTORY_IGNORE_EXTS]
 
-IGNORED = re.compile(b'|'.join(IGNORED_ALWAYS + IGNORED_PATTERNS + IGNORED_EXTS))
+IGNORED = re.compile(b"|".join(IGNORED_ALWAYS + IGNORED_PATTERNS + IGNORED_EXTS))
 
 PATTERN_WITH_SUBSCRIPT = re.compile(
-    r'''^
+    r"""^
         (.+)                    # A pattern expression ending with...
         \[(?:                   # A [subscript] expression comprising:
             (-?[0-9]+)|         # A single positive or negative number
@@ -58,12 +58,13 @@ PATTERN_WITH_SUBSCRIPT = re.compile(
             ([0-9]*)
         )\]
         $
-    ''', re.X
+    """,
+    re.X,
 )
 
 
 def order_patterns(patterns):
-    ''' takes a list of patterns and reorders them by modifier to apply them consistently '''
+    """takes a list of patterns and reorders them by modifier to apply them consistently"""
 
     # FIXME: this goes away if we apply patterns incrementally or by groups
     pattern_regular = []
@@ -83,7 +84,7 @@ def order_patterns(patterns):
     # if no regular pattern was given, hence only exclude and/or intersection
     # make that magically work
     if pattern_regular == []:
-        pattern_regular = ['all']
+        pattern_regular = ["all"]
 
     # when applying the host selectors, run those without the "&" or "!"
     # first, then the &s, then the !s.
@@ -107,12 +108,12 @@ def split_host_pattern(pattern):
         # flatten the results
         return list(itertools.chain.from_iterable(results))
     elif not isinstance(pattern, string_types):
-        pattern = to_text(pattern, errors='surrogate_or_strict')
+        pattern = to_text(pattern, errors="surrogate_or_strict")
 
     # If it's got commas in it, we'll treat it as a straightforward
     # comma-separated list of patterns.
-    if u',' in pattern:
-        patterns = pattern.split(u',')
+    if "," in pattern:
+        patterns = pattern.split(",")
 
     # If it doesn't, it could still be a single pattern. This accounts for
     # non-separator uses of colons: IPv6 addresses and [x:y] host ranges.
@@ -125,19 +126,23 @@ def split_host_pattern(pattern):
             # This mishandles IPv6 addresses, and is retained only for backwards
             # compatibility.
             patterns = re.findall(
-                to_text(r'''(?:     # We want to match something comprising:
+                to_text(
+                    r"""(?:     # We want to match something comprising:
                         [^\s:\[\]]  # (anything other than whitespace or ':[]'
                         |           # ...or...
                         \[[^\]]*\]  # a single complete bracketed expression)
                     )+              # occurring once or more
-                '''), pattern, re.X
+                """
+                ),
+                pattern,
+                re.X,
             )
 
     return [p.strip() for p in patterns if p.strip()]
 
 
 class InventoryManager(object):
-    ''' Creates and manages inventory '''
+    """Creates and manages inventory"""
 
     def __init__(self, loader, sources=None, parse=True, cache=True):
 
@@ -170,7 +175,7 @@ class InventoryManager(object):
 
     @property
     def localhost(self):
-        return self._inventory.get_host('localhost')
+        return self._inventory.get_host("localhost")
 
     @property
     def groups(self):
@@ -197,9 +202,9 @@ class InventoryManager(object):
         return self._inventory.get_host(hostname)
 
     def _fetch_inventory_plugins(self):
-        ''' sets up loaded inventory plugins for usage '''
+        """sets up loaded inventory plugins for usage"""
 
-        display.vvvv('setting up inventory plugins')
+        display.vvvv("setting up inventory plugins")
 
         plugins = []
         for name in C.INVENTORY_ENABLED:
@@ -207,22 +212,24 @@ class InventoryManager(object):
             if plugin:
                 plugins.append(plugin)
             else:
-                display.warning('Failed to load inventory plugin, skipping %s' % name)
+                display.warning("Failed to load inventory plugin, skipping %s" % name)
 
         if not plugins:
-            raise AnsibleError("No inventory plugins available to generate inventory, make sure you have at least one enabled.")
+            raise AnsibleError(
+                "No inventory plugins available to generate inventory, make sure you have at least one enabled."
+            )
 
         return plugins
 
     def parse_sources(self, cache=False):
-        ''' iterate over inventory sources and parse each one to populate it'''
+        """iterate over inventory sources and parse each one to populate it"""
 
         parsed = False
         # allow for multiple inventory parsing
         for source in self._sources:
 
             if source:
-                if ',' not in source:
+                if "," not in source:
                     source = unfrackpath(source, follow=False)
                 parse = self.parse_source(source, cache=cache)
                 if parse and not parsed:
@@ -233,39 +240,55 @@ class InventoryManager(object):
             self._inventory.reconcile_inventory()
         else:
             if C.INVENTORY_UNPARSED_IS_FAILED:
-                raise AnsibleError("No inventory was parsed, please check your configuration and options.")
+                raise AnsibleError(
+                    "No inventory was parsed, please check your configuration and options."
+                )
             elif C.INVENTORY_UNPARSED_WARNING:
-                display.warning("No inventory was parsed, only implicit localhost is available")
+                display.warning(
+                    "No inventory was parsed, only implicit localhost is available"
+                )
 
         for group in self.groups.values():
-            group.vars = combine_vars(group.vars, get_vars_from_inventory_sources(self._loader, self._sources, [group], 'inventory'))
+            group.vars = combine_vars(
+                group.vars,
+                get_vars_from_inventory_sources(
+                    self._loader, self._sources, [group], "inventory"
+                ),
+            )
         for host in self.hosts.values():
-            host.vars = combine_vars(host.vars, get_vars_from_inventory_sources(self._loader, self._sources, [host], 'inventory'))
+            host.vars = combine_vars(
+                host.vars,
+                get_vars_from_inventory_sources(
+                    self._loader, self._sources, [host], "inventory"
+                ),
+            )
 
     def parse_source(self, source, cache=False):
-        ''' Generate or update inventory for the source provided '''
+        """Generate or update inventory for the source provided"""
 
         parsed = False
         failures = []
-        display.debug(u'Examining possible inventory source: %s' % source)
+        display.debug("Examining possible inventory source: %s" % source)
 
         # use binary for path functions
         b_source = to_bytes(source)
 
         # process directories as a collection of inventories
         if os.path.isdir(b_source):
-            display.debug(u'Searching for inventory files in directory: %s' % source)
+            display.debug("Searching for inventory files in directory: %s" % source)
             for i in sorted(os.listdir(b_source)):
 
-                display.debug(u'Considering %s' % i)
+                display.debug("Considering %s" % i)
                 # Skip hidden files and stuff we explicitly ignore
                 if IGNORED.search(i):
                     continue
 
                 # recursively deal with directory entries
-                fullpath = to_text(os.path.join(b_source, i), errors='surrogate_or_strict')
+                fullpath = to_text(
+                    os.path.join(b_source, i), errors="surrogate_or_strict"
+                )
                 parsed_this_one = self.parse_source(fullpath, cache=cache)
-                display.debug(u'parsed %s as %s' % (fullpath, parsed_this_one))
+                display.debug("parsed %s as %s" % (fullpath, parsed_this_one))
                 if not parsed:
                     parsed = parsed_this_one
         else:
@@ -277,8 +300,13 @@ class InventoryManager(object):
             # try source with each plugin
             for plugin in self._fetch_inventory_plugins():
 
-                plugin_name = to_text(getattr(plugin, '_load_name', getattr(plugin, '_original_path', '')))
-                display.debug(u'Attempting to use plugin %s (%s)' % (plugin_name, plugin._original_path))
+                plugin_name = to_text(
+                    getattr(plugin, "_load_name", getattr(plugin, "_original_path", ""))
+                )
+                display.debug(
+                    "Attempting to use plugin %s (%s)"
+                    % (plugin_name, plugin._original_path)
+                )
 
                 # initialize and figure out if plugin wants to attempt parsing this file
                 try:
@@ -296,38 +324,69 @@ class InventoryManager(object):
                             # some plugins might not implement caching
                             pass
                         parsed = True
-                        display.vvv('Parsed %s inventory source with %s plugin' % (source, plugin_name))
+                        display.vvv(
+                            "Parsed %s inventory source with %s plugin"
+                            % (source, plugin_name)
+                        )
                         break
                     except AnsibleParserError as e:
-                        display.debug('%s was not parsable by %s' % (source, plugin_name))
-                        tb = ''.join(traceback.format_tb(sys.exc_info()[2]))
-                        failures.append({'src': source, 'plugin': plugin_name, 'exc': e, 'tb': tb})
+                        display.debug(
+                            "%s was not parsable by %s" % (source, plugin_name)
+                        )
+                        tb = "".join(traceback.format_tb(sys.exc_info()[2]))
+                        failures.append(
+                            {"src": source, "plugin": plugin_name, "exc": e, "tb": tb}
+                        )
                     except Exception as e:
-                        display.debug('%s failed while attempting to parse %s' % (plugin_name, source))
-                        tb = ''.join(traceback.format_tb(sys.exc_info()[2]))
-                        failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e), 'tb': tb})
+                        display.debug(
+                            "%s failed while attempting to parse %s"
+                            % (plugin_name, source)
+                        )
+                        tb = "".join(traceback.format_tb(sys.exc_info()[2]))
+                        failures.append(
+                            {
+                                "src": source,
+                                "plugin": plugin_name,
+                                "exc": AnsibleError(e),
+                                "tb": tb,
+                            }
+                        )
                 else:
-                    display.vvv("%s declined parsing %s as it did not pass its verify_file() method" % (plugin_name, source))
+                    display.vvv(
+                        "%s declined parsing %s as it did not pass its verify_file() method"
+                        % (plugin_name, source)
+                    )
 
         if parsed:
             self._inventory.processed_sources.append(self._inventory.current_source)
         else:
             # only warn/error if NOT using the default or using it and the file is present
             # TODO: handle 'non file' inventory and detect vs hardcode default
-            if source != '/etc/ansible/hosts' or os.path.exists(source):
+            if source != "/etc/ansible/hosts" or os.path.exists(source):
 
                 if failures:
                     # only if no plugin processed files should we show errors.
                     for fail in failures:
-                        display.warning(u'\n* Failed to parse %s with %s plugin: %s' % (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
-                        if 'tb' in fail:
-                            display.vvv(to_text(fail['tb']))
+                        display.warning(
+                            "\n* Failed to parse %s with %s plugin: %s"
+                            % (
+                                to_text(fail["src"]),
+                                fail["plugin"],
+                                to_text(fail["exc"]),
+                            )
+                        )
+                        if "tb" in fail:
+                            display.vvv(to_text(fail["tb"]))
 
                 # final error/warning on inventory source failure
                 if C.INVENTORY_ANY_UNPARSED_IS_FAILED:
-                    raise AnsibleError(u'Completely failed to parse inventory source %s' % (source))
+                    raise AnsibleError(
+                        "Completely failed to parse inventory source %s" % (source)
+                    )
                 else:
-                    display.warning("Unable to parse %s as an inventory source" % source)
+                    display.warning(
+                        "Unable to parse %s as an inventory source" % source
+                    )
 
         # clear up, jic
         self._inventory.current_source = None
@@ -335,31 +394,31 @@ class InventoryManager(object):
         return parsed
 
     def clear_caches(self):
-        ''' clear all caches '''
+        """clear all caches"""
         self._hosts_patterns_cache = {}
         self._pattern_cache = {}
 
     def refresh_inventory(self):
-        ''' recalculate inventory '''
+        """recalculate inventory"""
 
         self.clear_caches()
         self._inventory = InventoryData()
         self.parse_sources(cache=False)
         for host in self._cached_dynamic_hosts:
-            self.add_dynamic_host(host, {'refresh': True})
+            self.add_dynamic_host(host, {"refresh": True})
         for host, result in self._cached_dynamic_grouping:
-            result['refresh'] = True
+            result["refresh"] = True
             self.add_dynamic_group(host, result)
 
     def _match_list(self, items, pattern_str):
         # compile patterns
         try:
-            if not pattern_str[0] == '~':
+            if not pattern_str[0] == "~":
                 pattern = re.compile(fnmatch.translate(pattern_str))
             else:
                 pattern = re.compile(pattern_str[1:])
         except Exception:
-            raise AnsibleError('Invalid host list pattern: %s' % pattern_str)
+            raise AnsibleError("Invalid host list pattern: %s" % pattern_str)
 
         # apply patterns
         results = []
@@ -368,7 +427,9 @@ class InventoryManager(object):
                 results.append(item)
         return results
 
-    def get_hosts(self, pattern="all", ignore_limits=False, ignore_restrictions=False, order=None):
+    def get_hosts(
+        self, pattern="all", ignore_limits=False, ignore_restrictions=False, order=None
+    ):
         """
         Takes a pattern or list of patterns and returns a list of matching
         inventory host names, taking into account any active restrictions
@@ -402,7 +463,9 @@ class InventoryManager(object):
                 # mainly useful for hostvars[host] access
                 if not ignore_limits and self._subset:
                     # exclude hosts not in a subset, if defined
-                    subset_uuids = set(s._uuid for s in self._evaluate_patterns(self._subset))
+                    subset_uuids = set(
+                        s._uuid for s in self._evaluate_patterns(self._subset)
+                    )
                     hosts = [h for h in hosts if h._uuid in subset_uuids]
 
                 if not ignore_restrictions and self._restriction:
@@ -412,16 +475,22 @@ class InventoryManager(object):
                 self._hosts_patterns_cache[pattern_hash] = deduplicate_list(hosts)
 
             # sort hosts list if needed (should only happen when called from strategy)
-            if order in ['sorted', 'reverse_sorted']:
-                hosts = sorted(self._hosts_patterns_cache[pattern_hash][:], key=attrgetter('name'), reverse=(order == 'reverse_sorted'))
-            elif order == 'reverse_inventory':
+            if order in ["sorted", "reverse_sorted"]:
+                hosts = sorted(
+                    self._hosts_patterns_cache[pattern_hash][:],
+                    key=attrgetter("name"),
+                    reverse=(order == "reverse_sorted"),
+                )
+            elif order == "reverse_inventory":
                 hosts = self._hosts_patterns_cache[pattern_hash][::-1]
             else:
                 hosts = self._hosts_patterns_cache[pattern_hash][:]
-                if order == 'shuffle':
+                if order == "shuffle":
                     shuffle(hosts)
-                elif order not in [None, 'inventory']:
-                    raise AnsibleOptionsError("Invalid 'order' specified for inventory hosts: %s" % order)
+                elif order not in [None, "inventory"]:
+                    raise AnsibleOptionsError(
+                        "Invalid 'order' specified for inventory hosts: %s" % order
+                    )
 
         return hosts
 
@@ -498,7 +567,9 @@ class InventoryManager(object):
             try:
                 hosts = self._apply_subscript(hosts, slice)
             except IndexError:
-                raise AnsibleError("No hosts matched the subscripted pattern '%s'" % pattern)
+                raise AnsibleError(
+                    "No hosts matched the subscripted pattern '%s'" % pattern
+                )
             self._pattern_cache[pattern] = hosts
 
         return self._pattern_cache[pattern]
@@ -514,7 +585,7 @@ class InventoryManager(object):
         """
 
         # Do not parse regexes for enumeration info
-        if pattern[0] == '~':
+        if pattern[0] == "~":
             return (pattern, None)
 
         # We want a pattern followed by an integer or range subscript.
@@ -531,8 +602,10 @@ class InventoryManager(object):
                 if not end:
                     end = -1
                 subscript = (int(start), int(end))
-                if sep == '-':
-                    display.warning("Use [x:y] inclusive subscripts instead of [x-y] which has been removed")
+                if sep == "-":
+                    display.warning(
+                        "Use [x:y] inclusive subscripts instead of [x-y] which has been removed"
+                    )
 
         return (pattern, subscript)
 
@@ -550,7 +623,7 @@ class InventoryManager(object):
         if end:
             if end == -1:
                 end = len(hosts) - 1
-            return hosts[start:end + 1]
+            return hosts[start : end + 1]
         else:
             return [hosts[start]]
 
@@ -568,7 +641,11 @@ class InventoryManager(object):
                 results.extend(self._inventory.groups[groupname].get_hosts())
 
         # check hosts if no groups matched or it is a regex/glob pattern
-        if not matching_groups or pattern[0] == '~' or any(special in pattern for special in ('.', '?', '*', '[')):
+        if (
+            not matching_groups
+            or pattern[0] == "~"
+            or any(special in pattern for special in (".", "?", "*", "["))
+        ):
             # pattern might match host
             matching_hosts = self._match_list(self._inventory.hosts, pattern)
             if matching_hosts:
@@ -582,19 +659,19 @@ class InventoryManager(object):
                 results.append(implicit)
 
         # Display warning if specified host pattern did not match any groups or hosts
-        if not results and not matching_groups and pattern != 'all':
+        if not results and not matching_groups and pattern != "all":
             msg = "Could not match supplied host pattern, ignoring: %s" % pattern
             display.debug(msg)
-            if C.HOST_PATTERN_MISMATCH == 'warning':
+            if C.HOST_PATTERN_MISMATCH == "warning":
                 display.warning(msg)
-            elif C.HOST_PATTERN_MISMATCH == 'error':
+            elif C.HOST_PATTERN_MISMATCH == "error":
                 raise AnsibleError(msg)
             # no need to write 'ignore' state
 
         return results
 
     def list_hosts(self, pattern="all"):
-        """ return a list of hostnames for a pattern """
+        """return a list of hostnames for a pattern"""
         # FIXME: cache?
         result = self.get_hosts(pattern)
 
@@ -640,48 +717,57 @@ class InventoryManager(object):
                 if x[0] == "@":
                     b_limit_file = to_bytes(x[1:])
                     if not os.path.exists(b_limit_file):
-                        raise AnsibleError(u'Unable to find limit file %s' % b_limit_file)
+                        raise AnsibleError(
+                            "Unable to find limit file %s" % b_limit_file
+                        )
                     if not os.path.isfile(b_limit_file):
-                        raise AnsibleError(u'Limit starting with "@" must be a file, not a directory: %s' % b_limit_file)
+                        raise AnsibleError(
+                            'Limit starting with "@" must be a file, not a directory: %s'
+                            % b_limit_file
+                        )
                     with open(b_limit_file) as fd:
-                        results.extend([to_text(l.strip()) for l in fd.read().split("\n")])
+                        results.extend(
+                            [to_text(l.strip()) for l in fd.read().split("\n")]
+                        )
                 else:
                     results.append(to_text(x))
             self._subset = results
 
     def remove_restriction(self):
-        """ Do not restrict list operations """
+        """Do not restrict list operations"""
         self._restriction = None
 
     def clear_pattern_cache(self):
         self._pattern_cache = {}
 
     def add_dynamic_host(self, host_info, result_item):
-        '''
+        """
         Helper function to add a new host to inventory based on a task result.
-        '''
+        """
 
         changed = False
-        if not result_item.get('refresh'):
+        if not result_item.get("refresh"):
             self._cached_dynamic_hosts.append(host_info)
 
         if host_info:
-            host_name = host_info.get('host_name')
+            host_name = host_info.get("host_name")
 
             # Check if host in inventory, add if not
             if host_name not in self.hosts:
-                self.add_host(host_name, 'all')
+                self.add_host(host_name, "all")
                 changed = True
             new_host = self.hosts.get(host_name)
 
             # Set/update the vars for this host
             new_host_vars = new_host.get_vars()
-            new_host_combined_vars = combine_vars(new_host_vars, host_info.get('host_vars', dict()))
+            new_host_combined_vars = combine_vars(
+                new_host_vars, host_info.get("host_vars", dict())
+            )
             if new_host_vars != new_host_combined_vars:
                 new_host.vars = new_host_combined_vars
                 changed = True
 
-            new_groups = host_info.get('groups', [])
+            new_groups = host_info.get("groups", [])
             for group_name in new_groups:
                 if group_name not in self.groups:
                     group_name = self._inventory.add_group(group_name)
@@ -694,17 +780,17 @@ class InventoryManager(object):
             if changed:
                 self.reconcile_inventory()
 
-            result_item['changed'] = changed
+            result_item["changed"] = changed
 
     def add_dynamic_group(self, host, result_item):
-        '''
+        """
         Helper function to add a group (if it does not exist), and to assign the
         specified host to that group.
-        '''
+        """
 
         changed = False
 
-        if not result_item.get('refresh'):
+        if not result_item.get("refresh"):
             self._cached_dynamic_grouping.append((host, result_item))
 
         # the host here is from the executor side, which means it was a
@@ -714,14 +800,14 @@ class InventoryManager(object):
         if real_host is None:
             if host.name == self.localhost.name:
                 real_host = self.localhost
-            elif not result_item.get('refresh'):
-                raise AnsibleError('%s cannot be matched in inventory' % host.name)
+            elif not result_item.get("refresh"):
+                raise AnsibleError("%s cannot be matched in inventory" % host.name)
             else:
                 # host was removed from inventory during refresh, we should not process
                 return
 
-        group_name = result_item.get('add_group')
-        parent_group_names = result_item.get('parent_groups', [])
+        group_name = result_item.get("add_group")
+        parent_group_names = result_item.get("parent_groups", [])
 
         if group_name not in self.groups:
             group_name = self.add_group(group_name)
@@ -748,4 +834,4 @@ class InventoryManager(object):
         if changed:
             self.reconcile_inventory()
 
-        result_item['changed'] = changed
+        result_item["changed"] = changed

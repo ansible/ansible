@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import grp
@@ -13,5 +12,5 @@ def main():
     print(grp.getgrnam(group_name).gr_gid)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

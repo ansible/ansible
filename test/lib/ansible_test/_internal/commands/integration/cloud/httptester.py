@@ -1,4 +1,5 @@
 """HTTP Tester plugin for integration tests."""
+
 from __future__ import annotations
 
 import os
@@ -22,7 +23,7 @@ from . import (
     CloudProvider,
 )
 
-KRB5_PASSWORD_ENV = 'KRB5_PASSWORD'
+KRB5_PASSWORD_ENV = "KRB5_PASSWORD"
 
 
 class HttptesterProvider(CloudProvider):
@@ -31,7 +32,9 @@ class HttptesterProvider(CloudProvider):
     def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
-        self.image = os.environ.get('ANSIBLE_HTTP_TEST_CONTAINER', 'quay.io/ansible/http-test-container:2.1.0')
+        self.image = os.environ.get(
+            "ANSIBLE_HTTP_TEST_CONTAINER", "quay.io/ansible/http-test-container:2.1.0"
+        )
 
         self.uses_docker = True
 
@@ -48,17 +51,17 @@ class HttptesterProvider(CloudProvider):
         ]
 
         aliases = [
-            'ansible.http.tests',
-            'sni1.ansible.http.tests',
-            'fail.ansible.http.tests',
-            'self-signed.ansible.http.tests',
+            "ansible.http.tests",
+            "sni1.ansible.http.tests",
+            "fail.ansible.http.tests",
+            "self-signed.ansible.http.tests",
         ]
 
         descriptor = run_support_container(
             self.args,
             self.platform,
             self.image,
-            'http-test-container',
+            "http-test-container",
             ports,
             aliases=aliases,
             env={
@@ -85,7 +88,7 @@ class HttptesterEnvironment(CloudEnvironment):
         """Return environment configuration for use in the test environment after delegation."""
         return CloudEnvironmentConfig(
             env_vars=dict(
-                HTTPTESTER='1',  # backwards compatibility for tests intended to work with or without HTTP Tester
+                HTTPTESTER="1",  # backwards compatibility for tests intended to work with or without HTTP Tester
                 KRB5_PASSWORD=str(self._get_cloud_config(KRB5_PASSWORD_ENV)),
             )
         )

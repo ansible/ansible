@@ -24,141 +24,127 @@ from ansible.errors import AnsibleParserError
 import pytest
 
 SPLIT_DATA = (
-    (None,
-        [],
-        {}),
-    (u'',
-        [],
-        {}),
-    (u'a',
-        [u'a'],
-        {u'_raw_params': u'a'}),
-    (u'a=b',
-        [u'a=b'],
-        {u'a': u'b'}),
-    (u'a="foo bar"',
-        [u'a="foo bar"'],
-        {u'a': u'foo bar'}),
-    (u'"foo bar baz"',
-        [u'"foo bar baz"'],
-        {u'_raw_params': '"foo bar baz"'}),
-    (u'foo bar baz',
-        [u'foo', u'bar', u'baz'],
-        {u'_raw_params': u'foo bar baz'}),
-    (u'a=b c="foo bar"',
-        [u'a=b', u'c="foo bar"'],
-        {u'a': u'b', u'c': u'foo bar'}),
-    (u'a="echo \\"hello world\\"" b=bar',
-        [u'a="echo \\"hello world\\""', u'b=bar'],
-        {u'a': u'echo "hello world"', u'b': u'bar'}),
-    (u'a="nest\'ed"',
-        [u'a="nest\'ed"'],
-        {u'a': u'nest\'ed'}),
-    (u' ',
-        [u' '],
-        {u'_raw_params': u' '}),
-    (u'\\ ',
-        [u' '],
-        {u'_raw_params': u' '}),
-    (u'a\\=escaped',
-        [u'a\\=escaped'],
-        {u'_raw_params': u'a=escaped'}),
-    (u'a="multi\nline"',
-        [u'a="multi\nline"'],
-        {u'a': u'multi\nline'}),
-    (u'a="blank\n\nline"',
-        [u'a="blank\n\nline"'],
-        {u'a': u'blank\n\nline'}),
-    (u'a="blank\n\n\nlines"',
-        [u'a="blank\n\n\nlines"'],
-        {u'a': u'blank\n\n\nlines'}),
-    (u'a="a long\nmessage\\\nabout a thing\n"',
-        [u'a="a long\nmessage\\\nabout a thing\n"'],
-        {u'a': u'a long\nmessage\\\nabout a thing\n'}),
-    (u'a="multiline\nmessage1\\\n" b="multiline\nmessage2\\\n"',
-        [u'a="multiline\nmessage1\\\n"', u'b="multiline\nmessage2\\\n"'],
-        {u'a': 'multiline\nmessage1\\\n', u'b': u'multiline\nmessage2\\\n'}),
-    (u'line \\\ncontinuation',
-        [u'line', u'continuation'],
-        {u'_raw_params': u'line continuation'}),
-    (u'not jinja}}',
-        [u'not', u'jinja}}'],
-        {u'_raw_params': u'not jinja}}'}),
-    (u'a={{multiline\njinja}}',
-        [u'a={{multiline\njinja}}'],
-        {u'a': u'{{multiline\njinja}}'}),
-    (u'a={{jinja}}',
-        [u'a={{jinja}}'],
-        {u'a': u'{{jinja}}'}),
-    (u'a={{ jinja }}',
-        [u'a={{ jinja }}'],
-        {u'a': u'{{ jinja }}'}),
-    (u'a={% jinja %}',
-        [u'a={% jinja %}'],
-        {u'a': u'{% jinja %}'}),
-    (u'a={# jinja #}',
-        [u'a={# jinja #}'],
-        {u'a': u'{# jinja #}'}),
-    (u'a="{{jinja}}"',
-        [u'a="{{jinja}}"'],
-        {u'a': u'{{jinja}}'}),
-    (u'a={{ jinja }}{{jinja2}}',
-        [u'a={{ jinja }}{{jinja2}}'],
-        {u'a': u'{{ jinja }}{{jinja2}}'}),
-    (u'a="{{ jinja }}{{jinja2}}"',
-        [u'a="{{ jinja }}{{jinja2}}"'],
-        {u'a': u'{{ jinja }}{{jinja2}}'}),
-    (u'a={{jinja}} b={{jinja2}}',
-        [u'a={{jinja}}', u'b={{jinja2}}'],
-        {u'a': u'{{jinja}}', u'b': u'{{jinja2}}'}),
-    (u'a="{{jinja}}\n" b="{{jinja2}}\n"',
-        [u'a="{{jinja}}\n"', u'b="{{jinja2}}\n"'],
-        {u'a': u'{{jinja}}\n', u'b': u'{{jinja2}}\n'}),
-    (u'a="café eñyei"',
-        [u'a="café eñyei"'],
-        {u'a': u'café eñyei'}),
-    (u'a=café b=eñyei',
-        [u'a=café', u'b=eñyei'],
-        {u'a': u'café', u'b': u'eñyei'}),
-    (u'a={{ foo | some_filter(\' \', " ") }} b=bar',
-        [u'a={{ foo | some_filter(\' \', " ") }}', u'b=bar'],
-        {u'a': u'{{ foo | some_filter(\' \', " ") }}', u'b': u'bar'}),
-    (u'One\n  Two\n    Three\n',
-        [u'One\n ', u'Two\n   ', u'Three\n'],
-        {u'_raw_params': u'One\n  Two\n    Three\n'}),
-    (u'\nOne\n  Two\n    Three\n',
-        [u'\n', u'One\n ', u'Two\n   ', u'Three\n'],
-        {u'_raw_params': u'\nOne\n  Two\n    Three\n'}),
+    (None, [], {}),
+    ("", [], {}),
+    ("a", ["a"], {"_raw_params": "a"}),
+    ("a=b", ["a=b"], {"a": "b"}),
+    ('a="foo bar"', ['a="foo bar"'], {"a": "foo bar"}),
+    ('"foo bar baz"', ['"foo bar baz"'], {"_raw_params": '"foo bar baz"'}),
+    ("foo bar baz", ["foo", "bar", "baz"], {"_raw_params": "foo bar baz"}),
+    ('a=b c="foo bar"', ["a=b", 'c="foo bar"'], {"a": "b", "c": "foo bar"}),
+    (
+        'a="echo \\"hello world\\"" b=bar',
+        ['a="echo \\"hello world\\""', "b=bar"],
+        {"a": 'echo "hello world"', "b": "bar"},
+    ),
+    ('a="nest\'ed"', ['a="nest\'ed"'], {"a": "nest'ed"}),
+    (" ", [" "], {"_raw_params": " "}),
+    ("\\ ", [" "], {"_raw_params": " "}),
+    ("a\\=escaped", ["a\\=escaped"], {"_raw_params": "a=escaped"}),
+    ('a="multi\nline"', ['a="multi\nline"'], {"a": "multi\nline"}),
+    ('a="blank\n\nline"', ['a="blank\n\nline"'], {"a": "blank\n\nline"}),
+    ('a="blank\n\n\nlines"', ['a="blank\n\n\nlines"'], {"a": "blank\n\n\nlines"}),
+    (
+        'a="a long\nmessage\\\nabout a thing\n"',
+        ['a="a long\nmessage\\\nabout a thing\n"'],
+        {"a": "a long\nmessage\\\nabout a thing\n"},
+    ),
+    (
+        'a="multiline\nmessage1\\\n" b="multiline\nmessage2\\\n"',
+        ['a="multiline\nmessage1\\\n"', 'b="multiline\nmessage2\\\n"'],
+        {"a": "multiline\nmessage1\\\n", "b": "multiline\nmessage2\\\n"},
+    ),
+    (
+        "line \\\ncontinuation",
+        ["line", "continuation"],
+        {"_raw_params": "line continuation"},
+    ),
+    ("not jinja}}", ["not", "jinja}}"], {"_raw_params": "not jinja}}"}),
+    (
+        "a={{multiline\njinja}}",
+        ["a={{multiline\njinja}}"],
+        {"a": "{{multiline\njinja}}"},
+    ),
+    ("a={{jinja}}", ["a={{jinja}}"], {"a": "{{jinja}}"}),
+    ("a={{ jinja }}", ["a={{ jinja }}"], {"a": "{{ jinja }}"}),
+    ("a={% jinja %}", ["a={% jinja %}"], {"a": "{% jinja %}"}),
+    ("a={# jinja #}", ["a={# jinja #}"], {"a": "{# jinja #}"}),
+    ('a="{{jinja}}"', ['a="{{jinja}}"'], {"a": "{{jinja}}"}),
+    (
+        "a={{ jinja }}{{jinja2}}",
+        ["a={{ jinja }}{{jinja2}}"],
+        {"a": "{{ jinja }}{{jinja2}}"},
+    ),
+    (
+        'a="{{ jinja }}{{jinja2}}"',
+        ['a="{{ jinja }}{{jinja2}}"'],
+        {"a": "{{ jinja }}{{jinja2}}"},
+    ),
+    (
+        "a={{jinja}} b={{jinja2}}",
+        ["a={{jinja}}", "b={{jinja2}}"],
+        {"a": "{{jinja}}", "b": "{{jinja2}}"},
+    ),
+    (
+        'a="{{jinja}}\n" b="{{jinja2}}\n"',
+        ['a="{{jinja}}\n"', 'b="{{jinja2}}\n"'],
+        {"a": "{{jinja}}\n", "b": "{{jinja2}}\n"},
+    ),
+    ('a="café eñyei"', ['a="café eñyei"'], {"a": "café eñyei"}),
+    ("a=café b=eñyei", ["a=café", "b=eñyei"], {"a": "café", "b": "eñyei"}),
+    (
+        "a={{ foo | some_filter(' ', \" \") }} b=bar",
+        ["a={{ foo | some_filter(' ', \" \") }}", "b=bar"],
+        {"a": "{{ foo | some_filter(' ', \" \") }}", "b": "bar"},
+    ),
+    (
+        "One\n  Two\n    Three\n",
+        ["One\n ", "Two\n   ", "Three\n"],
+        {"_raw_params": "One\n  Two\n    Three\n"},
+    ),
+    (
+        "\nOne\n  Two\n    Three\n",
+        ["\n", "One\n ", "Two\n   ", "Three\n"],
+        {"_raw_params": "\nOne\n  Two\n    Three\n"},
+    ),
 )
 
 PARSE_KV_CHECK_RAW = (
-    (u'raw=yes', {u'_raw_params': u'raw=yes'}),
-    (u'creates=something', {u'creates': u'something'}),
+    ("raw=yes", {"_raw_params": "raw=yes"}),
+    ("creates=something", {"creates": "something"}),
 )
 
 PARSER_ERROR = (
     '"',
     "'",
-    '{{',
-    '{%',
-    '{#',
+    "{{",
+    "{%",
+    "{#",
 )
 
 SPLIT_ARGS = tuple((test[0], test[1]) for test in SPLIT_DATA)
 PARSE_KV = tuple((test[0], test[2]) for test in SPLIT_DATA)
 
 
-@pytest.mark.parametrize("args, expected", SPLIT_ARGS, ids=[str(arg[0]) for arg in SPLIT_ARGS])
+@pytest.mark.parametrize(
+    "args, expected", SPLIT_ARGS, ids=[str(arg[0]) for arg in SPLIT_ARGS]
+)
 def test_split_args(args, expected):
     assert split_args(args) == expected
 
 
-@pytest.mark.parametrize("args, expected", PARSE_KV, ids=[str(arg[0]) for arg in PARSE_KV])
+@pytest.mark.parametrize(
+    "args, expected", PARSE_KV, ids=[str(arg[0]) for arg in PARSE_KV]
+)
 def test_parse_kv(args, expected):
     assert parse_kv(args) == expected
 
 
-@pytest.mark.parametrize("args, expected", PARSE_KV_CHECK_RAW, ids=[str(arg[0]) for arg in PARSE_KV_CHECK_RAW])
+@pytest.mark.parametrize(
+    "args, expected",
+    PARSE_KV_CHECK_RAW,
+    ids=[str(arg[0]) for arg in PARSE_KV_CHECK_RAW],
+)
 def test_parse_kv_check_raw(args, expected):
     assert parse_kv(args, check_raw=True) == expected
 

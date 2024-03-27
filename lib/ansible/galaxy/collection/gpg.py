@@ -24,10 +24,14 @@ if t.TYPE_CHECKING:
 
 IS_PY310_PLUS = sys.version_info[:2] >= (3, 10)
 
-frozen_dataclass = partial(dataclass, frozen=True, **({'slots': True} if IS_PY310_PLUS else {}))
+frozen_dataclass = partial(
+    dataclass, frozen=True, **({"slots": True} if IS_PY310_PLUS else {})
+)
 
 
-def get_signature_from_source(source, display=None):  # type: (str, t.Optional[Display]) -> str
+def get_signature_from_source(
+    source, display=None
+):  # type: (str, t.Optional[Display]) -> str
     if display is not None:
         display.vvvv(f"Using signature at {source}")
     try:
@@ -35,7 +39,7 @@ def get_signature_from_source(source, display=None):  # type: (str, t.Optional[D
             source,
             http_agent=user_agent(),
             validate_certs=True,
-            follow_redirects='safe'
+            follow_redirects="safe",
         ) as resp:
             signature = resp.read()
     except (HTTPError, URLError) as e:
@@ -58,17 +62,17 @@ def run_gpg_verify(
     remove_keybox = not os.path.exists(keyring)
 
     cmd = [
-        'gpg',
-        f'--status-fd={status_fd_write}',
-        '--verify',
-        '--batch',
-        '--no-tty',
-        '--no-default-keyring',
-        f'--keyring={keyring}',
-        '-',
+        "gpg",
+        f"--status-fd={status_fd_write}",
+        "--verify",
+        "--batch",
+        "--no-tty",
+        "--no-default-keyring",
+        f"--keyring={keyring}",
+        "-",
         manifest_file,
     ]
-    cmd_str = ' '.join(cmd)
+    cmd_str = " ".join(cmd)
     display.vvvv(f"Running command '{cmd}'")
 
     try:
@@ -78,7 +82,7 @@ def run_gpg_verify(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             pass_fds=(status_fd_write,),
-            encoding='utf8',
+            encoding="utf8",
         )
     except (FileNotFoundError, subprocess.SubprocessError) as err:
         raise AnsibleError(
@@ -118,12 +122,7 @@ def parse_gpg_errors(status_out):  # type: (str) -> t.Iterator[GpgBaseError]
 
         fields = [status]
         if remainder:
-            fields.extend(
-                remainder.split(
-                    None,
-                    len(dc_fields(cls)) - 2
-                )
-            )
+            fields.extend(remainder.split(None, len(dc_fields(cls)) - 2))
 
         yield cls(*fields)
 
@@ -135,16 +134,21 @@ class GpgBaseError(Exception):
     @classmethod
     def get_gpg_error_description(cls) -> str:
         """Return the current class description."""
-        return ' '.join(cls.__doc__.split())
+        return " ".join(cls.__doc__.split())
 
     def __post_init__(self):
-        for field_name, field_type in inspect.get_annotations(type(self), eval_str=True).items():
-            super(GpgBaseError, self).__setattr__(field_name, field_type(getattr(self, field_name)))
+        for field_name, field_type in inspect.get_annotations(
+            type(self), eval_str=True
+        ).items():
+            super(GpgBaseError, self).__setattr__(
+                field_name, field_type(getattr(self, field_name))
+            )
 
 
 @frozen_dataclass
 class GpgExpSig(GpgBaseError):
     """The signature with the keyid is good, but the signature is expired."""
+
     keyid: str
     username: str
 
@@ -152,6 +156,7 @@ class GpgExpSig(GpgBaseError):
 @frozen_dataclass
 class GpgExpKeySig(GpgBaseError):
     """The signature with the keyid is good, but the signature was made by an expired key."""
+
     keyid: str
     username: str
 
@@ -159,6 +164,7 @@ class GpgExpKeySig(GpgBaseError):
 @frozen_dataclass
 class GpgRevKeySig(GpgBaseError):
     """The signature with the keyid is good, but the signature was made by a revoked key."""
+
     keyid: str
     username: str
 
@@ -166,17 +172,19 @@ class GpgRevKeySig(GpgBaseError):
 @frozen_dataclass
 class GpgBadSig(GpgBaseError):
     """The signature with the keyid has not been verified okay."""
+
     keyid: str
     username: str
 
 
 @frozen_dataclass
 class GpgErrSig(GpgBaseError):
-    """"It was not possible to check the signature.  This may be caused by
+    """ "It was not possible to check the signature.  This may be caused by
     a missing public key or an unsupported algorithm.  A RC of 4
     indicates unknown algorithm, a 9 indicates a missing public
     key.
     """
+
     keyid: str
     pkalgo: int
     hashalgo: int
@@ -189,6 +197,7 @@ class GpgErrSig(GpgBaseError):
 @frozen_dataclass
 class GpgNoPubkey(GpgBaseError):
     """The public key is not available."""
+
     keyid: str
 
 
@@ -200,6 +209,7 @@ class GpgMissingPassPhrase(GpgBaseError):
 @frozen_dataclass
 class GpgBadPassphrase(GpgBaseError):
     """The supplied passphrase was wrong or not given."""
+
     keyid: str
 
 
@@ -212,6 +222,7 @@ class GpgNoData(GpgBaseError):
            message.
     - 4 :: Signature expected but not found.
     """
+
     what: str
 
 
@@ -224,12 +235,14 @@ class GpgUnexpected(GpgBaseError):
            message.
     - 4 :: Signature expected but not found.
     """
+
     what: str
 
 
 @frozen_dataclass
 class GpgError(GpgBaseError):
     """This is a generic error status message, it might be followed by error location specific data."""
+
     location: str
     code: int
     more: str = ""
@@ -238,6 +251,7 @@ class GpgError(GpgBaseError):
 @frozen_dataclass
 class GpgFailure(GpgBaseError):
     """This is the counterpart to SUCCESS and used to indicate a program failure."""
+
     location: str
     code: int
 
@@ -250,6 +264,7 @@ class GpgBadArmor(GpgBaseError):
 @frozen_dataclass
 class GpgKeyExpired(GpgBaseError):
     """The key has expired."""
+
     timestamp: int
 
 
@@ -261,24 +276,25 @@ class GpgKeyRevoked(GpgBaseError):
 @frozen_dataclass
 class GpgNoSecKey(GpgBaseError):
     """The secret key is not available."""
+
     keyid: str
 
 
 GPG_ERROR_MAP = {
-    'EXPSIG': GpgExpSig,
-    'EXPKEYSIG': GpgExpKeySig,
-    'REVKEYSIG': GpgRevKeySig,
-    'BADSIG': GpgBadSig,
-    'ERRSIG': GpgErrSig,
-    'NO_PUBKEY': GpgNoPubkey,
-    'MISSING_PASSPHRASE': GpgMissingPassPhrase,
-    'BAD_PASSPHRASE': GpgBadPassphrase,
-    'NODATA': GpgNoData,
-    'UNEXPECTED': GpgUnexpected,
-    'ERROR': GpgError,
-    'FAILURE': GpgFailure,
-    'BADARMOR': GpgBadArmor,
-    'KEYEXPIRED': GpgKeyExpired,
-    'KEYREVOKED': GpgKeyRevoked,
-    'NO_SECKEY': GpgNoSecKey,
+    "EXPSIG": GpgExpSig,
+    "EXPKEYSIG": GpgExpKeySig,
+    "REVKEYSIG": GpgRevKeySig,
+    "BADSIG": GpgBadSig,
+    "ERRSIG": GpgErrSig,
+    "NO_PUBKEY": GpgNoPubkey,
+    "MISSING_PASSPHRASE": GpgMissingPassPhrase,
+    "BAD_PASSPHRASE": GpgBadPassphrase,
+    "NODATA": GpgNoData,
+    "UNEXPECTED": GpgUnexpected,
+    "ERROR": GpgError,
+    "FAILURE": GpgFailure,
+    "BADARMOR": GpgBadArmor,
+    "KEYEXPIRED": GpgKeyExpired,
+    "KEYREVOKED": GpgKeyRevoked,
+    "NO_SECKEY": GpgNoSecKey,
 }

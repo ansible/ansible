@@ -22,5 +22,5 @@ def main():
     module.exit_json()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

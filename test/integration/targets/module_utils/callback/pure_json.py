@@ -3,11 +3,11 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: pure_json
     type: stdout
     short_description: only outputs the module results as json
-'''
+"""
 
 import json
 
@@ -17,8 +17,8 @@ from ansible.plugins.callback import CallbackBase
 class CallbackModule(CallbackBase):
 
     CALLBACK_VERSION = 2.0
-    CALLBACK_TYPE = 'stdout'
-    CALLBACK_NAME = 'pure_json'
+    CALLBACK_TYPE = "stdout"
+    CALLBACK_NAME = "pure_json"
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         self._display.display(json.dumps(result._result))

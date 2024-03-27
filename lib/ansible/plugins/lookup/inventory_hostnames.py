@@ -41,7 +41,7 @@ from ansible.plugins.lookup import LookupBase
 class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
         manager = InventoryManager(self._loader, parse=False)
-        for group, hosts in variables['groups'].items():
+        for group, hosts in variables["groups"].items():
             manager.add_group(group)
             for host in hosts:
                 manager.add_host(host, group=group)

@@ -1,4 +1,5 @@
 """Command line parsing for the `coverage analyze targets expand` command."""
+
 from __future__ import annotations
 
 import argparse
@@ -23,9 +24,9 @@ def do_expand(
 ):
     """Command line parsing for the `coverage analyze targets expand` command."""
     parser: argparse.ArgumentParser = subparsers.add_parser(
-        'expand',
+        "expand",
         parents=[parent],
-        help='expand target names from integers in aggregated coverage',
+        help="expand target names from integers in aggregated coverage",
     )
 
     parser.set_defaults(
@@ -33,16 +34,18 @@ def do_expand(
         config=CoverageAnalyzeTargetsExpandConfig,
     )
 
-    targets_expand = parser.add_argument_group(title='coverage arguments')
+    targets_expand = parser.add_argument_group(title="coverage arguments")
 
     targets_expand.add_argument(
-        'input_file',
-        help='input file to read aggregated coverage from',
+        "input_file",
+        help="input file to read aggregated coverage from",
     )
 
     targets_expand.add_argument(
-        'output_file',
-        help='output file to write expanded coverage to',
+        "output_file",
+        help="output file to write expanded coverage to",
     )
 
-    add_environments(parser, completer, ControllerMode.ORIGIN, TargetMode.NO_TARGETS)  # coverage analyze targets expand
+    add_environments(
+        parser, completer, ControllerMode.ORIGIN, TargetMode.NO_TARGETS
+    )  # coverage analyze targets expand

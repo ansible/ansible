@@ -16,4 +16,5 @@ if sys.version_info < (3, 10):
         HAS_IMPORTLIB_RESOURCES = True
 else:
     from importlib.resources import files
+
     HAS_IMPORTLIB_RESOURCES = True

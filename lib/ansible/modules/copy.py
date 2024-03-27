@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: copy
 version_added: historical
@@ -155,9 +155,9 @@ attributes:
   vault:
     support: full
     version_added: '2.2'
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Copy file with owner and permissions
   ansible.builtin.copy:
     src: /srv/myfiles/foo.conf
@@ -220,9 +220,9 @@ EXAMPLES = r'''
     src: /etc/foo.conf
     dest: /path/to/link  # link to /path/to/file
     follow: no
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 dest:
     description: Destination file/path.
     returned: success
@@ -283,7 +283,7 @@ state:
     returned: success
     type: str
     sample: file
-'''
+"""
 
 import errno
 import filecmp
@@ -306,16 +306,18 @@ class AnsibleModuleError(Exception):
 
 
 def split_pre_existing_dir(dirname):
-    '''
+    """
     Return the first pre-existing directory and a list of the new directories that will be created.
-    '''
+    """
     head, tail = os.path.split(dirname)
-    b_head = to_bytes(head, errors='surrogate_or_strict')
-    if head == '':
-        return ('.', [tail])
+    b_head = to_bytes(head, errors="surrogate_or_strict")
+    if head == "":
+        return (".", [tail])
     if not os.path.exists(b_head):
-        if head == '/':
-            raise AnsibleModuleError(results={'msg': "The '/' directory doesn't exist on this machine."})
+        if head == "/":
+            raise AnsibleModuleError(
+                results={"msg": "The '/' directory doesn't exist on this machine."}
+            )
         (pre_existing_dir, new_directory_list) = split_pre_existing_dir(head)
     else:
         return (head, [tail])
@@ -323,23 +325,27 @@ def split_pre_existing_dir(dirname):
     return (pre_existing_dir, new_directory_list)
 
 
-def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list, module, directory_args, changed):
-    '''
+def adjust_recursive_directory_permissions(
+    pre_existing_dir, new_directory_list, module, directory_args, changed
+):
+    """
     Walk the new directories list and make sure that permissions are as we would expect
-    '''
+    """
 
     if new_directory_list:
         working_dir = os.path.join(pre_existing_dir, new_directory_list.pop(0))
-        directory_args['path'] = working_dir
+        directory_args["path"] = working_dir
         changed = module.set_fs_attributes_if_different(directory_args, changed)
-        changed = adjust_recursive_directory_permissions(working_dir, new_directory_list, module, directory_args, changed)
+        changed = adjust_recursive_directory_permissions(
+            working_dir, new_directory_list, module, directory_args, changed
+        )
     return changed
 
 
 def chown_recursive(path, module):
     changed = False
-    owner = module.params['owner']
-    group = module.params['group']
+    owner = module.params["owner"]
+    group = module.params["group"]
 
     if owner is not None:
         if not module.check_mode:
@@ -358,15 +364,15 @@ def chown_recursive(path, module):
         else:
             uid = pwd.getpwnam(owner).pw_uid
             for dirpath, dirnames, filenames in os.walk(path):
-                owner_changed = (os.stat(dirpath).st_uid != uid)
+                owner_changed = os.stat(dirpath).st_uid != uid
                 if owner_changed is True:
                     changed = owner_changed
                 for dir in [os.path.join(dirpath, d) for d in dirnames]:
-                    owner_changed = (os.stat(dir).st_uid != uid)
+                    owner_changed = os.stat(dir).st_uid != uid
                     if owner_changed is True:
                         changed = owner_changed
                 for file in [os.path.join(dirpath, f) for f in filenames]:
-                    owner_changed = (os.stat(file).st_uid != uid)
+                    owner_changed = os.stat(file).st_uid != uid
                     if owner_changed is True:
                         changed = owner_changed
     if group is not None:
@@ -386,15 +392,15 @@ def chown_recursive(path, module):
         else:
             gid = grp.getgrnam(group).gr_gid
             for dirpath, dirnames, filenames in os.walk(path):
-                group_changed = (os.stat(dirpath).st_gid != gid)
+                group_changed = os.stat(dirpath).st_gid != gid
                 if group_changed is True:
                     changed = group_changed
                 for dir in [os.path.join(dirpath, d) for d in dirnames]:
-                    group_changed = (os.stat(dir).st_gid != gid)
+                    group_changed = os.stat(dir).st_gid != gid
                     if group_changed is True:
                         changed = group_changed
                 for file in [os.path.join(dirpath, f) for f in filenames]:
-                    group_changed = (os.stat(file).st_gid != gid)
+                    group_changed = os.stat(file).st_gid != gid
                     if group_changed is True:
                         changed = group_changed
 
@@ -405,9 +411,9 @@ def copy_diff_files(src, dest, module):
     """Copy files that are different between `src` directory and `dest` directory."""
 
     changed = False
-    owner = module.params['owner']
-    group = module.params['group']
-    local_follow = module.params['local_follow']
+    owner = module.params["owner"]
+    group = module.params["group"]
+    local_follow = module.params["local_follow"]
     diff_files = filecmp.dircmp(src, dest).diff_files
     if len(diff_files):
         changed = True
@@ -415,8 +421,8 @@ def copy_diff_files(src, dest, module):
         for item in diff_files:
             src_item_path = os.path.join(src, item)
             dest_item_path = os.path.join(dest, item)
-            b_src_item_path = to_bytes(src_item_path, errors='surrogate_or_strict')
-            b_dest_item_path = to_bytes(dest_item_path, errors='surrogate_or_strict')
+            b_src_item_path = to_bytes(src_item_path, errors="surrogate_or_strict")
+            b_dest_item_path = to_bytes(dest_item_path, errors="surrogate_or_strict")
             if os.path.islink(b_src_item_path) and local_follow is False:
                 linkto = os.readlink(b_src_item_path)
                 os.symlink(linkto, b_dest_item_path)
@@ -436,9 +442,9 @@ def copy_left_only(src, dest, module):
     """Copy files that exist in `src` directory only to the `dest` directory."""
 
     changed = False
-    owner = module.params['owner']
-    group = module.params['group']
-    local_follow = module.params['local_follow']
+    owner = module.params["owner"]
+    group = module.params["group"]
+    local_follow = module.params["local_follow"]
     left_only = filecmp.dircmp(src, dest).left_only
     if len(left_only):
         changed = True
@@ -446,25 +452,43 @@ def copy_left_only(src, dest, module):
         for item in left_only:
             src_item_path = os.path.join(src, item)
             dest_item_path = os.path.join(dest, item)
-            b_src_item_path = to_bytes(src_item_path, errors='surrogate_or_strict')
-            b_dest_item_path = to_bytes(dest_item_path, errors='surrogate_or_strict')
+            b_src_item_path = to_bytes(src_item_path, errors="surrogate_or_strict")
+            b_dest_item_path = to_bytes(dest_item_path, errors="surrogate_or_strict")
 
-            if os.path.islink(b_src_item_path) and os.path.isdir(b_src_item_path) and local_follow is True:
-                shutil.copytree(b_src_item_path, b_dest_item_path, symlinks=not local_follow)
+            if (
+                os.path.islink(b_src_item_path)
+                and os.path.isdir(b_src_item_path)
+                and local_follow is True
+            ):
+                shutil.copytree(
+                    b_src_item_path, b_dest_item_path, symlinks=not local_follow
+                )
                 chown_recursive(b_dest_item_path, module)
 
-            if os.path.islink(b_src_item_path) and os.path.isdir(b_src_item_path) and local_follow is False:
+            if (
+                os.path.islink(b_src_item_path)
+                and os.path.isdir(b_src_item_path)
+                and local_follow is False
+            ):
                 linkto = os.readlink(b_src_item_path)
                 os.symlink(linkto, b_dest_item_path)
 
-            if os.path.islink(b_src_item_path) and os.path.isfile(b_src_item_path) and local_follow is True:
+            if (
+                os.path.islink(b_src_item_path)
+                and os.path.isfile(b_src_item_path)
+                and local_follow is True
+            ):
                 shutil.copyfile(b_src_item_path, b_dest_item_path)
                 if owner is not None:
                     module.set_owner_if_different(b_dest_item_path, owner, False)
                 if group is not None:
                     module.set_group_if_different(b_dest_item_path, group, False)
 
-            if os.path.islink(b_src_item_path) and os.path.isfile(b_src_item_path) and local_follow is False:
+            if (
+                os.path.islink(b_src_item_path)
+                and os.path.isfile(b_src_item_path)
+                and local_follow is False
+            ):
                 linkto = os.readlink(b_src_item_path)
                 os.symlink(linkto, b_dest_item_path)
 
@@ -478,7 +502,9 @@ def copy_left_only(src, dest, module):
                     module.set_group_if_different(b_dest_item_path, group, False)
 
             if not os.path.islink(b_src_item_path) and os.path.isdir(b_src_item_path):
-                shutil.copytree(b_src_item_path, b_dest_item_path, symlinks=not local_follow)
+                shutil.copytree(
+                    b_src_item_path, b_dest_item_path, symlinks=not local_follow
+                )
                 chown_recursive(b_dest_item_path, module)
 
             changed = True
@@ -491,15 +517,18 @@ def copy_common_dirs(src, dest, module):
     for item in common_dirs:
         src_item_path = os.path.join(src, item)
         dest_item_path = os.path.join(dest, item)
-        b_src_item_path = to_bytes(src_item_path, errors='surrogate_or_strict')
-        b_dest_item_path = to_bytes(dest_item_path, errors='surrogate_or_strict')
+        b_src_item_path = to_bytes(src_item_path, errors="surrogate_or_strict")
+        b_dest_item_path = to_bytes(dest_item_path, errors="surrogate_or_strict")
         diff_files_changed = copy_diff_files(b_src_item_path, b_dest_item_path, module)
         left_only_changed = copy_left_only(b_src_item_path, b_dest_item_path, module)
         if diff_files_changed or left_only_changed:
             changed = True
 
         # recurse into subdirectory
-        changed = copy_common_dirs(os.path.join(src, item), os.path.join(dest, item), module) or changed
+        changed = (
+            copy_common_dirs(os.path.join(src, item), os.path.join(dest, item), module)
+            or changed
+        )
     return changed
 
 
@@ -508,41 +537,43 @@ def main():
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec=dict(
-            src=dict(type='path'),
-            _original_basename=dict(type='str'),  # used to handle 'dest is a directory' via template, a slight hack
-            content=dict(type='str', no_log=True),
-            dest=dict(type='path', required=True),
-            backup=dict(type='bool', default=False),
-            force=dict(type='bool', default=True),
-            validate=dict(type='str'),
-            directory_mode=dict(type='raw'),
-            remote_src=dict(type='bool'),
-            local_follow=dict(type='bool'),
-            checksum=dict(type='str'),
-            follow=dict(type='bool', default=False),
+            src=dict(type="path"),
+            _original_basename=dict(
+                type="str"
+            ),  # used to handle 'dest is a directory' via template, a slight hack
+            content=dict(type="str", no_log=True),
+            dest=dict(type="path", required=True),
+            backup=dict(type="bool", default=False),
+            force=dict(type="bool", default=True),
+            validate=dict(type="str"),
+            directory_mode=dict(type="raw"),
+            remote_src=dict(type="bool"),
+            local_follow=dict(type="bool"),
+            checksum=dict(type="str"),
+            follow=dict(type="bool", default=False),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
     )
 
-    src = module.params['src']
-    b_src = to_bytes(src, errors='surrogate_or_strict')
-    dest = module.params['dest']
+    src = module.params["src"]
+    b_src = to_bytes(src, errors="surrogate_or_strict")
+    dest = module.params["dest"]
     # Make sure we always have a directory component for later processing
     if os.path.sep not in dest:
-        dest = '.{0}{1}'.format(os.path.sep, dest)
-    b_dest = to_bytes(dest, errors='surrogate_or_strict')
-    backup = module.params['backup']
-    force = module.params['force']
-    _original_basename = module.params.get('_original_basename', None)
-    validate = module.params.get('validate', None)
-    follow = module.params['follow']
-    local_follow = module.params['local_follow']
-    mode = module.params['mode']
-    owner = module.params['owner']
-    group = module.params['group']
-    remote_src = module.params['remote_src']
-    checksum = module.params['checksum']
+        dest = ".{0}{1}".format(os.path.sep, dest)
+    b_dest = to_bytes(dest, errors="surrogate_or_strict")
+    backup = module.params["backup"]
+    force = module.params["force"]
+    _original_basename = module.params.get("_original_basename", None)
+    validate = module.params.get("validate", None)
+    follow = module.params["follow"]
+    local_follow = module.params["local_follow"]
+    mode = module.params["mode"]
+    owner = module.params["owner"]
+    group = module.params["group"]
+    remote_src = module.params["remote_src"]
+    checksum = module.params["checksum"]
 
     if not os.path.exists(b_src):
         module.fail_json(msg="Source %s not found" % (src))
@@ -551,9 +582,9 @@ def main():
 
     # Preserve is usually handled in the action plugin but mode + remote_src has to be done on the
     # remote host
-    if module.params['mode'] == 'preserve':
-        module.params['mode'] = '0%03o' % stat.S_IMODE(os.stat(b_src).st_mode)
-    mode = module.params['mode']
+    if module.params["mode"] == "preserve":
+        module.params["mode"] = "0%03o" % stat.S_IMODE(os.stat(b_src).st_mode)
+    mode = module.params["mode"]
 
     changed = False
 
@@ -565,7 +596,9 @@ def main():
         try:
             checksum_src = module.sha1(src)
         except (OSError, IOError) as e:
-            module.warn("Unable to calculate src checksum, assuming change: %s" % to_native(e))
+            module.warn(
+                "Unable to calculate src checksum, assuming change: %s" % to_native(e)
+            )
         try:
             # Backwards compat only.  This will be None in FIPS mode
             md5sum_src = module.md5(src)
@@ -576,50 +609,58 @@ def main():
 
     if checksum and checksum_src != checksum:
         module.fail_json(
-            msg='Copied file does not match the expected checksum. Transfer failed.',
+            msg="Copied file does not match the expected checksum. Transfer failed.",
             checksum=checksum_src,
-            expected_checksum=checksum
+            expected_checksum=checksum,
         )
 
     # Special handling for recursive copy - create intermediate dirs
     if dest.endswith(os.sep):
         if _original_basename:
             dest = os.path.join(dest, _original_basename)
-        b_dest = to_bytes(dest, errors='surrogate_or_strict')
+        b_dest = to_bytes(dest, errors="surrogate_or_strict")
         dirname = os.path.dirname(dest)
-        b_dirname = to_bytes(dirname, errors='surrogate_or_strict')
+        b_dirname = to_bytes(dirname, errors="surrogate_or_strict")
         if not os.path.exists(b_dirname):
             try:
                 (pre_existing_dir, new_directory_list) = split_pre_existing_dir(dirname)
             except AnsibleModuleError as e:
-                e.result['msg'] += ' Could not copy to {0}'.format(dest)
+                e.result["msg"] += " Could not copy to {0}".format(dest)
                 module.fail_json(**e.results)
 
             if module.check_mode:
-                module.exit_json(msg='dest directory %s would be created' % dirname, changed=True, src=src)
+                module.exit_json(
+                    msg="dest directory %s would be created" % dirname,
+                    changed=True,
+                    src=src,
+                )
             os.makedirs(b_dirname)
             changed = True
             directory_args = module.load_file_common_arguments(module.params)
             directory_mode = module.params["directory_mode"]
             if directory_mode is not None:
-                directory_args['mode'] = directory_mode
+                directory_args["mode"] = directory_mode
             else:
-                directory_args['mode'] = None
-            adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list, module, directory_args, changed)
+                directory_args["mode"] = None
+            adjust_recursive_directory_permissions(
+                pre_existing_dir, new_directory_list, module, directory_args, changed
+            )
 
     if os.path.isdir(b_dest):
         basename = os.path.basename(src)
         if _original_basename:
             basename = _original_basename
         dest = os.path.join(dest, basename)
-        b_dest = to_bytes(dest, errors='surrogate_or_strict')
+        b_dest = to_bytes(dest, errors="surrogate_or_strict")
 
     if os.path.exists(b_dest):
         if os.path.islink(b_dest) and follow:
             b_dest = os.path.realpath(b_dest)
-            dest = to_native(b_dest, errors='surrogate_or_strict')
+            dest = to_native(b_dest, errors="surrogate_or_strict")
         if not force:
-            module.exit_json(msg="file already exists", src=src, dest=dest, changed=False)
+            module.exit_json(
+                msg="file already exists", src=src, dest=dest, changed=False
+            )
         if os.access(b_dest, os.R_OK) and os.path.isfile(b_dest):
             checksum_dest = module.sha1(dest)
     else:
@@ -632,10 +673,18 @@ def main():
                 os.stat(os.path.dirname(b_dest))
             except OSError as e:
                 if "permission denied" in to_native(e).lower():
-                    module.fail_json(msg="Destination directory %s is not accessible" % (os.path.dirname(dest)))
-            module.fail_json(msg="Destination directory %s does not exist" % (os.path.dirname(dest)))
+                    module.fail_json(
+                        msg="Destination directory %s is not accessible"
+                        % (os.path.dirname(dest))
+                    )
+            module.fail_json(
+                msg="Destination directory %s does not exist" % (os.path.dirname(dest))
+            )
 
-    if not os.access(os.path.dirname(b_dest), os.W_OK) and not module.params['unsafe_writes']:
+    if (
+        not os.access(os.path.dirname(b_dest), os.W_OK)
+        and not module.params["unsafe_writes"]
+    ):
         module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
 
     backup_file = None
@@ -649,7 +698,7 @@ def main():
                 # allow for conversion from symlink.
                 if os.path.islink(b_dest):
                     os.unlink(b_dest)
-                    open(b_dest, 'w').close()
+                    open(b_dest, "w").close()
                 if validate:
                     # if we have a mode, make sure we set it on the temporary
                     # file source as some validations may require it
@@ -660,10 +709,17 @@ def main():
                     if group is not None:
                         module.set_group_if_different(src, group, False)
                     if "%s" not in validate:
-                        module.fail_json(msg="validate must contain %%s: %s" % (validate))
+                        module.fail_json(
+                            msg="validate must contain %%s: %s" % (validate)
+                        )
                     (rc, out, err) = module.run_command(validate % src)
                     if rc != 0:
-                        module.fail_json(msg="failed to validate", exit_status=rc, stdout=out, stderr=err)
+                        module.fail_json(
+                            msg="failed to validate",
+                            exit_status=rc,
+                            stdout=out,
+                            stderr=err,
+                        )
 
                 b_mysrc = b_src
                 if remote_src and os.path.isfile(b_src):
@@ -675,44 +731,71 @@ def main():
                         shutil.copystat(b_src, b_mysrc)
                     except OSError as err:
                         if err.errno == errno.ENOSYS and mode == "preserve":
-                            module.warn("Unable to copy stats {0}".format(to_native(b_src)))
+                            module.warn(
+                                "Unable to copy stats {0}".format(to_native(b_src))
+                            )
                         else:
                             raise
 
                 # at this point we should always have tmp file
-                module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'], keep_dest_attrs=not remote_src)
+                module.atomic_move(
+                    b_mysrc,
+                    dest,
+                    unsafe_writes=module.params["unsafe_writes"],
+                    keep_dest_attrs=not remote_src,
+                )
 
             except (IOError, OSError):
-                module.fail_json(msg="failed to copy: %s to %s" % (src, dest), traceback=traceback.format_exc())
+                module.fail_json(
+                    msg="failed to copy: %s to %s" % (src, dest),
+                    traceback=traceback.format_exc(),
+                )
         changed = True
 
     # If neither have checksums, both src and dest are directories.
     if checksum_src is None and checksum_dest is None:
-        if remote_src and os.path.isdir(module.params['src']):
-            b_src = to_bytes(module.params['src'], errors='surrogate_or_strict')
-            b_dest = to_bytes(module.params['dest'], errors='surrogate_or_strict')
+        if remote_src and os.path.isdir(module.params["src"]):
+            b_src = to_bytes(module.params["src"], errors="surrogate_or_strict")
+            b_dest = to_bytes(module.params["dest"], errors="surrogate_or_strict")
 
-            if src.endswith(os.path.sep) and os.path.isdir(module.params['dest']):
+            if src.endswith(os.path.sep) and os.path.isdir(module.params["dest"]):
                 diff_files_changed = copy_diff_files(b_src, b_dest, module)
                 left_only_changed = copy_left_only(b_src, b_dest, module)
                 common_dirs_changed = copy_common_dirs(b_src, b_dest, module)
                 owner_group_changed = chown_recursive(b_dest, module)
-                if diff_files_changed or left_only_changed or common_dirs_changed or owner_group_changed:
+                if (
+                    diff_files_changed
+                    or left_only_changed
+                    or common_dirs_changed
+                    or owner_group_changed
+                ):
                     changed = True
 
-            if src.endswith(os.path.sep) and not os.path.exists(module.params['dest']):
-                b_basename = to_bytes(os.path.basename(src), errors='surrogate_or_strict')
-                b_dest = to_bytes(os.path.join(b_dest, b_basename), errors='surrogate_or_strict')
-                b_src = to_bytes(os.path.join(module.params['src'], ""), errors='surrogate_or_strict')
+            if src.endswith(os.path.sep) and not os.path.exists(module.params["dest"]):
+                b_basename = to_bytes(
+                    os.path.basename(src), errors="surrogate_or_strict"
+                )
+                b_dest = to_bytes(
+                    os.path.join(b_dest, b_basename), errors="surrogate_or_strict"
+                )
+                b_src = to_bytes(
+                    os.path.join(module.params["src"], ""), errors="surrogate_or_strict"
+                )
                 if not module.check_mode:
                     shutil.copytree(b_src, b_dest, symlinks=not local_follow)
                 chown_recursive(dest, module)
                 changed = True
 
-            if not src.endswith(os.path.sep) and os.path.isdir(module.params['dest']):
-                b_basename = to_bytes(os.path.basename(src), errors='surrogate_or_strict')
-                b_dest = to_bytes(os.path.join(b_dest, b_basename), errors='surrogate_or_strict')
-                b_src = to_bytes(os.path.join(module.params['src'], ""), errors='surrogate_or_strict')
+            if not src.endswith(os.path.sep) and os.path.isdir(module.params["dest"]):
+                b_basename = to_bytes(
+                    os.path.basename(src), errors="surrogate_or_strict"
+                )
+                b_dest = to_bytes(
+                    os.path.join(b_dest, b_basename), errors="surrogate_or_strict"
+                )
+                b_src = to_bytes(
+                    os.path.join(module.params["src"], ""), errors="surrogate_or_strict"
+                )
                 if not module.check_mode and not os.path.exists(b_dest):
                     shutil.copytree(b_src, b_dest, symlinks=not local_follow)
                     changed = True
@@ -724,16 +807,30 @@ def main():
                     left_only_changed = copy_left_only(b_src, b_dest, module)
                     common_dirs_changed = copy_common_dirs(b_src, b_dest, module)
                     owner_group_changed = chown_recursive(b_dest, module)
-                    if diff_files_changed or left_only_changed or common_dirs_changed or owner_group_changed:
+                    if (
+                        diff_files_changed
+                        or left_only_changed
+                        or common_dirs_changed
+                        or owner_group_changed
+                    ):
                         changed = True
 
-            if not src.endswith(os.path.sep) and not os.path.exists(module.params['dest']):
-                b_basename = to_bytes(os.path.basename(module.params['src']), errors='surrogate_or_strict')
-                b_dest = to_bytes(os.path.join(b_dest, b_basename), errors='surrogate_or_strict')
+            if not src.endswith(os.path.sep) and not os.path.exists(
+                module.params["dest"]
+            ):
+                b_basename = to_bytes(
+                    os.path.basename(module.params["src"]), errors="surrogate_or_strict"
+                )
+                b_dest = to_bytes(
+                    os.path.join(b_dest, b_basename), errors="surrogate_or_strict"
+                )
                 if not module.check_mode and not os.path.exists(b_dest):
                     os.makedirs(b_dest)
                     changed = True
-                    b_src = to_bytes(os.path.join(module.params['src'], ""), errors='surrogate_or_strict')
+                    b_src = to_bytes(
+                        os.path.join(module.params["src"], ""),
+                        errors="surrogate_or_strict",
+                    )
                     diff_files_changed = copy_diff_files(b_src, b_dest, module)
                     left_only_changed = copy_left_only(b_src, b_dest, module)
                     common_dirs_changed = copy_common_dirs(b_src, b_dest, module)
@@ -745,13 +842,15 @@ def main():
         dest=dest, src=src, md5sum=md5sum_src, checksum=checksum_src, changed=changed
     )
     if backup_file:
-        res_args['backup_file'] = backup_file
+        res_args["backup_file"] = backup_file
 
     file_args = module.load_file_common_arguments(module.params, path=dest)
-    res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
+    res_args["changed"] = module.set_fs_attributes_if_different(
+        file_args, res_args["changed"]
+    )
 
     module.exit_json(**res_args)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

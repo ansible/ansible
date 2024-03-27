@@ -3,6 +3,7 @@ Check for illegal filenames on various operating systems.
 The main rules are derived from restrictions on Windows:
 https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#naming-conventions
 """
+
 from __future__ import annotations
 
 import os
@@ -11,17 +12,9 @@ import sys
 
 from ansible.module_utils.basic import to_bytes
 
-ILLEGAL_CHARS = [
-    b'<',
-    b'>',
-    b':',
-    b'"',
-    b'/',
-    b'\\',
-    b'|',
-    b'?',
-    b'*'
-] + [struct.pack("b", i) for i in range(32)]
+ILLEGAL_CHARS = [b"<", b">", b":", b'"', b"/", b"\\", b"|", b"?", b"*"] + [
+    struct.pack("b", i) for i in range(32)
+]
 
 ILLEGAL_NAMES = [
     "CON",
@@ -49,14 +42,14 @@ ILLEGAL_NAMES = [
 ]
 
 ILLEGAL_END_CHARS = [
-    '.',
-    ' ',
+    ".",
+    " ",
 ]
 
 
 def check_path(path, is_dir=False):
     """Check the specified path for unwanted characters and names."""
-    type_name = 'directory' if is_dir else 'file'
+    type_name = "directory" if is_dir else "file"
     file_name = os.path.basename(path.rstrip(os.path.sep))
     name = os.path.splitext(file_name)[0]
 
@@ -66,10 +59,10 @@ def check_path(path, is_dir=False):
     if file_name[-1] in ILLEGAL_END_CHARS:
         print("%s: illegal %s name end-char '%s'" % (path, type_name, file_name[-1]))
 
-    bfile = to_bytes(file_name, encoding='utf-8')
+    bfile = to_bytes(file_name, encoding="utf-8")
     for char in ILLEGAL_CHARS:
         if char in bfile:
-            bpath = to_bytes(path, encoding='utf-8')
+            bpath = to_bytes(path, encoding="utf-8")
             print("%s: illegal char '%s' in %s name" % (bpath, char, type_name))
 
 
@@ -79,5 +72,5 @@ def main():
         check_path(path, is_dir=path.endswith(os.path.sep))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

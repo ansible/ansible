@@ -1,4 +1,5 @@
 """Command line parsing for the `sanity` command."""
+
 from __future__ import annotations
 
 import argparse
@@ -31,9 +32,9 @@ def do_sanity(
 ):
     """Command line parsing for the `sanity` command."""
     parser: argparse.ArgumentParser = subparsers.add_parser(
-        'sanity',
+        "sanity",
         parents=[parent],
-        help='sanity tests',
+        help="sanity tests",
     )
 
     parser.set_defaults(
@@ -42,64 +43,66 @@ def do_sanity(
         config=SanityConfig,
     )
 
-    sanity = parser.add_argument_group(title='sanity test arguments')
+    sanity = parser.add_argument_group(title="sanity test arguments")
 
     sanity.add_argument(
-        '--test',
-        metavar='TEST',
-        action='append',
+        "--test",
+        metavar="TEST",
+        action="append",
         choices=[test.name for test in sanity_get_tests()],
-        help='tests to run',
+        help="tests to run",
     )
 
     sanity.add_argument(
-        '--skip-test',
-        metavar='TEST',
-        action='append',
+        "--skip-test",
+        metavar="TEST",
+        action="append",
         choices=[test.name for test in sanity_get_tests()],
-        help='tests to skip',
+        help="tests to skip",
     )
 
     sanity.add_argument(
-        '--allow-disabled',
-        action='store_true',
-        help='allow tests to run which are disabled by default',
+        "--allow-disabled",
+        action="store_true",
+        help="allow tests to run which are disabled by default",
     )
 
     sanity.add_argument(
-        '--list-tests',
-        action='store_true',
-        help='list available tests',
+        "--list-tests",
+        action="store_true",
+        help="list available tests",
     )
 
     sanity.add_argument(
-        '--enable-optional-errors',
-        action='store_true',
-        help='enable optional errors',
+        "--enable-optional-errors",
+        action="store_true",
+        help="enable optional errors",
     )
 
     sanity.add_argument(
-        '--lint',
-        action='store_true',
-        help='write lint output to stdout, everything else stderr',
+        "--lint",
+        action="store_true",
+        help="write lint output to stdout, everything else stderr",
     )
 
     sanity.add_argument(
-        '--junit',
-        action='store_true',
-        help='write test failures to junit xml files',
+        "--junit",
+        action="store_true",
+        help="write test failures to junit xml files",
     )
 
     sanity.add_argument(
-        '--failure-ok',
-        action='store_true',
-        help='exit successfully on failed tests after saving results',
+        "--failure-ok",
+        action="store_true",
+        help="exit successfully on failed tests after saving results",
     )
 
     sanity.add_argument(
-        '--prime-venvs',
-        action='store_true',
-        help='prepare virtual environments without running tests',
+        "--prime-venvs",
+        action="store_true",
+        help="prepare virtual environments without running tests",
     )
 
-    add_environments(parser, completer, ControllerMode.DELEGATED, TargetMode.SANITY)  # sanity
+    add_environments(
+        parser, completer, ControllerMode.DELEGATED, TargetMode.SANITY
+    )  # sanity

@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: reset_pulp
 short_description: Resets pulp back to the initial state
@@ -48,9 +48,9 @@ options:
     elements: str
 author:
 - Jordan Borean (@jborean93)
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: reset pulp content
   reset_pulp:
     pulp_api: http://galaxy:24817
@@ -61,11 +61,11 @@ EXAMPLES = '''
     namespaces:
     - namespace1
     - namespace2
-'''
+"""
 
-RETURN = '''
+RETURN = """
 #
-'''
+"""
 
 import json
 
@@ -74,16 +74,16 @@ from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.common.text.converters import to_text
 
 
-def invoke_api(module, url, method='GET', data=None, status_codes=None):
+def invoke_api(module, url, method="GET", data=None, status_codes=None):
     status_codes = status_codes or [200]
     headers = {}
     if data:
-        headers['Content-Type'] = 'application/json'
+        headers["Content-Type"] = "application/json"
         data = json.dumps(data)
 
     resp, info = fetch_url(module, url, method=method, data=data, headers=headers)
-    if info['status'] not in status_codes:
-        info['url'] = url
+    if info["status"] not in status_codes:
+        info["url"] = url
         module.fail_json(**info)
 
     data = to_text(resp.read())
@@ -92,102 +92,123 @@ def invoke_api(module, url, method='GET', data=None, status_codes=None):
 
 
 def delete_galaxy_namespace(namespace, module):
-    """ Deletes the galaxy ng namespace specified. """
-    ns_uri = '%sv3/namespaces/%s/' % (module.params['galaxy_ng_server'], namespace)
-    invoke_api(module, ns_uri, method='DELETE', status_codes=[204])
+    """Deletes the galaxy ng namespace specified."""
+    ns_uri = "%sv3/namespaces/%s/" % (module.params["galaxy_ng_server"], namespace)
+    invoke_api(module, ns_uri, method="DELETE", status_codes=[204])
 
 
 def delete_pulp_distribution(distribution, module):
-    """ Deletes the pulp distribution at the URI specified. """
-    task_info = invoke_api(module, distribution, method='DELETE', status_codes=[202])
-    wait_pulp_task(task_info['task'], module)
+    """Deletes the pulp distribution at the URI specified."""
+    task_info = invoke_api(module, distribution, method="DELETE", status_codes=[202])
+    wait_pulp_task(task_info["task"], module)
 
 
 def delete_pulp_orphans(module):
-    """ Deletes any orphaned pulp objects. """
-    orphan_uri = module.params['galaxy_ng_server'] + 'pulp/api/v3/orphans/'
-    task_info = invoke_api(module, orphan_uri, method='DELETE', status_codes=[202])
-    wait_pulp_task(task_info['task'], module)
+    """Deletes any orphaned pulp objects."""
+    orphan_uri = module.params["galaxy_ng_server"] + "pulp/api/v3/orphans/"
+    task_info = invoke_api(module, orphan_uri, method="DELETE", status_codes=[202])
+    wait_pulp_task(task_info["task"], module)
 
 
 def delete_pulp_repository(repository, module):
-    """ Deletes the pulp repository at the URI specified. """
-    task_info = invoke_api(module, repository, method='DELETE', status_codes=[202])
-    wait_pulp_task(task_info['task'], module)
+    """Deletes the pulp repository at the URI specified."""
+    task_info = invoke_api(module, repository, method="DELETE", status_codes=[202])
+    wait_pulp_task(task_info["task"], module)
 
 
 def get_galaxy_namespaces(module):
-    """ Gets a list of galaxy namespaces. """
+    """Gets a list of galaxy namespaces."""
     # No pagination has been implemented, shouldn't need unless we ever exceed 100 namespaces.
-    namespace_uri = module.params['galaxy_ng_server'] + 'v3/namespaces/?limit=100&offset=0'
+    namespace_uri = (
+        module.params["galaxy_ng_server"] + "v3/namespaces/?limit=100&offset=0"
+    )
     ns_info = invoke_api(module, namespace_uri)
 
-    return [n['name'] for n in ns_info['data']]
+    return [n["name"] for n in ns_info["data"]]
 
 
 def get_pulp_distributions(module, distribution):
-    """ Gets a list of all the pulp distributions. """
-    distro_uri = module.params['galaxy_ng_server'] + 'pulp/api/v3/distributions/ansible/ansible/'
-    distro_info = invoke_api(module, distro_uri + '?name=' + distribution)
-    return [module.params['pulp_api'] + r['pulp_href'] for r in distro_info['results']]
+    """Gets a list of all the pulp distributions."""
+    distro_uri = (
+        module.params["galaxy_ng_server"] + "pulp/api/v3/distributions/ansible/ansible/"
+    )
+    distro_info = invoke_api(module, distro_uri + "?name=" + distribution)
+    return [module.params["pulp_api"] + r["pulp_href"] for r in distro_info["results"]]
 
 
 def get_pulp_repositories(module, repository):
-    """ Gets a list of all the pulp repositories. """
-    repo_uri = module.params['galaxy_ng_server'] + 'pulp/api/v3/repositories/ansible/ansible/'
-    repo_info = invoke_api(module, repo_uri + '?name=' + repository)
-    return [module.params['pulp_api'] + r['pulp_href'] for r in repo_info['results']]
+    """Gets a list of all the pulp repositories."""
+    repo_uri = (
+        module.params["galaxy_ng_server"] + "pulp/api/v3/repositories/ansible/ansible/"
+    )
+    repo_info = invoke_api(module, repo_uri + "?name=" + repository)
+    return [module.params["pulp_api"] + r["pulp_href"] for r in repo_info["results"]]
 
 
 def get_repo_collections(repository, module):
-    collections_uri = module.params['galaxy_ng_server'] + 'v3/plugin/ansible/content/' + repository + '/collections/index/'
+    collections_uri = (
+        module.params["galaxy_ng_server"]
+        + "v3/plugin/ansible/content/"
+        + repository
+        + "/collections/index/"
+    )
     # status code 500 isn't really expected, an unhandled exception is causing this instead of a 404
     # See https://issues.redhat.com/browse/AAH-2329
-    info = invoke_api(module, collections_uri + '?limit=100&offset=0', status_codes=[200, 500])
+    info = invoke_api(
+        module, collections_uri + "?limit=100&offset=0", status_codes=[200, 500]
+    )
     if not info:
         return []
-    return [module.params['pulp_api'] + c['href'] for c in info['data']]
+    return [module.params["pulp_api"] + c["href"] for c in info["data"]]
 
 
 def delete_repo_collection(collection, module):
-    task_info = invoke_api(module, collection, method='DELETE', status_codes=[202])
-    wait_pulp_task(task_info['task'], module)
+    task_info = invoke_api(module, collection, method="DELETE", status_codes=[202])
+    wait_pulp_task(task_info["task"], module)
 
 
 def new_galaxy_namespace(name, module):
-    """ Creates a new namespace in Galaxy NG. """
-    ns_uri = module.params['galaxy_ng_server'] + 'v3/namespaces/ '
-    data = {'name': name, 'groups': []}
-    ns_info = invoke_api(module, ns_uri, method='POST', data=data, status_codes=[201])
+    """Creates a new namespace in Galaxy NG."""
+    ns_uri = module.params["galaxy_ng_server"] + "v3/namespaces/ "
+    data = {"name": name, "groups": []}
+    ns_info = invoke_api(module, ns_uri, method="POST", data=data, status_codes=[201])
 
-    return ns_info['id']
+    return ns_info["id"]
 
 
 def new_pulp_repository(name, module):
-    """ Creates a new pulp repository. """
-    repo_uri = module.params['galaxy_ng_server'] + 'pulp/api/v3/repositories/ansible/ansible/'
+    """Creates a new pulp repository."""
+    repo_uri = (
+        module.params["galaxy_ng_server"] + "pulp/api/v3/repositories/ansible/ansible/"
+    )
     # retain_repo_versions to work around https://issues.redhat.com/browse/AAH-2332
-    data = {'name': name, 'retain_repo_versions': '1024'}
-    repo_info = invoke_api(module, repo_uri, method='POST', data=data, status_codes=[201])
+    data = {"name": name, "retain_repo_versions": "1024"}
+    repo_info = invoke_api(
+        module, repo_uri, method="POST", data=data, status_codes=[201]
+    )
 
-    return repo_info['pulp_href']
+    return repo_info["pulp_href"]
 
 
 def new_pulp_distribution(name, base_path, repository, module):
-    """ Creates a new pulp distribution for a repository. """
-    distro_uri = module.params['galaxy_ng_server'] + 'pulp/api/v3/distributions/ansible/ansible/'
-    data = {'name': name, 'base_path': base_path, 'repository': repository}
-    task_info = invoke_api(module, distro_uri, method='POST', data=data, status_codes=[202])
-    task_info = wait_pulp_task(task_info['task'], module)
+    """Creates a new pulp distribution for a repository."""
+    distro_uri = (
+        module.params["galaxy_ng_server"] + "pulp/api/v3/distributions/ansible/ansible/"
+    )
+    data = {"name": name, "base_path": base_path, "repository": repository}
+    task_info = invoke_api(
+        module, distro_uri, method="POST", data=data, status_codes=[202]
+    )
+    task_info = wait_pulp_task(task_info["task"], module)
 
-    return module.params['pulp_api'] + task_info['created_resources'][0]
+    return module.params["pulp_api"] + task_info["created_resources"][0]
 
 
 def wait_pulp_task(task, module):
-    """ Waits for a pulp import task to finish. """
+    """Waits for a pulp import task to finish."""
     while True:
-        task_info = invoke_api(module, module.params['pulp_api'] + task)
-        if task_info['finished_at'] is not None:
+        task_info = invoke_api(module, module.params["pulp_api"] + task)
+        if task_info["finished_at"] is not None:
             break
 
     return task_info
@@ -195,39 +216,45 @@ def wait_pulp_task(task, module):
 
 def main():
     module_args = dict(
-        pulp_api=dict(type='str', required=True),
-        galaxy_ng_server=dict(type='str', required=True),
-        url_username=dict(type='str', required=True),
-        url_password=dict(type='str', required=True, no_log=True),
-        repositories=dict(type='list', elements='str', required=True),
-        namespaces=dict(type='list', elements='str', required=True),
+        pulp_api=dict(type="str", required=True),
+        galaxy_ng_server=dict(type="str", required=True),
+        url_username=dict(type="str", required=True),
+        url_password=dict(type="str", required=True, no_log=True),
+        repositories=dict(type="list", elements="str", required=True),
+        namespaces=dict(type="list", elements="str", required=True),
     )
 
-    module = AnsibleModule(
-        argument_spec=module_args,
-        supports_check_mode=False
-    )
-    module.params['force_basic_auth'] = True
+    module = AnsibleModule(argument_spec=module_args, supports_check_mode=False)
+    module.params["force_basic_auth"] = True
 
     # It may be due to the process of cleaning up orphans, but we cannot delete the namespace
     # while a collection still exists, so this is just a new safety to nuke all collections
     # first
-    for repository in module.params['repositories']:
-        [delete_repo_collection(c, module) for c in get_repo_collections(repository, module)]
+    for repository in module.params["repositories"]:
+        [
+            delete_repo_collection(c, module)
+            for c in get_repo_collections(repository, module)
+        ]
 
-    for repository in module.params['repositories']:
-        [delete_pulp_distribution(d, module) for d in get_pulp_distributions(module, repository)]
-        [delete_pulp_repository(r, module) for r in get_pulp_repositories(module, repository)]
+    for repository in module.params["repositories"]:
+        [
+            delete_pulp_distribution(d, module)
+            for d in get_pulp_distributions(module, repository)
+        ]
+        [
+            delete_pulp_repository(r, module)
+            for r in get_pulp_repositories(module, repository)
+        ]
     delete_pulp_orphans(module)
     [delete_galaxy_namespace(n, module) for n in get_galaxy_namespaces(module)]
 
-    for repository in module.params['repositories']:
+    for repository in module.params["repositories"]:
         repo_href = new_pulp_repository(repository, module)
         new_pulp_distribution(repository, repository, repo_href, module)
-    [new_galaxy_namespace(n, module) for n in module.params['namespaces']]
+    [new_galaxy_namespace(n, module) for n in module.params["namespaces"]]
 
     module.exit_json(changed=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

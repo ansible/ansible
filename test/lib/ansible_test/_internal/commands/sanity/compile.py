@@ -1,4 +1,5 @@
 """Sanity test for proper python syntax."""
+
 from __future__ import annotations
 
 import os
@@ -46,9 +47,16 @@ class CompileTest(SanityMultipleVersion):
 
     def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
-        return [target for target in targets if os.path.splitext(target.path)[1] == '.py' or is_subdir(target.path, 'bin')]
+        return [
+            target
+            for target in targets
+            if os.path.splitext(target.path)[1] == ".py"
+            or is_subdir(target.path, "bin")
+        ]
 
-    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
+    def test(
+        self, args: SanityConfig, targets: SanityTargets, python: PythonConfig
+    ) -> TestResult:
         if args.prime_venvs:
             return SanitySkipped(self.name, python_version=python.version)
 
@@ -56,9 +64,9 @@ class CompileTest(SanityMultipleVersion):
 
         paths = [target.path for target in targets.include]
 
-        cmd = [python.path, os.path.join(TARGET_SANITY_ROOT, 'compile', 'compile.py')]
+        cmd = [python.path, os.path.join(TARGET_SANITY_ROOT, "compile", "compile.py")]
 
-        data = '\n'.join(paths)
+        data = "\n".join(paths)
 
         display.info(data, verbosity=4)
 
@@ -76,20 +84,27 @@ class CompileTest(SanityMultipleVersion):
         if args.explain:
             return SanitySuccess(self.name, python_version=python.version)
 
-        pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
+        pattern = (
+            r"^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$"
+        )
 
         results = parse_to_list_of_dict(pattern, stdout)
 
-        results = [SanityMessage(
-            message=r['message'],
-            path=r['path'].replace('./', ''),
-            line=int(r['line']),
-            column=int(r['column']),
-        ) for r in results]
+        results = [
+            SanityMessage(
+                message=r["message"],
+                path=r["path"].replace("./", ""),
+                line=int(r["line"]),
+                column=int(r["column"]),
+            )
+            for r in results
+        ]
 
         results = settings.process_errors(results, paths)
 
         if results:
-            return SanityFailure(self.name, messages=results, python_version=python.version)
+            return SanityFailure(
+                self.name, messages=results, python_version=python.version
+            )
 
         return SanitySuccess(self.name, python_version=python.version)

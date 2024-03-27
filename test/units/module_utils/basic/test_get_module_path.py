@@ -17,5 +17,6 @@ realimport = builtins.__import__
 class TestGetModulePath(ModuleTestCase):
     def test_module_utils_basic_get_module_path(self):
         from ansible.module_utils.basic import get_module_path
-        with patch('os.path.realpath', return_value='/path/to/foo/'):
-            self.assertEqual(get_module_path(), '/path/to/foo')
+
+        with patch("os.path.realpath", return_value="/path/to/foo/"):
+            self.assertEqual(get_module_path(), "/path/to/foo")

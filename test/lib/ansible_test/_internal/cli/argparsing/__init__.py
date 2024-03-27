@@ -1,4 +1,5 @@
 """Completion finder which brings together custom options and completion logic."""
+
 from __future__ import annotations
 
 import abc
@@ -80,9 +81,15 @@ class RegisteredCompletionFinder(OptionCompletionFinder):
             # If one of the completion handlers registered their results, only allow those exact results to be returned.
             # This prevents argcomplete from adding results from other completers when they are known to be invalid.
             allowed_completions = set(self.registered_completions)
-            completions = [completion for completion in completions if completion in allowed_completions]
+            completions = [
+                completion
+                for completion in completions
+                if completion in allowed_completions
+            ]
 
-        return super().quote_completions(completions, cword_prequote, last_wordbreak_pos)
+        return super().quote_completions(
+            completions, cword_prequote, last_wordbreak_pos
+        )
 
 
 class CompositeAction(argparse.Action, metaclass=abc.ABCMeta):
@@ -96,7 +103,9 @@ class CompositeAction(argparse.Action, metaclass=abc.ABCMeta):
         **kwargs,
     ):
         self.definition = self.create_parser()
-        self.documentation_state[type(self)] = documentation_state = DocumentationState()
+        self.documentation_state[type(self)] = documentation_state = (
+            DocumentationState()
+        )
         self.definition.document(documentation_state)
 
         kwargs.update(dest=self.definition.dest)
@@ -116,7 +125,9 @@ class CompositeAction(argparse.Action, metaclass=abc.ABCMeta):
         values,
         option_string=None,
     ):
-        state = ParserState(mode=ParserMode.PARSE, namespaces=[namespace], remainder=values)
+        state = ParserState(
+            mode=ParserMode.PARSE, namespaces=[namespace], remainder=values
+        )
 
         try:
             self.definition.parse(state)
@@ -184,7 +195,7 @@ def detect_file_listing(value: str, mode: ParserMode) -> bool:
     listing = False
 
     if mode == ParserMode.LIST:
-        right = re.split('[=:]', value)[-1]
+        right = re.split("[=:]", value)[-1]
         listing = not right or os.path.exists(right)
 
         if not listing:
@@ -192,7 +203,7 @@ def detect_file_listing(value: str, mode: ParserMode) -> bool:
 
             # noinspection PyBroadException
             try:
-                filenames = os.listdir(directory or '.')
+                filenames = os.listdir(directory or ".")
             except Exception:  # pylint: disable=broad-except
                 pass
             else:
@@ -219,16 +230,18 @@ def detect_false_file_completion(value: str, mode: ParserMode) -> bool:
     if mode == ParserMode.COMPLETE:
         completion = True
 
-        right = re.split('[=:]', value)[-1]
+        right = re.split("[=:]", value)[-1]
         directory, prefix = os.path.split(right)
 
         # noinspection PyBroadException
         try:
-            filenames = os.listdir(directory or '.')
+            filenames = os.listdir(directory or ".")
         except Exception:  # pylint: disable=broad-except
             pass
         else:
-            matches = [filename for filename in filenames if filename.startswith(prefix)]
+            matches = [
+                filename for filename in filenames if filename.startswith(prefix)
+            ]
             completion = len(matches) == 1
 
     return completion
@@ -245,7 +258,7 @@ def complete(
 
     try:
         completer.parse(state)
-        raise ParserError('completion expected')
+        raise ParserError("completion expected")
     except CompletionUnavailable as ex:
         if detect_file_listing(value, state.mode):
             # Displaying a warning before the file listing informs the user it is invalid. Bash will redraw the prompt after the list.
@@ -256,9 +269,9 @@ def complete(
             # Returning multiple invalid matches instead of no matches will prevent Bash from using its own completion logic in this case.
             answer = CompletionSuccess(
                 list_mode=True,  # abuse list mode to enable preservation of the literal results
-                consumed='',
-                continuation='',
-                matches=['completion', 'invalid'],
+                consumed="",
+                continuation="",
+                matches=["completion", "invalid"],
             )
         else:
             answer = ex

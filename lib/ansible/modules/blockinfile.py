@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: blockinfile
 short_description: Insert/update/remove a text block surrounded by marker lines
@@ -128,9 +128,9 @@ attributes:
       platforms: posix
     vault:
       support: none
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 # Before Ansible 2.3, option 'dest' or 'name' was used instead of 'path'
 - name: Insert/Update "Match User" configuration block in /etc/ssh/sshd_config prepending and appending a new line
   ansible.builtin.blockinfile:
@@ -190,7 +190,7 @@ EXAMPLES = r'''
     insertafter: '(?m)SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
     marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK -->"
 
-'''
+"""
 
 import re
 import os
@@ -203,11 +203,11 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native
 def write_changes(module, contents, path):
 
     tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
-    f = os.fdopen(tmpfd, 'wb')
+    f = os.fdopen(tmpfd, "wb")
     f.write(contents)
     f.close()
 
-    validate = module.params.get('validate', None)
+    validate = module.params.get("validate", None)
     valid = not validate
     if validate:
         if "%s" not in validate:
@@ -215,10 +215,9 @@ def write_changes(module, contents, path):
         (rc, out, err) = module.run_command(validate % tmpfile)
         valid = rc == 0
         if rc != 0:
-            module.fail_json(msg='failed to validate: '
-                                 'rc:%s error:%s' % (rc, err))
+            module.fail_json(msg="failed to validate: " "rc:%s error:%s" % (rc, err))
     if valid:
-        module.atomic_move(tmpfile, path, unsafe_writes=module.params['unsafe_writes'])
+        module.atomic_move(tmpfile, path, unsafe_writes=module.params["unsafe_writes"])
 
 
 def check_file_attrs(module, changed, message, diff):
@@ -237,81 +236,86 @@ def check_file_attrs(module, changed, message, diff):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            path=dict(type='path', required=True, aliases=['dest', 'destfile', 'name']),
-            state=dict(type='str', default='present', choices=['absent', 'present']),
-            marker=dict(type='str', default='# {mark} ANSIBLE MANAGED BLOCK'),
-            block=dict(type='str', default='', aliases=['content']),
-            insertafter=dict(type='str'),
-            insertbefore=dict(type='str'),
-            create=dict(type='bool', default=False),
-            backup=dict(type='bool', default=False),
-            validate=dict(type='str'),
-            marker_begin=dict(type='str', default='BEGIN'),
-            marker_end=dict(type='str', default='END'),
-            append_newline=dict(type='bool', default=False),
-            prepend_newline=dict(type='bool', default=False),
+            path=dict(type="path", required=True, aliases=["dest", "destfile", "name"]),
+            state=dict(type="str", default="present", choices=["absent", "present"]),
+            marker=dict(type="str", default="# {mark} ANSIBLE MANAGED BLOCK"),
+            block=dict(type="str", default="", aliases=["content"]),
+            insertafter=dict(type="str"),
+            insertbefore=dict(type="str"),
+            create=dict(type="bool", default=False),
+            backup=dict(type="bool", default=False),
+            validate=dict(type="str"),
+            marker_begin=dict(type="str", default="BEGIN"),
+            marker_end=dict(type="str", default="END"),
+            append_newline=dict(type="bool", default=False),
+            prepend_newline=dict(type="bool", default=False),
         ),
-        mutually_exclusive=[['insertbefore', 'insertafter']],
+        mutually_exclusive=[["insertbefore", "insertafter"]],
         add_file_common_args=True,
-        supports_check_mode=True
+        supports_check_mode=True,
     )
     params = module.params
-    path = params['path']
+    path = params["path"]
 
     if os.path.isdir(path):
-        module.fail_json(rc=256,
-                         msg='Path %s is a directory !' % path)
+        module.fail_json(rc=256, msg="Path %s is a directory !" % path)
 
     path_exists = os.path.exists(path)
     if not path_exists:
-        if not module.boolean(params['create']):
-            module.fail_json(rc=257,
-                             msg='Path %s does not exist !' % path)
+        if not module.boolean(params["create"]):
+            module.fail_json(rc=257, msg="Path %s does not exist !" % path)
         destpath = os.path.dirname(path)
         if destpath and not os.path.exists(destpath) and not module.check_mode:
             try:
                 os.makedirs(destpath)
             except OSError as e:
-                module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (destpath, e.errno, e.strerror))
+                module.fail_json(
+                    msg="Error creating %s Error code: %s Error description: %s"
+                    % (destpath, e.errno, e.strerror)
+                )
             except Exception as e:
-                module.fail_json(msg='Error creating %s Error: %s' % (destpath, to_native(e)))
+                module.fail_json(
+                    msg="Error creating %s Error: %s" % (destpath, to_native(e))
+                )
         original = None
         lines = []
     else:
-        with open(path, 'rb') as f:
+        with open(path, "rb") as f:
             original = f.read()
         lines = original.splitlines(True)
 
-    diff = {'before': '',
-            'after': '',
-            'before_header': '%s (content)' % path,
-            'after_header': '%s (content)' % path}
+    diff = {
+        "before": "",
+        "after": "",
+        "before_header": "%s (content)" % path,
+        "after_header": "%s (content)" % path,
+    }
 
     if module._diff and original:
-        diff['before'] = original
+        diff["before"] = original
 
-    insertbefore = params['insertbefore']
-    insertafter = params['insertafter']
-    block = to_bytes(params['block'])
-    marker = to_bytes(params['marker'])
-    present = params['state'] == 'present'
+    insertbefore = params["insertbefore"]
+    insertafter = params["insertafter"]
+    block = to_bytes(params["block"])
+    marker = to_bytes(params["marker"])
+    present = params["state"] == "present"
     blank_line = [b(os.linesep)]
 
     if not present and not path_exists:
         module.exit_json(changed=False, msg="File %s not present" % path)
 
     if insertbefore is None and insertafter is None:
-        insertafter = 'EOF'
+        insertafter = "EOF"
 
-    if insertafter not in (None, 'EOF'):
-        insertre = re.compile(to_bytes(insertafter, errors='surrogate_or_strict'))
-    elif insertbefore not in (None, 'BOF'):
-        insertre = re.compile(to_bytes(insertbefore, errors='surrogate_or_strict'))
+    if insertafter not in (None, "EOF"):
+        insertre = re.compile(to_bytes(insertafter, errors="surrogate_or_strict"))
+    elif insertbefore not in (None, "BOF"):
+        insertre = re.compile(to_bytes(insertbefore, errors="surrogate_or_strict"))
     else:
         insertre = None
 
-    marker0 = re.sub(b(r'{mark}'), b(params['marker_begin']), marker) + b(os.linesep)
-    marker1 = re.sub(b(r'{mark}'), b(params['marker_end']), marker) + b(os.linesep)
+    marker0 = re.sub(b(r"{mark}"), b(params["marker_begin"]), marker) + b(os.linesep)
+    marker1 = re.sub(b(r"{mark}"), b(params["marker_end"]), marker) + b(os.linesep)
     if present and block:
         if not block.endswith(b(os.linesep)):
             block += b(os.linesep)
@@ -333,9 +337,9 @@ def main():
                 match = insertre.search(original)
                 if match:
                     if insertafter:
-                        n0 = to_native(original).count('\n', 0, match.end())
+                        n0 = to_native(original).count("\n", 0, match.end())
                     elif insertbefore:
-                        n0 = to_native(original).count('\n', 0, match.start())
+                        n0 = to_native(original).count("\n", 0, match.start())
             else:
                 for i, line in enumerate(lines):
                     if insertre.search(line):
@@ -349,9 +353,9 @@ def main():
         else:
             n0 = len(lines)  # insertafter=EOF
     elif n0 < n1:
-        lines[n0:n1 + 1] = []
+        lines[n0 : n1 + 1] = []
     else:
-        lines[n1:n0 + 1] = []
+        lines[n1 : n0 + 1] = []
         n0 = n1
 
     # Ensure there is a line separator before the block of lines to be inserted
@@ -363,7 +367,7 @@ def main():
     # If yes, we need to add the blank line if we are not at the beginning of the file
     # and the previous line is not a blank line
     # In both cases, we need to shift by one on the right the inserting position of the block
-    if params['prepend_newline'] and present:
+    if params["prepend_newline"] and present:
         if n0 != 0 and lines[n0 - 1] != b(os.linesep):
             lines[n0:n0] = blank_line
             n0 += 1
@@ -374,38 +378,38 @@ def main():
     # After the block: check if we need to append a blank line
     # If yes, we need to add the blank line if we are not at the end of the file
     # and the line right after is not a blank line
-    if params['append_newline'] and present:
+    if params["append_newline"] and present:
         line_after_block = n0 + len(blocklines)
         if line_after_block < len(lines) and lines[line_after_block] != b(os.linesep):
             lines[line_after_block:line_after_block] = blank_line
 
     if lines:
-        result = b''.join(lines)
+        result = b"".join(lines)
     else:
-        result = b''
+        result = b""
 
     if module._diff:
-        diff['after'] = result
+        diff["after"] = result
 
     if original == result:
-        msg = ''
+        msg = ""
         changed = False
     elif original is None:
-        msg = 'File created'
+        msg = "File created"
         changed = True
     elif not blocklines:
-        msg = 'Block removed'
+        msg = "Block removed"
         changed = True
     else:
-        msg = 'Block inserted'
+        msg = "Block inserted"
         changed = True
 
     backup_file = None
     if changed and not module.check_mode:
-        if module.boolean(params['backup']) and path_exists:
+        if module.boolean(params["backup"]) and path_exists:
             backup_file = module.backup_local(path)
         # We should always follow symlinks so that we change the real file
-        real_path = os.path.realpath(params['path'])
+        real_path = os.path.realpath(params["path"])
         write_changes(module, result, real_path)
 
     if module.check_mode and not path_exists:
@@ -414,16 +418,18 @@ def main():
     attr_diff = {}
     msg, changed = check_file_attrs(module, changed, msg, attr_diff)
 
-    attr_diff['before_header'] = '%s (file attributes)' % path
-    attr_diff['after_header'] = '%s (file attributes)' % path
+    attr_diff["before_header"] = "%s (file attributes)" % path
+    attr_diff["after_header"] = "%s (file attributes)" % path
 
     difflist = [diff, attr_diff]
 
     if backup_file is None:
         module.exit_json(changed=changed, msg=msg, diff=difflist)
     else:
-        module.exit_json(changed=changed, msg=msg, diff=difflist, backup_file=backup_file)
+        module.exit_json(
+            changed=changed, msg=msg, diff=difflist, backup_file=backup_file
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

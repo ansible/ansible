@@ -33,11 +33,11 @@ class FactNamespace:
         self.namespace_name = namespace_name
 
     def transform(self, name):
-        '''Take a text name, and transforms it as needed (add a namespace prefix, etc)'''
+        """Take a text name, and transforms it as needed (add a namespace prefix, etc)"""
         return name
 
     def _underscore(self, name):
-        return name.replace('-', '_')
+        return name.replace("-", "_")
 
 
 class PrefixFactNamespace(FactNamespace):
@@ -47,4 +47,4 @@ class PrefixFactNamespace(FactNamespace):
 
     def transform(self, name):
         new_name = self._underscore(name)
-        return '%s%s' % (self.prefix, new_name)
+        return "%s%s" % (self.prefix, new_name)

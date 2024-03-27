@@ -1,4 +1,5 @@
 """Command line parsing for all `coverage` commands."""
+
 from __future__ import annotations
 
 import argparse
@@ -45,11 +46,11 @@ def do_coverage(
     coverage_common = argparse.ArgumentParser(add_help=False, parents=[parent])
 
     parser = subparsers.add_parser(
-        'coverage',
-        help='code coverage management and reporting',
+        "coverage",
+        help="code coverage management and reporting",
     )
 
-    coverage_subparsers = parser.add_subparsers(metavar='COMMAND', required=True)
+    coverage_subparsers = parser.add_subparsers(metavar="COMMAND", required=True)
 
     do_analyze(coverage_subparsers, coverage_common, completer)
     do_erase(coverage_subparsers, coverage_common, completer)
@@ -65,21 +66,21 @@ def add_coverage_common(
 ):
     """Add common coverage arguments."""
     parser.add_argument(
-        '--group-by',
-        metavar='GROUP',
-        action='append',
+        "--group-by",
+        metavar="GROUP",
+        action="append",
         choices=COVERAGE_GROUPS,
-        help='group output by: %s' % ', '.join(COVERAGE_GROUPS),
+        help="group output by: %s" % ", ".join(COVERAGE_GROUPS),
     )
 
     parser.add_argument(
-        '--all',
-        action='store_true',
-        help='include all python/powershell source files',
+        "--all",
+        action="store_true",
+        help="include all python/powershell source files",
     )
 
     parser.add_argument(
-        '--stub',
-        action='store_true',
-        help='generate empty report of all python/powershell source files',
+        "--stub",
+        action="store_true",
+        help="generate empty report of all python/powershell source files",
     )

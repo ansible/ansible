@@ -7,4 +7,4 @@ from ansible.plugins.lookup import LookupBase
 
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
-        return ['ok']
+        return ["ok"]

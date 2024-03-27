@@ -13,7 +13,8 @@ if t.TYPE_CHECKING:
         ConcreteArtifactsManager,
     )
     from ansible.galaxy.dependency_resolution.dataclasses import (
-        Candidate, Requirement,
+        Candidate,
+        Requirement,
     )
 
 from ansible.galaxy.api import GalaxyAPI, GalaxyError
@@ -40,7 +41,9 @@ class MultiGalaxyAPIProxy:
 
     def _assert_that_offline_mode_is_not_requested(self):  # type: () -> None
         if self.is_offline_mode_requested:
-            raise NotImplementedError("The calling code is not supposed to be invoked in 'offline' mode.")
+            raise NotImplementedError(
+                "The calling code is not supposed to be invoked in 'offline' mode."
+            )
 
     def _get_collection_versions(self, requirement):
         # type: (Requirement) -> t.Iterator[tuple[GalaxyAPI, str]]
@@ -56,22 +59,21 @@ class MultiGalaxyAPIProxy:
         last_error = None  # type: Exception | None
 
         api_lookup_order = (
-            (requirement.src, )
-            if isinstance(requirement.src, GalaxyAPI)
-            else self._apis
+            (requirement.src,) if isinstance(requirement.src, GalaxyAPI) else self._apis
         )
 
         for api in api_lookup_order:
             try:
-                versions = api.get_collection_versions(requirement.namespace, requirement.name)
+                versions = api.get_collection_versions(
+                    requirement.namespace, requirement.name
+                )
             except GalaxyError as api_err:
                 last_error = api_err
             except Exception as unknown_err:
                 display.warning(
                     "Skipping Galaxy server {server!s}. "
                     "Got an unexpected error when getting "
-                    "available versions of collection {fqcn!s}: {err!s}".
-                    format(
+                    "available versions of collection {fqcn!s}: {err!s}".format(
                         server=api.api_server,
                         fqcn=requirement.fqcn,
                         err=to_text(unknown_err),
@@ -92,16 +94,13 @@ class MultiGalaxyAPIProxy:
         if requirement.is_concrete_artifact:
             return {
                 (
-                    self._concrete_art_mgr.
-                    get_direct_collection_version(requirement),
+                    self._concrete_art_mgr.get_direct_collection_version(requirement),
                     requirement.src,
                 ),
             }
 
         api_lookup_order = (
-            (requirement.src, )
-            if isinstance(requirement.src, GalaxyAPI)
-            else self._apis
+            (requirement.src,) if isinstance(requirement.src, GalaxyAPI) else self._apis
         )
         return set(
             (version, api)
@@ -116,7 +115,7 @@ class MultiGalaxyAPIProxy:
         self._assert_that_offline_mode_is_not_requested()
 
         api_lookup_order = (
-            (collection_candidate.src, )
+            (collection_candidate.src,)
             if isinstance(collection_candidate.src, GalaxyAPI)
             else self._apis
         )
@@ -140,8 +139,7 @@ class MultiGalaxyAPIProxy:
                 display.warning(
                     "Skipping Galaxy server {server!s}. "
                     "Got an unexpected error when getting "
-                    "available versions of collection {fqcn!s}: {err!s}".
-                    format(
+                    "available versions of collection {fqcn!s}: {err!s}".format(
                         server=api.api_server,
                         fqcn=collection_candidate.fqcn,
                         err=to_text(unknown_err),
@@ -165,17 +163,11 @@ class MultiGalaxyAPIProxy:
         # FIXME: return Requirement instances instead?
         """Retrieve collection dependencies of a given candidate."""
         if collection_candidate.is_concrete_artifact:
-            return (
-                self.
-                _concrete_art_mgr.
-                get_direct_collection_dependencies
-            )(collection_candidate)
+            return (self._concrete_art_mgr.get_direct_collection_dependencies)(
+                collection_candidate
+            )
 
-        return (
-            self.
-            get_collection_version_metadata(collection_candidate).
-            dependencies
-        )
+        return self.get_collection_version_metadata(collection_candidate).dependencies
 
     def get_signatures(self, collection_candidate):
         # type: (Candidate) -> list[str]
@@ -186,7 +178,7 @@ class MultiGalaxyAPIProxy:
         last_err = None  # type: Exception | None
 
         api_lookup_order = (
-            (collection_candidate.src, )
+            (collection_candidate.src,)
             if isinstance(collection_candidate.src, GalaxyAPI)
             else self._apis
         )
@@ -202,8 +194,7 @@ class MultiGalaxyAPIProxy:
                 display.warning(
                     "Skipping Galaxy server {server!s}. "
                     "Got an unexpected error when getting "
-                    "available versions of collection {fqcn!s}: {err!s}".
-                    format(
+                    "available versions of collection {fqcn!s}: {err!s}".format(
                         server=api.api_server,
                         fqcn=collection_candidate.fqcn,
                         err=to_text(unknown_err),

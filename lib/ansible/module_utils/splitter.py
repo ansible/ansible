@@ -30,17 +30,17 @@ from __future__ import annotations
 
 
 def _get_quote_state(token, quote_char):
-    '''
+    """
     the goal of this block is to determine if the quoted string
     is unterminated in which case it needs to be put back together
-    '''
+    """
     # the char before the current one, used to see if
     # the current character is escaped
     prev_char = None
     for idx, cur_char in enumerate(token):
         if idx > 0:
             prev_char = token[idx - 1]
-        if cur_char in '"\'' and prev_char != '\\':
+        if cur_char in "\"'" and prev_char != "\\":
             if quote_char:
                 if cur_char == quote_char:
                     quote_char = None
@@ -50,22 +50,22 @@ def _get_quote_state(token, quote_char):
 
 
 def _count_jinja2_blocks(token, cur_depth, open_token, close_token):
-    '''
+    """
     this function counts the number of opening/closing blocks for a
     given opening/closing type and adjusts the current depth for that
     block based on the difference
-    '''
+    """
     num_open = token.count(open_token)
     num_close = token.count(close_token)
     if num_open != num_close:
-        cur_depth += (num_open - num_close)
+        cur_depth += num_open - num_close
         if cur_depth < 0:
             cur_depth = 0
     return cur_depth
 
 
 def split_args(args):
-    '''
+    """
     Splits args on whitespace, but intelligently reassembles
     those that may have been split over a jinja2 block or quotes.
 
@@ -78,7 +78,7 @@ def split_args(args):
 
     Basically this is a variation shlex that has some more intelligence for
     how Ansible needs to use it.
-    '''
+    """
 
     # the list of params parsed out of the arg string
     # this is going to be the result value when we are donei
@@ -88,11 +88,11 @@ def split_args(args):
     # work with, and split on white space
     args = args.strip()
     try:
-        args = args.encode('utf-8')
+        args = args.encode("utf-8")
         do_decode = True
     except UnicodeDecodeError:
         do_decode = False
-    items = args.split('\n')
+    items = args.split("\n")
 
     # iterate over the tokens, and reassemble any that may have been
     # split on a space inside a jinja2 block.
@@ -115,7 +115,7 @@ def split_args(args):
         # we split on spaces and newlines separately, so that we
         # can tell which character we split on for reassembly
         # inside quotation characters
-        tokens = item.strip().split(' ')
+        tokens = item.strip().split(" ")
 
         line_continuation = False
         for idx, token in enumerate(tokens):
@@ -123,7 +123,7 @@ def split_args(args):
             # if we hit a line continuation character, but
             # we're not inside quotes, ignore it and continue
             # on to the next token while setting a flag
-            if token == '\\' and not inside_quotes:
+            if token == "\\" and not inside_quotes:
                 line_continuation = True
                 continue
 
@@ -145,18 +145,24 @@ def split_args(args):
             if inside_quotes and not was_inside_quotes:
                 params.append(token)
                 appended = True
-            elif print_depth or block_depth or comment_depth or inside_quotes or was_inside_quotes:
+            elif (
+                print_depth
+                or block_depth
+                or comment_depth
+                or inside_quotes
+                or was_inside_quotes
+            ):
                 if idx == 0 and not inside_quotes and was_inside_quotes:
                     params[-1] = "%s%s" % (params[-1], token)
                 elif len(tokens) > 1:
-                    spacer = ''
+                    spacer = ""
                     if idx > 0:
-                        spacer = ' '
+                        spacer = " "
                     params[-1] = "%s%s%s" % (params[-1], spacer, token)
                 else:
-                    spacer = ''
-                    if not params[-1].endswith('\n') and idx == 0:
-                        spacer = '\n'
+                    spacer = ""
+                    if not params[-1].endswith("\n") and idx == 0:
+                        spacer = "\n"
                     params[-1] = "%s%s%s" % (params[-1], spacer, token)
                 appended = True
 
@@ -182,15 +188,20 @@ def split_args(args):
 
             # finally, if we're at zero depth for all blocks and not inside quotes, and have not
             # yet appended anything to the list of params, we do so now
-            if not (print_depth or block_depth or comment_depth) and not inside_quotes and not appended and token != '':
+            if (
+                not (print_depth or block_depth or comment_depth)
+                and not inside_quotes
+                and not appended
+                and token != ""
+            ):
                 params.append(token)
 
         # if this was the last token in the list, and we have more than
         # one item (meaning we split on newlines), add a newline back here
         # to preserve the original structure
         if len(items) > 1 and itemidx != len(items) - 1 and not line_continuation:
-            if not params[-1].endswith('\n') or item == '':
-                params[-1] += '\n'
+            if not params[-1].endswith("\n") or item == "":
+                params[-1] += "\n"
 
         # always clear the line continuation flag
         line_continuation = False
@@ -198,21 +209,25 @@ def split_args(args):
     # If we're done and things are not at zero depth or we're still inside quotes,
     # raise an error to indicate that the args were unbalanced
     if print_depth or block_depth or comment_depth or inside_quotes:
-        raise Exception("error while splitting arguments, either an unbalanced jinja2 block or quotes")
+        raise Exception(
+            "error while splitting arguments, either an unbalanced jinja2 block or quotes"
+        )
 
     # finally, we decode each param back to the unicode it was in the arg string
     if do_decode:
-        params = [x.decode('utf-8') for x in params]
+        params = [x.decode("utf-8") for x in params]
 
     return params
 
 
 def is_quoted(data):
-    return len(data) > 0 and (data[0] == '"' and data[-1] == '"' or data[0] == "'" and data[-1] == "'")
+    return len(data) > 0 and (
+        data[0] == '"' and data[-1] == '"' or data[0] == "'" and data[-1] == "'"
+    )
 
 
 def unquote(data):
-    ''' removes first and last quotes from a string, if the string starts and ends with the same quotes '''
+    """removes first and last quotes from a string, if the string starts and ends with the same quotes"""
     if is_quoted(data):
         return data[1:-1]
     return data

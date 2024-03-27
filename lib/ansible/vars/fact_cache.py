@@ -22,7 +22,9 @@ class FactCache(MutableMapping):
 
         self._plugin = cache_loader.get(C.CACHE_PLUGIN)
         if not self._plugin:
-            raise AnsibleError('Unable to load the facts cache plugin (%s).' % (C.CACHE_PLUGIN))
+            raise AnsibleError(
+                "Unable to load the facts cache plugin (%s)." % (C.CACHE_PLUGIN)
+            )
 
         super(FactCache, self).__init__(*args, **kwargs)
 
@@ -47,14 +49,14 @@ class FactCache(MutableMapping):
         return len(self._plugin.keys())
 
     def copy(self):
-        """ Return a primitive copy of the keys and values from the cache. """
+        """Return a primitive copy of the keys and values from the cache."""
         return dict(self)
 
     def keys(self):
         return self._plugin.keys()
 
     def flush(self):
-        """ Flush the fact cache of all keys. """
+        """Flush the fact cache of all keys."""
         self._plugin.flush()
 
     def first_order_merge(self, key, value):

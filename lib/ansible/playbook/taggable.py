@@ -36,19 +36,21 @@ def _flatten_tags(tags: list) -> list:
 
 class Taggable:
 
-    untagged = frozenset(['untagged'])
-    tags = FieldAttribute(isa='list', default=list, listof=(string_types, int), extend=True)
+    untagged = frozenset(["untagged"])
+    tags = FieldAttribute(
+        isa="list", default=list, listof=(string_types, int), extend=True
+    )
 
     def _load_tags(self, attr, ds):
         if isinstance(ds, list):
             return ds
         elif isinstance(ds, string_types):
-            return [x.strip() for x in ds.split(',')]
+            return [x.strip() for x in ds.split(",")]
         else:
-            raise AnsibleError('tags must be specified as a list', obj=ds)
+            raise AnsibleError("tags must be specified as a list", obj=ds)
 
     def evaluate_tags(self, only_tags, skip_tags, all_vars):
-        ''' this checks if the current item should be executed depending on tag options '''
+        """this checks if the current item should be executed depending on tag options"""
 
         if self.tags:
             templar = Templar(loader=self._loader, variables=all_vars)
@@ -65,13 +67,15 @@ class Taggable:
         should_run = True  # default, tasks to run
 
         if only_tags:
-            if 'always' in tags:
+            if "always" in tags:
                 should_run = True
-            elif ('all' in only_tags and 'never' not in tags):
+            elif "all" in only_tags and "never" not in tags:
                 should_run = True
             elif not tags.isdisjoint(only_tags):
                 should_run = True
-            elif 'tagged' in only_tags and tags != self.untagged and 'never' not in tags:
+            elif (
+                "tagged" in only_tags and tags != self.untagged and "never" not in tags
+            ):
                 should_run = True
             else:
                 should_run = False
@@ -79,12 +83,12 @@ class Taggable:
         if should_run and skip_tags:
 
             # Check for tags that we need to skip
-            if 'all' in skip_tags:
-                if 'always' not in tags or 'always' in skip_tags:
+            if "all" in skip_tags:
+                if "always" not in tags or "always" in skip_tags:
                     should_run = False
             elif not tags.isdisjoint(skip_tags):
                 should_run = False
-            elif 'tagged' in skip_tags and tags != self.untagged:
+            elif "tagged" in skip_tags and tags != self.untagged:
                 should_run = False
 
         return should_run

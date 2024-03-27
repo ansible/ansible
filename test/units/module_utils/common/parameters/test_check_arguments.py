@@ -17,25 +17,31 @@ from ansible.module_utils.errors import AnsibleValidationErrorMultiple
 @pytest.fixture
 def argument_spec():
     return {
-        'state': {'aliases': ['status']},
-        'enabled': {},
+        "state": {"aliases": ["status"]},
+        "enabled": {},
     }
 
 
 @pytest.mark.parametrize(
-    ('module_parameters', 'legal_inputs', 'expected'),
+    ("module_parameters", "legal_inputs", "expected"),
     (
-        ({'fish': 'food'}, ['state', 'enabled'], set(['fish'])),
-        ({'state': 'enabled', 'path': '/var/lib/path'}, None, set(['path'])),
-        ({'state': 'enabled', 'path': '/var/lib/path'}, ['state', 'path'], set()),
-        ({'state': 'enabled', 'path': '/var/lib/path'}, ['state'], set(['path'])),
+        ({"fish": "food"}, ["state", "enabled"], set(["fish"])),
+        ({"state": "enabled", "path": "/var/lib/path"}, None, set(["path"])),
+        ({"state": "enabled", "path": "/var/lib/path"}, ["state", "path"], set()),
+        ({"state": "enabled", "path": "/var/lib/path"}, ["state"], set(["path"])),
         ({}, None, set()),
-        ({'state': 'enabled'}, None, set()),
-        ({'status': 'enabled', 'enabled': True, 'path': '/var/lib/path'}, None, set(['path'])),
-        ({'status': 'enabled', 'enabled': True}, None, set()),
-    )
+        ({"state": "enabled"}, None, set()),
+        (
+            {"status": "enabled", "enabled": True, "path": "/var/lib/path"},
+            None,
+            set(["path"]),
+        ),
+        ({"status": "enabled", "enabled": True}, None, set()),
+    ),
 )
-def test_check_arguments(argument_spec, module_parameters, legal_inputs, expected, mocker):
+def test_check_arguments(
+    argument_spec, module_parameters, legal_inputs, expected, mocker
+):
     result = _get_unsupported_parameters(argument_spec, module_parameters, legal_inputs)
 
     assert result == expected

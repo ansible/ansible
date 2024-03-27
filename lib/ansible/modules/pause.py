@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: pause
 short_description: Pause playbook execution
@@ -64,9 +64,9 @@ attributes:
 notes:
       - Starting in 2.2,  if you specify 0 or negative for minutes or seconds, it will wait for 1 second, previously it would wait indefinitely.
       - User input is not captured or echoed, regardless of echo setting, when minutes or seconds is specified.
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Pause for 5 minutes to build app cache
   ansible.builtin.pause:
     minutes: 5
@@ -82,9 +82,9 @@ EXAMPLES = '''
   ansible.builtin.pause:
     prompt: "Enter a secret"
     echo: no
-'''
+"""
 
-RETURN = '''
+RETURN = """
 user_input:
   description: User input from interactive console
   returned: if no waiting time set
@@ -115,4 +115,4 @@ echo:
   returned: always
   type: bool
   sample: true
-'''
+"""

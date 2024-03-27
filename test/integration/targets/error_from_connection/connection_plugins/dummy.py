@@ -16,13 +16,13 @@ from ansible.plugins.connection import ConnectionBase
 
 class Connection(ConnectionBase):
 
-    transport = 'dummy'
+    transport = "dummy"
     has_pipelining = True
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
-        raise AnsibleError('an error with {{ some Jinja }}')
+        raise AnsibleError("an error with {{ some Jinja }}")
 
     def _connect(self):
         pass

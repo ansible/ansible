@@ -15,22 +15,31 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def do_vault(data, secret, salt=None, vault_id='filter_default', wrap_object=False, vaultid=None):
+def do_vault(
+    data, secret, salt=None, vault_id="filter_default", wrap_object=False, vaultid=None
+):
 
     if not isinstance(secret, (string_types, binary_type, Undefined)):
-        raise AnsibleFilterTypeError("Secret passed is required to be a string, instead we got: %s" % type(secret))
+        raise AnsibleFilterTypeError(
+            "Secret passed is required to be a string, instead we got: %s"
+            % type(secret)
+        )
 
     if not isinstance(data, (string_types, binary_type, Undefined)):
-        raise AnsibleFilterTypeError("Can only vault strings, instead we got: %s" % type(data))
+        raise AnsibleFilterTypeError(
+            "Can only vault strings, instead we got: %s" % type(data)
+        )
 
     if vaultid is not None:
-        display.deprecated("Use of undocumented 'vaultid', use 'vault_id' instead", version='2.20')
-        if vault_id == 'filter_default':
+        display.deprecated(
+            "Use of undocumented 'vaultid', use 'vault_id' instead", version="2.20"
+        )
+        if vault_id == "filter_default":
             vault_id = vaultid
         else:
             display.warning("Ignoring vaultid as vault_id is already set.")
 
-    vault = ''
+    vault = ""
     vs = VaultSecret(to_bytes(secret))
     vl = VaultLib()
     try:
@@ -48,22 +57,31 @@ def do_vault(data, secret, salt=None, vault_id='filter_default', wrap_object=Fal
     return vault
 
 
-def do_unvault(vault, secret, vault_id='filter_default', vaultid=None):
+def do_unvault(vault, secret, vault_id="filter_default", vaultid=None):
 
     if not isinstance(secret, (string_types, binary_type, Undefined)):
-        raise AnsibleFilterTypeError("Secret passed is required to be as string, instead we got: %s" % type(secret))
+        raise AnsibleFilterTypeError(
+            "Secret passed is required to be as string, instead we got: %s"
+            % type(secret)
+        )
 
-    if not isinstance(vault, (string_types, binary_type, AnsibleVaultEncryptedUnicode, Undefined)):
-        raise AnsibleFilterTypeError("Vault should be in the form of a string, instead we got: %s" % type(vault))
+    if not isinstance(
+        vault, (string_types, binary_type, AnsibleVaultEncryptedUnicode, Undefined)
+    ):
+        raise AnsibleFilterTypeError(
+            "Vault should be in the form of a string, instead we got: %s" % type(vault)
+        )
 
     if vaultid is not None:
-        display.deprecated("Use of undocumented 'vaultid', use 'vault_id' instead", version='2.20')
-        if vault_id == 'filter_default':
+        display.deprecated(
+            "Use of undocumented 'vaultid', use 'vault_id' instead", version="2.20"
+        )
+        if vault_id == "filter_default":
             vault_id = vaultid
         else:
             display.warning("Ignoring vaultid as vault_id is already set.")
 
-    data = ''
+    data = ""
     vs = VaultSecret(to_bytes(secret))
     vl = VaultLib([(vault_id, vs)])
     if isinstance(vault, AnsibleVaultEncryptedUnicode):
@@ -83,12 +101,12 @@ def do_unvault(vault, secret, vault_id='filter_default', vaultid=None):
 
 
 class FilterModule(object):
-    ''' Ansible vault jinja2 filters '''
+    """Ansible vault jinja2 filters"""
 
     def filters(self):
         filters = {
-            'vault': do_vault,
-            'unvault': do_unvault,
+            "vault": do_vault,
+            "unvault": do_unvault,
         }
 
         return filters

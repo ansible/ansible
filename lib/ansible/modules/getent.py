@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: getent
 short_description: A wrapper to the unix getent utility
@@ -58,9 +58,9 @@ notes:
    - Not all databases support enumeration, check system documentation for details.
 author:
 - Brian Coca (@bcoca)
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Get root user info
   ansible.builtin.getent:
     database: passwd
@@ -97,9 +97,9 @@ EXAMPLES = '''
 - ansible.builtin.debug:
     var: ansible_facts.getent_shadow
 
-'''
+"""
 
-RETURN = '''
+RETURN = """
 ansible_facts:
   description: Facts to add to ansible_facts.
   returned: always
@@ -112,7 +112,7 @@ ansible_facts:
         - Starting at 2.11 it now returns multiple duplicate entries, previously it only returned the last one
       returned: always
       type: list
-'''
+"""
 
 import traceback
 
@@ -123,24 +123,24 @@ from ansible.module_utils.common.text.converters import to_native
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            database=dict(type='str', required=True),
-            key=dict(type='str', no_log=False),
-            service=dict(type='str'),
-            split=dict(type='str'),
-            fail_key=dict(type='bool', default=True),
+            database=dict(type="str", required=True),
+            key=dict(type="str", no_log=False),
+            service=dict(type="str"),
+            split=dict(type="str"),
+            fail_key=dict(type="bool", default=True),
         ),
         supports_check_mode=True,
     )
 
-    colon = ['passwd', 'shadow', 'group', 'gshadow']
+    colon = ["passwd", "shadow", "group", "gshadow"]
 
-    database = module.params['database']
-    key = module.params.get('key')
-    split = module.params.get('split')
-    service = module.params.get('service')
-    fail_key = module.params.get('fail_key')
+    database = module.params["database"]
+    key = module.params.get("key")
+    split = module.params.get("split")
+    service = module.params.get("service")
+    fail_key = module.params.get("fail_key")
 
-    getent_bin = module.get_bin_path('getent', True)
+    getent_bin = module.get_bin_path("getent", True)
 
     if key is not None:
         cmd = [getent_bin, database, key]
@@ -148,10 +148,10 @@ def main():
         cmd = [getent_bin, database]
 
     if service is not None:
-        cmd.extend(['-s', service])
+        cmd.extend(["-s", service])
 
     if split is None and database in colon:
-        split = ':'
+        split = ":"
 
     try:
         rc, out, err = module.run_command(cmd)
@@ -159,7 +159,7 @@ def main():
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     msg = "Unexpected failure!"
-    dbtree = 'getent_%s' % database
+    dbtree = "getent_%s" % database
     results = {dbtree: {}}
 
     if rc == 0:
@@ -194,5 +194,5 @@ def main():
     module.fail_json(msg=msg)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
