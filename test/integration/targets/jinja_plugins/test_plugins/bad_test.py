@@ -6,4 +6,4 @@ from __future__ import annotations
 
 class TestModule:
     def tests(self):
-        raise TypeError('bad_test')
+        raise TypeError("bad_test")

@@ -6,10 +6,10 @@ from __future__ import annotations
 
 
 class ModuleDocFragment(object):
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
 options: {}
 deprecated:
     alternative: Use some other module
     why: Test deprecation
     removed_in: '3.0.0'
-'''
+"""

@@ -27,6 +27,7 @@ from ansible.module_utils.common.text.converters import to_bytes, to_text
 
 try:
     from scp import SCPClient
+
     HAS_SCP = True
 except ImportError:
     HAS_SCP = False
@@ -36,9 +37,10 @@ def enable_mode(func):
     @wraps(func)
     def wrapped(self, *args, **kwargs):
         prompt = self._connection.get_prompt()
-        if not to_text(prompt, errors='surrogate_or_strict').strip().endswith('#'):
-            raise AnsibleError('operation requires privilege escalation')
+        if not to_text(prompt, errors="surrogate_or_strict").strip().endswith("#"):
+            raise AnsibleError("operation requires privilege escalation")
         return func(self, *args, **kwargs)
+
     return wrapped
 
 
@@ -74,7 +76,14 @@ class CliconfBase(AnsiblePlugin):
             conn.edit_config(['hostname test', 'netconf ssh'])
     """
 
-    __rpc__ = ['get_config', 'edit_config', 'get_capabilities', 'get', 'enable_response_logging', 'disable_response_logging']
+    __rpc__ = [
+        "get_config",
+        "edit_config",
+        "get_capabilities",
+        "get",
+        "enable_response_logging",
+        "disable_response_logging",
+    ]
 
     def __init__(self, connection):
         super(CliconfBase, self).__init__()
@@ -83,11 +92,24 @@ class CliconfBase(AnsiblePlugin):
         self.response_logging = False
 
     def _alarm_handler(self, signum, frame):
-        """Alarm handler raised in case of command timeout """
-        self._connection.queue_message('log', 'closing shell due to command timeout (%s seconds).' % self._connection._play_context.timeout)
+        """Alarm handler raised in case of command timeout"""
+        self._connection.queue_message(
+            "log",
+            "closing shell due to command timeout (%s seconds)."
+            % self._connection._play_context.timeout,
+        )
         self.close()
 
-    def send_command(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, prompt_retry_check=False, check_all=False):
+    def send_command(
+        self,
+        command=None,
+        prompt=None,
+        answer=None,
+        sendonly=False,
+        newline=True,
+        prompt_retry_check=False,
+        check_all=False,
+    ):
         """Executes a command over the device connection
 
         This method will execute a command over the device connection and
@@ -105,30 +127,30 @@ class CliconfBase(AnsiblePlugin):
         :returns: The output from the device after executing the command
         """
         kwargs = {
-            'command': to_bytes(command),
-            'sendonly': sendonly,
-            'newline': newline,
-            'prompt_retry_check': prompt_retry_check,
-            'check_all': check_all
+            "command": to_bytes(command),
+            "sendonly": sendonly,
+            "newline": newline,
+            "prompt_retry_check": prompt_retry_check,
+            "check_all": check_all,
         }
 
         if prompt is not None:
             if isinstance(prompt, list):
-                kwargs['prompt'] = [to_bytes(p) for p in prompt]
+                kwargs["prompt"] = [to_bytes(p) for p in prompt]
             else:
-                kwargs['prompt'] = to_bytes(prompt)
+                kwargs["prompt"] = to_bytes(prompt)
         if answer is not None:
             if isinstance(answer, list):
-                kwargs['answer'] = [to_bytes(p) for p in answer]
+                kwargs["answer"] = [to_bytes(p) for p in answer]
             else:
-                kwargs['answer'] = to_bytes(answer)
+                kwargs["answer"] = to_bytes(answer)
 
         resp = self._connection.send(**kwargs)
 
         if not self.response_logging:
-            self.history.append(('*****', '*****'))
+            self.history.append(("*****", "*****"))
         else:
-            self.history.append((kwargs['command'], resp))
+            self.history.append((kwargs["command"], resp))
 
         return resp
 
@@ -137,7 +159,7 @@ class CliconfBase(AnsiblePlugin):
         return self.__rpc__
 
     def get_history(self):
-        """ Returns the history file for all commands
+        """Returns the history file for all commands
 
         This will return a log of all the commands that have been sent to
         the device and all of the output received.  By default, all commands
@@ -148,7 +170,7 @@ class CliconfBase(AnsiblePlugin):
         return self.history
 
     def reset_history(self):
-        """ Resets the history of run commands
+        """Resets the history of run commands
         :return: None
         """
         self.history = list()
@@ -162,7 +184,7 @@ class CliconfBase(AnsiblePlugin):
         self.response_logging = False
 
     @abstractmethod
-    def get_config(self, source='running', flags=None, format=None):
+    def get_config(self, source="running", flags=None, format=None):
         """Retrieves the specified configuration from the device
 
         This method will retrieve the configuration specified by source and
@@ -186,7 +208,9 @@ class CliconfBase(AnsiblePlugin):
         pass
 
     @abstractmethod
-    def edit_config(self, candidate=None, commit=True, replace=None, diff=False, comment=None):
+    def edit_config(
+        self, candidate=None, commit=True, replace=None, diff=False, comment=None
+    ):
         """Loads the candidate configuration into the network device
 
         This method will load the specified candidate config into the device
@@ -217,7 +241,16 @@ class CliconfBase(AnsiblePlugin):
         pass
 
     @abstractmethod
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True, output=None, check_all=False):
+    def get(
+        self,
+        command=None,
+        prompt=None,
+        answer=None,
+        sendonly=False,
+        newline=True,
+        output=None,
+        check_all=False,
+    ):
         """Execute specified command on remote device
         This method will retrieve the specified data and
         return it to the caller as a string.
@@ -278,9 +311,9 @@ class CliconfBase(AnsiblePlugin):
         :return: capability as dict
         """
         result = {}
-        result['rpc'] = self.get_base_rpc()
-        result['device_info'] = self.get_device_info()
-        result['network_api'] = 'cliconf'
+        result["rpc"] = self.get_base_rpc()
+        result["device_info"] = self.get_device_info()
+        result["network_api"] = "cliconf"
         return result
 
     @abstractmethod
@@ -306,7 +339,9 @@ class CliconfBase(AnsiblePlugin):
 
         :return: None
         """
-        return self._connection.method_not_found("commit is not supported by network_os %s" % self._play_context.network_os)
+        return self._connection.method_not_found(
+            "commit is not supported by network_os %s" % self._play_context.network_os
+        )
 
     def discard_changes(self):
         """Discard candidate configuration
@@ -317,7 +352,10 @@ class CliconfBase(AnsiblePlugin):
 
         :returns: None
         """
-        return self._connection.method_not_found("discard_changes is not supported by network_os %s" % self._play_context.network_os)
+        return self._connection.method_not_found(
+            "discard_changes is not supported by network_os %s"
+            % self._play_context.network_os
+        )
 
     def rollback(self, rollback_id, commit=True):
         """
@@ -328,7 +366,7 @@ class CliconfBase(AnsiblePlugin):
         """
         pass
 
-    def copy_file(self, source=None, destination=None, proto='scp', timeout=30):
+    def copy_file(self, source=None, destination=None, proto="scp", timeout=30):
         """Copies file over scp/sftp to remote device
 
         :param source: Source file path
@@ -340,16 +378,18 @@ class CliconfBase(AnsiblePlugin):
         :return: None
         """
         ssh = self._connection.paramiko_conn._connect_uncached()
-        if proto == 'scp':
+        if proto == "scp":
             if not HAS_SCP:
-                raise AnsibleError("Required library scp is not installed.  Please install it using `pip install scp`")
+                raise AnsibleError(
+                    "Required library scp is not installed.  Please install it using `pip install scp`"
+                )
             with SCPClient(ssh.get_transport(), socket_timeout=timeout) as scp:
                 out = scp.put(source, destination)
-        elif proto == 'sftp':
+        elif proto == "sftp":
             with ssh.open_sftp() as sftp:
                 sftp.put(source, destination)
 
-    def get_file(self, source=None, destination=None, proto='scp', timeout=30):
+    def get_file(self, source=None, destination=None, proto="scp", timeout=30):
         """Fetch file over scp/sftp from remote device
         :param source: Source file path
         :param destination: Destination file path
@@ -360,20 +400,30 @@ class CliconfBase(AnsiblePlugin):
         :return: None
         """
         ssh = self._connection.paramiko_conn._connect_uncached()
-        if proto == 'scp':
+        if proto == "scp":
             if not HAS_SCP:
-                raise AnsibleError("Required library scp is not installed.  Please install it using `pip install scp`")
+                raise AnsibleError(
+                    "Required library scp is not installed.  Please install it using `pip install scp`"
+                )
             try:
                 with SCPClient(ssh.get_transport(), socket_timeout=timeout) as scp:
                     scp.get(source, destination)
             except EOFError:
                 # This appears to be benign.
                 pass
-        elif proto == 'sftp':
+        elif proto == "sftp":
             with ssh.open_sftp() as sftp:
                 sftp.get(source, destination)
 
-    def get_diff(self, candidate=None, running=None, diff_match=None, diff_ignore_lines=None, path=None, diff_replace=None):
+    def get_diff(
+        self,
+        candidate=None,
+        running=None,
+        diff_match=None,
+        diff_ignore_lines=None,
+        path=None,
+        diff_replace=None,
+    ):
         """
         Generate diff between candidate and running configuration. If the
         remote host supports onbox diff capabilities ie. supports_onbox_diff in that case
@@ -429,21 +479,25 @@ class CliconfBase(AnsiblePlugin):
         """
         pass
 
-    def check_edit_config_capability(self, operations, candidate=None, commit=True, replace=None, comment=None):
+    def check_edit_config_capability(
+        self, operations, candidate=None, commit=True, replace=None, comment=None
+    ):
 
         if not candidate and not replace:
-            raise ValueError("must provide a candidate or replace to load configuration")
+            raise ValueError(
+                "must provide a candidate or replace to load configuration"
+            )
 
         if commit not in (True, False):
             raise ValueError("'commit' must be a bool, got %s" % commit)
 
-        if replace and not operations['supports_replace']:
+        if replace and not operations["supports_replace"]:
             raise ValueError("configuration replace is not supported")
 
-        if comment and not operations.get('supports_commit_comment', False):
+        if comment and not operations.get("supports_commit_comment", False):
             raise ValueError("commit comment is not supported")
 
-        if replace and not operations.get('supports_replace', False):
+        if replace and not operations.get("supports_replace", False):
             raise ValueError("configuration replace is not supported")
 
     def set_cli_prompt_context(self):
@@ -453,7 +507,7 @@ class CliconfBase(AnsiblePlugin):
         """
         pass
 
-    def _update_cli_prompt_context(self, config_context=None, exit_command='exit'):
+    def _update_cli_prompt_context(self, config_context=None, exit_command="exit"):
         """
         Update the cli prompt context to ensure it is in operational mode
         :param config_context: It is string value to identify if the current cli prompt ends with config mode prompt
@@ -462,13 +516,17 @@ class CliconfBase(AnsiblePlugin):
         """
         out = self._connection.get_prompt()
         if out is None:
-            raise AnsibleConnectionFailure(message=u'cli prompt is not identified from the last received'
-                                                   u' response window: %s' % self._connection._last_recv_window)
+            raise AnsibleConnectionFailure(
+                message="cli prompt is not identified from the last received"
+                " response window: %s" % self._connection._last_recv_window
+            )
 
         while True:
-            out = to_text(out, errors='surrogate_then_replace').strip()
+            out = to_text(out, errors="surrogate_then_replace").strip()
             if config_context and out.endswith(config_context):
-                self._connection.queue_message('vvvv', 'wrong context, sending exit to device')
+                self._connection.queue_message(
+                    "vvvv", "wrong context, sending exit to device"
+                )
                 self.send_command(exit_command)
                 out = self._connection.get_prompt()
             else:

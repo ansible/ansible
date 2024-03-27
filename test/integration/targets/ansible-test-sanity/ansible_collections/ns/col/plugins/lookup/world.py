@@ -2,20 +2,20 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 name: world
 short_description: World lookup
 description: A world lookup.
 author:
   - Ansible Core Team
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - debug:
     msg: "{{ lookup('ns.col.world') }}"
-'''
+"""
 
-RETURN = ''' # '''
+RETURN = """ # """
 
 from ansible.plugins.lookup import LookupBase
 from ansible import constants  # pylint: disable=unused-import

@@ -10,16 +10,18 @@ from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.common.text.converters import to_native
 
 
-__all__ = ['AnsibleJ2Vars']
+__all__ = ["AnsibleJ2Vars"]
 
 
 def _process_locals(_l):
     if _l is None:
         return {}
     return {
-        k: v for k, v in _l.items()
+        k: v
+        for k, v in _l.items()
         if v is not missing
-        and k not in {'context', 'environment', 'template'}  # NOTE is this really needed?
+        and k
+        not in {"context", "environment", "template"}  # NOTE is this really needed?
     }
 
 
@@ -38,7 +40,12 @@ class AnsibleJ2Vars(ChainMap):
         variable = super().__getitem__(varname)
 
         from ansible.vars.hostvars import HostVars
-        if (varname == "vars" and isinstance(variable, dict)) or isinstance(variable, HostVars) or hasattr(variable, '__UNSAFE__'):
+
+        if (
+            (varname == "vars" and isinstance(variable, dict))
+            or isinstance(variable, HostVars)
+            or hasattr(variable, "__UNSAFE__")
+        ):
             return variable
 
         try:
@@ -54,7 +61,7 @@ class AnsibleJ2Vars(ChainMap):
                 exc=AnsibleUndefinedVariable,
             )
         except Exception as e:
-            msg = getattr(e, 'message', None) or to_native(e)
+            msg = getattr(e, "message", None) or to_native(e)
             raise AnsibleError(
                 f"An unhandled exception occurred while templating '{to_native(variable)}'. "
                 f"Error was a {type(e)}, original message: {msg}"

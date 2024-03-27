@@ -1,4 +1,5 @@
 """Common logic for the `coverage analyze` subcommand."""
+
 from __future__ import annotations
 import typing as t
 

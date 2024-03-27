@@ -23,19 +23,16 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 
 try:
     from ansible.module_utils.compat import selinux
+
     HAVE_SELINUX = True
 except ImportError:
     HAVE_SELINUX = False
 
-SELINUX_MODE_DICT = {
-    1: 'enforcing',
-    0: 'permissive',
-    -1: 'disabled'
-}
+SELINUX_MODE_DICT = {1: "enforcing", 0: "permissive", -1: "disabled"}
 
 
 class SelinuxFactCollector(BaseFactCollector):
-    name = 'selinux'
+    name = "selinux"
     _fact_ids = set()  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
@@ -46,47 +43,49 @@ class SelinuxFactCollector(BaseFactCollector):
         # there is no way to tell if SELinux is enabled or disabled on the system
         # without the library.
         if not HAVE_SELINUX:
-            selinux_facts['status'] = 'Missing selinux Python library'
-            facts_dict['selinux'] = selinux_facts
-            facts_dict['selinux_python_present'] = False
+            selinux_facts["status"] = "Missing selinux Python library"
+            facts_dict["selinux"] = selinux_facts
+            facts_dict["selinux_python_present"] = False
             return facts_dict
 
         # Set a boolean for testing whether the Python library is present
-        facts_dict['selinux_python_present'] = True
+        facts_dict["selinux_python_present"] = True
 
         if not selinux.is_selinux_enabled():
-            selinux_facts['status'] = 'disabled'
+            selinux_facts["status"] = "disabled"
         else:
-            selinux_facts['status'] = 'enabled'
+            selinux_facts["status"] = "enabled"
 
             try:
-                selinux_facts['policyvers'] = selinux.security_policyvers()
+                selinux_facts["policyvers"] = selinux.security_policyvers()
             except (AttributeError, OSError):
-                selinux_facts['policyvers'] = 'unknown'
+                selinux_facts["policyvers"] = "unknown"
 
             try:
                 (rc, configmode) = selinux.selinux_getenforcemode()
                 if rc == 0:
-                    selinux_facts['config_mode'] = SELINUX_MODE_DICT.get(configmode, 'unknown')
+                    selinux_facts["config_mode"] = SELINUX_MODE_DICT.get(
+                        configmode, "unknown"
+                    )
                 else:
-                    selinux_facts['config_mode'] = 'unknown'
+                    selinux_facts["config_mode"] = "unknown"
             except (AttributeError, OSError):
-                selinux_facts['config_mode'] = 'unknown'
+                selinux_facts["config_mode"] = "unknown"
 
             try:
                 mode = selinux.security_getenforce()
-                selinux_facts['mode'] = SELINUX_MODE_DICT.get(mode, 'unknown')
+                selinux_facts["mode"] = SELINUX_MODE_DICT.get(mode, "unknown")
             except (AttributeError, OSError):
-                selinux_facts['mode'] = 'unknown'
+                selinux_facts["mode"] = "unknown"
 
             try:
                 (rc, policytype) = selinux.selinux_getpolicytype()
                 if rc == 0:
-                    selinux_facts['type'] = policytype
+                    selinux_facts["type"] = policytype
                 else:
-                    selinux_facts['type'] = 'unknown'
+                    selinux_facts["type"] = "unknown"
             except (AttributeError, OSError):
-                selinux_facts['type'] = 'unknown'
+                selinux_facts["type"] = "unknown"
 
-        facts_dict['selinux'] = selinux_facts
+        facts_dict["selinux"] = selinux_facts
         return facts_dict

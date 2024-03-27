@@ -18,7 +18,7 @@ from ansible.module_utils.common.collections import is_sequence
 from ansible.utils.context_objects import CLIArgs, GlobalCLIArgs
 
 
-__all__ = ('CLIARGS',)
+__all__ = ("CLIARGS",)
 
 # Note: this is not the singleton version.  The Singleton is only created once the program has
 # actually parsed the args
@@ -42,6 +42,7 @@ def cliargs_deferred_get(key, default=None, shallowcopy=False):
     This function is not directly bound to ``CliArgs`` so that it works with
     ``CLIARGS`` being replaced
     """
+
     def inner():
         value = CLIARGS.get(key, default=default)
         if not shallowcopy:
@@ -51,4 +52,5 @@ def cliargs_deferred_get(key, default=None, shallowcopy=False):
         elif isinstance(value, (Mapping, Set)):
             return value.copy()
         return value
+
     return inner

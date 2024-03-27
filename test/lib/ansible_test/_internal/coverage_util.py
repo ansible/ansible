@@ -1,4 +1,5 @@
 """Utility code for facilitating collection of code coverage when running tests."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -69,8 +70,8 @@ class CoverageVersion:
 
 COVERAGE_VERSIONS = (
     # IMPORTANT: Keep this in sync with the ansible-test.txt requirements file.
-    CoverageVersion('7.3.2', 7, (3, 8), (3, 12)),
-    CoverageVersion('6.5.0', 7, (3, 7), (3, 7)),
+    CoverageVersion("7.3.2", 7, (3, 8), (3, 12)),
+    CoverageVersion("6.5.0", 7, (3, 7), (3, 7)),
 )
 """
 This tuple specifies the coverage version to use for Python version ranges.
@@ -87,19 +88,29 @@ class CoverageError(ApplicationError):
         self.path = path
         self.message = message
 
-        super().__init__(f'Error reading coverage file "{os.path.relpath(path)}": {message}')
+        super().__init__(
+            f'Error reading coverage file "{os.path.relpath(path)}": {message}'
+        )
 
 
 def get_coverage_version(version: str) -> CoverageVersion:
     """Return the coverage version to use with the specified Python version."""
     python_version = str_to_version(version)
-    supported_versions = [entry for entry in COVERAGE_VERSIONS if entry.min_python <= python_version <= entry.max_python]
+    supported_versions = [
+        entry
+        for entry in COVERAGE_VERSIONS
+        if entry.min_python <= python_version <= entry.max_python
+    ]
 
     if not supported_versions:
-        raise InternalError(f'Python {version} has no matching entry in COVERAGE_VERSIONS.')
+        raise InternalError(
+            f"Python {version} has no matching entry in COVERAGE_VERSIONS."
+        )
 
     if len(supported_versions) > 1:
-        raise InternalError(f'Python {version} has multiple matching entries in COVERAGE_VERSIONS.')
+        raise InternalError(
+            f"Python {version} has multiple matching entries in COVERAGE_VERSIONS."
+        )
 
     coverage_version = supported_versions[0]
 
@@ -116,13 +127,13 @@ def get_coverage_file_schema_version(path: str) -> int:
     with open_binary_file(path) as file_obj:
         header = file_obj.read(16)
 
-    if header.startswith(b'!coverage.py: '):
+    if header.startswith(b"!coverage.py: "):
         return 0
 
-    if header.startswith(b'SQLite'):
+    if header.startswith(b"SQLite"):
         return get_sqlite_schema_version(path)
 
-    raise CoverageError(path, f'Unknown header: {header!r}')
+    raise CoverageError(path, f"Unknown header: {header!r}")
 
 
 def get_sqlite_schema_version(path: str) -> int:
@@ -130,16 +141,19 @@ def get_sqlite_schema_version(path: str) -> int:
     try:
         with sqlite3.connect(path) as connection:
             cursor = connection.cursor()
-            cursor.execute('select version from coverage_schema')
+            cursor.execute("select version from coverage_schema")
             schema_version = cursor.fetchmany(1)[0][0]
     except Exception as ex:
-        raise CoverageError(path, f'SQLite error: {ex}') from ex
+        raise CoverageError(path, f"SQLite error: {ex}") from ex
 
     if not isinstance(schema_version, int):
-        raise CoverageError(path, f'Schema version is {type(schema_version)} instead of {int}: {schema_version}')
+        raise CoverageError(
+            path,
+            f"Schema version is {type(schema_version)} instead of {int}: {schema_version}",
+        )
 
     if schema_version < 1:
-        raise CoverageError(path, f'Schema version is out-of-range: {schema_version}')
+        raise CoverageError(path, f"Schema version is out-of-range: {schema_version}")
 
     return schema_version
 
@@ -164,15 +178,19 @@ def cover_python(
 def get_coverage_platform(config: HostConfig) -> str:
     """Return the platform label for the given host config."""
     if isinstance(config, PosixRemoteConfig):
-        platform = f'remote-{sanitize_host_name(config.name)}'
+        platform = f"remote-{sanitize_host_name(config.name)}"
     elif isinstance(config, DockerConfig):
-        platform = f'docker-{sanitize_host_name(config.name)}'
+        platform = f"docker-{sanitize_host_name(config.name)}"
     elif isinstance(config, PosixSshConfig):
-        platform = f'ssh-{sanitize_host_name(config.host)}'
+        platform = f"ssh-{sanitize_host_name(config.host)}"
     elif isinstance(config, OriginConfig):
-        platform = 'origin'  # previous versions of ansible-test used "local-{python_version}"
+        platform = (
+            "origin"  # previous versions of ansible-test used "local-{python_version}"
+        )
     else:
-        raise NotImplementedError(f'Coverage platform label not defined for type: {type(config)}')
+        raise NotImplementedError(
+            f"Coverage platform label not defined for type: {type(config)}"
+        )
 
     return platform
 
@@ -187,15 +205,27 @@ def get_coverage_environment(
     # config is in a temporary directory
     # results are in the source tree
     config_file = get_coverage_config(args)
-    coverage_name = '='.join((args.command, target_name, get_coverage_platform(args.controller), f'python-{version}', 'coverage'))
-    coverage_dir = os.path.join(data_context().content.root, data_context().content.results_path, ResultType.COVERAGE.name)
+    coverage_name = "=".join(
+        (
+            args.command,
+            target_name,
+            get_coverage_platform(args.controller),
+            f"python-{version}",
+            "coverage",
+        )
+    )
+    coverage_dir = os.path.join(
+        data_context().content.root,
+        data_context().content.results_path,
+        ResultType.COVERAGE.name,
+    )
     coverage_file = os.path.join(coverage_dir, coverage_name)
 
     make_dirs(coverage_dir)
 
     if args.coverage_check:
         # cause the 'coverage' module to be found, but not imported or enabled
-        coverage_file = ''
+        coverage_file = ""
 
     # Enable code coverage collection on local Python programs (this does not include Ansible modules).
     # Used by the injectors to support code coverage.
@@ -220,7 +250,7 @@ def get_coverage_config(args: TestConfig) -> str:
     coverage_config = generate_coverage_config(args)
 
     if args.explain:
-        temp_dir = '/tmp/coverage-temp-dir'
+        temp_dir = "/tmp/coverage-temp-dir"
     else:
         temp_dir = tempfile.mkdtemp()
         ExitHandler.register(lambda: remove_tree(temp_dir))
@@ -247,7 +277,7 @@ def generate_coverage_config(args: TestConfig) -> str:
 
 def generate_ansible_coverage_config() -> str:
     """Generate code coverage configuration for Ansible tests."""
-    coverage_config = '''
+    coverage_config = """
 [run]
 branch = True
 concurrency =
@@ -263,14 +293,14 @@ omit =
     */pytest
     */AnsiballZ_*.py
     */test/results/*
-'''
+"""
 
     return coverage_config
 
 
 def generate_collection_coverage_config(args: TestConfig) -> str:
     """Generate code coverage configuration for Ansible Collection tests."""
-    coverage_config = '''
+    coverage_config = """
 [run]
 branch = True
 concurrency =
@@ -279,28 +309,39 @@ concurrency =
 parallel = True
 disable_warnings =
     no-data-collected
-'''
+"""
 
     if isinstance(args, IntegrationConfig):
-        coverage_config += '''
+        coverage_config += """
 include =
     %s/*
     */%s/*
-''' % (data_context().content.root, data_context().content.collection.directory)
+""" % (
+            data_context().content.root,
+            data_context().content.collection.directory,
+        )
     elif isinstance(args, SanityConfig):
         # temporary work-around for import sanity test
-        coverage_config += '''
+        coverage_config += """
 include =
     %s/*
 
 omit =
     %s/*
-''' % (data_context().content.root, os.path.join(data_context().content.root, data_context().content.results_path))
+""" % (
+            data_context().content.root,
+            os.path.join(
+                data_context().content.root, data_context().content.results_path
+            ),
+        )
     else:
-        coverage_config += '''
+        coverage_config += (
+            """
 include =
      %s/*
-''' % data_context().content.root
+"""
+            % data_context().content.root
+        )
 
     return coverage_config
 
@@ -314,7 +355,9 @@ def self_check() -> None:
     # Verify all controller Python versions are mapped to the latest coverage version.
     for version in CONTROLLER_PYTHON_VERSIONS:
         if get_coverage_version(version) != CONTROLLER_COVERAGE_VERSION:
-            raise InternalError(f'Controller Python version {version} is not mapped to the latest coverage version.')
+            raise InternalError(
+                f"Controller Python version {version} is not mapped to the latest coverage version."
+            )
 
 
 self_check()

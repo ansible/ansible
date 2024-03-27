@@ -29,8 +29,7 @@ from __future__ import annotations
 
 
 class Firewall_rulesArgs(object):  # pylint: disable=R0903
-    """The arg spec for the vyos_firewall_rules module
-    """
+    """The arg spec for the vyos_firewall_rules module"""
 
     def __init__(self, **kwargs):
         pass
@@ -72,12 +71,8 @@ class Firewall_rulesArgs(object):  # pylint: disable=R0903
                                         "address": {"type": "str"},
                                         "group": {
                                             "options": {
-                                                "address_group": {
-                                                    "type": "str"
-                                                },
-                                                "network_group": {
-                                                    "type": "str"
-                                                },
+                                                "address_group": {"type": "str"},
+                                                "network_group": {"type": "str"},
                                                 "port_group": {"type": "str"},
                                             },
                                             "type": "dict",
@@ -195,12 +190,8 @@ class Firewall_rulesArgs(object):  # pylint: disable=R0903
                                         "address": {"type": "str"},
                                         "group": {
                                             "options": {
-                                                "address_group": {
-                                                    "type": "str"
-                                                },
-                                                "network_group": {
-                                                    "type": "str"
-                                                },
+                                                "address_group": {"type": "str"},
+                                                "network_group": {"type": "str"},
                                                 "port_group": {"type": "str"},
                                             },
                                             "type": "dict",

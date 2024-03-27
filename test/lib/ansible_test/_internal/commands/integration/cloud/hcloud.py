@@ -1,4 +1,5 @@
 """Hetzner Cloud plugin for integration tests."""
+
 from __future__ import annotations
 
 import configparser
@@ -35,7 +36,9 @@ class HcloudCloudProvider(CloudProvider):
 
         self.uses_config = True
 
-    def filter(self, targets: tuple[IntegrationTarget, ...], exclude: list[str]) -> None:
+    def filter(
+        self, targets: tuple[IntegrationTarget, ...], exclude: list[str]
+    ) -> None:
         """Filter out the cloud tests when the necessary config and resources are not available."""
         aci = self._create_ansible_core_ci()
 
@@ -53,7 +56,7 @@ class HcloudCloudProvider(CloudProvider):
 
     def _setup_dynamic(self) -> None:
         """Request Hetzner credentials through the Ansible Core CI service."""
-        display.info('Provisioning %s cloud environment.' % self.platform, verbosity=1)
+        display.info("Provisioning %s cloud environment." % self.platform, verbosity=1)
 
         config = self._read_config_template()
 
@@ -62,16 +65,16 @@ class HcloudCloudProvider(CloudProvider):
         response = aci.start()
 
         if not self.args.explain:
-            token = response['hetzner']['token']
+            token = response["hetzner"]["token"]
 
             display.sensitive.add(token)
-            display.info('Hetzner Cloud Token: %s' % token, verbosity=1)
+            display.info("Hetzner Cloud Token: %s" % token, verbosity=1)
 
             values = dict(
                 TOKEN=token,
             )
 
-            display.sensitive.add(values['TOKEN'])
+            display.sensitive.add(values["TOKEN"])
 
             config = self._populate_config_template(config, values)
 
@@ -79,7 +82,7 @@ class HcloudCloudProvider(CloudProvider):
 
     def _create_ansible_core_ci(self) -> AnsibleCoreCI:
         """Return a Heztner instance of AnsibleCoreCI."""
-        return AnsibleCoreCI(self.args, CloudResource(platform='hetzner'))
+        return AnsibleCoreCI(self.args, CloudResource(platform="hetzner"))
 
 
 class HcloudCloudEnvironment(CloudEnvironment):
@@ -91,16 +94,18 @@ class HcloudCloudEnvironment(CloudEnvironment):
         parser.read(self.config_path)
 
         env_vars = dict(
-            HCLOUD_TOKEN=parser.get('default', 'hcloud_api_token'),
+            HCLOUD_TOKEN=parser.get("default", "hcloud_api_token"),
         )
 
-        display.sensitive.add(env_vars['HCLOUD_TOKEN'])
+        display.sensitive.add(env_vars["HCLOUD_TOKEN"])
 
         ansible_vars = dict(
             hcloud_prefix=self.resource_prefix,
         )
 
-        ansible_vars.update(dict((key.lower(), value) for key, value in env_vars.items()))
+        ansible_vars.update(
+            dict((key.lower(), value) for key, value in env_vars.items())
+        )
 
         return CloudEnvironmentConfig(
             env_vars=env_vars,

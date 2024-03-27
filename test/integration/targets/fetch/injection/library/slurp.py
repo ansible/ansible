@@ -17,12 +17,29 @@ DOCUMENTATION = """
 import json
 import random
 
-bad_responses = ['../foo', '../../foo', '../../../foo', '/../../../foo', '/../foo', '//..//foo', '..//..//foo']
+bad_responses = [
+    "../foo",
+    "../../foo",
+    "../../../foo",
+    "/../../../foo",
+    "/../foo",
+    "//..//foo",
+    "..//..//foo",
+]
 
 
 def main():
-    print(json.dumps(dict(changed=False, content='', encoding='base64', source=random.choice(bad_responses))))
+    print(
+        json.dumps(
+            dict(
+                changed=False,
+                content="",
+                encoding="base64",
+                source=random.choice(bad_responses),
+            )
+        )
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

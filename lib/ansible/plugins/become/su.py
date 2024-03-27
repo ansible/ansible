@@ -99,54 +99,56 @@ from ansible.plugins.become import BecomeBase
 
 class BecomeModule(BecomeBase):
 
-    name = 'su'
+    name = "su"
 
     # messages for detecting prompted password issues
-    fail = ('Authentication failure',)
+    fail = ("Authentication failure",)
 
     SU_PROMPT_LOCALIZATIONS = [
-        'Password',
-        '암호',
-        'パスワード',
-        'Adgangskode',
-        'Contraseña',
-        'Contrasenya',
-        'Hasło',
-        'Heslo',
-        'Jelszó',
-        'Lösenord',
-        'Mật khẩu',
-        'Mot de passe',
-        'Parola',
-        'Parool',
-        'Pasahitza',
-        'Passord',
-        'Passwort',
-        'Salasana',
-        'Sandi',
-        'Senha',
-        'Wachtwoord',
-        'ססמה',
-        'Лозинка',
-        'Парола',
-        'Пароль',
-        'गुप्तशब्द',
-        'शब्दकूट',
-        'సంకేతపదము',
-        'හස්පදය',
-        '密码',
-        '密碼',
-        '口令',
+        "Password",
+        "암호",
+        "パスワード",
+        "Adgangskode",
+        "Contraseña",
+        "Contrasenya",
+        "Hasło",
+        "Heslo",
+        "Jelszó",
+        "Lösenord",
+        "Mật khẩu",
+        "Mot de passe",
+        "Parola",
+        "Parool",
+        "Pasahitza",
+        "Passord",
+        "Passwort",
+        "Salasana",
+        "Sandi",
+        "Senha",
+        "Wachtwoord",
+        "ססמה",
+        "Лозинка",
+        "Парола",
+        "Пароль",
+        "गुप्तशब्द",
+        "शब्दकूट",
+        "సంకేతపదము",
+        "හස්පදය",
+        "密码",
+        "密碼",
+        "口令",
     ]
 
     def check_password_prompt(self, b_output):
-        ''' checks if the expected password prompt exists in b_output '''
+        """checks if the expected password prompt exists in b_output"""
 
-        prompts = self.get_option('prompt_l10n') or self.SU_PROMPT_LOCALIZATIONS
-        b_password_string = b"|".join((br'(\w+\'s )?' + to_bytes(p)) for p in prompts)
+        prompts = self.get_option("prompt_l10n") or self.SU_PROMPT_LOCALIZATIONS
+        b_password_string = b"|".join((rb"(\w+\'s )?" + to_bytes(p)) for p in prompts)
         # Colon or unicode fullwidth colon
-        b_password_string = b_password_string + to_bytes(u' ?(:|：) ?')
-        b_su_prompt_localizations_re = re.compile(b_password_string, flags=re.IGNORECASE)
+        b_password_string = b_password_string + to_bytes(" ?(:|：) ?")
+        b_su_prompt_localizations_re = re.compile(
+            b_password_string, flags=re.IGNORECASE
+        )
         return bool(b_su_prompt_localizations_re.match(b_output))
 
     def build_become_command(self, cmd, shell):
@@ -159,9 +161,9 @@ class BecomeModule(BecomeBase):
         if not cmd:
             return cmd
 
-        exe = self.get_option('become_exe') or self.name
-        flags = self.get_option('become_flags') or ''
-        user = self.get_option('become_user') or ''
+        exe = self.get_option("become_exe") or self.name
+        flags = self.get_option("become_flags") or ""
+        user = self.get_option("become_user") or ""
         success_cmd = self._build_success_command(cmd, shell)
 
         return "%s %s %s -c %s" % (exe, flags, user, shlex.quote(success_cmd))

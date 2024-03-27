@@ -32,30 +32,34 @@ from ansible.module_utils.common.text.converters import to_bytes
 
 
 def secure_hash_s(data, hash_func=sha1):
-    ''' Return a secure hash hex digest of data. '''
+    """Return a secure hash hex digest of data."""
 
     digest = hash_func()
-    data = to_bytes(data, errors='surrogate_or_strict')
+    data = to_bytes(data, errors="surrogate_or_strict")
     digest.update(data)
     return digest.hexdigest()
 
 
 def secure_hash(filename, hash_func=sha1):
-    ''' Return a secure hash hex digest of local file, None if file is not present or a directory. '''
+    """Return a secure hash hex digest of local file, None if file is not present or a directory."""
 
-    if not os.path.exists(to_bytes(filename, errors='surrogate_or_strict')) or os.path.isdir(to_bytes(filename, errors='strict')):
+    if not os.path.exists(
+        to_bytes(filename, errors="surrogate_or_strict")
+    ) or os.path.isdir(to_bytes(filename, errors="strict")):
         return None
     digest = hash_func()
     blocksize = 64 * 1024
     try:
-        infile = open(to_bytes(filename, errors='surrogate_or_strict'), 'rb')
+        infile = open(to_bytes(filename, errors="surrogate_or_strict"), "rb")
         block = infile.read(blocksize)
         while block:
             digest.update(block)
             block = infile.read(blocksize)
         infile.close()
     except IOError as e:
-        raise AnsibleError("error while accessing the file %s, error was: %s" % (filename, e))
+        raise AnsibleError(
+            "error while accessing the file %s, error was: %s" % (filename, e)
+        )
     return digest.hexdigest()
 
 
@@ -75,13 +79,14 @@ checksum_s = secure_hash_s
 # MD5 will not work on systems which are FIPS-140-2 compliant.
 #
 
+
 def md5s(data):
     if not _md5:
-        raise ValueError('MD5 not available.  Possibly running in FIPS mode')
+        raise ValueError("MD5 not available.  Possibly running in FIPS mode")
     return secure_hash_s(data, _md5)
 
 
 def md5(filename):
     if not _md5:
-        raise ValueError('MD5 not available.  Possibly running in FIPS mode')
+        raise ValueError("MD5 not available.  Possibly running in FIPS mode")
     return secure_hash(filename, _md5)

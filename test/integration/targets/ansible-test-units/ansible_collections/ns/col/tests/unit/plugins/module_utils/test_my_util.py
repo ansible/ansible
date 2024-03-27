@@ -4,4 +4,4 @@ from .....plugins.module_utils.my_util import hello
 
 
 def test_hello():
-    assert hello('Ansibull') == 'Hello Ansibull'
+    assert hello("Ansibull") == "Hello Ansibull"

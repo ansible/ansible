@@ -22,13 +22,14 @@ from abc import abstractmethod
 from functools import wraps
 
 from ansible.errors import AnsibleError
-from ansible.plugins import AnsiblePlugin
-from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.basic import missing_required_lib
+from ansible.module_utils.common.text.converters import to_native
+from ansible.plugins import AnsiblePlugin
 
 try:
     from ncclient.operations import RPCError
-    from ncclient.xml_ import to_xml, to_ele, NCElement
+    from ncclient.xml_ import NCElement, to_ele, to_xml
+
     HAS_NCCLIENT = True
     NCCLIENT_IMP_ERR = None
 # paramiko and gssapi are incompatible and raise AttributeError not ImportError
@@ -39,17 +40,21 @@ except Exception as err:
     NCCLIENT_IMP_ERR = err
 
 try:
-    from lxml.etree import Element, SubElement, tostring, fromstring
+    from lxml.etree import fromstring
 except ImportError:
-    from xml.etree.ElementTree import Element, SubElement, tostring, fromstring
+    from xml.etree.ElementTree import fromstring
 
 
 def ensure_ncclient(func):
     @wraps(func)
     def wrapped(self, *args, **kwargs):
         if not HAS_NCCLIENT:
-            raise AnsibleError("%s: %s" % (missing_required_lib('ncclient'), to_native(NCCLIENT_IMP_ERR)))
+            raise AnsibleError(
+                "%s: %s"
+                % (missing_required_lib("ncclient"), to_native(NCCLIENT_IMP_ERR))
+            )
         return func(self, *args, **kwargs)
+
     return wrapped
 
 
@@ -104,8 +109,22 @@ class NetconfBase(AnsiblePlugin):
             conn.load_configuration(config=[''set system ntp server 1.1.1.1''], action='set', format='text')
     """
 
-    __rpc__ = ['rpc', 'get_config', 'get', 'edit_config', 'validate', 'copy_config', 'dispatch', 'lock', 'unlock',
-               'discard_changes', 'commit', 'get_schema', 'delete_config', 'get_device_operations']
+    __rpc__ = [
+        "rpc",
+        "get_config",
+        "get",
+        "edit_config",
+        "validate",
+        "copy_config",
+        "dispatch",
+        "lock",
+        "unlock",
+        "discard_changes",
+        "commit",
+        "get_schema",
+        "delete_config",
+        "get_device_operations",
+    ]
 
     def __init__(self, connection):
         super(NetconfBase, self).__init__()
@@ -124,7 +143,7 @@ class NetconfBase(AnsiblePlugin):
         try:
             obj = to_ele(name)
             resp = self.m.rpc(obj)
-            return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+            return resp.data_xml if hasattr(resp, "data_xml") else resp.xml
         except RPCError as exc:
             msg = exc.xml
             raise Exception(to_xml(msg))
@@ -141,9 +160,9 @@ class NetconfBase(AnsiblePlugin):
             filter = tuple(filter)
 
         if not source:
-            source = 'running'
+            source = "running"
         resp = self.m.get_config(source=source, filter=filter)
-        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+        return resp.data_xml if hasattr(resp, "data_xml") else resp.xml
 
     def get(self, filter=None, with_defaults=None):
         """
@@ -157,10 +176,18 @@ class NetconfBase(AnsiblePlugin):
         if isinstance(filter, list):
             filter = tuple(filter)
         resp = self.m.get(filter=filter, with_defaults=with_defaults)
-        response = resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+        response = resp.data_xml if hasattr(resp, "data_xml") else resp.xml
         return response
 
-    def edit_config(self, config=None, format='xml', target='candidate', default_operation=None, test_option=None, error_option=None):
+    def edit_config(
+        self,
+        config=None,
+        format="xml",
+        target="candidate",
+        default_operation=None,
+        test_option=None,
+        error_option=None,
+    ):
         """
         Loads all or part of the specified *config* to the *target* configuration datastore.
         :param config: Is the configuration, which must be rooted in the `config` element.
@@ -174,12 +201,18 @@ class NetconfBase(AnsiblePlugin):
         :return: Returns xml string containing the RPC response received from remote host
         """
         if config is None:
-            raise ValueError('config value must be provided')
-        resp = self.m.edit_config(config, format=format, target=target, default_operation=default_operation, test_option=test_option,
-                                  error_option=error_option)
-        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+            raise ValueError("config value must be provided")
+        resp = self.m.edit_config(
+            config,
+            format=format,
+            target=target,
+            default_operation=default_operation,
+            test_option=test_option,
+            error_option=error_option,
+        )
+        return resp.data_xml if hasattr(resp, "data_xml") else resp.xml
 
-    def validate(self, source='candidate'):
+    def validate(self, source="candidate"):
         """
         Validate the contents of the specified configuration.
         :param source: Is the name of the configuration datastore being validated or `config` element
@@ -187,7 +220,7 @@ class NetconfBase(AnsiblePlugin):
         :return: Returns xml string containing the RPC response received from remote host
         """
         resp = self.m.validate(source=source)
-        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+        return resp.data_xml if hasattr(resp, "data_xml") else resp.xml
 
     def copy_config(self, source, target):
         """
@@ -198,7 +231,7 @@ class NetconfBase(AnsiblePlugin):
         :return: Returns xml string containing the RPC response received from remote host
         """
         resp = self.m.copy_config(source, target)
-        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+        return resp.data_xml if hasattr(resp, "data_xml") else resp.xml
 
     def dispatch(self, rpc_command=None, source=None, filter=None):
         """
@@ -209,7 +242,7 @@ class NetconfBase(AnsiblePlugin):
         :return: Returns xml string containing the RPC response received from remote host
         """
         if rpc_command is None:
-            raise ValueError('rpc_command value must be provided')
+            raise ValueError("rpc_command value must be provided")
 
         resp = self.m.dispatch(fromstring(rpc_command), source=source, filter=filter)
 
@@ -217,7 +250,7 @@ class NetconfBase(AnsiblePlugin):
             # In case xml reply is transformed or namespace is removed in
             # ncclient device specific handler return modified xml response
             result = resp.data_xml
-        elif hasattr(resp, 'data_ele') and resp.data_ele:
+        elif hasattr(resp, "data_ele") and resp.data_ele:
             # if data node is present in xml response return the xml string
             # with data node as root
             result = resp.data_xml
@@ -235,7 +268,7 @@ class NetconfBase(AnsiblePlugin):
         :return: Returns xml string containing the RPC response received from remote host
         """
         resp = self.m.lock(target=target)
-        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+        return resp.data_xml if hasattr(resp, "data_xml") else resp.xml
 
     def unlock(self, target="candidate"):
         """
@@ -245,7 +278,7 @@ class NetconfBase(AnsiblePlugin):
         :return: Returns xml string containing the RPC response received from remote host
         """
         resp = self.m.unlock(target=target)
-        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+        return resp.data_xml if hasattr(resp, "data_xml") else resp.xml
 
     def discard_changes(self):
         """
@@ -254,7 +287,7 @@ class NetconfBase(AnsiblePlugin):
         :return: Returns xml string containing the RPC response received from remote host
         """
         resp = self.m.discard_changes()
-        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+        return resp.data_xml if hasattr(resp, "data_xml") else resp.xml
 
     def commit(self, confirmed=False, timeout=None, persist=None):
         """
@@ -272,7 +305,7 @@ class NetconfBase(AnsiblePlugin):
         :return: Returns xml string containing the RPC response received from remote host
         """
         resp = self.m.commit(confirmed=confirmed, timeout=timeout, persist=persist)
-        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+        return resp.data_xml if hasattr(resp, "data_xml") else resp.xml
 
     def get_schema(self, identifier=None, version=None, format=None):
         """
@@ -283,7 +316,7 @@ class NetconfBase(AnsiblePlugin):
         :return: Returns xml string containing the RPC response received from remote host
         """
         resp = self.m.get_schema(identifier, version=version, format=format)
-        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+        return resp.data_xml if hasattr(resp, "data_xml") else resp.xml
 
     def delete_config(self, target):
         """
@@ -292,7 +325,7 @@ class NetconfBase(AnsiblePlugin):
         :return: Returns xml string containing the RPC response received from remote host
         """
         resp = self.m.delete_config(target)
-        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+        return resp.data_xml if hasattr(resp, "data_xml") else resp.xml
 
     def locked(self, target):
         return self.m.locked(target)
@@ -348,27 +381,28 @@ class NetconfBase(AnsiblePlugin):
         :return: Remote host capabilities in dictionary format
         """
         operations = {}
-        capabilities = '\n'.join(server_capabilities)
-        operations['supports_commit'] = ':candidate' in capabilities
-        operations['supports_defaults'] = ':with-defaults' in capabilities
-        operations['supports_confirm_commit'] = ':confirmed-commit' in capabilities
-        operations['supports_startup'] = ':startup' in capabilities
-        operations['supports_xpath'] = ':xpath' in capabilities
-        operations['supports_writable_running'] = ':writable-running' in capabilities
-        operations['supports_validate'] = ':validate' in capabilities
+        capabilities = "\n".join(server_capabilities)
+        operations["supports_commit"] = ":candidate" in capabilities
+        operations["supports_defaults"] = ":with-defaults" in capabilities
+        operations["supports_confirm_commit"] = ":confirmed-commit" in capabilities
+        operations["supports_startup"] = ":startup" in capabilities
+        operations["supports_xpath"] = ":xpath" in capabilities
+        operations["supports_writable_running"] = ":writable-running" in capabilities
+        operations["supports_validate"] = ":validate" in capabilities
 
-        operations['lock_datastore'] = []
-        if operations['supports_writable_running']:
-            operations['lock_datastore'].append('running')
+        operations["lock_datastore"] = []
+        if operations["supports_writable_running"]:
+            operations["lock_datastore"].append("running")
 
-        if operations['supports_commit']:
-            operations['lock_datastore'].append('candidate')
+        if operations["supports_commit"]:
+            operations["lock_datastore"].append("candidate")
 
-        if operations['supports_startup']:
-            operations['lock_datastore'].append('startup')
+        if operations["supports_startup"]:
+            operations["lock_datastore"].append("startup")
 
-        operations['supports_lock'] = bool(operations['lock_datastore'])
+        operations["supports_lock"] = bool(operations["lock_datastore"])
 
         return operations
+
 
 # TODO Restore .xml, when ncclient supports it for all platforms

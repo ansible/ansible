@@ -9,7 +9,7 @@ from ansible.module_utils.common.text.converters import to_text
 
 target = sys.argv.pop(1)
 myclass = "%sCLI" % target.capitalize()
-module_name = f'ansible.cli.{target}'
+module_name = f"ansible.cli.{target}"
 
 try:
     # define cli
@@ -21,10 +21,10 @@ except ImportError as e:
         raise
 
 try:
-    args = [to_text(a, errors='surrogate_or_strict') for a in sys.argv]
+    args = [to_text(a, errors="surrogate_or_strict") for a in sys.argv]
 except UnicodeError:
-    sys.stderr.write(u"The full traceback was:\n\n%s" % to_text(traceback.format_exc()))
-    sys.exit(u'Command line args are parsable to utf-8')
+    sys.stderr.write("The full traceback was:\n\n%s" % to_text(traceback.format_exc()))
+    sys.exit("Command line args are parsable to utf-8")
 
 # init cli
 cli = mycli(args)
@@ -35,4 +35,4 @@ print(cli.__class__.version_info(gitinfo=True))
 cli.parse()
 
 # run
-cProfile.run('cli.run()')
+cProfile.run("cli.run()")

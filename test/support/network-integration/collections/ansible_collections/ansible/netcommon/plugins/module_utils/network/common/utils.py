@@ -53,9 +53,7 @@ except ImportError:
 
 
 OPERATORS = frozenset(["ge", "gt", "eq", "neq", "lt", "le"])
-ALIASES = frozenset(
-    [("min", "ge"), ("max", "le"), ("exactly", "eq"), ("neq", "ne")]
-)
+ALIASES = frozenset([("min", "ge"), ("max", "le"), ("exactly", "eq"), ("neq", "ne")])
 
 
 def to_list(val):
@@ -127,9 +125,7 @@ class Entity(object):
         * default - default value
     """
 
-    def __init__(
-        self, module, attrs=None, args=None, keys=None, from_argspec=False
-    ):
+    def __init__(self, module, attrs=None, args=None, keys=None, from_argspec=False):
         args = [] if args is None else args
 
         self._attributes = attrs or {}
@@ -182,9 +178,7 @@ class Entity(object):
         if strict:
             unknown = set(value).difference(self.attr_names)
             if unknown:
-                self._module.fail_json(
-                    msg="invalid keys: %s" % ",".join(unknown)
-                )
+                self._module.fail_json(msg="invalid keys: %s" % ",".join(unknown))
 
         for name, attr in iteritems(self._attributes):
             if value.get(name) is None:
@@ -209,9 +203,7 @@ class Entity(object):
                         continue
 
             if attr.get("required") and value.get(name) is None:
-                self._module.fail_json(
-                    msg="missing required attribute %s" % name
-                )
+                self._module.fail_json(msg="missing required attribute %s" % name)
 
             if "choices" in attr:
                 if value[name] not in attr["choices"]:
@@ -222,9 +214,7 @@ class Entity(object):
 
             if value[name] is not None:
                 value_type = attr.get("type", "str")
-                type_checker = self._module._CHECK_ARGUMENT_TYPES_DISPATCHER[
-                    value_type
-                ]
+                type_checker = self._module._CHECK_ARGUMENT_TYPES_DISPATCHER[value_type]
                 type_checker(value[name])
             elif value.get(name):
                 value[name] = self._module.params[name]
@@ -233,23 +223,18 @@ class Entity(object):
 
 
 class EntityCollection(Entity):
-    """Extends ```Entity``` to handle a list of dicts """
+    """Extends ```Entity``` to handle a list of dicts"""
 
     def __call__(self, iterable, strict=True):
         if iterable is None:
             iterable = [
-                super(EntityCollection, self).__call__(
-                    self._module.params, strict
-                )
+                super(EntityCollection, self).__call__(self._module.params, strict)
             ]
 
         if not isinstance(iterable, (list, tuple)):
             self._module.fail_json(msg="value must be an iterable")
 
-        return [
-            (super(EntityCollection, self).__call__(i, strict))
-            for i in iterable
-        ]
+        return [(super(EntityCollection, self).__call__(i, strict)) for i in iterable]
 
 
 # these two are for backwards compatibility and can be removed once all of the
@@ -265,7 +250,7 @@ class ComplexList(EntityCollection):
 
 
 def dict_diff(base, comparable):
-    """ Generate a dict object of differences
+    """Generate a dict object of differences
 
     This function will compare two dict objects and return the difference
     between them as a dict object.  For scalar values, the key will reflect
@@ -309,7 +294,7 @@ def dict_diff(base, comparable):
 
 
 def dict_merge(base, other):
-    """ Return a new dict object that combines base and other
+    """Return a new dict object that combines base and other
 
     This will create a new dict object that is a combination of the key/value
     pairs from base and other.  When both keys exist, the value will be
@@ -419,7 +404,7 @@ def conditional(expr, val, cast=None):
 
 
 def ternary(value, true_val, false_val):
-    """  value ? true_val : false_val """
+    """value ? true_val : false_val"""
     if value:
         return true_val
     else:
@@ -591,11 +576,7 @@ def remove_empties(cfg_dict):
             child_val = remove_empties(val)
             if child_val:
                 dct = {key: child_val}
-        elif (
-            isinstance(val, list)
-            and val
-            and all(isinstance(x, dict) for x in val)
-        ):
+        elif isinstance(val, list) and val and all(isinstance(x, dict) for x in val):
             child_val = [remove_empties(x) for x in val]
             if child_val:
                 dct = {key: child_val}

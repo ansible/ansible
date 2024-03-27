@@ -46,26 +46,27 @@ def set_gather_timeout_lower():
 def sleep_amount_implicit(amount):
     # implicit refers to the lack of argument to the decorator
     time.sleep(amount)
-    return 'Succeeded after {0} sec'.format(amount)
+    return "Succeeded after {0} sec".format(amount)
 
 
 @timeout.timeout(timeout.DEFAULT_GATHER_TIMEOUT + 5)
 def sleep_amount_explicit_higher(amount):
     # explicit refers to the argument to the decorator
     time.sleep(amount)
-    return 'Succeeded after {0} sec'.format(amount)
+    return "Succeeded after {0} sec".format(amount)
 
 
 @timeout.timeout(2)
 def sleep_amount_explicit_lower(amount):
     # explicit refers to the argument to the decorator
     time.sleep(amount)
-    return 'Succeeded after {0} sec'.format(amount)
+    return "Succeeded after {0} sec".format(amount)
 
 
 #
 # Tests for how the timeout decorator is specified
 #
+
 
 def test_defaults_still_within_bounds():
     # If the default changes outside of these bounds, some of the tests will
@@ -76,47 +77,52 @@ def test_defaults_still_within_bounds():
 
 def test_implicit_file_default_succeeds():
     # amount checked must be less than DEFAULT_GATHER_TIMEOUT
-    assert sleep_amount_implicit(1) == 'Succeeded after 1 sec'
+    assert sleep_amount_implicit(1) == "Succeeded after 1 sec"
 
 
 def test_implicit_file_default_timesout(monkeypatch):
-    monkeypatch.setattr(timeout, 'DEFAULT_GATHER_TIMEOUT', 1)
+    monkeypatch.setattr(timeout, "DEFAULT_GATHER_TIMEOUT", 1)
     # sleep_time is greater than the default
     sleep_time = timeout.DEFAULT_GATHER_TIMEOUT + 1
     with pytest.raises(timeout.TimeoutError):
-        assert sleep_amount_implicit(sleep_time) == '(Not expected to succeed)'
+        assert sleep_amount_implicit(sleep_time) == "(Not expected to succeed)"
 
 
 def test_implicit_file_overridden_succeeds(set_gather_timeout_higher):
     # Set sleep_time greater than the default timeout and less than our new timeout
     sleep_time = 3
-    assert sleep_amount_implicit(sleep_time) == 'Succeeded after {0} sec'.format(sleep_time)
+    assert sleep_amount_implicit(sleep_time) == "Succeeded after {0} sec".format(
+        sleep_time
+    )
 
 
 def test_implicit_file_overridden_timesout(set_gather_timeout_lower):
     # Set sleep_time greater than our new timeout but less than the default
     sleep_time = 3
     with pytest.raises(timeout.TimeoutError):
-        assert sleep_amount_implicit(sleep_time) == '(Not expected to Succeed)'
+        assert sleep_amount_implicit(sleep_time) == "(Not expected to Succeed)"
 
 
 def test_explicit_succeeds(monkeypatch):
-    monkeypatch.setattr(timeout, 'DEFAULT_GATHER_TIMEOUT', 1)
+    monkeypatch.setattr(timeout, "DEFAULT_GATHER_TIMEOUT", 1)
     # Set sleep_time greater than the default timeout and less than our new timeout
     sleep_time = 2
-    assert sleep_amount_explicit_higher(sleep_time) == 'Succeeded after {0} sec'.format(sleep_time)
+    assert sleep_amount_explicit_higher(sleep_time) == "Succeeded after {0} sec".format(
+        sleep_time
+    )
 
 
 def test_explicit_timeout():
     # Set sleep_time greater than our new timeout but less than the default
     sleep_time = 3
     with pytest.raises(timeout.TimeoutError):
-        assert sleep_amount_explicit_lower(sleep_time) == '(Not expected to succeed)'
+        assert sleep_amount_explicit_lower(sleep_time) == "(Not expected to succeed)"
 
 
 #
 # Test that exception handling works
 #
+
 
 @timeout.timeout(1)
 def function_times_out():
@@ -127,12 +133,12 @@ def function_times_out():
 # we normally have our timeouts.  It's more of an integration test than a unit test.
 @timeout.timeout(1)
 def function_times_out_in_run_command(am):
-    am.run_command([sys.executable, '-c', 'import time ; time.sleep(2)'])
+    am.run_command([sys.executable, "-c", "import time ; time.sleep(2)"])
 
 
 @timeout.timeout(1)
 def function_other_timeout():
-    raise TimeoutError('Vanilla Timeout')
+    raise TimeoutError("Vanilla Timeout")
 
 
 @timeout.timeout(1)
@@ -145,25 +151,25 @@ def function_catches_all_exceptions():
     try:
         time.sleep(10)
     except BaseException:
-        raise RuntimeError('We should not have gotten here')
+        raise RuntimeError("We should not have gotten here")
 
 
 def test_timeout_raises_timeout():
     with pytest.raises(timeout.TimeoutError):
-        assert function_times_out() == '(Not expected to succeed)'
+        assert function_times_out() == "(Not expected to succeed)"
 
 
-@pytest.mark.parametrize('stdin', ({},), indirect=['stdin'])
+@pytest.mark.parametrize("stdin", ({},), indirect=["stdin"])
 def test_timeout_raises_timeout_integration_test(am):
     with pytest.raises(timeout.TimeoutError):
-        assert function_times_out_in_run_command(am) == '(Not expected to succeed)'
+        assert function_times_out_in_run_command(am) == "(Not expected to succeed)"
 
 
 def test_timeout_raises_other_exception():
     with pytest.raises(ZeroDivisionError):
-        assert function_raises() == '(Not expected to succeed)'
+        assert function_raises() == "(Not expected to succeed)"
 
 
 def test_exception_not_caught_by_called_code():
     with pytest.raises(timeout.TimeoutError):
-        assert function_catches_all_exceptions() == '(Not expected to succeed)'
+        assert function_catches_all_exceptions() == "(Not expected to succeed)"

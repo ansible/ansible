@@ -14,15 +14,15 @@ from ansible.module_utils.common.warnings import warn, get_warning_messages
 @pytest.fixture
 def warning_messages():
     return [
-        'First warning',
-        'Second warning',
-        'Third warning',
+        "First warning",
+        "Second warning",
+        "Third warning",
     ]
 
 
 def test_warn():
-    warn('Warning message')
-    assert warnings._global_warnings == ['Warning message']
+    warn("Warning message")
+    assert warnings._global_warnings == ["Warning message"]
 
 
 def test_multiple_warningss(warning_messages):
@@ -42,18 +42,20 @@ def test_get_warning_messages(warning_messages):
 
 
 @pytest.mark.parametrize(
-    'test_case',
+    "test_case",
     (
         1,
         True,
         [1],
-        {'k1': 'v1'},
+        {"k1": "v1"},
         (1, 2),
         6.62607004,
-        b'bytestr',
+        b"bytestr",
         None,
-    )
+    ),
 )
 def test_warn_failure(test_case):
-    with pytest.raises(TypeError, match='warn requires a string not a %s' % type(test_case)):
+    with pytest.raises(
+        TypeError, match="warn requires a string not a %s" % type(test_case)
+    ):
         warn(test_case)

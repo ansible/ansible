@@ -14,8 +14,7 @@ from ansible_collections.ansible.netcommon.plugins.module_utils.network.common.n
 
 
 class ConfigBase(object):
-    """ The base class for all resource modules
-    """
+    """The base class for all resource modules"""
 
     ACTION_STATES = ["merged", "replaced", "overridden", "deleted"]
 

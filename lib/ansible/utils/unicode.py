@@ -20,7 +20,7 @@ from __future__ import annotations
 from ansible.module_utils.common.text.converters import to_text
 
 
-__all__ = ('unicode_wrap',)
+__all__ = ("unicode_wrap",)
 
 
 def unicode_wrap(func, *args, **kwargs):
@@ -28,4 +28,4 @@ def unicode_wrap(func, *args, **kwargs):
 
     Use with partial to ensure that filter plugins will return text values.
     """
-    return to_text(func(*args, **kwargs), nonstring='passthru')
+    return to_text(func(*args, **kwargs), nonstring="passthru")

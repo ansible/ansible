@@ -352,8 +352,7 @@ def check_args(module, warnings):
     if module.params["multiline_delimiter"]:
         if len(module.params["multiline_delimiter"]) != 1:
             module.fail_json(
-                msg="multiline_delimiter value can only be a "
-                "single character"
+                msg="multiline_delimiter value can only be a " "single character"
             )
 
 
@@ -404,8 +403,7 @@ def save_config(module, result):
 
 
 def main():
-    """ main entry point for module execution
-    """
+    """main entry point for module execution"""
     backup_spec = dict(filename=dict(), dir_path=dict(type="path"))
     argument_spec = dict(
         src=dict(type="path"),
@@ -413,9 +411,7 @@ def main():
         parents=dict(type="list"),
         before=dict(type="list"),
         after=dict(type="list"),
-        match=dict(
-            default="line", choices=["line", "strict", "exact", "none"]
-        ),
+        match=dict(default="line", choices=["line", "strict", "exact", "none"]),
         replace=dict(default="line", choices=["line", "block"]),
         multiline_delimiter=dict(default="@"),
         running_config=dict(aliases=["config"]),
@@ -511,9 +507,7 @@ def main():
                 if banner_diff:
                     connection.edit_banner(
                         candidate=json.dumps(banner_diff),
-                        multiline_delimiter=module.params[
-                            "multiline_delimiter"
-                        ],
+                        multiline_delimiter=module.params["multiline_delimiter"],
                     )
 
             result["changed"] = True
@@ -524,9 +518,7 @@ def main():
     if module.params["save_when"] == "always":
         save_config(module, result)
     elif module.params["save_when"] == "modified":
-        output = run_commands(
-            module, ["show running-config", "show startup-config"]
-        )
+        output = run_commands(module, ["show running-config", "show startup-config"])
 
         running_config = NetworkConfig(
             indent=1, contents=output[0], ignore_lines=diff_ignore_lines

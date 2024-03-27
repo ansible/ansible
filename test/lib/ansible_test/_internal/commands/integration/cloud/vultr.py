@@ -1,4 +1,5 @@
 """Vultr plugin for integration tests."""
+
 from __future__ import annotations
 
 import configparser
@@ -42,10 +43,10 @@ class VultrCloudEnvironment(CloudEnvironment):
         parser.read(self.config_path)
 
         env_vars = dict(
-            VULTR_API_KEY=parser.get('default', 'key'),
+            VULTR_API_KEY=parser.get("default", "key"),
         )
 
-        display.sensitive.add(env_vars['VULTR_API_KEY'])
+        display.sensitive.add(env_vars["VULTR_API_KEY"])
 
         ansible_vars = dict(
             vultr_resource_prefix=self.resource_prefix,

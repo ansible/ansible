@@ -37,7 +37,13 @@ for _data, _expected in list(UNIQUE_DATA):
     UNIQUE_DATA.append((dict_values(_data), dict_values(_expected)))
 
 for _dataset1, _dataset2, _expected in list(TWO_SETS_DATA):
-    TWO_SETS_DATA.append((dict_values(_dataset1), dict_values(_dataset2), tuple(dict_values(answer) for answer in _expected)))
+    TWO_SETS_DATA.append(
+        (
+            dict_values(_dataset1),
+            dict_values(_dataset2),
+            tuple(dict_values(answer) for answer in _expected),
+        )
+    )
 
 
 env = Environment()
@@ -51,37 +57,53 @@ def assert_lists_contain_same_elements(a, b) -> None:
     missing_from_a = [item for item in b if item not in a]
     missing_from_b = [item for item in a if item not in b]
 
-    assert not missing_from_a, f'elements from `b` {missing_from_a} missing from `a` {a}'
-    assert not missing_from_b, f'elements from `a` {missing_from_b} missing from `b` {b}'
+    assert (
+        not missing_from_a
+    ), f"elements from `b` {missing_from_a} missing from `a` {a}"
+    assert (
+        not missing_from_b
+    ), f"elements from `a` {missing_from_b} missing from `b` {b}"
 
 
-@pytest.mark.parametrize('data, expected', UNIQUE_DATA, ids=str)
+@pytest.mark.parametrize("data, expected", UNIQUE_DATA, ids=str)
 def test_unique(data, expected):
     assert_lists_contain_same_elements(ms.unique(env, data), expected)
 
 
-@pytest.mark.parametrize('dataset1, dataset2, expected', TWO_SETS_DATA, ids=str)
+@pytest.mark.parametrize("dataset1, dataset2, expected", TWO_SETS_DATA, ids=str)
 def test_intersect(dataset1, dataset2, expected):
-    assert_lists_contain_same_elements(ms.intersect(env, dataset1, dataset2), expected[0])
+    assert_lists_contain_same_elements(
+        ms.intersect(env, dataset1, dataset2), expected[0]
+    )
 
 
-@pytest.mark.parametrize('dataset1, dataset2, expected', TWO_SETS_DATA, ids=str)
+@pytest.mark.parametrize("dataset1, dataset2, expected", TWO_SETS_DATA, ids=str)
 def test_difference(dataset1, dataset2, expected):
-    assert_lists_contain_same_elements(ms.difference(env, dataset1, dataset2), expected[1])
+    assert_lists_contain_same_elements(
+        ms.difference(env, dataset1, dataset2), expected[1]
+    )
 
 
-@pytest.mark.parametrize('dataset1, dataset2, expected', TWO_SETS_DATA, ids=str)
+@pytest.mark.parametrize("dataset1, dataset2, expected", TWO_SETS_DATA, ids=str)
 def test_symmetric_difference(dataset1, dataset2, expected):
-    assert_lists_contain_same_elements(ms.symmetric_difference(env, dataset1, dataset2), expected[2])
+    assert_lists_contain_same_elements(
+        ms.symmetric_difference(env, dataset1, dataset2), expected[2]
+    )
 
 
 class TestLogarithm:
     def test_log_non_number(self):
         # Message changed in python3.6
-        with pytest.raises(AnsibleFilterTypeError, match='log\\(\\) can only be used on numbers: (a float is required|must be real number, not str)'):
-            ms.logarithm('a')
-        with pytest.raises(AnsibleFilterTypeError, match='log\\(\\) can only be used on numbers: (a float is required|must be real number, not str)'):
-            ms.logarithm(10, base='a')
+        with pytest.raises(
+            AnsibleFilterTypeError,
+            match="log\\(\\) can only be used on numbers: (a float is required|must be real number, not str)",
+        ):
+            ms.logarithm("a")
+        with pytest.raises(
+            AnsibleFilterTypeError,
+            match="log\\(\\) can only be used on numbers: (a float is required|must be real number, not str)",
+        ):
+            ms.logarithm(10, base="a")
 
     def test_log_ten(self):
         assert ms.logarithm(10, 10) == 1.0
@@ -97,11 +119,17 @@ class TestLogarithm:
 class TestPower:
     def test_power_non_number(self):
         # Message changed in python3.6
-        with pytest.raises(AnsibleFilterTypeError, match='pow\\(\\) can only be used on numbers: (a float is required|must be real number, not str)'):
-            ms.power('a', 10)
+        with pytest.raises(
+            AnsibleFilterTypeError,
+            match="pow\\(\\) can only be used on numbers: (a float is required|must be real number, not str)",
+        ):
+            ms.power("a", 10)
 
-        with pytest.raises(AnsibleFilterTypeError, match='pow\\(\\) can only be used on numbers: (a float is required|must be real number, not str)'):
-            ms.power(10, 'a')
+        with pytest.raises(
+            AnsibleFilterTypeError,
+            match="pow\\(\\) can only be used on numbers: (a float is required|must be real number, not str)",
+        ):
+            ms.power(10, "a")
 
     def test_power_squared(self):
         assert ms.power(10, 2) == 100
@@ -113,14 +141,20 @@ class TestPower:
 class TestInversePower:
     def test_root_non_number(self):
         # Messages differed in python-2.6, python-2.7-3.5, and python-3.6+
-        with pytest.raises(AnsibleFilterTypeError, match="root\\(\\) can only be used on numbers:"
-                           " (invalid literal for float\\(\\): a"
-                           "|could not convert string to float: a"
-                           "|could not convert string to float: 'a')"):
-            ms.inversepower(10, 'a')
+        with pytest.raises(
+            AnsibleFilterTypeError,
+            match="root\\(\\) can only be used on numbers:"
+            " (invalid literal for float\\(\\): a"
+            "|could not convert string to float: a"
+            "|could not convert string to float: 'a')",
+        ):
+            ms.inversepower(10, "a")
 
-        with pytest.raises(AnsibleFilterTypeError, match="root\\(\\) can only be used on numbers: (a float is required|must be real number, not str)"):
-            ms.inversepower('a', 10)
+        with pytest.raises(
+            AnsibleFilterTypeError,
+            match="root\\(\\) can only be used on numbers: (a float is required|must be real number, not str)",
+        ):
+            ms.inversepower("a", 10)
 
     def test_square_root(self):
         assert ms.inversepower(100) == 10
@@ -130,46 +164,105 @@ class TestInversePower:
         assert ms.inversepower(27, 3) == 3
 
 
-class TestRekeyOnMember():
+class TestRekeyOnMember:
     # (Input data structure, member to rekey on, expected return)
     VALID_ENTRIES = (
-        ([{"proto": "eigrp", "state": "enabled"}, {"proto": "ospf", "state": "enabled"}],
-         'proto',
-         {'eigrp': {'state': 'enabled', 'proto': 'eigrp'}, 'ospf': {'state': 'enabled', 'proto': 'ospf'}}),
-        ({'eigrp': {"proto": "eigrp", "state": "enabled"}, 'ospf': {"proto": "ospf", "state": "enabled"}},
-         'proto',
-         {'eigrp': {'state': 'enabled', 'proto': 'eigrp'}, 'ospf': {'state': 'enabled', 'proto': 'ospf'}}),
+        (
+            [
+                {"proto": "eigrp", "state": "enabled"},
+                {"proto": "ospf", "state": "enabled"},
+            ],
+            "proto",
+            {
+                "eigrp": {"state": "enabled", "proto": "eigrp"},
+                "ospf": {"state": "enabled", "proto": "ospf"},
+            },
+        ),
+        (
+            {
+                "eigrp": {"proto": "eigrp", "state": "enabled"},
+                "ospf": {"proto": "ospf", "state": "enabled"},
+            },
+            "proto",
+            {
+                "eigrp": {"state": "enabled", "proto": "eigrp"},
+                "ospf": {"state": "enabled", "proto": "ospf"},
+            },
+        ),
     )
 
     # (Input data structure, member to rekey on, expected error message)
     INVALID_ENTRIES = (
         # Fail when key is not found
-        (AnsibleFilterError, [{"proto": "eigrp", "state": "enabled"}], 'invalid_key', "Key invalid_key was not found"),
-        (AnsibleFilterError, {"eigrp": {"proto": "eigrp", "state": "enabled"}}, 'invalid_key', "Key invalid_key was not found"),
+        (
+            AnsibleFilterError,
+            [{"proto": "eigrp", "state": "enabled"}],
+            "invalid_key",
+            "Key invalid_key was not found",
+        ),
+        (
+            AnsibleFilterError,
+            {"eigrp": {"proto": "eigrp", "state": "enabled"}},
+            "invalid_key",
+            "Key invalid_key was not found",
+        ),
         # Fail when key is duplicated
-        (AnsibleFilterError, [{"proto": "eigrp"}, {"proto": "ospf"}, {"proto": "ospf"}],
-         'proto', 'Key ospf is not unique, cannot correctly turn into dict'),
+        (
+            AnsibleFilterError,
+            [{"proto": "eigrp"}, {"proto": "ospf"}, {"proto": "ospf"}],
+            "proto",
+            "Key ospf is not unique, cannot correctly turn into dict",
+        ),
         # Fail when value is not a dict
-        (AnsibleFilterTypeError, ["string"], 'proto', "List item is not a valid dict"),
-        (AnsibleFilterTypeError, [123], 'proto', "List item is not a valid dict"),
-        (AnsibleFilterTypeError, [[{'proto': 1}]], 'proto', "List item is not a valid dict"),
+        (AnsibleFilterTypeError, ["string"], "proto", "List item is not a valid dict"),
+        (AnsibleFilterTypeError, [123], "proto", "List item is not a valid dict"),
+        (
+            AnsibleFilterTypeError,
+            [[{"proto": 1}]],
+            "proto",
+            "List item is not a valid dict",
+        ),
         # Fail when we do not send a dict or list
-        (AnsibleFilterTypeError, "string", 'proto', "Type is not a valid list, set, or dict"),
-        (AnsibleFilterTypeError, 123, 'proto', "Type is not a valid list, set, or dict"),
+        (
+            AnsibleFilterTypeError,
+            "string",
+            "proto",
+            "Type is not a valid list, set, or dict",
+        ),
+        (
+            AnsibleFilterTypeError,
+            123,
+            "proto",
+            "Type is not a valid list, set, or dict",
+        ),
     )
 
     @pytest.mark.parametrize("list_original, key, expected", VALID_ENTRIES)
     def test_rekey_on_member_success(self, list_original, key, expected):
         assert ms.rekey_on_member(list_original, key) == expected
 
-    @pytest.mark.parametrize("expected_exception_type, list_original, key, expected", INVALID_ENTRIES)
-    def test_fail_rekey_on_member(self, expected_exception_type, list_original, key, expected):
+    @pytest.mark.parametrize(
+        "expected_exception_type, list_original, key, expected", INVALID_ENTRIES
+    )
+    def test_fail_rekey_on_member(
+        self, expected_exception_type, list_original, key, expected
+    ):
         with pytest.raises(expected_exception_type) as err:
             ms.rekey_on_member(list_original, key)
 
         assert err.value.message == expected
 
     def test_duplicate_strategy_overwrite(self):
-        list_original = ({'proto': 'eigrp', 'id': 1}, {'proto': 'ospf', 'id': 2}, {'proto': 'eigrp', 'id': 3})
-        expected = {'eigrp': {'proto': 'eigrp', 'id': 3}, 'ospf': {'proto': 'ospf', 'id': 2}}
-        assert ms.rekey_on_member(list_original, 'proto', duplicates='overwrite') == expected
+        list_original = (
+            {"proto": "eigrp", "id": 1},
+            {"proto": "ospf", "id": 2},
+            {"proto": "eigrp", "id": 3},
+        )
+        expected = {
+            "eigrp": {"proto": "eigrp", "id": 3},
+            "ospf": {"proto": "ospf", "id": 2},
+        }
+        assert (
+            ms.rekey_on_member(list_original, "proto", duplicates="overwrite")
+            == expected
+        )

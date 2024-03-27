@@ -6,10 +6,11 @@
 
 from __future__ import annotations
 
+from ansible.module_utils.common.text.converters import to_text
+
 # FIXME: decide what of this we want to actually be public/toplevel, put other stuff on a utility class?
 from ._collection_config import AnsibleCollectionConfig
 from ._collection_finder import AnsibleCollectionRef
-from ansible.module_utils.common.text.converters import to_text
 
 
 def resource_from_fqcr(ref):
@@ -21,5 +22,5 @@ def resource_from_fqcr(ref):
     :param ref: collection reference to parse
     :return: the resource as a unicode string
     """
-    ref = to_text(ref, errors='strict')
-    return ref.split(u'.')[-1]
+    ref = to_text(ref, errors="strict")
+    return ref.split(".")[-1]

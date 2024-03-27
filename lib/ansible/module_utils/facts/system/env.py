@@ -25,14 +25,14 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 
 
 class EnvFactCollector(BaseFactCollector):
-    name = 'env'
+    name = "env"
     _fact_ids = set()  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         env_facts = {}
-        env_facts['env'] = {}
+        env_facts["env"] = {}
 
         for k, v in iteritems(os.environ):
-            env_facts['env'][k] = v
+            env_facts["env"][k] = v
 
         return env_facts

@@ -52,11 +52,11 @@ class LookupModule(LookupBase):
             display.debug("Unvault lookup term: %s" % term)
 
             # Find the file in the expected search path
-            lookupfile = self.find_file_in_search_path(variables, 'files', term)
-            display.vvvv(u"Unvault lookup found %s" % lookupfile)
+            lookupfile = self.find_file_in_search_path(variables, "files", term)
+            display.vvvv("Unvault lookup found %s" % lookupfile)
             if lookupfile:
                 actual_file = self._loader.get_real_file(lookupfile, decrypt=True)
-                with open(actual_file, 'rb') as f:
+                with open(actual_file, "rb") as f:
                     b_contents = f.read()
                 ret.append(to_text(b_contents))
             else:

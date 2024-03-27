@@ -1,4 +1,5 @@
 """Sanity test for PEP 8 style guidelines using pycodestyle."""
+
 from __future__ import annotations
 
 import os
@@ -47,15 +48,24 @@ class Pep8Test(SanitySingleVersion):
     @property
     def error_code(self) -> t.Optional[str]:
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
-        return 'A100'
+        return "A100"
 
     def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
-        return [target for target in targets if os.path.splitext(target.path)[1] == '.py' or is_subdir(target.path, 'bin')]
+        return [
+            target
+            for target in targets
+            if os.path.splitext(target.path)[1] == ".py"
+            or is_subdir(target.path, "bin")
+        ]
 
-    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
-        current_ignore_file = os.path.join(SANITY_ROOT, 'pep8', 'current-ignore.txt')
-        current_ignore = sorted(read_lines_without_comments(current_ignore_file, remove_blank_lines=True))
+    def test(
+        self, args: SanityConfig, targets: SanityTargets, python: PythonConfig
+    ) -> TestResult:
+        current_ignore_file = os.path.join(SANITY_ROOT, "pep8", "current-ignore.txt")
+        current_ignore = sorted(
+            read_lines_without_comments(current_ignore_file, remove_blank_lines=True)
+        )
 
         settings = self.load_processor(args)
 
@@ -79,7 +89,9 @@ class Pep8Test(SanitySingleVersion):
                 status = ex.status
 
             if stderr:
-                raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
+                raise SubprocessError(
+                    cmd=cmd, status=status, stderr=stderr, stdout=stdout
+                )
         else:
             stdout = None
 
@@ -87,20 +99,23 @@ class Pep8Test(SanitySingleVersion):
             return SanitySuccess(self.name)
 
         if stdout:
-            pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<code>[WE][0-9]{3}) (?P<message>.*)$'
+            pattern = "^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<code>[WE][0-9]{3}) (?P<message>.*)$"
 
             results = parse_to_list_of_dict(pattern, stdout)
         else:
             results = []
 
-        messages = [SanityMessage(
-            message=r['message'],
-            path=r['path'],
-            line=int(r['line']),
-            column=int(r['column']),
-            level='warning' if r['code'].startswith('W') else 'error',
-            code=r['code'],
-        ) for r in results]
+        messages = [
+            SanityMessage(
+                message=r["message"],
+                path=r["path"],
+                line=int(r["line"]),
+                column=int(r["column"]),
+                level="warning" if r["code"].startswith("W") else "error",
+                code=r["code"],
+            )
+            for r in results
+        ]
 
         errors = settings.process_errors(messages, paths)
 

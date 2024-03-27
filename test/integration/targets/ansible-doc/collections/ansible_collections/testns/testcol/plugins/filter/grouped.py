@@ -16,11 +16,11 @@ def meaningoflife(a):
 
 
 class FilterModule(object):
-    ''' Ansible core jinja2 filters '''
+    """Ansible core jinja2 filters"""
 
     def filters(self):
         return {
-            'noop': nochange,
-            'ultimatequestion': meaningoflife,
-            'b64decode': nochange,   # here to colide with basename of builtin
+            "noop": nochange,
+            "ultimatequestion": meaningoflife,
+            "b64decode": nochange,  # here to colide with basename of builtin
         }

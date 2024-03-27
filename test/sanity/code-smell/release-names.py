@@ -30,7 +30,7 @@ from ansible.release import __codename__
 def main():
     """Entrypoint to the script"""
 
-    releases = pathlib.Path('.github/RELEASE_NAMES.txt').read_text().splitlines()
+    releases = pathlib.Path(".github/RELEASE_NAMES.txt").read_text().splitlines()
 
     # Why this format?  The file's sole purpose is to be read by a human when they need to know
     # which release names have already been used.  So:
@@ -40,8 +40,10 @@ def main():
         if __codename__ == name:
             break
     else:
-        print(f'.github/RELEASE_NAMES.txt: Current codename {__codename__!r} not present in the file')
+        print(
+            f".github/RELEASE_NAMES.txt: Current codename {__codename__!r} not present in the file"
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

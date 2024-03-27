@@ -25,7 +25,7 @@ from ansible.utils.display import Display
 
 display = Display()
 
-__all__ = ['LookupBase']
+__all__ = ["LookupBase"]
 
 
 class LookupBase(AnsiblePlugin):
@@ -41,8 +41,8 @@ class LookupBase(AnsiblePlugin):
         self._display = display
 
     def get_basedir(self, variables):
-        if 'role_path' in variables:
-            return variables['role_path']
+        if "role_path" in variables:
+            return variables["role_path"]
         else:
             return self._loader.get_basedir()
 
@@ -68,7 +68,7 @@ class LookupBase(AnsiblePlugin):
     def _flatten_hash_to_list(terms):
         ret = []
         for key in terms:
-            ret.append({'key': key, 'value': terms[key]})
+            ret.append({"key": key, "value": terms[key]})
         return ret
 
     @abstractmethod
@@ -104,21 +104,26 @@ class LookupBase(AnsiblePlugin):
         pass
 
     def find_file_in_search_path(self, myvars, subdir, needle, ignore_missing=False):
-        '''
+        """
         Return a file (needle) in the task's expected search path.
-        '''
+        """
 
-        if 'ansible_search_path' in myvars:
-            paths = myvars['ansible_search_path']
+        if "ansible_search_path" in myvars:
+            paths = myvars["ansible_search_path"]
         else:
             paths = [self.get_basedir(myvars)]
 
         result = None
         try:
-            result = self._loader.path_dwim_relative_stack(paths, subdir, needle, is_role=bool('role_path' in myvars))
+            result = self._loader.path_dwim_relative_stack(
+                paths, subdir, needle, is_role=bool("role_path" in myvars)
+            )
         except AnsibleFileNotFound:
             if not ignore_missing:
-                self._display.warning("Unable to find '%s' in expected paths (use -vvvvv to see paths)" % needle)
+                self._display.warning(
+                    "Unable to find '%s' in expected paths (use -vvvvv to see paths)"
+                    % needle
+                )
 
         return result
 

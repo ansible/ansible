@@ -25,21 +25,26 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 
 
 class OhaiFactCollector(BaseFactCollector):
-    '''This is a subclass of Facts for including information gathered from Ohai.'''
-    name = 'ohai'
+    """This is a subclass of Facts for including information gathered from Ohai."""
+
+    name = "ohai"
     _fact_ids = set()  # type: t.Set[str]
 
     def __init__(self, collectors=None, namespace=None):
-        namespace = PrefixFactNamespace(namespace_name='ohai',
-                                        prefix='ohai_')
-        super(OhaiFactCollector, self).__init__(collectors=collectors,
-                                                namespace=namespace)
+        namespace = PrefixFactNamespace(namespace_name="ohai", prefix="ohai_")
+        super(OhaiFactCollector, self).__init__(
+            collectors=collectors, namespace=namespace
+        )
 
     def find_ohai(self, module):
-        ohai_path = module.get_bin_path('ohai')
+        ohai_path = module.get_bin_path("ohai")
         return ohai_path
 
-    def run_ohai(self, module, ohai_path,):
+    def run_ohai(
+        self,
+        module,
+        ohai_path,
+    ):
         rc, out, err = module.run_command(ohai_path)
         return rc, out, err
 

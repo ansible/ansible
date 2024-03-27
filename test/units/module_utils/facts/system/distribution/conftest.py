@@ -13,8 +13,6 @@ from unittest.mock import Mock
 @pytest.fixture
 def mock_module():
     mock_module = Mock()
-    mock_module.params = {'gather_subset': ['all'],
-                          'gather_timeout': 5,
-                          'filter': '*'}
+    mock_module.params = {"gather_subset": ["all"], "gather_timeout": 5, "filter": "*"}
     mock_module.get_bin_path = Mock(return_value=None)
     return mock_module

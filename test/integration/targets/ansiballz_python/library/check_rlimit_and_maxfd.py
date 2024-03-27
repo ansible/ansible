@@ -12,9 +12,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict()
-    )
+    module = AnsibleModule(argument_spec=dict())
 
     rlimit_nofile = resource.getrlimit(resource.RLIMIT_NOFILE)
 
@@ -23,8 +21,10 @@ def main():
     except AttributeError:
         maxfd = -1
 
-    module.exit_json(rlimit_nofile=rlimit_nofile, maxfd=maxfd, infinity=resource.RLIM_INFINITY)
+    module.exit_json(
+        rlimit_nofile=rlimit_nofile, maxfd=maxfd, infinity=resource.RLIM_INFINITY
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

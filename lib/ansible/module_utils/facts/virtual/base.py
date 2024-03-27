@@ -34,7 +34,8 @@ class Virtual:
 
     All subclasses MUST define platform.
     """
-    platform = 'Generic'
+
+    platform = "Generic"
 
     # FIXME: remove load_on_init if we can
     def __init__(self, module, load_on_init=False):
@@ -48,23 +49,25 @@ class Virtual:
 
     def get_virtual_facts(self):
         virtual_facts = {
-            'virtualization_type': '',
-            'virtualization_role': '',
-            'virtualization_tech_guest': set(),
-            'virtualization_tech_host': set(),
+            "virtualization_type": "",
+            "virtualization_role": "",
+            "virtualization_tech_guest": set(),
+            "virtualization_tech_host": set(),
         }
         return virtual_facts
 
 
 class VirtualCollector(BaseFactCollector):
-    name = 'virtual'
+    name = "virtual"
     _fact_class = Virtual
-    _fact_ids = set([
-        'virtualization_type',
-        'virtualization_role',
-        'virtualization_tech_guest',
-        'virtualization_tech_host',
-    ])  # type: t.Set[str]
+    _fact_ids = set(
+        [
+            "virtualization_type",
+            "virtualization_role",
+            "virtualization_tech_guest",
+            "virtualization_tech_host",
+        ]
+    )  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         collected_facts = collected_facts or {}

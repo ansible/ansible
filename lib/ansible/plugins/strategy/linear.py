@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: linear
     short_description: Executes tasks in a linear fashion
     description:
@@ -27,7 +27,7 @@ DOCUMENTATION = '''
     notes:
      - This was the default Ansible behaviour before 'strategy plugins' were introduced in 2.0.
     author: Ansible Core Team
-'''
+"""
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError, AnsibleParserError
@@ -53,14 +53,14 @@ class StrategyModule(StrategyBase):
         self._in_handlers = False
 
     def _get_next_task_lockstep(self, hosts, iterator):
-        '''
+        """
         Returns a list of (host, task) tuples, where the task may
         be a noop task to keep the iterator in lock step across
         all hosts.
-        '''
+        """
         noop_task = Task()
-        noop_task.action = 'meta'
-        noop_task.args['_raw_params'] = 'noop'
+        noop_task.action = "meta"
+        noop_task.args["_raw_params"] = "noop"
         noop_task.implicit = True
         noop_task.set_loader(iterator._play._loader)
 
@@ -73,15 +73,18 @@ class StrategyModule(StrategyBase):
         if not state_task_per_host:
             return [(h, None) for h in hosts]
 
-        if self._in_handlers and not any(filter(
-            lambda rs: rs == IteratingStates.HANDLERS,
-            (s.run_state for s, dummy in state_task_per_host.values()))
+        if self._in_handlers and not any(
+            filter(
+                lambda rs: rs == IteratingStates.HANDLERS,
+                (s.run_state for s, dummy in state_task_per_host.values()),
+            )
         ):
             self._in_handlers = False
 
         if self._in_handlers:
             lowest_cur_handler = min(
-                s.cur_handlers_task for s, t in state_task_per_host.values()
+                s.cur_handlers_task
+                for s, t in state_task_per_host.values()
                 if s.run_state == IteratingStates.HANDLERS
             )
         else:
@@ -101,13 +104,14 @@ class StrategyModule(StrategyBase):
             else:
                 # prevent infinite loop
                 raise AnsibleAssertionError(
-                    'BUG: There seems to be a mismatch between tasks in PlayIterator and HostStates.'
+                    "BUG: There seems to be a mismatch between tasks in PlayIterator and HostStates."
                 )
 
         host_tasks = []
         for host, (state, task) in state_task_per_host.items():
-            if ((self._in_handlers and lowest_cur_handler == state.cur_handlers_task) or
-                    (not self._in_handlers and cur_task._uuid == task._uuid)):
+            if (
+                self._in_handlers and lowest_cur_handler == state.cur_handlers_task
+            ) or (not self._in_handlers and cur_task._uuid == task._uuid):
                 iterator.set_state_for_host(host.name, state)
                 host_tasks.append((host, task))
             else:
@@ -116,18 +120,21 @@ class StrategyModule(StrategyBase):
         # once hosts synchronize on 'flush_handlers' lockstep enters
         # '_in_handlers' phase where handlers are run instead of tasks
         # until at least one host is in IteratingStates.HANDLERS
-        if (not self._in_handlers and cur_task.action in C._ACTION_META and
-                cur_task.args.get('_raw_params') == 'flush_handlers'):
+        if (
+            not self._in_handlers
+            and cur_task.action in C._ACTION_META
+            and cur_task.args.get("_raw_params") == "flush_handlers"
+        ):
             self._in_handlers = True
 
         return host_tasks
 
     def run(self, iterator, play_context):
-        '''
+        """
         The linear strategy is simple - get the next task and queue
         it for all hosts, then wait for the queue to drain before
         moving on to the next task
-        '''
+        """
 
         # iterate over each task, while there is one left to run
         result = self._tqm.RUN_OK
@@ -156,7 +163,7 @@ class StrategyModule(StrategyBase):
                 any_errors_fatal = False
 
                 results = []
-                for (host, task) in host_tasks:
+                for host, task in host_tasks:
                     if not task:
                         continue
 
@@ -170,13 +177,23 @@ class StrategyModule(StrategyBase):
                     # role which has already run (and whether that role allows duplicate execution)
                     if not isinstance(task, Handler) and task._role:
                         role_obj = self._get_cached_role(task, iterator._play)
-                        if role_obj.has_run(host) and role_obj._metadata.allow_duplicates is False:
-                            display.debug("'%s' skipped because role has already run" % task)
+                        if (
+                            role_obj.has_run(host)
+                            and role_obj._metadata.allow_duplicates is False
+                        ):
+                            display.debug(
+                                "'%s' skipped because role has already run" % task
+                            )
                             continue
 
                     display.debug("getting variables")
-                    task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task,
-                                                                _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
+                    task_vars = self._variable_manager.get_vars(
+                        play=iterator._play,
+                        host=host,
+                        task=task,
+                        _hosts=self._hosts_cache,
+                        _hosts_all=self._hosts_cache_all,
+                    )
                     self.add_tqm_variables(task_vars, play=iterator._play)
                     templar = Templar(loader=self._loader, variables=task_vars)
                     display.debug("done getting variables")
@@ -188,7 +205,11 @@ class StrategyModule(StrategyBase):
                     task_action = templar.template(task.action)
 
                     try:
-                        action = action_loader.get(task_action, class_only=True, collection_list=task.collections)
+                        action = action_loader.get(
+                            task_action,
+                            class_only=True,
+                            collection_list=task.collections,
+                        )
                     except KeyError:
                         # we don't care here, because the action may simply not have a
                         # corresponding action plugin
@@ -197,10 +218,20 @@ class StrategyModule(StrategyBase):
                     if task_action in C._ACTION_META:
                         # for the linear strategy, we run meta tasks just once and for
                         # all hosts currently being iterated over rather than one host
-                        results.extend(self._execute_meta(task, play_context, iterator, host))
-                        if task.args.get('_raw_params', None) not in ('noop', 'reset_connection', 'end_host', 'role_complete', 'flush_handlers'):
+                        results.extend(
+                            self._execute_meta(task, play_context, iterator, host)
+                        )
+                        if task.args.get("_raw_params", None) not in (
+                            "noop",
+                            "reset_connection",
+                            "end_host",
+                            "role_complete",
+                            "flush_handlers",
+                        ):
                             run_once = True
-                        if (task.any_errors_fatal or run_once) and not task.ignore_errors:
+                        if (
+                            task.any_errors_fatal or run_once
+                        ) and not task.ignore_errors:
                             any_errors_fatal = True
                     else:
                         # handle step if needed, skip meta actions as they are used internally
@@ -211,17 +242,30 @@ class StrategyModule(StrategyBase):
                                 skip_rest = True
                                 break
 
-                        run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
+                        run_once = (
+                            templar.template(task.run_once)
+                            or action
+                            and getattr(action, "BYPASS_HOST_LOOP", False)
+                        )
 
-                        if (task.any_errors_fatal or run_once) and not task.ignore_errors:
+                        if (
+                            task.any_errors_fatal or run_once
+                        ) and not task.ignore_errors:
                             any_errors_fatal = True
 
                         if not callback_sent:
-                            display.debug("sending task start callback, copying the task so we can template it temporarily")
+                            display.debug(
+                                "sending task start callback, copying the task so we can template it temporarily"
+                            )
                             saved_name = task.name
                             display.debug("done copying, going to template now")
                             try:
-                                task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
+                                task.name = to_text(
+                                    templar.template(
+                                        task.name, fail_on_undefined=False
+                                    ),
+                                    nonstring="empty",
+                                )
                                 display.debug("done templating")
                             except Exception:
                                 # just ignore any errors during task name templating,
@@ -229,9 +273,15 @@ class StrategyModule(StrategyBase):
                                 display.debug("templating failed for some reason")
                             display.debug("here goes the callback...")
                             if isinstance(task, Handler):
-                                self._tqm.send_callback('v2_playbook_on_handler_task_start', task)
+                                self._tqm.send_callback(
+                                    "v2_playbook_on_handler_task_start", task
+                                )
                             else:
-                                self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
+                                self._tqm.send_callback(
+                                    "v2_playbook_on_task_start",
+                                    task,
+                                    is_conditional=False,
+                                )
                             task.name = saved_name
                             callback_sent = True
                             display.debug("sending task start callback")
@@ -250,13 +300,20 @@ class StrategyModule(StrategyBase):
                     if run_once:
                         break
 
-                    results.extend(self._process_pending_results(iterator, max_passes=max(1, int(len(self._tqm._workers) * 0.1))))
+                    results.extend(
+                        self._process_pending_results(
+                            iterator,
+                            max_passes=max(1, int(len(self._tqm._workers) * 0.1)),
+                        )
+                    )
 
                 # go to next host/task group
                 if skip_rest:
                     continue
 
-                display.debug("done queuing things up, now waiting for results queue to drain")
+                display.debug(
+                    "done queuing things up, now waiting for results queue to drain"
+                )
                 if self._pending_results > 0:
                     results.extend(self._wait_on_pending_results(iterator))
 
@@ -266,7 +323,7 @@ class StrategyModule(StrategyBase):
                     results,
                     iterator=iterator,
                     loader=self._loader,
-                    variable_manager=self._variable_manager
+                    variable_manager=self._variable_manager,
                 )
 
                 if len(included_files) > 0:
@@ -278,7 +335,9 @@ class StrategyModule(StrategyBase):
                     included_tasks = []
                     failed_includes_hosts = set()
                     for included_file in included_files:
-                        display.debug("processing included file: %s" % included_file._filename)
+                        display.debug(
+                            "processing included file: %s" % included_file._filename
+                        )
                         is_handler = False
                         try:
                             if included_file._is_role:
@@ -300,9 +359,13 @@ class StrategyModule(StrategyBase):
 
                             # let PlayIterator know about any new handlers included via include_role or
                             # import_role within include_role/include_taks
-                            iterator.handlers = [h for b in iterator._play.handlers for h in b.block]
+                            iterator.handlers = [
+                                h for b in iterator._play.handlers for h in b.block
+                            ]
 
-                            display.debug("iterating over new_blocks loaded from include file")
+                            display.debug(
+                                "iterating over new_blocks loaded from include file"
+                            )
                             for new_block in new_blocks:
                                 if is_handler:
                                     for task in new_block.block:
@@ -316,7 +379,9 @@ class StrategyModule(StrategyBase):
                                         _hosts_all=self._hosts_cache_all,
                                     )
                                     display.debug("filtering new block on tags")
-                                    final_block = new_block.filter_tagged_tasks(task_vars)
+                                    final_block = new_block.filter_tagged_tasks(
+                                        task_vars
+                                    )
                                     display.debug("done filtering new block on tags")
 
                                     included_tasks.extend(final_block.get_tasks())
@@ -325,23 +390,27 @@ class StrategyModule(StrategyBase):
                                     if host in included_file._hosts:
                                         all_blocks[host].append(final_block)
 
-                            display.debug("done iterating over new_blocks loaded from include file")
+                            display.debug(
+                                "done iterating over new_blocks loaded from include file"
+                            )
                         except AnsibleParserError:
                             raise
                         except AnsibleError as e:
                             display.error(to_text(e), wrap_text=False)
                             for r in included_file._results:
-                                r._result['failed'] = True
-                                r._result['reason'] = str(e)
-                                self._tqm._stats.increment('failures', r._host.name)
-                                self._tqm.send_callback('v2_runner_on_failed', r)
+                                r._result["failed"] = True
+                                r._result["reason"] = str(e)
+                                self._tqm._stats.increment("failures", r._host.name)
+                                self._tqm.send_callback("v2_runner_on_failed", r)
                                 failed_includes_hosts.add(r._host)
                         else:
                             # since we skip incrementing the stats when the task result is
                             # first processed, we do so now for each host in the list
                             for host in included_file._hosts:
-                                self._tqm._stats.increment('ok', host.name)
-                            self._tqm.send_callback('v2_playbook_on_include', included_file)
+                                self._tqm._stats.increment("ok", host.name)
+                            self._tqm.send_callback(
+                                "v2_playbook_on_include", included_file
+                            )
 
                     for host in failed_includes_hosts:
                         self._tqm._failed_hosts[host.name] = True
@@ -349,12 +418,16 @@ class StrategyModule(StrategyBase):
 
                     # finally go through all of the hosts and append the
                     # accumulated blocks to their list of tasks
-                    display.debug("extending task lists for all hosts with included blocks")
+                    display.debug(
+                        "extending task lists for all hosts with included blocks"
+                    )
 
                     for host in hosts_left:
                         iterator.add_tasks(host, all_blocks[host])
 
-                    iterator.all_tasks[iterator.cur_task:iterator.cur_task] = included_tasks
+                    iterator.all_tasks[iterator.cur_task : iterator.cur_task] = (
+                        included_tasks
+                    )
 
                     display.debug("done extending task lists")
                     display.debug("done processing included files")
@@ -381,22 +454,35 @@ class StrategyModule(StrategyBase):
                 if iterator._play.max_fail_percentage is not None and len(results) > 0:
                     percentage = iterator._play.max_fail_percentage / 100.0
 
-                    if (len(self._tqm._failed_hosts) / iterator.batch_size) > percentage:
+                    if (
+                        len(self._tqm._failed_hosts) / iterator.batch_size
+                    ) > percentage:
                         for host in hosts_left:
                             # don't double-mark hosts, or the iterator will potentially
                             # fail them out of the rescue/always states
                             if host.name not in failed_hosts:
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
-                        self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
+                        self._tqm.send_callback("v2_playbook_on_no_hosts_remaining")
                         result |= self._tqm.RUN_FAILED_BREAK_PLAY
-                    display.debug('(%s failed / %s total )> %s max fail' % (len(self._tqm._failed_hosts), iterator.batch_size, percentage))
+                    display.debug(
+                        "(%s failed / %s total )> %s max fail"
+                        % (
+                            len(self._tqm._failed_hosts),
+                            iterator.batch_size,
+                            percentage,
+                        )
+                    )
                 display.debug("done checking for max_fail_percentage")
 
-                display.debug("checking to see if all hosts have failed and the running result is not ok")
-                if result != self._tqm.RUN_OK and len(self._tqm._failed_hosts) >= len(hosts_left):
+                display.debug(
+                    "checking to see if all hosts have failed and the running result is not ok"
+                )
+                if result != self._tqm.RUN_OK and len(self._tqm._failed_hosts) >= len(
+                    hosts_left
+                ):
                     display.debug("^ not ok, so returning result now")
-                    self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
+                    self._tqm.send_callback("v2_playbook_on_no_hosts_remaining")
                     return result
                 display.debug("done checking to see if all hosts have failed")
 

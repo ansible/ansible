@@ -24,9 +24,22 @@ from ansible.module_utils.facts import timeout
 
 from ansible.module_utils.facts.hardware import linux
 
-from . linux_data import LSBLK_OUTPUT, LSBLK_OUTPUT_2, LSBLK_UUIDS, MTAB, MTAB_ENTRIES, BIND_MOUNTS, STATVFS_INFO, UDEVADM_UUID, UDEVADM_OUTPUT, SG_INQ_OUTPUTS
+from .linux_data import (
+    LSBLK_OUTPUT,
+    LSBLK_OUTPUT_2,
+    LSBLK_UUIDS,
+    MTAB,
+    MTAB_ENTRIES,
+    BIND_MOUNTS,
+    STATVFS_INFO,
+    UDEVADM_UUID,
+    UDEVADM_OUTPUT,
+    SG_INQ_OUTPUTS,
+)
 
-with open(os.path.join(os.path.dirname(__file__), '../fixtures/findmount_output.txt')) as f:
+with open(
+    os.path.join(os.path.dirname(__file__), "../fixtures/findmount_output.txt")
+) as f:
     FINDMNT_OUTPUT = f.read()
 
 GET_MOUNT_SIZE = {}
@@ -45,17 +58,34 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
     def tearDown(self):
         timeout.GATHER_TIMEOUT = None
 
-    @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._mtab_entries', return_value=MTAB_ENTRIES)
-    @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._find_bind_mounts', return_value=BIND_MOUNTS)
-    @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._lsblk_uuid', return_value=LSBLK_UUIDS)
-    @patch('ansible.module_utils.facts.hardware.linux.get_mount_size', side_effect=mock_get_mount_size)
-    @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._udevadm_uuid', return_value=UDEVADM_UUID)
-    def test_get_mount_facts(self,
-                             mock_get_mount_size,
-                             mock_lsblk_uuid,
-                             mock_find_bind_mounts,
-                             mock_mtab_entries,
-                             mock_udevadm_uuid):
+    @patch(
+        "ansible.module_utils.facts.hardware.linux.LinuxHardware._mtab_entries",
+        return_value=MTAB_ENTRIES,
+    )
+    @patch(
+        "ansible.module_utils.facts.hardware.linux.LinuxHardware._find_bind_mounts",
+        return_value=BIND_MOUNTS,
+    )
+    @patch(
+        "ansible.module_utils.facts.hardware.linux.LinuxHardware._lsblk_uuid",
+        return_value=LSBLK_UUIDS,
+    )
+    @patch(
+        "ansible.module_utils.facts.hardware.linux.get_mount_size",
+        side_effect=mock_get_mount_size,
+    )
+    @patch(
+        "ansible.module_utils.facts.hardware.linux.LinuxHardware._udevadm_uuid",
+        return_value=UDEVADM_UUID,
+    )
+    def test_get_mount_facts(
+        self,
+        mock_get_mount_size,
+        mock_lsblk_uuid,
+        mock_find_bind_mounts,
+        mock_mtab_entries,
+        mock_udevadm_uuid,
+    ):
         module = Mock()
         # Returns a LinuxHardware-ish
         lh = linux.LinuxHardware(module=module, load_on_init=False)
@@ -63,32 +93,36 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         # Nothing returned, just self.facts modified as a side effect
         mount_facts = lh.get_mount_facts()
         self.assertIsInstance(mount_facts, dict)
-        self.assertIn('mounts', mount_facts)
-        self.assertIsInstance(mount_facts['mounts'], list)
-        self.assertIsInstance(mount_facts['mounts'][0], dict)
+        self.assertIn("mounts", mount_facts)
+        self.assertIsInstance(mount_facts["mounts"], list)
+        self.assertIsInstance(mount_facts["mounts"][0], dict)
 
-        home_expected = {'block_available': 1001578731,
-                         'block_size': 4096,
-                         'block_total': 105871006,
-                         'block_used': 5713133,
-                         'device': '/dev/mapper/fedora_dhcp129--186-home',
-                         'dump': 0,
-                         'fstype': 'ext4',
-                         'inode_available': 26860880,
-                         'inode_total': 26902528,
-                         'inode_used': 41648,
-                         'mount': '/home',
-                         'options': 'rw,seclabel,relatime,data=ordered',
-                         'passno': 0,
-                         'size_available': 410246647808,
-                         'size_total': 433647640576,
-                         'uuid': 'N/A'}
-        home_info = [x for x in mount_facts['mounts'] if x['mount'] == '/home'][0]
+        home_expected = {
+            "block_available": 1001578731,
+            "block_size": 4096,
+            "block_total": 105871006,
+            "block_used": 5713133,
+            "device": "/dev/mapper/fedora_dhcp129--186-home",
+            "dump": 0,
+            "fstype": "ext4",
+            "inode_available": 26860880,
+            "inode_total": 26902528,
+            "inode_used": 41648,
+            "mount": "/home",
+            "options": "rw,seclabel,relatime,data=ordered",
+            "passno": 0,
+            "size_available": 410246647808,
+            "size_total": 433647640576,
+            "uuid": "N/A",
+        }
+        home_info = [x for x in mount_facts["mounts"] if x["mount"] == "/home"][0]
 
         self.maxDiff = 4096
         self.assertDictEqual(home_info, home_expected)
 
-    @patch('ansible.module_utils.facts.hardware.linux.get_file_content', return_value=MTAB)
+    @patch(
+        "ansible.module_utils.facts.hardware.linux.get_file_content", return_value=MTAB
+    )
     def test_get_mtab_entries(self, mock_get_file_content):
 
         module = Mock()
@@ -98,7 +132,10 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         self.assertIsInstance(mtab_entries[0], list)
         self.assertEqual(len(mtab_entries), 38)
 
-    @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._run_findmnt', return_value=(0, FINDMNT_OUTPUT, ''))
+    @patch(
+        "ansible.module_utils.facts.hardware.linux.LinuxHardware._run_findmnt",
+        return_value=(0, FINDMNT_OUTPUT, ""),
+    )
     def test_find_bind_mounts(self, mock_run_findmnt):
         module = Mock()
         lh = linux.LinuxHardware(module=module, load_on_init=False)
@@ -107,9 +144,12 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         # If bind_mounts becomes another seq type, feel free to change
         self.assertIsInstance(bind_mounts, set)
         self.assertEqual(len(bind_mounts), 1)
-        self.assertIn('/not/a/real/bind_mount', bind_mounts)
+        self.assertIn("/not/a/real/bind_mount", bind_mounts)
 
-    @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._run_findmnt', return_value=(37, '', ''))
+    @patch(
+        "ansible.module_utils.facts.hardware.linux.LinuxHardware._run_findmnt",
+        return_value=(37, "", ""),
+    )
     def test_find_bind_mounts_non_zero(self, mock_run_findmnt):
         module = Mock()
         lh = linux.LinuxHardware(module=module, load_on_init=False)
@@ -127,18 +167,26 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         self.assertIsInstance(bind_mounts, set)
         self.assertEqual(len(bind_mounts), 0)
 
-    @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._run_lsblk', return_value=(0, LSBLK_OUTPUT, ''))
+    @patch(
+        "ansible.module_utils.facts.hardware.linux.LinuxHardware._run_lsblk",
+        return_value=(0, LSBLK_OUTPUT, ""),
+    )
     def test_lsblk_uuid(self, mock_run_lsblk):
         module = Mock()
         lh = linux.LinuxHardware(module=module, load_on_init=False)
         lsblk_uuids = lh._lsblk_uuid()
 
         self.assertIsInstance(lsblk_uuids, dict)
-        self.assertIn(b'/dev/loop9', lsblk_uuids)
-        self.assertIn(b'/dev/sda1', lsblk_uuids)
-        self.assertEqual(lsblk_uuids[b'/dev/sda1'], b'32caaec3-ef40-4691-a3b6-438c3f9bc1c0')
+        self.assertIn(b"/dev/loop9", lsblk_uuids)
+        self.assertIn(b"/dev/sda1", lsblk_uuids)
+        self.assertEqual(
+            lsblk_uuids[b"/dev/sda1"], b"32caaec3-ef40-4691-a3b6-438c3f9bc1c0"
+        )
 
-    @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._run_lsblk', return_value=(37, LSBLK_OUTPUT, ''))
+    @patch(
+        "ansible.module_utils.facts.hardware.linux.LinuxHardware._run_lsblk",
+        return_value=(37, LSBLK_OUTPUT, ""),
+    )
     def test_lsblk_uuid_non_zero(self, mock_run_lsblk):
         module = Mock()
         lh = linux.LinuxHardware(module=module, load_on_init=False)
@@ -156,44 +204,56 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         self.assertIsInstance(lsblk_uuids, dict)
         self.assertEqual(len(lsblk_uuids), 0)
 
-    @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._run_lsblk', return_value=(0, LSBLK_OUTPUT_2, ''))
+    @patch(
+        "ansible.module_utils.facts.hardware.linux.LinuxHardware._run_lsblk",
+        return_value=(0, LSBLK_OUTPUT_2, ""),
+    )
     def test_lsblk_uuid_dev_with_space_in_name(self, mock_run_lsblk):
         module = Mock()
         lh = linux.LinuxHardware(module=module, load_on_init=False)
         lsblk_uuids = lh._lsblk_uuid()
         self.assertIsInstance(lsblk_uuids, dict)
-        self.assertIn(b'/dev/loop0', lsblk_uuids)
-        self.assertIn(b'/dev/sda1', lsblk_uuids)
-        self.assertEqual(lsblk_uuids[b'/dev/mapper/an-example-mapper with a space in the name'], b'84639acb-013f-4d2f-9392-526a572b4373')
-        self.assertEqual(lsblk_uuids[b'/dev/sda1'], b'32caaec3-ef40-4691-a3b6-438c3f9bc1c0')
+        self.assertIn(b"/dev/loop0", lsblk_uuids)
+        self.assertIn(b"/dev/sda1", lsblk_uuids)
+        self.assertEqual(
+            lsblk_uuids[b"/dev/mapper/an-example-mapper with a space in the name"],
+            b"84639acb-013f-4d2f-9392-526a572b4373",
+        )
+        self.assertEqual(
+            lsblk_uuids[b"/dev/sda1"], b"32caaec3-ef40-4691-a3b6-438c3f9bc1c0"
+        )
 
     def test_udevadm_uuid(self):
         module = Mock()
-        module.run_command = Mock(return_value=(0, UDEVADM_OUTPUT, ''))  # (rc, out, err)
+        module.run_command = Mock(
+            return_value=(0, UDEVADM_OUTPUT, "")
+        )  # (rc, out, err)
         lh = linux.LinuxHardware(module=module, load_on_init=False)
-        udevadm_uuid = lh._udevadm_uuid('mock_device')
+        udevadm_uuid = lh._udevadm_uuid("mock_device")
 
-        self.assertEqual(udevadm_uuid, '57b1a3e7-9019-4747-9809-7ec52bba9179')
+        self.assertEqual(udevadm_uuid, "57b1a3e7-9019-4747-9809-7ec52bba9179")
 
     def test_get_sg_inq_serial(self):
         # Valid outputs
         for sq_inq_output in SG_INQ_OUTPUTS:
             module = Mock()
-            module.run_command = Mock(return_value=(0, sq_inq_output, ''))  # (rc, out, err)
+            module.run_command = Mock(
+                return_value=(0, sq_inq_output, "")
+            )  # (rc, out, err)
             lh = linux.LinuxHardware(module=module, load_on_init=False)
-            sg_inq_serial = lh._get_sg_inq_serial('/usr/bin/sg_inq', 'nvme0n1')
-            self.assertEqual(sg_inq_serial, 'vol0123456789')
+            sg_inq_serial = lh._get_sg_inq_serial("/usr/bin/sg_inq", "nvme0n1")
+            self.assertEqual(sg_inq_serial, "vol0123456789")
 
         # Invalid output
         module = Mock()
-        module.run_command = Mock(return_value=(0, '', ''))  # (rc, out, err)
+        module.run_command = Mock(return_value=(0, "", ""))  # (rc, out, err)
         lh = linux.LinuxHardware(module=module, load_on_init=False)
-        sg_inq_serial = lh._get_sg_inq_serial('/usr/bin/sg_inq', 'nvme0n1')
+        sg_inq_serial = lh._get_sg_inq_serial("/usr/bin/sg_inq", "nvme0n1")
         self.assertEqual(sg_inq_serial, None)
 
         # Non zero rc
         module = Mock()
-        module.run_command = Mock(return_value=(42, '', 'Error 42'))  # (rc, out, err)
+        module.run_command = Mock(return_value=(42, "", "Error 42"))  # (rc, out, err)
         lh = linux.LinuxHardware(module=module, load_on_init=False)
-        sg_inq_serial = lh._get_sg_inq_serial('/usr/bin/sg_inq', 'nvme0n1')
+        sg_inq_serial = lh._get_sg_inq_serial("/usr/bin/sg_inq", "nvme0n1")
         self.assertEqual(sg_inq_serial, None)

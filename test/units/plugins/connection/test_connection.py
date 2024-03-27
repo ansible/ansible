@@ -52,7 +52,7 @@ class TestConnectionBaseClass(unittest.TestCase):
     def setUp(self):
         self.play_context = PlayContext()
         self.play_context.prompt = (
-            '[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: '
+            "[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: "
         )
         self.in_stream = StringIO()
 
@@ -62,19 +62,22 @@ class TestConnectionBaseClass(unittest.TestCase):
     def test_subclass_error(self):
         class ConnectionModule1(ConnectionBase):
             pass
+
         with self.assertRaises(TypeError):
             ConnectionModule1()  # pylint: disable=abstract-class-instantiated
 
     def test_subclass_success(self):
-        self.assertIsInstance(NoOpConnection(self.play_context, self.in_stream), NoOpConnection)
+        self.assertIsInstance(
+            NoOpConnection(self.play_context, self.in_stream), NoOpConnection
+        )
 
     def test_check_password_prompt(self):
         local = (
-            b'[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: \n'
-            b'BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq\n'
+            b"[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: \n"
+            b"BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq\n"
         )
 
-        ssh_pipelining_vvvv = b'''
+        ssh_pipelining_vvvv = b"""
 debug3: mux_master_read_cb: channel 1 packet type 0x10000002 len 251
 debug2: process_mux_new_session: channel 1: request tty 0, X 1, agent 1, subsys 0, term "xterm-256color", cmd "/bin/sh -c 'sudo -H -S  -p "[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: " -u root /bin/sh -c '"'"'echo BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq; /bin/true'"'"' && sleep 0'", env 0
 debug3: process_mux_new_session: got fds stdin 9, stdout 10, stderr 11
@@ -85,9 +88,9 @@ debug2: channel 2: rcvd ext data 67
 [sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: debug2: channel 2: written 67 to efd 11
 BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq
 debug3: receive packet: type 98
-'''  # noqa
+"""  # noqa
 
-        ssh_nopipelining_vvvv = b'''
+        ssh_nopipelining_vvvv = b"""
 debug3: mux_master_read_cb: channel 1 packet type 0x10000002 len 251
 debug2: process_mux_new_session: channel 1: request tty 1, X 1, agent 1, subsys 0, term "xterm-256color", cmd "/bin/sh -c 'sudo -H -S  -p "[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: " -u root /bin/sh -c '"'"'echo BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq; /bin/true'"'"' && sleep 0'", env 0
 debug3: mux_client_request_session: session request sent
@@ -101,29 +104,31 @@ debug3: Received SSH2_MSG_IGNORE
 
 BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq
 debug3: receive packet: type 98
-'''  # noqa
+"""  # noqa
 
         ssh_novvvv = (
-            b'[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: \n'
-            b'BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq\n'
+            b"[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: \n"
+            b"BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq\n"
         )
 
         dns_issue = (
-            b'timeout waiting for privilege escalation password prompt:\n'
-            b'sudo: sudo: unable to resolve host tcloud014\n'
-            b'[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: \n'
-            b'BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq\n'
+            b"timeout waiting for privilege escalation password prompt:\n"
+            b"sudo: sudo: unable to resolve host tcloud014\n"
+            b"[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: \n"
+            b"BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq\n"
         )
 
-        nothing = b''
+        nothing = b""
 
-        in_front = b'''
+        in_front = b"""
 debug1: Sending command: /bin/sh -c 'sudo -H -S  -p "[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: " -u root /bin/sh -c '"'"'echo
-'''
+"""
 
         c = NoOpConnection(self.play_context, self.in_stream)
-        c.set_become_plugin(become_loader.get('sudo'))
-        c.become.prompt = '[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: '
+        c.set_become_plugin(become_loader.get("sudo"))
+        c.become.prompt = (
+            "[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: "
+        )
 
         self.assertTrue(c.become.check_password_prompt(local))
         self.assertTrue(c.become.check_password_prompt(ssh_pipelining_vvvv))

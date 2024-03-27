@@ -62,7 +62,7 @@ from ansible.plugins.become import BecomeBase
 
 class BecomeModule(BecomeBase):
 
-    name = 'runas'
+    name = "runas"
 
     def build_become_command(self, cmd, shell):
         # runas is implemented inside the winrm connection plugin

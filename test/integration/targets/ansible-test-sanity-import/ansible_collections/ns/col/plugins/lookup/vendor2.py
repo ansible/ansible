@@ -2,27 +2,30 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 name: vendor2
 short_description: lookup
 description: Lookup.
 author:
   - Ansible Core Team
-'''
+"""
 
-EXAMPLES = '''#'''
-RETURN = '''#'''
+EXAMPLES = """#"""
+RETURN = """#"""
 
 from ansible.plugins.lookup import LookupBase
+
 # noinspection PyUnresolvedReferences
-from ansible.plugins import loader  # import the loader to verify it works when the collection loader has already been loaded  # pylint: disable=unused-import
+from ansible.plugins import (
+    loader,
+)  # import the loader to verify it works when the collection loader has already been loaded  # pylint: disable=unused-import
 
 try:
     import demo  # pylint: disable=unused-import
 except ImportError:
     pass
 else:
-    raise Exception('demo import found when it should not be')
+    raise Exception("demo import found when it should not be")
 
 
 class LookupModule(LookupBase):

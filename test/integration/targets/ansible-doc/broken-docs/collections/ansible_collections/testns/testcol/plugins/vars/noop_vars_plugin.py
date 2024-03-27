@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     vars: noop_vars_plugin
         broken:
     short_description: Do NOT load host and group vars
@@ -17,7 +17,7 @@ DOCUMENTATION = '''
           - name: ANSIBLE_VARS_PLUGIN_STAGE
     extends_documentation_fragment:
         - testns.testcol2.deprecation
-'''
+"""
 
 from ansible.plugins.vars import BaseVarsPlugin
 
@@ -26,4 +26,4 @@ class VarsModule(BaseVarsPlugin):
 
     def get_vars(self, loader, path, entities, cache=True):
         super(VarsModule, self).get_vars(loader, path, entities)
-        return {'collection': 'yes', 'notreal': 'value'}
+        return {"collection": "yes", "notreal": "value"}

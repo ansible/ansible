@@ -2,14 +2,26 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
-from units.modules.utils import AnsibleExitJson, AnsibleFailJson, set_module_args, fail_json, exit_json
+from units.modules.utils import (
+    AnsibleExitJson,
+    AnsibleFailJson,
+    set_module_args,
+    fail_json,
+    exit_json,
+)
 import pytest
 
 from ansible.modules import iptables
 
 IPTABLES_CMD = "/sbin/iptables"
 IPTABLES_VERSION = "1.8.2"
-CONST_INPUT_FILTER = [IPTABLES_CMD, "-t", "filter", "-L", "INPUT",]
+CONST_INPUT_FILTER = [
+    IPTABLES_CMD,
+    "-t",
+    "filter",
+    "-L",
+    "INPUT",
+]
 
 
 @pytest.fixture
@@ -19,7 +31,9 @@ def _mock_basic_commands(mocker):
         "ansible.module_utils.basic.AnsibleModule.get_bin_path",
         return_value=IPTABLES_CMD,
     )
-    mocker.patch("ansible.modules.iptables.get_iptables_version", return_value=IPTABLES_VERSION)
+    mocker.patch(
+        "ansible.modules.iptables.get_iptables_version", return_value=IPTABLES_VERSION
+    )
 
 
 def test_without_required_parameters(mocker):
@@ -36,7 +50,7 @@ def test_without_required_parameters(mocker):
     assert "Failed to find required executable" in exc.value.args[0]["msg"]
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 def test_flush_table_without_chain(mocker):
     """Test flush without chain, flush the table."""
     set_module_args(
@@ -58,7 +72,7 @@ def test_flush_table_without_chain(mocker):
     assert first_cmd_args_list[3], "-F"
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 def test_flush_table_check_true(mocker):
     """Test flush without parameters and check == true."""
     set_module_args(
@@ -76,7 +90,7 @@ def test_flush_table_check_true(mocker):
     assert run_command.call_count == 0
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 def test_policy_table(mocker):
     """Test change policy of a chain."""
     set_module_args(
@@ -107,7 +121,7 @@ def test_policy_table(mocker):
     ]
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 @pytest.mark.parametrize(
     ("test_input", "commands_results"),
     [
@@ -132,8 +146,8 @@ def test_policy_table(mocker):
                 (0, "", ""),
             ],
             id="policy-table-change-false",
-        )
-    ]
+        ),
+    ],
 )
 def test_policy_table_flush(mocker, test_input, commands_results):
     """Test flush without parameters and change == false."""
@@ -154,7 +168,8 @@ def test_policy_table_flush(mocker, test_input, commands_results):
 # TODO ADD test policy with chain don't exists
 # TODO ADD test policy with wrong choice fail
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+
+@pytest.mark.usefixtures("_mock_basic_commands")
 def test_insert_rule_change_false(mocker):
     """Test flush without parameters."""
     set_module_args(
@@ -196,7 +211,7 @@ def test_insert_rule_change_false(mocker):
     ]
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 def test_insert_rule(mocker):
     """Test flush without parameters."""
     set_module_args(
@@ -251,7 +266,7 @@ def test_insert_rule(mocker):
     ]
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 def test_append_rule_check_mode(mocker):
     """Test append a redirection rule in check mode."""
     set_module_args(
@@ -306,7 +321,7 @@ def test_append_rule_check_mode(mocker):
     ]
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 def test_append_rule(mocker):
     """Test append a redirection rule."""
     set_module_args(
@@ -383,7 +398,7 @@ def test_append_rule(mocker):
     ]
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 def test_remove_rule(mocker):
     """Test flush without parameters."""
     set_module_args(
@@ -479,7 +494,7 @@ def test_remove_rule(mocker):
     ]
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 def test_remove_rule_check_mode(mocker):
     """Test flush without parameters check mode."""
     set_module_args(
@@ -546,7 +561,7 @@ def test_remove_rule_check_mode(mocker):
     ]
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 @pytest.mark.parametrize(
     ("test_input", "expected"),
     [
@@ -595,7 +610,7 @@ def test_remove_rule_check_mode(mocker):
             ],
             id="update-reject-with",
         ),
-    ]
+    ],
 )
 def test_insert_with_reject(mocker, test_input, expected):
     """Using reject_with with a previously defined jump: REJECT results in two Jump statements #18988."""
@@ -617,7 +632,7 @@ def test_insert_with_reject(mocker, test_input, expected):
     assert first_cmd_args_list[0][0] == expected
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 def test_jump_tee_gateway_negative(mocker):
     """Missing gateway when JUMP is set to TEE."""
     set_module_args(
@@ -643,7 +658,7 @@ def test_jump_tee_gateway_negative(mocker):
     assert exc.value.args[0]["failed"]
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 def test_jump_tee_gateway(mocker):
     """Using gateway when JUMP is set to TEE."""
     set_module_args(
@@ -698,25 +713,17 @@ def test_jump_tee_gateway(mocker):
     ]
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 @pytest.mark.parametrize(
     ("test_input"),
     [
+        pytest.param('flags=ALL flags_set="ACK,RST,SYN,FIN"', id="tcp-flags-str"),
         pytest.param(
-            'flags=ALL flags_set="ACK,RST,SYN,FIN"',
-            id="tcp-flags-str"
+            {"flags": "ALL", "flags_set": "ACK,RST,SYN,FIN"}, id="tcp-flags-dict"
         ),
         pytest.param(
-            {
-                "flags": "ALL", "flags_set": "ACK,RST,SYN,FIN"
-            },
-            id="tcp-flags-dict"
-        ),
-        pytest.param(
-            {
-                "flags": ["ALL"], "flags_set": ["ACK", "RST", "SYN", "FIN"]
-            },
-            id="tcp-flags-list"
+            {"flags": ["ALL"], "flags_set": ["ACK", "RST", "SYN", "FIN"]},
+            id="tcp-flags-list",
         ),
     ],
 )
@@ -761,7 +768,7 @@ def test_tcp_flags(mocker, test_input):
     ]
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 @pytest.mark.parametrize(
     "log_level",
     [
@@ -826,7 +833,7 @@ def test_log_level(mocker, log_level):
     ]
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 @pytest.mark.parametrize(
     ("test_input", "expected"),
     [
@@ -877,11 +884,7 @@ def test_log_level(mocker, log_level):
             id="src-range-dst-range",
         ),
         pytest.param(
-            {
-                "chain": "INPUT",
-                "dst_range": "10.0.0.50-10.0.0.100",
-                "jump": "ACCEPT"
-            },
+            {"chain": "INPUT", "dst_range": "10.0.0.50-10.0.0.100", "jump": "ACCEPT"},
             [
                 IPTABLES_CMD,
                 "-t",
@@ -895,7 +898,7 @@ def test_log_level(mocker, log_level):
                 "--dst-range",
                 "10.0.0.50-10.0.0.100",
             ],
-            id="dst-range"
+            id="dst-range",
         ),
     ],
 )
@@ -920,7 +923,7 @@ def test_iprange(mocker, test_input, expected):
     assert first_cmd_args_list[0][0] == expected
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 def test_insert_rule_with_wait(mocker):
     """Test flush without parameters."""
     set_module_args(
@@ -965,7 +968,7 @@ def test_insert_rule_with_wait(mocker):
     ]
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 def test_comment_position_at_end(mocker):
     """Test comment position to make sure it is at the end of command."""
     set_module_args(
@@ -1013,7 +1016,7 @@ def test_comment_position_at_end(mocker):
     assert run_command.call_args[0][0][14] == "this is a comment"
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 def test_destination_ports(mocker):
     """Test multiport module usage with multiple ports."""
     set_module_args(
@@ -1065,7 +1068,7 @@ def test_destination_ports(mocker):
     ]
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 @pytest.mark.parametrize(
     ("test_input", "expected"),
     [
@@ -1202,7 +1205,7 @@ def test_match_set(mocker, test_input, expected):
     assert first_cmd_args_list[0][0] == expected
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 def test_chain_creation(mocker):
     """Test chain creation when absent."""
     set_module_args(
@@ -1263,7 +1266,7 @@ def test_chain_creation(mocker):
     assert not exc.value.args[0]["changed"]
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 def test_chain_creation_check_mode(mocker):
     """Test chain creation when absent in check mode."""
     set_module_args(
@@ -1314,7 +1317,7 @@ def test_chain_creation_check_mode(mocker):
     assert not exc.value.args[0]["changed"]
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 def test_chain_deletion(mocker):
     """Test chain deletion when present."""
     set_module_args(
@@ -1376,7 +1379,7 @@ def test_chain_deletion(mocker):
     assert not exc.value.args[0]["changed"]
 
 
-@pytest.mark.usefixtures('_mock_basic_commands')
+@pytest.mark.usefixtures("_mock_basic_commands")
 def test_chain_deletion_check_mode(mocker):
     """Test chain deletion when present in check mode."""
     set_module_args(

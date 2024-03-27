@@ -30,4 +30,4 @@ from __future__ import annotations
 
 # import from the compat api because 2.0-2.3 had a module_utils.facts.ansible_facts
 # and get_all_facts in top level namespace
-from ansible.module_utils.facts.compat import ansible_facts, get_all_facts   # noqa
+from ansible.module_utils.facts.compat import ansible_facts, get_all_facts  # noqa

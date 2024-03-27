@@ -25,9 +25,12 @@ from ansible.parsing.utils.yaml import from_yaml
 
 
 def test_from_yaml_simple():
-    assert from_yaml(u'---\n- test: 1\n  test2: "2"\n- caf\xe9: "caf\xe9"') == [{u'test': 1, u'test2': u"2"}, {u"caf\xe9": u"caf\xe9"}]
+    assert from_yaml('---\n- test: 1\n  test2: "2"\n- caf\xe9: "caf\xe9"') == [
+        {"test": 1, "test2": "2"},
+        {"caf\xe9": "caf\xe9"},
+    ]
 
 
 def test_bad_yaml():
     with pytest.raises(AnsibleParserError):
-        from_yaml(u'foo: bar: baz')
+        from_yaml("foo: bar: baz")

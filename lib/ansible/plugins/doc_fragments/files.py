@@ -11,7 +11,7 @@ class ModuleDocFragment(object):
 
     # Note: mode is overridden by the copy and template modules so if you change the description
     # here, you should also change it there.
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
 options:
   mode:
     description:
@@ -88,4 +88,4 @@ options:
     type: str
     aliases: [ attr ]
     version_added: '2.3'
-'''
+"""

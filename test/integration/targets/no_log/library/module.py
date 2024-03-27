@@ -11,34 +11,33 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     module = AnsibleModule(
         argument_spec={
-            'state': {},
-            'secret': {'no_log': True},
-            'subopt_dict': {
-                'type': 'dict',
-                'options': {
-                    'str_sub_opt1': {'no_log': True},
-                    'str_sub_opt2': {},
-                    'nested_subopt': {
-                        'type': 'dict',
-                        'options': {
-                            'n_subopt1': {'no_log': True},
-                        }
-                    }
-                }
+            "state": {},
+            "secret": {"no_log": True},
+            "subopt_dict": {
+                "type": "dict",
+                "options": {
+                    "str_sub_opt1": {"no_log": True},
+                    "str_sub_opt2": {},
+                    "nested_subopt": {
+                        "type": "dict",
+                        "options": {
+                            "n_subopt1": {"no_log": True},
+                        },
+                    },
+                },
             },
-            'subopt_list': {
-                'type': 'list',
-                'elements': 'dict',
-                'options': {
-                    'subopt1': {'no_log': True},
-                    'subopt2': {},
-                }
-            }
-
+            "subopt_list": {
+                "type": "list",
+                "elements": "dict",
+                "options": {
+                    "subopt1": {"no_log": True},
+                    "subopt2": {},
+                },
+            },
         }
     )
-    module.exit_json(msg='done')
+    module.exit_json(msg="done")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

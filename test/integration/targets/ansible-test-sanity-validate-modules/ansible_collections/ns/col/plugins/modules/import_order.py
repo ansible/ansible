@@ -6,18 +6,18 @@ from __future__ import annotations
 
 from ansible.module_utils.basic import AnsibleModule
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: import_order
 short_description: Import order test module
 description: Import order test module.
 author:
   - Ansible Core Team
-'''
+"""
 
-EXAMPLES = '''#'''
-RETURN = ''''''
+EXAMPLES = """#"""
+RETURN = """"""
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     module = AnsibleModule(argument_spec=dict())
     module.exit_json()

@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: ping
 version_added: historical
@@ -35,9 +35,9 @@ author:
   - Michael DeHaan
 notes:
   - Supports C(check_mode).
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 # Test we can logon to 'webservers' and execute python with json lib.
 # ansible webservers -m ping
 
@@ -47,15 +47,15 @@ EXAMPLES = '''
 - name: Induce an exception to see what happens
   ansible.builtin.ping:
     data: crash
-'''
+"""
 
-RETURN = '''
+RETURN = """
 ping:
     description: Value provided with the data parameter.
     returned: success
     type: str
     sample: pong
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -63,20 +63,20 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            data=dict(type='str', default='pong'),
+            data=dict(type="str", default="pong"),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
-    if module.params['data'] == 'crash':
+    if module.params["data"] == "crash":
         raise Exception("boom")
 
     result = dict(
-        ping=module.params['data'],
+        ping=module.params["data"],
     )
 
     module.exit_json(**result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

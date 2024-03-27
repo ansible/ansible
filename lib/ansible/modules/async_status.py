@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: async_status
 short_description: Obtain status of asynchronous task
@@ -51,9 +51,9 @@ seealso:
 author:
 - Ansible Core Team
 - Michael DeHaan
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 ---
 - name: Asynchronous dnf task
   ansible.builtin.dnf:
@@ -75,9 +75,9 @@ EXAMPLES = r'''
   ansible.builtin.async_status:
     jid: '{{ dnf_sleeper.ansible_job_id }}'
     mode: cleanup
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 ansible_job_id:
   description: The asynchronous job id
   returned: success
@@ -105,7 +105,7 @@ erased:
   description: Path to erased job file
   returned: when file is erased
   type: str
-'''
+"""
 
 import json
 import os
@@ -127,17 +127,19 @@ def main():
         supports_check_mode=True,
     )
 
-    mode = module.params['mode']
-    jid = module.params['jid']
-    async_dir = module.params['_async_dir']
+    mode = module.params["mode"]
+    jid = module.params["jid"]
+    async_dir = module.params["_async_dir"]
 
     # setup logging directory
     log_path = os.path.join(async_dir, jid)
 
     if not os.path.exists(log_path):
-        module.fail_json(msg="could not find job", ansible_job_id=jid, started=1, finished=1)
+        module.fail_json(
+            msg="could not find job", ansible_job_id=jid, started=1, finished=1
+        )
 
-    if mode == 'cleanup':
+    if mode == "cleanup":
         os.unlink(log_path)
         module.exit_json(ansible_job_id=jid, erased=log_path)
 
@@ -152,16 +154,23 @@ def main():
     except Exception:
         if not data:
             # file not written yet?  That means it is running
-            module.exit_json(results_file=log_path, ansible_job_id=jid, started=1, finished=0)
+            module.exit_json(
+                results_file=log_path, ansible_job_id=jid, started=1, finished=0
+            )
         else:
-            module.fail_json(ansible_job_id=jid, results_file=log_path,
-                             msg="Could not parse job output: %s" % data, started=1, finished=1)
+            module.fail_json(
+                ansible_job_id=jid,
+                results_file=log_path,
+                msg="Could not parse job output: %s" % data,
+                started=1,
+                finished=1,
+            )
 
-    if 'started' not in data:
-        data['finished'] = 1
-        data['ansible_job_id'] = jid
-    elif 'finished' not in data:
-        data['finished'] = 0
+    if "started" not in data:
+        data["finished"] = 1
+        data["ansible_job_id"] = jid
+    elif "finished" not in data:
+        data["finished"] = 0
 
     # Fix error: TypeError: exit_json() keywords must be strings
     data = {to_native(k): v for k, v in iteritems(data)}
@@ -169,5 +178,5 @@ def main():
     module.exit_json(**data)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

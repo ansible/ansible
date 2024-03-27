@@ -1,4 +1,5 @@
 """Command line parsing for the `shell` command."""
+
 from __future__ import annotations
 
 import argparse
@@ -26,9 +27,9 @@ def do_shell(
 ):
     """Command line parsing for the `shell` command."""
     parser: argparse.ArgumentParser = subparsers.add_parser(
-        'shell',
+        "shell",
         parents=[parent],
-        help='open an interactive shell',
+        help="open an interactive shell",
     )
 
     parser.set_defaults(
@@ -36,24 +37,26 @@ def do_shell(
         config=ShellConfig,
     )
 
-    shell = parser.add_argument_group(title='shell arguments')
+    shell = parser.add_argument_group(title="shell arguments")
 
     shell.add_argument(
-        'cmd',
-        nargs='*',
-        help='run the specified command',
+        "cmd",
+        nargs="*",
+        help="run the specified command",
     )
 
     shell.add_argument(
-        '--raw',
-        action='store_true',
-        help='direct to shell with no setup',
+        "--raw",
+        action="store_true",
+        help="direct to shell with no setup",
     )
 
     shell.add_argument(
-        '--export',
-        metavar='PATH',
-        help='export inventory instead of opening a shell',
+        "--export",
+        metavar="PATH",
+        help="export inventory instead of opening a shell",
     )
 
-    add_environments(parser, completer, ControllerMode.DELEGATED, TargetMode.SHELL)  # shell
+    add_environments(
+        parser, completer, ControllerMode.DELEGATED, TargetMode.SHELL
+    )  # shell

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 class ModuleDocFragment(object):
     # Standard documentation fragment
-    RETURN = r'''
+    RETURN = r"""
 changed:
   description: Whether the module affected changes on the target.
   returned: always
@@ -38,4 +38,4 @@ exception:
   returned: on some errors
   type: str
   sample: Unknown error
-'''
+"""

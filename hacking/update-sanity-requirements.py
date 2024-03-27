@@ -35,32 +35,54 @@ class SanityTest:
     source_path: pathlib.Path
 
     def freeze_requirements(self) -> None:
-        source_requirements = [packaging.requirements.Requirement(re.sub(' #.*$', '', line)) for line in self.source_path.read_text().splitlines()]
+        source_requirements = [
+            packaging.requirements.Requirement(re.sub(" #.*$", "", line))
+            for line in self.source_path.read_text().splitlines()
+        ]
 
         install_packages = {requirement.name for requirement in source_requirements}
-        exclude_packages = {'distribute', 'pip', 'setuptools', 'wheel'} - install_packages
+        exclude_packages = {
+            "distribute",
+            "pip",
+            "setuptools",
+            "wheel",
+        } - install_packages
 
         with tempfile.TemporaryDirectory() as venv_dir:
             venv.create(venv_dir, with_pip=True)
 
-            python = pathlib.Path(venv_dir, 'bin', 'python')
-            pip = [python, '-m', 'pip', '--disable-pip-version-check']
+            python = pathlib.Path(venv_dir, "bin", "python")
+            pip = [python, "-m", "pip", "--disable-pip-version-check"]
             env = dict()
 
-            pip_freeze = subprocess.run(pip + ['freeze'], env=env, check=True, capture_output=True, text=True)
+            pip_freeze = subprocess.run(
+                pip + ["freeze"], env=env, check=True, capture_output=True, text=True
+            )
 
             if pip_freeze.stdout:
-                raise Exception(f'Initial virtual environment is not empty:\n{pip_freeze.stdout}')
+                raise Exception(
+                    f"Initial virtual environment is not empty:\n{pip_freeze.stdout}"
+                )
 
-            subprocess.run(pip + ['install', 'wheel'], env=env, check=True)  # make bdist_wheel available during pip install
-            subprocess.run(pip + ['install', '-r', self.source_path], env=env, check=True)
+            subprocess.run(
+                pip + ["install", "wheel"], env=env, check=True
+            )  # make bdist_wheel available during pip install
+            subprocess.run(
+                pip + ["install", "-r", self.source_path], env=env, check=True
+            )
 
-            freeze_options = ['--all']
+            freeze_options = ["--all"]
 
             for exclude_package in exclude_packages:
-                freeze_options.extend(('--exclude', exclude_package))
+                freeze_options.extend(("--exclude", exclude_package))
 
-            pip_freeze = subprocess.run(pip + ['freeze'] + freeze_options, env=env, check=True, capture_output=True, text=True)
+            pip_freeze = subprocess.run(
+                pip + ["freeze"] + freeze_options,
+                env=env,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
 
         self.write_requirements(pip_freeze.stdout)
 
@@ -68,8 +90,8 @@ class SanityTest:
         """Update requirements in place with current pre-build instructions."""
         requirements = pathlib.Path(self.requirements_path).read_text()
         lines = requirements.splitlines(keepends=True)
-        lines = [line for line in lines if not line.startswith('#')]
-        requirements = ''.join(lines)
+        lines = [line for line in lines if not line.startswith("#")]
+        requirements = "".join(lines)
 
         self.write_requirements(requirements)
 
@@ -79,15 +101,15 @@ class SanityTest:
 
         requirements = f'# edit "{self.source_path.name}" and generate with: {SELF} --test {self.name}\n{pre_build}{requirements}'
 
-        with open(self.requirements_path, 'w') as requirement_file:
+        with open(self.requirements_path, "w") as requirement_file:
             requirement_file.write(requirements)
 
     @staticmethod
     def create(path: pathlib.Path) -> SanityTest:
         return SanityTest(
-            name=path.stem.replace('sanity.', '').replace('.requirements', ''),
+            name=path.stem.replace("sanity.", "").replace(".requirements", ""),
             requirements_path=path,
-            source_path=path.with_suffix('.in'),
+            source_path=path.with_suffix(".in"),
         )
 
 
@@ -96,16 +118,17 @@ def pre_build_instructions(requirements: str) -> str:
     parsed_requirements = requirements.splitlines()
 
     package_versions = {
-        match.group('package').lower(): match.group('version') for match
-        in (re.search('^(?P<package>.*)==(?P<version>.*)$', requirement) for requirement in parsed_requirements)
+        match.group("package").lower(): match.group("version")
+        for match in (
+            re.search("^(?P<package>.*)==(?P<version>.*)$", requirement)
+            for requirement in parsed_requirements
+        )
         if match
     }
 
     instructions: list[str] = []
 
-    build_constraints = (
-        ('pyyaml', '>= 5.4, <= 6.0', ('Cython < 3.0',)),
-    )
+    build_constraints = (("pyyaml", ">= 5.4, <= 6.0", ("Cython < 3.0",)),)
 
     for package, specifier, constraints in build_constraints:
         version_string = package_versions.get(package)
@@ -115,12 +138,14 @@ def pre_build_instructions(requirements: str) -> str:
             specifier_set = packaging.specifiers.SpecifierSet(specifier)
 
             if specifier_set.contains(version):
-                instructions.append(f'# pre-build requirement: {package} == {version}\n')
+                instructions.append(
+                    f"# pre-build requirement: {package} == {version}\n"
+                )
 
                 for constraint in constraints:
-                    instructions.append(f'# pre-build constraint: {constraint}\n')
+                    instructions.append(f"# pre-build constraint: {constraint}\n")
 
-    return ''.join(instructions)
+    return "".join(instructions)
 
 
 def main() -> None:
@@ -128,18 +153,18 @@ def main() -> None:
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--test',
-        metavar='TEST',
-        dest='test_names',
-        action='append',
+        "--test",
+        metavar="TEST",
+        dest="test_names",
+        action="append",
         choices=[test.name for test in tests],
-        help='test requirements to update'
+        help="test requirements to update",
     )
 
     parser.add_argument(
-        '--pre-build-only',
-        action='store_true',
-        help='apply pre-build instructions to existing requirements',
+        "--pre-build-only",
+        action="store_true",
+        help="apply pre-build instructions to existing requirements",
     )
 
     if argcomplete:
@@ -151,7 +176,7 @@ def main() -> None:
     tests = [test for test in tests if test.name in test_names] if test_names else tests
 
     for test in tests:
-        print(f'===[ {test.name} ]===', flush=True)
+        print(f"===[ {test.name} ]===", flush=True)
 
         if args.pre_build_only:
             test.update_pre_build()
@@ -161,8 +186,8 @@ def main() -> None:
 
 def find_tests() -> t.List[SanityTest]:
     globs = (
-        'test/lib/ansible_test/_data/requirements/sanity.*.txt',
-        'test/sanity/code-smell/*.requirements.txt',
+        "test/lib/ansible_test/_data/requirements/sanity.*.txt",
+        "test/sanity/code-smell/*.requirements.txt",
     )
 
     tests: t.List[SanityTest] = []
@@ -180,5 +205,5 @@ def get_tests(glob: pathlib.Path) -> t.List[SanityTest]:
     return [SanityTest.create(item) for item in path.glob(pattern)]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

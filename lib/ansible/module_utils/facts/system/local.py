@@ -30,31 +30,31 @@ from ansible.module_utils.six.moves import configparser, StringIO
 
 
 class LocalFactCollector(BaseFactCollector):
-    name = 'local'
+    name = "local"
     _fact_ids = set()  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         local_facts = {}
-        local_facts['local'] = {}
+        local_facts["local"] = {}
 
         if not module:
             return local_facts
 
-        fact_path = module.params.get('fact_path', None)
+        fact_path = module.params.get("fact_path", None)
 
         if not fact_path or not os.path.exists(fact_path):
             return local_facts
 
         local = {}
         # go over .fact files, run executables, read rest, skip bad with warning and note
-        for fn in sorted(glob.glob(fact_path + '/*.fact')):
+        for fn in sorted(glob.glob(fact_path + "/*.fact")):
             # use filename for key where it will sit under local facts
-            fact_base = os.path.basename(fn).replace('.fact', '')
+            fact_base = os.path.basename(fn).replace(".fact", "")
             failed = None
             try:
                 executable_fact = stat.S_IXUSR & os.stat(fn)[stat.ST_MODE]
             except OSError as e:
-                failed = 'Could not stat fact (%s): %s' % (fn, to_text(e))
+                failed = "Could not stat fact (%s): %s" % (fn, to_text(e))
                 local[fact_base] = failed
                 module.warn(failed)
                 continue
@@ -63,9 +63,12 @@ class LocalFactCollector(BaseFactCollector):
                     # run it
                     rc, out, err = module.run_command(fn)
                     if rc != 0:
-                        failed = 'Failure executing fact script (%s), rc: %s, err: %s' % (fn, rc, err)
+                        failed = (
+                            "Failure executing fact script (%s), rc: %s, err: %s"
+                            % (fn, rc, err)
+                        )
                 except (IOError, OSError) as e:
-                    failed = 'Could not execute fact script (%s): %s' % (fn, to_text(e))
+                    failed = "Could not execute fact script (%s): %s" % (fn, to_text(e))
 
                 if failed is not None:
                     local[fact_base] = failed
@@ -73,11 +76,11 @@ class LocalFactCollector(BaseFactCollector):
                     continue
             else:
                 # ignores exceptions and returns empty
-                out = get_file_content(fn, default='')
+                out = get_file_content(fn, default="")
 
             try:
                 # ensure we have unicode
-                out = to_text(out, errors='surrogate_or_strict')
+                out = to_text(out, errors="surrogate_or_strict")
             except UnicodeError:
                 fact = 'error loading fact - output of running "%s" was not utf-8' % fn
                 local[fact_base] = fact
@@ -96,7 +99,10 @@ class LocalFactCollector(BaseFactCollector):
                     else:
                         cp.readfp(StringIO(out))
                 except configparser.Error:
-                    fact = "error loading facts as JSON or ini - please check content: %s" % fn
+                    fact = (
+                        "error loading facts as JSON or ini - please check content: %s"
+                        % fn
+                    )
                     module.warn(fact)
                 else:
                     fact = {}
@@ -112,5 +118,5 @@ class LocalFactCollector(BaseFactCollector):
 
             local[fact_base] = fact
 
-        local_facts['local'] = local
+        local_facts["local"] = local
         return local_facts

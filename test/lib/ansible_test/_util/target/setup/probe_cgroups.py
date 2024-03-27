@@ -1,4 +1,5 @@
 """A tool for probing cgroups to determine write access."""
+
 from __future__ import annotations
 
 import json
@@ -26,5 +27,5 @@ def main():  # type: () -> None
     print(json.dumps(results, sort_keys=True))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

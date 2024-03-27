@@ -28,19 +28,19 @@ from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.helpers import load_list_of_roles
 from ansible.playbook.role.requirement import RoleRequirement
 
-__all__ = ['RoleMetadata']
+__all__ = ["RoleMetadata"]
 
 
 class RoleMetadata(Base, CollectionSearch):
-    '''
+    """
     This class wraps the parsing and validation of the optional metadata
     within each Role (meta/main.yml).
-    '''
+    """
 
-    allow_duplicates = NonInheritableFieldAttribute(isa='bool', default=False)
-    dependencies = NonInheritableFieldAttribute(isa='list', default=list)
-    galaxy_info = NonInheritableFieldAttribute(isa='dict')
-    argument_specs = NonInheritableFieldAttribute(isa='dict', default=dict)
+    allow_duplicates = NonInheritableFieldAttribute(isa="bool", default=False)
+    dependencies = NonInheritableFieldAttribute(isa="list", default=list)
+    galaxy_info = NonInheritableFieldAttribute(isa="dict")
+    argument_specs = NonInheritableFieldAttribute(isa="dict", default=dict)
 
     def __init__(self, owner=None):
         self._owner = owner
@@ -48,37 +48,47 @@ class RoleMetadata(Base, CollectionSearch):
 
     @staticmethod
     def load(data, owner, variable_manager=None, loader=None):
-        '''
+        """
         Returns a new RoleMetadata object based on the datastructure passed in.
-        '''
+        """
 
         if not isinstance(data, dict):
-            raise AnsibleParserError("the 'meta/main.yml' for role %s is not a dictionary" % owner.get_name())
+            raise AnsibleParserError(
+                "the 'meta/main.yml' for role %s is not a dictionary" % owner.get_name()
+            )
 
-        m = RoleMetadata(owner=owner).load_data(data, variable_manager=variable_manager, loader=loader)
+        m = RoleMetadata(owner=owner).load_data(
+            data, variable_manager=variable_manager, loader=loader
+        )
         return m
 
     def _load_dependencies(self, attr, ds):
-        '''
+        """
         This is a helper loading function for the dependencies list,
         which returns a list of RoleInclude objects
-        '''
+        """
 
         roles = []
         if ds:
             if not isinstance(ds, list):
-                raise AnsibleParserError("Expected role dependencies to be a list.", obj=self._ds)
+                raise AnsibleParserError(
+                    "Expected role dependencies to be a list.", obj=self._ds
+                )
 
             for role_def in ds:
                 # FIXME: consolidate with ansible-galaxy to keep this in sync
-                if isinstance(role_def, string_types) or 'role' in role_def or 'name' in role_def:
+                if (
+                    isinstance(role_def, string_types)
+                    or "role" in role_def
+                    or "name" in role_def
+                ):
                     roles.append(role_def)
                     continue
                 try:
                     # role_def is new style: { src: 'galaxy.role,version,name', other_vars: "here" }
                     def_parsed = RoleRequirement.role_yaml_parse(role_def)
-                    if def_parsed.get('name'):
-                        role_def['name'] = def_parsed['name']
+                    if def_parsed.get("name"):
+                        role_def["name"] = def_parsed["name"]
                     roles.append(role_def)
                 except AnsibleError as exc:
                     raise AnsibleParserError(to_native(exc), obj=role_def, orig_exc=exc)
@@ -95,25 +105,35 @@ class RoleMetadata(Base, CollectionSearch):
             # if the calling role is a collection role, ensure that its containing collection is searched first
             owner_collection = self._owner._role_collection
             if owner_collection:
-                collection_search_list = [c for c in collection_search_list if c != owner_collection]
+                collection_search_list = [
+                    c for c in collection_search_list if c != owner_collection
+                ]
                 collection_search_list.insert(0, owner_collection)
             # ensure fallback role search works
-            if 'ansible.legacy' not in collection_search_list:
-                collection_search_list.append('ansible.legacy')
+            if "ansible.legacy" not in collection_search_list:
+                collection_search_list.append("ansible.legacy")
 
         try:
-            return load_list_of_roles(roles, play=self._owner._play, current_role_path=current_role_path,
-                                      variable_manager=self._variable_manager, loader=self._loader,
-                                      collection_search_list=collection_search_list)
+            return load_list_of_roles(
+                roles,
+                play=self._owner._play,
+                current_role_path=current_role_path,
+                variable_manager=self._variable_manager,
+                loader=self._loader,
+                collection_search_list=collection_search_list,
+            )
         except AssertionError as e:
-            raise AnsibleParserError("A malformed list of role dependencies was encountered.", obj=self._ds, orig_exc=e)
+            raise AnsibleParserError(
+                "A malformed list of role dependencies was encountered.",
+                obj=self._ds,
+                orig_exc=e,
+            )
 
     def serialize(self):
         return dict(
-            allow_duplicates=self._allow_duplicates,
-            dependencies=self._dependencies
+            allow_duplicates=self._allow_duplicates, dependencies=self._dependencies
         )
 
     def deserialize(self, data):
-        setattr(self, 'allow_duplicates', data.get('allow_duplicates', False))
-        setattr(self, 'dependencies', data.get('dependencies', []))
+        setattr(self, "allow_duplicates", data.get("allow_duplicates", False))
+        setattr(self, "dependencies", data.get("dependencies", []))

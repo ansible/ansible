@@ -32,20 +32,23 @@ display = Display()
 def to_safe_group_name(name, replacer="_", force=False, silent=False):
     # Converts 'bad' characters in a string to underscores (or provided replacer) so they can be used as Ansible hosts or groups
 
-    warn = ''
+    warn = ""
     if name:  # when deserializing we might not have name yet
         invalid_chars = C.INVALID_VARIABLE_NAMES.findall(name)
         if invalid_chars:
-            msg = 'invalid character(s) "%s" in group name (%s)' % (to_text(set(invalid_chars)), to_text(name))
-            if C.TRANSFORM_INVALID_GROUP_CHARS not in ('never', 'ignore') or force:
+            msg = 'invalid character(s) "%s" in group name (%s)' % (
+                to_text(set(invalid_chars)),
+                to_text(name),
+            )
+            if C.TRANSFORM_INVALID_GROUP_CHARS not in ("never", "ignore") or force:
                 name = C.INVALID_VARIABLE_NAMES.sub(replacer, name)
-                if not (silent or C.TRANSFORM_INVALID_GROUP_CHARS == 'silently'):
-                    display.vvvv('Replacing ' + msg)
-                    warn = 'Invalid characters were found in group names and automatically replaced, use -vvvv to see details'
+                if not (silent or C.TRANSFORM_INVALID_GROUP_CHARS == "silently"):
+                    display.vvvv("Replacing " + msg)
+                    warn = "Invalid characters were found in group names and automatically replaced, use -vvvv to see details"
             else:
-                if C.TRANSFORM_INVALID_GROUP_CHARS == 'never':
-                    display.vvvv('Not replacing %s' % msg)
-                    warn = 'Invalid characters were found in group names but not replaced, use -vvvv to see details'
+                if C.TRANSFORM_INVALID_GROUP_CHARS == "never":
+                    display.vvvv("Not replacing %s" % msg)
+                    warn = "Invalid characters were found in group names but not replaced, use -vvvv to see details"
 
     if warn:
         display.warning(warn)
@@ -59,7 +62,8 @@ class InventoryObjectType(Enum):
 
 
 class Group:
-    ''' a group of ansible hosts '''
+    """a group of ansible hosts"""
+
     base_type = InventoryObjectType.GROUP
 
     # __slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', '_hosts_cache' ]
@@ -107,20 +111,20 @@ class Group:
 
     def deserialize(self, data):
         self.__init__()  # used by __setstate__ to deserialize in place  # pylint: disable=unnecessary-dunder-call
-        self.name = data.get('name')
-        self.vars = data.get('vars', dict())
-        self.depth = data.get('depth', 0)
-        self.hosts = data.get('hosts', [])
+        self.name = data.get("name")
+        self.vars = data.get("vars", dict())
+        self.depth = data.get("depth", 0)
+        self.hosts = data.get("hosts", [])
         self._hosts = None
 
-        parent_groups = data.get('parent_groups', [])
+        parent_groups = data.get("parent_groups", [])
         for parent_data in parent_groups:
             g = Group()
             g.deserialize(parent_data)
             self.parent_groups.append(g)
 
     def _walk_relationship(self, rel, include_self=False, preserve_ordering=False):
-        '''
+        """
         Given `rel` that is an iterable property of Group,
         consitituting a directed acyclic graph among all groups,
         Returns a set of all groups in full tree
@@ -132,7 +136,7 @@ class Group:
         | /     are directed upward
         F
         Called on F, returns set of (A, B, C, D, E)
-        '''
+        """
         seen = set([])
         unprocessed = set(getattr(self, rel))
         if include_self:
@@ -159,10 +163,10 @@ class Group:
         return seen
 
     def get_ancestors(self):
-        return self._walk_relationship('parent_groups')
+        return self._walk_relationship("parent_groups")
 
     def get_descendants(self, **kwargs):
-        return self._walk_relationship('child_groups', **kwargs)
+        return self._walk_relationship("child_groups", **kwargs)
 
     @property
     def host_names(self):
@@ -185,7 +189,10 @@ class Group:
             start_ancestors = group.get_ancestors()
             new_ancestors = self.get_ancestors()
             if group in new_ancestors:
-                raise AnsibleError("Adding group '%s' as child to '%s' creates a recursive dependency loop." % (to_native(group.name), to_native(self.name)))
+                raise AnsibleError(
+                    "Adding group '%s' as child to '%s' creates a recursive dependency loop."
+                    % (to_native(group.name), to_native(self.name))
+                )
             new_ancestors.add(self)
             new_ancestors.difference_update(start_ancestors)
 
@@ -225,7 +232,10 @@ class Group:
                     g.depth = depth
                     unprocessed.update(g.child_groups)
             if depth - start_depth > len(seen):
-                raise AnsibleError("The group named '%s' has a recursive dependency loop." % to_native(self.name))
+                raise AnsibleError(
+                    "The group named '%s' has a recursive dependency loop."
+                    % to_native(self.name)
+                )
 
     def add_host(self, host):
         added = False
@@ -249,10 +259,14 @@ class Group:
 
     def set_variable(self, key, value):
 
-        if key == 'ansible_group_priority':
+        if key == "ansible_group_priority":
             self.set_priority(int(value))
         else:
-            if key in self.vars and isinstance(self.vars[key], MutableMapping) and isinstance(value, Mapping):
+            if (
+                key in self.vars
+                and isinstance(self.vars[key], MutableMapping)
+                and isinstance(value, Mapping)
+            ):
                 self.vars = combine_vars(self.vars, {key: value})
             else:
                 self.vars[key] = value
@@ -278,7 +292,7 @@ class Group:
             for kk in kid_hosts:
                 if kk not in seen:
                     seen[kk] = 1
-                    if self.name == 'all' and kk.implicit:
+                    if self.name == "all" and kk.implicit:
                         continue
                     hosts.append(kk)
         return hosts

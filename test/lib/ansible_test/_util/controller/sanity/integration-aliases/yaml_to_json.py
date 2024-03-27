@@ -1,4 +1,5 @@
 """Read YAML from stdin and write JSON to stdout."""
+
 from __future__ import annotations
 
 import json

@@ -1,4 +1,5 @@
 """Diff parsing functions and classes."""
+
 from __future__ import annotations
 
 import re
@@ -41,7 +42,7 @@ class DiffSide:
     def __init__(self, path: str, new: bool) -> None:
         self.path = path
         self.new = new
-        self.prefix = '+' if self.new else '-'
+        self.prefix = "+" if self.new else "-"
         self.eof_newline = True
         self.exists = True
 
@@ -62,11 +63,11 @@ class DiffSide:
     def append(self, line: str) -> None:
         """Append the given line."""
         if self._lines_remaining <= 0:
-            raise Exception('Diff range overflow.')
+            raise Exception("Diff range overflow.")
 
         entry = self._next_line_number, line
 
-        if line.startswith(' '):
+        if line.startswith(" "):
             pass
         elif line.startswith(self.prefix):
             self.lines.append(entry)
@@ -74,7 +75,7 @@ class DiffSide:
             if not self._range_start:
                 self._range_start = self._next_line_number
         else:
-            raise Exception('Unexpected diff content prefix.')
+            raise Exception("Unexpected diff content prefix.")
 
         self.lines_and_context.append(entry)
 
@@ -83,7 +84,7 @@ class DiffSide:
         if self._range_start:
             if self.is_complete:
                 range_end = self._next_line_number
-            elif line.startswith(' '):
+            elif line.startswith(" "):
                 range_end = self._next_line_number - 1
             else:
                 range_end = 0
@@ -106,7 +107,7 @@ class DiffSide:
         else:
             lines = self.lines
 
-        return ['%s:%4d %s' % (self.path, line[0], line[1]) for line in lines]
+        return ["%s:%4d %s" % (self.path, line[0], line[1]) for line in lines]
 
 
 class DiffParser:
@@ -128,19 +129,24 @@ class DiffParser:
             try:
                 self.action()
             except Exception as ex:
-                message = textwrap.dedent('''
+                message = (
+                    textwrap.dedent(
+                        """
                 %s
 
                      Line: %d
                  Previous: %s
                   Current: %s
                 %s
-                ''').strip() % (
-                    ex,
-                    self.line_number,
-                    self.previous_line or '',
-                    self.line or '',
-                    traceback.format_exc(),
+                """
+                    ).strip()
+                    % (
+                        ex,
+                        self.line_number,
+                        self.previous_line or "",
+                        self.line or "",
+                        traceback.format_exc(),
+                    )
                 )
 
                 raise ApplicationError(message.strip()) from None
@@ -153,57 +159,67 @@ class DiffParser:
         """Process a diff start line."""
         self.complete_file()
 
-        match = re.search(r'^diff --git "?(?:a/)?(?P<old_path>.*)"? "?(?:b/)?(?P<new_path>.*)"?$', self.line)
+        match = re.search(
+            r'^diff --git "?(?:a/)?(?P<old_path>.*)"? "?(?:b/)?(?P<new_path>.*)"?$',
+            self.line,
+        )
 
         if not match:
-            raise Exception('Unexpected diff start line.')
+            raise Exception("Unexpected diff start line.")
 
-        self.file = FileDiff(match.group('old_path'), match.group('new_path'))
+        self.file = FileDiff(match.group("old_path"), match.group("new_path"))
         self.action = self.process_continue
 
     def process_range(self) -> None:
         """Process a diff range line."""
-        match = re.search(r'^@@ -((?P<old_start>[0-9]+),)?(?P<old_count>[0-9]+) \+((?P<new_start>[0-9]+),)?(?P<new_count>[0-9]+) @@', self.line)
+        match = re.search(
+            r"^@@ -((?P<old_start>[0-9]+),)?(?P<old_count>[0-9]+) \+((?P<new_start>[0-9]+),)?(?P<new_count>[0-9]+) @@",
+            self.line,
+        )
 
         if not match:
-            raise Exception('Unexpected diff range line.')
+            raise Exception("Unexpected diff range line.")
 
-        self.file.old.set_start(int(match.group('old_start') or 1), int(match.group('old_count')))
-        self.file.new.set_start(int(match.group('new_start') or 1), int(match.group('new_count')))
+        self.file.old.set_start(
+            int(match.group("old_start") or 1), int(match.group("old_count"))
+        )
+        self.file.new.set_start(
+            int(match.group("new_start") or 1), int(match.group("new_count"))
+        )
         self.action = self.process_content
 
     def process_continue(self) -> None:
         """Process a diff start, range or header line."""
-        if self.line.startswith('diff '):
+        if self.line.startswith("diff "):
             self.process_start()
-        elif self.line.startswith('@@ '):
+        elif self.line.startswith("@@ "):
             self.process_range()
         else:
             self.process_header()
 
     def process_header(self) -> None:
         """Process a diff header line."""
-        if self.line.startswith('Binary files '):
+        if self.line.startswith("Binary files "):
             self.file.binary = True
-        elif self.line == '--- /dev/null':
+        elif self.line == "--- /dev/null":
             self.file.old.exists = False
-        elif self.line == '+++ /dev/null':
+        elif self.line == "+++ /dev/null":
             self.file.new.exists = False
         else:
             self.file.append_header(self.line)
 
     def process_content(self) -> None:
         """Process a diff content line."""
-        if self.line == r'\ No newline at end of file':
-            if self.previous_line.startswith(' '):
+        if self.line == r"\ No newline at end of file":
+            if self.previous_line.startswith(" "):
                 self.file.old.eof_newline = False
                 self.file.new.eof_newline = False
-            elif self.previous_line.startswith('-'):
+            elif self.previous_line.startswith("-"):
                 self.file.old.eof_newline = False
-            elif self.previous_line.startswith('+'):
+            elif self.previous_line.startswith("+"):
                 self.file.new.eof_newline = False
             else:
-                raise Exception('Unexpected previous diff content line.')
+                raise Exception("Unexpected previous diff content line.")
 
             return
 
@@ -211,15 +227,15 @@ class DiffParser:
             self.process_continue()
             return
 
-        if self.line.startswith(' '):
+        if self.line.startswith(" "):
             self.file.old.append(self.line)
             self.file.new.append(self.line)
-        elif self.line.startswith('-'):
+        elif self.line.startswith("-"):
             self.file.old.append(self.line)
-        elif self.line.startswith('+'):
+        elif self.line.startswith("+"):
             self.file.new.append(self.line)
         else:
-            raise Exception('Unexpected diff content line.')
+            raise Exception("Unexpected diff content line.")
 
     def complete_file(self) -> None:
         """Complete processing of the current file, if any."""

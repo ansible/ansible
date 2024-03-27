@@ -20,15 +20,15 @@ import os
 
 
 def get_file_content(path, default=None, strip=True):
-    '''
-        Return the contents of a given file path
+    """
+    Return the contents of a given file path
 
-        :args path: path to file to return contents from
-        :args default: value to return if we could not read file
-        :args strip: controls if we strip whitespace from the result or not
+    :args path: path to file to return contents from
+    :args default: value to return if we could not read file
+    :args strip: controls if we strip whitespace from the result or not
 
-        :returns: String with file contents (optionally stripped) or 'default' value
-    '''
+    :returns: String with file contents (optionally stripped) or 'default' value
+    """
     data = default
     if os.path.exists(path) and os.access(path, os.R_OK):
         datafile = None
@@ -62,7 +62,7 @@ def get_file_content(path, default=None, strip=True):
 
 
 def get_file_lines(path, strip=True, line_sep=None):
-    '''get list of lines from file'''
+    """get list of lines from file"""
     data = get_file_content(path, strip=strip)
     if data:
         if line_sep is None:
@@ -82,19 +82,25 @@ def get_mount_size(mountpoint):
 
     try:
         statvfs_result = os.statvfs(mountpoint)
-        mount_size['size_total'] = statvfs_result.f_frsize * statvfs_result.f_blocks
-        mount_size['size_available'] = statvfs_result.f_frsize * (statvfs_result.f_bavail)
+        mount_size["size_total"] = statvfs_result.f_frsize * statvfs_result.f_blocks
+        mount_size["size_available"] = statvfs_result.f_frsize * (
+            statvfs_result.f_bavail
+        )
 
         # Block total/available/used
-        mount_size['block_size'] = statvfs_result.f_bsize
-        mount_size['block_total'] = statvfs_result.f_blocks
-        mount_size['block_available'] = statvfs_result.f_bavail
-        mount_size['block_used'] = mount_size['block_total'] - mount_size['block_available']
+        mount_size["block_size"] = statvfs_result.f_bsize
+        mount_size["block_total"] = statvfs_result.f_blocks
+        mount_size["block_available"] = statvfs_result.f_bavail
+        mount_size["block_used"] = (
+            mount_size["block_total"] - mount_size["block_available"]
+        )
 
         # Inode total/available/used
-        mount_size['inode_total'] = statvfs_result.f_files
-        mount_size['inode_available'] = statvfs_result.f_favail
-        mount_size['inode_used'] = mount_size['inode_total'] - mount_size['inode_available']
+        mount_size["inode_total"] = statvfs_result.f_files
+        mount_size["inode_available"] = statvfs_result.f_favail
+        mount_size["inode_used"] = (
+            mount_size["inode_total"] - mount_size["inode_available"]
+        )
     except OSError:
         pass
 

@@ -40,4 +40,4 @@ from ansible.plugins.inventory import BaseInventoryPlugin
 
 class InventoryModule(BaseInventoryPlugin):
 
-    NAME = 'inventory1'
+    NAME = "inventory1"

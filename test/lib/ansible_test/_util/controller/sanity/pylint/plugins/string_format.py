@@ -1,4 +1,5 @@
 """Ansible specific pylint plugin for checking format string usage."""
+
 # (c) 2018, Matt Martz <matt@sivel.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # -*- coding: utf-8 -*-
@@ -10,8 +11,10 @@ import astroid
 try:
     from pylint.interfaces import IAstroidChecker
 except ImportError:
+
     class IAstroidChecker:
         """Backwards compatibility for 2.x / 3.x support."""
+
 
 try:
     from pylint.checkers.utils import check_messages
@@ -22,14 +25,18 @@ from pylint.checkers import BaseChecker
 from pylint.checkers import utils
 
 MSGS = {
-    'E9305': ("disabled",  # kept for backwards compatibility with inline ignores, remove after 2.14 is EOL
-              "ansible-format-automatic-specification",
-              "disabled"),
-    'E9390': ("bytes object has no .format attribute",
-              "ansible-no-format-on-bytestring",
-              "Used when a bytestring was used as a PEP 3101 format string "
-              "as Python3 bytestrings do not have a .format attribute",
-              {'minversion': (3, 0)}),
+    "E9305": (
+        "disabled",  # kept for backwards compatibility with inline ignores, remove after 2.14 is EOL
+        "ansible-format-automatic-specification",
+        "disabled",
+    ),
+    "E9390": (
+        "bytes object has no .format attribute",
+        "ansible-no-format-on-bytestring",
+        "Used when a bytestring was used as a PEP 3101 format string "
+        "as Python3 bytestrings do not have a .format attribute",
+        {"minversion": (3, 0)},
+    ),
 }
 
 
@@ -39,23 +46,26 @@ class AnsibleStringFormatChecker(BaseChecker):
     """
 
     __implements__ = (IAstroidChecker,)
-    name = 'string'
+    name = "string"
     msgs = MSGS
 
     @check_messages(*(MSGS.keys()))
     def visit_call(self, node):
         """Visit a call node."""
         func = utils.safe_infer(node.func)
-        if (isinstance(func, astroid.BoundMethod)
-                and isinstance(func.bound, astroid.Instance)
-                and func.bound.name in ('str', 'unicode', 'bytes')):
-            if func.name == 'format':
+        if (
+            isinstance(func, astroid.BoundMethod)
+            and isinstance(func.bound, astroid.Instance)
+            and func.bound.name in ("str", "unicode", "bytes")
+        ):
+            if func.name == "format":
                 self._check_new_format(node, func)
 
     def _check_new_format(self, node, func):
-        """ Check the new string formatting """
-        if (isinstance(node.func, astroid.Attribute)
-                and not isinstance(node.func.expr, astroid.Const)):
+        """Check the new string formatting"""
+        if isinstance(node.func, astroid.Attribute) and not isinstance(
+            node.func.expr, astroid.Const
+        ):
             return
         try:
             strnode = next(func.bound.infer())
@@ -65,10 +75,10 @@ class AnsibleStringFormatChecker(BaseChecker):
             return
 
         if isinstance(strnode.value, bytes):
-            self.add_message('ansible-no-format-on-bytestring', node=node)
+            self.add_message("ansible-no-format-on-bytestring", node=node)
             return
 
 
 def register(linter):
-    """required method to auto register this checker """
+    """required method to auto register this checker"""
     linter.register_checker(AnsibleStringFormatChecker(linter))

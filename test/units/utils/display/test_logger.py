@@ -10,19 +10,20 @@ import sys
 
 
 def test_logger():
-    '''
+    """
     Avoid CVE-2019-14846 as 3rd party libs will disclose secrets when
     logging is set to DEBUG
-    '''
+    """
 
     # clear loaded modules to have unadultered test.
     for loaded in list(sys.modules.keys()):
-        if 'ansible' in loaded:
+        if "ansible" in loaded:
             del sys.modules[loaded]
 
     # force logger to exist via config
     from ansible import constants as C
-    C.DEFAULT_LOG_PATH = '/dev/null'
+
+    C.DEFAULT_LOG_PATH = "/dev/null"
 
     # initialize logger
     from ansible.utils.display import logger

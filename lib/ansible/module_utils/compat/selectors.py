@@ -23,10 +23,10 @@ import sys
 from ansible.module_utils.common.warnings import deprecate
 
 
-sys.modules['ansible.module_utils.compat.selectors'] = selectors
+sys.modules["ansible.module_utils.compat.selectors"] = selectors
 
 
 deprecate(
-    msg='The `ansible.module_utils.compat.selectors` module is deprecated.',
-    version='2.19',
+    msg="The `ansible.module_utils.compat.selectors` module is deprecated.",
+    version="2.19",
 )

@@ -9,8 +9,6 @@ setup(
     version="0",
     packages=find_packages(),
     entry_points={
-        'console_scripts': [
-            'ansible_test_pip_chdir = ansible_test_pip_chdir:main'
-        ]
-    }
+        "console_scripts": ["ansible_test_pip_chdir = ansible_test_pip_chdir:main"]
+    },
 )

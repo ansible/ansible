@@ -42,7 +42,9 @@ def camel_dict_to_snake_dict(camel_dict, reversible=False, ignore_list=()):
     snake_dict = {}
     for k, v in camel_dict.items():
         if isinstance(v, dict) and k not in ignore_list:
-            snake_dict[_camel_to_snake(k, reversible=reversible)] = camel_dict_to_snake_dict(v, reversible)
+            snake_dict[_camel_to_snake(k, reversible=reversible)] = (
+                camel_dict_to_snake_dict(v, reversible)
+            )
         elif isinstance(v, list) and k not in ignore_list:
             snake_dict[_camel_to_snake(k, reversible=reversible)] = value_is_list(v)
         else:
@@ -64,7 +66,9 @@ def snake_dict_to_camel_dict(snake_dict, capitalize_first=False):
         new_type = type(complex_type)()
         if isinstance(complex_type, dict):
             for key in complex_type:
-                new_type[_snake_to_camel(key, capitalize_first)] = camelize(complex_type[key], capitalize_first)
+                new_type[_snake_to_camel(key, capitalize_first)] = camelize(
+                    complex_type[key], capitalize_first
+                )
         elif isinstance(complex_type, list):
             for i in range(len(complex_type)):
                 new_type.append(camelize(complex_type[i], capitalize_first))
@@ -77,22 +81,24 @@ def snake_dict_to_camel_dict(snake_dict, capitalize_first=False):
 
 def _snake_to_camel(snake, capitalize_first=False):
     if capitalize_first:
-        return ''.join(x.capitalize() or '_' for x in snake.split('_'))
+        return "".join(x.capitalize() or "_" for x in snake.split("_"))
     else:
-        return snake.split('_')[0] + ''.join(x.capitalize() or '_' for x in snake.split('_')[1:])
+        return snake.split("_")[0] + "".join(
+            x.capitalize() or "_" for x in snake.split("_")[1:]
+        )
 
 
 def _camel_to_snake(name, reversible=False):
 
     def prepend_underscore_and_lower(m):
-        return '_' + m.group(0).lower()
+        return "_" + m.group(0).lower()
 
     if reversible:
-        upper_pattern = r'[A-Z]'
+        upper_pattern = r"[A-Z]"
     else:
         # Cope with pluralized abbreviations such as TargetGroupARNs
         # that would otherwise be rendered target_group_ar_ns
-        upper_pattern = r'[A-Z]{3,}s$'
+        upper_pattern = r"[A-Z]{3,}s$"
 
     s1 = re.sub(upper_pattern, prepend_underscore_and_lower, name)
     # Handle when there was nothing before the plural_pattern
@@ -102,16 +108,16 @@ def _camel_to_snake(name, reversible=False):
         return s1
 
     # Remainder of solution seems to be https://stackoverflow.com/a/1176023
-    first_cap_pattern = r'(.)([A-Z][a-z]+)'
-    all_cap_pattern = r'([a-z0-9])([A-Z]+)'
-    s2 = re.sub(first_cap_pattern, r'\1_\2', s1)
-    return re.sub(all_cap_pattern, r'\1_\2', s2).lower()
+    first_cap_pattern = r"(.)([A-Z][a-z]+)"
+    all_cap_pattern = r"([a-z0-9])([A-Z]+)"
+    s2 = re.sub(first_cap_pattern, r"\1_\2", s1)
+    return re.sub(all_cap_pattern, r"\1_\2", s2).lower()
 
 
 def dict_merge(a, b):
-    '''recursively merges dicts. not just simple a['key'] = b['key'], if
+    """recursively merges dicts. not just simple a['key'] = b['key'], if
     both a and b have a key whose value is a dict then dict_merge is called
-    on both values and the result stored in the returned dictionary.'''
+    on both values and the result stored in the returned dictionary."""
     if not isinstance(b, dict):
         return b
     result = deepcopy(a)
@@ -134,12 +140,14 @@ def recursive_diff(dict1, dict2):
     """
 
     if not all((isinstance(item, MutableMapping) for item in (dict1, dict2))):
-        raise TypeError("Unable to diff 'dict1' %s and 'dict2' %s. "
-                        "Both must be a dictionary." % (type(dict1), type(dict2)))
+        raise TypeError(
+            "Unable to diff 'dict1' %s and 'dict2' %s. "
+            "Both must be a dictionary." % (type(dict1), type(dict2))
+        )
 
     left = dict((k, v) for (k, v) in dict1.items() if k not in dict2)
     right = dict((k, v) for (k, v) in dict2.items() if k not in dict1)
-    for k in (set(dict1.keys()) & set(dict2.keys())):
+    for k in set(dict1.keys()) & set(dict2.keys()):
         if isinstance(dict1[k], dict) and isinstance(dict2[k], dict):
             result = recursive_diff(dict1[k], dict2[k])
             if result:

@@ -45,12 +45,12 @@ def safe_eval(value, locals=None, include_exceptions=False):
         if include_exceptions:
             return (value, None)
         return value
-    if re.search(r'\w\.\w+\(', value):
+    if re.search(r"\w\.\w+\(", value):
         if include_exceptions:
             return (value, None)
         return value
     # do not allow imports
-    if re.search(r'import \w+', value):
+    if re.search(r"import \w+", value):
         if include_exceptions:
             return (value, None)
         return value
@@ -90,8 +90,8 @@ def check_mutually_exclusive(terms, parameters, options_context=None):
             results.append(check)
 
     if results:
-        full_list = ['|'.join(check) for check in results]
-        msg = "parameters are mutually exclusive: %s" % ', '.join(full_list)
+        full_list = ["|".join(check) for check in results]
+        msg = "parameters are mutually exclusive: %s" % ", ".join(full_list)
         if options_context:
             msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
         raise TypeError(to_native(msg))
@@ -125,7 +125,7 @@ def check_required_one_of(terms, parameters, options_context=None):
 
     if results:
         for term in results:
-            msg = "one of the following is required: %s" % ', '.join(term)
+            msg = "one of the following is required: %s" % ", ".join(term)
             if options_context:
                 msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
             raise TypeError(to_native(msg))
@@ -161,7 +161,7 @@ def check_required_together(terms, parameters, options_context=None):
                 results.append(term)
     if results:
         for term in results:
-            msg = "parameters are required together: %s" % ', '.join(term)
+            msg = "parameters are required together: %s" % ", ".join(term)
             if options_context:
                 msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
             raise TypeError(to_native(msg))
@@ -187,7 +187,7 @@ def check_required_by(requirements, parameters, options_context=None):
     if requirements is None:
         return result
 
-    for (key, value) in requirements.items():
+    for key, value in requirements.items():
         if key not in parameters or parameters[key] is None:
             continue
         result[key] = []
@@ -201,7 +201,10 @@ def check_required_by(requirements, parameters, options_context=None):
     if result:
         for key, missing in result.items():
             if len(missing) > 0:
-                msg = "missing parameter(s) required by '%s': %s" % (key, ', '.join(missing))
+                msg = "missing parameter(s) required by '%s': %s" % (
+                    key,
+                    ", ".join(missing),
+                )
                 if options_context:
                     msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
                 raise TypeError(to_native(msg))
@@ -228,8 +231,8 @@ def check_required_arguments(argument_spec, parameters, options_context=None):
     if argument_spec is None:
         return missing
 
-    for (k, v) in argument_spec.items():
-        required = v.get('required', False)
+    for k, v in argument_spec.items():
+        required = v.get("required", False)
         if required and k not in parameters:
             missing.append(k)
 
@@ -296,7 +299,7 @@ def check_required_if(requirements, parameters, options_context=None):
 
     for req in requirements:
         missing = {}
-        missing['missing'] = []
+        missing["missing"] = []
         max_missing_count = 0
         is_one_of = False
         if len(req) == 4:
@@ -308,25 +311,29 @@ def check_required_if(requirements, parameters, options_context=None):
         # present, else all requirements should be present.
         if is_one_of:
             max_missing_count = len(requirements)
-            missing['requires'] = 'any'
+            missing["requires"] = "any"
         else:
-            missing['requires'] = 'all'
+            missing["requires"] = "all"
 
         if key in parameters and parameters[key] == val:
             for check in requirements:
                 count = count_terms(check, parameters)
                 if count == 0:
-                    missing['missing'].append(check)
-        if len(missing['missing']) and len(missing['missing']) >= max_missing_count:
-            missing['parameter'] = key
-            missing['value'] = val
-            missing['requirements'] = requirements
+                    missing["missing"].append(check)
+        if len(missing["missing"]) and len(missing["missing"]) >= max_missing_count:
+            missing["parameter"] = key
+            missing["value"] = val
+            missing["requirements"] = requirements
             results.append(missing)
 
     if results:
         for missing in results:
             msg = "%s is %s but %s of the following are missing: %s" % (
-                missing['parameter'], missing['value'], missing['requires'], ', '.join(missing['missing']))
+                missing["parameter"],
+                missing["value"],
+                missing["requires"],
+                ", ".join(missing["missing"]),
+            )
             if options_context:
                 msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
             raise TypeError(to_native(msg))
@@ -354,7 +361,7 @@ def check_missing_parameters(parameters, required_parameters=None):
             missing_params.append(param)
 
     if missing_params:
-        msg = "missing required arguments: %s" % ', '.join(missing_params)
+        msg = "missing required arguments: %s" % ", ".join(missing_params)
         raise TypeError(to_native(msg))
 
     return missing_params
@@ -363,7 +370,7 @@ def check_missing_parameters(parameters, required_parameters=None):
 # FIXME: The param and prefix parameters here are coming from AnsibleModule._check_type_string()
 #        which is using those for the warning messaged based on string conversion warning settings.
 #        Not sure how to deal with that here since we don't have config state to query.
-def check_type_str(value, allow_conversion=True, param=None, prefix=''):
+def check_type_str(value, allow_conversion=True, param=None, prefix=""):
     """Verify that the value is a string or convert to a string.
 
     Since unexpected changes can sometimes happen when converting to a string,
@@ -381,7 +388,7 @@ def check_type_str(value, allow_conversion=True, param=None, prefix=''):
         return value
 
     if allow_conversion and value is not None:
-        return to_native(value, errors='surrogate_or_strict')
+        return to_native(value, errors="surrogate_or_strict")
 
     msg = "'{0!r}' is not a string and conversion is not allowed".format(value)
     raise TypeError(to_native(msg))
@@ -407,7 +414,7 @@ def check_type_list(value):
     elif isinstance(value, int) or isinstance(value, float):
         return [str(value)]
 
-    raise TypeError('%s cannot be converted to a list' % type(value))
+    raise TypeError("%s cannot be converted to a list" % type(value))
 
 
 def check_type_dict(value):
@@ -429,9 +436,9 @@ def check_type_dict(value):
             except Exception:
                 (result, exc) = safe_eval(value, dict(), include_exceptions=True)
                 if exc is not None:
-                    raise TypeError('unable to evaluate string as dictionary')
+                    raise TypeError("unable to evaluate string as dictionary")
                 return result
-        elif '=' in value:
+        elif "=" in value:
             fields = []
             field_buffer = []
             in_quote = False
@@ -440,28 +447,28 @@ def check_type_dict(value):
                 if in_escape:
                     field_buffer.append(c)
                     in_escape = False
-                elif c == '\\':
+                elif c == "\\":
                     in_escape = True
-                elif not in_quote and c in ('\'', '"'):
+                elif not in_quote and c in ("'", '"'):
                     in_quote = c
                 elif in_quote and in_quote == c:
                     in_quote = False
-                elif not in_quote and c in (',', ' '):
-                    field = ''.join(field_buffer)
+                elif not in_quote and c in (",", " "):
+                    field = "".join(field_buffer)
                     if field:
                         fields.append(field)
                     field_buffer = []
                 else:
                     field_buffer.append(c)
 
-            field = ''.join(field_buffer)
+            field = "".join(field_buffer)
             if field:
                 fields.append(field)
             return dict(x.split("=", 1) for x in fields)
         else:
             raise TypeError("dictionary requested, could not parse JSON or key=value")
 
-    raise TypeError('%s cannot be converted to a dict' % type(value))
+    raise TypeError("%s cannot be converted to a dict" % type(value))
 
 
 def check_type_bool(value):
@@ -480,7 +487,7 @@ def check_type_bool(value):
     if isinstance(value, string_types) or isinstance(value, (int, float)):
         return boolean(value)
 
-    raise TypeError('%s cannot be converted to a bool' % type(value))
+    raise TypeError("%s cannot be converted to a bool" % type(value))
 
 
 def check_type_int(value):
@@ -502,7 +509,7 @@ def check_type_int(value):
         except ValueError:
             pass
 
-    raise TypeError('%s cannot be converted to an int' % type(value))
+    raise TypeError("%s cannot be converted to an int" % type(value))
 
 
 def check_type_float(value):
@@ -523,10 +530,12 @@ def check_type_float(value):
         except ValueError:
             pass
 
-    raise TypeError('%s cannot be converted to a float' % type(value))
+    raise TypeError("%s cannot be converted to a float" % type(value))
 
 
-def check_type_path(value,):
+def check_type_path(
+    value,
+):
     """Verify the provided value is a string or convert it to a string,
     then return the expanded path
     """
@@ -547,7 +556,7 @@ def check_type_bytes(value):
     try:
         return human_to_bytes(value)
     except ValueError:
-        raise TypeError('%s cannot be converted to a Byte value' % type(value))
+        raise TypeError("%s cannot be converted to a Byte value" % type(value))
 
 
 def check_type_bits(value):
@@ -560,7 +569,7 @@ def check_type_bits(value):
     try:
         return human_to_bytes(value, isbits=True)
     except ValueError:
-        raise TypeError('%s cannot be converted to a Bit value' % type(value))
+        raise TypeError("%s cannot be converted to a Bit value" % type(value))
 
 
 def check_type_jsonarg(value):
@@ -574,4 +583,4 @@ def check_type_jsonarg(value):
         return value.strip()
     elif isinstance(value, (list, tuple, dict)):
         return jsonify(value)
-    raise TypeError('%s cannot be converted to a json string' % type(value))
+    raise TypeError("%s cannot be converted to a json string" % type(value))

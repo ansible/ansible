@@ -8,6 +8,4 @@ def test_subdir_filter(data):
 class FilterModule(object):
 
     def filters(self):
-        return {
-            'test_subdir_filter': test_subdir_filter
-        }
+        return {"test_subdir_filter": test_subdir_filter}

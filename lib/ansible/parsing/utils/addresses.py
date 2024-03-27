@@ -23,21 +23,21 @@ from ansible.errors import AnsibleParserError, AnsibleError
 # Components that match a numeric or alphanumeric begin:end or begin:end:step
 # range expression inside square brackets.
 
-numeric_range = r'''
+numeric_range = r"""
     \[
         (?:[0-9]+:[0-9]+)               # numeric begin:end
         (?::[0-9]+)?                    # numeric :step (optional)
     \]
-'''
+"""
 
-hexadecimal_range = r'''
+hexadecimal_range = r"""
     \[
         (?:[0-9a-f]+:[0-9a-f]+)         # hexadecimal begin:end
         (?::[0-9]+)?                    # numeric :step (optional)
     \]
-'''
+"""
 
-alphanumeric_range = r'''
+alphanumeric_range = r"""
     \[
         (?:
             [a-z]:[a-z]|                # one-char alphabetic range
@@ -45,56 +45,60 @@ alphanumeric_range = r'''
         )
         (?::[0-9]+)?                    # numeric :step (optional)
     \]
-'''
+"""
 
 # Components that match a 16-bit portion of an IPv6 address in hexadecimal
 # notation (0..ffff) or an 8-bit portion of an IPv4 address in decimal notation
 # (0..255) or an [x:y(:z)] numeric range.
 
-ipv6_component = r'''
+ipv6_component = r"""
     (?:
         [0-9a-f]{{1,4}}|                # 0..ffff
         {range}                         # or a numeric range
     )
-'''.format(range=hexadecimal_range)
+""".format(
+    range=hexadecimal_range
+)
 
-ipv4_component = r'''
+ipv4_component = r"""
     (?:
         [01]?[0-9]{{1,2}}|              # 0..199
         2[0-4][0-9]|                    # 200..249
         25[0-5]|                        # 250..255
         {range}                         # or a numeric range
     )
-'''.format(range=numeric_range)
+""".format(
+    range=numeric_range
+)
 
 # A hostname label, e.g. 'foo' in 'foo.example.com'. Consists of alphanumeric
 # characters plus dashes (and underscores) or valid ranges. The label may not
 # start or end with a hyphen or an underscore. This is interpolated into the
 # hostname pattern below. We don't try to enforce the 63-char length limit.
 
-label = r'''
+label = r"""
     (?:[\w]|{range})                    # Starts with an alphanumeric or a range
     (?:[\w_-]|{range})*                 # Then zero or more of the same or [_-]
     (?<![_-])                           # ...as long as it didn't end with [_-]
-'''.format(range=alphanumeric_range)
+""".format(
+    range=alphanumeric_range
+)
 
 patterns = {
     # This matches a square-bracketed expression with a port specification. What
     # is inside the square brackets is validated later.
-
-    'bracketed_hostport': re.compile(
-        r'''^
+    "bracketed_hostport": re.compile(
+        r"""^
             \[(.+)\]                    # [host identifier]
             :([0-9]+)                   # :port number
             $
-        ''', re.X
+        """,
+        re.X,
     ),
-
     # This matches a bare IPv4 address or hostname (or host pattern including
     # [x:y(:z)] ranges) with a port specification.
-
-    'hostport': re.compile(
-        r'''^
+    "hostport": re.compile(
+        r"""^
             ((?:                        # We want to match:
                 [^:\[\]]                # (a non-range character
                 |                       # ...or...
@@ -102,18 +106,19 @@ patterns = {
             )*)                         # repeated as many times as possible
             :([0-9]+)                   # followed by a port number
             $
-        ''', re.X
+        """,
+        re.X,
     ),
-
     # This matches an IPv4 address, but also permits range expressions.
-
-    'ipv4': re.compile(
-        r'''^
+    "ipv4": re.compile(
+        r"""^
             (?:{i4}\.){{3}}{i4}         # Three parts followed by dots plus one
             $
-        '''.format(i4=ipv4_component), re.X | re.I
+        """.format(
+            i4=ipv4_component
+        ),
+        re.X | re.I,
     ),
-
     # This matches an IPv6 address, but also permits range expressions.
     #
     # This expression looks complex, but it really only spells out the various
@@ -123,9 +128,8 @@ patterns = {
     #
     # Note that we can't just use ipaddress.ip_address() because we also have to
     # accept ranges in place of each component.
-
-    'ipv6': re.compile(
-        r'''^
+    "ipv6": re.compile(
+        r"""^
             (?:{0}:){{7}}{0}|           # uncompressed: 1:2:3:4:5:6:7:8
             (?:{0}:){{1,6}}:|           # compressed variants, which are all
             (?:{0}:)(?::{0}){{1,6}}|    # a::b for various lengths of a,b
@@ -141,9 +145,11 @@ patterns = {
             ::(?:ffff:)?(?:{0}\.){{3}}{0}|
             (?:0:){{5}}ffff:(?:{0}\.){{3}}{0}
             $
-        '''.format(ipv6_component), re.X | re.I
+        """.format(
+            ipv6_component
+        ),
+        re.X | re.I,
     ),
-
     # This matches a hostname or host pattern including [x:y(:z)] ranges.
     #
     # We roughly follow DNS rules here, but also allow ranges (and underscores).
@@ -153,15 +159,16 @@ patterns = {
     #
     # We don't enforce DNS length restrictions here (63 characters per label,
     # 253 characters total) or make any attempt to process IDNs.
-
-    'hostname': re.compile(
-        r'''^
+    "hostname": re.compile(
+        r"""^
             {label}                     # We must have at least one label
             (?:\.{label})*              # Followed by zero or more .labels
             $
-        '''.format(label=label), re.X | re.I | re.UNICODE
+        """.format(
+            label=label
+        ),
+        re.X | re.I | re.UNICODE,
     ),
-
 }
 
 
@@ -184,7 +191,7 @@ def parse_address(address, allow_ranges=False):
     # First, we extract the port number if one is specified.
 
     port = None
-    for matching in ['bracketed_hostport', 'hostport']:
+    for matching in ["bracketed_hostport", "hostport"]:
         m = patterns[matching].match(address)
         if m:
             (address, port) = m.groups()
@@ -195,7 +202,7 @@ def parse_address(address, allow_ranges=False):
     # numeric ranges, or a hostname with alphanumeric ranges.
 
     host = None
-    for matching in ['ipv4', 'ipv6', 'hostname']:
+    for matching in ["ipv4", "ipv6", "hostname"]:
         m = patterns[matching].match(address)
         if m:
             host = address
@@ -208,7 +215,9 @@ def parse_address(address, allow_ranges=False):
     # If we get to this point, we know that any included ranges are valid.
     # If the caller is prepared to handle them, all is well.
     # Otherwise we treat it as a parse failure.
-    if not allow_ranges and '[' in host:
-        raise AnsibleParserError("Detected range in host but was asked to ignore ranges")
+    if not allow_ranges and "[" in host:
+        raise AnsibleParserError(
+            "Detected range in host but was asked to ignore ranges"
+        )
 
     return (host, port)

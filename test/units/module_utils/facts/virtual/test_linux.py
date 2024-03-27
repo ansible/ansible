@@ -8,44 +8,48 @@ from ansible.module_utils.facts.virtual import linux
 
 
 def mock_os_path_is_file_docker(filename):
-    if filename in ('/.dockerenv', '/.dockerinit'):
+    if filename in ("/.dockerenv", "/.dockerinit"):
         return True
     return False
 
 
 def test_get_virtual_facts_docker(mocker):
-    mocker.patch('os.path.exists', mock_os_path_is_file_docker)
+    mocker.patch("os.path.exists", mock_os_path_is_file_docker)
 
     module = mocker.Mock()
-    module.run_command.return_value = (0, '', '')
+    module.run_command.return_value = (0, "", "")
     inst = linux.LinuxVirtual(module)
     facts = inst.get_virtual_facts()
 
     expected = {
-        'virtualization_role': 'guest',
-        'virtualization_tech_host': set(),
-        'virtualization_type': 'docker',
-        'virtualization_tech_guest': set(['docker', 'container']),
+        "virtualization_role": "guest",
+        "virtualization_tech_host": set(),
+        "virtualization_type": "docker",
+        "virtualization_tech_guest": set(["docker", "container"]),
     }
 
     assert facts == expected
 
 
 def test_get_virtual_facts_bhyve(mocker):
-    mocker.patch('os.path.exists', return_value=False)
-    mocker.patch('ansible.module_utils.facts.virtual.linux.get_file_content', return_value='')
-    mocker.patch('ansible.module_utils.facts.virtual.linux.get_file_lines', return_value=[])
+    mocker.patch("os.path.exists", return_value=False)
+    mocker.patch(
+        "ansible.module_utils.facts.virtual.linux.get_file_content", return_value=""
+    )
+    mocker.patch(
+        "ansible.module_utils.facts.virtual.linux.get_file_lines", return_value=[]
+    )
 
     module = mocker.Mock()
-    module.run_command.return_value = (0, 'BHYVE\n', '')
+    module.run_command.return_value = (0, "BHYVE\n", "")
     inst = linux.LinuxVirtual(module)
 
     facts = inst.get_virtual_facts()
     expected = {
-        'virtualization_role': 'guest',
-        'virtualization_tech_host': set(),
-        'virtualization_type': 'bhyve',
-        'virtualization_tech_guest': set(['bhyve']),
+        "virtualization_role": "guest",
+        "virtualization_tech_host": set(),
+        "virtualization_type": "bhyve",
+        "virtualization_tech_guest": set(["bhyve"]),
     }
 
     assert facts == expected

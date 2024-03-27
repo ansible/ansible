@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: metadata
 version_added: 2.12
@@ -19,13 +19,13 @@ options:
     type: str
 author:
   - Ansible Core Team
-'''
+"""
 
-EXAMPLES = '''
-'''
+EXAMPLES = """
+"""
 
-RETURN = '''
-'''
+RETURN = """
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -33,12 +33,12 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            data=dict(type='str', required=True),
+            data=dict(type="str", required=True),
         ),
     )
 
     module.exit_json()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

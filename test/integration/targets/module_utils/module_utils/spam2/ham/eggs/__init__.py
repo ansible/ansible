@@ -1,1 +1,1 @@
-data = 'spam2'
+data = "spam2"

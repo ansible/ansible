@@ -349,7 +349,11 @@ import sys
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
-from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
+from ansible.module_utils.common.respawn import (
+    has_respawned,
+    probe_interpreters_for_module,
+    respawn_module,
+)
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
 libdnf5 = None
@@ -404,7 +408,10 @@ def is_newer_version_installed(base, spec):
         return False
 
     # FIXME https://github.com/rpm-software-management/dnf5/issues/1104
-    return libdnf5.rpm.rpmvercmp(installed_package.get_evr(), target_package.get_evr()) == 1
+    return (
+        libdnf5.rpm.rpmvercmp(installed_package.get_evr(), target_package.get_evr())
+        == 1
+    )
 
 
 def package_to_dict(package):
@@ -572,12 +579,7 @@ class Dnf5Module(YumDnf):
         sack.update_and_load_enabled_repos(True)
 
         if self.update_cache and not self.names and not self.list:
-            self.module.exit_json(
-                msg="Cache updated",
-                changed=False,
-                results=[],
-                rc=0
-            )
+            self.module.exit_json(msg="Cache updated", changed=False, results=[], rc=0)
 
         if self.list:
             command = self.list
@@ -591,7 +593,9 @@ class Dnf5Module(YumDnf):
             elif command in {"repos", "repositories"}:
                 query = libdnf5.repo.RepoQuery(base)
                 query.filter_enabled(True)
-                results = [{"repoid": repo.get_id(), "state": "enabled"} for repo in query]
+                results = [
+                    {"repoid": repo.get_id(), "state": "enabled"} for repo in query
+                ]
             else:
                 resolve_spec_settings = libdnf5.base.ResolveSpecSettings()
                 query = libdnf5.rpm.PackageQuery(base)
@@ -627,7 +631,11 @@ class Dnf5Module(YumDnf):
                         goal.add_upgrade(spec, settings)
                 else:
                     if self.update_only:
-                        results.append("Packages providing {} not installed due to update_only specified".format(spec))
+                        results.append(
+                            "Packages providing {} not installed due to update_only specified".format(
+                                spec
+                            )
+                        )
                     else:
                         goal.add_install(spec, settings)
         elif self.state in {"absent", "removed"}:
@@ -649,9 +657,14 @@ class Dnf5Module(YumDnf):
         if transaction.get_problems():
             failures = []
             for log_event in transaction.get_resolve_logs():
-                if log_event.get_problem() == libdnf5.base.GoalProblem_NOT_FOUND and self.state in {"install", "present", "latest"}:
+                if (
+                    log_event.get_problem() == libdnf5.base.GoalProblem_NOT_FOUND
+                    and self.state in {"install", "present", "latest"}
+                ):
                     # NOTE dnf module compat
-                    failures.append("No package {} available.".format(log_event.get_spec()))
+                    failures.append(
+                        "No package {} available.".format(log_event.get_spec())
+                    )
                 else:
                     failures.append(log_event.to_string())
 
@@ -678,8 +691,15 @@ class Dnf5Module(YumDnf):
             if self.download_only:
                 action = "Downloaded"
             else:
-                action = libdnf5.base.transaction.transaction_item_action_to_string(pkg.get_action())
-            results.append("{}: {}".format(actions_compat_map.get(action, action), pkg.get_package().get_nevra()))
+                action = libdnf5.base.transaction.transaction_item_action_to_string(
+                    pkg.get_action()
+                )
+            results.append(
+                "{}: {}".format(
+                    actions_compat_map.get(action, action),
+                    pkg.get_package().get_nevra(),
+                )
+            )
 
         msg = ""
         if self.module.check_mode:
@@ -690,16 +710,26 @@ class Dnf5Module(YumDnf):
             if not self.download_only:
                 transaction.set_description("ansible dnf5 module")
                 result = transaction.run()
-                if result == libdnf5.base.Transaction.TransactionRunResult_ERROR_GPG_CHECK:
+                if (
+                    result
+                    == libdnf5.base.Transaction.TransactionRunResult_ERROR_GPG_CHECK
+                ):
                     self.module.fail_json(
-                        msg="Failed to validate GPG signatures: {}".format(",".join(transaction.get_gpg_signature_problems())),
+                        msg="Failed to validate GPG signatures: {}".format(
+                            ",".join(transaction.get_gpg_signature_problems())
+                        ),
                         failures=[],
                         rc=1,
                     )
                 elif result != libdnf5.base.Transaction.TransactionRunResult_SUCCESS:
                     self.module.fail_json(
                         msg="Failed to install some of the specified packages",
-                        failures=["{}: {}".format(transaction.transaction_result_to_string(result), log) for log in transaction.get_transaction_problems()],
+                        failures=[
+                            "{}: {}".format(
+                                transaction.transaction_result_to_string(result), log
+                            )
+                            for log in transaction.get_transaction_problems()
+                        ],
                         rc=1,
                     )
 

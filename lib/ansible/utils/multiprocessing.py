@@ -12,4 +12,4 @@ import multiprocessing
 #
 # This exists in utils to allow it to be easily imported into various places
 # without causing circular import or dependency problems
-context = multiprocessing.get_context('fork')
+context = multiprocessing.get_context("fork")

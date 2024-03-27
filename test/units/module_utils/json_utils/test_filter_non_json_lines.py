@@ -23,12 +23,12 @@ from ansible.module_utils.json_utils import _filter_non_json_lines
 
 
 class TestAnsibleModuleExitJson(unittest.TestCase):
-    single_line_json_dict = u"""{"key": "value", "olá": "mundo"}"""
-    single_line_json_array = u"""["a","b","c"]"""
-    multi_line_json_dict = u"""{
+    single_line_json_dict = """{"key": "value", "olá": "mundo"}"""
+    single_line_json_array = """["a","b","c"]"""
+    multi_line_json_dict = """{
 "key":"value"
 }"""
-    multi_line_json_array = u"""[
+    multi_line_json_array = """[
 "a",
 "b",
 "c"]"""
@@ -37,17 +37,17 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         single_line_json_dict,
         single_line_json_array,
         multi_line_json_dict,
-        multi_line_json_array
+        multi_line_json_array,
     ]
 
-    junk = [u"single line of junk", u"line 1/2 of junk\nline 2/2 of junk"]
+    junk = ["single line of junk", "line 1/2 of junk\nline 2/2 of junk"]
 
     unparsable_cases = (
-        u'No json here',
-        u'"olá": "mundo"',
-        u'{"No json": "ending"',
-        u'{"wrong": "ending"]',
-        u'["wrong": "ending"}',
+        "No json here",
+        '"olá": "mundo"',
+        '{"No json": "ending"',
+        '{"wrong": "ending"]',
+        '["wrong": "ending"}',
     )
 
     def test_just_json(self):
@@ -68,19 +68,21 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
             for j in self.junk:
                 filtered, warnings = _filter_non_json_lines(i + "\n" + j)
                 self.assertEqual(filtered, i)
-                self.assertEqual(warnings, [u"Module invocation had junk after the JSON data: %s" % j.strip()])
+                self.assertEqual(
+                    warnings,
+                    ["Module invocation had junk after the JSON data: %s" % j.strip()],
+                )
 
     def test_leading_and_trailing_junk(self):
         for i in self.all_inputs:
             for j in self.junk:
                 filtered, warnings = _filter_non_json_lines("\n".join([j, i, j]))
                 self.assertEqual(filtered, i)
-                self.assertEqual(warnings, [u"Module invocation had junk after the JSON data: %s" % j.strip()])
+                self.assertEqual(
+                    warnings,
+                    ["Module invocation had junk after the JSON data: %s" % j.strip()],
+                )
 
     def test_unparsable_filter_non_json_lines(self):
         for i in self.unparsable_cases:
-            self.assertRaises(
-                ValueError,
-                _filter_non_json_lines,
-                data=i
-            )
+            self.assertRaises(ValueError, _filter_non_json_lines, data=i)

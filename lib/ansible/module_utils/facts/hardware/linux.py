@@ -32,7 +32,11 @@ from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.text.formatters import bytes_to_human
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
-from ansible.module_utils.facts.utils import get_file_content, get_file_lines, get_mount_size
+from ansible.module_utils.facts.utils import (
+    get_file_content,
+    get_file_lines,
+    get_mount_size,
+)
 from ansible.module_utils.six import iteritems
 
 # import this as a module to ensure we get the same module instance
@@ -67,26 +71,30 @@ class LinuxHardware(Hardware):
     In addition, it also defines number of DMI facts and device facts.
     """
 
-    platform = 'Linux'
+    platform = "Linux"
 
     # Originally only had these four as toplevelfacts
-    ORIGINAL_MEMORY_FACTS = frozenset(('MemTotal', 'SwapTotal', 'MemFree', 'SwapFree'))
+    ORIGINAL_MEMORY_FACTS = frozenset(("MemTotal", "SwapTotal", "MemFree", "SwapFree"))
     # Now we have all of these in a dict structure
-    MEMORY_FACTS = ORIGINAL_MEMORY_FACTS.union(('Buffers', 'Cached', 'SwapCached'))
+    MEMORY_FACTS = ORIGINAL_MEMORY_FACTS.union(("Buffers", "Cached", "SwapCached"))
 
     # regex used against findmnt output to detect bind mounts
-    BIND_MOUNT_RE = re.compile(r'.*\]')
+    BIND_MOUNT_RE = re.compile(r".*\]")
 
     # regex used against mtab content to find entries that are bind mounts
     MTAB_BIND_MOUNT_RE = re.compile(r'.*bind.*"')
 
     # regex used for replacing octal escape sequences
-    OCTAL_ESCAPE_RE = re.compile(r'\\[0-9]{3}')
+    OCTAL_ESCAPE_RE = re.compile(r"\\[0-9]{3}")
 
     def populate(self, collected_facts=None):
         hardware_facts = {}
         locale = get_best_parsable_locale(self.module)
-        self.module.run_command_environ_update = {'LANG': locale, 'LC_ALL': locale, 'LC_NUMERIC': locale}
+        self.module.run_command_environ_update = {
+            "LANG": locale,
+            "LC_ALL": locale,
+            "LC_NUMERIC": locale,
+        }
 
         cpu_facts = self.get_cpu_facts(collected_facts=collected_facts)
         memory_facts = self.get_memory_facts()
@@ -121,37 +129,43 @@ class LinuxHardware(Hardware):
             data = line.split(":", 1)
             key = data[0]
             if key in self.ORIGINAL_MEMORY_FACTS:
-                val = data[1].strip().split(' ')[0]
+                val = data[1].strip().split(" ")[0]
                 memory_facts["%s_mb" % key.lower()] = int(val) // 1024
 
             if key in self.MEMORY_FACTS:
-                val = data[1].strip().split(' ')[0]
+                val = data[1].strip().split(" ")[0]
                 memstats[key.lower()] = int(val) // 1024
 
-        if None not in (memstats.get('memtotal'), memstats.get('memfree')):
-            memstats['real:used'] = memstats['memtotal'] - memstats['memfree']
-        if None not in (memstats.get('cached'), memstats.get('memfree'), memstats.get('buffers')):
-            memstats['nocache:free'] = memstats['cached'] + memstats['memfree'] + memstats['buffers']
-        if None not in (memstats.get('memtotal'), memstats.get('nocache:free')):
-            memstats['nocache:used'] = memstats['memtotal'] - memstats['nocache:free']
-        if None not in (memstats.get('swaptotal'), memstats.get('swapfree')):
-            memstats['swap:used'] = memstats['swaptotal'] - memstats['swapfree']
+        if None not in (memstats.get("memtotal"), memstats.get("memfree")):
+            memstats["real:used"] = memstats["memtotal"] - memstats["memfree"]
+        if None not in (
+            memstats.get("cached"),
+            memstats.get("memfree"),
+            memstats.get("buffers"),
+        ):
+            memstats["nocache:free"] = (
+                memstats["cached"] + memstats["memfree"] + memstats["buffers"]
+            )
+        if None not in (memstats.get("memtotal"), memstats.get("nocache:free")):
+            memstats["nocache:used"] = memstats["memtotal"] - memstats["nocache:free"]
+        if None not in (memstats.get("swaptotal"), memstats.get("swapfree")):
+            memstats["swap:used"] = memstats["swaptotal"] - memstats["swapfree"]
 
-        memory_facts['memory_mb'] = {
-            'real': {
-                'total': memstats.get('memtotal'),
-                'used': memstats.get('real:used'),
-                'free': memstats.get('memfree'),
+        memory_facts["memory_mb"] = {
+            "real": {
+                "total": memstats.get("memtotal"),
+                "used": memstats.get("real:used"),
+                "free": memstats.get("memfree"),
             },
-            'nocache': {
-                'free': memstats.get('nocache:free'),
-                'used': memstats.get('nocache:used'),
+            "nocache": {
+                "free": memstats.get("nocache:free"),
+                "used": memstats.get("nocache:used"),
             },
-            'swap': {
-                'total': memstats.get('swaptotal'),
-                'free': memstats.get('swapfree'),
-                'used': memstats.get('swap:used'),
-                'cached': memstats.get('swapcached'),
+            "swap": {
+                "total": memstats.get("swaptotal"),
+                "free": memstats.get("swapfree"),
+                "used": memstats.get("swap:used"),
+                "cached": memstats.get("swapcached"),
             },
         }
 
@@ -175,11 +189,11 @@ class LinuxHardware(Hardware):
         xen = False
         xen_paravirt = False
         try:
-            if os.path.exists('/proc/xen'):
+            if os.path.exists("/proc/xen"):
                 xen = True
             else:
-                for line in get_file_lines('/sys/hypervisor/type'):
-                    if line.strip() == 'xen':
+                for line in get_file_lines("/sys/hypervisor/type"):
+                    if line.strip() == "xen":
                         xen = True
                     # Only interested in the first line
                     break
@@ -189,8 +203,8 @@ class LinuxHardware(Hardware):
         if not os.access("/proc/cpuinfo", os.R_OK):
             return cpu_facts
 
-        cpu_facts['processor'] = []
-        for line in get_file_lines('/proc/cpuinfo'):
+        cpu_facts["processor"] = []
+        for line in get_file_lines("/proc/cpuinfo"):
             data = line.split(":", 1)
             key = data[0].strip()
 
@@ -200,46 +214,53 @@ class LinuxHardware(Hardware):
                 val = ""
 
             if xen:
-                if key == 'flags':
+                if key == "flags":
                     # Check for vme cpu flag, Xen paravirt does not expose this.
                     #   Need to detect Xen paravirt because it exposes cpuinfo
                     #   differently than Xen HVM or KVM and causes reporting of
                     #   only a single cpu core.
-                    if 'vme' not in val:
+                    if "vme" not in val:
                         xen_paravirt = True
 
             # model name is for Intel arch, Processor (mind the uppercase P)
             # works for some ARM devices, like the Sheevaplug.
-            if key in ['model name', 'Processor', 'vendor_id', 'cpu', 'Vendor', 'processor']:
-                if 'processor' not in cpu_facts:
-                    cpu_facts['processor'] = []
-                cpu_facts['processor'].append(val)
-                if key == 'vendor_id':
+            if key in [
+                "model name",
+                "Processor",
+                "vendor_id",
+                "cpu",
+                "Vendor",
+                "processor",
+            ]:
+                if "processor" not in cpu_facts:
+                    cpu_facts["processor"] = []
+                cpu_facts["processor"].append(val)
+                if key == "vendor_id":
                     vendor_id_occurrence += 1
-                if key == 'model name':
+                if key == "model name":
                     model_name_occurrence += 1
-                if key == 'processor':
+                if key == "processor":
                     processor_occurrence += 1
                 i += 1
-            elif key == 'physical id':
+            elif key == "physical id":
                 physid = val
                 if physid not in sockets:
                     sockets[physid] = 1
-            elif key == 'core id':
+            elif key == "core id":
                 coreid = val
                 if coreid not in sockets:
                     cores[coreid] = 1
-            elif key == 'cpu cores':
+            elif key == "cpu cores":
                 sockets[physid] = int(val)
-            elif key == 'siblings':
+            elif key == "siblings":
                 cores[coreid] = int(val)
             # S390x classic cpuinfo
-            elif key == '# processors':
+            elif key == "# processors":
                 zp = int(val)
-            elif key == 'max thread id':
+            elif key == "max thread id":
                 zmt = int(val) + 1
             # SPARC
-            elif key == 'ncpus active':
+            elif key == "ncpus active":
                 i = int(val)
 
         # Skip for platforms without vendor_id/model_name in cpuinfo (e.g ppc64le)
@@ -251,152 +272,194 @@ class LinuxHardware(Hardware):
         # and sometimes includes both 'processor' and 'Processor'.
         # The fields for Power CPUs include 'processor' and 'cpu'.
         # Always use 'processor' count for ARM and Power systems
-        if collected_facts.get('ansible_architecture', '').startswith(('armv', 'aarch', 'ppc')):
+        if collected_facts.get("ansible_architecture", "").startswith(
+            ("armv", "aarch", "ppc")
+        ):
             i = processor_occurrence
 
-        if collected_facts.get('ansible_architecture') == 's390x':
+        if collected_facts.get("ansible_architecture") == "s390x":
             # getting sockets would require 5.7+ with CONFIG_SCHED_TOPOLOGY
-            cpu_facts['processor_count'] = 1
-            cpu_facts['processor_cores'] = round(zp / zmt)
-            cpu_facts['processor_threads_per_core'] = zmt
-            cpu_facts['processor_vcpus'] = zp
-            cpu_facts['processor_nproc'] = zp
+            cpu_facts["processor_count"] = 1
+            cpu_facts["processor_cores"] = round(zp / zmt)
+            cpu_facts["processor_threads_per_core"] = zmt
+            cpu_facts["processor_vcpus"] = zp
+            cpu_facts["processor_nproc"] = zp
         else:
             if xen_paravirt:
-                cpu_facts['processor_count'] = i
-                cpu_facts['processor_cores'] = i
-                cpu_facts['processor_threads_per_core'] = 1
-                cpu_facts['processor_vcpus'] = i
-                cpu_facts['processor_nproc'] = i
+                cpu_facts["processor_count"] = i
+                cpu_facts["processor_cores"] = i
+                cpu_facts["processor_threads_per_core"] = 1
+                cpu_facts["processor_vcpus"] = i
+                cpu_facts["processor_nproc"] = i
             else:
                 if sockets:
-                    cpu_facts['processor_count'] = len(sockets)
+                    cpu_facts["processor_count"] = len(sockets)
                 else:
-                    cpu_facts['processor_count'] = i
+                    cpu_facts["processor_count"] = i
 
                 socket_values = list(sockets.values())
                 if socket_values and socket_values[0]:
-                    cpu_facts['processor_cores'] = socket_values[0]
+                    cpu_facts["processor_cores"] = socket_values[0]
                 else:
-                    cpu_facts['processor_cores'] = 1
+                    cpu_facts["processor_cores"] = 1
 
                 core_values = list(cores.values())
                 if core_values:
-                    cpu_facts['processor_threads_per_core'] = round(core_values[0] / cpu_facts['processor_cores'])
+                    cpu_facts["processor_threads_per_core"] = round(
+                        core_values[0] / cpu_facts["processor_cores"]
+                    )
                 else:
-                    cpu_facts['processor_threads_per_core'] = round(1 / cpu_facts['processor_cores'])
+                    cpu_facts["processor_threads_per_core"] = round(
+                        1 / cpu_facts["processor_cores"]
+                    )
 
-                cpu_facts['processor_vcpus'] = (cpu_facts['processor_threads_per_core'] *
-                                                cpu_facts['processor_count'] * cpu_facts['processor_cores'])
+                cpu_facts["processor_vcpus"] = (
+                    cpu_facts["processor_threads_per_core"]
+                    * cpu_facts["processor_count"]
+                    * cpu_facts["processor_cores"]
+                )
 
-                cpu_facts['processor_nproc'] = processor_occurrence
+                cpu_facts["processor_nproc"] = processor_occurrence
 
         # if the number of processors available to the module's
         # thread cannot be determined, the processor count
         # reported by /proc will be the default (as previously defined)
         try:
-            cpu_facts['processor_nproc'] = len(
-                os.sched_getaffinity(0)
-            )
+            cpu_facts["processor_nproc"] = len(os.sched_getaffinity(0))
         except AttributeError:
             # In Python < 3.3, os.sched_getaffinity() is not available
             try:
-                cmd = get_bin_path('nproc')
+                cmd = get_bin_path("nproc")
             except ValueError:
                 pass
             else:
                 rc, out, _err = self.module.run_command(cmd)
                 if rc == 0:
-                    cpu_facts['processor_nproc'] = int(out)
+                    cpu_facts["processor_nproc"] = int(out)
 
         return cpu_facts
 
     def get_dmi_facts(self):
-        ''' learn dmi facts from system
+        """learn dmi facts from system
 
         Try /sys first for dmi related facts.
-        If that is not available, fall back to dmidecode executable '''
+        If that is not available, fall back to dmidecode executable"""
 
         dmi_facts = {}
 
-        if os.path.exists('/sys/devices/virtual/dmi/id/product_name'):
+        if os.path.exists("/sys/devices/virtual/dmi/id/product_name"):
             # Use kernel DMI info, if available
 
             # DMI SPEC -- https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.2.0.pdf
-            FORM_FACTOR = ["Unknown", "Other", "Unknown", "Desktop",
-                           "Low Profile Desktop", "Pizza Box", "Mini Tower", "Tower",
-                           "Portable", "Laptop", "Notebook", "Hand Held", "Docking Station",
-                           "All In One", "Sub Notebook", "Space-saving", "Lunch Box",
-                           "Main Server Chassis", "Expansion Chassis", "Sub Chassis",
-                           "Bus Expansion Chassis", "Peripheral Chassis", "RAID Chassis",
-                           "Rack Mount Chassis", "Sealed-case PC", "Multi-system",
-                           "CompactPCI", "AdvancedTCA", "Blade", "Blade Enclosure",
-                           "Tablet", "Convertible", "Detachable", "IoT Gateway",
-                           "Embedded PC", "Mini PC", "Stick PC"]
+            FORM_FACTOR = [
+                "Unknown",
+                "Other",
+                "Unknown",
+                "Desktop",
+                "Low Profile Desktop",
+                "Pizza Box",
+                "Mini Tower",
+                "Tower",
+                "Portable",
+                "Laptop",
+                "Notebook",
+                "Hand Held",
+                "Docking Station",
+                "All In One",
+                "Sub Notebook",
+                "Space-saving",
+                "Lunch Box",
+                "Main Server Chassis",
+                "Expansion Chassis",
+                "Sub Chassis",
+                "Bus Expansion Chassis",
+                "Peripheral Chassis",
+                "RAID Chassis",
+                "Rack Mount Chassis",
+                "Sealed-case PC",
+                "Multi-system",
+                "CompactPCI",
+                "AdvancedTCA",
+                "Blade",
+                "Blade Enclosure",
+                "Tablet",
+                "Convertible",
+                "Detachable",
+                "IoT Gateway",
+                "Embedded PC",
+                "Mini PC",
+                "Stick PC",
+            ]
 
             DMI_DICT = {
-                'bios_date': '/sys/devices/virtual/dmi/id/bios_date',
-                'bios_vendor': '/sys/devices/virtual/dmi/id/bios_vendor',
-                'bios_version': '/sys/devices/virtual/dmi/id/bios_version',
-                'board_asset_tag': '/sys/devices/virtual/dmi/id/board_asset_tag',
-                'board_name': '/sys/devices/virtual/dmi/id/board_name',
-                'board_serial': '/sys/devices/virtual/dmi/id/board_serial',
-                'board_vendor': '/sys/devices/virtual/dmi/id/board_vendor',
-                'board_version': '/sys/devices/virtual/dmi/id/board_version',
-                'chassis_asset_tag': '/sys/devices/virtual/dmi/id/chassis_asset_tag',
-                'chassis_serial': '/sys/devices/virtual/dmi/id/chassis_serial',
-                'chassis_vendor': '/sys/devices/virtual/dmi/id/chassis_vendor',
-                'chassis_version': '/sys/devices/virtual/dmi/id/chassis_version',
-                'form_factor': '/sys/devices/virtual/dmi/id/chassis_type',
-                'product_name': '/sys/devices/virtual/dmi/id/product_name',
-                'product_serial': '/sys/devices/virtual/dmi/id/product_serial',
-                'product_uuid': '/sys/devices/virtual/dmi/id/product_uuid',
-                'product_version': '/sys/devices/virtual/dmi/id/product_version',
-                'system_vendor': '/sys/devices/virtual/dmi/id/sys_vendor',
+                "bios_date": "/sys/devices/virtual/dmi/id/bios_date",
+                "bios_vendor": "/sys/devices/virtual/dmi/id/bios_vendor",
+                "bios_version": "/sys/devices/virtual/dmi/id/bios_version",
+                "board_asset_tag": "/sys/devices/virtual/dmi/id/board_asset_tag",
+                "board_name": "/sys/devices/virtual/dmi/id/board_name",
+                "board_serial": "/sys/devices/virtual/dmi/id/board_serial",
+                "board_vendor": "/sys/devices/virtual/dmi/id/board_vendor",
+                "board_version": "/sys/devices/virtual/dmi/id/board_version",
+                "chassis_asset_tag": "/sys/devices/virtual/dmi/id/chassis_asset_tag",
+                "chassis_serial": "/sys/devices/virtual/dmi/id/chassis_serial",
+                "chassis_vendor": "/sys/devices/virtual/dmi/id/chassis_vendor",
+                "chassis_version": "/sys/devices/virtual/dmi/id/chassis_version",
+                "form_factor": "/sys/devices/virtual/dmi/id/chassis_type",
+                "product_name": "/sys/devices/virtual/dmi/id/product_name",
+                "product_serial": "/sys/devices/virtual/dmi/id/product_serial",
+                "product_uuid": "/sys/devices/virtual/dmi/id/product_uuid",
+                "product_version": "/sys/devices/virtual/dmi/id/product_version",
+                "system_vendor": "/sys/devices/virtual/dmi/id/sys_vendor",
             }
 
-            for (key, path) in DMI_DICT.items():
+            for key, path in DMI_DICT.items():
                 data = get_file_content(path)
                 if data is not None:
-                    if key == 'form_factor':
+                    if key == "form_factor":
                         try:
-                            dmi_facts['form_factor'] = FORM_FACTOR[int(data)]
+                            dmi_facts["form_factor"] = FORM_FACTOR[int(data)]
                         except IndexError:
-                            dmi_facts['form_factor'] = 'unknown (%s)' % data
+                            dmi_facts["form_factor"] = "unknown (%s)" % data
                     else:
                         dmi_facts[key] = data
                 else:
-                    dmi_facts[key] = 'NA'
+                    dmi_facts[key] = "NA"
 
         else:
             # Fall back to using dmidecode, if available
-            dmi_bin = self.module.get_bin_path('dmidecode')
+            dmi_bin = self.module.get_bin_path("dmidecode")
             DMI_DICT = {
-                'bios_date': 'bios-release-date',
-                'bios_vendor': 'bios-vendor',
-                'bios_version': 'bios-version',
-                'board_asset_tag': 'baseboard-asset-tag',
-                'board_name': 'baseboard-product-name',
-                'board_serial': 'baseboard-serial-number',
-                'board_vendor': 'baseboard-manufacturer',
-                'board_version': 'baseboard-version',
-                'chassis_asset_tag': 'chassis-asset-tag',
-                'chassis_serial': 'chassis-serial-number',
-                'chassis_vendor': 'chassis-manufacturer',
-                'chassis_version': 'chassis-version',
-                'form_factor': 'chassis-type',
-                'product_name': 'system-product-name',
-                'product_serial': 'system-serial-number',
-                'product_uuid': 'system-uuid',
-                'product_version': 'system-version',
-                'system_vendor': 'system-manufacturer',
+                "bios_date": "bios-release-date",
+                "bios_vendor": "bios-vendor",
+                "bios_version": "bios-version",
+                "board_asset_tag": "baseboard-asset-tag",
+                "board_name": "baseboard-product-name",
+                "board_serial": "baseboard-serial-number",
+                "board_vendor": "baseboard-manufacturer",
+                "board_version": "baseboard-version",
+                "chassis_asset_tag": "chassis-asset-tag",
+                "chassis_serial": "chassis-serial-number",
+                "chassis_vendor": "chassis-manufacturer",
+                "chassis_version": "chassis-version",
+                "form_factor": "chassis-type",
+                "product_name": "system-product-name",
+                "product_serial": "system-serial-number",
+                "product_uuid": "system-uuid",
+                "product_version": "system-version",
+                "system_vendor": "system-manufacturer",
             }
-            for (k, v) in DMI_DICT.items():
+            for k, v in DMI_DICT.items():
                 if dmi_bin is not None:
-                    (rc, out, err) = self.module.run_command('%s -s %s' % (dmi_bin, v))
+                    (rc, out, err) = self.module.run_command("%s -s %s" % (dmi_bin, v))
                     if rc == 0:
                         # Strip out commented lines (specific dmidecode output)
-                        thisvalue = ''.join([line for line in out.splitlines() if not line.startswith('#')])
+                        thisvalue = "".join(
+                            [
+                                line
+                                for line in out.splitlines()
+                                if not line.startswith("#")
+                            ]
+                        )
                         try:
                             json.dumps(thisvalue)
                         except UnicodeDecodeError:
@@ -404,9 +467,9 @@ class LinuxHardware(Hardware):
 
                         dmi_facts[k] = thisvalue
                     else:
-                        dmi_facts[k] = 'NA'
+                        dmi_facts[k] = "NA"
                 else:
-                    dmi_facts[k] = 'NA'
+                    dmi_facts[k] = "NA"
 
         return dmi_facts
 
@@ -415,7 +478,15 @@ class LinuxHardware(Hardware):
         # --exclude 2 makes lsblk ignore floppy disks, which are slower to answer than typical timeouts
         # this uses the linux major device number
         # for details see https://www.kernel.org/doc/Documentation/devices.txt
-        args = ['--list', '--noheadings', '--paths', '--output', 'NAME,UUID', '--exclude', '2']
+        args = [
+            "--list",
+            "--noheadings",
+            "--paths",
+            "--output",
+            "NAME,UUID",
+            "--exclude",
+            "2",
+        ]
         cmd = [lsblk_path] + args
         rc, out, err = self.module.run_command(cmd)
         return rc, out, err
@@ -452,13 +523,13 @@ class LinuxHardware(Hardware):
 
     def _udevadm_uuid(self, device):
         # fallback for versions of lsblk <= 2.23 that don't have --paths, see _run_lsblk() above
-        uuid = 'N/A'
+        uuid = "N/A"
 
-        udevadm_path = self.module.get_bin_path('udevadm')
+        udevadm_path = self.module.get_bin_path("udevadm")
         if not udevadm_path:
             return uuid
 
-        cmd = [udevadm_path, 'info', '--query', 'property', '--name', device]
+        cmd = [udevadm_path, "info", "--query", "property", "--name", device]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             return uuid
@@ -469,16 +540,16 @@ class LinuxHardware(Hardware):
         # ID_FS_USAGE=filesystem
         # ID_FS_UUID=57b1a3e7-9019-4747-9809-7ec52bba9179
         # ...
-        m = re.search('ID_FS_UUID=(.*)\n', out)
+        m = re.search("ID_FS_UUID=(.*)\n", out)
         if m:
             uuid = m.group(1)
 
         return uuid
 
     def _run_findmnt(self, findmnt_path):
-        args = ['--list', '--noheadings', '--notruncate']
+        args = ["--list", "--noheadings", "--notruncate"]
         cmd = [findmnt_path] + args
-        rc, out, err = self.module.run_command(cmd, errors='surrogate_then_replace')
+        rc, out, err = self.module.run_command(cmd, errors="surrogate_then_replace")
         return rc, out, err
 
     def _find_bind_mounts(self):
@@ -505,11 +576,11 @@ class LinuxHardware(Hardware):
         return bind_mounts
 
     def _mtab_entries(self):
-        mtab_file = '/etc/mtab'
+        mtab_file = "/etc/mtab"
         if not os.path.exists(mtab_file):
-            mtab_file = '/proc/mounts'
+            mtab_file = "/proc/mounts"
 
-        mtab = get_file_content(mtab_file, '')
+        mtab = get_file_content(mtab_file, "")
         mtab_entries = []
         for line in mtab.splitlines():
             fields = line.split()
@@ -557,24 +628,32 @@ class LinuxHardware(Hardware):
             device, mount, fstype, options = fields[0], fields[1], fields[2], fields[3]
             dump, passno = int(fields[4]), int(fields[5])
 
-            if not device.startswith(('/', '\\')) and ':/' not in device or fstype == 'none':
+            if (
+                not device.startswith(("/", "\\"))
+                and ":/" not in device
+                or fstype == "none"
+            ):
                 continue
 
-            mount_info = {'mount': mount,
-                          'device': device,
-                          'fstype': fstype,
-                          'options': options,
-                          'dump': dump,
-                          'passno': passno}
+            mount_info = {
+                "mount": mount,
+                "device": device,
+                "fstype": fstype,
+                "options": options,
+                "dump": dump,
+                "passno": passno,
+            }
 
             if mount in bind_mounts:
                 # only add if not already there, we might have a plain /etc/mtab
                 if not self.MTAB_BIND_MOUNT_RE.match(options):
-                    mount_info['options'] += ",bind"
+                    mount_info["options"] += ",bind"
 
-            results[mount] = {'info': mount_info,
-                              'extra': pool.apply_async(self.get_mount_info, (mount, device, uuids)),
-                              'timelimit': time.time() + maxtime}
+            results[mount] = {
+                "info": mount_info,
+                "extra": pool.apply_async(self.get_mount_info, (mount, device, uuids)),
+                "timelimit": time.time() + maxtime,
+            }
 
         pool.close()  # done with new workers, start gc
 
@@ -582,39 +661,50 @@ class LinuxHardware(Hardware):
         while results:
             for mount in list(results):
                 done = False
-                res = results[mount]['extra']
+                res = results[mount]["extra"]
                 try:
                     if res.ready():
                         done = True
                         if res.successful():
                             mount_size, uuid = res.get()
                             if mount_size:
-                                results[mount]['info'].update(mount_size)
-                            results[mount]['info']['uuid'] = uuid or 'N/A'
+                                results[mount]["info"].update(mount_size)
+                            results[mount]["info"]["uuid"] = uuid or "N/A"
                         else:
                             # failed, try to find out why, if 'res.successful' we know there are no exceptions
-                            results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
+                            results[mount]["info"]["note"] = (
+                                "Could not get extra information: %s."
+                                % (to_text(res.get()))
+                            )
 
-                    elif time.time() > results[mount]['timelimit']:
+                    elif time.time() > results[mount]["timelimit"]:
                         done = True
-                        self.module.warn("Timeout exceeded when getting mount info for %s" % mount)
-                        results[mount]['info']['note'] = 'Could not get extra information due to timeout'
+                        self.module.warn(
+                            "Timeout exceeded when getting mount info for %s" % mount
+                        )
+                        results[mount]["info"][
+                            "note"
+                        ] = "Could not get extra information due to timeout"
                 except Exception as e:
                     import traceback
+
                     done = True
-                    results[mount]['info'] = 'N/A'
-                    self.module.warn("Error prevented getting extra info for mount %s: [%s] %s." % (mount, type(e), to_text(e)))
+                    results[mount]["info"] = "N/A"
+                    self.module.warn(
+                        "Error prevented getting extra info for mount %s: [%s] %s."
+                        % (mount, type(e), to_text(e))
+                    )
                     self.module.debug(traceback.format_exc())
 
                 if done:
                     # move results outside and make loop only handle pending
-                    mounts.append(results[mount]['info'])
+                    mounts.append(results[mount]["info"])
                     del results[mount]
 
             # avoid cpu churn, sleep between retrying for loop with remaining mounts
             time.sleep(0.1)
 
-        return {'mounts': mounts}
+        return {"mounts": mounts}
 
     def get_device_links(self, link_dir):
         if not os.path.exists(link_dir):
@@ -623,7 +713,9 @@ class LinuxHardware(Hardware):
             retval = collections.defaultdict(set)
             for entry in os.listdir(link_dir):
                 try:
-                    target = os.path.basename(os.readlink(os.path.join(link_dir, entry)))
+                    target = os.path.basename(
+                        os.readlink(os.path.join(link_dir, entry))
+                    )
                     retval[target].add(entry)
                 except OSError:
                     continue
@@ -634,8 +726,8 @@ class LinuxHardware(Hardware):
     def get_all_device_owners(self):
         try:
             retval = collections.defaultdict(set)
-            for path in glob.glob('/sys/block/*/slaves/*'):
-                elements = path.split('/')
+            for path in glob.glob("/sys/block/*/slaves/*"):
+                elements = path.split("/")
                 device = elements[3]
                 target = elements[5]
                 retval[target].add(device)
@@ -645,23 +737,23 @@ class LinuxHardware(Hardware):
 
     def get_all_device_links(self):
         return {
-            'ids': self.get_device_links('/dev/disk/by-id'),
-            'uuids': self.get_device_links('/dev/disk/by-uuid'),
-            'labels': self.get_device_links('/dev/disk/by-label'),
-            'masters': self.get_all_device_owners(),
+            "ids": self.get_device_links("/dev/disk/by-id"),
+            "uuids": self.get_device_links("/dev/disk/by-uuid"),
+            "labels": self.get_device_links("/dev/disk/by-label"),
+            "masters": self.get_all_device_owners(),
         }
 
     def get_holders(self, block_dev_dict, sysdir):
-        block_dev_dict['holders'] = []
+        block_dev_dict["holders"] = []
         if os.path.isdir(sysdir + "/holders"):
             for folder in os.listdir(sysdir + "/holders"):
                 if not folder.startswith("dm-"):
                     continue
                 name = get_file_content(sysdir + "/holders/" + folder + "/dm/name")
                 if name:
-                    block_dev_dict['holders'].append(name)
+                    block_dev_dict["holders"].append(name)
                 else:
-                    block_dev_dict['holders'].append(folder)
+                    block_dev_dict["holders"].append(folder)
 
     def _get_sg_inq_serial(self, sg_inq, block):
         device = "/dev/%s" % (block)
@@ -674,10 +766,12 @@ class LinuxHardware(Hardware):
     def get_device_facts(self):
         device_facts = {}
 
-        device_facts['devices'] = {}
-        lspci = self.module.get_bin_path('lspci')
+        device_facts["devices"] = {}
+        lspci = self.module.get_bin_path("lspci")
         if lspci:
-            rc, pcidata, err = self.module.run_command([lspci, '-D'], errors='surrogate_then_replace')
+            rc, pcidata, err = self.module.run_command(
+                [lspci, "-D"], errors="surrogate_then_replace"
+            )
         else:
             pcidata = None
 
@@ -695,13 +789,15 @@ class LinuxHardware(Hardware):
             for link_name in devs_by_id:
                 if link_name.startswith("wwn-"):
                     try:
-                        wwn_link = os.readlink(os.path.join("/dev/disk/by-id", link_name))
+                        wwn_link = os.readlink(
+                            os.path.join("/dev/disk/by-id", link_name)
+                        )
                     except OSError:
                         continue
                     devs_wwn[os.path.basename(wwn_link)] = link_name[4:]
 
         links = self.get_all_device_links()
-        device_facts['device_links'] = links
+        device_facts["device_links"] = links
 
         for block in block_devs:
             virtual = 1
@@ -722,15 +818,15 @@ class LinuxHardware(Hardware):
                         virtual = 0
                         break
             d = {}
-            d['virtual'] = virtual
-            d['links'] = {}
-            for (link_type, link_values) in iteritems(links):
-                d['links'][link_type] = link_values.get(block, [])
+            d["virtual"] = virtual
+            d["links"] = {}
+            for link_type, link_values in iteritems(links):
+                d["links"][link_type] = link_values.get(block, [])
             diskname = os.path.basename(sysdir)
-            for key in ['vendor', 'model', 'sas_address', 'sas_device_handle']:
+            for key in ["vendor", "model", "sas_address", "sas_device_handle"]:
                 d[key] = get_file_content(sysdir + "/device/" + key)
 
-            sg_inq = self.module.get_bin_path('sg_inq')
+            sg_inq = self.module.get_bin_path("sg_inq")
 
             # we can get NVMe device's serial number from /sys/block/<name>/device/serial
             serial_path = "/sys/block/%s/device/serial" % (block)
@@ -738,21 +834,22 @@ class LinuxHardware(Hardware):
             if sg_inq:
                 serial = self._get_sg_inq_serial(sg_inq, block)
                 if serial:
-                    d['serial'] = serial
+                    d["serial"] = serial
             else:
                 serial = get_file_content(serial_path)
                 if serial:
-                    d['serial'] = serial
+                    d["serial"] = serial
 
-            for key, test in [('removable', '/removable'),
-                              ('support_discard', '/queue/discard_granularity'),
-                              ]:
+            for key, test in [
+                ("removable", "/removable"),
+                ("support_discard", "/queue/discard_granularity"),
+            ]:
                 d[key] = get_file_content(sysdir + test)
 
             if diskname in devs_wwn:
-                d['wwn'] = devs_wwn[diskname]
+                d["wwn"] = devs_wwn[diskname]
 
-            d['partitions'] = {}
+            d["partitions"] = {}
             for folder in os.listdir(sysdir):
                 m = re.search("(" + diskname + r"[p]?\d+)", folder)
                 if m:
@@ -760,39 +857,45 @@ class LinuxHardware(Hardware):
                     partname = m.group(1)
                     part_sysdir = sysdir + "/" + partname
 
-                    part['links'] = {}
-                    for (link_type, link_values) in iteritems(links):
-                        part['links'][link_type] = link_values.get(partname, [])
+                    part["links"] = {}
+                    for link_type, link_values in iteritems(links):
+                        part["links"][link_type] = link_values.get(partname, [])
 
-                    part['start'] = get_file_content(part_sysdir + "/start", 0)
-                    part['sectors'] = get_file_content(part_sysdir + "/size", 0)
+                    part["start"] = get_file_content(part_sysdir + "/start", 0)
+                    part["sectors"] = get_file_content(part_sysdir + "/size", 0)
 
-                    part['sectorsize'] = get_file_content(part_sysdir + "/queue/logical_block_size")
-                    if not part['sectorsize']:
-                        part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size", 512)
-                    part['size'] = bytes_to_human((float(part['sectors']) * 512.0))
-                    part['uuid'] = get_partition_uuid(partname)
+                    part["sectorsize"] = get_file_content(
+                        part_sysdir + "/queue/logical_block_size"
+                    )
+                    if not part["sectorsize"]:
+                        part["sectorsize"] = get_file_content(
+                            part_sysdir + "/queue/hw_sector_size", 512
+                        )
+                    part["size"] = bytes_to_human((float(part["sectors"]) * 512.0))
+                    part["uuid"] = get_partition_uuid(partname)
                     self.get_holders(part, part_sysdir)
 
-                    d['partitions'][partname] = part
+                    d["partitions"][partname] = part
 
-            d['rotational'] = get_file_content(sysdir + "/queue/rotational")
-            d['scheduler_mode'] = ""
+            d["rotational"] = get_file_content(sysdir + "/queue/rotational")
+            d["scheduler_mode"] = ""
             scheduler = get_file_content(sysdir + "/queue/scheduler")
             if scheduler is not None:
                 m = re.match(r".*?(\[(.*)\])", scheduler)
                 if m:
-                    d['scheduler_mode'] = m.group(2)
+                    d["scheduler_mode"] = m.group(2)
 
-            d['sectors'] = get_file_content(sysdir + "/size")
-            if not d['sectors']:
-                d['sectors'] = 0
-            d['sectorsize'] = get_file_content(sysdir + "/queue/logical_block_size")
-            if not d['sectorsize']:
-                d['sectorsize'] = get_file_content(sysdir + "/queue/hw_sector_size", 512)
-            d['size'] = bytes_to_human(float(d['sectors']) * 512.0)
+            d["sectors"] = get_file_content(sysdir + "/size")
+            if not d["sectors"]:
+                d["sectors"] = 0
+            d["sectorsize"] = get_file_content(sysdir + "/queue/logical_block_size")
+            if not d["sectorsize"]:
+                d["sectorsize"] = get_file_content(
+                    sysdir + "/queue/hw_sector_size", 512
+                )
+            d["size"] = bytes_to_human(float(d["sectors"]) * 512.0)
 
-            d['host'] = ""
+            d["host"] = ""
 
             # domains are numbered (0 to ffff), bus (0 to ff), slot (0 to 1f), and function (0 to 7).
             m = re.match(r".+/([a-f0-9]{4}:[a-f0-9]{2}:[0|1][a-f0-9]\.[0-7])/", sysdir)
@@ -801,83 +904,94 @@ class LinuxHardware(Hardware):
                 did = re.escape(pciid)
                 m = re.search("^" + did + r"\s(.*)$", pcidata, re.MULTILINE)
                 if m:
-                    d['host'] = m.group(1)
+                    d["host"] = m.group(1)
 
             self.get_holders(d, sysdir)
 
-            device_facts['devices'][diskname] = d
+            device_facts["devices"][diskname] = d
 
         return device_facts
 
     def get_uptime_facts(self):
         uptime_facts = {}
-        uptime_file_content = get_file_content('/proc/uptime')
+        uptime_file_content = get_file_content("/proc/uptime")
         if uptime_file_content:
-            uptime_seconds_string = uptime_file_content.split(' ')[0]
-            uptime_facts['uptime_seconds'] = int(float(uptime_seconds_string))
+            uptime_seconds_string = uptime_file_content.split(" ")[0]
+            uptime_facts["uptime_seconds"] = int(float(uptime_seconds_string))
 
         return uptime_facts
 
     def _find_mapper_device_name(self, dm_device):
-        dm_prefix = '/dev/dm-'
+        dm_prefix = "/dev/dm-"
         mapper_device = dm_device
         if dm_device.startswith(dm_prefix):
-            dmsetup_cmd = self.module.get_bin_path('dmsetup', True)
-            mapper_prefix = '/dev/mapper/'
-            rc, dm_name, err = self.module.run_command("%s info -C --noheadings -o name %s" % (dmsetup_cmd, dm_device))
+            dmsetup_cmd = self.module.get_bin_path("dmsetup", True)
+            mapper_prefix = "/dev/mapper/"
+            rc, dm_name, err = self.module.run_command(
+                "%s info -C --noheadings -o name %s" % (dmsetup_cmd, dm_device)
+            )
             if rc == 0:
                 mapper_device = mapper_prefix + dm_name.rstrip()
         return mapper_device
 
     def get_lvm_facts(self):
-        """ Get LVM Facts if running as root and lvm utils are available """
+        """Get LVM Facts if running as root and lvm utils are available"""
 
-        lvm_facts = {'lvm': 'N/A'}
+        lvm_facts = {"lvm": "N/A"}
 
-        if os.getuid() == 0 and self.module.get_bin_path('vgs'):
-            lvm_util_options = '--noheadings --nosuffix --units g --separator ,'
+        if os.getuid() == 0 and self.module.get_bin_path("vgs"):
+            lvm_util_options = "--noheadings --nosuffix --units g --separator ,"
 
-            vgs_path = self.module.get_bin_path('vgs')
+            vgs_path = self.module.get_bin_path("vgs")
             # vgs fields: VG #PV #LV #SN Attr VSize VFree
             vgs = {}
             if vgs_path:
-                rc, vg_lines, err = self.module.run_command('%s %s' % (vgs_path, lvm_util_options))
+                rc, vg_lines, err = self.module.run_command(
+                    "%s %s" % (vgs_path, lvm_util_options)
+                )
                 for vg_line in vg_lines.splitlines():
-                    items = vg_line.strip().split(',')
-                    vgs[items[0]] = {'size_g': items[-2],
-                                     'free_g': items[-1],
-                                     'num_lvs': items[2],
-                                     'num_pvs': items[1]}
+                    items = vg_line.strip().split(",")
+                    vgs[items[0]] = {
+                        "size_g": items[-2],
+                        "free_g": items[-1],
+                        "num_lvs": items[2],
+                        "num_pvs": items[1],
+                    }
 
-            lvs_path = self.module.get_bin_path('lvs')
+            lvs_path = self.module.get_bin_path("lvs")
             # lvs fields:
             # LV VG Attr LSize Pool Origin Data% Move Log Copy% Convert
             lvs = {}
             if lvs_path:
-                rc, lv_lines, err = self.module.run_command('%s %s' % (lvs_path, lvm_util_options))
+                rc, lv_lines, err = self.module.run_command(
+                    "%s %s" % (lvs_path, lvm_util_options)
+                )
                 for lv_line in lv_lines.splitlines():
-                    items = lv_line.strip().split(',')
-                    lvs[items[0]] = {'size_g': items[3], 'vg': items[1]}
+                    items = lv_line.strip().split(",")
+                    lvs[items[0]] = {"size_g": items[3], "vg": items[1]}
 
-            pvs_path = self.module.get_bin_path('pvs')
+            pvs_path = self.module.get_bin_path("pvs")
             # pvs fields: PV VG #Fmt #Attr PSize PFree
             pvs = {}
             if pvs_path:
-                rc, pv_lines, err = self.module.run_command('%s %s' % (pvs_path, lvm_util_options))
+                rc, pv_lines, err = self.module.run_command(
+                    "%s %s" % (pvs_path, lvm_util_options)
+                )
                 for pv_line in pv_lines.splitlines():
-                    items = pv_line.strip().split(',')
+                    items = pv_line.strip().split(",")
                     pvs[self._find_mapper_device_name(items[0])] = {
-                        'size_g': items[4],
-                        'free_g': items[5],
-                        'vg': items[1]}
+                        "size_g": items[4],
+                        "free_g": items[5],
+                        "vg": items[1],
+                    }
 
-            lvm_facts['lvm'] = {'lvs': lvs, 'vgs': vgs, 'pvs': pvs}
+            lvm_facts["lvm"] = {"lvs": lvs, "vgs": vgs, "pvs": pvs}
 
         return lvm_facts
 
 
 class LinuxHardwareCollector(HardwareCollector):
-    _platform = 'Linux'
+    _platform = "Linux"
     _fact_class = LinuxHardware
 
-    required_facts = set(['platform'])
+    required_facts = set(["platform"])

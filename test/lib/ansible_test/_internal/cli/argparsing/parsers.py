@@ -1,4 +1,5 @@
 """General purpose composite argument parsing and completion."""
+
 from __future__ import annotations
 
 import abc
@@ -17,9 +18,9 @@ import typing as t
 # The recommended assignment_character list is due to how argcomplete handles continuation characters.
 # see: https://github.com/kislyuk/argcomplete/blob/5a20d6165fbb4d4d58559378919b05964870cc16/argcomplete/__init__.py#L557-L558
 
-PAIR_DELIMITER = ','
-ASSIGNMENT_DELIMITER = '='
-PATH_DELIMITER = '/'
+PAIR_DELIMITER = ","
+ASSIGNMENT_DELIMITER = "="
+PATH_DELIMITER = "/"
 
 
 # This class was originally frozen. However, that causes issues when running under Python 3.11.
@@ -33,7 +34,7 @@ class Completion(Exception):
 class CompletionUnavailable(Completion):
     """Argument completion unavailable."""
 
-    message: str = 'No completions available.'
+    message: str = "No completions available."
 
 
 @dataclasses.dataclass
@@ -64,11 +65,14 @@ class CompletionSuccess(Completion):
     def completions(self) -> list[str]:
         """List of completion values to return to argcomplete."""
         completions = self.matches
-        continuation = '' if self.list_mode else self.continuation
+        continuation = "" if self.list_mode else self.continuation
 
         if not self.preserve:
             # include the existing prefix to avoid rewriting the word undergoing completion
-            completions = [f'{self.consumed}{completion}{continuation}' for completion in completions]
+            completions = [
+                f"{self.consumed}{completion}{continuation}"
+                for completion in completions
+            ]
 
         return completions
 
@@ -100,8 +104,8 @@ class ParserState:
     """State of the composite argument parser."""
 
     mode: ParserMode
-    remainder: str = ''
-    consumed: str = ''
+    remainder: str = ""
+    consumed: str = ""
     boundaries: list[ParserBoundary] = dataclasses.field(default_factory=list)
     namespaces: list[t.Any] = dataclasses.field(default_factory=list)
     parts: list[str] = dataclasses.field(default_factory=list)
@@ -114,9 +118,12 @@ class ParserState:
     def match(self, value: str, choices: list[str]) -> bool:
         """Return True if the given value matches the provided choices, taking into account parsing boundaries, otherwise return False."""
         if self.current_boundary:
-            delimiters, delimiter = self.current_boundary.delimiters, self.current_boundary.match
+            delimiters, delimiter = (
+                self.current_boundary.delimiters,
+                self.current_boundary.match,
+            )
         else:
-            delimiters, delimiter = '', None
+            delimiters, delimiter = "", None
 
         for choice in choices:
             if choice.rstrip(delimiters) == choice:
@@ -125,7 +132,7 @@ class ParserState:
                     return True  # value matched
             else:
                 # choice is delimited
-                if f'{value}{delimiter}' == choice:
+                if f"{value}{delimiter}" == choice:
                     return True  # value and delimiter matched
 
         return False
@@ -135,7 +142,7 @@ class ParserState:
         delimiters = "".join(boundary.delimiters for boundary in self.boundaries)
 
         if delimiters:
-            pattern = '([' + re.escape(delimiters) + '])'
+            pattern = "([" + re.escape(delimiters) + "])"
             regex = re.compile(pattern)
             parts = regex.split(self.remainder, 1)
         else:
@@ -182,7 +189,9 @@ class ParserState:
         self.namespaces.append(namespace)
 
     @contextlib.contextmanager
-    def delimit(self, delimiters: str, required: bool = True) -> c.Iterator[ParserBoundary]:
+    def delimit(
+        self, delimiters: str, required: bool = True
+    ) -> c.Iterator[ParserBoundary]:
         """Context manager for delimiting parsing of input."""
         boundary = ParserBoundary(delimiters=delimiters, required=required)
 
@@ -194,7 +203,9 @@ class ParserState:
             self.boundaries.pop()
 
         if boundary.required and not boundary.match:
-            raise ParserError('required delimiter not found, hit up-level delimiter or end of input instead')
+            raise ParserError(
+                "required delimiter not found, hit up-level delimiter or end of input instead"
+            )
 
 
 @dataclasses.dataclass
@@ -213,7 +224,7 @@ class Parser(metaclass=abc.ABCMeta):
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
-        raise Exception(f'Undocumented parser: {type(self)}')
+        raise Exception(f"Undocumented parser: {type(self)}")
 
 
 class MatchConditions(enum.Flag):
@@ -237,13 +248,17 @@ class DynamicChoicesParser(Parser, metaclass=abc.ABCMeta):
     def get_choices(self, value: str) -> list[str]:
         """Return a list of valid choices based on the given input value."""
 
-    def no_completion_match(self, value: str) -> CompletionUnavailable:  # pylint: disable=unused-argument
+    def no_completion_match(
+        self, value: str
+    ) -> CompletionUnavailable:  # pylint: disable=unused-argument
         """Return an instance of CompletionUnavailable when no match was found for the given value."""
         return CompletionUnavailable()
 
-    def no_choices_available(self, value: str) -> ParserError:  # pylint: disable=unused-argument
+    def no_choices_available(
+        self, value: str
+    ) -> ParserError:  # pylint: disable=unused-argument
         """Return an instance of ParserError when parsing fails and no choices are available."""
-        return ParserError('No choices available.')
+        return ParserError("No choices available.")
 
     def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
@@ -257,7 +272,12 @@ class DynamicChoicesParser(Parser, metaclass=abc.ABCMeta):
             if self.conditions & MatchConditions.ANY and value:
                 return value
 
-            if self.conditions & MatchConditions.NOTHING and not value and state.current_boundary and not state.current_boundary.match:
+            if (
+                self.conditions & MatchConditions.NOTHING
+                and not value
+                and state.current_boundary
+                and not state.current_boundary.match
+            ):
                 return value
 
             if state.mode == ParserMode.PARSE:
@@ -273,7 +293,11 @@ class DynamicChoicesParser(Parser, metaclass=abc.ABCMeta):
         if not matches:
             raise self.no_completion_match(value)
 
-        continuation = state.current_boundary.delimiters if state.current_boundary and state.current_boundary.required else ''
+        continuation = (
+            state.current_boundary.delimiters
+            if state.current_boundary and state.current_boundary.required
+            else ""
+        )
 
         raise CompletionSuccess(
             list_mode=state.mode == ParserMode.LIST,
@@ -286,7 +310,9 @@ class DynamicChoicesParser(Parser, metaclass=abc.ABCMeta):
 class ChoicesParser(DynamicChoicesParser):
     """Composite argument parser which relies on a static list of choices."""
 
-    def __init__(self, choices: list[str], conditions: MatchConditions = MatchConditions.CHOICE) -> None:
+    def __init__(
+        self, choices: list[str], conditions: MatchConditions = MatchConditions.CHOICE
+    ) -> None:
         self.choices = choices
 
         super().__init__(conditions=conditions)
@@ -297,16 +323,22 @@ class ChoicesParser(DynamicChoicesParser):
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
-        return '|'.join(self.choices)
+        return "|".join(self.choices)
 
 
 class EnumValueChoicesParser(ChoicesParser):
     """Composite argument parser which relies on a static list of choices derived from the values of an enum."""
 
-    def __init__(self, enum_type: t.Type[enum.Enum], conditions: MatchConditions = MatchConditions.CHOICE) -> None:
+    def __init__(
+        self,
+        enum_type: t.Type[enum.Enum],
+        conditions: MatchConditions = MatchConditions.CHOICE,
+    ) -> None:
         self.enum_type = enum_type
 
-        super().__init__(choices=[str(item.value) for item in enum_type], conditions=conditions)
+        super().__init__(
+            choices=[str(item.value) for item in enum_type], conditions=conditions
+        )
 
     def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
@@ -317,7 +349,7 @@ class EnumValueChoicesParser(ChoicesParser):
 class IntegerParser(DynamicChoicesParser):
     """Composite argument parser for integers."""
 
-    PATTERN = re.compile('^[1-9][0-9]*$')
+    PATTERN = re.compile("^[1-9][0-9]*$")
 
     def __init__(self, maximum: t.Optional[int] = None) -> None:
         self.maximum = maximum
@@ -349,25 +381,27 @@ class IntegerParser(DynamicChoicesParser):
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
-        return '{integer}'
+        return "{integer}"
 
 
 class BooleanParser(ChoicesParser):
     """Composite argument parser for boolean (yes/no) values."""
 
     def __init__(self) -> None:
-        super().__init__(['yes', 'no'])
+        super().__init__(["yes", "no"])
 
     def parse(self, state: ParserState) -> bool:
         """Parse the input from the given state and return the result."""
         value = super().parse(state)
-        return value == 'yes'
+        return value == "yes"
 
 
 class AnyParser(ChoicesParser):
     """Composite argument parser which accepts any input value."""
 
-    def __init__(self, nothing: bool = False, no_match_message: t.Optional[str] = None) -> None:
+    def __init__(
+        self, nothing: bool = False, no_match_message: t.Optional[str] = None
+    ) -> None:
         self.no_match_message = no_match_message
 
         conditions = MatchConditions.ANY
@@ -395,7 +429,7 @@ class AnyParser(ChoicesParser):
 class RelativePathNameParser(DynamicChoicesParser):
     """Composite argument parser for relative path names."""
 
-    RELATIVE_NAMES = ['.', '..']
+    RELATIVE_NAMES = [".", ".."]
 
     def __init__(self, choices: list[str]) -> None:
         self.choices = choices
@@ -409,7 +443,7 @@ class RelativePathNameParser(DynamicChoicesParser):
         if value in self.RELATIVE_NAMES:
             # complete relative names, but avoid suggesting them unless the current name is relative
             # unfortunately this will be sorted in reverse of what bash presents ("../ ./" instead of "./ ../")
-            choices.extend(f'{item}{PATH_DELIMITER}' for item in self.RELATIVE_NAMES)
+            choices.extend(f"{item}{PATH_DELIMITER}" for item in self.RELATIVE_NAMES)
 
         return choices
 
@@ -423,23 +457,34 @@ class FileParser(Parser):
             path = AnyParser().parse(state)
 
             if not os.path.isfile(path):
-                raise ParserError(f'Not a file: {path}')
+                raise ParserError(f"Not a file: {path}")
         else:
-            path = ''
+            path = ""
 
-            with state.delimit(PATH_DELIMITER, required=False) as boundary:  # type: ParserBoundary
+            with state.delimit(
+                PATH_DELIMITER, required=False
+            ) as boundary:  # type: ParserBoundary
                 while boundary.ready:
-                    directory = path or '.'
+                    directory = path or "."
 
                     try:
-                        with os.scandir(directory) as scan:  # type: c.Iterator[os.DirEntry]
-                            choices = [f'{item.name}{PATH_DELIMITER}' if item.is_dir() else item.name for item in scan]
+                        with os.scandir(
+                            directory
+                        ) as scan:  # type: c.Iterator[os.DirEntry]
+                            choices = [
+                                (
+                                    f"{item.name}{PATH_DELIMITER}"
+                                    if item.is_dir()
+                                    else item.name
+                                )
+                                for item in scan
+                            ]
                     except OSError:
                         choices = []
 
                     if not path:
                         choices.append(PATH_DELIMITER)  # allow absolute paths
-                        choices.append('../')  # suggest relative paths
+                        choices.append("../")  # suggest relative paths
 
                     part = RelativePathNameParser(choices).parse(state)
                     path += f'{part}{boundary.match or ""}'
@@ -452,16 +497,18 @@ class AbsolutePathParser(Parser):
 
     def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
-        path = ''
+        path = ""
 
-        with state.delimit(PATH_DELIMITER, required=False) as boundary:  # type: ParserBoundary
+        with state.delimit(
+            PATH_DELIMITER, required=False
+        ) as boundary:  # type: ParserBoundary
             while boundary.ready:
                 if path:
                     path += AnyParser(nothing=True).parse(state)
                 else:
                     path += ChoicesParser([PATH_DELIMITER]).parse(state)
 
-                path += boundary.match or ''
+                path += boundary.match or ""
 
         return path
 
@@ -476,9 +523,9 @@ class NamespaceParser(Parser, metaclass=abc.ABCMeta):
 
         if current and self.limit_one:
             if state.mode == ParserMode.PARSE:
-                raise ParserError('Option cannot be specified more than once.')
+                raise ParserError("Option cannot be specified more than once.")
 
-            raise CompletionError('Option cannot be specified more than once.')
+            raise CompletionError("Option cannot be specified more than once.")
 
         value = self.get_value(state)
 
@@ -543,7 +590,9 @@ class KeyValueParser(Parser, metaclass=abc.ABCMeta):
         parsers = self.get_parsers(state)
         keys = list(parsers)
 
-        with state.delimit(PAIR_DELIMITER, required=False) as pair:  # type: ParserBoundary
+        with state.delimit(
+            PAIR_DELIMITER, required=False
+        ) as pair:  # type: ParserBoundary
             while pair.ready:
                 with state.delimit(ASSIGNMENT_DELIMITER):
                     key = ChoicesParser(keys).parse(state)
@@ -566,7 +615,9 @@ class PairParser(Parser, metaclass=abc.ABCMeta):
 
         state.set_namespace(namespace)
 
-        with state.delimit(self.delimiter, self.required) as boundary:  # type: ParserBoundary
+        with state.delimit(
+            self.delimiter, self.required
+        ) as boundary:  # type: ParserBoundary
             choice = self.get_left_parser(state).parse(state)
 
         if boundary.match:
@@ -600,7 +651,9 @@ class PairParser(Parser, metaclass=abc.ABCMeta):
 class TypeParser(Parser, metaclass=abc.ABCMeta):
     """Base class for composite argument parsers which parse a type name, a colon and then parse results based on the type given by the type name."""
 
-    def get_parsers(self, state: ParserState) -> dict[str, Parser]:  # pylint: disable=unused-argument
+    def get_parsers(
+        self, state: ParserState
+    ) -> dict[str, Parser]:  # pylint: disable=unused-argument
         """Return a dictionary of type names and type parsers."""
         return self.get_stateless_parsers()
 
@@ -612,7 +665,7 @@ class TypeParser(Parser, metaclass=abc.ABCMeta):
         """Parse the input from the given state and return the result."""
         parsers = self.get_parsers(state)
 
-        with state.delimit(':'):
+        with state.delimit(":"):
             key = ChoicesParser(list(parsers)).parse(state)
 
         value = parsers[key].parse(state)

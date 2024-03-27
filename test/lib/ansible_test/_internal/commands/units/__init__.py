@@ -1,4 +1,5 @@
 """Execute unit tests using pytest."""
+
 from __future__ import annotations
 
 import os
@@ -89,9 +90,9 @@ from ...host_profiles import (
 class TestContext:
     """Contexts that unit tests run in based on the type of content."""
 
-    controller = 'controller'
-    modules = 'modules'
-    module_utils = 'module_utils'
+    controller = "controller"
+    modules = "modules"
+    module_utils = "module_utils"
 
 
 def command_units(args: UnitsConfig) -> None:
@@ -100,7 +101,9 @@ def command_units(args: UnitsConfig) -> None:
 
     changes = get_changes_filter(args)
     require = args.require + changes
-    include = walk_internal_targets(walk_units_targets(), args.include, args.exclude, require)
+    include = walk_internal_targets(
+        walk_units_targets(), args.include, args.exclude, require
+    )
 
     paths = [target.path for target in include]
 
@@ -113,10 +116,20 @@ def command_units(args: UnitsConfig) -> None:
         module_utils_paths = []
     else:
         # normal collections run modules/module_utils unit tests isolated from controller code due to differences in python version requirements
-        module_paths = [path for path in paths if is_subdir(path, data_context().content.unit_module_path)]
-        module_utils_paths = [path for path in paths if is_subdir(path, data_context().content.unit_module_utils_path)]
+        module_paths = [
+            path
+            for path in paths
+            if is_subdir(path, data_context().content.unit_module_path)
+        ]
+        module_utils_paths = [
+            path
+            for path in paths
+            if is_subdir(path, data_context().content.unit_module_utils_path)
+        ]
 
-    controller_paths = sorted(path for path in set(paths) - set(module_paths) - set(module_utils_paths))
+    controller_paths = sorted(
+        path for path in set(paths) - set(module_paths) - set(module_utils_paths)
+    )
 
     remote_paths = module_paths or module_utils_paths
 
@@ -130,17 +143,26 @@ def command_units(args: UnitsConfig) -> None:
         raise AllTargetsSkipped()
 
     targets = t.cast(list[PosixConfig], args.targets)
-    target_versions: dict[str, PosixConfig] = {target.python.version: target for target in targets}
+    target_versions: dict[str, PosixConfig] = {
+        target.python.version: target for target in targets
+    }
     skipped_versions = args.host_settings.skipped_python_versions
     warn_versions = []
 
     # requested python versions that are remote-only and not supported by this collection
-    test_versions = [version for version in target_versions if version in REMOTE_ONLY_PYTHON_VERSIONS and version not in supported_remote_python_versions]
+    test_versions = [
+        version
+        for version in target_versions
+        if version in REMOTE_ONLY_PYTHON_VERSIONS
+        and version not in supported_remote_python_versions
+    ]
 
     if test_versions:
         for version in test_versions:
-            display.warning(f'Skipping unit tests on Python {version} because it is not supported by this collection.'
-                            f' Supported Python versions are: {", ".join(content_config.python_versions)}')
+            display.warning(
+                f"Skipping unit tests on Python {version} because it is not supported by this collection."
+                f' Supported Python versions are: {", ".join(content_config.python_versions)}'
+            )
 
         warn_versions.extend(test_versions)
 
@@ -151,12 +173,18 @@ def command_units(args: UnitsConfig) -> None:
         # all selected unit tests are controller tests
 
         # requested python versions that are remote-only
-        test_versions = [version for version in target_versions if version in REMOTE_ONLY_PYTHON_VERSIONS and version not in warn_versions]
+        test_versions = [
+            version
+            for version in target_versions
+            if version in REMOTE_ONLY_PYTHON_VERSIONS and version not in warn_versions
+        ]
 
         if test_versions:
             for version in test_versions:
-                display.warning(f'Skipping unit tests on Python {version} because it is only supported by module/module_utils unit tests.'
-                                ' No module/module_utils unit tests were selected.')
+                display.warning(
+                    f"Skipping unit tests on Python {version} because it is only supported by module/module_utils unit tests."
+                    " No module/module_utils unit tests were selected."
+                )
 
             warn_versions.extend(test_versions)
 
@@ -167,12 +195,19 @@ def command_units(args: UnitsConfig) -> None:
         # all selected unit tests are remote tests
 
         # requested python versions that are not supported by remote tests for this collection
-        test_versions = [version for version in target_versions if version not in supported_remote_python_versions and version not in warn_versions]
+        test_versions = [
+            version
+            for version in target_versions
+            if version not in supported_remote_python_versions
+            and version not in warn_versions
+        ]
 
         if test_versions:
             for version in test_versions:
-                display.warning(f'Skipping unit tests on Python {version} because it is not supported by module/module_utils unit tests of this collection.'
-                                f' Supported Python versions are: {", ".join(supported_remote_python_versions)}')
+                display.warning(
+                    f"Skipping unit tests on Python {version} because it is not supported by module/module_utils unit tests of this collection."
+                    f' Supported Python versions are: {", ".join(supported_remote_python_versions)}'
+                )
 
             warn_versions.extend(test_versions)
 
@@ -186,7 +221,7 @@ def command_units(args: UnitsConfig) -> None:
 
     test_sets = []
 
-    if args.requirements_mode != 'skip':
+    if args.requirements_mode != "skip":
         configure_pypi_proxy(args, host_state.controller_profile)  # units
 
     for version in SUPPORTED_PYTHON_VERSIONS:
@@ -219,21 +254,39 @@ def command_units(args: UnitsConfig) -> None:
             continue
 
         if version in skipped_versions:
-            display.warning("Skipping unit tests on Python %s because it could not be found." % version)
+            display.warning(
+                "Skipping unit tests on Python %s because it could not be found."
+                % version
+            )
             continue
 
-        target_profiles: dict[str, PosixProfile] = {profile.config.python.version: profile for profile in host_state.targets(PosixProfile)}
+        target_profiles: dict[str, PosixProfile] = {
+            profile.config.python.version: profile
+            for profile in host_state.targets(PosixProfile)
+        }
         target_profile = target_profiles[version]
 
-        final_candidates = [(test_context, target_profile.python, paths, env) for test_context, paths, env in test_candidates]
-        controller = any(test_context == TestContext.controller for test_context, python, paths, env in final_candidates)
+        final_candidates = [
+            (test_context, target_profile.python, paths, env)
+            for test_context, paths, env in test_candidates
+        ]
+        controller = any(
+            test_context == TestContext.controller
+            for test_context, python, paths, env in final_candidates
+        )
 
-        if args.requirements_mode != 'skip':
-            install_requirements(args, target_profile.python, ansible=controller, command=True, controller=False)  # units
+        if args.requirements_mode != "skip":
+            install_requirements(
+                args,
+                target_profile.python,
+                ansible=controller,
+                command=True,
+                controller=False,
+            )  # units
 
         test_sets.extend(final_candidates)
 
-    if args.requirements_mode == 'only':
+    if args.requirements_mode == "only":
         sys.exit()
 
     for test_context, python, paths, env in test_sets:
@@ -247,9 +300,9 @@ def command_units(args: UnitsConfig) -> None:
         #       Collection unit tests may directly import mock, which will be provided by ansible-test when it installs requirements using pip.
         #       Although mock is available for ansible-core unit tests, they should import unittest.mock instead.
         if str_to_version(python.version) < (3, 8):
-            config_name = 'legacy.ini'
+            config_name = "legacy.ini"
         else:
-            config_name = 'default.ini'
+            config_name = "default.ini"
 
         cmd = [
             'pytest',
@@ -265,31 +318,33 @@ def command_units(args: UnitsConfig) -> None:
         ]  # fmt:skip
 
         if not data_context().content.collection:
-            cmd.append('--durations=25')
+            cmd.append("--durations=25")
 
         plugins = []
 
         if args.coverage:
-            plugins.append('ansible_pytest_coverage')
+            plugins.append("ansible_pytest_coverage")
 
         if data_context().content.collection:
-            plugins.append('ansible_pytest_collections')
+            plugins.append("ansible_pytest_collections")
 
-        plugins.append('ansible_forked')
+        plugins.append("ansible_forked")
 
         if plugins:
-            env['PYTHONPATH'] += ':%s' % os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'pytest/plugins')
-            env['PYTEST_PLUGINS'] = ','.join(plugins)
+            env["PYTHONPATH"] += ":%s" % os.path.join(
+                ANSIBLE_TEST_TARGET_ROOT, "pytest/plugins"
+            )
+            env["PYTEST_PLUGINS"] = ",".join(plugins)
 
         if args.collect_only:
-            cmd.append('--collect-only')
+            cmd.append("--collect-only")
 
         if args.verbosity:
-            cmd.append('-' + ('v' * args.verbosity))
+            cmd.append("-" + ("v" * args.verbosity))
 
         cmd.extend(paths)
 
-        display.info('Unit test %s with Python %s' % (test_context, python.version))
+        display.info("Unit test %s with Python %s" % (test_context, python.version))
 
         try:
             cover_python(args, python, cmd, test_context, env, capture=False)
@@ -317,28 +372,42 @@ def get_units_ansible_python_path(args: UnitsConfig, test_context: str) -> str:
     if python_path:
         return python_path
 
-    python_path = create_temp_dir(prefix='ansible-test-')
-    ansible_path = os.path.join(python_path, 'ansible')
-    ansible_test_path = os.path.join(python_path, 'ansible_test')
+    python_path = create_temp_dir(prefix="ansible-test-")
+    ansible_path = os.path.join(python_path, "ansible")
+    ansible_test_path = os.path.join(python_path, "ansible_test")
 
-    write_text_file(os.path.join(ansible_path, '__init__.py'), '', True)
-    os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'module_utils'), os.path.join(ansible_path, 'module_utils'))
+    write_text_file(os.path.join(ansible_path, "__init__.py"), "", True)
+    os.symlink(
+        os.path.join(ANSIBLE_LIB_ROOT, "module_utils"),
+        os.path.join(ansible_path, "module_utils"),
+    )
 
     if data_context().content.collection:
         # built-in runtime configuration for the collection loader
-        make_dirs(os.path.join(ansible_path, 'config'))
-        os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'config', 'ansible_builtin_runtime.yml'), os.path.join(ansible_path, 'config', 'ansible_builtin_runtime.yml'))
+        make_dirs(os.path.join(ansible_path, "config"))
+        os.symlink(
+            os.path.join(ANSIBLE_LIB_ROOT, "config", "ansible_builtin_runtime.yml"),
+            os.path.join(ansible_path, "config", "ansible_builtin_runtime.yml"),
+        )
 
         # current collection loader required by all python versions supported by the controller
-        write_text_file(os.path.join(ansible_path, 'utils', '__init__.py'), '', True)
-        os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'utils', 'collection_loader'), os.path.join(ansible_path, 'utils', 'collection_loader'))
+        write_text_file(os.path.join(ansible_path, "utils", "__init__.py"), "", True)
+        os.symlink(
+            os.path.join(ANSIBLE_LIB_ROOT, "utils", "collection_loader"),
+            os.path.join(ansible_path, "utils", "collection_loader"),
+        )
 
         # legacy collection loader required by all python versions not supported by the controller
-        write_text_file(os.path.join(ansible_test_path, '__init__.py'), '', True)
-        write_text_file(os.path.join(ansible_test_path, '_internal', '__init__.py'), '', True)
+        write_text_file(os.path.join(ansible_test_path, "__init__.py"), "", True)
+        write_text_file(
+            os.path.join(ansible_test_path, "_internal", "__init__.py"), "", True
+        )
     elif test_context == TestContext.modules:
         # only non-collection ansible module tests should have access to ansible built-in modules
-        os.symlink(os.path.join(ANSIBLE_LIB_ROOT, 'modules'), os.path.join(ansible_path, 'modules'))
+        os.symlink(
+            os.path.join(ANSIBLE_LIB_ROOT, "modules"),
+            os.path.join(ansible_path, "modules"),
+        )
 
     cache[test_context] = python_path
 

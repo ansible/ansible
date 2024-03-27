@@ -5,8 +5,12 @@ import json
 
 
 def main():
-    print(json.dumps(dict(changed=False, source='collection_embedded_non_collection_role')))
+    print(
+        json.dumps(
+            dict(changed=False, source="collection_embedded_non_collection_role")
+        )
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

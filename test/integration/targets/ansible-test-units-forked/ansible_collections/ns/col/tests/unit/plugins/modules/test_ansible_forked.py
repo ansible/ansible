@@ -1,4 +1,5 @@
 """Unit tests to verify the functionality of the ansible-forked pytest plugin."""
+
 from __future__ import annotations
 
 
@@ -9,7 +10,9 @@ import sys
 import warnings
 
 
-warnings.warn("This verifies that warnings generated during test collection are reported.")
+warnings.warn(
+    "This verifies that warnings generated during test collection are reported."
+)
 
 
 @pytest.mark.xfail
@@ -29,8 +32,12 @@ def test_exception_xfail():
 
 
 def test_exception():
-    sys.stdout.write("This stdout message should be reported since we're throwing an exception.")
-    sys.stderr.write("This stderr message should be reported since we're throwing an exception.")
+    sys.stdout.write(
+        "This stdout message should be reported since we're throwing an exception."
+    )
+    sys.stderr.write(
+        "This stderr message should be reported since we're throwing an exception."
+    )
     raise Exception("This error is expected and should be visible.")
 
 

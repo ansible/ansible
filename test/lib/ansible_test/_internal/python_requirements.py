@@ -1,4 +1,5 @@
 """Python requirements management"""
+
 from __future__ import annotations
 
 import base64
@@ -54,8 +55,10 @@ from .coverage_util import (
     get_coverage_version,
 )
 
-QUIET_PIP_SCRIPT_PATH = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'quiet_pip.py')
-REQUIREMENTS_SCRIPT_PATH = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'requirements.py')
+QUIET_PIP_SCRIPT_PATH = os.path.join(ANSIBLE_TEST_TARGET_ROOT, "setup", "quiet_pip.py")
+REQUIREMENTS_SCRIPT_PATH = os.path.join(
+    ANSIBLE_TEST_TARGET_ROOT, "setup", "requirements.py"
+)
 
 # Pip Abstraction
 
@@ -64,7 +67,9 @@ class PipUnavailableError(ApplicationError):
     """Exception raised when pip is not available."""
 
     def __init__(self, python: PythonConfig) -> None:
-        super().__init__(f'Python {python.version} at "{python.path}" does not have pip available.')
+        super().__init__(
+            f'Python {python.version} at "{python.path}" does not have pip available.'
+        )
 
 
 @dataclasses.dataclass(frozen=True)
@@ -89,8 +94,9 @@ class PipInstall(PipCommand):
         """Return True if the specified package will be installed, otherwise False."""
         name = name.lower()
 
-        return (any(name in package.lower() for package in self.packages) or
-                any(name in contents.lower() for path, contents in self.requirements))
+        return any(name in package.lower() for package in self.packages) or any(
+            name in contents.lower() for path, contents in self.requirements
+        )
 
 
 @dataclasses.dataclass(frozen=True)
@@ -164,15 +170,20 @@ def install_requirements(
     run_pip(args, python, commands, connection)
 
     # false positive: pylint: disable=no-member
-    if any(isinstance(command, PipInstall) and command.has_package('pyyaml') for command in commands):
+    if any(
+        isinstance(command, PipInstall) and command.has_package("pyyaml")
+        for command in commands
+    ):
         check_pyyaml(python)
 
 
 def collect_bootstrap(python: PythonConfig) -> list[PipCommand]:
     """Return the details necessary to bootstrap pip into an empty virtual environment."""
     infrastructure_packages = get_venv_packages(python)
-    pip_version = infrastructure_packages['pip']
-    packages = [f'{name}=={version}' for name, version in infrastructure_packages.items()]
+    pip_version = infrastructure_packages["pip"]
+    packages = [
+        f"{name}=={version}" for name, version in infrastructure_packages.items()
+    ]
 
     bootstrap = PipBootstrap(
         pip_version=pip_version,
@@ -195,7 +206,14 @@ def collect_requirements(
     commands: list[PipCommand] = []
 
     if coverage:
-        commands.extend(collect_package_install(packages=[f'coverage=={get_coverage_version(python.version).coverage_version}'], constraints=False))
+        commands.extend(
+            collect_package_install(
+                packages=[
+                    f"coverage=={get_coverage_version(python.version).coverage_version}"
+                ],
+                constraints=False,
+            )
+        )
 
     if ansible or command:
         commands.extend(collect_general_install(command, ansible))
@@ -203,13 +221,15 @@ def collect_requirements(
     if sanity:
         commands.extend(collect_sanity_install(sanity))
 
-    if command == 'units':
+    if command == "units":
         commands.extend(collect_units_install())
 
-    if command in ('integration', 'windows-integration', 'network-integration'):
+    if command in ("integration", "windows-integration", "network-integration"):
         commands.extend(collect_integration_install(command, controller))
 
-    if (sanity or minimize) and any(isinstance(command, PipInstall) for command in commands):
+    if (sanity or minimize) and any(
+        isinstance(command, PipInstall) for command in commands
+    ):
         # bootstrap the managed virtual environment, which will have been created without any installed packages
         # sanity tests which install no packages skip this step
         commands = collect_bootstrap(python) + commands
@@ -220,14 +240,18 @@ def collect_requirements(
 
         if not minimize:
             # installed packages may have run-time dependencies on setuptools
-            uninstall_packages.remove('setuptools')
+            uninstall_packages.remove("setuptools")
 
         # hack to allow the package-data sanity test to keep wheel in the venv
-        install_commands = [command for command in commands if isinstance(command, PipInstall)]
-        install_wheel = any(install.has_package('wheel') for install in install_commands)
+        install_commands = [
+            command for command in commands if isinstance(command, PipInstall)
+        ]
+        install_wheel = any(
+            install.has_package("wheel") for install in install_commands
+        )
 
         if install_wheel:
-            uninstall_packages.remove('wheel')
+            uninstall_packages.remove("wheel")
 
         commands.extend(collect_uninstall(packages=uninstall_packages))
 
@@ -247,7 +271,9 @@ def run_pip(
     if isinstance(args, IntegrationConfig):
         # Integration tests can involve two hosts (controller and target).
         # The connection type can be used to disambiguate between the two.
-        context = " (controller)" if isinstance(connection, LocalConnection) else " (target)"
+        context = (
+            " (controller)" if isinstance(connection, LocalConnection) else " (target)"
+        )
     else:
         context = ""
 
@@ -256,7 +282,7 @@ def run_pip(
 
     # The interpreter path is not included below.
     # It can be seen by running ansible-test with increased verbosity (showing all commands executed).
-    display.info(f'Installing requirements for Python {python.version}{context}')
+    display.info(f"Installing requirements for Python {python.version}{context}")
 
     if not args.explain:
         try:
@@ -267,7 +293,7 @@ def run_pip(
             try:
                 connection.run([python.path], data=script, capture=True)
             except SubprocessError as ex:
-                if 'pip is unavailable:' in ex.stdout + ex.stderr:
+                if "pip is unavailable:" in ex.stdout + ex.stderr:
                     raise PipUnavailableError(python) from None
 
             raise
@@ -285,17 +311,19 @@ def collect_general_install(
     constraints_paths: list[tuple[str, str]] = []
 
     if ansible:
-        path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'ansible.txt')
+        path = os.path.join(ANSIBLE_TEST_DATA_ROOT, "requirements", "ansible.txt")
         requirements_paths.append((ANSIBLE_TEST_DATA_ROOT, path))
 
     if command:
-        path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', f'{command}.txt')
+        path = os.path.join(ANSIBLE_TEST_DATA_ROOT, "requirements", f"{command}.txt")
         requirements_paths.append((ANSIBLE_TEST_DATA_ROOT, path))
 
     return collect_install(requirements_paths, constraints_paths)
 
 
-def collect_package_install(packages: list[str], constraints: bool = True) -> list[PipInstall]:
+def collect_package_install(
+    packages: list[str], constraints: bool = True
+) -> list[PipInstall]:
     """Return the details necessary to install the specified packages."""
     return collect_install([], [], packages, constraints=constraints)
 
@@ -305,11 +333,15 @@ def collect_sanity_install(sanity: str) -> list[PipInstall]:
     requirements_paths: list[tuple[str, str]] = []
     constraints_paths: list[tuple[str, str]] = []
 
-    path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', f'sanity.{sanity}.txt')
+    path = os.path.join(ANSIBLE_TEST_DATA_ROOT, "requirements", f"sanity.{sanity}.txt")
     requirements_paths.append((ANSIBLE_TEST_DATA_ROOT, path))
 
     if data_context().content.is_ansible:
-        path = os.path.join(data_context().content.sanity_path, 'code-smell', f'{sanity}.requirements.txt')
+        path = os.path.join(
+            data_context().content.sanity_path,
+            "code-smell",
+            f"{sanity}.requirements.txt",
+        )
         requirements_paths.append((data_context().content.root, path))
 
     return collect_install(requirements_paths, constraints_paths, constraints=False)
@@ -320,10 +352,10 @@ def collect_units_install() -> list[PipInstall]:
     requirements_paths: list[tuple[str, str]] = []
     constraints_paths: list[tuple[str, str]] = []
 
-    path = os.path.join(data_context().content.unit_path, 'requirements.txt')
+    path = os.path.join(data_context().content.unit_path, "requirements.txt")
     requirements_paths.append((data_context().content.root, path))
 
-    path = os.path.join(data_context().content.unit_path, 'constraints.txt')
+    path = os.path.join(data_context().content.unit_path, "constraints.txt")
     constraints_paths.append((data_context().content.root, path))
 
     return collect_install(requirements_paths, constraints_paths)
@@ -337,24 +369,31 @@ def collect_integration_install(command: str, controller: bool) -> list[PipInsta
     # Support for prefixed files was added to ansible-test in ansible-core 2.12 when split controller/target testing was implemented.
     # Previous versions of ansible-test only recognize non-prefixed files.
     # If a prefixed file exists (even if empty), it takes precedence over the non-prefixed file.
-    prefixes = ('controller.' if controller else 'target.', '')
+    prefixes = ("controller." if controller else "target.", "")
 
     for prefix in prefixes:
-        path = os.path.join(data_context().content.integration_path, f'{prefix}requirements.txt')
+        path = os.path.join(
+            data_context().content.integration_path, f"{prefix}requirements.txt"
+        )
 
         if os.path.exists(path):
             requirements_paths.append((data_context().content.root, path))
             break
 
     for prefix in prefixes:
-        path = os.path.join(data_context().content.integration_path, f'{command}.{prefix}requirements.txt')
+        path = os.path.join(
+            data_context().content.integration_path,
+            f"{command}.{prefix}requirements.txt",
+        )
 
         if os.path.exists(path):
             requirements_paths.append((data_context().content.root, path))
             break
 
     for prefix in prefixes:
-        path = os.path.join(data_context().content.integration_path, f'{prefix}constraints.txt')
+        path = os.path.join(
+            data_context().content.integration_path, f"{prefix}constraints.txt"
+        )
 
         if os.path.exists(path):
             constraints_paths.append((data_context().content.root, path))
@@ -374,25 +413,42 @@ def collect_install(
     constraints_paths = list(constraints_paths)
 
     if constraints:
-        constraints_paths.append((ANSIBLE_TEST_DATA_ROOT, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'constraints.txt')))
+        constraints_paths.append(
+            (
+                ANSIBLE_TEST_DATA_ROOT,
+                os.path.join(ANSIBLE_TEST_DATA_ROOT, "requirements", "constraints.txt"),
+            )
+        )
 
-    requirements = [(os.path.relpath(path, root), read_text_file(path)) for root, path in requirements_paths if usable_pip_file(path)]
-    constraints = [(os.path.relpath(path, root), read_text_file(path)) for root, path in constraints_paths if usable_pip_file(path)]
+    requirements = [
+        (os.path.relpath(path, root), read_text_file(path))
+        for root, path in requirements_paths
+        if usable_pip_file(path)
+    ]
+    constraints = [
+        (os.path.relpath(path, root), read_text_file(path))
+        for root, path in constraints_paths
+        if usable_pip_file(path)
+    ]
     packages = packages or []
 
     if requirements or packages:
-        installs = [PipInstall(
-            requirements=requirements,
-            constraints=constraints,
-            packages=packages,
-        )]
+        installs = [
+            PipInstall(
+                requirements=requirements,
+                constraints=constraints,
+                packages=packages,
+            )
+        ]
     else:
         installs = []
 
     return installs
 
 
-def collect_uninstall(packages: list[str], ignore_errors: bool = False) -> list[PipUninstall]:
+def collect_uninstall(
+    packages: list[str], ignore_errors: bool = False
+) -> list[PipUninstall]:
     """Return the details necessary for the specified pip uninstall."""
     uninstall = PipUninstall(
         packages=packages,
@@ -412,15 +468,19 @@ def get_venv_packages(python: PythonConfig) -> dict[str, str]:
     #       See: https://github.com/ansible/base-test-container/blob/main/files/installer.py
 
     default_packages = dict(
-        pip='23.1.2',
-        setuptools='67.7.2',
-        wheel='0.37.1',
+        pip="23.1.2",
+        setuptools="67.7.2",
+        wheel="0.37.1",
     )
 
-    override_packages: dict[str, dict[str, str]] = {
-    }
+    override_packages: dict[str, dict[str, str]] = {}
 
-    packages = {name: version or default_packages[name] for name, version in override_packages.get(python.version, default_packages).items()}
+    packages = {
+        name: version or default_packages[name]
+        for name, version in override_packages.get(
+            python.version, default_packages
+        ).items()
+    }
 
     return packages
 
@@ -450,7 +510,9 @@ def prepare_pip_script(commands: list[PipCommand]) -> str:
     """Generate a Python script to perform the requested pip commands."""
     data = [command.serialize() for command in commands]
 
-    display.info(f'>>> Requirements Commands\n{json.dumps(data, indent=4)}', verbosity=3)
+    display.info(
+        f">>> Requirements Commands\n{json.dumps(data, indent=4)}", verbosity=3
+    )
 
     args = dict(
         script=read_text_file(QUIET_PIP_SCRIPT_PATH),
@@ -463,7 +525,9 @@ def prepare_pip_script(commands: list[PipCommand]) -> str:
     template = read_text_file(path)
     script = template.format(payload=payload)
 
-    display.info(f'>>> Python Script from Template ({path})\n{script.strip()}', verbosity=4)
+    display.info(
+        f">>> Python Script from Template ({path})\n{script.strip()}", verbosity=4
+    )
 
     return script
 

@@ -9,16 +9,17 @@ import pytest
 from ansible.executor.module_common import modify_module
 
 
-FAKE_OLD_MODULE = b'''#!/usr/bin/python
+FAKE_OLD_MODULE = b"""#!/usr/bin/python
 import sys
 print('{"result": "%s"}' % sys.executable)
-'''
+"""
 
 
 @pytest.fixture
 def fake_old_module_open(mocker):
     m = mocker.mock_open(read_data=FAKE_OLD_MODULE)
-    mocker.patch('builtins.open', m)
+    mocker.patch("builtins.open", m)
+
 
 # this test no longer makes sense, since a Python module will always either have interpreter discovery run or
 # an explicit interpreter passed (so we'll never default to the module shebang)
@@ -28,9 +29,9 @@ def fake_old_module_open(mocker):
 
 
 def test_shebang_task_vars(fake_old_module_open, templar):
-    task_vars = {
-        'ansible_python_interpreter': '/usr/bin/python3'
-    }
+    task_vars = {"ansible_python_interpreter": "/usr/bin/python3"}
 
-    (data, style, shebang) = modify_module('fake_module', 'fake_path', {}, templar, task_vars=task_vars)
-    assert shebang == '#!/usr/bin/python3'
+    (data, style, shebang) = modify_module(
+        "fake_module", "fake_path", {}, templar, task_vars=task_vars
+    )
+    assert shebang == "#!/usr/bin/python3"

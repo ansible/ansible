@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: expect
 version_added: '2.0'
@@ -83,9 +83,9 @@ seealso:
 - module: ansible.builtin.script
 - module: ansible.builtin.shell
 author: "Matt Martz (@sivel)"
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Case insensitive password string match
   ansible.builtin.expect:
     command: passwd username
@@ -116,7 +116,7 @@ EXAMPLES = r'''
             - "{{ db_username }}"
         "Database password":
             - "{{ db_password }}"
-'''
+"""
 
 import datetime
 import os
@@ -125,6 +125,7 @@ import traceback
 PEXPECT_IMP_ERR = None
 try:
     import pexpect
+
     HAS_PEXPECT = True
 except ImportError:
     PEXPECT_IMP_ERR = traceback.format_exc()
@@ -136,16 +137,16 @@ from ansible.module_utils.common.validation import check_type_int
 
 
 def response_closure(module, question, responses):
-    resp_gen = (b'%s\n' % to_bytes(r).rstrip(b'\n') for r in responses)
+    resp_gen = (b"%s\n" % to_bytes(r).rstrip(b"\n") for r in responses)
 
     def wrapped(info):
         try:
             return next(resp_gen)
         except StopIteration:
-            module.fail_json(msg="No remaining responses for '%s', "
-                                 "output was '%s'" %
-                                 (question,
-                                  info['child_result_list'][-1]))
+            module.fail_json(
+                msg="No remaining responses for '%s', "
+                "output was '%s'" % (question, info["child_result_list"][-1])
+            )
 
     return wrapped
 
@@ -154,42 +155,43 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             command=dict(required=True),
-            chdir=dict(type='path'),
-            creates=dict(type='path'),
-            removes=dict(type='path'),
-            responses=dict(type='dict', required=True),
-            timeout=dict(type='raw', default=30),
-            echo=dict(type='bool', default=False),
+            chdir=dict(type="path"),
+            creates=dict(type="path"),
+            removes=dict(type="path"),
+            responses=dict(type="dict", required=True),
+            timeout=dict(type="raw", default=30),
+            echo=dict(type="bool", default=False),
         )
     )
 
     if not HAS_PEXPECT:
-        module.fail_json(msg=missing_required_lib("pexpect"),
-                         exception=PEXPECT_IMP_ERR)
+        module.fail_json(msg=missing_required_lib("pexpect"), exception=PEXPECT_IMP_ERR)
 
-    chdir = module.params['chdir']
-    args = module.params['command']
-    creates = module.params['creates']
-    removes = module.params['removes']
-    responses = module.params['responses']
-    timeout = module.params['timeout']
+    chdir = module.params["chdir"]
+    args = module.params["command"]
+    creates = module.params["creates"]
+    removes = module.params["removes"]
+    responses = module.params["responses"]
+    timeout = module.params["timeout"]
     if timeout is not None:
         try:
             timeout = check_type_int(timeout)
         except TypeError as te:
-            module.fail_json(msg=f"argument 'timeout' is of type {type(timeout)} and we were unable to convert to int: {te}")
-    echo = module.params['echo']
+            module.fail_json(
+                msg=f"argument 'timeout' is of type {type(timeout)} and we were unable to convert to int: {te}"
+            )
+    echo = module.params["echo"]
 
     events = dict()
     for key, value in responses.items():
         if isinstance(value, list):
             response = response_closure(module, key, value)
         else:
-            response = b'%s\n' % to_bytes(value).rstrip(b'\n')
+            response = b"%s\n" % to_bytes(value).rstrip(b"\n")
 
         events[to_bytes(key)] = response
 
-    if args.strip() == '':
+    if args.strip() == "":
         module.fail_json(rc=256, msg="no command given")
 
     if chdir:
@@ -205,7 +207,7 @@ def main():
                 cmd=args,
                 stdout="skipped, since %s exists" % creates,
                 changed=False,
-                rc=0
+                rc=0,
             )
 
     if removes:
@@ -217,7 +219,7 @@ def main():
                 cmd=args,
                 stdout="skipped, since %s does not exist" % removes,
                 changed=False,
-                rc=0
+                rc=0,
             )
 
     startd = datetime.datetime.now()
@@ -225,38 +227,54 @@ def main():
     try:
         try:
             # Prefer pexpect.run from pexpect>=4
-            b_out, rc = pexpect.run(args, timeout=timeout, withexitstatus=True,
-                                    events=events, cwd=chdir, echo=echo,
-                                    encoding=None)
+            b_out, rc = pexpect.run(
+                args,
+                timeout=timeout,
+                withexitstatus=True,
+                events=events,
+                cwd=chdir,
+                echo=echo,
+                encoding=None,
+            )
         except TypeError:
             # Use pexpect._run in pexpect>=3.3,<4
             # pexpect.run doesn't support `echo`
             # pexpect.runu doesn't support encoding=None
-            b_out, rc = pexpect._run(args, timeout=timeout, withexitstatus=True,
-                                     events=events, extra_args=None, logfile=None,
-                                     cwd=chdir, env=None, _spawn=pexpect.spawn,
-                                     echo=echo)
+            b_out, rc = pexpect._run(
+                args,
+                timeout=timeout,
+                withexitstatus=True,
+                events=events,
+                extra_args=None,
+                logfile=None,
+                cwd=chdir,
+                env=None,
+                _spawn=pexpect.spawn,
+                echo=echo,
+            )
 
     except (TypeError, AttributeError) as e:
         # This should catch all insufficient versions of pexpect
         # We deem them insufficient for their lack of ability to specify
         # to not echo responses via the run/runu functions, which would
         # potentially leak sensitive information
-        module.fail_json(msg='Insufficient version of pexpect installed '
-                             '(%s), this module requires pexpect>=3.3. '
-                             'Error was %s' % (pexpect.__version__, to_native(e)))
+        module.fail_json(
+            msg="Insufficient version of pexpect installed "
+            "(%s), this module requires pexpect>=3.3. "
+            "Error was %s" % (pexpect.__version__, to_native(e))
+        )
     except pexpect.ExceptionPexpect as e:
-        module.fail_json(msg='%s' % to_native(e), exception=traceback.format_exc())
+        module.fail_json(msg="%s" % to_native(e), exception=traceback.format_exc())
 
     endd = datetime.datetime.now()
     delta = endd - startd
 
     if b_out is None:
-        b_out = b''
+        b_out = b""
 
     result = dict(
         cmd=args,
-        stdout=to_native(b_out).rstrip('\r\n'),
+        stdout=to_native(b_out).rstrip("\r\n"),
         rc=rc,
         start=str(startd),
         end=str(endd),
@@ -265,12 +283,12 @@ def main():
     )
 
     if rc is None:
-        module.fail_json(msg='command exceeded timeout', **result)
+        module.fail_json(msg="command exceeded timeout", **result)
     elif rc != 0:
-        module.fail_json(msg='non-zero return code', **result)
+        module.fail_json(msg="non-zero return code", **result)
 
     module.exit_json(**result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

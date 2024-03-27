@@ -1,4 +1,5 @@
 """Access Ansible Core CI remote services."""
+
 from __future__ import annotations
 
 import abc
@@ -84,7 +85,7 @@ class VmResource(Resource):
 
     def get_label(self) -> str:
         """Return a user-friendly label for this resource."""
-        return f'{self.platform} {self.version} ({self.architecture}) [{self.tag}] @{self.provider}'
+        return f"{self.platform} {self.version} ({self.architecture}) [{self.tag}] @{self.provider}"
 
     @property
     def persist(self) -> bool:
@@ -100,7 +101,7 @@ class CloudResource(Resource):
 
     def as_tuple(self) -> tuple[str, str, str, str]:
         """Return the resource as a tuple of platform, version, architecture and provider."""
-        return self.platform, '', '', self.platform
+        return self.platform, "", "", self.platform
 
     def get_label(self) -> str:
         """Return a user-friendly label for this resource."""
@@ -115,7 +116,7 @@ class CloudResource(Resource):
 class AnsibleCoreCI:
     """Client for Ansible Core CI services."""
 
-    DEFAULT_ENDPOINT = 'https://ansible-core-ci.testing.ansible.com'
+    DEFAULT_ENDPOINT = "https://ansible-core-ci.testing.ansible.com"
 
     def __init__(
         self,
@@ -136,27 +137,30 @@ class AnsibleCoreCI:
         self.ci_provider = get_ci_provider()
         self.label = self.resource.get_label()
 
-        stripped_label = re.sub('[^A-Za-z0-9_.]+', '-', self.label).strip('-')
+        stripped_label = re.sub("[^A-Za-z0-9_.]+", "-", self.label).strip("-")
 
         self.name = f"{stripped_label}-{self.stage}"  # turn the label into something suitable for use as a filename
 
-        self.path = os.path.expanduser(f'~/.ansible/test/instances/{self.name}')
+        self.path = os.path.expanduser(f"~/.ansible/test/instances/{self.name}")
         self.ssh_key = SshKey(args)
 
         if self.resource.persist and load and self._load():
             try:
-                display.info(f'Checking existing {self.label} instance using: {self._uri}', verbosity=1)
+                display.info(
+                    f"Checking existing {self.label} instance using: {self._uri}",
+                    verbosity=1,
+                )
 
                 self.connection = self.get(always_raise_on=[404])
 
-                display.info(f'Loaded existing {self.label} instance.', verbosity=1)
+                display.info(f"Loaded existing {self.label} instance.", verbosity=1)
             except HttpError as ex:
                 if ex.status != 404:
                     raise
 
                 self._clear()
 
-                display.info(f'Cleared stale {self.label} instance.', verbosity=1)
+                display.info(f"Cleared stale {self.label} instance.", verbosity=1)
 
                 self.instance_id = None
                 self.endpoint = None
@@ -185,7 +189,7 @@ class AnsibleCoreCI:
     def start(self) -> t.Optional[dict[str, t.Any]]:
         """Start instance."""
         if self.started:
-            display.info(f'Skipping started {self.label} instance.', verbosity=1)
+            display.info(f"Skipping started {self.label} instance.", verbosity=1)
             return None
 
         return self._start(self.ci_provider.prepare_core_ci_auth())
@@ -193,27 +197,32 @@ class AnsibleCoreCI:
     def stop(self) -> None:
         """Stop instance."""
         if not self.started:
-            display.info(f'Skipping invalid {self.label} instance.', verbosity=1)
+            display.info(f"Skipping invalid {self.label} instance.", verbosity=1)
             return
 
         response = self.client.delete(self._uri)
 
         if response.status_code == 404:
             self._clear()
-            display.info(f'Cleared invalid {self.label} instance.', verbosity=1)
+            display.info(f"Cleared invalid {self.label} instance.", verbosity=1)
             return
 
         if response.status_code == 200:
             self._clear()
-            display.info(f'Stopped running {self.label} instance.', verbosity=1)
+            display.info(f"Stopped running {self.label} instance.", verbosity=1)
             return
 
         raise self._create_http_error(response)
 
-    def get(self, tries: int = 3, sleep: int = 15, always_raise_on: t.Optional[list[int]] = None) -> t.Optional[InstanceConnection]:
+    def get(
+        self,
+        tries: int = 3,
+        sleep: int = 15,
+        always_raise_on: t.Optional[list[int]] = None,
+    ) -> t.Optional[InstanceConnection]:
         """Get instance connection information."""
         if not self.started:
-            display.info(f'Skipping invalid {self.label} instance.', verbosity=1)
+            display.info(f"Skipping invalid {self.label} instance.", verbosity=1)
             return None
 
         if not always_raise_on:
@@ -234,43 +243,43 @@ class AnsibleCoreCI:
             if not tries or response.status_code in always_raise_on:
                 raise error
 
-            display.warning(f'{error}. Trying again after {sleep} seconds.')
+            display.warning(f"{error}. Trying again after {sleep} seconds.")
             time.sleep(sleep)
 
         if self.args.explain:
             self.connection = InstanceConnection(
                 running=True,
-                hostname='cloud.example.com',
+                hostname="cloud.example.com",
                 port=12345,
-                username='root',
-                password='password' if self.platform == 'windows' else None,
+                username="root",
+                password="password" if self.platform == "windows" else None,
             )
         else:
             response_json = response.json()
-            status = response_json['status']
-            con = response_json.get('connection')
+            status = response_json["status"]
+            con = response_json.get("connection")
 
             if con:
                 self.connection = InstanceConnection(
-                    running=status == 'running',
-                    hostname=con['hostname'],
-                    port=int(con['port']),
-                    username=con['username'],
-                    password=con.get('password'),
+                    running=status == "running",
+                    hostname=con["hostname"],
+                    port=int(con["port"]),
+                    username=con["username"],
+                    password=con.get("password"),
                     response_json=response_json,
                 )
             else:
                 self.connection = InstanceConnection(
-                    running=status == 'running',
+                    running=status == "running",
                     response_json=response_json,
                 )
 
         if self.connection.password:
             display.sensitive.add(str(self.connection.password))
 
-        status = 'running' if self.connection.running else 'starting'
+        status = "running" if self.connection.running else "starting"
 
-        display.info(f'The {self.label} instance is {status}.', verbosity=1)
+        display.info(f"The {self.label} instance is {status}.", verbosity=1)
 
         return self.connection
 
@@ -281,15 +290,17 @@ class AnsibleCoreCI:
                 return
             time.sleep(10)
 
-        raise ApplicationError(f'Timeout waiting for {self.label} instance.')
+        raise ApplicationError(f"Timeout waiting for {self.label} instance.")
 
     @property
     def _uri(self) -> str:
-        return f'{self.endpoint}/{self.stage}/{self.provider}/{self.instance_id}'
+        return f"{self.endpoint}/{self.stage}/{self.provider}/{self.instance_id}"
 
     def _start(self, auth) -> dict[str, t.Any]:
         """Start instance."""
-        display.info(f'Initializing new {self.label} instance using: {self._uri}', verbosity=1)
+        display.info(
+            f"Initializing new {self.label} instance using: {self._uri}", verbosity=1
+        )
 
         data = dict(
             config=dict(
@@ -303,7 +314,7 @@ class AnsibleCoreCI:
         data.update(auth=auth)
 
         headers = {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
         }
 
         response = self._start_endpoint(data, headers)
@@ -311,20 +322,24 @@ class AnsibleCoreCI:
         self.started = True
         self._save()
 
-        display.info(f'Started {self.label} instance.', verbosity=1)
+        display.info(f"Started {self.label} instance.", verbosity=1)
 
         if self.args.explain:
             return {}
 
         return response.json()
 
-    def _start_endpoint(self, data: dict[str, t.Any], headers: dict[str, str]) -> HttpResponse:
+    def _start_endpoint(
+        self, data: dict[str, t.Any], headers: dict[str, str]
+    ) -> HttpResponse:
         tries = self.retries
         sleep = 15
 
         while True:
             tries -= 1
-            response = self.client.put(self._uri, data=json.dumps(data), headers=headers)
+            response = self.client.put(
+                self._uri, data=json.dumps(data), headers=headers
+            )
 
             if response.status_code == 200:
                 return response
@@ -337,7 +352,7 @@ class AnsibleCoreCI:
             if not tries:
                 raise error
 
-            display.warning(f'{error}. Trying again after {sleep} seconds.')
+            display.warning(f"{error}. Trying again after {sleep} seconds.")
             time.sleep(sleep)
 
     def _clear(self) -> None:
@@ -355,7 +370,7 @@ class AnsibleCoreCI:
         except FileNotFoundError:
             return False
 
-        if not data.startswith('{'):
+        if not data.startswith("{"):
             return False  # legacy format
 
         config = json.loads(data)
@@ -364,8 +379,8 @@ class AnsibleCoreCI:
 
     def load(self, config: dict[str, str]) -> bool:
         """Load the instance from the provided dictionary."""
-        self.instance_id = str(config['instance_id'])
-        self.endpoint = config['endpoint']
+        self.instance_id = str(config["instance_id"])
+        self.endpoint = config["endpoint"]
         self.started = True
 
         display.sensitive.add(self.instance_id)
@@ -393,22 +408,22 @@ class AnsibleCoreCI:
     def _create_http_error(response: HttpResponse) -> ApplicationError:
         """Return an exception created from the given HTTP response."""
         response_json = response.json()
-        stack_trace = ''
+        stack_trace = ""
 
-        if 'message' in response_json:
-            message = response_json['message']
-        elif 'errorMessage' in response_json:
-            message = response_json['errorMessage'].strip()
-            if 'stackTrace' in response_json:
-                traceback_lines = response_json['stackTrace']
+        if "message" in response_json:
+            message = response_json["message"]
+        elif "errorMessage" in response_json:
+            message = response_json["errorMessage"].strip()
+            if "stackTrace" in response_json:
+                traceback_lines = response_json["stackTrace"]
 
                 # AWS Lambda on Python 2.7 returns a list of tuples
                 # AWS Lambda on Python 3.7 returns a list of strings
                 if traceback_lines and isinstance(traceback_lines[0], list):
                     traceback_lines = traceback.format_list(traceback_lines)
 
-                trace = '\n'.join([x.rstrip() for x in traceback_lines])
-                stack_trace = f'\nTraceback (from remote server):\n{trace}'
+                trace = "\n".join([x.rstrip() for x in traceback_lines])
+                stack_trace = f"\nTraceback (from remote server):\n{trace}"
         else:
             message = str(response_json)
 
@@ -418,8 +433,10 @@ class AnsibleCoreCI:
 class CoreHttpError(HttpError):
     """HTTP response as an error."""
 
-    def __init__(self, status: int, remote_message: str, remote_stack_trace: str) -> None:
-        super().__init__(status, f'{remote_message}{remote_stack_trace}')
+    def __init__(
+        self, status: int, remote_message: str, remote_stack_trace: str
+    ) -> None:
+        super().__init__(status, f"{remote_message}{remote_stack_trace}")
 
         self.remote_message = remote_message
         self.remote_stack_trace = remote_stack_trace
@@ -428,9 +445,9 @@ class CoreHttpError(HttpError):
 class SshKey:
     """Container for SSH key used to connect to remote instances."""
 
-    KEY_TYPE = 'rsa'  # RSA is used to maintain compatibility with paramiko and EC2
-    KEY_NAME = f'id_{KEY_TYPE}'
-    PUB_NAME = f'{KEY_NAME}.pub'
+    KEY_TYPE = "rsa"  # RSA is used to maintain compatibility with paramiko and EC2
+    KEY_NAME = f"id_{KEY_TYPE}"
+    PUB_NAME = f"{KEY_NAME}.pub"
 
     @mutex
     def __init__(self, args: EnvironmentConfig) -> None:
@@ -453,7 +470,9 @@ class SshKey:
             files.append((key, os.path.relpath(key_dst, data_context().content.root)))
             files.append((pub, os.path.relpath(pub_dst, data_context().content.root)))
 
-            permissions[os.path.relpath(key_dst, data_context().content.root)] = stat.S_IRUSR | stat.S_IWUSR
+            permissions[os.path.relpath(key_dst, data_context().content.root)] = (
+                stat.S_IRUSR | stat.S_IWUSR
+            )
 
         data_context().register_payload_callback(ssh_key_callback)
 
@@ -486,7 +505,7 @@ class SshKey:
 
     def get_source_key_pair_paths(self) -> t.Optional[tuple[str, str]]:
         """Return the ansible-test SSH key pair paths for the current user."""
-        base_dir = os.path.expanduser('~/.ansible/test/')
+        base_dir = os.path.expanduser("~/.ansible/test/")
 
         key = os.path.join(base_dir, self.KEY_NAME)
         pub = os.path.join(base_dir, self.PUB_NAME)
@@ -515,14 +534,31 @@ class SshKey:
             make_dirs(os.path.dirname(key))
 
         if not os.path.isfile(key) or not os.path.isfile(pub):
-            run_command(args, ['ssh-keygen', '-m', 'PEM', '-q', '-t', self.KEY_TYPE, '-N', '', '-f', key], capture=True)
+            run_command(
+                args,
+                [
+                    "ssh-keygen",
+                    "-m",
+                    "PEM",
+                    "-q",
+                    "-t",
+                    self.KEY_TYPE,
+                    "-N",
+                    "",
+                    "-f",
+                    key,
+                ],
+                capture=True,
+            )
 
             if args.explain:
                 return key, pub
 
             # newer ssh-keygen PEM output (such as on RHEL 8.1) is not recognized by paramiko
             key_contents = read_text_file(key)
-            key_contents = re.sub(r'(BEGIN|END) PRIVATE KEY', r'\1 RSA PRIVATE KEY', key_contents)
+            key_contents = re.sub(
+                r"(BEGIN|END) PRIVATE KEY", r"\1 RSA PRIVATE KEY", key_contents
+            )
 
             write_text_file(key, key_contents)
 
@@ -550,6 +586,6 @@ class InstanceConnection:
 
     def __str__(self):
         if self.password:
-            return f'{self.hostname}:{self.port} [{self.username}:{self.password}]'
+            return f"{self.hostname}:{self.port} [{self.username}:{self.password}]"
 
-        return f'{self.hostname}:{self.port} [{self.username}]'
+        return f"{self.hostname}:{self.port} [{self.username}]"

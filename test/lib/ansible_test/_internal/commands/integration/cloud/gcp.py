@@ -34,7 +34,7 @@ class GcpCloudProvider(CloudProvider):
 
         if not self._use_static_config():
             display.notice(
-                'static configuration could not be used. are you missing a template file?'
+                "static configuration could not be used. are you missing a template file?"
             )
 
 
@@ -50,7 +50,7 @@ class GcpCloudEnvironment(CloudEnvironment):
             resource_prefix=self.resource_prefix,
         )
 
-        ansible_vars.update(dict(parser.items('default')))
+        ansible_vars.update(dict(parser.items("default")))
 
         return CloudEnvironmentConfig(
             ansible_vars=ansible_vars,

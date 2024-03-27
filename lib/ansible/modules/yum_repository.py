@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: yum_repository
 author: Jiri Tyr (@jtyr)
@@ -355,9 +355,9 @@ notes:
     on disk until you run C(yum clean all). Use a notification handler for this.
   - "The O(ignore:params) parameter was removed in Ansible 2.5 due to circumventing Ansible's parameter
     handling"
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Add repository
   ansible.builtin.yum_repository:
     name: epel
@@ -397,9 +397,9 @@ EXAMPLES = '''
     name: epel
     file: external_repos
     state: absent
-'''
+"""
 
-RETURN = '''
+RETURN = """
 repo:
     description: repository name
     returned: success
@@ -410,7 +410,7 @@ state:
     returned: success
     type: str
     sample: "present"
-'''
+"""
 
 import os
 
@@ -428,54 +428,55 @@ class YumRepo(object):
 
     # List of parameters which will be allowed in the repo file output
     allowed_params = [
-        'async',
-        'bandwidth',
-        'baseurl',
-        'cost',
-        'deltarpm_metadata_percentage',
-        'deltarpm_percentage',
-        'enabled',
-        'enablegroups',
-        'exclude',
-        'failovermethod',
-        'gpgcakey',
-        'gpgcheck',
-        'gpgkey',
-        'module_hotfixes',
-        'http_caching',
-        'include',
-        'includepkgs',
-        'ip_resolve',
-        'keepalive',
-        'keepcache',
-        'metadata_expire',
-        'metadata_expire_filter',
-        'metalink',
-        'mirrorlist',
-        'mirrorlist_expire',
-        'name',
-        'password',
-        'priority',
-        'protect',
-        'proxy',
-        'proxy_password',
-        'proxy_username',
-        'repo_gpgcheck',
-        'retries',
-        's3_enabled',
-        'skip_if_unavailable',
-        'sslcacert',
-        'ssl_check_cert_permissions',
-        'sslclientcert',
-        'sslclientkey',
-        'sslverify',
-        'throttle',
-        'timeout',
-        'ui_repoid_vars',
-        'username']
+        "async",
+        "bandwidth",
+        "baseurl",
+        "cost",
+        "deltarpm_metadata_percentage",
+        "deltarpm_percentage",
+        "enabled",
+        "enablegroups",
+        "exclude",
+        "failovermethod",
+        "gpgcakey",
+        "gpgcheck",
+        "gpgkey",
+        "module_hotfixes",
+        "http_caching",
+        "include",
+        "includepkgs",
+        "ip_resolve",
+        "keepalive",
+        "keepcache",
+        "metadata_expire",
+        "metadata_expire_filter",
+        "metalink",
+        "mirrorlist",
+        "mirrorlist_expire",
+        "name",
+        "password",
+        "priority",
+        "protect",
+        "proxy",
+        "proxy_password",
+        "proxy_username",
+        "repo_gpgcheck",
+        "retries",
+        "s3_enabled",
+        "skip_if_unavailable",
+        "sslcacert",
+        "ssl_check_cert_permissions",
+        "sslclientcert",
+        "sslclientkey",
+        "sslverify",
+        "throttle",
+        "timeout",
+        "ui_repoid_vars",
+        "username",
+    ]
 
     # List of parameters which can be a list
-    list_params = ['exclude', 'includepkgs']
+    list_params = ["exclude", "includepkgs"]
 
     def __init__(self, module):
         # To be able to use fail_json
@@ -483,21 +484,19 @@ class YumRepo(object):
         # Shortcut for the params
         self.params = self.module.params
         # Section is always the repoid
-        self.section = self.params['repoid']
+        self.section = self.params["repoid"]
 
         # Check if repo directory exists
-        repos_dir = self.params['reposdir']
+        repos_dir = self.params["reposdir"]
         if not os.path.isdir(repos_dir):
-            self.module.fail_json(
-                msg="Repo directory '%s' does not exist." % repos_dir)
+            self.module.fail_json(msg="Repo directory '%s' does not exist." % repos_dir)
 
         # Set dest; also used to set dest parameter for the FS attributes
-        self.params['dest'] = os.path.join(
-            repos_dir, "%s.repo" % self.params['file'])
+        self.params["dest"] = os.path.join(repos_dir, "%s.repo" % self.params["file"])
 
         # Read the repo file if it exists
-        if os.path.isfile(self.params['dest']):
-            self.repofile.read(self.params['dest'])
+        if os.path.isfile(self.params["dest"]):
+            self.repofile.read(self.params["dest"])
 
     def add(self):
         # Remove already existing repo and create a new one
@@ -510,27 +509,31 @@ class YumRepo(object):
         # Baseurl/mirrorlist is not required because for removal we need only
         # the repo name. This is why we check if the baseurl/mirrorlist is
         # defined.
-        req_params = (self.params['baseurl'], self.params['metalink'], self.params['mirrorlist'])
+        req_params = (
+            self.params["baseurl"],
+            self.params["metalink"],
+            self.params["mirrorlist"],
+        )
         if req_params == (None, None, None):
             self.module.fail_json(
                 msg="Parameter 'baseurl', 'metalink' or 'mirrorlist' is required for "
-                    "adding a new repo.")
+                "adding a new repo."
+            )
 
         # Set options
         for key, value in sorted(self.params.items()):
             if key in self.list_params and isinstance(value, list):
                 # Join items into one string for specific parameters
-                value = ' '.join(value)
+                value = " ".join(value)
             elif isinstance(value, bool):
                 # Convert boolean value to integer
                 value = int(value)
 
             # Set the value only if it was defined (default is None)
             if value is not None and key in self.allowed_params:
-                if key == 'keepcache':
+                if key == "keepcache":
                     self.module.deprecate(
-                        "'keepcache' parameter is deprecated.",
-                        version='2.20'
+                        "'keepcache' parameter is deprecated.", version="2.20"
                     )
                 self.repofile.set(self.section, key, value)
 
@@ -538,22 +541,22 @@ class YumRepo(object):
         if len(self.repofile.sections()):
             # Write data into the file
             try:
-                with open(self.params['dest'], 'w') as fd:
+                with open(self.params["dest"], "w") as fd:
                     self.repofile.write(fd)
             except IOError as e:
                 self.module.fail_json(
-                    msg="Problems handling file %s." % self.params['dest'],
-                    details=to_native(e))
+                    msg="Problems handling file %s." % self.params["dest"],
+                    details=to_native(e),
+                )
         else:
             # Remove the file if there are not repos
             try:
-                os.remove(self.params['dest'])
+                os.remove(self.params["dest"])
             except OSError as e:
                 self.module.fail_json(
-                    msg=(
-                        "Cannot remove empty repo file %s." %
-                        self.params['dest']),
-                    details=to_native(e))
+                    msg=("Cannot remove empty repo file %s." % self.params["dest"]),
+                    details=to_native(e),
+                )
 
     def remove(self):
         # Remove section if exists
@@ -579,61 +582,58 @@ def main():
     # Module settings
     argument_spec = dict(
         bandwidth=dict(),
-        baseurl=dict(type='list', elements='str'),
+        baseurl=dict(type="list", elements="str"),
         cost=dict(),
         deltarpm_metadata_percentage=dict(),
         deltarpm_percentage=dict(),
         description=dict(),
-        enabled=dict(type='bool'),
-        enablegroups=dict(type='bool'),
-        exclude=dict(type='list', elements='str'),
-        failovermethod=dict(choices=['roundrobin', 'priority']),
+        enabled=dict(type="bool"),
+        enablegroups=dict(type="bool"),
+        exclude=dict(type="list", elements="str"),
+        failovermethod=dict(choices=["roundrobin", "priority"]),
         file=dict(),
         gpgcakey=dict(no_log=False),
-        gpgcheck=dict(type='bool'),
-        gpgkey=dict(type='list', elements='str', no_log=False),
-        module_hotfixes=dict(type='bool'),
-        http_caching=dict(choices=['all', 'packages', 'none']),
+        gpgcheck=dict(type="bool"),
+        gpgkey=dict(type="list", elements="str", no_log=False),
+        module_hotfixes=dict(type="bool"),
+        http_caching=dict(choices=["all", "packages", "none"]),
         include=dict(),
-        includepkgs=dict(type='list', elements='str'),
-        ip_resolve=dict(choices=['4', '6', 'IPv4', 'IPv6', 'whatever']),
-        keepalive=dict(type='bool'),
-        keepcache=dict(choices=['0', '1']),
+        includepkgs=dict(type="list", elements="str"),
+        ip_resolve=dict(choices=["4", "6", "IPv4", "IPv6", "whatever"]),
+        keepalive=dict(type="bool"),
+        keepcache=dict(choices=["0", "1"]),
         metadata_expire=dict(),
         metadata_expire_filter=dict(
-            choices=[
-                'never',
-                'read-only:past',
-                'read-only:present',
-                'read-only:future']),
+            choices=["never", "read-only:past", "read-only:present", "read-only:future"]
+        ),
         metalink=dict(),
         mirrorlist=dict(),
         mirrorlist_expire=dict(),
         name=dict(required=True),
         password=dict(no_log=True),
         priority=dict(),
-        protect=dict(type='bool'),
+        protect=dict(type="bool"),
         proxy=dict(),
         proxy_password=dict(no_log=True),
         proxy_username=dict(),
-        repo_gpgcheck=dict(type='bool'),
-        reposdir=dict(default='/etc/yum.repos.d', type='path'),
+        repo_gpgcheck=dict(type="bool"),
+        reposdir=dict(default="/etc/yum.repos.d", type="path"),
         retries=dict(),
-        s3_enabled=dict(type='bool'),
-        skip_if_unavailable=dict(type='bool'),
-        sslcacert=dict(aliases=['ca_cert']),
-        ssl_check_cert_permissions=dict(type='bool'),
-        sslclientcert=dict(aliases=['client_cert']),
-        sslclientkey=dict(aliases=['client_key'], no_log=False),
-        sslverify=dict(type='bool', aliases=['validate_certs']),
-        state=dict(choices=['present', 'absent'], default='present'),
+        s3_enabled=dict(type="bool"),
+        skip_if_unavailable=dict(type="bool"),
+        sslcacert=dict(aliases=["ca_cert"]),
+        ssl_check_cert_permissions=dict(type="bool"),
+        sslclientcert=dict(aliases=["client_cert"]),
+        sslclientkey=dict(aliases=["client_key"], no_log=False),
+        sslverify=dict(type="bool", aliases=["validate_certs"]),
+        state=dict(choices=["present", "absent"], default="present"),
         throttle=dict(),
         timeout=dict(),
         ui_repoid_vars=dict(),
         username=dict(),
     )
 
-    argument_spec['async'] = dict(type='bool')
+    argument_spec["async"] = dict(type="bool")
 
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -641,66 +641,65 @@ def main():
         supports_check_mode=True,
     )
 
-    name = module.params['name']
-    state = module.params['state']
+    name = module.params["name"]
+    state = module.params["state"]
 
     # Check if required parameters are present
-    if state == 'present':
+    if state == "present":
         if (
-                module.params['baseurl'] is None and
-                module.params['metalink'] is None and
-                module.params['mirrorlist'] is None):
+            module.params["baseurl"] is None
+            and module.params["metalink"] is None
+            and module.params["mirrorlist"] is None
+        ):
             module.fail_json(
-                msg="Parameter 'baseurl', 'metalink' or 'mirrorlist' is required.")
-        if module.params['description'] is None:
-            module.fail_json(
-                msg="Parameter 'description' is required.")
+                msg="Parameter 'baseurl', 'metalink' or 'mirrorlist' is required."
+            )
+        if module.params["description"] is None:
+            module.fail_json(msg="Parameter 'description' is required.")
 
     # Rename "name" and "description" to ensure correct key sorting
-    module.params['repoid'] = module.params['name']
-    module.params['name'] = module.params['description']
-    del module.params['description']
+    module.params["repoid"] = module.params["name"]
+    module.params["name"] = module.params["description"]
+    del module.params["description"]
 
     # Change list type to string for baseurl and gpgkey
-    for list_param in ['baseurl', 'gpgkey']:
-        if (
-                list_param in module.params and
-                module.params[list_param] is not None):
+    for list_param in ["baseurl", "gpgkey"]:
+        if list_param in module.params and module.params[list_param] is not None:
             module.params[list_param] = "\n".join(module.params[list_param])
 
     # Define repo file name if it doesn't exist
-    if module.params['file'] is None:
-        module.params['file'] = module.params['repoid']
+    if module.params["file"] is None:
+        module.params["file"] = module.params["repoid"]
 
     # Instantiate the YumRepo object
     yumrepo = YumRepo(module)
 
     # Get repo status before change
     diff = {
-        'before_header': yumrepo.params['dest'],
-        'before': yumrepo.dump(),
-        'after_header': yumrepo.params['dest'],
-        'after': ''
+        "before_header": yumrepo.params["dest"],
+        "before": yumrepo.dump(),
+        "after_header": yumrepo.params["dest"],
+        "after": "",
     }
 
     # Perform action depending on the state
-    if state == 'present':
+    if state == "present":
         yumrepo.add()
-    elif state == 'absent':
+    elif state == "absent":
         yumrepo.remove()
 
     # Get repo status after change
-    diff['after'] = yumrepo.dump()
+    diff["after"] = yumrepo.dump()
 
     # Compare repo states
-    changed = diff['before'] != diff['after']
+    changed = diff["before"] != diff["after"]
 
     # Save the file only if not in check mode and if there was a change
     if not module.check_mode and changed:
         yumrepo.save()
 
     # Change file attributes if needed
-    if os.path.isfile(module.params['dest']):
+    if os.path.isfile(module.params["dest"]):
         file_args = module.load_file_common_arguments(module.params)
         changed = module.set_fs_attributes_if_different(file_args, changed)
 
@@ -708,5 +707,5 @@ def main():
     module.exit_json(changed=changed, repo=name, state=state, diff=diff)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

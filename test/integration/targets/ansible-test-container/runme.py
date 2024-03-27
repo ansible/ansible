@@ -22,10 +22,10 @@ import sys
 import time
 import typing as t
 
-UNPRIVILEGED_USER_NAME = 'ansible-test'
-CGROUP_ROOT = pathlib.Path('/sys/fs/cgroup')
-CGROUP_SYSTEMD = CGROUP_ROOT / 'systemd'
-LOG_PATH = pathlib.Path('/tmp/results')
+UNPRIVILEGED_USER_NAME = "ansible-test"
+CGROUP_ROOT = pathlib.Path("/sys/fs/cgroup")
+CGROUP_SYSTEMD = CGROUP_ROOT / "systemd"
+LOG_PATH = pathlib.Path("/tmp/results")
 
 # The value of /proc/*/loginuid when it is not set.
 # It is a reserved UID, which is the maximum 32-bit unsigned integer value.
@@ -35,7 +35,7 @@ LOGINUID_NOT_SET = 4294967295
 UID = os.getuid()
 
 try:
-    LOGINUID = int(pathlib.Path('/proc/self/loginuid').read_text())
+    LOGINUID = int(pathlib.Path("/proc/self/loginuid").read_text())
     LOGINUID_MISMATCH = LOGINUID != LOGINUID_NOT_SET and LOGINUID != UID
 except FileNotFoundError:
     LOGINUID = None
@@ -44,35 +44,43 @@ except FileNotFoundError:
 
 def main() -> None:
     """Main program entry point."""
-    display.section('Startup check')
+    display.section("Startup check")
 
     try:
-        bootstrap_type = pathlib.Path('/etc/ansible-test.bootstrap').read_text().strip()
+        bootstrap_type = pathlib.Path("/etc/ansible-test.bootstrap").read_text().strip()
     except FileNotFoundError:
-        bootstrap_type = 'undefined'
+        bootstrap_type = "undefined"
 
-    display.info(f'Bootstrap type: {bootstrap_type}')
+    display.info(f"Bootstrap type: {bootstrap_type}")
 
-    if bootstrap_type != 'remote':
-        display.warning('Skipping destructive test on system which is not an ansible-test remote provisioned instance.')
+    if bootstrap_type != "remote":
+        display.warning(
+            "Skipping destructive test on system which is not an ansible-test remote provisioned instance."
+        )
         return
 
-    display.info(f'UID: {UID} / {LOGINUID}')
+    display.info(f"UID: {UID} / {LOGINUID}")
 
     if UID != 0:
-        raise Exception('This test must be run as root.')
+        raise Exception("This test must be run as root.")
 
     if not LOGINUID_MISMATCH:
         if LOGINUID is None:
-            display.warning('Tests involving loginuid mismatch will be skipped on this host since it does not have audit support.')
+            display.warning(
+                "Tests involving loginuid mismatch will be skipped on this host since it does not have audit support."
+            )
         elif LOGINUID == LOGINUID_NOT_SET:
-            display.warning('Tests involving loginuid mismatch will be skipped on this host since it is not set.')
+            display.warning(
+                "Tests involving loginuid mismatch will be skipped on this host since it is not set."
+            )
         elif LOGINUID == 0:
-            raise Exception('Use sudo, su, etc. as a non-root user to become root before running this test.')
+            raise Exception(
+                "Use sudo, su, etc. as a non-root user to become root before running this test."
+            )
         else:
             raise Exception()
 
-    display.section(f'Bootstrapping {os_release}')
+    display.section(f"Bootstrapping {os_release}")
 
     bootstrapper = Bootstrapper.init()
     bootstrapper.run()
@@ -89,15 +97,15 @@ def main() -> None:
     results = [run_test(scenario) for scenario in scenarios]
     error_total = 0
 
-    for name in sorted(result_dir.glob('*.log')):
+    for name in sorted(result_dir.glob("*.log")):
         lines = name.read_text().strip().splitlines()
-        error_count = len([line for line in lines if line.startswith('FAIL: ')])
+        error_count = len([line for line in lines if line.startswith("FAIL: ")])
         error_total += error_count
 
-        display.section(f'Log ({error_count=}/{len(lines)}): {name.name}')
+        display.section(f"Log ({error_count=}/{len(lines)}): {name.name}")
 
         for line in lines:
-            if line.startswith('FAIL: '):
+            if line.startswith("FAIL: "):
                 display.show(line, display.RED)
             else:
                 display.show(line)
@@ -105,24 +113,28 @@ def main() -> None:
     error_count = len([result for result in results if result.message])
     error_total += error_count
 
-    duration = datetime.timedelta(seconds=int(sum(result.duration.total_seconds() for result in results)))
+    duration = datetime.timedelta(
+        seconds=int(sum(result.duration.total_seconds() for result in results))
+    )
 
-    display.section(f'Test Results ({error_count=}/{len(results)}) [{duration}]')
+    display.section(f"Test Results ({error_count=}/{len(results)}) [{duration}]")
 
     for result in results:
-        notes = f' <cleanup: {", ".join(result.cleanup)}>' if result.cleanup else ''
+        notes = f' <cleanup: {", ".join(result.cleanup)}>' if result.cleanup else ""
 
         if result.cgroup_dirs:
-            notes += f' <cgroup_dirs: {len(result.cgroup_dirs)}>'
+            notes += f" <cgroup_dirs: {len(result.cgroup_dirs)}>"
 
-        notes += f' [{result.duration}]'
+        notes += f" [{result.duration}]"
 
         if result.message:
-            display.show(f'FAIL: {result.scenario} {result.message}{notes}', display.RED)
+            display.show(
+                f"FAIL: {result.scenario} {result.message}{notes}", display.RED
+            )
         elif result.duration.total_seconds() >= 90:
-            display.show(f'SLOW: {result.scenario}{notes}', display.YELLOW)
+            display.show(f"SLOW: {result.scenario}{notes}", display.YELLOW)
         else:
-            display.show(f'PASS: {result.scenario}{notes}')
+            display.show(f"PASS: {result.scenario}{notes}")
 
     if error_total:
         sys.exit(1)
@@ -130,10 +142,21 @@ def main() -> None:
 
 def get_container_completion_entries() -> dict[str, dict[str, str]]:
     """Parse and return the ansible-test container completion entries."""
-    completion_lines = pathlib.Path(os.environ['PYTHONPATH'], '../test/lib/ansible_test/_data/completion/docker.txt').read_text().splitlines()
+    completion_lines = (
+        pathlib.Path(
+            os.environ["PYTHONPATH"],
+            "../test/lib/ansible_test/_data/completion/docker.txt",
+        )
+        .read_text()
+        .splitlines()
+    )
 
     # TODO: consider including testing for the collection default image
-    entries = {name: value for name, value in (parse_completion_entry(line) for line in completion_lines) if name != 'default'}
+    entries = {
+        name: value
+        for name, value in (parse_completion_entry(line) for line in completion_lines)
+        if name != "default"
+    }
 
     return entries
 
@@ -141,11 +164,13 @@ def get_container_completion_entries() -> dict[str, dict[str, str]]:
 def get_test_scenarios() -> list[TestScenario]:
     """Generate and return a list of test scenarios."""
 
-    supported_engines = ('docker', 'podman')
+    supported_engines = ("docker", "podman")
     available_engines = [engine for engine in supported_engines if shutil.which(engine)]
 
     if not available_engines:
-        raise ApplicationError(f'No supported container engines found: {", ".join(supported_engines)}')
+        raise ApplicationError(
+            f'No supported container engines found: {", ".join(supported_engines)}'
+        )
 
     entries = get_container_completion_entries()
 
@@ -154,10 +179,10 @@ def get_test_scenarios() -> list[TestScenario]:
     scenarios: list[TestScenario] = []
 
     for container_name, settings in entries.items():
-        image = settings['image']
-        cgroup = settings.get('cgroup', 'v1-v2')
+        image = settings["image"]
+        cgroup = settings.get("cgroup", "v1-v2")
 
-        if container_name == 'centos6' and os_release.id == 'alpine':
+        if container_name == "centos6" and os_release.id == "alpine":
             # Alpine kernels do not emulate vsyscall by default, which causes the centos6 container to fail during init.
             # See: https://unix.stackexchange.com/questions/478387/running-a-centos-docker-image-on-arch-linux-exits-with-code-139
             # Other distributions enable settings which trap vsyscall by default.
@@ -167,18 +192,24 @@ def get_test_scenarios() -> list[TestScenario]:
 
         for engine in available_engines:
             # TODO: figure out how to get tests passing using docker without disabling selinux
-            disable_selinux = os_release.id == 'fedora' and engine == 'docker' and cgroup != 'none'
-            debug_systemd = cgroup != 'none'
+            disable_selinux = (
+                os_release.id == "fedora" and engine == "docker" and cgroup != "none"
+            )
+            debug_systemd = cgroup != "none"
 
             # The sleep+pkill used to support the cgroup probe causes problems with the centos6 container.
             # It results in sshd connections being refused or reset for many, but not all, container instances.
             # The underlying cause of this issue is unknown.
-            probe_cgroups = container_name != 'centos6'
+            probe_cgroups = container_name != "centos6"
 
             # The default RHEL 9 crypto policy prevents use of SHA-1.
             # This results in SSH errors with centos6 containers: ssh_dispatch_run_fatal: Connection to 1.2.3.4 port 22: error in libcrypto
             # See: https://access.redhat.com/solutions/6816771
-            enable_sha1 = os_release.id == 'rhel' and os_release.version_id.startswith('9.') and container_name == 'centos6'
+            enable_sha1 = (
+                os_release.id == "rhel"
+                and os_release.version_id.startswith("9.")
+                and container_name == "centos6"
+            )
 
             cgroup_version = get_docker_info(engine).cgroup_version
 
@@ -187,30 +218,38 @@ def get_test_scenarios() -> list[TestScenario]:
                 UserScenario(ssh=unprivileged_user),
             ]
 
-            if engine == 'podman':
+            if engine == "podman":
                 user_scenarios.append(UserScenario(ssh=ROOT_USER))
 
                 # TODO: test podman remote on Alpine and Ubuntu hosts
                 # TODO: combine remote with ssh using different unprivileged users
-                if os_release.id not in ('alpine', 'ubuntu'):
+                if os_release.id not in ("alpine", "ubuntu"):
                     user_scenarios.append(UserScenario(remote=unprivileged_user))
 
                 if LOGINUID_MISMATCH:
                     user_scenarios.append(UserScenario())
 
             for user_scenario in user_scenarios:
-                expose_cgroup_version: int | None = None  # by default the host is assumed to provide sufficient cgroup support for the container and scenario
+                expose_cgroup_version: int | None = (
+                    None  # by default the host is assumed to provide sufficient cgroup support for the container and scenario
+                )
 
-                if cgroup == 'v1-only' and cgroup_version != 1:
+                if cgroup == "v1-only" and cgroup_version != 1:
                     expose_cgroup_version = 1  # the container requires cgroup v1 support and the host does not use cgroup v1
-                elif cgroup != 'none' and not have_systemd():
+                elif cgroup != "none" and not have_systemd():
                     # the container requires cgroup support and the host does not use systemd
                     if cgroup_version == 1:
                         expose_cgroup_version = 1  # cgroup v1 mount required
-                    elif cgroup_version == 2 and engine == 'podman' and user_scenario.actual != ROOT_USER:
+                    elif (
+                        cgroup_version == 2
+                        and engine == "podman"
+                        and user_scenario.actual != ROOT_USER
+                    ):
                         # Running a systemd container on a non-systemd host with cgroup v2 fails for rootless podman.
                         # It may be possible to support this scenario, but the necessary configuration to do so is unknown.
-                        display.warning(f'Skipping testing of {container_name!r} with rootless podman because the host uses cgroup v2 without systemd.')
+                        display.warning(
+                            f"Skipping testing of {container_name!r} with rootless podman because the host uses cgroup v2 without systemd."
+                        )
                         continue
 
                 scenarios.append(
@@ -232,22 +271,29 @@ def get_test_scenarios() -> list[TestScenario]:
 
 def run_test(scenario: TestScenario) -> TestResult:
     """Run a test scenario and return the test results."""
-    display.section(f'Testing {scenario} Started')
+    display.section(f"Testing {scenario} Started")
 
     start = time.monotonic()
 
-    integration = ['ansible-test', 'integration', 'split']
-    integration_options = ['--target', f'docker:{scenario.container_name}', '--color', '--truncate', '0', '-v']
+    integration = ["ansible-test", "integration", "split"]
+    integration_options = [
+        "--target",
+        f"docker:{scenario.container_name}",
+        "--color",
+        "--truncate",
+        "0",
+        "-v",
+    ]
     target_only_options = []
 
     if scenario.debug_systemd:
-        integration_options.append('--dev-systemd-debug')
+        integration_options.append("--dev-systemd-debug")
 
     if scenario.probe_cgroups:
-        target_only_options = ['--dev-probe-cgroups', str(LOG_PATH)]
+        target_only_options = ["--dev-probe-cgroups", str(LOG_PATH)]
 
     entries = get_container_completion_entries()
-    alpine_container = [name for name in entries if name.startswith('alpine')][0]
+    alpine_container = [name for name in entries if name.startswith("alpine")][0]
 
     commands = [
         # The cgroup probe is only performed for the first test of the target.
@@ -258,36 +304,55 @@ def run_test(scenario: TestScenario) -> TestResult:
         # For the split test we'll use Alpine Linux as the controller. There are two reasons for this:
         # 1) It doesn't require the cgroup v1 hack, so we can test a target that doesn't need that.
         # 2) It doesn't require disabling selinux, so we can test a target that doesn't need that.
-        [*integration, '--controller', f'docker:{alpine_container}', *integration_options],
+        [
+            *integration,
+            "--controller",
+            f"docker:{alpine_container}",
+            *integration_options,
+        ],
     ]
 
     common_env: dict[str, str] = {}
     test_env: dict[str, str] = {}
 
-    if scenario.engine == 'podman':
+    if scenario.engine == "podman":
         if scenario.user_scenario.remote:
             common_env.update(
                 # Podman 4.3.0 has a regression which requires a port for remote connections to work.
                 # See: https://github.com/containers/podman/issues/16509
-                CONTAINER_HOST=f'ssh://{scenario.user_scenario.remote.name}@localhost:22'
-                               f'/run/user/{scenario.user_scenario.remote.pwnam.pw_uid}/podman/podman.sock',
-                CONTAINER_SSHKEY=str(pathlib.Path('~/.ssh/id_rsa').expanduser()),  # TODO: add support for ssh + remote when the ssh user is not root
+                CONTAINER_HOST=f"ssh://{scenario.user_scenario.remote.name}@localhost:22"
+                f"/run/user/{scenario.user_scenario.remote.pwnam.pw_uid}/podman/podman.sock",
+                CONTAINER_SSHKEY=str(
+                    pathlib.Path("~/.ssh/id_rsa").expanduser()
+                ),  # TODO: add support for ssh + remote when the ssh user is not root
             )
 
-        test_env.update(ANSIBLE_TEST_PREFER_PODMAN='1')
+        test_env.update(ANSIBLE_TEST_PREFER_PODMAN="1")
 
     test_env.update(common_env)
 
     if scenario.user_scenario.ssh:
-        client_become_cmd = ['ssh', f'{scenario.user_scenario.ssh.name}@localhost']
-        test_commands = [client_become_cmd + [f'cd ~/ansible; {format_env(test_env)}{sys.executable} bin/{shlex.join(command)}'] for command in commands]
+        client_become_cmd = ["ssh", f"{scenario.user_scenario.ssh.name}@localhost"]
+        test_commands = [
+            client_become_cmd
+            + [
+                f"cd ~/ansible; {format_env(test_env)}{sys.executable} bin/{shlex.join(command)}"
+            ]
+            for command in commands
+        ]
     else:
-        client_become_cmd = ['sh', '-c']
-        test_commands = [client_become_cmd + [f'{format_env(test_env)}{shlex.join(command)}'] for command in commands]
+        client_become_cmd = ["sh", "-c"]
+        test_commands = [
+            client_become_cmd + [f"{format_env(test_env)}{shlex.join(command)}"]
+            for command in commands
+        ]
 
     prime_storage_command = []
 
-    if scenario.engine == 'podman' and scenario.user_scenario.actual.name == UNPRIVILEGED_USER_NAME:
+    if (
+        scenario.engine == "podman"
+        and scenario.user_scenario.actual.name == UNPRIVILEGED_USER_NAME
+    ):
         # When testing podman we need to make sure that the overlay filesystem is used instead of vfs.
         # Using the vfs filesystem will result in running out of disk space during the tests.
         # To change the filesystem used, the existing storage directory must be removed before "priming" the storage database.
@@ -300,54 +365,62 @@ def run_test(scenario: TestScenario) -> TestResult:
         #
         #   User-selected graph driver "vfs" overwritten by graph driver "overlay" from database - delete libpod local files to resolve
 
-        actual_become_cmd = ['ssh', f'{scenario.user_scenario.actual.name}@localhost']
+        actual_become_cmd = ["ssh", f"{scenario.user_scenario.actual.name}@localhost"]
         prime_storage_command = actual_become_cmd + prepare_prime_podman_storage()
 
-    message = ''
+    message = ""
 
     if scenario.expose_cgroup_version == 1:
         prepare_cgroup_systemd(scenario.user_scenario.actual.name, scenario.engine)
 
     try:
         if prime_storage_command:
-            retry_command(lambda: run_command(*prime_storage_command), retry_any_error=True)
+            retry_command(
+                lambda: run_command(*prime_storage_command), retry_any_error=True
+            )
 
         if scenario.disable_selinux:
-            run_command('setenforce', 'permissive')
+            run_command("setenforce", "permissive")
 
         if scenario.enable_sha1:
-            run_command('update-crypto-policies', '--set', 'DEFAULT:SHA1')
+            run_command("update-crypto-policies", "--set", "DEFAULT:SHA1")
 
         for test_command in test_commands:
             retry_command(lambda: run_command(*test_command))
     except SubprocessError as ex:
         message = str(ex)
-        display.error(f'{scenario} {message}')
+        display.error(f"{scenario} {message}")
     finally:
         if scenario.enable_sha1:
-            run_command('update-crypto-policies', '--set', 'DEFAULT')
+            run_command("update-crypto-policies", "--set", "DEFAULT")
 
         if scenario.disable_selinux:
-            run_command('setenforce', 'enforcing')
+            run_command("setenforce", "enforcing")
 
         if scenario.expose_cgroup_version == 1:
             dirs = remove_cgroup_systemd()
         else:
             dirs = list_group_systemd()
 
-        cleanup_command = [scenario.engine, 'rmi', '-f', scenario.image]
+        cleanup_command = [scenario.engine, "rmi", "-f", scenario.image]
 
         try:
-            retry_command(lambda: run_command(*client_become_cmd + [f'{format_env(common_env)}{shlex.join(cleanup_command)}']), retry_any_error=True)
+            retry_command(
+                lambda: run_command(
+                    *client_become_cmd
+                    + [f"{format_env(common_env)}{shlex.join(cleanup_command)}"]
+                ),
+                retry_any_error=True,
+            )
         except SubprocessError as ex:
             display.error(str(ex))
 
-        cleanup = cleanup_podman() if scenario.engine == 'podman' else tuple()
+        cleanup = cleanup_podman() if scenario.engine == "podman" else tuple()
 
     finish = time.monotonic()
     duration = datetime.timedelta(seconds=int(finish - start))
 
-    display.section(f'Testing {scenario} Completed in {duration}')
+    display.section(f"Testing {scenario} Completed in {duration}")
 
     return TestResult(
         scenario=scenario,
@@ -360,9 +433,13 @@ def run_test(scenario: TestScenario) -> TestResult:
 
 def prepare_prime_podman_storage() -> list[str]:
     """Partially prime podman storage and return a command to complete the remainder."""
-    prime_storage_command = ['rm -rf ~/.local/share/containers; STORAGE_DRIVER=overlay podman pull quay.io/bedrock/alpine:3.16.2']
+    prime_storage_command = [
+        "rm -rf ~/.local/share/containers; STORAGE_DRIVER=overlay podman pull quay.io/bedrock/alpine:3.16.2"
+    ]
 
-    test_containers = pathlib.Path(f'~{UNPRIVILEGED_USER_NAME}/.local/share/containers').expanduser()
+    test_containers = pathlib.Path(
+        f"~{UNPRIVILEGED_USER_NAME}/.local/share/containers"
+    ).expanduser()
 
     if test_containers.is_dir():
         # First remove the directory as root, since the user may not have permissions on all the files.
@@ -377,9 +454,17 @@ def cleanup_podman() -> tuple[str, ...]:
     cleanup = []
 
     for remaining in range(3, -1, -1):
-        processes = [(int(item[0]), item[1]) for item in
-                     [item.split(maxsplit=1) for item in run_command('ps', '-A', '-o', 'pid,comm', capture=True).stdout.splitlines()]
-                     if pathlib.Path(item[1].split()[0]).name in ('catatonit', 'podman', 'conmon')]
+        processes = [
+            (int(item[0]), item[1])
+            for item in [
+                item.split(maxsplit=1)
+                for item in run_command(
+                    "ps", "-A", "-o", "pid,comm", capture=True
+                ).stdout.splitlines()
+            ]
+            if pathlib.Path(item[1].split()[0]).name
+            in ("catatonit", "podman", "conmon")
+        ]
 
         if not processes:
             break
@@ -396,15 +481,15 @@ def cleanup_podman() -> tuple[str, ...]:
 
         time.sleep(1)
     else:
-        raise Exception('failed to kill all matching processes')
+        raise Exception("failed to kill all matching processes")
 
     uid = pwd.getpwnam(UNPRIVILEGED_USER_NAME).pw_uid
 
-    container_tmp = pathlib.Path(f'/tmp/containers-user-{uid}')
-    podman_tmp = pathlib.Path(f'/tmp/podman-run-{uid}')
+    container_tmp = pathlib.Path(f"/tmp/containers-user-{uid}")
+    podman_tmp = pathlib.Path(f"/tmp/podman-run-{uid}")
 
-    user_config = pathlib.Path(f'~{UNPRIVILEGED_USER_NAME}/.config').expanduser()
-    user_local = pathlib.Path(f'~{UNPRIVILEGED_USER_NAME}/.local').expanduser()
+    user_config = pathlib.Path(f"~{UNPRIVILEGED_USER_NAME}/.config").expanduser()
+    user_local = pathlib.Path(f"~{UNPRIVILEGED_USER_NAME}/.local").expanduser()
 
     if container_tmp.is_dir():
         rmtree(container_tmp)
@@ -423,19 +508,30 @@ def cleanup_podman() -> tuple[str, ...]:
 
 def have_systemd() -> bool:
     """Return True if the host uses systemd."""
-    return pathlib.Path('/run/systemd/system').is_dir()
+    return pathlib.Path("/run/systemd/system").is_dir()
 
 
 def prepare_cgroup_systemd(username: str, engine: str) -> None:
     """Prepare the systemd cgroup."""
     CGROUP_SYSTEMD.mkdir()
 
-    run_command('mount', 'cgroup', '-t', 'cgroup', str(CGROUP_SYSTEMD), '-o', 'none,name=systemd,xattr', capture=True)
+    run_command(
+        "mount",
+        "cgroup",
+        "-t",
+        "cgroup",
+        str(CGROUP_SYSTEMD),
+        "-o",
+        "none,name=systemd,xattr",
+        capture=True,
+    )
 
-    if engine == 'podman':
-        run_command('chown', '-R', f'{username}:{username}', str(CGROUP_SYSTEMD))
+    if engine == "podman":
+        run_command("chown", "-R", f"{username}:{username}", str(CGROUP_SYSTEMD))
 
-    run_command('find', str(CGROUP_SYSTEMD), '-type', 'd', '-exec', 'ls', '-l', '{}', ';')
+    run_command(
+        "find", str(CGROUP_SYSTEMD), "-type", "d", "-exec", "ls", "-l", "{}", ";"
+    )
 
 
 def list_group_systemd() -> list[pathlib.Path]:
@@ -445,7 +541,7 @@ def list_group_systemd() -> list[pathlib.Path]:
     for dirpath, dirnames, filenames in os.walk(CGROUP_SYSTEMD, topdown=False):
         for dirname in dirnames:
             target_path = pathlib.Path(dirpath, dirname)
-            display.info(f'dir: {target_path}')
+            display.info(f"dir: {target_path}")
             dirs.add(target_path)
 
     return sorted(dirs)
@@ -460,7 +556,7 @@ def remove_cgroup_systemd() -> list[pathlib.Path]:
             for dirpath, dirnames, filenames in os.walk(CGROUP_SYSTEMD, topdown=False):
                 for dirname in dirnames:
                     target_path = pathlib.Path(dirpath, dirname)
-                    display.info(f'rmdir: {target_path}')
+                    display.info(f"rmdir: {target_path}")
                     dirs.add(target_path)
                     target_path.rmdir()
         except OSError as ex:
@@ -471,22 +567,24 @@ def remove_cgroup_systemd() -> list[pathlib.Path]:
         else:
             break
 
-        display.warning(f'{error} -- sleeping for {sleep_seconds} second(s) before trying again ...')  # pylint: disable=used-before-assignment
+        display.warning(
+            f"{error} -- sleeping for {sleep_seconds} second(s) before trying again ..."
+        )  # pylint: disable=used-before-assignment
 
         time.sleep(sleep_seconds)
 
     time.sleep(1)  # allow time for cgroups to be fully removed before unmounting
 
-    run_command('umount', str(CGROUP_SYSTEMD))
+    run_command("umount", str(CGROUP_SYSTEMD))
 
     CGROUP_SYSTEMD.rmdir()
 
     time.sleep(1)  # allow time for cgroup hierarchy to be removed after unmounting
 
-    cgroup = pathlib.Path('/proc/self/cgroup').read_text()
+    cgroup = pathlib.Path("/proc/self/cgroup").read_text()
 
-    if 'systemd' in cgroup:
-        raise Exception('systemd hierarchy detected')
+    if "systemd" in cgroup:
+        raise Exception("systemd hierarchy detected")
 
     return sorted(dirs)
 
@@ -495,15 +593,15 @@ def rmtree(path: pathlib.Path) -> None:
     """Wrapper around shutil.rmtree with additional error handling."""
     for retries in range(10, -1, -1):
         try:
-            display.info(f'rmtree: {path} ({retries} attempts remaining) ... ')
+            display.info(f"rmtree: {path} ({retries} attempts remaining) ... ")
             shutil.rmtree(path)
         except Exception:
             if not path.exists():
-                display.info(f'rmtree: {path} (not found)')
+                display.info(f"rmtree: {path} (not found)")
                 return
 
             if not path.is_dir():
-                display.info(f'rmtree: {path} (not a directory)')
+                display.info(f"rmtree: {path} (not a directory)")
                 return
 
             if retries:
@@ -511,16 +609,21 @@ def rmtree(path: pathlib.Path) -> None:
 
             raise
         else:
-            display.info(f'rmtree: {path} (done)')
+            display.info(f"rmtree: {path} (done)")
             return
 
 
 def format_env(env: dict[str, str]) -> str:
     """Format an env dict for injection into a shell command and return the resulting string."""
     if env:
-        return ' '.join(f'{shlex.quote(key)}={shlex.quote(value)}' for key, value in env.items()) + ' '
+        return (
+            " ".join(
+                f"{shlex.quote(key)}={shlex.quote(value)}" for key, value in env.items()
+            )
+            + " "
+        )
 
-    return ''
+    return ""
 
 
 class DockerInfo:
@@ -533,12 +636,12 @@ class DockerInfo:
     def cgroup_version(self) -> int:
         """The cgroup version of the container host."""
         data = self.data
-        host = data.get('host')
+        host = data.get("host")
 
         if host:
-            version = int(host['cgroupVersion'].lstrip('v'))  # podman
+            version = int(host["cgroupVersion"].lstrip("v"))  # podman
         else:
-            version = int(data['CgroupVersion'])  # docker
+            version = int(data["CgroupVersion"])  # docker
 
         return version
 
@@ -546,7 +649,11 @@ class DockerInfo:
 @functools.lru_cache
 def get_docker_info(engine: str) -> DockerInfo:
     """Return info for the current container runtime. The results are cached."""
-    return DockerInfo(json.loads(run_command(engine, 'info', '--format', '{{ json . }}', capture=True).stdout))
+    return DockerInfo(
+        json.loads(
+            run_command(engine, "info", "--format", "{{ json . }}", capture=True).stdout
+        )
+    )
 
 
 @dataclasses.dataclass(frozen=True)
@@ -589,28 +696,28 @@ class TestScenario:
         tags = []
 
         if self.user_scenario.ssh:
-            tags.append(f'ssh: {self.user_scenario.ssh.name}')
+            tags.append(f"ssh: {self.user_scenario.ssh.name}")
 
         if self.user_scenario.remote:
-            tags.append(f'remote: {self.user_scenario.remote.name}')
+            tags.append(f"remote: {self.user_scenario.remote.name}")
 
         if self.disable_selinux:
-            tags.append('selinux: permissive')
+            tags.append("selinux: permissive")
 
         if self.expose_cgroup_version is not None:
-            tags.append(f'cgroup: {self.expose_cgroup_version}')
+            tags.append(f"cgroup: {self.expose_cgroup_version}")
 
         if self.enable_sha1:
-            tags.append('sha1: enabled')
+            tags.append("sha1: enabled")
 
         return tuple(tags)
 
     @property
     def tag_label(self) -> str:
-        return ' '.join(f'[{tag}]' for tag in self.tags)
+        return " ".join(f"[{tag}]" for tag in self.tags)
 
     def __str__(self):
-        return f'[{self.container_name}] ({self.engine}) {self.tag_label}'.strip()
+        return f"[{self.container_name}] ({self.engine}) {self.tag_label}".strip()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -627,7 +734,10 @@ def parse_completion_entry(value: str) -> tuple[str, dict[str, str]]:
     values = value.split()
 
     name = values[0]
-    data = {kvp[0]: kvp[1] if len(kvp) > 1 else '' for kvp in [item.split('=', 1) for item in values[1:]]}
+    data = {
+        kvp[0]: kvp[1] if len(kvp) > 1 else ""
+        for kvp in [item.split("=", 1) for item in values[1:]]
+    }
 
     return name, data
 
@@ -657,16 +767,16 @@ class SubprocessError(ApplicationError):
     def __init__(self, result: SubprocessResult) -> None:
         self.result = result
 
-        message = f'Command `{shlex.join(result.command)}` exited with status: {result.status}'
+        message = f"Command `{shlex.join(result.command)}` exited with status: {result.status}"
 
-        stdout = (result.stdout or '').strip()
-        stderr = (result.stderr or '').strip()
+        stdout = (result.stdout or "").strip()
+        stderr = (result.stderr or "").strip()
 
         if stdout:
-            message += f'\n>>> Standard Output\n{stdout}'
+            message += f"\n>>> Standard Output\n{stdout}"
 
         if stderr:
-            message += f'\n>>> Standard Error\n{stderr}'
+            message += f"\n>>> Standard Error\n{stderr}"
 
         super().__init__(message)
 
@@ -677,53 +787,53 @@ class ProgramNotFoundError(ApplicationError):
     def __init__(self, name: str) -> None:
         self.name = name
 
-        super().__init__(f'Missing program: {name}')
+        super().__init__(f"Missing program: {name}")
 
 
 class Display:
     """Display interface for sending output to the console."""
 
-    CLEAR = '\033[0m'
-    RED = '\033[31m'
-    GREEN = '\033[32m'
-    YELLOW = '\033[33m'
-    BLUE = '\033[34m'
-    PURPLE = '\033[35m'
-    CYAN = '\033[36m'
+    CLEAR = "\033[0m"
+    RED = "\033[31m"
+    GREEN = "\033[32m"
+    YELLOW = "\033[33m"
+    BLUE = "\033[34m"
+    PURPLE = "\033[35m"
+    CYAN = "\033[36m"
 
     def __init__(self) -> None:
         self.sensitive: set[str] = set()
 
     def section(self, message: str) -> None:
         """Print a section message to the console."""
-        self.show(f'==> {message}', color=self.BLUE)
+        self.show(f"==> {message}", color=self.BLUE)
 
     def subsection(self, message: str) -> None:
         """Print a subsection message to the console."""
-        self.show(f'--> {message}', color=self.CYAN)
+        self.show(f"--> {message}", color=self.CYAN)
 
     def fatal(self, message: str) -> None:
         """Print a fatal message to the console."""
-        self.show(f'FATAL: {message}', color=self.RED)
+        self.show(f"FATAL: {message}", color=self.RED)
 
     def error(self, message: str) -> None:
         """Print an error message to the console."""
-        self.show(f'ERROR: {message}', color=self.RED)
+        self.show(f"ERROR: {message}", color=self.RED)
 
     def warning(self, message: str) -> None:
         """Print a warning message to the console."""
-        self.show(f'WARNING: {message}', color=self.PURPLE)
+        self.show(f"WARNING: {message}", color=self.PURPLE)
 
     def info(self, message: str) -> None:
         """Print an info message to the console."""
-        self.show(f'INFO: {message}', color=self.YELLOW)
+        self.show(f"INFO: {message}", color=self.YELLOW)
 
     def show(self, message: str, color: str | None = None) -> None:
         """Print a message to the console."""
         for item in self.sensitive:
-            message = message.replace(item, '*' * len(item))
+            message = message.replace(item, "*" * len(item))
 
-        print(f'{color or self.CLEAR}{message}{self.CLEAR}', flush=True)
+        print(f"{color or self.CLEAR}{message}{self.CLEAR}", flush=True)
 
 
 def run_module(
@@ -731,25 +841,39 @@ def run_module(
     args: dict[str, t.Any],
 ) -> SubprocessResult:
     """Run the specified Ansible module and return the result."""
-    return run_command('ansible', '-m', module, '-v', '-a', json.dumps(args), 'localhost')
+    return run_command(
+        "ansible", "-m", module, "-v", "-a", json.dumps(args), "localhost"
+    )
 
 
-def retry_command(func: t.Callable[[], SubprocessResult], attempts: int = 3, retry_any_error: bool = False) -> SubprocessResult:
+def retry_command(
+    func: t.Callable[[], SubprocessResult],
+    attempts: int = 3,
+    retry_any_error: bool = False,
+) -> SubprocessResult:
     """Run the given command function up to the specified number of attempts when the failure is due to an SSH error."""
     for attempts_remaining in range(attempts - 1, -1, -1):
         try:
             return func()
         except SubprocessError as ex:
-            if ex.result.command[0] == 'ssh' and ex.result.status == 255 and attempts_remaining:
+            if (
+                ex.result.command[0] == "ssh"
+                and ex.result.status == 255
+                and attempts_remaining
+            ):
                 # SSH connections on our Ubuntu 22.04 host sometimes fail for unknown reasons.
                 # This retry should allow the test suite to continue, maintaining CI stability.
                 # TODO: Figure out why local SSH connections sometimes fail during the test run.
-                display.warning('Command failed due to an SSH error. Waiting a few seconds before retrying.')
+                display.warning(
+                    "Command failed due to an SSH error. Waiting a few seconds before retrying."
+                )
                 time.sleep(3)
                 continue
 
             if retry_any_error:
-                display.warning('Command failed. Waiting a few seconds before retrying.')
+                display.warning(
+                    "Command failed. Waiting a few seconds before retrying."
+                )
                 time.sleep(3)
                 continue
 
@@ -768,10 +892,12 @@ def run_command(
     stdout = subprocess.PIPE if capture else None
     stderr = subprocess.PIPE if capture else None
 
-    display.subsection(f'Run command: {shlex.join(command)}')
+    display.subsection(f"Run command: {shlex.join(command)}")
 
     try:
-        with subprocess.Popen(args=command, stdin=stdin, stdout=stdout, stderr=stderr, env=env, text=True) as process:
+        with subprocess.Popen(
+            args=command, stdin=stdin, stdout=stdout, stderr=stderr, env=env, text=True
+        ) as process:
             process_stdout, process_stderr = process.communicate(data)
             process_status = process.returncode
     except FileNotFoundError:
@@ -815,7 +941,7 @@ class Bootstrapper(metaclass=abc.ABCMeta):
             if bootstrapper.usable():
                 return bootstrapper
 
-        display.warning('No supported bootstrapper found.')
+        display.warning("No supported bootstrapper found.")
         return Bootstrapper
 
     @classmethod
@@ -830,16 +956,23 @@ class Bootstrapper(metaclass=abc.ABCMeta):
     @classmethod
     def configure_root_user(cls) -> None:
         """Configure the root user to run tests."""
-        root_password_status = run_command('passwd', '--status', 'root', capture=True)
+        root_password_status = run_command("passwd", "--status", "root", capture=True)
         root_password_set = root_password_status.stdout.split()[1]
 
-        if root_password_set not in ('P', 'PS'):
-            root_password = run_command('openssl', 'passwd', '-5', '-stdin', data=secrets.token_hex(8), capture=True).stdout.strip()
+        if root_password_set not in ("P", "PS"):
+            root_password = run_command(
+                "openssl",
+                "passwd",
+                "-5",
+                "-stdin",
+                data=secrets.token_hex(8),
+                capture=True,
+            ).stdout.strip()
 
             run_module(
-                'user',
+                "user",
                 dict(
-                    user='root',
+                    user="root",
                     password=root_password,
                 ),
             )
@@ -847,30 +980,32 @@ class Bootstrapper(metaclass=abc.ABCMeta):
     @classmethod
     def configure_unprivileged_user(cls) -> None:
         """Configure the unprivileged user to run tests."""
-        unprivileged_password = run_command('openssl', 'passwd', '-5', '-stdin', data=secrets.token_hex(8), capture=True).stdout.strip()
+        unprivileged_password = run_command(
+            "openssl", "passwd", "-5", "-stdin", data=secrets.token_hex(8), capture=True
+        ).stdout.strip()
 
         run_module(
-            'user',
+            "user",
             dict(
                 user=UNPRIVILEGED_USER_NAME,
                 password=unprivileged_password,
-                groups=['docker'] if cls.install_docker() else [],
+                groups=["docker"] if cls.install_docker() else [],
                 append=True,
             ),
         )
 
-        if os_release.id == 'alpine':
+        if os_release.id == "alpine":
             # Most distros handle this automatically, but not Alpine.
             # See: https://www.redhat.com/sysadmin/rootless-podman
             start = 165535
             end = start + 65535
-            id_range = f'{start}-{end}'
+            id_range = f"{start}-{end}"
 
             run_command(
-                'usermod',
-                '--add-subuids',
+                "usermod",
+                "--add-subuids",
                 id_range,
-                '--add-subgids',
+                "--add-subgids",
                 id_range,
                 UNPRIVILEGED_USER_NAME,
             )
@@ -878,21 +1013,28 @@ class Bootstrapper(metaclass=abc.ABCMeta):
     @classmethod
     def configure_source_trees(cls):
         """Configure the source trees needed to run tests for both root and the unprivileged user."""
-        current_ansible = pathlib.Path(os.environ['PYTHONPATH']).parent
+        current_ansible = pathlib.Path(os.environ["PYTHONPATH"]).parent
 
-        root_ansible = pathlib.Path('~').expanduser() / 'ansible'
-        test_ansible = pathlib.Path(f'~{UNPRIVILEGED_USER_NAME}').expanduser() / 'ansible'
+        root_ansible = pathlib.Path("~").expanduser() / "ansible"
+        test_ansible = (
+            pathlib.Path(f"~{UNPRIVILEGED_USER_NAME}").expanduser() / "ansible"
+        )
 
         if current_ansible != root_ansible:
-            display.info(f'copying {current_ansible} -> {root_ansible} ...')
+            display.info(f"copying {current_ansible} -> {root_ansible} ...")
             rmtree(root_ansible)
             shutil.copytree(current_ansible, root_ansible)
-            run_command('chown', '-R', 'root:root', str(root_ansible))
+            run_command("chown", "-R", "root:root", str(root_ansible))
 
-        display.info(f'copying {current_ansible} -> {test_ansible} ...')
+        display.info(f"copying {current_ansible} -> {test_ansible} ...")
         rmtree(test_ansible)
         shutil.copytree(current_ansible, test_ansible)
-        run_command('chown', '-R', f'{UNPRIVILEGED_USER_NAME}:{UNPRIVILEGED_USER_NAME}', str(test_ansible))
+        run_command(
+            "chown",
+            "-R",
+            f"{UNPRIVILEGED_USER_NAME}:{UNPRIVILEGED_USER_NAME}",
+            str(test_ansible),
+        )
 
         paths = [pathlib.Path(test_ansible)]
 
@@ -914,9 +1056,11 @@ class Bootstrapper(metaclass=abc.ABCMeta):
         uid = user.pw_uid
         gid = user.pw_gid
 
-        current_rsa_pub = pathlib.Path('~/.ssh/id_rsa.pub').expanduser()
+        current_rsa_pub = pathlib.Path("~/.ssh/id_rsa.pub").expanduser()
 
-        test_authorized_keys = pathlib.Path(f'~{UNPRIVILEGED_USER_NAME}/.ssh/authorized_keys').expanduser()
+        test_authorized_keys = pathlib.Path(
+            f"~{UNPRIVILEGED_USER_NAME}/.ssh/authorized_keys"
+        ).expanduser()
 
         test_authorized_keys.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
         os.chown(test_authorized_keys.parent, uid, gid)
@@ -930,12 +1074,22 @@ class Bootstrapper(metaclass=abc.ABCMeta):
         """Configure podman remote support."""
         # TODO: figure out how to support remote podman without systemd (Alpine)
         # TODO: figure out how to support remote podman on Ubuntu
-        if os_release.id in ('alpine', 'ubuntu'):
+        if os_release.id in ("alpine", "ubuntu"):
             return
 
         # Support podman remote on any host with systemd available.
-        retry_command(lambda: run_command('ssh', f'{UNPRIVILEGED_USER_NAME}@localhost', 'systemctl', '--user', 'enable', '--now', 'podman.socket'))
-        run_command('loginctl', 'enable-linger', UNPRIVILEGED_USER_NAME)
+        retry_command(
+            lambda: run_command(
+                "ssh",
+                f"{UNPRIVILEGED_USER_NAME}@localhost",
+                "systemctl",
+                "--user",
+                "enable",
+                "--now",
+                "podman.socket",
+            )
+        )
+        run_command("loginctl", "enable-linger", UNPRIVILEGED_USER_NAME)
 
 
 class DnfBootstrapper(Bootstrapper):
@@ -949,40 +1103,42 @@ class DnfBootstrapper(Bootstrapper):
     @classmethod
     def install_docker(cls) -> bool:
         """Return True if docker will be installed."""
-        return os_release.id != 'rhel'
+        return os_release.id != "rhel"
 
     @classmethod
     def usable(cls) -> bool:
         """Return True if the bootstrapper can be used, otherwise False."""
-        return bool(shutil.which('dnf'))
+        return bool(shutil.which("dnf"))
 
     @classmethod
     def run(cls) -> None:
         """Run the bootstrapper."""
         # NOTE: Install crun to make it available to podman, otherwise installing moby-engine can cause podman to use runc instead.
-        packages = ['podman', 'crun']
+        packages = ["podman", "crun"]
 
         if cls.install_docker():
-            packages.append('moby-engine')
+            packages.append("moby-engine")
 
-        if os_release.id == 'fedora' and os_release.version_id == '36':
+        if os_release.id == "fedora" and os_release.version_id == "36":
             # In Fedora 36 the current version of netavark, 1.2.0, causes TCP connect to hang between rootfull containers.
             # The previously tested version, 1.1.0, did not have this issue.
             # Unfortunately, with the release of 1.2.0 the 1.1.0 package was removed from the repositories.
             # Thankfully the 1.0.2 version is available and also works, so we'll use that here until a fixed version is available.
             # See: https://github.com/containers/netavark/issues/491
-            packages.append('netavark-1.0.2')
+            packages.append("netavark-1.0.2")
 
-        if os_release.id == 'fedora' and os_release.version_id == '39':
+        if os_release.id == "fedora" and os_release.version_id == "39":
             # In Fedora 39, the current version of containerd, 1.6.23, prevents Docker from working.
             # The previously tested version, 1.6.19, did not have this issue.
             # See: https://bugzilla.redhat.com/show_bug.cgi?id=2237396
             run_command(
-                'dnf', 'install', '-y',
-                'https://kojipkgs.fedoraproject.org/packages/containerd/1.6.19/2.fc39/x86_64/containerd-1.6.19-2.fc39.x86_64.rpm'
+                "dnf",
+                "install",
+                "-y",
+                "https://kojipkgs.fedoraproject.org/packages/containerd/1.6.19/2.fc39/x86_64/containerd-1.6.19-2.fc39.x86_64.rpm",
             )
 
-        if os_release.id == 'rhel':
+        if os_release.id == "rhel":
             # As of the release of RHEL 9.1, installing podman on RHEL 9.0 results in a non-fatal error at install time:
             #
             #   libsemanage.semanage_pipe_data: Child process /usr/libexec/selinux/hll/pp failed with code: 255. (No such file or directory).
@@ -999,25 +1155,25 @@ class DnfBootstrapper(Bootstrapper):
             # NOTE: This work-around can probably be removed once we're testing on RHEL 9.1, as the updated packages should already be installed.
             #       Unfortunately at this time there is no RHEL 9.1 AMI available (other than the Beta release).
 
-            run_command('dnf', 'update', '-y', 'policycoreutils')
+            run_command("dnf", "update", "-y", "policycoreutils")
 
-        run_command('dnf', 'install', '-y', *packages)
+        run_command("dnf", "install", "-y", *packages)
 
         if cls.install_docker():
-            run_command('systemctl', 'start', 'docker')
+            run_command("systemctl", "start", "docker")
 
-        if os_release.id == 'rhel' and os_release.version_id.startswith('8.'):
+        if os_release.id == "rhel" and os_release.version_id.startswith("8."):
             # RHEL 8 defaults to using runc instead of crun.
             # Unfortunately runc seems to have issues with podman remote.
             # Specifically, it tends to cause conmon to burn CPU until it reaches the specified exit delay.
             # So we'll just change the system default to crun instead.
             # Unfortunately we can't do this with the `--runtime` option since that doesn't work with podman remote.
 
-            conf = pathlib.Path('/usr/share/containers/containers.conf').read_text()
+            conf = pathlib.Path("/usr/share/containers/containers.conf").read_text()
 
-            conf = re.sub('^runtime .*', 'runtime = "crun"', conf, flags=re.MULTILINE)
+            conf = re.sub("^runtime .*", 'runtime = "crun"', conf, flags=re.MULTILINE)
 
-            pathlib.Path('/etc/containers/containers.conf').write_text(conf)
+            pathlib.Path("/etc/containers/containers.conf").write_text(conf)
 
         super().run()
 
@@ -1028,7 +1184,9 @@ class AptBootstrapper(Bootstrapper):
     @classmethod
     def install_podman(cls) -> bool:
         """Return True if podman will be installed."""
-        return not (os_release.id == 'ubuntu' and os_release.version_id in {'20.04', '22.04'})
+        return not (
+            os_release.id == "ubuntu" and os_release.version_id in {"20.04", "22.04"}
+        )
 
     @classmethod
     def install_docker(cls) -> bool:
@@ -1038,24 +1196,31 @@ class AptBootstrapper(Bootstrapper):
     @classmethod
     def usable(cls) -> bool:
         """Return True if the bootstrapper can be used, otherwise False."""
-        return bool(shutil.which('apt-get'))
+        return bool(shutil.which("apt-get"))
 
     @classmethod
     def run(cls) -> None:
         """Run the bootstrapper."""
         apt_env = os.environ.copy()
         apt_env.update(
-            DEBIAN_FRONTEND='noninteractive',
+            DEBIAN_FRONTEND="noninteractive",
         )
 
-        packages = ['docker.io']
+        packages = ["docker.io"]
 
         if cls.install_podman():
             # NOTE: Install crun to make it available to podman, otherwise installing docker.io can cause podman to use runc instead.
             # Using podman rootless requires the `newuidmap` and `slirp4netns` commands.
-            packages.extend(('podman', 'crun', 'uidmap', 'slirp4netns'))
+            packages.extend(("podman", "crun", "uidmap", "slirp4netns"))
 
-        run_command('apt-get', 'install', *packages, '-y', '--no-install-recommends', env=apt_env)
+        run_command(
+            "apt-get",
+            "install",
+            *packages,
+            "-y",
+            "--no-install-recommends",
+            env=apt_env,
+        )
 
         super().run()
 
@@ -1076,30 +1241,36 @@ class ApkBootstrapper(Bootstrapper):
     @classmethod
     def usable(cls) -> bool:
         """Return True if the bootstrapper can be used, otherwise False."""
-        return bool(shutil.which('apk'))
+        return bool(shutil.which("apk"))
 
     @classmethod
     def run(cls) -> None:
         """Run the bootstrapper."""
         # The `openssl` package is used to generate hashed passwords.
         # The `crun` package must be explicitly installed since podman won't install it as dep if `runc` is present.
-        packages = ['docker', 'podman', 'openssl', 'crun']
+        packages = ["docker", "podman", "openssl", "crun"]
 
-        if os_release.version_id.startswith('3.18.'):
+        if os_release.version_id.startswith("3.18."):
             # The 3.19 `crun` package installed below requires `ip6tables`, but depends on the `iptables` package.
             # In 3.19, the `iptables` package includes `ip6tables`, but in 3.18 they are separate packages.
             # Remove once 3.18 is no longer tested.
-            packages.append('ip6tables')
+            packages.append("ip6tables")
 
-        run_command('apk', 'add', *packages)
+        run_command("apk", "add", *packages)
 
-        if os_release.version_id.startswith('3.18.'):
+        if os_release.version_id.startswith("3.18."):
             # 3.18 only contains `crun` 1.8.4, to get a newer version that resolves the run/shm issue, install `crun` from 3.19.
             # Remove once 3.18 is no longer tested.
-            run_command('apk', 'upgrade', '-U', '--repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/community', 'crun')
+            run_command(
+                "apk",
+                "upgrade",
+                "-U",
+                "--repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/community",
+                "crun",
+            )
 
-        run_command('service', 'docker', 'start')
-        run_command('modprobe', 'tun')
+        run_command("service", "docker", "start")
+        run_command("modprobe", "tun")
 
         super().run()
 
@@ -1114,7 +1285,12 @@ class OsRelease:
     @staticmethod
     def init() -> OsRelease:
         """Detect the current OS release and return the result."""
-        lines = run_command('sh', '-c', '. /etc/os-release && echo $ID && echo $VERSION_ID', capture=True).stdout.splitlines()
+        lines = run_command(
+            "sh",
+            "-c",
+            ". /etc/os-release && echo $ID && echo $VERSION_ID",
+            capture=True,
+        ).stdout.splitlines()
 
         result = OsRelease(
             id=lines[0],
@@ -1129,7 +1305,7 @@ class OsRelease:
 display = Display()
 os_release = OsRelease.init()
 
-ROOT_USER = User.get('root')
+ROOT_USER = User.get("root")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

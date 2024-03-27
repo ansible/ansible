@@ -1,11 +1,10 @@
-
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: stat
 version_added: "1.3"
@@ -72,9 +71,9 @@ seealso:
 - module: ansible.builtin.file
 - module: ansible.windows.win_stat
 author: Bruce Pennypacker (@bpennypacker)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 # Obtain the stats of /etc/foo.conf, and check that the file still belongs
 # to 'root'. Fail otherwise.
 - name: Get stats of a file
@@ -137,9 +136,9 @@ EXAMPLES = r'''
   ansible.builtin.stat:
     path: /path/to/something
     checksum_algorithm: sha256
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 stat:
     description: Dictionary containing all the stat data, some platforms might add additional fields.
     returned: success
@@ -366,7 +365,7 @@ stat:
             type: str
             sample: "381700746"
             version_added: 2.3
-'''
+"""
 
 import errno
 import grp
@@ -418,22 +417,22 @@ def format_output(module, path, st):
 
     # Platform dependent flags:
     for other in [
-            # Some Linux
-            ('st_blocks', 'blocks'),
-            ('st_blksize', 'block_size'),
-            ('st_rdev', 'device_type'),
-            ('st_flags', 'flags'),
-            # Some Berkley based
-            ('st_gen', 'generation'),
-            ('st_birthtime', 'birthtime'),
-            # RISCOS
-            ('st_ftype', 'file_type'),
-            ('st_attrs', 'attrs'),
-            ('st_obtype', 'object_type'),
-            # macOS
-            ('st_rsize', 'real_size'),
-            ('st_creator', 'creator'),
-            ('st_type', 'file_type'),
+        # Some Linux
+        ("st_blocks", "blocks"),
+        ("st_blksize", "block_size"),
+        ("st_rdev", "device_type"),
+        ("st_flags", "flags"),
+        # Some Berkley based
+        ("st_gen", "generation"),
+        ("st_birthtime", "birthtime"),
+        # RISCOS
+        ("st_ftype", "file_type"),
+        ("st_attrs", "attrs"),
+        ("st_obtype", "object_type"),
+        # macOS
+        ("st_rsize", "real_size"),
+        ("st_creator", "creator"),
+        ("st_type", "file_type"),
     ]:
         if hasattr(st, other[0]):
             output[other[1]] = getattr(st, other[0])
@@ -444,25 +443,32 @@ def format_output(module, path, st):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            path=dict(type='path', required=True, aliases=['dest', 'name']),
-            follow=dict(type='bool', default=False),
-            get_checksum=dict(type='bool', default=True),
-            get_mime=dict(type='bool', default=True, aliases=['mime', 'mime_type', 'mime-type']),
-            get_attributes=dict(type='bool', default=True, aliases=['attr', 'attributes']),
-            checksum_algorithm=dict(type='str', default='sha1',
-                                    choices=['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512'],
-                                    aliases=['checksum', 'checksum_algo']),
+            path=dict(type="path", required=True, aliases=["dest", "name"]),
+            follow=dict(type="bool", default=False),
+            get_checksum=dict(type="bool", default=True),
+            get_mime=dict(
+                type="bool", default=True, aliases=["mime", "mime_type", "mime-type"]
+            ),
+            get_attributes=dict(
+                type="bool", default=True, aliases=["attr", "attributes"]
+            ),
+            checksum_algorithm=dict(
+                type="str",
+                default="sha1",
+                choices=["md5", "sha1", "sha224", "sha256", "sha384", "sha512"],
+                aliases=["checksum", "checksum_algo"],
+            ),
         ),
         supports_check_mode=True,
     )
 
-    path = module.params.get('path')
-    b_path = to_bytes(path, errors='surrogate_or_strict')
-    follow = module.params.get('follow')
-    get_mime = module.params.get('get_mime')
-    get_attr = module.params.get('get_attributes')
-    get_checksum = module.params.get('get_checksum')
-    checksum_algorithm = module.params.get('checksum_algorithm')
+    path = module.params.get("path")
+    b_path = to_bytes(path, errors="surrogate_or_strict")
+    follow = module.params.get("follow")
+    get_mime = module.params.get("get_mime")
+    get_attr = module.params.get("get_attributes")
+    get_checksum = module.params.get("get_checksum")
+    checksum_algorithm = module.params.get("checksum_algorithm")
 
     # main stat data
     try:
@@ -472,7 +478,7 @@ def main():
             st = os.lstat(b_path)
     except OSError as e:
         if e.errno == errno.ENOENT:
-            output = {'exists': False}
+            output = {"exists": False}
             module.exit_json(changed=False, stat=output)
 
         module.fail_json(msg=e.strerror)
@@ -481,58 +487,62 @@ def main():
     output = format_output(module, path, st)
 
     # resolved permissions
-    for perm in [('readable', os.R_OK), ('writeable', os.W_OK), ('executable', os.X_OK)]:
+    for perm in [
+        ("readable", os.R_OK),
+        ("writeable", os.W_OK),
+        ("executable", os.X_OK),
+    ]:
         output[perm[0]] = os.access(b_path, perm[1])
 
     # symlink info
-    if output.get('islnk'):
-        output['lnk_source'] = os.path.realpath(b_path)
-        output['lnk_target'] = os.readlink(b_path)
+    if output.get("islnk"):
+        output["lnk_source"] = os.path.realpath(b_path)
+        output["lnk_target"] = os.readlink(b_path)
 
     try:  # user data
         pw = pwd.getpwuid(st.st_uid)
-        output['pw_name'] = pw.pw_name
+        output["pw_name"] = pw.pw_name
     except (TypeError, KeyError):
         pass
 
     try:  # group data
         grp_info = grp.getgrgid(st.st_gid)
-        output['gr_name'] = grp_info.gr_name
+        output["gr_name"] = grp_info.gr_name
     except (KeyError, ValueError, OverflowError):
         pass
 
     # checksums
-    if output.get('isreg') and output.get('readable'):
+    if output.get("isreg") and output.get("readable"):
         if get_checksum:
-            output['checksum'] = module.digest_from_file(b_path, checksum_algorithm)
+            output["checksum"] = module.digest_from_file(b_path, checksum_algorithm)
 
     # try to get mime data if requested
     if get_mime:
-        output['mimetype'] = output['charset'] = 'unknown'
-        mimecmd = module.get_bin_path('file')
+        output["mimetype"] = output["charset"] = "unknown"
+        mimecmd = module.get_bin_path("file")
         if mimecmd:
-            mimecmd = [mimecmd, '--mime-type', '--mime-encoding', b_path]
+            mimecmd = [mimecmd, "--mime-type", "--mime-encoding", b_path]
             try:
                 rc, out, err = module.run_command(mimecmd)
                 if rc == 0:
-                    mimetype, charset = out.rsplit(':', 1)[1].split(';')
-                    output['mimetype'] = mimetype.strip()
-                    output['charset'] = charset.split('=')[1].strip()
+                    mimetype, charset = out.rsplit(":", 1)[1].split(";")
+                    output["mimetype"] = mimetype.strip()
+                    output["charset"] = charset.split("=")[1].strip()
             except Exception:
                 pass
 
     # try to get attr data
     if get_attr:
-        output['version'] = None
-        output['attributes'] = []
-        output['attr_flags'] = ''
+        output["version"] = None
+        output["attributes"] = []
+        output["attr_flags"] = ""
         out = module.get_file_attributes(b_path)
-        for x in ('version', 'attributes', 'attr_flags'):
+        for x in ("version", "attributes", "attr_flags"):
             if x in out:
                 output[x] = out[x]
 
     module.exit_json(changed=False, stat=output)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

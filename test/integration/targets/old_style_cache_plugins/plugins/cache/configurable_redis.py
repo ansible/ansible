@@ -3,7 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     cache: configurable_redis
     short_description: Use Redis DB for cache
     description:
@@ -38,7 +38,7 @@ DOCUMENTATION = '''
           - key: fact_caching_timeout
             section: defaults
         type: integer
-'''
+"""
 
 import time
 import json
@@ -51,7 +51,9 @@ from ansible.utils.display import Display
 try:
     from redis import StrictRedis, VERSION
 except ImportError:
-    raise AnsibleError("The 'redis' python module (version 2.4.5 or newer) is required for the redis fact cache, 'pip install redis'")
+    raise AnsibleError(
+        "The 'redis' python module (version 2.4.5 or newer) is required for the redis fact cache, 'pip install redis'"
+    )
 
 display = Display()
 
@@ -64,18 +66,19 @@ class CacheModule(BaseCacheModule):
     to expire keys. This mechanism is used or a pattern matched 'scan' for
     performance.
     """
+
     def __init__(self, *args, **kwargs):
         connection = []
 
         super(CacheModule, self).__init__(*args, **kwargs)
-        if self.get_option('_uri'):
-            connection = self.get_option('_uri').split(':')
-        self._timeout = float(self.get_option('_timeout'))
-        self._prefix = self.get_option('_prefix')
+        if self.get_option("_uri"):
+            connection = self.get_option("_uri").split(":")
+        self._timeout = float(self.get_option("_timeout"))
+        self._prefix = self.get_option("_prefix")
 
         self._cache = {}
         self._db = StrictRedis(*connection)
-        self._keys_set = 'ansible_cache_keys'
+        self._keys_set = "ansible_cache_keys"
 
     def _make_key(self, key):
         return self._prefix + key
@@ -119,7 +122,7 @@ class CacheModule(BaseCacheModule):
 
     def contains(self, key):
         self._expire_keys()
-        return (self._db.zrank(self._keys_set, key) is not None)
+        return self._db.zrank(self._keys_set, key) is not None
 
     def delete(self, key):
         if key in self._cache:

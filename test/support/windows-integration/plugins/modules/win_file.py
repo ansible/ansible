@@ -4,11 +4,13 @@
 # Copyright: (c) 2015, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
+ANSIBLE_METADATA = {
+    "metadata_version": "1.1",
+    "status": ["stableinterface"],
+    "supported_by": "core",
+}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_file
 version_added: "1.9.2"
@@ -45,9 +47,9 @@ seealso:
 - module: win_stat
 author:
 - Jon Hawkesworth (@jhawkesworth)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Touch a file (creates if not present, updates modification time if present)
   win_file:
     path: C:\Temp\foo.conf
@@ -67,4 +69,4 @@ EXAMPLES = r'''
   win_file:
     path: C:\Temp
     state: absent
-'''
+"""

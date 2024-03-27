@@ -8,8 +8,7 @@ from __future__ import annotations
 
 
 class FactsArgs(object):  # pylint: disable=R0903
-    """ The arg spec for the vyos facts module
-    """
+    """The arg spec for the vyos facts module"""
 
     def __init__(self, **kwargs):
         pass

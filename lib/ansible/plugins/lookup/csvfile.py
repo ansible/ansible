@@ -89,7 +89,8 @@ class CSVRecoder:
     """
     Iterator that reads an encoded stream and encodes the input to UTF-8
     """
-    def __init__(self, f, encoding='utf-8'):
+
+    def __init__(self, f, encoding="utf-8"):
         self.reader = codecs.getreader(encoding)(f)
 
     def __iter__(self):
@@ -98,7 +99,7 @@ class CSVRecoder:
     def __next__(self):
         return next(self.reader).encode("utf-8")
 
-    next = __next__   # For Python 2
+    next = __next__  # For Python 2
 
 
 class CSVReader:
@@ -107,7 +108,7 @@ class CSVReader:
     which is encoded in the given encoding.
     """
 
-    def __init__(self, f, dialect=csv.excel, encoding='utf-8', **kwds):
+    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
         if PY2:
             f = CSVRecoder(f, encoding)
         else:
@@ -127,10 +128,12 @@ class CSVReader:
 
 class LookupModule(LookupBase):
 
-    def read_csv(self, filename, key, delimiter, encoding='utf-8', dflt=None, col=1, keycol=0):
+    def read_csv(
+        self, filename, key, delimiter, encoding="utf-8", dflt=None, col=1, keycol=0
+    ):
 
         try:
-            f = open(to_bytes(filename), 'rb')
+            f = open(to_bytes(filename), "rb")
             creader = CSVReader(f, delimiter=to_native(delimiter), encoding=encoding)
 
             for row in creader:
@@ -153,19 +156,19 @@ class LookupModule(LookupBase):
         for term in terms:
             kv = parse_kv(term)
 
-            if '_raw_params' not in kv:
-                raise AnsibleError('Search key is required but was not found')
+            if "_raw_params" not in kv:
+                raise AnsibleError("Search key is required but was not found")
 
-            key = kv['_raw_params']
+            key = kv["_raw_params"]
 
             # parameters override per term using k/v
             try:
                 reset_params = False
                 for name, value in kv.items():
-                    if name == '_raw_params':
+                    if name == "_raw_params":
                         continue
                     if name not in paramvals:
-                        raise AnsibleAssertionError('%s is not a valid option' % name)
+                        raise AnsibleAssertionError("%s is not a valid option" % name)
 
                     self._deprecate_inline_kv()
                     self.set_option(name, value)
@@ -178,11 +181,21 @@ class LookupModule(LookupBase):
                 raise AnsibleError(e)
 
             # default is just placeholder for real tab
-            if paramvals['delimiter'] == 'TAB':
-                paramvals['delimiter'] = "\t"
+            if paramvals["delimiter"] == "TAB":
+                paramvals["delimiter"] = "\t"
 
-            lookupfile = self.find_file_in_search_path(variables, 'files', paramvals['file'])
-            var = self.read_csv(lookupfile, key, paramvals['delimiter'], paramvals['encoding'], paramvals['default'], paramvals['col'], paramvals['keycol'])
+            lookupfile = self.find_file_in_search_path(
+                variables, "files", paramvals["file"]
+            )
+            var = self.read_csv(
+                lookupfile,
+                key,
+                paramvals["delimiter"],
+                paramvals["encoding"],
+                paramvals["default"],
+                paramvals["col"],
+                paramvals["keycol"],
+            )
             if var is not None:
                 if isinstance(var, MutableSequence):
                     for v in var:

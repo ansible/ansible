@@ -23,7 +23,7 @@ import os
 
 
 def test_logname():
-    """ Test if ``UserFactCollector`` still works with LOGNAME set """
+    """Test if ``UserFactCollector`` still works with LOGNAME set"""
     collector = UserFactCollector()
 
     unmodified_facts = collector.collect()
@@ -33,6 +33,6 @@ def test_logname():
     modified_facts = collector.collect()
 
     # Set logname should be different to the real name.
-    assert unmodified_facts['user_id'] != modified_facts['user_id']
+    assert unmodified_facts["user_id"] != modified_facts["user_id"]
     # Actual UID is the same.
-    assert unmodified_facts['user_uid'] == modified_facts['user_uid']
+    assert unmodified_facts["user_uid"] == modified_facts["user_uid"]

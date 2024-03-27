@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: get_url
 short_description: Downloads files from HTTP, HTTPS, or FTP to node
@@ -217,9 +217,9 @@ seealso:
 - module: ansible.windows.win_get_url
 author:
 - Jan-Piet Mens (@jpmens)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Download foo.conf
   ansible.builtin.get_url:
     url: http://example.com/path/file.conf
@@ -270,9 +270,9 @@ EXAMPLES = r'''
     dest: /etc/foo.conf
     username: bar
     password: '{{ mysecret }}'
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 backup_file:
     description: name of backup file created after download
     returned: changed and if backup=yes
@@ -363,7 +363,7 @@ url:
     returned: always
     type: str
     sample: https://www.ansible.com/
-'''
+"""
 
 import os
 import re
@@ -383,13 +383,27 @@ from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 def url_filename(url):
     fn = os.path.basename(urlsplit(url)[2])
-    if fn == '':
-        return 'index.html'
+    if fn == "":
+        return "index.html"
     return fn
 
 
-def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None, tmp_dest='', method='GET', unredirected_headers=None,
-            decompress=True, ciphers=None, use_netrc=True):
+def url_get(
+    module,
+    url,
+    dest,
+    use_proxy,
+    last_mod_time,
+    force,
+    timeout=10,
+    headers=None,
+    tmp_dest="",
+    method="GET",
+    unredirected_headers=None,
+    decompress=True,
+    ciphers=None,
+    use_netrc=True,
+):
     """
     Download data from the url and store in a temporary file.
 
@@ -397,19 +411,49 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     """
 
     start = utcnow()
-    rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method,
-                          unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
+    rsp, info = fetch_url(
+        module,
+        url,
+        use_proxy=use_proxy,
+        force=force,
+        last_mod_time=last_mod_time,
+        timeout=timeout,
+        headers=headers,
+        method=method,
+        unredirected_headers=unredirected_headers,
+        decompress=decompress,
+        ciphers=ciphers,
+        use_netrc=use_netrc,
+    )
     elapsed = (utcnow() - start).seconds
 
-    if info['status'] == 304:
-        module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''), status_code=info['status'], elapsed=elapsed)
+    if info["status"] == 304:
+        module.exit_json(
+            url=url,
+            dest=dest,
+            changed=False,
+            msg=info.get("msg", ""),
+            status_code=info["status"],
+            elapsed=elapsed,
+        )
 
     # Exceptions in fetch_url may result in a status -1, the ensures a proper error to the user in all cases
-    if info['status'] == -1:
-        module.fail_json(msg=info['msg'], url=url, dest=dest, elapsed=elapsed)
+    if info["status"] == -1:
+        module.fail_json(msg=info["msg"], url=url, dest=dest, elapsed=elapsed)
 
-    if info['status'] != 200 and not url.startswith('file:/') and not (url.startswith('ftp:/') and info.get('msg', '').startswith('OK')):
-        module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'], url=url, dest=dest, elapsed=elapsed)
+    if (
+        info["status"] != 200
+        and not url.startswith("file:/")
+        and not (url.startswith("ftp:/") and info.get("msg", "").startswith("OK"))
+    ):
+        module.fail_json(
+            msg="Request failed",
+            status_code=info["status"],
+            response=info["msg"],
+            url=url,
+            dest=dest,
+            elapsed=elapsed,
+        )
 
     # create a temporary file and copy content to do checksum-based replacement
     if tmp_dest:
@@ -417,20 +461,29 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
         tmp_dest_is_dir = os.path.isdir(tmp_dest)
         if not tmp_dest_is_dir:
             if os.path.exists(tmp_dest):
-                module.fail_json(msg="%s is a file but should be a directory." % tmp_dest, elapsed=elapsed)
+                module.fail_json(
+                    msg="%s is a file but should be a directory." % tmp_dest,
+                    elapsed=elapsed,
+                )
             else:
-                module.fail_json(msg="%s directory does not exist." % tmp_dest, elapsed=elapsed)
+                module.fail_json(
+                    msg="%s directory does not exist." % tmp_dest, elapsed=elapsed
+                )
     else:
         tmp_dest = module.tmpdir
 
     fd, tempname = tempfile.mkstemp(dir=tmp_dest)
 
-    f = os.fdopen(fd, 'wb')
+    f = os.fdopen(fd, "wb")
     try:
         shutil.copyfileobj(rsp, f)
     except Exception as e:
         os.remove(tempname)
-        module.fail_json(msg="failed to create temporary content file: %s" % to_native(e), elapsed=elapsed, exception=traceback.format_exc())
+        module.fail_json(
+            msg="failed to create temporary content file: %s" % to_native(e),
+            elapsed=elapsed,
+            exception=traceback.format_exc(),
+        )
     f.close()
     rsp.close()
     return tempname, info
@@ -445,8 +498,8 @@ def extract_filename_from_headers(headers):
     cont_disp_regex = 'attachment; ?filename="?([^"]+)'
     res = None
 
-    if 'content-disposition' in headers:
-        cont_disp = headers['content-disposition']
+    if "content-disposition" in headers:
+        cont_disp = headers["content-disposition"]
         match = re.match(cont_disp_regex, cont_disp)
         if match:
             res = match.group(1)
@@ -459,7 +512,7 @@ def extract_filename_from_headers(headers):
 def is_url(checksum):
     """
     Returns True if checksum value has supported URL scheme, else False."""
-    supported_schemes = ('http', 'https', 'ftp', 'file')
+    supported_schemes = ("http", "https", "ftp", "file")
 
     return urlsplit(checksum).scheme in supported_schemes
 
@@ -467,25 +520,26 @@ def is_url(checksum):
 # ==============================================================
 # main
 
+
 def main():
     argument_spec = url_argument_spec()
 
     # setup aliases
-    argument_spec['url_username']['aliases'] = ['username']
-    argument_spec['url_password']['aliases'] = ['password']
+    argument_spec["url_username"]["aliases"] = ["username"]
+    argument_spec["url_password"]["aliases"] = ["password"]
 
     argument_spec.update(
-        url=dict(type='str', required=True),
-        dest=dict(type='path', required=True),
-        backup=dict(type='bool', default=False),
-        checksum=dict(type='str', default=''),
-        timeout=dict(type='int', default=10),
-        headers=dict(type='dict'),
-        tmp_dest=dict(type='path'),
-        unredirected_headers=dict(type='list', elements='str', default=[]),
-        decompress=dict(type='bool', default=True),
-        ciphers=dict(type='list', elements='str'),
-        use_netrc=dict(type='bool', default=True),
+        url=dict(type="str", required=True),
+        dest=dict(type="path", required=True),
+        backup=dict(type="bool", default=False),
+        checksum=dict(type="str", default=""),
+        timeout=dict(type="int", default=10),
+        headers=dict(type="dict"),
+        tmp_dest=dict(type="path"),
+        unredirected_headers=dict(type="list", elements="str", default=[]),
+        decompress=dict(type="bool", default=True),
+        ciphers=dict(type="list", elements="str"),
+        use_netrc=dict(type="bool", default=True),
     )
 
     module = AnsibleModule(
@@ -495,19 +549,19 @@ def main():
         supports_check_mode=True,
     )
 
-    url = module.params['url']
-    dest = module.params['dest']
-    backup = module.params['backup']
-    force = module.params['force']
-    checksum = module.params['checksum']
-    use_proxy = module.params['use_proxy']
-    timeout = module.params['timeout']
-    headers = module.params['headers']
-    tmp_dest = module.params['tmp_dest']
-    unredirected_headers = module.params['unredirected_headers']
-    decompress = module.params['decompress']
-    ciphers = module.params['ciphers']
-    use_netrc = module.params['use_netrc']
+    url = module.params["url"]
+    dest = module.params["dest"]
+    backup = module.params["backup"]
+    force = module.params["force"]
+    checksum = module.params["checksum"]
+    use_proxy = module.params["use_proxy"]
+    timeout = module.params["timeout"]
+    headers = module.params["headers"]
+    tmp_dest = module.params["tmp_dest"]
+    unredirected_headers = module.params["unredirected_headers"]
+    decompress = module.params["decompress"]
+    ciphers = module.params["ciphers"]
+    use_netrc = module.params["use_netrc"]
 
     result = dict(
         changed=False,
@@ -524,17 +578,32 @@ def main():
     # checksum specified, parse for algorithm and checksum
     if checksum:
         try:
-            algorithm, checksum = checksum.split(':', 1)
+            algorithm, checksum = checksum.split(":", 1)
         except ValueError:
-            module.fail_json(msg="The checksum parameter has to be in format <algorithm>:<checksum>", **result)
+            module.fail_json(
+                msg="The checksum parameter has to be in format <algorithm>:<checksum>",
+                **result,
+            )
 
         if is_url(checksum):
             checksum_url = checksum
             # download checksum file to checksum_tmpsrc
-            checksum_tmpsrc, checksum_info = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest,
-                                                     unredirected_headers=unredirected_headers, ciphers=ciphers, use_netrc=use_netrc)
+            checksum_tmpsrc, checksum_info = url_get(
+                module,
+                checksum_url,
+                dest,
+                use_proxy,
+                last_mod_time,
+                force,
+                timeout,
+                headers,
+                tmp_dest,
+                unredirected_headers=unredirected_headers,
+                ciphers=ciphers,
+                use_netrc=use_netrc,
+            )
             with open(checksum_tmpsrc) as f:
-                lines = [line.rstrip('\n') for line in f]
+                lines = [line.rstrip("\n") for line in f]
             os.remove(checksum_tmpsrc)
             checksum_map = []
             filename = url_filename(url)
@@ -550,7 +619,12 @@ def main():
                     parts = line.split(" ", 1)
                     if len(parts) == 2:
                         # Remove the leading type char, we expect
-                        if parts[1].startswith((" ", "*",)):
+                        if parts[1].startswith(
+                            (
+                                " ",
+                                "*",
+                            )
+                        ):
                             parts[1] = parts[1][1:]
 
                         # Append checksum and path without potential leading './'
@@ -565,22 +639,25 @@ def main():
                 checksum = None
 
             if checksum is None:
-                module.fail_json(msg="Unable to find a checksum for file '%s' in '%s'" % (filename, checksum_url))
+                module.fail_json(
+                    msg="Unable to find a checksum for file '%s' in '%s'"
+                    % (filename, checksum_url)
+                )
         # Remove any non-alphanumeric characters, including the infamous
         # Unicode zero-width space
-        checksum = re.sub(r'\W+', '', checksum).lower()
+        checksum = re.sub(r"\W+", "", checksum).lower()
         # Ensure the checksum portion is a hexdigest
         try:
             int(checksum, 16)
         except ValueError:
-            module.fail_json(msg='The checksum format is invalid', **result)
+            module.fail_json(msg="The checksum format is invalid", **result)
 
     if not dest_is_dir and os.path.exists(dest):
         checksum_mismatch = False
 
         # If the download is not forced and there is a checksum, allow
         # checksum match to skip the download.
-        if not force and checksum != '':
+        if not force and checksum != "":
             destination_checksum = module.digest_from_file(dest, algorithm)
 
             if checksum != destination_checksum:
@@ -591,9 +668,11 @@ def main():
             # Not forcing redownload, unless checksum does not match
             # allow file attribute changes
             file_args = module.load_file_common_arguments(module.params, path=dest)
-            result['changed'] = module.set_fs_attributes_if_different(file_args, False)
-            if result['changed']:
-                module.exit_json(msg="file already exists but file attributes changed", **result)
+            result["changed"] = module.set_fs_attributes_if_different(file_args, False)
+            if result["changed"]:
+                module.exit_json(
+                    msg="file already exists but file attributes changed", **result
+                )
             module.exit_json(msg="file already exists", **result)
 
         # If the file already exists, prepare the last modified time for the
@@ -608,11 +687,25 @@ def main():
 
     # download to tmpsrc
     start = utcnow()
-    method = 'HEAD' if module.check_mode else 'GET'
-    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest, method,
-                           unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
-    result['elapsed'] = (utcnow() - start).seconds
-    result['src'] = tmpsrc
+    method = "HEAD" if module.check_mode else "GET"
+    tmpsrc, info = url_get(
+        module,
+        url,
+        dest,
+        use_proxy,
+        last_mod_time,
+        force,
+        timeout,
+        headers,
+        tmp_dest,
+        method,
+        unredirected_headers=unredirected_headers,
+        decompress=decompress,
+        ciphers=ciphers,
+        use_netrc=use_netrc,
+    )
+    result["elapsed"] = (utcnow() - start).seconds
+    result["src"] = tmpsrc
 
     # Now the request has completed, we can finally generate the final
     # destination file name from the info dict.
@@ -623,18 +716,23 @@ def main():
             # Fall back to extracting the filename from the URL.
             # Pluck the URL from the info, since a redirect could have changed
             # it.
-            filename = url_filename(info['url'])
+            filename = url_filename(info["url"])
         dest = os.path.join(dest, filename)
-        result['dest'] = dest
+        result["dest"] = dest
 
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
         os.remove(tmpsrc)
-        module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'], **result)
+        module.fail_json(
+            msg="Request failed",
+            status_code=info["status"],
+            response=info["msg"],
+            **result,
+        )
     if not os.access(tmpsrc, os.R_OK):
         os.remove(tmpsrc)
         module.fail_json(msg="Source %s is not readable" % (tmpsrc), **result)
-    result['checksum_src'] = module.sha1(tmpsrc)
+    result["checksum_src"] = module.sha1(tmpsrc)
 
     # check if there is no dest file
     if os.path.exists(dest):
@@ -645,63 +743,82 @@ def main():
         if not os.access(dest, os.R_OK):
             os.remove(tmpsrc)
             module.fail_json(msg="Destination %s is not readable" % (dest), **result)
-        result['checksum_dest'] = module.sha1(dest)
+        result["checksum_dest"] = module.sha1(dest)
     else:
         if not os.path.exists(os.path.dirname(dest)):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination %s does not exist" % (os.path.dirname(dest)), **result)
+            module.fail_json(
+                msg="Destination %s does not exist" % (os.path.dirname(dest)), **result
+            )
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination %s is not writable" % (os.path.dirname(dest)), **result)
+            module.fail_json(
+                msg="Destination %s is not writable" % (os.path.dirname(dest)), **result
+            )
 
     if module.check_mode:
         if os.path.exists(tmpsrc):
             os.remove(tmpsrc)
-        result['changed'] = ('checksum_dest' not in result or
-                             result['checksum_src'] != result['checksum_dest'])
-        module.exit_json(msg=info.get('msg', ''), **result)
+        result["changed"] = (
+            "checksum_dest" not in result
+            or result["checksum_src"] != result["checksum_dest"]
+        )
+        module.exit_json(msg=info.get("msg", ""), **result)
 
     backup_file = None
-    if result['checksum_src'] != result['checksum_dest']:
+    if result["checksum_src"] != result["checksum_dest"]:
         try:
             if backup:
                 if os.path.exists(dest):
                     backup_file = module.backup_local(dest)
-            module.atomic_move(tmpsrc, dest, unsafe_writes=module.params['unsafe_writes'])
+            module.atomic_move(
+                tmpsrc, dest, unsafe_writes=module.params["unsafe_writes"]
+            )
         except Exception as e:
             if os.path.exists(tmpsrc):
                 os.remove(tmpsrc)
-            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)),
-                             exception=traceback.format_exc(), **result)
-        result['changed'] = True
+            module.fail_json(
+                msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)),
+                exception=traceback.format_exc(),
+                **result,
+            )
+        result["changed"] = True
     else:
-        result['changed'] = False
+        result["changed"] = False
         if os.path.exists(tmpsrc):
             os.remove(tmpsrc)
 
-    if checksum != '':
+    if checksum != "":
         destination_checksum = module.digest_from_file(dest, algorithm)
 
         if checksum != destination_checksum:
             os.remove(dest)
-            module.fail_json(msg="The checksum for %s did not match %s; it was %s." % (dest, checksum, destination_checksum), **result)
+            module.fail_json(
+                msg="The checksum for %s did not match %s; it was %s."
+                % (dest, checksum, destination_checksum),
+                **result,
+            )
 
     # allow file attribute changes
     file_args = module.load_file_common_arguments(module.params, path=dest)
-    result['changed'] = module.set_fs_attributes_if_different(file_args, result['changed'])
+    result["changed"] = module.set_fs_attributes_if_different(
+        file_args, result["changed"]
+    )
 
     # Backwards compat only.  We'll return None on FIPS enabled systems
     try:
-        result['md5sum'] = module.md5(dest)
+        result["md5sum"] = module.md5(dest)
     except ValueError:
-        result['md5sum'] = None
+        result["md5sum"] = None
 
     if backup_file:
-        result['backup_file'] = backup_file
+        result["backup_file"] = backup_file
 
     # Mission complete
-    module.exit_json(msg=info.get('msg', ''), status_code=info.get('status', ''), **result)
+    module.exit_json(
+        msg=info.get("msg", ""), status_code=info.get("status", ""), **result
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

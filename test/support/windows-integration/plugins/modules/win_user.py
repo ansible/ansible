@@ -7,11 +7,13 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
+ANSIBLE_METADATA = {
+    "metadata_version": "1.1",
+    "status": ["stableinterface"],
+    "supported_by": "core",
+}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_user
 version_added: "1.7"
@@ -113,9 +115,9 @@ seealso:
 author:
     - Paul Durivage (@angstwad)
     - Chris Church (@cchurch)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Ensure user bob is present
   win_user:
     name: bob
@@ -128,9 +130,9 @@ EXAMPLES = r'''
   win_user:
     name: bob
     state: absent
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 account_disabled:
   description: Whether the user is disabled.
   returned: user exists
@@ -191,4 +193,4 @@ user_cannot_change_password:
   returned: user exists
   type: bool
   sample: false
-'''
+"""

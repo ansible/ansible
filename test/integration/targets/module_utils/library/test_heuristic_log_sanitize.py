@@ -20,9 +20,9 @@ def main():
 
     module = AnsibleModule(
         argument_spec={
-            'data': {
-                'type': 'str',
-                'required': True,
+            "data": {
+                "type": "str",
+                "required": True,
             }
         },
     )
@@ -36,16 +36,16 @@ def main():
     # To test this in the same way that modules ultimately operate this test
     # monkeypatches ansible.module_utils.basic to store the sanitized data
     # for later inspection.
-    data = module.params['data']
-    left = data.rindex(':') + 1
-    right = data.rindex('@')
-    expected = data[:left] + '********' + data[right:]
+    data = module.params["data"]
+    left = data.rindex(":") + 1
+    right = data.rindex("@")
+    expected = data[:left] + "********" + data[right:]
 
     sanitized = heuristic_log_sanitize_spy.return_value
     if sanitized != expected:
-        module.fail_json(msg='Invalid match', expected=expected, sanitized=sanitized)
+        module.fail_json(msg="Invalid match", expected=expected, sanitized=sanitized)
     module.exit_json(match=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

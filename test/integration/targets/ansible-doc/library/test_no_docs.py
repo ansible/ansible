@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
+ANSIBLE_METADATA = {
+    "metadata_version": "1.1",
+    "status": ["stableinterface"],
+    "supported_by": "core",
+}
 
 
 from ansible.module_utils.basic import AnsibleModule
@@ -18,5 +20,5 @@ def main():
     module.exit_json()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

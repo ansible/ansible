@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: invalid_argument_spec_incorrect_context
 short_description: Invalid argument spec incorrect context schema test module
 description: Invalid argument spec incorrect context schema test module
@@ -13,10 +13,10 @@ options:
   foo:
     description: foo
     type: str
-'''
+"""
 
-EXAMPLES = '''#'''
-RETURN = ''''''
+EXAMPLES = """#"""
+RETURN = """"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -25,12 +25,12 @@ def main():
     AnsibleModule(
         argument_spec=dict(
             foo=dict(
-                type='str',
-                context='bar',
+                type="str",
+                context="bar",
             ),
         ),
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

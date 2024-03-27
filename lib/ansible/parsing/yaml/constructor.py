@@ -22,7 +22,12 @@ from yaml.nodes import MappingNode
 
 from ansible import constants as C
 from ansible.module_utils.common.text.converters import to_bytes, to_native
-from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode, AnsibleVaultEncryptedUnicode
+from ansible.parsing.yaml.objects import (
+    AnsibleMapping,
+    AnsibleSequence,
+    AnsibleUnicode,
+    AnsibleVaultEncryptedUnicode,
+)
 from ansible.parsing.vault import VaultLib
 from ansible.utils.display import Display
 from ansible.utils.unsafe_proxy import wrap_var
@@ -36,7 +41,7 @@ class AnsibleConstructor(SafeConstructor):
         super(AnsibleConstructor, self).__init__()
         self._vaults = {}
         self.vault_secrets = vault_secrets or []
-        self._vaults['default'] = VaultLib(secrets=self.vault_secrets)
+        self._vaults["default"] = VaultLib(secrets=self.vault_secrets)
 
     def construct_yaml_map(self, node):
         data = AnsibleMapping()
@@ -50,9 +55,12 @@ class AnsibleConstructor(SafeConstructor):
         # it here so that we can warn users when they have duplicate dict keys
         # (pyyaml silently allows overwriting keys)
         if not isinstance(node, MappingNode):
-            raise ConstructorError(None, None,
-                                   "expected a mapping node, but found %s" % node.id,
-                                   node.start_mark)
+            raise ConstructorError(
+                None,
+                None,
+                "expected a mapping node, but found %s" % node.id,
+                node.start_mark,
+            )
         self.flatten_mapping(node)
         mapping = AnsibleMapping()
 
@@ -64,19 +72,28 @@ class AnsibleConstructor(SafeConstructor):
             try:
                 hash(key)
             except TypeError as exc:
-                raise ConstructorError("while constructing a mapping", node.start_mark,
-                                       "found unacceptable key (%s)" % exc, key_node.start_mark)
+                raise ConstructorError(
+                    "while constructing a mapping",
+                    node.start_mark,
+                    "found unacceptable key (%s)" % exc,
+                    key_node.start_mark,
+                )
 
             if key in mapping:
-                msg = (u'While constructing a mapping from {1}, line {2}, column {3}, found a duplicate dict key ({0}).'
-                       u' Using last defined value only.'.format(key, *mapping.ansible_pos))
-                if C.DUPLICATE_YAML_DICT_KEY == 'warn':
+                msg = (
+                    "While constructing a mapping from {1}, line {2}, column {3}, found a duplicate dict key ({0})."
+                    " Using last defined value only.".format(key, *mapping.ansible_pos)
+                )
+                if C.DUPLICATE_YAML_DICT_KEY == "warn":
                     display.warning(msg)
-                elif C.DUPLICATE_YAML_DICT_KEY == 'error':
-                    raise ConstructorError(context=None, context_mark=None,
-                                           problem=to_native(msg),
-                                           problem_mark=node.start_mark,
-                                           note=None)
+                elif C.DUPLICATE_YAML_DICT_KEY == "error":
+                    raise ConstructorError(
+                        context=None,
+                        context_mark=None,
+                        problem=to_native(msg),
+                        problem_mark=node.start_mark,
+                        note=None,
+                    )
                 else:
                     # when 'ignore'
                     display.debug(msg)
@@ -101,12 +118,15 @@ class AnsibleConstructor(SafeConstructor):
         b_ciphertext_data = to_bytes(value)
         # could pass in a key id here to choose the vault to associate with
         # TODO/FIXME: plugin vault selector
-        vault = self._vaults['default']
+        vault = self._vaults["default"]
         if vault.secrets is None:
-            raise ConstructorError(context=None, context_mark=None,
-                                   problem="found !vault but no vault password provided",
-                                   problem_mark=node.start_mark,
-                                   note=None)
+            raise ConstructorError(
+                context=None,
+                context_mark=None,
+                problem="found !vault but no vault password provided",
+                problem_mark=node.start_mark,
+                note=None,
+            )
         ret = AnsibleVaultEncryptedUnicode(b_ciphertext_data)
         ret.vault = vault
         ret.ansible_pos = self._node_position_info(node)
@@ -120,9 +140,9 @@ class AnsibleConstructor(SafeConstructor):
 
     def construct_yaml_unsafe(self, node):
         try:
-            constructor = getattr(node, 'id', 'object')
+            constructor = getattr(node, "id", "object")
             if constructor is not None:
-                constructor = getattr(self, 'construct_%s' % constructor)
+                constructor = getattr(self, "construct_%s" % constructor)
         except AttributeError:
             constructor = self.construct_object
 
@@ -146,31 +166,31 @@ class AnsibleConstructor(SafeConstructor):
 
 
 AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:map',
-    AnsibleConstructor.construct_yaml_map)
+    "tag:yaml.org,2002:map", AnsibleConstructor.construct_yaml_map
+)
 
 AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:python/dict',
-    AnsibleConstructor.construct_yaml_map)
+    "tag:yaml.org,2002:python/dict", AnsibleConstructor.construct_yaml_map
+)
 
 AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:str',
-    AnsibleConstructor.construct_yaml_str)
+    "tag:yaml.org,2002:str", AnsibleConstructor.construct_yaml_str
+)
 
 AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:python/unicode',
-    AnsibleConstructor.construct_yaml_str)
+    "tag:yaml.org,2002:python/unicode", AnsibleConstructor.construct_yaml_str
+)
 
 AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:seq',
-    AnsibleConstructor.construct_yaml_seq)
+    "tag:yaml.org,2002:seq", AnsibleConstructor.construct_yaml_seq
+)
+
+AnsibleConstructor.add_constructor("!unsafe", AnsibleConstructor.construct_yaml_unsafe)
 
 AnsibleConstructor.add_constructor(
-    u'!unsafe',
-    AnsibleConstructor.construct_yaml_unsafe)
+    "!vault", AnsibleConstructor.construct_vault_encrypted_unicode
+)
 
 AnsibleConstructor.add_constructor(
-    u'!vault',
-    AnsibleConstructor.construct_vault_encrypted_unicode)
-
-AnsibleConstructor.add_constructor(u'!vault-encrypted', AnsibleConstructor.construct_vault_encrypted_unicode)
+    "!vault-encrypted", AnsibleConstructor.construct_vault_encrypted_unicode
+)

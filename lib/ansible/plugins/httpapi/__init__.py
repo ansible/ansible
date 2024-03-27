@@ -14,11 +14,11 @@ class HttpApiBase(AnsiblePlugin):
 
         self.connection = connection
         self._become = False
-        self._become_pass = ''
+        self._become_pass = ""
 
     def set_become(self, become_context):
         self._become = become_context.become
-        self._become_pass = getattr(become_context, 'become_pass') or ''
+        self._become_pass = getattr(become_context, "become_pass") or ""
 
     def login(self, username, password):
         """Call a defined login endpoint to receive an authentication token.
@@ -30,7 +30,7 @@ class HttpApiBase(AnsiblePlugin):
         pass
 
     def logout(self):
-        """ Call to implement session logout.
+        """Call to implement session logout.
 
         Method to clear session gracefully e.g. tokens granted in login
         need to be revoked.
@@ -44,9 +44,9 @@ class HttpApiBase(AnsiblePlugin):
         headers of a request. The default implementation uses cookie data.
         If no authentication data is found, return None
         """
-        cookie = response.info().get('Set-Cookie')
+        cookie = response.info().get("Set-Cookie")
         if cookie:
-            return {'Cookie': cookie}
+            return {"Cookie": cookie}
 
         return None
 
@@ -67,12 +67,15 @@ class HttpApiBase(AnsiblePlugin):
             * Any other value returned is taken as a valid response from the
             server without making another request. In many cases, this can just
             be the original exception.
-            """
+        """
         if exc.code == 401:
             if self.connection._auth:
                 # Stored auth appears to be invalid, clear and retry
                 self.connection._auth = None
-                self.login(self.connection.get_option('remote_user'), self.connection.get_option('password'))
+                self.login(
+                    self.connection.get_option("remote_user"),
+                    self.connection.get_option("password"),
+                )
                 return True
             else:
                 # Unauthorized and there's no token. Return an error

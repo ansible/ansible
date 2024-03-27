@@ -1,4 +1,5 @@
 """Python threading tools."""
+
 from __future__ import annotations
 
 import collections.abc as c
@@ -10,7 +11,7 @@ import queue
 import typing as t
 
 
-TCallable = t.TypeVar('TCallable', bound=t.Callable[..., t.Any])
+TCallable = t.TypeVar("TCallable", bound=t.Callable[..., t.Any])
 
 
 class WrappedThread(threading.Thread):

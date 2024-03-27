@@ -1,4 +1,5 @@
 """Command line parsing for the `integration` command."""
+
 from __future__ import annotations
 
 import argparse
@@ -33,9 +34,9 @@ def do_posix_integration(
 ):
     """Command line parsing for the `integration` command."""
     parser: argparse.ArgumentParser = subparsers.add_parser(
-        'integration',
+        "integration",
         parents=[parent],
-        help='posix integration tests',
+        help="posix integration tests",
     )
 
     parser.set_defaults(
@@ -44,8 +45,13 @@ def do_posix_integration(
         config=PosixIntegrationConfig,
     )
 
-    posix_integration = t.cast(argparse.ArgumentParser, parser.add_argument_group(title='integration test arguments'))
+    posix_integration = t.cast(
+        argparse.ArgumentParser,
+        parser.add_argument_group(title="integration test arguments"),
+    )
 
     add_integration_common(posix_integration)
 
-    add_environments(parser, completer, ControllerMode.DELEGATED, TargetMode.POSIX_INTEGRATION)  # integration
+    add_environments(
+        parser, completer, ControllerMode.DELEGATED, TargetMode.POSIX_INTEGRATION
+    )  # integration

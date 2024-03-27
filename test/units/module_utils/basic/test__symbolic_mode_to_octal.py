@@ -28,70 +28,66 @@ from ansible.module_utils.basic import AnsibleModule
 # 'o': 0}
 
 DATA = (  # Going from no permissions to setting all for user, group, and/or other
-    (0o040000, u'a+rwx', 0o0777),
-    (0o040000, u'u+rwx,g+rwx,o+rwx', 0o0777),
-    (0o040000, u'o+rwx', 0o0007),
-    (0o040000, u'g+rwx', 0o0070),
-    (0o040000, u'u+rwx', 0o0700),
-
+    (0o040000, "a+rwx", 0o0777),
+    (0o040000, "u+rwx,g+rwx,o+rwx", 0o0777),
+    (0o040000, "o+rwx", 0o0007),
+    (0o040000, "g+rwx", 0o0070),
+    (0o040000, "u+rwx", 0o0700),
     # Going from all permissions to none for user, group, and/or other
-    (0o040777, u'a-rwx', 0o0000),
-    (0o040777, u'u-rwx,g-rwx,o-rwx', 0o0000),
-    (0o040777, u'o-rwx', 0o0770),
-    (0o040777, u'g-rwx', 0o0707),
-    (0o040777, u'u-rwx', 0o0077),
-
+    (0o040777, "a-rwx", 0o0000),
+    (0o040777, "u-rwx,g-rwx,o-rwx", 0o0000),
+    (0o040777, "o-rwx", 0o0770),
+    (0o040777, "g-rwx", 0o0707),
+    (0o040777, "u-rwx", 0o0077),
     # now using absolute assignment from None to a set of perms
-    (0o040000, u'a=rwx', 0o0777),
-    (0o040000, u'u=rwx,g=rwx,o=rwx', 0o0777),
-    (0o040000, u'o=rwx', 0o0007),
-    (0o040000, u'g=rwx', 0o0070),
-    (0o040000, u'u=rwx', 0o0700),
-
+    (0o040000, "a=rwx", 0o0777),
+    (0o040000, "u=rwx,g=rwx,o=rwx", 0o0777),
+    (0o040000, "o=rwx", 0o0007),
+    (0o040000, "g=rwx", 0o0070),
+    (0o040000, "u=rwx", 0o0700),
     # X effect on files and dirs
-    (0o040000, u'a+X', 0o0111),
-    (0o100000, u'a+X', 0),
-    (0o040000, u'a=X', 0o0111),
-    (0o100000, u'a=X', 0),
-    (0o040777, u'a-X', 0o0666),
+    (0o040000, "a+X", 0o0111),
+    (0o100000, "a+X", 0),
+    (0o040000, "a=X", 0o0111),
+    (0o100000, "a=X", 0),
+    (0o040777, "a-X", 0o0666),
     # Same as chmod but is it a bug?
     # chmod a-X statfile <== removes execute from statfile
-    (0o100777, u'a-X', 0o0666),
-
+    (0o100777, "a-X", 0o0666),
     # Multiple permissions
-    (0o040000, u'u=rw-x+X,g=r-x+X,o=r-x+X', 0o0755),
-    (0o100000, u'u=rw-x+X,g=r-x+X,o=r-x+X', 0o0644),
-    (0o040000, u'ug=rx,o=', 0o0550),
-    (0o100000, u'ug=rx,o=', 0o0550),
-    (0o040000, u'u=rx,g=r', 0o0540),
-    (0o100000, u'u=rx,g=r', 0o0540),
-    (0o040777, u'ug=rx,o=', 0o0550),
-    (0o100777, u'ug=rx,o=', 0o0550),
-    (0o040777, u'u=rx,g=r', 0o0547),
-    (0o100777, u'u=rx,g=r', 0o0547),
+    (0o040000, "u=rw-x+X,g=r-x+X,o=r-x+X", 0o0755),
+    (0o100000, "u=rw-x+X,g=r-x+X,o=r-x+X", 0o0644),
+    (0o040000, "ug=rx,o=", 0o0550),
+    (0o100000, "ug=rx,o=", 0o0550),
+    (0o040000, "u=rx,g=r", 0o0540),
+    (0o100000, "u=rx,g=r", 0o0540),
+    (0o040777, "ug=rx,o=", 0o0550),
+    (0o100777, "ug=rx,o=", 0o0550),
+    (0o040777, "u=rx,g=r", 0o0547),
+    (0o100777, "u=rx,g=r", 0o0547),
 )
 
 UMASK_DATA = (
-    (0o100000, '+rwx', 0o770),
-    (0o100777, '-rwx', 0o007),
+    (0o100000, "+rwx", 0o770),
+    (0o100777, "-rwx", 0o007),
 )
 
 INVALID_DATA = (
-    (0o040000, u'a=foo', "bad symbolic permission for mode: a=foo"),
-    (0o040000, u'f=rwx', "bad symbolic permission for mode: f=rwx"),
+    (0o040000, "a=foo", "bad symbolic permission for mode: a=foo"),
+    (0o040000, "f=rwx", "bad symbolic permission for mode: f=rwx"),
 )
 
 
-@pytest.mark.parametrize('stat_info, mode_string, expected', DATA)
+@pytest.mark.parametrize("stat_info, mode_string, expected", DATA)
 def test_good_symbolic_modes(mocker, stat_info, mode_string, expected):
     mock_stat = mocker.MagicMock()
     mock_stat.st_mode = stat_info
     assert AnsibleModule._symbolic_mode_to_octal(mock_stat, mode_string) == expected
 
 
-@pytest.mark.parametrize('stat_info, mode_string, expected', UMASK_DATA)
+@pytest.mark.parametrize("stat_info, mode_string, expected", UMASK_DATA)
 def test_umask_with_symbolic_modes(mocker, stat_info, mode_string, expected):
-    mock_umask = mocker.patch('os.umask')
+    mock_umask = mocker.patch("os.umask")
     mock_umask.return_value = 0o7
 
     mock_stat = mocker.MagicMock()
@@ -100,10 +96,10 @@ def test_umask_with_symbolic_modes(mocker, stat_info, mode_string, expected):
     assert AnsibleModule._symbolic_mode_to_octal(mock_stat, mode_string) == expected
 
 
-@pytest.mark.parametrize('stat_info, mode_string, expected', INVALID_DATA)
+@pytest.mark.parametrize("stat_info, mode_string, expected", INVALID_DATA)
 def test_invalid_symbolic_modes(mocker, stat_info, mode_string, expected):
     mock_stat = mocker.MagicMock()
     mock_stat.st_mode = stat_info
     with pytest.raises(ValueError) as exc:
-        assert AnsibleModule._symbolic_mode_to_octal(mock_stat, mode_string) == 'blah'
+        assert AnsibleModule._symbolic_mode_to_octal(mock_stat, mode_string) == "blah"
     assert exc.match(expected)

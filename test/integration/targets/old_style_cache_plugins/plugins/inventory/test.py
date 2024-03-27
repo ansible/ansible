@@ -3,29 +3,29 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: test
     plugin_type: inventory
     short_description: test inventory source
     extends_documentation_fragment:
         - inventory_cache
-'''
+"""
 
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 
 
 class InventoryModule(BaseInventoryPlugin, Cacheable):
 
-    NAME = 'test'
+    NAME = "test"
 
     def populate(self, hosts):
         for host in list(hosts.keys()):
-            self.inventory.add_host(host, group='all')
+            self.inventory.add_host(host, group="all")
             for hostvar, hostval in hosts[host].items():
                 self.inventory.set_variable(host, hostvar, hostval)
 
     def get_hosts(self):
-        return {'host1': {'one': 'two'}, 'host2': {'three': 'four'}}
+        return {"host1": {"one": "two"}, "host2": {"three": "four"}}
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
@@ -36,7 +36,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         # cache may be True or False at this point to indicate if the inventory is being refreshed
         # get the user's cache option
-        cache_setting = self.get_option('cache')
+        cache_setting = self.get_option("cache")
 
         attempt_to_read_cache = cache_setting and cache
         cache_needs_update = cache_setting and not cache

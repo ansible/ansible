@@ -1,4 +1,5 @@
 """A tool for installing test requirements on the controller and target host."""
+
 from __future__ import annotations
 
 # pylint: disable=wrong-import-position
@@ -44,9 +45,9 @@ except ImportError:
     # noinspection PyCompatibility,PyUnresolvedReferences
     from urllib2 import urlopen  # pylint: disable=ansible-bad-import-from
 
-ENCODING = 'utf-8'
+ENCODING = "utf-8"
 
-Text = type(u'')
+Text = type("")
 
 VERBOSITY = 0
 CONSOLE = sys.stderr
@@ -58,12 +59,12 @@ def main():  # type: () -> None
 
     payload = json.loads(to_text(base64.b64decode(PAYLOAD)))
 
-    VERBOSITY = payload['verbosity']
+    VERBOSITY = payload["verbosity"]
 
-    script = payload['script']
-    commands = payload['commands']
+    script = payload["script"]
+    commands = payload["commands"]
 
-    with tempfile.NamedTemporaryFile(prefix='ansible-test-', suffix='-pip.py') as pip:
+    with tempfile.NamedTemporaryFile(prefix="ansible-test-", suffix="-pip.py") as pip:
         pip.write(to_bytes(script))
         pip.flush()
 
@@ -78,24 +79,30 @@ def main():  # type: () -> None
 # noinspection PyUnusedLocal
 def bootstrap(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
     """Bootstrap pip and related packages in an empty virtual environment."""
-    pip_version = options['pip_version']
-    packages = options['packages']
+    pip_version = options["pip_version"]
+    packages = options["packages"]
 
-    url = 'https://ci-files.testing.ansible.com/ansible-test/get-pip-%s.py' % pip_version
-    cache_path = os.path.expanduser('~/.ansible/test/cache/get_pip_%s.py' % pip_version.replace(".", "_"))
-    temp_path = cache_path + '.download'
+    url = (
+        "https://ci-files.testing.ansible.com/ansible-test/get-pip-%s.py" % pip_version
+    )
+    cache_path = os.path.expanduser(
+        "~/.ansible/test/cache/get_pip_%s.py" % pip_version.replace(".", "_")
+    )
+    temp_path = cache_path + ".download"
 
     if os.path.exists(cache_path):
-        log('Using cached pip %s bootstrap script: %s' % (pip_version, cache_path))
+        log("Using cached pip %s bootstrap script: %s" % (pip_version, cache_path))
     else:
-        log('Downloading pip %s bootstrap script: %s' % (pip_version, url))
+        log("Downloading pip %s bootstrap script: %s" % (pip_version, url))
 
         make_dirs(os.path.dirname(cache_path))
 
         try:
             download_file(url, temp_path)
         except Exception as ex:
-            raise ApplicationError(('''
+            raise ApplicationError(
+                (
+                    """
 Download failed: %s
 
 The bootstrap script can be manually downloaded and saved to: %s
@@ -103,11 +110,14 @@ The bootstrap script can be manually downloaded and saved to: %s
 If you're behind a proxy, consider commenting on the following GitHub issue:
 
 https://github.com/ansible/ansible/issues/77304
-''' % (ex, cache_path)).strip())
+"""
+                    % (ex, cache_path)
+                ).strip()
+            )
 
         shutil.move(temp_path, cache_path)
 
-        log('Cached pip %s bootstrap script: %s' % (pip_version, cache_path))
+        log("Cached pip %s bootstrap script: %s" % (pip_version, cache_path))
 
     env = common_pip_environment()
     env.update(GET_PIP=cache_path)
@@ -122,18 +132,18 @@ https://github.com/ansible/ansible/issues/77304
 
 def install(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
     """Perform a pip install."""
-    requirements = options['requirements']
-    constraints = options['constraints']
-    packages = options['packages']
+    requirements = options["requirements"]
+    constraints = options["constraints"]
+    packages = options["packages"]
 
-    tempdir = tempfile.mkdtemp(prefix='ansible-test-', suffix='-requirements')
+    tempdir = tempfile.mkdtemp(prefix="ansible-test-", suffix="-requirements")
 
     try:
         options = common_pip_options()
         options.extend(packages)
 
         for path, content in requirements:
-            if path.split(os.sep)[0] in ('test', 'requirements'):
+            if path.split(os.sep)[0] in ("test", "requirements"):
                 # Support for pre-build is currently limited to requirements embedded in ansible-test and those used by ansible-core.
                 # Requirements from ansible-core can be found in the 'test' and 'requirements' directories.
                 # This feature will probably be extended to support collections after further testing.
@@ -142,13 +152,13 @@ def install(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
                     pre_build.execute(pip)
 
             write_text_file(os.path.join(tempdir, path), content, True)
-            options.extend(['-r', path])
+            options.extend(["-r", path])
 
         for path, content in constraints:
             write_text_file(os.path.join(tempdir, path), content, True)
-            options.extend(['-c', path])
+            options.extend(["-c", path])
 
-        command = [sys.executable, pip, 'install'] + options
+        command = [sys.executable, pip, "install"] + options
 
         env = common_pip_environment()
 
@@ -166,21 +176,21 @@ class PreBuild:
 
     def execute(self, pip):  # type: (str) -> None
         """Execute these pre-build instructions."""
-        tempdir = tempfile.mkdtemp(prefix='ansible-test-', suffix='-pre-build')
+        tempdir = tempfile.mkdtemp(prefix="ansible-test-", suffix="-pre-build")
 
         try:
             options = common_pip_options()
             options.append(self.requirement)
 
-            constraints = '\n'.join(self.constraints) + '\n'
-            constraints_path = os.path.join(tempdir, 'constraints.txt')
+            constraints = "\n".join(self.constraints) + "\n"
+            constraints_path = os.path.join(tempdir, "constraints.txt")
 
             write_text_file(constraints_path, constraints, True)
 
             env = common_pip_environment()
             env.update(PIP_CONSTRAINT=constraints_path)
 
-            command = [sys.executable, pip, 'wheel'] + options
+            command = [sys.executable, pip, "wheel"] + options
 
             execute_command(command, env=env, cwd=tempdir)
         finally:
@@ -192,9 +202,9 @@ def parse_pre_build_instructions(requirements):  # type: (str) -> list[PreBuild]
     # CAUTION: This code must be kept in sync with the sanity test hashing code in:
     #          test/lib/ansible_test/_internal/commands/sanity/__init__.py
 
-    pre_build_prefix = '# pre-build '
-    pre_build_requirement_prefix = pre_build_prefix + 'requirement: '
-    pre_build_constraint_prefix = pre_build_prefix + 'constraint: '
+    pre_build_prefix = "# pre-build "
+    pre_build_requirement_prefix = pre_build_prefix + "requirement: "
+    pre_build_constraint_prefix = pre_build_prefix + "constraint: "
 
     lines = requirements.splitlines()
     pre_build_lines = [line for line in lines if line.startswith(pre_build_prefix)]
@@ -203,24 +213,26 @@ def parse_pre_build_instructions(requirements):  # type: (str) -> list[PreBuild]
 
     for line in pre_build_lines:
         if line.startswith(pre_build_requirement_prefix):
-            instructions.append(PreBuild(line[len(pre_build_requirement_prefix):]))
+            instructions.append(PreBuild(line[len(pre_build_requirement_prefix) :]))
         elif line.startswith(pre_build_constraint_prefix):
-            instructions[-1].constraints.append(line[len(pre_build_constraint_prefix):])
+            instructions[-1].constraints.append(
+                line[len(pre_build_constraint_prefix) :]
+            )
         else:
-            raise RuntimeError('Unsupported pre-build comment: ' + line)
+            raise RuntimeError("Unsupported pre-build comment: " + line)
 
     return instructions
 
 
 def uninstall(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
     """Perform a pip uninstall."""
-    packages = options['packages']
-    ignore_errors = options['ignore_errors']
+    packages = options["packages"]
+    ignore_errors = options["ignore_errors"]
 
     options = common_pip_options()
     options.extend(packages)
 
-    command = [sys.executable, pip, 'uninstall', '-y'] + options
+    command = [sys.executable, pip, "uninstall", "-y"] + options
 
     env = common_pip_environment()
 
@@ -238,7 +250,7 @@ def version(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
 
     options = common_pip_options()
 
-    command = [sys.executable, pip, '-V'] + options
+    command = [sys.executable, pip, "-V"] + options
 
     env = common_pip_environment()
 
@@ -255,7 +267,7 @@ def common_pip_environment():  # type: () -> t.Dict[str, str]
     # It seems reasonable to bypass PEP 668 checks in both of these cases.
     # Doing so with an environment variable allows it to work under any version of pip which supports it, without breaking older versions.
     # NOTE: pip version 23.0 enforces PEP 668 but does not support the override, in which case upgrading pip is required.
-    env.update(PIP_BREAK_SYSTEM_PACKAGES='1')
+    env.update(PIP_BREAK_SYSTEM_PACKAGES="1")
 
     return env
 
@@ -263,7 +275,7 @@ def common_pip_environment():  # type: () -> t.Dict[str, str]
 def common_pip_options():  # type: () -> t.List[str]
     """Return a list of common pip options."""
     return [
-        '--disable-pip-version-check',
+        "--disable-pip-version-check",
     ]
 
 
@@ -272,14 +284,14 @@ def devnull():  # type: () -> t.IO[bytes]
     try:
         return devnull.file
     except AttributeError:
-        devnull.file = open(os.devnull, 'w+b')  # pylint: disable=consider-using-with
+        devnull.file = open(os.devnull, "w+b")  # pylint: disable=consider-using-with
 
     return devnull.file
 
 
 def download_file(url, path):  # type: (str, str) -> None
     """Download the given URL to the specified file path."""
-    with open(to_bytes(path), 'wb') as saved_file:
+    with open(to_bytes(path), "wb") as saved_file:
         with contextlib.closing(urlopen(url)) as download:
             shutil.copyfileobj(download, saved_file)
 
@@ -290,14 +302,20 @@ class ApplicationError(Exception):
 
 class SubprocessError(ApplicationError):
     """A command returned a non-zero status."""
-    def __init__(self, cmd, status, stdout, stderr):  # type: (t.List[str], int, str, str) -> None
-        message = 'A command failed with status %d: %s' % (status, ' '.join(cmd_quote(c) for c in cmd))
+
+    def __init__(
+        self, cmd, status, stdout, stderr
+    ):  # type: (t.List[str], int, str, str) -> None
+        message = "A command failed with status %d: %s" % (
+            status,
+            " ".join(cmd_quote(c) for c in cmd),
+        )
 
         if stderr:
-            message += '\n>>> Standard Error\n%s' % stderr.strip()
+            message += "\n>>> Standard Error\n%s" % stderr.strip()
 
         if stdout:
-            message += '\n>>> Standard Output\n%s' % stdout.strip()
+            message += "\n>>> Standard Output\n%s" % stdout.strip()
 
         super(SubprocessError, self).__init__(message)
 
@@ -311,9 +329,11 @@ def log(message, verbosity=0):  # type: (str, int) -> None
     CONSOLE.flush()
 
 
-def execute_command(cmd, cwd=None, capture=False, env=None):  # type: (t.List[str], t.Optional[str], bool, t.Optional[t.Dict[str, str]]) -> None
+def execute_command(
+    cmd, cwd=None, capture=False, env=None
+):  # type: (t.List[str], t.Optional[str], bool, t.Optional[t.Dict[str, str]]) -> None
     """Execute the specified command."""
-    log('Execute command: %s' % ' '.join(cmd_quote(c) for c in cmd), verbosity=1)
+    log("Execute command: %s" % " ".join(cmd_quote(c) for c in cmd), verbosity=1)
 
     cmd_bytes = [to_bytes(c) for c in cmd]
 
@@ -325,21 +345,25 @@ def execute_command(cmd, cwd=None, capture=False, env=None):  # type: (t.List[st
         stderr = None
 
     cwd_bytes = to_optional_bytes(cwd)
-    process = subprocess.Popen(cmd_bytes, cwd=cwd_bytes, stdin=devnull(), stdout=stdout, stderr=stderr, env=env)  # pylint: disable=consider-using-with
+    process = subprocess.Popen(
+        cmd_bytes, cwd=cwd_bytes, stdin=devnull(), stdout=stdout, stderr=stderr, env=env
+    )  # pylint: disable=consider-using-with
     stdout_bytes, stderr_bytes = process.communicate()
-    stdout_text = to_optional_text(stdout_bytes) or u''
-    stderr_text = to_optional_text(stderr_bytes) or u''
+    stdout_text = to_optional_text(stdout_bytes) or ""
+    stderr_text = to_optional_text(stderr_bytes) or ""
 
     if process.returncode != 0:
         raise SubprocessError(cmd, process.returncode, stdout_text, stderr_text)
 
 
-def write_text_file(path, content, create_directories=False):  # type: (str, str, bool) -> None
+def write_text_file(
+    path, content, create_directories=False
+):  # type: (str, str, bool) -> None
     """Write the given text content to the specified path, optionally creating missing directories."""
     if create_directories:
         make_dirs(os.path.dirname(path))
 
-    with open_binary_file(path, 'wb') as file_obj:
+    with open_binary_file(path, "wb") as file_obj:
         file_obj.write(to_bytes(content))
 
 
@@ -361,25 +385,31 @@ def make_dirs(path):  # type: (str) -> None
             raise
 
 
-def open_binary_file(path, mode='rb'):  # type: (str, str) -> t.IO[bytes]
+def open_binary_file(path, mode="rb"):  # type: (str, str) -> t.IO[bytes]
     """Open the given path for binary access."""
-    if 'b' not in mode:
+    if "b" not in mode:
         raise Exception('mode must include "b" for binary files: %s' % mode)
 
-    return io.open(to_bytes(path), mode)  # pylint: disable=consider-using-with,unspecified-encoding
+    return io.open(
+        to_bytes(path), mode
+    )  # pylint: disable=consider-using-with,unspecified-encoding
 
 
-def to_optional_bytes(value, errors='strict'):  # type: (t.Optional[t.AnyStr], str) -> t.Optional[bytes]
+def to_optional_bytes(
+    value, errors="strict"
+):  # type: (t.Optional[t.AnyStr], str) -> t.Optional[bytes]
     """Return the given value as bytes encoded using UTF-8 if not already bytes, or None if the value is None."""
     return None if value is None else to_bytes(value, errors)
 
 
-def to_optional_text(value, errors='strict'):  # type: (t.Optional[t.AnyStr], str) -> t.Optional[t.Text]
+def to_optional_text(
+    value, errors="strict"
+):  # type: (t.Optional[t.AnyStr], str) -> t.Optional[t.Text]
     """Return the given value as text decoded using UTF-8 if not already text, or None if the value is None."""
     return None if value is None else to_text(value, errors)
 
 
-def to_bytes(value, errors='strict'):  # type: (t.AnyStr, str) -> bytes
+def to_bytes(value, errors="strict"):  # type: (t.AnyStr, str) -> bytes
     """Return the given value as bytes encoded using UTF-8 if not already bytes."""
     if isinstance(value, bytes):
         return value
@@ -387,10 +417,10 @@ def to_bytes(value, errors='strict'):  # type: (t.AnyStr, str) -> bytes
     if isinstance(value, Text):
         return value.encode(ENCODING, errors)
 
-    raise Exception('value is not bytes or text: %s' % type(value))
+    raise Exception("value is not bytes or text: %s" % type(value))
 
 
-def to_text(value, errors='strict'):  # type: (t.AnyStr, str) -> t.Text
+def to_text(value, errors="strict"):  # type: (t.AnyStr, str) -> t.Text
     """Return the given value as text decoded using UTF-8 if not already text."""
     if isinstance(value, bytes):
         return value.decode(ENCODING, errors)
@@ -398,10 +428,10 @@ def to_text(value, errors='strict'):  # type: (t.AnyStr, str) -> t.Text
     if isinstance(value, Text):
         return value
 
-    raise Exception('value is not bytes or text: %s' % type(value))
+    raise Exception("value is not bytes or text: %s" % type(value))
 
 
-PAYLOAD = b'{payload}'  # base-64 encoded JSON payload which will be populated before this script is executed
+PAYLOAD = b"{payload}"  # base-64 encoded JSON payload which will be populated before this script is executed
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

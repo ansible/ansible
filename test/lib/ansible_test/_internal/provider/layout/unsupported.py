@@ -1,4 +1,5 @@
 """Layout provider for an unsupported directory layout."""
+
 from __future__ import annotations
 
 from . import (
@@ -26,17 +27,17 @@ class UnsupportedLayout(LayoutProvider):
             paths,
             plugin_paths=plugin_paths,
             collection=None,
-            test_path='',
-            results_path='',
-            sanity_path='',
+            test_path="",
+            results_path="",
+            sanity_path="",
             sanity_messages=None,
-            integration_path='',
-            integration_targets_path='',
-            integration_vars_path='',
+            integration_path="",
+            integration_targets_path="",
+            integration_vars_path="",
             integration_messages=None,
-            unit_path='',
-            unit_module_path='',
-            unit_module_utils_path='',
+            unit_path="",
+            unit_module_path="",
+            unit_module_utils_path="",
             unit_messages=None,
             unsupported=True,
         )

@@ -7,5 +7,5 @@ from __future__ import annotations
 class TestModule:
     def tests(self):
         return {
-            'world': lambda x: x.lower() == 'world',
+            "world": lambda x: x.lower() == "world",
         }

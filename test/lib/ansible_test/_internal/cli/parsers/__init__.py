@@ -1,4 +1,5 @@
 """Composite argument parsers for ansible-test specific command-line arguments."""
+
 from __future__ import annotations
 
 import typing as t
@@ -62,10 +63,17 @@ class OriginControllerParser(ControllerNamespaceParser, TypeParser):
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
-        section = '--controller options:'
+        section = "--controller options:"
 
-        state.sections[section] = ''  # place this section before the sections created by the parsers below
-        state.sections[section] = '\n'.join([f'  {name}:{parser.document(state)}' for name, parser in self.get_stateless_parsers().items()])
+        state.sections[section] = (
+            ""  # place this section before the sections created by the parsers below
+        )
+        state.sections[section] = "\n".join(
+            [
+                f"  {name}:{parser.document(state)}"
+                for name, parser in self.get_stateless_parsers().items()
+            ]
+        )
 
         return None
 
@@ -89,10 +97,17 @@ class DelegatedControllerParser(ControllerNamespaceParser, TypeParser):
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
-        section = '--controller options:'
+        section = "--controller options:"
 
-        state.sections[section] = ''  # place this section before the sections created by the parsers below
-        state.sections[section] = '\n'.join([f'  {name}:{parser.document(state)}' for name, parser in self.get_stateless_parsers().items()])
+        state.sections[section] = (
+            ""  # place this section before the sections created by the parsers below
+        )
+        state.sections[section] = "\n".join(
+            [
+                f"  {name}:{parser.document(state)}"
+                for name, parser in self.get_stateless_parsers().items()
+            ]
+        )
 
         return None
 
@@ -120,10 +135,17 @@ class PosixTargetParser(TargetNamespaceParser, TypeParser):
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
-        section = f'{self.option_name} options (choose one):'
+        section = f"{self.option_name} options (choose one):"
 
-        state.sections[section] = ''  # place this section before the sections created by the parsers below
-        state.sections[section] = '\n'.join([f'  {name}:{parser.document(state)}' for name, parser in self.get_stateless_parsers().items()])
+        state.sections[section] = (
+            ""  # place this section before the sections created by the parsers below
+        )
+        state.sections[section] = "\n".join(
+            [
+                f"  {name}:{parser.document(state)}"
+                for name, parser in self.get_stateless_parsers().items()
+            ]
+        )
 
         return None
 
@@ -153,7 +175,9 @@ class WindowsTargetParser(TargetsNamespaceParser, TypeParser):
                 inventory=WindowsInventoryParser(),
             )
 
-        if not targets or not any(isinstance(target, WindowsInventoryConfig) for target in targets):
+        if not targets or not any(
+            isinstance(target, WindowsInventoryConfig) for target in targets
+        ):
             if get_ci_provider().supports_core_ci_auth():
                 parsers.update(
                     remote=WindowsRemoteParser(),
@@ -163,10 +187,17 @@ class WindowsTargetParser(TargetsNamespaceParser, TypeParser):
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
-        section = f'{self.option_name} options (choose one):'
+        section = f"{self.option_name} options (choose one):"
 
-        state.sections[section] = ''  # place this section before the sections created by the parsers below
-        state.sections[section] = '\n'.join([f'  {name}:{parser.document(state)}' for name, parser in self.get_stateless_parsers().items()])
+        state.sections[section] = (
+            ""  # place this section before the sections created by the parsers below
+        )
+        state.sections[section] = "\n".join(
+            [
+                f"  {name}:{parser.document(state)}"
+                for name, parser in self.get_stateless_parsers().items()
+            ]
+        )
 
         return None
 
@@ -196,7 +227,9 @@ class NetworkTargetParser(TargetsNamespaceParser, TypeParser):
                 inventory=NetworkInventoryParser(),
             )
 
-        if not targets or not any(isinstance(target, NetworkInventoryConfig) for target in targets):
+        if not targets or not any(
+            isinstance(target, NetworkInventoryConfig) for target in targets
+        ):
             if get_ci_provider().supports_core_ci_auth():
                 parsers.update(
                     remote=NetworkRemoteParser(),
@@ -206,10 +239,17 @@ class NetworkTargetParser(TargetsNamespaceParser, TypeParser):
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
-        section = f'{self.option_name} options (choose one):'
+        section = f"{self.option_name} options (choose one):"
 
-        state.sections[section] = ''  # place this section before the sections created by the parsers below
-        state.sections[section] = '\n'.join([f'  {name}:{parser.document(state)}' for name, parser in self.get_stateless_parsers().items()])
+        state.sections[section] = (
+            ""  # place this section before the sections created by the parsers below
+        )
+        state.sections[section] = "\n".join(
+            [
+                f"  {name}:{parser.document(state)}"
+                for name, parser in self.get_stateless_parsers().items()
+            ]
+        )
 
         return None
 
@@ -225,7 +265,7 @@ class PythonTargetParser(TargetsNamespaceParser, Parser):
     @property
     def option_name(self) -> str:
         """The option name used for this parser."""
-        return '--target-python'
+        return "--target-python"
 
     def get_value(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result, without storing the result in the namespace."""
@@ -243,12 +283,14 @@ class PythonTargetParser(TargetsNamespaceParser, Parser):
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
-        section = f'{self.option_name} options (choose one):'
+        section = f"{self.option_name} options (choose one):"
 
-        state.sections[section] = '\n'.join([
-            f'  {PythonParser(SUPPORTED_PYTHON_VERSIONS, allow_venv=False, allow_default=True).document(state)}  # non-origin controller',
-            f'  {PythonParser(SUPPORTED_PYTHON_VERSIONS, allow_venv=True, allow_default=True).document(state)}  # origin controller',
-        ])
+        state.sections[section] = "\n".join(
+            [
+                f"  {PythonParser(SUPPORTED_PYTHON_VERSIONS, allow_venv=False, allow_default=True).document(state)}  # non-origin controller",
+                f"  {PythonParser(SUPPORTED_PYTHON_VERSIONS, allow_venv=True, allow_default=True).document(state)}  # origin controller",
+            ]
+        )
 
         return None
 
@@ -273,7 +315,7 @@ class PosixSshTargetParser(PosixTargetParser):
     @property
     def option_name(self) -> str:
         """The option name used for this parser."""
-        return '--target-posix'
+        return "--target-posix"
 
 
 class WindowsSshTargetParser(WindowsTargetParser):
@@ -282,7 +324,7 @@ class WindowsSshTargetParser(WindowsTargetParser):
     @property
     def option_name(self) -> str:
         """The option name used for this parser."""
-        return '--target-windows'
+        return "--target-windows"
 
     @property
     def allow_inventory(self) -> bool:
@@ -301,7 +343,7 @@ class NetworkSshTargetParser(NetworkTargetParser):
     @property
     def option_name(self) -> str:
         """The option name used for this parser."""
-        return '--target-network'
+        return "--target-network"
 
     @property
     def allow_inventory(self) -> bool:

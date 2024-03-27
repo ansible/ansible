@@ -22,9 +22,13 @@ def deprecate(msg, version=None, date=None, collection_name=None):
         # For compatibility, we accept that neither version nor date is set,
         # and treat that the same as if version would haven been set
         if date is not None:
-            _global_deprecations.append({'msg': msg, 'date': date, 'collection_name': collection_name})
+            _global_deprecations.append(
+                {"msg": msg, "date": date, "collection_name": collection_name}
+            )
         else:
-            _global_deprecations.append({'msg': msg, 'version': version, 'collection_name': collection_name})
+            _global_deprecations.append(
+                {"msg": msg, "version": version, "collection_name": collection_name}
+            )
     else:
         raise TypeError("deprecate requires a string not a %s" % type(msg))
 

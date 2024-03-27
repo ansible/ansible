@@ -76,24 +76,29 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
         if variables is not None:
             self._templar.available_variables = variables
-        myvars = getattr(self._templar, '_available_variables', {})
+        myvars = getattr(self._templar, "_available_variables", {})
 
         self.set_options(var_options=variables, direct=kwargs)
-        default = self.get_option('default')
+        default = self.get_option("default")
 
         ret = []
         for term in terms:
             if not isinstance(term, string_types):
-                raise AnsibleError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
+                raise AnsibleError(
+                    'Invalid setting identifier, "%s" is not a string, its a %s'
+                    % (term, type(term))
+                )
 
             try:
                 try:
                     value = myvars[term]
                 except KeyError:
                     try:
-                        value = myvars['hostvars'][myvars['inventory_hostname']][term]
+                        value = myvars["hostvars"][myvars["inventory_hostname"]][term]
                     except KeyError:
-                        raise AnsibleUndefinedVariable('No variable found with this name: %s' % term)
+                        raise AnsibleUndefinedVariable(
+                            "No variable found with this name: %s" % term
+                        )
 
                 ret.append(self._templar.template(value, fail_on_undefined=True))
             except AnsibleUndefinedVariable:

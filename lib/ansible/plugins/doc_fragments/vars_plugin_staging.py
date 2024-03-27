@@ -8,7 +8,7 @@ from __future__ import annotations
 
 class ModuleDocFragment(object):
 
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
 options:
   stage:
     description:
@@ -20,4 +20,4 @@ options:
     choices: ['all', 'task', 'inventory']
     version_added: "2.10"
     type: str
-'''
+"""

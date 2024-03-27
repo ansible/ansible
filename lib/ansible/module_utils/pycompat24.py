@@ -46,28 +46,28 @@ def get_exception():
 
     """
     deprecate(
-        msg='The `ansible.module_utils.pycompat24.get_exception` '
-        'function is deprecated.',
-        version='2.19',
+        msg="The `ansible.module_utils.pycompat24.get_exception` "
+        "function is deprecated.",
+        version="2.19",
     )
     return sys.exc_info()[1]
 
 
 def __getattr__(importable_name):
     """Inject import-time deprecation warning for ``literal_eval()``."""
-    if importable_name == 'literal_eval':
+    if importable_name == "literal_eval":
         deprecate(
-            msg=f'The `ansible.module_utils.pycompat24.'
-            f'{importable_name}` function is deprecated.',
-            version='2.19',
+            msg=f"The `ansible.module_utils.pycompat24."
+            f"{importable_name}` function is deprecated.",
+            version="2.19",
         )
         from ast import literal_eval
+
         return literal_eval
 
     raise AttributeError(
-        f'cannot import name {importable_name !r} '
-        f'has no attribute ({__file__ !s})',
+        f"cannot import name {importable_name !r} " f"has no attribute ({__file__ !s})",
     )
 
 
-__all__ = ('get_exception', 'literal_eval')  # pylint: disable=undefined-all-variable
+__all__ = ("get_exception", "literal_eval")  # pylint: disable=undefined-all-variable

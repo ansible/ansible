@@ -1,4 +1,5 @@
 """Constants used by ansible-test. Imports should not be used in this file (other than to import the target common constants)."""
+
 from __future__ import annotations
 
 from .._util.target.common.constants import (
@@ -13,21 +14,21 @@ STATUS_HOST_CONNECTION_ERROR = 4
 SOFT_RLIMIT_NOFILE = 1024
 
 # File used to track the ansible-test test execution timeout.
-TIMEOUT_PATH = '.ansible-test-timeout.json'
+TIMEOUT_PATH = ".ansible-test-timeout.json"
 
 CONTROLLER_MIN_PYTHON_VERSION = CONTROLLER_PYTHON_VERSIONS[0]
 SUPPORTED_PYTHON_VERSIONS = REMOTE_ONLY_PYTHON_VERSIONS + CONTROLLER_PYTHON_VERSIONS
 
 REMOTE_PROVIDERS = [
-    'default',
-    'aws',
-    'azure',
-    'parallels',
+    "default",
+    "aws",
+    "azure",
+    "parallels",
 ]
 
 SECCOMP_CHOICES = [
-    'default',
-    'unconfined',
+    "default",
+    "unconfined",
 ]
 
 # This bin symlink map must exactly match the contents of the bin directory.
@@ -35,15 +36,15 @@ SECCOMP_CHOICES = [
 # It is also used to construct the injector directory at runtime.
 # It is also used to construct entry points when not running ansible-test from source.
 ANSIBLE_BIN_SYMLINK_MAP = {
-    'ansible': '../lib/ansible/cli/adhoc.py',
-    'ansible-config': '../lib/ansible/cli/config.py',
-    'ansible-connection': '../lib/ansible/cli/scripts/ansible_connection_cli_stub.py',
-    'ansible-console': '../lib/ansible/cli/console.py',
-    'ansible-doc': '../lib/ansible/cli/doc.py',
-    'ansible-galaxy': '../lib/ansible/cli/galaxy.py',
-    'ansible-inventory': '../lib/ansible/cli/inventory.py',
-    'ansible-playbook': '../lib/ansible/cli/playbook.py',
-    'ansible-pull': '../lib/ansible/cli/pull.py',
-    'ansible-test': '../test/lib/ansible_test/_util/target/cli/ansible_test_cli_stub.py',
-    'ansible-vault': '../lib/ansible/cli/vault.py',
+    "ansible": "../lib/ansible/cli/adhoc.py",
+    "ansible-config": "../lib/ansible/cli/config.py",
+    "ansible-connection": "../lib/ansible/cli/scripts/ansible_connection_cli_stub.py",
+    "ansible-console": "../lib/ansible/cli/console.py",
+    "ansible-doc": "../lib/ansible/cli/doc.py",
+    "ansible-galaxy": "../lib/ansible/cli/galaxy.py",
+    "ansible-inventory": "../lib/ansible/cli/inventory.py",
+    "ansible-playbook": "../lib/ansible/cli/playbook.py",
+    "ansible-pull": "../lib/ansible/cli/pull.py",
+    "ansible-test": "../test/lib/ansible_test/_util/target/cli/ansible_test_cli_stub.py",
+    "ansible-vault": "../lib/ansible/cli/vault.py",
 }

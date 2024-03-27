@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: find
 author: Brian Coca (@bcoca)
@@ -165,10 +165,10 @@ attributes:
         platforms: posix
 seealso:
 - module: ansible.windows.win_find
-'''
+"""
 
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Recursively find /tmp files older than 2 days
   ansible.builtin.find:
     paths: /tmp
@@ -227,9 +227,9 @@ EXAMPLES = r'''
       - '^_[0-9]{2,4}_.*.log$'
       - '^[a-z]{1,5}_.*log$'
 
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 files:
     description: All matches found with the specified criteria (see stat module for full output of each dictionary)
     returned: success
@@ -260,7 +260,7 @@ skipped_paths:
     type: dict
     sample: {"/laskdfj": "'/laskdfj' is not a directory"}
     version_added: '2.12'
-'''
+"""
 
 import errno
 import fnmatch
@@ -283,7 +283,7 @@ class _Object:
 
 
 def pfilter(f, patterns=None, excludes=None, use_regex=False):
-    '''filter using glob patterns'''
+    """filter using glob patterns"""
     if not patterns and not excludes:
         return True
 
@@ -322,7 +322,7 @@ def pfilter(f, patterns=None, excludes=None, use_regex=False):
 
 
 def agefilter(st, now, age, timestamp):
-    '''filter files older than age'''
+    """filter files older than age"""
     if age is None:
         return True
     elif age >= 0 and now - getattr(st, "st_%s" % timestamp) >= abs(age):
@@ -333,7 +333,7 @@ def agefilter(st, now, age, timestamp):
 
 
 def sizefilter(st, size):
-    '''filter files greater than size'''
+    """filter files greater than size"""
     if size is None:
         return True
     elif size >= 0 and st.st_size >= abs(size):
@@ -371,8 +371,10 @@ def contentfilter(fsname, pattern, encoding, read_whole_file=False):
         raise e
     except UnicodeDecodeError as e:
         if encoding is None:
-            encoding = 'None (default determined by the Python built-in function "open")'
-        msg = f'Failed to read the file {fsname} due to an encoding error. current encoding: {encoding}'
+            encoding = (
+                'None (default determined by the Python built-in function "open")'
+            )
+        msg = f"Failed to read the file {fsname} due to an encoding error. current encoding: {encoding}"
         raise Exception(msg) from e
     except Exception:
         pass
@@ -414,80 +416,87 @@ def statinfo(st):
         pass
 
     return {
-        'mode': "%04o" % stat.S_IMODE(st.st_mode),
-        'isdir': stat.S_ISDIR(st.st_mode),
-        'ischr': stat.S_ISCHR(st.st_mode),
-        'isblk': stat.S_ISBLK(st.st_mode),
-        'isreg': stat.S_ISREG(st.st_mode),
-        'isfifo': stat.S_ISFIFO(st.st_mode),
-        'islnk': stat.S_ISLNK(st.st_mode),
-        'issock': stat.S_ISSOCK(st.st_mode),
-        'uid': st.st_uid,
-        'gid': st.st_gid,
-        'size': st.st_size,
-        'inode': st.st_ino,
-        'dev': st.st_dev,
-        'nlink': st.st_nlink,
-        'atime': st.st_atime,
-        'mtime': st.st_mtime,
-        'ctime': st.st_ctime,
-        'gr_name': gr_name,
-        'pw_name': pw_name,
-        'wusr': bool(st.st_mode & stat.S_IWUSR),
-        'rusr': bool(st.st_mode & stat.S_IRUSR),
-        'xusr': bool(st.st_mode & stat.S_IXUSR),
-        'wgrp': bool(st.st_mode & stat.S_IWGRP),
-        'rgrp': bool(st.st_mode & stat.S_IRGRP),
-        'xgrp': bool(st.st_mode & stat.S_IXGRP),
-        'woth': bool(st.st_mode & stat.S_IWOTH),
-        'roth': bool(st.st_mode & stat.S_IROTH),
-        'xoth': bool(st.st_mode & stat.S_IXOTH),
-        'isuid': bool(st.st_mode & stat.S_ISUID),
-        'isgid': bool(st.st_mode & stat.S_ISGID),
+        "mode": "%04o" % stat.S_IMODE(st.st_mode),
+        "isdir": stat.S_ISDIR(st.st_mode),
+        "ischr": stat.S_ISCHR(st.st_mode),
+        "isblk": stat.S_ISBLK(st.st_mode),
+        "isreg": stat.S_ISREG(st.st_mode),
+        "isfifo": stat.S_ISFIFO(st.st_mode),
+        "islnk": stat.S_ISLNK(st.st_mode),
+        "issock": stat.S_ISSOCK(st.st_mode),
+        "uid": st.st_uid,
+        "gid": st.st_gid,
+        "size": st.st_size,
+        "inode": st.st_ino,
+        "dev": st.st_dev,
+        "nlink": st.st_nlink,
+        "atime": st.st_atime,
+        "mtime": st.st_mtime,
+        "ctime": st.st_ctime,
+        "gr_name": gr_name,
+        "pw_name": pw_name,
+        "wusr": bool(st.st_mode & stat.S_IWUSR),
+        "rusr": bool(st.st_mode & stat.S_IRUSR),
+        "xusr": bool(st.st_mode & stat.S_IXUSR),
+        "wgrp": bool(st.st_mode & stat.S_IWGRP),
+        "rgrp": bool(st.st_mode & stat.S_IRGRP),
+        "xgrp": bool(st.st_mode & stat.S_IXGRP),
+        "woth": bool(st.st_mode & stat.S_IWOTH),
+        "roth": bool(st.st_mode & stat.S_IROTH),
+        "xoth": bool(st.st_mode & stat.S_IXOTH),
+        "isuid": bool(st.st_mode & stat.S_ISUID),
+        "isgid": bool(st.st_mode & stat.S_ISGID),
     }
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            paths=dict(type='list', required=True, aliases=['name', 'path'], elements='str'),
-            patterns=dict(type='list', default=[], aliases=['pattern'], elements='str'),
-            excludes=dict(type='list', aliases=['exclude'], elements='str'),
-            contains=dict(type='str'),
-            read_whole_file=dict(type='bool', default=False),
-            file_type=dict(type='str', default="file", choices=['any', 'directory', 'file', 'link']),
-            age=dict(type='str'),
-            age_stamp=dict(type='str', default="mtime", choices=['atime', 'ctime', 'mtime']),
-            size=dict(type='str'),
-            recurse=dict(type='bool', default=False),
-            hidden=dict(type='bool', default=False),
-            follow=dict(type='bool', default=False),
-            get_checksum=dict(type='bool', default=False),
-            use_regex=dict(type='bool', default=False),
-            depth=dict(type='int'),
-            mode=dict(type='raw'),
-            exact_mode=dict(type='bool', default=True),
-            encoding=dict(type='str')
+            paths=dict(
+                type="list", required=True, aliases=["name", "path"], elements="str"
+            ),
+            patterns=dict(type="list", default=[], aliases=["pattern"], elements="str"),
+            excludes=dict(type="list", aliases=["exclude"], elements="str"),
+            contains=dict(type="str"),
+            read_whole_file=dict(type="bool", default=False),
+            file_type=dict(
+                type="str", default="file", choices=["any", "directory", "file", "link"]
+            ),
+            age=dict(type="str"),
+            age_stamp=dict(
+                type="str", default="mtime", choices=["atime", "ctime", "mtime"]
+            ),
+            size=dict(type="str"),
+            recurse=dict(type="bool", default=False),
+            hidden=dict(type="bool", default=False),
+            follow=dict(type="bool", default=False),
+            get_checksum=dict(type="bool", default=False),
+            use_regex=dict(type="bool", default=False),
+            depth=dict(type="int"),
+            mode=dict(type="raw"),
+            exact_mode=dict(type="bool", default=True),
+            encoding=dict(type="str"),
         ),
         supports_check_mode=True,
     )
 
     params = module.params
 
-    if params['mode'] and not isinstance(params['mode'], string_types):
+    if params["mode"] and not isinstance(params["mode"], string_types):
         module.fail_json(
-            msg="argument 'mode' is not a string and conversion is not allowed, value is of type %s" % params['mode'].__class__.__name__
+            msg="argument 'mode' is not a string and conversion is not allowed, value is of type %s"
+            % params["mode"].__class__.__name__
         )
 
     # Set the default match pattern to either a match-all glob or
     # regex depending on use_regex being set.  This makes sure if you
     # set excludes: without a pattern pfilter gets something it can
     # handle.
-    if not params['patterns']:
-        if params['use_regex']:
-            params['patterns'] = ['.*']
+    if not params["patterns"]:
+        if params["use_regex"]:
+            params["patterns"] = [".*"]
         else:
-            params['patterns'] = ['*']
+            params["patterns"] = ["*"]
 
     filelist = []
     skipped = {}
@@ -498,69 +507,90 @@ def main():
             return
         raise e
 
-    if params['age'] is None:
+    if params["age"] is None:
         age = None
     else:
         # convert age to seconds:
-        m = re.match(r"^(-?\d+)(s|m|h|d|w)?$", params['age'].lower())
+        m = re.match(r"^(-?\d+)(s|m|h|d|w)?$", params["age"].lower())
         seconds_per_unit = {"s": 1, "m": 60, "h": 3600, "d": 86400, "w": 604800}
         if m:
             age = int(m.group(1)) * seconds_per_unit.get(m.group(2), 1)
         else:
-            module.fail_json(age=params['age'], msg="failed to process age")
+            module.fail_json(age=params["age"], msg="failed to process age")
 
-    if params['size'] is None:
+    if params["size"] is None:
         size = None
     else:
         # convert size to bytes:
-        m = re.match(r"^(-?\d+)(b|k|m|g|t)?$", params['size'].lower())
+        m = re.match(r"^(-?\d+)(b|k|m|g|t)?$", params["size"].lower())
         bytes_per_unit = {"b": 1, "k": 1024, "m": 1024**2, "g": 1024**3, "t": 1024**4}
         if m:
             size = int(m.group(1)) * bytes_per_unit.get(m.group(2), 1)
         else:
-            module.fail_json(size=params['size'], msg="failed to process size")
+            module.fail_json(size=params["size"], msg="failed to process size")
 
     now = time.time()
-    msg = 'All paths examined'
+    msg = "All paths examined"
     looked = 0
     has_warnings = False
-    for npath in params['paths']:
+    for npath in params["paths"]:
         npath = os.path.expanduser(os.path.expandvars(npath))
         try:
             if not os.path.isdir(npath):
                 raise Exception("'%s' is not a directory" % to_native(npath))
 
-            for root, dirs, files in os.walk(npath, onerror=handle_walk_errors, followlinks=params['follow']):
+            for root, dirs, files in os.walk(
+                npath, onerror=handle_walk_errors, followlinks=params["follow"]
+            ):
                 looked = looked + len(files) + len(dirs)
-                for fsobj in (files + dirs):
+                for fsobj in files + dirs:
                     fsname = os.path.normpath(os.path.join(root, fsobj))
-                    if params['depth']:
+                    if params["depth"]:
                         wpath = npath.rstrip(os.path.sep) + os.path.sep
-                        depth = int(fsname.count(os.path.sep)) - int(wpath.count(os.path.sep)) + 1
-                        if depth > params['depth']:
+                        depth = (
+                            int(fsname.count(os.path.sep))
+                            - int(wpath.count(os.path.sep))
+                            + 1
+                        )
+                        if depth > params["depth"]:
                             # Empty the list used by os.walk to avoid traversing deeper unnecessarily
                             del dirs[:]
                             continue
-                    if os.path.basename(fsname).startswith('.') and not params['hidden']:
+                    if (
+                        os.path.basename(fsname).startswith(".")
+                        and not params["hidden"]
+                    ):
                         continue
 
                     try:
                         st = os.lstat(fsname)
                     except (IOError, OSError) as e:
-                        module.warn("Skipped entry '%s' due to this access issue: %s\n" % (fsname, to_text(e)))
+                        module.warn(
+                            "Skipped entry '%s' due to this access issue: %s\n"
+                            % (fsname, to_text(e))
+                        )
                         skipped[fsname] = to_text(e)
                         has_warnings = True
                         continue
 
-                    r = {'path': fsname}
-                    if params['file_type'] == 'any':
-                        if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
-                                agefilter(st, now, age, params['age_stamp']) and
-                                mode_filter(st, params['mode'], params['exact_mode'], module)):
+                    r = {"path": fsname}
+                    if params["file_type"] == "any":
+                        if (
+                            pfilter(
+                                fsobj,
+                                params["patterns"],
+                                params["excludes"],
+                                params["use_regex"],
+                            )
+                            and agefilter(st, now, age, params["age_stamp"])
+                            and mode_filter(
+                                st, params["mode"], params["exact_mode"], module
+                            )
+                        ):
 
                             r.update(statinfo(st))
-                            if stat.S_ISREG(st.st_mode) and params['get_checksum']:
-                                r['checksum'] = module.sha1(fsname)
+                            if stat.S_ISREG(st.st_mode) and params["get_checksum"]:
+                                r["checksum"] = module.sha1(fsname)
 
                             if stat.S_ISREG(st.st_mode):
                                 if sizefilter(st, size):
@@ -568,46 +598,90 @@ def main():
                             else:
                                 filelist.append(r)
 
-                    elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
-                        if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
-                                agefilter(st, now, age, params['age_stamp']) and
-                                mode_filter(st, params['mode'], params['exact_mode'], module)):
+                    elif (
+                        stat.S_ISDIR(st.st_mode) and params["file_type"] == "directory"
+                    ):
+                        if (
+                            pfilter(
+                                fsobj,
+                                params["patterns"],
+                                params["excludes"],
+                                params["use_regex"],
+                            )
+                            and agefilter(st, now, age, params["age_stamp"])
+                            and mode_filter(
+                                st, params["mode"], params["exact_mode"], module
+                            )
+                        ):
 
                             r.update(statinfo(st))
                             filelist.append(r)
 
-                    elif stat.S_ISREG(st.st_mode) and params['file_type'] == 'file':
-                        if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
-                                agefilter(st, now, age, params['age_stamp']) and
-                                sizefilter(st, size) and
-                                contentfilter(fsname, params['contains'], params['encoding'], params['read_whole_file']) and
-                                mode_filter(st, params['mode'], params['exact_mode'], module)):
+                    elif stat.S_ISREG(st.st_mode) and params["file_type"] == "file":
+                        if (
+                            pfilter(
+                                fsobj,
+                                params["patterns"],
+                                params["excludes"],
+                                params["use_regex"],
+                            )
+                            and agefilter(st, now, age, params["age_stamp"])
+                            and sizefilter(st, size)
+                            and contentfilter(
+                                fsname,
+                                params["contains"],
+                                params["encoding"],
+                                params["read_whole_file"],
+                            )
+                            and mode_filter(
+                                st, params["mode"], params["exact_mode"], module
+                            )
+                        ):
 
                             r.update(statinfo(st))
-                            if params['get_checksum']:
-                                r['checksum'] = module.sha1(fsname)
+                            if params["get_checksum"]:
+                                r["checksum"] = module.sha1(fsname)
                             filelist.append(r)
 
-                    elif stat.S_ISLNK(st.st_mode) and params['file_type'] == 'link':
-                        if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
-                                agefilter(st, now, age, params['age_stamp']) and
-                                mode_filter(st, params['mode'], params['exact_mode'], module)):
+                    elif stat.S_ISLNK(st.st_mode) and params["file_type"] == "link":
+                        if (
+                            pfilter(
+                                fsobj,
+                                params["patterns"],
+                                params["excludes"],
+                                params["use_regex"],
+                            )
+                            and agefilter(st, now, age, params["age_stamp"])
+                            and mode_filter(
+                                st, params["mode"], params["exact_mode"], module
+                            )
+                        ):
 
                             r.update(statinfo(st))
                             filelist.append(r)
 
-                if not params['recurse']:
+                if not params["recurse"]:
                     break
         except Exception as e:
             skipped[npath] = to_text(e)
-            module.warn("Skipped '%s' path due to this access issue: %s\n" % (to_text(npath), skipped[npath]))
+            module.warn(
+                "Skipped '%s' path due to this access issue: %s\n"
+                % (to_text(npath), skipped[npath])
+            )
             has_warnings = True
 
     if has_warnings:
-        msg = 'Not all paths examined, check warnings for details'
+        msg = "Not all paths examined, check warnings for details"
     matched = len(filelist)
-    module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked, skipped_paths=skipped)
+    module.exit_json(
+        files=filelist,
+        changed=False,
+        msg=msg,
+        matched=matched,
+        examined=looked,
+        skipped_paths=skipped,
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

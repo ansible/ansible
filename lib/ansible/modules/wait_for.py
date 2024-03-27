@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: wait_for
 short_description: Waits for a condition before continuing
@@ -120,9 +120,9 @@ author:
     - Jeroen Hoekx (@jhoekx)
     - John Jarvis (@jarv)
     - Andrii Radyk (@AnderEnder)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Sleep for 300 seconds and continue with play
   ansible.builtin.wait_for:
     timeout: 300
@@ -198,9 +198,9 @@ EXAMPLES = r'''
     delay: 10
   vars:
     ansible_connection: local
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 elapsed:
   description: The number of seconds that elapsed while waiting
   returned: always
@@ -220,7 +220,7 @@ match_groupdict:
     {
       'group': 'match'
     }
-'''
+"""
 
 import binascii
 import contextlib
@@ -245,6 +245,7 @@ HAS_PSUTIL = False
 PSUTIL_IMP_ERR = None
 try:
     import psutil
+
     HAS_PSUTIL = True
     # just because we can import it on Linux doesn't mean we will use it
 except ImportError:
@@ -263,17 +264,15 @@ class TCPConnectionInfo(object):
 
     All subclasses MUST define platform and distribution (which may be None).
     """
-    platform = 'Generic'
+
+    platform = "Generic"
     distribution = None
 
     match_all_ips = {
-        socket.AF_INET: '0.0.0.0',
-        socket.AF_INET6: '::',
+        socket.AF_INET: "0.0.0.0",
+        socket.AF_INET6: "::",
     }
-    ipv4_mapped_ipv6_address = {
-        'prefix': '::ffff',
-        'match_all': '::ffff:0.0.0.0'
-    }
+    ipv4_mapped_ipv6_address = {"prefix": "::ffff", "match_all": "::ffff:0.0.0.0"}
 
     def __new__(cls, *args, **kwargs):
         new_cls = get_platform_subclass(TCPConnectionInfo)
@@ -281,14 +280,16 @@ class TCPConnectionInfo(object):
 
     def __init__(self, module):
         self.module = module
-        self.ips = _convert_host_to_ip(module.params['host'])
-        self.port = int(self.module.params['port'])
+        self.ips = _convert_host_to_ip(module.params["host"])
+        self.port = int(self.module.params["port"])
         self.exclude_ips = self._get_exclude_ips()
         if not HAS_PSUTIL:
-            module.fail_json(msg=missing_required_lib('psutil'), exception=PSUTIL_IMP_ERR)
+            module.fail_json(
+                msg=missing_required_lib("psutil"), exception=PSUTIL_IMP_ERR
+            )
 
     def _get_exclude_ips(self):
-        exclude_hosts = self.module.params['exclude_hosts']
+        exclude_hosts = self.module.params["exclude_hosts"]
         exclude_ips = []
         if exclude_hosts is not None:
             for host in exclude_hosts:
@@ -299,34 +300,37 @@ class TCPConnectionInfo(object):
         active_connections = 0
         for p in psutil.process_iter():
             try:
-                if hasattr(p, 'get_connections'):
-                    connections = p.get_connections(kind='inet')
+                if hasattr(p, "get_connections"):
+                    connections = p.get_connections(kind="inet")
                 else:
-                    connections = p.connections(kind='inet')
+                    connections = p.connections(kind="inet")
             except psutil.Error:
                 # Process is Zombie or other error state
                 continue
             for conn in connections:
-                if conn.status not in self.module.params['active_connection_states']:
+                if conn.status not in self.module.params["active_connection_states"]:
                     continue
-                if hasattr(conn, 'local_address'):
+                if hasattr(conn, "local_address"):
                     (local_ip, local_port) = conn.local_address
                 else:
                     (local_ip, local_port) = conn.laddr
                 if self.port != local_port:
                     continue
-                if hasattr(conn, 'remote_address'):
+                if hasattr(conn, "remote_address"):
                     (remote_ip, remote_port) = conn.remote_address
                 else:
                     (remote_ip, remote_port) = conn.raddr
                 if (conn.family, remote_ip) in self.exclude_ips:
                     continue
-                if any((
-                    (conn.family, local_ip) in self.ips,
-                    (conn.family, self.match_all_ips[conn.family]) in self.ips,
-                    local_ip.startswith(self.ipv4_mapped_ipv6_address['prefix']) and
-                        (conn.family, self.ipv4_mapped_ipv6_address['match_all']) in self.ips,
-                )):
+                if any(
+                    (
+                        (conn.family, local_ip) in self.ips,
+                        (conn.family, self.match_all_ips[conn.family]) in self.ips,
+                        local_ip.startswith(self.ipv4_mapped_ipv6_address["prefix"])
+                        and (conn.family, self.ipv4_mapped_ipv6_address["match_all"])
+                        in self.ips,
+                    )
+                ):
                     active_connections += 1
         return active_connections
 
@@ -334,26 +338,25 @@ class TCPConnectionInfo(object):
 # ===========================================
 # Subclass: Linux
 
+
 class LinuxTCPConnectionInfo(TCPConnectionInfo):
     """
     This is a TCP Connection Info evaluation strategy class
     that utilizes information from Linux's procfs. While less universal,
     does allow Linux targets to not require an additional library.
     """
-    platform = 'Linux'
+
+    platform = "Linux"
     distribution = None
 
-    source_file = {
-        socket.AF_INET: '/proc/net/tcp',
-        socket.AF_INET6: '/proc/net/tcp6'
-    }
+    source_file = {socket.AF_INET: "/proc/net/tcp", socket.AF_INET6: "/proc/net/tcp6"}
     match_all_ips = {
-        socket.AF_INET: '00000000',
-        socket.AF_INET6: '00000000000000000000000000000000',
+        socket.AF_INET: "00000000",
+        socket.AF_INET6: "00000000000000000000000000000000",
     }
     ipv4_mapped_ipv6_address = {
-        'prefix': '0000000000000000FFFF0000',
-        'match_all': '0000000000000000FFFF000000000000'
+        "prefix": "0000000000000000FFFF0000",
+        "match_all": "0000000000000000FFFF000000000000",
     }
     local_address_field = 1
     remote_address_field = 2
@@ -361,12 +364,12 @@ class LinuxTCPConnectionInfo(TCPConnectionInfo):
 
     def __init__(self, module):
         self.module = module
-        self.ips = _convert_host_to_hex(module.params['host'])
-        self.port = "%0.4X" % int(module.params['port'])
+        self.ips = _convert_host_to_hex(module.params["host"])
+        self.port = "%0.4X" % int(module.params["port"])
         self.exclude_ips = self._get_exclude_ips()
 
     def _get_exclude_ips(self):
-        exclude_hosts = self.module.params['exclude_hosts']
+        exclude_hosts = self.module.params["exclude_hosts"]
         exclude_ips = []
         if exclude_hosts is not None:
             for host in exclude_hosts:
@@ -382,23 +385,34 @@ class LinuxTCPConnectionInfo(TCPConnectionInfo):
                 f = open(self.source_file[family])
                 for tcp_connection in f.readlines():
                     tcp_connection = tcp_connection.strip().split()
-                    if tcp_connection[self.local_address_field] == 'local_address':
+                    if tcp_connection[self.local_address_field] == "local_address":
                         continue
-                    if (tcp_connection[self.connection_state_field] not in
-                            [get_connection_state_id(_connection_state) for _connection_state in self.module.params['active_connection_states']]):
+                    if tcp_connection[self.connection_state_field] not in [
+                        get_connection_state_id(_connection_state)
+                        for _connection_state in self.module.params[
+                            "active_connection_states"
+                        ]
+                    ]:
                         continue
-                    (local_ip, local_port) = tcp_connection[self.local_address_field].split(':')
+                    (local_ip, local_port) = tcp_connection[
+                        self.local_address_field
+                    ].split(":")
                     if self.port != local_port:
                         continue
-                    (remote_ip, remote_port) = tcp_connection[self.remote_address_field].split(':')
+                    (remote_ip, remote_port) = tcp_connection[
+                        self.remote_address_field
+                    ].split(":")
                     if (family, remote_ip) in self.exclude_ips:
                         continue
-                    if any((
-                        (family, local_ip) in self.ips,
-                        (family, self.match_all_ips[family]) in self.ips,
-                        local_ip.startswith(self.ipv4_mapped_ipv6_address['prefix']) and
-                            (family, self.ipv4_mapped_ipv6_address['match_all']) in self.ips,
-                    )):
+                    if any(
+                        (
+                            (family, local_ip) in self.ips,
+                            (family, self.match_all_ips[family]) in self.ips,
+                            local_ip.startswith(self.ipv4_mapped_ipv6_address["prefix"])
+                            and (family, self.ipv4_mapped_ipv6_address["match_all"])
+                            in self.ips,
+                        )
+                    ):
                         active_connections += 1
             except IOError as e:
                 pass
@@ -448,7 +462,7 @@ def _convert_host_to_hex(host):
             hexip_nf = binascii.b2a_hex(socket.inet_pton(family, ip))
             hexip_hf = ""
             for i in range(0, len(hexip_nf), 8):
-                ipgroup_nf = hexip_nf[i:i + 8]
+                ipgroup_nf = hexip_nf[i : i + 8]
                 ipgroup_hf = socket.ntohl(int(ipgroup_nf, base=16))
                 hexip_hf = "%s%08X" % (hexip_hf, ipgroup_hf)
             ips.append((family, hexip_hf))
@@ -457,18 +471,20 @@ def _convert_host_to_hex(host):
 
 def _timedelta_total_seconds(timedelta):
     return (
-        timedelta.microseconds + 0.0 +
-        (timedelta.seconds + timedelta.days * 24 * 3600) * 10 ** 6) / 10 ** 6
+        timedelta.microseconds
+        + 0.0
+        + (timedelta.seconds + timedelta.days * 24 * 3600) * 10**6
+    ) / 10**6
 
 
 def get_connection_state_id(state):
     connection_state_id = {
-        'ESTABLISHED': '01',
-        'SYN_SENT': '02',
-        'SYN_RECV': '03',
-        'FIN_WAIT1': '04',
-        'FIN_WAIT2': '05',
-        'TIME_WAIT': '06',
+        "ESTABLISHED": "01",
+        "SYN_SENT": "02",
+        "SYN_RECV": "03",
+        "FIN_WAIT1": "04",
+        "FIN_WAIT2": "05",
+        "TIME_WAIT": "06",
     }
     return connection_state_id[state]
 
@@ -477,35 +493,52 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            host=dict(type='str', default='127.0.0.1'),
-            timeout=dict(type='int', default=300),
-            connect_timeout=dict(type='int', default=5),
-            delay=dict(type='int', default=0),
-            port=dict(type='int'),
-            active_connection_states=dict(type='list', elements='str', default=['ESTABLISHED', 'FIN_WAIT1', 'FIN_WAIT2', 'SYN_RECV', 'SYN_SENT', 'TIME_WAIT']),
-            path=dict(type='path'),
-            search_regex=dict(type='str'),
-            state=dict(type='str', default='started', choices=['absent', 'drained', 'present', 'started', 'stopped']),
-            exclude_hosts=dict(type='list', elements='str'),
-            sleep=dict(type='int', default=1),
-            msg=dict(type='str'),
+            host=dict(type="str", default="127.0.0.1"),
+            timeout=dict(type="int", default=300),
+            connect_timeout=dict(type="int", default=5),
+            delay=dict(type="int", default=0),
+            port=dict(type="int"),
+            active_connection_states=dict(
+                type="list",
+                elements="str",
+                default=[
+                    "ESTABLISHED",
+                    "FIN_WAIT1",
+                    "FIN_WAIT2",
+                    "SYN_RECV",
+                    "SYN_SENT",
+                    "TIME_WAIT",
+                ],
+            ),
+            path=dict(type="path"),
+            search_regex=dict(type="str"),
+            state=dict(
+                type="str",
+                default="started",
+                choices=["absent", "drained", "present", "started", "stopped"],
+            ),
+            exclude_hosts=dict(type="list", elements="str"),
+            sleep=dict(type="int", default=1),
+            msg=dict(type="str"),
         ),
     )
 
-    host = module.params['host']
-    timeout = module.params['timeout']
-    connect_timeout = module.params['connect_timeout']
-    delay = module.params['delay']
-    port = module.params['port']
-    state = module.params['state']
+    host = module.params["host"]
+    timeout = module.params["timeout"]
+    connect_timeout = module.params["connect_timeout"]
+    delay = module.params["delay"]
+    port = module.params["port"]
+    state = module.params["state"]
 
-    path = module.params['path']
-    b_path = to_bytes(path, errors='surrogate_or_strict', nonstring='passthru')
+    path = module.params["path"]
+    b_path = to_bytes(path, errors="surrogate_or_strict", nonstring="passthru")
 
-    search_regex = module.params['search_regex']
-    b_search_regex = to_bytes(search_regex, errors='surrogate_or_strict', nonstring='passthru')
+    search_regex = module.params["search_regex"]
+    b_search_regex = to_bytes(
+        search_regex, errors="surrogate_or_strict", nonstring="passthru"
+    )
 
-    msg = module.params['msg']
+    msg = module.params["msg"]
 
     if search_regex is not None:
         try:
@@ -519,27 +552,40 @@ def main():
     match_groups = ()
 
     if port and path:
-        module.fail_json(msg="port and path parameter can not both be passed to wait_for", elapsed=0)
-    if path and state == 'stopped':
-        module.fail_json(msg="state=stopped should only be used for checking a port in the wait_for module", elapsed=0)
-    if path and state == 'drained':
-        module.fail_json(msg="state=drained should only be used for checking a port in the wait_for module", elapsed=0)
-    if module.params['exclude_hosts'] is not None and state != 'drained':
-        module.fail_json(msg="exclude_hosts should only be with state=drained", elapsed=0)
-    for _connection_state in module.params['active_connection_states']:
+        module.fail_json(
+            msg="port and path parameter can not both be passed to wait_for", elapsed=0
+        )
+    if path and state == "stopped":
+        module.fail_json(
+            msg="state=stopped should only be used for checking a port in the wait_for module",
+            elapsed=0,
+        )
+    if path and state == "drained":
+        module.fail_json(
+            msg="state=drained should only be used for checking a port in the wait_for module",
+            elapsed=0,
+        )
+    if module.params["exclude_hosts"] is not None and state != "drained":
+        module.fail_json(
+            msg="exclude_hosts should only be with state=drained", elapsed=0
+        )
+    for _connection_state in module.params["active_connection_states"]:
         try:
             get_connection_state_id(_connection_state)
         except Exception:
-            module.fail_json(msg="unknown active_connection_state (%s) defined" % _connection_state, elapsed=0)
+            module.fail_json(
+                msg="unknown active_connection_state (%s) defined" % _connection_state,
+                elapsed=0,
+            )
 
     start = utcnow()
 
     if delay:
         time.sleep(delay)
 
-    if not port and not path and state != 'drained':
+    if not port and not path and state != "drained":
         time.sleep(timeout)
-    elif state in ['absent', 'stopped']:
+    elif state in ["absent", "stopped"]:
         # first wait for the stop condition
         end = start + datetime.timedelta(seconds=timeout)
 
@@ -558,15 +604,21 @@ def main():
                 except Exception:
                     break
             # Conditions not yet met, wait and try again
-            time.sleep(module.params['sleep'])
+            time.sleep(module.params["sleep"])
         else:
             elapsed = utcnow() - start
             if port:
-                module.fail_json(msg=msg or "Timeout when waiting for %s:%s to stop." % (host, port), elapsed=elapsed.seconds)
+                module.fail_json(
+                    msg=msg or "Timeout when waiting for %s:%s to stop." % (host, port),
+                    elapsed=elapsed.seconds,
+                )
             elif path:
-                module.fail_json(msg=msg or "Timeout when waiting for %s to be absent." % (path), elapsed=elapsed.seconds)
+                module.fail_json(
+                    msg=msg or "Timeout when waiting for %s to be absent." % (path),
+                    elapsed=elapsed.seconds,
+                )
 
-    elif state in ['started', 'present']:
+    elif state in ["started", "present"]:
         # wait for start condition
         end = start + datetime.timedelta(seconds=timeout)
         while utcnow() < end:
@@ -577,7 +629,10 @@ def main():
                     # If anything except file not present, throw an error
                     if e.errno != 2:
                         elapsed = utcnow() - start
-                        module.fail_json(msg=msg or "Failed to stat %s, %s" % (path, e.strerror), elapsed=elapsed.seconds)
+                        module.fail_json(
+                            msg=msg or "Failed to stat %s, %s" % (path, e.strerror),
+                            elapsed=elapsed.seconds,
+                        )
                     # file doesn't exist yet, so continue
                 else:
                     # File exists.  Are there additional things to check?
@@ -586,9 +641,11 @@ def main():
                         break
 
                     try:
-                        with open(b_path, 'rb') as f:
+                        with open(b_path, "rb") as f:
                             try:
-                                with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as mm:
+                                with contextlib.closing(
+                                    mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+                                ) as mm:
                                     search = b_compiled_search_re.search(mm)
                                     if search:
                                         if search.groupdict():
@@ -597,7 +654,10 @@ def main():
                                             match_groups = search.groups()
                                         break
                             except (ValueError, OSError) as e:
-                                module.debug('wait_for failed to use mmap on "%s": %s. Falling back to file read().' % (path, to_native(e)))
+                                module.debug(
+                                    'wait_for failed to use mmap on "%s": %s. Falling back to file read().'
+                                    % (path, to_native(e))
+                                )
                                 # cannot mmap this file, try normal read
                                 search = re.search(b_compiled_search_re, f.read())
                                 if search:
@@ -607,23 +667,32 @@ def main():
                                         match_groups = search.groups()
                                     break
                             except Exception as e:
-                                module.warn('wait_for failed on "%s", unexpected exception(%s): %s.).' % (path, to_native(e.__class__), to_native(e)))
+                                module.warn(
+                                    'wait_for failed on "%s", unexpected exception(%s): %s.).'
+                                    % (path, to_native(e.__class__), to_native(e))
+                                )
                     except IOError:
                         pass
             elif port:
-                alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - utcnow()))
+                alt_connect_timeout = math.ceil(
+                    _timedelta_total_seconds(end - utcnow())
+                )
                 try:
-                    s = socket.create_connection((host, port), min(connect_timeout, alt_connect_timeout))
+                    s = socket.create_connection(
+                        (host, port), min(connect_timeout, alt_connect_timeout)
+                    )
                 except Exception:
                     # Failed to connect by connect_timeout. wait and try again
                     pass
                 else:
                     # Connected -- are there additional conditions?
                     if b_compiled_search_re:
-                        b_data = b''
+                        b_data = b""
                         matched = False
                         while utcnow() < end:
-                            max_timeout = math.ceil(_timedelta_total_seconds(end - utcnow()))
+                            max_timeout = math.ceil(
+                                _timedelta_total_seconds(end - utcnow())
+                            )
                             readable = select.select([s], [], [], max_timeout)[0]
                             if not readable:
                                 # No new data.  Probably means our timeout
@@ -663,23 +732,39 @@ def main():
                         break
 
             # Conditions not yet met, wait and try again
-            time.sleep(module.params['sleep'])
+            time.sleep(module.params["sleep"])
 
-        else:   # while-else
+        else:  # while-else
             # Timeout expired
             elapsed = utcnow() - start
             if port:
                 if search_regex:
-                    module.fail_json(msg=msg or "Timeout when waiting for search string %s in %s:%s" % (search_regex, host, port), elapsed=elapsed.seconds)
+                    module.fail_json(
+                        msg=msg
+                        or "Timeout when waiting for search string %s in %s:%s"
+                        % (search_regex, host, port),
+                        elapsed=elapsed.seconds,
+                    )
                 else:
-                    module.fail_json(msg=msg or "Timeout when waiting for %s:%s" % (host, port), elapsed=elapsed.seconds)
+                    module.fail_json(
+                        msg=msg or "Timeout when waiting for %s:%s" % (host, port),
+                        elapsed=elapsed.seconds,
+                    )
             elif path:
                 if search_regex:
-                    module.fail_json(msg=msg or "Timeout when waiting for search string %s in %s" % (search_regex, path), elapsed=elapsed.seconds)
+                    module.fail_json(
+                        msg=msg
+                        or "Timeout when waiting for search string %s in %s"
+                        % (search_regex, path),
+                        elapsed=elapsed.seconds,
+                    )
                 else:
-                    module.fail_json(msg=msg or "Timeout when waiting for file %s" % (path), elapsed=elapsed.seconds)
+                    module.fail_json(
+                        msg=msg or "Timeout when waiting for file %s" % (path),
+                        elapsed=elapsed.seconds,
+                    )
 
-    elif state == 'drained':
+    elif state == "drained":
         # wait until all active connections are gone
         end = start + datetime.timedelta(seconds=timeout)
         tcpconns = TCPConnectionInfo(module)
@@ -688,15 +773,25 @@ def main():
                 break
 
             # Conditions not yet met, wait and try again
-            time.sleep(module.params['sleep'])
+            time.sleep(module.params["sleep"])
         else:
             elapsed = utcnow() - start
-            module.fail_json(msg=msg or "Timeout when waiting for %s:%s to drain" % (host, port), elapsed=elapsed.seconds)
+            module.fail_json(
+                msg=msg or "Timeout when waiting for %s:%s to drain" % (host, port),
+                elapsed=elapsed.seconds,
+            )
 
     elapsed = utcnow() - start
-    module.exit_json(state=state, port=port, search_regex=search_regex, match_groups=match_groups, match_groupdict=match_groupdict, path=path,
-                     elapsed=elapsed.seconds)
+    module.exit_json(
+        state=state,
+        port=port,
+        search_regex=search_regex,
+        match_groups=match_groups,
+        match_groupdict=match_groupdict,
+        path=path,
+        elapsed=elapsed.seconds,
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

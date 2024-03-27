@@ -1,4 +1,5 @@
 """Actions for handling composite arguments with argparse."""
+
 from __future__ import annotations
 
 from .argparsing import (

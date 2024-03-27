@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: debconf
 short_description: Configure a .deb package
@@ -86,9 +86,9 @@ options:
     default: false
 author:
 - Brian Coca (@bcoca)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Set default locale to fr_FR.UTF-8
   ansible.builtin.debconf:
     name: locales
@@ -121,16 +121,16 @@ EXAMPLES = r'''
     value: "{{ site_passphrase }}"
     vtype: password
   no_log: True
-'''
+"""
 
-RETURN = r'''#'''
+RETURN = r"""#"""
 
 from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
 
 
 def get_password_value(module, pkg, question, vtype):
-    getsel = module.get_bin_path('debconf-get-selections', True)
+    getsel = module.get_bin_path("debconf-get-selections", True)
     cmd = [getsel]
     rc, out, err = module.run_command(cmd)
     if rc != 0:
@@ -143,17 +143,19 @@ def get_password_value(module, pkg, question, vtype):
             break
 
     if not desired_line:
-        module.fail_json(msg="Failed to find the value '%s' from '%s'" % (question, pkg))
+        module.fail_json(
+            msg="Failed to find the value '%s' from '%s'" % (question, pkg)
+        )
 
     (dpkg, dquestion, dvtype, dvalue) = desired_line.split()
     if dquestion == question and dvtype == vtype:
         return dvalue
-    return ''
+    return ""
 
 
 def get_selections(module, pkg):
-    cmd = [module.get_bin_path('debconf-show', True), pkg]
-    rc, out, err = module.run_command(' '.join(cmd))
+    cmd = [module.get_bin_path("debconf-show", True), pkg]
+    rc, out, err = module.run_command(" ".join(cmd))
 
     if rc != 0:
         module.fail_json(msg=err)
@@ -161,21 +163,21 @@ def get_selections(module, pkg):
     selections = {}
 
     for line in out.splitlines():
-        (key, value) = line.split(':', 1)
-        selections[key.strip('*').strip()] = value.strip()
+        (key, value) = line.split(":", 1)
+        selections[key.strip("*").strip()] = value.strip()
 
     return selections
 
 
 def set_selection(module, pkg, question, vtype, value, unseen):
-    setsel = module.get_bin_path('debconf-set-selections', True)
+    setsel = module.get_bin_path("debconf-set-selections", True)
     cmd = [setsel]
     if unseen:
-        cmd.append('-u')
+        cmd.append("-u")
 
-    if vtype == 'boolean':
+    if vtype == "boolean":
         value = value.lower()
-    data = ' '.join([pkg, question, vtype, value])
+    data = " ".join([pkg, question, vtype, value])
 
     return module.run_command(cmd, data=data)
 
@@ -183,13 +185,27 @@ def set_selection(module, pkg, question, vtype, value, unseen):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='str', required=True, aliases=['pkg']),
-            question=dict(type='str', aliases=['selection', 'setting']),
-            vtype=dict(type='str', choices=['boolean', 'error', 'multiselect', 'note', 'password', 'seen', 'select', 'string', 'text', 'title']),
-            value=dict(type='raw', aliases=['answer']),
-            unseen=dict(type='bool', default=False),
+            name=dict(type="str", required=True, aliases=["pkg"]),
+            question=dict(type="str", aliases=["selection", "setting"]),
+            vtype=dict(
+                type="str",
+                choices=[
+                    "boolean",
+                    "error",
+                    "multiselect",
+                    "note",
+                    "password",
+                    "seen",
+                    "select",
+                    "string",
+                    "text",
+                    "title",
+                ],
+            ),
+            value=dict(type="raw", aliases=["answer"]),
+            unseen=dict(type="bool", default=False),
         ),
-        required_together=(['question', 'vtype', 'value'],),
+        required_together=(["question", "vtype", "value"],),
         supports_check_mode=True,
     )
 
@@ -207,7 +223,9 @@ def main():
 
     if question is not None:
         if vtype is None or value is None:
-            module.fail_json(msg="when supplying a question you must supply a valid vtype and value")
+            module.fail_json(
+                msg="when supplying a question you must supply a valid vtype and value"
+            )
 
         # if question doesn't exist, value cannot match
         if question not in prev:
@@ -216,16 +234,19 @@ def main():
             existing = prev[question]
 
             # ensure we compare booleans supplied to the way debconf sees them (true/false strings)
-            if vtype == 'boolean':
+            if vtype == "boolean":
                 value = to_text(value).lower()
                 existing = to_text(prev[question]).lower()
-            elif vtype == 'password':
+            elif vtype == "password":
                 existing = get_password_value(module, pkg, question, vtype)
-            elif vtype == 'multiselect' and isinstance(value, list):
+            elif vtype == "multiselect" and isinstance(value, list):
                 try:
                     value = sorted(value)
                 except TypeError as exc:
-                    module.fail_json(msg="Invalid value provided for 'multiselect': %s" % to_native(exc))
+                    module.fail_json(
+                        msg="Invalid value provided for 'multiselect': %s"
+                        % to_native(exc)
+                    )
                 existing = sorted([i.strip() for i in existing.split(",")])
 
             if value != existing:
@@ -233,11 +254,14 @@ def main():
 
     if changed:
         if not module.check_mode:
-            if vtype == 'multiselect' and isinstance(value, list):
+            if vtype == "multiselect" and isinstance(value, list):
                 try:
                     value = ", ".join(value)
                 except TypeError as exc:
-                    module.fail_json(msg="Invalid value provided for 'multiselect': %s" % to_native(exc))
+                    module.fail_json(
+                        msg="Invalid value provided for 'multiselect': %s"
+                        % to_native(exc)
+                    )
             rc, msg, e = set_selection(module, pkg, question, vtype, value, unseen)
             if rc:
                 module.fail_json(msg=e)
@@ -246,18 +270,20 @@ def main():
         if question in prev:
             prev = {question: prev[question]}
         else:
-            prev[question] = ''
+            prev[question] = ""
 
         diff_dict = {}
         if module._diff:
             after = prev.copy()
             after.update(curr)
-            diff_dict = {'before': prev, 'after': after}
+            diff_dict = {"before": prev, "after": after}
 
-        module.exit_json(changed=changed, msg=msg, current=curr, previous=prev, diff=diff_dict)
+        module.exit_json(
+            changed=changed, msg=msg, current=curr, previous=prev, diff=diff_dict
+        )
 
     module.exit_json(changed=changed, msg=msg, current=prev)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

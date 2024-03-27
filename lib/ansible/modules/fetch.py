@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: fetch
 short_description: Fetch files from remote nodes
@@ -95,9 +95,9 @@ seealso:
 author:
 - Ansible Core Team
 - Michael DeHaan
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Store file into /tmp/fetched/host.example.com/tmp/somefile
   ansible.builtin.fetch:
     src: /tmp/somefile
@@ -120,4 +120,4 @@ EXAMPLES = r'''
     src: /tmp/uniquefile
     dest: special/prefix-{{ inventory_hostname }}
     flat: yes
-'''
+"""

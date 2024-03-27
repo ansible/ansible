@@ -39,11 +39,11 @@ class TestAnsibleVaultUnicodeNoVault(unittest.TestCase, YamlTestUtils):
         self.assertRaises(TypeError, objects.AnsibleVaultEncryptedUnicode)
 
     def test_empty_string_init(self):
-        seq = ''.encode('utf8')
+        seq = "".encode("utf8")
         self.assert_values(seq)
 
     def test_empty_byte_string_init(self):
-        seq = b''
+        seq = b""
         self.assert_values(seq)
 
     def _assert_values(self, avu, seq):
@@ -57,15 +57,15 @@ class TestAnsibleVaultUnicodeNoVault(unittest.TestCase, YamlTestUtils):
         self._assert_values(avu, seq)
 
     def test_single_char(self):
-        seq = 'a'.encode('utf8')
+        seq = "a".encode("utf8")
         self.assert_values(seq)
 
     def test_string(self):
-        seq = 'some letters'
+        seq = "some letters"
         self.assert_values(seq)
 
     def test_byte_string(self):
-        seq = 'some letters'.encode('utf8')
+        seq = "some letters".encode("utf8")
         self.assert_values(seq)
 
 
@@ -73,13 +73,13 @@ class TestAnsibleVaultEncryptedUnicode(unittest.TestCase, YamlTestUtils):
     def setUp(self):
         self.good_vault_password = "hunter42"
         good_vault_secret = TextVaultSecret(self.good_vault_password)
-        self.good_vault_secrets = [('good_vault_password', good_vault_secret)]
+        self.good_vault_secrets = [("good_vault_password", good_vault_secret)]
         self.good_vault = vault.VaultLib(self.good_vault_secrets)
 
         # TODO: make this use two vault secret identities instead of two vaultSecrets
-        self.wrong_vault_password = 'not-hunter42'
+        self.wrong_vault_password = "not-hunter42"
         wrong_vault_secret = TextVaultSecret(self.wrong_vault_password)
-        self.wrong_vault_secrets = [('wrong_vault_password', wrong_vault_secret)]
+        self.wrong_vault_secrets = [("wrong_vault_password", wrong_vault_secret)]
         self.wrong_vault = vault.VaultLib(self.wrong_vault_secrets)
 
         self.vault = self.good_vault
@@ -89,7 +89,9 @@ class TestAnsibleVaultEncryptedUnicode(unittest.TestCase, YamlTestUtils):
         return AnsibleLoader(stream, vault_secrets=self.vault_secrets)
 
     def test_dump_load_cycle(self):
-        aveu = self._from_plaintext('the test string for TestAnsibleVaultEncryptedUnicode.test_dump_load_cycle')
+        aveu = self._from_plaintext(
+            "the test string for TestAnsibleVaultEncryptedUnicode.test_dump_load_cycle"
+        )
         self._dump_load_cycle(aveu)
 
     def assert_values(self, avu, seq):
@@ -101,43 +103,45 @@ class TestAnsibleVaultEncryptedUnicode(unittest.TestCase, YamlTestUtils):
 
     def _from_plaintext(self, seq):
         id_secret = vault.match_encrypt_secret(self.good_vault_secrets)
-        return objects.AnsibleVaultEncryptedUnicode.from_plaintext(seq, vault=self.vault, secret=id_secret[1])
+        return objects.AnsibleVaultEncryptedUnicode.from_plaintext(
+            seq, vault=self.vault, secret=id_secret[1]
+        )
 
     def test_empty_init(self):
         self.assertRaises(TypeError, objects.AnsibleVaultEncryptedUnicode)
 
     def test_empty_string_init_from_plaintext(self):
-        seq = ''
+        seq = ""
         avu = self._from_plaintext(seq)
         self.assert_values(avu, seq)
 
     def test_empty_unicode_init_from_plaintext(self):
-        seq = u''
+        seq = ""
         avu = self._from_plaintext(seq)
         self.assert_values(avu, seq)
 
     def test_string_from_plaintext(self):
-        seq = 'some letters'
+        seq = "some letters"
         avu = self._from_plaintext(seq)
         self.assert_values(avu, seq)
 
     def test_unicode_from_plaintext(self):
-        seq = u'some letters'
+        seq = "some letters"
         avu = self._from_plaintext(seq)
         self.assert_values(avu, seq)
 
     def test_unicode_from_plaintext_encode(self):
-        seq = u'some text here'
+        seq = "some text here"
         avu = self._from_plaintext(seq)
-        b_avu = avu.encode('utf-8', 'strict')
+        b_avu = avu.encode("utf-8", "strict")
         self.assertIsInstance(avu, objects.AnsibleVaultEncryptedUnicode)
-        self.assertEqual(b_avu, seq.encode('utf-8', 'strict'))
+        self.assertEqual(b_avu, seq.encode("utf-8", "strict"))
         self.assertTrue(avu.vault is self.vault)
         self.assertIsInstance(avu.vault, vault.VaultLib)
 
     # TODO/FIXME: make sure bad password fails differently than 'thats not encrypted'
     def test_empty_string_wrong_password(self):
-        seq = ''
+        seq = ""
         self.vault = self.wrong_vault
         avu = self._from_plaintext(seq)
 
@@ -147,11 +151,11 @@ class TestAnsibleVaultEncryptedUnicode(unittest.TestCase, YamlTestUtils):
         self.assertRaises(AnsibleError, compare, avu, seq)
 
     def test_vaulted_utf8_value_37258(self):
-        seq = u"aöffü"
+        seq = "aöffü"
         avu = self._from_plaintext(seq)
         self.assert_values(avu, seq)
 
     def test_str_vaulted_utf8_value_37258(self):
-        seq = u"aöffü"
+        seq = "aöffü"
         avu = self._from_plaintext(seq)
         assert str(avu) == to_native(seq)

@@ -71,20 +71,27 @@ class LookupModule(LookupBase):
             display.debug("File lookup term: %s" % term)
             # Find the file in the expected search path
             try:
-                lookupfile = self.find_file_in_search_path(variables, 'files', term, ignore_missing=True)
-                display.vvvv(u"File lookup using %s as file" % lookupfile)
+                lookupfile = self.find_file_in_search_path(
+                    variables, "files", term, ignore_missing=True
+                )
+                display.vvvv("File lookup using %s as file" % lookupfile)
                 if lookupfile:
                     b_contents, show_data = self._loader._get_file_contents(lookupfile)
-                    contents = to_text(b_contents, errors='surrogate_or_strict')
-                    if self.get_option('lstrip'):
+                    contents = to_text(b_contents, errors="surrogate_or_strict")
+                    if self.get_option("lstrip"):
                         contents = contents.lstrip()
-                    if self.get_option('rstrip'):
+                    if self.get_option("rstrip"):
                         contents = contents.rstrip()
                     ret.append(contents)
                 else:
                     # TODO: only add search info if abs path?
-                    raise AnsibleOptionsError("file not found, use -vvvvv to see paths searched")
+                    raise AnsibleOptionsError(
+                        "file not found, use -vvvvv to see paths searched"
+                    )
             except AnsibleError as e:
-                raise AnsibleLookupError("The 'file' lookup had an issue accessing the file '%s'" % term, orig_exc=e)
+                raise AnsibleLookupError(
+                    "The 'file' lookup had an issue accessing the file '%s'" % term,
+                    orig_exc=e,
+                )
 
         return ret

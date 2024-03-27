@@ -35,6 +35,7 @@ from ansible.utils.display import Display
 
 try:
     from jinja2.filters import do_unique
+
     HAS_UNIQUE = True
 except ImportError:
     HAS_UNIQUE = False
@@ -50,27 +51,42 @@ def unique(environment, a, case_sensitive=None, attribute=None):
 
     def _do_fail(e):
         if case_sensitive is False or attribute:
-            raise AnsibleFilterError("Jinja2's unique filter failed and we cannot fall back to Ansible's version "
-                                     "as it does not support the parameters supplied", orig_exc=e)
+            raise AnsibleFilterError(
+                "Jinja2's unique filter failed and we cannot fall back to Ansible's version "
+                "as it does not support the parameters supplied",
+                orig_exc=e,
+            )
 
     error = e = None
     try:
         if HAS_UNIQUE:
-            c = list(do_unique(environment, a, case_sensitive=bool(case_sensitive), attribute=attribute))
+            c = list(
+                do_unique(
+                    environment,
+                    a,
+                    case_sensitive=bool(case_sensitive),
+                    attribute=attribute,
+                )
+            )
     except TypeError as e:
         error = e
         _do_fail(e)
     except Exception as e:
         error = e
         _do_fail(e)
-        display.warning('Falling back to Ansible unique filter as Jinja2 one failed: %s' % to_text(e))
+        display.warning(
+            "Falling back to Ansible unique filter as Jinja2 one failed: %s"
+            % to_text(e)
+        )
 
     if not HAS_UNIQUE or error:
 
         # handle Jinja2 specific attributes when using Ansible's version
         if case_sensitive is False or attribute:
-            raise AnsibleFilterError("Ansible's unique filter does not support case_sensitive=False nor attribute parameters, "
-                                     "you need a newer version of Jinja2 that provides their version of the filter.")
+            raise AnsibleFilterError(
+                "Ansible's unique filter does not support case_sensitive=False nor attribute parameters, "
+                "you need a newer version of Jinja2 that provides their version of the filter."
+            )
 
         c = []
         for x in a:
@@ -124,14 +140,18 @@ def logarithm(x, base=math.e):
         else:
             return math.log(x, base)
     except TypeError as e:
-        raise AnsibleFilterTypeError('log() can only be used on numbers: %s' % to_native(e))
+        raise AnsibleFilterTypeError(
+            "log() can only be used on numbers: %s" % to_native(e)
+        )
 
 
 def power(x, y):
     try:
         return math.pow(x, y)
     except TypeError as e:
-        raise AnsibleFilterTypeError('pow() can only be used on numbers: %s' % to_native(e))
+        raise AnsibleFilterTypeError(
+            "pow() can only be used on numbers: %s" % to_native(e)
+        )
 
 
 def inversepower(x, base=2):
@@ -141,30 +161,40 @@ def inversepower(x, base=2):
         else:
             return math.pow(x, 1.0 / float(base))
     except (ValueError, TypeError) as e:
-        raise AnsibleFilterTypeError('root() can only be used on numbers: %s' % to_native(e))
+        raise AnsibleFilterTypeError(
+            "root() can only be used on numbers: %s" % to_native(e)
+        )
 
 
 def human_readable(size, isbits=False, unit=None):
-    ''' Return a human-readable string '''
+    """Return a human-readable string"""
     try:
         return formatters.bytes_to_human(size, isbits, unit)
     except TypeError as e:
-        raise AnsibleFilterTypeError("human_readable() failed on bad input: %s" % to_native(e))
+        raise AnsibleFilterTypeError(
+            "human_readable() failed on bad input: %s" % to_native(e)
+        )
     except Exception:
-        raise AnsibleFilterError("human_readable() can't interpret following string: %s" % size)
+        raise AnsibleFilterError(
+            "human_readable() can't interpret following string: %s" % size
+        )
 
 
 def human_to_bytes(size, default_unit=None, isbits=False):
-    ''' Return bytes count from a human-readable string '''
+    """Return bytes count from a human-readable string"""
     try:
         return formatters.human_to_bytes(size, default_unit, isbits)
     except TypeError as e:
-        raise AnsibleFilterTypeError("human_to_bytes() failed on bad input: %s" % to_native(e))
+        raise AnsibleFilterTypeError(
+            "human_to_bytes() failed on bad input: %s" % to_native(e)
+        )
     except Exception:
-        raise AnsibleFilterError("human_to_bytes() can't interpret following string: %s" % size)
+        raise AnsibleFilterError(
+            "human_to_bytes() can't interpret following string: %s" % size
+        )
 
 
-def rekey_on_member(data, key, duplicates='error'):
+def rekey_on_member(data, key, duplicates="error"):
     """
     Rekey a dict of dicts on another member
 
@@ -173,8 +203,12 @@ def rekey_on_member(data, key, duplicates='error'):
     duplicates can be one of ``error`` or ``overwrite`` to specify whether to error out if the key
     value would be duplicated or to overwrite previous entries if that's the case.
     """
-    if duplicates not in ('error', 'overwrite'):
-        raise AnsibleFilterError("duplicates parameter to rekey_on_member has unknown value: {0}".format(duplicates))
+    if duplicates not in ("error", "overwrite"):
+        raise AnsibleFilterError(
+            "duplicates parameter to rekey_on_member has unknown value: {0}".format(
+                duplicates
+            )
+        )
 
     new_obj = {}
 
@@ -204,9 +238,13 @@ def rekey_on_member(data, key, duplicates='error'):
         # Note: if new_obj[key_elem] exists it will always be a non-empty dict (it will at
         # minimum contain {key: key_elem}
         if new_obj.get(key_elem, None):
-            if duplicates == 'error':
-                raise AnsibleFilterError("Key {0} is not unique, cannot correctly turn into dict".format(key_elem))
-            elif duplicates == 'overwrite':
+            if duplicates == "error":
+                raise AnsibleFilterError(
+                    "Key {0} is not unique, cannot correctly turn into dict".format(
+                        key_elem
+                    )
+                )
+            elif duplicates == "overwrite":
                 new_obj[key_elem] = item
         else:
             new_obj[key_elem] = item
@@ -215,36 +253,31 @@ def rekey_on_member(data, key, duplicates='error'):
 
 
 class FilterModule(object):
-    ''' Ansible math jinja2 filters '''
+    """Ansible math jinja2 filters"""
 
     def filters(self):
         filters = {
             # exponents and logarithms
-            'log': logarithm,
-            'pow': power,
-            'root': inversepower,
-
+            "log": logarithm,
+            "pow": power,
+            "root": inversepower,
             # set theory
-            'unique': unique,
-            'intersect': intersect,
-            'difference': difference,
-            'symmetric_difference': symmetric_difference,
-            'union': union,
-
+            "unique": unique,
+            "intersect": intersect,
+            "difference": difference,
+            "symmetric_difference": symmetric_difference,
+            "union": union,
             # combinatorial
-            'product': itertools.product,
-            'permutations': itertools.permutations,
-            'combinations': itertools.combinations,
-
+            "product": itertools.product,
+            "permutations": itertools.permutations,
+            "combinations": itertools.combinations,
             # computer theory
-            'human_readable': human_readable,
-            'human_to_bytes': human_to_bytes,
-            'rekey_on_member': rekey_on_member,
-
+            "human_readable": human_readable,
+            "human_to_bytes": human_to_bytes,
+            "rekey_on_member": rekey_on_member,
             # zip
-            'zip': zip,
-            'zip_longest': itertools.zip_longest,
-
+            "zip": zip,
+            "zip_longest": itertools.zip_longest,
         }
 
         return filters

@@ -1,4 +1,5 @@
 """Source provider for content which has been installed."""
+
 from __future__ import annotations
 
 import os
@@ -23,18 +24,23 @@ class InstalledSource(SourceProvider):
         paths = []
 
         kill_extensions = (
-            '.pyc',
-            '.pyo',
+            ".pyc",
+            ".pyo",
         )
 
         for root, _dummy, file_names in os.walk(path):
             rel_root = os.path.relpath(root, path)
 
-            if rel_root == '.':
-                rel_root = ''
+            if rel_root == ".":
+                rel_root = ""
 
-            paths.extend([os.path.join(rel_root, file_name) for file_name in file_names
-                          if not os.path.splitext(file_name)[1] in kill_extensions])
+            paths.extend(
+                [
+                    os.path.join(rel_root, file_name)
+                    for file_name in file_names
+                    if not os.path.splitext(file_name)[1] in kill_extensions
+                ]
+            )
 
             # NOTE: directory symlinks are ignored as there should be no directory symlinks for an install
 

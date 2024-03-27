@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: dnf
 version_added: 1.9
@@ -296,9 +296,9 @@ author:
   - Cristian van Ee (@DJMuggs) <cristian at cvee.org>
   - Berend De Schouwer (@berenddeschouwer)
   - Adam Miller (@maxamillion) <admiller@redhat.com>
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Install the latest version of Apache
   ansible.builtin.dnf:
     name: httpd
@@ -384,7 +384,7 @@ EXAMPLES = '''
   ansible.builtin.dnf:
     name: '@postgresql/client'
     state: present
-'''
+"""
 
 import os
 import sys
@@ -395,7 +395,11 @@ from ansible.module_utils.compat.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
-from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
+from ansible.module_utils.common.respawn import (
+    has_respawned,
+    probe_interpreters_for_module,
+    respawn_module,
+)
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
 
@@ -428,10 +432,9 @@ class DnfModule(YumDnf):
         For unhandled dnf.exceptions.Error scenarios, there are certain error
         messages we want to filter in an install scenario. Do that here.
         """
-        if (
-            to_text("no package matched") in to_text(error) or
-            to_text("No match for argument:") in to_text(error)
-        ):
+        if to_text("no package matched") in to_text(error) or to_text(
+            "No match for argument:"
+        ) in to_text(error):
             return "No package {0} available.".format(spec)
 
         return error
@@ -442,10 +445,9 @@ class DnfModule(YumDnf):
         messages we want to ignore in a removal scenario as known benign
         failures. Do that here.
         """
-        if (
-            'no package matched' in to_native(error) or
-            'No match for argument:' in to_native(error)
-        ):
+        if "no package matched" in to_native(
+            error
+        ) or "No match for argument:" in to_native(error):
             return (False, "{0} is not installed".format(spec))
 
         # Return value is tuple of:
@@ -457,31 +459,32 @@ class DnfModule(YumDnf):
         # NOTE: This no longer contains the 'dnfstate' field because it is
         # already known based on the query type.
         result = {
-            'name': package.name,
-            'arch': package.arch,
-            'epoch': str(package.epoch),
-            'release': package.release,
-            'version': package.version,
-            'repo': package.repoid}
+            "name": package.name,
+            "arch": package.arch,
+            "epoch": str(package.epoch),
+            "release": package.release,
+            "version": package.version,
+            "repo": package.repoid,
+        }
 
         # envra format for backwards compat
-        result['envra'] = '{epoch}:{name}-{version}-{release}.{arch}'.format(**result)
+        result["envra"] = "{epoch}:{name}-{version}-{release}.{arch}".format(**result)
 
         # keep nevra key for backwards compat as it was previously
         # defined with a value in envra format
-        result['nevra'] = result['envra']
+        result["nevra"] = result["envra"]
 
         if package.installtime == 0:
-            result['yumstate'] = 'available'
+            result["yumstate"] = "available"
         else:
-            result['yumstate'] = 'installed'
+            result["yumstate"] = "installed"
 
         return result
 
     def _ensure_dnf(self):
         locale = get_best_parsable_locale(self.module)
-        os.environ['LC_ALL'] = os.environ['LC_MESSAGES'] = locale
-        os.environ['LANGUAGE'] = os.environ['LANG'] = locale
+        os.environ["LC_ALL"] = os.environ["LC_MESSAGES"] = locale
+        os.environ["LANGUAGE"] = os.environ["LANG"] = locale
 
         global dnf
         try:
@@ -491,6 +494,7 @@ class DnfModule(YumDnf):
             import dnf.package
             import dnf.subject
             import dnf.util
+
             HAS_DNF = True
         except ImportError:
             HAS_DNF = False
@@ -498,14 +502,16 @@ class DnfModule(YumDnf):
         if HAS_DNF:
             return
 
-        system_interpreters = ['/usr/libexec/platform-python',
-                               '/usr/bin/python3',
-                               '/usr/bin/python2',
-                               '/usr/bin/python']
+        system_interpreters = [
+            "/usr/libexec/platform-python",
+            "/usr/bin/python3",
+            "/usr/bin/python2",
+            "/usr/bin/python",
+        ]
 
         if not has_respawned():
             # probe well-known system Python locations for accessible bindings, favoring py3
-            interpreter = probe_interpreters_for_module(system_interpreters, 'dnf')
+            interpreter = probe_interpreters_for_module(system_interpreters, "dnf")
 
             if interpreter:
                 # respawn under the interpreter where the bindings should be found
@@ -515,13 +521,16 @@ class DnfModule(YumDnf):
         # done all we can do, something is just broken (auto-install isn't useful anymore with respawn, so it was removed)
         self.module.fail_json(
             msg="Could not import the dnf python module using {0} ({1}). "
-                "Please install `python3-dnf` or `python2-dnf` package or ensure you have specified the "
-                "correct ansible_python_interpreter. (attempted {2})"
-                .format(sys.executable, sys.version.replace('\n', ''), system_interpreters),
-            results=[]
+            "Please install `python3-dnf` or `python2-dnf` package or ensure you have specified the "
+            "correct ansible_python_interpreter. (attempted {2})".format(
+                sys.executable, sys.version.replace("\n", ""), system_interpreters
+            ),
+            results=[],
         )
 
-    def _configure_base(self, base, conf_file, disable_gpg_check, installroot='/', sslverify=True):
+    def _configure_base(
+        self, base, conf_file, disable_gpg_check, installroot="/", sslverify=True
+    ):
         """Configure the dnf Base object."""
 
         conf = base.conf
@@ -531,7 +540,8 @@ class DnfModule(YumDnf):
             # Fail if we can't read the configuration file.
             if not os.access(conf_file, os.R_OK):
                 self.module.fail_json(
-                    msg="cannot read configuration file", conf_file=conf_file,
+                    msg="cannot read configuration file",
+                    conf_file=conf_file,
                     results=[],
                 )
             else:
@@ -582,15 +592,15 @@ class DnfModule(YumDnf):
 
         # Set releasever
         if self.releasever is not None:
-            conf.substitutions['releasever'] = self.releasever
+            conf.substitutions["releasever"] = self.releasever
 
-        if conf.substitutions.get('releasever') is None:
+        if conf.substitutions.get("releasever") is None:
             self.module.warn(
                 'Unable to detect release version (use "releasever" option to specify release version)'
             )
             # values of conf.substitutions are expected to be strings
             # setting this to an empty string instead of None appears to mimic the DNF CLI behavior
-            conf.substitutions['releasever'] = ''
+            conf.substitutions["releasever"] = ""
 
         # Set skip_broken (in dnf this is strict=0)
         if self.skip_broken:
@@ -638,7 +648,15 @@ class DnfModule(YumDnf):
                 repo.gpgcheck = False
                 repo.repo_gpgcheck = False
 
-    def _base(self, conf_file, disable_gpg_check, disablerepo, enablerepo, installroot, sslverify):
+    def _base(
+        self,
+        conf_file,
+        disable_gpg_check,
+        disablerepo,
+        enablerepo,
+        installroot,
+        sslverify,
+    ):
         """Return a fully configured dnf Base object."""
         base = dnf.Base()
         self._configure_base(base, conf_file, disable_gpg_check, installroot, sslverify)
@@ -665,34 +683,28 @@ class DnfModule(YumDnf):
                     base.update_cache()
                 except dnf.exceptions.RepoError as e:
                     self.module.fail_json(
-                        msg="{0}".format(to_text(e)),
-                        results=[],
-                        rc=1
+                        msg="{0}".format(to_text(e)), results=[], rc=1
                     )
-            base.fill_sack(load_system_repo='auto')
+            base.fill_sack(load_system_repo="auto")
         except dnf.exceptions.RepoError as e:
-            self.module.fail_json(
-                msg="{0}".format(to_text(e)),
-                results=[],
-                rc=1
-            )
+            self.module.fail_json(msg="{0}".format(to_text(e)), results=[], rc=1)
 
         add_security_filters = getattr(base, "add_security_filters", None)
         if callable(add_security_filters):
             filters = {}
             if self.bugfix:
-                filters.setdefault('types', []).append('bugfix')
+                filters.setdefault("types", []).append("bugfix")
             if self.security:
-                filters.setdefault('types', []).append('security')
+                filters.setdefault("types", []).append("security")
             if filters:
-                add_security_filters('eq', **filters)
+                add_security_filters("eq", **filters)
         else:
             filters = []
             if self.bugfix:
-                key = {'advisory_type__eq': 'bugfix'}
+                key = {"advisory_type__eq": "bugfix"}
                 filters.append(base.sack.query().upgrades().filter(**key))
             if self.security:
-                key = {'advisory_type__eq': 'security'}
+                key = {"advisory_type__eq": "security"}
                 filters.append(base.sack.query().upgrades().filter(**key))
             if filters:
                 base._update_security_filters = filters
@@ -702,19 +714,21 @@ class DnfModule(YumDnf):
     def list_items(self, command):
         """List package info based on the command."""
         # Rename updates to upgrades
-        if command == 'updates':
-            command = 'upgrades'
+        if command == "updates":
+            command = "upgrades"
 
         # Return the corresponding packages
-        if command in ['installed', 'upgrades', 'available']:
+        if command in ["installed", "upgrades", "available"]:
             results = [
                 self._package_dict(package)
-                for package in getattr(self.base.sack.query(), command)()]
+                for package in getattr(self.base.sack.query(), command)()
+            ]
         # Return the enabled repository ids
-        elif command in ['repos', 'repositories']:
+        elif command in ["repos", "repositories"]:
             results = [
-                {'repoid': repo.id, 'state': 'enabled'}
-                for repo in self.base.repos.iter_enabled()]
+                {"repoid": repo.id, "state": "enabled"}
+                for repo in self.base.repos.iter_enabled()
+            ]
         # Return any matching packages
         else:
             packages = dnf.subject.Subject(command).get_best_query(self.base.sack)
@@ -724,7 +738,10 @@ class DnfModule(YumDnf):
 
     def _is_installed(self, pkg):
         return bool(
-            dnf.subject.Subject(pkg).get_best_query(sack=self.base.sack).installed().run()
+            dnf.subject.Subject(pkg)
+            .get_best_query(sack=self.base.sack)
+            .installed()
+            .run()
         )
 
     def _is_newer_version_installed(self, pkg_name):
@@ -733,9 +750,14 @@ class DnfModule(YumDnf):
                 available = pkg_name
             else:
                 available = sorted(
-                    dnf.subject.Subject(pkg_name).get_best_query(sack=self.base.sack).available().run()
+                    dnf.subject.Subject(pkg_name)
+                    .get_best_query(sack=self.base.sack)
+                    .available()
+                    .run()
                 )[-1]
-            installed = sorted(self.base.sack.query().installed().filter(name=available.name).run())[-1]
+            installed = sorted(
+                self.base.sack.query().installed().filter(name=available.name).run()
+            )[-1]
         except IndexError:
             return False
         return installed > available
@@ -744,7 +766,7 @@ class DnfModule(YumDnf):
         """Mark the package for install."""
         is_newer_version_installed = self._is_newer_version_installed(pkg_spec)
         is_installed = self._is_installed(pkg_spec)
-        msg = ''
+        msg = ""
         try:
             if is_newer_version_installed:
                 if self.allow_downgrade:
@@ -782,53 +804,58 @@ class DnfModule(YumDnf):
             msg = "No package {0} available.".format(pkg_spec)
             if self.base.conf.strict:
                 return {
-                    'failed': True,
-                    'msg': msg,
-                    'failure': " ".join((pkg_spec, to_native(e))),
-                    'rc': 1,
-                    "results": []
+                    "failed": True,
+                    "msg": msg,
+                    "failure": " ".join((pkg_spec, to_native(e))),
+                    "rc": 1,
+                    "results": [],
                 }
         except dnf.exceptions.DepsolveError as e:
             return {
-                'failed': True,
-                'msg': "Depsolve Error occurred for package {0}.".format(pkg_spec),
-                'failure': " ".join((pkg_spec, to_native(e))),
-                'rc': 1,
-                "results": []
+                "failed": True,
+                "msg": "Depsolve Error occurred for package {0}.".format(pkg_spec),
+                "failure": " ".join((pkg_spec, to_native(e))),
+                "rc": 1,
+                "results": [],
             }
         except dnf.exceptions.Error as e:
             if to_text("already installed") in to_text(e):
-                return {'failed': False, 'msg': '', 'failure': ''}
+                return {"failed": False, "msg": "", "failure": ""}
             else:
                 return {
-                    'failed': True,
-                    'msg': "Unknown Error occurred for package {0}.".format(pkg_spec),
-                    'failure': " ".join((pkg_spec, to_native(e))),
-                    'rc': 1,
-                    "results": []
+                    "failed": True,
+                    "msg": "Unknown Error occurred for package {0}.".format(pkg_spec),
+                    "failure": " ".join((pkg_spec, to_native(e))),
+                    "rc": 1,
+                    "results": [],
                 }
 
-        return {'failed': False, 'msg': msg, 'failure': '', 'rc': 0}
+        return {"failed": False, "msg": msg, "failure": "", "rc": 0}
 
     def _parse_spec_group_file(self):
         pkg_specs, grp_specs, module_specs, filenames = [], [], [], []
         already_loaded_comps = False  # Only load this if necessary, it's slow
 
         for name in self.names:
-            if '://' in name:
+            if "://" in name:
                 name = fetch_file(self.module, name)
                 filenames.append(name)
             elif name.endswith(".rpm"):
                 filenames.append(name)
-            elif name.startswith('/'):
+            elif name.startswith("/"):
                 # dnf install /usr/bin/vi
-                installed = self.base.sack.query().filter(provides=name, file=name).installed().run()
+                installed = (
+                    self.base.sack.query()
+                    .filter(provides=name, file=name)
+                    .installed()
+                    .run()
+                )
                 if installed:
                     pkg_specs.append(installed[0].name)  # should be only one?
                 elif not self.update_only:
                     # not installed, pass the filename for dnf to process
                     pkg_specs.append(name)
-            elif name.startswith("@") or ('/' in name):
+            elif name.startswith("@") or ("/" in name):
                 if not already_loaded_comps:
                     self.base.read_comps()
                     already_loaded_comps = True
@@ -851,7 +878,9 @@ class DnfModule(YumDnf):
         not_installed = []
         for pkg in pkgs:
             if self._is_installed(
-                    self._package_dict(pkg)["nevra"] if isinstance(pkg, dnf.package.Package) else pkg
+                self._package_dict(pkg)["nevra"]
+                if isinstance(pkg, dnf.package.Package)
+                else pkg
             ):
                 try:
                     if isinstance(pkg, dnf.package.Package):
@@ -860,7 +889,9 @@ class DnfModule(YumDnf):
                         self.base.upgrade(pkg)
                 except Exception as e:
                     self.module.fail_json(
-                        msg="Error occurred attempting update_only operation: {0}".format(to_native(e)),
+                        msg="Error occurred attempting update_only operation: {0}".format(
+                            to_native(e)
+                        ),
                         results=[],
                         rc=1,
                     )
@@ -871,7 +902,9 @@ class DnfModule(YumDnf):
 
     def _install_remote_rpms(self, filenames):
         if int(dnf.__version__.split(".")[0]) >= 2:
-            pkgs = list(sorted(self.base.add_remote_rpms(list(filenames)), reverse=True))
+            pkgs = list(
+                sorted(self.base.add_remote_rpms(list(filenames)), reverse=True)
+            )
         else:
             pkgs = []
             try:
@@ -880,7 +913,9 @@ class DnfModule(YumDnf):
             except IOError as e:
                 if to_text("Can not load RPM file") in to_text(e):
                     self.module.fail_json(
-                        msg="Error occurred attempting remote rpm install of package: {0}. {1}".format(filename, to_native(e)),
+                        msg="Error occurred attempting remote rpm install of package: {0}. {1}".format(
+                            filename, to_native(e)
+                        ),
                         results=[],
                         rc=1,
                     )
@@ -896,7 +931,9 @@ class DnfModule(YumDnf):
                         self.base.package_install(pkg, strict=self.base.conf.strict)
                 except Exception as e:
                     self.module.fail_json(
-                        msg="Error occurred attempting remote rpm operation: {0}".format(to_native(e)),
+                        msg="Error occurred attempting remote rpm operation: {0}".format(
+                            to_native(e)
+                        ),
                         results=[],
                         rc=1,
                     )
@@ -910,46 +947,40 @@ class DnfModule(YumDnf):
             if enabled_streams:
                 if nsv.stream:
                     if nsv.stream in enabled_streams:
-                        return True     # The provided stream was found
+                        return True  # The provided stream was found
                     else:
-                        return False    # The provided stream was not found
+                        return False  # The provided stream was not found
                 else:
-                    return True         # No stream provided, but module found
+                    return True  # No stream provided, but module found
 
         return False  # seems like a sane default
 
     def ensure(self):
 
-        response = {
-            'msg': "",
-            'changed': False,
-            'results': [],
-            'rc': 0
-        }
+        response = {"msg": "", "changed": False, "results": [], "rc": 0}
 
         # Accumulate failures.  Package management modules install what they can
         # and fail with a message about what they can't.
-        failure_response = {
-            'msg': "",
-            'failures': [],
-            'results': [],
-            'rc': 1
-        }
+        failure_response = {"msg": "", "failures": [], "results": [], "rc": 1}
 
         # Autoremove is called alone
         # Jump to remove path where base.autoremove() is run
         if not self.names and self.autoremove:
             self.names = []
-            self.state = 'absent'
+            self.state = "absent"
 
-        if self.names == ['*'] and self.state == 'latest':
+        if self.names == ["*"] and self.state == "latest":
             try:
                 self.base.upgrade_all()
             except dnf.exceptions.DepsolveError as e:
-                failure_response['msg'] = "Depsolve Error occurred attempting to upgrade all packages"
+                failure_response["msg"] = (
+                    "Depsolve Error occurred attempting to upgrade all packages"
+                )
                 self.module.fail_json(**failure_response)
         else:
-            pkg_specs, group_specs, module_specs, filenames = self._parse_spec_group_file()
+            pkg_specs, group_specs, module_specs, filenames = (
+                self._parse_spec_group_file()
+            )
 
             pkg_specs = [p.strip() for p in pkg_specs]
             filenames = [f.strip() for f in filenames]
@@ -969,48 +1000,72 @@ class DnfModule(YumDnf):
                             results=[],
                         )
 
-            if self.state in ['installed', 'present']:
+            if self.state in ["installed", "present"]:
                 # Install files.
                 self._install_remote_rpms(filenames)
                 for filename in filenames:
-                    response['results'].append("Installed {0}".format(filename))
+                    response["results"].append("Installed {0}".format(filename))
 
                 # Install modules
                 if module_specs and self.with_modules:
                     for module in module_specs:
                         try:
                             if not self._is_module_installed(module):
-                                response['results'].append("Module {0} installed.".format(module))
+                                response["results"].append(
+                                    "Module {0} installed.".format(module)
+                                )
                             self.module_base.install([module])
                             self.module_base.enable([module])
                         except dnf.exceptions.MarkingErrors as e:
-                            failure_response['failures'].append(' '.join((module, to_native(e))))
+                            failure_response["failures"].append(
+                                " ".join((module, to_native(e)))
+                            )
 
                 # Install groups.
                 for group in groups:
                     try:
-                        group_pkg_count_installed = self.base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
+                        group_pkg_count_installed = self.base.group_install(
+                            group, dnf.const.GROUP_PACKAGE_TYPES
+                        )
                         if group_pkg_count_installed == 0:
-                            response['results'].append("Group {0} already installed.".format(group))
+                            response["results"].append(
+                                "Group {0} already installed.".format(group)
+                            )
                         else:
-                            response['results'].append("Group {0} installed.".format(group))
+                            response["results"].append(
+                                "Group {0} installed.".format(group)
+                            )
                     except dnf.exceptions.DepsolveError as e:
-                        failure_response['msg'] = "Depsolve Error occurred attempting to install group: {0}".format(group)
+                        failure_response["msg"] = (
+                            "Depsolve Error occurred attempting to install group: {0}".format(
+                                group
+                            )
+                        )
                         self.module.fail_json(**failure_response)
                     except dnf.exceptions.Error as e:
                         # In dnf 2.0 if all the mandatory packages in a group do
                         # not install, an error is raised.  We want to capture
                         # this but still install as much as possible.
-                        failure_response['failures'].append(" ".join((group, to_native(e))))
+                        failure_response["failures"].append(
+                            " ".join((group, to_native(e)))
+                        )
 
                 for environment in environments:
                     try:
-                        self.base.environment_install(environment, dnf.const.GROUP_PACKAGE_TYPES)
+                        self.base.environment_install(
+                            environment, dnf.const.GROUP_PACKAGE_TYPES
+                        )
                     except dnf.exceptions.DepsolveError as e:
-                        failure_response['msg'] = "Depsolve Error occurred attempting to install environment: {0}".format(environment)
+                        failure_response["msg"] = (
+                            "Depsolve Error occurred attempting to install environment: {0}".format(
+                                environment
+                            )
+                        )
                         self.module.fail_json(**failure_response)
                     except dnf.exceptions.Error as e:
-                        failure_response['failures'].append(" ".join((environment, to_native(e))))
+                        failure_response["failures"].append(
+                            " ".join((environment, to_native(e)))
+                        )
 
                 if module_specs and not self.with_modules:
                     # This means that the group or env wasn't found in comps
@@ -1023,49 +1078,70 @@ class DnfModule(YumDnf):
                 if self.update_only:
                     not_installed = self._update_only(pkg_specs)
                     for spec in not_installed:
-                        response['results'].append("Packages providing %s not installed due to update_only specified" % spec)
+                        response["results"].append(
+                            "Packages providing %s not installed due to update_only specified"
+                            % spec
+                        )
                 else:
                     for pkg_spec in pkg_specs:
                         install_result = self._mark_package_install(pkg_spec)
-                        if install_result['failed']:
-                            if install_result['msg']:
-                                failure_response['msg'] += install_result['msg']
-                            failure_response['failures'].append(self._sanitize_dnf_error_msg_install(pkg_spec, install_result['failure']))
+                        if install_result["failed"]:
+                            if install_result["msg"]:
+                                failure_response["msg"] += install_result["msg"]
+                            failure_response["failures"].append(
+                                self._sanitize_dnf_error_msg_install(
+                                    pkg_spec, install_result["failure"]
+                                )
+                            )
                         else:
-                            if install_result['msg']:
-                                response['results'].append(install_result['msg'])
+                            if install_result["msg"]:
+                                response["results"].append(install_result["msg"])
 
-            elif self.state == 'latest':
+            elif self.state == "latest":
                 # "latest" is same as "installed" for filenames.
                 self._install_remote_rpms(filenames)
                 for filename in filenames:
-                    response['results'].append("Installed {0}".format(filename))
+                    response["results"].append("Installed {0}".format(filename))
 
                 # Upgrade modules
                 if module_specs and self.with_modules:
                     for module in module_specs:
                         try:
                             if self._is_module_installed(module):
-                                response['results'].append("Module {0} upgraded.".format(module))
+                                response["results"].append(
+                                    "Module {0} upgraded.".format(module)
+                                )
                             self.module_base.upgrade([module])
                         except dnf.exceptions.MarkingErrors as e:
-                            failure_response['failures'].append(' '.join((module, to_native(e))))
+                            failure_response["failures"].append(
+                                " ".join((module, to_native(e)))
+                            )
 
                 for group in groups:
                     try:
                         try:
                             self.base.group_upgrade(group)
-                            response['results'].append("Group {0} upgraded.".format(group))
+                            response["results"].append(
+                                "Group {0} upgraded.".format(group)
+                            )
                         except dnf.exceptions.CompsError:
                             if not self.update_only:
                                 # If not already installed, try to install.
-                                group_pkg_count_installed = self.base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
+                                group_pkg_count_installed = self.base.group_install(
+                                    group, dnf.const.GROUP_PACKAGE_TYPES
+                                )
                                 if group_pkg_count_installed == 0:
-                                    response['results'].append("Group {0} already installed.".format(group))
+                                    response["results"].append(
+                                        "Group {0} already installed.".format(group)
+                                    )
                                 else:
-                                    response['results'].append("Group {0} installed.".format(group))
+                                    response["results"].append(
+                                        "Group {0} installed.".format(group)
+                                    )
                     except dnf.exceptions.Error as e:
-                        failure_response['failures'].append(" ".join((group, to_native(e))))
+                        failure_response["failures"].append(
+                            " ".join((group, to_native(e)))
+                        )
 
                 for environment in environments:
                     try:
@@ -1073,26 +1149,43 @@ class DnfModule(YumDnf):
                             self.base.environment_upgrade(environment)
                         except dnf.exceptions.CompsError:
                             # If not already installed, try to install.
-                            self.base.environment_install(environment, dnf.const.GROUP_PACKAGE_TYPES)
+                            self.base.environment_install(
+                                environment, dnf.const.GROUP_PACKAGE_TYPES
+                            )
                     except dnf.exceptions.DepsolveError as e:
-                        failure_response['msg'] = "Depsolve Error occurred attempting to install environment: {0}".format(environment)
+                        failure_response["msg"] = (
+                            "Depsolve Error occurred attempting to install environment: {0}".format(
+                                environment
+                            )
+                        )
                     except dnf.exceptions.Error as e:
-                        failure_response['failures'].append(" ".join((environment, to_native(e))))
+                        failure_response["failures"].append(
+                            " ".join((environment, to_native(e)))
+                        )
 
                 if self.update_only:
                     not_installed = self._update_only(pkg_specs)
                     for spec in not_installed:
-                        response['results'].append("Packages providing %s not installed due to update_only specified" % spec)
+                        response["results"].append(
+                            "Packages providing %s not installed due to update_only specified"
+                            % spec
+                        )
                 else:
                     for pkg_spec in pkg_specs:
-                        install_result = self._mark_package_install(pkg_spec, upgrade=True)
-                        if install_result['failed']:
-                            if install_result['msg']:
-                                failure_response['msg'] += install_result['msg']
-                            failure_response['failures'].append(self._sanitize_dnf_error_msg_install(pkg_spec, install_result['failure']))
+                        install_result = self._mark_package_install(
+                            pkg_spec, upgrade=True
+                        )
+                        if install_result["failed"]:
+                            if install_result["msg"]:
+                                failure_response["msg"] += install_result["msg"]
+                            failure_response["failures"].append(
+                                self._sanitize_dnf_error_msg_install(
+                                    pkg_spec, install_result["failure"]
+                                )
+                            )
                         else:
-                            if install_result['msg']:
-                                response['results'].append(install_result['msg'])
+                            if install_result["msg"]:
+                                response["results"].append(install_result["msg"])
 
             else:
                 # state == absent
@@ -1107,12 +1200,16 @@ class DnfModule(YumDnf):
                     for module in module_specs:
                         try:
                             if self._is_module_installed(module):
-                                response['results'].append("Module {0} removed.".format(module))
+                                response["results"].append(
+                                    "Module {0} removed.".format(module)
+                                )
                             self.module_base.remove([module])
                             self.module_base.disable([module])
                             self.module_base.reset([module])
                         except dnf.exceptions.MarkingErrors as e:
-                            failure_response['failures'].append(' '.join((module, to_native(e))))
+                            failure_response["failures"].append(
+                                " ".join((module, to_native(e)))
+                            )
 
                 for group in groups:
                     try:
@@ -1139,19 +1236,29 @@ class DnfModule(YumDnf):
                 installed = self.base.sack.query().installed()
                 for pkg_spec in pkg_specs:
                     # short-circuit installed check for wildcard matching
-                    if '*' in pkg_spec:
+                    if "*" in pkg_spec:
                         try:
                             self.base.remove(pkg_spec)
                         except dnf.exceptions.MarkingError as e:
-                            is_failure, handled_remove_error = self._sanitize_dnf_error_msg_remove(pkg_spec, to_native(e))
+                            is_failure, handled_remove_error = (
+                                self._sanitize_dnf_error_msg_remove(
+                                    pkg_spec, to_native(e)
+                                )
+                            )
                             if is_failure:
-                                failure_response['failures'].append('{0} - {1}'.format(pkg_spec, to_native(e)))
+                                failure_response["failures"].append(
+                                    "{0} - {1}".format(pkg_spec, to_native(e))
+                                )
                             else:
-                                response['results'].append(handled_remove_error)
+                                response["results"].append(handled_remove_error)
                         continue
 
-                    installed_pkg = dnf.subject.Subject(pkg_spec).get_best_query(
-                        sack=self.base.sack).installed().run()
+                    installed_pkg = (
+                        dnf.subject.Subject(pkg_spec)
+                        .get_best_query(sack=self.base.sack)
+                        .installed()
+                        .run()
+                    )
 
                     for pkg in installed_pkg:
                         self.base.remove(str(pkg))
@@ -1174,35 +1281,47 @@ class DnfModule(YumDnf):
             # does nothing to help here, so we don't take it into account at
             # all.
             if not self.base.resolve(allow_erasing=self.allowerasing):
-                if failure_response['failures']:
-                    failure_response['msg'] = 'Failed to install some of the specified packages'
+                if failure_response["failures"]:
+                    failure_response["msg"] = (
+                        "Failed to install some of the specified packages"
+                    )
                     self.module.fail_json(**failure_response)
 
-                response['msg'] = "Nothing to do"
+                response["msg"] = "Nothing to do"
                 self.module.exit_json(**response)
             else:
-                response['changed'] = True
+                response["changed"] = True
 
                 # If packages got installed/removed, add them to the results.
                 # We do this early so we can use it for both check_mode and not.
                 if self.download_only:
-                    install_action = 'Downloaded'
+                    install_action = "Downloaded"
                 else:
-                    install_action = 'Installed'
+                    install_action = "Installed"
                 for package in self.base.transaction.install_set:
-                    response['results'].append("{0}: {1}".format(install_action, package))
+                    response["results"].append(
+                        "{0}: {1}".format(install_action, package)
+                    )
                 for package in self.base.transaction.remove_set:
-                    response['results'].append("Removed: {0}".format(package))
+                    response["results"].append("Removed: {0}".format(package))
 
-                if failure_response['failures']:
-                    failure_response['msg'] = 'Failed to install some of the specified packages'
+                if failure_response["failures"]:
+                    failure_response["msg"] = (
+                        "Failed to install some of the specified packages"
+                    )
                     self.module.fail_json(**failure_response)
                 if self.module.check_mode:
-                    response['msg'] = "Check mode: No changes made, but would have if not in check mode"
+                    response["msg"] = (
+                        "Check mode: No changes made, but would have if not in check mode"
+                    )
                     self.module.exit_json(**response)
 
                 try:
-                    if self.download_only and self.download_dir and self.base.conf.destdir:
+                    if (
+                        self.download_only
+                        and self.download_dir
+                        and self.base.conf.destdir
+                    ):
                         dnf.util.ensure_dir(self.base.conf.destdir)
                         self.base.repos.all().pkgdir = self.base.conf.destdir
 
@@ -1230,7 +1349,11 @@ class DnfModule(YumDnf):
                             fail = True
 
                         if fail:
-                            msg = 'Failed to validate GPG signature for {0}: {1}'.format(package, gpgerr)
+                            msg = (
+                                "Failed to validate GPG signature for {0}: {1}".format(
+                                    package, gpgerr
+                                )
+                            )
                             self.module.fail_json(msg)
 
                 if self.download_only:
@@ -1242,22 +1365,30 @@ class DnfModule(YumDnf):
                     if tid is not None:
                         transaction = self.base.history.old([tid])[0]
                         if transaction.return_code:
-                            failure_response['failures'].append(transaction.output())
+                            failure_response["failures"].append(transaction.output())
 
-                if failure_response['failures']:
-                    failure_response['msg'] = 'Failed to install some of the specified packages'
+                if failure_response["failures"]:
+                    failure_response["msg"] = (
+                        "Failed to install some of the specified packages"
+                    )
                     self.module.fail_json(**failure_response)
                 self.module.exit_json(**response)
         except dnf.exceptions.DepsolveError as e:
-            failure_response['msg'] = "Depsolve Error occurred: {0}".format(to_native(e))
+            failure_response["msg"] = "Depsolve Error occurred: {0}".format(
+                to_native(e)
+            )
             self.module.fail_json(**failure_response)
         except dnf.exceptions.Error as e:
             if to_text("already installed") in to_text(e):
-                response['changed'] = False
-                response['results'].append("Package already installed: {0}".format(to_native(e)))
+                response["changed"] = False
+                response["results"].append(
+                    "Package already installed: {0}".format(to_native(e))
+                )
                 self.module.exit_json(**response)
             else:
-                failure_response['msg'] = "Unknown Error occurred: {0}".format(to_native(e))
+                failure_response["msg"] = "Unknown Error occurred: {0}".format(
+                    to_native(e)
+                )
                 self.module.fail_json(**failure_response)
 
     def run(self):
@@ -1265,42 +1396,47 @@ class DnfModule(YumDnf):
 
         # Check if autoremove is called correctly
         if self.autoremove:
-            if LooseVersion(dnf.__version__) < LooseVersion('2.0.1'):
+            if LooseVersion(dnf.__version__) < LooseVersion("2.0.1"):
                 self.module.fail_json(
-                    msg="Autoremove requires dnf>=2.0.1. Current dnf version is %s" % dnf.__version__,
+                    msg="Autoremove requires dnf>=2.0.1. Current dnf version is %s"
+                    % dnf.__version__,
                     results=[],
                 )
 
         # Check if download_dir is called correctly
         if self.download_dir:
-            if LooseVersion(dnf.__version__) < LooseVersion('2.6.2'):
+            if LooseVersion(dnf.__version__) < LooseVersion("2.6.2"):
                 self.module.fail_json(
-                    msg="download_dir requires dnf>=2.6.2. Current dnf version is %s" % dnf.__version__,
+                    msg="download_dir requires dnf>=2.6.2. Current dnf version is %s"
+                    % dnf.__version__,
                     results=[],
                 )
 
         if self.update_cache and not self.names and not self.list:
             self.base = self._base(
-                self.conf_file, self.disable_gpg_check, self.disablerepo,
-                self.enablerepo, self.installroot, self.sslverify
+                self.conf_file,
+                self.disable_gpg_check,
+                self.disablerepo,
+                self.enablerepo,
+                self.installroot,
+                self.sslverify,
             )
-            self.module.exit_json(
-                msg="Cache updated",
-                changed=False,
-                results=[],
-                rc=0
-            )
+            self.module.exit_json(msg="Cache updated", changed=False, results=[], rc=0)
 
         # Set state as installed by default
         # This is not set in AnsibleModule() because the following shouldn't happen
         # - dnf: autoremove=yes state=installed
         if self.state is None:
-            self.state = 'installed'
+            self.state = "installed"
 
         if self.list:
             self.base = self._base(
-                self.conf_file, self.disable_gpg_check, self.disablerepo,
-                self.enablerepo, self.installroot, self.sslverify
+                self.conf_file,
+                self.disable_gpg_check,
+                self.disablerepo,
+                self.enablerepo,
+                self.installroot,
+                self.sslverify,
             )
             self.list_items(self.list)
         else:
@@ -1312,8 +1448,12 @@ class DnfModule(YumDnf):
                     results=[],
                 )
             self.base = self._base(
-                self.conf_file, self.disable_gpg_check, self.disablerepo,
-                self.enablerepo, self.installroot, self.sslverify
+                self.conf_file,
+                self.disable_gpg_check,
+                self.disablerepo,
+                self.enablerepo,
+                self.installroot,
+                self.sslverify,
             )
 
             if self.with_modules:
@@ -1336,11 +1476,11 @@ def main():
     #   list=repos
     #   list=pkgspec
 
-    yumdnf_argument_spec['argument_spec']['use_backend'] = dict(default='auto', choices=['auto', 'yum', 'yum4', 'dnf4', 'dnf5'])
-
-    module = AnsibleModule(
-        **yumdnf_argument_spec
+    yumdnf_argument_spec["argument_spec"]["use_backend"] = dict(
+        default="auto", choices=["auto", "yum", "yum4", "dnf4", "dnf5"]
     )
+
+    module = AnsibleModule(**yumdnf_argument_spec)
 
     module_implementation = DnfModule(module)
     try:
@@ -1350,9 +1490,9 @@ def main():
             msg="Failed to synchronize repodata: {0}".format(to_native(de)),
             rc=1,
             results=[],
-            changed=False
+            changed=False,
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

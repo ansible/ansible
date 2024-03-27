@@ -1,4 +1,5 @@
 """Sanity test to check integration test aliases."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -62,14 +63,16 @@ from ...host_configs import (
 class IntegrationAliasesTest(SanitySingleVersion):
     """Sanity test to evaluate integration test aliases."""
 
-    CI_YML = '.azure-pipelines/azure-pipelines.yml'
-    TEST_ALIAS_PREFIX = 'shippable'  # this will be changed at some point in the future
+    CI_YML = ".azure-pipelines/azure-pipelines.yml"
+    TEST_ALIAS_PREFIX = "shippable"  # this will be changed at some point in the future
 
-    DISABLED = 'disabled/'
-    UNSTABLE = 'unstable/'
-    UNSUPPORTED = 'unsupported/'
+    DISABLED = "disabled/"
+    UNSTABLE = "unstable/"
+    UNSUPPORTED = "unsupported/"
 
-    EXPLAIN_URL = get_docs_url('https://docs.ansible.com/ansible-core/devel/dev_guide/testing/sanity/integration-aliases.html')
+    EXPLAIN_URL = get_docs_url(
+        "https://docs.ansible.com/ansible-core/devel/dev_guide/testing/sanity/integration-aliases.html"
+    )
 
     TEMPLATE_DISABLED = """
     The following integration tests are **disabled** [[explain]({explain_url}#disabled)]:
@@ -134,30 +137,35 @@ class IntegrationAliasesTest(SanitySingleVersion):
         if not self._ci_test_groups:
             test_groups: dict[str, set[int]] = {}
 
-            for stage in self._ci_config['stages']:
-                for job in stage['jobs']:
-                    if job.get('template') != 'templates/matrix.yml':
+            for stage in self._ci_config["stages"]:
+                for job in stage["jobs"]:
+                    if job.get("template") != "templates/matrix.yml":
                         continue
 
-                    parameters = job['parameters']
+                    parameters = job["parameters"]
 
-                    groups = parameters.get('groups', [])
-                    test_format = parameters.get('testFormat', '{0}')
-                    test_group_format = parameters.get('groupFormat', '{0}/{{1}}')
+                    groups = parameters.get("groups", [])
+                    test_format = parameters.get("testFormat", "{0}")
+                    test_group_format = parameters.get("groupFormat", "{0}/{{1}}")
 
-                    for target in parameters['targets']:
-                        test = target.get('test') or target.get('name')
+                    for target in parameters["targets"]:
+                        test = target.get("test") or target.get("name")
 
                         if groups:
-                            tests_formatted = [test_group_format.format(test_format).format(test, group) for group in groups]
+                            tests_formatted = [
+                                test_group_format.format(test_format).format(
+                                    test, group
+                                )
+                                for group in groups
+                            ]
                         else:
                             tests_formatted = [test_format.format(test)]
 
                         for test_formatted in tests_formatted:
-                            parts = test_formatted.split('/')
+                            parts = test_formatted.split("/")
                             key = parts[0]
 
-                            if key in ('sanity', 'units'):
+                            if key in ("sanity", "units"):
                                 continue
 
                             try:
@@ -171,29 +179,55 @@ class IntegrationAliasesTest(SanitySingleVersion):
                             group_set = test_groups.setdefault(key, set())
                             group_set.add(group)
 
-            self._ci_test_groups = dict((key, sorted(value)) for key, value in test_groups.items())
+            self._ci_test_groups = dict(
+                (key, sorted(value)) for key, value in test_groups.items()
+            )
 
         return self._ci_test_groups
 
-    def format_test_group_alias(self, name: str, fallback: str = '') -> str:
+    def format_test_group_alias(self, name: str, fallback: str = "") -> str:
         """Return a test group alias using the given name and fallback."""
         group_numbers = self.ci_test_groups.get(name, None)
 
         if group_numbers:
             if min(group_numbers) != 1:
-                display.warning('Min test group "%s" in %s is %d instead of 1.' % (name, self.CI_YML, min(group_numbers)), unique=True)
+                display.warning(
+                    'Min test group "%s" in %s is %d instead of 1.'
+                    % (name, self.CI_YML, min(group_numbers)),
+                    unique=True,
+                )
 
             if max(group_numbers) != len(group_numbers):
-                display.warning('Max test group "%s" in %s is %d instead of %d.' % (name, self.CI_YML, max(group_numbers), len(group_numbers)), unique=True)
+                display.warning(
+                    'Max test group "%s" in %s is %d instead of %d.'
+                    % (name, self.CI_YML, max(group_numbers), len(group_numbers)),
+                    unique=True,
+                )
 
             if max(group_numbers) > 9:
-                alias = '%s/%s/group(%s)/' % (self.TEST_ALIAS_PREFIX, name, '|'.join(str(i) for i in range(min(group_numbers), max(group_numbers) + 1)))
+                alias = "%s/%s/group(%s)/" % (
+                    self.TEST_ALIAS_PREFIX,
+                    name,
+                    "|".join(
+                        str(i)
+                        for i in range(min(group_numbers), max(group_numbers) + 1)
+                    ),
+                )
             elif len(group_numbers) > 1:
-                alias = '%s/%s/group[%d-%d]/' % (self.TEST_ALIAS_PREFIX, name, min(group_numbers), max(group_numbers))
+                alias = "%s/%s/group[%d-%d]/" % (
+                    self.TEST_ALIAS_PREFIX,
+                    name,
+                    min(group_numbers),
+                    max(group_numbers),
+                )
             else:
-                alias = '%s/%s/group%d/' % (self.TEST_ALIAS_PREFIX, name, min(group_numbers))
+                alias = "%s/%s/group%d/" % (
+                    self.TEST_ALIAS_PREFIX,
+                    name,
+                    min(group_numbers),
+                )
         elif fallback:
-            alias = '%s/%s/group%d/' % (self.TEST_ALIAS_PREFIX, fallback, 1)
+            alias = "%s/%s/group%d/" % (self.TEST_ALIAS_PREFIX, fallback, 1)
         else:
             raise Exception('cannot find test group "%s" in %s' % (name, self.CI_YML))
 
@@ -201,18 +235,31 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
     def load_yaml(self, python: PythonConfig, path: str) -> dict[str, t.Any]:
         """Load the specified YAML file and return the contents."""
-        yaml_to_json_path = os.path.join(SANITY_ROOT, self.name, 'yaml_to_json.py')
-        return json.loads(raw_command([python.path, yaml_to_json_path], data=read_text_file(path), capture=True)[0])
+        yaml_to_json_path = os.path.join(SANITY_ROOT, self.name, "yaml_to_json.py")
+        return json.loads(
+            raw_command(
+                [python.path, yaml_to_json_path],
+                data=read_text_file(path),
+                capture=True,
+            )[0]
+        )
 
-    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
+    def test(
+        self, args: SanityConfig, targets: SanityTargets, python: PythonConfig
+    ) -> TestResult:
         if args.explain:
             return SanitySuccess(self.name)
 
         if not os.path.isfile(self.CI_YML):
-            return SanityFailure(self.name, messages=[SanityMessage(
-                message='file missing',
-                path=self.CI_YML,
-            )])
+            return SanityFailure(
+                self.name,
+                messages=[
+                    SanityMessage(
+                        message="file missing",
+                        path=self.CI_YML,
+                    )
+                ],
+            )
 
         results = Results(
             comments=[],
@@ -222,7 +269,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
         self.load_ci_config(python)
         self.check_changes(args, results)
 
-        write_json_test_results(ResultType.BOT, 'data-sanity-ci.json', results.__dict__)
+        write_json_test_results(ResultType.BOT, "data-sanity-ci.json", results.__dict__)
 
         messages = []
 
@@ -239,42 +286,72 @@ class IntegrationAliasesTest(SanitySingleVersion):
         posix_targets = tuple(walk_posix_integration_targets())
 
         clouds = get_cloud_platforms(args, posix_targets)
-        cloud_targets = ['cloud/%s/' % cloud for cloud in clouds]
+        cloud_targets = ["cloud/%s/" % cloud for cloud in clouds]
 
-        all_cloud_targets = tuple(filter_targets(posix_targets, ['cloud/'], errors=False))
-        invalid_cloud_targets = tuple(filter_targets(all_cloud_targets, cloud_targets, include=False, errors=False))
+        all_cloud_targets = tuple(
+            filter_targets(posix_targets, ["cloud/"], errors=False)
+        )
+        invalid_cloud_targets = tuple(
+            filter_targets(
+                all_cloud_targets, cloud_targets, include=False, errors=False
+            )
+        )
 
         messages = []
 
         for target in invalid_cloud_targets:
             for alias in target.aliases:
-                if alias.startswith('cloud/') and alias != 'cloud/':
-                    if any(alias.startswith(cloud_target) for cloud_target in cloud_targets):
+                if alias.startswith("cloud/") and alias != "cloud/":
+                    if any(
+                        alias.startswith(cloud_target) for cloud_target in cloud_targets
+                    ):
                         continue
 
-                    messages.append(SanityMessage('invalid alias `%s`' % alias, '%s/aliases' % target.path))
+                    messages.append(
+                        SanityMessage(
+                            "invalid alias `%s`" % alias, "%s/aliases" % target.path
+                        )
+                    )
 
         messages += self.check_ci_group(
-            targets=tuple(filter_targets(posix_targets, ['cloud/', '%s/generic/' % self.TEST_ALIAS_PREFIX], include=False, errors=False)),
-            find=self.format_test_group_alias('linux').replace('linux', 'posix'),
-            find_incidental=['%s/posix/incidental/' % self.TEST_ALIAS_PREFIX],
+            targets=tuple(
+                filter_targets(
+                    posix_targets,
+                    ["cloud/", "%s/generic/" % self.TEST_ALIAS_PREFIX],
+                    include=False,
+                    errors=False,
+                )
+            ),
+            find=self.format_test_group_alias("linux").replace("linux", "posix"),
+            find_incidental=["%s/posix/incidental/" % self.TEST_ALIAS_PREFIX],
         )
 
         messages += self.check_ci_group(
-            targets=tuple(filter_targets(posix_targets, ['%s/generic/' % self.TEST_ALIAS_PREFIX], errors=False)),
-            find=self.format_test_group_alias('generic'),
+            targets=tuple(
+                filter_targets(
+                    posix_targets,
+                    ["%s/generic/" % self.TEST_ALIAS_PREFIX],
+                    errors=False,
+                )
+            ),
+            find=self.format_test_group_alias("generic"),
         )
 
         for cloud in clouds:
-            if cloud == 'httptester':
-                find = self.format_test_group_alias('linux').replace('linux', 'posix')
-                find_incidental = ['%s/posix/incidental/' % self.TEST_ALIAS_PREFIX]
+            if cloud == "httptester":
+                find = self.format_test_group_alias("linux").replace("linux", "posix")
+                find_incidental = ["%s/posix/incidental/" % self.TEST_ALIAS_PREFIX]
             else:
-                find = self.format_test_group_alias(cloud, 'generic')
-                find_incidental = ['%s/%s/incidental/' % (self.TEST_ALIAS_PREFIX, cloud), '%s/cloud/incidental/' % self.TEST_ALIAS_PREFIX]
+                find = self.format_test_group_alias(cloud, "generic")
+                find_incidental = [
+                    "%s/%s/incidental/" % (self.TEST_ALIAS_PREFIX, cloud),
+                    "%s/cloud/incidental/" % self.TEST_ALIAS_PREFIX,
+                ]
 
             messages += self.check_ci_group(
-                targets=tuple(filter_targets(posix_targets, ['cloud/%s/' % cloud], errors=False)),
+                targets=tuple(
+                    filter_targets(posix_targets, ["cloud/%s/" % cloud], errors=False)
+                ),
                 find=find,
                 find_incidental=find_incidental,
             )
@@ -287,24 +364,46 @@ class IntegrationAliasesTest(SanitySingleVersion):
         }
 
         for target in posix_targets:
-            if target.name == 'ansible-test-container':
+            if target.name == "ansible-test-container":
                 continue  # special test target which uses group 6 -- nothing else should be in that group
 
-            if f'{self.TEST_ALIAS_PREFIX}/posix/' not in target.aliases:
+            if f"{self.TEST_ALIAS_PREFIX}/posix/" not in target.aliases:
                 continue
 
-            found_groups = [alias for alias in target.aliases if re.search(f'^{self.TEST_ALIAS_PREFIX}/posix/group[0-9]+/$', alias)]
-            expected_groups = [f'{self.TEST_ALIAS_PREFIX}/posix/group{group}/' for group in target_type_groups[target.target_type]]
+            found_groups = [
+                alias
+                for alias in target.aliases
+                if re.search(f"^{self.TEST_ALIAS_PREFIX}/posix/group[0-9]+/$", alias)
+            ]
+            expected_groups = [
+                f"{self.TEST_ALIAS_PREFIX}/posix/group{group}/"
+                for group in target_type_groups[target.target_type]
+            ]
             valid_groups = [group for group in found_groups if group in expected_groups]
-            invalid_groups = [group for group in found_groups if not any(group.startswith(expected_group) for expected_group in expected_groups)]
+            invalid_groups = [
+                group
+                for group in found_groups
+                if not any(
+                    group.startswith(expected_group)
+                    for expected_group in expected_groups
+                )
+            ]
 
             if not valid_groups:
-                messages.append(SanityMessage(f'Target of type {target.target_type.name} must be in at least one of these groups: {", ".join(expected_groups)}',
-                                              f'{target.path}/aliases'))
+                messages.append(
+                    SanityMessage(
+                        f'Target of type {target.target_type.name} must be in at least one of these groups: {", ".join(expected_groups)}',
+                        f"{target.path}/aliases",
+                    )
+                )
 
             if invalid_groups:
-                messages.append(SanityMessage(f'Target of type {target.target_type.name} cannot be in these groups: {", ".join(invalid_groups)}',
-                                              f'{target.path}/aliases'))
+                messages.append(
+                    SanityMessage(
+                        f'Target of type {target.target_type.name} cannot be in these groups: {", ".join(invalid_groups)}',
+                        f"{target.path}/aliases",
+                    )
+                )
 
         return messages
 
@@ -316,8 +415,8 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         messages += self.check_ci_group(
             targets=windows_targets,
-            find=self.format_test_group_alias('windows'),
-            find_incidental=['%s/windows/incidental/' % self.TEST_ALIAS_PREFIX],
+            find=self.format_test_group_alias("windows"),
+            find_incidental=["%s/windows/incidental/" % self.TEST_ALIAS_PREFIX],
         )
 
         return messages
@@ -330,30 +429,46 @@ class IntegrationAliasesTest(SanitySingleVersion):
     ) -> list[SanityMessage]:
         """Check the CI groups set in the provided targets and return a list of messages with any issues found."""
         all_paths = set(target.path for target in targets)
-        supported_paths = set(target.path for target in filter_targets(targets, [find], errors=False))
-        unsupported_paths = set(target.path for target in filter_targets(targets, [self.UNSUPPORTED], errors=False))
+        supported_paths = set(
+            target.path for target in filter_targets(targets, [find], errors=False)
+        )
+        unsupported_paths = set(
+            target.path
+            for target in filter_targets(targets, [self.UNSUPPORTED], errors=False)
+        )
 
         if find_incidental:
-            incidental_paths = set(target.path for target in filter_targets(targets, find_incidental, errors=False))
+            incidental_paths = set(
+                target.path
+                for target in filter_targets(targets, find_incidental, errors=False)
+            )
         else:
             incidental_paths = set()
 
-        unassigned_paths = all_paths - supported_paths - unsupported_paths - incidental_paths
+        unassigned_paths = (
+            all_paths - supported_paths - unsupported_paths - incidental_paths
+        )
         conflicting_paths = supported_paths & unsupported_paths
 
-        unassigned_message = 'missing alias `%s` or `%s`' % (find.strip('/'), self.UNSUPPORTED.strip('/'))
-        conflicting_message = 'conflicting alias `%s` and `%s`' % (find.strip('/'), self.UNSUPPORTED.strip('/'))
+        unassigned_message = "missing alias `%s` or `%s`" % (
+            find.strip("/"),
+            self.UNSUPPORTED.strip("/"),
+        )
+        conflicting_message = "conflicting alias `%s` and `%s`" % (
+            find.strip("/"),
+            self.UNSUPPORTED.strip("/"),
+        )
 
         messages = []
 
         for path in unassigned_paths:
-            if path == 'test/integration/targets/ansible-test-container':
+            if path == "test/integration/targets/ansible-test-container":
                 continue  # special test target which uses group 6 -- nothing else should be in that group
 
-            messages.append(SanityMessage(unassigned_message, '%s/aliases' % path))
+            messages.append(SanityMessage(unassigned_message, "%s/aliases" % path))
 
         for path in conflicting_paths:
-            messages.append(SanityMessage(conflicting_message, '%s/aliases' % path))
+            messages.append(SanityMessage(conflicting_message, "%s/aliases" % path))
 
         return messages
 
@@ -362,15 +477,25 @@ class IntegrationAliasesTest(SanitySingleVersion):
         integration_targets = list(walk_integration_targets())
         module_targets = list(walk_module_targets())
 
-        integration_targets_by_name = dict((target.name, target) for target in integration_targets)
-        module_names_by_path = dict((target.path, target.module) for target in module_targets)
+        integration_targets_by_name = dict(
+            (target.name, target) for target in integration_targets
+        )
+        module_names_by_path = dict(
+            (target.path, target.module) for target in module_targets
+        )
 
         disabled_targets = []
         unstable_targets = []
         unsupported_targets = []
 
-        for command in [command for command in args.metadata.change_description.focused_command_targets if 'integration' in command]:
-            for target in args.metadata.change_description.focused_command_targets[command]:
+        for command in [
+            command
+            for command in args.metadata.change_description.focused_command_targets
+            if "integration" in command
+        ]:
+            for target in args.metadata.change_description.focused_command_targets[
+                command
+            ]:
                 if self.DISABLED in integration_targets_by_name[target].aliases:
                     disabled_targets.append(target)
                 elif self.UNSTABLE in integration_targets_by_name[target].aliases:
@@ -410,7 +535,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
         if not targets:
             return None
 
-        tests = '\n'.join('- %s' % target for target in targets)
+        tests = "\n".join("- %s" % target for target in targets)
 
         data = dict(
             explain_url=self.EXPLAIN_URL,

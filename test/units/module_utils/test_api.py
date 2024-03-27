@@ -25,9 +25,10 @@ class TestRateLimit:
         @rate_limit(rate=1, rate_limit=1)
         def login_database():
             return "success"
+
         r = login_database()
 
-        assert r == 'success'
+        assert r == "success"
 
 
 class TestRetry:
@@ -36,19 +37,19 @@ class TestRetry:
         @retry(retries=4, retry_pause=2)
         def login_database():
             login_database.counter += 1
-            return 'success'
+            return "success"
 
         login_database.counter = 0
         r = login_database()
 
-        assert r == 'success'
+        assert r == "success"
         assert login_database.counter == 1
 
     def test_catch_exception(self):
 
         @retry(retries=1)
         def login_database():
-            return 'success'
+            return "success"
 
         with pytest.raises(Exception, match="Retry"):
             login_database()
@@ -113,8 +114,8 @@ class TestRetryWithDelaysAndCondition:
             login_database.counter += 1
             if login_database.counter == 1:
                 raise CustomException("Retry")
-            return 'success'
+            return "success"
 
         login_database.counter = 0
-        assert login_database() == 'success'
+        assert login_database() == "success"
         assert login_database.counter == 2

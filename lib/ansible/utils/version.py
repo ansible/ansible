@@ -11,7 +11,7 @@ from ansible.module_utils.compat.version import LooseVersion, Version
 # Regular expression taken from
 # https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string
 SEMVER_RE = re.compile(
-    r'''
+    r"""
     ^
         (?P<major>0|[1-9]\d*)
         \.
@@ -30,8 +30,8 @@ SEMVER_RE = re.compile(
             (?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*)
         )?
     $
-    ''',
-    flags=re.X
+    """,
+    flags=re.X,
 )
 
 
@@ -41,6 +41,7 @@ class _Alpha:
     Largely this exists to make comparing an integer and a string on py3
     so that it works like py2.
     """
+
     def __init__(self, specifier):
         self.specifier = specifier
 
@@ -84,6 +85,7 @@ class _Numeric:
     Largely this exists to make comparing an integer and a string on py3
     so that it works like py2.
     """
+
     def __init__(self, specifier):
         self.specifier = int(specifier)
 
@@ -141,7 +143,7 @@ class SemanticVersion(Version):
             self.parse(vstring)
 
     def __repr__(self):
-        return 'SemanticVersion(%r)' % self.vstring
+        return "SemanticVersion(%r)" % self.vstring
 
     @staticmethod
     def from_loose_version(loose_version):
@@ -160,7 +162,7 @@ class SemanticVersion(Version):
             raise ValueError("%r is not a LooseVersion" % loose_version)
 
         extra_idx = 3
-        for marker in ('-', '+'):
+        for marker in ("-", "+"):
             try:
                 idx = version.index(marker)
             except ValueError:
@@ -174,14 +176,12 @@ class SemanticVersion(Version):
             raise ValueError("Non integer values in %r" % loose_version)
 
         # Extra is everything to the right of the core version
-        extra = re.search('[+-].+$', loose_version.vstring)
+        extra = re.search("[+-].+$", loose_version.vstring)
 
         version = version + [0] * (3 - len(version))
         return SemanticVersion(
-            '%s%s' % (
-                '.'.join(str(v) for v in version),
-                extra.group(0) if extra else ''
-            )
+            "%s%s"
+            % (".".join(str(v) for v in version), extra.group(0) if extra else "")
         )
 
     def parse(self, vstring):
@@ -195,9 +195,14 @@ class SemanticVersion(Version):
         self.patch = int(patch)
 
         if prerelease:
-            self.prerelease = tuple(_Numeric(x) if x.isdigit() else _Alpha(x) for x in prerelease.split('.'))
+            self.prerelease = tuple(
+                _Numeric(x) if x.isdigit() else _Alpha(x) for x in prerelease.split(".")
+            )
         if buildmetadata:
-            self.buildmetadata = tuple(_Numeric(x) if x.isdigit() else _Alpha(x) for x in buildmetadata.split('.'))
+            self.buildmetadata = tuple(
+                _Numeric(x) if x.isdigit() else _Alpha(x)
+                for x in buildmetadata.split(".")
+            )
 
     @property
     def core(self):

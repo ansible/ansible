@@ -1,4 +1,5 @@
 """Argument parsing epilog generation."""
+
 from __future__ import annotations
 
 from .argparsing import (
@@ -18,6 +19,6 @@ def get_epilog(completer: CompositeActionCompletionFinder) -> str:
         epilog = 'Install the "argcomplete" python package to enable tab completion.'
 
     if data_context().content.unsupported:
-        epilog += '\n\n' + data_context().explain_working_directory()
+        epilog += "\n\n" + data_context().explain_working_directory()
 
     return epilog

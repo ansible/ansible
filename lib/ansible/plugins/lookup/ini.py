@@ -92,21 +92,21 @@ from ansible.plugins.lookup import LookupBase
 
 
 def _parse_params(term, paramvals):
-    '''Safely split parameter term to preserve spaces'''
+    """Safely split parameter term to preserve spaces"""
 
     # TODO: deprecate this method
     valid_keys = paramvals.keys()
-    params = defaultdict(lambda: '')
+    params = defaultdict(lambda: "")
 
     # TODO: check kv_parser to see if it can handle spaces this same way
     keys = []
-    thiskey = 'key'  # initialize for 'lookup item'
+    thiskey = "key"  # initialize for 'lookup item'
     for idp, phrase in enumerate(term.split()):
 
         # update current key if used
-        if '=' in phrase:
+        if "=" in phrase:
             for k in valid_keys:
-                if ('%s=' % k) in phrase:
+                if ("%s=" % k) in phrase:
                     thiskey = k
 
         # if first term or key does not exist
@@ -115,7 +115,7 @@ def _parse_params(term, paramvals):
             keys.append(thiskey)
         else:
             # append to existing key
-            params[thiskey] += ' ' + phrase
+            params[thiskey] += " " + phrase
 
     # return list of values
     return [params[x] for x in keys]
@@ -140,8 +140,10 @@ class LookupModule(LookupBase):
         self.set_options(var_options=variables, direct=kwargs)
         paramvals = self.get_options()
 
-        self.cp = configparser.ConfigParser(allow_no_value=paramvals.get('allow_no_value', paramvals.get('allow_none')))
-        if paramvals['case_sensitive']:
+        self.cp = configparser.ConfigParser(
+            allow_no_value=paramvals.get("allow_no_value", paramvals.get("allow_none"))
+        )
+        if paramvals["case_sensitive"]:
             self.cp.optionxform = to_native
 
         ret = []
@@ -149,17 +151,19 @@ class LookupModule(LookupBase):
 
             key = term
             # parameters specified?
-            if '=' in term or ' ' in term.strip():
+            if "=" in term or " " in term.strip():
                 self._deprecate_inline_kv()
                 params = _parse_params(term, paramvals)
                 try:
                     updated_key = False
                     updated_options = False
                     for param in params:
-                        if '=' in param:
-                            name, value = param.split('=')
+                        if "=" in param:
+                            name, value = param.split("=")
                             if name not in paramvals:
-                                raise AnsibleLookupError('%s is not a valid option.' % name)
+                                raise AnsibleLookupError(
+                                    "%s is not a valid option." % name
+                                )
                             self.set_option(name, value)
                             updated_options = True
                         elif key == term:
@@ -170,37 +174,56 @@ class LookupModule(LookupBase):
                         paramvals = self.get_options()
                 except ValueError as e:
                     # bad params passed
-                    raise AnsibleLookupError("Could not use '%s' from '%s': %s" % (param, params, to_native(e)), orig_exc=e)
+                    raise AnsibleLookupError(
+                        "Could not use '%s' from '%s': %s"
+                        % (param, params, to_native(e)),
+                        orig_exc=e,
+                    )
                 if not updated_key:
-                    raise AnsibleOptionsError("No key to lookup was provided as first term with in string inline options: %s" % term)
+                    raise AnsibleOptionsError(
+                        "No key to lookup was provided as first term with in string inline options: %s"
+                        % term
+                    )
                     # only passed options in inline string
 
             # TODO: look to use cache to avoid redoing this for every term if they use same file
             # Retrieve file path
-            path = self.find_file_in_search_path(variables, 'files', paramvals['file'])
+            path = self.find_file_in_search_path(variables, "files", paramvals["file"])
 
             # Create StringIO later used to parse ini
             config = StringIO()
             # Special case for java properties
-            if paramvals['type'] == "properties":
-                config.write(u'[java_properties]\n')
-                paramvals['section'] = 'java_properties'
+            if paramvals["type"] == "properties":
+                config.write("[java_properties]\n")
+                paramvals["section"] = "java_properties"
 
             # Open file using encoding
             contents, show_data = self._loader._get_file_contents(path)
-            contents = to_text(contents, errors='surrogate_or_strict', encoding=paramvals['encoding'])
+            contents = to_text(
+                contents, errors="surrogate_or_strict", encoding=paramvals["encoding"]
+            )
             config.write(contents)
             config.seek(0, os.SEEK_SET)
 
             try:
                 self.cp.read_file(config)
             except configparser.DuplicateOptionError as doe:
-                raise AnsibleLookupError("Duplicate option in '{file}': {error}".format(file=paramvals['file'], error=to_native(doe)))
+                raise AnsibleLookupError(
+                    "Duplicate option in '{file}': {error}".format(
+                        file=paramvals["file"], error=to_native(doe)
+                    )
+                )
 
             try:
-                var = self.get_value(key, paramvals['section'], paramvals['default'], paramvals['re'])
+                var = self.get_value(
+                    key, paramvals["section"], paramvals["default"], paramvals["re"]
+                )
             except configparser.NoSectionError:
-                raise AnsibleLookupError("No section '{section}' in {file}".format(section=paramvals['section'], file=paramvals['file']))
+                raise AnsibleLookupError(
+                    "No section '{section}' in {file}".format(
+                        section=paramvals["section"], file=paramvals["file"]
+                    )
+                )
             if var is not None:
                 if isinstance(var, MutableSequence):
                     for v in var:

@@ -1,4 +1,5 @@
 """Provision hosts for running tests."""
+
 from __future__ import annotations
 
 import collections.abc as c
@@ -47,8 +48,8 @@ from .pypi_proxy import (
     run_pypi_proxy,
 )
 
-THostProfile = t.TypeVar('THostProfile', bound=HostProfile)
-TEnvironmentConfig = t.TypeVar('TEnvironmentConfig', bound=EnvironmentConfig)
+THostProfile = t.TypeVar("THostProfile", bound=HostProfile)
+TEnvironmentConfig = t.TypeVar("TEnvironmentConfig", bound=EnvironmentConfig)
 
 
 class PrimeContainers(ApplicationError):
@@ -69,7 +70,7 @@ class HostState:
 
     def serialize(self, path: str) -> None:
         """Serialize the host state to the given path."""
-        with open_binary_file(path, 'wb') as state_file:
+        with open_binary_file(path, "wb") as state_file:
             pickle.dump(self, state_file)
 
     @staticmethod
@@ -87,13 +88,20 @@ class HostState:
 
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing all target hosts from the controller."""
-        return list(itertools.chain.from_iterable([target.get_controller_target_connections() for
-                                                   target in self.target_profiles if isinstance(target, SshTargetHostProfile)]))
+        return list(
+            itertools.chain.from_iterable(
+                [
+                    target.get_controller_target_connections()
+                    for target in self.target_profiles
+                    if isinstance(target, SshTargetHostProfile)
+                ]
+            )
+        )
 
     def targets(self, profile_type: t.Type[THostProfile]) -> list[THostProfile]:
         """The list of target(s), verified to be of the specified type."""
         if not self.target_profiles:
-            raise Exception('No target profiles found.')
+            raise Exception("No target profiles found.")
 
         assert type_guard(self.target_profiles, profile_type)
 
@@ -111,13 +119,19 @@ def prepare_profiles(
     If a requirements callback was provided, it will be used before configuring hosts if delegation has already been performed.
     """
     if args.host_path:
-        host_state = HostState.deserialize(args, os.path.join(args.host_path, 'state.dat'))
+        host_state = HostState.deserialize(
+            args, os.path.join(args.host_path, "state.dat")
+        )
     else:
         run_pypi_proxy(args, targets_use_pypi)
 
         host_state = HostState(
-            controller_profile=t.cast(ControllerHostProfile, create_host_profile(args, args.controller, True)),
-            target_profiles=[create_host_profile(args, target, False) for target in args.targets],
+            controller_profile=t.cast(
+                ControllerHostProfile, create_host_profile(args, args.controller, True)
+            ),
+            target_profiles=[
+                create_host_profile(args, target, False) for target in args.targets
+            ],
         )
 
         if args.prime_containers:
@@ -136,7 +150,12 @@ def prepare_profiles(
             if not skip_setup:
                 profile.setup()
 
-        dispatch_jobs([(profile, WrappedThread(functools.partial(provision, profile))) for profile in host_state.profiles])
+        dispatch_jobs(
+            [
+                (profile, WrappedThread(functools.partial(provision, profile)))
+                for profile in host_state.profiles
+            ]
+        )
 
         host_state.controller_profile.configure()
 
@@ -156,7 +175,12 @@ def prepare_profiles(
             if requirements:
                 requirements(profile)
 
-        dispatch_jobs([(profile, WrappedThread(functools.partial(configure, profile))) for profile in host_state.target_profiles])
+        dispatch_jobs(
+            [
+                (profile, WrappedThread(functools.partial(configure, profile)))
+                for profile in host_state.target_profiles
+            ]
+        )
 
     return host_state
 
@@ -167,12 +191,16 @@ def check_controller_python(args: EnvironmentConfig, host_state: HostState) -> N
     controller_python = host_state.controller_profile.python
 
     if expected_executable := verify_sys_executable(controller_python.path):
-        raise ApplicationError(f'Running under Python interpreter "{sys.executable}" instead of "{expected_executable}".')
+        raise ApplicationError(
+            f'Running under Python interpreter "{sys.executable}" instead of "{expected_executable}".'
+        )
 
     expected_version = controller_python.version
 
     if expected_version != sys_version:
-        raise ApplicationError(f'Running under Python version {sys_version} instead of {expected_version}.')
+        raise ApplicationError(
+            f"Running under Python version {sys_version} instead of {expected_version}."
+        )
 
     args.controller_python = controller_python
 
@@ -199,20 +227,24 @@ def dispatch_jobs(jobs: list[tuple[HostProfile, WrappedThread]]) -> None:
         try:
             thread.wait_for_result()
         except HostConnectionError as ex:
-            display.error(f'Host {profile.config} connection failed:\n{ex}')
+            display.error(f"Host {profile.config} connection failed:\n{ex}")
             failed = True
             connection_failures += 1
         except ApplicationError as ex:
-            display.error(f'Host {profile.config} job failed:\n{ex}')
+            display.error(f"Host {profile.config} job failed:\n{ex}")
             failed = True
         except Exception as ex:  # pylint: disable=broad-except
             name = f'{"" if ex.__class__.__module__ == "builtins" else ex.__class__.__module__ + "."}{ex.__class__.__qualname__}'
-            display.error(f'Host {profile.config} job failed:\nTraceback (most recent call last):\n'
-                          f'{"".join(traceback.format_tb(ex.__traceback__)).rstrip()}\n{name}: {ex}')
+            display.error(
+                f"Host {profile.config} job failed:\nTraceback (most recent call last):\n"
+                f'{"".join(traceback.format_tb(ex.__traceback__)).rstrip()}\n{name}: {ex}'
+            )
             failed = True
 
     if connection_failures:
-        raise HostConnectionError(f'Host job(s) failed, including {connection_failures} connection failure(s). See previous error(s) for details.')
+        raise HostConnectionError(
+            f"Host job(s) failed, including {connection_failures} connection failure(s). See previous error(s) for details."
+        )
 
     if failed:
-        raise ApplicationError('Host job(s) failed. See previous error(s) for details.')
+        raise ApplicationError("Host job(s) failed. See previous error(s) for details.")

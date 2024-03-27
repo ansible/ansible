@@ -15,13 +15,16 @@ realimport = builtins.__import__
 
 class TestTextifyContainers(ModuleTestCase):
     def test_module_utils_basic_json_dict_converters(self):
-        from ansible.module_utils.basic import json_dict_unicode_to_bytes, json_dict_bytes_to_unicode
+        from ansible.module_utils.basic import (
+            json_dict_unicode_to_bytes,
+            json_dict_bytes_to_unicode,
+        )
 
         test_data = dict(
-            item1=u"Fóo",
-            item2=[u"Bár", u"Bam"],
-            item3=dict(sub1=u"Súb"),
-            item4=(u"föo", u"bär", u"©"),
+            item1="Fóo",
+            item2=["Bár", "Bam"],
+            item3=dict(sub1="Súb"),
+            item4=("föo", "bär", "©"),
             item5=42,
         )
         res = json_dict_unicode_to_bytes(test_data)

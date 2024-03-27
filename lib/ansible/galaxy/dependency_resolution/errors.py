@@ -11,6 +11,7 @@ try:
         InconsistentCandidate as CollectionDependencyInconsistentCandidate,
     )
 except ImportError:
+
     class CollectionDependencyResolutionImpossible(Exception):  # type: ignore[no-redef]
         pass
 

@@ -47,7 +47,12 @@ from functools import wraps
 from struct import unpack, pack
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleAssertionError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive
+from ansible.errors import (
+    AnsibleError,
+    AnsibleAssertionError,
+    AnsiblePromptInterrupt,
+    AnsiblePromptNoninteractive,
+)
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.six import text_type
 from ansible.utils.color import stringc
@@ -59,9 +64,9 @@ if t.TYPE_CHECKING:
     # avoid circular import at runtime
     from ansible.executor.task_queue_manager import FinalQueue
 
-P = t.ParamSpec('P')
+P = t.ParamSpec("P")
 
-_LIBC = ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
+_LIBC = ctypes.cdll.LoadLibrary(ctypes.util.find_library("c"))
 # Set argtypes, to avoid segfault if the wrong type is provided,
 # restype is assumed to be c_int
 _LIBC.wcwidth.argtypes = (ctypes.c_wchar,)
@@ -69,8 +74,8 @@ _LIBC.wcswidth.argtypes = (ctypes.c_wchar_p, ctypes.c_int)
 # Max for c_int
 _MAX_INT = 2 ** (ctypes.sizeof(ctypes.c_int) * 8 - 1) - 1
 
-MOVE_TO_BOL = b'\r'
-CLEAR_TO_EOL = b'\x1b[K'
+MOVE_TO_BOL = b"\r"
+CLEAR_TO_EOL = b"\x1b[K"
 
 
 def get_text_width(text: str) -> int:
@@ -82,7 +87,7 @@ def get_text_width(text: str) -> int:
     for non-printable wide characters.
     """
     if not isinstance(text, text_type):
-        raise TypeError('get_text_width requires text, not %s' % type(text))
+        raise TypeError("get_text_width requires text, not %s" % type(text))
 
     try:
         width = _LIBC.wcswidth(text, _MAX_INT)
@@ -95,7 +100,7 @@ def get_text_width(text: str) -> int:
     counter = 0
     for c in text:
         counter += 1
-        if c in (u'\x08', u'\x7f', u'\x94', u'\x1b'):
+        if c in ("\x08", "\x7f", "\x94", "\x1b"):
             # A few characters result in a subtraction of length:
             # BS, DEL, CCH, ESC
             # ESC is slightly different in that it's part of an escape sequence, and
@@ -117,7 +122,7 @@ def get_text_width(text: str) -> int:
 
     if width == 0 and counter:
         raise EnvironmentError(
-            'get_text_width could not calculate text width of %r' % text
+            "get_text_width could not calculate text width of %r" % text
         )
 
     # It doesn't make sense to have a negative printable width
@@ -142,7 +147,7 @@ class FilterUserInjector(logging.Filter):
         username = getpass.getuser()
     except KeyError:
         # people like to make containers w/o actual valid passwd/shadow and use host uids
-        username = 'uid=%s' % os.getuid()
+        username = "uid=%s" % os.getuid()
 
     def filter(self, record):
         record.user = FilterUserInjector.username
@@ -151,30 +156,43 @@ class FilterUserInjector(logging.Filter):
 
 logger = None
 # TODO: make this a callback event instead
-if getattr(C, 'DEFAULT_LOG_PATH'):
+if getattr(C, "DEFAULT_LOG_PATH"):
     path = C.DEFAULT_LOG_PATH
-    if path and (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
+    if (
+        path
+        and (os.path.exists(path) and os.access(path, os.W_OK))
+        or os.access(os.path.dirname(path), os.W_OK)
+    ):
         # NOTE: level is kept at INFO to avoid security disclosures caused by certain libraries when using DEBUG
-        logging.basicConfig(filename=path, level=logging.INFO,  # DO NOT set to logging.DEBUG
-                            format='%(asctime)s p=%(process)d u=%(user)s n=%(name)s | %(message)s')
+        logging.basicConfig(
+            filename=path,
+            level=logging.INFO,  # DO NOT set to logging.DEBUG
+            format="%(asctime)s p=%(process)d u=%(user)s n=%(name)s | %(message)s",
+        )
 
-        logger = logging.getLogger('ansible')
+        logger = logging.getLogger("ansible")
         for handler in logging.root.handlers:
-            handler.addFilter(FilterBlackList(getattr(C, 'DEFAULT_LOG_FILTER', [])))
+            handler.addFilter(FilterBlackList(getattr(C, "DEFAULT_LOG_FILTER", [])))
             handler.addFilter(FilterUserInjector())
     else:
-        print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
+        print(
+            "[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n"
+            % path,
+            file=sys.stderr,
+        )
 
 # map color to log levels
-color_to_log_level = {C.COLOR_ERROR: logging.ERROR,
-                      C.COLOR_WARN: logging.WARNING,
-                      C.COLOR_OK: logging.INFO,
-                      C.COLOR_SKIP: logging.WARNING,
-                      C.COLOR_UNREACHABLE: logging.ERROR,
-                      C.COLOR_DEBUG: logging.DEBUG,
-                      C.COLOR_CHANGED: logging.INFO,
-                      C.COLOR_DEPRECATE: logging.WARNING,
-                      C.COLOR_VERBOSE: logging.INFO}
+color_to_log_level = {
+    C.COLOR_ERROR: logging.ERROR,
+    C.COLOR_WARN: logging.WARNING,
+    C.COLOR_OK: logging.INFO,
+    C.COLOR_SKIP: logging.WARNING,
+    C.COLOR_UNREACHABLE: logging.ERROR,
+    C.COLOR_DEBUG: logging.DEBUG,
+    C.COLOR_CHANGED: logging.INFO,
+    C.COLOR_DEPRECATE: logging.WARNING,
+    C.COLOR_VERBOSE: logging.INFO,
+}
 
 b_COW_PATHS = (
     b"/usr/bin/cowsay",
@@ -214,19 +232,23 @@ def setraw(fd: int, when: int = termios.TCSAFLUSH) -> None:
     setting stdout and stdin to raw which remove output post processing that commonly converts NL to CRLF
     """
     mode = termios.tcgetattr(fd)
-    mode[tty.IFLAG] = mode[tty.IFLAG] & ~(termios.BRKINT | termios.ICRNL | termios.INPCK | termios.ISTRIP | termios.IXON)
+    mode[tty.IFLAG] = mode[tty.IFLAG] & ~(
+        termios.BRKINT | termios.ICRNL | termios.INPCK | termios.ISTRIP | termios.IXON
+    )
     mode[tty.OFLAG] = mode[tty.OFLAG] & ~(termios.OPOST)
     mode[tty.CFLAG] = mode[tty.CFLAG] & ~(termios.CSIZE | termios.PARENB)
     mode[tty.CFLAG] = mode[tty.CFLAG] | termios.CS8
-    mode[tty.LFLAG] = mode[tty.LFLAG] & ~(termios.ECHO | termios.ICANON | termios.IEXTEN | termios.ISIG)
+    mode[tty.LFLAG] = mode[tty.LFLAG] & ~(
+        termios.ECHO | termios.ICANON | termios.IEXTEN | termios.ISIG
+    )
     mode[tty.CC][termios.VMIN] = 1
     mode[tty.CC][termios.VTIME] = 0
     termios.tcsetattr(fd, when, mode)
 
 
 def clear_line(stdout: t.BinaryIO) -> None:
-    stdout.write(b'\x1b[%s' % MOVE_TO_BOL)
-    stdout.write(b'\x1b[%s' % CLEAR_TO_EOL)
+    stdout.write(b"\x1b[%s" % MOVE_TO_BOL)
+    stdout.write(b"\x1b[%s" % CLEAR_TO_EOL)
 
 
 def setup_prompt(stdin_fd: int, stdout_fd: int, seconds: int, echo: bool) -> None:
@@ -254,8 +276,8 @@ def setupterm() -> None:
         global MOVE_TO_BOL
         global CLEAR_TO_EOL
         # curses.tigetstr() returns None in some circumstances
-        MOVE_TO_BOL = curses.tigetstr('cr') or MOVE_TO_BOL
-        CLEAR_TO_EOL = curses.tigetstr('el') or CLEAR_TO_EOL
+        MOVE_TO_BOL = curses.tigetstr("cr") or MOVE_TO_BOL
+        CLEAR_TO_EOL = curses.tigetstr("el") or CLEAR_TO_EOL
 
 
 class Display(metaclass=Singleton):
@@ -288,13 +310,19 @@ class Display(metaclass=Singleton):
 
         if self.b_cowsay:
             try:
-                cmd = subprocess.Popen([self.b_cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                cmd = subprocess.Popen(
+                    [self.b_cowsay, "-l"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
                 (out, err) = cmd.communicate()
                 if cmd.returncode:
                     raise Exception
                 self.cows_available: set[str] = {to_text(c) for c in out.split()}
                 if C.ANSIBLE_COW_ACCEPTLIST and any(C.ANSIBLE_COW_ACCEPTLIST):
-                    self.cows_available = set(C.ANSIBLE_COW_ACCEPTLIST).intersection(self.cows_available)
+                    self.cows_available = set(C.ANSIBLE_COW_ACCEPTLIST).intersection(
+                        self.cows_available
+                    )
             except Exception:
                 # could not execute cowsay for some reason
                 self.b_cowsay = None
@@ -308,23 +336,29 @@ class Display(metaclass=Singleton):
         except Exception as ex:
             self.warning(f"failed to patch stdout/stderr for fork-safety: {ex}")
 
-        codecs.register_error('_replacing_warning_handler', self._replacing_warning_handler)
+        codecs.register_error(
+            "_replacing_warning_handler", self._replacing_warning_handler
+        )
         try:
-            sys.stdout.reconfigure(errors='_replacing_warning_handler')
-            sys.stderr.reconfigure(errors='_replacing_warning_handler')
+            sys.stdout.reconfigure(errors="_replacing_warning_handler")
+            sys.stderr.reconfigure(errors="_replacing_warning_handler")
         except Exception as ex:
-            self.warning(f"failed to reconfigure stdout/stderr with custom encoding error handler: {ex}")
+            self.warning(
+                f"failed to reconfigure stdout/stderr with custom encoding error handler: {ex}"
+            )
 
         self.setup_curses = False
 
-    def _replacing_warning_handler(self, exception: UnicodeError) -> tuple[str | bytes, int]:
+    def _replacing_warning_handler(
+        self, exception: UnicodeError
+    ) -> tuple[str | bytes, int]:
         # TODO: This should probably be deferred until after the current display is completed
         #       this will require some amount of new functionality
         self.deprecated(
             'Non UTF-8 encoded data replaced with "?" while displaying text to stdout/stderr, this is temporary and will become an error',
-            version='2.18',
+            version="2.18",
         )
-        return '?', exception.end
+        return "?", exception.end
 
     def set_queue(self, queue: FinalQueue) -> None:
         """Set the _final_q on Display, so that we know to proxy display over the queue
@@ -333,7 +367,7 @@ class Display(metaclass=Singleton):
         This is only needed in ansible.executor.process.worker:WorkerProcess._run
         """
         if multiprocessing_context.parent_process() is None:
-            raise RuntimeError('queue cannot be set in parent process')
+            raise RuntimeError("queue cannot be set in parent process")
         self._final_q = queue
 
     def set_cowsay_info(self) -> None:
@@ -359,34 +393,36 @@ class Display(metaclass=Singleton):
                 # we will proxy them through the queue
                 return self._final_q.send_display(func.__name__, *args, **kwargs)
             return func(self, *args, **kwargs)
+
         return wrapper
 
     @staticmethod
-    def _meets_debug(
-        func: c.Callable[..., None]
-    ) -> c.Callable[..., None]:
-        """This method ensures that debug is enabled before delegating to the proxy
-        """
+    def _meets_debug(func: c.Callable[..., None]) -> c.Callable[..., None]:
+        """This method ensures that debug is enabled before delegating to the proxy"""
+
         @wraps(func)
         def wrapper(self, msg: str, host: str | None = None) -> None:
             if not C.DEFAULT_DEBUG:
                 return
             return func(self, msg, host=host)
+
         return wrapper
 
     @staticmethod
-    def _meets_verbosity(
-        func: c.Callable[..., None]
-    ) -> c.Callable[..., None]:
+    def _meets_verbosity(func: c.Callable[..., None]) -> c.Callable[..., None]:
         """This method ensures the verbosity has been met before delegating to the proxy
 
         Currently this method is unused, and the logic is handled directly in ``verbose``
         """
+
         @wraps(func)
-        def wrapper(self, msg: str, host: str | None = None, caplevel: int = None) -> None:
+        def wrapper(
+            self, msg: str, host: str | None = None, caplevel: int = None
+        ) -> None:
             if self.verbosity > caplevel:
                 return func(self, msg, host=host, caplevel=caplevel)
             return
+
         return wrapper
 
     @_proxy
@@ -399,19 +435,21 @@ class Display(metaclass=Singleton):
         log_only: bool = False,
         newline: bool = True,
     ) -> None:
-        """ Display a message to the user
+        """Display a message to the user
 
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
         """
 
         if not isinstance(msg, str):
-            raise TypeError(f'Display message must be str, not: {msg.__class__.__name__}')
+            raise TypeError(
+                f"Display message must be str, not: {msg.__class__.__name__}"
+            )
 
         nocolor = msg
 
         if not log_only:
 
-            has_newline = msg.endswith(u'\n')
+            has_newline = msg.endswith("\n")
             if has_newline:
                 msg2 = msg[:-1]
             else:
@@ -421,7 +459,7 @@ class Display(metaclass=Singleton):
                 msg2 = stringc(msg2, color)
 
             if has_newline or newline:
-                msg2 = msg2 + u'\n'
+                msg2 = msg2 + "\n"
 
             # Note: After Display() class is refactored need to update the log capture
             # code in 'bin/ansible-connection' (and other relevant places).
@@ -452,7 +490,7 @@ class Display(metaclass=Singleton):
     def _log(self, msg: str, color: str | None = None, caplevel: int | None = None):
 
         if caplevel is None or self.log_verbosity > caplevel:
-            msg2 = msg.lstrip('\n')
+            msg2 = msg.lstrip("\n")
 
             lvl = logging.INFO
             if color:
@@ -461,7 +499,9 @@ class Display(metaclass=Singleton):
                     lvl = color_to_log_level[color]
                 except KeyError:
                     # this should not happen, but JIC
-                    raise AnsibleAssertionError('Invalid color supplied to display: %s' % color)
+                    raise AnsibleAssertionError(
+                        "Invalid color supplied to display: %s" % color
+                    )
             # actually log
             logger.log(lvl, msg2)
 
@@ -491,15 +531,21 @@ class Display(metaclass=Singleton):
             self._verbose_log(msg, host=host, caplevel=caplevel)
 
     @_proxy
-    def _verbose_display(self, msg: str, host: str | None = None, caplevel: int = 2) -> None:
+    def _verbose_display(
+        self, msg: str, host: str | None = None, caplevel: int = 2
+    ) -> None:
         to_stderr = C.VERBOSE_TO_STDERR
         if host is None:
             self.display(msg, color=C.COLOR_VERBOSE, stderr=to_stderr)
         else:
-            self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, stderr=to_stderr)
+            self.display(
+                "<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, stderr=to_stderr
+            )
 
     @_proxy
-    def _verbose_log(self, msg: str, host: str | None = None, caplevel: int = 2) -> None:
+    def _verbose_log(
+        self, msg: str, host: str | None = None, caplevel: int = 2
+    ) -> None:
         # we send to log if log was configured with higher verbosity
         if host is not None:
             msg = "<%s> %s" % (host, msg)
@@ -509,9 +555,14 @@ class Display(metaclass=Singleton):
     @_proxy
     def debug(self, msg: str, host: str | None = None) -> None:
         if host is None:
-            self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
+            self.display(
+                "%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG
+            )
         else:
-            self.display("%6d %0.5f [%s]: %s" % (os.getpid(), time.time(), host, msg), color=C.COLOR_DEBUG)
+            self.display(
+                "%6d %0.5f [%s]: %s" % (os.getpid(), time.time(), host, msg),
+                color=C.COLOR_DEBUG,
+            )
 
     def get_deprecation_message(
         self,
@@ -521,37 +572,39 @@ class Display(metaclass=Singleton):
         date: str | None = None,
         collection_name: str | None = None,
     ) -> str:
-        ''' used to print out a deprecation message.'''
+        """used to print out a deprecation message."""
         msg = msg.strip()
-        if msg and msg[-1] not in ['!', '?', '.']:
-            msg += '.'
+        if msg and msg[-1] not in ["!", "?", "."]:
+            msg += "."
 
-        if collection_name == 'ansible.builtin':
-            collection_name = 'ansible-core'
+        if collection_name == "ansible.builtin":
+            collection_name = "ansible-core"
 
         if removed:
-            header = '[DEPRECATED]: {0}'.format(msg)
-            removal_fragment = 'This feature was removed'
-            help_text = 'Please update your playbooks.'
+            header = "[DEPRECATED]: {0}".format(msg)
+            removal_fragment = "This feature was removed"
+            help_text = "Please update your playbooks."
         else:
-            header = '[DEPRECATION WARNING]: {0}'.format(msg)
-            removal_fragment = 'This feature will be removed'
+            header = "[DEPRECATION WARNING]: {0}".format(msg)
+            removal_fragment = "This feature will be removed"
             # FUTURE: make this a standalone warning so it only shows up once?
-            help_text = 'Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.'
+            help_text = "Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg."
 
         if collection_name:
-            from_fragment = 'from {0}'.format(collection_name)
+            from_fragment = "from {0}".format(collection_name)
         else:
-            from_fragment = ''
+            from_fragment = ""
 
         if date:
-            when = 'in a release after {0}.'.format(date)
+            when = "in a release after {0}.".format(date)
         elif version:
-            when = 'in version {0}.'.format(version)
+            when = "in version {0}.".format(version)
         else:
-            when = 'in a future release.'
+            when = "in a future release."
 
-        message_text = ' '.join(f for f in [header, removal_fragment, from_fragment, when, help_text] if f)
+        message_text = " ".join(
+            f for f in [header, removal_fragment, from_fragment, when, help_text] if f
+        )
 
         return message_text
 
@@ -567,7 +620,13 @@ class Display(metaclass=Singleton):
         if not removed and not C.DEPRECATION_WARNINGS:
             return
 
-        message_text = self.get_deprecation_message(msg, version=version, removed=removed, date=date, collection_name=collection_name)
+        message_text = self.get_deprecation_message(
+            msg,
+            version=version,
+            removed=removed,
+            date=date,
+            collection_name=collection_name,
+        )
 
         if removed:
             raise AnsibleError(message_text)
@@ -600,9 +659,9 @@ class Display(metaclass=Singleton):
 
     @_proxy
     def banner(self, msg: str, color: str | None = None, cows: bool = True) -> None:
-        '''
+        """
         Prints a header-looking line with cowsay or stars with length depending on terminal width (3 minimum)
-        '''
+        """
         msg = to_text(msg)
 
         if self.b_cowsay and cows:
@@ -610,7 +669,9 @@ class Display(metaclass=Singleton):
                 self.banner_cowsay(msg)
                 return
             except OSError:
-                self.warning("somebody cleverly deleted cowsay or something during the PB run.  heh.")
+                self.warning(
+                    "somebody cleverly deleted cowsay or something during the PB run.  heh."
+                )
 
         msg = msg.strip()
         try:
@@ -619,35 +680,35 @@ class Display(metaclass=Singleton):
             star_len = self.columns - len(msg)
         if star_len <= 3:
             star_len = 3
-        stars = u"*" * star_len
-        self.display(u"\n%s %s" % (msg, stars), color=color)
+        stars = "*" * star_len
+        self.display("\n%s %s" % (msg, stars), color=color)
 
     @_proxy
     def banner_cowsay(self, msg: str, color: str | None = None) -> None:
-        if u": [" in msg:
-            msg = msg.replace(u"[", u"")
-            if msg.endswith(u"]"):
+        if ": [" in msg:
+            msg = msg.replace("[", "")
+            if msg.endswith("]"):
                 msg = msg[:-1]
         runcmd = [self.b_cowsay, b"-W", b"60"]
         if self.noncow:
             thecow = self.noncow
-            if thecow == 'random':
+            if thecow == "random":
                 thecow = random.choice(list(self.cows_available))
-            runcmd.append(b'-f')
+            runcmd.append(b"-f")
             runcmd.append(to_bytes(thecow))
         runcmd.append(to_bytes(msg))
         cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
-        self.display(u"%s\n" % to_text(out), color=color)
+        self.display("%s\n" % to_text(out), color=color)
 
     @_proxy
     def error(self, msg: str, wrap_text: bool = True) -> None:
         if wrap_text:
-            new_msg = u"\n[ERROR]: %s" % msg
+            new_msg = "\n[ERROR]: %s" % msg
             wrapped = textwrap.wrap(new_msg, self.columns)
-            new_msg = u"\n".join(wrapped) + u"\n"
+            new_msg = "\n".join(wrapped) + "\n"
         else:
-            new_msg = u"ERROR! %s" % msg
+            new_msg = "ERROR! %s" % msg
         if new_msg not in self._errors:
             self.display(new_msg, color=C.COLOR_ERROR, stderr=True)
             self._errors[new_msg] = 1
@@ -681,7 +742,7 @@ class Display(metaclass=Singleton):
             elif prompt:
                 msg = "%s: " % prompt
             else:
-                msg = 'input for %s: ' % varname
+                msg = "input for %s: " % varname
 
             if confirm:
                 while True:
@@ -703,10 +764,11 @@ class Display(metaclass=Singleton):
         if encrypt:
             # Circular import because encrypt needs a display class
             from ansible.utils.encrypt import do_encrypt
+
             result = do_encrypt(result, encrypt, salt_size=salt_size, salt=salt)
 
         # handle utf-8 chars
-        result = to_text(result, errors='surrogate_or_strict')
+        result = to_text(result, errors="surrogate_or_strict")
 
         if unsafe:
             result = wrap_var(result)
@@ -714,7 +776,9 @@ class Display(metaclass=Singleton):
 
     def _set_column_width(self) -> None:
         if os.isatty(1):
-            tty_size = unpack('HHHH', fcntl.ioctl(1, termios.TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[1]
+            tty_size = unpack(
+                "HHHH", fcntl.ioctl(1, termios.TIOCGWINSZ, pack("HHHH", 0, 0, 0, 0))
+            )[1]
         else:
             tty_size = 0
         self.columns = max(79, tty_size - 1)
@@ -729,9 +793,14 @@ class Display(metaclass=Singleton):
     ) -> bytes:
         if self._final_q:
             from ansible.executor.process.worker import current_worker
+
             self._final_q.send_prompt(
-                worker_id=current_worker.worker_id, prompt=msg, private=private, seconds=seconds,
-                interrupt_input=interrupt_input, complete_input=complete_input
+                worker_id=current_worker.worker_id,
+                prompt=msg,
+                private=private,
+                seconds=seconds,
+                interrupt_input=interrupt_input,
+                complete_input=complete_input,
             )
             return current_worker.worker_queue.get()
 
@@ -747,7 +816,7 @@ class Display(metaclass=Singleton):
             # is running in the background.
             or os.getpgrp() != os.tcgetpgrp(self._stdin_fd)
         ):
-            raise AnsiblePromptNoninteractive('stdin is not interactive')
+            raise AnsiblePromptNoninteractive("stdin is not interactive")
 
         # When seconds/interrupt_input/complete_input are all None, this does mostly the same thing as input/getpass,
         # but self.prompt may raise a KeyboardInterrupt, which must be caught in the main thread.
@@ -760,7 +829,7 @@ class Display(metaclass=Singleton):
         #         raise AnsiblePromptInterrupt('user interrupt')
 
         self.display(msg)
-        result = b''
+        result = b""
         with self._lock:
             original_stdin_settings = termios.tcgetattr(self._stdin_fd)
             try:
@@ -771,10 +840,17 @@ class Display(metaclass=Singleton):
                 termios.tcflush(self._stdin, termios.TCIFLUSH)
 
                 # read input 1 char at a time until the optional timeout or complete/interrupt condition is met
-                return self._read_non_blocking_stdin(echo=not private, seconds=seconds, interrupt_input=interrupt_input, complete_input=complete_input)
+                return self._read_non_blocking_stdin(
+                    echo=not private,
+                    seconds=seconds,
+                    interrupt_input=interrupt_input,
+                    complete_input=complete_input,
+                )
             finally:
                 # restore the old settings for the duped stdin stdin_fd
-                termios.tcsetattr(self._stdin_fd, termios.TCSADRAIN, original_stdin_settings)
+                termios.tcsetattr(
+                    self._stdin_fd, termios.TCSADRAIN, original_stdin_settings
+                )
 
     def _read_non_blocking_stdin(
         self,
@@ -790,34 +866,42 @@ class Display(metaclass=Singleton):
             start = time.time()
         if interrupt_input is None:
             try:
-                interrupt = termios.tcgetattr(sys.stdin.buffer.fileno())[6][termios.VINTR]
+                interrupt = termios.tcgetattr(sys.stdin.buffer.fileno())[6][
+                    termios.VINTR
+                ]
             except Exception:
-                interrupt = b'\x03'  # value for Ctrl+C
+                interrupt = b"\x03"  # value for Ctrl+C
 
         try:
             backspace_sequences = [termios.tcgetattr(self._stdin_fd)[6][termios.VERASE]]
         except Exception:
             # unsupported/not present, use default
-            backspace_sequences = [b'\x7f', b'\x08']
+            backspace_sequences = [b"\x7f", b"\x08"]
 
-        result_string = b''
+        result_string = b""
         while seconds is None or (time.time() - start < seconds):
             key_pressed = None
             try:
                 os.set_blocking(self._stdin_fd, False)
-                while key_pressed is None and (seconds is None or (time.time() - start < seconds)):
+                while key_pressed is None and (
+                    seconds is None or (time.time() - start < seconds)
+                ):
                     key_pressed = self._stdin.read(1)
                     # throttle to prevent excess CPU consumption
                     time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
             finally:
                 os.set_blocking(self._stdin_fd, True)
                 if key_pressed is None:
-                    key_pressed = b''
+                    key_pressed = b""
 
-            if (interrupt_input is None and key_pressed == interrupt) or (interrupt_input is not None and key_pressed.lower() in interrupt_input):
+            if (interrupt_input is None and key_pressed == interrupt) or (
+                interrupt_input is not None and key_pressed.lower() in interrupt_input
+            ):
                 clear_line(self._stdout)
-                raise AnsiblePromptInterrupt('user interrupt')
-            if (complete_input is None and key_pressed in (b'\r', b'\n')) or (complete_input is not None and key_pressed.lower() in complete_input):
+                raise AnsiblePromptInterrupt("user interrupt")
+            if (complete_input is None and key_pressed in (b"\r", b"\n")) or (
+                complete_input is not None and key_pressed.lower() in complete_input
+            ):
                 clear_line(self._stdout)
                 break
             elif key_pressed in backspace_sequences:

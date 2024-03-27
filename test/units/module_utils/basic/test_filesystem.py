@@ -17,6 +17,7 @@ realimport = builtins.__import__
 class TestOtherFilesystem(ModuleTestCase):
     def test_module_utils_basic_ansible_module_user_and_group(self):
         from ansible.module_utils import basic
+
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
@@ -27,11 +28,12 @@ class TestOtherFilesystem(ModuleTestCase):
         mock_stat.st_uid = 0
         mock_stat.st_gid = 0
 
-        with patch('os.lstat', return_value=mock_stat):
-            self.assertEqual(am.user_and_group('/path/to/file'), (0, 0))
+        with patch("os.lstat", return_value=mock_stat):
+            self.assertEqual(am.user_and_group("/path/to/file"), (0, 0))
 
     def test_module_utils_basic_ansible_module_find_mount_point(self):
         from ansible.module_utils import basic
+
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
@@ -39,37 +41,42 @@ class TestOtherFilesystem(ModuleTestCase):
         )
 
         def _mock_ismount(path):
-            if path == b'/':
+            if path == b"/":
                 return True
             return False
 
-        with patch('os.path.ismount', side_effect=_mock_ismount):
-            self.assertEqual(am.find_mount_point('/root/fs/../mounted/path/to/whatever'), '/')
+        with patch("os.path.ismount", side_effect=_mock_ismount):
+            self.assertEqual(
+                am.find_mount_point("/root/fs/../mounted/path/to/whatever"), "/"
+            )
 
         def _mock_ismount(path):
-            if path == b'/subdir/mount':
+            if path == b"/subdir/mount":
                 return True
             return False
 
-        with patch('os.path.ismount', side_effect=_mock_ismount):
-            self.assertEqual(am.find_mount_point('/subdir/mount/path/to/whatever'), '/subdir/mount')
+        with patch("os.path.ismount", side_effect=_mock_ismount):
+            self.assertEqual(
+                am.find_mount_point("/subdir/mount/path/to/whatever"), "/subdir/mount"
+            )
 
     def test_module_utils_basic_ansible_module_set_owner_if_different(self):
         from ansible.module_utils import basic
+
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec=dict(),
         )
 
-        self.assertEqual(am.set_owner_if_different('/path/to/file', None, True), True)
-        self.assertEqual(am.set_owner_if_different('/path/to/file', None, False), False)
+        self.assertEqual(am.set_owner_if_different("/path/to/file", None, True), True)
+        self.assertEqual(am.set_owner_if_different("/path/to/file", None, False), False)
 
         am.user_and_group = MagicMock(return_value=(500, 500))
 
-        with patch('os.lchown', return_value=None) as m:
-            self.assertEqual(am.set_owner_if_different('/path/to/file', 0, False), True)
-            m.assert_called_with(b'/path/to/file', 0, -1)
+        with patch("os.lchown", return_value=None) as m:
+            self.assertEqual(am.set_owner_if_different("/path/to/file", 0, False), True)
+            m.assert_called_with(b"/path/to/file", 0, -1)
 
             def _mock_getpwnam(*args, **kwargs):
                 mock_pw = MagicMock()
@@ -77,38 +84,49 @@ class TestOtherFilesystem(ModuleTestCase):
                 return mock_pw
 
             m.reset_mock()
-            with patch('pwd.getpwnam', side_effect=_mock_getpwnam):
-                self.assertEqual(am.set_owner_if_different('/path/to/file', 'root', False), True)
-                m.assert_called_with(b'/path/to/file', 0, -1)
+            with patch("pwd.getpwnam", side_effect=_mock_getpwnam):
+                self.assertEqual(
+                    am.set_owner_if_different("/path/to/file", "root", False), True
+                )
+                m.assert_called_with(b"/path/to/file", 0, -1)
 
-            with patch('pwd.getpwnam', side_effect=KeyError):
-                self.assertRaises(SystemExit, am.set_owner_if_different, '/path/to/file', 'root', False)
+            with patch("pwd.getpwnam", side_effect=KeyError):
+                self.assertRaises(
+                    SystemExit,
+                    am.set_owner_if_different,
+                    "/path/to/file",
+                    "root",
+                    False,
+                )
 
             m.reset_mock()
             am.check_mode = True
-            self.assertEqual(am.set_owner_if_different('/path/to/file', 0, False), True)
+            self.assertEqual(am.set_owner_if_different("/path/to/file", 0, False), True)
             self.assertEqual(m.called, False)
             am.check_mode = False
 
-        with patch('os.lchown', side_effect=OSError) as m:
-            self.assertRaises(SystemExit, am.set_owner_if_different, '/path/to/file', 'root', False)
+        with patch("os.lchown", side_effect=OSError) as m:
+            self.assertRaises(
+                SystemExit, am.set_owner_if_different, "/path/to/file", "root", False
+            )
 
     def test_module_utils_basic_ansible_module_set_group_if_different(self):
         from ansible.module_utils import basic
+
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec=dict(),
         )
 
-        self.assertEqual(am.set_group_if_different('/path/to/file', None, True), True)
-        self.assertEqual(am.set_group_if_different('/path/to/file', None, False), False)
+        self.assertEqual(am.set_group_if_different("/path/to/file", None, True), True)
+        self.assertEqual(am.set_group_if_different("/path/to/file", None, False), False)
 
         am.user_and_group = MagicMock(return_value=(500, 500))
 
-        with patch('os.lchown', return_value=None) as m:
-            self.assertEqual(am.set_group_if_different('/path/to/file', 0, False), True)
-            m.assert_called_with(b'/path/to/file', -1, 0)
+        with patch("os.lchown", return_value=None) as m:
+            self.assertEqual(am.set_group_if_different("/path/to/file", 0, False), True)
+            m.assert_called_with(b"/path/to/file", -1, 0)
 
             def _mock_getgrnam(*args, **kwargs):
                 mock_gr = MagicMock()
@@ -116,24 +134,37 @@ class TestOtherFilesystem(ModuleTestCase):
                 return mock_gr
 
             m.reset_mock()
-            with patch('grp.getgrnam', side_effect=_mock_getgrnam):
-                self.assertEqual(am.set_group_if_different('/path/to/file', 'root', False), True)
-                m.assert_called_with(b'/path/to/file', -1, 0)
+            with patch("grp.getgrnam", side_effect=_mock_getgrnam):
+                self.assertEqual(
+                    am.set_group_if_different("/path/to/file", "root", False), True
+                )
+                m.assert_called_with(b"/path/to/file", -1, 0)
 
-            with patch('grp.getgrnam', side_effect=KeyError):
-                self.assertRaises(SystemExit, am.set_group_if_different, '/path/to/file', 'root', False)
+            with patch("grp.getgrnam", side_effect=KeyError):
+                self.assertRaises(
+                    SystemExit,
+                    am.set_group_if_different,
+                    "/path/to/file",
+                    "root",
+                    False,
+                )
 
             m.reset_mock()
             am.check_mode = True
-            self.assertEqual(am.set_group_if_different('/path/to/file', 0, False), True)
+            self.assertEqual(am.set_group_if_different("/path/to/file", 0, False), True)
             self.assertEqual(m.called, False)
             am.check_mode = False
 
-        with patch('os.lchown', side_effect=OSError) as m:
-            self.assertRaises(SystemExit, am.set_group_if_different, '/path/to/file', 'root', False)
+        with patch("os.lchown", side_effect=OSError) as m:
+            self.assertRaises(
+                SystemExit, am.set_group_if_different, "/path/to/file", "root", False
+            )
 
-    def test_module_utils_basic_ansible_module_set_directory_attributes_if_different(self):
+    def test_module_utils_basic_ansible_module_set_directory_attributes_if_different(
+        self,
+    ):
         from ansible.module_utils import basic
+
         basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
@@ -143,17 +174,21 @@ class TestOtherFilesystem(ModuleTestCase):
         am.selinux_enabled = lambda: False
 
         file_args = {
-            'path': '/path/to/file',
-            'mode': None,
-            'owner': None,
-            'group': None,
-            'seuser': None,
-            'serole': None,
-            'setype': None,
-            'selevel': None,
-            'secontext': [None, None, None],
-            'attributes': None,
+            "path": "/path/to/file",
+            "mode": None,
+            "owner": None,
+            "group": None,
+            "seuser": None,
+            "serole": None,
+            "setype": None,
+            "selevel": None,
+            "secontext": [None, None, None],
+            "attributes": None,
         }
 
-        self.assertEqual(am.set_directory_attributes_if_different(file_args, True), True)
-        self.assertEqual(am.set_directory_attributes_if_different(file_args, False), False)
+        self.assertEqual(
+            am.set_directory_attributes_if_different(file_args, True), True
+        )
+        self.assertEqual(
+            am.set_directory_attributes_if_different(file_args, False), False
+        )

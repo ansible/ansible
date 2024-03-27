@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: group
 version_added: "0.0.2"
@@ -75,9 +75,9 @@ seealso:
 - module: ansible.windows.win_group
 author:
 - Stephen Fromm (@sfromm)
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Ensure group "somegroup" exists
   ansible.builtin.group:
     name: somegroup
@@ -88,9 +88,9 @@ EXAMPLES = '''
     name: docker
     state: present
     gid: 1750
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 gid:
   description: Group ID of the group.
   returned: When O(state) is C(present)
@@ -111,7 +111,7 @@ system:
   returned: When O(state) is C(present)
   type: bool
   sample: False
-'''
+"""
 
 import grp
 import os
@@ -134,9 +134,9 @@ class Group(object):
     All subclasses MUST define platform and distribution (which may be None).
     """
 
-    platform = 'Generic'
+    platform = "Generic"
     distribution = None  # type: str | None
-    GROUPFILE = '/etc/group'
+    GROUPFILE = "/etc/group"
 
     def __new__(cls, *args, **kwargs):
         new_cls = get_platform_subclass(Group)
@@ -144,22 +144,22 @@ class Group(object):
 
     def __init__(self, module):
         self.module = module
-        self.state = module.params['state']
-        self.name = module.params['name']
-        self.force = module.params['force']
-        self.gid = module.params['gid']
-        self.system = module.params['system']
-        self.local = module.params['local']
-        self.non_unique = module.params['non_unique']
+        self.state = module.params["state"]
+        self.name = module.params["name"]
+        self.force = module.params["force"]
+        self.gid = module.params["gid"]
+        self.system = module.params["system"]
+        self.local = module.params["local"]
+        self.non_unique = module.params["non_unique"]
 
     def execute_command(self, cmd):
         return self.module.run_command(cmd)
 
     def group_del(self):
         if self.local:
-            command_name = 'lgroupdel'
+            command_name = "lgroupdel"
         else:
-            command_name = 'groupdel'
+            command_name = "groupdel"
         cmd = [self.module.get_bin_path(command_name, True), self.name]
         return self.execute_command(cmd)
 
@@ -167,45 +167,49 @@ class Group(object):
         if self.gid:
             for gr in grp.getgrall():
                 if self.gid == gr.gr_gid and self.name != gr.gr_name:
-                    self.module.fail_json(msg="GID '{0}' already exists with group '{1}'".format(self.gid, gr.gr_name))
+                    self.module.fail_json(
+                        msg="GID '{0}' already exists with group '{1}'".format(
+                            self.gid, gr.gr_name
+                        )
+                    )
 
     def group_add(self, **kwargs):
         if self.local:
-            command_name = 'lgroupadd'
+            command_name = "lgroupadd"
             self._local_check_gid_exists()
         else:
-            command_name = 'groupadd'
+            command_name = "groupadd"
         cmd = [self.module.get_bin_path(command_name, True)]
         for key in kwargs:
-            if key == 'gid' and kwargs[key] is not None:
-                cmd.append('-g')
+            if key == "gid" and kwargs[key] is not None:
+                cmd.append("-g")
                 cmd.append(str(kwargs[key]))
                 if self.non_unique:
-                    cmd.append('-o')
-            elif key == 'system' and kwargs[key] is True:
-                cmd.append('-r')
+                    cmd.append("-o")
+            elif key == "system" and kwargs[key] is True:
+                cmd.append("-r")
         cmd.append(self.name)
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
         if self.local:
-            command_name = 'lgroupmod'
+            command_name = "lgroupmod"
             self._local_check_gid_exists()
         else:
-            command_name = 'groupmod'
+            command_name = "groupmod"
         cmd = [self.module.get_bin_path(command_name, True)]
         info = self.group_info()
         for key in kwargs:
-            if key == 'gid':
+            if key == "gid":
                 if kwargs[key] is not None and info[2] != int(kwargs[key]):
-                    cmd.append('-g')
+                    cmd.append("-g")
                     cmd.append(str(kwargs[key]))
                     if self.non_unique:
-                        cmd.append('-o')
+                        cmd.append("-o")
         if len(cmd) == 1:
-            return (None, '', '')
+            return (None, "", "")
         if self.module.check_mode:
-            return (0, '', '')
+            return (0, "", "")
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -216,11 +220,15 @@ class Group(object):
         # look in the local GROUP file for an existing account.
         if self.local:
             if not os.path.exists(self.GROUPFILE):
-                self.module.fail_json(msg="'local: true' specified but unable to find local group file {0} to parse.".format(self.GROUPFILE))
+                self.module.fail_json(
+                    msg="'local: true' specified but unable to find local group file {0} to parse.".format(
+                        self.GROUPFILE
+                    )
+                )
 
             exists = False
-            name_test = '{0}:'.format(self.name)
-            with open(self.GROUPFILE, 'rb') as f:
+            name_test = "{0}:".format(self.name)
+            with open(self.GROUPFILE, "rb") as f:
                 reversed_lines = f.readlines()[::-1]
                 for line in reversed_lines:
                     if line.startswith(to_bytes(name_test)):
@@ -246,6 +254,7 @@ class Group(object):
 
 # ===========================================
 
+
 class Linux(Group):
     """
     This is a Linux Group manipulation class. This is to apply the '-f' parameter to the groupdel command
@@ -254,22 +263,23 @@ class Linux(Group):
         - group_del()
     """
 
-    platform = 'Linux'
+    platform = "Linux"
     distribution = None
 
     def group_del(self):
         if self.local:
-            command_name = 'lgroupdel'
+            command_name = "lgroupdel"
         else:
-            command_name = 'groupdel'
+            command_name = "groupdel"
         cmd = [self.module.get_bin_path(command_name, True)]
         if self.force:
-            cmd.append('-f')
+            cmd.append("-f")
         cmd.append(self.name)
         return self.execute_command(cmd)
 
 
 # ===========================================
+
 
 class SunOS(Group):
     """
@@ -280,23 +290,24 @@ class SunOS(Group):
         - group_add()
     """
 
-    platform = 'SunOS'
+    platform = "SunOS"
     distribution = None
-    GROUPFILE = '/etc/group'
+    GROUPFILE = "/etc/group"
 
     def group_add(self, **kwargs):
-        cmd = [self.module.get_bin_path('groupadd', True)]
+        cmd = [self.module.get_bin_path("groupadd", True)]
         for key in kwargs:
-            if key == 'gid' and kwargs[key] is not None:
-                cmd.append('-g')
+            if key == "gid" and kwargs[key] is not None:
+                cmd.append("-g")
                 cmd.append(str(kwargs[key]))
                 if self.non_unique:
-                    cmd.append('-o')
+                    cmd.append("-o")
         cmd.append(self.name)
         return self.execute_command(cmd)
 
 
 # ===========================================
+
 
 class AIX(Group):
     """
@@ -308,40 +319,41 @@ class AIX(Group):
       - group_mod()
     """
 
-    platform = 'AIX'
+    platform = "AIX"
     distribution = None
-    GROUPFILE = '/etc/group'
+    GROUPFILE = "/etc/group"
 
     def group_del(self):
-        cmd = [self.module.get_bin_path('rmgroup', True), self.name]
+        cmd = [self.module.get_bin_path("rmgroup", True), self.name]
         return self.execute_command(cmd)
 
     def group_add(self, **kwargs):
-        cmd = [self.module.get_bin_path('mkgroup', True)]
+        cmd = [self.module.get_bin_path("mkgroup", True)]
         for key in kwargs:
-            if key == 'gid' and kwargs[key] is not None:
-                cmd.append('id=' + str(kwargs[key]))
-            elif key == 'system' and kwargs[key] is True:
-                cmd.append('-a')
+            if key == "gid" and kwargs[key] is not None:
+                cmd.append("id=" + str(kwargs[key]))
+            elif key == "system" and kwargs[key] is True:
+                cmd.append("-a")
         cmd.append(self.name)
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
-        cmd = [self.module.get_bin_path('chgroup', True)]
+        cmd = [self.module.get_bin_path("chgroup", True)]
         info = self.group_info()
         for key in kwargs:
-            if key == 'gid':
+            if key == "gid":
                 if kwargs[key] is not None and info[2] != int(kwargs[key]):
-                    cmd.append('id=' + str(kwargs[key]))
+                    cmd.append("id=" + str(kwargs[key]))
         if len(cmd) == 1:
-            return (None, '', '')
+            return (None, "", "")
         if self.module.check_mode:
-            return (0, '', '')
+            return (0, "", "")
         cmd.append(self.name)
         return self.execute_command(cmd)
 
 
 # ===========================================
+
 
 class FreeBsdGroup(Group):
     """
@@ -353,38 +365,38 @@ class FreeBsdGroup(Group):
       - group_mod()
     """
 
-    platform = 'FreeBSD'
+    platform = "FreeBSD"
     distribution = None
-    GROUPFILE = '/etc/group'
+    GROUPFILE = "/etc/group"
 
     def group_del(self):
-        cmd = [self.module.get_bin_path('pw', True), 'groupdel', self.name]
+        cmd = [self.module.get_bin_path("pw", True), "groupdel", self.name]
         return self.execute_command(cmd)
 
     def group_add(self, **kwargs):
-        cmd = [self.module.get_bin_path('pw', True), 'groupadd', self.name]
+        cmd = [self.module.get_bin_path("pw", True), "groupadd", self.name]
         if self.gid is not None:
-            cmd.append('-g')
+            cmd.append("-g")
             cmd.append(str(self.gid))
             if self.non_unique:
-                cmd.append('-o')
+                cmd.append("-o")
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
-        cmd = [self.module.get_bin_path('pw', True), 'groupmod', self.name]
+        cmd = [self.module.get_bin_path("pw", True), "groupmod", self.name]
         info = self.group_info()
         cmd_len = len(cmd)
         if self.gid is not None and int(self.gid) != info[2]:
-            cmd.append('-g')
+            cmd.append("-g")
             cmd.append(str(self.gid))
             if self.non_unique:
-                cmd.append('-o')
+                cmd.append("-o")
         # modify the group if cmd will do anything
         if cmd_len != len(cmd):
             if self.module.check_mode:
-                return (0, '', '')
+                return (0, "", "")
             return self.execute_command(cmd)
-        return (None, '', '')
+        return (None, "", "")
 
 
 class DragonFlyBsdGroup(FreeBsdGroup):
@@ -393,10 +405,11 @@ class DragonFlyBsdGroup(FreeBsdGroup):
     It inherits all behaviors from FreeBsdGroup class.
     """
 
-    platform = 'DragonFly'
+    platform = "DragonFly"
 
 
 # ===========================================
+
 
 class DarwinGroup(Group):
     """
@@ -410,59 +423,59 @@ class DarwinGroup(Group):
     group manipulation are done using dseditgroup(1).
     """
 
-    platform = 'Darwin'
+    platform = "Darwin"
     distribution = None
 
     def group_add(self, **kwargs):
-        cmd = [self.module.get_bin_path('dseditgroup', True)]
-        cmd += ['-o', 'create']
+        cmd = [self.module.get_bin_path("dseditgroup", True)]
+        cmd += ["-o", "create"]
         if self.gid is not None:
-            cmd += ['-i', str(self.gid)]
-        elif 'system' in kwargs and kwargs['system'] is True:
+            cmd += ["-i", str(self.gid)]
+        elif "system" in kwargs and kwargs["system"] is True:
             gid = self.get_lowest_available_system_gid()
             if gid is not False:
                 self.gid = str(gid)
-                cmd += ['-i', str(self.gid)]
-        cmd += ['-L', self.name]
+                cmd += ["-i", str(self.gid)]
+        cmd += ["-L", self.name]
         (rc, out, err) = self.execute_command(cmd)
         return (rc, out, err)
 
     def group_del(self):
-        cmd = [self.module.get_bin_path('dseditgroup', True)]
-        cmd += ['-o', 'delete']
-        cmd += ['-L', self.name]
+        cmd = [self.module.get_bin_path("dseditgroup", True)]
+        cmd += ["-o", "delete"]
+        cmd += ["-L", self.name]
         (rc, out, err) = self.execute_command(cmd)
         return (rc, out, err)
 
     def group_mod(self, gid=None):
         info = self.group_info()
         if self.gid is not None and int(self.gid) != info[2]:
-            cmd = [self.module.get_bin_path('dseditgroup', True)]
-            cmd += ['-o', 'edit']
+            cmd = [self.module.get_bin_path("dseditgroup", True)]
+            cmd += ["-o", "edit"]
             if gid is not None:
-                cmd += ['-i', str(gid)]
-            cmd += ['-L', self.name]
+                cmd += ["-i", str(gid)]
+            cmd += ["-L", self.name]
             (rc, out, err) = self.execute_command(cmd)
             return (rc, out, err)
-        return (None, '', '')
+        return (None, "", "")
 
     def get_lowest_available_system_gid(self):
         # check for lowest available system gid (< 500)
         try:
-            cmd = [self.module.get_bin_path('dscl', True)]
-            cmd += ['/Local/Default', '-list', '/Groups', 'PrimaryGroupID']
+            cmd = [self.module.get_bin_path("dscl", True)]
+            cmd += ["/Local/Default", "-list", "/Groups", "PrimaryGroupID"]
             (rc, out, err) = self.execute_command(cmd)
             lines = out.splitlines()
             highest = 0
             for group_info in lines:
-                parts = group_info.split(' ')
+                parts = group_info.split(" ")
                 if len(parts) > 1:
                     gid = int(parts[-1])
                     if gid > highest and gid < 500:
                         highest = gid
             if highest == 0 or highest == 499:
                 return False
-            return (highest + 1)
+            return highest + 1
         except Exception:
             return False
 
@@ -477,41 +490,42 @@ class OpenBsdGroup(Group):
       - group_mod()
     """
 
-    platform = 'OpenBSD'
+    platform = "OpenBSD"
     distribution = None
-    GROUPFILE = '/etc/group'
+    GROUPFILE = "/etc/group"
 
     def group_del(self):
-        cmd = [self.module.get_bin_path('groupdel', True), self.name]
+        cmd = [self.module.get_bin_path("groupdel", True), self.name]
         return self.execute_command(cmd)
 
     def group_add(self, **kwargs):
-        cmd = [self.module.get_bin_path('groupadd', True)]
+        cmd = [self.module.get_bin_path("groupadd", True)]
         if self.gid is not None:
-            cmd.append('-g')
+            cmd.append("-g")
             cmd.append(str(self.gid))
             if self.non_unique:
-                cmd.append('-o')
+                cmd.append("-o")
         cmd.append(self.name)
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
-        cmd = [self.module.get_bin_path('groupmod', True)]
+        cmd = [self.module.get_bin_path("groupmod", True)]
         info = self.group_info()
         if self.gid is not None and int(self.gid) != info[2]:
-            cmd.append('-g')
+            cmd.append("-g")
             cmd.append(str(self.gid))
             if self.non_unique:
-                cmd.append('-o')
+                cmd.append("-o")
         if len(cmd) == 1:
-            return (None, '', '')
+            return (None, "", "")
         if self.module.check_mode:
-            return (0, '', '')
+            return (0, "", "")
         cmd.append(self.name)
         return self.execute_command(cmd)
 
 
 # ===========================================
+
 
 class NetBsdGroup(Group):
     """
@@ -523,36 +537,36 @@ class NetBsdGroup(Group):
       - group_mod()
     """
 
-    platform = 'NetBSD'
+    platform = "NetBSD"
     distribution = None
-    GROUPFILE = '/etc/group'
+    GROUPFILE = "/etc/group"
 
     def group_del(self):
-        cmd = [self.module.get_bin_path('groupdel', True), self.name]
+        cmd = [self.module.get_bin_path("groupdel", True), self.name]
         return self.execute_command(cmd)
 
     def group_add(self, **kwargs):
-        cmd = [self.module.get_bin_path('groupadd', True)]
+        cmd = [self.module.get_bin_path("groupadd", True)]
         if self.gid is not None:
-            cmd.append('-g')
+            cmd.append("-g")
             cmd.append(str(self.gid))
             if self.non_unique:
-                cmd.append('-o')
+                cmd.append("-o")
         cmd.append(self.name)
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
-        cmd = [self.module.get_bin_path('groupmod', True)]
+        cmd = [self.module.get_bin_path("groupmod", True)]
         info = self.group_info()
         if self.gid is not None and int(self.gid) != info[2]:
-            cmd.append('-g')
+            cmd.append("-g")
             cmd.append(str(self.gid))
             if self.non_unique:
-                cmd.append('-o')
+                cmd.append("-o")
         if len(cmd) == 1:
-            return (None, '', '')
+            return (None, "", "")
         if self.module.check_mode:
-            return (0, '', '')
+            return (0, "", "")
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -571,85 +585,87 @@ class BusyBoxGroup(Group):
     """
 
     def group_add(self, **kwargs):
-        cmd = [self.module.get_bin_path('addgroup', True)]
+        cmd = [self.module.get_bin_path("addgroup", True)]
         if self.gid is not None:
-            cmd.extend(['-g', str(self.gid)])
+            cmd.extend(["-g", str(self.gid)])
 
         if self.system:
-            cmd.append('-S')
+            cmd.append("-S")
 
         cmd.append(self.name)
 
         return self.execute_command(cmd)
 
     def group_del(self):
-        cmd = [self.module.get_bin_path('delgroup', True), self.name]
+        cmd = [self.module.get_bin_path("delgroup", True), self.name]
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
         # Since there is no groupmod command, modify /etc/group directly
         info = self.group_info()
         if self.gid is not None and self.gid != info[2]:
-            with open('/etc/group', 'rb') as f:
+            with open("/etc/group", "rb") as f:
                 b_groups = f.read()
 
             b_name = to_bytes(self.name)
-            b_current_group_string = b'%s:x:%d:' % (b_name, info[2])
-            b_new_group_string = b'%s:x:%d:' % (b_name, self.gid)
+            b_current_group_string = b"%s:x:%d:" % (b_name, info[2])
+            b_new_group_string = b"%s:x:%d:" % (b_name, self.gid)
 
-            if b':%d:' % self.gid in b_groups:
+            if b":%d:" % self.gid in b_groups:
                 self.module.fail_json(msg="gid '{gid}' in use".format(gid=self.gid))
 
             if self.module.check_mode:
-                return 0, '', ''
+                return 0, "", ""
             b_new_groups = b_groups.replace(b_current_group_string, b_new_group_string)
-            with open('/etc/group', 'wb') as f:
+            with open("/etc/group", "wb") as f:
                 f.write(b_new_groups)
-            return 0, '', ''
+            return 0, "", ""
 
-        return None, '', ''
+        return None, "", ""
 
 
 class AlpineGroup(BusyBoxGroup):
 
-    platform = 'Linux'
-    distribution = 'Alpine'
+    platform = "Linux"
+    distribution = "Alpine"
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', default='present', choices=['absent', 'present']),
-            name=dict(type='str', required=True),
-            force=dict(type='bool', default=False),
-            gid=dict(type='int'),
-            system=dict(type='bool', default=False),
-            local=dict(type='bool', default=False),
-            non_unique=dict(type='bool', default=False),
+            state=dict(type="str", default="present", choices=["absent", "present"]),
+            name=dict(type="str", required=True),
+            force=dict(type="bool", default=False),
+            gid=dict(type="int"),
+            system=dict(type="bool", default=False),
+            local=dict(type="bool", default=False),
+            non_unique=dict(type="bool", default=False),
         ),
         supports_check_mode=True,
         required_if=[
-            ['non_unique', True, ['gid']],
+            ["non_unique", True, ["gid"]],
         ],
     )
 
-    if module.params['force'] and module.params['local']:
-        module.fail_json(msg='force is not a valid option for local, force=True and local=True are mutually exclusive')
+    if module.params["force"] and module.params["local"]:
+        module.fail_json(
+            msg="force is not a valid option for local, force=True and local=True are mutually exclusive"
+        )
 
     group = Group(module)
 
-    module.debug('Group instantiated - platform %s' % group.platform)
+    module.debug("Group instantiated - platform %s" % group.platform)
     if group.distribution:
-        module.debug('Group instantiated - distribution %s' % group.distribution)
+        module.debug("Group instantiated - distribution %s" % group.distribution)
 
     rc = None
-    out = ''
-    err = ''
+    out = ""
+    err = ""
     result = {}
-    result['name'] = group.name
-    result['state'] = group.state
+    result["name"] = group.name
+    result["state"] = group.state
 
-    if group.state == 'absent':
+    if group.state == "absent":
 
         if group.group_exists():
             if module.check_mode:
@@ -658,7 +674,7 @@ def main():
             if rc != 0:
                 module.fail_json(name=group.name, msg=err)
 
-    elif group.state == 'present':
+    elif group.state == "present":
 
         if not group.group_exists():
             if module.check_mode:
@@ -671,21 +687,21 @@ def main():
             module.fail_json(name=group.name, msg=err)
 
     if rc is None:
-        result['changed'] = False
+        result["changed"] = False
     else:
-        result['changed'] = True
+        result["changed"] = True
     if out:
-        result['stdout'] = out
+        result["stdout"] = out
     if err:
-        result['stderr'] = err
+        result["stderr"] = err
 
     if group.group_exists():
         info = group.group_info()
-        result['system'] = group.system
-        result['gid'] = info[2]
+        result["system"] = group.system
+        result["gid"] = info[2]
 
     module.exit_json(**result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

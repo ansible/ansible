@@ -5,8 +5,8 @@ import json
 
 
 def main():
-    print(json.dumps(dict(changed=False, source='testns.testcol.notrealmodule')))
+    print(json.dumps(dict(changed=False, source="testns.testcol.notrealmodule")))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

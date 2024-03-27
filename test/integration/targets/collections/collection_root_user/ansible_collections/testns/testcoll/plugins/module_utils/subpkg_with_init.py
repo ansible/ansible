@@ -3,8 +3,12 @@ from __future__ import annotations
 
 
 def thingtocall():
-    raise Exception('this should never be called (loaded discrete module instead of package module)')
+    raise Exception(
+        "this should never be called (loaded discrete module instead of package module)"
+    )
 
 
 def anotherthingtocall():
-    raise Exception('this should never be called (loaded discrete module instead of package module)')
+    raise Exception(
+        "this should never be called (loaded discrete module instead of package module)"
+    )

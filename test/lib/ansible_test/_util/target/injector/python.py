@@ -12,26 +12,30 @@ def main():
     name = os.path.basename(__file__)
     args = [sys.executable]
 
-    coverage_config = os.environ.get('COVERAGE_CONF')
-    coverage_output = os.environ.get('COVERAGE_FILE')
+    coverage_config = os.environ.get("COVERAGE_CONF")
+    coverage_output = os.environ.get("COVERAGE_FILE")
 
     if coverage_config:
         if coverage_output:
-            args += ['-m', 'coverage.__main__', 'run', '--rcfile', coverage_config]
+            args += ["-m", "coverage.__main__", "run", "--rcfile", coverage_config]
         else:
-            found = bool(importlib.util.find_spec('coverage'))
+            found = bool(importlib.util.find_spec("coverage"))
 
             if not found:
-                sys.exit('ERROR: Could not find `coverage` module. '
-                         'Did you use a virtualenv created without --system-site-packages or with the wrong interpreter?')
+                sys.exit(
+                    "ERROR: Could not find `coverage` module. "
+                    "Did you use a virtualenv created without --system-site-packages or with the wrong interpreter?"
+                )
 
-    if name == 'python.py':
-        if sys.argv[1] == '-c':
+    if name == "python.py":
+        if sys.argv[1] == "-c":
             # prevent simple misuse of python.py with -c which does not work with coverage
-            sys.exit('ERROR: Use `python -c` instead of `python.py -c` to avoid errors when code coverage is collected.')
-    elif name == 'pytest':
-        args += ['-m', 'pytest']
-    elif name == 'importer.py':
+            sys.exit(
+                "ERROR: Use `python -c` instead of `python.py -c` to avoid errors when code coverage is collected."
+            )
+    elif name == "pytest":
+        args += ["-m", "pytest"]
+    elif name == "importer.py":
         args += [find_program(name, False)]
     else:
         args += [find_program(name, True)]
@@ -46,7 +50,7 @@ def find_program(name, executable):  # type: (str, bool) -> str
     Find and return the full path to the named program, optionally requiring it to be executable.
     Raises an exception if the program is not found.
     """
-    path = os.environ.get('PATH', os.path.defpath)
+    path = os.environ.get("PATH", os.path.defpath)
     seen = {os.path.abspath(__file__)}
     mode = os.F_OK | os.X_OK if executable else os.F_OK
 
@@ -64,5 +68,5 @@ def find_program(name, executable):  # type: (str, bool) -> str
     raise Exception('Executable "%s" not found in path: %s' % (name, path))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -11,7 +11,7 @@ from ansible.module_utils.common.text.converters import to_bytes
 
 
 def has_respawned():
-    return hasattr(sys.modules['__main__'], '_respawned')
+    return hasattr(sys.modules["__main__"], "_respawned")
 
 
 def respawn_module(interpreter_path):
@@ -32,14 +32,14 @@ def respawn_module(interpreter_path):
     """
 
     if has_respawned():
-        raise Exception('module has already been respawned')
+        raise Exception("module has already been respawned")
 
     # FUTURE: we need a safe way to log that a respawn has occurred for forensic/debug purposes
     payload = _create_payload()
     stdin_read, stdin_write = os.pipe()
     os.write(stdin_write, to_bytes(payload))
     os.close(stdin_write)
-    rc = subprocess.call([interpreter_path, '--'], stdin=stdin_read)
+    rc = subprocess.call([interpreter_path, "--"], stdin=stdin_read)
     sys.exit(rc)  # pylint: disable=ansible-bad-function
 
 
@@ -58,7 +58,9 @@ def probe_interpreters_for_module(interpreter_paths, module_name):
         if not os.path.exists(interpreter_path):
             continue
         try:
-            rc = subprocess.call([interpreter_path, '-c', 'import {0}'.format(module_name)])
+            rc = subprocess.call(
+                [interpreter_path, "-c", "import {0}".format(module_name)]
+            )
             if rc == 0:
                 return interpreter_path
         except Exception:
@@ -69,12 +71,15 @@ def probe_interpreters_for_module(interpreter_paths, module_name):
 
 def _create_payload():
     from ansible.module_utils import basic
-    smuggled_args = getattr(basic, '_ANSIBLE_ARGS')
+
+    smuggled_args = getattr(basic, "_ANSIBLE_ARGS")
     if not smuggled_args:
-        raise Exception('unable to access ansible.module_utils.basic._ANSIBLE_ARGS (not launched by AnsiballZ?)')
-    module_fqn = sys.modules['__main__']._module_fqn
-    modlib_path = sys.modules['__main__']._modlib_path
-    respawn_code_template = '''
+        raise Exception(
+            "unable to access ansible.module_utils.basic._ANSIBLE_ARGS (not launched by AnsiballZ?)"
+        )
+    module_fqn = sys.modules["__main__"]._module_fqn
+    modlib_path = sys.modules["__main__"]._modlib_path
+    respawn_code_template = """
 import runpy
 import sys
 
@@ -89,8 +94,12 @@ if __name__ == '__main__':
     basic._ANSIBLE_ARGS = smuggled_args
 
     runpy.run_module(module_fqn, init_globals=dict(_respawned=True), run_name='__main__', alter_sys=True)
-    '''
+    """
 
-    respawn_code = respawn_code_template.format(module_fqn=module_fqn, modlib_path=modlib_path, smuggled_args=smuggled_args.strip())
+    respawn_code = respawn_code_template.format(
+        module_fqn=module_fqn,
+        modlib_path=modlib_path,
+        smuggled_args=smuggled_args.strip(),
+    )
 
     return respawn_code

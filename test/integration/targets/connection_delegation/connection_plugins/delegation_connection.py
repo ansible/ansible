@@ -22,7 +22,7 @@ from ansible.plugins.connection import ConnectionBase
 
 class Connection(ConnectionBase):
 
-    transport = 'delegation_connection'
+    transport = "delegation_connection"
     has_pipelining = True
 
     def __init__(self, *args, **kwargs):

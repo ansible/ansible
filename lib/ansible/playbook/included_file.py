@@ -50,14 +50,21 @@ class IncludedFile:
         raise ValueError()
 
     def __eq__(self, other):
-        return (other._filename == self._filename and
-                other._args == self._args and
-                other._vars == self._vars and
-                other._task._uuid == self._task._uuid and
-                other._task._parent._uuid == self._task._parent._uuid)
+        return (
+            other._filename == self._filename
+            and other._args == self._args
+            and other._vars == self._vars
+            and other._task._uuid == self._task._uuid
+            and other._task._parent._uuid == self._task._parent._uuid
+        )
 
     def __repr__(self):
-        return "%s (args=%s vars=%s): %s" % (self._filename, self._args, self._vars, self._hosts)
+        return "%s (args=%s vars=%s): %s" % (
+            self._filename,
+            self._args,
+            self._vars,
+            self._hosts,
+        )
 
     @staticmethod
     def process_include_results(results, iterator, loader, variable_manager):
@@ -72,47 +79,72 @@ class IncludedFile:
             if original_task.action in C._ACTION_ALL_INCLUDES:
 
                 if original_task.loop:
-                    if 'results' not in res._result:
+                    if "results" not in res._result:
                         continue
-                    include_results = res._result['results']
+                    include_results = res._result["results"]
                 else:
                     include_results = [res._result]
 
                 for include_result in include_results:
                     # if the task result was skipped or failed, continue
-                    if 'skipped' in include_result and include_result['skipped'] or 'failed' in include_result and include_result['failed']:
+                    if (
+                        "skipped" in include_result
+                        and include_result["skipped"]
+                        or "failed" in include_result
+                        and include_result["failed"]
+                    ):
                         continue
 
                     cache_key = (iterator._play, original_host, original_task)
                     try:
                         task_vars = task_vars_cache[cache_key]
                     except KeyError:
-                        task_vars = task_vars_cache[cache_key] = variable_manager.get_vars(play=iterator._play, host=original_host, task=original_task)
+                        task_vars = task_vars_cache[cache_key] = (
+                            variable_manager.get_vars(
+                                play=iterator._play,
+                                host=original_host,
+                                task=original_task,
+                            )
+                        )
 
-                    include_args = include_result.pop('include_args', dict())
+                    include_args = include_result.pop("include_args", dict())
                     special_vars = {}
-                    loop_var = include_result.get('ansible_loop_var', 'item')
-                    index_var = include_result.get('ansible_index_var')
+                    loop_var = include_result.get("ansible_loop_var", "item")
+                    index_var = include_result.get("ansible_index_var")
                     if loop_var in include_result:
-                        task_vars[loop_var] = special_vars[loop_var] = include_result[loop_var]
-                        task_vars['ansible_loop_var'] = special_vars['ansible_loop_var'] = loop_var
+                        task_vars[loop_var] = special_vars[loop_var] = include_result[
+                            loop_var
+                        ]
+                        task_vars["ansible_loop_var"] = special_vars[
+                            "ansible_loop_var"
+                        ] = loop_var
                     if index_var and index_var in include_result:
-                        task_vars[index_var] = special_vars[index_var] = include_result[index_var]
-                        task_vars['ansible_index_var'] = special_vars['ansible_index_var'] = index_var
-                    if '_ansible_item_label' in include_result:
-                        task_vars['_ansible_item_label'] = special_vars['_ansible_item_label'] = include_result['_ansible_item_label']
-                    if 'ansible_loop' in include_result:
-                        task_vars['ansible_loop'] = special_vars['ansible_loop'] = include_result['ansible_loop']
-                    if original_task.no_log and '_ansible_no_log' not in include_args:
-                        task_vars['_ansible_no_log'] = special_vars['_ansible_no_log'] = original_task.no_log
+                        task_vars[index_var] = special_vars[index_var] = include_result[
+                            index_var
+                        ]
+                        task_vars["ansible_index_var"] = special_vars[
+                            "ansible_index_var"
+                        ] = index_var
+                    if "_ansible_item_label" in include_result:
+                        task_vars["_ansible_item_label"] = special_vars[
+                            "_ansible_item_label"
+                        ] = include_result["_ansible_item_label"]
+                    if "ansible_loop" in include_result:
+                        task_vars["ansible_loop"] = special_vars["ansible_loop"] = (
+                            include_result["ansible_loop"]
+                        )
+                    if original_task.no_log and "_ansible_no_log" not in include_args:
+                        task_vars["_ansible_no_log"] = special_vars[
+                            "_ansible_no_log"
+                        ] = original_task.no_log
 
                     # get search path for this task to pass to lookup plugins that may be used in pathing to
                     # the included file
-                    task_vars['ansible_search_path'] = original_task.get_search_path()
+                    task_vars["ansible_search_path"] = original_task.get_search_path()
 
                     # ensure basedir is always in (dwim already searches here but we need to display it)
-                    if loader.get_basedir() not in task_vars['ansible_search_path']:
-                        task_vars['ansible_search_path'].append(loader.get_basedir())
+                    if loader.get_basedir() not in task_vars["ansible_search_path"]:
+                        task_vars["ansible_search_path"].append(loader.get_basedir())
 
                     templar = Templar(loader=loader, variables=task_vars)
 
@@ -132,25 +164,54 @@ class IncludedFile:
                                     parent_include_dir = parent_include._role_path
                                 else:
                                     try:
-                                        parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
-                                    except AnsibleError as e:
-                                        parent_include_dir = ''
-                                        display.warning(
-                                            'Templating the path of the parent %s failed. The path to the '
-                                            'included file may not be found. '
-                                            'The error was: %s.' % (original_task.action, to_text(e))
+                                        parent_include_dir = os.path.dirname(
+                                            templar.template(
+                                                parent_include.args.get("_raw_params")
+                                            )
                                         )
-                                if cumulative_path is not None and not os.path.isabs(cumulative_path):
-                                    cumulative_path = os.path.join(parent_include_dir, cumulative_path)
+                                    except AnsibleError as e:
+                                        parent_include_dir = ""
+                                        display.warning(
+                                            "Templating the path of the parent %s failed. The path to the "
+                                            "included file may not be found. "
+                                            "The error was: %s."
+                                            % (original_task.action, to_text(e))
+                                        )
+                                if cumulative_path is not None and not os.path.isabs(
+                                    cumulative_path
+                                ):
+                                    cumulative_path = os.path.join(
+                                        parent_include_dir, cumulative_path
+                                    )
                                 else:
                                     cumulative_path = parent_include_dir
-                                include_target = templar.template(include_result['include'])
+                                include_target = templar.template(
+                                    include_result["include"]
+                                )
                                 if original_task._role:
-                                    dirname = 'handlers' if isinstance(original_task, Handler) else 'tasks'
-                                    new_basedir = os.path.join(original_task._role._role_path, dirname, cumulative_path)
+                                    dirname = (
+                                        "handlers"
+                                        if isinstance(original_task, Handler)
+                                        else "tasks"
+                                    )
+                                    new_basedir = os.path.join(
+                                        original_task._role._role_path,
+                                        dirname,
+                                        cumulative_path,
+                                    )
                                     candidates = [
-                                        loader.path_dwim_relative(original_task._role._role_path, dirname, include_target, is_role=True),
-                                        loader.path_dwim_relative(new_basedir, dirname, include_target, is_role=True)
+                                        loader.path_dwim_relative(
+                                            original_task._role._role_path,
+                                            dirname,
+                                            include_target,
+                                            is_role=True,
+                                        ),
+                                        loader.path_dwim_relative(
+                                            new_basedir,
+                                            dirname,
+                                            include_target,
+                                            is_role=True,
+                                        ),
                                     ]
                                     for include_file in candidates:
                                         try:
@@ -161,7 +222,11 @@ class IncludedFile:
                                         except OSError:
                                             pass
                                 else:
-                                    include_file = loader.path_dwim_relative(loader.get_basedir(), cumulative_path, include_target)
+                                    include_file = loader.path_dwim_relative(
+                                        loader.get_basedir(),
+                                        cumulative_path,
+                                        include_target,
+                                    )
 
                                 if os.path.exists(include_file):
                                     break
@@ -170,20 +235,33 @@ class IncludedFile:
 
                         if include_file is None:
                             if original_task._role:
-                                include_target = templar.template(include_result['include'])
+                                include_target = templar.template(
+                                    include_result["include"]
+                                )
                                 include_file = loader.path_dwim_relative(
                                     original_task._role._role_path,
-                                    'handlers' if isinstance(original_task, Handler) else 'tasks',
+                                    (
+                                        "handlers"
+                                        if isinstance(original_task, Handler)
+                                        else "tasks"
+                                    ),
                                     include_target,
-                                    is_role=True)
+                                    is_role=True,
+                                )
                             else:
-                                include_file = loader.path_dwim(include_result['include'])
+                                include_file = loader.path_dwim(
+                                    include_result["include"]
+                                )
 
                         include_file = templar.template(include_file)
-                        inc_file = IncludedFile(include_file, include_args, special_vars, original_task)
+                        inc_file = IncludedFile(
+                            include_file, include_args, special_vars, original_task
+                        )
                     else:
                         # template the included role's name here
-                        role_name = include_args.pop('name', include_args.pop('role', None))
+                        role_name = include_args.pop(
+                            "name", include_args.pop("role", None)
+                        )
                         if role_name is not None:
                             role_name = templar.template(role_name)
 
@@ -192,14 +270,24 @@ class IncludedFile:
                         new_task._role_name = role_name
                         for from_arg in new_task.FROM_ARGS:
                             if from_arg in include_args:
-                                from_key = from_arg.removesuffix('_from')
-                                new_task._from_files[from_key] = templar.template(include_args.pop(from_arg))
+                                from_key = from_arg.removesuffix("_from")
+                                new_task._from_files[from_key] = templar.template(
+                                    include_args.pop(from_arg)
+                                )
 
-                        omit_token = task_vars.get('omit')
+                        omit_token = task_vars.get("omit")
                         if omit_token:
-                            new_task._from_files = remove_omit(new_task._from_files, omit_token)
+                            new_task._from_files = remove_omit(
+                                new_task._from_files, omit_token
+                            )
 
-                        inc_file = IncludedFile(role_name, include_args, special_vars, new_task, is_role=True)
+                        inc_file = IncludedFile(
+                            role_name,
+                            include_args,
+                            special_vars,
+                            new_task,
+                            is_role=True,
+                        )
 
                     idx = 0
                     orig_inc_file = inc_file

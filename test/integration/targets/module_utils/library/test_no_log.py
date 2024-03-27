@@ -11,17 +11,23 @@ from ansible.module_utils.basic import AnsibleModule, env_fallback
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            explicit_pass=dict(type='str', no_log=True),
-            fallback_pass=dict(type='str', no_log=True, fallback=(env_fallback, ['SECRET_ENV'])),
-            default_pass=dict(type='str', no_log=True, default='zyx'),
-            normal=dict(type='str', default='plaintext'),
+            explicit_pass=dict(type="str", no_log=True),
+            fallback_pass=dict(
+                type="str", no_log=True, fallback=(env_fallback, ["SECRET_ENV"])
+            ),
+            default_pass=dict(type="str", no_log=True, default="zyx"),
+            normal=dict(type="str", default="plaintext"),
             suboption=dict(
-                type='dict',
+                type="dict",
                 options=dict(
-                    explicit_sub_pass=dict(type='str', no_log=True),
-                    fallback_sub_pass=dict(type='str', no_log=True, fallback=(env_fallback, ['SECRET_SUB_ENV'])),
-                    default_sub_pass=dict(type='str', no_log=True, default='xvu'),
-                    normal=dict(type='str', default='plaintext'),
+                    explicit_sub_pass=dict(type="str", no_log=True),
+                    fallback_sub_pass=dict(
+                        type="str",
+                        no_log=True,
+                        fallback=(env_fallback, ["SECRET_SUB_ENV"]),
+                    ),
+                    default_sub_pass=dict(type="str", no_log=True, default="xvu"),
+                    normal=dict(type="str", default="plaintext"),
                 ),
             ),
         ),
@@ -30,5 +36,5 @@ def main():
     module.exit_json(changed=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

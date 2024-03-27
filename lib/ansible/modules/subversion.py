@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: subversion
 short_description: Deploys a subversion repository
@@ -106,9 +106,9 @@ notes:
 
 requirements:
     - subversion (the command line tool with C(svn) entrypoint)
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Checkout subversion repository to specified folder
   ansible.builtin.subversion:
     repo: svn+ssh://an.example.org/path/to/repo
@@ -126,9 +126,9 @@ EXAMPLES = '''
     dest: /src/checkout
     checkout: no
     update: no
-'''
+"""
 
-RETURN = r'''#'''
+RETURN = r"""#"""
 
 import os
 import re
@@ -144,9 +144,11 @@ class Subversion(object):
     #  Révision : 1889134
     #  版本: 1889134
     #  Revision: 1889134
-    REVISION_RE = r'^\w+\s?:\s+\d+$'
+    REVISION_RE = r"^\w+\s?:\s+\d+$"
 
-    def __init__(self, module, dest, repo, revision, username, password, svn_path, validate_certs):
+    def __init__(
+        self, module, dest, repo, revision, username, password, svn_path, validate_certs
+    ):
         self.module = module
         self.dest = dest
         self.repo = repo
@@ -157,18 +159,20 @@ class Subversion(object):
         self.validate_certs = validate_certs
 
     def has_option_password_from_stdin(self):
-        rc, version, err = self.module.run_command([self.svn_path, '--version', '--quiet'], check_rc=True)
-        return LooseVersion(version) >= LooseVersion('1.10.0')
+        rc, version, err = self.module.run_command(
+            [self.svn_path, "--version", "--quiet"], check_rc=True
+        )
+        return LooseVersion(version) >= LooseVersion("1.10.0")
 
     def _exec(self, args, check_rc=True):
-        '''Execute a subversion command, and return output. If check_rc is False, returns the return code instead of the output.'''
+        """Execute a subversion command, and return output. If check_rc is False, returns the return code instead of the output."""
         bits = [
             self.svn_path,
-            '--non-interactive',
-            '--no-auth-cache',
+            "--non-interactive",
+            "--no-auth-cache",
         ]
         if not self.validate_certs:
-            bits.append('--trust-server-cert')
+            bits.append("--trust-server-cert")
         stdin_data = None
         if self.username:
             bits.extend(["--username", self.username])
@@ -177,8 +181,10 @@ class Subversion(object):
                 bits.append("--password-from-stdin")
                 stdin_data = self.password
             else:
-                self.module.warn("The authentication provided will be used on the svn command line and is not secure. "
-                                 "To securely pass credentials, upgrade svn to version 1.10.0 or greater.")
+                self.module.warn(
+                    "The authentication provided will be used on the svn command line and is not secure. "
+                    "To securely pass credentials, upgrade svn to version 1.10.0 or greater."
+                )
                 bits.extend(["--password", self.password])
         bits.extend(args)
         rc, out, err = self.module.run_command(bits, check_rc, data=stdin_data)
@@ -189,12 +195,12 @@ class Subversion(object):
             return rc
 
     def is_svn_repo(self):
-        '''Checks if path is a SVN Repo.'''
+        """Checks if path is a SVN Repo."""
         rc = self._exec(["info", self.dest], check_rc=False)
         return rc == 0
 
     def checkout(self, force=False):
-        '''Creates new svn working directory if it does not already exist.'''
+        """Creates new svn working directory if it does not already exist."""
         cmd = ["checkout"]
         if force:
             cmd.append("--force")
@@ -202,7 +208,7 @@ class Subversion(object):
         self._exec(cmd)
 
     def export(self, force=False):
-        '''Export svn repo to directory'''
+        """Export svn repo to directory"""
         cmd = ["export"]
         if force:
             cmd.append("--force")
@@ -211,78 +217,80 @@ class Subversion(object):
         self._exec(cmd)
 
     def switch(self):
-        '''Change working directory's repo.'''
+        """Change working directory's repo."""
         # switch to ensure we are pointing at correct repo.
         # it also updates!
-        output = self._exec(["switch", "--revision", self.revision, self.repo, self.dest])
+        output = self._exec(
+            ["switch", "--revision", self.revision, self.repo, self.dest]
+        )
         for line in output:
-            if re.search(r'^[ABDUCGE]\s', line):
+            if re.search(r"^[ABDUCGE]\s", line):
                 return True
         return False
 
     def update(self):
-        '''Update existing svn working directory.'''
+        """Update existing svn working directory."""
         output = self._exec(["update", "-r", self.revision, self.dest])
 
         for line in output:
-            if re.search(r'^[ABDUCGE]\s', line):
+            if re.search(r"^[ABDUCGE]\s", line):
                 return True
         return False
 
     def revert(self):
-        '''Revert svn working directory.'''
+        """Revert svn working directory."""
         output = self._exec(["revert", "-R", self.dest])
         for line in output:
-            if re.search(r'^Reverted ', line) is None:
+            if re.search(r"^Reverted ", line) is None:
                 return True
         return False
 
     def get_revision(self):
-        '''Revision and URL of subversion working directory.'''
-        text = '\n'.join(self._exec(["info", self.dest]))
+        """Revision and URL of subversion working directory."""
+        text = "\n".join(self._exec(["info", self.dest]))
         rev = re.search(self.REVISION_RE, text, re.MULTILINE)
         if rev:
             rev = rev.group(0)
         else:
-            rev = 'Unable to get revision'
+            rev = "Unable to get revision"
 
-        url = re.search(r'^URL\s?:.*$', text, re.MULTILINE)
+        url = re.search(r"^URL\s?:.*$", text, re.MULTILINE)
         if url:
             url = url.group(0)
         else:
-            url = 'Unable to get URL'
+            url = "Unable to get URL"
 
         return rev, url
 
     def get_remote_revision(self):
-        '''Revision and URL of subversion working directory.'''
-        text = '\n'.join(self._exec(["info", self.repo]))
+        """Revision and URL of subversion working directory."""
+        text = "\n".join(self._exec(["info", self.repo]))
         rev = re.search(self.REVISION_RE, text, re.MULTILINE)
         if rev:
             rev = rev.group(0)
         else:
-            rev = 'Unable to get remote revision'
+            rev = "Unable to get remote revision"
         return rev
 
     def has_local_mods(self):
-        '''True if revisioned files have been added or modified. Unrevisioned files are ignored.'''
+        """True if revisioned files have been added or modified. Unrevisioned files are ignored."""
         lines = self._exec(["status", "--quiet", "--ignore-externals", self.dest])
         # The --quiet option will return only modified files.
         # Match only revisioned files, i.e. ignore status '?'.
-        regex = re.compile(r'^[^?X]')
+        regex = re.compile(r"^[^?X]")
         # Has local mods if more than 0 modified revisioned files.
         return len(list(filter(regex.match, lines))) > 0
 
     def needs_update(self):
         curr, url = self.get_revision()
-        out2 = '\n'.join(self._exec(["info", "-r", self.revision, self.dest]))
+        out2 = "\n".join(self._exec(["info", "-r", self.revision, self.dest]))
         head = re.search(self.REVISION_RE, out2, re.MULTILINE)
         if head:
             head = head.group(0)
         else:
-            head = 'Unable to get revision'
-        rev1 = int(curr.split(':')[1].strip())
-        rev2 = int(head.split(':')[1].strip())
+            head = "Unable to get revision"
+        rev1 = int(curr.split(":")[1].strip())
+        rev2 = int(head.split(":")[1].strip())
         change = False
         if rev1 < rev2:
             change = True
@@ -292,36 +300,36 @@ class Subversion(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            dest=dict(type='path'),
-            repo=dict(type='str', required=True, aliases=['name', 'repository']),
-            revision=dict(type='str', default='HEAD', aliases=['rev', 'version']),
-            force=dict(type='bool', default=False),
-            username=dict(type='str'),
-            password=dict(type='str', no_log=True),
-            executable=dict(type='path'),
-            export=dict(type='bool', default=False),
-            checkout=dict(type='bool', default=True),
-            update=dict(type='bool', default=True),
-            switch=dict(type='bool', default=True),
-            in_place=dict(type='bool', default=False),
-            validate_certs=dict(type='bool', default=False),
+            dest=dict(type="path"),
+            repo=dict(type="str", required=True, aliases=["name", "repository"]),
+            revision=dict(type="str", default="HEAD", aliases=["rev", "version"]),
+            force=dict(type="bool", default=False),
+            username=dict(type="str"),
+            password=dict(type="str", no_log=True),
+            executable=dict(type="path"),
+            export=dict(type="bool", default=False),
+            checkout=dict(type="bool", default=True),
+            update=dict(type="bool", default=True),
+            switch=dict(type="bool", default=True),
+            in_place=dict(type="bool", default=False),
+            validate_certs=dict(type="bool", default=False),
         ),
         supports_check_mode=True,
     )
 
-    dest = module.params['dest']
-    repo = module.params['repo']
-    revision = module.params['revision']
-    force = module.params['force']
-    username = module.params['username']
-    password = module.params['password']
-    svn_path = module.params['executable'] or module.get_bin_path('svn', True)
-    export = module.params['export']
-    switch = module.params['switch']
-    checkout = module.params['checkout']
-    update = module.params['update']
-    in_place = module.params['in_place']
-    validate_certs = module.params['validate_certs']
+    dest = module.params["dest"]
+    repo = module.params["repo"]
+    revision = module.params["revision"]
+    force = module.params["force"]
+    username = module.params["username"]
+    password = module.params["password"]
+    svn_path = module.params["executable"] or module.get_bin_path("svn", True)
+    export = module.params["export"]
+    switch = module.params["switch"]
+    checkout = module.params["checkout"]
+    update = module.params["update"]
+    in_place = module.params["in_place"]
+    validate_certs = module.params["validate_certs"]
 
     # We screenscrape a huge amount of svn commands so use C locale anytime we
     # call run_command()
@@ -329,9 +337,13 @@ def main():
     module.run_command_environ_update = dict(LANG=locale, LC_MESSAGES=locale)
 
     if not dest and (checkout or update or export):
-        module.fail_json(msg="the destination directory must be specified unless checkout=no, update=no, and export=no")
+        module.fail_json(
+            msg="the destination directory must be specified unless checkout=no, update=no, and export=no"
+        )
 
-    svn = Subversion(module, dest, repo, revision, username, password, svn_path, validate_certs)
+    svn = Subversion(
+        module, dest, repo, revision, username, password, svn_path, validate_certs
+    )
 
     if not export and not update and not checkout:
         module.exit_json(changed=False, after=svn.get_remote_revision())
@@ -378,7 +390,10 @@ def main():
         if local_mods and force:
             svn.revert()
     else:
-        module.fail_json(msg="ERROR: %s folder already exists, but its not a subversion repository." % (dest,))
+        module.fail_json(
+            msg="ERROR: %s folder already exists, but its not a subversion repository."
+            % (dest,)
+        )
 
     if export:
         module.exit_json(changed=True)
@@ -388,5 +403,5 @@ def main():
         module.exit_json(changed=changed, before=before, after=after)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -6,10 +6,10 @@ def do_nothing(myval):
 
 
 class FilterModule(object):
-    ''' Ansible core jinja2 filters '''
+    """Ansible core jinja2 filters"""
 
     def filters(self):
         return {
-            'filter1': do_nothing,
-            'filter3': do_nothing,
+            "filter1": do_nothing,
+            "filter3": do_nothing,
         }

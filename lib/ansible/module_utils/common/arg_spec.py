@@ -94,14 +94,15 @@ class ArgumentSpecValidator:
     validate a number of parameters using the :meth:`validate` method.
     """
 
-    def __init__(self, argument_spec,
-                 mutually_exclusive=None,
-                 required_together=None,
-                 required_one_of=None,
-                 required_if=None,
-                 required_by=None,
-                 ):
-
+    def __init__(
+        self,
+        argument_spec,
+        mutually_exclusive=None,
+        required_together=None,
+        required_one_of=None,
+        required_if=None,
+        required_by=None,
+    ):
         """
         :arg argument_spec: Specification of valid parameters and their type. May
             include nested argument specs.
@@ -136,9 +137,15 @@ class ArgumentSpecValidator:
         self.argument_spec = argument_spec
 
         for key in sorted(self.argument_spec.keys()):
-            aliases = self.argument_spec[key].get('aliases')
+            aliases = self.argument_spec[key].get("aliases")
             if aliases:
-                self._valid_parameter_names.update(["{key} ({aliases})".format(key=key, aliases=", ".join(sorted(aliases)))])
+                self._valid_parameter_names.update(
+                    [
+                        "{key} ({aliases})".format(
+                            key=key, aliases=", ".join(sorted(aliases))
+                        )
+                    ]
+                )
             else:
                 self._valid_parameter_names.update([key])
 
@@ -178,35 +185,53 @@ class ArgumentSpecValidator:
 
         result = ValidationResult(parameters)
 
-        result._no_log_values.update(set_fallbacks(self.argument_spec, result._validated_parameters))
+        result._no_log_values.update(
+            set_fallbacks(self.argument_spec, result._validated_parameters)
+        )
 
         alias_warnings = []
         alias_deprecations = []
         try:
-            result._aliases.update(_handle_aliases(self.argument_spec, result._validated_parameters, alias_warnings, alias_deprecations))
+            result._aliases.update(
+                _handle_aliases(
+                    self.argument_spec,
+                    result._validated_parameters,
+                    alias_warnings,
+                    alias_deprecations,
+                )
+            )
         except (TypeError, ValueError) as e:
             result.errors.append(AliasError(to_native(e)))
 
-        legal_inputs = _get_legal_inputs(self.argument_spec, result._validated_parameters, result._aliases)
+        legal_inputs = _get_legal_inputs(
+            self.argument_spec, result._validated_parameters, result._aliases
+        )
 
         for option, alias in alias_warnings:
-            result._warnings.append({'option': option, 'alias': alias})
+            result._warnings.append({"option": option, "alias": alias})
 
         for deprecation in alias_deprecations:
-            result._deprecations.append({
-                'msg': "Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
-                'version': deprecation.get('version'),
-                'date': deprecation.get('date'),
-                'collection_name': deprecation.get('collection_name'),
-            })
+            result._deprecations.append(
+                {
+                    "msg": "Alias '%s' is deprecated. See the module docs for more information"
+                    % deprecation["name"],
+                    "version": deprecation.get("version"),
+                    "date": deprecation.get("date"),
+                    "collection_name": deprecation.get("collection_name"),
+                }
+            )
 
         try:
-            result._no_log_values.update(_list_no_log_values(self.argument_spec, result._validated_parameters))
+            result._no_log_values.update(
+                _list_no_log_values(self.argument_spec, result._validated_parameters)
+            )
         except TypeError as te:
             result.errors.append(NoLogError(to_native(te)))
 
         try:
-            result._deprecations.extend(_list_deprecations(self.argument_spec, result._validated_parameters))
+            result._deprecations.extend(
+                _list_deprecations(self.argument_spec, result._validated_parameters)
+            )
         except TypeError as te:
             result.errors.append(DeprecationError(to_native(te)))
 
@@ -225,42 +250,61 @@ class ArgumentSpecValidator:
             result.errors.append(AliasError(to_native(ve)))
 
         try:
-            check_mutually_exclusive(self._mutually_exclusive, result._validated_parameters)
+            check_mutually_exclusive(
+                self._mutually_exclusive, result._validated_parameters
+            )
         except TypeError as te:
             result.errors.append(MutuallyExclusiveError(to_native(te)))
 
-        result._no_log_values.update(_set_defaults(self.argument_spec, result._validated_parameters, False))
+        result._no_log_values.update(
+            _set_defaults(self.argument_spec, result._validated_parameters, False)
+        )
 
         try:
             check_required_arguments(self.argument_spec, result._validated_parameters)
         except TypeError as e:
             result.errors.append(RequiredError(to_native(e)))
 
-        _validate_argument_types(self.argument_spec, result._validated_parameters, errors=result.errors)
-        _validate_argument_values(self.argument_spec, result._validated_parameters, errors=result.errors)
+        _validate_argument_types(
+            self.argument_spec, result._validated_parameters, errors=result.errors
+        )
+        _validate_argument_values(
+            self.argument_spec, result._validated_parameters, errors=result.errors
+        )
 
         for check in _ADDITIONAL_CHECKS:
             try:
-                check['func'](getattr(self, "_{attr}".format(attr=check['attr'])), result._validated_parameters)
+                check["func"](
+                    getattr(self, "_{attr}".format(attr=check["attr"])),
+                    result._validated_parameters,
+                )
             except TypeError as te:
-                result.errors.append(check['err'](to_native(te)))
+                result.errors.append(check["err"](to_native(te)))
 
-        result._no_log_values.update(_set_defaults(self.argument_spec, result._validated_parameters))
+        result._no_log_values.update(
+            _set_defaults(self.argument_spec, result._validated_parameters)
+        )
 
         alias_deprecations = []
-        _validate_sub_spec(self.argument_spec, result._validated_parameters,
-                           errors=result.errors,
-                           no_log_values=result._no_log_values,
-                           unsupported_parameters=result._unsupported_parameters,
-                           supported_parameters=result._supported_parameters,
-                           alias_deprecations=alias_deprecations,)
+        _validate_sub_spec(
+            self.argument_spec,
+            result._validated_parameters,
+            errors=result.errors,
+            no_log_values=result._no_log_values,
+            unsupported_parameters=result._unsupported_parameters,
+            supported_parameters=result._supported_parameters,
+            alias_deprecations=alias_deprecations,
+        )
         for deprecation in alias_deprecations:
-            result._deprecations.append({
-                'msg': "Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
-                'version': deprecation.get('version'),
-                'date': deprecation.get('date'),
-                'collection_name': deprecation.get('collection_name'),
-            })
+            result._deprecations.append(
+                {
+                    "msg": "Alias '%s' is deprecated. See the module docs for more information"
+                    % deprecation["name"],
+                    "version": deprecation.get("version"),
+                    "date": deprecation.get("date"),
+                    "collection_name": deprecation.get("collection_name"),
+                }
+            )
 
         if result._unsupported_parameters:
             flattened_names = []
@@ -280,7 +324,9 @@ class ArgumentSpecValidator:
                 aliases_string = ", ".join(supported_aliases)
                 supported_string += " (%s)" % aliases_string
 
-            msg = "{0}. Supported parameters include: {1}.".format(unsupported_string, supported_string)
+            msg = "{0}. Supported parameters include: {1}.".format(
+                unsupported_string, supported_string
+            )
             result.errors.append(UnsupportedError(msg))
 
         return result
@@ -300,11 +346,18 @@ class ModuleArgumentSpecValidator(ArgumentSpecValidator):
         result = super(ModuleArgumentSpecValidator, self).validate(parameters)
 
         for d in result._deprecations:
-            deprecate(d['msg'],
-                      version=d.get('version'), date=d.get('date'),
-                      collection_name=d.get('collection_name'))
+            deprecate(
+                d["msg"],
+                version=d.get("version"),
+                date=d.get("date"),
+                collection_name=d.get("collection_name"),
+            )
 
         for w in result._warnings:
-            warn('Both option {option} and its alias {alias} are set.'.format(option=w['option'], alias=w['alias']))
+            warn(
+                "Both option {option} and its alias {alias} are set.".format(
+                    option=w["option"], alias=w["alias"]
+                )
+            )
 
         return result

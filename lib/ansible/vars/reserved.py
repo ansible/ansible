@@ -27,7 +27,7 @@ display = Display()
 
 
 def get_reserved_names(include_private=True):
-    ''' this function returns the list of reserved names associated with play objects'''
+    """this function returns the list of reserved names associated with play objects"""
 
     public = set()
     private = set()
@@ -45,13 +45,13 @@ def get_reserved_names(include_private=True):
                 public.add(name)
 
     # local_action is implicit with action
-    if 'action' in public:
-        public.add('local_action')
+    if "action" in public:
+        public.add("local_action")
 
     # loop implies with_
     # FIXME: remove after with_ is not only deprecated but removed
-    if 'loop' in private or 'loop' in public:
-        public.add('with_')
+    if "loop" in private or "loop" in public:
+        public.add("with_")
 
     if include_private:
         result = public.union(private)
@@ -62,7 +62,7 @@ def get_reserved_names(include_private=True):
 
 
 def warn_if_reserved(myvars, additional=None):
-    ''' this function warns if any variable passed conflicts with internally reserved names '''
+    """this function warns if any variable passed conflicts with internally reserved names"""
 
     if additional is None:
         reserved = _RESERVED_NAMES
@@ -70,9 +70,9 @@ def warn_if_reserved(myvars, additional=None):
         reserved = _RESERVED_NAMES.union(additional)
 
     varnames = set(myvars)
-    varnames.discard('vars')  # we add this one internally, so safe to ignore
+    varnames.discard("vars")  # we add this one internally, so safe to ignore
     for varname in varnames.intersection(reserved):
-        display.warning('Found variable using reserved name: %s' % varname)
+        display.warning("Found variable using reserved name: %s" % varname)
 
 
 def is_reserved_name(name):

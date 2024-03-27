@@ -25,17 +25,17 @@ display = Display()
 
 
 class BaseVarsPlugin(AnsiblePlugin):
-
     """
     Loads variables for groups and/or hosts
     """
+
     is_stateless = False
 
     def __init__(self):
-        """ constructor """
+        """constructor"""
         super(BaseVarsPlugin, self).__init__()
         self._display = display
 
     def get_vars(self, loader, path, entities):
-        """ Gets variables. """
+        """Gets variables."""
         self._basedir = basedir(path)

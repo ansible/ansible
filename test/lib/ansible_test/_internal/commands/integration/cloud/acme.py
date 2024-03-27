@@ -1,4 +1,5 @@
 """ACME plugin for integration tests."""
+
 from __future__ import annotations
 
 import os
@@ -25,10 +26,10 @@ class ACMEProvider(CloudProvider):
         super().__init__(args)
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
-        if os.environ.get('ANSIBLE_ACME_CONTAINER'):
-            self.image = os.environ.get('ANSIBLE_ACME_CONTAINER')
+        if os.environ.get("ANSIBLE_ACME_CONTAINER"):
+            self.image = os.environ.get("ANSIBLE_ACME_CONTAINER")
         else:
-            self.image = 'quay.io/ansible/acme-test-container:2.1.0'
+            self.image = "quay.io/ansible/acme-test-container:2.1.0"
 
         self.uses_docker = True
 
@@ -52,14 +53,14 @@ class ACMEProvider(CloudProvider):
             self.args,
             self.platform,
             self.image,
-            'acme-simulator',
+            "acme-simulator",
             ports,
         )
 
         if not descriptor:
             return
 
-        self._set_cloud_config('acme_host', descriptor.name)
+        self._set_cloud_config("acme_host", descriptor.name)
 
     def _setup_static(self) -> None:
         raise NotImplementedError()
@@ -71,7 +72,7 @@ class ACMEEnvironment(CloudEnvironment):
     def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         ansible_vars = dict(
-            acme_host=self._get_cloud_config('acme_host'),
+            acme_host=self._get_cloud_config("acme_host"),
         )
 
         return CloudEnvironmentConfig(

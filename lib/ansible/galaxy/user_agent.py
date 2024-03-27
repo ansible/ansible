@@ -13,7 +13,7 @@ def user_agent():
     """Returns a user agent used by ansible-galaxy to include the Ansible version, platform and python version."""
 
     python_version = sys.version_info
-    return u"ansible-galaxy/{ansible_version} ({platform}; python:{py_major}.{py_minor}.{py_micro})".format(
+    return "ansible-galaxy/{ansible_version} ({platform}; python:{py_major}.{py_minor}.{py_micro})".format(
         ansible_version=ansible_version,
         platform=platform.system(),
         py_major=python_version.major,

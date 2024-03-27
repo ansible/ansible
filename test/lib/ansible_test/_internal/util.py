@@ -1,4 +1,5 @@
 """Miscellaneous utility functions and classes."""
+
 from __future__ import annotations
 
 import abc
@@ -56,37 +57,37 @@ from .constants import (
     SUPPORTED_PYTHON_VERSIONS,
 )
 
-C = t.TypeVar('C')
-TBase = t.TypeVar('TBase')
-TKey = t.TypeVar('TKey')
-TValue = t.TypeVar('TValue')
+C = t.TypeVar("C")
+TBase = t.TypeVar("TBase")
+TKey = t.TypeVar("TKey")
+TValue = t.TypeVar("TValue")
 
 PYTHON_PATHS: dict[str, str] = {}
 
-COVERAGE_CONFIG_NAME = 'coveragerc'
+COVERAGE_CONFIG_NAME = "coveragerc"
 
 ANSIBLE_TEST_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # assume running from install
 ANSIBLE_ROOT = os.path.dirname(ANSIBLE_TEST_ROOT)
-ANSIBLE_LIB_ROOT = os.path.join(ANSIBLE_ROOT, 'ansible')
+ANSIBLE_LIB_ROOT = os.path.join(ANSIBLE_ROOT, "ansible")
 ANSIBLE_SOURCE_ROOT = None
 
 if not os.path.exists(ANSIBLE_LIB_ROOT):
     # running from source
     ANSIBLE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(ANSIBLE_TEST_ROOT)))
-    ANSIBLE_LIB_ROOT = os.path.join(ANSIBLE_ROOT, 'lib', 'ansible')
+    ANSIBLE_LIB_ROOT = os.path.join(ANSIBLE_ROOT, "lib", "ansible")
     ANSIBLE_SOURCE_ROOT = ANSIBLE_ROOT
 
-ANSIBLE_TEST_DATA_ROOT = os.path.join(ANSIBLE_TEST_ROOT, '_data')
-ANSIBLE_TEST_UTIL_ROOT = os.path.join(ANSIBLE_TEST_ROOT, '_util')
-ANSIBLE_TEST_CONFIG_ROOT = os.path.join(ANSIBLE_TEST_ROOT, 'config')
+ANSIBLE_TEST_DATA_ROOT = os.path.join(ANSIBLE_TEST_ROOT, "_data")
+ANSIBLE_TEST_UTIL_ROOT = os.path.join(ANSIBLE_TEST_ROOT, "_util")
+ANSIBLE_TEST_CONFIG_ROOT = os.path.join(ANSIBLE_TEST_ROOT, "config")
 
-ANSIBLE_TEST_CONTROLLER_ROOT = os.path.join(ANSIBLE_TEST_UTIL_ROOT, 'controller')
-ANSIBLE_TEST_TARGET_ROOT = os.path.join(ANSIBLE_TEST_UTIL_ROOT, 'target')
+ANSIBLE_TEST_CONTROLLER_ROOT = os.path.join(ANSIBLE_TEST_UTIL_ROOT, "controller")
+ANSIBLE_TEST_TARGET_ROOT = os.path.join(ANSIBLE_TEST_UTIL_ROOT, "target")
 
-ANSIBLE_TEST_TOOLS_ROOT = os.path.join(ANSIBLE_TEST_CONTROLLER_ROOT, 'tools')
-ANSIBLE_TEST_TARGET_TOOLS_ROOT = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'tools')
+ANSIBLE_TEST_TOOLS_ROOT = os.path.join(ANSIBLE_TEST_CONTROLLER_ROOT, "tools")
+ANSIBLE_TEST_TARGET_TOOLS_ROOT = os.path.join(ANSIBLE_TEST_TARGET_ROOT, "tools")
 
 # Modes are set to allow all users the same level of access.
 # This permits files to be used in tests that change users.
@@ -127,11 +128,13 @@ class Architecture:
     These are the architectures supported by ansible-test, such as when provisioning remote instances.
     """
 
-    X86_64 = 'x86_64'
-    AARCH64 = 'aarch64'
+    X86_64 = "x86_64"
+    AARCH64 = "aarch64"
 
 
-REMOTE_ARCHITECTURES = list(value for key, value in Architecture.__dict__.items() if not key.startswith('__'))
+REMOTE_ARCHITECTURES = list(
+    value for key, value in Architecture.__dict__.items() if not key.startswith("__")
+)
 
 
 def is_valid_identifier(value: str) -> bool:
@@ -170,17 +173,26 @@ def detect_architecture(python: str) -> t.Optional[str]:
     if python in results:
         return results[python]
 
-    if python == sys.executable or os.path.realpath(python) == os.path.realpath(sys.executable):
+    if python == sys.executable or os.path.realpath(python) == os.path.realpath(
+        sys.executable
+    ):
         uname = platform.uname()
     else:
-        data = raw_command([python, '-c', 'import json, platform; print(json.dumps(platform.uname()));'], capture=True)[0]
+        data = raw_command(
+            [
+                python,
+                "-c",
+                "import json, platform; print(json.dumps(platform.uname()));",
+            ],
+            capture=True,
+        )[0]
         uname = json.loads(data)
 
     translation = {
-        'x86_64': Architecture.X86_64,  # Linux, macOS
-        'amd64': Architecture.X86_64,  # FreeBSD
-        'aarch64': Architecture.AARCH64,  # Linux, FreeBSD
-        'arm64': Architecture.AARCH64,  # FreeBSD
+        "x86_64": Architecture.X86_64,  # Linux, macOS
+        "amd64": Architecture.X86_64,  # FreeBSD
+        "aarch64": Architecture.AARCH64,  # Linux, FreeBSD
+        "arm64": Architecture.AARCH64,  # FreeBSD
     }
 
     candidates = []
@@ -192,17 +204,30 @@ def detect_architecture(python: str) -> t.Optional[str]:
         candidates.append(uname[5])
 
     candidates = sorted(set(candidates))
-    architectures = sorted(set(arch for arch in [translation.get(candidate) for candidate in candidates] if arch))
+    architectures = sorted(
+        set(
+            arch
+            for arch in [translation.get(candidate) for candidate in candidates]
+            if arch
+        )
+    )
 
     architecture: t.Optional[str] = None
 
     if not architectures:
-        display.warning(f'Unable to determine architecture for Python interpreter "{python}" from: {candidates}')
+        display.warning(
+            f'Unable to determine architecture for Python interpreter "{python}" from: {candidates}'
+        )
     elif len(architectures) == 1:
         architecture = architectures[0]
-        display.info(f'Detected architecture {architecture} for Python interpreter: {python}', verbosity=1)
+        display.info(
+            f"Detected architecture {architecture} for Python interpreter: {python}",
+            verbosity=1,
+        )
     else:
-        display.warning(f'Conflicting architectures detected ({architectures}) for Python interpreter "{python}" from: {candidates}')
+        display.warning(
+            f'Conflicting architectures detected ({architectures}) for Python interpreter "{python}" from: {candidates}'
+        )
 
     results[python] = architecture
 
@@ -215,13 +240,13 @@ def filter_args(args: list[str], filters: dict[str, int]) -> list[str]:
     result = []
 
     for arg in args:
-        if not arg.startswith('-') and remaining:
+        if not arg.startswith("-") and remaining:
             remaining -= 1
             continue
 
         remaining = 0
 
-        parts = arg.split('=', 1)
+        parts = arg.split("=", 1)
         key = parts[0]
 
         if key in filters:
@@ -233,7 +258,9 @@ def filter_args(args: list[str], filters: dict[str, int]) -> list[str]:
     return result
 
 
-def read_lines_without_comments(path: str, remove_blank_lines: bool = False, optional: bool = False) -> list[str]:
+def read_lines_without_comments(
+    path: str, remove_blank_lines: bool = False, optional: bool = False
+) -> list[str]:
     """
     Returns lines from the specified text file with comments removed.
     Comments are any content from a hash symbol to the end of a line.
@@ -244,7 +271,7 @@ def read_lines_without_comments(path: str, remove_blank_lines: bool = False, opt
 
     lines = read_text_file(path).splitlines()
 
-    lines = [re.sub(r' *#.*$', '', line) for line in lines]
+    lines = [re.sub(r" *#.*$", "", line) for line in lines]
 
     if remove_blank_lines:
         lines = [line for line in lines if line]
@@ -257,7 +284,12 @@ def exclude_none_values(data: dict[TKey, t.Optional[TValue]]) -> dict[TKey, TVal
     return dict((key, value) for key, value in data.items() if value is not None)
 
 
-def find_executable(executable: str, cwd: t.Optional[str] = None, path: t.Optional[str] = None, required: t.Union[bool, str] = True) -> t.Optional[str]:
+def find_executable(
+    executable: str,
+    cwd: t.Optional[str] = None,
+    path: t.Optional[str] = None,
+    required: t.Union[bool, str] = True,
+) -> t.Optional[str]:
     """
     Find the specified executable and return the full path, or None if it could not be found.
     If required is True an exception will be raised if the executable is not found.
@@ -275,7 +307,7 @@ def find_executable(executable: str, cwd: t.Optional[str] = None, path: t.Option
             match = executable
     else:
         if path is None:
-            path = os.environ.get('PATH', os.path.defpath)
+            path = os.environ.get("PATH", os.path.defpath)
 
         if path:
             path_dirs = path.split(os.path.pathsep)
@@ -292,14 +324,16 @@ def find_executable(executable: str, cwd: t.Optional[str] = None, path: t.Option
 
                 candidate = os.path.join(path_dir, executable)
 
-                if os.path.exists(candidate) and os.access(candidate, os.F_OK | os.X_OK):
+                if os.path.exists(candidate) and os.access(
+                    candidate, os.F_OK | os.X_OK
+                ):
                     match = candidate
                     break
 
     if not match and required:
         message = 'Required program "%s" not found.' % executable
 
-        if required != 'warning':
+        if required != "warning":
             raise ApplicationError(message)
 
         display.warning(message)
@@ -307,7 +341,9 @@ def find_executable(executable: str, cwd: t.Optional[str] = None, path: t.Option
     return match
 
 
-def find_python(version: str, path: t.Optional[str] = None, required: bool = True) -> t.Optional[str]:
+def find_python(
+    version: str, path: t.Optional[str] = None, required: bool = True
+) -> t.Optional[str]:
     """
     Find and return the full path to the specified Python version.
     If required, an exception will be raised not found.
@@ -315,10 +351,10 @@ def find_python(version: str, path: t.Optional[str] = None, required: bool = Tru
     """
     version_info = str_to_version(version)
 
-    if not path and version_info == sys.version_info[:len(version_info)]:
+    if not path and version_info == sys.version_info[: len(version_info)]:
         python_bin = sys.executable
     else:
-        python_bin = find_executable('python%s' % version, path=path, required=required)
+        python_bin = find_executable("python%s" % version, path=path, required=required)
 
     return python_bin
 
@@ -328,10 +364,12 @@ def get_ansible_version() -> str:
     """Return the Ansible version."""
     # ansible may not be in our sys.path
     # avoids a symlink to release.py since ansible placement relative to ansible-test may change during delegation
-    load_module(os.path.join(ANSIBLE_LIB_ROOT, 'release.py'), 'ansible_release')
+    load_module(os.path.join(ANSIBLE_LIB_ROOT, "release.py"), "ansible_release")
 
     # noinspection PyUnresolvedReferences
-    from ansible_release import __version__ as ansible_version  # pylint: disable=import-error
+    from ansible_release import (
+        __version__ as ansible_version,
+    )  # pylint: disable=import-error
 
     return ansible_version
 
@@ -342,15 +380,24 @@ def _enable_vendoring() -> None:
     # Convert warnings into errors, to avoid problems from surfacing later.
 
     with warnings.catch_warnings():
-        warnings.filterwarnings('error')
+        warnings.filterwarnings("error")
 
-        load_module(os.path.join(ANSIBLE_LIB_ROOT, '_vendor', '__init__.py'), 'ansible_vendor')
+        load_module(
+            os.path.join(ANSIBLE_LIB_ROOT, "_vendor", "__init__.py"), "ansible_vendor"
+        )
 
 
 @cache
 def get_available_python_versions() -> dict[str, str]:
     """Return a dictionary indicating which supported Python versions are available."""
-    return dict((version, path) for version, path in ((version, find_python(version, required=False)) for version in SUPPORTED_PYTHON_VERSIONS) if path)
+    return dict(
+        (version, path)
+        for version, path in (
+            (version, find_python(version, required=False))
+            for version in SUPPORTED_PYTHON_VERSIONS
+        )
+        if path
+    )
 
 
 def raw_command(
@@ -365,35 +412,37 @@ def raw_command(
     interactive: bool = False,
     output_stream: t.Optional[OutputStream] = None,
     cmd_verbosity: int = 1,
-    str_errors: str = 'strict',
+    str_errors: str = "strict",
     error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified command and return stdout and stderr as a tuple."""
     output_stream = output_stream or OutputStream.AUTO
 
     if capture and interactive:
-        raise InternalError('Cannot combine capture=True with interactive=True.')
+        raise InternalError("Cannot combine capture=True with interactive=True.")
 
     if data and interactive:
-        raise InternalError('Cannot combine data with interactive=True.')
+        raise InternalError("Cannot combine data with interactive=True.")
 
     if stdin and interactive:
-        raise InternalError('Cannot combine stdin with interactive=True.')
+        raise InternalError("Cannot combine stdin with interactive=True.")
 
     if stdout and interactive:
-        raise InternalError('Cannot combine stdout with interactive=True.')
+        raise InternalError("Cannot combine stdout with interactive=True.")
 
     if stdin and data:
-        raise InternalError('Cannot combine stdin with data.')
+        raise InternalError("Cannot combine stdin with data.")
 
     if stdout and not capture:
-        raise InternalError('Redirection of stdout requires capture=True to avoid redirection of stderr to stdout.')
+        raise InternalError(
+            "Redirection of stdout requires capture=True to avoid redirection of stderr to stdout."
+        )
 
     if output_stream != OutputStream.AUTO and capture:
-        raise InternalError(f'Cannot combine {output_stream=} with capture=True.')
+        raise InternalError(f"Cannot combine {output_stream=} with capture=True.")
 
     if output_stream != OutputStream.AUTO and interactive:
-        raise InternalError(f'Cannot combine {output_stream=} with interactive=True.')
+        raise InternalError(f"Cannot combine {output_stream=} with interactive=True.")
 
     if not cwd:
         cwd = os.getcwd()
@@ -406,38 +455,40 @@ def raw_command(
     escaped_cmd = shlex.join(cmd)
 
     if capture:
-        description = 'Run'
+        description = "Run"
     elif interactive:
-        description = 'Interactive'
+        description = "Interactive"
     else:
-        description = 'Stream'
+        description = "Stream"
 
-    description += ' command'
+    description += " command"
 
     with_types = []
 
     if data:
-        with_types.append('data')
+        with_types.append("data")
 
     if stdin:
-        with_types.append('stdin')
+        with_types.append("stdin")
 
     if stdout:
-        with_types.append('stdout')
+        with_types.append("stdout")
 
     if with_types:
         description += f' with {"/".join(with_types)}'
 
-    display.info(f'{description}: {escaped_cmd}', verbosity=cmd_verbosity, truncate=True)
-    display.info('Working directory: %s' % cwd, verbosity=2)
+    display.info(
+        f"{description}: {escaped_cmd}", verbosity=cmd_verbosity, truncate=True
+    )
+    display.info("Working directory: %s" % cwd, verbosity=2)
 
-    program = find_executable(cmd[0], cwd=cwd, path=env['PATH'], required=False)
+    program = find_executable(cmd[0], cwd=cwd, path=env["PATH"], required=False)
 
     if program:
-        display.info('Program found: %s' % program, verbosity=2)
+        display.info("Program found: %s" % program, verbosity=2)
 
     for key in sorted(env.keys()):
-        display.info('%s=%s' % (key, env[key]), verbosity=2)
+        display.info("%s=%s" % (key, env[key]), verbosity=2)
 
     if explain:
         return None, None
@@ -462,7 +513,11 @@ def raw_command(
         # This also maintains consistency between local testing and CI systems, which typically do not provide a TTY.
         # To maintain output ordering, a single pipe is used for both stdout/stderr when not capturing output unless the output stream is ORIGINAL.
         stdout = stdout or subprocess.PIPE
-        stderr = subprocess.PIPE if capture or output_stream == OutputStream.ORIGINAL else subprocess.STDOUT
+        stderr = (
+            subprocess.PIPE
+            if capture or output_stream == OutputStream.ORIGINAL
+            else subprocess.STDOUT
+        )
         communicate = True
     else:
         stderr = None
@@ -474,34 +529,56 @@ def raw_command(
         try:
             cmd_bytes = [to_bytes(arg) for arg in cmd]
             env_bytes = dict((to_bytes(k), to_bytes(v)) for k, v in env.items())
-            process = subprocess.Popen(cmd_bytes, env=env_bytes, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)  # pylint: disable=consider-using-with
+            process = subprocess.Popen(
+                cmd_bytes,
+                env=env_bytes,
+                stdin=stdin,
+                stdout=stdout,
+                stderr=stderr,
+                cwd=cwd,
+            )  # pylint: disable=consider-using-with
         except FileNotFoundError as ex:
             raise ApplicationError('Required program "%s" not found.' % cmd[0]) from ex
 
         if communicate:
             data_bytes = to_optional_bytes(data)
-            stdout_bytes, stderr_bytes = communicate_with_process(process, data_bytes, stdout == subprocess.PIPE, stderr == subprocess.PIPE, capture=capture,
-                                                                  output_stream=output_stream)
-            stdout_text = to_optional_text(stdout_bytes, str_errors) or ''
-            stderr_text = to_optional_text(stderr_bytes, str_errors) or ''
+            stdout_bytes, stderr_bytes = communicate_with_process(
+                process,
+                data_bytes,
+                stdout == subprocess.PIPE,
+                stderr == subprocess.PIPE,
+                capture=capture,
+                output_stream=output_stream,
+            )
+            stdout_text = to_optional_text(stdout_bytes, str_errors) or ""
+            stderr_text = to_optional_text(stderr_bytes, str_errors) or ""
         else:
             process.wait()
             stdout_text, stderr_text = None, None
     finally:
         if process and process.returncode is None:
             process.kill()
-            display.info('')  # the process we're interrupting may have completed a partial line of output
-            display.notice('Killed command to avoid an orphaned child process during handling of an unexpected exception.')
+            display.info(
+                ""
+            )  # the process we're interrupting may have completed a partial line of output
+            display.notice(
+                "Killed command to avoid an orphaned child process during handling of an unexpected exception."
+            )
 
     status = process.returncode
     runtime = time.time() - start
 
-    display.info('Command exited with status %s after %s seconds.' % (status, runtime), verbosity=4)
+    display.info(
+        "Command exited with status %s after %s seconds." % (status, runtime),
+        verbosity=4,
+    )
 
     if status == 0:
         return stdout_text, stderr_text
 
-    raise SubprocessError(cmd, status, stdout_text, stderr_text, runtime, error_callback)
+    raise SubprocessError(
+        cmd, status, stdout_text, stderr_text, runtime, error_callback
+    )
 
 
 def communicate_with_process(
@@ -525,13 +602,17 @@ def communicate_with_process(
         threads.append(WriterThread(process.stdin, stdin))
 
     if stdout:
-        stdout_reader = reader(process.stdout, output_stream.get_buffer(sys.stdout.buffer))
+        stdout_reader = reader(
+            process.stdout, output_stream.get_buffer(sys.stdout.buffer)
+        )
         threads.append(stdout_reader)
     else:
         stdout_reader = None
 
     if stderr:
-        stderr_reader = reader(process.stderr, output_stream.get_buffer(sys.stderr.buffer))
+        stderr_reader = reader(
+            process.stderr, output_stream.get_buffer(sys.stderr.buffer)
+        )
         threads.append(stderr_reader)
     else:
         stderr_reader = None
@@ -546,14 +627,14 @@ def communicate_with_process(
             display.error(str(ex))
 
     if isinstance(stdout_reader, ReaderThread):
-        stdout_bytes = b''.join(stdout_reader.lines)
+        stdout_bytes = b"".join(stdout_reader.lines)
     else:
-        stdout_bytes = b''
+        stdout_bytes = b""
 
     if isinstance(stderr_reader, ReaderThread):
-        stderr_bytes = b''.join(stderr_reader.lines)
+        stderr_bytes = b"".join(stderr_reader.lines)
     else:
-        stderr_bytes = b''
+        stderr_bytes = b""
 
     process.wait()
 
@@ -628,30 +709,28 @@ def common_environment() -> dict[str, str]:
     """Common environment used for executing all programs."""
     env = dict(
         LC_ALL=CONFIGURED_LOCALE,
-        PATH=os.environ.get('PATH', os.path.defpath),
+        PATH=os.environ.get("PATH", os.path.defpath),
     )
 
-    required = (
-        'HOME',
-    )
+    required = ("HOME",)
 
     optional = (
-        'LD_LIBRARY_PATH',
-        'SSH_AUTH_SOCK',
+        "LD_LIBRARY_PATH",
+        "SSH_AUTH_SOCK",
         # MacOS High Sierra Compatibility
         # http://sealiesoftware.com/blog/archive/2017/6/5/Objective-C_and_fork_in_macOS_1013.html
         # Example configuration for macOS:
         # export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
-        'OBJC_DISABLE_INITIALIZE_FORK_SAFETY',
-        'ANSIBLE_KEEP_REMOTE_FILES',
+        "OBJC_DISABLE_INITIALIZE_FORK_SAFETY",
+        "ANSIBLE_KEEP_REMOTE_FILES",
         # MacOS Homebrew Compatibility
         # https://cryptography.io/en/latest/installation/#building-cryptography-on-macos
         # This may also be required to install pyyaml with libyaml support when installed in non-standard locations.
         # Example configuration for brew on macOS:
         # export LDFLAGS="-L$(brew --prefix openssl)/lib/     -L$(brew --prefix libyaml)/lib/"
         # export  CFLAGS="-I$(brew --prefix openssl)/include/ -I$(brew --prefix libyaml)/include/"
-        'LDFLAGS',
-        'CFLAGS',
+        "LDFLAGS",
+        "CFLAGS",
     )
 
     # FreeBSD Compatibility
@@ -659,8 +738,8 @@ def common_environment() -> dict[str, str]:
     # The header /usr/local/include/yaml.h isn't in the default include path for the compiler.
     # It is included here so that tests can take advantage of it, rather than only ansible-test during managed pip installs.
     # If CFLAGS has been set in the environment that value will take precedence due to being an optional var when calling pass_vars.
-    if os.path.exists('/etc/freebsd-update.conf'):
-        env.update(CFLAGS='-I/usr/local/include/')
+    if os.path.exists("/etc/freebsd-update.conf"):
+        env.update(CFLAGS="-I/usr/local/include/")
 
     env.update(pass_vars(required=required, optional=optional))
 
@@ -670,13 +749,15 @@ def common_environment() -> dict[str, str]:
 def report_locale(show_warning: bool) -> None:
     """Report the configured locale and the locale warning, if applicable."""
 
-    display.info(f'Configured locale: {CONFIGURED_LOCALE}', verbosity=1)
+    display.info(f"Configured locale: {CONFIGURED_LOCALE}", verbosity=1)
 
     if LOCALE_WARNING and show_warning:
         display.warning(LOCALE_WARNING)
 
 
-def pass_vars(required: c.Collection[str], optional: c.Collection[str]) -> dict[str, str]:
+def pass_vars(
+    required: c.Collection[str], optional: c.Collection[str]
+) -> dict[str, str]:
     """Return a filtered dictionary of environment variables based on the current environment."""
     env = {}
 
@@ -700,7 +781,9 @@ def verified_chmod(path: str, mode: int) -> None:
     executable = any(mode & perm for perm in (stat.S_IXUSR, stat.S_IXGRP, stat.S_IXOTH))
 
     if executable and not os.access(path, os.X_OK):
-        raise ApplicationError(f'Path "{path}" should executable, but is not. Is the filesystem mounted with the "noexec" option?')
+        raise ApplicationError(
+            f'Path "{path}" should executable, but is not. Is the filesystem mounted with the "noexec" option?'
+        )
 
 
 def remove_tree(path: str) -> None:
@@ -714,45 +797,45 @@ def remove_tree(path: str) -> None:
 def is_binary_file(path: str) -> bool:
     """Return True if the specified file is a binary file, otherwise return False."""
     assume_text = {
-        '.cfg',
-        '.conf',
-        '.crt',
-        '.cs',
-        '.css',
-        '.html',
-        '.ini',
-        '.j2',
-        '.js',
-        '.json',
-        '.md',
-        '.pem',
-        '.ps1',
-        '.psm1',
-        '.py',
-        '.rst',
-        '.sh',
-        '.txt',
-        '.xml',
-        '.yaml',
-        '.yml',
+        ".cfg",
+        ".conf",
+        ".crt",
+        ".cs",
+        ".css",
+        ".html",
+        ".ini",
+        ".j2",
+        ".js",
+        ".json",
+        ".md",
+        ".pem",
+        ".ps1",
+        ".psm1",
+        ".py",
+        ".rst",
+        ".sh",
+        ".txt",
+        ".xml",
+        ".yaml",
+        ".yml",
     }
 
     assume_binary = {
-        '.bin',
-        '.eot',
-        '.gz',
-        '.ico',
-        '.iso',
-        '.jpg',
-        '.otf',
-        '.p12',
-        '.png',
-        '.pyc',
-        '.rpm',
-        '.ttf',
-        '.woff',
-        '.woff2',
-        '.zip',
+        ".bin",
+        ".eot",
+        ".gz",
+        ".ico",
+        ".iso",
+        ".jpg",
+        ".otf",
+        ".p12",
+        ".png",
+        ".pyc",
+        ".rpm",
+        ".ttf",
+        ".woff",
+        ".woff2",
+        ".zip",
     }
 
     ext = os.path.splitext(path)[1]
@@ -764,12 +847,14 @@ def is_binary_file(path: str) -> bool:
         return True
 
     with open_binary_file(path) as path_fd:
-        return b'\0' in path_fd.read(4096)
+        return b"\0" in path_fd.read(4096)
 
 
 def generate_name(length: int = 8) -> str:
     """Generate and return a random name."""
-    return ''.join(random.choice(string.ascii_letters + string.digits) for _idx in range(length))
+    return "".join(
+        random.choice(string.ascii_letters + string.digits) for _idx in range(length)
+    )
 
 
 def generate_password() -> str:
@@ -779,10 +864,10 @@ def generate_password() -> str:
         string.digits,
         string.ascii_letters,
         string.digits,
-        '-',
+        "-",
     ] * 4
 
-    password = ''.join([random.choice(char) for char in chars[:-1]])
+    password = "".join([random.choice(char) for char in chars[:-1]])
 
     display.sensitive.add(password)
 
@@ -792,13 +877,13 @@ def generate_password() -> str:
 class Display:
     """Manages color console output."""
 
-    clear = '\033[0m'
-    red = '\033[31m'
-    green = '\033[32m'
-    yellow = '\033[33m'
-    blue = '\033[34m'
-    purple = '\033[35m'
-    cyan = '\033[36m'
+    clear = "\033[0m"
+    red = "\033[31m"
+    green = "\033[32m"
+    yellow = "\033[33m"
+    blue = "\033[34m"
+    purple = "\033[35m"
+    cyan = "\033[36m"
 
     verbosity_colors = {
         0: None,
@@ -812,7 +897,9 @@ class Display:
         self.color = sys.stdout.isatty()
         self.warnings: list[str] = []
         self.warnings_unique: set[str] = set()
-        self.fd = sys.stderr  # default to stderr until config is initialized to avoid early messages going to stdout
+        self.fd = (
+            sys.stderr
+        )  # default to stderr until config is initialized to avoid early messages going to stdout
         self.rows = 0
         self.columns = 0
         self.truncate = 0
@@ -820,18 +907,20 @@ class Display:
         self.sensitive: set[str] = set()
 
         if os.isatty(0):
-            self.rows, self.columns = unpack('HHHH', fcntl.ioctl(0, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[:2]
+            self.rows, self.columns = unpack(
+                "HHHH", fcntl.ioctl(0, TIOCGWINSZ, pack("HHHH", 0, 0, 0, 0))
+            )[:2]
 
     def __warning(self, message: str) -> None:
         """Internal implementation for displaying a warning message."""
-        self.print_message('WARNING: %s' % message, color=self.purple)
+        self.print_message("WARNING: %s" % message, color=self.purple)
 
     def review_warnings(self) -> None:
         """Review all warnings which previously occurred."""
         if not self.warnings:
             return
 
-        self.__warning('Reviewing previous %d warning(s):' % len(self.warnings))
+        self.__warning("Reviewing previous %d warning(s):" % len(self.warnings))
 
         for warning in self.warnings:
             self.__warning(warning)
@@ -852,15 +941,15 @@ class Display:
 
     def notice(self, message: str) -> None:
         """Display a notice level message."""
-        self.print_message('NOTICE: %s' % message, color=self.purple)
+        self.print_message("NOTICE: %s" % message, color=self.purple)
 
     def error(self, message: str) -> None:
         """Display an error level message."""
-        self.print_message('ERROR: %s' % message, color=self.red)
+        self.print_message("ERROR: %s" % message, color=self.red)
 
     def fatal(self, message: str) -> None:
         """Display a fatal level message."""
-        self.print_message('FATAL: %s' % message, color=self.red, stderr=True)
+        self.print_message("FATAL: %s" % message, color=self.red, stderr=True)
 
     def info(self, message: str, verbosity: int = 0, truncate: bool = False) -> None:
         """Display an info level message."""
@@ -881,16 +970,16 @@ class Display:
                 if not item:
                     continue
 
-                message = message.replace(item, '*' * len(item))
+                message = message.replace(item, "*" * len(item))
 
         if truncate:
             if len(message) > self.truncate > 5:
-                message = message[:self.truncate - 5] + ' ...'
+                message = message[: self.truncate - 5] + " ..."
 
         if color and self.color:
             # convert color resets in message to desired color
             message = message.replace(self.clear, color)
-            message = '%s%s%s' % (color, message, self.clear)
+            message = "%s%s%s" % (color, message, self.clear)
 
         fd = sys.stderr if stderr else self.fd
 
@@ -902,7 +991,7 @@ class InternalError(Exception):
     """An unhandled internal error indicating a bug in the code."""
 
     def __init__(self, message: str) -> None:
-        super().__init__(f'An internal error has occurred in ansible-test: {message}')
+        super().__init__(f"An internal error has occurred in ansible-test: {message}")
 
 
 class ApplicationError(Exception):
@@ -932,12 +1021,12 @@ class SubprocessError(ApplicationError):
         message = 'Command "%s" returned exit status %s.\n' % (shlex.join(cmd), status)
 
         if stderr:
-            message += '>>> Standard Error\n'
-            message += '%s%s\n' % (stderr.strip(), Display.clear)
+            message += ">>> Standard Error\n"
+            message += "%s%s\n" % (stderr.strip(), Display.clear)
 
         if stdout:
-            message += '>>> Standard Output\n'
-            message += '%s%s\n' % (stdout.strip(), Display.clear)
+            message += ">>> Standard Output\n"
+            message += "%s%s\n" % (stdout.strip(), Display.clear)
 
         self.cmd = cmd
         self.message = message
@@ -958,7 +1047,7 @@ class MissingEnvironmentVariable(ApplicationError):
     """Error caused by missing environment variable."""
 
     def __init__(self, name: str) -> None:
-        super().__init__('Missing environment variable: %s' % name)
+        super().__init__("Missing environment variable: %s" % name)
 
         self.name = name
 
@@ -981,7 +1070,13 @@ class HostConnectionError(ApplicationError):
             self._callback()
 
 
-def retry(func: t.Callable[..., TValue], ex_type: t.Type[BaseException] = SubprocessError, sleep: int = 10, attempts: int = 10, warn: bool = True) -> TValue:
+def retry(
+    func: t.Callable[..., TValue],
+    ex_type: t.Type[BaseException] = SubprocessError,
+    sleep: int = 10,
+    attempts: int = 10,
+    warn: bool = True,
+) -> TValue:
     """Retry the specified function on failure."""
     for dummy in range(1, attempts):
         try:
@@ -1009,7 +1104,9 @@ def parse_to_list_of_dict(pattern: str, value: str) -> list[dict[str, str]]:
             unmatched.append(line)
 
     if unmatched:
-        raise Exception('Pattern "%s" did not match values:\n%s' % (pattern, '\n'.join(unmatched)))
+        raise Exception(
+            'Pattern "%s" did not match values:\n%s' % (pattern, "\n".join(unmatched))
+        )
 
     return matched
 
@@ -1060,17 +1157,20 @@ def paths_to_dirs(paths: list[str]) -> list[str]:
 
 def str_to_version(version: str) -> tuple[int, ...]:
     """Return a version tuple from a version string."""
-    return tuple(int(n) for n in version.split('.'))
+    return tuple(int(n) for n in version.split("."))
 
 
 def version_to_str(version: tuple[int, ...]) -> str:
     """Return a version string from a version tuple."""
-    return '.'.join(str(n) for n in version)
+    return ".".join(str(n) for n in version)
 
 
 def sorted_versions(versions: list[str]) -> list[str]:
     """Return a sorted copy of the given list of versions."""
-    return [version_to_str(version) for version in sorted(str_to_version(version) for version in versions)]
+    return [
+        version_to_str(version)
+        for version in sorted(str_to_version(version) for version in versions)
+    ]
 
 
 def import_plugins(directory: str, root: t.Optional[str] = None) -> None:
@@ -1082,11 +1182,13 @@ def import_plugins(directory: str, root: t.Optional[str] = None) -> None:
         root = os.path.dirname(__file__)
 
     path = os.path.join(root, directory)
-    package = __name__.rsplit('.', 1)[0]
-    prefix = '%s.%s.' % (package, directory.replace(os.path.sep, '.'))
+    package = __name__.rsplit(".", 1)[0]
+    prefix = "%s.%s." % (package, directory.replace(os.path.sep, "."))
 
-    for (_module_loader, name, _ispkg) in pkgutil.iter_modules([path], prefix=prefix):
-        module_path = os.path.join(root, name[len(package) + 1:].replace('.', os.path.sep) + '.py')
+    for _module_loader, name, _ispkg in pkgutil.iter_modules([path], prefix=prefix):
+        module_path = os.path.join(
+            root, name[len(package) + 1 :].replace(".", os.path.sep) + ".py"
+        )
         load_module(module_path, name)
 
 
@@ -1095,7 +1197,9 @@ def load_plugins(base_type: t.Type[C], database: dict[str, t.Type[C]]) -> None:
     Load plugins of the specified type and track them in the specified database.
     Only plugins which have already been imported will be loaded.
     """
-    plugins: dict[str, t.Type[C]] = dict((sc.__module__.rsplit('.', 1)[1], sc) for sc in get_subclasses(base_type))
+    plugins: dict[str, t.Type[C]] = dict(
+        (sc.__module__.rsplit(".", 1)[1], sc) for sc in get_subclasses(base_type)
+    )
 
     for plugin in plugins:
         database[plugin] = plugins[plugin]
@@ -1114,24 +1218,39 @@ def load_module(path: str, name: str) -> None:
 
 def sanitize_host_name(name: str) -> str:
     """Return a sanitized version of the given name, suitable for use as a hostname."""
-    return re.sub('[^A-Za-z0-9]+', '-', name)[:63].strip('-')
+    return re.sub("[^A-Za-z0-9]+", "-", name)[:63].strip("-")
 
 
-def get_generic_type(base_type: t.Type, generic_base_type: t.Type[TValue]) -> t.Optional[t.Type[TValue]]:
+def get_generic_type(
+    base_type: t.Type, generic_base_type: t.Type[TValue]
+) -> t.Optional[t.Type[TValue]]:
     """Return the generic type arg derived from the generic_base_type type that is associated with the base_type type, if any, otherwise return None."""
     # noinspection PyUnresolvedReferences
     type_arg = t.get_args(base_type.__orig_bases__[0])[0]
     return None if isinstance(type_arg, generic_base_type) else type_arg
 
 
-def get_type_associations(base_type: t.Type[TBase], generic_base_type: t.Type[TValue]) -> list[tuple[t.Type[TValue], t.Type[TBase]]]:
+def get_type_associations(
+    base_type: t.Type[TBase], generic_base_type: t.Type[TValue]
+) -> list[tuple[t.Type[TValue], t.Type[TBase]]]:
     """Create and return a list of tuples associating generic_base_type derived types with a corresponding base_type derived type."""
-    return [item for item in [(get_generic_type(sc_type, generic_base_type), sc_type) for sc_type in get_subclasses(base_type)] if item[1]]
+    return [
+        item
+        for item in [
+            (get_generic_type(sc_type, generic_base_type), sc_type)
+            for sc_type in get_subclasses(base_type)
+        ]
+        if item[1]
+    ]
 
 
-def get_type_map(base_type: t.Type[TBase], generic_base_type: t.Type[TValue]) -> dict[t.Type[TValue], t.Type[TBase]]:
+def get_type_map(
+    base_type: t.Type[TBase], generic_base_type: t.Type[TValue]
+) -> dict[t.Type[TValue], t.Type[TBase]]:
     """Create and return a mapping of generic_base_type derived types to base_type derived types."""
-    return {item[0]: item[1] for item in get_type_associations(base_type, generic_base_type)}
+    return {
+        item[0]: item[1] for item in get_type_associations(base_type, generic_base_type)
+    }
 
 
 def verify_sys_executable(path: str) -> t.Optional[str]:
@@ -1142,7 +1261,9 @@ def verify_sys_executable(path: str) -> t.Optional[str]:
     if os.path.realpath(path) == os.path.realpath(sys.executable):
         return None
 
-    expected_executable = raw_command([path, '-c', 'import sys; print(sys.executable)'], capture=True)[0]
+    expected_executable = raw_command(
+        [path, "-c", "import sys; print(sys.executable)"], capture=True
+    )[0]
 
     if expected_executable == sys.executable:
         return None
@@ -1150,19 +1271,25 @@ def verify_sys_executable(path: str) -> t.Optional[str]:
     return expected_executable
 
 
-def type_guard(sequence: c.Sequence[t.Any], guard_type: t.Type[C]) -> t.TypeGuard[c.Sequence[C]]:
+def type_guard(
+    sequence: c.Sequence[t.Any], guard_type: t.Type[C]
+) -> t.TypeGuard[c.Sequence[C]]:
     """
     Raises an exception if any item in the given sequence does not match the specified guard type.
     Use with assert so that type checkers are aware of the type guard.
     """
-    invalid_types = set(type(item) for item in sequence if not isinstance(item, guard_type))
+    invalid_types = set(
+        type(item) for item in sequence if not isinstance(item, guard_type)
+    )
 
     if not invalid_types:
         return True
 
     invalid_type_names = sorted(str(item) for item in invalid_types)
 
-    raise Exception(f'Sequence required to contain only {guard_type} includes: {", ".join(invalid_type_names)}')
+    raise Exception(
+        f'Sequence required to contain only {guard_type} includes: {", ".join(invalid_type_names)}'
+    )
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

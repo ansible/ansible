@@ -8,6 +8,7 @@ from __future__ import annotations
 try:
     from resolvelib import Resolver
 except ImportError:
+
     class Resolver:  # type: ignore[no-redef]
         pass
 

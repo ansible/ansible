@@ -15,44 +15,50 @@ from abc import ABCMeta, abstractmethod
 
 yumdnf_argument_spec = dict(
     argument_spec=dict(
-        allow_downgrade=dict(type='bool', default=False),
+        allow_downgrade=dict(type="bool", default=False),
         allowerasing=dict(default=False, type="bool"),
-        autoremove=dict(type='bool', default=False),
+        autoremove=dict(type="bool", default=False),
         best=dict(type="bool"),
-        bugfix=dict(required=False, type='bool', default=False),
-        cacheonly=dict(type='bool', default=False),
-        conf_file=dict(type='str'),
-        disable_excludes=dict(type='str', default=None),
-        disable_gpg_check=dict(type='bool', default=False),
-        disable_plugin=dict(type='list', elements='str', default=[]),
-        disablerepo=dict(type='list', elements='str', default=[]),
-        download_only=dict(type='bool', default=False),
-        download_dir=dict(type='str', default=None),
-        enable_plugin=dict(type='list', elements='str', default=[]),
-        enablerepo=dict(type='list', elements='str', default=[]),
-        exclude=dict(type='list', elements='str', default=[]),
-        installroot=dict(type='str', default="/"),
+        bugfix=dict(required=False, type="bool", default=False),
+        cacheonly=dict(type="bool", default=False),
+        conf_file=dict(type="str"),
+        disable_excludes=dict(type="str", default=None),
+        disable_gpg_check=dict(type="bool", default=False),
+        disable_plugin=dict(type="list", elements="str", default=[]),
+        disablerepo=dict(type="list", elements="str", default=[]),
+        download_only=dict(type="bool", default=False),
+        download_dir=dict(type="str", default=None),
+        enable_plugin=dict(type="list", elements="str", default=[]),
+        enablerepo=dict(type="list", elements="str", default=[]),
+        exclude=dict(type="list", elements="str", default=[]),
+        installroot=dict(type="str", default="/"),
         install_repoquery=dict(
-            type='bool', default=True,
-            removed_in_version='2.20', removed_from_collection='ansible.builtin',
+            type="bool",
+            default=True,
+            removed_in_version="2.20",
+            removed_from_collection="ansible.builtin",
         ),
-        install_weak_deps=dict(type='bool', default=True),
-        list=dict(type='str'),
-        name=dict(type='list', elements='str', aliases=['pkg'], default=[]),
+        install_weak_deps=dict(type="bool", default=True),
+        list=dict(type="str"),
+        name=dict(type="list", elements="str", aliases=["pkg"], default=[]),
         nobest=dict(type="bool"),
         releasever=dict(default=None),
-        security=dict(type='bool', default=False),
-        skip_broken=dict(type='bool', default=False),
+        security=dict(type="bool", default=False),
+        skip_broken=dict(type="bool", default=False),
         # removed==absent, installed==present, these are accepted as aliases
-        state=dict(type='str', default=None, choices=['absent', 'installed', 'latest', 'present', 'removed']),
-        update_cache=dict(type='bool', default=False, aliases=['expire-cache']),
-        update_only=dict(required=False, default="no", type='bool'),
-        validate_certs=dict(type='bool', default=True),
-        sslverify=dict(type='bool', default=True),
-        lock_timeout=dict(type='int', default=30),
+        state=dict(
+            type="str",
+            default=None,
+            choices=["absent", "installed", "latest", "present", "removed"],
+        ),
+        update_cache=dict(type="bool", default=False, aliases=["expire-cache"]),
+        update_only=dict(required=False, default="no", type="bool"),
+        validate_certs=dict(type="bool", default=True),
+        sslverify=dict(type="bool", default=True),
+        lock_timeout=dict(type="int", default=30),
     ),
-    required_one_of=[['name', 'list', 'update_cache']],
-    mutually_exclusive=[['name', 'list'], ['best', 'nobest']],
+    required_one_of=[["name", "list", "update_cache"]],
+    mutually_exclusive=[["name", "list"], ["best", "nobest"]],
     supports_check_mode=True,
 )
 
@@ -68,37 +74,37 @@ class YumDnf(metaclass=ABCMeta):
 
         self.module = module
 
-        self.allow_downgrade = self.module.params['allow_downgrade']
-        self.allowerasing = self.module.params['allowerasing']
-        self.autoremove = self.module.params['autoremove']
-        self.best = self.module.params['best']
-        self.bugfix = self.module.params['bugfix']
-        self.cacheonly = self.module.params['cacheonly']
-        self.conf_file = self.module.params['conf_file']
-        self.disable_excludes = self.module.params['disable_excludes']
-        self.disable_gpg_check = self.module.params['disable_gpg_check']
-        self.disable_plugin = self.module.params['disable_plugin']
-        self.disablerepo = self.module.params.get('disablerepo', [])
-        self.download_only = self.module.params['download_only']
-        self.download_dir = self.module.params['download_dir']
-        self.enable_plugin = self.module.params['enable_plugin']
-        self.enablerepo = self.module.params.get('enablerepo', [])
-        self.exclude = self.module.params['exclude']
-        self.installroot = self.module.params['installroot']
-        self.install_repoquery = self.module.params['install_repoquery']
-        self.install_weak_deps = self.module.params['install_weak_deps']
-        self.list = self.module.params['list']
-        self.names = [p.strip() for p in self.module.params['name']]
-        self.nobest = self.module.params['nobest']
-        self.releasever = self.module.params['releasever']
-        self.security = self.module.params['security']
-        self.skip_broken = self.module.params['skip_broken']
-        self.state = self.module.params['state']
-        self.update_only = self.module.params['update_only']
-        self.update_cache = self.module.params['update_cache']
-        self.validate_certs = self.module.params['validate_certs']
-        self.sslverify = self.module.params['sslverify']
-        self.lock_timeout = self.module.params['lock_timeout']
+        self.allow_downgrade = self.module.params["allow_downgrade"]
+        self.allowerasing = self.module.params["allowerasing"]
+        self.autoremove = self.module.params["autoremove"]
+        self.best = self.module.params["best"]
+        self.bugfix = self.module.params["bugfix"]
+        self.cacheonly = self.module.params["cacheonly"]
+        self.conf_file = self.module.params["conf_file"]
+        self.disable_excludes = self.module.params["disable_excludes"]
+        self.disable_gpg_check = self.module.params["disable_gpg_check"]
+        self.disable_plugin = self.module.params["disable_plugin"]
+        self.disablerepo = self.module.params.get("disablerepo", [])
+        self.download_only = self.module.params["download_only"]
+        self.download_dir = self.module.params["download_dir"]
+        self.enable_plugin = self.module.params["enable_plugin"]
+        self.enablerepo = self.module.params.get("enablerepo", [])
+        self.exclude = self.module.params["exclude"]
+        self.installroot = self.module.params["installroot"]
+        self.install_repoquery = self.module.params["install_repoquery"]
+        self.install_weak_deps = self.module.params["install_weak_deps"]
+        self.list = self.module.params["list"]
+        self.names = [p.strip() for p in self.module.params["name"]]
+        self.nobest = self.module.params["nobest"]
+        self.releasever = self.module.params["releasever"]
+        self.security = self.module.params["security"]
+        self.skip_broken = self.module.params["skip_broken"]
+        self.state = self.module.params["state"]
+        self.update_only = self.module.params["update_only"]
+        self.update_cache = self.module.params["update_cache"]
+        self.validate_certs = self.module.params["validate_certs"]
+        self.sslverify = self.module.params["sslverify"]
+        self.lock_timeout = self.module.params["lock_timeout"]
 
         # It's possible someone passed a comma separated string since it used
         # to be a string type, so we should handle that
@@ -110,11 +116,11 @@ class YumDnf(metaclass=ABCMeta):
         # Fail if someone passed a space separated string
         # https://github.com/ansible/ansible/issues/46301
         for name in self.names:
-            if ' ' in name and not any(spec in name for spec in ['@', '>', '<', '=']):
+            if " " in name and not any(spec in name for spec in ["@", ">", "<", "="]):
                 module.fail_json(
-                    msg='It appears that a space separated string of packages was passed in '
-                        'as an argument. To operate on several packages, pass a comma separated '
-                        'string of packages or a list of packages.'
+                    msg="It appears that a space separated string of packages was passed in "
+                    "as an argument. To operate on several packages, pass a comma separated "
+                    "string of packages or a list of packages."
                 )
 
         # Sanity checking for autoremove
@@ -139,9 +145,9 @@ class YumDnf(metaclass=ABCMeta):
         new_list = []
         remove_from_original_list = []
         for element in some_list:
-            if ',' in element:
+            if "," in element:
                 remove_from_original_list.append(element)
-                new_list.extend([e.strip() for e in element.split(',')])
+                new_list.extend([e.strip() for e in element.split(",")])
 
         for element in remove_from_original_list:
             some_list.remove(element)

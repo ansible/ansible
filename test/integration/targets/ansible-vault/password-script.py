@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import sys
 
-PASSWORD = 'test-vault-password'
+PASSWORD = "test-vault-password"
 
 
 def main(args):
@@ -28,5 +28,5 @@ def main(args):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv[:]))

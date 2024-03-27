@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 connection: test_connection_default
 short_description: test connection plugin used in tests
 description:
@@ -11,15 +11,15 @@ description:
 author: ansible (@core)
 version_added: historical
 options:
-'''
+"""
 
 from ansible.plugins.connection import ConnectionBase
 
 
 class Connection(ConnectionBase):
-    ''' test connnection '''
+    """test connnection"""
 
-    transport = 'test_connection_default'
+    transport = "test_connection_default"
 
     def __init__(self, *args, **kwargs):
         super(Connection, self).__init__(*args, **kwargs)

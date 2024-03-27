@@ -38,10 +38,14 @@ def check_for_controlpersist(ssh_executable):
     except KeyError:
         pass
 
-    b_ssh_exec = to_bytes(ssh_executable, errors='surrogate_or_strict')
+    b_ssh_exec = to_bytes(ssh_executable, errors="surrogate_or_strict")
     has_cp = True
     try:
-        cmd = subprocess.Popen([b_ssh_exec, '-o', 'ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd = subprocess.Popen(
+            [b_ssh_exec, "-o", "ControlPersist"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
         (out, err) = cmd.communicate()
         if b"Bad configuration option" in err or b"Usage:" in err:
             has_cp = False
@@ -55,11 +59,14 @@ def check_for_controlpersist(ssh_executable):
 def set_default_transport():
 
     # deal with 'smart' connection .. one time ..
-    if C.DEFAULT_TRANSPORT == 'smart':
-        display.deprecated("The 'smart' option for connections is deprecated. Set the connection plugin directly instead.", version='2.20')
+    if C.DEFAULT_TRANSPORT == "smart":
+        display.deprecated(
+            "The 'smart' option for connections is deprecated. Set the connection plugin directly instead.",
+            version="2.20",
+        )
 
         # see if SSH can support ControlPersist if not use paramiko
-        if not check_for_controlpersist('ssh') and paramiko is not None:
+        if not check_for_controlpersist("ssh") and paramiko is not None:
             C.DEFAULT_TRANSPORT = "paramiko"
         else:
             C.DEFAULT_TRANSPORT = "ssh"

@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 module: semantic_markup
 short_description: Test semantic markup
 description:
@@ -91,36 +91,41 @@ options:
           - O(bar=bam).
           - O(foo.bar=1).
         type: str
-'''
+"""
 
-EXAMPLES = '''#'''
+EXAMPLES = """#"""
 
-RETURN = r'''
+RETURN = r"""
 bar:
   description: Bar.
   type: int
   returned: success
   sample: 5
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
 
-if __name__ == '__main__':
-    module = AnsibleModule(argument_spec=dict(
-        foo=dict(),
-        a1=dict(),
-        a2=dict(),
-        a3=dict(),
-        a4=dict(),
-        a5=dict(),
-        a6=dict(),
-        a7=dict(),
-        a8=dict(),
-        a9=dict(),
-        a10=dict(),
-        a11=dict(type='dict', options=dict(
-            b1=dict(),
-        ))
-    ))
+if __name__ == "__main__":
+    module = AnsibleModule(
+        argument_spec=dict(
+            foo=dict(),
+            a1=dict(),
+            a2=dict(),
+            a3=dict(),
+            a4=dict(),
+            a5=dict(),
+            a6=dict(),
+            a7=dict(),
+            a8=dict(),
+            a9=dict(),
+            a10=dict(),
+            a11=dict(
+                type="dict",
+                options=dict(
+                    b1=dict(),
+                ),
+            ),
+        )
+    )
     module.exit_json()

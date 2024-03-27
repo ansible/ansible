@@ -12,7 +12,7 @@
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 
-'''
+"""
 The **urls** utils module offers a replacement for the urllib python library.
 
 urllib is the python stdlib way to retrieve files from the Internet but it
@@ -25,7 +25,7 @@ to replace urllib with a more secure library. However, all third party libraries
 require that the library be installed on the managed machine. That is an extra step
 for users making use of a module. If possible, avoid third party libraries by using
 this code instead.
-'''
+"""
 
 from __future__ import annotations
 
@@ -55,6 +55,7 @@ from urllib.request import BaseHandler
 
 try:
     import gzip
+
     HAS_GZIP = True
     GZIP_IMP_ERR = None
 except ImportError:
@@ -70,6 +71,7 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native, to_
 
 try:
     import ssl
+
     HAS_SSL = True
 except Exception:
     HAS_SSL = False
@@ -86,6 +88,7 @@ except ImportError:
 # Old import for GSSAPI authentication, this is not used in urls.py but kept for backwards compatibility.
 try:
     import urllib_gssapi  # pylint: disable=unused-import
+
     HAS_GSSAPI = True
 except ImportError:
     HAS_GSSAPI = False
@@ -95,9 +98,11 @@ try:
     import gssapi
 
     class HTTPGSSAPIAuthHandler(BaseHandler):
-        """ Handles Negotiate/Kerberos support through the gssapi library. """
+        """Handles Negotiate/Kerberos support through the gssapi library."""
 
-        AUTH_HEADER_PATTERN = re.compile(r'(?:.*)\s*(Negotiate|Kerberos)\s*([^,]*),?', re.I)
+        AUTH_HEADER_PATTERN = re.compile(
+            r"(?:.*)\s*(Negotiate|Kerberos)\s*([^,]*),?", re.I
+        )
         handler_order = 480  # Handle before Digest authentication
 
         def __init__(self, username=None, password=None):
@@ -106,7 +111,9 @@ try:
             self._context = None
 
         def get_auth_value(self, headers):
-            auth_match = self.AUTH_HEADER_PATTERN.search(headers.get('www-authenticate', ''))
+            auth_match = self.AUTH_HEADER_PATTERN.search(
+                headers.get("www-authenticate", "")
+            )
             if auth_match:
                 return auth_match.group(1), base64.b64decode(auth_match.group(2))
 
@@ -127,29 +134,39 @@ try:
                 username = gssapi.Name(self.username, name_type=gssapi.NameType.user)
 
             if username and self.password:
-                if not hasattr(gssapi.raw, 'acquire_cred_with_password'):
-                    raise NotImplementedError("Platform GSSAPI library does not support "
-                                              "gss_acquire_cred_with_password, cannot acquire GSSAPI credential with "
-                                              "explicit username and password.")
+                if not hasattr(gssapi.raw, "acquire_cred_with_password"):
+                    raise NotImplementedError(
+                        "Platform GSSAPI library does not support "
+                        "gss_acquire_cred_with_password, cannot acquire GSSAPI credential with "
+                        "explicit username and password."
+                    )
 
-                b_password = to_bytes(self.password, errors='surrogate_or_strict')
-                cred = gssapi.raw.acquire_cred_with_password(username, b_password, usage='initiate').creds
+                b_password = to_bytes(self.password, errors="surrogate_or_strict")
+                cred = gssapi.raw.acquire_cred_with_password(
+                    username, b_password, usage="initiate"
+                ).creds
 
             else:
-                cred = gssapi.Credentials(name=username, usage='initiate')
+                cred = gssapi.Credentials(name=username, usage="initiate")
 
             # Get the peer certificate for the channel binding token if possible (HTTPS). A bug on macOS causes the
             # authentication to fail when the CBT is present. Just skip that platform.
             cbt = None
             cert = getpeercert(fp, True)
-            if cert and platform.system() != 'Darwin':
+            if cert and platform.system() != "Darwin":
                 cert_hash = get_channel_binding_cert_hash(cert)
                 if cert_hash:
-                    cbt = gssapi.raw.ChannelBindings(application_data=b"tls-server-end-point:" + cert_hash)
+                    cbt = gssapi.raw.ChannelBindings(
+                        application_data=b"tls-server-end-point:" + cert_hash
+                    )
 
             # TODO: We could add another option that is set to include the port in the SPN if desired in the future.
-            target = gssapi.Name("HTTP@%s" % parsed.hostname, gssapi.NameType.hostbased_service)
-            self._context = gssapi.SecurityContext(usage="initiate", name=target, creds=cred, channel_bindings=cbt)
+            target = gssapi.Name(
+                "HTTP@%s" % parsed.hostname, gssapi.NameType.hostbased_service
+            )
+            self._context = gssapi.SecurityContext(
+                usage="initiate", name=target, creds=cred, channel_bindings=cbt
+            )
 
             resp = None
             while not self._context.complete:
@@ -157,8 +174,11 @@ try:
                 if not out_token:
                     break
 
-                auth_header = '%s %s' % (auth_protocol, to_native(base64.b64encode(out_token)))
-                req.add_unredirected_header('Authorization', auth_header)
+                auth_header = "%s %s" % (
+                    auth_protocol,
+                    to_native(base64.b64encode(out_token)),
+                )
+                req.add_unredirected_header("Authorization", auth_header)
                 resp = self.parent.open(req)
 
                 # The response could contain a token that the client uses to validate the server
@@ -171,12 +191,13 @@ try:
 
 except ImportError:
     GSSAPI_IMP_ERR = traceback.format_exc()
-    HTTPGSSAPIAuthHandler = None  # type: types.ModuleType | None  # type: ignore[no-redef]
+    HTTPGSSAPIAuthHandler = (
+        None
+    )  # type: types.ModuleType | None  # type: ignore[no-redef]
 
 
 PEM_CERT_RE = re.compile(
-    r'^-----BEGIN CERTIFICATE-----\n.+?-----END CERTIFICATE-----$',
-    flags=re.M | re.S
+    r"^-----BEGIN CERTIFICATE-----\n.+?-----END CERTIFICATE-----$", flags=re.M | re.S
 )
 
 #
@@ -186,11 +207,13 @@ PEM_CERT_RE = re.compile(
 
 class ConnectionError(Exception):
     """Failed to connect to the server"""
+
     pass
 
 
 class ProxyError(ConnectionError):
     """Failure to connect because of a proxy"""
+
     pass
 
 
@@ -199,6 +222,7 @@ class SSLValidationError(ConnectionError):
 
     No longer used, but kept for backwards compatibility
     """
+
     pass
 
 
@@ -207,11 +231,13 @@ class NoSSLError(SSLValidationError):
 
     No longer used, but kept for backwards compatibility
     """
+
     pass
 
 
 class MissingModuleError(Exception):
     """Failed to import 3rd party module required by the caller"""
+
     def __init__(self, message, import_traceback, module=None):
         super().__init__(message)
         self.import_traceback = import_traceback
@@ -221,12 +247,13 @@ class MissingModuleError(Exception):
 UnixHTTPSHandler = None
 UnixHTTPSConnection = None
 if HAS_SSL:
+
     @contextmanager
     def unix_socket_patch_httpconnection_connect():
-        '''Monkey patch ``http.client.HTTPConnection.connect`` to be ``UnixHTTPConnection.connect``
+        """Monkey patch ``http.client.HTTPConnection.connect`` to be ``UnixHTTPConnection.connect``
         so that when calling ``super(UnixHTTPSConnection, self).connect()`` we get the
         correct behavior of creating self.sock for the unix socket
-        '''
+        """
         _connect = http.client.HTTPConnection.connect
         http.client.HTTPConnection.connect = UnixHTTPConnection.connect
         yield
@@ -258,19 +285,19 @@ if HAS_SSL:
             kwargs = {}
             try:
                 # deprecated: description='deprecated check_hostname' python_version='3.12'
-                kwargs['check_hostname'] = self._check_hostname
+                kwargs["check_hostname"] = self._check_hostname
             except AttributeError:
                 pass
             return self.do_open(
                 UnixHTTPSConnection(self._unix_socket),
                 req,
                 context=self._context,
-                **kwargs
+                **kwargs,
             )
 
 
 class UnixHTTPConnection(http.client.HTTPConnection):
-    '''Handles http requests to a unix socket file'''
+    """Handles http requests to a unix socket file"""
 
     def __init__(self, unix_socket):
         self._unix_socket = unix_socket
@@ -280,7 +307,7 @@ class UnixHTTPConnection(http.client.HTTPConnection):
         try:
             self.sock.connect(self._unix_socket)
         except OSError as e:
-            raise OSError('Invalid Socket File (%s): %s' % (self._unix_socket, e))
+            raise OSError("Invalid Socket File (%s): %s" % (self._unix_socket, e))
         if self.timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
             self.sock.settimeout(self.timeout)
 
@@ -290,7 +317,7 @@ class UnixHTTPConnection(http.client.HTTPConnection):
 
 
 class UnixHTTPHandler(urllib.request.HTTPHandler):
-    '''Handler for Unix urls'''
+    """Handler for Unix urls"""
 
     def __init__(self, unix_socket, **kwargs):
         super().__init__(**kwargs)
@@ -301,36 +328,42 @@ class UnixHTTPHandler(urllib.request.HTTPHandler):
 
 
 class ParseResultDottedDict(dict):
-    '''
+    """
     A dict that acts similarly to the ParseResult named tuple from urllib
-    '''
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__dict__ = self
 
     def as_list(self):
-        '''
+        """
         Generate a list from this dict, that looks like the ParseResult named tuple
-        '''
-        return [self.get(k, None) for k in ('scheme', 'netloc', 'path', 'params', 'query', 'fragment')]
+        """
+        return [
+            self.get(k, None)
+            for k in ("scheme", "netloc", "path", "params", "query", "fragment")
+        ]
 
 
 def generic_urlparse(parts):
-    '''
+    """
     Returns a dictionary of url parts as parsed by urlparse,
     but accounts for the fact that older versions of that
     library do not support named attributes (ie. .netloc)
 
     This method isn't of much use any longer, but is kept
     in a minimal state for backwards compat.
-    '''
+    """
     result = ParseResultDottedDict(parts._asdict())
-    result.update({
-        'username': parts.username,
-        'password': parts.password,
-        'hostname': parts.hostname,
-        'port': parts.port,
-    })
+    result.update(
+        {
+            "username": parts.username,
+            "password": parts.password,
+            "hostname": parts.hostname,
+            "port": parts.port,
+        }
+    )
     return result
 
 
@@ -342,19 +375,21 @@ def extract_pem_certs(data):
 def get_response_filename(response):
     url = response.geturl()
     path = urlparse(url)[2]
-    filename = os.path.basename(path.rstrip('/')) or None
+    filename = os.path.basename(path.rstrip("/")) or None
     if filename:
         filename = unquote(filename)
 
-    return response.headers.get_param('filename', header='content-disposition') or filename
+    return (
+        response.headers.get_param("filename", header="content-disposition") or filename
+    )
 
 
 def parse_content_type(response):
     get_type = response.headers.get_content_type
     get_param = response.headers.get_param
-    content_type = (get_type() or 'application/octet-stream').split(',')[0]
-    main_type, sub_type = content_type.split('/')
-    charset = (get_param('charset') or 'utf-8').split(',')[0]
+    content_type = (get_type() or "application/octet-stream").split(",")[0]
+    main_type, sub_type = content_type.split("/")
+    charset = (get_param("charset") or "utf-8").split(",")[0]
     return content_type, main_type, sub_type, charset
 
 
@@ -364,12 +399,15 @@ class GzipDecodedReader(GzipFile):
 
     Largely copied from ``xmlrpclib``/``xmlrpc.client``
     """
+
     def __init__(self, fp):
         if not HAS_GZIP:
-            raise MissingModuleError(self.missing_gzip_error(), import_traceback=GZIP_IMP_ERR)
+            raise MissingModuleError(
+                self.missing_gzip_error(), import_traceback=GZIP_IMP_ERR
+            )
 
         self._io = fp
-        super().__init__(mode='rb', fileobj=self._io)
+        super().__init__(mode="rb", fileobj=self._io)
 
     def close(self):
         try:
@@ -380,9 +418,9 @@ class GzipDecodedReader(GzipFile):
     @staticmethod
     def missing_gzip_error():
         return missing_required_lib(
-            'gzip',
-            reason='to decompress gzip encoded responses. '
-                   'Set "decompress" to False, to prevent attempting auto decompression'
+            "gzip",
+            reason="to decompress gzip encoded responses. "
+            'Set "decompress" to False, to prevent attempting auto decompression',
         )
 
 
@@ -410,21 +448,23 @@ class HTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
         follow_redirects = self.follow_redirects
 
         # Preserve urllib2 compatibility
-        if follow_redirects in ('urllib2', 'urllib'):
-            return urllib.request.HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, headers, newurl)
+        if follow_redirects in ("urllib2", "urllib"):
+            return urllib.request.HTTPRedirectHandler.redirect_request(
+                self, req, fp, code, msg, headers, newurl
+            )
 
         # Handle disabled redirects
-        elif follow_redirects in ('no', 'none', False):
+        elif follow_redirects in ("no", "none", False):
             raise urllib.error.HTTPError(newurl, code, msg, headers, fp)
 
         method = req.get_method()
 
         # Handle non-redirect HTTP status or invalid follow_redirects
-        if follow_redirects in ('all', 'yes', True):
+        if follow_redirects in ("all", "yes", True):
             if code < 300 or code >= 400:
                 raise urllib.error.HTTPError(req.get_full_url(), code, msg, headers, fp)
-        elif follow_redirects == 'safe':
-            if code < 300 or code >= 400 or method not in ('GET', 'HEAD'):
+        elif follow_redirects == "safe":
+            if code < 300 or code >= 400 or method not in ("GET", "HEAD"):
                 raise urllib.error.HTTPError(req.get_full_url(), code, msg, headers, fp)
         else:
             raise urllib.error.HTTPError(req.get_full_url(), code, msg, headers, fp)
@@ -433,7 +473,7 @@ class HTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
         origin_req_host = req.origin_req_host
 
         # Be conciliant with URIs containing a space
-        newurl = newurl.replace(' ', '%20')
+        newurl = newurl.replace(" ", "%20")
 
         # Support redirect with payload and original headers
         if code in (307, 308):
@@ -442,21 +482,25 @@ class HTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
         else:
             # Do not preserve payload and filter headers
             data = None
-            req_headers = {k: v for k, v in req.headers.items()
-                           if k.lower() not in ("content-length", "content-type", "transfer-encoding")}
+            req_headers = {
+                k: v
+                for k, v in req.headers.items()
+                if k.lower()
+                not in ("content-length", "content-type", "transfer-encoding")
+            }
 
             # http://tools.ietf.org/html/rfc7231#section-6.4.4
-            if code == 303 and method != 'HEAD':
-                method = 'GET'
+            if code == 303 and method != "HEAD":
+                method = "GET"
 
             # Do what the browsers do, despite standards...
             # First, turn 302s into GETs.
-            if code == 302 and method != 'HEAD':
-                method = 'GET'
+            if code == 302 and method != "HEAD":
+                method = "GET"
 
             # Second, if a POST is responded to with a 301, turn it into a GET.
-            if code == 301 and method == 'POST':
-                method = 'GET'
+            if code == 301 and method == "POST":
+                method = "GET"
 
         return urllib.request.Request(
             newurl,
@@ -468,13 +512,20 @@ class HTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
         )
 
 
-def make_context(cafile=None, cadata=None, capath=None, ciphers=None, validate_certs=True, client_cert=None,
-                 client_key=None):
+def make_context(
+    cafile=None,
+    cadata=None,
+    capath=None,
+    ciphers=None,
+    validate_certs=True,
+    client_cert=None,
+    client_key=None,
+):
     if ciphers is None:
         ciphers = []
 
     if not is_sequence(ciphers):
-        raise TypeError('Ciphers must be a list. Got %s.' % ciphers.__class__.__name__)
+        raise TypeError("Ciphers must be a list. Got %s." % ciphers.__class__.__name__)
 
     context = ssl.create_default_context(cafile=cafile)
 
@@ -493,7 +544,7 @@ def make_context(cafile=None, cadata=None, capath=None, ciphers=None, validate_c
             context.load_verify_locations(cadata=cadata)
 
     if ciphers:
-        context.set_ciphers(':'.join(map(to_native, ciphers)))
+        context.set_ciphers(":".join(map(to_native, ciphers)))
 
     if client_cert:
         # TLS 1.3 needs this to be set to True to allow post handshake cert
@@ -519,7 +570,11 @@ def get_ca_certs(cafile=None, capath=None):
     # don't add additional ca certs
     if cafile:
         paths_checked = [cafile]
-        with open(to_bytes(cafile, errors='surrogate_or_strict'), 'r', errors='surrogateescape') as f:
+        with open(
+            to_bytes(cafile, errors="surrogate_or_strict"),
+            "r",
+            errors="surrogateescape",
+        ) as f:
             for pem in extract_pem_certs(f.read()):
                 b_der = ssl.PEM_cert_to_DER_cert(pem)
                 cadata[b_der] = None
@@ -532,30 +587,30 @@ def get_ca_certs(cafile=None, capath=None):
     if capath:
         paths_checked.add(capath)
 
-    system = to_text(platform.system(), errors='surrogate_or_strict')
+    system = to_text(platform.system(), errors="surrogate_or_strict")
     # build a list of paths to check for .crt/.pem files
     # based on the platform type
-    if system == u'Linux':
-        paths_checked.add('/etc/pki/ca-trust/extracted/pem')
-        paths_checked.add('/etc/pki/tls/certs')
-        paths_checked.add('/usr/share/ca-certificates/cacert.org')
-    elif system == u'FreeBSD':
-        paths_checked.add('/usr/local/share/certs')
-    elif system == u'OpenBSD':
-        paths_checked.add('/etc/ssl')
-    elif system == u'NetBSD':
-        paths_checked.add('/etc/openssl/certs')
-    elif system == u'SunOS':
-        paths_checked.add('/opt/local/etc/openssl/certs')
-    elif system == u'AIX':
-        paths_checked.add('/var/ssl/certs')
-        paths_checked.add('/opt/freeware/etc/ssl/certs')
-    elif system == u'Darwin':
-        paths_checked.add('/usr/local/etc/openssl')
+    if system == "Linux":
+        paths_checked.add("/etc/pki/ca-trust/extracted/pem")
+        paths_checked.add("/etc/pki/tls/certs")
+        paths_checked.add("/usr/share/ca-certificates/cacert.org")
+    elif system == "FreeBSD":
+        paths_checked.add("/usr/local/share/certs")
+    elif system == "OpenBSD":
+        paths_checked.add("/etc/ssl")
+    elif system == "NetBSD":
+        paths_checked.add("/etc/openssl/certs")
+    elif system == "SunOS":
+        paths_checked.add("/opt/local/etc/openssl/certs")
+    elif system == "AIX":
+        paths_checked.add("/var/ssl/certs")
+        paths_checked.add("/opt/freeware/etc/ssl/certs")
+    elif system == "Darwin":
+        paths_checked.add("/usr/local/etc/openssl")
 
     # fall back to a user-deployed cert in a standard
     # location if the OS platform one is not available
-    paths_checked.add('/etc/ansible')
+    paths_checked.add("/etc/ansible")
 
     # for all of the paths, find any  .crt or .pem files
     # and compile them into single temp file for use
@@ -566,9 +621,13 @@ def get_ca_certs(cafile=None, capath=None):
 
         for f in os.listdir(path):
             full_path = os.path.join(path, f)
-            if os.path.isfile(full_path) and os.path.splitext(f)[1] in {'.pem', '.cer', '.crt'}:
+            if os.path.isfile(full_path) and os.path.splitext(f)[1] in {
+                ".pem",
+                ".cer",
+                ".crt",
+            }:
                 try:
-                    with open(full_path, 'r', errors='surrogateescape') as cert_file:
+                    with open(full_path, "r", errors="surrogateescape") as cert_file:
                         cert = cert_file.read()
                     try:
                         for pem in extract_pem_certs(cert):
@@ -584,7 +643,7 @@ def get_ca_certs(cafile=None, capath=None):
 
 
 def getpeercert(response, binary_form=False):
-    """ Attempt to get the peer certificate of the response from urlopen. """
+    """Attempt to get the peer certificate of the response from urlopen."""
     socket = response.fp.raw._sock
 
     try:
@@ -594,7 +653,7 @@ def getpeercert(response, binary_form=False):
 
 
 def get_channel_binding_cert_hash(certificate_der):
-    """ Gets the channel binding app data for a TLS connection using the peer cert. """
+    """Gets the channel binding app data for a TLS connection using the peer cert."""
     if not HAS_CRYPTOGRAPHY:
         return
 
@@ -608,7 +667,7 @@ def get_channel_binding_cert_hash(certificate_der):
         pass
 
     # If the signature hash algorithm is unknown/unsupported or md5/sha1 we must use SHA256.
-    if not hash_algorithm or hash_algorithm.name in ('md5', 'sha1'):
+    if not hash_algorithm or hash_algorithm.name in ("md5", "sha1"):
         hash_algorithm = hashes.SHA256()
 
     digest = hashes.Hash(hash_algorithm, default_backend())
@@ -616,7 +675,7 @@ def get_channel_binding_cert_hash(certificate_der):
     return digest.finalize()
 
 
-def rfc2822_date_string(timetuple, zone='-0000'):
+def rfc2822_date_string(timetuple, zone="-0000"):
     """Accepts a timetuple and optional zone which defaults to ``-0000``
     and returns a date string as specified by RFC 2822, e.g.:
 
@@ -624,21 +683,39 @@ def rfc2822_date_string(timetuple, zone='-0000'):
 
     Copied from email.utils.formatdate and modified for separate use
     """
-    return '%s, %02d %s %04d %02d:%02d:%02d %s' % (
-        ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][timetuple[6]],
+    return "%s, %02d %s %04d %02d:%02d:%02d %s" % (
+        ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][timetuple[6]],
         timetuple[2],
-        ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][timetuple[1] - 1],
-        timetuple[0], timetuple[3], timetuple[4], timetuple[5],
-        zone)
+        [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+        ][timetuple[1] - 1],
+        timetuple[0],
+        timetuple[3],
+        timetuple[4],
+        timetuple[5],
+        zone,
+    )
 
 
-def _configure_auth(url, url_username, url_password, use_gssapi, force_basic_auth, use_netrc):
+def _configure_auth(
+    url, url_username, url_password, use_gssapi, force_basic_auth, use_netrc
+):
     headers = {}
     handlers = []
 
     parsed = urlparse(url)
-    if parsed.scheme == 'ftp':
+    if parsed.scheme == "ftp":
         return url, headers, handlers
 
     username = url_username
@@ -646,13 +723,13 @@ def _configure_auth(url, url_username, url_password, use_gssapi, force_basic_aut
 
     if username:
         netloc = parsed.netloc
-    elif '@' in parsed.netloc:
-        credentials, netloc = parsed.netloc.split('@', 1)
-        if ':' in credentials:
-            username, password = credentials.split(':', 1)
+    elif "@" in parsed.netloc:
+        credentials, netloc = parsed.netloc.split("@", 1)
+        if ":" in credentials:
+            username, password = credentials.split(":", 1)
         else:
             username = credentials
-            password = ''
+            password = ""
         username = unquote(username)
         password = unquote(password)
 
@@ -663,8 +740,11 @@ def _configure_auth(url, url_username, url_password, use_gssapi, force_basic_aut
         if HTTPGSSAPIAuthHandler:  # type: ignore[truthy-function]
             handlers.append(HTTPGSSAPIAuthHandler(username, password))
         else:
-            imp_err_msg = missing_required_lib('gssapi', reason='for use_gssapi=True',
-                                               url='https://pypi.org/project/gssapi/')
+            imp_err_msg = missing_required_lib(
+                "gssapi",
+                reason="for use_gssapi=True",
+                url="https://pypi.org/project/gssapi/",
+            )
             raise MissingModuleError(imp_err_msg, import_traceback=GSSAPI_IMP_ERR)
 
     elif username and not force_basic_auth:
@@ -688,7 +768,7 @@ def _configure_auth(url, url_username, url_password, use_gssapi, force_basic_aut
 
     elif use_netrc:
         try:
-            rc = netrc.netrc(os.environ.get('NETRC'))
+            rc = netrc.netrc(os.environ.get("NETRC"))
             login = rc.authenticators(parsed.hostname)
         except IOError:
             login = None
@@ -702,11 +782,29 @@ def _configure_auth(url, url_username, url_password, use_gssapi, force_basic_aut
 
 
 class Request:
-    def __init__(self, headers=None, use_proxy=True, force=False, timeout=10, validate_certs=True,
-                 url_username=None, url_password=None, http_agent=None, force_basic_auth=False,
-                 follow_redirects='urllib2', client_cert=None, client_key=None, cookies=None, unix_socket=None,
-                 ca_path=None, unredirected_headers=None, decompress=True, ciphers=None, use_netrc=True,
-                 context=None):
+    def __init__(
+        self,
+        headers=None,
+        use_proxy=True,
+        force=False,
+        timeout=10,
+        validate_certs=True,
+        url_username=None,
+        url_password=None,
+        http_agent=None,
+        force_basic_auth=False,
+        follow_redirects="urllib2",
+        client_cert=None,
+        client_key=None,
+        cookies=None,
+        unix_socket=None,
+        ca_path=None,
+        unredirected_headers=None,
+        decompress=True,
+        ciphers=None,
+        use_netrc=True,
+        context=None,
+    ):
         """This class works somewhat similarly to the ``Session`` class of from requests
         by defining a cookiejar that can be used across requests as well as cascaded defaults that
         can apply to repeated requests
@@ -756,13 +854,34 @@ class Request:
             return fallback
         return value
 
-    def open(self, method, url, data=None, headers=None, use_proxy=None,
-             force=None, last_mod_time=None, timeout=None, validate_certs=None,
-             url_username=None, url_password=None, http_agent=None,
-             force_basic_auth=None, follow_redirects=None,
-             client_cert=None, client_key=None, cookies=None, use_gssapi=False,
-             unix_socket=None, ca_path=None, unredirected_headers=None, decompress=None,
-             ciphers=None, use_netrc=None, context=None):
+    def open(
+        self,
+        method,
+        url,
+        data=None,
+        headers=None,
+        use_proxy=None,
+        force=None,
+        last_mod_time=None,
+        timeout=None,
+        validate_certs=None,
+        url_username=None,
+        url_password=None,
+        http_agent=None,
+        force_basic_auth=None,
+        follow_redirects=None,
+        client_cert=None,
+        client_key=None,
+        cookies=None,
+        use_gssapi=False,
+        unix_socket=None,
+        ca_path=None,
+        unredirected_headers=None,
+        decompress=None,
+        ciphers=None,
+        use_netrc=None,
+        context=None,
+    ):
         """
         Sends a request via HTTP(S) or FTP using urllib (Python3)
 
@@ -829,7 +948,9 @@ class Request:
         cookies = self._fallback(cookies, self.cookies)
         unix_socket = self._fallback(unix_socket, self.unix_socket)
         ca_path = self._fallback(ca_path, self.ca_path)
-        unredirected_headers = self._fallback(unredirected_headers, self.unredirected_headers)
+        unredirected_headers = self._fallback(
+            unredirected_headers, self.unredirected_headers
+        )
         decompress = self._fallback(decompress, self.decompress)
         ciphers = self._fallback(ciphers, self.ciphers)
         use_netrc = self._fallback(use_netrc, self.use_netrc)
@@ -840,7 +961,9 @@ class Request:
         if unix_socket:
             handlers.append(UnixHTTPHandler(unix_socket))
 
-        url, auth_headers, auth_handlers = _configure_auth(url, url_username, url_password, use_gssapi, force_basic_auth, use_netrc)
+        url, auth_headers, auth_handlers = _configure_auth(
+            url, url_username, url_password, use_gssapi, force_basic_auth, use_netrc
+        )
         headers.update(auth_headers)
         handlers.extend(auth_handlers)
 
@@ -871,22 +994,22 @@ class Request:
         opener = urllib.request.build_opener(*handlers)
         urllib.request.install_opener(opener)
 
-        data = to_bytes(data, nonstring='passthru')
+        data = to_bytes(data, nonstring="passthru")
         request = urllib.request.Request(url, data=data, method=method.upper())
 
         # add the custom agent header, to help prevent issues
         # with sites that block the default urllib agent string
         if http_agent:
-            request.add_header('User-agent', http_agent)
+            request.add_header("User-agent", http_agent)
 
         # Cache control
         # Either we directly force a cache refresh
         if force:
-            request.add_header('cache-control', 'no-cache')
+            request.add_header("cache-control", "no-cache")
         # or we do it if the original is more recent than our copy
         elif last_mod_time:
-            tstamp = rfc2822_date_string(last_mod_time.timetuple(), 'GMT')
-            request.add_header('If-Modified-Since', tstamp)
+            tstamp = rfc2822_date_string(last_mod_time.timetuple(), "GMT")
+            request.add_header("If-Modified-Since", tstamp)
 
         # user defined headers now, which may override things we've set above
         unredirected_headers = [h.lower() for h in (unredirected_headers or [])]
@@ -897,7 +1020,7 @@ class Request:
                 request.add_header(header, headers[header])
 
         r = urllib.request.urlopen(request, None, timeout)
-        if decompress and r.headers.get('content-encoding', '').lower() == 'gzip':
+        if decompress and r.headers.get("content-encoding", "").lower() == "gzip":
             fp = GzipDecodedReader(r.fp)
             r.fp = fp
             # Content-Length does not match gzip decoded length
@@ -913,7 +1036,7 @@ class Request:
         :returns: HTTPResponse
         """
 
-        return self.open('GET', url, **kwargs)
+        return self.open("GET", url, **kwargs)
 
     def options(self, url, **kwargs):
         r"""Sends a OPTIONS request. Returns :class:`HTTPResponse` object.
@@ -923,7 +1046,7 @@ class Request:
         :returns: HTTPResponse
         """
 
-        return self.open('OPTIONS', url, **kwargs)
+        return self.open("OPTIONS", url, **kwargs)
 
     def head(self, url, **kwargs):
         r"""Sends a HEAD request. Returns :class:`HTTPResponse` object.
@@ -933,7 +1056,7 @@ class Request:
         :returns: HTTPResponse
         """
 
-        return self.open('HEAD', url, **kwargs)
+        return self.open("HEAD", url, **kwargs)
 
     def post(self, url, data=None, **kwargs):
         r"""Sends a POST request. Returns :class:`HTTPResponse` object.
@@ -944,7 +1067,7 @@ class Request:
         :returns: HTTPResponse
         """
 
-        return self.open('POST', url, data=data, **kwargs)
+        return self.open("POST", url, data=data, **kwargs)
 
     def put(self, url, data=None, **kwargs):
         r"""Sends a PUT request. Returns :class:`HTTPResponse` object.
@@ -955,7 +1078,7 @@ class Request:
         :returns: HTTPResponse
         """
 
-        return self.open('PUT', url, data=data, **kwargs)
+        return self.open("PUT", url, data=data, **kwargs)
 
     def patch(self, url, data=None, **kwargs):
         r"""Sends a PATCH request. Returns :class:`HTTPResponse` object.
@@ -966,7 +1089,7 @@ class Request:
         :returns: HTTPResponse
         """
 
-        return self.open('PATCH', url, data=data, **kwargs)
+        return self.open("PATCH", url, data=data, **kwargs)
 
     def delete(self, url, **kwargs):
         r"""Sends a DELETE request. Returns :class:`HTTPResponse` object.
@@ -976,29 +1099,67 @@ class Request:
         :returns: HTTPResponse
         """
 
-        return self.open('DELETE', url, **kwargs)
+        return self.open("DELETE", url, **kwargs)
 
 
-def open_url(url, data=None, headers=None, method=None, use_proxy=True,
-             force=False, last_mod_time=None, timeout=10, validate_certs=True,
-             url_username=None, url_password=None, http_agent=None,
-             force_basic_auth=False, follow_redirects='urllib2',
-             client_cert=None, client_key=None, cookies=None,
-             use_gssapi=False, unix_socket=None, ca_path=None,
-             unredirected_headers=None, decompress=True, ciphers=None, use_netrc=True):
-    '''
+def open_url(
+    url,
+    data=None,
+    headers=None,
+    method=None,
+    use_proxy=True,
+    force=False,
+    last_mod_time=None,
+    timeout=10,
+    validate_certs=True,
+    url_username=None,
+    url_password=None,
+    http_agent=None,
+    force_basic_auth=False,
+    follow_redirects="urllib2",
+    client_cert=None,
+    client_key=None,
+    cookies=None,
+    use_gssapi=False,
+    unix_socket=None,
+    ca_path=None,
+    unredirected_headers=None,
+    decompress=True,
+    ciphers=None,
+    use_netrc=True,
+):
+    """
     Sends a request via HTTP(S) or FTP using urllib (Python3)
 
     Does not require the module environment
-    '''
-    method = method or ('POST' if data else 'GET')
-    return Request().open(method, url, data=data, headers=headers, use_proxy=use_proxy,
-                          force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
-                          url_username=url_username, url_password=url_password, http_agent=http_agent,
-                          force_basic_auth=force_basic_auth, follow_redirects=follow_redirects,
-                          client_cert=client_cert, client_key=client_key, cookies=cookies,
-                          use_gssapi=use_gssapi, unix_socket=unix_socket, ca_path=ca_path,
-                          unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
+    """
+    method = method or ("POST" if data else "GET")
+    return Request().open(
+        method,
+        url,
+        data=data,
+        headers=headers,
+        use_proxy=use_proxy,
+        force=force,
+        last_mod_time=last_mod_time,
+        timeout=timeout,
+        validate_certs=validate_certs,
+        url_username=url_username,
+        url_password=url_password,
+        http_agent=http_agent,
+        force_basic_auth=force_basic_auth,
+        follow_redirects=follow_redirects,
+        client_cert=client_cert,
+        client_key=client_key,
+        cookies=cookies,
+        use_gssapi=use_gssapi,
+        unix_socket=unix_socket,
+        ca_path=ca_path,
+        unredirected_headers=unredirected_headers,
+        decompress=decompress,
+        ciphers=ciphers,
+        use_netrc=use_netrc,
+    )
 
 
 def prepare_multipart(fields):
@@ -1030,55 +1191,55 @@ def prepare_multipart(fields):
 
     if not isinstance(fields, Mapping):
         raise TypeError(
-            'Mapping is required, cannot be type %s' % fields.__class__.__name__
+            "Mapping is required, cannot be type %s" % fields.__class__.__name__
         )
 
-    m = email.mime.multipart.MIMEMultipart('form-data')
+    m = email.mime.multipart.MIMEMultipart("form-data")
     for field, value in sorted(fields.items()):
         if isinstance(value, str):
-            main_type = 'text'
-            sub_type = 'plain'
+            main_type = "text"
+            sub_type = "plain"
             content = value
             filename = None
         elif isinstance(value, Mapping):
-            filename = value.get('filename')
-            content = value.get('content')
+            filename = value.get("filename")
+            content = value.get("content")
             if not any((filename, content)):
-                raise ValueError('at least one of filename or content must be provided')
+                raise ValueError("at least one of filename or content must be provided")
 
-            mime = value.get('mime_type')
+            mime = value.get("mime_type")
             if not mime:
                 try:
-                    mime = mimetypes.guess_type(filename or '', strict=False)[0] or 'application/octet-stream'
+                    mime = (
+                        mimetypes.guess_type(filename or "", strict=False)[0]
+                        or "application/octet-stream"
+                    )
                 except Exception:
-                    mime = 'application/octet-stream'
-            main_type, sep, sub_type = mime.partition('/')
+                    mime = "application/octet-stream"
+            main_type, sep, sub_type = mime.partition("/")
         else:
             raise TypeError(
-                'value must be a string, or mapping, cannot be type %s' % value.__class__.__name__
+                "value must be a string, or mapping, cannot be type %s"
+                % value.__class__.__name__
             )
 
         if not content and filename:
-            with open(to_bytes(filename, errors='surrogate_or_strict'), 'rb') as f:
+            with open(to_bytes(filename, errors="surrogate_or_strict"), "rb") as f:
                 part = email.mime.application.MIMEApplication(f.read())
-                del part['Content-Type']
-                part.add_header('Content-Type', '%s/%s' % (main_type, sub_type))
+                del part["Content-Type"]
+                part.add_header("Content-Type", "%s/%s" % (main_type, sub_type))
         else:
             part = email.mime.nonmultipart.MIMENonMultipart(main_type, sub_type)
             part.set_payload(to_bytes(content))
 
-        part.add_header('Content-Disposition', 'form-data')
-        del part['MIME-Version']
-        part.set_param(
-            'name',
-            field,
-            header='Content-Disposition'
-        )
+        part.add_header("Content-Disposition", "form-data")
+        del part["MIME-Version"]
+        part.set_param("name", field, header="Content-Disposition")
         if filename:
             part.set_param(
-                'filename',
+                "filename",
                 to_native(os.path.basename(filename)),
-                header='Content-Disposition'
+                header="Content-Disposition",
             )
 
         m.attach(part)
@@ -1088,14 +1249,14 @@ def prepare_multipart(fields):
     b_data = m.as_bytes(policy=email.policy.HTTP)
     del m
 
-    headers, sep, b_content = b_data.partition(b'\r\n\r\n')
+    headers, sep, b_content = b_data.partition(b"\r\n\r\n")
     del b_data
 
     parser = email.parser.BytesHeaderParser().parsebytes
 
     return (
-        parser(headers)['content-type'],  # Message converts to native strings
-        b_content
+        parser(headers)["content-type"],  # Message converts to native strings
+        b_content,
     )
 
 
@@ -1109,34 +1270,51 @@ def basic_auth_header(username, password):
     using as value of an Authorization header to do basic auth.
     """
     if password is None:
-        password = ''
-    return b"Basic %s" % base64.b64encode(to_bytes("%s:%s" % (username, password), errors='surrogate_or_strict'))
-
-
-def url_argument_spec():
-    '''
-    Creates an argument spec that can be used with any module
-    that will be requesting content via urllib/urllib2
-    '''
-    return dict(
-        url=dict(type='str'),
-        force=dict(type='bool', default=False),
-        http_agent=dict(type='str', default='ansible-httpget'),
-        use_proxy=dict(type='bool', default=True),
-        validate_certs=dict(type='bool', default=True),
-        url_username=dict(type='str'),
-        url_password=dict(type='str', no_log=True),
-        force_basic_auth=dict(type='bool', default=False),
-        client_cert=dict(type='path'),
-        client_key=dict(type='path'),
-        use_gssapi=dict(type='bool', default=False),
+        password = ""
+    return b"Basic %s" % base64.b64encode(
+        to_bytes("%s:%s" % (username, password), errors="surrogate_or_strict")
     )
 
 
-def fetch_url(module, url, data=None, headers=None, method=None,
-              use_proxy=None, force=False, last_mod_time=None, timeout=10,
-              use_gssapi=False, unix_socket=None, ca_path=None, cookies=None, unredirected_headers=None,
-              decompress=True, ciphers=None, use_netrc=True):
+def url_argument_spec():
+    """
+    Creates an argument spec that can be used with any module
+    that will be requesting content via urllib/urllib2
+    """
+    return dict(
+        url=dict(type="str"),
+        force=dict(type="bool", default=False),
+        http_agent=dict(type="str", default="ansible-httpget"),
+        use_proxy=dict(type="bool", default=True),
+        validate_certs=dict(type="bool", default=True),
+        url_username=dict(type="str"),
+        url_password=dict(type="str", no_log=True),
+        force_basic_auth=dict(type="bool", default=False),
+        client_cert=dict(type="path"),
+        client_key=dict(type="path"),
+        use_gssapi=dict(type="bool", default=False),
+    )
+
+
+def fetch_url(
+    module,
+    url,
+    data=None,
+    headers=None,
+    method=None,
+    use_proxy=None,
+    force=False,
+    last_mod_time=None,
+    timeout=10,
+    use_gssapi=False,
+    unix_socket=None,
+    ca_path=None,
+    cookies=None,
+    unredirected_headers=None,
+    decompress=True,
+    ciphers=None,
+    use_netrc=True,
+):
     """Sends a request via HTTP(S) or FTP (needs the module as parameter)
 
     :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
@@ -1185,21 +1363,21 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     tempfile.tempdir = module.tmpdir
 
     # Get validate_certs from the module params
-    validate_certs = module.params.get('validate_certs', True)
+    validate_certs = module.params.get("validate_certs", True)
 
     if use_proxy is None:
-        use_proxy = module.params.get('use_proxy', True)
+        use_proxy = module.params.get("use_proxy", True)
 
-    username = module.params.get('url_username', '')
-    password = module.params.get('url_password', '')
-    http_agent = module.params.get('http_agent', get_user_agent())
-    force_basic_auth = module.params.get('force_basic_auth', '')
+    username = module.params.get("url_username", "")
+    password = module.params.get("url_password", "")
+    http_agent = module.params.get("http_agent", get_user_agent())
+    force_basic_auth = module.params.get("force_basic_auth", "")
 
-    follow_redirects = module.params.get('follow_redirects', 'urllib2')
+    follow_redirects = module.params.get("follow_redirects", "urllib2")
 
-    client_cert = module.params.get('client_cert')
-    client_key = module.params.get('client_key')
-    use_gssapi = module.params.get('use_gssapi', use_gssapi)
+    client_cert = module.params.get("client_cert")
+    client_key = module.params.get("client_key")
+    use_gssapi = module.params.get("use_gssapi", use_gssapi)
 
     if not isinstance(cookies, cookiejar.CookieJar):
         cookies = cookiejar.CookieJar()
@@ -1207,14 +1385,32 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     r = None
     info = dict(url=url, status=-1)
     try:
-        r = open_url(url, data=data, headers=headers, method=method,
-                     use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
-                     validate_certs=validate_certs, url_username=username,
-                     url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
-                     follow_redirects=follow_redirects, client_cert=client_cert,
-                     client_key=client_key, cookies=cookies, use_gssapi=use_gssapi,
-                     unix_socket=unix_socket, ca_path=ca_path, unredirected_headers=unredirected_headers,
-                     decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
+        r = open_url(
+            url,
+            data=data,
+            headers=headers,
+            method=method,
+            use_proxy=use_proxy,
+            force=force,
+            last_mod_time=last_mod_time,
+            timeout=timeout,
+            validate_certs=validate_certs,
+            url_username=username,
+            url_password=password,
+            http_agent=http_agent,
+            force_basic_auth=force_basic_auth,
+            follow_redirects=follow_redirects,
+            client_cert=client_cert,
+            client_key=client_key,
+            cookies=cookies,
+            use_gssapi=use_gssapi,
+            unix_socket=unix_socket,
+            ca_path=ca_path,
+            unredirected_headers=unredirected_headers,
+            decompress=decompress,
+            ciphers=ciphers,
+            use_netrc=use_netrc,
+        )
         # Lowercase keys, to conform to py2 behavior
         info.update({k.lower(): v for k, v in r.info().items()})
 
@@ -1224,7 +1420,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             # The same as above, lower case keys to match py2 behavior, and create more consistent results
             name = name.lower()
             if name in temp_headers:
-                temp_headers[name] = ', '.join((temp_headers[name], value))
+                temp_headers[name] = ", ".join((temp_headers[name], value))
             else:
                 temp_headers[name] = value
         info.update(temp_headers)
@@ -1238,11 +1434,17 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         for cookie in cookies:
             cookie_dict[cookie.name] = cookie.value
             cookie_list.append((cookie.name, cookie.value))
-        info['cookies_string'] = '; '.join('%s=%s' % c for c in cookie_list)
+        info["cookies_string"] = "; ".join("%s=%s" % c for c in cookie_list)
 
-        info['cookies'] = cookie_dict
+        info["cookies"] = cookie_dict
         # finally update the result with a message about the fetch
-        info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), url=r.geturl(), status=r.code))
+        info.update(
+            dict(
+                msg="OK (%s bytes)" % r.headers.get("Content-Length", "unknown"),
+                url=r.geturl(),
+                status=r.code,
+            )
+        )
     except (ConnectionError, ValueError) as e:
         module.fail_json(msg=to_native(e), **info)
     except MissingModuleError as e:
@@ -1257,7 +1459,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                 raise AttributeError
             body = e.read()
         except AttributeError:
-            body = ''
+            body = ""
         else:
             e.close()
 
@@ -1268,18 +1470,26 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         except Exception:
             pass
 
-        info.update({'msg': to_native(e), 'body': body, 'status': e.code})
+        info.update({"msg": to_native(e), "body": body, "status": e.code})
 
     except urllib.error.URLError as e:
-        code = int(getattr(e, 'code', -1))
+        code = int(getattr(e, "code", -1))
         info.update(dict(msg="Request failed: %s" % to_native(e), status=code))
     except socket.error as e:
         info.update(dict(msg="Connection failure: %s" % to_native(e), status=-1))
     except http.client.BadStatusLine as e:
-        info.update(dict(msg="Connection failure: connection was closed before a valid response was received: %s" % to_native(e.line), status=-1))
+        info.update(
+            dict(
+                msg="Connection failure: connection was closed before a valid response was received: %s"
+                % to_native(e.line),
+                status=-1,
+            )
+        )
     except Exception as e:
-        info.update(dict(msg="An unknown error occurred: %s" % to_native(e), status=-1),
-                    exception=traceback.format_exc())
+        info.update(
+            dict(msg="An unknown error occurred: %s" % to_native(e), status=-1),
+            exception=traceback.format_exc(),
+        )
     finally:
         tempfile.tempdir = old_tempdir
 
@@ -1288,10 +1498,10 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
 def _suffixes(name):
     """A list of the final component's suffixes, if any."""
-    if name.endswith('.'):
+    if name.endswith("."):
         return []
-    name = name.lstrip('.')
-    return ['.' + s for s in name.split('.')[1:]]
+    name = name.lstrip(".")
+    return ["." + s for s in name.split(".")[1:]]
 
 
 def _split_multiext(name, min=3, max=4, count=2):
@@ -1312,13 +1522,13 @@ def _split_multiext(name, min=3, max=4, count=2):
     :kwarg count: Number of suffixes from the end to evaluate.
 
     """
-    extension = ''
+    extension = ""
     for i, sfx in enumerate(reversed(_suffixes(name))):
         if i >= count:
             break
 
         if min <= len(sfx) <= max:
-            extension = '%s%s' % (sfx, extension)
+            extension = "%s%s" % (sfx, extension)
             name = name.rstrip(sfx)
         else:
             # Stop on the first invalid extension
@@ -1327,10 +1537,21 @@ def _split_multiext(name, min=3, max=4, count=2):
     return name, extension
 
 
-def fetch_file(module, url, data=None, headers=None, method=None,
-               use_proxy=True, force=False, last_mod_time=None, timeout=10,
-               unredirected_headers=None, decompress=True, ciphers=None):
-    '''Download and save a file via HTTP(S) or FTP (needs the module as parameter).
+def fetch_file(
+    module,
+    url,
+    data=None,
+    headers=None,
+    method=None,
+    use_proxy=True,
+    force=False,
+    last_mod_time=None,
+    timeout=10,
+    unredirected_headers=None,
+    decompress=True,
+    ciphers=None,
+):
+    """Download and save a file via HTTP(S) or FTP (needs the module as parameter).
     This is basically a wrapper around fetch_url().
 
     :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
@@ -1348,18 +1569,32 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     :kwarg ciphers: (optional) List of ciphers to use
 
     :returns: A string, the path to the downloaded file.
-    '''
+    """
     # download file
     bufsize = 65536
     parts = urlparse(url)
     file_prefix, file_ext = _split_multiext(os.path.basename(parts.path), count=2)
-    fetch_temp_file = tempfile.NamedTemporaryFile(dir=module.tmpdir, prefix=file_prefix, suffix=file_ext, delete=False)
+    fetch_temp_file = tempfile.NamedTemporaryFile(
+        dir=module.tmpdir, prefix=file_prefix, suffix=file_ext, delete=False
+    )
     module.add_cleanup_file(fetch_temp_file.name)
     try:
-        rsp, info = fetch_url(module, url, data, headers, method, use_proxy, force, last_mod_time, timeout,
-                              unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers)
+        rsp, info = fetch_url(
+            module,
+            url,
+            data,
+            headers,
+            method,
+            use_proxy,
+            force,
+            last_mod_time,
+            timeout,
+            unredirected_headers=unredirected_headers,
+            decompress=decompress,
+            ciphers=ciphers,
+        )
         if not rsp or (rsp.code and rsp.code >= 400):
-            module.fail_json(msg="Failure downloading %s, %s" % (url, info['msg']))
+            module.fail_json(msg="Failure downloading %s, %s" % (url, info["msg"]))
         data = rsp.read(bufsize)
         while data:
             fetch_temp_file.write(data)
@@ -1372,4 +1607,4 @@ def fetch_file(module, url, data=None, headers=None, method=None,
 
 def get_user_agent():
     """Returns a user agent used by open_url"""
-    return u"ansible-httpget"
+    return "ansible-httpget"

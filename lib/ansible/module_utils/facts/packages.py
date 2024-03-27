@@ -12,7 +12,11 @@ from ansible.module_utils.common._utils import get_all_subclasses
 
 def get_all_pkg_managers():
 
-    return {obj.__name__.lower(): obj for obj in get_all_subclasses(PkgMgr) if obj not in (CLIMgr, LibMgr)}
+    return {
+        obj.__name__.lower(): obj
+        for obj in get_all_subclasses(PkgMgr)
+        if obj not in (CLIMgr, LibMgr)
+    }
 
 
 class PkgMgr(with_metaclass(ABCMeta, object)):  # type: ignore[misc]
@@ -39,9 +43,9 @@ class PkgMgr(with_metaclass(ABCMeta, object)):  # type: ignore[misc]
         installed_packages = {}
         for package in self.list_installed():
             package_details = self.get_package_details(package)
-            if 'source' not in package_details:
-                package_details['source'] = self.__class__.__name__.lower()
-            name = package_details['name']
+            if "source" not in package_details:
+                package_details["source"] = self.__class__.__name__.lower()
+            name = package_details["name"]
             if name not in installed_packages:
                 installed_packages[name] = [package_details]
             else:

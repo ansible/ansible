@@ -17,7 +17,7 @@
 #############################################
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     vars: v2_vars_plugin
     version_added: "2.10"
     short_description: load host and group vars
@@ -32,7 +32,7 @@ DOCUMENTATION = '''
             section: other_vars_plugin
         env:
           - name: ANSIBLE_VARS_PLUGIN_STAGE
-'''
+"""
 
 from ansible.plugins.vars import BaseVarsPlugin
 
@@ -41,4 +41,4 @@ class VarsModule(BaseVarsPlugin):
 
     def get_vars(self, loader, path, entities, cache=True):
         super(VarsModule, self).get_vars(loader, path, entities)
-        return {'collection': False, 'name': 'v2_vars_plugin', 'v2_vars_plugin': True}
+        return {"collection": False, "name": "v2_vars_plugin", "v2_vars_plugin": True}

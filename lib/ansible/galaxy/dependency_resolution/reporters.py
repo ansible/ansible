@@ -8,6 +8,7 @@ from __future__ import annotations
 try:
     from resolvelib import BaseReporter
 except ImportError:
+
     class BaseReporter:  # type: ignore[no-redef]
         pass
 

@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: jsonfile
     short_description: JSON formatted files.
     description:
@@ -38,7 +38,7 @@ DOCUMENTATION = '''
           - key: fact_caching_timeout
             section: defaults
         type: integer
-'''
+"""
 
 import codecs
 import json
@@ -54,9 +54,9 @@ class CacheModule(BaseFileCacheModule):
 
     def _load(self, filepath):
         # Valid JSON is always UTF-8 encoded.
-        with codecs.open(filepath, 'r', encoding='utf-8') as f:
+        with codecs.open(filepath, "r", encoding="utf-8") as f:
             return json.load(f, cls=AnsibleJSONDecoder)
 
     def _dump(self, value, filepath):
-        with codecs.open(filepath, 'w', encoding='utf-8') as f:
+        with codecs.open(filepath, "w", encoding="utf-8") as f:
             f.write(json.dumps(value, cls=AnsibleJSONEncoder, sort_keys=True, indent=4))

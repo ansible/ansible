@@ -95,13 +95,17 @@ Subsystem         Group            PID          Status
 class TestAIXScanService(unittest.TestCase):
 
     def setUp(self):
-        self.mock1 = patch.object(basic.AnsibleModule, 'get_bin_path', return_value='/usr/sbin/lssrc')
+        self.mock1 = patch.object(
+            basic.AnsibleModule, "get_bin_path", return_value="/usr/sbin/lssrc"
+        )
         self.mock1.start()
         self.addCleanup(self.mock1.stop)
-        self.mock2 = patch.object(basic.AnsibleModule, 'run_command', return_value=(0, LSSRC_OUTPUT, ''))
+        self.mock2 = patch.object(
+            basic.AnsibleModule, "run_command", return_value=(0, LSSRC_OUTPUT, "")
+        )
         self.mock2.start()
         self.addCleanup(self.mock2.stop)
-        self.mock3 = patch('platform.system', return_value='AIX')
+        self.mock3 = patch("platform.system", return_value="AIX")
         self.mock3.start()
         self.addCleanup(self.mock3.stop)
 
@@ -111,15 +115,21 @@ class TestAIXScanService(unittest.TestCase):
 
         self.assertIsInstance(result, dict)
 
-        self.assertIn('IBM.HostRM', result)
-        self.assertEqual(result['IBM.HostRM'], {
-            'name': 'IBM.HostRM',
-            'source': 'src',
-            'state': 'running',
-        })
-        self.assertIn('IBM.AuditRM', result)
-        self.assertEqual(result['IBM.AuditRM'], {
-            'name': 'IBM.AuditRM',
-            'source': 'src',
-            'state': 'stopped',
-        })
+        self.assertIn("IBM.HostRM", result)
+        self.assertEqual(
+            result["IBM.HostRM"],
+            {
+                "name": "IBM.HostRM",
+                "source": "src",
+                "state": "running",
+            },
+        )
+        self.assertIn("IBM.AuditRM", result)
+        self.assertEqual(
+            result["IBM.AuditRM"],
+            {
+                "name": "IBM.AuditRM",
+                "source": "src",
+                "state": "stopped",
+            },
+        )

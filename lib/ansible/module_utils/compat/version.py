@@ -133,16 +133,14 @@ class StrictVersion(Version):
     in the distutils documentation.
     """
 
-    version_re = re.compile(r'^(\d+) \. (\d+) (\. (\d+))? ([ab](\d+))?$',
-                            RE_FLAGS)
+    version_re = re.compile(r"^(\d+) \. (\d+) (\. (\d+))? ([ab](\d+))?$", RE_FLAGS)
 
     def parse(self, vstring):
         match = self.version_re.match(vstring)
         if not match:
             raise ValueError("invalid version number '%s'" % vstring)
 
-        (major, minor, patch, prerelease, prerelease_num) = \
-            match.group(1, 2, 4, 5, 6)
+        (major, minor, patch, prerelease, prerelease_num) = match.group(1, 2, 4, 5, 6)
 
         if patch:
             self.version = tuple(map(int, [major, minor, patch]))
@@ -156,9 +154,9 @@ class StrictVersion(Version):
 
     def __str__(self):
         if self.version[2] == 0:
-            vstring = '.'.join(map(str, self.version[0:2]))
+            vstring = ".".join(map(str, self.version[0:2]))
         else:
-            vstring = '.'.join(map(str, self.version))
+            vstring = ".".join(map(str, self.version))
 
         if self.prerelease:
             vstring = vstring + self.prerelease[0] + str(self.prerelease[1])
@@ -185,13 +183,13 @@ class StrictVersion(Version):
         # case 3: self doesn't have prerelease, other does: self is greater
         # case 4: both have prerelease: must compare them!
 
-        if (not self.prerelease and not other.prerelease):
+        if not self.prerelease and not other.prerelease:
             return 0
-        elif (self.prerelease and not other.prerelease):
+        elif self.prerelease and not other.prerelease:
             return -1
-        elif (not self.prerelease and other.prerelease):
+        elif not self.prerelease and other.prerelease:
             return 1
-        elif (self.prerelease and other.prerelease):
+        elif self.prerelease and other.prerelease:
             if self.prerelease == other.prerelease:
                 return 0
             elif self.prerelease < other.prerelease:
@@ -200,6 +198,7 @@ class StrictVersion(Version):
                 return 1
         else:
             raise AssertionError("never get here")
+
 
 # end class StrictVersion
 
@@ -300,7 +299,7 @@ class LooseVersion(Version):
     of "want").
     """
 
-    component_re = re.compile(r'(\d+ | [a-z]+ | \.)', re.VERBOSE)
+    component_re = re.compile(r"(\d+ | [a-z]+ | \.)", re.VERBOSE)
 
     def __init__(self, vstring=None):
         if vstring:
@@ -311,7 +310,7 @@ class LooseVersion(Version):
         # from the parsed tuple -- so I just store the string here for
         # use by __str__
         self.vstring = vstring
-        components = [x for x in self.component_re.split(vstring) if x and x != '.']
+        components = [x for x in self.component_re.split(vstring) if x and x != "."]
         for i, obj in enumerate(components):
             try:
                 components[i] = int(obj)
@@ -338,5 +337,6 @@ class LooseVersion(Version):
             return -1
         if self.version > other.version:
             return 1
+
 
 # end class LooseVersion

@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: assemble
 short_description: Assemble configuration files from fragments
@@ -102,9 +102,9 @@ extends_documentation_fragment:
     - action_common_attributes.files
     - decrypt
     - files
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Assemble from fragments from a directory
   ansible.builtin.assemble:
     src: /etc/someapp/fragments
@@ -121,9 +121,9 @@ EXAMPLES = r'''
     src: /etc/ssh/conf.d/
     dest: /etc/ssh/sshd_config
     validate: /usr/sbin/sshd -t -f %s
-'''
+"""
 
-RETURN = r'''#'''
+RETURN = r"""#"""
 
 import codecs
 import os
@@ -135,10 +135,12 @@ from ansible.module_utils.six import b, indexbytes
 from ansible.module_utils.common.text.converters import to_native
 
 
-def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, tmpdir=None):
-    ''' assemble a file from a directory of fragments '''
+def assemble_from_fragments(
+    src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, tmpdir=None
+):
+    """assemble a file from a directory of fragments"""
     tmpfd, temp_path = tempfile.mkstemp(dir=tmpdir)
-    tmp = os.fdopen(tmpfd, 'wb')
+    tmp = os.fdopen(tmpfd, "wb")
     delimit_me = False
     add_newline = False
 
@@ -146,14 +148,16 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
         if compiled_regexp and not compiled_regexp.search(f):
             continue
         fragment = os.path.join(src_path, f)
-        if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
+        if not os.path.isfile(fragment) or (
+            ignore_hidden and os.path.basename(fragment).startswith(".")
+        ):
             continue
-        with open(fragment, 'rb') as fragment_fh:
+        with open(fragment, "rb") as fragment_fh:
             fragment_content = fragment_fh.read()
 
         # always put a newline between fragments if the previous fragment didn't end with a newline.
         if add_newline:
-            tmp.write(b('\n'))
+            tmp.write(b("\n"))
 
         # delimiters should only appear between fragments
         if delimit_me:
@@ -168,11 +172,11 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
                 # use indexbytes for compat
                 # chr(10) == '\n'
                 if indexbytes(delimiter, -1) != 10:
-                    tmp.write(b('\n'))
+                    tmp.write(b("\n"))
 
         tmp.write(fragment_content)
         delimit_me = True
-        if fragment_content.endswith(b('\n')):
+        if fragment_content.endswith(b("\n")):
             add_newline = False
         else:
             add_newline = True
@@ -189,7 +193,9 @@ def cleanup(path, result=None):
         except (IOError, OSError) as e:
             # don't error on possible race conditions, but keep warning
             if result is not None:
-                result['warnings'] = ['Unable to remove temp file (%s): %s' % (path, to_native(e))]
+                result["warnings"] = [
+                    "Unable to remove temp file (%s): %s" % (path, to_native(e))
+                ]
 
 
 def main():
@@ -197,14 +203,14 @@ def main():
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec=dict(
-            src=dict(type='path', required=True),
-            delimiter=dict(type='str'),
-            dest=dict(type='path', required=True),
-            backup=dict(type='bool', default=False),
-            remote_src=dict(type='bool', default=True),
-            regexp=dict(type='str'),
-            ignore_hidden=dict(type='bool', default=False),
-            validate=dict(type='str'),
+            src=dict(type="path", required=True),
+            delimiter=dict(type="str"),
+            dest=dict(type="path", required=True),
+            backup=dict(type="bool", default=False),
+            remote_src=dict(type="bool", default=True),
+            regexp=dict(type="str"),
+            ignore_hidden=dict(type="bool", default=False),
+            validate=dict(type="str"),
         ),
         add_file_common_args=True,
     )
@@ -212,14 +218,14 @@ def main():
     changed = False
     path_hash = None
     dest_hash = None
-    src = module.params['src']
-    dest = module.params['dest']
-    backup = module.params['backup']
-    delimiter = module.params['delimiter']
-    regexp = module.params['regexp']
+    src = module.params["src"]
+    dest = module.params["dest"]
+    backup = module.params["backup"]
+    delimiter = module.params["delimiter"]
+    regexp = module.params["regexp"]
     compiled_regexp = None
-    ignore_hidden = module.params['ignore_hidden']
-    validate = module.params.get('validate', None)
+    ignore_hidden = module.params["ignore_hidden"]
+    validate = module.params.get("validate", None)
 
     result = dict(src=src, dest=dest)
     if not os.path.exists(src):
@@ -232,21 +238,23 @@ def main():
         try:
             compiled_regexp = re.compile(regexp)
         except re.error as e:
-            module.fail_json(msg="Invalid Regexp (%s) in \"%s\"" % (to_native(e), regexp))
+            module.fail_json(msg='Invalid Regexp (%s) in "%s"' % (to_native(e), regexp))
 
     if validate and "%s" not in validate:
         module.fail_json(msg="validate must contain %%s: %s" % validate)
 
-    path = assemble_from_fragments(src, delimiter, compiled_regexp, ignore_hidden, module.tmpdir)
+    path = assemble_from_fragments(
+        src, delimiter, compiled_regexp, ignore_hidden, module.tmpdir
+    )
     path_hash = module.sha1(path)
-    result['checksum'] = path_hash
+    result["checksum"] = path_hash
 
     # Backwards compat.  This won't return data if FIPS mode is active
     try:
         pathmd5 = module.md5(path)
     except ValueError:
         pathmd5 = None
-    result['md5sum'] = pathmd5
+    result["md5sum"] = pathmd5
 
     if os.path.exists(dest):
         dest_hash = module.sha1(dest)
@@ -254,26 +262,26 @@ def main():
     if path_hash != dest_hash:
         if validate:
             (rc, out, err) = module.run_command(validate % path)
-            result['validation'] = dict(rc=rc, stdout=out, stderr=err)
+            result["validation"] = dict(rc=rc, stdout=out, stderr=err)
             if rc != 0:
                 cleanup(path)
                 module.fail_json(msg="failed to validate: rc:%s error:%s" % (rc, err))
         if backup and dest_hash is not None:
-            result['backup_file'] = module.backup_local(dest)
+            result["backup_file"] = module.backup_local(dest)
 
-        module.atomic_move(path, dest, unsafe_writes=module.params['unsafe_writes'])
+        module.atomic_move(path, dest, unsafe_writes=module.params["unsafe_writes"])
         changed = True
 
     cleanup(path, result)
 
     # handle file permissions
     file_args = module.load_file_common_arguments(module.params)
-    result['changed'] = module.set_fs_attributes_if_different(file_args, changed)
+    result["changed"] = module.set_fs_attributes_if_different(file_args, changed)
 
     # Mission complete
-    result['msg'] = "OK"
+    result["msg"] = "OK"
     module.exit_json(**result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

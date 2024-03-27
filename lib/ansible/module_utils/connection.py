@@ -58,16 +58,16 @@ def write_to_file_descriptor(fd, obj):
 
     # raw \r characters will not survive pty round-trip
     # They should be rehydrated on the receiving end
-    src = src.replace(b'\r', br'\r')
+    src = src.replace(b"\r", rb"\r")
     data_hash = to_bytes(hashlib.sha1(src).hexdigest())
 
-    os.write(fd, b'%d\n' % len(src))
+    os.write(fd, b"%d\n" % len(src))
     os.write(fd, src)
-    os.write(fd, b'%s\n' % data_hash)
+    os.write(fd, b"%s\n" % data_hash)
 
 
 def send_data(s, data):
-    packed_len = struct.pack('!Q', len(data))
+    packed_len = struct.pack("!Q", len(data))
     return s.sendall(packed_len + data)
 
 
@@ -79,7 +79,7 @@ def recv_data(s):
         if not d:
             return None
         data += d
-    data_len = struct.unpack('!Q', data[:header_len])[0]
+    data_len = struct.unpack("!Q", data[:header_len])[0]
     data = data[header_len:]
     while len(data) < data_len:
         d = s.recv(data_len - len(data))
@@ -94,16 +94,16 @@ def exec_command(module, command):
     try:
         out = connection.exec_command(command)
     except ConnectionError as exc:
-        code = getattr(exc, 'code', 1)
-        message = getattr(exc, 'err', exc)
-        return code, '', to_text(message, errors='surrogate_then_replace')
-    return 0, out, ''
+        code = getattr(exc, "code", 1)
+        message = getattr(exc, "err", exc)
+        return code, "", to_text(message, errors="surrogate_then_replace")
+    return 0, out, ""
 
 
 def request_builder(method_, *args, **kwargs):
     reqid = str(uuid.uuid4())
-    req = {'jsonrpc': '2.0', 'method': method_, 'id': reqid}
-    req['params'] = (args, kwargs)
+    req = {"jsonrpc": "2.0", "method": method_, "id": reqid}
+    req["params"] = (args, kwargs)
 
     return req
 
@@ -120,26 +120,30 @@ class Connection(object):
 
     def __init__(self, socket_path):
         if socket_path is None:
-            raise AssertionError('socket_path must be a value')
+            raise AssertionError("socket_path must be a value")
         self.socket_path = socket_path
 
     def __getattr__(self, name):
         try:
             return self.__dict__[name]
         except KeyError:
-            if name.startswith('_'):
-                raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
+            if name.startswith("_"):
+                raise AttributeError(
+                    "'%s' object has no attribute '%s'"
+                    % (self.__class__.__name__, name)
+                )
             return partial(self.__rpc__, name)
 
     def _exec_jsonrpc(self, name, *args, **kwargs):
 
         req = request_builder(name, *args, **kwargs)
-        reqid = req['id']
+        reqid = req["id"]
 
         if not os.path.exists(self.socket_path):
             raise ConnectionError(
-                'socket path %s does not exist or cannot be found. See Troubleshooting socket '
-                'path issues in the Network Debug and Troubleshooting Guide' % self.socket_path
+                "socket path %s does not exist or cannot be found. See Troubleshooting socket "
+                "path issues in the Network Debug and Troubleshooting Guide"
+                % self.socket_path
             )
 
         try:
@@ -154,9 +158,10 @@ class Connection(object):
             out = self.send(data)
         except socket.error as e:
             raise ConnectionError(
-                'unable to connect to socket %s. See Troubleshooting socket path issues '
-                'in the Network Debug and Troubleshooting Guide' % self.socket_path,
-                err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc()
+                "unable to connect to socket %s. See Troubleshooting socket path issues "
+                "in the Network Debug and Troubleshooting Guide" % self.socket_path,
+                err=to_text(e, errors="surrogate_then_replace"),
+                exception=traceback.format_exc(),
             )
 
         try:
@@ -165,16 +170,22 @@ class Connection(object):
             # set_option(s) has sensitive info, and the details are unlikely to matter anyway
             if name.startswith("set_option"):
                 raise ConnectionError(
-                    "Unable to decode JSON from response to {0}. Received '{1}'.".format(name, out)
+                    "Unable to decode JSON from response to {0}. Received '{1}'.".format(
+                        name, out
+                    )
                 )
-            params = [repr(arg) for arg in args] + ['{0}={1!r}'.format(k, v) for k, v in iteritems(kwargs)]
-            params = ', '.join(params)
+            params = [repr(arg) for arg in args] + [
+                "{0}={1!r}".format(k, v) for k, v in iteritems(kwargs)
+            ]
+            params = ", ".join(params)
             raise ConnectionError(
-                "Unable to decode JSON from response to {0}({1}). Received '{2}'.".format(name, params, out)
+                "Unable to decode JSON from response to {0}({1}). Received '{2}'.".format(
+                    name, params, out
+                )
             )
 
-        if response['id'] != reqid:
-            raise ConnectionError('invalid json-rpc id received')
+        if response["id"] != reqid:
+            raise ConnectionError("invalid json-rpc id received")
         if "result_type" in response:
             response["result"] = cPickle.loads(to_bytes(response["result"]))
 
@@ -182,23 +193,25 @@ class Connection(object):
 
     def __rpc__(self, name, *args, **kwargs):
         """Executes the json-rpc and returns the output received
-           from remote device.
-           :name: rpc method to be executed over connection plugin that implements jsonrpc 2.0
-           :args: Ordered list of params passed as arguments to rpc method
-           :kwargs: Dict of valid key, value pairs passed as arguments to rpc method
+        from remote device.
+        :name: rpc method to be executed over connection plugin that implements jsonrpc 2.0
+        :args: Ordered list of params passed as arguments to rpc method
+        :kwargs: Dict of valid key, value pairs passed as arguments to rpc method
 
-           For usage refer the respective connection plugin docs.
+        For usage refer the respective connection plugin docs.
         """
 
         response = self._exec_jsonrpc(name, *args, **kwargs)
 
-        if 'error' in response:
-            err = response.get('error')
-            msg = err.get('data') or err['message']
-            code = err['code']
-            raise ConnectionError(to_text(msg, errors='surrogate_then_replace'), code=code)
+        if "error" in response:
+            err = response.get("error")
+            msg = err.get("data") or err["message"]
+            code = err["code"]
+            raise ConnectionError(
+                to_text(msg, errors="surrogate_then_replace"), code=code
+            )
 
-        return response['result']
+        return response["result"]
 
     def send(self, data):
         try:
@@ -211,11 +224,12 @@ class Connection(object):
         except socket.error as e:
             sf.close()
             raise ConnectionError(
-                'unable to connect to socket %s. See the socket path issue category in '
-                'Network Debug and Troubleshooting Guide' % self.socket_path,
-                err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc()
+                "unable to connect to socket %s. See the socket path issue category in "
+                "Network Debug and Troubleshooting Guide" % self.socket_path,
+                err=to_text(e, errors="surrogate_then_replace"),
+                exception=traceback.format_exc(),
             )
 
         sf.close()
 
-        return to_text(response, errors='surrogate_or_strict')
+        return to_text(response, errors="surrogate_or_strict")

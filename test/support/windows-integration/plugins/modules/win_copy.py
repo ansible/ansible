@@ -5,11 +5,13 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
+ANSIBLE_METADATA = {
+    "metadata_version": "1.1",
+    "status": ["stableinterface"],
+    "supported_by": "core",
+}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_copy
 version_added: '1.9.2'
@@ -109,9 +111,9 @@ seealso:
 author:
 - Jon Hawkesworth (@jhawkesworth)
 - Jordan Borean (@jborean93)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Copy a single file
   win_copy:
     src: /srv/myfiles/foo.conf
@@ -166,9 +168,9 @@ EXAMPLES = r'''
     # This ensures the become user will have permissions for the operation
     # Make sure to specify a folder both the ansible_user and the become_user have access to (i.e not %TEMP% which is user specific and requires Admin)
     ansible_remote_tmp: 'c:\tmp'
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 backup_file:
     description: Name of the backup file that was created.
     returned: if backup=yes
@@ -204,4 +206,4 @@ original_basename:
     returned: changed, src is a file
     type: str
     sample: foo.txt
-'''
+"""

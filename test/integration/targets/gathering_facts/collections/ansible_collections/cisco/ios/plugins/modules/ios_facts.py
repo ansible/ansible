@@ -24,16 +24,17 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    """main entry point for module execution
-    """
-    argument_spec = dict(
-        gather_subset=dict(default='!config')
+    """main entry point for module execution"""
+    argument_spec = dict(gather_subset=dict(default="!config"))
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+
+    module.exit_json(
+        ansible_facts={
+            "gather_subset": module.params["gather_subset"],
+            "_ansible_facts_gathered": True,
+        }
     )
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
-
-    module.exit_json(ansible_facts={'gather_subset': module.params['gather_subset'], '_ansible_facts_gathered': True})
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -1,4 +1,5 @@
 """Composite argument key-value parsers used by other parsers."""
+
 from __future__ import annotations
 
 import typing as t
@@ -63,15 +64,19 @@ class OriginKeyValueParser(KeyValueParser):
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
-        python_parser = PythonParser(versions=CONTROLLER_PYTHON_VERSIONS, allow_venv=True, allow_default=True)
+        python_parser = PythonParser(
+            versions=CONTROLLER_PYTHON_VERSIONS, allow_venv=True, allow_default=True
+        )
 
-        section_name = 'origin options'
+        section_name = "origin options"
 
-        state.sections[f'controller {section_name} (comma separated):'] = '\n'.join([
-            f'  python={python_parser.document(state)}',
-        ])
+        state.sections[f"controller {section_name} (comma separated):"] = "\n".join(
+            [
+                f"  python={python_parser.document(state)}",
+            ]
+        )
 
-        return f'{{{section_name}}}  # default'
+        return f"{{{section_name}}}  # default"
 
 
 class ControllerKeyValueParser(KeyValueParser):
@@ -80,23 +85,32 @@ class ControllerKeyValueParser(KeyValueParser):
     def get_parsers(self, state: ParserState) -> dict[str, Parser]:
         """Return a dictionary of key names and value parsers."""
         versions = get_controller_pythons(state.root_namespace.controller, False)
-        allow_default = bool(get_controller_pythons(state.root_namespace.controller, True))
-        allow_venv = isinstance(state.root_namespace.controller, OriginConfig) or not state.root_namespace.controller
+        allow_default = bool(
+            get_controller_pythons(state.root_namespace.controller, True)
+        )
+        allow_venv = (
+            isinstance(state.root_namespace.controller, OriginConfig)
+            or not state.root_namespace.controller
+        )
 
         return dict(
-            python=PythonParser(versions=versions, allow_venv=allow_venv, allow_default=allow_default),
+            python=PythonParser(
+                versions=versions, allow_venv=allow_venv, allow_default=allow_default
+            ),
         )
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
-        section_name = 'controller options'
+        section_name = "controller options"
 
-        state.sections[f'target {section_name} (comma separated):'] = '\n'.join([
-            f'  python={PythonParser(SUPPORTED_PYTHON_VERSIONS, allow_venv=False, allow_default=True).document(state)}  # non-origin controller',
-            f'  python={PythonParser(SUPPORTED_PYTHON_VERSIONS, allow_venv=True, allow_default=True).document(state)}  # origin controller',
-        ])
+        state.sections[f"target {section_name} (comma separated):"] = "\n".join(
+            [
+                f"  python={PythonParser(SUPPORTED_PYTHON_VERSIONS, allow_venv=False, allow_default=True).document(state)}  # non-origin controller",
+                f"  python={PythonParser(SUPPORTED_PYTHON_VERSIONS, allow_venv=True, allow_default=True).document(state)}  # origin controller",
+            ]
+        )
 
-        return f'{{{section_name}}}  # default'
+        return f"{{{section_name}}}  # default"
 
 
 class DockerKeyValueParser(KeyValueParser):
@@ -110,7 +124,11 @@ class DockerKeyValueParser(KeyValueParser):
     def get_parsers(self, state: ParserState) -> dict[str, Parser]:
         """Return a dictionary of key names and value parsers."""
         return dict(
-            python=PythonParser(versions=self.versions, allow_venv=False, allow_default=self.allow_default),
+            python=PythonParser(
+                versions=self.versions,
+                allow_venv=False,
+                allow_default=self.allow_default,
+            ),
             seccomp=ChoicesParser(SECCOMP_CHOICES),
             cgroup=EnumValueChoicesParser(CGroupVersion),
             audit=EnumValueChoicesParser(AuditMode),
@@ -120,20 +138,26 @@ class DockerKeyValueParser(KeyValueParser):
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
-        python_parser = PythonParser(versions=[], allow_venv=False, allow_default=self.allow_default)
+        python_parser = PythonParser(
+            versions=[], allow_venv=False, allow_default=self.allow_default
+        )
 
-        section_name = 'docker options'
+        section_name = "docker options"
 
-        state.sections[f'{"controller" if self.controller else "target"} {section_name} (comma separated):'] = '\n'.join([
-            f'  python={python_parser.document(state)}',
-            f'  seccomp={ChoicesParser(SECCOMP_CHOICES).document(state)}',
-            f'  cgroup={EnumValueChoicesParser(CGroupVersion).document(state)}',
-            f'  audit={EnumValueChoicesParser(AuditMode).document(state)}',
-            f'  privileged={BooleanParser().document(state)}',
-            f'  memory={IntegerParser().document(state)}  # bytes',
-        ])
+        state.sections[
+            f'{"controller" if self.controller else "target"} {section_name} (comma separated):'
+        ] = "\n".join(
+            [
+                f"  python={python_parser.document(state)}",
+                f"  seccomp={ChoicesParser(SECCOMP_CHOICES).document(state)}",
+                f"  cgroup={EnumValueChoicesParser(CGroupVersion).document(state)}",
+                f"  audit={EnumValueChoicesParser(AuditMode).document(state)}",
+                f"  privileged={BooleanParser().document(state)}",
+                f"  memory={IntegerParser().document(state)}  # bytes",
+            ]
+        )
 
-        return f'{{{section_name}}}'
+        return f"{{{section_name}}}"
 
 
 class PosixRemoteKeyValueParser(KeyValueParser):
@@ -150,23 +174,33 @@ class PosixRemoteKeyValueParser(KeyValueParser):
             become=ChoicesParser(list(SUPPORTED_BECOME_METHODS)),
             provider=ChoicesParser(REMOTE_PROVIDERS),
             arch=ChoicesParser(REMOTE_ARCHITECTURES),
-            python=PythonParser(versions=self.versions, allow_venv=False, allow_default=self.allow_default),
+            python=PythonParser(
+                versions=self.versions,
+                allow_venv=False,
+                allow_default=self.allow_default,
+            ),
         )
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
-        python_parser = PythonParser(versions=[], allow_venv=False, allow_default=self.allow_default)
+        python_parser = PythonParser(
+            versions=[], allow_venv=False, allow_default=self.allow_default
+        )
 
-        section_name = 'remote options'
+        section_name = "remote options"
 
-        state.sections[f'{"controller" if self.controller else "target"} {section_name} (comma separated):'] = '\n'.join([
-            f'  become={ChoicesParser(list(SUPPORTED_BECOME_METHODS)).document(state)}',
-            f'  provider={ChoicesParser(REMOTE_PROVIDERS).document(state)}',
-            f'  arch={ChoicesParser(REMOTE_ARCHITECTURES).document(state)}',
-            f'  python={python_parser.document(state)}',
-        ])
+        state.sections[
+            f'{"controller" if self.controller else "target"} {section_name} (comma separated):'
+        ] = "\n".join(
+            [
+                f"  become={ChoicesParser(list(SUPPORTED_BECOME_METHODS)).document(state)}",
+                f"  provider={ChoicesParser(REMOTE_PROVIDERS).document(state)}",
+                f"  arch={ChoicesParser(REMOTE_ARCHITECTURES).document(state)}",
+                f"  python={python_parser.document(state)}",
+            ]
+        )
 
-        return f'{{{section_name}}}'
+        return f"{{{section_name}}}"
 
 
 class WindowsRemoteKeyValueParser(KeyValueParser):
@@ -181,14 +215,16 @@ class WindowsRemoteKeyValueParser(KeyValueParser):
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
-        section_name = 'remote options'
+        section_name = "remote options"
 
-        state.sections[f'target {section_name} (comma separated):'] = '\n'.join([
-            f'  provider={ChoicesParser(REMOTE_PROVIDERS).document(state)}',
-            f'  arch={ChoicesParser(REMOTE_ARCHITECTURES).document(state)}',
-        ])
+        state.sections[f"target {section_name} (comma separated):"] = "\n".join(
+            [
+                f"  provider={ChoicesParser(REMOTE_PROVIDERS).document(state)}",
+                f"  arch={ChoicesParser(REMOTE_ARCHITECTURES).document(state)}",
+            ]
+        )
 
-        return f'{{{section_name}}}'
+        return f"{{{section_name}}}"
 
 
 class NetworkRemoteKeyValueParser(KeyValueParser):
@@ -205,16 +241,18 @@ class NetworkRemoteKeyValueParser(KeyValueParser):
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
-        section_name = 'remote options'
+        section_name = "remote options"
 
-        state.sections[f'target {section_name} (comma separated):'] = '\n'.join([
-            f'  provider={ChoicesParser(REMOTE_PROVIDERS).document(state)}',
-            f'  arch={ChoicesParser(REMOTE_ARCHITECTURES).document(state)}',
-            '  collection={collection}',
-            '  connection={connection}',
-        ])
+        state.sections[f"target {section_name} (comma separated):"] = "\n".join(
+            [
+                f"  provider={ChoicesParser(REMOTE_PROVIDERS).document(state)}",
+                f"  arch={ChoicesParser(REMOTE_ARCHITECTURES).document(state)}",
+                "  collection={collection}",
+                "  connection={connection}",
+            ]
+        )
 
-        return f'{{{section_name}}}'
+        return f"{{{section_name}}}"
 
 
 class PosixSshKeyValueParser(KeyValueParser):
@@ -223,20 +261,28 @@ class PosixSshKeyValueParser(KeyValueParser):
     def get_parsers(self, state: ParserState) -> dict[str, Parser]:
         """Return a dictionary of key names and value parsers."""
         return dict(
-            python=PythonParser(versions=list(SUPPORTED_PYTHON_VERSIONS), allow_venv=False, allow_default=False),
+            python=PythonParser(
+                versions=list(SUPPORTED_PYTHON_VERSIONS),
+                allow_venv=False,
+                allow_default=False,
+            ),
         )
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
-        python_parser = PythonParser(versions=SUPPORTED_PYTHON_VERSIONS, allow_venv=False, allow_default=False)
+        python_parser = PythonParser(
+            versions=SUPPORTED_PYTHON_VERSIONS, allow_venv=False, allow_default=False
+        )
 
-        section_name = 'ssh options'
+        section_name = "ssh options"
 
-        state.sections[f'target {section_name} (comma separated):'] = '\n'.join([
-            f'  python={python_parser.document(state)}',
-        ])
+        state.sections[f"target {section_name} (comma separated):"] = "\n".join(
+            [
+                f"  python={python_parser.document(state)}",
+            ]
+        )
 
-        return f'{{{section_name}}}'
+        return f"{{{section_name}}}"
 
 
 class EmptyKeyValueParser(KeyValueParser):

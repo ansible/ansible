@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: host_pinned
     short_description: Executes tasks on each host without interruption
     description:
@@ -28,7 +28,7 @@ DOCUMENTATION = '''
           Other than that, it behaves just like the "free" strategy.
     version_added: "2.7"
     author: Ansible Core Team
-'''
+"""
 
 from ansible.plugins.strategy.free import StrategyModule as FreeStrategyModule
 from ansible.utils.display import Display

@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: convert_camelCase
 short_description: test converting data to camelCase
@@ -20,7 +20,7 @@ options:
     description: Whether to capitalize the first character
     default: False
     type: bool
-'''
+"""
 
 
 from ansible.module_utils.basic import AnsibleModule
@@ -30,18 +30,17 @@ from ansible.module_utils.common.dict_transformations import snake_dict_to_camel
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            data=dict(type='dict', required=True),
-            capitalize_first=dict(type='bool', default=False),
+            data=dict(type="dict", required=True),
+            capitalize_first=dict(type="bool", default=False),
         ),
     )
 
     result = snake_dict_to_camel_dict(
-        module.params['data'],
-        module.params['capitalize_first']
+        module.params["data"], module.params["capitalize_first"]
     )
 
     module.exit_json(data=result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

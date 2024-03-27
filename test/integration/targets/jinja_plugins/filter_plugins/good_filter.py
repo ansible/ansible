@@ -7,5 +7,5 @@ from __future__ import annotations
 class FilterModule:
     def filters(self):
         return {
-            'hello': lambda x: 'Hello, %s!' % x,
+            "hello": lambda x: "Hello, %s!" % x,
         }

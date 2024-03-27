@@ -5,8 +5,8 @@ class FilterModule(object):
 
     def filters(self):
         return {
-            'broken': lambda x: 'broken',
+            "broken": lambda x: "broken",
         }
 
 
-raise Exception('This is a broken filter plugin.')
+raise Exception("This is a broken filter plugin.")

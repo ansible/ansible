@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: validate_argument_spec
 short_description: Validate role argument specs.
@@ -46,9 +46,9 @@ attributes:
         support: none
     platform:
         platforms: all
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: verify vars needed for this task file are present when included
   ansible.builtin.validate_argument_spec:
         argument_spec: '{{ required_data }}'
@@ -82,9 +82,9 @@ EXAMPLES = r'''
       vars:
         stuff: knows
         but: nobuts!
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 argument_errors:
   description: A list of arg validation errors.
   returned: failure
@@ -114,4 +114,4 @@ validate_args_context:
     type: role
     path: /home/user/roles/my_role/
     argument_spec_name: main
-'''
+"""

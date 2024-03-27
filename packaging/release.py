@@ -47,22 +47,35 @@ C = t.TypeVar("C", bound=t.Callable[..., None])
 
 def path_to_str(value: t.Any) -> str:
     """Return the given value converted to a string suitable for use as a command line argument."""
-    return f"{value}/" if isinstance(value, pathlib.Path) and value.is_dir() else str(value)
+    return (
+        f"{value}/"
+        if isinstance(value, pathlib.Path) and value.is_dir()
+        else str(value)
+    )
 
 
 @t.overload
-def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str, capture_output: t.Literal[True]) -> CompletedProcess:
-    ...
+def run(
+    *args: t.Any,
+    env: dict[str, t.Any] | None,
+    cwd: pathlib.Path | str,
+    capture_output: t.Literal[True],
+) -> CompletedProcess: ...
 
 
 @t.overload
-def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str, capture_output: t.Literal[False]) -> None:
-    ...
+def run(
+    *args: t.Any,
+    env: dict[str, t.Any] | None,
+    cwd: pathlib.Path | str,
+    capture_output: t.Literal[False],
+) -> None: ...
 
 
 @t.overload
-def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str) -> None:
-    ...
+def run(
+    *args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str
+) -> None: ...
 
 
 def run(
@@ -72,15 +85,28 @@ def run(
     capture_output: bool = False,
 ) -> CompletedProcess | None:
     """Run the specified command."""
-    args = [arg.relative_to(cwd) if isinstance(arg, pathlib.Path) else arg for arg in args]
+    args = [
+        arg.relative_to(cwd) if isinstance(arg, pathlib.Path) else arg for arg in args
+    ]
 
     str_args = tuple(path_to_str(arg) for arg in args)
-    str_env = {key: path_to_str(value) for key, value in env.items()} if env is not None else None
+    str_env = (
+        {key: path_to_str(value) for key, value in env.items()}
+        if env is not None
+        else None
+    )
 
     display.show(f"--> {shlex.join(str_args)}", color=Display.CYAN)
 
     try:
-        p = subprocess.run(str_args, check=True, text=True, env=str_env, cwd=cwd, capture_output=capture_output)
+        p = subprocess.run(
+            str_args,
+            check=True,
+            text=True,
+            env=str_env,
+            cwd=cwd,
+            capture_output=capture_output,
+        )
     except subprocess.CalledProcessError as ex:
         # improve type hinting and include stdout/stderr (if any) in the message
         raise CalledProcessError(
@@ -120,7 +146,14 @@ class ApplicationError(Exception):
 class CalledProcessError(Exception):
     """Results from a failed process."""
 
-    def __init__(self, message: str, cmd: tuple[str, ...], status: int, stdout: str | None, stderr: str | None) -> None:
+    def __init__(
+        self,
+        message: str,
+        cmd: tuple[str, ...],
+        status: int,
+        stdout: str | None,
+        stderr: str | None,
+    ) -> None:
         if stdout and (stdout := stdout.strip()):
             message += f"\n>>> Standard Output\n{stdout}"
 
@@ -203,7 +236,11 @@ class CommandFramework:
         subparsers = parser.add_subparsers(metavar="COMMAND", required=True)
 
         for func in self.commands:
-            func_parser = subparsers.add_parser(self._format_command_name(func), description=func.__doc__, help=func.__doc__)
+            func_parser = subparsers.add_parser(
+                self._format_command_name(func),
+                description=func.__doc__,
+                help=func.__doc__,
+            )
             func_parser.set_defaults(func=func)
 
             exclusive_groups = {}
@@ -211,7 +248,9 @@ class CommandFramework:
 
             for name in signature.parameters:
                 if name not in self.arguments:
-                    raise RuntimeError(f"The '{name}' argument, used by '{func.__name__}', has not been defined.")
+                    raise RuntimeError(
+                        f"The '{name}' argument, used by '{func.__name__}', has not been defined."
+                    )
 
                 if (arguments := self.arguments.get(name)) is None:
                     continue  # internal use
@@ -224,7 +263,9 @@ class CommandFramework:
 
                 if exclusive:
                     if exclusive not in exclusive_groups:
-                        exclusive_groups[exclusive] = func_parser.add_mutually_exclusive_group()
+                        exclusive_groups[exclusive] = (
+                            func_parser.add_mutually_exclusive_group()
+                        )
 
                     command_parser = exclusive_groups[exclusive]
                 else:
@@ -256,9 +297,21 @@ class CommandFramework:
     def _run(self, func: t.Callable[..., None], **kwargs) -> None:
         """Run the specified command, using any provided internal args."""
         signature = inspect.signature(func)
-        func_args = {name: getattr(self.parsed_arguments, name) for name in signature.parameters if hasattr(self.parsed_arguments, name)}
-        func_args.update({name: value for name, value in kwargs.items() if name in signature.parameters})
-        printable_args = ", ".join(f"{name}={repr(value)}" for name, value in func_args.items())
+        func_args = {
+            name: getattr(self.parsed_arguments, name)
+            for name in signature.parameters
+            if hasattr(self.parsed_arguments, name)
+        }
+        func_args.update(
+            {
+                name: value
+                for name, value in kwargs.items()
+                if name in signature.parameters
+            }
+        )
+        printable_args = ", ".join(
+            f"{name}={repr(value)}" for name, value in func_args.items()
+        )
         label = f"{self._format_command_name(func)}({printable_args})"
 
         display.show(f"==> {label}", color=Display.BLUE)
@@ -415,39 +468,55 @@ class VersionMode(enum.Enum):
         release_component_count = 3
 
         if len(version.release) != release_component_count:
-            raise ApplicationError(f"Version {version} contains {version.release} release components instead of {release_component_count}.")
+            raise ApplicationError(
+                f"Version {version} contains {version.release} release components instead of {release_component_count}."
+            )
 
         if version.epoch:
-            raise ApplicationError(f"Version {version} contains an epoch component: {version.epoch}")
+            raise ApplicationError(
+                f"Version {version} contains an epoch component: {version.epoch}"
+            )
 
         if version.local is not None:
-            raise ApplicationError(f"Version {version} contains a local component: {version.local}")
+            raise ApplicationError(
+                f"Version {version} contains a local component: {version.local}"
+            )
 
         if version.is_devrelease and version.is_postrelease:
-            raise ApplicationError(f"Version {version} is a development and post release version.")
+            raise ApplicationError(
+                f"Version {version} is a development and post release version."
+            )
 
         if self == VersionMode.ALLOW_DEV_POST:
             return version
 
         if self == VersionMode.REQUIRE_DEV_POST:
             if not version.is_devrelease and not version.is_postrelease:
-                raise ApplicationError(f"Version {version} is not a development or post release version.")
+                raise ApplicationError(
+                    f"Version {version} is not a development or post release version."
+                )
 
             return version
 
         if version.is_devrelease:
-            raise ApplicationError(f"Version {version} is a development release: {version.dev}")
+            raise ApplicationError(
+                f"Version {version} is a development release: {version.dev}"
+            )
 
         if self == VersionMode.STRIP_POST:
             if version.is_postrelease:
                 version = Version(str(version).removesuffix(f".post{version.post}"))
-                display.warning(f"Using version {version} by stripping the post release suffix from version {original_version}.")
+                display.warning(
+                    f"Using version {version} by stripping the post release suffix from version {original_version}."
+                )
 
             return version
 
         if self == VersionMode.REQUIRE_POST:
             if not version.is_postrelease:
-                raise ApplicationError(f"Version {version} is not a post release version.")
+                raise ApplicationError(
+                    f"Version {version} is not a post release version."
+                )
 
             return version
 
@@ -461,21 +530,20 @@ class VersionMode(enum.Enum):
 
 
 @t.overload
-def git(*args: t.Any, capture_output: t.Literal[True]) -> CompletedProcess:
-    ...
+def git(*args: t.Any, capture_output: t.Literal[True]) -> CompletedProcess: ...
 
 
 @t.overload
-def git(*args: t.Any, capture_output: t.Literal[False]) -> None:
-    ...
+def git(*args: t.Any, capture_output: t.Literal[False]) -> None: ...
 
 
 @t.overload
-def git(*args: t.Any) -> None:
-    ...
+def git(*args: t.Any) -> None: ...
 
 
-def git(*args: t.Any, capture_output: t.Literal[True] | t.Literal[False] = False) -> CompletedProcess | None:
+def git(
+    *args: t.Any, capture_output: t.Literal[True] | t.Literal[False] = False
+) -> CompletedProcess | None:
     """Run the specified git command."""
     return run("git", *args, env=None, cwd=CHECKOUT_DIR, capture_output=capture_output)
 
@@ -483,7 +551,14 @@ def git(*args: t.Any, capture_output: t.Literal[True] | t.Literal[False] = False
 def get_commit(rev: str | None = None) -> str:
     """Return the commit associated with the given rev, or HEAD if no rev is given."""
     try:
-        return git("rev-parse", "--quiet", "--verify", "--end-of-options", f"{rev or 'HEAD'}^{{commit}}", capture_output=True).stdout.strip()
+        return git(
+            "rev-parse",
+            "--quiet",
+            "--verify",
+            "--end-of-options",
+            f"{rev or 'HEAD'}^{{commit}}",
+            capture_output=True,
+        ).stdout.strip()
     except CalledProcessError as ex:
         if ex.status == 1 and not ex.stdout and not ex.stderr:
             raise ApplicationError(f"Could not find commit: {rev}") from None
@@ -491,11 +566,19 @@ def get_commit(rev: str | None = None) -> str:
         raise
 
 
-def prepare_pull_request(version: Version, branch: str, title: str, add: t.Iterable[pathlib.Path | str], allow_stale: bool) -> PullRequest:
+def prepare_pull_request(
+    version: Version,
+    branch: str,
+    title: str,
+    add: t.Iterable[pathlib.Path | str],
+    allow_stale: bool,
+) -> PullRequest:
     """Return pull request parameters using the provided details."""
     git_state = get_git_state(version, allow_stale)
 
-    if not git("status", "--porcelain", "--untracked-files=no", capture_output=True).stdout.strip():
+    if not git(
+        "status", "--porcelain", "--untracked-files=no", capture_output=True
+    ).stdout.strip():
         raise ApplicationError("There are no changes to commit. Did you skip a step?")
 
     upstream_branch = get_upstream_branch(version)
@@ -535,7 +618,9 @@ def create_github_release(release: GitHubRelease) -> None:
     )
 
     query_string = urllib.parse.urlencode(params)
-    url = f"https://github.com/{release.user}/{release.repo}/releases/new?{query_string}"
+    url = (
+        f"https://github.com/{release.user}/{release.repo}/releases/new?{query_string}"
+    )
 
     display.show("Opening release creation page in new tab using default browser ...")
     webbrowser.open_new_tab(url)
@@ -575,11 +660,17 @@ Feature Pull Request
 
 def get_remote(name: str, push: bool) -> Remote:
     """Return details about the specified remote."""
-    remote_url = git("remote", "get-url", *(["--push"] if push else []), name, capture_output=True).stdout.strip()
-    remote_match = re.search(r"[@/]github[.]com[:/](?P<user>[^/]+)/(?P<repo>[^.]+)(?:[.]git)?$", remote_url)
+    remote_url = git(
+        "remote", "get-url", *(["--push"] if push else []), name, capture_output=True
+    ).stdout.strip()
+    remote_match = re.search(
+        r"[@/]github[.]com[:/](?P<user>[^/]+)/(?P<repo>[^.]+)(?:[.]git)?$", remote_url
+    )
 
     if not remote_match:
-        raise RuntimeError(f"Unable to identify the user and repo in the '{name}' remote: {remote_url}")
+        raise RuntimeError(
+            f"Unable to identify the user and repo in the '{name}' remote: {remote_url}"
+        )
 
     remote = Remote(
         name=name,
@@ -594,29 +685,51 @@ def get_remote(name: str, push: bool) -> Remote:
 def get_remotes() -> Remotes:
     """Return details about the remotes we need to use."""
     # assume the devel branch has its upstream remote pointing to the user's fork
-    fork_remote_name = git("branch", "--list", "devel", "--format=%(upstream:remotename)", capture_output=True).stdout.strip()
+    fork_remote_name = git(
+        "branch",
+        "--list",
+        "devel",
+        "--format=%(upstream:remotename)",
+        capture_output=True,
+    ).stdout.strip()
 
     if not fork_remote_name:
-        raise ApplicationError("Could not determine the remote for your fork of Ansible.")
+        raise ApplicationError(
+            "Could not determine the remote for your fork of Ansible."
+        )
 
-    display.show(f"Detected '{fork_remote_name}' as the remote for your fork of Ansible.")
+    display.show(
+        f"Detected '{fork_remote_name}' as the remote for your fork of Ansible."
+    )
 
     # assume there is only one ansible org remote, which would allow release testing using another repo in the same org without special configuration
     all_remotes = git("remote", "-v", capture_output=True).stdout.strip().splitlines()
-    ansible_remote_names = set(line.split()[0] for line in all_remotes if re.search(r"[@/]github[.]com[:/]ansible/", line))
+    ansible_remote_names = set(
+        line.split()[0]
+        for line in all_remotes
+        if re.search(r"[@/]github[.]com[:/]ansible/", line)
+    )
 
     if not ansible_remote_names:
-        raise ApplicationError(f"Could not determine the remote which '{fork_remote_name}' was forked from.")
+        raise ApplicationError(
+            f"Could not determine the remote which '{fork_remote_name}' was forked from."
+        )
 
     if len(ansible_remote_names) > 1:
-        raise ApplicationError(f"Found multiple candidates for the remote from which '{fork_remote_name}' was forked from: {', '.join(ansible_remote_names)}")
+        raise ApplicationError(
+            f"Found multiple candidates for the remote from which '{fork_remote_name}' was forked from: {', '.join(ansible_remote_names)}"
+        )
 
     upstream_remote_name = ansible_remote_names.pop()
 
-    display.show(f"Detected '{upstream_remote_name}' as the remote from which '{fork_remote_name}' was forked from.")
+    display.show(
+        f"Detected '{upstream_remote_name}' as the remote from which '{fork_remote_name}' was forked from."
+    )
 
     if fork_remote_name == upstream_remote_name:
-        raise ApplicationError("The remote for your fork of Ansible cannot be the same as the remote from which it was forked.")
+        raise ApplicationError(
+            "The remote for your fork of Ansible cannot be the same as the remote from which it was forked."
+        )
 
     remotes = Remotes(
         fork=get_remote(fork_remote_name, push=True),
@@ -645,7 +758,9 @@ def get_git_state(version: Version, allow_stale: bool) -> GitState:
 
     if commit != upstream_commit:
         with suppress_when(allow_stale):
-            raise ApplicationError(f"The current commit ({commit}) does not match {upstream_ref} ({upstream_commit}).")
+            raise ApplicationError(
+                f"The current commit ({commit}) does not match {upstream_ref} ({upstream_commit})."
+            )
 
     branch = git("branch", "--show-current", capture_output=True).stdout.strip() or None
 
@@ -671,7 +786,9 @@ build
 twine
 """
 
-    requirements_file = CHECKOUT_DIR / "test/sanity/code-smell/package-data.requirements.txt"
+    requirements_file = (
+        CHECKOUT_DIR / "test/sanity/code-smell/package-data.requirements.txt"
+    )
     requirements_content = requirements_file.read_text()
     requirements_content += ansible_requirements
     requirements_content += release_requirements
@@ -686,13 +803,17 @@ twine
     venv_marker_file = venv_dir / "marker.txt"
 
     env = os.environ.copy()
-    env.pop("PYTHONPATH", None)  # avoid interference from ansible being injected into the environment
+    env.pop(
+        "PYTHONPATH", None
+    )  # avoid interference from ansible being injected into the environment
     env.update(
         PATH=os.pathsep.join((str(venv_bin_dir), env["PATH"])),
     )
 
     if not venv_marker_file.exists():
-        display.show(f"Creating a Python {python_version} virtual environment ({requirements_hash}) ...")
+        display.show(
+            f"Creating a Python {python_version} virtual environment ({requirements_hash}) ..."
+        )
 
         if venv_dir.exists():
             shutil.rmtree(venv_dir)
@@ -701,14 +822,26 @@ twine
 
         venv_requirements_file.write_text(requirements_content)
 
-        run("pip", "install", "-r", venv_requirements_file, env=env | PIP_ENV, cwd=CHECKOUT_DIR)
+        run(
+            "pip",
+            "install",
+            "-r",
+            venv_requirements_file,
+            env=env | PIP_ENV,
+            cwd=CHECKOUT_DIR,
+        )
 
         venv_marker_file.touch()
 
     return env
 
 
-def get_ansible_version(version: str | None = None, /, commit: str | None = None, mode: VersionMode = VersionMode.DEFAULT) -> Version:
+def get_ansible_version(
+    version: str | None = None,
+    /,
+    commit: str | None = None,
+    mode: VersionMode = VersionMode.DEFAULT,
+) -> Version:
     """Parse and return the current ansible-core version, the provided version or the version from the provided commit."""
     if version and commit:
         raise ValueError("Specify only one of: version, commit")
@@ -717,7 +850,11 @@ def get_ansible_version(version: str | None = None, /, commit: str | None = None
         source = ""
     else:
         if commit:
-            current = git("show", f"{commit}:{ANSIBLE_RELEASE_FILE.relative_to(CHECKOUT_DIR)}", capture_output=True).stdout
+            current = git(
+                "show",
+                f"{commit}:{ANSIBLE_RELEASE_FILE.relative_to(CHECKOUT_DIR)}",
+                capture_output=True,
+            ).stdout
         else:
             current = ANSIBLE_RELEASE_FILE.read_text()
 
@@ -737,7 +874,13 @@ def get_ansible_version(version: str | None = None, /, commit: str | None = None
     return parsed_version
 
 
-def get_next_version(version: Version, /, final: bool = False, pre: str | None = None, mode: VersionMode = VersionMode.DEFAULT) -> Version:
+def get_next_version(
+    version: Version,
+    /,
+    final: bool = False,
+    pre: str | None = None,
+    mode: VersionMode = VersionMode.DEFAULT,
+) -> Version:
     """Return the next version after the specified version."""
 
     # TODO: consider using development versions instead of post versions after a release is published
@@ -761,7 +904,9 @@ def get_next_version(version: Version, /, final: bool = False, pre: str | None =
         if version.pre is None:
             micro = version.micro + 1
     else:
-        raise ApplicationError(f"Version {version} is not a development or post release version.")
+        raise ApplicationError(
+            f"Version {version} is not a development or post release version."
+        )
 
     version = f"{version.major}.{version.minor}.{micro}{pre}"
 
@@ -771,10 +916,14 @@ def get_next_version(version: Version, /, final: bool = False, pre: str | None =
 def check_ansible_version(current_version: Version, requested_version: Version) -> None:
     """Verify the requested version is valid for the current version."""
     if requested_version.release[:2] != current_version.release[:2]:
-        raise ApplicationError(f"Version {requested_version} does not match the major and minor portion of the current version: {current_version}")
+        raise ApplicationError(
+            f"Version {requested_version} does not match the major and minor portion of the current version: {current_version}"
+        )
 
     if requested_version < current_version:
-        raise ApplicationError(f"Version {requested_version} is older than the current version: {current_version}")
+        raise ApplicationError(
+            f"Version {requested_version} is older than the current version: {current_version}"
+        )
 
     # TODO: consider additional checks to avoid mistakes when incrementing the release version
 
@@ -789,7 +938,9 @@ def set_ansible_version(current_version: Version, requested_version: Version) ->
     display.show(f"Updating version {current_version} to {requested_version} ...")
 
     current = ANSIBLE_RELEASE_FILE.read_text()
-    updated = ANSIBLE_VERSION_PATTERN.sub(ANSIBLE_VERSION_FORMAT.format(version=requested_version), current)
+    updated = ANSIBLE_VERSION_PATTERN.sub(
+        ANSIBLE_VERSION_FORMAT.format(version=requested_version), current
+    )
 
     if current == updated:
         raise RuntimeError("Failed to set the ansible-core version.")
@@ -797,28 +948,43 @@ def set_ansible_version(current_version: Version, requested_version: Version) ->
     ANSIBLE_RELEASE_FILE.write_text(updated)
 
 
-def create_reproducible_sdist(original_path: pathlib.Path, output_path: pathlib.Path, mtime: int) -> None:
+def create_reproducible_sdist(
+    original_path: pathlib.Path, output_path: pathlib.Path, mtime: int
+) -> None:
     """Read the specified sdist and write out a new copy with uniform file metadata at the specified location."""
     with tarfile.open(original_path) as original_archive:
         with tempfile.TemporaryDirectory() as temp_dir:
             tar_file = pathlib.Path(temp_dir) / "sdist.tar"
 
             with tarfile.open(tar_file, mode="w") as tar_archive:
-                for original_info in original_archive.getmembers():  # type: tarfile.TarInfo
-                    tar_archive.addfile(create_reproducible_tar_info(original_info, mtime), original_archive.extractfile(original_info))
+                for (
+                    original_info
+                ) in original_archive.getmembers():  # type: tarfile.TarInfo
+                    tar_archive.addfile(
+                        create_reproducible_tar_info(original_info, mtime),
+                        original_archive.extractfile(original_info),
+                    )
 
             with tar_file.open("rb") as tar_archive:
                 with gzip.GzipFile(output_path, "wb", mtime=mtime) as output_archive:
                     shutil.copyfileobj(tar_archive, output_archive)
 
 
-def create_reproducible_tar_info(original: tarfile.TarInfo, mtime: int) -> tarfile.TarInfo:
+def create_reproducible_tar_info(
+    original: tarfile.TarInfo, mtime: int
+) -> tarfile.TarInfo:
     """Return a copy of the given TarInfo with uniform file metadata."""
     sanitized = tarfile.TarInfo()
     sanitized.name = original.name
     sanitized.size = original.size
     sanitized.mtime = mtime
-    sanitized.mode = (original.mode & ~(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)) | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH | stat.S_IWUSR
+    sanitized.mode = (
+        (original.mode & ~(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO))
+        | stat.S_IRUSR
+        | stat.S_IRGRP
+        | stat.S_IROTH
+        | stat.S_IWUSR
+    )
     sanitized.type = original.type
     sanitized.linkname = original.linkname
     sanitized.uid = 0
@@ -843,7 +1009,9 @@ def test_built_artifact(path: pathlib.Path) -> None:
         venv.create(venv_dir, with_pip=True)
 
         env = os.environ.copy()
-        env.pop("PYTHONPATH", None)  # avoid interference from ansible being injected into the environment
+        env.pop(
+            "PYTHONPATH", None
+        )  # avoid interference from ansible being injected into the environment
         env.update(
             PATH=os.pathsep.join((str(venv_bin_dir), env["PATH"])),
         )
@@ -871,7 +1039,9 @@ def calculate_digest(path: pathlib.Path) -> str:
 
 
 @functools.cache
-def get_release_artifact_details(repository: str, version: Version, validate: bool) -> list[ReleaseArtifact]:
+def get_release_artifact_details(
+    repository: str, version: Version, validate: bool
+) -> list[ReleaseArtifact]:
     """Return information about the release artifacts hosted on PyPI."""
     endpoint = PYPI_ENDPOINTS[repository]
     url = f"{endpoint}/ansible-core/{version}/json"
@@ -888,18 +1058,24 @@ def get_release_artifact_details(repository: str, version: Version, validate: bo
 
         raise RuntimeError(f"Failed to get {version} from PyPI: {ex}") from ex
 
-    artifacts = [describe_release_artifact(version, item, validate) for item in data["urls"]]
+    artifacts = [
+        describe_release_artifact(version, item, validate) for item in data["urls"]
+    ]
 
     expected_artifact_types = {"bdist_wheel", "sdist"}
     found_artifact_types = set(artifact.package_type for artifact in artifacts)
 
     if found_artifact_types != expected_artifact_types:
-        raise RuntimeError(f"Expected {expected_artifact_types} artifact types, but found {found_artifact_types} instead.")
+        raise RuntimeError(
+            f"Expected {expected_artifact_types} artifact types, but found {found_artifact_types} instead."
+        )
 
     return artifacts
 
 
-def describe_release_artifact(version: Version, item: dict[str, t.Any], validate: bool) -> ReleaseArtifact:
+def describe_release_artifact(
+    version: Version, item: dict[str, t.Any], validate: bool
+) -> ReleaseArtifact:
     """Return release artifact details extracted from the given PyPI data."""
     package_type = item["packagetype"]
 
@@ -924,13 +1100,19 @@ def describe_release_artifact(version: Version, item: dict[str, t.Any], validate
             local_size = local_artifact_file.stat().st_size
             local_digest = calculate_digest(local_artifact_file)
         except FileNotFoundError:
-            raise ApplicationError(f"Missing local artifact: {local_artifact_file.relative_to(CHECKOUT_DIR)}") from None
+            raise ApplicationError(
+                f"Missing local artifact: {local_artifact_file.relative_to(CHECKOUT_DIR)}"
+            ) from None
 
         if local_size != pypi_size:
-            raise ApplicationError(f"The {version} local {package_type} size {local_size} does not match the PyPI size {pypi_size}.")
+            raise ApplicationError(
+                f"The {version} local {package_type} size {local_size} does not match the PyPI size {pypi_size}."
+            )
 
         if local_digest != pypi_digest:
-            raise ApplicationError(f"The {version} local {package_type} digest '{local_digest}' does not match the PyPI digest '{pypi_digest}'.")
+            raise ApplicationError(
+                f"The {version} local {package_type} digest '{local_digest}' does not match the PyPI digest '{pypi_digest}'."
+            )
 
     return ReleaseArtifact(
         package_type=package_type,
@@ -942,13 +1124,17 @@ def describe_release_artifact(version: Version, item: dict[str, t.Any], validate
     )
 
 
-def get_next_release_date(start: datetime.date, step: int, after: datetime.date) -> datetime.date:
+def get_next_release_date(
+    start: datetime.date, step: int, after: datetime.date
+) -> datetime.date:
     """Return the next release date."""
     if start > after:
         raise ValueError(f"{start=} is greater than {after=}")
 
     current_delta = after - start
-    release_delta = datetime.timedelta(days=(math.floor(current_delta.days / step) + 1) * step)
+    release_delta = datetime.timedelta(
+        days=(math.floor(current_delta.days / step) + 1) * step
+    )
 
     release = start + release_delta
 
@@ -965,7 +1151,9 @@ def create_template_environment() -> jinja2.Environment:
     return env
 
 
-def create_github_release_notes(upstream: Remote, repository: str, version: Version, validate: bool) -> str:
+def create_github_release_notes(
+    upstream: Remote, repository: str, version: Version, validate: bool
+) -> str:
     """Create and return GitHub release notes."""
     env = create_template_environment()
     template = env.from_string(GITHUB_RELEASE_NOTES_TEMPLATE)
@@ -981,7 +1169,9 @@ def create_github_release_notes(upstream: Remote, repository: str, version: Vers
     return release_notes
 
 
-def create_release_announcement(upstream: Remote, repository: str, version: Version, validate: bool) -> ReleaseAnnouncement:
+def create_release_announcement(
+    upstream: Remote, repository: str, version: Version, validate: bool
+) -> ReleaseAnnouncement:
     """Create and return a release announcement message."""
     env = create_template_environment()
     subject_template = env.from_string(RELEASE_ANNOUNCEMENT_SUBJECT_TEMPLATE)
@@ -1006,7 +1196,9 @@ def create_release_announcement(upstream: Remote, repository: str, version: Vers
     )
 
     if version.pre and version.pre[0] in ("a", "b"):
-        display.warning("The release announcement template does not populate the date for the next release.")
+        display.warning(
+            "The release announcement template does not populate the date for the next release."
+        )
 
     subject = subject_template.render(**variables).strip()
     body = body_template.render(**variables).strip()
@@ -1125,17 +1317,46 @@ Thanks!
 # region Commands
 
 command = CommandFramework(
-    repository=dict(metavar="REPO", choices=tuple(PYPI_ENDPOINTS), default="pypi", help="PyPI repository to use: %(choices)s [%(default)s]"),
+    repository=dict(
+        metavar="REPO",
+        choices=tuple(PYPI_ENDPOINTS),
+        default="pypi",
+        help="PyPI repository to use: %(choices)s [%(default)s]",
+    ),
     version=dict(exclusive="version", help="version to set"),
-    pre=dict(exclusive="version", help="increment version to the specified pre-release (aN, bN, rcN)"),
-    final=dict(exclusive="version", action="store_true", help="increment version to the next final release"),
+    pre=dict(
+        exclusive="version",
+        help="increment version to the specified pre-release (aN, bN, rcN)",
+    ),
+    final=dict(
+        exclusive="version",
+        action="store_true",
+        help="increment version to the next final release",
+    ),
     commit=dict(help="commit to tag"),
-    mailto=dict(name="--no-mailto", action="store_false", help="write announcement to console instead of using a mailto: link"),
-    validate=dict(name="--no-validate", action="store_false", help="disable validation of PyPI artifacts against local ones"),
-    prompt=dict(name="--no-prompt", action="store_false", help="disable interactive prompt before publishing with twine"),
-    allow_tag=dict(action="store_true", help="allow an existing release tag (for testing)"),
+    mailto=dict(
+        name="--no-mailto",
+        action="store_false",
+        help="write announcement to console instead of using a mailto: link",
+    ),
+    validate=dict(
+        name="--no-validate",
+        action="store_false",
+        help="disable validation of PyPI artifacts against local ones",
+    ),
+    prompt=dict(
+        name="--no-prompt",
+        action="store_false",
+        help="disable interactive prompt before publishing with twine",
+    ),
+    allow_tag=dict(
+        action="store_true", help="allow an existing release tag (for testing)"
+    ),
     allow_stale=dict(action="store_true", help="allow a stale checkout (for testing)"),
-    allow_dirty=dict(action="store_true", help="allow untracked files and files with changes (for testing)"),
+    allow_dirty=dict(
+        action="store_true",
+        help="allow untracked files and files with changes (for testing)",
+    ),
 )
 
 
@@ -1189,7 +1410,9 @@ def check_state(allow_stale: bool = False) -> None:
 
 # noinspection PyUnusedLocal
 @command
-def prepare(final: bool = False, pre: str | None = None, version: str | None = None) -> None:
+def prepare(
+    final: bool = False, pre: str | None = None, version: str | None = None
+) -> None:
     """Prepare a release."""
     command.run(
         update_version,
@@ -1201,7 +1424,9 @@ def prepare(final: bool = False, pre: str | None = None, version: str | None = N
 
 
 @command
-def update_version(final: bool = False, pre: str | None = None, version: str | None = None) -> None:
+def update_version(
+    final: bool = False, pre: str | None = None, version: str | None = None
+) -> None:
     """Update the version embedded in the source code."""
     current_version = get_ansible_version(mode=VersionMode.REQUIRE_DEV_POST)
 
@@ -1241,10 +1466,31 @@ def generate_changelog() -> None:
 
     # TODO: consider switching back to the original changelog generator instead of using antsibull-changelog
 
-    run("antsibull-changelog", "release", "-vv", "--use-ansible-doc", env=env, cwd=CHECKOUT_DIR)
-    run("antsibull-changelog", "generate", "-vv", "--use-ansible-doc", env=env, cwd=CHECKOUT_DIR)
+    run(
+        "antsibull-changelog",
+        "release",
+        "-vv",
+        "--use-ansible-doc",
+        env=env,
+        cwd=CHECKOUT_DIR,
+    )
+    run(
+        "antsibull-changelog",
+        "generate",
+        "-vv",
+        "--use-ansible-doc",
+        env=env,
+        cwd=CHECKOUT_DIR,
+    )
 
-    run("ansible-test", "sanity", CHANGELOGS_DIR, ANSIBLE_RELEASE_FILE, env=env, cwd=CHECKOUT_DIR)
+    run(
+        "ansible-test",
+        "sanity",
+        CHANGELOGS_DIR,
+        ANSIBLE_RELEASE_FILE,
+        env=env,
+        cwd=CHECKOUT_DIR,
+    )
 
 
 @command
@@ -1288,16 +1534,24 @@ def build(allow_dirty: bool = False) -> None:
     version = get_ansible_version(mode=VersionMode.ALLOW_DEV_POST)
     env = ensure_venv()
 
-    dirty = git("status", "--porcelain", "--untracked-files=all", capture_output=True).stdout.strip().splitlines()
+    dirty = (
+        git("status", "--porcelain", "--untracked-files=all", capture_output=True)
+        .stdout.strip()
+        .splitlines()
+    )
 
     if dirty:
         with suppress_when(allow_dirty):
-            raise ApplicationError(f"There are {len(dirty)} files which are untracked and/or have changes, which will be omitted from the build.")
+            raise ApplicationError(
+                f"There are {len(dirty)} files which are untracked and/or have changes, which will be omitted from the build."
+            )
 
     sdist_file = get_sdist_path(version)
     wheel_file = get_wheel_path(version)
 
-    with tempfile.TemporaryDirectory(dir=DIST_DIR, prefix=f"build-{version}-", suffix=".tmp") as temp_dir_name:
+    with tempfile.TemporaryDirectory(
+        dir=DIST_DIR, prefix=f"build-{version}-", suffix=".tmp"
+    ) as temp_dir_name:
         temp_dir = pathlib.Path(temp_dir_name)
         dist_dir = temp_dir / "dist"
 
@@ -1312,7 +1566,9 @@ def build(allow_dirty: bool = False) -> None:
         try:
             run("python", "-m", "build", env=env, cwd=temp_dir)
 
-            create_reproducible_sdist(get_sdist_path(version, dist_dir), sdist_file, commit_time)
+            create_reproducible_sdist(
+                get_sdist_path(version, dist_dir), sdist_file, commit_time
+            )
             get_wheel_path(version, dist_dir).rename(wheel_file)
         finally:
             git("worktree", "remove", temp_dir)
@@ -1340,19 +1596,25 @@ def test_sdist() -> None:
             try:
                 sdist = stack.enter_context(tarfile.open(sdist_file))
             except FileNotFoundError:
-                raise ApplicationError(f"Missing sdist: {sdist_file.relative_to(CHECKOUT_DIR)}") from None
+                raise ApplicationError(
+                    f"Missing sdist: {sdist_file.relative_to(CHECKOUT_DIR)}"
+                ) from None
 
             # deprecated: description='extractall fallback without filter' python_version='3.11'
-            if hasattr(tarfile, 'data_filter'):
-                sdist.extractall(temp_dir, filter='data')  # type: ignore[call-arg]
+            if hasattr(tarfile, "data_filter"):
+                sdist.extractall(temp_dir, filter="data")  # type: ignore[call-arg]
             else:
                 sdist.extractall(temp_dir)
 
         pyc_glob = "*.pyc*"
-        pyc_files = sorted(path.relative_to(temp_dir) for path in temp_dir.rglob(pyc_glob))
+        pyc_files = sorted(
+            path.relative_to(temp_dir) for path in temp_dir.rglob(pyc_glob)
+        )
 
         if pyc_files:
-            raise ApplicationError(f"Found {len(pyc_files)} '{pyc_glob}' file(s): {', '.join(map(str, pyc_files))}")
+            raise ApplicationError(
+                f"Found {len(pyc_files)} '{pyc_glob}' file(s): {', '.join(map(str, pyc_files))}"
+            )
 
     test_built_artifact(sdist_file)
 
@@ -1370,7 +1632,9 @@ def test_wheel() -> None:
             try:
                 wheel = stack.enter_context(zipfile.ZipFile(wheel_file))
             except FileNotFoundError:
-                raise ApplicationError(f"Missing wheel for version {version}: {wheel_file}") from None
+                raise ApplicationError(
+                    f"Missing wheel for version {version}: {wheel_file}"
+                ) from None
 
             wheel.extractall(temp_dir)
 
@@ -1387,37 +1651,75 @@ def publish(repository: str, prompt: bool = True) -> None:
 
     if prompt:
         try:
-            while input(f"Do you want to publish {version} to the '{repository}' repository?\nEnter the repository name to confirm: ") != repository:
+            while (
+                input(
+                    f"Do you want to publish {version} to the '{repository}' repository?\nEnter the repository name to confirm: "
+                )
+                != repository
+            ):
                 pass
         except KeyboardInterrupt:
             display.show("")
             raise ApplicationError("Publishing was aborted by the user.") from None
 
-    run("twine", "upload", "-r", repository, sdist_file, wheel_file, env=env, cwd=CHECKOUT_DIR)
+    run(
+        "twine",
+        "upload",
+        "-r",
+        repository,
+        sdist_file,
+        wheel_file,
+        env=env,
+        cwd=CHECKOUT_DIR,
+    )
 
 
 @command
-def tag_release(repository: str, commit: str | None = None, validate: bool = True, allow_tag: bool = False) -> None:
+def tag_release(
+    repository: str,
+    commit: str | None = None,
+    validate: bool = True,
+    allow_tag: bool = False,
+) -> None:
     """Create a GitHub release using the current or specified commit."""
     upstream = get_remotes().upstream
 
     if commit:
-        git("fetch", upstream.name)  # fetch upstream to make sure the commit can be found
+        git(
+            "fetch", upstream.name
+        )  # fetch upstream to make sure the commit can be found
 
     commit = get_commit(commit)
     version = get_ansible_version(commit=commit)
     tag = f"v{version}"
 
-    if upstream_tag := git("ls-remote", "--tags", upstream.name, tag, capture_output=True).stdout.strip():
+    if upstream_tag := git(
+        "ls-remote", "--tags", upstream.name, tag, capture_output=True
+    ).stdout.strip():
         with suppress_when(allow_tag):
-            raise ApplicationError(f"Version {version} has already been tagged: {upstream_tag}")
+            raise ApplicationError(
+                f"Version {version} has already been tagged: {upstream_tag}"
+            )
 
     upstream_branch = get_upstream_branch(version)
-    upstream_refs = git("branch", "-r", "--format=%(refname)", "--contains", commit, capture_output=True).stdout.strip().splitlines()
+    upstream_refs = (
+        git(
+            "branch",
+            "-r",
+            "--format=%(refname)",
+            "--contains",
+            commit,
+            capture_output=True,
+        )
+        .stdout.strip()
+        .splitlines()
+    )
     upstream_ref = f"refs/remotes/{upstream.name}/{upstream_branch}"
 
     if upstream_ref not in upstream_refs:
-        raise ApplicationError(f"Commit {upstream_ref} not found. Found {len(upstream_refs)} upstream ref(s): {', '.join(upstream_refs)}")
+        raise ApplicationError(
+            f"Commit {upstream_ref} not found. Found {len(upstream_refs)} upstream ref(s): {', '.join(upstream_refs)}"
+        )
 
     body = create_github_release_notes(upstream, repository, version, validate)
 
@@ -1438,7 +1740,9 @@ def tag_release(repository: str, commit: str | None = None, validate: bool = Tru
 def post_version() -> None:
     """Set the post release version."""
     current_version = get_ansible_version()
-    requested_version = get_ansible_version(f"{current_version}.post0", mode=VersionMode.REQUIRE_POST)
+    requested_version = get_ansible_version(
+        f"{current_version}.post0", mode=VersionMode.REQUIRE_POST
+    )
 
     set_ansible_version(current_version, requested_version)
 
@@ -1460,12 +1764,23 @@ def create_post_pr(allow_stale: bool = False) -> None:
 
 
 @command
-def release_announcement(repository: str, version: str | None = None, mailto: bool = True, validate: bool = True) -> None:
+def release_announcement(
+    repository: str,
+    version: str | None = None,
+    mailto: bool = True,
+    validate: bool = True,
+) -> None:
     """Generate a release announcement for the current or specified version."""
     parsed_version = get_ansible_version(version, mode=VersionMode.STRIP_POST)
     upstream = get_remotes().upstream
-    message = create_release_announcement(upstream, repository, parsed_version, validate)
-    recipient_list = PRE_RELEASE_ANNOUNCEMENT_RECIPIENTS if parsed_version.is_prerelease else FINAL_RELEASE_ANNOUNCEMENT_RECIPIENTS
+    message = create_release_announcement(
+        upstream, repository, parsed_version, validate
+    )
+    recipient_list = (
+        PRE_RELEASE_ANNOUNCEMENT_RECIPIENTS
+        if parsed_version.is_prerelease
+        else FINAL_RELEASE_ANNOUNCEMENT_RECIPIENTS
+    )
     recipients = ", ".join(recipient_list)
 
     if mailto:

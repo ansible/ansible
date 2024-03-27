@@ -1,1 +1,1 @@
-data = 'abcdefgh'
+data = "abcdefgh"

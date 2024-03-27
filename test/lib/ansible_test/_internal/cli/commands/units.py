@@ -1,4 +1,5 @@
 """Command line parsing for the `units` command."""
+
 from __future__ import annotations
 
 import argparse
@@ -30,9 +31,9 @@ def do_units(
 ):
     """Command line parsing for the `units` command."""
     parser: argparse.ArgumentParser = subparsers.add_parser(
-        'units',
+        "units",
         parents=[parent],
-        help='unit tests',
+        help="unit tests",
     )
 
     parser.set_defaults(
@@ -41,25 +42,27 @@ def do_units(
         config=UnitsConfig,
     )
 
-    units = parser.add_argument_group(title='unit test arguments')
+    units = parser.add_argument_group(title="unit test arguments")
 
     units.add_argument(
-        '--collect-only',
-        action='store_true',
-        help='collect tests but do not execute them',
+        "--collect-only",
+        action="store_true",
+        help="collect tests but do not execute them",
     )
 
     units.add_argument(
-        '--num-workers',
-        metavar='INT',
+        "--num-workers",
+        metavar="INT",
         type=int,
-        help='number of workers to use (default: auto)',
+        help="number of workers to use (default: auto)",
     )
 
     units.add_argument(
-        '--requirements-mode',
-        choices=('only', 'skip'),
+        "--requirements-mode",
+        choices=("only", "skip"),
         help=argparse.SUPPRESS,
     )
 
-    add_environments(parser, completer, ControllerMode.DELEGATED, TargetMode.UNITS)  # units
+    add_environments(
+        parser, completer, ControllerMode.DELEGATED, TargetMode.UNITS
+    )  # units

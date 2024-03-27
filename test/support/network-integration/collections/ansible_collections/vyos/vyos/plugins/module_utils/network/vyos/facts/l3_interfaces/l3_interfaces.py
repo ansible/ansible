@@ -28,8 +28,7 @@ from ansible_collections.vyos.vyos.plugins.module_utils.network.vyos.argspec.l3_
 
 
 class L3_interfacesFacts(object):
-    """ The vyos l3_interfaces fact class
-    """
+    """The vyos l3_interfaces fact class"""
 
     def __init__(self, module, subspec="config", options="options"):
         self._module = module
@@ -46,7 +45,7 @@ class L3_interfacesFacts(object):
         self.generated_spec = utils.generate_dict(facts_argument_spec)
 
     def populate_facts(self, connection, ansible_facts, data=None):
-        """ Populate the facts for l3_interfaces
+        """Populate the facts for l3_interfaces
         :param connection: the device connection
         :param ansible_facts: Facts dictionary
         :param data: previously collected conf
@@ -76,9 +75,7 @@ class L3_interfacesFacts(object):
         facts = {}
         if objs:
             facts["l3_interfaces"] = []
-            params = utils.validate_config(
-                self.argument_spec, {"config": objs}
-            )
+            params = utils.validate_config(self.argument_spec, {"config": objs})
             for cfg in params["config"]:
                 facts["l3_interfaces"].append(utils.remove_empties(cfg))
 

@@ -1,4 +1,5 @@
 """DigitalOcean plugin for integration tests."""
+
 from __future__ import annotations
 
 import configparser
@@ -42,10 +43,10 @@ class DigitalOceanCloudEnvironment(CloudEnvironment):
         parser.read(self.config_path)
 
         env_vars = dict(
-            DO_API_KEY=parser.get('default', 'key'),
+            DO_API_KEY=parser.get("default", "key"),
         )
 
-        display.sensitive.add(env_vars['DO_API_KEY'])
+        display.sensitive.add(env_vars["DO_API_KEY"])
 
         ansible_vars = dict(
             resource_prefix=self.resource_prefix,

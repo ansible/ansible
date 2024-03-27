@@ -3,20 +3,20 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: _not_deprecated
 short_description: This module is not deprecated
 description: Its name has a leading underscore, but it is not deprecated.
 author:
   - Ansible Core Team
-'''
+"""
 
-EXAMPLES = '''#'''
-RETURN = ''''''
+EXAMPLES = """#"""
+RETURN = """"""
 
 from ansible.module_utils.basic import AnsibleModule
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     module = AnsibleModule(argument_spec=dict())
     module.exit_json()

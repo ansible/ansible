@@ -21,11 +21,11 @@ from ansible.module_utils.six import string_types
 
 
 def pct_to_int(value, num_items, min_value=1):
-    '''
+    """
     Converts a given value to a percentage if specified as "x%",
     otherwise converts the given value to an integer.
-    '''
-    if isinstance(value, string_types) and value.endswith('%'):
+    """
+    if isinstance(value, string_types) and value.endswith("%"):
         value_pct = int(value.replace("%", ""))
         return int((value_pct / 100.0) * num_items) or min_value
     else:
@@ -38,7 +38,11 @@ def object_to_dict(obj, exclude=None):
     """
     if exclude is None or not isinstance(exclude, list):
         exclude = []
-    return dict((key, getattr(obj, key)) for key in dir(obj) if not (key.startswith('_') or key in exclude))
+    return dict(
+        (key, getattr(obj, key))
+        for key in dir(obj)
+        if not (key.startswith("_") or key in exclude)
+    )
 
 
 def deduplicate_list(original_list):

@@ -1,4 +1,5 @@
 """Command line parsing for the `coverage xml` command."""
+
 from __future__ import annotations
 
 import argparse
@@ -26,9 +27,9 @@ def do_xml(
 ) -> None:
     """Command line parsing for the `coverage xml` command."""
     parser: argparse.ArgumentParser = subparsers.add_parser(
-        'xml',
+        "xml",
         parents=[parent],
-        help='generate xml coverage report',
+        help="generate xml coverage report",
     )
 
     parser.set_defaults(
@@ -36,8 +37,12 @@ def do_xml(
         config=CoverageXmlConfig,
     )
 
-    coverage_combine = t.cast(argparse.ArgumentParser, parser.add_argument_group(title='coverage arguments'))
+    coverage_combine = t.cast(
+        argparse.ArgumentParser, parser.add_argument_group(title="coverage arguments")
+    )
 
     add_coverage_common(coverage_combine)
 
-    add_environments(parser, completer, ControllerMode.DELEGATED, TargetMode.NO_TARGETS)  # coverage xml
+    add_environments(
+        parser, completer, ControllerMode.DELEGATED, TargetMode.NO_TARGETS
+    )  # coverage xml

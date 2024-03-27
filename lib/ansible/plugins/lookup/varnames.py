@@ -55,7 +55,7 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
 
         if variables is None:
-            raise AnsibleError('No variables available to search')
+            raise AnsibleError("No variables available to search")
 
         self.set_options(var_options=variables, direct=kwargs)
 
@@ -64,12 +64,18 @@ class LookupModule(LookupBase):
         for term in terms:
 
             if not isinstance(term, string_types):
-                raise AnsibleError('Invalid setting identifier, "%s" is not a string, it is a %s' % (term, type(term)))
+                raise AnsibleError(
+                    'Invalid setting identifier, "%s" is not a string, it is a %s'
+                    % (term, type(term))
+                )
 
             try:
                 name = re.compile(term)
             except Exception as e:
-                raise AnsibleError('Unable to use "%s" as a search parameter: %s' % (term, to_native(e)))
+                raise AnsibleError(
+                    'Unable to use "%s" as a search parameter: %s'
+                    % (term, to_native(e))
+                )
 
             for varname in variable_names:
                 if name.search(varname):

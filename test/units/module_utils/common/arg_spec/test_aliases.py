@@ -6,63 +6,66 @@ from __future__ import annotations
 
 import pytest
 
-from ansible.module_utils.errors import AnsibleValidationError, AnsibleValidationErrorMultiple
+from ansible.module_utils.errors import (
+    AnsibleValidationError,
+    AnsibleValidationErrorMultiple,
+)
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator, ValidationResult
 
 # id, argument spec, parameters, expected parameters, deprecation, warning
 ALIAS_TEST_CASES = [
     (
         "alias",
-        {'path': {'aliases': ['dir', 'directory']}},
-        {'dir': '/tmp'},
+        {"path": {"aliases": ["dir", "directory"]}},
+        {"dir": "/tmp"},
         {
-            'dir': '/tmp',
-            'path': '/tmp',
+            "dir": "/tmp",
+            "path": "/tmp",
         },
         "",
         "",
     ),
     (
         "alias-duplicate-warning",
-        {'path': {'aliases': ['dir', 'directory']}},
+        {"path": {"aliases": ["dir", "directory"]}},
         {
-            'dir': '/tmp',
-            'directory': '/tmp',
+            "dir": "/tmp",
+            "directory": "/tmp",
         },
         {
-            'dir': '/tmp',
-            'directory': '/tmp',
-            'path': '/tmp',
+            "dir": "/tmp",
+            "directory": "/tmp",
+            "path": "/tmp",
         },
         "",
-        {'alias': 'directory', 'option': 'path'},
+        {"alias": "directory", "option": "path"},
     ),
     (
         "deprecated-alias",
         {
-            'path': {
-                'aliases': ['not_yo_path'],
-                'deprecated_aliases': [
+            "path": {
+                "aliases": ["not_yo_path"],
+                "deprecated_aliases": [
                     {
-                        'name': 'not_yo_path',
-                        'version': '1.7',
+                        "name": "not_yo_path",
+                        "version": "1.7",
                     }
-                ]
+                ],
             }
         },
-        {'not_yo_path': '/tmp'},
+        {"not_yo_path": "/tmp"},
         {
-            'path': '/tmp',
-            'not_yo_path': '/tmp',
+            "path": "/tmp",
+            "not_yo_path": "/tmp",
         },
         {
-            'version': '1.7',
-            'date': None,
-            'collection_name': None,
-            'msg': "Alias 'not_yo_path' is deprecated. See the module docs for more information",
+            "version": "1.7",
+            "date": None,
+            "collection_name": None,
+            "msg": "Alias 'not_yo_path' is deprecated. See the module docs for more information",
         },
         "",
-    )
+    ),
 ]
 
 
@@ -70,26 +73,26 @@ ALIAS_TEST_CASES = [
 ALIAS_TEST_CASES_INVALID = [
     (
         "alias-invalid",
-        {'path': {'aliases': 'bad'}},
+        {"path": {"aliases": "bad"}},
         {},
-        {'path': None},
+        {"path": None},
         "internal error: aliases must be a list or tuple",
     ),
     (
         # This isn't related to aliases, but it exists in the alias handling code
         "default-and-required",
-        {'name': {'default': 'ray', 'required': True}},
+        {"name": {"default": "ray", "required": True}},
         {},
-        {'name': 'ray'},
+        {"name": "ray"},
         "internal error: required and default are mutually exclusive for name",
     ),
 ]
 
 
 @pytest.mark.parametrize(
-    ('arg_spec', 'parameters', 'expected', 'deprecation', 'warning'),
+    ("arg_spec", "parameters", "expected", "deprecation", "warning"),
     ((i[1:]) for i in ALIAS_TEST_CASES),
-    ids=[i[0] for i in ALIAS_TEST_CASES]
+    ids=[i[0] for i in ALIAS_TEST_CASES],
 )
 def test_aliases(arg_spec, parameters, expected, deprecation, warning):
     v = ArgumentSpecValidator(arg_spec)
@@ -116,9 +119,9 @@ def test_aliases(arg_spec, parameters, expected, deprecation, warning):
 
 
 @pytest.mark.parametrize(
-    ('arg_spec', 'parameters', 'expected', 'error'),
+    ("arg_spec", "parameters", "expected", "error"),
     ((i[1:]) for i in ALIAS_TEST_CASES_INVALID),
-    ids=[i[0] for i in ALIAS_TEST_CASES_INVALID]
+    ids=[i[0] for i in ALIAS_TEST_CASES_INVALID],
 )
 def test_aliases_invalid(arg_spec, parameters, expected, error):
     v = ArgumentSpecValidator(arg_spec)

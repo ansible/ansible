@@ -5,8 +5,8 @@ import json
 
 
 def main():
-    print(json.dumps(dict(changed=False, source='content_adj')))
+    print(json.dumps(dict(changed=False, source="content_adj")))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

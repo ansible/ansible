@@ -1,4 +1,5 @@
 """Command line parsing for the `coverage erase` command."""
+
 from __future__ import annotations
 
 import argparse
@@ -23,9 +24,9 @@ def do_erase(
 ) -> None:
     """Command line parsing for the `coverage erase` command."""
     parser: argparse.ArgumentParser = subparsers.add_parser(
-        'erase',
+        "erase",
         parents=[parent],
-        help='erase coverage data files',
+        help="erase coverage data files",
     )
 
     parser.set_defaults(
@@ -33,4 +34,6 @@ def do_erase(
         config=CoverageEraseConfig,
     )
 
-    add_environments(parser, completer, ControllerMode.ORIGIN, TargetMode.NO_TARGETS)  # coverage erase
+    add_environments(
+        parser, completer, ControllerMode.ORIGIN, TargetMode.NO_TARGETS
+    )  # coverage erase

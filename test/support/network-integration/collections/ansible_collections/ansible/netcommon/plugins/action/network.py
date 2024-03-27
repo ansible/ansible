@@ -45,11 +45,7 @@ class ActionModule(_ActionModule):
 
         result = super(ActionModule, self).run(task_vars=task_vars)
 
-        if (
-            config_module
-            and self._task.args.get("backup")
-            and not result.get("failed")
-        ):
+        if config_module and self._task.args.get("backup") and not result.get("failed"):
             self._handle_backup_option(result, task_vars)
 
         return result
@@ -72,9 +68,7 @@ class ActionModule(_ActionModule):
             cwd = self._get_working_path()
             backup_path = os.path.join(cwd, "backup")
         if not filename:
-            tstamp = time.strftime(
-                "%Y-%m-%d@%H:%M:%S", time.localtime(time.time())
-            )
+            tstamp = time.strftime("%Y-%m-%d@%H:%M:%S", time.localtime(time.time()))
             filename = "%s_config.%s" % (
                 task_vars["inventory_hostname"],
                 tstamp,
@@ -82,9 +76,7 @@ class ActionModule(_ActionModule):
 
         dest = os.path.join(backup_path, filename)
         backup_path = os.path.expanduser(
-            os.path.expandvars(
-                to_bytes(backup_path, errors="surrogate_or_strict")
-            )
+            os.path.expandvars(to_bytes(backup_path, errors="surrogate_or_strict"))
         )
 
         if not os.path.exists(backup_path):
@@ -128,9 +120,7 @@ class ActionModule(_ActionModule):
         else:
             result["date"] = tstamp.split("@")[0]
             result["time"] = tstamp.split("@")[1]
-            result["shortname"] = result["backup_path"][::-1].split(".", 1)[1][
-                ::-1
-            ]
+            result["shortname"] = result["backup_path"][::-1].split(".", 1)[1][::-1]
             result["filename"] = result["backup_path"].split("/")[-1]
 
         # strip out any keys that have two leading and two trailing
@@ -152,9 +142,7 @@ class ActionModule(_ActionModule):
         if os.path.isabs(src) or urlsplit("src").scheme:
             source = src
         else:
-            source = self._loader.path_dwim_relative(
-                working_path, "templates", src
-            )
+            source = self._loader.path_dwim_relative(working_path, "templates", src)
             if not source:
                 source = self._loader.path_dwim_relative(working_path, src)
 
@@ -201,8 +189,6 @@ class ActionModule(_ActionModule):
             display.vvvv("Getting network OS from fact")
             network_os = task_vars["ansible_facts"]["network_os"]
         else:
-            raise AnsibleError(
-                "ansible_network_os must be specified on this host"
-            )
+            raise AnsibleError("ansible_network_os must be specified on this host")
 
         return network_os

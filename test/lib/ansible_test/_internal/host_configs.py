@@ -1,4 +1,5 @@
 """Configuration for the test hosts requested by the user."""
+
 from __future__ import annotations
 
 import abc
@@ -50,14 +51,21 @@ class OriginCompletionConfig(PosixCompletionConfig):
     """Pseudo completion config for the origin."""
 
     def __init__(self) -> None:
-        super().__init__(name='origin')
+        super().__init__(name="origin")
 
     @property
     def supported_pythons(self) -> list[str]:
         """Return a list of the supported Python versions."""
         current_version = version_to_str(sys.version_info[:2])
-        versions = [version for version in SUPPORTED_PYTHON_VERSIONS if version == current_version] + \
-                   [version for version in SUPPORTED_PYTHON_VERSIONS if version != current_version]
+        versions = [
+            version
+            for version in SUPPORTED_PYTHON_VERSIONS
+            if version == current_version
+        ] + [
+            version
+            for version in SUPPORTED_PYTHON_VERSIONS
+            if version != current_version
+        ]
         return versions
 
     def get_python_path(self, version: str) -> str:
@@ -75,7 +83,7 @@ class OriginCompletionConfig(PosixCompletionConfig):
 class HostContext:
     """Context used when getting and applying defaults for host configurations."""
 
-    controller_config: t.Optional['PosixConfig']
+    controller_config: t.Optional["PosixConfig"]
 
     @property
     def controller(self) -> bool:
@@ -121,14 +129,16 @@ class PythonConfig(metaclass=abc.ABCMeta):
         """Return the Python major version."""
         return self.tuple[0]
 
-    def apply_defaults(self, context: HostContext, defaults: PosixCompletionConfig) -> None:
+    def apply_defaults(
+        self, context: HostContext, defaults: PosixCompletionConfig
+    ) -> None:
         """Apply default settings."""
-        if self.version in (None, 'default'):
+        if self.version in (None, "default"):
             self.version = defaults.get_default_python(context.controller)
 
         if self.path:
-            if self.path.endswith('/'):
-                self.path = os.path.join(self.path, f'python{self.version}')
+            if self.path.endswith("/"):
+                self.path = os.path.join(self.path, f"python{self.version}")
 
             # FUTURE: If the host is origin, the python path could be validated here.
         else:
@@ -162,7 +172,9 @@ class VirtualPythonConfig(PythonConfig):
 
     system_site_packages: t.Optional[bool] = None
 
-    def apply_defaults(self, context: HostContext, defaults: PosixCompletionConfig) -> None:
+    def apply_defaults(
+        self, context: HostContext, defaults: PosixCompletionConfig
+    ) -> None:
         """Apply default settings."""
         super().apply_defaults(context, defaults)
 
@@ -223,12 +235,12 @@ class RemoteConfig(HostConfig, metaclass=abc.ABCMeta):
     @property
     def platform(self) -> str:
         """The name of the platform."""
-        return self.name.partition('/')[0]
+        return self.name.partition("/")[0]
 
     @property
     def version(self) -> str:
         """The version of the platform."""
-        return self.name.partition('/')[2]
+        return self.name.partition("/")[2]
 
     def apply_defaults(self, context: HostContext, defaults: CompletionConfig) -> None:
         """Apply default settings."""
@@ -236,10 +248,10 @@ class RemoteConfig(HostConfig, metaclass=abc.ABCMeta):
 
         super().apply_defaults(context, defaults)
 
-        if self.provider == 'default':
+        if self.provider == "default":
             self.provider = None
 
-        self.provider = self.provider or defaults.provider or 'aws'
+        self.provider = self.provider or defaults.provider or "aws"
         self.arch = self.arch or defaults.arch or Architecture.X86_64
 
     @property
@@ -269,7 +281,7 @@ class PosixSshConfig(PosixConfig):
     @property
     def have_root(self) -> bool:
         """True if root is available, otherwise False."""
-        return self.user == 'root'
+        return self.user == "root"
 
 
 @dataclasses.dataclass
@@ -301,7 +313,9 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
 
     def get_defaults(self, context: HostContext) -> DockerCompletionConfig:
         """Return the default settings."""
-        return filter_completion(docker_completion()).get(self.name) or DockerCompletionConfig(
+        return filter_completion(docker_completion()).get(
+            self.name
+        ) or DockerCompletionConfig(
             name=self.name,
             image=self.name,
             placeholder=True,
@@ -311,11 +325,19 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
         """Return the default targets for this host config."""
         if self.name in filter_completion(docker_completion()):
             defaults = self.get_defaults(context)
-            pythons = {version: defaults.get_python_path(version) for version in defaults.supported_pythons}
+            pythons = {
+                version: defaults.get_python_path(version)
+                for version in defaults.supported_pythons
+            }
         else:
-            pythons = {context.controller_config.python.version: context.controller_config.python.path}
+            pythons = {
+                context.controller_config.python.version: context.controller_config.python.path
+            }
 
-        return [ControllerConfig(python=NativePythonConfig(version=version, path=path)) for version, path in pythons.items()]
+        return [
+            ControllerConfig(python=NativePythonConfig(version=version, path=path))
+            for version, path in pythons.items()
+        ]
 
     def apply_defaults(self, context: HostContext, defaults: CompletionConfig) -> None:
         """Apply default settings."""
@@ -361,20 +383,32 @@ class PosixRemoteConfig(RemoteConfig, ControllerHostConfig, PosixConfig):
     def get_defaults(self, context: HostContext) -> PosixRemoteCompletionConfig:
         """Return the default settings."""
         # pylint: disable=unexpected-keyword-arg  # see: https://github.com/PyCQA/pylint/issues/7434
-        return filter_completion(remote_completion()).get(self.name) or remote_completion().get(self.platform) or PosixRemoteCompletionConfig(
-            name=self.name,
-            placeholder=True,
+        return (
+            filter_completion(remote_completion()).get(self.name)
+            or remote_completion().get(self.platform)
+            or PosixRemoteCompletionConfig(
+                name=self.name,
+                placeholder=True,
+            )
         )
 
     def get_default_targets(self, context: HostContext) -> list[ControllerConfig]:
         """Return the default targets for this host config."""
         if self.name in filter_completion(remote_completion()):
             defaults = self.get_defaults(context)
-            pythons = {version: defaults.get_python_path(version) for version in defaults.supported_pythons}
+            pythons = {
+                version: defaults.get_python_path(version)
+                for version in defaults.supported_pythons
+            }
         else:
-            pythons = {context.controller_config.python.version: context.controller_config.python.path}
+            pythons = {
+                context.controller_config.python.version: context.controller_config.python.path
+            }
 
-        return [ControllerConfig(python=NativePythonConfig(version=version, path=path)) for version, path in pythons.items()]
+        return [
+            ControllerConfig(python=NativePythonConfig(version=version, path=path))
+            for version, path in pythons.items()
+        ]
 
     def apply_defaults(self, context: HostContext, defaults: CompletionConfig) -> None:
         """Apply default settings."""
@@ -401,7 +435,9 @@ class WindowsRemoteConfig(RemoteConfig, WindowsConfig):
 
     def get_defaults(self, context: HostContext) -> WindowsRemoteCompletionConfig:
         """Return the default settings."""
-        return filter_completion(windows_completion()).get(self.name) or windows_completion().get(self.platform)
+        return filter_completion(windows_completion()).get(
+            self.name
+        ) or windows_completion().get(self.platform)
 
 
 @dataclasses.dataclass
@@ -423,7 +459,9 @@ class NetworkRemoteConfig(RemoteConfig, NetworkConfig):
 
     def get_defaults(self, context: HostContext) -> NetworkRemoteCompletionConfig:
         """Return the default settings."""
-        return filter_completion(network_completion()).get(self.name) or NetworkRemoteCompletionConfig(
+        return filter_completion(network_completion()).get(
+            self.name
+        ) or NetworkRemoteCompletionConfig(
             name=self.name,
             placeholder=True,
         )
@@ -453,7 +491,10 @@ class OriginConfig(ControllerHostConfig, PosixConfig):
 
     def get_default_targets(self, context: HostContext) -> list[ControllerConfig]:
         """Return the default targets for this host config."""
-        return [ControllerConfig(python=NativePythonConfig(version=version, path=path)) for version, path in get_available_python_versions().items()]
+        return [
+            ControllerConfig(python=NativePythonConfig(version=version, path=path))
+            for version, path in get_available_python_versions().items()
+        ]
 
     @property
     def have_root(self) -> bool:
@@ -524,7 +565,7 @@ class HostSettings:
 
     def serialize(self, path: str) -> None:
         """Serialize the host settings to the given path."""
-        with open_binary_file(path, 'wb') as settings_file:
+        with open_binary_file(path, "wb") as settings_file:
             pickle.dump(self, settings_file)
 
     @staticmethod

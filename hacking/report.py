@@ -10,10 +10,13 @@ import os
 import sqlite3
 import sys
 
-DATABASE_PATH = os.path.expanduser('~/.ansible/report.db')
-BASE_PATH = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')) + '/'
-ANSIBLE_PATH = os.path.join(BASE_PATH, 'lib')
-ANSIBLE_TEST_PATH = os.path.join(BASE_PATH, 'test/lib')
+DATABASE_PATH = os.path.expanduser("~/.ansible/report.db")
+BASE_PATH = (
+    os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+    + "/"
+)
+ANSIBLE_PATH = os.path.join(BASE_PATH, "lib")
+ANSIBLE_TEST_PATH = os.path.join(BASE_PATH, "test/lib")
 
 if ANSIBLE_PATH not in sys.path:
     sys.path.insert(0, ANSIBLE_PATH)
@@ -42,16 +45,16 @@ def parse_args():
 
     parser = argparse.ArgumentParser()
 
-    subparsers = parser.add_subparsers(metavar='COMMAND')
-    subparsers.required = True  # work-around for python 3 bug which makes subparsers optional
+    subparsers = parser.add_subparsers(metavar="COMMAND")
+    subparsers.required = (
+        True  # work-around for python 3 bug which makes subparsers optional
+    )
 
-    populate = subparsers.add_parser('populate',
-                                     help='populate report database')
+    populate = subparsers.add_parser("populate", help="populate report database")
 
     populate.set_defaults(func=populate_database)
 
-    query = subparsers.add_parser('query',
-                                  help='query report database')
+    query = subparsers.add_parser("query", help="query report database")
 
     query.set_defaults(func=query_database)
 
@@ -65,9 +68,9 @@ def parse_args():
 
 def query_database():
     if not os.path.exists(DATABASE_PATH):
-        sys.exit('error: Database not found. Did you run `report.py populate` first?')
+        sys.exit("error: Database not found. Did you run `report.py populate` first?")
 
-    os.execvp('sqlite3', ('sqlite3', DATABASE_PATH))
+    os.execvp("sqlite3", ("sqlite3", DATABASE_PATH))
 
 
 def populate_database():
@@ -77,7 +80,7 @@ def populate_database():
 
 
 def populate_modules():
-    module_dir = os.path.join(BASE_PATH, 'lib/ansible/modules/')
+    module_dir = os.path.join(BASE_PATH, "lib/ansible/modules/")
 
     modules_rows = []
 
@@ -85,128 +88,156 @@ def populate_modules():
         for file_name in file_names:
             module, extension = os.path.splitext(file_name)
 
-            if module == '__init__' or extension != '.py':
+            if module == "__init__" or extension != ".py":
                 continue
 
-            if module.startswith('_'):
+            if module.startswith("_"):
                 module = module[1:]
 
-            namespace = os.path.join(root.replace(module_dir, '')).replace('/', '.')
+            namespace = os.path.join(root.replace(module_dir, "")).replace("/", ".")
 
             path = os.path.join(root, file_name)
 
             result = read_docstring(path)
 
-            doc = result['doc']
+            doc = result["doc"]
 
-            modules_rows.append(dict(
-                module=module,
-                namespace=namespace,
-                path=path.replace(BASE_PATH, ''),
-                version_added=str(doc.get('version_added', '')) if doc else '',
-            ))
+            modules_rows.append(
+                dict(
+                    module=module,
+                    namespace=namespace,
+                    path=path.replace(BASE_PATH, ""),
+                    version_added=str(doc.get("version_added", "")) if doc else "",
+                )
+            )
 
-    populate_data(dict(
-        modules=dict(
-            rows=modules_rows,
-            schema=(
-                ('module', 'TEXT'),
-                ('namespace', 'TEXT'),
-                ('path', 'TEXT'),
-                ('version_added', 'TEXT'),
-            )),
-    ))
+    populate_data(
+        dict(
+            modules=dict(
+                rows=modules_rows,
+                schema=(
+                    ("module", "TEXT"),
+                    ("namespace", "TEXT"),
+                    ("path", "TEXT"),
+                    ("version_added", "TEXT"),
+                ),
+            ),
+        )
+    )
 
 
 def populate_coverage():
-    response = open_url('https://codecov.io/api/gh/ansible/ansible/tree/devel/?src=extension')
+    response = open_url(
+        "https://codecov.io/api/gh/ansible/ansible/tree/devel/?src=extension"
+    )
     data = json.load(response)
-    files = data['commit']['report']['files']
+    files = data["commit"]["report"]["files"]
     coverage_rows = []
 
     for path, data in files.items():
-        report = data['t']
-        coverage_rows.append(dict(
-            path=path,
-            coverage=float(report['c']),
-            lines=report['n'],
-            hit=report['h'],
-            partial=report['p'],
-            missed=report['m'],
-        ))
+        report = data["t"]
+        coverage_rows.append(
+            dict(
+                path=path,
+                coverage=float(report["c"]),
+                lines=report["n"],
+                hit=report["h"],
+                partial=report["p"],
+                missed=report["m"],
+            )
+        )
 
-    populate_data(dict(
-        coverage=dict(
-            rows=coverage_rows,
-            schema=(
-                ('path', 'TEXT'),
-                ('coverage', 'REAL'),
-                ('lines', 'INTEGER'),
-                ('hit', 'INTEGER'),
-                ('partial', 'INTEGER'),
-                ('missed', 'INTEGER'),
-            )),
-    ))
+    populate_data(
+        dict(
+            coverage=dict(
+                rows=coverage_rows,
+                schema=(
+                    ("path", "TEXT"),
+                    ("coverage", "REAL"),
+                    ("lines", "INTEGER"),
+                    ("hit", "INTEGER"),
+                    ("partial", "INTEGER"),
+                    ("missed", "INTEGER"),
+                ),
+            ),
+        )
+    )
 
 
 def populate_integration_targets():
     targets = list(walk_integration_targets())
 
-    integration_targets_rows = [dict(
-        target=target.name,
-        type=target.type,
-        path=target.path,
-        script_path=target.script_path,
-    ) for target in targets]
+    integration_targets_rows = [
+        dict(
+            target=target.name,
+            type=target.type,
+            path=target.path,
+            script_path=target.script_path,
+        )
+        for target in targets
+    ]
 
-    integration_target_aliases_rows = [dict(
-        target=target.name,
-        alias=alias,
-    ) for target in targets for alias in target.aliases]
+    integration_target_aliases_rows = [
+        dict(
+            target=target.name,
+            alias=alias,
+        )
+        for target in targets
+        for alias in target.aliases
+    ]
 
-    integration_target_modules_rows = [dict(
-        target=target.name,
-        module=module,
-    ) for target in targets for module in target.modules]
+    integration_target_modules_rows = [
+        dict(
+            target=target.name,
+            module=module,
+        )
+        for target in targets
+        for module in target.modules
+    ]
 
-    populate_data(dict(
-        integration_targets=dict(
-            rows=integration_targets_rows,
-            schema=(
-                ('target', 'TEXT'),
-                ('type', 'TEXT'),
-                ('path', 'TEXT'),
-                ('script_path', 'TEXT'),
-            )),
-        integration_target_aliases=dict(
-            rows=integration_target_aliases_rows,
-            schema=(
-                ('target', 'TEXT'),
-                ('alias', 'TEXT'),
-            )),
-        integration_target_modules=dict(
-            rows=integration_target_modules_rows,
-            schema=(
-                ('target', 'TEXT'),
-                ('module', 'TEXT'),
-            )),
-    ))
+    populate_data(
+        dict(
+            integration_targets=dict(
+                rows=integration_targets_rows,
+                schema=(
+                    ("target", "TEXT"),
+                    ("type", "TEXT"),
+                    ("path", "TEXT"),
+                    ("script_path", "TEXT"),
+                ),
+            ),
+            integration_target_aliases=dict(
+                rows=integration_target_aliases_rows,
+                schema=(
+                    ("target", "TEXT"),
+                    ("alias", "TEXT"),
+                ),
+            ),
+            integration_target_modules=dict(
+                rows=integration_target_modules_rows,
+                schema=(
+                    ("target", "TEXT"),
+                    ("module", "TEXT"),
+                ),
+            ),
+        )
+    )
 
 
 def create_table(cursor, name, columns):
-    schema = ', '.join('%s %s' % column for column in columns)
+    schema = ", ".join("%s %s" % column for column in columns)
 
-    cursor.execute('DROP TABLE IF EXISTS %s' % name)
-    cursor.execute('CREATE TABLE %s (%s)' % (name, schema))
+    cursor.execute("DROP TABLE IF EXISTS %s" % name)
+    cursor.execute("CREATE TABLE %s (%s)" % (name, schema))
 
 
 def populate_table(cursor, rows, name, columns):
     create_table(cursor, name, columns)
 
-    values = ', '.join([':%s' % column[0] for column in columns])
+    values = ", ".join([":%s" % column[0] for column in columns])
 
     for row in rows:
-        cursor.execute('INSERT INTO %s VALUES (%s)' % (name, values), row)
+        cursor.execute("INSERT INTO %s VALUES (%s)" % (name, values), row)
 
 
 def populate_data(data):
@@ -214,11 +245,11 @@ def populate_data(data):
     cursor = connection.cursor()
 
     for table in data:
-        populate_table(cursor, data[table]['rows'], table, data[table]['schema'])
+        populate_table(cursor, data[table]["rows"], table, data[table]["schema"])
 
     connection.commit()
     connection.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

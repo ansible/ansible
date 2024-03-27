@@ -7,7 +7,7 @@ from __future__ import annotations
 
 class ModuleDocFragment(object):
 
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
     options:
       result_format:
         name: Format of the task result
@@ -46,4 +46,4 @@ class ModuleDocFragment(object):
           - key: callback_format_pretty
             section: defaults
         version_added: '2.13'
-'''
+"""

@@ -97,16 +97,18 @@ class MissingSetting(AnsibleOptionsError):
 def _get_plugin_config(pname, ptype, config, variables):
     try:
         # plugin creates settings on load, this is cached so not too expensive to redo
-        loader = getattr(plugin_loader, '%s_loader' % ptype)
+        loader = getattr(plugin_loader, "%s_loader" % ptype)
         p = loader.get(pname, class_only=True)
         if p is None:
             raise AnsibleLookupError('Unable to load %s plugin "%s"' % (ptype, pname))
-        result, origin = C.config.get_config_value_and_origin(config, plugin_type=ptype, plugin_name=p._load_name, variables=variables)
+        result, origin = C.config.get_config_value_and_origin(
+            config, plugin_type=ptype, plugin_name=p._load_name, variables=variables
+        )
     except AnsibleLookupError:
         raise
     except AnsibleError as e:
         msg = to_native(e)
-        if 'was not defined' in msg:
+        if "was not defined" in msg:
             raise MissingSetting(msg, orig_exc=e)
         raise e
 
@@ -130,22 +132,34 @@ class LookupModule(LookupBase):
 
         self.set_options(var_options=variables, direct=kwargs)
 
-        missing = self.get_option('on_missing')
-        ptype = self.get_option('plugin_type')
-        pname = self.get_option('plugin_name')
-        show_origin = self.get_option('show_origin')
+        missing = self.get_option("on_missing")
+        ptype = self.get_option("plugin_type")
+        pname = self.get_option("plugin_name")
+        show_origin = self.get_option("show_origin")
 
         if (ptype or pname) and not (ptype and pname):
-            raise AnsibleOptionsError('Both plugin_type and plugin_name are required, cannot use one without the other')
+            raise AnsibleOptionsError(
+                "Both plugin_type and plugin_name are required, cannot use one without the other"
+            )
 
-        if not isinstance(missing, string_types) or missing not in ['error', 'warn', 'skip']:
-            raise AnsibleOptionsError('"on_missing" must be a string and one of "error", "warn" or "skip", not %s' % missing)
+        if not isinstance(missing, string_types) or missing not in [
+            "error",
+            "warn",
+            "skip",
+        ]:
+            raise AnsibleOptionsError(
+                '"on_missing" must be a string and one of "error", "warn" or "skip", not %s'
+                % missing
+            )
 
         ret = []
 
         for term in terms:
             if not isinstance(term, string_types):
-                raise AnsibleOptionsError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
+                raise AnsibleOptionsError(
+                    'Invalid setting identifier, "%s" is not a string, its a %s'
+                    % (term, type(term))
+                )
 
             result = Sentinel
             origin = None
@@ -155,11 +169,13 @@ class LookupModule(LookupBase):
                 else:
                     result = _get_global_config(term)
             except MissingSetting as e:
-                if missing == 'error':
-                    raise AnsibleLookupError('Unable to find setting %s' % term, orig_exc=e)
-                elif missing == 'warn':
-                    self._display.warning('Skipping, did not find setting %s' % term)
-                elif missing == 'skip':
+                if missing == "error":
+                    raise AnsibleLookupError(
+                        "Unable to find setting %s" % term, orig_exc=e
+                    )
+                elif missing == "warn":
+                    self._display.warning("Skipping, did not find setting %s" % term)
+                elif missing == "skip":
                     pass  # this is not needed, but added to have all 3 options stated
 
             if result is not Sentinel:

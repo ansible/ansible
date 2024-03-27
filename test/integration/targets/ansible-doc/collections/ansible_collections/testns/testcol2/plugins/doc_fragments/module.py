@@ -6,7 +6,7 @@ from __future__ import annotations
 
 
 class ModuleDocFragment(object):
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
 options:
     testcol2option:
         description:
@@ -17,4 +17,4 @@ options:
         description:
             - Another option taken from testcol2
         type: str
-'''
+"""

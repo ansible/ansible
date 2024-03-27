@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     connection: fakelocal
     short_description: dont execute anything
     description:
@@ -22,7 +22,7 @@ DOCUMENTATION = '''
               key: remote_user
           vars:
               - name: ansible_user
-'''
+"""
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.plugins.connection import ConnectionBase
@@ -32,9 +32,9 @@ display = Display()
 
 
 class Connection(ConnectionBase):
-    ''' Local based connections '''
+    """Local based connections"""
 
-    transport = 'fakelocal'
+    transport = "fakelocal"
     has_pipelining = True
 
     def __init__(self, *args, **kwargs):
@@ -43,33 +43,41 @@ class Connection(ConnectionBase):
         self.cwd = None
 
     def _connect(self):
-        ''' verify '''
+        """verify"""
 
-        if self.get_option('remote_user') == 'invaliduser' and self.get_option('password') == 'badpassword':
-            raise AnsibleConnectionFailure('Got invaliduser and badpassword')
+        if (
+            self.get_option("remote_user") == "invaliduser"
+            and self.get_option("password") == "badpassword"
+        ):
+            raise AnsibleConnectionFailure("Got invaliduser and badpassword")
 
         if not self._connected:
-            display.vvv(u"ESTABLISH FAKELOCAL CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
+            display.vvv(
+                "ESTABLISH FAKELOCAL CONNECTION FOR USER: {0}".format(
+                    self._play_context.remote_user
+                ),
+                host=self._play_context.remote_addr,
+            )
             self._connected = True
         return self
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
-        ''' run a command on the local host '''
+        """run a command on the local host"""
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        return 0, '{"msg": "ALL IS GOOD"}', ''
+        return 0, '{"msg": "ALL IS GOOD"}', ""
 
     def put_file(self, in_path, out_path):
-        ''' transfer a file from local to local '''
+        """transfer a file from local to local"""
 
         super(Connection, self).put_file(in_path, out_path)
 
     def fetch_file(self, in_path, out_path):
-        ''' fetch a file from local to local -- for compatibility '''
+        """fetch a file from local to local -- for compatibility"""
 
         super(Connection, self).fetch_file(in_path, out_path)
 
     def close(self):
-        ''' terminate the connection; nothing to do here '''
+        """terminate the connection; nothing to do here"""
         self._connected = False

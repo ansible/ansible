@@ -41,8 +41,12 @@ class PSModuleDepFinder(object):
         self._re_cs_module = [
             # Reference C# module_util in another C# util, this must always be the fully qualified name.
             # 'using ansible_collections.{namespace}.{collection}.plugins.module_utils.{name}'
-            re.compile(to_bytes(r'(?i)^using\s((Ansible\..+)|'
-                                r'(ansible_collections\.\w+\.\w+\.plugins\.module_utils\.[\w\.]+));\s*$')),
+            re.compile(
+                to_bytes(
+                    r"(?i)^using\s((Ansible\..+)|"
+                    r"(ansible_collections\.\w+\.\w+\.plugins\.module_utils\.[\w\.]+));\s*$"
+                )
+            ),
         ]
 
         self._re_cs_in_ps_module = [
@@ -51,32 +55,50 @@ class PSModuleDepFinder(object):
             # '#AnsibleRequires -CSharpUtil ansible_collections.{namespace}.{collection}.plugins.module_utils.{name}'
             # '#AnsibleRequires -CSharpUtil ..module_utils.{name}'
             # Can have '-Optional' at the end to denote the util is optional
-            re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-csharputil\s+((Ansible\.[\w\.]+)|'
-                                r'(ansible_collections\.\w+\.\w+\.plugins\.module_utils\.[\w\.]+)|'
-                                r'(\.[\w\.]+))(?P<optional>\s+-Optional){0,1}')),
+            re.compile(
+                to_bytes(
+                    r"(?i)^#\s*ansiblerequires\s+-csharputil\s+((Ansible\.[\w\.]+)|"
+                    r"(ansible_collections\.\w+\.\w+\.plugins\.module_utils\.[\w\.]+)|"
+                    r"(\.[\w\.]+))(?P<optional>\s+-Optional){0,1}"
+                )
+            ),
         ]
 
         self._re_ps_module = [
             # Original way of referencing a builtin module_util
             # '#Requires -Module Ansible.ModuleUtils.{name}
-            re.compile(to_bytes(r'(?i)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)')),
+            re.compile(
+                to_bytes(
+                    r"(?i)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)"
+                )
+            ),
             # New way of referencing a builtin and collection module_util
             # '#AnsibleRequires -PowerShell Ansible.ModuleUtils.{name}'
             # '#AnsibleRequires -PowerShell ansible_collections.{namespace}.{collection}.plugins.module_utils.{name}'
             # '#AnsibleRequires -PowerShell ..module_utils.{name}'
             # Can have '-Optional' at the end to denote the util is optional
-            re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-powershell\s+((Ansible\.ModuleUtils\.[\w\.]+)|'
-                                r'(ansible_collections\.\w+\.\w+\.plugins\.module_utils\.[\w\.]+)|'
-                                r'(\.[\w\.]+))(?P<optional>\s+-Optional){0,1}')),
+            re.compile(
+                to_bytes(
+                    r"(?i)^#\s*ansiblerequires\s+-powershell\s+((Ansible\.ModuleUtils\.[\w\.]+)|"
+                    r"(ansible_collections\.\w+\.\w+\.plugins\.module_utils\.[\w\.]+)|"
+                    r"(\.[\w\.]+))(?P<optional>\s+-Optional){0,1}"
+                )
+            ),
         ]
 
-        self._re_wrapper = re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-wrapper\s+(\w*)'))
-        self._re_ps_version = re.compile(to_bytes(r'(?i)^#requires\s+\-version\s+([0-9]+(\.[0-9]+){0,3})$'))
-        self._re_os_version = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-osversion\s+([0-9]+(\.[0-9]+){0,3})$'))
-        self._re_become = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-become$'))
+        self._re_wrapper = re.compile(
+            to_bytes(r"(?i)^#\s*ansiblerequires\s+-wrapper\s+(\w*)")
+        )
+        self._re_ps_version = re.compile(
+            to_bytes(r"(?i)^#requires\s+\-version\s+([0-9]+(\.[0-9]+){0,3})$")
+        )
+        self._re_os_version = re.compile(
+            to_bytes(r"(?i)^#ansiblerequires\s+\-osversion\s+([0-9]+(\.[0-9]+){0,3})$")
+        )
+        self._re_become = re.compile(to_bytes(r"(?i)^#ansiblerequires\s+\-become$"))
 
     def scan_module(self, module_data, fqn=None, wrapper=False, powershell=True):
-        lines = module_data.split(b'\n')
+        lines = module_data.split(b"\n")
         module_utils = set()
         if wrapper:
             cs_utils = self.cs_utils_wrapper
@@ -106,10 +128,12 @@ class PSModuleDepFinder(object):
                         # newline chars
                         module_util_name = to_text(match.group(1).rstrip())
                         match_dict = match.groupdict()
-                        optional = match_dict.get('optional', None) is not None
+                        optional = match_dict.get("optional", None) is not None
 
                         if module_util_name not in check[1].keys():
-                            module_utils.add((module_util_name, check[2], fqn, optional))
+                            module_utils.add(
+                                (module_util_name, check[2], fqn, optional)
+                            )
 
                         break
 
@@ -147,8 +171,9 @@ class PSModuleDepFinder(object):
 
         data = pkgutil.get_data("ansible.executor.powershell", to_native(name + ".ps1"))
         if data is None:
-            raise AnsibleError("Could not find executor powershell script "
-                               "for '%s'" % name)
+            raise AnsibleError(
+                "Could not find executor powershell script " "for '%s'" % name
+            )
 
         b_data = to_bytes(data)
 
@@ -173,16 +198,17 @@ class PSModuleDepFinder(object):
                 if optional:
                     return
 
-                raise AnsibleError('Could not find imported module support code '
-                                   'for \'%s\'' % m)
+                raise AnsibleError(
+                    "Could not find imported module support code " "for '%s'" % m
+                )
 
             module_util_data = to_bytes(_slurp(mu_path))
         else:
             # Collection util, load the package data based on the util import.
 
             submodules = m.split(".")
-            if m.startswith('.'):
-                fqn_submodules = fqn.split('.')
+            if m.startswith("."):
+                fqn_submodules = fqn.split(".")
                 for submodule in submodules:
                     if submodule:
                         break
@@ -190,8 +216,12 @@ class PSModuleDepFinder(object):
 
                 submodules = fqn_submodules + [s for s in submodules if s]
 
-            n_package_name = to_native('.'.join(submodules[:-1]), errors='surrogate_or_strict')
-            n_resource_name = to_native(submodules[-1] + ext, errors='surrogate_or_strict')
+            n_package_name = to_native(
+                ".".join(submodules[:-1]), errors="surrogate_or_strict"
+            )
+            n_resource_name = to_native(
+                submodules[-1] + ext, errors="surrogate_or_strict"
+            )
 
             try:
                 module_util = import_module(n_package_name)
@@ -199,30 +229,37 @@ class PSModuleDepFinder(object):
                 if pkg_data is None:
                     raise ImportError("No package data found")
 
-                module_util_data = to_bytes(pkg_data, errors='surrogate_or_strict')
-                util_fqn = to_text("%s.%s " % (n_package_name, submodules[-1]), errors='surrogate_or_strict')
+                module_util_data = to_bytes(pkg_data, errors="surrogate_or_strict")
+                util_fqn = to_text(
+                    "%s.%s " % (n_package_name, submodules[-1]),
+                    errors="surrogate_or_strict",
+                )
 
                 # Get the path of the util which is required for coverage collection.
                 resource_paths = list(module_util.__path__)
                 if len(resource_paths) != 1:
                     # This should never happen with a collection but we are just being defensive about it.
-                    raise AnsibleError("Internal error: Referenced module_util package '%s' contains 0 or multiple "
-                                       "import locations when we only expect 1." % n_package_name)
+                    raise AnsibleError(
+                        "Internal error: Referenced module_util package '%s' contains 0 or multiple "
+                        "import locations when we only expect 1." % n_package_name
+                    )
                 mu_path = os.path.join(resource_paths[0], n_resource_name)
             except (ImportError, OSError) as err:
                 if getattr(err, "errno", errno.ENOENT) == errno.ENOENT:
                     if optional:
                         return
 
-                    raise AnsibleError('Could not find collection imported module support code for \'%s\''
-                                       % to_native(m))
+                    raise AnsibleError(
+                        "Could not find collection imported module support code for '%s'"
+                        % to_native(m)
+                    )
 
                 else:
                     raise
 
         util_info = {
-            'data': module_util_data,
-            'path': to_text(mu_path),
+            "data": module_util_data,
+            "path": to_text(mu_path),
         }
         if ext == ".psm1":
             self.ps_modules[m] = util_info
@@ -231,7 +268,9 @@ class PSModuleDepFinder(object):
                 self.cs_utils_wrapper[m] = util_info
             else:
                 self.cs_utils_module[m] = util_info
-        self.scan_module(module_util_data, fqn=util_fqn, wrapper=wrapper, powershell=(ext == ".psm1"))
+        self.scan_module(
+            module_util_data, fqn=util_fqn, wrapper=wrapper, powershell=(ext == ".psm1")
+        )
 
     def _parse_version_match(self, match, attribute):
         new_version = to_text(match.group(1)).rstrip()
@@ -252,9 +291,10 @@ class PSModuleDepFinder(object):
 
 def _slurp(path):
     if not os.path.exists(path):
-        raise AnsibleError("imported module support code does not exist at %s"
-                           % os.path.abspath(path))
-    fd = open(path, 'rb')
+        raise AnsibleError(
+            "imported module support code does not exist at %s" % os.path.abspath(path)
+        )
+    fd = open(path, "rb")
     data = fd.read()
     fd.close()
     return data
@@ -267,25 +307,36 @@ def _strip_comments(source):
     for line in source.splitlines():
         l = line.strip()
 
-        if start_block and l.endswith(b'#>'):
+        if start_block and l.endswith(b"#>"):
             start_block = False
             continue
         elif start_block:
             continue
-        elif l.startswith(b'<#'):
+        elif l.startswith(b"<#"):
             start_block = True
             continue
-        elif not l or l.startswith(b'#'):
+        elif not l or l.startswith(b"#"):
             continue
 
         buf.append(line)
-    return b'\n'.join(buf)
+    return b"\n".join(buf)
 
 
-def _create_powershell_wrapper(b_module_data, module_path, module_args,
-                               environment, async_timeout, become,
-                               become_method, become_user, become_password,
-                               become_flags, substyle, task_vars, module_fqn):
+def _create_powershell_wrapper(
+    b_module_data,
+    module_path,
+    module_args,
+    environment,
+    async_timeout,
+    become,
+    become_method,
+    become_user,
+    become_password,
+    become_flags,
+    substyle,
+    task_vars,
+    module_fqn,
+):
     # creates the manifest/wrapper used in PowerShell/C# modules to enable
     # things like become and async - this is also called in action/script.py
 
@@ -293,10 +344,12 @@ def _create_powershell_wrapper(b_module_data, module_path, module_args,
     # if running under a persistent connection and substyle is C# so we
     # don't have type conflicts
     finder = PSModuleDepFinder()
-    if substyle != 'script':
+    if substyle != "script":
         # don't scan the module for util dependencies and other Ansible related
         # flags if the substyle is 'script' which is set by action/script
-        finder.scan_module(b_module_data, fqn=module_fqn, powershell=(substyle == "powershell"))
+        finder.scan_module(
+            b_module_data, fqn=module_fqn, powershell=(substyle == "powershell")
+        )
 
     module_wrapper = "module_%s_wrapper" % substyle
     exec_manifest = dict(
@@ -312,53 +365,62 @@ def _create_powershell_wrapper(b_module_data, module_path, module_args,
     finder.scan_exec_script(module_wrapper)
 
     if async_timeout > 0:
-        finder.scan_exec_script('exec_wrapper')
-        finder.scan_exec_script('async_watchdog')
-        finder.scan_exec_script('async_wrapper')
+        finder.scan_exec_script("exec_wrapper")
+        finder.scan_exec_script("async_watchdog")
+        finder.scan_exec_script("async_wrapper")
 
-        exec_manifest["actions"].insert(0, 'async_watchdog')
-        exec_manifest["actions"].insert(0, 'async_wrapper')
-        exec_manifest["async_jid"] = f'j{random.randint(0, 999999999999)}'
+        exec_manifest["actions"].insert(0, "async_watchdog")
+        exec_manifest["actions"].insert(0, "async_wrapper")
+        exec_manifest["async_jid"] = f"j{random.randint(0, 999999999999)}"
         exec_manifest["async_timeout_sec"] = async_timeout
-        exec_manifest["async_startup_timeout"] = C.config.get_config_value("WIN_ASYNC_STARTUP_TIMEOUT", variables=task_vars)
+        exec_manifest["async_startup_timeout"] = C.config.get_config_value(
+            "WIN_ASYNC_STARTUP_TIMEOUT", variables=task_vars
+        )
 
-    if become and resource_from_fqcr(become_method) == 'runas':  # runas and namespace.collection.runas
-        finder.scan_exec_script('exec_wrapper')
-        finder.scan_exec_script('become_wrapper')
+    if (
+        become and resource_from_fqcr(become_method) == "runas"
+    ):  # runas and namespace.collection.runas
+        finder.scan_exec_script("exec_wrapper")
+        finder.scan_exec_script("become_wrapper")
 
-        exec_manifest["actions"].insert(0, 'become_wrapper')
+        exec_manifest["actions"].insert(0, "become_wrapper")
         exec_manifest["become_user"] = become_user
         exec_manifest["become_password"] = become_password
-        exec_manifest['become_flags'] = become_flags
+        exec_manifest["become_flags"] = become_flags
 
-    exec_manifest['min_ps_version'] = finder.ps_version
-    exec_manifest['min_os_version'] = finder.os_version
-    if finder.become and 'become_wrapper' not in exec_manifest['actions']:
-        finder.scan_exec_script('exec_wrapper')
-        finder.scan_exec_script('become_wrapper')
+    exec_manifest["min_ps_version"] = finder.ps_version
+    exec_manifest["min_os_version"] = finder.os_version
+    if finder.become and "become_wrapper" not in exec_manifest["actions"]:
+        finder.scan_exec_script("exec_wrapper")
+        finder.scan_exec_script("become_wrapper")
 
-        exec_manifest['actions'].insert(0, 'become_wrapper')
-        exec_manifest['become_user'] = 'SYSTEM'
-        exec_manifest['become_password'] = None
-        exec_manifest['become_flags'] = None
+        exec_manifest["actions"].insert(0, "become_wrapper")
+        exec_manifest["become_user"] = "SYSTEM"
+        exec_manifest["become_password"] = None
+        exec_manifest["become_flags"] = None
 
     coverage_manifest = dict(
         module_path=module_path,
         module_util_paths=dict(),
         output=None,
     )
-    coverage_output = C.config.get_config_value('COVERAGE_REMOTE_OUTPUT', variables=task_vars)
-    if coverage_output and substyle == 'powershell':
-        finder.scan_exec_script('coverage_wrapper')
-        coverage_manifest['output'] = coverage_output
+    coverage_output = C.config.get_config_value(
+        "COVERAGE_REMOTE_OUTPUT", variables=task_vars
+    )
+    if coverage_output and substyle == "powershell":
+        finder.scan_exec_script("coverage_wrapper")
+        coverage_manifest["output"] = coverage_output
 
-        coverage_enabled = C.config.get_config_value('COVERAGE_REMOTE_PATHS', variables=task_vars)
-        coverage_manifest['path_filter'] = coverage_enabled
+        coverage_enabled = C.config.get_config_value(
+            "COVERAGE_REMOTE_PATHS", variables=task_vars
+        )
+        coverage_manifest["path_filter"] = coverage_enabled
 
     # make sure Ansible.ModuleUtils.AddType is added if any C# utils are used
     if len(finder.cs_utils_wrapper) > 0 or len(finder.cs_utils_module) > 0:
-        finder._add_module(b"Ansible.ModuleUtils.AddType", ".psm1", None, False,
-                           wrapper=False)
+        finder._add_module(
+            b"Ansible.ModuleUtils.AddType", ".psm1", None, False, wrapper=False
+        )
 
     # exec_wrapper is only required to be part of the payload if using
     # become or async, to save on payload space we check if exec_wrapper has
@@ -377,25 +439,25 @@ def _create_powershell_wrapper(b_module_data, module_path, module_args,
         exec_manifest[name] = b64_data
 
     for name, data in finder.ps_modules.items():
-        b64_data = to_text(base64.b64encode(data['data']))
-        exec_manifest['powershell_modules'][name] = b64_data
-        coverage_manifest['module_util_paths'][name] = data['path']
+        b64_data = to_text(base64.b64encode(data["data"]))
+        exec_manifest["powershell_modules"][name] = b64_data
+        coverage_manifest["module_util_paths"][name] = data["path"]
 
     cs_utils = {}
     for cs_util in [finder.cs_utils_wrapper, finder.cs_utils_module]:
         for name, data in cs_util.items():
-            cs_utils[name] = data['data']
+            cs_utils[name] = data["data"]
 
     for name, data in cs_utils.items():
         b64_data = to_text(base64.b64encode(data))
-        exec_manifest['csharp_utils'][name] = b64_data
-    exec_manifest['csharp_utils_module'] = list(finder.cs_utils_module.keys())
+        exec_manifest["csharp_utils"][name] = b64_data
+    exec_manifest["csharp_utils_module"] = list(finder.cs_utils_module.keys())
 
     # To save on the data we are sending across we only add the coverage info if coverage is being run
-    if 'coverage_wrapper' in exec_manifest:
-        exec_manifest['coverage'] = coverage_manifest
+    if "coverage_wrapper" in exec_manifest:
+        exec_manifest["coverage"] = coverage_manifest
 
     b_json = to_bytes(json.dumps(exec_manifest))
     # delimit the payload JSON from the wrapper to keep sensitive contents out of scriptblocks (which can be logged)
-    b_data = exec_wrapper + b'\0\0\0\0' + b_json
+    b_data = exec_wrapper + b"\0\0\0\0" + b_json
     return b_data

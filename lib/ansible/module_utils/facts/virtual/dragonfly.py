@@ -21,4 +21,4 @@ from ansible.module_utils.facts.virtual.freebsd import FreeBSDVirtual, VirtualCo
 class DragonFlyVirtualCollector(VirtualCollector):
     # Note the _fact_class impl is actually the FreeBSDVirtual impl
     _fact_class = FreeBSDVirtual
-    _platform = 'DragonFly'
+    _platform = "DragonFly"

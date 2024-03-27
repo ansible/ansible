@@ -1,4 +1,5 @@
 """Source provider to use when the layout is unsupported."""
+
 from __future__ import annotations
 
 from . import (

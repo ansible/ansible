@@ -1,4 +1,5 @@
 """Check for unwanted symbolic links."""
+
 from __future__ import annotations
 
 import os
@@ -14,19 +15,22 @@ def main():
             continue
 
         if not os.path.exists(path):
-            print('%s: broken symlinks are not allowed' % path)
+            print("%s: broken symlinks are not allowed" % path)
             continue
 
         if path.endswith(os.path.sep):
-            print('%s: symlinks to directories are not allowed' % path)
+            print("%s: symlinks to directories are not allowed" % path)
             continue
 
         real_path = os.path.realpath(path)
 
         if not real_path.startswith(root_dir):
-            print('%s: symlinks outside content tree are not allowed: %s' % (path, os.path.relpath(real_path, os.path.dirname(path))))
+            print(
+                "%s: symlinks outside content tree are not allowed: %s"
+                % (path, os.path.relpath(real_path, os.path.dirname(path)))
+            )
             continue
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

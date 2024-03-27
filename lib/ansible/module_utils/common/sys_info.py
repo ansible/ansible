@@ -10,11 +10,11 @@ from ansible.module_utils import distro
 from ansible.module_utils.common._utils import get_all_subclasses
 
 
-__all__ = ('get_distribution', 'get_distribution_version', 'get_platform_subclass')
+__all__ = ("get_distribution", "get_distribution_version", "get_platform_subclass")
 
 
 def get_distribution():
-    '''
+    """
     Return the name of the distribution the module is running on.
 
     :rtype: NativeString or None
@@ -23,35 +23,37 @@ def get_distribution():
     This function attempts to determine what distribution the code is running
     on and return a string representing that value. If the platform is Linux
     and the distribution cannot be determined, it returns ``OtherLinux``.
-    '''
+    """
     distribution = distro.id().capitalize()
 
-    if platform.system() == 'Linux':
-        if distribution == 'Amzn':
-            distribution = 'Amazon'
-        elif distribution == 'Rhel':
-            distribution = 'Redhat'
+    if platform.system() == "Linux":
+        if distribution == "Amzn":
+            distribution = "Amazon"
+        elif distribution == "Rhel":
+            distribution = "Redhat"
         elif not distribution:
-            distribution = 'OtherLinux'
+            distribution = "OtherLinux"
 
     return distribution
 
 
 def get_distribution_version():
-    '''
+    """
     Get the version of the distribution the code is running on
 
     :rtype: NativeString or None
     :returns: A string representation of the version of the distribution. If it
     cannot determine the version, it returns an empty string. If this is not run on
     a Linux machine it returns None.
-    '''
+    """
     version = None
 
-    needs_best_version = frozenset((
-        u'centos',
-        u'debian',
-    ))
+    needs_best_version = frozenset(
+        (
+            "centos",
+            "debian",
+        )
+    )
 
     version = distro.version()
     distro_id = distro.id()
@@ -63,53 +65,53 @@ def get_distribution_version():
             # CentoOS maintainers believe only the major version is appropriate
             # but Ansible users desire minor version information, e.g., 7.5.
             # https://github.com/ansible/ansible/issues/50141#issuecomment-449452781
-            if distro_id == u'centos':
-                version = u'.'.join(version_best.split(u'.')[:2])
+            if distro_id == "centos":
+                version = ".".join(version_best.split(".")[:2])
 
             # Debian does not include minor version in /etc/os-release.
             # Bug report filed upstream requesting this be added to /etc/os-release
             # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=931197
-            if distro_id == u'debian':
+            if distro_id == "debian":
                 version = version_best
 
     else:
-        version = u''
+        version = ""
 
     return version
 
 
 def get_distribution_codename():
-    '''
+    """
     Return the code name for this Linux Distribution
 
     :rtype: NativeString or None
     :returns: A string representation of the distribution's codename or None if not a Linux distro
-    '''
+    """
     codename = None
-    if platform.system() == 'Linux':
+    if platform.system() == "Linux":
         # Until this gets merged and we update our bundled copy of distro:
         # https://github.com/nir0s/distro/pull/230
         # Fixes Fedora 28+ not having a code name and Ubuntu Xenial Xerus needing to be "xenial"
         os_release_info = distro.os_release_info()
-        codename = os_release_info.get('version_codename')
+        codename = os_release_info.get("version_codename")
 
         if codename is None:
-            codename = os_release_info.get('ubuntu_codename')
+            codename = os_release_info.get("ubuntu_codename")
 
-        if codename is None and distro.id() == 'ubuntu':
+        if codename is None and distro.id() == "ubuntu":
             lsb_release_info = distro.lsb_release_info()
-            codename = lsb_release_info.get('codename')
+            codename = lsb_release_info.get("codename")
 
         if codename is None:
             codename = distro.codename()
-            if codename == u'':
+            if codename == "":
                 codename = None
 
     return codename
 
 
 def get_platform_subclass(cls):
-    '''
+    """
     Finds a subclass implementing desired functionality on the platform the code is running on
 
     :arg cls: Class to find an appropriate subclass for
@@ -135,7 +137,7 @@ def get_platform_subclass(cls):
             def __new__(cls, *args, **kwargs):
                 new_cls = get_platform_subclass(User)
                 return super(cls, new_cls).__new__(new_cls)
-    '''
+    """
     this_platform = platform.system()
     distribution = get_distribution()
 
@@ -144,7 +146,11 @@ def get_platform_subclass(cls):
     # get the most specific superclass for this platform
     if distribution is not None:
         for sc in get_all_subclasses(cls):
-            if sc.distribution is not None and sc.distribution == distribution and sc.platform == this_platform:
+            if (
+                sc.distribution is not None
+                and sc.distribution == distribution
+                and sc.platform == this_platform
+            ):
                 subclass = sc
     if subclass is None:
         for sc in get_all_subclasses(cls):

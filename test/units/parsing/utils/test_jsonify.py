@@ -32,7 +32,7 @@ class TestJsonify(unittest.TestCase):
         self.assertEqual(cleaned, '{"a": 1,"b": 2,"c": 3}')
 
     def test_jsonify_unicode(self):
-        self.assertEqual(jsonify(dict(toshio=u'くらとみ')), u'{"toshio": "くらとみ"}')
+        self.assertEqual(jsonify(dict(toshio="くらとみ")), '{"toshio": "くらとみ"}')
 
     def test_jsonify_empty(self):
-        self.assertEqual(jsonify(None), '{}')
+        self.assertEqual(jsonify(None), "{}")

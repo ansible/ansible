@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: group_by
 short_description: Create Ansible groups based on facts
@@ -65,9 +65,9 @@ seealso:
 - module: ansible.builtin.add_host
 author:
 - Jeroen Hoekx (@jhoekx)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Create groups based on the machine architecture
   ansible.builtin.group_by:
     key: machine_{{ ansible_machine }}
@@ -85,4 +85,4 @@ EXAMPLES = r'''
 - name: Add all active hosts to a static group
   ansible.builtin.group_by:
     key: done
-'''
+"""

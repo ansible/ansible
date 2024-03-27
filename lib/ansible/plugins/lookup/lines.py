@@ -53,10 +53,18 @@ class LookupModule(LookupBase):
 
         ret = []
         for term in terms:
-            p = subprocess.Popen(term, cwd=self._loader.get_basedir(), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            p = subprocess.Popen(
+                term,
+                cwd=self._loader.get_basedir(),
+                shell=True,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+            )
             (stdout, stderr) = p.communicate()
             if p.returncode == 0:
                 ret.extend([to_text(l) for l in stdout.splitlines()])
             else:
-                raise AnsibleError("lookup_plugin.lines(%s) returned %d" % (term, p.returncode))
+                raise AnsibleError(
+                    "lookup_plugin.lines(%s) returned %d" % (term, p.returncode)
+                )
         return ret

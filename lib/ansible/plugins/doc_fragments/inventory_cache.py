@@ -8,7 +8,7 @@ from __future__ import annotations
 class ModuleDocFragment(object):
 
     # inventory cache
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
 options:
   cache:
     description:
@@ -70,4 +70,4 @@ options:
         key: fact_caching_prefix
       - section: inventory
         key: cache_prefix
-'''
+"""

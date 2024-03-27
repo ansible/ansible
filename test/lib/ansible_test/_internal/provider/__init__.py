@@ -1,4 +1,5 @@
 """Provider (plugin) infrastructure for ansible-test."""
+
 from __future__ import annotations
 
 import abc
@@ -11,9 +12,14 @@ from ..util import (
 )
 
 
-def get_path_provider_classes(provider_type: t.Type[TPathProvider]) -> list[t.Type[TPathProvider]]:
+def get_path_provider_classes(
+    provider_type: t.Type[TPathProvider],
+) -> list[t.Type[TPathProvider]]:
     """Return a list of path provider classes of the given type."""
-    return sorted(get_subclasses(provider_type), key=lambda subclass: (subclass.priority, subclass.__name__))
+    return sorted(
+        get_subclasses(provider_type),
+        key=lambda subclass: (subclass.priority, subclass.__name__),
+    )
 
 
 def find_path_provider(
@@ -51,7 +57,7 @@ class ProviderNotFoundForPath(ApplicationError):
     """Exception generated when a path based provider cannot be found for a given path."""
 
     def __init__(self, provider_type: t.Type, path: str) -> None:
-        super().__init__('No %s found for path: %s' % (provider_type.__name__, path))
+        super().__init__("No %s found for path: %s" % (provider_type.__name__, path))
 
         self.provider_type = provider_type
         self.path = path
@@ -72,4 +78,4 @@ class PathProvider(metaclass=abc.ABCMeta):
         """Return True if the given path is a content root for this provider."""
 
 
-TPathProvider = t.TypeVar('TPathProvider', bound=PathProvider)
+TPathProvider = t.TypeVar("TPathProvider", bound=PathProvider)

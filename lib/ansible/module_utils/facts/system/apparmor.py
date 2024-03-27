@@ -25,16 +25,16 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 
 
 class ApparmorFactCollector(BaseFactCollector):
-    name = 'apparmor'
+    name = "apparmor"
     _fact_ids = set()  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         facts_dict = {}
         apparmor_facts = {}
-        if os.path.exists('/sys/kernel/security/apparmor'):
-            apparmor_facts['status'] = 'enabled'
+        if os.path.exists("/sys/kernel/security/apparmor"):
+            apparmor_facts["status"] = "enabled"
         else:
-            apparmor_facts['status'] = 'disabled'
+            apparmor_facts["status"] = "disabled"
 
-        facts_dict['apparmor'] = apparmor_facts
+        facts_dict["apparmor"] = apparmor_facts
         return facts_dict

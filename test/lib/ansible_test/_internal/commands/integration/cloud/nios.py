@@ -1,4 +1,5 @@
 """NIOS plugin for integration tests."""
+
 from __future__ import annotations
 
 import os
@@ -28,12 +29,12 @@ class NiosProvider(CloudProvider):
     #
     # It's source source itself resides at:
     # https://github.com/ansible/nios-test-container
-    DOCKER_IMAGE = 'quay.io/ansible/nios-test-container:3.0.0'
+    DOCKER_IMAGE = "quay.io/ansible/nios-test-container:3.0.0"
 
     def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
-        self.__container_from_env = os.environ.get('ANSIBLE_NIOSSIM_CONTAINER')
+        self.__container_from_env = os.environ.get("ANSIBLE_NIOSSIM_CONTAINER")
         """
         Overrides target container, might be used for development.
 
@@ -66,14 +67,14 @@ class NiosProvider(CloudProvider):
             self.args,
             self.platform,
             self.image,
-            'nios-simulator',
+            "nios-simulator",
             ports,
         )
 
         if not descriptor:
             return
 
-        self._set_cloud_config('NIOS_HOST', descriptor.name)
+        self._set_cloud_config("NIOS_HOST", descriptor.name)
 
     def _setup_static(self) -> None:
         raise NotImplementedError()
@@ -86,9 +87,9 @@ class NiosEnvironment(CloudEnvironment):
         """Return environment configuration for use in the test environment after delegation."""
         ansible_vars = dict(
             nios_provider=dict(
-                host=self._get_cloud_config('NIOS_HOST'),
-                username='admin',
-                password='infoblox',
+                host=self._get_cloud_config("NIOS_HOST"),
+                username="admin",
+                password="infoblox",
             ),
         )
 

@@ -16,7 +16,7 @@ class _EventSource:
 
     def __iadd__(self, handler):
         if not callable(handler):
-            raise ValueError('handler must be callable')
+            raise ValueError("handler must be callable")
         self._handlers.add(handler)
         return self
 
@@ -54,7 +54,7 @@ class _AnsibleCollectionConfig(type):
     @collection_finder.setter
     def collection_finder(cls, value):
         if cls._collection_finder:
-            raise ValueError('an AnsibleCollectionFinder has already been configured')
+            raise ValueError("an AnsibleCollectionFinder has already been configured")
 
         cls._collection_finder = value
 
@@ -79,7 +79,7 @@ class _AnsibleCollectionConfig(type):
     @on_collection_load.setter
     def on_collection_load(cls, value):
         if value is not cls._on_collection_load:
-            raise ValueError('on_collection_load is not directly settable (use +=)')
+            raise ValueError("on_collection_load is not directly settable (use +=)")
 
     @property
     def playbook_paths(cls):
@@ -93,7 +93,9 @@ class _AnsibleCollectionConfig(type):
 
     def _require_finder(cls):
         if not cls._collection_finder:
-            raise NotImplementedError('an AnsibleCollectionFinder has not been installed in this process')
+            raise NotImplementedError(
+                "an AnsibleCollectionFinder has not been installed in this process"
+            )
 
 
 # concrete class of our metaclass type that defines the class properties we want

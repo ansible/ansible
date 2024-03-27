@@ -25,7 +25,7 @@ class BaseFactsTest(unittest.TestCase):
     # just a base class, not an actual test
     __test__ = False
 
-    gather_subset = ['all']
+    gather_subset = ["all"]
     valid_subsets = None
     fact_namespace = None
     collector_class = None
@@ -37,29 +37,40 @@ class BaseFactsTest(unittest.TestCase):
 
     def _mock_module(self):
         mock_module = Mock()
-        mock_module.params = {'gather_subset': self.gather_subset,
-                              'gather_timeout': 5,
-                              'filter': '*'}
+        mock_module.params = {
+            "gather_subset": self.gather_subset,
+            "gather_timeout": 5,
+            "filter": "*",
+        }
         mock_module.get_bin_path = Mock(return_value=None)
         return mock_module
 
-    @patch('platform.system', return_value='Linux')
-    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value='systemd')
+    @patch("platform.system", return_value="Linux")
+    @patch(
+        "ansible.module_utils.facts.system.service_mgr.get_file_content",
+        return_value="systemd",
+    )
     def test_collect(self, mock_gfc, mock_ps):
         self._test_collect()
 
     def _test_collect(self):
         module = self._mock_module()
         fact_collector = self.collector_class()
-        facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)
+        facts_dict = fact_collector.collect(
+            module=module, collected_facts=self.collected_facts
+        )
         self.assertIsInstance(facts_dict, dict)
         return facts_dict
 
-    @patch('platform.system', return_value='Linux')
-    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value='systemd')
+    @patch("platform.system", return_value="Linux")
+    @patch(
+        "ansible.module_utils.facts.system.service_mgr.get_file_content",
+        return_value="systemd",
+    )
     def test_collect_with_namespace(self, mock_gfc, mock_ps):
         module = self._mock_module()
         fact_collector = self.collector_class()
-        facts_dict = fact_collector.collect_with_namespace(module=module,
-                                                           collected_facts=self.collected_facts)
+        facts_dict = fact_collector.collect_with_namespace(
+            module=module, collected_facts=self.collected_facts
+        )
         self.assertIsInstance(facts_dict, dict)

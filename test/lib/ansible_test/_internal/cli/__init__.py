@@ -1,4 +1,5 @@
 """Command line parsing."""
+
 from __future__ import annotations
 
 import argparse
@@ -32,8 +33,16 @@ def parse_args(argv: t.Optional[list[str]] = None) -> argparse.Namespace:
     """Parse command line arguments."""
     completer = CompositeActionCompletionFinder()
 
-    parser = argparse.ArgumentParser(prog='ansible-test', epilog=get_epilog(completer), formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--version', action='version', version=f'%(prog)s version {get_ansible_version()}')
+    parser = argparse.ArgumentParser(
+        prog="ansible-test",
+        epilog=get_epilog(completer),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s version {get_ansible_version()}",
+    )
 
     do_commands(parser, completer)
 
@@ -55,7 +64,9 @@ def parse_args(argv: t.Optional[list[str]] = None) -> argparse.Namespace:
     if args.no_environment:
         pass
     elif args.host_path:
-        args.host_settings = HostSettings.deserialize(os.path.join(args.host_path, 'settings.dat'))
+        args.host_settings = HostSettings.deserialize(
+            os.path.join(args.host_path, "settings.dat")
+        )
     else:
         args.host_settings = convert_legacy_args(argv, args, args.target_mode)
         args.host_settings.apply_defaults()

@@ -10,18 +10,22 @@ from ansible.module_utils.common.network import to_subnet
 
 
 def main():
-    module = AnsibleModule(argument_spec=dict(
-        subnet=dict(),
-    ))
+    module = AnsibleModule(
+        argument_spec=dict(
+            subnet=dict(),
+        )
+    )
 
-    subnet = module.params['subnet']
+    subnet = module.params["subnet"]
 
     if subnet is not None:
-        split_addr = subnet.split('/')
+        split_addr = subnet.split("/")
         if len(split_addr) != 2:
-            module.fail_json("Invalid CIDR notation: expected a subnet mask (e.g. 10.0.0.0/32)")
+            module.fail_json(
+                "Invalid CIDR notation: expected a subnet mask (e.g. 10.0.0.0/32)"
+            )
         module.exit_json(resolved=to_subnet(split_addr[0], split_addr[1]))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -214,7 +214,10 @@ def main():
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result.update(
-        {"stdout": responses, "stdout_lines": list(to_lines(responses)), }
+        {
+            "stdout": responses,
+            "stdout_lines": list(to_lines(responses)),
+        }
     )
 
     module.exit_json(**result)

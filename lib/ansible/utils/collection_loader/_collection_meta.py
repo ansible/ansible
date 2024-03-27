@@ -27,5 +27,5 @@ def _meta_yml_to_dict(yaml_string_data, content_id):
     if not routing_dict:
         routing_dict = {}
     if not isinstance(routing_dict, Mapping):
-        raise ValueError('collection metadata must be an instance of Python Mapping')
+        raise ValueError("collection metadata must be an instance of Python Mapping")
     return routing_dict

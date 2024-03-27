@@ -1,4 +1,5 @@
 """POSIX integration testing."""
+
 from __future__ import annotations
 
 import os
@@ -42,7 +43,19 @@ def command_posix_integration(args: PosixIntegrationConfig) -> None:
     all_targets = tuple(walk_posix_integration_targets(include_hidden=True))
     host_state, internal_targets = command_integration_filter(args, all_targets)
     control_connections = [local_ssh(args, host_state.controller_profile.python)]
-    managed_connections = [root_ssh(ssh) for ssh in host_state.get_controller_target_connections()]
-    pre_target, post_target = create_container_hooks(args, control_connections, managed_connections)
+    managed_connections = [
+        root_ssh(ssh) for ssh in host_state.get_controller_target_connections()
+    ]
+    pre_target, post_target = create_container_hooks(
+        args, control_connections, managed_connections
+    )
 
-    command_integration_filtered(args, host_state, internal_targets, all_targets, inventory_path, pre_target=pre_target, post_target=post_target)
+    command_integration_filtered(
+        args,
+        host_state,
+        internal_targets,
+        all_targets,
+        inventory_path,
+        pre_target=pre_target,
+        post_target=post_target,
+    )

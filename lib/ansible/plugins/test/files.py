@@ -21,25 +21,24 @@ from os.path import isdir, isfile, isabs, exists, lexists, islink, samefile, ism
 
 
 class TestModule(object):
-    ''' Ansible file jinja2 tests '''
+    """Ansible file jinja2 tests"""
 
     def tests(self):
         return {
             # file testing
-            'directory': isdir,
-            'is_dir': isdir,
-            'file': isfile,
-            'is_file': isfile,
-            'link': islink,
-            'is_link': islink,
-            'exists': exists,
-            'link_exists': lexists,
-
+            "directory": isdir,
+            "is_dir": isdir,
+            "file": isfile,
+            "is_file": isfile,
+            "link": islink,
+            "is_link": islink,
+            "exists": exists,
+            "link_exists": lexists,
             # path testing
-            'abs': isabs,
-            'is_abs': isabs,
-            'same_file': samefile,
-            'is_same_file': samefile,
-            'mount': ismount,
-            'is_mount': ismount,
+            "abs": isabs,
+            "is_abs": isabs,
+            "same_file": samefile,
+            "is_same_file": samefile,
+            "mount": ismount,
+            "is_mount": ismount,
         }

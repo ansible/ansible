@@ -10,8 +10,8 @@ import pytest
 
 # Strings that should be converted into a typed value
 VALID_STRINGS = (
-    ("'a'", 'a'),
-    ("'1'", '1'),
+    ("'a'", "a"),
+    ("'1'", "1"),
     ("1", 1),
     ("True", True),
     ("False", False),
@@ -19,9 +19,7 @@ VALID_STRINGS = (
 )
 
 # Passing things that aren't strings should just return the object
-NONSTRINGS = (
-    ({'a': 1}, {'a': 1}),
-)
+NONSTRINGS = (({"a": 1}, {"a": 1}),)
 
 # These strings are not basic types.  For security, these should not be
 # executed.  We return the same string and get an exception for some
@@ -33,32 +31,40 @@ INVALID_STRINGS = (
 )
 
 
-@pytest.mark.parametrize('code, expected, stdin',
-                         ((c, e, {}) for c, e in chain(VALID_STRINGS, NONSTRINGS)),
-                         indirect=['stdin'])
+@pytest.mark.parametrize(
+    "code, expected, stdin",
+    ((c, e, {}) for c, e in chain(VALID_STRINGS, NONSTRINGS)),
+    indirect=["stdin"],
+)
 def test_simple_types(am, code, expected):
     # test some basic usage for various types
     assert am.safe_eval(code) == expected
 
 
-@pytest.mark.parametrize('code, expected, stdin',
-                         ((c, e, {}) for c, e in chain(VALID_STRINGS, NONSTRINGS)),
-                         indirect=['stdin'])
+@pytest.mark.parametrize(
+    "code, expected, stdin",
+    ((c, e, {}) for c, e in chain(VALID_STRINGS, NONSTRINGS)),
+    indirect=["stdin"],
+)
 def test_simple_types_with_exceptions(am, code, expected):
     # Test simple types with exceptions requested
     assert am.safe_eval(code, include_exceptions=True), (expected, None)
 
 
-@pytest.mark.parametrize('code, expected, stdin',
-                         ((c, e, {}) for c, e, dummy in INVALID_STRINGS),
-                         indirect=['stdin'])
+@pytest.mark.parametrize(
+    "code, expected, stdin",
+    ((c, e, {}) for c, e, dummy in INVALID_STRINGS),
+    indirect=["stdin"],
+)
 def test_invalid_strings(am, code, expected):
     assert am.safe_eval(code) == expected
 
 
-@pytest.mark.parametrize('code, expected, exception, stdin',
-                         ((c, e, ex, {}) for c, e, ex in INVALID_STRINGS),
-                         indirect=['stdin'])
+@pytest.mark.parametrize(
+    "code, expected, exception, stdin",
+    ((c, e, ex, {}) for c, e, ex in INVALID_STRINGS),
+    indirect=["stdin"],
+)
 def test_invalid_strings_with_exceptions(am, code, expected, exception):
     res = am.safe_eval(code, include_exceptions=True)
     assert res[0] == expected

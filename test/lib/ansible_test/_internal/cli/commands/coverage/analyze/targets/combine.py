@@ -1,4 +1,5 @@
 """Command line parsing for the `coverage analyze targets combine` command."""
+
 from __future__ import annotations
 
 import argparse
@@ -23,9 +24,9 @@ def do_combine(
 ):
     """Command line parsing for the `coverage analyze targets combine` command."""
     parser: argparse.ArgumentParser = subparsers.add_parser(
-        'combine',
+        "combine",
         parents=[parent],
-        help='combine multiple aggregated coverage files',
+        help="combine multiple aggregated coverage files",
     )
 
     parser.set_defaults(
@@ -33,17 +34,19 @@ def do_combine(
         config=CoverageAnalyzeTargetsCombineConfig,
     )
 
-    targets_combine = parser.add_argument_group('coverage arguments')
+    targets_combine = parser.add_argument_group("coverage arguments")
 
     targets_combine.add_argument(
-        'input_file',
-        nargs='+',
-        help='input file to read aggregated coverage from',
+        "input_file",
+        nargs="+",
+        help="input file to read aggregated coverage from",
     )
 
     targets_combine.add_argument(
-        'output_file',
-        help='output file to write aggregated coverage to',
+        "output_file",
+        help="output file to write aggregated coverage to",
     )
 
-    add_environments(parser, completer, ControllerMode.ORIGIN, TargetMode.NO_TARGETS)  # coverage analyze targets combine
+    add_environments(
+        parser, completer, ControllerMode.ORIGIN, TargetMode.NO_TARGETS
+    )  # coverage analyze targets combine

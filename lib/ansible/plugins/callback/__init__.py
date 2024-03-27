@@ -47,12 +47,12 @@ global_display = Display()
 __all__ = ["CallbackBase"]
 
 
-_DEBUG_ALLOWED_KEYS = frozenset(('msg', 'exception', 'warnings', 'deprecations'))
+_DEBUG_ALLOWED_KEYS = frozenset(("msg", "exception", "warnings", "deprecations"))
 _YAML_TEXT_TYPES = (text_type, AnsibleUnicode, AnsibleUnsafeText, NativeJinjaUnsafeText)
 # Characters that libyaml/pyyaml consider breaks
-_YAML_BREAK_CHARS = '\n\x85\u2028\u2029'  # NL, NEL, LS, PS
+_YAML_BREAK_CHARS = "\n\x85\u2028\u2029"  # NL, NEL, LS, PS
 # regex representation of libyaml/pyyaml of a space followed by a break character
-_SPACE_BREAK_RE = re.compile(fr' +([{_YAML_BREAK_CHARS}])')
+_SPACE_BREAK_RE = re.compile(rf" +([{_YAML_BREAK_CHARS}])")
 
 
 class _AnsibleCallbackDumper(AnsibleDumper):
@@ -80,13 +80,14 @@ class _SpecialCharacterTranslator:
     def __getitem__(self, ch):
         # "special character" logic from pyyaml yaml.emitter.Emitter.analyze_scalar, translated to decimal
         # for perf w/ str.translate
-        if (ch == 10 or
-            32 <= ch <= 126 or
-            ch == 133 or
-            160 <= ch <= 55295 or
-            57344 <= ch <= 65533 or
-            65536 <= ch < 1114111)\
-                and ch != 65279:
+        if (
+            ch == 10
+            or 32 <= ch <= 126
+            or ch == 133
+            or 160 <= ch <= 55295
+            or 57344 <= ch <= 65533
+            or 65536 <= ch < 1114111
+        ) and ch != 65279:
             return ch
         return None
 
@@ -106,39 +107,35 @@ def _munge_data_for_lossy_yaml(scalar):
     # ...libyaml/pyyaml only permits special characters for double quoted scalars
     scalar = _filter_yaml_special(scalar)
     # ...libyaml/pyyaml only permits spaces followed by breaks for double quoted scalars
-    return _SPACE_BREAK_RE.sub(r'\1', scalar)
+    return _SPACE_BREAK_RE.sub(r"\1", scalar)
 
 
 def _pretty_represent_str(self, data):
     """Uses block style for multi-line strings"""
     data = text_type(data)
     if _should_use_block(data):
-        style = '|'
+        style = "|"
         if self._lossy:
             data = _munge_data_for_lossy_yaml(data)
     else:
         style = self.default_style
 
-    node = yaml.representer.ScalarNode('tag:yaml.org,2002:str', data, style=style)
+    node = yaml.representer.ScalarNode("tag:yaml.org,2002:str", data, style=style)
     if self.alias_key is not None:
         self.represented_objects[self.alias_key] = node
     return node
 
 
 for data_type in _YAML_TEXT_TYPES:
-    _AnsibleCallbackDumper.add_representer(
-        data_type,
-        _pretty_represent_str
-    )
+    _AnsibleCallbackDumper.add_representer(data_type, _pretty_represent_str)
 
 
 class CallbackBase(AnsiblePlugin):
-
-    '''
+    """
     This is a base ansible callback class that does nothing. New callbacks should
     use this class as a base and override any callback methods they wish to execute
     custom actions.
-    '''
+    """
 
     def __init__(self, display=None, options=None):
         if display:
@@ -147,10 +144,13 @@ class CallbackBase(AnsiblePlugin):
             self._display = global_display
 
         if self._display.verbosity >= 4:
-            name = getattr(self, 'CALLBACK_NAME', 'unnamed')
-            ctype = getattr(self, 'CALLBACK_TYPE', 'old')
-            version = getattr(self, 'CALLBACK_VERSION', '1.0')
-            self._display.vvvv('Loading callback plugin %s of type %s, v%s from %s' % (name, ctype, version, sys.modules[self.__module__].__file__))
+            name = getattr(self, "CALLBACK_NAME", "unnamed")
+            ctype = getattr(self, "CALLBACK_TYPE", "old")
+            version = getattr(self, "CALLBACK_VERSION", "1.0")
+            self._display.vvvv(
+                "Loading callback plugin %s of type %s, v%s from %s"
+                % (name, ctype, version, sys.modules[self.__module__].__file__)
+            )
 
         self.disabled = False
         self.wants_implicit_tasks = False
@@ -159,24 +159,38 @@ class CallbackBase(AnsiblePlugin):
         if options is not None:
             self.set_options(options)
 
-        self._hide_in_debug = ('changed', 'failed', 'skipped', 'invocation', 'skip_reason')
+        self._hide_in_debug = (
+            "changed",
+            "failed",
+            "skipped",
+            "invocation",
+            "skip_reason",
+        )
 
     # helper for callbacks, so they don't all have to include deepcopy
     _copy_result = deepcopy
 
     def set_option(self, k, v):
-        self._plugin_options[k] = C.config.get_config_value(k, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={k: v})
+        self._plugin_options[k] = C.config.get_config_value(
+            k, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={k: v}
+        )
 
     def get_option(self, k):
         return self._plugin_options[k]
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
-        ''' This is different than the normal plugin method as callbacks get called early and really don't accept keywords.
-            Also _options was already taken for CLI args and callbacks use _plugin_options instead.
-        '''
+        """This is different than the normal plugin method as callbacks get called early and really don't accept keywords.
+        Also _options was already taken for CLI args and callbacks use _plugin_options instead.
+        """
 
         # load from config
-        self._plugin_options = C.config.get_plugin_options(self.plugin_type, self._load_name, keys=task_keys, variables=var_options, direct=direct)
+        self._plugin_options = C.config.get_plugin_options(
+            self.plugin_type,
+            self._load_name,
+            keys=task_keys,
+            variables=var_options,
+            direct=direct,
+        )
 
     @staticmethod
     def host_label(result):
@@ -184,35 +198,44 @@ class CallbackBase(AnsiblePlugin):
         result.
         """
         label = "%s" % result._host.get_name()
-        if result._task.delegate_to and result._task.delegate_to != result._host.get_name():
+        if (
+            result._task.delegate_to
+            and result._task.delegate_to != result._host.get_name()
+        ):
             # show delegated host
             label += " -> %s" % result._task.delegate_to
             # in case we have 'extra resolution'
-            ahost = result._result.get('_ansible_delegated_vars', {}).get('ansible_host', result._task.delegate_to)
+            ahost = result._result.get("_ansible_delegated_vars", {}).get(
+                "ansible_host", result._task.delegate_to
+            )
             if result._task.delegate_to != ahost:
                 label += "(%s)" % ahost
         return label
 
     def _run_is_verbose(self, result, verbosity=0):
-        return ((self._display.verbosity > verbosity or result._result.get('_ansible_verbose_always', False) is True)
-                and result._result.get('_ansible_verbose_override', False) is False)
+        return (
+            self._display.verbosity > verbosity
+            or result._result.get("_ansible_verbose_always", False) is True
+        ) and result._result.get("_ansible_verbose_override", False) is False
 
-    def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False, serialize=True):
+    def _dump_results(
+        self, result, indent=None, sort_keys=True, keep_invocation=False, serialize=True
+    ):
         try:
-            result_format = self.get_option('result_format')
+            result_format = self.get_option("result_format")
         except KeyError:
             # Callback does not declare result_format nor extend result_format_callback
-            result_format = 'json'
+            result_format = "json"
 
         try:
-            pretty_results = self.get_option('pretty_results')
+            pretty_results = self.get_option("pretty_results")
         except KeyError:
             # Callback does not declare pretty_results nor extend result_format_callback
             pretty_results = None
 
         indent_conditions = (
-            result.get('_ansible_verbose_always'),
-            pretty_results is None and result_format != 'json',
+            result.get("_ansible_verbose_always"),
+            pretty_results is None and result_format != "json",
             pretty_results is True,
             self._display.verbosity > 2,
         )
@@ -227,16 +250,20 @@ class CallbackBase(AnsiblePlugin):
         abridged_result = strip_internal_keys(module_response_deepcopy(result))
 
         # remove invocation unless specifically wanting it
-        if not keep_invocation and self._display.verbosity < 3 and 'invocation' in result:
-            del abridged_result['invocation']
+        if (
+            not keep_invocation
+            and self._display.verbosity < 3
+            and "invocation" in result
+        ):
+            del abridged_result["invocation"]
 
         # remove diff information from screen output
-        if self._display.verbosity < 3 and 'diff' in result:
-            del abridged_result['diff']
+        if self._display.verbosity < 3 and "diff" in result:
+            del abridged_result["diff"]
 
         # remove exception from screen output
-        if 'exception' in abridged_result:
-            del abridged_result['exception']
+        if "exception" in abridged_result:
+            del abridged_result["exception"]
 
         if not serialize:
             # Just return ``abridged_result`` without going through serialization
@@ -244,32 +271,42 @@ class CallbackBase(AnsiblePlugin):
             # that want to further modify the result, or use custom serialization
             return abridged_result
 
-        if result_format == 'json':
+        if result_format == "json":
             try:
-                return json.dumps(abridged_result, cls=AnsibleJSONEncoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+                return json.dumps(
+                    abridged_result,
+                    cls=AnsibleJSONEncoder,
+                    indent=indent,
+                    ensure_ascii=False,
+                    sort_keys=sort_keys,
+                )
             except TypeError:
                 # Python3 bug: throws an exception when keys are non-homogenous types:
                 # https://bugs.python.org/issue25457
                 # sort into an OrderedDict and then json.dumps() that instead
                 if not OrderedDict:
                     raise
-                return json.dumps(OrderedDict(sorted(abridged_result.items(), key=to_text)),
-                                  cls=AnsibleJSONEncoder, indent=indent,
-                                  ensure_ascii=False, sort_keys=False)
-        elif result_format == 'yaml':
+                return json.dumps(
+                    OrderedDict(sorted(abridged_result.items(), key=to_text)),
+                    cls=AnsibleJSONEncoder,
+                    indent=indent,
+                    ensure_ascii=False,
+                    sort_keys=False,
+                )
+        elif result_format == "yaml":
             # None is a sentinel in this case that indicates default behavior
             # default behavior for yaml is to prettify results
             lossy = pretty_results in (None, True)
             if lossy:
                 # if we already have stdout, we don't need stdout_lines
-                if 'stdout' in abridged_result and 'stdout_lines' in abridged_result:
-                    abridged_result['stdout_lines'] = '<omitted>'
+                if "stdout" in abridged_result and "stdout_lines" in abridged_result:
+                    abridged_result["stdout_lines"] = "<omitted>"
 
                 # if we already have stderr, we don't need stderr_lines
-                if 'stderr' in abridged_result and 'stderr_lines' in abridged_result:
-                    abridged_result['stderr_lines'] = '<omitted>'
+                if "stderr" in abridged_result and "stderr_lines" in abridged_result:
+                    abridged_result["stderr_lines"] = "<omitted>"
 
-            return '\n%s' % textwrap.indent(
+            return "\n%s" % textwrap.indent(
                 yaml.dump(
                     abridged_result,
                     allow_unicode=True,
@@ -278,56 +315,59 @@ class CallbackBase(AnsiblePlugin):
                     indent=indent,
                     # sort_keys=sort_keys  # This requires PyYAML>=5.1
                 ),
-                ' ' * (indent or 4)
+                " " * (indent or 4),
             )
 
     def _handle_warnings(self, res):
-        ''' display warnings, if enabled and any exist in the result '''
+        """display warnings, if enabled and any exist in the result"""
         if C.ACTION_WARNINGS:
-            if 'warnings' in res and res['warnings']:
-                for warning in res['warnings']:
+            if "warnings" in res and res["warnings"]:
+                for warning in res["warnings"]:
                     self._display.warning(warning)
-                del res['warnings']
-            if 'deprecations' in res and res['deprecations']:
-                for warning in res['deprecations']:
+                del res["warnings"]
+            if "deprecations" in res and res["deprecations"]:
+                for warning in res["deprecations"]:
                     self._display.deprecated(**warning)
-                del res['deprecations']
+                del res["deprecations"]
 
     def _handle_exception(self, result, use_stderr=False):
 
-        if 'exception' in result:
+        if "exception" in result:
             msg = "An exception occurred during task execution. "
-            exception_str = to_text(result['exception'])
+            exception_str = to_text(result["exception"])
             if self._display.verbosity < 3:
                 # extract just the actual error message from the exception text
-                error = exception_str.strip().split('\n')[-1]
+                error = exception_str.strip().split("\n")[-1]
                 msg += "To see the full traceback, use -vvv. The error was: %s" % error
             else:
                 msg = "The full traceback is:\n" + exception_str
-                del result['exception']
+                del result["exception"]
 
             self._display.display(msg, color=C.COLOR_ERROR, stderr=use_stderr)
 
     def _serialize_diff(self, diff):
         try:
-            result_format = self.get_option('result_format')
+            result_format = self.get_option("result_format")
         except KeyError:
             # Callback does not declare result_format nor extend result_format_callback
-            result_format = 'json'
+            result_format = "json"
 
         try:
-            pretty_results = self.get_option('pretty_results')
+            pretty_results = self.get_option("pretty_results")
         except KeyError:
             # Callback does not declare pretty_results nor extend result_format_callback
             pretty_results = None
 
-        if result_format == 'json':
-            return json.dumps(diff, sort_keys=True, indent=4, separators=(u',', u': ')) + u'\n'
-        elif result_format == 'yaml':
+        if result_format == "json":
+            return (
+                json.dumps(diff, sort_keys=True, indent=4, separators=(",", ": "))
+                + "\n"
+            )
+        elif result_format == "yaml":
             # None is a sentinel in this case that indicates default behavior
             # default behavior for yaml is to prettify results
             lossy = pretty_results in (None, True)
-            return '%s\n' % textwrap.indent(
+            return "%s\n" % textwrap.indent(
                 yaml.dump(
                     diff,
                     allow_unicode=True,
@@ -336,7 +376,7 @@ class CallbackBase(AnsiblePlugin):
                     indent=4,
                     # sort_keys=sort_keys  # This requires PyYAML>=5.1
                 ),
-                '    '
+                "    ",
             )
 
     def _get_diff(self, difflist):
@@ -346,80 +386,88 @@ class CallbackBase(AnsiblePlugin):
 
         ret = []
         for diff in difflist:
-            if 'dst_binary' in diff:
-                ret.append(u"diff skipped: destination file appears to be binary\n")
-            if 'src_binary' in diff:
-                ret.append(u"diff skipped: source file appears to be binary\n")
-            if 'dst_larger' in diff:
-                ret.append(u"diff skipped: destination file size is greater than %d\n" % diff['dst_larger'])
-            if 'src_larger' in diff:
-                ret.append(u"diff skipped: source file size is greater than %d\n" % diff['src_larger'])
-            if 'before' in diff and 'after' in diff:
+            if "dst_binary" in diff:
+                ret.append("diff skipped: destination file appears to be binary\n")
+            if "src_binary" in diff:
+                ret.append("diff skipped: source file appears to be binary\n")
+            if "dst_larger" in diff:
+                ret.append(
+                    "diff skipped: destination file size is greater than %d\n"
+                    % diff["dst_larger"]
+                )
+            if "src_larger" in diff:
+                ret.append(
+                    "diff skipped: source file size is greater than %d\n"
+                    % diff["src_larger"]
+                )
+            if "before" in diff and "after" in diff:
                 # format complex structures into 'files'
-                for x in ['before', 'after']:
+                for x in ["before", "after"]:
                     if isinstance(diff[x], MutableMapping):
                         diff[x] = self._serialize_diff(diff[x])
                     elif diff[x] is None:
-                        diff[x] = ''
-                if 'before_header' in diff:
-                    before_header = u"before: %s" % diff['before_header']
+                        diff[x] = ""
+                if "before_header" in diff:
+                    before_header = "before: %s" % diff["before_header"]
                 else:
-                    before_header = u'before'
-                if 'after_header' in diff:
-                    after_header = u"after: %s" % diff['after_header']
+                    before_header = "before"
+                if "after_header" in diff:
+                    after_header = "after: %s" % diff["after_header"]
                 else:
-                    after_header = u'after'
-                before_lines = diff['before'].splitlines(True)
-                after_lines = diff['after'].splitlines(True)
-                if before_lines and not before_lines[-1].endswith(u'\n'):
-                    before_lines[-1] += u'\n\\ No newline at end of file\n'
-                if after_lines and not after_lines[-1].endswith('\n'):
-                    after_lines[-1] += u'\n\\ No newline at end of file\n'
-                differ = difflib.unified_diff(before_lines,
-                                              after_lines,
-                                              fromfile=before_header,
-                                              tofile=after_header,
-                                              fromfiledate=u'',
-                                              tofiledate=u'',
-                                              n=C.DIFF_CONTEXT)
+                    after_header = "after"
+                before_lines = diff["before"].splitlines(True)
+                after_lines = diff["after"].splitlines(True)
+                if before_lines and not before_lines[-1].endswith("\n"):
+                    before_lines[-1] += "\n\\ No newline at end of file\n"
+                if after_lines and not after_lines[-1].endswith("\n"):
+                    after_lines[-1] += "\n\\ No newline at end of file\n"
+                differ = difflib.unified_diff(
+                    before_lines,
+                    after_lines,
+                    fromfile=before_header,
+                    tofile=after_header,
+                    fromfiledate="",
+                    tofiledate="",
+                    n=C.DIFF_CONTEXT,
+                )
                 difflines = list(differ)
                 has_diff = False
                 for line in difflines:
                     has_diff = True
-                    if line.startswith(u'+'):
+                    if line.startswith("+"):
                         line = stringc(line, C.COLOR_DIFF_ADD)
-                    elif line.startswith(u'-'):
+                    elif line.startswith("-"):
                         line = stringc(line, C.COLOR_DIFF_REMOVE)
-                    elif line.startswith(u'@@'):
+                    elif line.startswith("@@"):
                         line = stringc(line, C.COLOR_DIFF_LINES)
                     ret.append(line)
                 if has_diff:
-                    ret.append('\n')
-            if 'prepared' in diff:
-                ret.append(diff['prepared'])
-        return u''.join(ret)
+                    ret.append("\n")
+            if "prepared" in diff:
+                ret.append(diff["prepared"])
+        return "".join(ret)
 
     def _get_item_label(self, result):
-        ''' retrieves the value to be displayed as a label for an item entry from a result object'''
-        if result.get('_ansible_no_log', False):
+        """retrieves the value to be displayed as a label for an item entry from a result object"""
+        if result.get("_ansible_no_log", False):
             item = "(censored due to no_log)"
         else:
-            item = result.get('_ansible_item_label', result.get('item'))
+            item = result.get("_ansible_item_label", result.get("item"))
         return item
 
     def _process_items(self, result):
         # just remove them as now they get handled by individual callbacks
-        del result._result['results']
+        del result._result["results"]
 
     def _clean_results(self, result, task_name):
-        ''' removes data from results for display '''
+        """removes data from results for display"""
 
         # mostly controls that debug only outputs what it was meant to
         if task_name in C._ACTION_DEBUG:
-            if 'msg' in result:
+            if "msg" in result:
                 # msg should be alone
                 for key in list(result.keys()):
-                    if key not in _DEBUG_ALLOWED_KEYS and not key.startswith('_'):
+                    if key not in _DEBUG_ALLOWED_KEYS and not key.startswith("_"):
                         result.pop(key)
             else:
                 # 'var' value as field, so eliminate others and what is left should be varname
@@ -429,7 +477,7 @@ class CallbackBase(AnsiblePlugin):
     def _print_task_path(self, task, color=C.COLOR_DEBUG):
         path = task.get_path()
         if path:
-            self._display.display(u"task path: %s" % path, color=color)
+            self._display.display("task path: %s" % path, color=color)
 
     def set_play_context(self, play_context):
         pass
@@ -476,7 +524,18 @@ class CallbackBase(AnsiblePlugin):
     def playbook_on_task_start(self, name, is_conditional):
         pass
 
-    def playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None, unsafe=None):
+    def playbook_on_vars_prompt(
+        self,
+        varname,
+        private=True,
+        prompt=None,
+        encrypt=None,
+        confirm=False,
+        salt_size=None,
+        salt=None,
+        default=None,
+        unsafe=None,
+    ):
         pass
 
     def playbook_on_setup(self):
@@ -512,7 +571,9 @@ class CallbackBase(AnsiblePlugin):
     def v2_runner_on_skipped(self, result):
         if C.DISPLAY_SKIPPED_HOSTS:
             host = result._host.get_name()
-            self.runner_on_skipped(host, self._get_item_label(getattr(result._result, 'results', {})))
+            self.runner_on_skipped(
+                host, self._get_item_label(getattr(result._result, "results", {}))
+            )
 
     def v2_runner_on_unreachable(self, result):
         host = result._host.get_name()
@@ -520,23 +581,23 @@ class CallbackBase(AnsiblePlugin):
 
     def v2_runner_on_async_poll(self, result):
         host = result._host.get_name()
-        jid = result._result.get('ansible_job_id')
+        jid = result._result.get("ansible_job_id")
         # FIXME, get real clock
         clock = 0
         self.runner_on_async_poll(host, result._result, jid, clock)
 
     def v2_runner_on_async_ok(self, result):
         host = result._host.get_name()
-        jid = result._result.get('ansible_job_id')
+        jid = result._result.get("ansible_job_id")
         self.runner_on_async_ok(host, result._result, jid)
 
     def v2_runner_on_async_failed(self, result):
         host = result._host.get_name()
         # Attempt to get the async job ID. If the job does not finish before the
         # async timeout value, the ID may be within the unparsed 'async_result' dict.
-        jid = result._result.get('ansible_job_id')
-        if not jid and 'async_result' in result._result:
-            jid = result._result['async_result'].get('ansible_job_id')
+        jid = result._result.get("ansible_job_id")
+        if not jid and "async_result" in result._result:
+            jid = result._result["async_result"].get("ansible_job_id")
         self.runner_on_async_failed(host, result._result, jid)
 
     def v2_playbook_on_start(self, playbook):
@@ -561,8 +622,21 @@ class CallbackBase(AnsiblePlugin):
     def v2_playbook_on_handler_task_start(self, task):
         pass  # no v1 correspondence
 
-    def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None, unsafe=None):
-        self.playbook_on_vars_prompt(varname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
+    def v2_playbook_on_vars_prompt(
+        self,
+        varname,
+        private=True,
+        prompt=None,
+        encrypt=None,
+        confirm=False,
+        salt_size=None,
+        salt=None,
+        default=None,
+        unsafe=None,
+    ):
+        self.playbook_on_vars_prompt(
+            varname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe
+        )
 
     # FIXME: not called
     def v2_playbook_on_import_for_host(self, result, imported_file):
@@ -581,9 +655,9 @@ class CallbackBase(AnsiblePlugin):
         self.playbook_on_stats(stats)
 
     def v2_on_file_diff(self, result):
-        if 'diff' in result._result:
+        if "diff" in result._result:
             host = result._host.get_name()
-            self.on_file_diff(host, result._result['diff'])
+            self.on_file_diff(host, result._result["diff"])
 
     def v2_playbook_on_include(self, included_file):
         pass  # no v1 correspondence

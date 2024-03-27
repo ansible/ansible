@@ -25,23 +25,21 @@ def mocker_sunos_service(mocker):
     get_bin_path.return_value = "/usr/bin/svcs"
 
     # Read a mocked /etc/release file
-    mocked_etc_release_data = mocker.mock_open(
-        read_data=" Oracle Solaris 12.0")
+    mocked_etc_release_data = mocker.mock_open(read_data=" Oracle Solaris 12.0")
     builtin_open = "builtins.open"
     mocker.patch(builtin_open, mocked_etc_release_data)
 
-    service_status = mocker.patch.object(
-        service.Service, "modify_service_state")
+    service_status = mocker.patch.object(service.Service, "modify_service_state")
     service_status.return_value = (0, "", "")
 
     get_sunos_svcs_status = mocker.patch.object(
-        service.SunOSService, "get_sunos_svcs_status")
+        service.SunOSService, "get_sunos_svcs_status"
+    )
     get_sunos_svcs_status.return_value = "offline"
-    get_service_status = mocker.patch.object(
-        service.Service, "get_service_status")
+    get_service_status = mocker.patch.object(service.Service, "get_service_status")
     get_service_status.return_value = ""
 
-    mocker.patch('ansible.module_utils.common.sys_info.distro.id', return_value='')
+    mocker.patch("ansible.module_utils.common.sys_info.distro.id", return_value="")
 
 
 @pytest.fixture

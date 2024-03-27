@@ -29,14 +29,14 @@ from ansible.errors import AnsibleConnectionFailure
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(br"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(br"\@[\w\-\.]+:\S+?[>#\$] ?$"),
+        re.compile(rb"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+        re.compile(rb"\@[\w\-\.]+:\S+?[>#\$] ?$"),
     ]
 
     terminal_stderr_re = [
-        re.compile(br"\n\s*Invalid command:"),
-        re.compile(br"\nCommit failed"),
-        re.compile(br"\n\s+Set failed"),
+        re.compile(rb"\n\s*Invalid command:"),
+        re.compile(rb"\nCommit failed"),
+        re.compile(rb"\n\s+Set failed"),
     ]
 
     terminal_length = os.getenv("ANSIBLE_VYOS_TERMINAL_LENGTH", 10000)
@@ -45,8 +45,6 @@ class TerminalModule(TerminalBase):
         try:
             for cmd in (b"set terminal length 0", b"set terminal width 512"):
                 self._exec_cli_command(cmd)
-            self._exec_cli_command(
-                b"set terminal length %d" % self.terminal_length
-            )
+            self._exec_cli_command(b"set terminal length %d" % self.terminal_length)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure("unable to set terminal parameters")

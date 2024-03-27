@@ -81,7 +81,7 @@ def strip_internal_keys(dirty, exceptions=None):
         # listify to avoid updating dict while iterating over it
         for k in list(dirty.keys()):
             if isinstance(k, six.string_types):
-                if k.startswith('_ansible_') and k not in exceptions:
+                if k.startswith("_ansible_") and k not in exceptions:
                     del dirty[k]
                     continue
 
@@ -94,27 +94,34 @@ def strip_internal_keys(dirty, exceptions=None):
 
 
 def remove_internal_keys(data):
-    '''
+    """
     More nuanced version of strip_internal_keys
-    '''
+    """
     for key in list(data.keys()):
-        if (key.startswith('_ansible_') and key != '_ansible_parsed') or key in C.INTERNAL_RESULT_KEYS:
-            display.warning("Removed unexpected internal key in module return: %s = %s" % (key, data[key]))
+        if (
+            key.startswith("_ansible_") and key != "_ansible_parsed"
+        ) or key in C.INTERNAL_RESULT_KEYS:
+            display.warning(
+                "Removed unexpected internal key in module return: %s = %s"
+                % (key, data[key])
+            )
             del data[key]
 
     # remove bad/empty internal keys
-    for key in ['warnings', 'deprecations']:
+    for key in ["warnings", "deprecations"]:
         if key in data and not data[key]:
             del data[key]
 
     # cleanse fact values that are allowed from actions but not modules
-    for key in list(data.get('ansible_facts', {}).keys()):
-        if key.startswith('discovered_interpreter_') or key.startswith('ansible_discovered_interpreter_'):
-            del data['ansible_facts'][key]
+    for key in list(data.get("ansible_facts", {}).keys()):
+        if key.startswith("discovered_interpreter_") or key.startswith(
+            "ansible_discovered_interpreter_"
+        ):
+            del data["ansible_facts"][key]
 
 
 def clean_facts(facts):
-    ''' remove facts that can override internal keys or otherwise deemed unsafe '''
+    """remove facts that can override internal keys or otherwise deemed unsafe"""
     data = module_response_deepcopy(facts)
 
     remove_keys = set()
@@ -131,10 +138,13 @@ def clean_facts(facts):
     # next we remove any connection plugin specific vars
     for conn_path in connection_loader.all(path_only=True):
         conn_name = os.path.splitext(os.path.basename(conn_path))[0]
-        re_key = re.compile('^ansible_%s_' % re.escape(conn_name))
+        re_key = re.compile("^ansible_%s_" % re.escape(conn_name))
         for fact_key in fact_keys:
             # most lightweight VM or container tech creates devices with this pattern, this avoids filtering them out
-            if (re_key.match(fact_key) and not fact_key.endswith(('_bridge', '_gwbridge'))) or fact_key.startswith('ansible_become_'):
+            if (
+                re_key.match(fact_key)
+                and not fact_key.endswith(("_bridge", "_gwbridge"))
+            ) or fact_key.startswith("ansible_become_"):
                 remove_keys.add(fact_key)
 
     # remove some KNOWN keys
@@ -143,13 +153,13 @@ def clean_facts(facts):
             remove_keys.add(hard)
 
     # finally, we search for interpreter keys to remove
-    re_interp = re.compile('^ansible_.*_interpreter$')
+    re_interp = re.compile("^ansible_.*_interpreter$")
     for fact_key in fact_keys:
         if re_interp.match(fact_key):
             remove_keys.add(fact_key)
     # then we remove them (except for ssh host keys)
     for r_key in remove_keys:
-        if not r_key.startswith('ansible_ssh_host_key_'):
+        if not r_key.startswith("ansible_ssh_host_key_"):
             display.warning("Removed restricted key from module data: %s" % (r_key))
             del data[r_key]
 
@@ -157,12 +167,12 @@ def clean_facts(facts):
 
 
 def namespace_facts(facts):
-    ''' return all facts inside 'ansible_facts' w/o an ansible_ prefix '''
+    """return all facts inside 'ansible_facts' w/o an ansible_ prefix"""
     deprefixed = {}
     for k in facts:
-        if k.startswith('ansible_') and k not in ('ansible_local',):
+        if k.startswith("ansible_") and k not in ("ansible_local",):
             deprefixed[k[8:]] = module_response_deepcopy(facts[k])
         else:
             deprefixed[k] = module_response_deepcopy(facts[k])
 
-    return {'ansible_facts': deprefixed}
+    return {"ansible_facts": deprefixed}

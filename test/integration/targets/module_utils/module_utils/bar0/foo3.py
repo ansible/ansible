@@ -1,1 +1,1 @@
-data = 'bar0'
+data = "bar0"

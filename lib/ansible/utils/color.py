@@ -24,13 +24,14 @@ from ansible import constants as C
 ANSIBLE_COLOR = True
 if C.ANSIBLE_NOCOLOR:
     ANSIBLE_COLOR = False
-elif not hasattr(sys.stdout, 'isatty') or not sys.stdout.isatty():
+elif not hasattr(sys.stdout, "isatty") or not sys.stdout.isatty():
     ANSIBLE_COLOR = False
 else:
     try:
         import curses
+
         curses.setupterm()
-        if curses.tigetnum('colors') < 0:
+        if curses.tigetnum("colors") < 0:
             ANSIBLE_COLOR = False
     except ImportError:
         # curses library was not found
@@ -54,19 +55,25 @@ if C.ANSIBLE_FORCE_COLOR:
 
 def parsecolor(color):
     """SGR parameter string for the specified color name."""
-    matches = re.match(r"color(?P<color>[0-9]+)"
-                       r"|(?P<rgb>rgb(?P<red>[0-5])(?P<green>[0-5])(?P<blue>[0-5]))"
-                       r"|gray(?P<gray>[0-9]+)", color)
+    matches = re.match(
+        r"color(?P<color>[0-9]+)"
+        r"|(?P<rgb>rgb(?P<red>[0-5])(?P<green>[0-5])(?P<blue>[0-5]))"
+        r"|gray(?P<gray>[0-9]+)",
+        color,
+    )
     if not matches:
         return C.COLOR_CODES[color]
-    if matches.group('color'):
-        return u'38;5;%d' % int(matches.group('color'))
-    if matches.group('rgb'):
-        return u'38;5;%d' % (16 + 36 * int(matches.group('red')) +
-                             6 * int(matches.group('green')) +
-                             int(matches.group('blue')))
-    if matches.group('gray'):
-        return u'38;5;%d' % (232 + int(matches.group('gray')))
+    if matches.group("color"):
+        return "38;5;%d" % int(matches.group("color"))
+    if matches.group("rgb"):
+        return "38;5;%d" % (
+            16
+            + 36 * int(matches.group("red"))
+            + 6 * int(matches.group("green"))
+            + int(matches.group("blue"))
+        )
+    if matches.group("gray"):
+        return "38;5;%d" % (232 + int(matches.group("gray")))
 
 
 def stringc(text, color, wrap_nonvisible_chars=False):
@@ -74,7 +81,7 @@ def stringc(text, color, wrap_nonvisible_chars=False):
 
     if ANSIBLE_COLOR:
         color_code = parsecolor(color)
-        fmt = u"\033[%sm%s\033[0m"
+        fmt = "\033[%sm%s\033[0m"
         if wrap_nonvisible_chars:
             # This option is provided for use in cases when the
             # formatting of a command line prompt is needed, such as
@@ -86,15 +93,15 @@ def stringc(text, color, wrap_nonvisible_chars=False):
             #    all characters except \001 and \002 (following a \001) are copied to
             #    the returned string; all characters except those between \001 and
             #    \002 are assumed to be `visible'. */
-            fmt = u"\001\033[%sm\002%s\001\033[0m\002"
-        return u"\n".join([fmt % (color_code, t) for t in text.split(u'\n')])
+            fmt = "\001\033[%sm\002%s\001\033[0m\002"
+        return "\n".join([fmt % (color_code, t) for t in text.split("\n")])
     else:
         return text
 
 
 def colorize(lead, num, color):
-    """ Print 'lead' = 'num' in 'color' """
-    s = u"%s=%-4s" % (lead, str(num))
+    """Print 'lead' = 'num' in 'color'"""
+    s = "%s=%-4s" % (lead, str(num))
     if num != 0 and ANSIBLE_COLOR and color is not None:
         s = stringc(s, color)
     return s
@@ -102,10 +109,10 @@ def colorize(lead, num, color):
 
 def hostcolor(host, stats, color=True):
     if ANSIBLE_COLOR and color:
-        if stats['failures'] != 0 or stats['unreachable'] != 0:
-            return u"%-37s" % stringc(host, C.COLOR_ERROR)
-        elif stats['changed'] != 0:
-            return u"%-37s" % stringc(host, C.COLOR_CHANGED)
+        if stats["failures"] != 0 or stats["unreachable"] != 0:
+            return "%-37s" % stringc(host, C.COLOR_ERROR)
+        elif stats["changed"] != 0:
+            return "%-37s" % stringc(host, C.COLOR_CHANGED)
         else:
-            return u"%-37s" % stringc(host, C.COLOR_OK)
-    return u"%-26s" % host
+            return "%-37s" % stringc(host, C.COLOR_OK)
+    return "%-26s" % host

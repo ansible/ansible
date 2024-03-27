@@ -18,13 +18,15 @@ class ActionModule(ActionBase):
         def patched_exec_command(*args, **kwargs):
             rc, stdout, stderr = exec_command(*args, **kwargs)
 
-            new_stdout = json.dumps({
-                "rc": rc,
-                "stdout": stdout.decode(),
-                "stderr": stderr.decode(),
-                "failed": False,
-                "changed": False,
-            }).encode()
+            new_stdout = json.dumps(
+                {
+                    "rc": rc,
+                    "stdout": stdout.decode(),
+                    "stderr": stderr.decode(),
+                    "failed": False,
+                    "changed": False,
+                }
+            ).encode()
 
             return (0, new_stdout, b"")
 

@@ -1,4 +1,5 @@
 """Common utility code that depends on CommonConfig."""
+
 from __future__ import annotations
 
 import collections.abc as c
@@ -65,6 +66,7 @@ CHECK_YAML_VERSIONS: dict[str, t.Any] = {}
 
 class ExitHandler:
     """Simple exit handler implementation."""
+
     _callbacks: list[tuple[t.Callable, tuple[t.Any, ...], dict[str, t.Any]]] = []
 
     @staticmethod
@@ -90,7 +92,7 @@ class ExitHandler:
                     func(*args, **kwargs)
                 except BaseException as ex:  # pylint: disable=broad-exception-caught
                     last_exception = ex
-                    display.fatal(f'Exit handler failed: {ex}')
+                    display.fatal(f"Exit handler failed: {ex}")
 
             if last_exception:
                 raise last_exception
@@ -105,15 +107,15 @@ class ShellScriptTemplate:
     def substitute(self, **kwargs: t.Union[str, list[str]]) -> str:
         """Return a string templated with the given arguments."""
         kvp = dict((k, self.quote(v)) for k, v in kwargs.items())
-        pattern = re.compile(r'#{(?P<name>[^}]+)}')
-        value = pattern.sub(lambda match: kvp[match.group('name')], self.template)
+        pattern = re.compile(r"#{(?P<name>[^}]+)}")
+        value = pattern.sub(lambda match: kvp[match.group("name")], self.template)
         return value
 
     @staticmethod
     def quote(value: t.Union[str, list[str]]) -> str:
         """Return a shell quoted version of the given value."""
         if isinstance(value, list):
-            return shlex.quote(' '.join(value))
+            return shlex.quote(" ".join(value))
 
         return shlex.quote(value)
 
@@ -131,13 +133,13 @@ class ResultType:
 
     @staticmethod
     def _populate() -> None:
-        ResultType.BOT = ResultType('bot')
-        ResultType.COVERAGE = ResultType('coverage')
-        ResultType.DATA = ResultType('data')
-        ResultType.JUNIT = ResultType('junit')
-        ResultType.LOGS = ResultType('logs')
-        ResultType.REPORTS = ResultType('reports')
-        ResultType.TMP = ResultType('.tmp')
+        ResultType.BOT = ResultType("bot")
+        ResultType.COVERAGE = ResultType("coverage")
+        ResultType.DATA = ResultType("data")
+        ResultType.JUNIT = ResultType("junit")
+        ResultType.LOGS = ResultType("logs")
+        ResultType.REPORTS = ResultType("reports")
+        ResultType.TMP = ResultType(".tmp")
 
     def __init__(self, name: str) -> None:
         self.name = name
@@ -184,7 +186,7 @@ class CommonConfig:
 
     def get_ansible_config(self) -> str:
         """Return the path to the Ansible config for the given config."""
-        return os.path.join(ANSIBLE_TEST_DATA_ROOT, 'ansible.cfg')
+        return os.path.join(ANSIBLE_TEST_DATA_ROOT, "ansible.cfg")
 
 
 def get_docs_url(url: str) -> str:
@@ -196,16 +198,16 @@ def get_docs_url(url: str) -> str:
     This serves to provide a fallback URL for pre-release versions.
     It also makes searching the source for docs links easier, since a full URL is provided to this function.
     """
-    url_prefix = 'https://docs.ansible.com/ansible-core/devel/'
+    url_prefix = "https://docs.ansible.com/ansible-core/devel/"
 
     if not url.startswith(url_prefix):
         raise ValueError(f'URL "{url}" does not start with: {url_prefix}')
 
     ansible_version = get_ansible_version()
 
-    if re.search(r'^[0-9.]+$', ansible_version):
-        url_version = '.'.join(ansible_version.split('.')[:2])
-        new_prefix = f'https://docs.ansible.com/ansible-core/{url_version}/'
+    if re.search(r"^[0-9.]+$", ansible_version):
+        url_version = ".".join(ansible_version.split(".")[:2])
+        new_prefix = f"https://docs.ansible.com/ansible-core/{url_version}/"
 
         url = url.replace(url_prefix, new_prefix)
 
@@ -233,13 +235,20 @@ def handle_layout_messages(messages: t.Optional[LayoutMessages]) -> None:
         display.warning(message)
 
     if messages.error:
-        raise ApplicationError('\n'.join(messages.error))
+        raise ApplicationError("\n".join(messages.error))
 
 
-def process_scoped_temporary_file(args: CommonConfig, prefix: t.Optional[str] = 'ansible-test-', suffix: t.Optional[str] = None) -> str:
+def process_scoped_temporary_file(
+    args: CommonConfig,
+    prefix: t.Optional[str] = "ansible-test-",
+    suffix: t.Optional[str] = None,
+) -> str:
     """Return the path to a temporary file that will be automatically removed when the process exits."""
     if args.explain:
-        path = os.path.join(tempfile.gettempdir(), f'{prefix or tempfile.gettempprefix()}{generate_name()}{suffix or ""}')
+        path = os.path.join(
+            tempfile.gettempdir(),
+            f'{prefix or tempfile.gettempprefix()}{generate_name()}{suffix or ""}',
+        )
     else:
         temp_fd, path = tempfile.mkstemp(prefix=prefix, suffix=suffix)
         os.close(temp_fd)
@@ -248,10 +257,17 @@ def process_scoped_temporary_file(args: CommonConfig, prefix: t.Optional[str] = 
     return path
 
 
-def process_scoped_temporary_directory(args: CommonConfig, prefix: t.Optional[str] = 'ansible-test-', suffix: t.Optional[str] = None) -> str:
+def process_scoped_temporary_directory(
+    args: CommonConfig,
+    prefix: t.Optional[str] = "ansible-test-",
+    suffix: t.Optional[str] = None,
+) -> str:
     """Return the path to a temporary directory that will be automatically removed when the process exits."""
     if args.explain:
-        path = os.path.join(tempfile.gettempdir(), f'{prefix or tempfile.gettempprefix()}{generate_name()}{suffix or ""}')
+        path = os.path.join(
+            tempfile.gettempdir(),
+            f'{prefix or tempfile.gettempprefix()}{generate_name()}{suffix or ""}',
+        )
     else:
         path = tempfile.mkdtemp(prefix=prefix, suffix=suffix)
         ExitHandler.register(lambda: remove_tree(path))
@@ -260,12 +276,20 @@ def process_scoped_temporary_directory(args: CommonConfig, prefix: t.Optional[st
 
 
 @contextlib.contextmanager
-def named_temporary_file(args: CommonConfig, prefix: str, suffix: str, directory: t.Optional[str], content: str) -> c.Iterator[str]:
+def named_temporary_file(
+    args: CommonConfig,
+    prefix: str,
+    suffix: str,
+    directory: t.Optional[str],
+    content: str,
+) -> c.Iterator[str]:
     """Context manager for a named temporary file."""
     if args.explain:
-        yield os.path.join(directory or '/tmp', '%stemp%s' % (prefix, suffix))
+        yield os.path.join(directory or "/tmp", "%stemp%s" % (prefix, suffix))
     else:
-        with tempfile.NamedTemporaryFile(prefix=prefix, suffix=suffix, dir=directory) as tempfile_fd:
+        with tempfile.NamedTemporaryFile(
+            prefix=prefix, suffix=suffix, dir=directory
+        ) as tempfile_fd:
             tempfile_fd.write(to_bytes(content))
             tempfile_fd.flush()
 
@@ -281,7 +305,9 @@ def write_json_test_results(
 ) -> None:
     """Write the given json content to the specified test results path, creating directories as needed."""
     path = os.path.join(category.path, name)
-    write_json_file(path, content, create_directories=True, formatted=formatted, encoder=encoder)
+    write_json_file(
+        path, content, create_directories=True, formatted=formatted, encoder=encoder
+    )
 
 
 def write_text_test_results(category: ResultType, name: str, content: str) -> None:
@@ -293,24 +319,32 @@ def write_text_test_results(category: ResultType, name: str, content: str) -> No
 @cache
 def get_injector_path() -> str:
     """Return the path to a directory which contains a `python.py` executable and associated injector scripts."""
-    injector_path = tempfile.mkdtemp(prefix='ansible-test-', suffix='-injector', dir='/tmp')
-
-    display.info(f'Initializing "{injector_path}" as the temporary injector directory.', verbosity=1)
-
-    injector_names = sorted(list(ANSIBLE_BIN_SYMLINK_MAP) + [
-        'importer.py',
-        'pytest',
-    ])
-
-    scripts = (
-        ('python.py', '/usr/bin/env python', MODE_FILE_EXECUTE),
-        ('virtualenv.sh', '/usr/bin/env bash', MODE_FILE),
+    injector_path = tempfile.mkdtemp(
+        prefix="ansible-test-", suffix="-injector", dir="/tmp"
     )
 
-    source_path = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'injector')
+    display.info(
+        f'Initializing "{injector_path}" as the temporary injector directory.',
+        verbosity=1,
+    )
+
+    injector_names = sorted(
+        list(ANSIBLE_BIN_SYMLINK_MAP)
+        + [
+            "importer.py",
+            "pytest",
+        ]
+    )
+
+    scripts = (
+        ("python.py", "/usr/bin/env python", MODE_FILE_EXECUTE),
+        ("virtualenv.sh", "/usr/bin/env bash", MODE_FILE),
+    )
+
+    source_path = os.path.join(ANSIBLE_TEST_TARGET_ROOT, "injector")
 
     for name in injector_names:
-        os.symlink('python.py', os.path.join(injector_path, name))
+        os.symlink("python.py", os.path.join(injector_path, name))
 
     for name, shebang, mode in scripts:
         src = os.path.join(source_path, name)
@@ -335,13 +369,13 @@ def get_injector_path() -> str:
 
 def set_shebang(script: str, executable: str) -> str:
     """Return the given script with the specified executable used for the shebang."""
-    prefix = '#!'
+    prefix = "#!"
     shebang = prefix + executable
 
     overwrite = (
         prefix,
-        '# auto-shebang',
-        '# shellcheck shell=',
+        "# auto-shebang",
+        "# shellcheck shell=",
     )
 
     lines = script.splitlines()
@@ -351,7 +385,7 @@ def set_shebang(script: str, executable: str) -> str:
     else:
         lines.insert(0, shebang)
 
-    script = '\n'.join(lines)
+    script = "\n".join(lines)
 
     return script
 
@@ -363,13 +397,13 @@ def get_python_path(interpreter: str) -> str:
     if python_path:
         return python_path
 
-    prefix = 'python-'
-    suffix = '-ansible'
+    prefix = "python-"
+    suffix = "-ansible"
 
-    root_temp_dir = '/tmp'
+    root_temp_dir = "/tmp"
 
     python_path = tempfile.mkdtemp(prefix=prefix, suffix=suffix, dir=root_temp_dir)
-    injected_interpreter = os.path.join(python_path, 'python')
+    injected_interpreter = os.path.join(python_path, "python")
 
     # A symlink is faster than the execv wrapper, but isn't guaranteed to provide the correct result.
     # There are several scenarios known not to work with symlinks:
@@ -379,7 +413,11 @@ def get_python_path(interpreter: str) -> str:
     #
     # To avoid issues for these and other scenarios, only an exec wrapper is used.
 
-    display.info('Injecting "%s" as a execv wrapper for the "%s" interpreter.' % (injected_interpreter, interpreter), verbosity=1)
+    display.info(
+        'Injecting "%s" as a execv wrapper for the "%s" interpreter.'
+        % (injected_interpreter, interpreter),
+        verbosity=1,
+    )
 
     create_interpreter_wrapper(interpreter, injected_interpreter)
 
@@ -393,9 +431,15 @@ def get_python_path(interpreter: str) -> str:
     return python_path
 
 
-def create_temp_dir(prefix: t.Optional[str] = None, suffix: t.Optional[str] = None, base_dir: t.Optional[str] = None) -> str:
+def create_temp_dir(
+    prefix: t.Optional[str] = None,
+    suffix: t.Optional[str] = None,
+    base_dir: t.Optional[str] = None,
+) -> str:
     """Create a temporary directory that persists until the current process exits."""
-    temp_path = tempfile.mkdtemp(prefix=prefix or 'tmp', suffix=suffix or '', dir=base_dir)
+    temp_path = tempfile.mkdtemp(
+        prefix=prefix or "tmp", suffix=suffix or "", dir=base_dir
+    )
     ExitHandler.register(remove_tree, temp_path)
     return temp_path
 
@@ -406,7 +450,8 @@ def create_interpreter_wrapper(interpreter: str, injected_interpreter: str) -> N
     # injected_interpreter could be a script from the system or our own wrapper created for the --venv option
     shebang_interpreter = sys.executable
 
-    code = textwrap.dedent('''
+    code = textwrap.dedent(
+        """
     #!%s
 
     from __future__ import annotations
@@ -417,7 +462,9 @@ def create_interpreter_wrapper(interpreter: str, injected_interpreter: str) -> N
     python = '%s'
 
     execv(python, [python] + argv[1:])
-    ''' % (shebang_interpreter, interpreter)).lstrip()
+    """
+        % (shebang_interpreter, interpreter)
+    ).lstrip()
 
     write_text_file(injected_interpreter, code)
 
@@ -427,7 +474,7 @@ def create_interpreter_wrapper(interpreter: str, injected_interpreter: str) -> N
 def cleanup_python_paths() -> None:
     """Clean up all temporary python directories."""
     for path in sorted(PYTHON_PATHS.values()):
-        display.info('Cleaning up temporary python directory: %s' % path, verbosity=2)
+        display.info("Cleaning up temporary python directory: %s" % path, verbosity=2)
         remove_tree(path)
 
 
@@ -456,11 +503,13 @@ def intercept_python(
     else:
         python_path = get_python_path(python.path)
 
-    env['PATH'] = os.path.pathsep.join([inject_path, python_path, env['PATH']])
-    env['ANSIBLE_TEST_PYTHON_VERSION'] = python.version
-    env['ANSIBLE_TEST_PYTHON_INTERPRETER'] = python.path
+    env["PATH"] = os.path.pathsep.join([inject_path, python_path, env["PATH"]])
+    env["ANSIBLE_TEST_PYTHON_VERSION"] = python.version
+    env["ANSIBLE_TEST_PYTHON_INTERPRETER"] = python.path
 
-    return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd, always=always)
+    return run_command(
+        args, cmd, capture=capture, env=env, data=data, cwd=cwd, always=always
+    )
 
 
 def run_command(
@@ -476,7 +525,7 @@ def run_command(
     interactive: bool = False,
     output_stream: t.Optional[OutputStream] = None,
     cmd_verbosity: int = 1,
-    str_errors: str = 'strict',
+    str_errors: str = "strict",
     error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified command and return stdout and stderr as a tuple."""
@@ -500,20 +549,26 @@ def run_command(
 
 def yamlcheck(python: PythonConfig, explain: bool = False) -> t.Optional[bool]:
     """Return True if PyYAML has libyaml support, False if it does not and None if it was not found."""
-    stdout = raw_command([python.path, os.path.join(ANSIBLE_TEST_TARGET_TOOLS_ROOT, 'yamlcheck.py')], capture=True, explain=explain)[0]
+    stdout = raw_command(
+        [python.path, os.path.join(ANSIBLE_TEST_TARGET_TOOLS_ROOT, "yamlcheck.py")],
+        capture=True,
+        explain=explain,
+    )[0]
 
     if explain:
         return None
 
     result = json.loads(stdout)
 
-    if not result['yaml']:
+    if not result["yaml"]:
         return None
 
-    return result['cloader']
+    return result["cloader"]
 
 
-def check_pyyaml(python: PythonConfig, required: bool = True, quiet: bool = False) -> t.Optional[bool]:
+def check_pyyaml(
+    python: PythonConfig, required: bool = True, quiet: bool = False
+) -> t.Optional[bool]:
     """
     Return True if PyYAML has libyaml support, False if it does not and None if it was not found.
     The result is cached if True or required.
@@ -533,8 +588,13 @@ def check_pyyaml(python: PythonConfig, required: bool = True, quiet: bool = Fals
     if not quiet:
         if state is None:
             if required:
-                display.warning('PyYAML is not installed for interpreter: %s' % python.path)
+                display.warning(
+                    "PyYAML is not installed for interpreter: %s" % python.path
+                )
         elif not state:
-            display.warning('PyYAML will be slow due to installation without libyaml support for interpreter: %s' % python.path)
+            display.warning(
+                "PyYAML will be slow due to installation without libyaml support for interpreter: %s"
+                % python.path
+            )
 
     return state

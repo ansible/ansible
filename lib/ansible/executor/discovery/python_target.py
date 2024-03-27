@@ -12,10 +12,10 @@ import io
 import os
 
 
-def read_utf8_file(path, encoding='utf-8'):
+def read_utf8_file(path, encoding="utf-8"):
     if not os.access(path, os.R_OK):
         return None
-    with io.open(path, 'r', encoding=encoding) as fd:
+    with io.open(path, "r", encoding=encoding) as fd:
         content = fd.read()
 
     return content
@@ -24,15 +24,15 @@ def read_utf8_file(path, encoding='utf-8'):
 def get_platform_info():
     result = dict(platform_dist_result=[])
 
-    if hasattr(platform, 'dist'):
-        result['platform_dist_result'] = platform.dist()
+    if hasattr(platform, "dist"):
+        result["platform_dist_result"] = platform.dist()
 
-    osrelease_content = read_utf8_file('/etc/os-release')
+    osrelease_content = read_utf8_file("/etc/os-release")
     # try to fall back to /usr/lib/os-release
     if not osrelease_content:
-        osrelease_content = read_utf8_file('/usr/lib/os-release')
+        osrelease_content = read_utf8_file("/usr/lib/os-release")
 
-    result['osrelease_content'] = osrelease_content
+    result["osrelease_content"] = osrelease_content
 
     return result
 
@@ -43,5 +43,5 @@ def main():
     print(json.dumps(info))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

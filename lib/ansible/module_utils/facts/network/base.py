@@ -30,7 +30,8 @@ class Network:
 
     All subclasses MUST define platform.
     """
-    platform = 'Generic'
+
+    platform = "Generic"
 
     # FIXME: remove load_on_init when we can
     def __init__(self, module, load_on_init=False):
@@ -43,20 +44,26 @@ class Network:
 
 class NetworkCollector(BaseFactCollector):
     # MAYBE: we could try to build this based on the arch specific implementation of Network() or its kin
-    name = 'network'
+    name = "network"
     _fact_class = Network
-    _fact_ids = set(['interfaces',
-                     'default_ipv4',
-                     'default_ipv6',
-                     'all_ipv4_addresses',
-                     'all_ipv6_addresses'])  # type: t.Set[str]
+    _fact_ids = set(
+        [
+            "interfaces",
+            "default_ipv4",
+            "default_ipv6",
+            "all_ipv4_addresses",
+            "all_ipv6_addresses",
+        ]
+    )  # type: t.Set[str]
 
-    IPV6_SCOPE = {'0': 'global',
-                  '10': 'host',
-                  '20': 'link',
-                  '40': 'admin',
-                  '50': 'site',
-                  '80': 'organization'}
+    IPV6_SCOPE = {
+        "0": "global",
+        "10": "host",
+        "20": "link",
+        "40": "admin",
+        "50": "site",
+        "80": "organization",
+    }
 
     def collect(self, module=None, collected_facts=None):
         collected_facts = collected_facts or {}

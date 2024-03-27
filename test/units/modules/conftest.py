@@ -12,10 +12,10 @@ from ansible.module_utils.common.text.converters import to_bytes
 
 @pytest.fixture
 def patch_ansible_module(request, mocker):
-    request.param = {'ANSIBLE_MODULE_ARGS': request.param}
-    request.param['ANSIBLE_MODULE_ARGS']['_ansible_remote_tmp'] = '/tmp'
-    request.param['ANSIBLE_MODULE_ARGS']['_ansible_keep_remote_files'] = False
+    request.param = {"ANSIBLE_MODULE_ARGS": request.param}
+    request.param["ANSIBLE_MODULE_ARGS"]["_ansible_remote_tmp"] = "/tmp"
+    request.param["ANSIBLE_MODULE_ARGS"]["_ansible_keep_remote_files"] = False
 
     args = json.dumps(request.param)
 
-    mocker.patch('ansible.module_utils.basic._ANSIBLE_ARGS', to_bytes(args))
+    mocker.patch("ansible.module_utils.basic._ANSIBLE_ARGS", to_bytes(args))

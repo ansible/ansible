@@ -27,7 +27,7 @@ from ansible.module_utils.facts.network.base import NetworkCollector
 
 
 class IscsiInitiatorNetworkCollector(NetworkCollector):
-    name = 'iscsi'
+    name = "iscsi"
     _fact_ids = set()  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
@@ -71,38 +71,40 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
         """
 
         iscsi_facts = {}
-        iscsi_facts['iscsi_iqn'] = ""
-        if sys.platform.startswith('linux') or sys.platform.startswith('sunos'):
-            for line in get_file_content('/etc/iscsi/initiatorname.iscsi', '').splitlines():
-                if line.startswith('#') or line.startswith(';') or line.strip() == '':
+        iscsi_facts["iscsi_iqn"] = ""
+        if sys.platform.startswith("linux") or sys.platform.startswith("sunos"):
+            for line in get_file_content(
+                "/etc/iscsi/initiatorname.iscsi", ""
+            ).splitlines():
+                if line.startswith("#") or line.startswith(";") or line.strip() == "":
                     continue
-                if line.startswith('InitiatorName='):
-                    iscsi_facts['iscsi_iqn'] = line.split('=', 1)[1]
+                if line.startswith("InitiatorName="):
+                    iscsi_facts["iscsi_iqn"] = line.split("=", 1)[1]
                     break
-        elif sys.platform.startswith('aix'):
+        elif sys.platform.startswith("aix"):
             try:
-                cmd = get_bin_path('lsattr')
+                cmd = get_bin_path("lsattr")
             except ValueError:
                 return iscsi_facts
 
             cmd += " -E -l iscsi0"
             rc, out, err = module.run_command(cmd)
             if rc == 0 and out:
-                line = self.findstr(out, 'initiator_name')
-                iscsi_facts['iscsi_iqn'] = line.split()[1].rstrip()
+                line = self.findstr(out, "initiator_name")
+                iscsi_facts["iscsi_iqn"] = line.split()[1].rstrip()
 
-        elif sys.platform.startswith('hp-ux'):
+        elif sys.platform.startswith("hp-ux"):
             # try to find it in the default PATH and opt_dirs
             try:
-                cmd = get_bin_path('iscsiutil', opt_dirs=['/opt/iscsi/bin'])
+                cmd = get_bin_path("iscsiutil", opt_dirs=["/opt/iscsi/bin"])
             except ValueError:
                 return iscsi_facts
 
             cmd += " -l"
             rc, out, err = module.run_command(cmd)
             if out:
-                line = self.findstr(out, 'Initiator Name')
-                iscsi_facts['iscsi_iqn'] = line.split(":", 1)[1].rstrip()
+                line = self.findstr(out, "Initiator Name")
+                iscsi_facts["iscsi_iqn"] = line.split(":", 1)[1].rstrip()
 
         return iscsi_facts
 

@@ -11,7 +11,9 @@ PARAMIKO_IMPORT_ERR = None
 
 try:
     with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', message='Blowfish has been deprecated', category=UserWarning)
+        warnings.filterwarnings(
+            "ignore", message="Blowfish has been deprecated", category=UserWarning
+        )
         import paramiko  # pylint: disable=unused-import
 # paramiko and gssapi are incompatible and raise AttributeError not ImportError
 # When running in FIPS mode, cryptography raises InternalError

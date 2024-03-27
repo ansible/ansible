@@ -1,4 +1,5 @@
 """Bootstrapping for test hosts."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -34,14 +35,16 @@ class Bootstrap:
     @property
     def bootstrap_type(self) -> str:
         """The bootstrap type to pass to the bootstrapping script."""
-        return self.__class__.__name__.replace('Bootstrap', '').lower()
+        return self.__class__.__name__.replace("Bootstrap", "").lower()
 
     def get_variables(self) -> dict[str, t.Union[str, list[str]]]:
         """The variables to template in the bootstrapping script."""
         return dict(
             bootstrap_type=self.bootstrap_type,
-            controller='yes' if self.controller else '',
-            python_interpreters=[f'{key}:{value}' for key, value in self.python_interpreters.items()],
+            controller="yes" if self.controller else "",
+            python_interpreters=[
+                f"{key}:{value}" for key, value in self.python_interpreters.items()
+            ],
             ssh_key_type=self.ssh_key.KEY_TYPE,
             ssh_private_key=self.ssh_key.key_contents,
             ssh_public_key=self.ssh_key.pub_contents,
@@ -49,10 +52,10 @@ class Bootstrap:
 
     def get_script(self) -> str:
         """Return a shell script to bootstrap the specified host."""
-        path = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'bootstrap.sh')
+        path = os.path.join(ANSIBLE_TEST_TARGET_ROOT, "setup", "bootstrap.sh")
 
         content = read_text_file(path)
-        content = set_shebang(content, '/bin/sh')
+        content = set_shebang(content, "/bin/sh")
 
         template = ShellScriptTemplate(content)
 
@@ -72,8 +75,8 @@ class BootstrapDocker(Bootstrap):
         variables = super().get_variables()
 
         variables.update(
-            platform='',
-            platform_version='',
+            platform="",
+            platform_version="",
         )
 
         return variables

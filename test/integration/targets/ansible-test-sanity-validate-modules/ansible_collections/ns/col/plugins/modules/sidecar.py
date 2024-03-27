@@ -5,8 +5,10 @@ from __future__ import annotations
 from ansible.module_utils.basic import AnsibleModule
 
 
-if __name__ == '__main__':
-    module = AnsibleModule(argument_spec=dict(
-        test=dict(type='str', choices=['foo', 'bar'], default='foo'),
-    ))
-    module.exit_json(test='foo')
+if __name__ == "__main__":
+    module = AnsibleModule(
+        argument_spec=dict(
+            test=dict(type="str", choices=["foo", "bar"], default="foo"),
+        )
+    )
+    module.exit_json(test="foo")

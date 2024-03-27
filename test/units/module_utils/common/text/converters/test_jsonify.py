@@ -10,16 +10,16 @@ from ansible.module_utils.common.text.converters import jsonify
 
 
 @pytest.mark.parametrize(
-    'test_input,expected',
+    "test_input,expected",
     [
-        (1, '1'),
-        (u'string', u'"string"'),
-        (u'くらとみ', u'"\\u304f\\u3089\\u3068\\u307f"'),
-        (u'café', u'"caf\\u00e9"'),
-        (b'string', u'"string"'),
-        (False, u'false'),
-        (u'string'.encode('utf-8'), u'"string"'),
-    ]
+        (1, "1"),
+        ("string", '"string"'),
+        ("くらとみ", '"\\u304f\\u3089\\u3068\\u307f"'),
+        ("café", '"caf\\u00e9"'),
+        (b"string", '"string"'),
+        (False, "false"),
+        ("string".encode("utf-8"), '"string"'),
+    ],
 )
 def test_jsonify(test_input, expected):
     """Test for jsonify()."""

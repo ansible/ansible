@@ -25,14 +25,14 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 
 
 class FipsFactCollector(BaseFactCollector):
-    name = 'fips'
+    name = "fips"
     _fact_ids = set()  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         # NOTE: this is populated even if it is not set
         fips_facts = {}
-        fips_facts['fips'] = False
-        data = get_file_content('/proc/sys/crypto/fips_enabled')
-        if data and data == '1':
-            fips_facts['fips'] = True
+        fips_facts["fips"] = False
+        data = get_file_content("/proc/sys/crypto/fips_enabled")
+        if data and data == "1":
+            fips_facts["fips"] = True
         return fips_facts

@@ -19,12 +19,14 @@ except ImportError:
 
 def main():
     module = AnsibleModule(argument_spec={})
-    module.exit_json(**dict(
-        found=bool(paramiko or ansible_paramiko),
-        paramiko=bool(paramiko),
-        ansible_paramiko=bool(ansible_paramiko),
-    ))
+    module.exit_json(
+        **dict(
+            found=bool(paramiko or ansible_paramiko),
+            paramiko=bool(paramiko),
+            ansible_paramiko=bool(ansible_paramiko),
+        )
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -12,25 +12,22 @@ from ansible.module_utils.common.validation import check_required_together
 
 @pytest.fixture
 def together_terms():
-    return [
-        ['bananas', 'potatoes'],
-        ['cats', 'wolves']
-    ]
+    return [["bananas", "potatoes"], ["cats", "wolves"]]
 
 
 def test_check_required_together(together_terms):
     params = {
-        'bananas': 'hello',
-        'potatoes': 'this is here too',
-        'dogs': 'haha',
+        "bananas": "hello",
+        "potatoes": "this is here too",
+        "dogs": "haha",
     }
     assert check_required_together(together_terms, params) == []
 
 
 def test_check_required_together_missing(together_terms):
     params = {
-        'bananas': 'woohoo',
-        'wolves': 'uh oh',
+        "bananas": "woohoo",
+        "wolves": "uh oh",
     }
     expected = "parameters are required together: bananas, potatoes"
 
@@ -43,8 +40,8 @@ def test_check_required_together_missing(together_terms):
 def test_check_required_together_missing_none():
     terms = None
     params = {
-        'foo': 'bar',
-        'baz': 'buzz',
+        "foo": "bar",
+        "baz": "buzz",
     }
     assert check_required_together(terms, params) == []
 

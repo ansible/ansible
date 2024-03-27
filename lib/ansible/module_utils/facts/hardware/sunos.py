@@ -31,7 +31,8 @@ class SunOSHardware(Hardware):
     In addition to the generic memory and cpu facts, this also sets
     swap_reserved_mb and swap_allocated_mb that is available from *swap -s*.
     """
-    platform = 'SunOS'
+
+    platform = "SunOS"
 
     def populate(self, collected_facts=None):
         hardware_facts = {}
@@ -40,7 +41,11 @@ class SunOSHardware(Hardware):
         #        of the parent process instead of altering an env provided to Popen()
         # Use C locale for hardware collection helpers to avoid locale specific number formatting (#24542)
         locale = get_best_parsable_locale(self.module)
-        self.module.run_command_environ_update = {'LANG': locale, 'LC_ALL': locale, 'LC_NUMERIC': locale}
+        self.module.run_command_environ_update = {
+            "LANG": locale,
+            "LC_ALL": locale,
+            "LC_NUMERIC": locale,
+        }
 
         cpu_facts = self.get_cpu_facts()
         memory_facts = self.get_memory_facts()
@@ -72,7 +77,7 @@ class SunOSHardware(Hardware):
 
         rc, out, err = self.module.run_command("/usr/bin/kstat cpu_info")
 
-        cpu_facts['processor'] = []
+        cpu_facts["processor"] = []
 
         for line in out.splitlines():
             if len(line) < 1:
@@ -82,22 +87,22 @@ class SunOSHardware(Hardware):
             key = data[0].strip()
 
             # "brand" works on Solaris 10 & 11. "implementation" for Solaris 9.
-            if key == 'module:':
-                brand = ''
-            elif key == 'brand':
+            if key == "module:":
+                brand = ""
+            elif key == "brand":
                 brand = data[1].strip()
-            elif key == 'clock_MHz':
+            elif key == "clock_MHz":
                 clock_mhz = data[1].strip()
-            elif key == 'implementation':
+            elif key == "implementation":
                 processor = brand or data[1].strip()
                 # Add clock speed to description for SPARC CPU
                 # FIXME
-                if collected_facts.get('ansible_machine') != 'i86pc':
+                if collected_facts.get("ansible_machine") != "i86pc":
                     processor += " @ " + clock_mhz + "MHz"
-                if 'ansible_processor' not in collected_facts:
-                    cpu_facts['processor'] = []
-                cpu_facts['processor'].append(processor)
-            elif key == 'chip_id':
+                if "ansible_processor" not in collected_facts:
+                    cpu_facts["processor"] = []
+                cpu_facts["processor"].append(processor)
+            elif key == "chip_id":
                 physid = data[1].strip()
                 if physid not in sockets:
                     sockets[physid] = 1
@@ -110,11 +115,11 @@ class SunOSHardware(Hardware):
         # virtual CPUs visible to Solaris. Not a true count of cores for modern SPARC as
         # these processors have: sockets -> cores -> threads/virtual CPU.
         if len(sockets) > 0:
-            cpu_facts['processor_count'] = len(sockets)
-            cpu_facts['processor_cores'] = reduce(lambda x, y: x + y, sockets.values())
+            cpu_facts["processor_count"] = len(sockets)
+            cpu_facts["processor_cores"] = reduce(lambda x, y: x + y, sockets.values())
         else:
-            cpu_facts['processor_cores'] = 'NA'
-            cpu_facts['processor_count'] = len(cpu_facts['processor'])
+            cpu_facts["processor_cores"] = "NA"
+            cpu_facts["processor_count"] = len(cpu_facts["processor"])
 
         return cpu_facts
 
@@ -124,8 +129,8 @@ class SunOSHardware(Hardware):
         rc, out, err = self.module.run_command(["/usr/sbin/prtconf"])
 
         for line in out.splitlines():
-            if 'Memory size' in line:
-                memory_facts['memtotal_mb'] = int(line.split()[2])
+            if "Memory size" in line:
+                memory_facts["memtotal_mb"] = int(line.split()[2])
 
         rc, out, err = self.module.run_command("/usr/sbin/swap -s")
 
@@ -134,33 +139,35 @@ class SunOSHardware(Hardware):
         used = int(out.split()[8][:-1])
         free = int(out.split()[10][:-1])
 
-        memory_facts['swapfree_mb'] = free // 1024
-        memory_facts['swaptotal_mb'] = (free + used) // 1024
-        memory_facts['swap_allocated_mb'] = allocated // 1024
-        memory_facts['swap_reserved_mb'] = reserved // 1024
+        memory_facts["swapfree_mb"] = free // 1024
+        memory_facts["swaptotal_mb"] = (free + used) // 1024
+        memory_facts["swap_allocated_mb"] = allocated // 1024
+        memory_facts["swap_reserved_mb"] = reserved // 1024
 
         return memory_facts
 
     @timeout.timeout()
     def get_mount_facts(self):
         mount_facts = {}
-        mount_facts['mounts'] = []
+        mount_facts["mounts"] = []
 
         # For a detailed format description see mnttab(4)
         #   special mount_point fstype options time
-        fstab = get_file_content('/etc/mnttab')
+        fstab = get_file_content("/etc/mnttab")
 
         if fstab:
             for line in fstab.splitlines():
-                fields = line.split('\t')
+                fields = line.split("\t")
                 mount_statvfs_info = get_mount_size(fields[1])
-                mount_info = {'mount': fields[1],
-                              'device': fields[0],
-                              'fstype': fields[2],
-                              'options': fields[3],
-                              'time': fields[4]}
+                mount_info = {
+                    "mount": fields[1],
+                    "device": fields[0],
+                    "fstype": fields[2],
+                    "options": fields[3],
+                    "time": fields[4],
+                }
                 mount_info.update(mount_statvfs_info)
-                mount_facts['mounts'].append(mount_info)
+                mount_facts["mounts"].append(mount_info)
 
         return mount_facts
 
@@ -169,14 +176,14 @@ class SunOSHardware(Hardware):
 
         # On Solaris 8 the prtdiag wrapper is absent from /usr/sbin,
         # but that's okay, because we know where to find the real thing:
-        rc, platform, err = self.module.run_command('/usr/bin/uname -i')
-        platform_sbin = '/usr/platform/' + platform.rstrip() + '/sbin'
+        rc, platform, err = self.module.run_command("/usr/bin/uname -i")
+        platform_sbin = "/usr/platform/" + platform.rstrip() + "/sbin"
 
         prtdiag_path = self.module.get_bin_path("prtdiag", opt_dirs=[platform_sbin])
         rc, out, err = self.module.run_command(prtdiag_path)
         # rc returns 1
         if out:
-            system_conf = out.split('\n')[0]
+            system_conf = out.split("\n")[0]
 
             # If you know of any other manufacturers whose names appear in
             # the first line of prtdiag's output, please add them here:
@@ -188,15 +195,19 @@ class SunOSHardware(Hardware):
                 "VMware, Inc.",
             ]
             vendor_regexp = "|".join(map(re.escape, vendors))
-            system_conf_regexp = (r'System Configuration:\s+'
-                                  + r'(' + vendor_regexp + r')\s+'
-                                  + r'(?:sun\w+\s+)?'
-                                  + r'(.+)')
+            system_conf_regexp = (
+                r"System Configuration:\s+"
+                + r"("
+                + vendor_regexp
+                + r")\s+"
+                + r"(?:sun\w+\s+)?"
+                + r"(.+)"
+            )
 
             found = re.match(system_conf_regexp, system_conf)
             if found:
-                dmi_facts['system_vendor'] = found.group(1)
-                dmi_facts['product_name'] = found.group(2)
+                dmi_facts["system_vendor"] = found.group(1)
+                dmi_facts["product_name"] = found.group(2)
 
         return dmi_facts
 
@@ -217,46 +228,52 @@ class SunOSHardware(Hardware):
         # sderr:0:sd0,err:Vendor  ATA
 
         device_facts = {}
-        device_facts['devices'] = {}
+        device_facts["devices"] = {}
 
         disk_stats = {
-            'Product': 'product',
-            'Revision': 'revision',
-            'Serial No': 'serial',
-            'Size': 'size',
-            'Vendor': 'vendor',
-            'Hard Errors': 'hard_errors',
-            'Soft Errors': 'soft_errors',
-            'Transport Errors': 'transport_errors',
-            'Media Error': 'media_errors',
-            'Predictive Failure Analysis': 'predictive_failure_analysis',
-            'Illegal Request': 'illegal_request',
+            "Product": "product",
+            "Revision": "revision",
+            "Serial No": "serial",
+            "Size": "size",
+            "Vendor": "vendor",
+            "Hard Errors": "hard_errors",
+            "Soft Errors": "soft_errors",
+            "Transport Errors": "transport_errors",
+            "Media Error": "media_errors",
+            "Predictive Failure Analysis": "predictive_failure_analysis",
+            "Illegal Request": "illegal_request",
         }
 
-        cmd = ['/usr/bin/kstat', '-p']
+        cmd = ["/usr/bin/kstat", "-p"]
 
         for ds in disk_stats:
-            cmd.append('sderr:::%s' % ds)
+            cmd.append("sderr:::%s" % ds)
 
         d = {}
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             return device_facts
 
-        sd_instances = frozenset(line.split(':')[1] for line in out.split('\n') if line.startswith('sderr'))
+        sd_instances = frozenset(
+            line.split(":")[1] for line in out.split("\n") if line.startswith("sderr")
+        )
         for instance in sd_instances:
-            lines = (line for line in out.split('\n') if ':' in line and line.split(':')[1] == instance)
+            lines = (
+                line
+                for line in out.split("\n")
+                if ":" in line and line.split(":")[1] == instance
+            )
             for line in lines:
-                text, value = line.split('\t')
-                stat = text.split(':')[3]
+                text, value = line.split("\t")
+                stat = text.split(":")[3]
 
-                if stat == 'Size':
+                if stat == "Size":
                     d[disk_stats.get(stat)] = bytes_to_human(float(value))
                 else:
                     d[disk_stats.get(stat)] = value.rstrip()
 
-            diskname = 'sd' + instance
-            device_facts['devices'][diskname] = d
+            diskname = "sd" + instance
+            device_facts["devices"][diskname] = d
             d = {}
 
         return device_facts
@@ -265,19 +282,21 @@ class SunOSHardware(Hardware):
         uptime_facts = {}
         # sample kstat output:
         # unix:0:system_misc:boot_time    1548249689
-        rc, out, err = self.module.run_command('/usr/bin/kstat -p unix:0:system_misc:boot_time')
+        rc, out, err = self.module.run_command(
+            "/usr/bin/kstat -p unix:0:system_misc:boot_time"
+        )
 
         if rc != 0:
             return
 
         # uptime = $current_time - $boot_time
-        uptime_facts['uptime_seconds'] = int(time.time() - int(out.split('\t')[1]))
+        uptime_facts["uptime_seconds"] = int(time.time() - int(out.split("\t")[1]))
 
         return uptime_facts
 
 
 class SunOSHardwareCollector(HardwareCollector):
     _fact_class = SunOSHardware
-    _platform = 'SunOS'
+    _platform = "SunOS"
 
-    required_facts = set(['platform'])
+    required_facts = set(["platform"])

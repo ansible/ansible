@@ -25,7 +25,7 @@ from ansible.utils.vars import isidentifier
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
-    _VALID_ARGS = frozenset(('aggregate', 'data', 'per_host'))
+    _VALID_ARGS = frozenset(("aggregate", "data", "per_host"))
     _requires_connection = False
 
     # TODO: document this in non-empty set_stats.py module
@@ -36,21 +36,23 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
-        stats = {'data': {}, 'per_host': False, 'aggregate': True}
+        stats = {"data": {}, "per_host": False, "aggregate": True}
 
         if self._task.args:
-            data = self._task.args.get('data', {})
+            data = self._task.args.get("data", {})
 
             if not isinstance(data, dict):
-                data = self._templar.template(data, convert_bare=False, fail_on_undefined=True)
+                data = self._templar.template(
+                    data, convert_bare=False, fail_on_undefined=True
+                )
 
             if not isinstance(data, dict):
-                result['failed'] = True
-                result['msg'] = "The 'data' option needs to be a dictionary/hash"
+                result["failed"] = True
+                result["msg"] = "The 'data' option needs to be a dictionary/hash"
                 return result
 
             # set boolean options, defaults are set above in stats init
-            for opt in ['per_host', 'aggregate']:
+            for opt in ["per_host", "aggregate"]:
                 val = self._task.args.get(opt, None)
                 if val is not None:
                     if not isinstance(val, bool):
@@ -58,19 +60,21 @@ class ActionModule(ActionBase):
                     else:
                         stats[opt] = val
 
-            for (k, v) in data.items():
+            for k, v in data.items():
 
                 k = self._templar.template(k)
 
                 if not isidentifier(k):
-                    result['failed'] = True
-                    result['msg'] = ("The variable name '%s' is not valid. Variables must start with a letter or underscore character, and contain only "
-                                     "letters, numbers and underscores." % k)
+                    result["failed"] = True
+                    result["msg"] = (
+                        "The variable name '%s' is not valid. Variables must start with a letter or underscore character, and contain only "
+                        "letters, numbers and underscores." % k
+                    )
                     return result
 
-                stats['data'][k] = self._templar.template(v)
+                stats["data"][k] = self._templar.template(v)
 
-        result['changed'] = False
-        result['ansible_stats'] = stats
+        result["changed"] = False
+        result["ansible_stats"] = stats
 
         return result

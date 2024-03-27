@@ -34,8 +34,8 @@ def fake_now(monkeypatch):
     def _time():
         return EPOCH_TS
 
-    monkeypatch.setattr(date_time.datetime, 'datetime', FakeNow)
-    monkeypatch.setattr(time, 'time', _time)
+    monkeypatch.setattr(date_time.datetime, "datetime", FakeNow)
+    monkeypatch.setattr(time, "time", _time)
 
 
 @pytest.fixture
@@ -49,48 +49,54 @@ def fake_date_facts(fake_now):
 
 
 @pytest.mark.parametrize(
-    ('fact_name', 'fact_value'),
+    ("fact_name", "fact_value"),
     (
-        ('year', '2020'),
-        ('month', '07'),
-        ('weekday', 'Saturday'),
-        ('weekday_number', '6'),
-        ('weeknumber', '27'),
-        ('day', '11'),
-        ('hour', '12'),
-        ('minute', '34'),
-        ('second', '56'),
-        ('date', '2020-07-11'),
-        ('time', '12:34:56'),
-        ('iso8601_basic', '20200711T123456124356'),
-        ('iso8601_basic_short', '20200711T123456'),
-        ('iso8601_micro', '2020-07-11T02:34:56.124356Z'),
-        ('iso8601', '2020-07-11T02:34:56Z'),
+        ("year", "2020"),
+        ("month", "07"),
+        ("weekday", "Saturday"),
+        ("weekday_number", "6"),
+        ("weeknumber", "27"),
+        ("day", "11"),
+        ("hour", "12"),
+        ("minute", "34"),
+        ("second", "56"),
+        ("date", "2020-07-11"),
+        ("time", "12:34:56"),
+        ("iso8601_basic", "20200711T123456124356"),
+        ("iso8601_basic_short", "20200711T123456"),
+        ("iso8601_micro", "2020-07-11T02:34:56.124356Z"),
+        ("iso8601", "2020-07-11T02:34:56Z"),
     ),
 )
 def test_date_time_facts(fake_date_facts, fact_name, fact_value):
-    assert fake_date_facts['date_time'][fact_name] == fact_value
+    assert fake_date_facts["date_time"][fact_name] == fact_value
 
 
 def test_date_time_epoch(fake_date_facts):
     """Test that format of returned epoch value is correct"""
 
-    assert fake_date_facts['date_time']['epoch'].isdigit()
-    assert len(fake_date_facts['date_time']['epoch']) == 10  # This length will not change any time soon
-    assert fake_date_facts['date_time']['epoch_int'].isdigit()
-    assert len(fake_date_facts['date_time']['epoch_int']) == 10  # This length will not change any time soon
+    assert fake_date_facts["date_time"]["epoch"].isdigit()
+    assert (
+        len(fake_date_facts["date_time"]["epoch"]) == 10
+    )  # This length will not change any time soon
+    assert fake_date_facts["date_time"]["epoch_int"].isdigit()
+    assert (
+        len(fake_date_facts["date_time"]["epoch_int"]) == 10
+    )  # This length will not change any time soon
 
 
-@pytest.mark.parametrize('fact_name', ('tz', 'tz_dst'))
+@pytest.mark.parametrize("fact_name", ("tz", "tz_dst"))
 def test_date_time_tz(fake_date_facts, fact_name):
     """
     Test the returned value for timezone consists of only uppercase
     letters and is the expected length.
     """
 
-    assert fake_date_facts['date_time'][fact_name].isupper()
-    assert 2 <= len(fake_date_facts['date_time'][fact_name]) <= 5
-    assert not set(fake_date_facts['date_time'][fact_name]).difference(set(string.ascii_uppercase))
+    assert fake_date_facts["date_time"][fact_name].isupper()
+    assert 2 <= len(fake_date_facts["date_time"][fact_name]) <= 5
+    assert not set(fake_date_facts["date_time"][fact_name]).difference(
+        set(string.ascii_uppercase)
+    )
 
 
 def test_date_time_tz_offset(fake_date_facts):
@@ -99,6 +105,6 @@ def test_date_time_tz_offset(fake_date_facts):
     series of integers.
     """
 
-    assert fake_date_facts['date_time']['tz_offset'][0] in ['-', '+']
-    assert fake_date_facts['date_time']['tz_offset'][1:].isdigit()
-    assert len(fake_date_facts['date_time']['tz_offset']) == 5
+    assert fake_date_facts["date_time"]["tz_offset"][0] in ["-", "+"]
+    assert fake_date_facts["date_time"]["tz_offset"][1:].isdigit()
+    assert len(fake_date_facts["date_time"]["tz_offset"]) == 5

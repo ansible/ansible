@@ -106,37 +106,39 @@ class LookupModule(LookupBase):
         self.set_options(var_options=variables, direct=kwargs)
 
         # capture options
-        convert_data_p = self.get_option('convert_data')
-        lookup_template_vars = self.get_option('template_vars')
-        jinja2_native = self.get_option('jinja2_native') and C.DEFAULT_JINJA2_NATIVE
-        variable_start_string = self.get_option('variable_start_string')
-        variable_end_string = self.get_option('variable_end_string')
-        comment_start_string = self.get_option('comment_start_string')
-        comment_end_string = self.get_option('comment_end_string')
+        convert_data_p = self.get_option("convert_data")
+        lookup_template_vars = self.get_option("template_vars")
+        jinja2_native = self.get_option("jinja2_native") and C.DEFAULT_JINJA2_NATIVE
+        variable_start_string = self.get_option("variable_start_string")
+        variable_end_string = self.get_option("variable_end_string")
+        comment_start_string = self.get_option("comment_start_string")
+        comment_end_string = self.get_option("comment_end_string")
 
         if jinja2_native:
             templar = self._templar
         else:
-            templar = self._templar.copy_with_new_env(environment_class=AnsibleEnvironment)
+            templar = self._templar.copy_with_new_env(
+                environment_class=AnsibleEnvironment
+            )
 
         for term in terms:
             display.debug("File lookup term: %s" % term)
 
-            lookupfile = self.find_file_in_search_path(variables, 'templates', term)
+            lookupfile = self.find_file_in_search_path(variables, "templates", term)
             display.vvvv("File lookup using %s as file" % lookupfile)
             if lookupfile:
                 b_template_data, show_data = self._loader._get_file_contents(lookupfile)
-                template_data = to_text(b_template_data, errors='surrogate_or_strict')
+                template_data = to_text(b_template_data, errors="surrogate_or_strict")
 
                 # set jinja2 internal search path for includes
-                searchpath = variables.get('ansible_search_path', [])
+                searchpath = variables.get("ansible_search_path", [])
                 if searchpath:
                     # our search paths aren't actually the proper ones for jinja includes.
                     # We want to search into the 'templates' subdir of each search path in
                     # addition to our original search paths.
                     newsearchpath = []
                     for p in searchpath:
-                        newsearchpath.append(os.path.join(p, 'templates'))
+                        newsearchpath.append(os.path.join(p, "templates"))
                         newsearchpath.append(p)
                     searchpath = newsearchpath
                 searchpath.insert(0, os.path.dirname(lookupfile))
@@ -149,24 +151,34 @@ class LookupModule(LookupBase):
                 vars.update(generate_ansible_template_vars(term, lookupfile))
                 vars.update(lookup_template_vars)
 
-                with templar.set_temporary_context(available_variables=vars, searchpath=searchpath):
+                with templar.set_temporary_context(
+                    available_variables=vars, searchpath=searchpath
+                ):
                     overrides = dict(
                         variable_start_string=variable_start_string,
                         variable_end_string=variable_end_string,
                         comment_start_string=comment_start_string,
-                        comment_end_string=comment_end_string
+                        comment_end_string=comment_end_string,
                     )
-                    res = templar.template(template_data, preserve_trailing_newlines=True,
-                                           convert_data=convert_data_p, escape_backslashes=False,
-                                           overrides=overrides)
+                    res = templar.template(
+                        template_data,
+                        preserve_trailing_newlines=True,
+                        convert_data=convert_data_p,
+                        escape_backslashes=False,
+                        overrides=overrides,
+                    )
 
-                if (C.DEFAULT_JINJA2_NATIVE and not jinja2_native) or not convert_data_p:
+                if (
+                    C.DEFAULT_JINJA2_NATIVE and not jinja2_native
+                ) or not convert_data_p:
                     # jinja2_native is true globally but off for the lookup, we need this text
                     # not to be processed by literal_eval anywhere in Ansible
                     res = NativeJinjaText(res)
 
                 ret.append(res)
             else:
-                raise AnsibleError("the template file %s could not be found for the lookup" % term)
+                raise AnsibleError(
+                    "the template file %s could not be found for the lookup" % term
+                )
 
         return ret

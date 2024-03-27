@@ -13,36 +13,38 @@ def is_chroot(module=None):
 
     is_chroot = None
 
-    if os.environ.get('debian_chroot', False):
+    if os.environ.get("debian_chroot", False):
         is_chroot = True
     else:
-        my_root = os.stat('/')
+        my_root = os.stat("/")
         try:
             # check if my file system is the root one
-            proc_root = os.stat('/proc/1/root/.')
-            is_chroot = my_root.st_ino != proc_root.st_ino or my_root.st_dev != proc_root.st_dev
+            proc_root = os.stat("/proc/1/root/.")
+            is_chroot = (
+                my_root.st_ino != proc_root.st_ino or my_root.st_dev != proc_root.st_dev
+            )
         except Exception:
             # I'm not root or no proc, fallback to checking it is inode #2
             fs_root_ino = 2
 
             if module is not None:
-                stat_path = module.get_bin_path('stat')
+                stat_path = module.get_bin_path("stat")
                 if stat_path:
-                    cmd = [stat_path, '-f', '--format=%T', '/']
+                    cmd = [stat_path, "-f", "--format=%T", "/"]
                     rc, out, err = module.run_command(cmd)
-                    if 'btrfs' in out:
+                    if "btrfs" in out:
                         fs_root_ino = 256
-                    elif 'xfs' in out:
+                    elif "xfs" in out:
                         fs_root_ino = 128
 
-            is_chroot = (my_root.st_ino != fs_root_ino)
+            is_chroot = my_root.st_ino != fs_root_ino
 
     return is_chroot
 
 
 class ChrootFactCollector(BaseFactCollector):
-    name = 'chroot'
-    _fact_ids = set(['is_chroot'])  # type: t.Set[str]
+    name = "chroot"
+    _fact_ids = set(["is_chroot"])  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
-        return {'is_chroot': is_chroot(module)}
+        return {"is_chroot": is_chroot(module)}

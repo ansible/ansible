@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: check_mode_attribute_1
 short_description: Test for check mode attribute 1
 description: Test for check mode attribute 1.
@@ -19,14 +19,14 @@ attributes:
     support: none
   platform:
     platforms: all
-'''
+"""
 
-EXAMPLES = '''#'''
-RETURN = ''''''
+EXAMPLES = """#"""
+RETURN = """"""
 
 from ansible.module_utils.basic import AnsibleModule
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     module = AnsibleModule(argument_spec=dict(), supports_check_mode=False)
     module.exit_json()

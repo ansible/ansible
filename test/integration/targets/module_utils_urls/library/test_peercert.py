@@ -4,7 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: test_perrcert
 short_description: Test getting the peer certificate of a HTTP response
@@ -16,15 +16,15 @@ options:
     type: str
 author:
 - Ansible Project
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 #
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 #
-'''
+"""
 
 import base64
 
@@ -35,32 +35,32 @@ from ansible.module_utils.urls import getpeercert, Request
 
 def get_x509_shorthand(name, value):
     prefix = {
-        'countryName': 'C',
-        'stateOrProvinceName': 'ST',
-        'localityName': 'L',
-        'organizationName': 'O',
-        'commonName': 'CN',
-        'organizationalUnitName': 'OU',
+        "countryName": "C",
+        "stateOrProvinceName": "ST",
+        "localityName": "L",
+        "organizationName": "O",
+        "commonName": "CN",
+        "organizationalUnitName": "OU",
     }[name]
 
-    return '%s=%s' % (prefix, value)
+    return "%s=%s" % (prefix, value)
 
 
 def main():
     module_args = dict(
-        url=dict(type='str', required=True),
+        url=dict(type="str", required=True),
     )
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=True,
     )
     result = {
-        'changed': False,
-        'cert': None,
-        'raw_cert': None,
+        "changed": False,
+        "cert": None,
+        "raw_cert": None,
     }
 
-    req = Request().get(module.params['url'])
+    req = Request().get(module.params["url"])
     try:
         cert = getpeercert(req)
         b_cert = getpeercert(req, binary_form=True)
@@ -70,28 +70,30 @@ def main():
 
     if cert:
         processed_cert = {
-            'issuer': '',
-            'not_after': cert.get('notAfter', None),
-            'not_before': cert.get('notBefore', None),
-            'serial_number': cert.get('serialNumber', None),
-            'subject': '',
-            'version': cert.get('version', None),
+            "issuer": "",
+            "not_after": cert.get("notAfter", None),
+            "not_before": cert.get("notBefore", None),
+            "serial_number": cert.get("serialNumber", None),
+            "subject": "",
+            "version": cert.get("version", None),
         }
 
-        for field in ['issuer', 'subject']:
+        for field in ["issuer", "subject"]:
             field_values = []
             for x509_part in cert.get(field, []):
-                field_values.append(get_x509_shorthand(x509_part[0][0], x509_part[0][1]))
+                field_values.append(
+                    get_x509_shorthand(x509_part[0][0], x509_part[0][1])
+                )
 
             processed_cert[field] = ",".join(field_values)
 
-        result['cert'] = processed_cert
+        result["cert"] = processed_cert
 
     if b_cert:
-        result['raw_cert'] = to_text(base64.b64encode(b_cert))
+        result["raw_cert"] = to_text(base64.b64encode(b_cert))
 
     module.exit_json(**result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

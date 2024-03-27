@@ -6,16 +6,16 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: eosfacts
 short_description: module to test module_defaults
 description: module to test module_defaults
 version_added: '2.13'
-'''
+"""
 
-EXAMPLES = r'''
-'''
+EXAMPLES = r"""
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -25,10 +25,10 @@ def main():
         argument_spec=dict(
             eosfacts=dict(type=bool),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
-    module.exit_json(eosfacts=module.params['eosfacts'])
+    module.exit_json(eosfacts=module.params["eosfacts"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

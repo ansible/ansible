@@ -26,34 +26,45 @@ from ansible.utils.display import Display
 from ansible.module_utils.six import string_types
 from ansible.template import Templar
 
-__all__ = ['IncludeRole']
+__all__ = ["IncludeRole"]
 
 display = Display()
 
 
 class IncludeRole(TaskInclude):
-
     """
     A Role include is derived from a regular role to handle the special
     circumstances related to the `- include_role: ...`
     """
 
-    BASE = frozenset(('name', 'role'))  # directly assigned
-    FROM_ARGS = frozenset(('tasks_from', 'vars_from', 'defaults_from', 'handlers_from'))  # used to populate from dict in role
-    OTHER_ARGS = frozenset(('apply', 'public', 'allow_duplicates', 'rolespec_validate'))  # assigned to matching property
+    BASE = frozenset(("name", "role"))  # directly assigned
+    FROM_ARGS = frozenset(
+        ("tasks_from", "vars_from", "defaults_from", "handlers_from")
+    )  # used to populate from dict in role
+    OTHER_ARGS = frozenset(
+        ("apply", "public", "allow_duplicates", "rolespec_validate")
+    )  # assigned to matching property
     VALID_ARGS = BASE | FROM_ARGS | OTHER_ARGS  # all valid args
 
     # =================================================================================
     # ATTRIBUTES
-    public = NonInheritableFieldAttribute(isa='bool', default=None, private=False, always_post_validate=True)
+    public = NonInheritableFieldAttribute(
+        isa="bool", default=None, private=False, always_post_validate=True
+    )
 
     # private as this is a 'module options' vs a task property
-    allow_duplicates = NonInheritableFieldAttribute(isa='bool', default=True, private=True, always_post_validate=True)
-    rolespec_validate = NonInheritableFieldAttribute(isa='bool', default=True, private=True, always_post_validate=True)
+    allow_duplicates = NonInheritableFieldAttribute(
+        isa="bool", default=True, private=True, always_post_validate=True
+    )
+    rolespec_validate = NonInheritableFieldAttribute(
+        isa="bool", default=True, private=True, always_post_validate=True
+    )
 
     def __init__(self, block=None, role=None, task_include=None):
 
-        super(IncludeRole, self).__init__(block=block, role=role, task_include=task_include)
+        super(IncludeRole, self).__init__(
+            block=block, role=role, task_include=task_include
+        )
 
         self._from_files = {}
         self._parent_role = role
@@ -61,7 +72,7 @@ class IncludeRole(TaskInclude):
         self._role_path = None
 
     def get_name(self):
-        ''' return the name of the task '''
+        """return the name of the task"""
         return self.name or "%s : %s" % (self.action, self._role_name)
 
     def get_block_list(self, play=None, variable_manager=None, loader=None):
@@ -72,7 +83,13 @@ class IncludeRole(TaskInclude):
         else:
             myplay = play
 
-        ri = RoleInclude.load(self._role_name, play=myplay, variable_manager=variable_manager, loader=loader, collection_list=self.collections)
+        ri = RoleInclude.load(
+            self._role_name,
+            play=myplay,
+            variable_manager=variable_manager,
+            loader=loader,
+            collection_list=self.collections,
+        )
         ri.vars |= self.vars
 
         if variable_manager is not None:
@@ -83,8 +100,16 @@ class IncludeRole(TaskInclude):
         from_files = templar.template(self._from_files)
 
         # build role
-        actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=from_files,
-                                from_include=True, validate=self.rolespec_validate, public=self.public, static=self.statically_loaded)
+        actual_role = Role.load(
+            ri,
+            myplay,
+            parent_role=self._parent_role,
+            from_files=from_files,
+            from_include=True,
+            validate=self.rolespec_validate,
+            public=self.public,
+            static=self.statically_loaded,
+        )
         actual_role._metadata.allow_duplicates = self.allow_duplicates
 
         # add role to play
@@ -116,37 +141,59 @@ class IncludeRole(TaskInclude):
         return blocks, handlers
 
     @staticmethod
-    def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
+    def load(
+        data,
+        block=None,
+        role=None,
+        task_include=None,
+        variable_manager=None,
+        loader=None,
+    ):
 
-        ir = IncludeRole(block, role, task_include=task_include).load_data(data, variable_manager=variable_manager, loader=loader)
+        ir = IncludeRole(block, role, task_include=task_include).load_data(
+            data, variable_manager=variable_manager, loader=loader
+        )
 
         # Validate options
         my_arg_names = frozenset(ir.args.keys())
 
         # name is needed, or use role as alias
-        ir._role_name = ir.args.get('name', ir.args.get('role'))
+        ir._role_name = ir.args.get("name", ir.args.get("role"))
         if ir._role_name is None:
-            raise AnsibleParserError("'name' is a required field for %s." % ir.action, obj=data)
+            raise AnsibleParserError(
+                "'name' is a required field for %s." % ir.action, obj=data
+            )
 
         # validate bad args, otherwise we silently ignore
         bad_opts = my_arg_names.difference(IncludeRole.VALID_ARGS)
         if bad_opts:
-            raise AnsibleParserError('Invalid options for %s: %s' % (ir.action, ','.join(list(bad_opts))), obj=data)
+            raise AnsibleParserError(
+                "Invalid options for %s: %s" % (ir.action, ",".join(list(bad_opts))),
+                obj=data,
+            )
 
         # build options for role include/import tasks
         for key in my_arg_names.intersection(IncludeRole.FROM_ARGS):
-            from_key = key.removesuffix('_from')
+            from_key = key.removesuffix("_from")
             args_value = ir.args.get(key)
             if not isinstance(args_value, string_types):
-                raise AnsibleParserError('Expected a string for %s but got %s instead' % (key, type(args_value)))
+                raise AnsibleParserError(
+                    "Expected a string for %s but got %s instead"
+                    % (key, type(args_value))
+                )
             ir._from_files[from_key] = args_value
 
         # apply is only valid for includes, not imports as they inherit directly
-        apply_attrs = ir.args.get('apply', {})
+        apply_attrs = ir.args.get("apply", {})
         if apply_attrs and ir.action not in C._ACTION_INCLUDE_ROLE:
-            raise AnsibleParserError('Invalid options for %s: apply' % ir.action, obj=data)
+            raise AnsibleParserError(
+                "Invalid options for %s: apply" % ir.action, obj=data
+            )
         elif not isinstance(apply_attrs, dict):
-            raise AnsibleParserError('Expected a dict for apply but got %s instead' % type(apply_attrs), obj=data)
+            raise AnsibleParserError(
+                "Expected a dict for apply but got %s instead" % type(apply_attrs),
+                obj=data,
+            )
 
         # manual list as otherwise the options would set other task parameters we don't want.
         for option in my_arg_names.intersection(IncludeRole.OTHER_ARGS):
@@ -156,7 +203,9 @@ class IncludeRole(TaskInclude):
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
 
-        new_me = super(IncludeRole, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
+        new_me = super(IncludeRole, self).copy(
+            exclude_parent=exclude_parent, exclude_tasks=exclude_tasks
+        )
         new_me.statically_loaded = self.statically_loaded
         new_me._from_files = self._from_files.copy()
         new_me._parent_role = self._parent_role
@@ -169,6 +218,10 @@ class IncludeRole(TaskInclude):
         v = super(IncludeRole, self).get_include_params()
         if self._parent_role:
             v |= self._parent_role.get_role_params()
-            v.setdefault('ansible_parent_role_names', []).insert(0, self._parent_role.get_name())
-            v.setdefault('ansible_parent_role_paths', []).insert(0, self._parent_role._role_path)
+            v.setdefault("ansible_parent_role_names", []).insert(
+                0, self._parent_role.get_name()
+            )
+            v.setdefault("ansible_parent_role_paths", []).insert(
+                0, self._parent_role._role_path
+            )
         return v

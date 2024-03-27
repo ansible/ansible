@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 author: 'Ansible Core Team (@ansible)'
 short_description: 'Add and remove deb822 formatted repositories'
 description:
@@ -146,9 +146,9 @@ options:
 requirements:
     - python3-debian / python-debian
 version_added: '2.15'
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Add debian repo
   deb822_repository:
     name: debian
@@ -190,9 +190,9 @@ EXAMPLES = '''
     components: stable
     architectures: amd64
     signed_by: https://download.example.com/linux/ubuntu/gpg
-'''
+"""
 
-RETURN = '''
+RETURN = """
 repo:
   description: A source string for the repository
   returned: always
@@ -225,7 +225,7 @@ key_filename:
   returned: always
   type: str
   sample: /etc/apt/keyrings/debian.gpg
-'''
+"""
 
 import os
 import re
@@ -253,7 +253,7 @@ except ImportError:
     HAS_DEBIAN = False
     DEBIAN_IMP_ERR = traceback.format_exc()
 
-KEYRINGS_DIR = '/etc/apt/keyrings'
+KEYRINGS_DIR = "/etc/apt/keyrings"
 
 
 def ensure_keyrings_dir(module):
@@ -265,12 +265,12 @@ def ensure_keyrings_dir(module):
 
     changed |= module.set_fs_attributes_if_different(
         {
-            'path': KEYRINGS_DIR,
-            'secontext': [None, None, None],
-            'owner': 'root',
-            'group': 'root',
-            'mode': '0755',
-            'attributes': None,
+            "path": KEYRINGS_DIR,
+            "secontext": [None, None, None],
+            "owner": "root",
+            "group": "root",
+            "mode": "0755",
+            "attributes": None,
         },
         changed,
     )
@@ -279,41 +279,37 @@ def ensure_keyrings_dir(module):
 
 
 def make_signed_by_filename(slug, ext):
-    return os.path.join(KEYRINGS_DIR, '%s.%s' % (slug, ext))
+    return os.path.join(KEYRINGS_DIR, "%s.%s" % (slug, ext))
 
 
 def make_sources_filename(slug):
-    return os.path.join(
-        '/etc/apt/sources.list.d',
-        '%s.sources' % slug
-    )
+    return os.path.join("/etc/apt/sources.list.d", "%s.sources" % slug)
 
 
 def format_bool(v):
-    return 'yes' if v else 'no'
+    return "yes" if v else "no"
 
 
 def format_list(v):
-    return ' '.join(v)
+    return " ".join(v)
 
 
 def format_multiline(v):
-    return '\n' + textwrap.indent(
-        '\n'.join(line.strip() or '.' for line in v.strip().splitlines()),
-        '    '
+    return "\n" + textwrap.indent(
+        "\n".join(line.strip() or "." for line in v.strip().splitlines()), "    "
     )
 
 
 def format_field_name(v):
-    if v == 'name':
-        return 'X-Repolib-Name'
-    elif v == 'uris':
-        return 'URIs'
-    return v.replace('_', '-').title()
+    if v == "name":
+        return "X-Repolib-Name"
+    elif v == "uris":
+        return "URIs"
+    return v.replace("_", "-").title()
 
 
 def is_armored(b_data):
-    return b'-----BEGIN PGP PUBLIC KEY BLOCK-----' in b_data
+    return b"-----BEGIN PGP PUBLIC KEY BLOCK-----" in b_data
 
 
 def write_signed_by_key(module, v, slug):
@@ -339,10 +335,10 @@ def write_signed_by_key(module, v, slug):
         return changed, v, None
 
     tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
-    with os.fdopen(tmpfd, 'wb') as f:
+    with os.fdopen(tmpfd, "wb") as f:
         f.write(b_data)
 
-    ext = 'asc' if is_armored(b_data) else 'gpg'
+    ext = "asc" if is_armored(b_data) else "gpg"
     filename = make_signed_by_filename(slug, ext)
 
     src_chksum = module.sha256(tmpfile)
@@ -362,101 +358,102 @@ def write_signed_by_key(module, v, slug):
 def main():
     module = AnsibleModule(
         argument_spec={
-            'allow_downgrade_to_insecure': {
-                'type': 'bool',
+            "allow_downgrade_to_insecure": {
+                "type": "bool",
             },
-            'allow_insecure': {
-                'type': 'bool',
+            "allow_insecure": {
+                "type": "bool",
             },
-            'allow_weak': {
-                'type': 'bool',
+            "allow_weak": {
+                "type": "bool",
             },
-            'architectures': {
-                'elements': 'str',
-                'type': 'list',
+            "architectures": {
+                "elements": "str",
+                "type": "list",
             },
-            'by_hash': {
-                'type': 'bool',
+            "by_hash": {
+                "type": "bool",
             },
-            'check_date': {
-                'type': 'bool',
+            "check_date": {
+                "type": "bool",
             },
-            'check_valid_until': {
-                'type': 'bool',
+            "check_valid_until": {
+                "type": "bool",
             },
-            'components': {
-                'elements': 'str',
-                'type': 'list',
+            "components": {
+                "elements": "str",
+                "type": "list",
             },
-            'date_max_future': {
-                'type': 'int',
+            "date_max_future": {
+                "type": "int",
             },
-            'enabled': {
-                'type': 'bool',
+            "enabled": {
+                "type": "bool",
             },
-            'inrelease_path': {
-                'type': 'str',
+            "inrelease_path": {
+                "type": "str",
             },
-            'languages': {
-                'elements': 'str',
-                'type': 'list',
+            "languages": {
+                "elements": "str",
+                "type": "list",
             },
-            'name': {
-                'type': 'str',
-                'required': True,
+            "name": {
+                "type": "str",
+                "required": True,
             },
-            'pdiffs': {
-                'type': 'bool',
+            "pdiffs": {
+                "type": "bool",
             },
-            'signed_by': {
-                'type': 'str',
+            "signed_by": {
+                "type": "str",
             },
-            'suites': {
-                'elements': 'str',
-                'type': 'list',
+            "suites": {
+                "elements": "str",
+                "type": "list",
             },
-            'targets': {
-                'elements': 'str',
-                'type': 'list',
+            "targets": {
+                "elements": "str",
+                "type": "list",
             },
-            'trusted': {
-                'type': 'bool',
+            "trusted": {
+                "type": "bool",
             },
-            'types': {
-                'choices': [
-                    'deb',
-                    'deb-src',
+            "types": {
+                "choices": [
+                    "deb",
+                    "deb-src",
                 ],
-                'elements': 'str',
-                'type': 'list',
-                'default': [
-                    'deb',
-                ]
+                "elements": "str",
+                "type": "list",
+                "default": [
+                    "deb",
+                ],
             },
-            'uris': {
-                'elements': 'str',
-                'type': 'list',
+            "uris": {
+                "elements": "str",
+                "type": "list",
             },
             # non-deb822 args
-            'mode': {
-                'type': 'raw',
-                'default': '0644',
+            "mode": {
+                "type": "raw",
+                "default": "0644",
             },
-            'state': {
-                'type': 'str',
-                'choices': [
-                    'present',
-                    'absent',
+            "state": {
+                "type": "str",
+                "choices": [
+                    "present",
+                    "absent",
                 ],
-                'default': 'present',
+                "default": "present",
             },
         },
         supports_check_mode=True,
     )
 
     if not HAS_DEBIAN:
-        module.fail_json(msg=missing_required_lib("python3-debian"),
-                         exception=DEBIAN_IMP_ERR)
+        module.fail_json(
+            msg=missing_required_lib("python3-debian"), exception=DEBIAN_IMP_ERR
+        )
 
     check_mode = module.check_mode
 
@@ -466,27 +463,27 @@ def main():
     params = module.params.copy()
 
     # popped non-deb822 args
-    mode = params.pop('mode')
-    state = params.pop('state')
+    mode = params.pop("mode")
+    state = params.pop("state")
 
-    name = params['name']
+    name = params["name"]
     slug = re.sub(
-        r'[^a-z0-9-]+',
-        '',
+        r"[^a-z0-9-]+",
+        "",
         re.sub(
-            r'[_\s]+',
-            '-',
+            r"[_\s]+",
+            "-",
             name.lower(),
         ),
     )
     sources_filename = make_sources_filename(slug)
 
-    if state == 'absent':
+    if state == "absent":
         if os.path.exists(sources_filename):
             if not check_mode:
                 os.unlink(sources_filename)
             changed |= True
-        for ext in ('asc', 'gpg'):
+        for ext in ("asc", "gpg"):
             signed_by_filename = make_signed_by_filename(slug, ext)
             if os.path.exists(signed_by_filename):
                 if not check_mode:
@@ -511,24 +508,26 @@ def main():
             value = to_native(value)
         elif is_sequence(value):
             value = format_list(value)
-        elif key == 'signed_by':
+        elif key == "signed_by":
             try:
-                key_changed, signed_by_filename, signed_by_data = write_signed_by_key(module, value, slug)
+                key_changed, signed_by_filename, signed_by_data = write_signed_by_key(
+                    module, value, slug
+                )
                 value = signed_by_filename or signed_by_data
                 changed |= key_changed
             except RuntimeError as exc:
                 module.fail_json(
-                    msg='Could not fetch signed_by key: %s' % to_native(exc)
+                    msg="Could not fetch signed_by key: %s" % to_native(exc)
                 )
 
-        if value.count('\n') > 0:
+        if value.count("\n") > 0:
             value = format_multiline(value)
 
         deb822[format_field_name(key)] = value
 
     repo = deb822.dump()
     tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
-    with os.fdopen(tmpfd, 'wb') as f:
+    with os.fdopen(tmpfd, "wb") as f:
         f.write(to_bytes(repo))
 
     sources_filename = make_sources_filename(slug)
@@ -551,5 +550,5 @@ def main():
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

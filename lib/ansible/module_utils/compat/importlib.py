@@ -11,16 +11,16 @@ def __getattr__(importable_name):
 
     Specifically, for ``import_module()``.
     """
-    if importable_name == 'import_module':
+    if importable_name == "import_module":
         deprecate(
-            msg=f'The `ansible.module_utils.compat.importlib.'
-            f'{importable_name}` function is deprecated.',
-            version='2.19',
+            msg=f"The `ansible.module_utils.compat.importlib."
+            f"{importable_name}` function is deprecated.",
+            version="2.19",
         )
         from importlib import import_module
+
         return import_module
 
     raise AttributeError(
-        f'cannot import name {importable_name !r} '
-        f'has no attribute ({__file__ !s})',
+        f"cannot import name {importable_name !r} " f"has no attribute ({__file__ !s})",
     )

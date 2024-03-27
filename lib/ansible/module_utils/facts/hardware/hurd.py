@@ -27,7 +27,7 @@ class HurdHardware(LinuxHardware):
     the Linux kernel.
     """
 
-    platform = 'GNU'
+    platform = "GNU"
 
     def populate(self, collected_facts=None):
         hardware_facts = {}
@@ -49,4 +49,4 @@ class HurdHardware(LinuxHardware):
 
 class HurdHardwareCollector(HardwareCollector):
     _fact_class = HurdHardware
-    _platform = 'GNU'
+    _platform = "GNU"
