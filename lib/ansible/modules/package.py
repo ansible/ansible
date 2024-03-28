@@ -84,4 +84,10 @@ EXAMPLES = '''
       - httpd
       - mariadb-server
     state: latest
+
+- name: Use the dnf package manager to install httpd
+  ansible.builtin.package:
+    name: httpd
+    state: present
+    use: dnf
 '''
