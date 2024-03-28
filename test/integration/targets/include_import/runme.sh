@@ -121,6 +121,10 @@ ansible-playbook valid_include_keywords/playbook.yml "$@"
 ansible-playbook tasks/test_allow_single_role_dup.yml 2>&1 | tee test_allow_single_role_dup.out
 test "$(grep -c 'ok=3' test_allow_single_role_dup.out)" = 1
 
+# Test allow_duplicate with include_role and import_role
+test "$(ansible-playbook tasks/test_dynamic_allow_dup.yml --tags include | grep -c 'Tasks file inside role')" = 2
+test "$(ansible-playbook tasks/test_dynamic_allow_dup.yml --tags import | grep -c 'Tasks file inside role')" = 2
+
 # test templating public, allow_duplicates, and rolespec_validate
 ansible-playbook tasks/test_templating_IncludeRole_FA.yml 2>&1 | tee IncludeRole_FA_template.out
 test "$(grep -c 'ok=4' IncludeRole_FA_template.out)" = 1
