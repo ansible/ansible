@@ -12,5 +12,10 @@ bugfixes:
   for collections that do not have any stable versions
   published.
   (https://github.com/ansible/ansible/pull/81606)
+- >-
+  ansible-galaxy - started choosing the collection
+  pre-releases when they are the only way to satisfy
+  the requirements.
+  (https://github.com/ansible/ansible/pull/81764)
 
 ...
