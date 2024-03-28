@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-vault encrypt_string - give informative message when --name is provided and won't be used.

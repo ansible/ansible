@@ -354,6 +354,8 @@ class VaultCLI(CLI):
                 display.display('The last named variable will be "%s". The rest will not have'
                                 ' names.' % context.CLIARGS['encrypt_string_names'][-1],
                                 stderr=True)
+            elif not name_and_text_list and context.CLIARGS['encrypt_string_names']:
+                display.display("No command line arguments provided to use with --name. To name an argument from stdin use --stdin-name.", stderr=True)
 
             # Add the rest of the args without specifying a name
             for extra_arg in args[len(name_and_text_list):]:
