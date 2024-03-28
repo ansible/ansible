@@ -978,8 +978,7 @@ class StrategyBase:
                 if host_state.run_state == IteratingStates.HANDLERS:
                     raise AnsibleError('flush_handlers cannot be used as a handler')
                 if target_host.name not in self._tqm._unreachable_hosts:
-                    host_state.pre_flushing_run_state = host_state.run_state
-                    host_state.run_state = IteratingStates.HANDLERS
+                    iterator.set_run_state_for_host(target_host.name, IteratingStates.HANDLERS)
                 msg = "triggered running handlers for %s" % target_host.name
             else:
                 skipped = True
@@ -1038,14 +1037,19 @@ class StrategyBase:
                 skip_reason += ", continuing execution for %s" % target_host.name
                 # TODO: Nix msg here? Left for historical reasons, but skip_reason exists now.
                 msg = "end_host conditional evaluated to false, continuing execution for %s" % target_host.name
-        elif meta_action == 'role_complete':
-            # Allow users to use this in a play as reported in https://github.com/ansible/ansible/issues/22286?
-            # How would this work with allow_duplicates??
+        elif meta_action == 'end_role':
             if task.implicit:
                 role_obj = self._get_cached_role(task, iterator._play)
                 if target_host.name in role_obj._had_task_run:
                     role_obj._completed[target_host.name] = True
-                    msg = 'role_complete for %s' % target_host.name
+                    msg = 'role complete for %s' % target_host.name
+            else:
+                if _evaluate_conditional(target_host):
+                    iterator.set_run_state_for_host(target_host.name, IteratingStates.SKIP_ROLE)
+                    msg = 'ending role %s for %s' % (task._role.get_name(), target_host.name)
+                else:
+                    skipped = True
+                    skip_reason += ', continuing role'
         elif meta_action == 'reset_connection':
             all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task,
                                                        _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
@@ -1107,13 +1111,7 @@ class StrategyBase:
         return [res]
 
     def _get_cached_role(self, task, play):
-        role_path = task._role.get_role_path()
-        role_cache = play.role_cache[role_path]
-        try:
-            idx = role_cache.index(task._role)
-            return role_cache[idx]
-        except ValueError:
-            raise AnsibleError(f'Cannot locate {task._role.get_name()} in role cache')
+        return play._get_cached_role(task._role)
 
     def get_hosts_left(self, iterator):
         ''' returns list of available hosts for this iterator by filtering out unreachables '''
