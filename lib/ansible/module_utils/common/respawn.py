@@ -68,8 +68,11 @@ def probe_interpreters_for_module(interpreter_paths, module_name):
 
 
 def _create_payload():
-    from ansible.module_utils import basic
-    smuggled_args = getattr(basic, '_ANSIBLE_ARGS')
+    try:
+        from _ansiballz import ANSIBALLZ_PARAMS as smuggled_args  # type: ignore[import]
+    except ImportError:
+        from ansible.module_utils import basic
+        smuggled_args = getattr(basic, '_ANSIBLE_ARGS')
     if not smuggled_args:
         raise Exception('unable to access ansible.module_utils.basic._ANSIBLE_ARGS (not launched by AnsiballZ?)')
     module_fqn = sys.modules['__main__']._module_fqn

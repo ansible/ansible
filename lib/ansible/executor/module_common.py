@@ -23,11 +23,13 @@ import base64
 import datetime
 import json
 import os
+import pkgutil
+import re
 import shlex
+import shutil
+import textwrap
 import time
 import zipfile
-import re
-import pkgutil
 
 from ast import AST, Import, ImportFrom
 from io import BytesIO
@@ -41,6 +43,7 @@ from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.plugins.loader import module_utils_loader
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, _nested_dict_get
+from ansible.compat.importlib_resources import files
 
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
@@ -74,318 +77,7 @@ _MODULE_UTILS_PATH = os.path.join(os.path.dirname(__file__), '..', 'module_utils
 
 # ******************************************************************************
 
-ANSIBALLZ_TEMPLATE = u'''%(shebang)s
-%(coding)s
-_ANSIBALLZ_WRAPPER = True # For test-module.py script to tell this is a ANSIBALLZ_WRAPPER
-# This code is part of Ansible, but is an independent component.
-# The code in this particular templatable string, and this templatable string
-# only, is BSD licensed.  Modules which end up using this snippet, which is
-# dynamically combined together by Ansible still belong to the author of the
-# module, and they may assign their own license to the complete work.
-#
-# Copyright (c), James Cammarata, 2016
-# Copyright (c), Toshio Kuratomi, 2016
-#
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-#    * Redistributions of source code must retain the above copyright
-#      notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright notice,
-#      this list of conditions and the following disclaimer in the documentation
-#      and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-def _ansiballz_main():
-    import os
-    import os.path
-
-    # Access to the working directory is required by Python when using pipelining, as well as for the coverage module.
-    # Some platforms, such as macOS, may not allow querying the working directory when using become to drop privileges.
-    try:
-        os.getcwd()
-    except OSError:
-        try:
-            os.chdir(os.path.expanduser('~'))
-        except OSError:
-            os.chdir('/')
-
-%(rlimit)s
-
-    import sys
-    import __main__
-
-    # For some distros and python versions we pick up this script in the temporary
-    # directory.  This leads to problems when the ansible module masks a python
-    # library that another import needs.  We have not figured out what about the
-    # specific distros and python versions causes this to behave differently.
-    #
-    # Tested distros:
-    # Fedora23 with python3.4  Works
-    # Ubuntu15.10 with python2.7  Works
-    # Ubuntu15.10 with python3.4  Fails without this
-    # Ubuntu16.04.1 with python3.5  Fails without this
-    # To test on another platform:
-    # * use the copy module (since this shadows the stdlib copy module)
-    # * Turn off pipelining
-    # * Make sure that the destination file does not exist
-    # * ansible ubuntu16-test -m copy -a 'src=/etc/motd dest=/var/tmp/m'
-    # This will traceback in shutil.  Looking at the complete traceback will show
-    # that shutil is importing copy which finds the ansible module instead of the
-    # stdlib module
-    scriptdir = None
-    try:
-        scriptdir = os.path.dirname(os.path.realpath(__main__.__file__))
-    except (AttributeError, OSError):
-        # Some platforms don't set __file__ when reading from stdin
-        # OSX raises OSError if using abspath() in a directory we don't have
-        # permission to read (realpath calls abspath)
-        pass
-
-    # Strip cwd from sys.path to avoid potential permissions issues
-    excludes = set(('', '.', scriptdir))
-    sys.path = [p for p in sys.path if p not in excludes]
-
-    import base64
-    import runpy
-    import shutil
-    import tempfile
-    import zipfile
-
-    if sys.version_info < (3,):
-        PY3 = False
-    else:
-        PY3 = True
-
-    ZIPDATA = %(zipdata)r
-
-    # Note: temp_path isn't needed once we switch to zipimport
-    def invoke_module(modlib_path, temp_path, json_params):
-        # When installed via setuptools (including python setup.py install),
-        # ansible may be installed with an easy-install.pth file.  That file
-        # may load the system-wide install of ansible rather than the one in
-        # the module.  sitecustomize is the only way to override that setting.
-        z = zipfile.ZipFile(modlib_path, mode='a')
-
-        # py3: modlib_path will be text, py2: it's bytes.  Need bytes at the end
-        sitecustomize = u'import sys\\nsys.path.insert(0,"%%s")\\n' %% modlib_path
-        sitecustomize = sitecustomize.encode('utf-8')
-        # Use a ZipInfo to work around zipfile limitation on hosts with
-        # clocks set to a pre-1980 year (for instance, Raspberry Pi)
-        zinfo = zipfile.ZipInfo()
-        zinfo.filename = 'sitecustomize.py'
-        zinfo.date_time = %(date_time)s
-        z.writestr(zinfo, sitecustomize)
-        z.close()
-
-        # Put the zipped up module_utils we got from the controller first in the python path so that we
-        # can monkeypatch the right basic
-        sys.path.insert(0, modlib_path)
-
-        # Monkeypatch the parameters into basic
-        from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = json_params
-%(coverage)s
-        # Run the module!  By importing it as '__main__', it thinks it is executing as a script
-        runpy.run_module(mod_name=%(module_fqn)r, init_globals=dict(_module_fqn=%(module_fqn)r, _modlib_path=modlib_path),
-                         run_name='__main__', alter_sys=True)
-
-        # Ansible modules must exit themselves
-        print('{"msg": "New-style module did not handle its own exit", "failed": true}')
-        sys.exit(1)
-
-    def debug(command, zipped_mod, json_params):
-        # The code here normally doesn't run.  It's only used for debugging on the
-        # remote machine.
-        #
-        # The subcommands in this function make it easier to debug ansiballz
-        # modules.  Here's the basic steps:
-        #
-        # Run ansible with the environment variable: ANSIBLE_KEEP_REMOTE_FILES=1 and -vvv
-        # to save the module file remotely::
-        #   $ ANSIBLE_KEEP_REMOTE_FILES=1 ansible host1 -m ping -a 'data=october' -vvv
-        #
-        # Part of the verbose output will tell you where on the remote machine the
-        # module was written to::
-        #   [...]
-        #   <host1> SSH: EXEC ssh -C -q -o ControlMaster=auto -o ControlPersist=60s -o KbdInteractiveAuthentication=no -o
-        #   PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey -o PasswordAuthentication=no -o ConnectTimeout=10 -o
-        #   ControlPath=/home/badger/.ansible/cp/ansible-ssh-%%h-%%p-%%r -tt rhel7 '/bin/sh -c '"'"'LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
-        #   LC_MESSAGES=en_US.UTF-8 /usr/bin/python /home/badger/.ansible/tmp/ansible-tmp-1461173013.93-9076457629738/ping'"'"''
-        #   [...]
-        #
-        # Login to the remote machine and run the module file via from the previous
-        # step with the explode subcommand to extract the module payload into
-        # source files::
-        #   $ ssh host1
-        #   $ /usr/bin/python /home/badger/.ansible/tmp/ansible-tmp-1461173013.93-9076457629738/ping explode
-        #   Module expanded into:
-        #   /home/badger/.ansible/tmp/ansible-tmp-1461173408.08-279692652635227/ansible
-        #
-        # You can now edit the source files to instrument the code or experiment with
-        # different parameter values.  When you're ready to run the code you've modified
-        # (instead of the code from the actual zipped module), use the execute subcommand like this::
-        #   $ /usr/bin/python /home/badger/.ansible/tmp/ansible-tmp-1461173013.93-9076457629738/ping execute
-
-        # Okay to use __file__ here because we're running from a kept file
-        basedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'debug_dir')
-        args_path = os.path.join(basedir, 'args')
-
-        if command == 'explode':
-            # transform the ZIPDATA into an exploded directory of code and then
-            # print the path to the code.  This is an easy way for people to look
-            # at the code on the remote machine for debugging it in that
-            # environment
-            z = zipfile.ZipFile(zipped_mod)
-            for filename in z.namelist():
-                if filename.startswith('/'):
-                    raise Exception('Something wrong with this module zip file: should not contain absolute paths')
-
-                dest_filename = os.path.join(basedir, filename)
-                if dest_filename.endswith(os.path.sep) and not os.path.exists(dest_filename):
-                    os.makedirs(dest_filename)
-                else:
-                    directory = os.path.dirname(dest_filename)
-                    if not os.path.exists(directory):
-                        os.makedirs(directory)
-                    f = open(dest_filename, 'wb')
-                    f.write(z.read(filename))
-                    f.close()
-
-            # write the args file
-            f = open(args_path, 'wb')
-            f.write(json_params)
-            f.close()
-
-            print('Module expanded into:')
-            print('%%s' %% basedir)
-            exitcode = 0
-
-        elif command == 'execute':
-            # Execute the exploded code instead of executing the module from the
-            # embedded ZIPDATA.  This allows people to easily run their modified
-            # code on the remote machine to see how changes will affect it.
-
-            # Set pythonpath to the debug dir
-            sys.path.insert(0, basedir)
-
-            # read in the args file which the user may have modified
-            with open(args_path, 'rb') as f:
-                json_params = f.read()
-
-            # Monkeypatch the parameters into basic
-            from ansible.module_utils import basic
-            basic._ANSIBLE_ARGS = json_params
-
-            # Run the module!  By importing it as '__main__', it thinks it is executing as a script
-            runpy.run_module(mod_name=%(module_fqn)r, init_globals=None, run_name='__main__', alter_sys=True)
-
-            # Ansible modules must exit themselves
-            print('{"msg": "New-style module did not handle its own exit", "failed": true}')
-            sys.exit(1)
-
-        else:
-            print('WARNING: Unknown debug command.  Doing nothing.')
-            exitcode = 0
-
-        return exitcode
-
-    #
-    # See comments in the debug() method for information on debugging
-    #
-
-    ANSIBALLZ_PARAMS = %(params)s
-    if PY3:
-        ANSIBALLZ_PARAMS = ANSIBALLZ_PARAMS.encode('utf-8')
-    try:
-        # There's a race condition with the controller removing the
-        # remote_tmpdir and this module executing under async.  So we cannot
-        # store this in remote_tmpdir (use system tempdir instead)
-        # Only need to use [ansible_module]_payload_ in the temp_path until we move to zipimport
-        # (this helps ansible-test produce coverage stats)
-        temp_path = tempfile.mkdtemp(prefix='ansible_' + %(ansible_module)r + '_payload_')
-
-        zipped_mod = os.path.join(temp_path, 'ansible_' + %(ansible_module)r + '_payload.zip')
-
-        with open(zipped_mod, 'wb') as modlib:
-            modlib.write(base64.b64decode(ZIPDATA))
-
-        if len(sys.argv) == 2:
-            exitcode = debug(sys.argv[1], zipped_mod, ANSIBALLZ_PARAMS)
-        else:
-            # Note: temp_path isn't needed once we switch to zipimport
-            invoke_module(zipped_mod, temp_path, ANSIBALLZ_PARAMS)
-    finally:
-        try:
-            shutil.rmtree(temp_path)
-        except (NameError, OSError):
-            # tempdir creation probably failed
-            pass
-    sys.exit(exitcode)
-
-if __name__ == '__main__':
-    _ansiballz_main()
-'''
-
-ANSIBALLZ_COVERAGE_TEMPLATE = '''
-        os.environ['COVERAGE_FILE'] = %(coverage_output)r + '=python-%%s=coverage' %% '.'.join(str(v) for v in sys.version_info[:2])
-
-        import atexit
-
-        try:
-            import coverage
-        except ImportError:
-            print('{"msg": "Could not import `coverage` module.", "failed": true}')
-            sys.exit(1)
-
-        cov = coverage.Coverage(config_file=%(coverage_config)r)
-
-        def atexit_coverage():
-            cov.stop()
-            cov.save()
-
-        atexit.register(atexit_coverage)
-
-        cov.start()
-'''
-
-ANSIBALLZ_COVERAGE_CHECK_TEMPLATE = '''
-        try:
-            if PY3:
-                import importlib.util
-                if importlib.util.find_spec('coverage') is None:
-                    raise ImportError
-            else:
-                import imp
-                imp.find_module('coverage')
-        except ImportError:
-            print('{"msg": "Could not find `coverage` module.", "failed": true}')
-            sys.exit(1)
-'''
-
-ANSIBALLZ_RLIMIT_TEMPLATE = '''
-    import resource
-
-    existing_soft, existing_hard = resource.getrlimit(resource.RLIMIT_NOFILE)
-
-    # adjust soft limit subject to existing hard limit
-    requested_soft = min(existing_hard, %(rlimit_nofile)d)
-
-    if requested_soft != existing_soft:
-        try:
-            resource.setrlimit(resource.RLIMIT_NOFILE, (requested_soft, existing_hard))
-        except ValueError:
-            # some platforms (eg macOS) lie about their hard limit
-            pass
-'''
+ANSIBALLZ_TEMPLATE = (files('ansible.executor.ansiballz') / 'template.pyt').read_text()
 
 
 def _strip_comments(source):
@@ -431,6 +123,21 @@ NEW_STYLE_PYTHON_MODULE_RE = re.compile(
     # Core absolute imports
     br'from +ansible\.module_utils.* +import |'
     br'import +ansible\.module_utils\.)'
+)
+
+NEW_STYLE_POWERSHELL_MODULE_RE = re.compile(
+    br'''(?:
+        \#Requires\ -Module
+        |
+        \#Requires\ -Version
+        |
+        \#AnsibleRequires\ -OSVersion
+        |
+        \#AnsibleRequires\ -Powershell
+        |
+        \#AnsibleRequires\ -CSharpUtil
+    )''',
+    flags=re.VERBOSE | re.IGNORECASE,
 )
 
 
@@ -1068,12 +775,176 @@ def _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data):
         )
 
 
-def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
-                       become_method, become_user, become_password, become_flags, environment, remote_is_local=False):
-    """
-    Given the source of the module, convert it to a Jinja2 template to insert
-    module code and return whether it's a new or old style module.
-    """
+def _make_python_ansiballz(module_name, remote_module_fqn, b_module_data, module_args, task_vars, templar, module_compression, remote_is_local, pipelining):
+    date_time = time.gmtime()[:6]
+    if date_time[0] < 1980:
+        date_string = datetime.datetime(*date_time, tzinfo=datetime.timezone.utc).strftime('%c')
+        raise AnsibleError(f'Cannot create zipfile due to pre-1980 configured date: {date_string}')
+    params = dict(ANSIBLE_MODULE_ARGS=module_args,)
+    try:
+        json_params = json.dumps(params, cls=AnsibleJSONEncoder, vault_to_text=True)
+    except TypeError as e:
+        raise AnsibleError("Unable to pass options to module, they must be JSON serializable: %s" % to_native(e))
+
+    o_interpreter, o_args = _extract_interpreter(b_module_data)
+    if o_interpreter is None:
+        o_interpreter = u'/usr/bin/python'
+
+    shebang, interpreter = _get_shebang(o_interpreter, task_vars, templar, o_args, remote_is_local=remote_is_local)
+
+    try:
+        compression_method = getattr(zipfile, module_compression)
+    except AttributeError:
+        display.warning(u'Bad module compression string specified: %s.  Using ZIP_STORED (no compression)' % module_compression)
+        compression_method = zipfile.ZIP_STORED
+
+    lookup_path = os.path.join(C.DEFAULT_LOCAL_TMP, 'ansiballz_cache')
+    cached_module_filename = os.path.join(lookup_path, "%s-%s" % (remote_module_fqn, module_compression))
+
+    # Optimization -- don't lock if the module has already been cached
+    if os.path.exists(cached_module_filename):
+        display.debug('ANSIBALLZ: using cached module: %s' % cached_module_filename)
+        with open(cached_module_filename, 'rb') as module_data:
+            zipoutput = BytesIO(module_data.read())
+    else:
+        if module_name in action_write_locks.action_write_locks:
+            display.debug('ANSIBALLZ: Using lock for %s' % module_name)
+            lock = action_write_locks.action_write_locks[module_name]
+        else:
+            # If the action plugin directly invokes the module (instead of
+            # going through a strategy) then we don't have a cross-process
+            # Lock specifically for this module.  Use the "unexpected
+            # module" lock instead
+            display.debug('ANSIBALLZ: Using generic lock for %s' % module_name)
+            lock = action_write_locks.action_write_locks[None]
+
+        display.debug('ANSIBALLZ: Acquiring lock')
+        with lock:
+            display.debug('ANSIBALLZ: Lock acquired: %s' % id(lock))
+            # Check that no other process has created this while we were
+            # waiting for the lock
+            if not os.path.exists(cached_module_filename):
+                display.debug('ANSIBALLZ: Creating module')
+                # Create the module zip data
+                zipoutput = BytesIO(to_bytes(shebang) + b'\n')
+                zf = zipfile.ZipFile(zipoutput, mode='a', compression=compression_method)
+
+                # walk the module imports, looking for module_utils to send- they'll be added to the zipfile
+                recursive_finder(module_name, remote_module_fqn, b_module_data, zf, date_time)
+
+                display.debug('ANSIBALLZ: Writing module into payload')
+                _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data)
+
+                zf.close()
+
+                # Write the assembled module to a temp file (write to temp
+                # so that no one looking for the file reads a partially
+                # written file)
+                #
+                # FIXME: Once split controller/remote is merged, this can be simplified to
+                #        os.makedirs(lookup_path, exist_ok=True)
+                if not os.path.exists(lookup_path):
+                    try:
+                        # Note -- if we have a global function to setup, that would
+                        # be a better place to run this
+                        os.makedirs(lookup_path)
+                    except OSError:
+                        # Multiple processes tried to create the directory. If it still does not
+                        # exist, raise the original exception.
+                        if not os.path.exists(lookup_path):
+                            raise
+                display.debug('ANSIBALLZ: Writing module')
+                with open(cached_module_filename + '-part', 'wb') as f:
+                    zipoutput.seek(0)
+                    shutil.copyfileobj(zipoutput, f)
+
+                # Rename the file into its final position in the cache so
+                # future users of this module can read it off the
+                # filesystem instead of constructing from scratch.
+                display.debug('ANSIBALLZ: Renaming module')
+                os.rename(cached_module_filename + '-part', cached_module_filename)
+                display.debug('ANSIBALLZ: Done creating module')
+
+            else:
+                display.debug('ANSIBALLZ: Reading module after lock')
+                # Another process wrote the file while we were waiting for
+                # the write lock.  Go ahead and read the data from disk
+                # instead of re-creating it.
+                try:
+                    with open(cached_module_filename, 'rb') as f:
+                        zipoutput = BytesIO()
+                        shutil.copyfileobj(f, zipoutput)
+                        zipoutput.seek(0)
+                except IOError:
+                    raise AnsibleError('A different worker process failed to create module file. '
+                                       'Look at traceback for that process for debugging information.')
+    # FUTURE: the module cache entry should be invalidated if we got this value from a host-dependent source
+    rlimit_nofile = C.config.get_config_value('PYTHON_MODULE_RLIMIT_NOFILE', variables=task_vars)
+
+    if not isinstance(rlimit_nofile, int):
+        rlimit_nofile = int(templar.template(rlimit_nofile))
+
+    coverage_config = os.environ.get('_ANSIBLE_COVERAGE_CONFIG', '')
+    coverage_output = os.environ.get('_ANSIBLE_COVERAGE_OUTPUT', '')
+
+    zf = zipfile.ZipFile(zipoutput, mode='a', compression=compression_method)
+    zf.writestr(
+        _make_zinfo('sitecustomize.py', date_time, zf=zf),
+        to_bytes(
+            textwrap.dedent('''
+                import os
+                import sys
+                root = os.path.dirname(__file__)
+                if root[-4:-1] == '.py':
+                    root = root[:-1]
+                sys.path.insert(0, root)
+            ''')
+        )
+    )
+    zf.writestr(
+        _make_zinfo('_ansiballz.py', date_time, zf=zf),
+        to_bytes(
+            textwrap.dedent('''
+                ANSIBALLZ_PARAMS=%(params)r
+            ''')
+        ) % {
+            b'params': to_bytes(json_params),
+        }
+    )
+    zf.close()
+
+    if pipelining:
+        zipdata = to_text(
+            base64.b64encode(zipoutput.getvalue()),
+            errors='surrogate_or_strict'
+        )
+    else:
+        zipdata = ''
+
+    b_data = to_bytes(ACTIVE_ANSIBALLZ_TEMPLATE % dict(
+        zipdata=zipdata,
+        ansible_module=module_name,
+        module_fqn=remote_module_fqn,
+        shebang=shebang,
+        coding=ENCODING_STRING,
+        coverage_config=coverage_config,
+        coverage_output=coverage_output,
+        rlimit_nofile=rlimit_nofile,
+    ))
+
+    if pipelining:
+        return b_data, shebang
+
+    zf = zipfile.ZipFile(zipoutput, mode='a', compression=compression_method)
+    zf.writestr(
+        _make_zinfo('__main__.py', date_time, zf=zf),
+        b_data
+    )
+    zf.close()
+    return zipoutput.getvalue(), shebang
+
+
+def _determine_module_style(module_name, b_module_data):
     module_substyle = module_style = 'old'
 
     # module_style is something important to calling code (ActionBase).  It
@@ -1085,38 +956,42 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     if _is_binary(b_module_data):
         module_substyle = module_style = 'binary'
     elif REPLACER in b_module_data:
-        # Do REPLACER before from ansible.module_utils because we need make sure
-        # we substitute "from ansible.module_utils basic" for REPLACER
+        display.deprecated(f'{module_name!r} is utilizing old style module {REPLACER!r} strings.', version='2.20')
         module_style = 'new'
         module_substyle = 'python'
-        b_module_data = b_module_data.replace(REPLACER, b'from ansible.module_utils.basic import *')
     elif NEW_STYLE_PYTHON_MODULE_RE.search(b_module_data):
         module_style = 'new'
         module_substyle = 'python'
     elif REPLACER_WINDOWS in b_module_data:
+        display.deprecated(f'{module_name!r} is utilizing old style module {REPLACER_WINDOWS!r} strings.', version='2.20')
         module_style = 'new'
         module_substyle = 'powershell'
-        b_module_data = b_module_data.replace(REPLACER_WINDOWS, b'#Requires -Module Ansible.ModuleUtils.Legacy')
-    elif re.search(b'#Requires -Module', b_module_data, re.IGNORECASE) \
-            or re.search(b'#Requires -Version', b_module_data, re.IGNORECASE)\
-            or re.search(b'#AnsibleRequires -OSVersion', b_module_data, re.IGNORECASE) \
-            or re.search(b'#AnsibleRequires -Powershell', b_module_data, re.IGNORECASE) \
-            or re.search(b'#AnsibleRequires -CSharpUtil', b_module_data, re.IGNORECASE):
+    elif NEW_STYLE_POWERSHELL_MODULE_RE.search(b_module_data):
         module_style = 'new'
         module_substyle = 'powershell'
     elif REPLACER_JSONARGS in b_module_data:
+        display.deprecated(f'{module_name!r} is utilizing old style module {REPLACER_JSONARGS!r} strings.', version='2.20')
         module_style = 'new'
         module_substyle = 'jsonargs'
     elif b'WANT_JSON' in b_module_data:
         module_substyle = module_style = 'non_native_want_json'
+
+    return module_style, module_substyle
+
+
+def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
+                       become_method, become_user, become_password, become_flags, environment, remote_is_local=False, pipelining=False):
+    """
+    Given the source of the module, convert it to a Jinja2 template to insert
+    module code and return whether it's a new or old style module.
+    """
+    module_style, module_substyle = _determine_module_style(module_name, b_module_data)
 
     shebang = None
     # Neither old-style, non_native_want_json nor binary modules should be modified
     # except for the shebang line (Done by modify_module)
     if module_style in ('old', 'non_native_want_json', 'binary'):
         return b_module_data, module_style, shebang
-
-    output = BytesIO()
 
     try:
         remote_module_fqn = _get_ansible_module_fqn(module_path)
@@ -1130,155 +1005,13 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         remote_module_fqn = 'ansible.modules.%s' % module_name
 
     if module_substyle == 'python':
-        date_time = time.gmtime()[:6]
-        if date_time[0] < 1980:
-            date_string = datetime.datetime(*date_time, tzinfo=datetime.timezone.utc).strftime('%c')
-            raise AnsibleError(f'Cannot create zipfile due to pre-1980 configured date: {date_string}')
-        params = dict(ANSIBLE_MODULE_ARGS=module_args,)
-        try:
-            python_repred_params = repr(json.dumps(params, cls=AnsibleJSONEncoder, vault_to_text=True))
-        except TypeError as e:
-            raise AnsibleError("Unable to pass options to module, they must be JSON serializable: %s" % to_native(e))
-
-        try:
-            compression_method = getattr(zipfile, module_compression)
-        except AttributeError:
-            display.warning(u'Bad module compression string specified: %s.  Using ZIP_STORED (no compression)' % module_compression)
-            compression_method = zipfile.ZIP_STORED
-
-        lookup_path = os.path.join(C.DEFAULT_LOCAL_TMP, 'ansiballz_cache')
-        cached_module_filename = os.path.join(lookup_path, "%s-%s" % (remote_module_fqn, module_compression))
-
-        zipdata = None
-        # Optimization -- don't lock if the module has already been cached
-        if os.path.exists(cached_module_filename):
-            display.debug('ANSIBALLZ: using cached module: %s' % cached_module_filename)
-            with open(cached_module_filename, 'rb') as module_data:
-                zipdata = module_data.read()
-        else:
-            if module_name in action_write_locks.action_write_locks:
-                display.debug('ANSIBALLZ: Using lock for %s' % module_name)
-                lock = action_write_locks.action_write_locks[module_name]
-            else:
-                # If the action plugin directly invokes the module (instead of
-                # going through a strategy) then we don't have a cross-process
-                # Lock specifically for this module.  Use the "unexpected
-                # module" lock instead
-                display.debug('ANSIBALLZ: Using generic lock for %s' % module_name)
-                lock = action_write_locks.action_write_locks[None]
-
-            display.debug('ANSIBALLZ: Acquiring lock')
-            with lock:
-                display.debug('ANSIBALLZ: Lock acquired: %s' % id(lock))
-                # Check that no other process has created this while we were
-                # waiting for the lock
-                if not os.path.exists(cached_module_filename):
-                    display.debug('ANSIBALLZ: Creating module')
-                    # Create the module zip data
-                    zipoutput = BytesIO()
-                    zf = zipfile.ZipFile(zipoutput, mode='w', compression=compression_method)
-
-                    # walk the module imports, looking for module_utils to send- they'll be added to the zipfile
-                    recursive_finder(module_name, remote_module_fqn, b_module_data, zf, date_time)
-
-                    display.debug('ANSIBALLZ: Writing module into payload')
-                    _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data)
-
-                    zf.close()
-                    zipdata = base64.b64encode(zipoutput.getvalue())
-
-                    # Write the assembled module to a temp file (write to temp
-                    # so that no one looking for the file reads a partially
-                    # written file)
-                    #
-                    # FIXME: Once split controller/remote is merged, this can be simplified to
-                    #        os.makedirs(lookup_path, exist_ok=True)
-                    if not os.path.exists(lookup_path):
-                        try:
-                            # Note -- if we have a global function to setup, that would
-                            # be a better place to run this
-                            os.makedirs(lookup_path)
-                        except OSError:
-                            # Multiple processes tried to create the directory. If it still does not
-                            # exist, raise the original exception.
-                            if not os.path.exists(lookup_path):
-                                raise
-                    display.debug('ANSIBALLZ: Writing module')
-                    with open(cached_module_filename + '-part', 'wb') as f:
-                        f.write(zipdata)
-
-                    # Rename the file into its final position in the cache so
-                    # future users of this module can read it off the
-                    # filesystem instead of constructing from scratch.
-                    display.debug('ANSIBALLZ: Renaming module')
-                    os.rename(cached_module_filename + '-part', cached_module_filename)
-                    display.debug('ANSIBALLZ: Done creating module')
-
-            if zipdata is None:
-                display.debug('ANSIBALLZ: Reading module after lock')
-                # Another process wrote the file while we were waiting for
-                # the write lock.  Go ahead and read the data from disk
-                # instead of re-creating it.
-                try:
-                    with open(cached_module_filename, 'rb') as f:
-                        zipdata = f.read()
-                except IOError:
-                    raise AnsibleError('A different worker process failed to create module file. '
-                                       'Look at traceback for that process for debugging information.')
-        zipdata = to_text(zipdata, errors='surrogate_or_strict')
-
-        o_interpreter, o_args = _extract_interpreter(b_module_data)
-        if o_interpreter is None:
-            o_interpreter = u'/usr/bin/python'
-
-        shebang, interpreter = _get_shebang(o_interpreter, task_vars, templar, o_args, remote_is_local=remote_is_local)
-
-        # FUTURE: the module cache entry should be invalidated if we got this value from a host-dependent source
-        rlimit_nofile = C.config.get_config_value('PYTHON_MODULE_RLIMIT_NOFILE', variables=task_vars)
-
-        if not isinstance(rlimit_nofile, int):
-            rlimit_nofile = int(templar.template(rlimit_nofile))
-
-        if rlimit_nofile:
-            rlimit = ANSIBALLZ_RLIMIT_TEMPLATE % dict(
-                rlimit_nofile=rlimit_nofile,
-            )
-        else:
-            rlimit = ''
-
-        coverage_config = os.environ.get('_ANSIBLE_COVERAGE_CONFIG')
-
-        if coverage_config:
-            coverage_output = os.environ['_ANSIBLE_COVERAGE_OUTPUT']
-
-            if coverage_output:
-                # Enable code coverage analysis of the module.
-                # This feature is for internal testing and may change without notice.
-                coverage = ANSIBALLZ_COVERAGE_TEMPLATE % dict(
-                    coverage_config=coverage_config,
-                    coverage_output=coverage_output,
-                )
-            else:
-                # Verify coverage is available without importing it.
-                # This will detect when a module would fail with coverage enabled with minimal overhead.
-                coverage = ANSIBALLZ_COVERAGE_CHECK_TEMPLATE
-        else:
-            coverage = ''
-
-        output.write(to_bytes(ACTIVE_ANSIBALLZ_TEMPLATE % dict(
-            zipdata=zipdata,
-            ansible_module=module_name,
-            module_fqn=remote_module_fqn,
-            params=python_repred_params,
-            shebang=shebang,
-            coding=ENCODING_STRING,
-            date_time=date_time,
-            coverage=coverage,
-            rlimit=rlimit,
-        )))
-        b_module_data = output.getvalue()
+        b_module_data = b_module_data.replace(REPLACER, b'from ansible.module_utils.basic import *')
+        b_module_data, shebang = _make_python_ansiballz(module_name, remote_module_fqn, b_module_data, module_args,
+                                                        task_vars, templar, module_compression, remote_is_local, pipelining)
 
     elif module_substyle == 'powershell':
+        b_module_data = b_module_data.replace(REPLACER_WINDOWS, b'#Requires -Module Ansible.ModuleUtils.Legacy')
+
         # Powershell/winrm don't actually make use of shebang so we can
         # safely set this here.  If we let the fallback code handle this
         # it can fail in the presence of the UTF8 BOM commonly added by
@@ -1338,7 +1071,7 @@ def _extract_interpreter(b_module_data):
 
 
 def modify_module(module_name, module_path, module_args, templar, task_vars=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
-                  become_method=None, become_user=None, become_password=None, become_flags=None, environment=None, remote_is_local=False):
+                  become_method=None, become_user=None, become_password=None, become_flags=None, environment=None, remote_is_local=False, pipelining=False):
     """
     Used to insert chunks of code into modules before transfer rather than
     doing regular python imports.  This allows for more efficient transfer in
@@ -1370,7 +1103,7 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
     (b_module_data, module_style, shebang) = _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression,
                                                                 async_timeout=async_timeout, become=become, become_method=become_method,
                                                                 become_user=become_user, become_password=become_password, become_flags=become_flags,
-                                                                environment=environment, remote_is_local=remote_is_local)
+                                                                environment=environment, remote_is_local=remote_is_local, pipelining=pipelining)
 
     if module_style == 'binary':
         return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))

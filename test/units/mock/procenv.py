@@ -22,8 +22,9 @@ import sys
 import json
 
 from contextlib import contextmanager
-from io import BytesIO, StringIO
+from io import BytesIO, TextIOWrapper
 import unittest
+from unittest.mock import patch
 from ansible.module_utils.common.text.converters import to_bytes
 
 
@@ -35,14 +36,13 @@ def swap_stdin_and_argv(stdin_data='', argv_data=tuple()):
     real_stdin = sys.stdin
     real_argv = sys.argv
 
-    fake_stream = StringIO(stdin_data)
-    fake_stream.buffer = BytesIO(to_bytes(stdin_data))
+    fake_stream = TextIOWrapper(BytesIO(to_bytes(stdin_data)))
 
     try:
         sys.stdin = fake_stream
         sys.argv = argv_data
-
-        yield
+        with patch('select.select', return_value=([sys.stdin], [], [])):
+            yield
     finally:
         sys.stdin = real_stdin
         sys.argv = real_argv

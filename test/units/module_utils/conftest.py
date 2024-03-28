@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import json
 import sys
-from io import BytesIO
+from io import BytesIO, TextIOWrapper
 
 import pytest
 
@@ -34,10 +34,11 @@ def stdin(mocker, request):
     else:
         raise Exception('Malformed data to the stdin pytest fixture')
 
-    fake_stdin = BytesIO(to_bytes(args, errors='surrogate_or_strict'))
+    fake_stdin = TextIOWrapper(BytesIO(to_bytes(args, errors='surrogate_or_strict')))
 
-    mocker.patch('ansible.module_utils.basic.sys.stdin', mocker.MagicMock())
-    mocker.patch('ansible.module_utils.basic.sys.stdin.buffer', fake_stdin)
+    mocker.patch('ansible.module_utils.basic.sys.stdin', fake_stdin)
+
+    mocker.patch('select.select', return_value=([fake_stdin], [], []))
 
     yield fake_stdin
 

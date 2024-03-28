@@ -14,6 +14,7 @@ def main():
         '.ps1',
         '.psm1',
         '.py',
+        '.pyt',
     )
 
     skip_paths = set([

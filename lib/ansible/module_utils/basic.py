@@ -70,6 +70,11 @@ except ImportError:
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
 
+try:
+    from _ansiballz import ANSIBALLZ_PARAMS  # type: ignore[import]
+except ImportError:
+    ANSIBALLZ_PARAMS = None
+
 from ._text import to_native, to_bytes, to_text
 from ansible.module_utils.common.text.converters import (
     jsonify,
@@ -307,24 +312,32 @@ def _load_params():
     inside it as a copy in your own code.
     '''
     global _ANSIBLE_ARGS
-    if _ANSIBLE_ARGS is not None:
-        buffer = _ANSIBLE_ARGS
-    else:
-        # debug overrides to read args from file or cmdline
 
-        # Avoid tracebacks when locale is non-utf8
-        # We control the args and we pass them as utf8
+    try:
+        stdin_ready = bool(select.select([sys.stdin], [], [], 0)[0])
+    except Exception:
+        stdin_ready = False
+
+    buffer = ''
+    if stdin_ready:
+        buffer = sys.stdin.buffer.read()
+
+    if not buffer:
         if len(sys.argv) > 1:
+            # Avoid tracebacks when locale is non-utf8
+            # We control the args and we pass them as utf8
             if os.path.isfile(sys.argv[1]):
                 fd = open(sys.argv[1], 'rb')
                 buffer = fd.read()
                 fd.close()
             else:
                 buffer = sys.argv[1].encode('utf-8', errors='surrogateescape')
-        # default case, read from stdin
-        else:
-            buffer = sys.stdin.buffer.read()
-        _ANSIBLE_ARGS = buffer
+        elif _ANSIBLE_ARGS is not None:
+            buffer = _ANSIBLE_ARGS
+        elif ANSIBALLZ_PARAMS is not None:
+            buffer = ANSIBALLZ_PARAMS
+
+    _ANSIBLE_ARGS = buffer
 
     try:
         params = json.loads(buffer.decode('utf-8'))
