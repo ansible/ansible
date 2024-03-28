@@ -27,8 +27,9 @@ from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeEr
 from ansible.module_utils.six import string_types, integer_types, reraise, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
-from ansible.module_utils.common.yaml import yaml_load, yaml_load_all
 from ansible.parsing.ajson import AnsibleJSONEncoder
+from ansible.parsing.utils.yaml import from_yaml as yaml_load
+from ansible.parsing.utils.yaml import from_yaml_all as yaml_load_all
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.template import recursive_check_defined
 from ansible.utils.display import Display

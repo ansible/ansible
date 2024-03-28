@@ -397,10 +397,13 @@
     that:
       - "'---\nbananas: yellow\napples: red'|from_yaml == {'bananas': 'yellow', 'apples': 'red'}"
       - "2|from_yaml == 2"
+      - "2|from_yaml == 2"
       - "'---\nbananas: yellow\n---\napples: red'|from_yaml_all|list == [{'bananas': 'yellow'}, {'apples': 'red'}]"
       - "2|from_yaml_all == 2"
       - "unsafe_fruit|from_yaml == {'bananas': 'yellow', 'apples': 'red'}"
       - "unsafe_fruit_all|from_yaml_all|list == [{'bananas': 'yellow'}, {'apples': 'red'}]"
+      # direclty check unsafe as 'indirect' is already made 'safe for yaml'
+      - "'---\nbananas: !unsafe yellow\napples: red'|from_yaml == {'bananas': 'yellow', 'apples': 'red'}"
   vars:
     unsafe_fruit: !unsafe |
       ---

@@ -1,0 +1,2 @@
+minor_changes:
+  - filters from_yaml and from_yaml_all now accept 'Ansible specific Yaml', which includes vaults and `!unsafe` custom constructors.
