@@ -43,31 +43,40 @@ class ActionModule(ActionBase):
 
         module = self._task.args.get('use', 'auto')
 
-        if self._task.delegate_to:
-            # TODO: template delegate_to if needed
-            hosts_vars = task_vars['hostvars'][self._task.delegate_to]
-            tvars = combine_vars(self._task.vars, task_vars.get('delegated_vars', {}))
-        else:
-            hosts_vars = task_vars
-            tvars = task_vars
         try:
             if module == 'auto':
+
+                if self._task.delegate_to:
+                    # TODO: template delegate_to if needed
+                    hosts_vars = task_vars['hostvars'][self._task.delegate_to]
+                    tvars = combine_vars(self._task.vars, task_vars.get('delegated_vars', {}))
+                else:
+                    hosts_vars = task_vars
+                    tvars = task_vars
+
+                if hosts_vars.get('_ansible_facts_gathered', False):
+                    facts = hosts_vars
+                    pmgr = 'pkg_mgr'
+                    local = 'local'
+                else:
+                    # very expensive step, we actually run fact gathering because we don't have facts for this host.
+                    facts = self._execute_module(
+                            module_name='ansible.legacy.setup',
+                            module_args=dict(filter='ansible_pkg_mgr,local', gather_subset='!all,local'),
+                            task_vars=task_vars)
+                    pmgr = 'ansible_pkg_mgr'
+                    local= 'ansible_local'
+
                 try:
-                    module = hosts_vars['ansible_local']['overrides']['pkg_mgr']
+                    module = facts['ansible_facts'][local]['overrides']['pkg_mgr']
                 except KeyError:
                     module = C.config.get_config_value('PACKAGE_MANAGER_OVERRIDE', variables=tvars)
 
                 if not module:
                     try:
-                        module = hosts_vars['ansible_facts']['pkg_mgr']
+                        module = facts['ansible_facts'][pmgr]
                     except KeyError:
-                        # very expensive step, we actually run fact gathering because we don't have facts for this host.
-                        facts = self._execute_module(
-                            module_name='ansible.legacy.setup',
-                            module_args=dict(filter='ansible_pkg_mgr', gather_subset='!all'),
-                            task_vars=task_vars)
-                        display.debug("Facts %s" % facts)
-                        module = facts.get('ansible_facts', {}).get('ansible_pkg_mgr', 'auto')
+                        module = 'auto'
 
             if module and module != 'auto':
                 if not self._shared_loader_obj.module_loader.has_plugin(module):
