@@ -386,6 +386,8 @@ class GalaxyRole(object):
                         else:
                             os.makedirs(self.path)
 
+                        boundary = unfrackpath(archive_parent_dir)
+
                         # We strip off any higher-level directories for all of the files
                         # contained within the tar file here. The default is 'github_repo-target'.
                         # Gerrit instances, on the other hand, does not have a parent directory at all.
@@ -400,28 +402,25 @@ class GalaxyRole(object):
                                 if not (attr_value := getattr(member, attr, None)):
                                     continue
 
-                                if attr_value.startswith(os.sep) and not is_subpath(attr_value, archive_parent_dir):
-                                    err = f"Invalid {attr} for tarfile member: path {attr_value} is not a subpath of the role {archive_parent_dir}"
-                                    raise AnsibleError(err)
-
                                 if attr == 'linkname':
                                     # Symlinks are relative to the link
-                                    relative_to_archive_dir = os.path.dirname(getattr(member, 'name', ''))
-                                    archive_dir_path = os.path.join(archive_parent_dir, relative_to_archive_dir, attr_value)
+                                    relative_to = os.path.join(boundary, os.path.dirname(getattr(member, 'name', '')))
                                 else:
                                     # Normalize paths that start with the archive dir
                                     attr_value = attr_value.replace(archive_parent_dir, "", 1)
                                     attr_value = os.path.join(*attr_value.split(os.sep))  # remove leading os.sep
-                                    archive_dir_path = os.path.join(archive_parent_dir, attr_value)
+                                    relative_to = boundary
 
-                                resolved_archive = unfrackpath(archive_parent_dir)
-                                resolved_path = unfrackpath(archive_dir_path)
-                                if not is_subpath(resolved_path, resolved_archive):
-                                    err = f"Invalid {attr} for tarfile member: path {resolved_path} is not a subpath of the role {resolved_archive}"
-                                    raise AnsibleError(err)
+                                abs_path = unfrackpath(os.path.join(relative_to, attr_value))
+                                if not is_subpath(abs_path, boundary):
+                                    if attr == 'name':
+                                        # this member is outside of the role, skip
+                                        break
+                                    raise AnsibleError(f"Invalid {attr} for tarfile member: path {abs_path} is not a subpath of the role {boundary}")
 
-                                relative_path = os.path.join(*resolved_path.replace(resolved_archive, "", 1).split(os.sep)) or '.'
-                                setattr(member, attr, relative_path)
+                                if attr == 'name' or '..' not in attr_value:
+                                    attr_value = os.path.join(*abs_path.replace(relative_to, "", 1).split(os.sep)) or '.'
+                                setattr(member, attr, attr_value)
 
                             if _check_working_data_filter():
                                 # deprecated: description='extract fallback without filter' python_version='3.11'
