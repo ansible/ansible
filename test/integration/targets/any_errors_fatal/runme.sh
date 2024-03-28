@@ -49,3 +49,7 @@ ansible-playbook -i inventory "$@" 80981.yml | tee out.txt
 [ "$(grep -c 'SHOULD NOT HAPPEN' out.txt)" -eq 0 ]
 [ "$(grep -c 'rescue' out.txt)" -eq 2 ]
 [ "$(grep -c 'recovered' out.txt)" -eq 2 ]
+
+# -v here is intentional as we rely on the output of the command module that is by default not printed
+ansible-playbook -i inventory -v "$@" 82834.yml | tee out.txt
+[ "$(grep -c 'SHOULD NOT HAPPEN' out.txt)" -eq 0 ]
