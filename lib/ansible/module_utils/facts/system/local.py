@@ -104,8 +104,14 @@ class LocalFactCollector(BaseFactCollector):
                         if sect not in fact:
                             fact[sect] = {}
                         for opt in cp.options(sect):
-                            val = cp.get(sect, opt)
-                            fact[sect][opt] = val
+                            try:
+                                val = cp.get(sect, opt)
+                            except configparser.Error as ex:
+                                fact = "error loading facts as ini - please check content: %s (%s)" % (fn, ex)
+                                module.warn(fact)
+                                continue
+                            else:
+                                fact[sect][opt] = val
             except Exception as e:
                 fact = "Failed to convert (%s) to JSON: %s" % (fn, to_text(e))
                 module.warn(fact)
