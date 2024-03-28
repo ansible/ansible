@@ -115,6 +115,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         opt_help.add_basedir_options(self.parser)
         opt_help.add_runtask_options(self.parser)
         opt_help.add_tasknoplay_options(self.parser)
+        opt_help.add_live_options(self.parser)
 
         # options unique to shell
         self.parser.add_argument('pattern', help='host pattern', metavar='pattern', default='all', nargs='?')
@@ -382,8 +383,18 @@ class ConsoleCLI(CLI, cmd.Cmd):
         else:
             display.display("Please specify become value, e.g. `become yes`")
 
+<<<<<<< HEAD
     def help_become(self):
         display.display("Toggle whether the tasks are run with become")
+=======
+    def do_live(self, arg):
+        """Toggle whether plays run with become"""
+        if arg:
+            self.options.live = boolean(arg, strict=False)
+            display.v("live changed to %s" % self.options.live)
+        else:
+            display.display("Please specify live value, e.g. `live yes`")
+>>>>>>> f945216a43 (Added ability to modules to emit 'update messsages')
 
     def do_remote_user(self, arg):
         """Given a username, set the remote user plays are run by"""

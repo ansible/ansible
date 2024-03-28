@@ -396,3 +396,8 @@ def add_vault_options(parser):
                             help='ask for vault password')
     base_group.add_argument('--vault-password-file', '--vault-pass-file', default=[], dest='vault_password_files',
                             help="vault password file", type=unfrack_path(follow=False), action='append')
+
+
+def add_live_options(parser):
+    parser.add_argument('--live', default=False, dest='live', action='store_true',
+                        help="Requests and displays 'live updates' from executing actions and connections that support it.")
