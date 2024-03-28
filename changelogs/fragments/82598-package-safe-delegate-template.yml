@@ -1,0 +1,3 @@
+bugfixes:
+- package - Resolve issue of determining the package manager for ``use=auto`` when ``delegate_to``
+  is derived from an unsafe data source (https://github.com/ansible/ansible/issues/82598)
