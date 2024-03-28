@@ -439,6 +439,15 @@ def test_timeout_server_config(timeout_cli, timeout_cfg, timeout_fallback, expec
     assert galaxy_cli.api_servers[0].timeout == expected_timeout
 
 
+def test_init_collection(collection_input):
+    input_dir, output_dir = collection_input
+    file_hash = secure_hash_s(open(os.path.join(input_dir, 'README.md')).read())
+    assert file_hash == '08f24200b9fbe18903e7a50930c9d0df0b8d7da3'  # shasum test/units/cli/test_data/collection_skeleton/README.md.j2
+
+    assert os.path.isfile(os.path.join(input_dir, 'roles/common/templates/file-a.j2'))
+    assert os.path.isfile(os.path.join(input_dir, 'roles/common/templates/file-a'))
+
+
 def test_build_collection_no_galaxy_yaml():
     fake_path = u'/fake/ÅÑŚÌβŁÈ/path'
     expected = to_native("The collection galaxy.yml path '%s/galaxy.yml' does not exist." % fake_path)
@@ -838,7 +847,7 @@ def test_build_with_symlink_inside_collection(collection_input):
         actual_file = secure_hash_s(linked_file_obj.read())
         linked_file_obj.close()
 
-        assert actual_file == '08f24200b9fbe18903e7a50930c9d0df0b8d7da3'  # shasum test/units/cli/test_data/collection_skeleton/README.md
+        assert actual_file == '08f24200b9fbe18903e7a50930c9d0df0b8d7da3'  # shasum test/units/cli/test_data/collection_skeleton/README.md.j2
 
 
 def test_publish_no_wait(galaxy_server, collection_artifact, monkeypatch):
