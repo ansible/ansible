@@ -1,0 +1,2 @@
+minor_changes:
+- user - Add mobile parameter for creating mobile accounts on macOS (https://github.com/ansible/ansible/pull/81534).
