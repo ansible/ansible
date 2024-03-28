@@ -3,7 +3,7 @@
         "doc": {
             "collection": "testns.testcol",
             "deprecated": {
-                "alternative": "Use some other module",
+                "alternatives": "Use some other module",
                 "removed_from_collection": "testns.testcol2",
                 "removed_in": "3.0.0",
                 "why": "Test deprecation"

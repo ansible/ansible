@@ -15,6 +15,10 @@ from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from ansible.release import __version__
 from ansible.utils.fqcn import add_internal_fqcns
 
+# initialize config manager/config data to read/store global settings
+# and generate 'pseudo constants' for app consumption.
+config = ConfigManager()
+
 
 def _warning(msg):
     ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
@@ -34,6 +38,26 @@ def _deprecated(msg, version):
     except Exception:
         import sys
         sys.stderr.write(' [DEPRECATED] %s, to be removed in %s\n' % (msg, version))
+
+
+def handle_config_noise(display=None):
+
+    if display is not None:
+        w = display.warning
+        d = display.deprecated
+    else:
+        w = _warning
+        d = _deprecated
+
+    while config.WARNINGS:
+        warn = config.WARNINGS.pop(0)
+        w(warn)
+
+    while config.DEPRECATED:
+        # tuple with name and options
+        dep = config.DEPRECATED.pop(0)
+        msg = config.get_deprecated_msg_from_config(dep[1])
+        d(msg, version=dep[1]['version'])
 
 
 def set_constant(name, value, export=vars()):
@@ -218,11 +242,8 @@ MAGIC_VARIABLE_MAPPING = dict(
 )
 
 # POPULATE SETTINGS FROM CONFIG ###
-config = ConfigManager()
-
-# Generate constants from config
 for setting in config.get_configuration_definitions():
     set_constant(setting, config.get_config_value(setting, variables=vars()))
 
-for warn in config.WARNINGS:
-    _warning(warn)
+# emit any warnings or deprecations
+handle_config_noise()

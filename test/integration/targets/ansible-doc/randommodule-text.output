@@ -20,7 +20,7 @@ OPTIONS (= inicates it is required):
         set_via:
           env:
           - deprecated:
-              alternative: none
+              alternatives: none
               removed_in: 2.0.0
               version: 2.0.0
               why: Test deprecation

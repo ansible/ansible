@@ -22,7 +22,7 @@ DOCUMENTATION = '''
           - key: fact_caching_connection
             section: defaults
             deprecated:
-              alternative: none
+              alternatives: none
               why: Test deprecation
               version: '2.0.0'
       _prefix:
@@ -34,7 +34,7 @@ DOCUMENTATION = '''
           - key: fact_caching_prefix
             section: defaults
         deprecated:
-          alternative: none
+          alternatives: none
           why: Another test deprecation
           removed_at_date: '2050-01-01'
       _timeout:
@@ -49,7 +49,7 @@ DOCUMENTATION = '''
           - name: notsjonfile_fact_caching_timeout
             version_added: 1.5.0
             deprecated:
-              alternative: do not use a variable
+              alternatives: do not use a variable
               why: Test deprecation
               version: '3.0.0'
         type: integer

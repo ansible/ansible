@@ -9,7 +9,7 @@ class ModuleDocFragment(object):
     DOCUMENTATION = r'''
 options: {}
 deprecated:
-    alternative: Use some other module
+    alternatives: Use some other module
     why: Test deprecation
     removed_in: '3.0.0'
 '''

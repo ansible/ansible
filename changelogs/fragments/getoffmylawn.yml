@@ -1,0 +1,2 @@
+minor_changes:
+  - plugins, deprecations and warnings concerning configuration are now displayted to the user, techinical issue that prevented 'de duplication' have been resolved.
