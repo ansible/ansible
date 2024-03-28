@@ -584,7 +584,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         at least one task was run
         '''
 
-        return host.name in self._completed and not self._metadata.allow_duplicates
+        return host.name in self._completed
 
     def compile(self, play, dep_chain=None):
         '''
