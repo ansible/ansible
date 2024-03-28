@@ -81,6 +81,8 @@ class ActionModule(ActionBase):
             # re-run interpreter discovery if we ran it in the first iteration
             if self._discovered_interpreter_key:
                 task_vars['ansible_facts'].pop(self._discovered_interpreter_key, None)
+            elif self._task.delegate_to and self._delegate_discovered_interpreter_key:
+                task_vars['ansible_delegated_vars'][self._task.delegate_to]['ansible_facts'].pop(self._delegate_discovered_interpreter_key)
             # call connection reset between runs if it's there
             try:
                 self._connection.reset()
