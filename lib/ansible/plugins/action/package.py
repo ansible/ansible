@@ -54,7 +54,7 @@ class ActionModule(ActionBase):
         try:
             if module == 'auto':
                 try:
-                    module = hosts_vars['ansible_local']['overrides']]['pkg_mgr']
+                    module = hosts_vars['ansible_local']['overrides']['pkg_mgr']
                 except KeyError:
                     module = C.config.get_config_value('PACKAGE_MANAGER_OVERRIDE', variables=tvars)
 
