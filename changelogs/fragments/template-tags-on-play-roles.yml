@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix templating ``tags`` on plays and roles.
