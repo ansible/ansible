@@ -8,8 +8,6 @@ import os
 
 import pytest
 
-from io import StringIO
-
 from unittest.mock import MagicMock
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.module_utils.common.text.converters import to_bytes
@@ -207,9 +205,8 @@ class TestConnectionWinRM(object):
         winrm.HAVE_KERBEROS = kerb
 
         pc = PlayContext()
-        new_stdin = StringIO()
 
-        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn = connection_loader.get('winrm', pc)
         conn.set_options(var_options=options, direct=direct)
         conn._build_winrm_kwargs()
 
@@ -245,8 +242,7 @@ class TestWinRMKerbAuth(object):
 
         winrm.HAS_PEXPECT = False
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn = connection_loader.get('winrm', pc)
         conn.set_options(var_options=options)
         conn._build_winrm_kwargs()
 
@@ -279,8 +275,7 @@ class TestWinRMKerbAuth(object):
 
         winrm.HAS_PEXPECT = True
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn = connection_loader.get('winrm', pc)
         conn.set_options(var_options=options)
         conn._build_winrm_kwargs()
 
@@ -308,8 +303,7 @@ class TestWinRMKerbAuth(object):
 
         winrm.HAS_PEXPECT = False
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn = connection_loader.get('winrm', pc)
         options = {"_extras": {}, "ansible_winrm_kinit_cmd": "/fake/kinit"}
         conn.set_options(var_options=options)
         conn._build_winrm_kwargs()
@@ -331,8 +325,7 @@ class TestWinRMKerbAuth(object):
 
         winrm.HAS_PEXPECT = True
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn = connection_loader.get('winrm', pc)
         options = {"_extras": {}, "ansible_winrm_kinit_cmd": "/fake/kinit"}
         conn.set_options(var_options=options)
         conn._build_winrm_kwargs()
@@ -356,8 +349,7 @@ class TestWinRMKerbAuth(object):
 
         winrm.HAS_PEXPECT = False
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn = connection_loader.get('winrm', pc)
         conn.set_options(var_options={"_extras": {}})
         conn._build_winrm_kwargs()
 
@@ -381,8 +373,7 @@ class TestWinRMKerbAuth(object):
 
         winrm.HAS_PEXPECT = True
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn = connection_loader.get('winrm', pc)
         conn.set_options(var_options={"_extras": {}})
         conn._build_winrm_kwargs()
 
@@ -404,8 +395,7 @@ class TestWinRMKerbAuth(object):
 
         winrm.HAS_PEXPECT = False
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn = connection_loader.get('winrm', pc)
         conn.set_options(var_options={"_extras": {}})
         conn._build_winrm_kwargs()
 
@@ -429,8 +419,7 @@ class TestWinRMKerbAuth(object):
         winrm.HAS_PEXPECT = True
         pc = PlayContext()
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn = connection_loader.get('winrm', pc)
         conn.set_options(var_options={"_extras": {}})
         conn._build_winrm_kwargs()
 
@@ -444,8 +433,7 @@ class TestWinRMKerbAuth(object):
         requests_exc = pytest.importorskip("requests.exceptions")
 
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn = connection_loader.get('winrm', pc)
 
         mock_proto = MagicMock()
         mock_proto.run_command.side_effect = requests_exc.Timeout("msg")
@@ -464,8 +452,7 @@ class TestWinRMKerbAuth(object):
         requests_exc = pytest.importorskip("requests.exceptions")
 
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn = connection_loader.get('winrm', pc)
 
         mock_proto = MagicMock()
         mock_proto.run_command.return_value = "command_id"
@@ -483,8 +470,7 @@ class TestWinRMKerbAuth(object):
 
     def test_connect_failure_auth_401(self, monkeypatch):
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn = connection_loader.get('winrm', pc)
         conn.set_options(var_options={"ansible_winrm_transport": "basic", "_extras": {}})
 
         mock_proto = MagicMock()
@@ -499,8 +485,7 @@ class TestWinRMKerbAuth(object):
 
     def test_connect_failure_other_exception(self, monkeypatch):
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn = connection_loader.get('winrm', pc)
         conn.set_options(var_options={"ansible_winrm_transport": "basic", "_extras": {}})
 
         mock_proto = MagicMock()
@@ -515,8 +500,7 @@ class TestWinRMKerbAuth(object):
 
     def test_connect_failure_operation_timed_out(self, monkeypatch):
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn = connection_loader.get('winrm', pc)
         conn.set_options(var_options={"ansible_winrm_transport": "basic", "_extras": {}})
 
         mock_proto = MagicMock()
@@ -531,8 +515,7 @@ class TestWinRMKerbAuth(object):
 
     def test_connect_no_transport(self):
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn = connection_loader.get('winrm', pc)
         conn.set_options(var_options={"_extras": {}})
         conn._build_winrm_kwargs()
         conn._winrm_transport = []
