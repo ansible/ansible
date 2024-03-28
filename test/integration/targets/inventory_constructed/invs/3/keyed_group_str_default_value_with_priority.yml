@@ -1,0 +1,13 @@
+plugin: ansible.builtin.constructed
+keyed_groups:
+  - key: keyed_group_1
+    default_value: "priority_2"
+    prefix: b_keyed_group
+    vars:
+      ansible_group_priority: 2
+
+  - key: keyed_group_2
+    default_value: "priority_3"
+    prefix: a_keyed_group
+    vars:
+      ansible_group_priority: '{{("priority_3" in keyed_group_2)|ternary(3, 1)}}'
