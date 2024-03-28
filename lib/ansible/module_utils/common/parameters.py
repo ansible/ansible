@@ -748,11 +748,11 @@ def _validate_sub_spec(
                 elements = parameters[param]
 
             for idx, sub_parameters in enumerate(elements):
-                no_log_values.update(set_fallbacks(sub_spec, sub_parameters))
-
                 if not isinstance(sub_parameters, dict):
                     errors.append(SubParameterTypeError("value of '%s' must be of type dict or list of dicts" % param))
                     continue
+
+                no_log_values.update(set_fallbacks(sub_spec, sub_parameters))
 
                 # Set prefix for warning messages
                 new_prefix = prefix + param
