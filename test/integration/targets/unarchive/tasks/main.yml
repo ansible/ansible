@@ -21,3 +21,4 @@
 - import_tasks: test_invalid_options.yml
 - import_tasks: test_ownership_top_folder.yml
 - import_tasks: test_relative_dest.yml
+- import_tasks: test_zip_invalid_datetimestamp.yml

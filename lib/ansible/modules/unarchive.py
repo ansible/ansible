@@ -609,8 +609,11 @@ class ZipArchive(object):
             # Note: this timestamp calculation has a rounding error
             # somewhere... unzip and this timestamp can be one second off
             # When that happens, we report a change and re-unzip the file
-            dt_object = datetime.datetime(*(time.strptime(pcs[6], '%Y%m%d.%H%M%S')[0:6]))
-            timestamp = time.mktime(dt_object.timetuple())
+            try:
+                dt_object = datetime.datetime(*(time.strptime(pcs[6], '%Y%m%d.%H%M%S')[0:6]))
+                timestamp = time.mktime(dt_object.timetuple())
+            except ValueError as e:
+                self.module.exit_json(msg="Invalid timestamp: %s" % to_text(e), exception=traceback.format_exc())
 
             # Compare file timestamps
             if stat.S_ISREG(st.st_mode):

@@ -1,0 +1,3 @@
+---
+bugfixes:
+- unarchive - catch exception when ZIP file has an invalid timestamp (https://github.com/ansible/ansible/issues/81092).
