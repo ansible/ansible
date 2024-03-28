@@ -57,6 +57,7 @@ from ansible.module_utils.common.validation import (
     check_required_one_of,
     check_required_if,
     check_required_by,
+    check_required_none,
     check_type_bits,
     check_type_bool,
     check_type_bytes,
@@ -803,8 +804,9 @@ def _validate_sub_spec(
 
                 no_log_values.update(_set_defaults(sub_spec, sub_parameters, False))
 
+                required_options = []
                 try:
-                    check_required_arguments(sub_spec, sub_parameters, options_context)
+                    check_required_arguments(sub_spec, sub_parameters, options_context, add_required=required_options)
                 except TypeError as e:
                     errors.append(RequiredError(to_native(e)))
 
@@ -813,9 +815,13 @@ def _validate_sub_spec(
 
                 for check in _ADDITIONAL_CHECKS:
                     try:
-                        check['func'](value.get(check['attr']), sub_parameters, options_context)
+                        check['func'](value.get(check['attr']), sub_parameters, options_context, add_required=required_options)
                     except TypeError as e:
                         errors.append(check['err'](to_native(e)))
+                try:
+                    check_required_none(required_options, sub_spec, sub_parameters, options_context)
+                except TypeError as e:
+                    errors.append(RequiredError(to_native(e)))
 
                 no_log_values.update(_set_defaults(sub_spec, sub_parameters))
 

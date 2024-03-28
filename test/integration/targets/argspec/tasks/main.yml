@@ -8,12 +8,36 @@
   ignore_errors: true
 
 - argspec:
+    required:
+    required_one_of_one: value
+  register: argspec_required_fail_none
+
+- argspec:
     required: value
     required_one_of_two: value
 
 - argspec:
     required: value
+    # Explicit None is allowed for 'required_one_of_three'
+    required_one_of_three:
+  register: argspec_required_one_of_explicitly_allowed
+
+- argspec:
+    required: value
+    # Explicit None is not allowed for 'required_one_of_four'
+    required_one_of_four:
+  register: argspec_required_one_of_explicitly_disallowed
+  ignore_errors: true
+
+- argspec:
+    required: value
   register: argspec_required_one_of_fail
+  ignore_errors: true
+
+- argspec:
+    required: value
+    required_one_of_one:
+  register: argspec_required_one_of_fail_none
   ignore_errors: true
 
 - argspec:
@@ -32,6 +56,33 @@
   ignore_errors: true
 
 - argspec:
+    required: value
+    required_one_of_two: value
+    required_by_one:
+    required_by_two:
+    required_by_three: value
+  register: argspec_required_by_fail_none_1
+  ignore_errors: true
+
+- argspec:
+    required: value
+    required_one_of_two: value
+    required_by_one: value
+    required_by_two:
+    required_by_three: value
+  register: argspec_required_by_fail_none_2
+  ignore_errors: true
+
+- argspec:
+    required: value
+    required_one_of_two: value
+    required_by_one:
+    required_by_two:
+    required_by_three: value
+  register: argspec_required_by_fail_none_3
+  ignore_errors: true
+
+- argspec:
     state: absent
     required: value
     required_one_of_one: value
@@ -41,6 +92,14 @@
     required: value
     required_one_of_one: value
   register: argspec_required_if_fail
+  ignore_errors: true
+
+- argspec:
+    state: present
+    path:
+    required: value
+    required_one_of_one: value
+  register: argspec_required_if_fail_none
   ignore_errors: true
 
 - argspec:
@@ -62,6 +121,15 @@
     required: value
     required_one_of_one: value
   register: argspec_mutually_exclusive_fail
+  ignore_errors: true
+
+- argspec:
+    state: present
+    content: foo
+    path:
+    required: value
+    required_one_of_one: value
+  register: argspec_mutually_exclusive_fail_none
   ignore_errors: true
 
 - argspec:
@@ -137,6 +205,15 @@
 - argspec:
     required_together:
       - thing: foo
+        other:
+    required: value
+    required_one_of_one: value
+  register: argspec_required_together_fail_none
+  ignore_errors: true
+
+- argspec:
+    required_together:
+      - thing: foo
         other: bar
     required: value
     required_one_of_one: value
@@ -163,6 +240,15 @@
   ignore_errors: true
 
 - argspec:
+    required_if:
+      - thing: foo
+        other:
+    required: value
+    required_one_of_one: value
+  register: argspec_required_if_fail_2_none
+  ignore_errors: true
+
+- argspec:
     required_one_of:
       - thing: foo
         other: bar
@@ -178,6 +264,14 @@
   ignore_errors: true
 
 - argspec:
+    required_one_of:
+      - thing:
+    required: value
+    required_one_of_one: value
+  register: argspec_required_one_of_fail_2_none
+  ignore_errors: true
+
+- argspec:
     required_by:
       - thing: foo
         other: bar
@@ -190,6 +284,33 @@
     required: value
     required_one_of_one: value
   register: argspec_required_by_fail_2
+  ignore_errors: true
+
+- argspec:
+    required_by:
+      - thing: foo
+        other:
+    required: value
+    required_one_of_one: value
+  register: argspec_required_by_fail_2_none_1
+  ignore_errors: true
+
+- argspec:
+    required_by:
+      - thing:
+        other: bar
+    required: value
+    required_one_of_one: value
+  register: argspec_required_by_fail_2_none_2
+  ignore_errors: true
+
+- argspec:
+    required_by:
+      - thing:
+        other:
+    required: value
+    required_one_of_one: value
+  register: argspec_required_by_fail_2_none_3
   ignore_errors: true
 
 - argspec:
@@ -238,6 +359,14 @@
     required: value
     required_one_of_one: value
   register: argspec_fail_required_together_2
+  ignore_errors: true
+
+- argspec:
+    required_together_one: foo
+    required_together_two:
+    required: value
+    required_one_of_one: value
+  register: argspec_fail_required_together_2_none
   ignore_errors: true
 
 - argspec:
@@ -493,14 +622,33 @@
 - assert:
     that:
       - argspec_required_fail is failed
+      - argspec_required_fail_none is succeeded
+      - "'required parameter required is none (null)' == argspec_required_fail_none.deprecations[0]['msg']"
 
       - argspec_required_one_of_fail is failed
+      - argspec_required_one_of_fail_none is succeeded
+      - "'required parameter required_one_of_one is none (null)' == argspec_required_one_of_fail_none.deprecations[0]['msg']"
+
+      - argspec_required_one_of_explicitly_allowed.deprecations is undefined
+      - argspec_required_one_of_explicitly_disallowed is failed
+      - argspec_required_one_of_explicitly_disallowed.msg == 'required parameter required_one_of_four cannot be none (null)'
 
       - argspec_required_by_fail is failed
+      - argspec_required_by_fail_none_1 is succeeded
+      - argspec_required_by_fail_none_1.deprecations | length == 1
+      - argspec_required_by_fail_none_1.deprecations[0].msg == 'The explicit none (null) value specified to required_by_one will not be treated as "not specified" in the future'
+      - argspec_required_by_fail_none_2 is failed
+      - argspec_required_by_fail_none_2.msg == "missing parameter(s) required by 'required_by_one': required_by_two"
+      - argspec_required_by_fail_none_3 is succeeded
+      - argspec_required_by_fail_none_3.deprecations | length == 1
+      - argspec_required_by_fail_none_3.deprecations[0].msg == 'The explicit none (null) value specified to required_by_one will not be treated as "not specified" in the future'
 
       - argspec_required_if_fail is failed
+      - argspec_required_if_fail_none is succeeded
+      - "'required parameter path is none (null)' == argspec_required_if_fail_none.deprecations[0]['msg']"
 
       - argspec_mutually_exclusive_fail is failed
+      - argspec_mutually_exclusive_fail_none is failed
 
       - argspec_good_mapping is successful
       - >-
@@ -519,12 +667,26 @@
       - argspec_bad_mapping_list is failed
 
       - argspec_required_together_fail is failed
+      - argspec_required_together_fail_none is succeeded
+      - "'required parameter other found in required_together is none (null)' == argspec_required_together_fail_none.deprecations[0]['msg']"
 
       - argspec_required_if_fail_2 is failed
+      - argspec_required_if_fail_2_none is succeeded
+      - "'required parameter other found in required_if is none (null)' == argspec_required_if_fail_2_none.deprecations[0]['msg']"
 
       - argspec_required_one_of_fail_2 is failed
+      - argspec_required_one_of_fail_2_none is succeeded
+      - "'required parameter thing found in required_one_of is none (null)' == argspec_required_one_of_fail_2_none.deprecations[0]['msg']"
 
       - argspec_required_by_fail_2 is failed
+      - argspec_required_by_fail_2_none_1 is failed
+      - argspec_required_by_fail_2_none_1.msg == "missing parameter(s) required by 'thing': other"
+      - argspec_required_by_fail_2_none_2 is succeeded
+      - argspec_required_by_fail_2_none_2.deprecations | length == 1
+      - argspec_required_by_fail_2_none_2.deprecations[0].msg == 'The explicit none (null) value specified to thing found in required_by will not be treated as "not specified" in the future'
+      - argspec_required_by_fail_2_none_3 is succeeded
+      - argspec_required_by_fail_2_none_3.deprecations | length == 1
+      - argspec_required_by_fail_2_none_3.deprecations[0].msg == 'The explicit none (null) value specified to thing found in required_by will not be treated as "not specified" in the future'
 
       - argspec_good_json_string is successful
       - >-
@@ -537,6 +699,8 @@
       - argspec_fail_on_missing_params_bad is failed
 
       - argspec_fail_required_together_2 is failed
+      - argspec_fail_required_together_2_none is succeeded
+      - "'required parameter required_together_two is none (null)' == argspec_fail_required_together_2_none.deprecations[0]['msg']"
 
       - >-
         argspec_suboptions_list_no_elements.suboptions_list_no_elements.0 == {'thing': 'foo'}

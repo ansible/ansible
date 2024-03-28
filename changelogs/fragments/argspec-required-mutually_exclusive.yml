@@ -1,0 +1,12 @@
+deprecated_features:
+- >-
+  The ``required_by`` feature for Python modules treats an explicit parameter passed in as ``None`` as "not specified".
+  This is deprecated because it is inconsistent with the other ``required`` and ``required_*`` checks.
+- >-
+  The ``required``, ``required_if``, ``required_together``, ``required_one_of``, and ``required_by`` checks for Python modules
+  warn when a module parameter is passed in as ``None``, but still accept that value.
+
+  The module can opt into the intended behavior by setting ``allow_none_value`` to ``True`` or ``False`` for the option in the
+  argument spec.
+  
+  (https://github.com/ansible/ansible/issues/69190)
