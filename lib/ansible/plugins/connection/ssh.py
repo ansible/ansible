@@ -281,9 +281,10 @@ DOCUMENTATION = '''
           - name: ansible_control_path
             version_added: '2.7'
       control_path_dir:
-        default: ~/.ansible/cp
         description:
           - This sets the directory to use for ssh control path if the control path setting is null.
+          - Since 2.17, if null (default), it defaults to ``$ANSIBLE_HOME/cp``.
+          - Prior to 2.17, it defaulted to ``~/.ansible/cp``, regardless of the value of ANSIBLE_HOME.
           - Also, provides the ``%(directory)s`` variable for the control path setting.
         type: string
         env:
@@ -380,6 +381,7 @@ import time
 import typing as t
 
 from functools import wraps
+import ansible.constants as C
 from ansible.errors import (
     AnsibleAuthenticationFailure,
     AnsibleConnectionFailure,
@@ -797,6 +799,8 @@ class Connection(ConnectionBase):
 
             if not controlpath:
                 self.control_path_dir = self.get_option('control_path_dir')
+                if self.control_path_dir is None:
+                    self.control_path_dir = os.path.join(C.ANSIBLE_HOME, "cp")
                 cpdir = unfrackpath(self.control_path_dir)
                 b_cpdir = to_bytes(cpdir, errors='surrogate_or_strict')
 
