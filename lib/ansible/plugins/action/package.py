@@ -75,7 +75,7 @@ class ActionModule(ActionBase):
                         # actually get from facts
                         module = facts['ansible_facts'][pmgr]
                     except KeyError:
-                        raise AnsibleActionFail('Could not detect a package manager. Try using the "use" option.' % module)
+                        raise AnsibleActionFail('Could not detect a package manager. Try using the "use" option.')
 
             if module and module != 'auto':
                 if not self._shared_loader_obj.module_loader.has_plugin(module):
