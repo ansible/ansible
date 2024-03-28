@@ -420,6 +420,7 @@ class ActionModule(ActionBase):
         remote_src = boolean(self._task.args.get('remote_src', False), strict=False)
         local_follow = boolean(self._task.args.get('local_follow', True), strict=False)
 
+        result['diff'] = []
         result['failed'] = True
         if not source and content is None:
             result['msg'] = 'src (or content) is required'
@@ -532,10 +533,10 @@ class ActionModule(ActionBase):
             for dir_component in paths:
                 os.path.join(dir_path, dir_component)
                 implicit_directories.add(dir_path)
-            if 'diff' in result and not result['diff']:
-                del result['diff']
+
             module_executed = True
             changed = changed or module_return.get('changed', False)
+            result['diff'] += module_return['diff']
 
         for src, dest_path in source_files['directories']:
             # Find directories that are leaves as they might not have been
@@ -559,6 +560,7 @@ class ActionModule(ActionBase):
 
             module_executed = True
             changed = changed or module_return.get('changed', False)
+            result['diff'].append(module_return['diff'])
 
         for target_path, dest_path in source_files['symlinks']:
             # Copy symlinks over
@@ -585,6 +587,7 @@ class ActionModule(ActionBase):
                 return self._ensure_invocation(result)
 
             changed = changed or module_return.get('changed', False)
+            result['diff'].append(module_return['diff'])
 
         if module_executed and len(source_files['files']) == 1:
             result.update(module_return)
@@ -595,6 +598,9 @@ class ActionModule(ActionBase):
                 result['dest'] = result['path']
         else:
             result.update(dict(dest=dest, src=source, changed=changed))
+
+        if 'diff' in result and not result['diff']:
+            del result['diff']
 
         # Delete tmp path
         self._remove_tmp_path(self._connection._shell.tmpdir)
