@@ -1442,7 +1442,7 @@ def find_existing_collections(path_filter, artifacts_manager, namespace_filter=N
     if collection_filter and not is_sequence(collection_filter):
         collection_filter = [collection_filter]
 
-    paths = set()
+    paths = []
     for path in files('ansible_collections').glob('*/*/'):
         path = _normalize_collection_path(path)
         if not path.is_dir():
@@ -1456,7 +1456,7 @@ def find_existing_collections(path_filter, artifacts_manager, namespace_filter=N
                 break
             else:
                 continue
-        paths.add(path)
+        paths.append(path)
 
     seen = set()
     for path in paths:
