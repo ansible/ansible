@@ -187,6 +187,18 @@
       - result is success
       - result is not changed
 
+- name: add GPG key from string value
+  rpm_key:
+      state: present
+      key: "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQGNBGUhLi4BDACrXw5kkEdclg7edHjzs3dCs4GIn7ct/tkyhi0Sw5cmH8txujPi\nHC5oVy+89sC7c3MapoVJPQFWJEf1/gIXWVnFdskKo+6G9/oy8VjFb763Wd+LAZpZ\neGnH/Aah/4v1jMI/Cwh020zDDbU3TU048IuPKTVYxyLjN52H9FWRRBY+XlZuSFFn\nvVeT8kL7c90onY2I+VXlI1vxQZ3Jnf2IUFqMmVQShVbikCf2nalYn1oz58qX0G0y\nfAffH6QfAKuaJPdB9IO/ZNMJDt7n/pjojNeMJ2iNXr1nWvmOBgBbqH0hsCB+gemG\naEbkXImZKB5+AYOOiKUKCmxL3iXUPJN96/Zi2govW8bOcv5iceFJIZr9WkdYghs8\nu180tVKVHhktRRrWXapJKsMf7+eG8uycNUSRlNVJDoxLmG2fm0CjBIqz+33t/p1d\nhOg6uoI6aa9xDTCeCbQHwFoi0PBMP19369TR9CuwwLNItUGMEll0KbG4PFAS3UJN\nMyvNv2LSSHebc90AEQEAAbQvaW5mYW1lLWlvIChTYW5kd2ljaCkgPGxhdXJvLmJh\nbGRlcmFzQGdtYWlsLmNvbT6JAc4EEwEKADgWIQQusEcInILarrO0h2D+rE4ds7ha\n3wUCZSEuLgIbAwULCQgHAgYVCgkICwIEFgIDAQIeAQIXgAAKCRD+rE4ds7ha39Zv\nC/96WC9zcrqKgiwWl1Tpw8y0tlOKfTQFzo82/tDPOApZuWlTSugGH+wKS3dLXBgb\nb78j7otzJBOGOiAp26ciZFcSe7FI59p0fKlGrXEj2hD5VkaK5ieFKo4/Rhalp9xK\nwg0nBgq2EWDuGgwPer+L9Qk1TZkeykv5lHNva2areo5Rnrpc0u/zE88xuWWomsn6\nomiJ7GlhyxxMAnyIrxRlCtY4b3b4TKDqz91R+VvXUN8Riel67HNIpc0TiW2eBDc4\nto145XGKZsrMKjmlDgyoRKIImeir4IgoXQHvz/v+uQKfbvJO0jgAT4Zh2tdNnSvf\nAzQL3lUOh7RBFONib+tObbBKILTH18Sa23tjctK09cRi4D8SxE2lcVeUxo6H8J/T\nHQSppNodmsuTaPRQOBscdQWAE3eSs5gEr9M+ALSkdPHCyktrJerqFUbkmcFR7q/Z\n9lWu8Ij/3LulXE5zgv3bFnSZlbf1FFWlRUx7QlCPNjFhTEJnmW78vhcDgsPZdird\nToi5AY0EZSEuLgEMAJj4jnYQCgd8e+mqgE+cspKi5GORBBZaClTsFqoCqkb5r9qJ\nCIwupyzcxkDRMRubgONVBgPwY5iimHXldqlNqw3bhrHsbwTvyxZ5Rqd03MxKOx2z\nHdp8pS5nIHCPdix+dBFJuhAOi6KG5zKwEQpNoohTwsc/9wQeYL37C/E4KClnD2My\nFEKX8NzLyFatBSuaF/BdqbpNyKW1Zv9QoMibcaUR9iehBD//uN9RGalLg4r7q8/B\nfDnN8fXNPdoYj20vu5jeHwf38F1tZcjQCqlz2JXcGC05ZzTk0JmKab/PWwnYnP1+\nKdJxpfj0eNw80OgwKbtxSElwqQr+UEcATquQMw+wtJO5KNK2NtA3w8+odigUtkiB\nlqLBwe8CzhHjjb1y5sQiSrTFHYuU4EiRAacfPR0sIvafMP9nCc9hL2c1XH4bkHOC\nKuZaaYWLRzun5Drz4qB+DvOjK8+5CkpCTIXV/mE/ix6SmziQ6I8+RZjXRxQeJK4L\nWZPkv9nh1F2pWe2M7QARAQABiQG2BBgBCgAgFiEELrBHCJyC2q6ztIdg/qxOHbO4\nWt8FAmUhLi4CGwwACgkQ/qxOHbO4Wt9iaQv/V0hgahG5hEf+3zn8ImLAYH3xK46E\nJokQzvfafGdVZ2SMyvb7zImEV5L6xqTira/d+lW74GZPxFFwlGOLtkr58riE3sdg\nL5EBvASep4kaz1GqoHpalAdR9yZDrHxyZExhDpUjBEd8oiBe/sPAEQlQQWqEPanE\nHsGS84lcN6onPhZE4fTUHTE76+Ayl9xqHktznaowws9Ml6LvVGRFSuIn44poUqBf\nFKOfPgHzy3Gy/NNEH6XFN4vxbC6OOJIuEVOjVHYyPD/kNF6kfeySlhDoDqJD45LS\ndptLRD91j73C7Asu2bQN0q7Mvr/g0MyNQ1n5B+bbNnmcI6F1VV9zI/bBRGYdOxCx\n5QRXY0otSVau5mddLCX4I7F/yrBvRfffWdi92wyByKvO2aGTtnRcajuFdeTQWanG\nlB9JQFBdsV+40/51ADc30F/UReP23833skictHMY9XDXYslgUOsbzYTMqHDuuDE/\n6cy9+l5zdaTzJ+biexvyK7dhXXhyueXWaDF9\n=NXmg\n-----END PGP PUBLIC KEY BLOCK-----"
+  register: result
+
+- name: Assert Verify GPG key successfully added from string value
+  assert:
+    that:
+      - result is success
+      - result is changed
+
 #
 # Cleanup
 #
