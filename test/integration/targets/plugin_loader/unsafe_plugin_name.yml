@@ -1,0 +1,9 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - action: !unsafe n.c.a
+      register: r
+
+    - assert:
+        that:
+          - r.nca_executed

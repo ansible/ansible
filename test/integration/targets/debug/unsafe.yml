@@ -1,0 +1,13 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    unsafe_var: !unsafe undef()|mandatory
+  tasks:
+    - debug:
+        var: '{{ unsafe_var }}'
+      ignore_errors: true
+      register: result
+
+    - assert:
+        that:
+          - result is successful

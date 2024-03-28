@@ -17,7 +17,7 @@
       - "unarchive03.changed == true"
       # Verify that file list is generated
       - "'files' in unarchive03"
-      - "{{unarchive03['files']| length}} == 3"
+      - "unarchive03['files']| length == 3"
       - "'foo-unarchive.txt' in unarchive03['files']"
       - "'foo-unarchive-777.txt' in unarchive03['files']"
       - "'FOO-UNAR.TXT' in unarchive03['files']"

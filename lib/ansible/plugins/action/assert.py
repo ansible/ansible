@@ -63,8 +63,29 @@ class ActionModule(ActionBase):
 
         quiet = boolean(self._task.args.get('quiet', False), strict=False)
 
+        # directly access 'that' via untemplated args from the task so we can intelligently trust embedded
+        # templates and preserve the original inputs/locations for better messaging on assert failures and
+        # errors.
+        # FIXME: even in devel, things like `that: item` don't always work properly (truthy string value
+        # is not really an embedded expression)
+        # we could fix that by doing direct var lookups on the inputs
+        # FIXME: some form of this code should probably be shared between debug, assert, and
+        # Task.post_validate, since they
+        # have a lot of overlapping needs
+        try:
+            thats = self._task.untemplated_args['that']
+        except KeyError:
+            # in the case of "we got our entire args dict from a template", we can just consult the
+            # post-templated dict (the damage has likely already been done for embedded templates anyway)
+            thats = self._task.args['that']
+
+        # FIXME: this is a case where we only want to resolve indirections, NOT recurse containers
+        # (and even then, the leaf-most expression being wrapped is at least suboptimal
+        # (since its expression will be "eaten").
+        if isinstance(thats, str):
+            thats = self._templar.template(thats)
+
         # make sure the 'that' items are a list
-        thats = self._task.args['that']
         if not isinstance(thats, list):
             thats = [thats]
 

@@ -33,7 +33,7 @@
       - 'slurp_existing.encoding == "base64"'
       - 'slurp_existing is not changed'
       - 'slurp_existing is not failed'
-      - '"{{ slurp_existing.content | b64decode }}" == "We are at the café"'
+      - 'slurp_existing.content | b64decode == "We are at the café"'
 
 - name: Create a binary file to test with
   copy:

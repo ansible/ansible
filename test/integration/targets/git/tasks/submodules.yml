@@ -32,7 +32,7 @@
 
 - name: SUBMODULES | Ensure submodu1 is at the appropriate commit
   assert:
-    that: '{{ submodule1.stdout_lines | length }} == 2'
+    that: 'submodule1.stdout_lines | length == 2'
 
 - name: SUBMODULES | clear checkout_dir
   file:
@@ -53,7 +53,7 @@
 
 - name: SUBMODULES | Ensure submodule1 is at the appropriate commit
   assert:
-    that: '{{ submodule1.stdout_lines | length }} == 4'
+    that: 'submodule1.stdout_lines | length == 4'
 
 - name: SUBMODULES | Copy the checkout so we can run several different tests on it
   command: 'cp -pr {{ checkout_dir }} {{ checkout_dir }}.bak'
@@ -84,8 +84,8 @@
 - name: SUBMODULES | Ensure both submodules are at the appropriate commit
   assert:
     that:
-      - '{{ submodule1.stdout_lines|length }} == 4'
-      - '{{ submodule2.stdout_lines|length }} == 2'
+      - 'submodule1.stdout_lines|length == 4'
+      - 'submodule2.stdout_lines|length == 2'
 
 
 - name: SUBMODULES | Remove checkout dir
@@ -112,7 +112,7 @@
 
 - name: SUBMODULES | Ensure submodule1 is at the appropriate commit
   assert:
-    that: '{{ submodule1.stdout_lines | length }} == 5'
+    that: 'submodule1.stdout_lines | length == 5'
 
 
 - name: SUBMODULES | Test that update with recursive found new submodules
@@ -121,7 +121,7 @@
 
 - name: SUBMODULES | Enusre submodule2 is at the appropriate commit
   assert:
-    that: '{{ submodule2.stdout_lines | length }} == 4'
+    that: 'submodule2.stdout_lines | length == 4'
 
 - name: SUBMODULES | clear checkout_dir
   file:
@@ -147,4 +147,4 @@
 
 - name: SUBMODULES | Ensure submodule1 is at the appropriate commit
   assert:
-    that: '{{ submodule1.stdout_lines | length }} == 4'
+    that: 'submodule1.stdout_lines | length == 4'

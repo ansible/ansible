@@ -541,6 +541,12 @@ def main():
                     "ignore",
                     "AnsibleCollectionFinder has already been configured")
 
+            # ansible.utils.unsafe_proxy attempts patching sys.intern generating a warning if it was already patched
+            warnings.filterwarnings(
+                "ignore",
+                "skipped sys.intern patch; appears to have already been patched"
+            )
+
             try:
                 yield
             finally:

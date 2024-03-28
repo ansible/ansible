@@ -22,7 +22,7 @@
 - name: Check that multiple duplicate lines collapse into a single commands
   assert:
     that:
-      - "{{ result.commands|length }} == 1"
+      - "result.commands|length == 1"
 
 - name: Check that set is correctly prepended
   assert:
@@ -58,6 +58,6 @@
 
 - assert:
     that:
-      - "{{ result.filtered|length }} == 2"
+      - "result.filtered|length == 2"
 
 - debug: msg="END cli/config_check.yaml on connection={{ ansible_connection }}"

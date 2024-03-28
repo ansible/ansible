@@ -1262,7 +1262,7 @@
   assert:
     that:
       - "copy_result6.changed"
-      - "copy_result6.dest == '{{remote_dir_expanded}}/multiline.txt'"
+      - "copy_result6.dest == remote_dir_expanded ~ '/multiline.txt'"
       - "copy_result6.checksum == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903'"
 
 # test overwriting a file as an unprivileged user (pull request #8624)
@@ -2165,26 +2165,26 @@
     assert:
       that:
       - testcase5 is changed
-      - "stat_new_dir_with_chown.stat.uid == {{ ansible_copy_test_user.uid }}"
-      - "stat_new_dir_with_chown.stat.gid == {{ ansible_copy_test_group.gid }}"
-      - "stat_new_dir_with_chown.stat.pw_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown.stat.gr_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_file1.stat.uid == {{ ansible_copy_test_user.uid }}"
-      - "stat_new_dir_with_chown_file1.stat.gid == {{ ansible_copy_test_group.gid }}"
-      - "stat_new_dir_with_chown_file1.stat.pw_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_file1.stat.gr_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_subdir.stat.uid == {{ ansible_copy_test_user.uid }}"
-      - "stat_new_dir_with_chown_subdir.stat.gid == {{ ansible_copy_test_group.gid }}"
-      - "stat_new_dir_with_chown_subdir.stat.pw_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_subdir.stat.gr_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_subdir_file12.stat.uid == {{ ansible_copy_test_user.uid }}"
-      - "stat_new_dir_with_chown_subdir_file12.stat.gid == {{ ansible_copy_test_group.gid }}"
-      - "stat_new_dir_with_chown_subdir_file12.stat.pw_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_subdir_file12.stat.gr_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_link_file12.stat.uid == {{ ansible_copy_test_user.uid }}"
-      - "stat_new_dir_with_chown_link_file12.stat.gid == {{ ansible_copy_test_group.gid }}"
-      - "stat_new_dir_with_chown_link_file12.stat.pw_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_link_file12.stat.gr_name == '{{ ansible_copy_test_user_name }}'"
+      - "stat_new_dir_with_chown.stat.uid == ansible_copy_test_user.uid"
+      - "stat_new_dir_with_chown.stat.gid == ansible_copy_test_group.gid"
+      - "stat_new_dir_with_chown.stat.pw_name == ansible_copy_test_user_name"
+      - "stat_new_dir_with_chown.stat.gr_name == ansible_copy_test_user_name"
+      - "stat_new_dir_with_chown_file1.stat.uid == ansible_copy_test_user.uid"
+      - "stat_new_dir_with_chown_file1.stat.gid == ansible_copy_test_group.gid"
+      - "stat_new_dir_with_chown_file1.stat.pw_name == ansible_copy_test_user_name"
+      - "stat_new_dir_with_chown_file1.stat.gr_name == ansible_copy_test_user_name"
+      - "stat_new_dir_with_chown_subdir.stat.uid == ansible_copy_test_user.uid"
+      - "stat_new_dir_with_chown_subdir.stat.gid == ansible_copy_test_group.gid"
+      - "stat_new_dir_with_chown_subdir.stat.pw_name == ansible_copy_test_user_name"
+      - "stat_new_dir_with_chown_subdir.stat.gr_name == ansible_copy_test_user_name"
+      - "stat_new_dir_with_chown_subdir_file12.stat.uid == ansible_copy_test_user.uid"
+      - "stat_new_dir_with_chown_subdir_file12.stat.gid == ansible_copy_test_group.gid"
+      - "stat_new_dir_with_chown_subdir_file12.stat.pw_name == ansible_copy_test_user_name"
+      - "stat_new_dir_with_chown_subdir_file12.stat.gr_name == ansible_copy_test_user_name"
+      - "stat_new_dir_with_chown_link_file12.stat.uid == ansible_copy_test_user.uid"
+      - "stat_new_dir_with_chown_link_file12.stat.gid == ansible_copy_test_group.gid"
+      - "stat_new_dir_with_chown_link_file12.stat.pw_name == ansible_copy_test_user_name"
+      - "stat_new_dir_with_chown_link_file12.stat.gr_name == ansible_copy_test_user_name"
 
   always:
     - name: execute - remove the user for test

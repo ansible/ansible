@@ -117,7 +117,7 @@
 - name: assert chdir works
   assert:
     that:
-    - "'{{chdir_result.stdout | trim}}' == '{{remote_tmp_dir_real_path.stdout | trim}}'"
+    - "chdir_result.stdout | trim == remote_tmp_dir_real_path.stdout | trim"
 
 - name: test timeout option
   expect:

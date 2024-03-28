@@ -320,7 +320,7 @@
   assert:
     that:
     - shell_result0 is changed
-    - shell_result0.cmd == '{{ remote_tmp_dir_test }}/test.sh'
+    - shell_result0.cmd == remote_tmp_dir_test ~ '/test.sh'
     - shell_result0.rc == 0
     - shell_result0.stderr == ''
     - shell_result0.stdout == 'win'

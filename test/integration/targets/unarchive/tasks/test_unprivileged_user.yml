@@ -40,7 +40,7 @@
           - unarchive10 is changed
           # Verify that file list is generated
           - "'files' in unarchive10"
-          - "{{unarchive10['files']| length}} == 1"
+          - "unarchive10['files']| length == 1"
           - "'foo-unarchive.txt' in unarchive10['files']"
           - archive_path.stat.exists
 
