@@ -243,7 +243,6 @@ class Connection(ConnectionBase):
 
     transport = 'winrm'
     module_implementation_preferences = ('.ps1', '.exe', '')
-    allow_executable = False
     has_pipelining = True
     allow_extras = True
 
