@@ -1,0 +1,2 @@
+minor_changes:
+  - expect - add raw responses (https://github.com/ansible/ansible/issues/80075).

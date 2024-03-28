@@ -34,6 +34,14 @@ options:
     type: path
     description:
       - Change into this directory before running the command.
+  raw_responses:
+    type: dict
+    description:
+      - Mapping of expected string/regex and raw string to respond with. If the
+        response is a list, successive matches return successive
+        responses. In case of raw_responses, no newline will be appended
+        to the response string.
+    version_added: '2.17'
   responses:
     type: dict
     description:
@@ -42,7 +50,7 @@ options:
       - The value of each key is a string or list of strings.
         If the value is a string and the prompt is encountered multiple times, the answer will be repeated.
         Provide the value as a list to give different answers for successive matches.
-    required: true
+        For responses, a newline will be appended to the response string.
   timeout:
     type: raw
     description:
@@ -116,6 +124,29 @@ EXAMPLES = r'''
             - "{{ db_username }}"
         "Database password":
             - "{{ db_password }}"
+
+- name: Multiple questions with raw responses
+  ansible.builtin.expect:
+    command: /path/to/custom/command
+    raw_responses:
+        "Do you accept the terms and conditions (y/n)?":
+            - "y"
+        "Do you accept the new terms and conditions (y/n)?":
+            - "n"
+
+- name: Generic question with both responses and raw responses
+  ansible.builtin.expect:
+    command: /path/to/custom/command
+    responses:
+      Question:
+        - response1
+        - response2
+        - response3
+    raw_responses:
+      Question2:
+        - response1
+        - response2
+        - response3
 '''
 
 import datetime
@@ -135,8 +166,23 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native
 from ansible.module_utils.common.validation import check_type_int
 
 
-def response_closure(module, question, responses):
-    resp_gen = (b'%s\n' % to_bytes(r).rstrip(b'\n') for r in responses)
+def process_responses(module, responses, events, raw=False):
+    if responses is None:
+        return
+
+    newline = "" if raw else "\n"
+
+    for key, value in responses.items():
+        if isinstance(value, list):
+            response = response_closure(module, key, value, newline)
+        else:
+            response = b'%s%s' % (to_bytes(value).rstrip(b'\n'), to_bytes(newline))
+
+        events[to_bytes(key)] = response
+
+
+def response_closure(module, question, responses, newline):
+    resp_gen = (b'%s%s' % (to_bytes(r).rstrip(b'\n'), to_bytes(newline)) for r in responses)
 
     def wrapped(info):
         try:
@@ -157,10 +203,12 @@ def main():
             chdir=dict(type='path'),
             creates=dict(type='path'),
             removes=dict(type='path'),
-            responses=dict(type='dict', required=True),
+            responses=dict(type='dict'),
+            raw_responses=dict(type='dict'),
             timeout=dict(type='raw', default=30),
             echo=dict(type='bool', default=False),
-        )
+        ),
+        required_one_of=[['responses', 'raw_responses']],
     )
 
     if not HAS_PEXPECT:
@@ -172,6 +220,7 @@ def main():
     creates = module.params['creates']
     removes = module.params['removes']
     responses = module.params['responses']
+    raw_responses = module.params['raw_responses']
     timeout = module.params['timeout']
     if timeout is not None:
         try:
@@ -181,13 +230,12 @@ def main():
     echo = module.params['echo']
 
     events = dict()
-    for key, value in responses.items():
-        if isinstance(value, list):
-            response = response_closure(module, key, value)
-        else:
-            response = b'%s\n' % to_bytes(value).rstrip(b'\n')
 
-        events[to_bytes(key)] = response
+    # process raw responses, do not add newline
+    process_responses(module, raw_responses, events, raw=True)
+
+    # process standard responses with newline addition
+    process_responses(module, responses, events)
 
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
