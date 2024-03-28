@@ -1,0 +1,10 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - include_role:
+      name: test1
+      tasks_from: unsupported_role_spec_fields
+    vars:
+      secret_option: "{{ 'shhh' | vault('passphrase') }}"
+      top_level_option:
+        secret_suboption: "{{ 'shhh' | vault('passphrase') }}"

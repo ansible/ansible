@@ -30,3 +30,8 @@ set -e
 # The task is tagged with 'foo' but we use 'bar' in the call below and expect
 # the validation task to run anyway since it is tagged 'always'.
 ansible-playbook test_tags.yml -i ../../inventory "$@" --tags bar | grep "a : Validating arguments against arg spec 'main' - Main entry point for role A."
+
+# Test warning for unsupported role spec fields
+ansible-playbook test_invalid_spec_warning.yml "$@"
+test $? -eq 0
+ansible-playbook test_invalid_spec_warning.yml "$@" 2>&1 | grep '\[WARNING\]: Using a sanitized role argument specification'

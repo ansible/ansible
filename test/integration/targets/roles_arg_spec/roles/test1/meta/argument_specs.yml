@@ -110,3 +110,15 @@ argument_specs:
      some_required_str:
        type: str
        required: true
+  unsupported_role_spec_fields:
+    short_description: "Validate the argument spec option fields"
+    options:
+      secret_option:
+        no_log: true  # Has no effect on tasks in the role - unsupported/documentation only
+      top_level_option:
+        type: dict
+        options:
+          secret_suboption:
+            no_log: true  # unsupported/documentation only
+            aliases:  # unsupported/documentation only
+              - suboption_alias

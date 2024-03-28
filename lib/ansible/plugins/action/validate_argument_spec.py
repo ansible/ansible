@@ -9,6 +9,39 @@ from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.utils.vars import combine_vars
 
 
+from ansible.utils.display import Display
+
+display = Display()
+
+
+def sanitize_argument_spec_fields(spec_validator, argument_spec, context=None):
+    if context is None:
+        context = []
+    spec = argument_spec
+    for arg in context:
+        spec = spec[arg]
+
+    for option in list(spec.keys()):
+        fields = spec[option]
+        result = spec_validator.validate(fields)
+
+        for error in result.error_messages:
+            field = error.split('.', 1)[0]
+            fields.pop(field, None)
+
+        if result.error_messages:
+            yield '.'.join(context + [option]), result.error_messages
+
+        if fields.get('type') in ('list', 'dict') and fields.get('options'):
+            yield from sanitize_argument_spec_fields(spec_validator, argument_spec, context + [option, 'options'])
+        elif fields.get('options'):
+            # removed for consistency but not really necessary as the arg parser would just ignore it
+            fields.pop('options')
+            err = 'options. Suboptions are supported for types dict and list.'
+            yield '.'.join(context + [option, 'options']), [err]
+    yield from ()
+
+
 class ActionModule(ActionBase):
     ''' Validate an arg spec'''
 
@@ -74,6 +107,43 @@ class ActionModule(ActionBase):
 
         if not isinstance(provided_arguments, dict):
             raise AnsibleError('Incorrect type for provided_arguments, expected dict and got %s' % type(provided_arguments))
+
+        if self._task.implicit:
+
+            # types handled by the argument parser
+            option_types = [None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str']
+            meta_validator = ArgumentSpecValidator(
+                dict(
+                    description=dict(type='list', elements='str'),
+                    type=dict(choices=option_types),
+                    default=dict(type='raw'),
+                    choices=dict(type='list'),
+                    elements=dict(choices=option_types),
+                    options=dict(type='dict'),
+                    required=dict(type='bool'),
+                    # don't deter documentation, the argparser will ignore this
+                    version_added=dict(type='raw'),
+                    # note: validate-modules does not support removed_in_version/removed_at_date for modules, so not including here
+                    # no_log, aliases, apply_defaults are not supported as those features do not exist inherently for roles
+                ),
+                # matches the documentation, though the argparser only requires this if there are suboptions
+                required_if=[('type', 'list', ('elements',))],
+            )
+            spec_errors = []
+            # remove any fields that fail validation
+            for param, errors in sanitize_argument_spec_fields(meta_validator, argument_spec_data):
+                spec_errors.append((param, errors))
+
+            if spec_errors:
+                role_name = result['validate_args_context']['name']
+                spec_name = result['validate_args_context']['argument_spec_name']
+                display.warning(f"Using a sanitized role argument specification. See errors for role '{role_name}' entrypoint '{spec_name}' with -vvv.")
+                role_path = result['validate_args_context']['path']
+                display.vvv(f"Role '{role_name}' ({role_path}) contains errors in the argument spec '{spec_name}'.")
+                for argument, error_list in spec_errors:
+                    display.vvv(f"{argument}:")
+                    for error in error_list:
+                        display.vvv(f"- {error}")
 
         args_from_vars = self.get_args_from_task_vars(argument_spec_data, task_vars)
         validator = ArgumentSpecValidator(argument_spec_data)

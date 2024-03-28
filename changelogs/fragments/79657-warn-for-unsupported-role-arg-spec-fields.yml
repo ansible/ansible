@@ -1,0 +1,2 @@
+bugfixes:
+  - roles - give a warning for unknown fields during implicit ``validate_argument_spec`` tasks.
