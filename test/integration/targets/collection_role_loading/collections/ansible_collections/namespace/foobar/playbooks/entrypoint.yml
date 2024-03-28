@@ -1,0 +1,15 @@
+---
+- hosts: '{{ target|default("localhost") }}'
+  gather_facts: false
+  roles:
+    - role: do_stuff
+
+- import_playbook: namespace.common.included
+
+- hosts: '{{ target|default("localhost") }}'
+  gather_facts: false
+  roles:
+    - do_stuff
+  tasks:
+    - import_role: name=do_stuff
+    - include_role: name=do_stuff
