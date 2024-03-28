@@ -1,0 +1,4 @@
+bugfixes:
+    - git - Fixes submodule checkouts to track `.gitmodules` specification
+      Instead of hardcoding to the `"master"` branch. 
+      (https://github.com/ansible/ansible/issues/77691)

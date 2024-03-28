@@ -569,6 +569,36 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
     return submodules
 
 
+def get_submodule_config(git_path, module, dest, submodule_name, config_name):
+    config_path = 'submodule.' + submodule_name + '.' + config_name
+    cmd = [git_path, 'config', '-f', '.gitmodules', '--get', config_path]
+    (rc, out, err) = module.run_command(cmd, cwd=dest)
+
+    out = out.rstrip('\n')
+    # if we can't resolve the actual branch, assume its master.
+    if not out:
+        out = "master"
+    return out
+
+
+def get_submodule_versions_from_remote(git_path, module, dest, submodule_revisions):
+    submodule_revisions_remote = {}
+    for submodule_name in submodule_revisions:
+        submodule_path = get_submodule_config(git_path, module, dest, submodule_name, 'path')
+        if not submodule_path:
+            module.fail_json(msg='Unable to detect path of submodule: %s' % submodule_name)
+
+        submodule_branch = get_submodule_config(git_path, module, dest, submodule_name, 'branch')
+        if not submodule_branch:
+            module.fail_json(msg='Unable to detect branch of submodule: %s' % submodule_name)
+
+        submodule_path = os.path.join(dest, submodule_path)
+        revision = get_version(module, git_path, submodule_path, '%s/%s' % ('origin', submodule_branch))
+        submodule_revisions_remote[submodule_name] = revision
+
+    return submodule_revisions_remote
+
+
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
           reference, refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_allowlist, single_branch):
     ''' makes a new git repo if it does not already exist '''
@@ -935,7 +965,7 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, g
             module.fail_json(msg="Failed to %s: %s %s" % (label, out, err), cmd=command)
 
 
-def submodules_fetch(git_path, module, remote, track_submodules, dest):
+def submodules_fetch(git_path, module, track_submodules, dest):
     changed = False
 
     if not os.path.exists(os.path.join(dest, '.gitmodules')):
@@ -962,9 +992,7 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
 
         if track_submodules:
             # Compare against submodule HEAD
-            # FIXME: determine this from .gitmodules
-            version = 'master'
-            after = get_submodule_versions(git_path, module, dest, '%s/%s' % (remote, version))
+            after = get_submodule_versions_from_remote(git_path, module, dest, begin)
             if begin != after:
                 changed = True
         else:
@@ -1393,7 +1421,7 @@ def main():
     # Deal with submodules
     submodules_updated = False
     if recursive and not bare:
-        submodules_updated = submodules_fetch(git_path, module, remote, track_submodules, dest)
+        submodules_updated = submodules_fetch(git_path, module, track_submodules, dest)
         if submodules_updated:
             result.update(submodules_changed=submodules_updated)
 
