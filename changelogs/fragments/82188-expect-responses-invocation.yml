@@ -1,0 +1,2 @@
+minor_changes:
+  - expect - omit the ``responses`` from the module invocation when response strings are not echoed (https://github.com/ansible/ansible/issues/82188).
