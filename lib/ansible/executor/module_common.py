@@ -74,6 +74,28 @@ _MODULE_UTILS_PATH = os.path.join(os.path.dirname(__file__), '..', 'module_utils
 
 # ******************************************************************************
 
+ANSIBALLZ_MIN_PYTHON = '''
+import sys
+import json
+
+# Used for determining if the system is running a new enough python version
+# and should only restrict on our documented minimum versions
+_PY_MIN = (3, 7)
+
+if sys.version_info < _PY_MIN:
+    print(json.dumps(dict(
+        failed=True,
+        msg=(
+            "ansible-core requires a minimum of Python version "
+            "{0}. Current version: {1}"
+        ).format(
+            '.'.join(map(str, _PY_MIN)),
+            ''.join(sys.version.splitlines()),
+        )
+    )))
+    sys.exit(1)
+'''
+
 ANSIBALLZ_TEMPLATE = u'''%(shebang)s
 %(coding)s
 _ANSIBALLZ_WRAPPER = True # For test-module.py script to tell this is a ANSIBALLZ_WRAPPER
@@ -104,6 +126,9 @@ _ANSIBALLZ_WRAPPER = True # For test-module.py script to tell this is a ANSIBALL
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+%(min_python)s
+
 def _ansiballz_main():
     import os
     import os.path
@@ -1275,6 +1300,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             date_time=date_time,
             coverage=coverage,
             rlimit=rlimit,
+            min_python=ANSIBALLZ_MIN_PYTHON,
         )))
         b_module_data = output.getvalue()
 

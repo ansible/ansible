@@ -14,7 +14,13 @@ _PY_MIN = (3, 7)
 if sys.version_info < _PY_MIN:
     print(json.dumps(dict(
         failed=True,
-        msg=f"ansible-core requires a minimum of Python version {'.'.join(map(str, _PY_MIN))}. Current version: {''.join(sys.version.splitlines())}",
+        msg=(
+            "ansible-core requires a minimum of Python version "
+            "{0}. Current version: {1}"
+        ).format(
+            '.'.join(map(str, _PY_MIN)),
+            ''.join(sys.version.splitlines()),
+        )
     )))
     sys.exit(1)
 

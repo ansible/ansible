@@ -1,0 +1,3 @@
+bugfixes:
+- Target minimum python check - Copy check into AnsiballZ template, to get earlier check before module code executes
+  (https://github.com/ansible/ansible/issues/82068)
