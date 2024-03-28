@@ -72,3 +72,18 @@ options:
     default: no
     version_added: '2.11'
 '''
+
+    URL_REDIRECT = r'''
+options:
+  follow_redirects:
+    description:
+      - Whether or not redirects should be followed. V(all) will follow all redirects.
+        V(safe) will follow only "safe" redirects, where "safe" means that the client is only
+        doing a GET or HEAD on the URI to which it is being redirected. V(none) will not follow
+        any redirects. Note that V(true) and V(false) choices are accepted for backwards compatibility,
+        where V(true) is the equivalent of V(all) and V(false) is the equivalent of V(safe). V(true) and V(false)
+        are deprecated and will be removed in some future version of Ansible.
+    type: str
+    choices: ['all', 'no', 'none', 'safe', 'urllib2', 'yes']
+    default: safe
+'''

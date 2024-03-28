@@ -105,17 +105,6 @@ options:
       - The webservice bans or rate-limits clients that cause any HTTP 401 errors.
     type: bool
     default: no
-  follow_redirects:
-    description:
-      - Whether or not the URI module should follow redirects. V(all) will follow all redirects.
-        V(safe) will follow only "safe" redirects, where "safe" means that the client is only
-        doing a GET or HEAD on the URI to which it is being redirected. V(none) will not follow
-        any redirects. Note that V(true) and V(false) choices are accepted for backwards compatibility,
-        where V(true) is the equivalent of V(all) and V(false) is the equivalent of V(safe). V(true) and V(false)
-        are deprecated and will be removed in some future version of Ansible.
-    type: str
-    choices: ['all', 'no', 'none', 'safe', 'urllib2', 'yes']
-    default: safe
   creates:
     description:
       - A filename, when it already exists, this step will not be run.
@@ -233,6 +222,7 @@ options:
 extends_documentation_fragment:
   - action_common_attributes
   - files
+  - url.url_redirect
 attributes:
     check_mode:
         support: none
@@ -451,7 +441,7 @@ from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.compat.datetime import utcnow, utcfromtimestamp
 from ansible.module_utils.six.moves.collections_abc import Mapping, Sequence
-from ansible.module_utils.urls import fetch_url, get_response_filename, parse_content_type, prepare_multipart, url_argument_spec
+from ansible.module_utils.urls import fetch_url, get_response_filename, parse_content_type, prepare_multipart, url_argument_spec, url_redirect_argument_spec
 
 JSON_CANDIDATES = {'json', 'javascript'}
 
@@ -598,6 +588,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
 
 def main():
     argument_spec = url_argument_spec()
+    argument_spec.update(url_redirect_argument_spec())
     argument_spec.update(
         dest=dict(type='path'),
         url_username=dict(type='str', aliases=['user']),
@@ -607,7 +598,6 @@ def main():
         src=dict(type='path'),
         method=dict(type='str', default='GET'),
         return_content=dict(type='bool', default=False),
-        follow_redirects=dict(type='str', default='safe', choices=['all', 'no', 'none', 'safe', 'urllib2', 'yes']),
         creates=dict(type='path'),
         removes=dict(type='path'),
         status_code=dict(type='list', elements='int', default=[200]),

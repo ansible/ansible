@@ -1133,6 +1133,15 @@ def url_argument_spec():
     )
 
 
+def url_redirect_argument_spec():
+    '''
+    As an addition to `url_argument_spec` this spec contains a `follow_redirects` argument
+    '''
+    return dict(
+        follow_redirects=dict(type='str', default='safe', choices=['all', 'no', 'none', 'safe', 'urllib2', 'yes']),
+    )
+
+
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=None, force=False, last_mod_time=None, timeout=10,
               use_gssapi=False, unix_socket=None, ca_path=None, cookies=None, unredirected_headers=None,
