@@ -501,7 +501,7 @@
 - name: test check mode creates/removes message
   command:
     cmd: "true"
-    creates: yes
+    creates: "yes"
   check_mode: yes
   register: result
 
