@@ -129,16 +129,16 @@ def _escape_backslashes(data, jinja_env):
     backslashes inside of a jinja2 expression.
 
     """
-    if '\\' in data and jinja_env.variable_start_string in data:
+    if '\\' in data and is_possibly_template(data, jinja_env):
         new_data = []
         d2 = jinja_env.preprocess(data)
         in_var = False
 
         for token in jinja_env.lex(d2):
-            if token[1] == 'variable_begin':
+            if token[1] in JINJA2_BEGIN_TOKENS:
                 in_var = True
                 new_data.append(token[2])
-            elif token[1] == 'variable_end':
+            elif token[1] in JINJA2_END_TOKENS:
                 in_var = False
                 new_data.append(token[2])
             elif in_var and token[1] == 'string':
