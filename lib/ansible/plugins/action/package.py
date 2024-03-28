@@ -54,26 +54,25 @@ class ActionModule(ActionBase):
                     hosts_vars = task_vars
                     tvars = task_vars
 
-                if hosts_vars.get('_ansible_facts_gathered', False):
-                    facts = hosts_vars
-                    pmgr = 'pkg_mgr'
-                    local = 'local'
-                else:
-                    # very expensive step, we actually run fact gathering because we don't have facts for this host.
-                    facts = self._execute_module(
-                            module_name='ansible.legacy.setup',
-                            module_args=dict(filter='ansible_pkg_mgr,local', gather_subset='!all,local'),
-                            task_vars=task_vars)
-                    pmgr = 'ansible_pkg_mgr'
-                    local= 'ansible_local'
-
-                try:
-                    module = facts['ansible_facts'][local]['overrides']['pkg_mgr']
-                except KeyError:
-                    module = C.config.get_config_value('PACKAGE_MANAGER_OVERRIDE', variables=tvars)
+                # use config
+                module = C.config.get_config_value('PACKAGE_MANAGER_OVERRIDE', variables=tvars)
 
                 if not module:
+                    # no use, no config, get from facts
+                    if hosts_vars.get('_ansible_facts_gathered', False):
+                        facts = hosts_vars
+                        pmgr = 'pkg_mgr'
+                    else:
+                        # we had no facts, so generate them
+                        # very expensive step, we actually run fact gathering because we don't have facts for this host.
+                        facts = self._execute_module(
+                                module_name='ansible.legacy.setup',
+                                module_args=dict(filter='ansible_pkg_mgr', gather_subset='!all'),
+                                task_vars=task_vars)
+                        pmgr = 'ansible_pkg_mgr'
+
                     try:
+                        # actually get from facts
                         module = facts['ansible_facts'][pmgr]
                     except KeyError:
                         module = 'auto'
