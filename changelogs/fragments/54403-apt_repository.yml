@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - apt_repository - parse function is now whitespace aware and the save/dump function no longer insert spaces between double hashed comments.  (https://github.com/ansible/ansible/issues/54403).
