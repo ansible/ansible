@@ -721,7 +721,7 @@ class TestVaultLib(unittest.TestCase):
         v_none = vault.VaultLib(vault_secrets_empty)
 
         self.assertRaisesRegex(vault.AnsibleVaultError,
-                               '.*Attempting to decrypt but no vault secrets found.*',
+                               '.*Attempted to decrypt (.*) but no vault secrets found.*',
                                v_none.decrypt,
                                b_vaulttext)
 

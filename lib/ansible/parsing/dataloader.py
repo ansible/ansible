@@ -145,7 +145,11 @@ class DataLoader:
             return b_vault_data, show_content
 
         b_ciphertext, b_version, cipher_name, vault_id = parse_vaulttext_envelope(b_vault_data)
-        b_data = self._vault.decrypt(b_vault_data, filename=b_file_name)
+        b_data = self._vault.decrypt(b_vault_data, filename=b_file_name, always_error=C.VAULT_DECRYPT_VARSFILE_FAIL)
+
+        if b_data == b_vault_data:
+            # failed to decrypt but it was not an error, return empty
+            b_data = {}
 
         show_content = False
         return b_data, show_content
