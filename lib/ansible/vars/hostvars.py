@@ -122,8 +122,7 @@ class HostVarsVars(Mapping):
         self._templar = Templar(variables=self._vars, loader=self._loader)
 
     def __getitem__(self, var):
-        templar = Templar(variables=self._vars, loader=self._loader)
-        foo = templar.template(self._vars[var], fail_on_undefined=False, static_vars=C.INTERNAL_STATIC_VARS)
+        foo = self._templar.template(self._vars[var], fail_on_undefined=False, static_vars=C.INTERNAL_STATIC_VARS)
         return foo
 
     def __contains__(self, var):
