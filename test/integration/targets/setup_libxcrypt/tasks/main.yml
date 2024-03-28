@@ -1,0 +1,28 @@
+- when: ansible_facts.distribution == 'MacOSX'
+  block:
+    - name: MACOS | Find brew binary
+      command: which brew
+      register: brew_which
+
+    - name: MACOS | Get owner of brew binary
+      stat:
+        path: "{{ brew_which.stdout }}"
+      register: brew_stat
+
+    - become: yes
+      become_user: "{{ brew_stat.stat.pw_name }}"
+      environment:
+        HOMEBREW_NO_AUTO_UPDATE: True
+      block:
+        - name: MAXOS | Install libxcrypt
+          command: brew install libxcrypt
+
+        - name: MACOS | Get brew prefix
+          command: brew --prefix
+          register: brew_prefix
+
+        - name: MACOS | Link libxcrypt
+          file:
+            src: '{{ brew_prefix.stdout_lines.0 }}/opt/libxcrypt/lib/libcrypt.dylib'
+            dest: /usr/local/lib/libcrypt.dylib
+            state: link
