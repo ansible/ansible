@@ -42,8 +42,7 @@ options:
       - You should only use this field if the automatic selection is not working for some reason.
       - Since version 2.17 you can override the automatic detection both through a local facts C(overrides) file and setting
         C(pkg_mgr) or override both by using the C(PACKAGE_MANAGER_OVERRIDE) configuration.
-      - The precedence is C(use), then if not set/set to auto, otherwise use the 'local' machine facts override, if still not set use the configuration,
-        if this is not set it then falls back auto-detection.
+      - The precedence is C(use), then if not set/set to auto, use the configuration, if this is not set it then falls back auto-detection.
     default: auto
 requirements:
     - Whatever is required for the package plugins specific for each system.
