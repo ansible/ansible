@@ -1,0 +1,3 @@
+minor_changes:
+  - copy - Reduce disk accesses by 50% when setting owner and group of copied
+    files and directories
