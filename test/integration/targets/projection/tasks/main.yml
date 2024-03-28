@@ -1,0 +1,55 @@
+- command: "echo one"
+  register: result
+
+- assert:
+    that:
+      - result.stdout is defined
+
+- command: "echo two"
+  register:
+    result2: ansible_result
+    stdout2: ansible_result.stdout
+  changed_when: ansible_result.stdout_lines|first == 'not two'
+
+- assert:
+    that:
+      - ansible_result is not defined
+      - result2.stdout is defined
+      - stdout2.stdout is not defined
+      - result2.stdout == stdout2
+
+- command: "echo three"
+  register:
+    stdout3: ansible_result.stdout_lines|first
+  changed_when: stdout3 == 'three'
+
+- assert:
+    that:
+      - stdout3.stdout is undefined
+      - stdout3 == 'three'
+
+- debug:
+    msg: '{{ stdout3 is changed }}'
+  register: stdout3_changed
+  ignore_errors: true
+
+- debug:
+    var: stdout3_changed
+
+- assert:
+    that:
+      - >-
+        'expects a dictionary' in stdout3_changed.msg
+
+- command: "echo {{ item }}"
+  loop:
+    - one
+    - two
+    - three
+  register: result4
+  changed_when: ansible_loop_result.stdout_lines|first == 'three'
+
+- assert:
+    that:
+      - ansible_loop_result is undefined
+      - result4 is changed
