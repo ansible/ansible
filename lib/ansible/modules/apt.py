@@ -702,6 +702,8 @@ def mark_installed_manually(m, packages):
         cmd = "%s unmarkauto %s" % (apt_mark_cmd_path, ' '.join(packages))
         rc, out, err = m.run_command(cmd)
 
+    check_locked_error(out, err)
+
     if rc != 0:
         m.fail_json(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc)
 
@@ -821,6 +823,9 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             changed = APT_GET_ZERO not in out
 
         data = dict(changed=changed, stdout=out, stderr=err, diff=diff)
+
+        check_locked_error(out, err)
+
         if rc:
             status = False
             data = dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc)
@@ -935,6 +940,8 @@ def install_deb(
         else:
             stderr = err
 
+        check_locked_error(stdout, stderr)
+
         if rc == 0:
             m.exit_json(changed=True, stdout=stdout, stderr=stderr, diff=diff)
         else:
@@ -1001,6 +1008,9 @@ def remove(m, pkgspec, cache, purge=False, force=False,
             diff = parse_diff(out)
         else:
             diff = {}
+
+        check_locked_error(out, err)
+
         if rc:
             m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err), stdout=out, stderr=err, rc=rc)
         m.exit_json(changed=True, stdout=out, stderr=err, diff=diff)
@@ -1036,6 +1046,9 @@ def cleanup(m, purge=False, force=False, operation=None,
         diff = parse_diff(out)
     else:
         diff = {}
+
+    check_locked_error(out, err)
+
     if rc:
         m.fail_json(msg="'apt-get %s' failed: %s" % (operation, err), stdout=out, stderr=err, rc=rc)
 
@@ -1149,6 +1162,9 @@ def upgrade(m, mode="yes", force=False, default_release=None,
         diff = parse_diff(out)
     else:
         diff = {}
+
+    check_locked_error(out, err)
+
     if rc:
         m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err), stdout=out, rc=rc)
     if (apt_cmd == APT_GET_CMD and APT_GET_ZERO in out) or (apt_cmd == APTITUDE_CMD and APTITUDE_ZERO in out):
@@ -1539,6 +1555,11 @@ def main():
 
         # got here w/o exception and/or exit???
         module.fail_json(msg='Unexpected code path taken, we really should have exited before, this is a bug')
+
+
+def check_locked_error(stdout, stderr):
+    if ("lock was locked" in stderr or "lock was locked" in stdout):
+        raise apt.cache.LockFailedException
 
 
 if __name__ == "__main__":
