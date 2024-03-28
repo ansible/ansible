@@ -75,11 +75,11 @@ class ActionModule(ActionBase):
                         # actually get from facts
                         module = facts['ansible_facts'][pmgr]
                     except KeyError:
-                        module = 'auto'
+                        raise AnsibleActionFail('Could not detect a package manager. Try using the "use" option.' % module)
 
             if module and module != 'auto':
                 if not self._shared_loader_obj.module_loader.has_plugin(module):
-                    raise AnsibleActionFail('Could not find a module for %s.' % module)
+                    raise AnsibleActionFail('Could not find a matching action for the "%s" package manager.' % module)
                 else:
                     # run the 'package' module
                     new_module_args = self._task.args.copy()
