@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - Make HTTP status codes to retry during galaxy API calls configurable (https://github.com/ansible/ansible/pull/82246).

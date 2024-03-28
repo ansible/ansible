@@ -20,7 +20,7 @@ import ansible.constants as C
 from ansible import context
 from ansible.errors import AnsibleError
 from ansible.galaxy import api as galaxy_api
-from ansible.galaxy.api import CollectionVersionMetadata, GalaxyAPI, GalaxyError
+from ansible.galaxy.api import CollectionVersionMetadata, GalaxyAPI, GalaxyError, should_retry_error
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken
 from ansible.module_utils.common.file import S_IRWU_RG_RO
 from ansible.module_utils.common.text.converters import to_native, to_text
@@ -1354,3 +1354,11 @@ def test_clear_cache(cache_dir):
 def test_cache_id(url, expected):
     actual = galaxy_api.get_cache_id(url)
     assert actual == expected
+
+
+def test_should_retry_error_with_invalid_code(monkeypatch):
+    expected = "Invalid value for HTTP retry code"
+    monkeypatch.setattr(C, 'GALAXY_RETRY_HTTP_ERROR_CODES', ["429", "invalid"])
+
+    with pytest.raises(AnsibleError, match=expected):
+        should_retry_error(Exception())
