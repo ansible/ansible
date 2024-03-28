@@ -683,7 +683,7 @@ class Connection(ConnectionBase):
             return
 
         path = os.path.expanduser("~/.ssh")
-        makedirs_safe(path)
+        os.makedirs(path, exist_ok=True)
 
         with open(filename, 'w') as f:
 
@@ -728,7 +728,7 @@ class Connection(ConnectionBase):
             # that are starting up.)
             lockfile = self.keyfile.replace("known_hosts", ".known_hosts.lock")
             dirname = os.path.dirname(self.keyfile)
-            makedirs_safe(dirname)
+            os.makedirs(dirname, exist_ok=True)
 
             KEY_LOCK = open(lockfile, 'w')
             fcntl.lockf(KEY_LOCK, fcntl.LOCK_EX)

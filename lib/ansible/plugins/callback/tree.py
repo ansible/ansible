@@ -32,7 +32,7 @@ import os
 from ansible.constants import TREE_DIR
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
-from ansible.utils.path import makedirs_safe, unfrackpath
+from ansible.utils.path import unfrackpath
 
 
 class CallbackModule(CallbackBase):
@@ -61,7 +61,7 @@ class CallbackModule(CallbackBase):
 
         buf = to_bytes(buf)
         try:
-            makedirs_safe(self.tree)
+            os.makedirs(self.tree, exist_ok=True)
         except (OSError, IOError) as e:
             self._display.warning(u"Unable to access or create the configured directory (%s): %s" % (to_text(self.tree), to_text(e)))
 

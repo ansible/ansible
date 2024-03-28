@@ -1190,19 +1190,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                     # Write the assembled module to a temp file (write to temp
                     # so that no one looking for the file reads a partially
                     # written file)
-                    #
-                    # FIXME: Once split controller/remote is merged, this can be simplified to
-                    #        os.makedirs(lookup_path, exist_ok=True)
-                    if not os.path.exists(lookup_path):
-                        try:
-                            # Note -- if we have a global function to setup, that would
-                            # be a better place to run this
-                            os.makedirs(lookup_path)
-                        except OSError:
-                            # Multiple processes tried to create the directory. If it still does not
-                            # exist, raise the original exception.
-                            if not os.path.exists(lookup_path):
-                                raise
+                    os.makedirs(lookup_path, exist_ok=True)
                     display.debug('ANSIBALLZ: Writing module')
                     with open(cached_module_filename + '-part', 'wb') as f:
                         f.write(zipdata)
