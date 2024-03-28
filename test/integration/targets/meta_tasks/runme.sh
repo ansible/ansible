@@ -73,6 +73,37 @@ for test_strategy in linear free; do
   grep -qv 'Failed to end_batch' <<< "$out"
 done
 
+# test clear_host_errors meta task
+for test_strategy in linear free; do
+    out="$(ansible-playbook test_clear_host_errors.yml -i inventory.yml -e test_strategy=$test_strategy -vv "$@")"
+
+    for initial_hosts in testhost testhost2 testhost3; do
+        grep -q "starting play for $initial_hosts" <<< "$out"
+    done
+
+    for host_left in testhost testhost3; do
+        grep -q "post-failure and pre-recovery for $host_left" <<< "$out"
+        grep -q "second post-failure and pre-recovery for $host_left" <<< "$out"
+        grep -q "block post-failure and pre-recovery for $host_left" <<< "$out"
+        grep -q "second in block post-failure and pre-recovery for $host_left" <<< "$out"
+	grep -q "next play pre-recovery for $host_left" <<< "$out"
+    done
+
+    grep -qv "post-failure and pre-recovery for testhost2" <<< "$out"
+    grep -qv "second post-failure and pre-recovery for testhost2" <<< "$out"
+    grep -qv "block post-failure and pre-recovery for testhost2" <<< "$out"
+    grep -qv "second in block post-failure and pre-recovery for testhost2" <<< "$out"
+    grep -qv "next play pre-recovery for testhost2" <<< "$out"
+
+    for host in testhost testhost2 testhost3; do
+        grep -q "$host in block" <<< "$out"
+        grep -q "post-recovery for $host" <<< "$out"
+        grep -q "second post-recovery for $host" <<< "$out"
+        grep -q "next play post-recovery for $host" <<< "$out"
+        grep -q "post-recovery in rescue for $host" <<< "$out"
+    done
+done
+
 # test refresh
 ansible-playbook -i inventory_refresh.yml refresh.yml "$@"
 ansible-playbook -i inventory_refresh.yml refresh_preserve_dynamic.yml "$@"
