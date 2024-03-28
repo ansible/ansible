@@ -40,37 +40,37 @@ class ActionModule(ActionBase):
         self._supports_async = True
 
         result = super(ActionModule, self).run(tmp, task_vars)
-        del tmp  # tmp no longer has any effect
 
         module = self._task.args.get('use', 'auto')
 
-        if module == 'auto':
-            try:
-                if self._task.delegate_to:  # if we delegate, we should use delegated host's facts
-                    module = C.config.get_config_value('PACKAGE_MANAGER_OVERRIDE', variables=combine_vars(self._task.vars, task_vars.get('delegated_vars', {})))
-                    if module is None:
-                        dh = '%s' % self._task.delegate_to
-                        module = self._templar.template(
-                            f"{{hostvars['{dh}']['ansible_local']['overrides']]['pkg_mgr']|default(hostvars['{dh}']['ansible_facts']['pkg_mgr'])}}"
-                        )
-                else:
-                    module = C.config.get_config_value('PACKAGE_MANAGER_OVERRIDE', variables=task_vars)
-                    if module is None:
-                        module = self._templar.template("{{ansible_local['overrides']['pkg_mgr']|default(ansible_facts['pkg_mgr'])}}")
-            except Exception:
-                pass  # could not get it from template!
+        if self._task.delegate_to:
+            # TODO: template delegate_to if needed
+            hosts_vars = variables['hostvars'][self._task.delegate_to]
+            tvars = combine_vars(self._task.vars, task_vars.get('delegated_vars', {}))
+        else:
+            hosts_vars = variables
+            tvars = task_vars
 
         try:
             if module == 'auto':
-                # TODO: change to action 'gather_facts'
-                facts = self._execute_module(
-                    module_name='ansible.legacy.setup',
-                    module_args=dict(filter='ansible_pkg_mgr', gather_subset='!all'),
-                    task_vars=task_vars)
-                display.debug("Facts %s" % facts)
-                module = facts.get('ansible_facts', {}).get('ansible_pkg_mgr', 'auto')
+                try:
+                    module = hosts_vars['ansible_local']['overrides']]['pkg_mgr']
+                except KeyError:
+                    module = C.config.get_config_value('PACKAGE_MANAGER_OVERRIDE', variables=tvars)
 
-            if module != 'auto':
+                if not module:
+                    try:
+                        module = hosts_vars['ansible_facts']['pkg_mgr']
+                    except KeyError:
+                        # very expensive step, we actually run fact gathering because we don't have facts for this host.
+                        facts = self._execute_module(
+                            module_name='ansible.legacy.setup',
+                            module_args=dict(filter='ansible_pkg_mgr', gather_subset='!all'),
+                            task_vars=task_vars)
+                        display.debug("Facts %s" % facts)
+                        module = facts.get('ansible_facts', {}).get('ansible_pkg_mgr', 'auto')
+
+            if module and module != 'auto':
                 if not self._shared_loader_obj.module_loader.has_plugin(module):
                     raise AnsibleActionFail('Could not find a module for %s.' % module)
                 else:
