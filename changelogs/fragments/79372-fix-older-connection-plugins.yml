@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix check for missing _sub_plugin attribute in older connection plugins (https://github.com/ansible/ansible/pull/79372)
