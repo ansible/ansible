@@ -77,6 +77,11 @@ options:
             - This ensures 'IdentitiesOnly=yes' is present in O(ssh_opts).
         type: path
         version_added: "1.5"
+    key_content:
+        description:
+            - Specify an optional private key string value to use for the checkout.
+        type: str
+        version_added: "2.17"
     reference:
         description:
             - Reference repository (see "git clone --reference ...").
@@ -288,6 +293,22 @@ EXAMPLES = '''
     single_branch: yes
     version: master
 
+- name: Example clone of a single branch using a private key on the target host
+  ansible.builtin.git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: /src/ansible-examples
+    key_file: /home/ansible/.ssh/id_ed25519
+    single_branch: yes
+    accept_hostkey: yes
+
+- name: Example clone of a single branch using a private key from the control node
+  ansible.builtin.git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: /src/ansible-examples
+    key_content: "{{ lookup('ansible.builtin.env', 'SSH_KEY') }}"
+    single_branch: yes
+    accept_hostkey: yes
+
 - name: Avoid hanging when http(s) password is missing
   ansible.builtin.git:
     repo: https://github.com/ansible/could-be-a-private-repo
@@ -340,7 +361,7 @@ import shutil
 import tempfile
 from ansible.module_utils.compat.version import LooseVersion
 
-from ansible.module_utils.common.text.converters import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.process import get_bin_path
@@ -1199,6 +1220,7 @@ def main():
             accept_hostkey=dict(default='no', type='bool'),
             accept_newhostkey=dict(default='no', type='bool'),
             key_file=dict(default=None, type='path', required=False),
+            key_content=dict(default=None, required=False, no_log=True),
             ssh_opts=dict(default=None, required=False),
             executable=dict(default=None, type='path'),
             bare=dict(default='no', type='bool'),
@@ -1210,7 +1232,8 @@ def main():
             archive_prefix=dict(),
             separate_git_dir=dict(type='path'),
         ),
-        mutually_exclusive=[('separate_git_dir', 'bare'), ('accept_hostkey', 'accept_newhostkey')],
+        mutually_exclusive=[('separate_git_dir', 'bare'), ('accept_hostkey', 'accept_newhostkey'),
+                            ('key_file', 'key_content')],
         required_by={'archive_prefix': ['archive']},
         supports_check_mode=True
     )
@@ -1231,6 +1254,7 @@ def main():
     single_branch = module.params['single_branch']
     git_path = module.params['executable'] or module.get_bin_path('git', True)
     key_file = module.params['key_file']
+    key_content = module.params['key_content']
     ssh_opts = module.params['ssh_opts']
     umask = module.params['umask']
     archive = module.params['archive']
@@ -1304,6 +1328,16 @@ def main():
 
     # iface changes so need it to make decisions
     git_version_used = git_version(git_path, module)
+
+    if key_content:
+        key_content += "\n" if not key_content.endswith("\n") else ""
+        key = to_bytes(key_content)
+        # tempfile not saved on disk
+        tmpfd, key_file = tempfile.mkstemp(dir=module.tmpdir)
+        module.add_cleanup_file(key_file)
+        tmpfile = os.fdopen(tmpfd, "w+b")
+        tmpfile.write(key)
+        tmpfile.close()
 
     # GIT_SSH=<path> as an environment variable, might create sh wrapper script for older versions.
     set_git_ssh_env(key_file, ssh_opts, git_version_used, module)
