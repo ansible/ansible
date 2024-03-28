@@ -1,0 +1,2 @@
+bugfixes:
+- git - Address non-UTF8 module responses in the ``diff`` parameter with repositories that contain non-UTF8 encoded data

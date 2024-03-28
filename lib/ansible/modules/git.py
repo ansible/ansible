@@ -671,7 +671,9 @@ def get_diff(module, git_path, dest, repo, remote, depth, bare, before, after):
         git_version_used = git_version(git_path, module)
         fetch(git_path, module, repo, dest, after, remote, depth, bare, '', git_version_used)
         cmd = '%s diff %s %s' % (git_path, before, after)
-        (rc, out, err) = module.run_command(cmd, cwd=dest)
+        # The actual file encodings in the repo may not be easily discernible, to avoid encoding issues later,
+        # replace chars that are not utf-8 encodable
+        (rc, out, err) = module.run_command(cmd, cwd=dest, errors='replace')
         if rc == 0 and out:
             return {'prepared': out}
         elif rc == 0:
