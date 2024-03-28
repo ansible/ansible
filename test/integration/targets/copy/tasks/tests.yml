@@ -1670,6 +1670,7 @@
     file:
       path: '{{ remote_dir }}/testcase1_local_follow_true'
       state: directory
+      mode: '0555'
 
   - name: execute - Copy the directory on remote with local_follow True
     copy:
@@ -1677,6 +1678,8 @@
       src: '{{ remote_dir }}/remote_dir_src/'
       dest: '{{ remote_dir }}/testcase1_local_follow_true'
       local_follow: True
+      mode: '0555'
+      directory_mode: '0555'
     register: testcase1
 
   - name: gather - Stat the testcase1_local_follow_true
@@ -1705,14 +1708,55 @@
       that:
       - testcase1 is changed
       - "stat_testcase1_local_follow_true.stat.isdir"
+      - "stat_testcase1_local_follow_true.stat.mode == '0555'"
       - "stat_testcase1_local_follow_true_subdir.stat.isdir"
+      - "stat_testcase1_local_follow_true_subdir.stat.mode == '0555'"
       - "stat_testcase1_local_follow_true_file1.stat.exists"
+      - "stat_testcase1_local_follow_true_file1.stat.mode == '0555'"
       - "stat_remote_dir_src_file1_before.stat.checksum == stat_testcase1_local_follow_true_file1.stat.checksum"
       - "stat_testcase1_local_follow_true_subdir_file12.stat.exists"
       - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_testcase1_local_follow_true_subdir_file12.stat.checksum"
       - "stat_testcase1_local_follow_true_link_file12.stat.exists"
       - "not stat_testcase1_local_follow_true_link_file12.stat.islnk"
+      - "stat_testcase1_local_follow_true_link_file12.stat.mode == '0555'"
       - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_testcase1_local_follow_true_link_file12.stat.checksum"
+
+  - name: execute - Copy the directory on remote with local_follow True again
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src/'
+      dest: '{{ remote_dir }}/testcase1_local_follow_true'
+      local_follow: True
+      mode: '0555'
+      directory_mode: '0555'
+    register: testcase1_idempotent
+
+  - name: execute - Copy the directory on remote with local_follow True and modified mode
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src/'
+      dest: '{{ remote_dir }}/testcase1_local_follow_true'
+      local_follow: True
+      mode: '0547'
+      directory_mode: '0547'
+    register: testcase1_modified_mode
+
+  - name: gather - stat modified testcase1 files
+    stat:
+      path: '{{ remote_dir }}/{{ item }}'
+    register: testcase1_modified_stat
+    loop:
+      - testcase1_local_follow_true
+      - testcase1_local_follow_true/subdir
+      - testcase1_local_follow_true/file1
+      - testcase1_local_follow_true/subdir/file12
+
+  - name: assert - remote_dir_src has copied with local_follow True.
+    assert:
+      that:
+      - testcase1_idempotent is not changed
+      - testcase1_modified_mode is changed
+      - testcase1_modified_stat.results | map(attribute='stat') | map(attribute='mode') | unique == ['0547']
 
 ### local_follow: False
   - name: execute - Create a test dest dir

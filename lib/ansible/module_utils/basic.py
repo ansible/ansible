@@ -683,9 +683,6 @@ class AnsibleModule(object):
         if not self.selinux_enabled():
             return changed
 
-        if self.check_file_absent_if_check_mode(path):
-            return True
-
         cur_context = self.selinux_context(path)
         new_context = list(cur_context)
         # Iterate over the current context instead of the
