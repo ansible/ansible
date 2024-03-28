@@ -669,6 +669,8 @@ def get_diff(module, git_path, dest, repo, remote, depth, bare, before, after):
     elif before != after:
         # Ensure we have the object we are referring to during git diff !
         git_version_used = git_version(git_path, module)
+        if git_version_used is None:
+            module.fail_json(msg='Cannot find git executable at %s' % git_path)
         fetch(git_path, module, repo, dest, after, remote, depth, bare, '', git_version_used)
         cmd = '%s diff %s %s' % (git_path, before, after)
         (rc, out, err) = module.run_command(cmd, cwd=dest)
@@ -1304,6 +1306,8 @@ def main():
 
     # iface changes so need it to make decisions
     git_version_used = git_version(git_path, module)
+    if git_version_used is None:
+        module.fail_json(msg='Cannot find git executable at %s' % git_path)
 
     # GIT_SSH=<path> as an environment variable, might create sh wrapper script for older versions.
     set_git_ssh_env(key_file, ssh_opts, git_version_used, module)
