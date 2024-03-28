@@ -17,9 +17,14 @@
 
 from __future__ import annotations
 
+from ansible import context, constants as C
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.task import Task
 from ansible.module_utils.six import string_types
+from ansible.utils.display import Display
+
+
+display = Display()
 
 
 class Handler(Task):
@@ -41,6 +46,20 @@ class Handler(Task):
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
         t = Handler(block=block, role=role, task_include=task_include)
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
+
+    def _validate_tags(self, attr, name, value):
+        if not value:
+            setattr(self, name, ["always"])
+            if C.HANDLERS_TAGS_COMPAT_WARNING and context.cliargs_deferred_get('tags')() != ("all",):
+                # FIXME deprecate this behavior and match the functionality with regular tasks?
+                display.warning(
+                    "Since ansible-core 2.17 tags are supported on handlers. "
+                    "There is at least one untagged handler in the play while the --tags "
+                    "command line option is specified. For backwards compatibility any "
+                    "untagged handler is implicitly tagged with the 'always' tag "
+                    "and therefore ignores any tags specified in --tags. You can silence "
+                    "this warning via the HANDLERS_TAGS_COMPAT_WARNING configuration option."
+                )
 
     def notify_host(self, host):
         if not self.is_host_notified(host):

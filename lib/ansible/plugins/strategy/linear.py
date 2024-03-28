@@ -304,21 +304,20 @@ class StrategyModule(StrategyBase):
 
                             display.debug("iterating over new_blocks loaded from include file")
                             for new_block in new_blocks:
+                                task_vars = self._variable_manager.get_vars(
+                                    play=iterator._play,
+                                    task=new_block.get_first_parent_include(),
+                                    _hosts=self._hosts_cache,
+                                    _hosts_all=self._hosts_cache_all,
+                                )
+                                display.debug("filtering new block on tags")
+                                final_block = new_block.filter_tagged_tasks(task_vars)
+                                display.debug("done filtering new block on tags")
+
                                 if is_handler:
                                     for task in new_block.block:
                                         task.notified_hosts = included_file._hosts[:]
-                                    final_block = new_block
                                 else:
-                                    task_vars = self._variable_manager.get_vars(
-                                        play=iterator._play,
-                                        task=new_block.get_first_parent_include(),
-                                        _hosts=self._hosts_cache,
-                                        _hosts_all=self._hosts_cache_all,
-                                    )
-                                    display.debug("filtering new block on tags")
-                                    final_block = new_block.filter_tagged_tasks(task_vars)
-                                    display.debug("done filtering new block on tags")
-
                                     included_tasks.extend(final_block.get_tasks())
 
                                 for host in hosts_left:

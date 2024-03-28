@@ -195,7 +195,11 @@ class PlayIterator:
         # the copy happens at each flush in order to restore the original
         # list and remove any included handlers that might not be notified
         # at the particular flush
-        self.handlers = [h for b in self._play.handlers for h in b.block]
+        self.handlers = [
+            h
+            for b in self._play.handlers
+            for h in b.filter_tagged_tasks(all_vars).block
+        ]
 
         self._host_states = {}
         start_at_matched = False

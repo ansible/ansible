@@ -107,6 +107,7 @@ def ansible_environment(args: CommonConfig, color: bool = True, ansible_config: 
         ANSIBLE_CONFIG=ansible_config,
         ANSIBLE_LIBRARY='/dev/null',
         ANSIBLE_DEVEL_WARNING='false',  # Don't show warnings that CI is running devel
+        ANSIBLE_HANDLERS_TAGS_COMPAT_WARNING='false',
         PYTHONPATH=get_ansible_python_path(args),
         PAGER='/bin/cat',
         PATH=path,

@@ -1,0 +1,2 @@
+minor_changes:
+  - Tags can be specified on handlers. See the Tags section in the ansible-core documentation and ``HANDLERS_TAGS_COMPAT_WARNING`` configuration option description for more information.

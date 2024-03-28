@@ -1,0 +1,19 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - command: echo
+      notify:
+        - handler_tagged
+        - handler_implicit_always
+      tags:
+        - always
+  handlers:
+    - name: handler_tagged
+      debug:
+        msg: handler_tagged ran
+      tags:
+        - handler_tag
+
+    - name: handler_implicit_always
+      debug:
+        msg: handler_implicit_always ran
