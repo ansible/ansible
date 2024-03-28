@@ -1,0 +1,30 @@
+---
+- name: test for allow_duplicates with include_role
+  hosts: localhost
+  gather_facts: false
+  tags:
+    - include
+  tasks:
+    - include_role:
+        name: dup_allowed_role
+        allow_duplicates: false
+    - include_role:
+        name: dup_allowed_role
+    - include_role:
+        name: dup_allowed_role
+        allow_duplicates: false
+
+- name: test for allow_duplicates with import_role
+  hosts: localhost
+  gather_facts: false
+  tags:
+    - import
+  tasks:
+    - import_role:
+        name: dup_allowed_role
+        allow_duplicates: false
+    - import_role:
+        name: dup_allowed_role
+    - import_role:
+        name: dup_allowed_role
+        allow_duplicates: false
