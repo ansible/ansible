@@ -66,9 +66,10 @@ class ActionModule(ActionBase):
                         # we had no facts, so generate them
                         # very expensive step, we actually run fact gathering because we don't have facts for this host.
                         facts = self._execute_module(
-                                module_name='ansible.legacy.setup',
-                                module_args=dict(filter='ansible_pkg_mgr', gather_subset='!all'),
-                                task_vars=task_vars)
+                            module_name='ansible.legacy.setup',
+                            module_args=dict(filter='ansible_pkg_mgr', gather_subset='!all'),
+                            task_vars=task_vars,
+                        )
                         pmgr = 'ansible_pkg_mgr'
 
                     try:
