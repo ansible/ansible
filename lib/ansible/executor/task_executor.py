@@ -621,6 +621,7 @@ class TaskExecutor:
         elif self._task.until:
             retries += 3  # the default is not set in FA because we need to differentiate "unset" value
 
+        # TODO: move, really not needed here, should move to closer and evaluate at time of use
         delay = self._task.delay
         if delay < 0:
             delay = 1
@@ -630,17 +631,20 @@ class TaskExecutor:
         for attempt in range(1, retries + 1):
             display.debug("running the handler")
             try:
+                # we do NOT return on errors here so we can process result as normal
+                # create your own result dict to handle
                 if self._task.timeout:
                     old_sig = signal.signal(signal.SIGALRM, task_timeout)
                     signal.alarm(self._task.timeout)
                 result = self._handler.run(task_vars=vars_copy)
             except (AnsibleActionFail, AnsibleActionSkip) as e:
-                return e.result
+                result = e.result
             except AnsibleConnectionFailure as e:
-                return dict(unreachable=True, msg=to_text(e))
+                # we mostly want the 'failed' path in processing, but when we return we drop that key
+                result = dict(unreachable=True, msg=to_text(e), changed=False, failed=False)
             except TaskTimeoutError as e:
                 msg = 'The %s action failed to execute in the expected time frame (%d) and was terminated' % (self._task.action, self._task.timeout)
-                return dict(failed=True, msg=msg)
+                result = dict(failed=True, msg=msg)
             finally:
                 if self._task.timeout:
                     signal.alarm(0)
@@ -665,6 +669,7 @@ class TaskExecutor:
             if self._task.async_val > 0:
                 if self._task.poll > 0 and not result.get('skipped') and not result.get('failed'):
                     result = self._poll_async_result(result=result, templar=templar, task_vars=vars_copy)
+                    # TODO: add 'unreachable' event and handling
                     if result.get('failed'):
                         self._final_q.send_callback(
                             'v2_runner_on_async_failed',
@@ -761,8 +766,13 @@ class TaskExecutor:
                 if cond.evaluate_conditional(templar, vars_copy):
                     break
                 else:
+                    if result.get('unreachable', False) and not self._task.ignore_unreachable:
+                        # only continue retry if not unreachable or we ignore it
+                        break
+
                     # no conditional check, or it failed, so sleep for the specified time
                     if attempt < retries:
+
                         result['_ansible_retry'] = True
                         result['retries'] = retries
                         display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
@@ -819,6 +829,10 @@ class TaskExecutor:
             for requireshed in ('ansible_host', 'ansible_port', 'ansible_user', 'ansible_connection'):
                 if requireshed not in result["_ansible_delegated_vars"] and requireshed in cvars:
                     result["_ansible_delegated_vars"][requireshed] = cvars.get(requireshed)
+
+        # keep unreachable as it's own failure, we used 'failed' to navigate normal processing till here
+        if result.get('unreachable', False):
+            del result['failed']
 
         # and return
         display.debug("attempt loop complete, returning result")
