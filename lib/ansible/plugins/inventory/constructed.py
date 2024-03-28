@@ -97,7 +97,7 @@ EXAMPLES = r'''
     group_vars:
         # group names: mapped to variables for those groups
         all:
-            ntpserver: 'ntp.{{ansible_facts['domain']}}'
+            ntpserver: "ntp.{{ansible_facts['domain']}}"
         webservers:
             open_ports: 80,8080,443
             allowed_ssh_groups: webdevs,qa,ops
