@@ -50,6 +50,12 @@ options:
       - Relative cost of accessing this repository. Useful for weighing one
         repo's packages as greater/less than any other.
     type: str
+  countme:
+    description:
+      - Whether a special flag should be added to a randomly chosen query each week.
+    default: ~
+    type: bool
+    version_added: '2.17'
   deltarpm_metadata_percentage:
     description:
       - When the relative size of deltarpm metadata vs pkgs is larger than
@@ -432,6 +438,7 @@ class YumRepo(object):
         'bandwidth',
         'baseurl',
         'cost',
+        'countme',
         'deltarpm_metadata_percentage',
         'deltarpm_percentage',
         'enabled',
@@ -581,6 +588,7 @@ def main():
         bandwidth=dict(),
         baseurl=dict(type='list', elements='str'),
         cost=dict(),
+        countme=dict(type='bool'),
         deltarpm_metadata_percentage=dict(),
         deltarpm_percentage=dict(),
         description=dict(),
