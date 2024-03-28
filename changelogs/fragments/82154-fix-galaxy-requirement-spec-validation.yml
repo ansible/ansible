@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix validating role params that may be unused by the role, but are supported by ansible-galaxy (https://github.com/ansible/ansible/issues/82154).

@@ -1,0 +1,17 @@
+argument_specs:
+  main:
+    short_description: Main entrypoint to test validating the overloaded role params scm, src, and version.
+    options:
+      scm:
+        type: str
+        description: role variable 'scm'
+        choices:
+          - "git"
+      src:
+        type: str
+        description: role variable 'src'
+        choices:
+          - "src"
+      version:
+        type: int
+        description: role variable 'version'
