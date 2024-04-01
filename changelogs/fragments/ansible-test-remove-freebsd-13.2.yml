@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Remove the FreeBSD 13.2 remote.
