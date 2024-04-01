@@ -244,8 +244,8 @@
 
 - name: test ansible_package_use
   block:
-  - package:
-    name: test with var
+  - name: test with var
+    package:
       name: doesnotmatter
     vars:
       ansible_package_use: lola
@@ -254,7 +254,7 @@
 
   - name: test w/o ansible_package_use
     package:
-        name: doesnotmatter
+      name: doesnotmatter
     ignore_errors: true
     register: no_use
 
