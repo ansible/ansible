@@ -47,7 +47,6 @@ class ActionModule(ActionBase):
             if module == 'auto':
 
                 if self._task.delegate_to:
-                    # TODO: template delegate_to if needed
                     hosts_vars = task_vars['hostvars'][self._task.delegate_to]
                     tvars = combine_vars(self._task.vars, task_vars.get('delegated_vars', {}))
                 else:
