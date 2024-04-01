@@ -1768,16 +1768,6 @@ OLD_PLUGIN_CACHE_CLEARING:
   type: boolean
   default: False
   version_added: "2.8"
-PACKAGE_MANAGER_OVERRIDE:
-  name: Override the package manager
-  description:
-    - When set, allows overriding the detected package manager fact when using the package action.
-  env: [{name: ANSIBLE_PACKAGE_MANAGER_OVERRIDE}]
-  ini:
-    - {key: package_manager_override, section: defaults}
-  vars:
-    - name: ansible_package_manager_override
-  version_added: '2.17'
 PAGER:
   name: pager application to use
   default: less

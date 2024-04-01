@@ -16,7 +16,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from ansible import constants as C
 from ansible.errors import AnsibleAction, AnsibleActionFail
 from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.module_utils.facts.system.pkg_mgr import PKG_MGRS
@@ -54,7 +53,7 @@ class ActionModule(ActionBase):
                     tvars = task_vars
 
                 # use config
-                module = C.config.get_config_value('PACKAGE_MANAGER_OVERRIDE', variables=tvars)
+                module = tvars.get('ansible_package_use', None)
 
                 if not module:
                     # no use, no config, get from facts
