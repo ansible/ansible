@@ -1,2 +1,2 @@
 bugfixes:
-  - Remove link to https://galaxy.ansible.com/api/v1/platforms/ from the role templates (https://github.com/ansible/ansible/issues/82453).
+  - Remove the galaxy_info field ``platforms`` from the role templates (https://github.com/ansible/ansible/issues/82453).
