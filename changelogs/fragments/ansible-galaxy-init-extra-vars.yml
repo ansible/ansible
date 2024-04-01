@@ -1,5 +1,0 @@
-minor_changes:
-- >-
-  ``ansible-galaxy role|collection init`` - accept ``--extra-vars`` to
-  supplement/override the variables ``ansible-galaxy`` injects for templating
-  ``.j2`` files in the skeleton.

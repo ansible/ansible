@@ -1,2 +1,0 @@
-minor_changes:
-  - Use Python's built-in ``functools.update_wrapper`` instead an inline copy from Python 3.7.

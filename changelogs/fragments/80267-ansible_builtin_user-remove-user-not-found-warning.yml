@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible.builtin.user - Remove user not found warning (https://github.com/ansible/ansible/issues/80267)

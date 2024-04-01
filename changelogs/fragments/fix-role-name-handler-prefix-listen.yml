@@ -1,2 +1,0 @@
-bugfixes:
-  - 'Fix notifying role handlers by listen keyword topics with the "role_name : " prefix (https://github.com/ansible/ansible/issues/82849).'

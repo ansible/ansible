@@ -1,2 +1,0 @@
-bugfixes:
-- winrm - does not hang when attempting to get process output when stdin write failed

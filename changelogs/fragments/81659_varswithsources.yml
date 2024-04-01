@@ -1,3 +1,0 @@
----
-bugfixes:
-- vars - handle exception while combining VarsWithSources and dict (https://github.com/ansible/ansible/issues/81659).

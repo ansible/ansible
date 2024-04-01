@@ -1,2 +1,0 @@
-minor_changes:
-  - import_role - allow subdirectories with ``_from`` options for parity with ``include_role`` (https://github.com/ansible/ansible/issues/82584).

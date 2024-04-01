@@ -1,2 +1,0 @@
-bugfixes:
-  - dwim functions for lookups should be better at detectging role context even in abscense of tasks/main.

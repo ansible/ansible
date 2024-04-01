@@ -1,2 +1,0 @@
-minor_changes:
-- urls - reduce complexity of ``Request.open``

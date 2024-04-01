@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-pull now will expand relative paths for the ``-d|--directory`` option is now expanded before use.

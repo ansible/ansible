@@ -1,2 +1,0 @@
-bugfixes:
-  - allow_duplicates - fix evaluating if the current role allows duplicates instead of using the initial value from the duplicate's cached role.
