@@ -1,3 +1,0 @@
----
-bugfixes:
- - assemble - fixed missing parameter 'content' in _get_diff_data API (https://github.com/ansible/ansible/issues/82359).

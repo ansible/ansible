@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test now has FreeBSD 13.3 and 14.0 support

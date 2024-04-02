@@ -1,2 +1,0 @@
-bugfixes:
-  - AnsibleModule.atomic_move - fix preserving extended ACLs of the destination when it exists (https://github.com/ansible/ansible/issues/72929).

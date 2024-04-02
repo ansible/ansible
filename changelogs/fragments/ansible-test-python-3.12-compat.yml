@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Add a ``pylint`` plugin to work around a known issue on Python 3.12.

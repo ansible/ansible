@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - Add Alpine 3.19 to remotes.
-  - ansible-test - Add Alpine 3.19 container.

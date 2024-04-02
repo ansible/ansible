@@ -1,3 +1,0 @@
----
-bugfixes:
-  - Reword the error message when the module fails to parse parameters in JSON format (https://github.com/ansible/ansible/issues/81188).

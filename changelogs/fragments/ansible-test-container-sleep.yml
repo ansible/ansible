@@ -1,3 +1,0 @@
-minor_changes:
-- ansible-test - When invoking ``sleep`` in containers during container setup, the ``env`` command is used to avoid invoking
-                 the shell builtin, if present.

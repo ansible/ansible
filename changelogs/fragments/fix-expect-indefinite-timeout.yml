@@ -1,2 +1,0 @@
-bugfixes:
-  - expect - fix argument spec error using timeout=null (https://github.com/ansible/ansible/issues/80982).

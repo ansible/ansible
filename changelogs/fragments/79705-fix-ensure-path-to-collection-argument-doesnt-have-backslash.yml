@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-galaxy - ensure path to ansible collection when installing or downloading doesn't have a backslash (https://github.com/ansible/ansible/pull/79705).

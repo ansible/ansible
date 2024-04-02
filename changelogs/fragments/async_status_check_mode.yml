@@ -1,3 +1,0 @@
-minor_changes:
-  - async tasks can now also support check mode at the same time.
-  - async_status now supports check mode.

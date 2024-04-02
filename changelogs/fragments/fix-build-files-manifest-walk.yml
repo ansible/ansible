@@ -1,4 +1,0 @@
-minor_changes:
-  - >-
-    ansible-galaxy - Started normalizing build directory with a trailing separator when building collections, internally.
-    (https://github.com/ansible/ansible/pull/81619).

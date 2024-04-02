@@ -1,2 +1,0 @@
-bugfixes:
-  - delegate_to when set to an empty or undefined variable will now give a proper error.

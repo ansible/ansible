@@ -1,2 +1,0 @@
-minor_changes:
-  - find - add a encoding parameter to specify which encoding of the files to be searched.

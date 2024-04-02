@@ -1,6 +1,0 @@
-minor_changes:
-  - dnf - add the ``best`` option
-  - dnf5 - add the ``best`` option
-bugfixes:
-  - dnf - the ``nobest`` option only overrides the distribution default when explicitly used, and is used for all supported operations (https://github.com/ansible/ansible/issues/82616)
-  - dnf5 - the ``nobest`` option only overrides the distribution default when used

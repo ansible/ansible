@@ -1,4 +1,0 @@
----
-
-minor_changes:
-  - csvfile - add a keycol parameter to specify in which column to search.

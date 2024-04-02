@@ -1,3 +1,0 @@
----
-minor_changes:
-  - ansible-test - Updated the CloudStack test container to version 1.7.0.

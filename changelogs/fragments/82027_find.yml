@@ -1,3 +1,0 @@
----
-bugfixes:
-    - find - do not fail on Permission errors (https://github.com/ansible/ansible/issues/82027).

@@ -1,3 +1,0 @@
-bugfixes:
-  - first_found lookup now always takes into account k=v options
-  - first_found lookup now always returns a full (absolute) and normalized path

@@ -1,3 +1,0 @@
----
-bugfixes:
-  - Consolidate systemd detection logic into one place (https://github.com/ansible/ansible/issues/80975).

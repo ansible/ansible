@@ -1,3 +1,0 @@
----
-bugfixes:
-  - iptables - add option choices 'src,src' and 'dst,dst' in match_set_flags (https://github.com/ansible/ansible/issues/81281).

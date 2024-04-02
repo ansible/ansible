@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-galaxy - Deprecate use of the Galaxy v2 API (https://github.com/ansible/ansible/issues/81781)

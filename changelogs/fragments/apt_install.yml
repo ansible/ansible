@@ -1,3 +1,0 @@
----
-bugfixes:
-  - apt - honor install_recommends and dpkg_options while installing python3-apt library (https://github.com/ansible/ansible/issues/40608).

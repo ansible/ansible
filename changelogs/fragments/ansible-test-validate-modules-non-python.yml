@@ -1,3 +1,0 @@
-bugfixes:
-  - ansible-test - The ``validate-modules`` sanity test no longer attempts to process files with unrecognized extensions as Python
-    (resolves https://github.com/ansible/ansible/issues/82604).
