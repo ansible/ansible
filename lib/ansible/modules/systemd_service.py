@@ -29,11 +29,13 @@ options:
             - V(started)/V(stopped) are idempotent actions that will not run commands unless necessary.
               V(restarted) will always bounce the unit.
               V(reloaded) will always reload and if the service is not running at the moment of the reload, it is started.
+            - If set, requires O(name).
         type: str
         choices: [ reloaded, restarted, started, stopped ]
     enabled:
         description:
-            - Whether the unit should start on boot. B(At least one of the states and enabled are required.)
+            - Whether the unit should start on boot. B(At least one of state and enabled are required.)
+            - If set, requires O(name).
         type: bool
     force:
         description:
@@ -42,7 +44,8 @@ options:
         version_added: 2.6
     masked:
         description:
-            - Whether the unit should be masked or not, a masked unit is impossible to start.
+            - Whether the unit should be masked or not. A masked unit is impossible to start.
+            - If set, requires O(name).
         type: bool
     daemon_reload:
         description:
@@ -87,11 +90,10 @@ attributes:
     platform:
         platforms: posix
 notes:
-    - Since 2.4, one of the following options is required O(state), O(enabled), O(masked), O(daemon_reload), (O(daemon_reexec) since 2.8),
-      and all except O(daemon_reload) and (O(daemon_reexec) since 2.8) also require O(name).
+    - O(state), O(enabled), O(masked) requires O(name).
     - Before 2.4 you always required O(name).
     - Globs are not supported in name, in other words, C(postgres*.service).
-    - The service names might vary by specific OS/distribution
+    - The service names might vary by specific OS/distribution.
     - The order of execution when having multiple properties is to first enable/disable, then mask/unmask and then deal with the service state.
       It has been reported that systemctl can behave differently depending on the order of operations if you do the same manually.
 requirements:
