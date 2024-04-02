@@ -1,0 +1,5 @@
+minor_changes:
+- >-
+  ``ansible-galaxy role import`` - add ``--namespace`` to publish the role to
+  a namespace other than the Github user. This option takes precedence over the
+  ``namespace`` field in the ``galaxy_info`` field of the ``meta/main.yml``.
