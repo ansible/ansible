@@ -57,7 +57,7 @@ class ActionModule(ActionBase):
 
                 if not module:
                     # no use, no config, get from facts
-                    if hosts_vars.get('_ansible_facts_gathered', False):
+                    if host_vars.get('ansible_facts', {}).get('pkg_mgr', False):
                         facts = hosts_vars
                         pmgr = 'pkg_mgr'
                     else:
