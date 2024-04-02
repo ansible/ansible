@@ -28,7 +28,7 @@ options:
     description:
       - Package name, or package specifier with version.
       - Syntax varies with package manager. For example V(name-1.0) or V(name=1.0).
-      - Package names also vary with package manager; this module will not "translate" them per distro. For example V(libyaml-dev), V(libyaml-devel).
+      - Package names also vary with package manager; this module will not "translate" them per distribution. For example V(libyaml-dev), V(libyaml-devel).
       - To operate on several packages this can accept a comma separated string of packages or a list of packages, depending on the underlying package manager.
     required: true
   state:
@@ -38,8 +38,9 @@ options:
     required: true
   use:
     description:
-      - The required package manager module to use (V(dnf), V(apt), and so on). The default V(auto) will use existing facts or try to autodetect it.
+      - The required package manager module to use (V(dnf), V(apt), and so on). The default V(auto) will use existing facts or try to auto-detect it.
       - You should only use this field if the automatic selection is not working for some reason.
+      - Since version 2.17 you can use the C(ansible_package_use) variable to override the automatic detection, but this option still takes precedence.
     default: auto
 requirements:
     - Whatever is required for the package plugins specific for each system.

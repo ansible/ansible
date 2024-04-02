@@ -240,3 +240,19 @@
           - "result is changed"
 
   when: ansible_distribution == "Fedora"
+
+
+- name: test ansible_package_use
+  block:
+  - name: test with var
+    package:
+      name: doesnotmatter
+    vars:
+      ansible_package_use: lola
+    ignore_errors: true
+    register: use_to_use
+
+  - assert:
+      that:
+        - use_to_use is failed
+        - "'Could not find a matching action' in use_to_use['msg']"
