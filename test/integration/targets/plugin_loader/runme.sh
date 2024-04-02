@@ -37,3 +37,5 @@ ansible-playbook use_coll_name.yml -i ../../inventory -e 'ansible_connection=ans
 
 # test filter loading ignoring duplicate file basename
 ansible-playbook file_collision/play.yml "$@"
+
+ANSIBLE_COLLECTIONS_PATH=$PWD/collections ansible-playbook unsafe_plugin_name.yml "$@"
