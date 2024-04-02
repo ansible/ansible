@@ -1,2 +1,0 @@
-bugfixes:
-  - role params now have higher precedence than host facts again, matching documentation, this had unintentionally changed in 2.15.

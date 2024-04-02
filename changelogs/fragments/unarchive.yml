@@ -1,3 +1,0 @@
----
-bugfixes:
-  - unarchive - force unarchive if symlink target changes (https://github.com/ansible/ansible/issues/30420).

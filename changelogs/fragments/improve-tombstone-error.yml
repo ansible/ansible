@@ -1,3 +1,0 @@
-bugfixes:
-  - Include the task location when a module or action plugin is deprecated (https://github.com/ansible/ansible/issues/82450).
-  - Give the tombstone error for ``include`` pre-fork like other tombstoned action/module plugins.

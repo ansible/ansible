@@ -1,2 +1,0 @@
-bugfixes:
-- winrm - Better handle send input failures when communicating with hosts under load

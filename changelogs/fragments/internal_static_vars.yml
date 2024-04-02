@@ -1,3 +1,0 @@
-bugfixes:
-  - Consolidated the list of internal static vars, centralized them as constant and completed from some missing entries.
-  - Slight optimization to hostvars (instantiate template only once per host, vs per call to var).
