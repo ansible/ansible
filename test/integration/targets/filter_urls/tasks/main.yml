@@ -19,6 +19,13 @@
       - "{'foo': 'bar', 'baz': 'buz'}|urlencode == 'foo=bar&baz=buz'"
       - "()|urlencode == ''"
 
+- name: verify urlencode works for unsafe strings
+  assert:
+    that:
+      - thing|urlencode == 'foo%3Abar'
+  vars:
+    thing: !unsafe foo:bar
+
 # Needed (temporarily) due to coverage reports not including the last task.
 - assert:
     that: true

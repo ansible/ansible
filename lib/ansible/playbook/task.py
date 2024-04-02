@@ -287,6 +287,30 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
 
         super(Task, self).post_validate(templar)
 
+    def _post_validate_args(self, attr, value, templar):
+        # smuggle an untemplated copy of the task args for actions that need more control over the templating of their
+        # input (eg, debug's var/msg, assert's "that" conditional expressions)
+        self.untemplated_args = value
+
+        # now recursively template the args dict
+        args = templar.template(value)
+
+        # FIXME: could we just nuke this entirely and/or wrap it up in ModuleArgsParser or something?
+        if '_variable_params' in args:
+            variable_params = args.pop('_variable_params')
+            if isinstance(variable_params, dict):
+                if C.INJECT_FACTS_AS_VARS:
+                    display.warning("Using a variable for a task's 'args' is unsafe in some situations "
+                                    "(see https://docs.ansible.com/ansible/devel/reference_appendices/faq.html#argsplat-unsafe)")
+                variable_params.update(args)
+                args = variable_params
+            else:
+                # if we didn't get a dict, it means there's garbage remaining after k=v parsing, just give up
+                # see https://github.com/ansible/ansible/issues/79862
+                raise AnsibleError(f"invalid or malformed argument: '{variable_params}'")
+
+        return args
+
     def _post_validate_loop(self, attr, value, templar):
         '''
         Override post validation for the loop field, which is templated

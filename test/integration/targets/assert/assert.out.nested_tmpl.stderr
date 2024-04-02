@@ -1,0 +1,4 @@
++ ansible-playbook -i localhost, -c local nested_tmpl.yml
+++ set +x
+[WARNING]: conditional statements should not include jinja2 templating
+delimiters such as {{ }} or {% %}. Found: "{{ foo }}" == "bar"
