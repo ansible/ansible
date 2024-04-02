@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - ssh - add tests for the SSH connection plugin.
