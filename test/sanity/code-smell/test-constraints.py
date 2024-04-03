@@ -72,10 +72,10 @@ def check_ansible_test(path: str, requirements: list[tuple[int, str, re.Match]])
     from ansible_test._internal.coverage_util import COVERAGE_VERSIONS
     from ansible_test._internal.util import version_to_str
 
-    expected_lines = set((
-        f"coverage == {item.coverage_version} ; python_version >= '{version_to_str(item.min_python)}' and python_version <= '{version_to_str(item.max_python)}'"
+    expected_lines = {
+        f"{item.coverage_spec} ; python_version >= '{version_to_str(item.min_python)}' and python_version <= '{version_to_str(item.max_python)}'"
         for item in COVERAGE_VERSIONS
-    ))
+    } | {next(iter(COVERAGE_VERSIONS)).covdefaults_spec}
 
     for idx, requirement in enumerate(requirements):
         lineno, line, match = requirement
