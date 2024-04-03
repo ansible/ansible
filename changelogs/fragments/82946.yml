@@ -1,0 +1,3 @@
+---
+removed_features:
+  - action - remove deprecated functionality from action plugin (https://github.com/ansible/ansible/issues/82946).
