@@ -313,7 +313,6 @@ class ConfigManager(object):
                 pass  # not templatable
         return value
 
-            # ensure correct type, can raise exceptions on mismatched types
     def _read_config_yaml_file(self, yml_file):
         # TODO: handle relative paths as relative to the directory containing the current playbook instead of CWD
         # Currently this is only used with absolute paths to the `ansible/config` directory
@@ -569,6 +568,7 @@ class ConfigManager(object):
                     origin = 'default'
                     value = self.template_default(defs[config].get('default'), variables)
             try:
+                # ensure correct type, can raise exceptions on mismatched types
                 value = ensure_type(value, defs[config].get('type'), origin=origin, origin_ftype=origin_ftype)
             except ValueError as e:
                 if origin.startswith('env:') and value == '':
