@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - Remove Alpine 3(.18) container.
-  - ansible-test - Remove Alpine 3.18 from remotes.
