@@ -1,3 +1,0 @@
----
-bugfixes:
-  - systemd_services - update documentation regarding required_one_of and required_by parameters (https://github.com/ansible/ansible/issues/82914).

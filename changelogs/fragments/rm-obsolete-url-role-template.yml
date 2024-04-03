@@ -1,2 +1,0 @@
-bugfixes:
-  - Remove the galaxy_info field ``platforms`` from the role templates (https://github.com/ansible/ansible/issues/82453).

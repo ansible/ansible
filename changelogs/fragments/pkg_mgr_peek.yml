@@ -1,2 +1,0 @@
-minor_changes:
-  - package action now has a configuration that overrides the detected package manager, it is still overridden itself by the use option.
