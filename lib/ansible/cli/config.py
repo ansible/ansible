@@ -416,7 +416,7 @@ class ConfigCLI(CLI):
                     value = config[setting].value
                     if config[setting].origin == 'default':
                         color = 'green'
-                        value = self.config.get_config_value(setting, variables=get_constants())
+                        value = self.config.template_default(value, get_constants())
                     elif config[setting].origin == 'REQUIRED':
                         # should include '_terms', '_input', etc
                         color = 'red'
