@@ -42,4 +42,4 @@ do
 done
 
 # ensure we don't show default templates, but templated defaults
-[ $(ansible-config init |grep '={{' -c ) -eq 0 ]
+[ "$(ansible-config init |grep '={{' -c )" -eq 0 ]
