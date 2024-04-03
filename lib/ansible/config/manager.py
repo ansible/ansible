@@ -302,6 +302,18 @@ class ConfigManager(object):
         # ensure we always have config def entry
         self._base_defs['CONFIG_FILE'] = {'default': None, 'type': 'path'}
 
+    def template_default(self, value, variables):
+        if isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')) and variables is not None:
+            # template default values if possible
+            # NOTE: cannot use is_template due to circular dep
+            try:
+                t = NativeEnvironment().from_string(value)
+                value = t.render(variables)
+            except Exception:
+                pass  # not templatable
+        return value
+
+            # ensure correct type, can raise exceptions on mismatched types
     def _read_config_yaml_file(self, yml_file):
         # TODO: handle relative paths as relative to the directory containing the current playbook instead of CWD
         # Currently this is only used with absolute paths to the `ansible/config` directory
@@ -555,17 +567,7 @@ class ConfigManager(object):
                                            to_native(_get_entry(plugin_type, plugin_name, config)))
                 else:
                     origin = 'default'
-                    value = defs[config].get('default')
-                    if isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')) and variables is not None:
-                        # template default values if possible
-                        # NOTE: cannot use is_template due to circular dep
-                        try:
-                            t = NativeEnvironment().from_string(value)
-                            value = t.render(variables)
-                        except Exception:
-                            pass  # not templatable
-
-            # ensure correct type, can raise exceptions on mismatched types
+                    value = self.template_default(defs[config].get('default'), variables)
             try:
                 value = ensure_type(value, defs[config].get('type'), origin=origin, origin_ftype=origin_ftype)
             except ValueError as e:

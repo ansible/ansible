@@ -269,7 +269,7 @@ class ConfigCLI(CLI):
             if not settings[setting].get('description'):
                 continue
 
-            default = settings[setting].get('default', '')
+            default = self.config.template_default(settings[setting].get('default', ''), get_constants())
             if subkey == 'env':
                 stype = settings[setting].get('type', '')
                 if stype == 'boolean':
@@ -351,7 +351,7 @@ class ConfigCLI(CLI):
                 if entry['key'] not in seen[entry['section']]:
                     seen[entry['section']].append(entry['key'])
 
-                    default = opt.get('default', '')
+                    default = self.config.template_default(opt.get('default', ''), get_constants())
                     if opt.get('type', '') == 'list' and not isinstance(default, string_types):
                         # python lists are not valid ini ones
                         default = ', '.join(default)
@@ -416,7 +416,7 @@ class ConfigCLI(CLI):
                     value = config[setting].value
                     if config[setting].origin == 'default':
                         color = 'green'
-                        value = self.config.get_setting_value(setting)
+                        value = self.config.get_config_value(setting, variables=get_constants())
                     elif config[setting].origin == 'REQUIRED':
                         # should include '_terms', '_input', etc
                         color = 'red'
