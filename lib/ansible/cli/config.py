@@ -413,14 +413,16 @@ class ConfigCLI(CLI):
             if context.CLIARGS['format'] == 'display':
                 if isinstance(config[setting], Setting):
                     # proceed normally
+                    value = config[setting].value
                     if config[setting].origin == 'default':
                         color = 'green'
+                        value = self.config.get_setting_value(setting)
                     elif config[setting].origin == 'REQUIRED':
                         # should include '_terms', '_input', etc
                         color = 'red'
                     else:
                         color = 'yellow'
-                    msg = "%s(%s) = %s" % (setting, config[setting].origin, config[setting].value)
+                    msg = "%s(%s) = %s" % (setting, config[setting].origin, value)
                 else:
                     color = 'green'
                     msg = "%s(%s) = %s" % (setting, 'default', config[setting].get('default'))
