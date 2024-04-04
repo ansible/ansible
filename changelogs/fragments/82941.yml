@@ -1,0 +1,5 @@
+---
+removed_features:
+  - paramiko_ssh - removed deprecated ssh_extra_args from the paramiko_ssh connection plugin (https://github.com/ansible/ansible/issues/82941).
+  - paramiko_ssh - removed deprecated ssh_common_args from the paramiko_ssh connection plugin (https://github.com/ansible/ansible/issues/82940).
+  - paramiko_ssh - removed deprecated ssh_args from the paramiko_ssh connection plugin (https://github.com/ansible/ansible/issues/82939).
