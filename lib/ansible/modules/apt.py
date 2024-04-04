@@ -21,6 +21,7 @@ options:
     description:
       - A list of package names, like V(foo), or package specifier with version, like V(foo=1.0) or V(foo>=1.0).
         Name wildcards (fnmatch) like V(apt*) and version wildcards like V(foo=1.0*) are also supported.
+      - Do not use single or double quotes around the version when referring to the package name with a specific version, such as V(foo=1.0) or V(foo>=1.0).
     aliases: [ package, pkg ]
     type: list
     elements: str
