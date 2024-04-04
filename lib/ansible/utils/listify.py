@@ -27,11 +27,7 @@ display = Display()
 __all__ = ['listify_lookup_plugin_terms']
 
 
-def listify_lookup_plugin_terms(terms, templar, loader=None, fail_on_undefined=True, convert_bare=False):
-
-    if loader is not None:
-        display.deprecated('"listify_lookup_plugin_terms" does not use "dataloader" anymore, the ability to pass it in will be removed in future versions.',
-                           version='2.18')
+def listify_lookup_plugin_terms(terms, templar, fail_on_undefined=True, convert_bare=False):
 
     if isinstance(terms, string_types):
         terms = templar.template(terms.strip(), convert_bare=convert_bare, fail_on_undefined=fail_on_undefined)
