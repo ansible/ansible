@@ -1,0 +1,2 @@
+removed_features:
+  - Play - removed deprecated ``ROLE_CACHE`` property in favor of ``role_cache``.
