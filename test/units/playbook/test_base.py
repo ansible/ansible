@@ -198,8 +198,7 @@ class TestBase(unittest.TestCase):
               'vars': [{'var_2_key': 'var_2_value'},
                        {'var_1_key': 'var_1_value'}]
               }
-        b = self._base_validate(ds)
-        self.assertEqual(b.vars['var_1_key'], 'var_1_value')
+        self.assertRaises(AnsibleParserError, self.b.load_data, ds)
 
     def test_vars_not_dict_or_list(self):
         ds = {'environment': [],

@@ -196,7 +196,6 @@ test/units/cli/test_data/role_skeleton/README.md pymarkdown:line-length
 test/integration/targets/find/files/hello_world.gbk no-smart-quotes
 test/integration/targets/find/files/hello_world.gbk no-unwanted-characters
 lib/ansible/galaxy/collection/__init__.py pylint:ansible-deprecated-version-comment  # 2.18 deprecation
-lib/ansible/playbook/base.py pylint:ansible-deprecated-version  # 2.18 deprecation
 lib/ansible/playbook/play.py pylint:ansible-deprecated-version  # 2.18 deprecation
 lib/ansible/playbook/play_context.py pylint:ansible-deprecated-version  # 2.18 deprecation
 lib/ansible/plugins/action/__init__.py pylint:ansible-deprecated-version  # 2.18 deprecation

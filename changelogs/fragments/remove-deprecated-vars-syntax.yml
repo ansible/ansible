@@ -1,0 +1,2 @@
+removed_features:
+  - Removed support for setting the ``vars`` keyword to lists of dictionaries. It is now required to be a single dictionary.
