@@ -19,7 +19,6 @@ from . import (
 from ...constants import (
     CONTROLLER_PYTHON_VERSIONS,
     REMOTE_ONLY_PYTHON_VERSIONS,
-    SUPPORTED_PYTHON_VERSIONS,
 )
 
 from ...test import (
@@ -37,7 +36,6 @@ from ...util import (
     ANSIBLE_TEST_CONTROLLER_ROOT,
     ApplicationError,
     is_subdir,
-    str_to_version,
 )
 
 from ...util_common import (
@@ -84,13 +82,6 @@ class MypyTest(SanityMultipleVersion):
     def needs_pypi(self) -> bool:
         """True if the test requires PyPI, otherwise False."""
         return True
-
-    @property
-    def supported_python_versions(self) -> t.Optional[tuple[str, ...]]:
-        """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
-        # Because the version of typeshed mypy use in 1.9 doesn't support 3.7, neither does mypy 1.9.
-        # see: https://mypy-lang.blogspot.com/2024/03/mypy-19-released.html
-        return tuple(version for version in SUPPORTED_PYTHON_VERSIONS if str_to_version(version) >= (3, 8))
 
     def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
         settings = self.load_processor(args, python.version)
