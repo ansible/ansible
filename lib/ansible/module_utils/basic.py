@@ -9,7 +9,7 @@ import sys
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
-_PY_MIN = (3, 7)
+_PY_MIN = (3, 8)
 
 if sys.version_info < _PY_MIN:
     print(json.dumps(dict(
