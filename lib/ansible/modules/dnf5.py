@@ -243,7 +243,6 @@ attributes:
     platform:
         platforms: rhel
 requirements:
-  - "python3"
   - "python3-libdnf5"
 version_added: 2.15
 """
@@ -453,7 +452,6 @@ class Dnf5Module(YumDnf):
         system_interpreters = [
             "/usr/libexec/platform-python",
             "/usr/bin/python3",
-            "/usr/bin/python2",
             "/usr/bin/python",
         ]
 
@@ -477,12 +475,6 @@ class Dnf5Module(YumDnf):
         )
 
     def run(self):
-        if sys.version_info.major < 3:
-            self.module.fail_json(
-                msg="The dnf5 module requires Python 3.",
-                failures=[],
-                rc=1,
-            )
         if not self.list and not self.download_only and os.geteuid() != 0:
             self.module.fail_json(
                 msg="This command has to be run under the root user.",
