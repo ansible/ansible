@@ -1,0 +1,4 @@
+bugfixes:
+- >-
+    fetch - add error message when using ``dest`` with a trailing slash that becomes a local directory -
+    https://github.com/ansible/ansible/issues/82878
