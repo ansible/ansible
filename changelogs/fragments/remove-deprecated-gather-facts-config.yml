@@ -1,0 +1,11 @@
+bugfixes:
+- >-
+  Remove deprecated config options DEFAULT_FACT_PATH, DEFAULT_GATHER_SUBSET, and
+  DEFAULT_GATHER_TIMEOUT in favor of setting ``fact_path``, ``gather_subset``
+  and ``gather_timeout`` as ``module_defaults`` for ``ansible.builtin.setup``.
+
+  These will apply to both the ``gather_facts`` play keyword, and any
+  ``ansible.builtin.setup`` tasks.
+
+  To configure these options only for the ``gather_facts`` keyword, set these
+  options as play keywords also.
