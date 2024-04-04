@@ -57,11 +57,9 @@ class Play(Base, Taggable, CollectionSearch):
 
     # Facts
     gather_facts = NonInheritableFieldAttribute(isa='bool', default=None, always_post_validate=True)
-
-    # defaults to be deprecated, should be 'None' in future
-    gather_subset = NonInheritableFieldAttribute(isa='list', default=(lambda: C.DEFAULT_GATHER_SUBSET), listof=string_types, always_post_validate=True)
-    gather_timeout = NonInheritableFieldAttribute(isa='int', default=C.DEFAULT_GATHER_TIMEOUT, always_post_validate=True)
-    fact_path = NonInheritableFieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
+    gather_subset = NonInheritableFieldAttribute(isa='list', default=None, listof=string_types, always_post_validate=True)
+    gather_timeout = NonInheritableFieldAttribute(isa='int', default=None, always_post_validate=True)
+    fact_path = NonInheritableFieldAttribute(isa='string', default=None)
 
     # Variable Attributes
     vars_files = NonInheritableFieldAttribute(isa='list', default=list, priority=99)
