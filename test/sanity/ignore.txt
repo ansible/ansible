@@ -200,6 +200,5 @@ lib/ansible/playbook/base.py pylint:ansible-deprecated-version  # 2.18 deprecati
 lib/ansible/playbook/play.py pylint:ansible-deprecated-version  # 2.18 deprecation
 lib/ansible/playbook/play_context.py pylint:ansible-deprecated-version  # 2.18 deprecation
 lib/ansible/plugins/action/__init__.py pylint:ansible-deprecated-version  # 2.18 deprecation
-lib/ansible/plugins/loader.py pylint:ansible-deprecated-version  # 2.18 deprecation
 lib/ansible/template/__init__.py pylint:ansible-deprecated-version  # 2.18 deprecation
 lib/ansible/vars/manager.py pylint:ansible-deprecated-version  # 2.18 deprecation

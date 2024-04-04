@@ -1098,10 +1098,6 @@ class PluginLoader:
                 needs_enabled = False
                 if hasattr(obj, 'REQUIRES_ENABLED'):
                     needs_enabled = obj.REQUIRES_ENABLED
-                elif hasattr(obj, 'REQUIRES_WHITELIST'):
-                    needs_enabled = obj.REQUIRES_WHITELIST
-                    display.deprecated("The VarsModule class variable 'REQUIRES_WHITELIST' is deprecated. "
-                                       "Use 'REQUIRES_ENABLED' instead.", version=2.18)
                 if not needs_enabled:
                     # Use get_with_context to cache the plugin the first time we see it.
                     self.get_with_context(fqcn)[0]
@@ -1412,13 +1408,6 @@ def _load_plugin_filter():
         # Modules and action plugins share the same reject list since the difference between the
         # two isn't visible to the users
         if version == u'1.0':
-
-            if 'module_blacklist' in filter_data:
-                display.deprecated("'module_blacklist' is being removed in favor of 'module_rejectlist'", version='2.18')
-                if 'module_rejectlist' not in filter_data:
-                    filter_data['module_rejectlist'] = filter_data['module_blacklist']
-                del filter_data['module_blacklist']
-
             try:
                 filters['ansible.modules'] = frozenset(filter_data['module_rejectlist'])
             except TypeError:
