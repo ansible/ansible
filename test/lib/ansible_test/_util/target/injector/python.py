@@ -8,6 +8,7 @@ import sys
 
 NETWORKING_CLI_STUB_SCRIPT = 'ansible_connection_cli_stub.py'
 
+
 def main():
     """Main entry point."""
     name = os.path.basename(__file__)

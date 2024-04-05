@@ -42,7 +42,6 @@ from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.six import iteritems
 
 
-
 def write_to_stream(stream, obj):
     """Write a length+newline-prefixed pickled object to a stream."""
     src = pickle.dumps(obj)
