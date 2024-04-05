@@ -409,7 +409,12 @@ class VariableManager:
             all_vars = _combine_and_track(all_vars, task.get_include_params(), "include params")
 
         # extra vars
-        all_vars = _combine_and_track(all_vars, self._extra_vars, "extra vars")
+        if self._extra_vars:
+            if host and not play and not task:
+                # Only take extra vars that override existing hostvars as that is what we are returning in this case
+                all_vars = _combine_and_track(all_vars, {k: v for (k, v) in self._extra_vars if k in all_vars}, "extra vars")
+            else:
+                all_vars = _combine_and_track(all_vars, self._extra_vars, "extra vars")
 
         # before we add 'reserved vars', check we didn't add any reserved vars
         warn_if_reserved(all_vars.keys())
