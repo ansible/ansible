@@ -6,7 +6,6 @@ import pathlib
 import sys
 
 exclude_programs = {
-    'ansible-connection',
     'ansible-test',
 }
 
