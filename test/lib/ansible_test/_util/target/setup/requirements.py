@@ -22,27 +22,13 @@ import errno
 import io
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
 import tempfile
-
-try:
-    import typing as t
-except ImportError:
-    t = None
-
-try:
-    from shlex import quote as cmd_quote
-except ImportError:
-    # noinspection PyProtectedMember
-    from pipes import quote as cmd_quote
-
-try:
-    from urllib.request import urlopen
-except ImportError:
-    # noinspection PyCompatibility,PyUnresolvedReferences
-    from urllib2 import urlopen  # pylint: disable=ansible-bad-import-from
+import typing as t
+import urllib.request
 
 ENCODING = 'utf-8'
 
@@ -280,7 +266,7 @@ def devnull():  # type: () -> t.IO[bytes]
 def download_file(url, path):  # type: (str, str) -> None
     """Download the given URL to the specified file path."""
     with open(to_bytes(path), 'wb') as saved_file:
-        with contextlib.closing(urlopen(url)) as download:
+        with contextlib.closing(urllib.request.urlopen(url)) as download:
             shutil.copyfileobj(download, saved_file)
 
 
@@ -291,7 +277,7 @@ class ApplicationError(Exception):
 class SubprocessError(ApplicationError):
     """A command returned a non-zero status."""
     def __init__(self, cmd, status, stdout, stderr):  # type: (t.List[str], int, str, str) -> None
-        message = 'A command failed with status %d: %s' % (status, ' '.join(cmd_quote(c) for c in cmd))
+        message = 'A command failed with status %d: %s' % (status, shlex.join(cmd))
 
         if stderr:
             message += '\n>>> Standard Error\n%s' % stderr.strip()
@@ -313,7 +299,7 @@ def log(message, verbosity=0):  # type: (str, int) -> None
 
 def execute_command(cmd, cwd=None, capture=False, env=None):  # type: (t.List[str], t.Optional[str], bool, t.Optional[t.Dict[str, str]]) -> None
     """Execute the specified command."""
-    log('Execute command: %s' % ' '.join(cmd_quote(c) for c in cmd), verbosity=1)
+    log('Execute command: %s' % shlex.join(cmd), verbosity=1)
 
     cmd_bytes = [to_bytes(c) for c in cmd]
 
