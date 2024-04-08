@@ -130,6 +130,13 @@ class AnsibleConstructor(SafeConstructor):
 
         return wrap_var(value)
 
+    def construct_yaml_binary_unsafe(self, node):
+        constructor = self.construct_yaml_binary
+
+        value = constructor(node)
+
+        return wrap_var(value)
+
     def _node_position_info(self, node):
         # the line number where the previous token has ended (plus empty lines)
         # Add one so that the first line is line 1 rather than line 0
@@ -168,6 +175,10 @@ AnsibleConstructor.add_constructor(
 AnsibleConstructor.add_constructor(
     u'!unsafe',
     AnsibleConstructor.construct_yaml_unsafe)
+
+AnsibleConstructor.add_constructor(
+    u'!unsafe-binary',
+    AnsibleConstructor.construct_yaml_binary_unsafe)
 
 AnsibleConstructor.add_constructor(
     u'!vault',

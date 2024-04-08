@@ -17,6 +17,8 @@
 
 from __future__ import annotations
 
+import base64
+
 import yaml
 
 from ansible.module_utils.six import text_type, binary_type
@@ -54,6 +56,11 @@ def represent_unicode(self, data):
 
 def represent_binary(self, data):
     return yaml.representer.SafeRepresenter.represent_binary(self, binary_type(data))
+
+
+def represent_binary_unsafe(self, data):
+    data_b64 = base64.encodebytes(binary_type(data)).decode('ascii')
+    return self.represent_scalar(u'!unsafe-binary', data_b64, style='|')
 
 
 def represent_undefined(self, data):
@@ -134,6 +141,11 @@ class AnsibleUnsafeDumper(AnsibleDumper):
 AnsibleUnsafeDumper.add_representer(
     AnsibleUnsafeText,
     represent_unsafe,
+)
+
+AnsibleUnsafeDumper.add_representer(
+    AnsibleUnsafeBytes,
+    represent_binary_unsafe,
 )
 
 AnsibleUnsafeDumper.add_representer(
