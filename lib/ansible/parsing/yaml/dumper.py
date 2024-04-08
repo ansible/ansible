@@ -44,6 +44,10 @@ def represent_vault_encrypted_unicode(self, data):
     return self.represent_scalar(u'!vault', data._ciphertext.decode(), style='|')
 
 
+def represent_unsafe(self, data):
+    return self.represent_scalar(u'!unsafe', text_type(data))
+
+
 def represent_unicode(self, data):
     return yaml.representer.SafeRepresenter.represent_str(self, text_type(data))
 
@@ -117,4 +121,22 @@ AnsibleDumper.add_representer(
 AnsibleDumper.add_representer(
     NativeJinjaText,
     represent_unicode,
+)
+
+
+class AnsibleUnsafeDumper(AnsibleDumper):
+    '''
+    A simple stub class that allows us to add representers
+    for our overridden object types.
+    '''
+
+
+AnsibleUnsafeDumper.add_representer(
+    AnsibleUnsafeText,
+    represent_unsafe,
+)
+
+AnsibleUnsafeDumper.add_representer(
+    NativeJinjaUnsafeText,
+    represent_unsafe,
 )

@@ -159,8 +159,8 @@ class InventoryCLI(CLI):
 
         if context.CLIARGS['yaml']:
             import yaml
-            from ansible.parsing.yaml.dumper import AnsibleDumper
-            results = to_text(yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False, allow_unicode=True))
+            from ansible.parsing.yaml.dumper import AnsibleUnsafeDumper
+            results = to_text(yaml.dump(stuff, Dumper=AnsibleUnsafeDumper, default_flow_style=False, allow_unicode=True))
         elif context.CLIARGS['toml']:
             from ansible.plugins.inventory.toml import toml_dumps
             try:
