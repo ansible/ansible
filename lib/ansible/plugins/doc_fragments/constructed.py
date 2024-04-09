@@ -62,7 +62,7 @@ options:
         description:
             - Set variables for this group
         type: dict
-        version_added: '2.17'
+        version_added: '2.18'
   use_extra_vars:
     version_added: '2.11'
     description: Merge extra vars into the available variables for composition (highest precedence).
