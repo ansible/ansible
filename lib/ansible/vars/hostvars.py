@@ -21,6 +21,7 @@ from collections.abc import Mapping
 
 from ansible import constants as C
 from ansible.template import Templar, AnsibleUndefined
+from ansible.utils.vars import combine_vars
 
 
 __all__ = ['HostVars', 'HostVarsVars']
@@ -75,7 +76,7 @@ class HostVars(Mapping):
         data = self.raw_get(host_name)
         if isinstance(data, AnsibleUndefined):
             return data
-        return HostVarsVars(data, loader=self._loader)
+        return HostVarsVars(data, loader=self._loader, extra_vars=self._variable_manager._extra_vars)
 
     def set_host_variable(self, host, varname, value):
         self._variable_manager.set_host_variable(host, varname, value)
@@ -111,12 +112,13 @@ class HostVars(Mapping):
 
 class HostVarsVars(Mapping):
 
-    def __init__(self, variables, loader):
+    def __init__(self, variables, loader, extra_vars):
         self._vars = variables
         self._loader = loader
         # NOTE: this only has access to the host's own vars,
-        # so templates that depend on vars in other scopes will not work.
-        self._templar = Templar(variables=self._vars, loader=self._loader)
+        # so templates that depend on vars in other scopes aside
+        # from self and 'extra vars' will not work.
+        self._templar = Templar(variables=combine_vars(self._vars, extra_vars), loader=self._loader)
 
     def __getitem__(self, var):
         return self._templar.template(self._vars[var], fail_on_undefined=False, static_vars=C.INTERNAL_STATIC_VARS)
