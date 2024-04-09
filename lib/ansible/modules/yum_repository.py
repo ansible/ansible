@@ -55,7 +55,7 @@ options:
       - Whether a special flag should be added to a randomly chosen query each week.
     default: ~
     type: bool
-    version_added: '2.17'
+    version_added: '2.18'
   deltarpm_metadata_percentage:
     description:
       - When the relative size of deltarpm metadata vs pkgs is larger than
