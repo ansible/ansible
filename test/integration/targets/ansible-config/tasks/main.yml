@@ -1,4 +1,4 @@
-- name: test ansible-config for valid output and no dupes
+- name: test ansible-config init for valid output and no dupes
   block:
     - name: Create temporary file
       tempfile:
@@ -12,3 +12,47 @@
 
     - name: run ini tester, for correctness and dupes
       shell: "{{ansible_playbook_python}} '{{role_path}}/files/ini_dupes.py' '{{ini_tempfile.path}}'"
+
+- name: test ansible-config validate
+  block:
+  # not testing w/o -t all as ansible-test uses it's own plugins and would give false positives
+  - name: validate config files
+    shell: ansible-config validate -t all -v
+    register: valid_cfg
+    loop:
+        - empty.cfg
+        - base_valid.cfg
+        - base_all_valid.cfg
+        - invalid_base.cfg
+        - invalid_plugins_config.ini
+    ignore_errors: true
+    environment:
+      ANSIBLE_CONFIG: "{{role_path ~ '/files/' ~ item}}"
+
+  - name: ensure expected cfg check results
+    assert:
+      that:
+          - valid_cfg['results'][0] is success
+          - valid_cfg['results'][1] is success
+          - valid_cfg['results'][2] is success
+          - valid_cfg['results'][3] is failed
+          - valid_cfg['results'][4] is failed
+
+  - name: validate env vars
+    shell: ansible-config validate -t all -v
+    register: valid_env
+    environment:
+      ANSIBLE_COW_SELECTION: 1
+
+  - name: validate env vars
+    shell: ansible-config validate -t all -v
+    register: invalid_env
+    ignore_errors: true
+    environment:
+      ANSIBLE_COW_DESTRUCTION: 1
+
+  - name: ensure env check is what we expected
+    assert:
+      that:
+          - valid_env is success
+          - invalid_env is failed
