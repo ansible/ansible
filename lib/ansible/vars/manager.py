@@ -154,6 +154,7 @@ class VariableManager:
         - task->get_vars (if there is a task context)
         - vars_cache[host] (if there is a host context)
         - extra vars
+        - magic vars (values from the engine, not overridable)
 
         ``_hosts`` and ``_hosts_all`` should be considered private args, with only internal trusted callers relying
         on the functionality they provide. These arguments may be removed at a later date without a deprecation
@@ -403,16 +404,16 @@ class VariableManager:
             # fact non-persistent cache
             all_vars = _combine_and_track(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()), "set_fact")
 
-        # next, we merge in role params and task include params
+        # next, we merge in params (roles/include_tasks)
         if task:
-            # special case for include tasks, where the include params
+            # special case for where the include params (role, include_tasks)
             # may be specified in the vars field for the task, which should
             # have higher precedence than the vars/np facts above
             if task._role:
                 all_vars = _combine_and_track(all_vars, task._role.get_role_params(task.get_dep_chain()), "role params")
             all_vars = _combine_and_track(all_vars, task.get_include_params(), "include params")
 
-        # extra vars
+        # updated with extra vars
         if self._extra_vars:
             if host and not play and not task:
                 # Only take extra vars that override existing hostvars as that is what we are returning in this case
@@ -431,14 +432,15 @@ class VariableManager:
         # 'vars' magic var
         if task or play:
             # has to be copy, otherwise recursive ref
+            # TODO: either move to a tempalte object or deprecate, this can hog memory on large inventories
             all_vars['vars'] = all_vars.copy()
 
         display.debug("done with get_vars()")
         if C.DEFAULT_DEBUG:
             # Use VarsWithSources wrapper class to display var sources
             return VarsWithSources.new_vars_with_sources(all_vars, _vars_sources)
-        else:
-            return all_vars
+
+        return all_vars
 
     def _get_magic_variables(self, play, host, task, include_hostvars, _hosts=None, _hosts_all=None):
         '''
