@@ -36,7 +36,9 @@ import email.mime.nonmultipart
 import email.parser
 import email.policy
 import email.utils
+import functools
 import http.client
+import io
 import mimetypes
 import netrc
 import os
@@ -218,9 +220,109 @@ class MissingModuleError(Exception):
         self.module = module
 
 
+class TLSinTLS:
+    def __init__(self, socket, context, server_hostname):
+        self.incoming = ssl.MemoryBIO()
+        self.outgoing = ssl.MemoryBIO()
+
+        self.socket = socket
+
+        self.sslobj = sslobj = context.wrap_bio(
+            self.incoming, self.outgoing, server_hostname=server_hostname
+        )
+
+        self.read = functools.partial(self._process, True, sslobj.read)
+        self.recv = functools.partial(self._process, True, sslobj.read)
+        self.send = functools.partial(self._process, False, sslobj.write)
+        self.sendall = functools.partial(self._process, False, sslobj.write)
+        self._decref_socketios = socket._decref_socketios
+
+        self._process(False, sslobj.do_handshake)
+
+    def close(self):
+        ...
+
+    def recv_into(self, buf, nbytes=None, flags=0):
+        if nbytes is None:
+            nbytes = len(buf)
+        return self._process(True, self.sslobj.read, nbytes, buf)
+
+    def _process_out(self):
+        buf = self.outgoing.read()
+        self.socket.sendall(buf)
+
+    def _process_in(self):
+        buf = self.socket.recv()
+        if buf:
+            self.incoming.write(buf)
+        else:
+            self.incoming.write_eof()
+
+    def _process(self, read, func, *args, **kwargs):
+        while True:
+            try:
+                return func(*args, **kwargs)
+            except ssl.SSLWantReadError as e:
+                self._process_out()
+                self._process_in()
+            except ssl.SSLWantWriteError as e:
+                self._process_in()
+                self._process_out()
+            else:
+                if read:
+                    self._process_out()
+                else:
+                    self._process_in()
+                break
+
+    def makefile(self, mode="r", buffering=None, *,
+                 encoding=None, errors=None, newline=None):
+        if buffering is None or buffering < 0:
+            buffering = io.DEFAULT_BUFFER_SIZE
+        return io.BufferedReader(
+            socket.SocketIO(self, 'r'),
+            buffering
+        )
+
+
+HTTPSHandler = None
+HTTPSConnection = None
 UnixHTTPSHandler = None
 UnixHTTPSConnection = None
 if HAS_SSL:
+    class HTTPSConnection(http.client.HTTPSConnection):  # type: ignore[no-redef]
+        def __init__(self, *args, **kwargs):
+            self._tls_in_tls = kwargs.pop('tls_in_tls', False)
+            super().__init__(*args, **kwargs)
+
+        def connect(self):
+            super().connect()
+            if self._tunnel_host:
+                super()._tunnel()
+                if self._tls_in_tls:
+                    self.sock = TLSinTLS(self.sock, self._context, self._tunnel_host)
+
+        def _tunnel(self):
+            """This is a noop, we don't want http.client.HTTPConnection._tunnel running before we have
+            a chance to have HTTPSConnection wrap the socket for HTTPS
+
+            The fact that http.client.HTTPConnection.connect establishes the tunnel is the 1st reason
+            HTTPS proxies aren't supported, the 2nd is that there is no native TLS in TLS, see TLSinTLS
+            """
+
+    class HTTPSHandler(urllib.request.HTTPSHandler):  # type: ignore[no-redef]
+        def https_open(self, req):
+            selector = urlparse(req.selector)
+            tls_in_tls = True
+            if req.host == req._tunnel_host and selector.hostname:
+                # urllib is all confused, this is likely http over an https proxy
+                tls_in_tls = selector.scheme == 'https'
+                port = selector.port
+                if not port:
+                    port = 443 if tls_in_tls else 80
+                req._tunnel_host = f'{selector.hostname}:{port}'
+            return self.do_open(HTTPSConnection, req, context=self._context, tls_in_tls=tls_in_tls)
+
     @contextmanager
     def unix_socket_patch_httpconnection_connect():
         '''Monkey patch ``http.client.HTTPConnection.connect`` to be ``UnixHTTPConnection.connect``
@@ -232,7 +334,7 @@ if HAS_SSL:
         yield
         http.client.HTTPConnection.connect = _connect
 
-    class UnixHTTPSConnection(http.client.HTTPSConnection):  # type: ignore[no-redef]
+    class UnixHTTPSConnection(HTTPSConnection):  # type: ignore[misc,valid-type,no-redef]
         def __init__(self, unix_socket):
             self._unix_socket = unix_socket
 
@@ -249,7 +351,7 @@ if HAS_SSL:
             super().__init__(*args, **kwargs)
             return self
 
-    class UnixHTTPSHandler(urllib.request.HTTPSHandler):  # type: ignore[no-redef]
+    class UnixHTTPSHandler(HTTPSHandler):  # type: ignore[misc,valid-type,no-redef]
         def __init__(self, unix_socket, **kwargs):
             super().__init__(**kwargs)
             self._unix_socket = unix_socket
@@ -859,7 +961,7 @@ class Request:
         if unix_socket:
             ssl_handler = UnixHTTPSHandler(unix_socket=unix_socket, context=context)
         else:
-            ssl_handler = urllib.request.HTTPSHandler(context=context)
+            ssl_handler = HTTPSHandler(context=context)
         handlers.append(ssl_handler)
 
         handlers.append(HTTPRedirectHandler(follow_redirects))

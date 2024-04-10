@@ -1,0 +1,96 @@
+- name: Get groups
+  ansible.builtin.getent:
+    database: group
+
+- name: Set var for nobody/nogroup group
+  set_fact:
+    nobody_group: '{{ ansible_facts.getent_group|list|select("match", "no(group|body)")|first }}'
+
+- name: Install tinyproxy config
+  copy:
+    dest: '{{ remote_tmp_dir }}/tinyproxy.conf'
+    content: |
+      User nobody
+      Group {{ nobody_group }}
+      Port 8080
+      Listen 127.0.0.1
+      Timeout 10
+      LogLevel Info
+      MaxClients 1
+      StartServers 1
+      Allow 127.0.0.1
+      Allow ::1
+      Allow ::
+      ViaProxyName "tinyproxy"
+      # LogFile "/tmp/tinyproxy.log"
+
+- name: Generate cert for stunnel
+  command: >-
+    openssl req -new -x509 -days 365 -nodes -out stunnel.pem -keyout stunnel.pem \
+    -subj "/C=US/ST=North Carolina/L=Durham/O=Ansible/CN=proxy.ansible.http.tests"
+  args:
+    chdir: '{{ remote_tmp_dir }}'
+
+- name: Install stunnel conf
+  copy:
+    dest: '{{ remote_tmp_dir }}/stunnel.conf'
+    content: |
+      pid = /tmp/stunnel.pid
+      cert = {{ remote_tmp_dir }}/stunnel.pem
+      key = {{ remote_tmp_dir }}/stunnel.pem
+      setuid = nobody
+      setgid = {{ nobody_group }}
+      socket = l:TCP_NODELAY=1
+      socket = r:TCP_NODELAY=1
+      foreground = yes
+      # output = /tmp/stunnel.log
+
+      [https]
+      accept  = 127.0.0.1:8443
+      connect = 127.0.0.1:8080
+
+- name: Start tinyproxy
+  command: tinyproxy -d -c "{{ remote_tmp_dir }}/tinyproxy.conf"
+  async: 30
+  poll: 0
+  register: tinyproxy
+
+- name: Start stunnel
+  command: stunnel "{{ remote_tmp_dir }}/stunnel.conf"
+  async: 30
+  poll: 0
+  register: stunnel
+
+- name: Ensure tinyproxy started
+  async_status:
+    jid: '{{ tinyproxy.ansible_job_id }}'
+
+- name: Ensure stunnel started
+  async_status:
+    jid: '{{ stunnel.ansible_job_id }}'
+
+- name: Test http over http proxy
+  uri:
+    url: http://{{ httpbin_host }}/get
+  environment:
+    http_proxy: http://127.0.0.1:8080
+
+- name: Test https over http proxy
+  uri:
+    url: http://{{ httpbin_host }}/get
+  environment:
+    http_proxy: http://127.0.0.1:8080
+
+- name: Test https over https proxy
+  uri:
+    url: https://{{ httpbin_host }}/get
+    validate_certs: false
+  environment:
+    https_proxy: https://127.0.0.1:8443
+
+- name: Test http over https proxy
+  uri:
+    url: http://{{ httpbin_host }}/get
+    validate_certs: false
+  environment:
+    https_proxy: https://127.0.0.1:8443
