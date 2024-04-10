@@ -227,6 +227,29 @@
       that:
           - success_to_read_right_encoding_file.matched == 1
 
+- name: specify the checksum_algo
+  register: find_by_specific_algo_res
+  find:
+    paths: "{{ remote_tmp_dir_test }}"
+    get_checksum: true
+    checksum_algorithm: md5
+
+- debug: var=find_by_specific_algo_res
+
+- name: get the md5 checksum by stat
+  register: all_files_st
+  stat:
+    get_checksum: true
+    checksum_algorithm: md5
+    path: "{{ item.path }}"
+  loop: "{{ find_by_specific_algo_res.files }}"
+
+- assert:
+      that: "all_files_st.results[index].stat.checksum == item.checksum"
+  loop: "{{ find_by_specific_algo_res.files }}"
+  loop_control:
+    index_var: index
+
 - name: read a gbk file by non-exists encoding
   find:
     paths: "{{ remote_tmp_dir_test }}"

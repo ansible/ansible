@@ -29,6 +29,10 @@ options:
             - You can choose seconds, minutes, hours, days, or weeks by specifying the
               first letter of any of those words (e.g., "1w").
         type: str
+    get_checksum:
+        default: false
+    checksum_algorithm:
+        version_added: "2.18"
     patterns:
         default: []
         description:
@@ -131,11 +135,6 @@ options:
             - Set this to V(true) to follow symlinks in path for systems with python 2.6+.
         type: bool
         default: no
-    get_checksum:
-        description:
-            - Set this to V(true) to retrieve a file's SHA1 checksum.
-        type: bool
-        default: no
     use_regex:
         description:
             - If V(false), the patterns are file globs (shell).
@@ -154,7 +153,7 @@ options:
             - When doing a O(contains) search, determine the encoding of the files to be searched.
         type: str
         version_added: "2.17"
-extends_documentation_fragment: action_common_attributes
+extends_documentation_fragment: [action_common_attributes, checksum_common]
 attributes:
     check_mode:
         details: since this action does not modify the target it just executes normally during check mode
@@ -463,6 +462,9 @@ def main():
             hidden=dict(type='bool', default=False),
             follow=dict(type='bool', default=False),
             get_checksum=dict(type='bool', default=False),
+            checksum_algorithm=dict(type='str', default='sha1',
+                                    choices=['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512'],
+                                    aliases=['checksum', 'checksum_algo']),
             use_regex=dict(type='bool', default=False),
             depth=dict(type='int'),
             mode=dict(type='raw'),
@@ -560,7 +562,7 @@ def main():
 
                             r.update(statinfo(st))
                             if stat.S_ISREG(st.st_mode) and params['get_checksum']:
-                                r['checksum'] = module.sha1(fsname)
+                                r['checksum'] = module.digest_from_file(fsname, params['checksum_algorithm'])
 
                             if stat.S_ISREG(st.st_mode):
                                 if sizefilter(st, size):
@@ -585,7 +587,7 @@ def main():
 
                             r.update(statinfo(st))
                             if params['get_checksum']:
-                                r['checksum'] = module.sha1(fsname)
+                                r['checksum'] = module.digest_from_file(fsname, params['checksum_algorithm'])
                             filelist.append(r)
 
                     elif stat.S_ISLNK(st.st_mode) and params['file_type'] == 'link':
