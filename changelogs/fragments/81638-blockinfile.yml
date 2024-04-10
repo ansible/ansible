@@ -1,0 +1,2 @@
+bugfixes:
+  - "blockinfile - when ``create=true`` is used with a filename without path, the module crashed (https://github.com/ansible/ansible/pull/81638)."
