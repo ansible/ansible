@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - systemd - extend systemctl is-enabled check to handle "enabled-runtime" (https://github.com/ansible/ansible/pull/77754).
