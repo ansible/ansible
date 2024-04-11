@@ -594,7 +594,7 @@ class Dnf5Module(YumDnf):
             self.module.exit_json(msg="", results=results, rc=0)
 
         settings = libdnf5.base.GoalJobSettings()
-        settings.group_with_name = True
+        settings.set_group_with_name(True)
         if self.bugfix or self.security:
             advisory_query = libdnf5.advisory.AdvisoryQuery(base)
             types = []
