@@ -496,7 +496,7 @@ class Dnf5Module(YumDnf):
             conf.config_file_path = self.conf_file
 
         try:
-            base.load_config_from_file()
+            base.load_config()
         except RuntimeError as e:
             self.module.fail_json(
                 msg=str(e),
@@ -536,7 +536,8 @@ class Dnf5Module(YumDnf):
         log_router = base.get_logger()
         global_logger = libdnf5.logger.GlobalLogger()
         global_logger.set(log_router.get(), libdnf5.logger.Logger.Level_DEBUG)
-        logger = libdnf5.logger.create_file_logger(base)
+        # FIXME hardcoding the filename does not seem right, should libdnf5 expose the default file name?
+        logger = libdnf5.logger.create_file_logger(base, "dnf5.log")
         log_router.add_logger(logger)
 
         if self.update_cache:
