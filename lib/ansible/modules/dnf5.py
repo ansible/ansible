@@ -562,7 +562,7 @@ class Dnf5Module(YumDnf):
             for repo in repo_query:
                 repo.enable()
 
-        sack.update_and_load_enabled_repos(True)
+        sack.load_repos()
 
         if self.update_cache and not self.names and not self.list:
             self.module.exit_json(
