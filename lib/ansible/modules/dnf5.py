@@ -570,7 +570,11 @@ class Dnf5Module(YumDnf):
             for repo in repo_query:
                 repo.enable()
 
-        sack.load_repos()
+        try:
+            sack.load_repos()
+        except AttributeError:
+            # dnf5 < 5.2.0.0
+            sack.update_and_load_enabled_repos(True)
 
         if self.update_cache and not self.names and not self.list:
             self.module.exit_json(
@@ -602,7 +606,11 @@ class Dnf5Module(YumDnf):
             self.module.exit_json(msg="", results=results, rc=0)
 
         settings = libdnf5.base.GoalJobSettings()
-        settings.set_group_with_name(True)
+        try:
+            settings.set_group_with_name(True)
+        except AttributeError:
+            # dnf5 < 5.2.0.0
+            settings.group_with_name = True
         if self.bugfix or self.security:
             advisory_query = libdnf5.advisory.AdvisoryQuery(base)
             types = []
