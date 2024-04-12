@@ -288,8 +288,7 @@ notes:
     removal the module is unable to detect that the group is installed
     (https://bugzilla.redhat.com/show_bug.cgi?id=1620324)
 requirements:
-  - "python >= 2.6"
-  - python-dnf
+  - python3-dnf
   - for the autoremove option you need dnf >= 2.0.1"
 author:
   - Igor Gnatenko (@ignatenkobrain) <i.gnatenko.brain@gmail.com>
@@ -404,6 +403,7 @@ from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 # to set proper locale before importing dnf to be able to scrape
 # the output in some cases (FIXME?).
 dnf = None
+libdnf = None
 
 
 class DnfModule(YumDnf):
@@ -484,6 +484,7 @@ class DnfModule(YumDnf):
         os.environ['LANGUAGE'] = os.environ['LANG'] = locale
 
         global dnf
+        global libdnf
         try:
             import dnf
             import dnf.const
@@ -491,6 +492,7 @@ class DnfModule(YumDnf):
             import dnf.package
             import dnf.subject
             import dnf.util
+            import libdnf
             HAS_DNF = True
         except ImportError:
             HAS_DNF = False
@@ -500,7 +502,6 @@ class DnfModule(YumDnf):
 
         system_interpreters = ['/usr/libexec/platform-python',
                                '/usr/bin/python3',
-                               '/usr/bin/python2',
                                '/usr/bin/python']
 
         if not has_respawned():
@@ -515,7 +516,7 @@ class DnfModule(YumDnf):
         # done all we can do, something is just broken (auto-install isn't useful anymore with respawn, so it was removed)
         self.module.fail_json(
             msg="Could not import the dnf python module using {0} ({1}). "
-                "Please install `python3-dnf` or `python2-dnf` package or ensure you have specified the "
+                "Please install `python3-dnf` package or ensure you have specified the "
                 "correct ansible_python_interpreter. (attempted {2})"
                 .format(sys.executable, sys.version.replace('\n', ''), system_interpreters),
             results=[]
@@ -558,6 +559,9 @@ class DnfModule(YumDnf):
 
         # Load substitutions from the filesystem
         conf.substitutions.update_from_etc(installroot)
+
+        # Substitute variables in cachedir path
+        conf.cachedir = libdnf.conf.ConfigParser.substitute(conf.cachedir, conf.substitutions)
 
         # Handle different DNF versions immutable mutable datatypes and
         # dnf v1/v2/v3

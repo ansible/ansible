@@ -49,7 +49,6 @@ lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/user.py validate-modules:use-run-command-not-popen
 lib/ansible/module_utils/basic.py no-get-exception  # only referenced in deprecation code
 lib/ansible/module_utils/basic.py pylint:unused-import  # deferring resolution to allow enabling the rule now
-lib/ansible/module_utils/compat/selinux.py import-3.7!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.8!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.9!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.10!skip # pass/fail depends on presence of libselinux.so
@@ -58,8 +57,6 @@ lib/ansible/module_utils/compat/selinux.py import-3.12!skip # pass/fail depends 
 lib/ansible/module_utils/compat/selinux.py pylint:unidiomatic-typecheck
 lib/ansible/module_utils/distro/_distro.py no-assert
 lib/ansible/module_utils/distro/_distro.py pep8!skip # bundled code we don't want to modify
-lib/ansible/module_utils/distro/_distro.py pylint:undefined-variable # ignore bundled
-lib/ansible/module_utils/distro/_distro.py pylint:using-constant-test # bundled code we don't want to modify
 lib/ansible/module_utils/distro/__init__.py empty-init # breaks namespacing, bundled, do not override
 lib/ansible/module_utils/facts/__init__.py empty-init # breaks namespacing, deprecate and eventually remove
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.ArgvParser.psm1 pslint:PSUseApprovedVerbs
@@ -198,3 +195,7 @@ test/support/README.md pymarkdown:no-bare-urls
 test/units/cli/test_data/role_skeleton/README.md pymarkdown:line-length
 test/integration/targets/find/files/hello_world.gbk no-smart-quotes
 test/integration/targets/find/files/hello_world.gbk no-unwanted-characters
+lib/ansible/galaxy/collection/__init__.py pylint:ansible-deprecated-version-comment  # 2.18 deprecation
+lib/ansible/plugins/action/__init__.py pylint:ansible-deprecated-version  # 2.18 deprecation
+lib/ansible/template/__init__.py pylint:ansible-deprecated-version  # 2.18 deprecation
+lib/ansible/vars/manager.py pylint:ansible-deprecated-version  # 2.18 deprecation

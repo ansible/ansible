@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - Update the base and default containers to use Ubuntu 22.04 for the base image.
-                   This also updates PowerShell to version 7.4.0 with .NET 8.0.0 and ShellCheck to version 0.8.0.

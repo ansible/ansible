@@ -113,22 +113,6 @@ class PlayContext(Base):
     # "PlayContext.force_handlers should not be used, the calling code should be using play itself instead"
     force_handlers = FieldAttribute(isa='bool', default=False)
 
-    @property
-    def verbosity(self):
-        display.deprecated(
-            "PlayContext.verbosity is deprecated, use ansible.utils.display.Display.verbosity instead.",
-            version="2.18"
-        )
-        return self._internal_verbosity
-
-    @verbosity.setter
-    def verbosity(self, value):
-        display.deprecated(
-            "PlayContext.verbosity is deprecated, use ansible.utils.display.Display.verbosity instead.",
-            version="2.18"
-        )
-        self._internal_verbosity = value
-
     def __init__(self, play=None, passwords=None, connection_lockfd=None):
         # Note: play is really not optional.  The only time it could be omitted is when we create
         # a PlayContext just so we can invoke its deserialize method to load it from a serialized

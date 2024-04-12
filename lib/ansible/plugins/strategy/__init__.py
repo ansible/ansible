@@ -553,12 +553,19 @@ class StrategyBase:
         seen = []
         for handler in handlers:
             if listeners := handler.listen:
-                if notification in handler.get_validated_value(
+                listeners = handler.get_validated_value(
                     'listen',
                     handler.fattributes.get('listen'),
                     listeners,
                     templar,
-                ):
+                )
+                if handler._role is not None:
+                    for listener in listeners.copy():
+                        listeners.extend([
+                            handler._role.get_name(include_role_fqcn=True) + ' : ' + listener,
+                            handler._role.get_name(include_role_fqcn=False) + ' : ' + listener
+                        ])
+                if notification in listeners:
                     if handler.name and handler.name in seen:
                         continue
                     seen.append(handler.name)

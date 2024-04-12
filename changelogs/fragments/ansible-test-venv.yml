@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Removed fallback to ``virtualenv`` when ``-m venv`` is non-functional.

@@ -560,7 +560,7 @@ class FieldAttributeBase:
                 setattr(self, name, value)
             except (TypeError, ValueError) as e:
                 value = getattr(self, name)
-                raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s. "
+                raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to %s. "
                                          "The error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds(), orig_exc=e)
             except (AnsibleUndefinedVariable, UndefinedError) as e:
                 if templar._fail_on_undefined_errors and name != 'name':
@@ -574,9 +574,7 @@ class FieldAttributeBase:
 
     def _load_vars(self, attr, ds):
         '''
-        Vars in a play can be specified either as a dictionary directly, or
-        as a list of dictionaries. If the later, this method will turn the
-        list into a single dictionary.
+        Vars in a play must be specified as a dictionary.
         '''
 
         def _validate_variable_keys(ds):
@@ -588,21 +586,6 @@ class FieldAttributeBase:
             if isinstance(ds, dict):
                 _validate_variable_keys(ds)
                 return combine_vars(self.vars, ds)
-            elif isinstance(ds, list):
-                display.deprecated(
-                    (
-                        'Specifying a list of dictionaries for vars is deprecated in favor of '
-                        'specifying a dictionary.'
-                    ),
-                    version='2.18'
-                )
-                all_vars = self.vars
-                for item in ds:
-                    if not isinstance(item, dict):
-                        raise ValueError
-                    _validate_variable_keys(item)
-                    all_vars = combine_vars(all_vars, item)
-                return all_vars
             elif ds is None:
                 return {}
             else:

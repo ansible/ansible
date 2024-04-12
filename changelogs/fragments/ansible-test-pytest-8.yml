@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Add a work-around for permission denied errors when using ``pytest >= 8`` on multi-user systems with an installed version of ``ansible-test``.

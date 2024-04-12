@@ -1,3 +1,0 @@
----
-bugfixes:
-  - Reword warning if the reserved keyword _ansible_ used as a module parameter (https://github.com/ansible/ansible/issues/82514).

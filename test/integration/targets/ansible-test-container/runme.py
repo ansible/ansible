@@ -23,7 +23,8 @@ import time
 import typing as t
 
 UNPRIVILEGED_USER_NAME = 'ansible-test'
-CGROUP_SYSTEMD = pathlib.Path('/sys/fs/cgroup/systemd')
+CGROUP_ROOT = pathlib.Path('/sys/fs/cgroup')
+CGROUP_SYSTEMD = CGROUP_ROOT / 'systemd'
 LOG_PATH = pathlib.Path('/tmp/results')
 
 # The value of /proc/*/loginuid when it is not set.
@@ -167,7 +168,6 @@ def get_test_scenarios() -> list[TestScenario]:
         for engine in available_engines:
             # TODO: figure out how to get tests passing using docker without disabling selinux
             disable_selinux = os_release.id == 'fedora' and engine == 'docker' and cgroup != 'none'
-            expose_cgroup_v1 = cgroup == 'v1-only' and get_docker_info(engine).cgroup_version != 1
             debug_systemd = cgroup != 'none'
 
             # The sleep+pkill used to support the cgroup probe causes problems with the centos6 container.
@@ -180,8 +180,7 @@ def get_test_scenarios() -> list[TestScenario]:
             # See: https://access.redhat.com/solutions/6816771
             enable_sha1 = os_release.id == 'rhel' and os_release.version_id.startswith('9.') and container_name == 'centos6'
 
-            if cgroup != 'none' and get_docker_info(engine).cgroup_version == 1 and not have_cgroup_systemd():
-                expose_cgroup_v1 = True  # the host uses cgroup v1 but there is no systemd cgroup and the container requires cgroup support
+            cgroup_version = get_docker_info(engine).cgroup_version
 
             user_scenarios = [
                 # TODO: test rootless docker
@@ -200,6 +199,20 @@ def get_test_scenarios() -> list[TestScenario]:
                     user_scenarios.append(UserScenario())
 
             for user_scenario in user_scenarios:
+                expose_cgroup_version: int | None = None  # by default the host is assumed to provide sufficient cgroup support for the container and scenario
+
+                if cgroup == 'v1-only' and cgroup_version != 1:
+                    expose_cgroup_version = 1  # the container requires cgroup v1 support and the host does not use cgroup v1
+                elif cgroup != 'none' and not have_systemd():
+                    # the container requires cgroup support and the host does not use systemd
+                    if cgroup_version == 1:
+                        expose_cgroup_version = 1  # cgroup v1 mount required
+                    elif cgroup_version == 2 and engine == 'podman' and user_scenario.actual != ROOT_USER:
+                        # Running a systemd container on a non-systemd host with cgroup v2 fails for rootless podman.
+                        # It may be possible to support this scenario, but the necessary configuration to do so is unknown.
+                        display.warning(f'Skipping testing of {container_name!r} with rootless podman because the host uses cgroup v2 without systemd.')
+                        continue
+
                 scenarios.append(
                     TestScenario(
                         user_scenario=user_scenario,
@@ -207,7 +220,7 @@ def get_test_scenarios() -> list[TestScenario]:
                         container_name=container_name,
                         image=image,
                         disable_selinux=disable_selinux,
-                        expose_cgroup_v1=expose_cgroup_v1,
+                        expose_cgroup_version=expose_cgroup_version,
                         enable_sha1=enable_sha1,
                         debug_systemd=debug_systemd,
                         probe_cgroups=probe_cgroups,
@@ -292,7 +305,7 @@ def run_test(scenario: TestScenario) -> TestResult:
 
     message = ''
 
-    if scenario.expose_cgroup_v1:
+    if scenario.expose_cgroup_version == 1:
         prepare_cgroup_systemd(scenario.user_scenario.actual.name, scenario.engine)
 
     try:
@@ -317,7 +330,7 @@ def run_test(scenario: TestScenario) -> TestResult:
         if scenario.disable_selinux:
             run_command('setenforce', 'enforcing')
 
-        if scenario.expose_cgroup_v1:
+        if scenario.expose_cgroup_version == 1:
             dirs = remove_cgroup_systemd()
         else:
             dirs = list_group_systemd()
@@ -408,9 +421,9 @@ def cleanup_podman() -> tuple[str, ...]:
     return tuple(sorted(set(cleanup)))
 
 
-def have_cgroup_systemd() -> bool:
-    """Return True if the container host has a systemd cgroup."""
-    return pathlib.Path(CGROUP_SYSTEMD).is_dir()
+def have_systemd() -> bool:
+    """Return True if the host uses systemd."""
+    return pathlib.Path('/run/systemd/system').is_dir()
 
 
 def prepare_cgroup_systemd(username: str, engine: str) -> None:
@@ -566,7 +579,7 @@ class TestScenario:
     container_name: str
     image: str
     disable_selinux: bool
-    expose_cgroup_v1: bool
+    expose_cgroup_version: int | None
     enable_sha1: bool
     debug_systemd: bool
     probe_cgroups: bool
@@ -584,8 +597,8 @@ class TestScenario:
         if self.disable_selinux:
             tags.append('selinux: permissive')
 
-        if self.expose_cgroup_v1:
-            tags.append('cgroup: v1')
+        if self.expose_cgroup_version is not None:
+            tags.append(f'cgroup: {self.expose_cgroup_version}')
 
         if self.enable_sha1:
             tags.append('sha1: enabled')
@@ -1069,17 +1082,22 @@ class ApkBootstrapper(Bootstrapper):
     def run(cls) -> None:
         """Run the bootstrapper."""
         # The `openssl` package is used to generate hashed passwords.
-        # crun added as podman won't install it as dep if runc is present
-        # but we don't want runc as it fails
-        # The edge `crun` package installed below requires ip6tables, and in
-        # edge, the `iptables` package includes `ip6tables`, but in 3.18 they
-        # are separate. Remove `ip6tables` once we update to 3.19.
-        packages = ['docker', 'podman', 'openssl', 'crun', 'ip6tables']
+        # The `crun` package must be explicitly installed since podman won't install it as dep if `runc` is present.
+        packages = ['docker', 'podman', 'openssl', 'crun']
+
+        if os_release.version_id.startswith('3.18.'):
+            # The 3.19 `crun` package installed below requires `ip6tables`, but depends on the `iptables` package.
+            # In 3.19, the `iptables` package includes `ip6tables`, but in 3.18 they are separate packages.
+            # Remove once 3.18 is no longer tested.
+            packages.append('ip6tables')
 
         run_command('apk', 'add', *packages)
-        # 3.18 only contains crun 1.8.4, to get 1.9.2 to resolve the run/shm issue, install crun from 3.19
-        # Remove once we update to 3.19
-        run_command('apk', 'upgrade', '-U', '--repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/community', 'crun')
+
+        if os_release.version_id.startswith('3.18.'):
+            # 3.18 only contains `crun` 1.8.4, to get a newer version that resolves the run/shm issue, install `crun` from 3.19.
+            # Remove once 3.18 is no longer tested.
+            run_command('apk', 'upgrade', '-U', '--repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/community', 'crun')
+
         run_command('service', 'docker', 'start')
         run_command('modprobe', 'tun')
 

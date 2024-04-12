@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - Removed the ``no-basestring`` sanity test.
-                   The test is no longer necessary now that Python 3 is required.

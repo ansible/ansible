@@ -260,15 +260,8 @@ from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.urls import fetch_file
 
-try:  # python 3.3+
-    from shlex import quote  # type: ignore[attr-defined]
-except ImportError:  # older python
-    from pipes import quote
-
-try:  # python 3.2+
-    from zipfile import BadZipFile  # type: ignore[attr-defined]
-except ImportError:  # older python
-    from zipfile import BadZipfile as BadZipFile
+from shlex import quote
+from zipfile import BadZipFile
 
 # String from tar that shows the tar contents are different from the
 # filesystem
@@ -978,7 +971,8 @@ class TarZstdArchive(TgzArchive):
 class ZipZArchive(ZipArchive):
     def __init__(self, src, b_dest, file_args, module):
         super(ZipZArchive, self).__init__(src, b_dest, file_args, module)
-        self.zipinfoflag = '-Z'
+        # NOTE: adds 'l', which is default on most linux but not all implementations
+        self.zipinfoflag = '-Zl'
         self.binaries = (
             ('unzip', 'cmd_path'),
             ('unzip', 'zipinfo_cmd_path'),
