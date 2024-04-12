@@ -28,7 +28,7 @@ from ansible.playbook.base import Base
 from ansible.playbook.block import Block
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
-from ansible.playbook.role import Role, hash_params
+from ansible.playbook.role import Role
 from ansible.playbook.task import Task
 from ansible.playbook.taggable import Taggable
 from ansible.vars.manager import preprocess_vars
@@ -57,11 +57,9 @@ class Play(Base, Taggable, CollectionSearch):
 
     # Facts
     gather_facts = NonInheritableFieldAttribute(isa='bool', default=None, always_post_validate=True)
-
-    # defaults to be deprecated, should be 'None' in future
-    gather_subset = NonInheritableFieldAttribute(isa='list', default=(lambda: C.DEFAULT_GATHER_SUBSET), listof=string_types, always_post_validate=True)
-    gather_timeout = NonInheritableFieldAttribute(isa='int', default=C.DEFAULT_GATHER_TIMEOUT, always_post_validate=True)
-    fact_path = NonInheritableFieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
+    gather_subset = NonInheritableFieldAttribute(isa='list', default=None, listof=string_types, always_post_validate=True)
+    gather_timeout = NonInheritableFieldAttribute(isa='int', default=None, always_post_validate=True)
+    fact_path = NonInheritableFieldAttribute(isa='string', default=None)
 
     # Variable Attributes
     vars_files = NonInheritableFieldAttribute(isa='list', default=list, priority=99)
@@ -101,22 +99,6 @@ class Play(Base, Taggable, CollectionSearch):
 
     def __repr__(self):
         return self.get_name()
-
-    @property
-    def ROLE_CACHE(self):
-        """Backwards compat for custom strategies using ``play.ROLE_CACHE``
-        """
-        display.deprecated(
-            'Play.ROLE_CACHE is deprecated in favor of Play.role_cache, or StrategyBase._get_cached_role',
-            version='2.18',
-        )
-        cache = {}
-        for path, roles in self.role_cache.items():
-            for role in roles:
-                name = role.get_name()
-                hashed_params = hash_params(role._get_hash_dict())
-                cache.setdefault(name, {})[hashed_params] = role
-        return cache
 
     def _validate_hosts(self, attribute, name, value):
         # Only validate 'hosts' if a value was passed in to original data set.

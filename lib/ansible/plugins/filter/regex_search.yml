@@ -6,6 +6,8 @@ DOCUMENTATION:
     - Search in a string to extract the part that matches the regular expression.
   notes:
     - Maps to Python's C(re.search).
+    - 'The substring matched by the group is accessible via the symbolic group name or
+      the ``\{number}`` special sequence. See examples section.'
   positional: _input, _regex
   options:
     _input:
@@ -37,6 +39,16 @@ EXAMPLES: |
 
   # drinkat => 'BAR'
   drinkat: "{{ 'foo\nBAR' | regex_search('^bar', multiline=True, ignorecase=True) }}"
+
+  # Extracts server and database id from a string using number
+  # (the substring matched by the group is accessible via the \number special sequence)
+  db: "{{ 'server1/database42' | regex_search('server([0-9]+)/database([0-9]+)', '\\1', '\\2') }}"
+  # => ['1', '42']
+
+  # Extracts dividend and divisor from a division
+  # (the substring matched by the group is accessible via the symbolic group name)
+  db: "{{ '21/42' | regex_search('(?P<dividend>[0-9]+)/(?P<divisor>[0-9]+)', '\\g<dividend>', '\\g<divisor>') }}"
+  # => ['21', '42']
 
 RETURN:
   _value:

@@ -92,13 +92,11 @@ class TestIncludeRole(unittest.TestCase):
             if isinstance(task, IncludeRole):
                 blocks, handlers = task.get_block_list(loader=self.loader)
                 for block in blocks:
-                    for t in self.flatten_tasks(block.block):
-                        yield t
+                    yield from self.flatten_tasks(block.block)
             elif isinstance(task, Task):
                 yield task
             else:
-                for t in self.flatten_tasks(task.block):
-                    yield t
+                yield from self.flatten_tasks(task.block)
 
     def get_tasks_vars(self, play, tasks):
         for task in self.flatten_tasks(tasks):

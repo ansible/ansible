@@ -1,0 +1,2 @@
+minor_changes:
+  - The minimum supported Python version on targets is now Python 3.8.

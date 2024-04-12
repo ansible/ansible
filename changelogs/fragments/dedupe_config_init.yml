@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-config init will now dedupe ini entries from plugins.

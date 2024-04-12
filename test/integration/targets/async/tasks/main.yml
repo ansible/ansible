@@ -298,3 +298,42 @@
 - assert:
     that:
       - '"ASYNC POLL on localhost" in callback_output.stdout'
+
+- name: run playbook in --check with task disabling check mode
+  command: ansible-playbook {{ role_path }}/check_task_test.yml --check
+  register: check_task_disabled_output
+  delegate_to: localhost
+  environment:
+     ANSIBLE_NOCOLOR: 'true'
+     ANSIBLE_FORCE_COLOR: 'false'
+
+- assert:
+    that:
+    - '"ASYNC OK on localhost" in check_task_disabled_output.stdout'
+
+- name: test 'hidden' async, gather_facts does internal on parallel true. Ensure it won't freeze in check_mode due to async_status not supporting it.
+  gather_facts:
+    parallel: true
+  timeout: 60
+  check_mode: true
+  when: "ansible_facts['os_family'] != 'Darwin'"
+  vars:
+    ansible_facts_modules:
+      - setup
+      - package_facts
+      - service_facts
+
+- name: test async in check mode
+  check_mode: true
+  block:
+    - setup:
+      async: 60
+      poll: 0
+      register: gf_async
+    - async_status:
+        jid: "{{ gf_async['ansible_job_id'] }}"
+      register: gf_done
+      until: gf_done is finished
+      retries: 100
+      delay: 10
+      timeout: 30

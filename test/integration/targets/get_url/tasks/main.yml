@@ -667,6 +667,7 @@
       environment:
         KRB5_CONFIG: '{{ krb5_config }}'
         KRB5CCNAME: FILE:{{ remote_tmp_dir }}/krb5.cc
+        OPENSSL_CONF: '{{ krb5_openssl_conf }}'
   when: krb5_config is defined
 
 - name: Test ciphers

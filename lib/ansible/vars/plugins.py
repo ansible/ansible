@@ -90,7 +90,7 @@ def get_vars_from_path(loader, path, entities, stage):
 
         collection = '.' in plugin.ansible_name and not plugin.ansible_name.startswith('ansible.builtin.')
         # Warn if a collection plugin has REQUIRES_ENABLED because it has no effect.
-        if collection and (hasattr(plugin, 'REQUIRES_ENABLED') or hasattr(plugin, 'REQUIRES_WHITELIST')):
+        if collection and hasattr(plugin, 'REQUIRES_ENABLED'):
             display.warning(
                 "Vars plugins in collections must be enabled to be loaded, REQUIRES_ENABLED is not supported. "
                 "This should be removed from the plugin %s." % plugin.ansible_name

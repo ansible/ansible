@@ -1,2 +1,0 @@
-bugfixes:
-  - fact gathering on linux now handles thread count by using rounding vs dropping decimals, it should give slightly more accurate numbers.

@@ -288,8 +288,7 @@ notes:
     removal the module is unable to detect that the group is installed
     (https://bugzilla.redhat.com/show_bug.cgi?id=1620324)
 requirements:
-  - "python >= 2.6"
-  - python-dnf
+  - python3-dnf
   - for the autoremove option you need dnf >= 2.0.1"
 author:
   - Igor Gnatenko (@ignatenkobrain) <i.gnatenko.brain@gmail.com>
@@ -500,7 +499,6 @@ class DnfModule(YumDnf):
 
         system_interpreters = ['/usr/libexec/platform-python',
                                '/usr/bin/python3',
-                               '/usr/bin/python2',
                                '/usr/bin/python']
 
         if not has_respawned():
@@ -515,7 +513,7 @@ class DnfModule(YumDnf):
         # done all we can do, something is just broken (auto-install isn't useful anymore with respawn, so it was removed)
         self.module.fail_json(
             msg="Could not import the dnf python module using {0} ({1}). "
-                "Please install `python3-dnf` or `python2-dnf` package or ensure you have specified the "
+                "Please install `python3-dnf` package or ensure you have specified the "
                 "correct ansible_python_interpreter. (attempted {2})"
                 .format(sys.executable, sys.version.replace('\n', ''), system_interpreters),
             results=[]
@@ -591,6 +589,11 @@ class DnfModule(YumDnf):
             # values of conf.substitutions are expected to be strings
             # setting this to an empty string instead of None appears to mimic the DNF CLI behavior
             conf.substitutions['releasever'] = ''
+
+        # Honor installroot for dnf directories
+        # This will also perform variable substitutions in the paths
+        for opt in ('cachedir', 'logdir', 'persistdir'):
+            conf.prepend_installroot(opt)
 
         # Set skip_broken (in dnf this is strict=0)
         if self.skip_broken:

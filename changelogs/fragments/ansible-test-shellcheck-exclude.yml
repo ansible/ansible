@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - The ``shellcheck`` sanity test no longer disables the ``SC2164`` check.
-                   In most cases, seeing this error means the script is missing ``set -e``.

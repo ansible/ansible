@@ -243,7 +243,6 @@ attributes:
     platform:
         platforms: rhel
 requirements:
-  - "python3"
   - "python3-libdnf5"
 version_added: 2.15
 """
@@ -425,8 +424,7 @@ def get_unneeded_pkgs(base):
     query = libdnf5.rpm.PackageQuery(base)
     query.filter_installed()
     query.filter_unneeded()
-    for pkg in query:
-        yield pkg
+    yield from query
 
 
 class Dnf5Module(YumDnf):
@@ -454,7 +452,6 @@ class Dnf5Module(YumDnf):
         system_interpreters = [
             "/usr/libexec/platform-python",
             "/usr/bin/python3",
-            "/usr/bin/python2",
             "/usr/bin/python",
         ]
 
@@ -478,12 +475,6 @@ class Dnf5Module(YumDnf):
         )
 
     def run(self):
-        if sys.version_info.major < 3:
-            self.module.fail_json(
-                msg="The dnf5 module requires Python 3.",
-                failures=[],
-                rc=1,
-            )
         if not self.list and not self.download_only and os.geteuid() != 0:
             self.module.fail_json(
                 msg="This command has to be run under the root user.",
@@ -505,7 +496,7 @@ class Dnf5Module(YumDnf):
             conf.config_file_path = self.conf_file
 
         try:
-            base.load_config_from_file()
+            base.load_config()
         except RuntimeError as e:
             self.module.fail_json(
                 msg=str(e),
@@ -545,7 +536,8 @@ class Dnf5Module(YumDnf):
         log_router = base.get_logger()
         global_logger = libdnf5.logger.GlobalLogger()
         global_logger.set(log_router.get(), libdnf5.logger.Logger.Level_DEBUG)
-        logger = libdnf5.logger.create_file_logger(base)
+        # FIXME hardcoding the filename does not seem right, should libdnf5 expose the default file name?
+        logger = libdnf5.logger.create_file_logger(base, "dnf5.log")
         log_router.add_logger(logger)
 
         if self.update_cache:
@@ -570,7 +562,11 @@ class Dnf5Module(YumDnf):
             for repo in repo_query:
                 repo.enable()
 
-        sack.update_and_load_enabled_repos(True)
+        try:
+            sack.load_repos()
+        except AttributeError:
+            # dnf5 < 5.2.0.0
+            sack.update_and_load_enabled_repos(True)
 
         if self.update_cache and not self.names and not self.list:
             self.module.exit_json(
@@ -602,7 +598,11 @@ class Dnf5Module(YumDnf):
             self.module.exit_json(msg="", results=results, rc=0)
 
         settings = libdnf5.base.GoalJobSettings()
-        settings.group_with_name = True
+        try:
+            settings.set_group_with_name(True)
+        except AttributeError:
+            # dnf5 < 5.2.0.0
+            settings.group_with_name = True
         if self.bugfix or self.security:
             advisory_query = libdnf5.advisory.AdvisoryQuery(base)
             types = []

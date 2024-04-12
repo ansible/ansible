@@ -36,7 +36,8 @@ attributes:
     async:
         support: none
     check_mode:
-        support: none
+        support: full
+        version_added: '2.17'
     diff_mode:
         support: none
     bypass_host_loop:
@@ -116,12 +117,15 @@ from ansible.module_utils.common.text.converters import to_native
 
 def main():
 
-    module = AnsibleModule(argument_spec=dict(
-        jid=dict(type='str', required=True),
-        mode=dict(type='str', default='status', choices=['cleanup', 'status']),
-        # passed in from the async_status action plugin
-        _async_dir=dict(type='path', required=True),
-    ))
+    module = AnsibleModule(
+        argument_spec=dict(
+            jid=dict(type="str", required=True),
+            mode=dict(type="str", default="status", choices=["cleanup", "status"]),
+            # passed in from the async_status action plugin
+            _async_dir=dict(type="path", required=True),
+        ),
+        supports_check_mode=True,
+    )
 
     mode = module.params['mode']
     jid = module.params['jid']

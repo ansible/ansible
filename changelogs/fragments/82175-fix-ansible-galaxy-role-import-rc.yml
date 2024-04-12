@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-galaxy role import - exit with 1 when the import fails (https://github.com/ansible/ansible/issues/82175).

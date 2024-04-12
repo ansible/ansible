@@ -998,7 +998,7 @@ def retry(func: t.Callable[..., TValue], ex_type: t.Type[BaseException] = Subpro
 def parse_to_list_of_dict(pattern: str, value: str) -> list[dict[str, str]]:
     """Parse lines from the given value using the specified pattern and return the extracted list of key/value pair dictionaries."""
     matched = []
-    unmatched = []
+    unmatched: list[str] = []
 
     for line in value.splitlines():
         match = re.search(pattern, line)

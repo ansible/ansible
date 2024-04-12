@@ -21,6 +21,7 @@ from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.module_utils.facts.system.pkg_mgr import PKG_MGRS
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
+from ansible.utils.vars import combine_vars
 
 display = Display()
 
@@ -38,31 +39,46 @@ class ActionModule(ActionBase):
         self._supports_async = True
 
         result = super(ActionModule, self).run(tmp, task_vars)
-        del tmp  # tmp no longer has any effect
 
         module = self._task.args.get('use', 'auto')
 
-        if module == 'auto':
-            try:
-                if self._task.delegate_to:  # if we delegate, we should use delegated host's facts
-                    module = self._templar.template("{{hostvars['%s']['ansible_facts']['pkg_mgr']}}" % self._task.delegate_to)
-                else:
-                    module = self._templar.template('{{ansible_facts.pkg_mgr}}')
-            except Exception:
-                pass  # could not get it from template!
-
         try:
             if module == 'auto':
-                facts = self._execute_module(
-                    module_name='ansible.legacy.setup',
-                    module_args=dict(filter='ansible_pkg_mgr', gather_subset='!all'),
-                    task_vars=task_vars)
-                display.debug("Facts %s" % facts)
-                module = facts.get('ansible_facts', {}).get('ansible_pkg_mgr', 'auto')
 
-            if module != 'auto':
+                if self._task.delegate_to:
+                    hosts_vars = task_vars['hostvars'][self._task.delegate_to]
+                    tvars = combine_vars(self._task.vars, task_vars.get('delegated_vars', {}))
+                else:
+                    hosts_vars = task_vars
+                    tvars = task_vars
+
+                # use config
+                module = tvars.get('ansible_package_use', None)
+
+                if not module:
+                    # no use, no config, get from facts
+                    if hosts_vars.get('ansible_facts', {}).get('pkg_mgr', False):
+                        facts = hosts_vars
+                        pmgr = 'pkg_mgr'
+                    else:
+                        # we had no facts, so generate them
+                        # very expensive step, we actually run fact gathering because we don't have facts for this host.
+                        facts = self._execute_module(
+                            module_name='ansible.legacy.setup',
+                            module_args=dict(filter='ansible_pkg_mgr', gather_subset='!all'),
+                            task_vars=task_vars,
+                        )
+                        pmgr = 'ansible_pkg_mgr'
+
+                    try:
+                        # actually get from facts
+                        module = facts['ansible_facts'][pmgr]
+                    except KeyError:
+                        raise AnsibleActionFail('Could not detect a package manager. Try using the "use" option.')
+
+            if module and module != 'auto':
                 if not self._shared_loader_obj.module_loader.has_plugin(module):
-                    raise AnsibleActionFail('Could not find a module for %s.' % module)
+                    raise AnsibleActionFail('Could not find a matching action for the "%s" package manager.' % module)
                 else:
                     # run the 'package' module
                     new_module_args = self._task.args.copy()

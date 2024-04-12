@@ -1,2 +1,0 @@
-bugfixes:
-  - known_hosts - Fix issue with `@cert-authority` entries in known_hosts incorrectly being removed.
