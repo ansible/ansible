@@ -403,7 +403,6 @@ from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 # to set proper locale before importing dnf to be able to scrape
 # the output in some cases (FIXME?).
 dnf = None
-libdnf = None
 
 
 class DnfModule(YumDnf):
@@ -484,7 +483,6 @@ class DnfModule(YumDnf):
         os.environ['LANGUAGE'] = os.environ['LANG'] = locale
 
         global dnf
-        global libdnf
         try:
             import dnf
             import dnf.const
@@ -492,7 +490,6 @@ class DnfModule(YumDnf):
             import dnf.package
             import dnf.subject
             import dnf.util
-            import libdnf
             HAS_DNF = True
         except ImportError:
             HAS_DNF = False
@@ -560,9 +557,6 @@ class DnfModule(YumDnf):
         # Load substitutions from the filesystem
         conf.substitutions.update_from_etc(installroot)
 
-        # Substitute variables in cachedir path
-        conf.cachedir = libdnf.conf.ConfigParser.substitute(conf.cachedir, conf.substitutions)
-
         # Handle different DNF versions immutable mutable datatypes and
         # dnf v1/v2/v3
         #
@@ -595,6 +589,11 @@ class DnfModule(YumDnf):
             # values of conf.substitutions are expected to be strings
             # setting this to an empty string instead of None appears to mimic the DNF CLI behavior
             conf.substitutions['releasever'] = ''
+
+        # Honor installroot for dnf directories
+        # This will also perform variable substitutions in the paths
+        for opt in ('cachedir', 'logdir', 'persistdir'):
+            conf.prepend_installroot(opt)
 
         # Set skip_broken (in dnf this is strict=0)
         if self.skip_broken:
