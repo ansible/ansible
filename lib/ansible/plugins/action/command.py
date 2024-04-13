@@ -12,8 +12,11 @@ from ansible.utils.vars import merge_hash
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.module_utils.parsing.convert_bool import boolean
 
-def _create_copy_tempfile(path:str):
-    ''' Create a tempfile containing a copy of the file at `path` '''
+def _create_copy_or_empty_tempfile(path:str):
+    '''
+    Create a tempfile containing a copy of the file at `path`.
+    If `path` does not point to a file, create an empty tempfile.
+    '''
     _, tempfile_path = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
     if os.path.isfile(path):
         try:
@@ -36,7 +39,7 @@ class ActionModule(ActionBase):
         if "modifies" in self._task.args and not raw:
             file_copy_paths_before = dict()
             for path in self._task.args['modifies']:
-                file_copy_paths_before[path] = _create_copy_tempfile(path)
+                file_copy_paths_before[path] = _create_copy_or_empty_tempfile(path)
 
         wrap_async = self._task.async_val and not self._connection.has_native_async
         # explicitly call `ansible.legacy.command` for backcompat to allow library/ override of `command` while not allowing
