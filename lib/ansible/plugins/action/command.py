@@ -9,7 +9,6 @@ import os
 import tempfile
 import shutil
 
-from ansible import constants as C
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import merge_hash
 from ansible.module_utils.common.text.converters import to_bytes
