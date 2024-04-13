@@ -155,6 +155,7 @@ EXAMPLES = r'''
     cmd: /usr/bin/make_database.sh db_user db_name
     modifies:
       - /path/to/database
+    diff_mode: true
 
 - name: Change the working directory to somedir/ and run the command as db_owner if /path/to/database does not exist
   ansible.builtin.command: /usr/bin/make_database.sh db_user db_name
