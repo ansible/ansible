@@ -54,10 +54,9 @@ class ActionModule(ActionBase):
             for path in self._task.args['modifies']:
                 copy_path_before = file_copy_paths_before[path]
                 diff = self._get_diff_data(copy_path_before, path, task_vars)
-                # TODO check value when there is no difference
-                if diff is not None:
-                    if self._play_context.diff:
-                        results['diff'].append(diff)
+                if self._play_context.diff:
+                    results['diff'].append(diff)
+                if diff["before"] != diff["after"]:
                     results['changed'] = True
                 os.remove(copy_path_before)
 
