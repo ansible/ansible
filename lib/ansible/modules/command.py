@@ -32,7 +32,8 @@ attributes:
         details: while the command itself is arbitrary and cannot be subject to the check mode semantics it adds O(creates)/O(removes) options as a workaround
         support: partial
     diff_mode:
-        support: none
+        details: the `modifies` option shows a diff before/after command execution.
+        support: partial
     platform:
       support: full
       platforms: posix
@@ -74,6 +75,13 @@ options:
       - A filename or (since 2.0) glob pattern. If a matching file exists, this step B(will) be run.
       - This is checked after O(creates) is checked.
     version_added: "0.8"
+  modifies:
+    type: list
+    description:
+      - A list of file paths. A tempfile copy is made of each file before command execution,
+      - and then `results['changed']` `results['diff']` are set by comparing after command execution.
+      - Plain text files only.
+    version_added: "2.14"
   chdir:
     type: path
     description:
@@ -141,6 +149,12 @@ EXAMPLES = r'''
   ansible.builtin.command:
     cmd: /usr/bin/make_database.sh db_user db_name
     creates: /path/to/database
+
+- name: Run command and show changes in /path/to/database file
+  ansible.builtin.command:
+    cmd: /usr/bin/make_database.sh db_user db_name
+    modifies:
+      - /path/to/database
 
 - name: Change the working directory to somedir/ and run the command as db_owner if /path/to/database does not exist
   ansible.builtin.command: /usr/bin/make_database.sh db_user db_name
@@ -256,6 +270,7 @@ def main():
             expand_argument_vars=dict(type='bool', default=True),
             creates=dict(type='path'),
             removes=dict(type='path'),
+            modifies=dict(type='list', elements='str'),
             # The default for this really comes from the action plugin
             stdin=dict(required=False),
             stdin_add_newline=dict(type='bool', default=True),
