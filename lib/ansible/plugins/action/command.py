@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-__metaclass__ = type
-
 import os
 import tempfile
 import shutil
