@@ -77,6 +77,7 @@ options:
     version_added: "0.8"
   modifies:
     type: list
+    elements: str
     description:
       - A list of file paths. A tempfile copy is made of each file before command execution,
       - and then `results['changed']` `results['diff']` are set by comparing after command execution.
