@@ -56,7 +56,7 @@ class ActionModule(ActionBase):
                 diff = self._get_diff_data(copy_path_before, path, task_vars)
                 if self._play_context.diff:
                     results['diff'].append(diff)
-                if diff["before"] != diff["after"]:
+                if not results['changed'] and diff['before'] != diff['after']:
                     results['changed'] = True
                 os.remove(copy_path_before)
 
