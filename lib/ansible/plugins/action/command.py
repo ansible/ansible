@@ -12,12 +12,13 @@ from ansible.plugins.action import ActionBase
 from ansible.utils.vars import merge_hash
 from ansible.module_utils.parsing.convert_bool import boolean
 
-def _create_copy_or_empty_tempfile(path:str):
+
+def _create_copy_or_empty_tempfile(path:str): 
     '''
     Create a tempfile containing a copy of the file at `path`.
     If `path` does not point to a file, create an empty tempfile.
     '''
-    _, tempfile_path = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
+    fd, tempfile_path = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
     if os.path.isfile(path):
         try:
             shutil.copy(path, tempfile_path)
@@ -25,6 +26,7 @@ def _create_copy_or_empty_tempfile(path:str):
             os.remove(tempfile_path)
             raise Exception(err)
     return tempfile_path
+
 
 class ActionModule(ActionBase):
 
