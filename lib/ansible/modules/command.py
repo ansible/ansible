@@ -82,7 +82,7 @@ options:
       - A list of file paths. A tempfile copy is made of each file before command execution,
       - and then `results['changed']` `results['diff']` are set by comparing after command execution.
       - Plain text files only.
-    version_added: "2.14"
+    version_added: "2.18"
   chdir:
     type: path
     description:
