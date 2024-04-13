@@ -9,7 +9,6 @@ import shutil
 
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import merge_hash
-from ansible.module_utils.common.text.converters import to_bytes
 from ansible.module_utils.parsing.convert_bool import boolean
 
 def _create_copy_or_empty_tempfile(path:str):
