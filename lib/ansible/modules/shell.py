@@ -105,6 +105,13 @@ EXAMPLES = r'''
 - name: Execute the command in remote shell; stdout goes to the specified file on the remote
   ansible.builtin.shell: somescript.sh >> somelog.txt
 
+- name: Execute the command in remote shell, append to file, show changes
+  ansible.builtin.shell:
+    cmd: somescript.sh >> somelog.txt
+    modifies:
+      - somelog.txt
+  diff: true
+
 - name: Change the working directory to somedir/ before executing the command
   ansible.builtin.shell: somescript.sh >> somelog.txt
   args:
