@@ -270,7 +270,7 @@ def _get_diff_data(before_path, after_path) -> dict:
     }
 
 
-def _create_copy_or_empty_tempfile(path:str, tempfile_dir:str) -> str:
+def _create_copy_or_empty_tempfile(path: str, tempfile_dir: str) -> str:
     '''
     Create a tempfile containing a copy of the file at `path`.
     If `path` does not point to a file, create an empty tempfile.
