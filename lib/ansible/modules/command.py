@@ -258,15 +258,17 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native, to_bytes, to_text
 from ansible.module_utils.common.collections import is_iterable
 
+
 def _get_diff_data(before_path, after_path) -> dict:
-  with open(before_path, "rb") as before_file:
-    before_contents = before_file.read()
-  with open(after_path, "rb") as after_file:
-    after_contents = after_file.read()
-  return {
-    "before": before_contents,
-    "after": after_contents
-  }
+    with open(before_path, "rb") as before_file:
+        before_contents = before_file.read()
+    with open(after_path, "rb") as after_file:
+        after_contents = after_file.read()
+    return {
+        "before": before_contents,
+        "after": after_contents
+    }
+
 
 def _create_copy_or_empty_tempfile(path:str, tempfile_dir:str) -> str:
     '''
@@ -281,6 +283,7 @@ def _create_copy_or_empty_tempfile(path:str, tempfile_dir:str) -> str:
             os.remove(tempfile_path)
             raise Exception(err)
     return tempfile_path
+
 
 def main():
 
