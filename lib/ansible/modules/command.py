@@ -384,7 +384,7 @@ def main():
     r['changed'] = True
 
     # make copies of files before command execution so that we can compare later
-    if len(modifies) > 0:
+    if modifies is not None and len(modifies) > 0:
         file_copy_paths_before = dict()
         for path in modifies:
             file_copy_paths_before[path] = _create_copy_or_empty_tempfile(path, module.tmpdir)
@@ -406,7 +406,7 @@ def main():
             r['changed'] = False
 
     # compare current state of files to their before-command tempfile copies
-    if len(modifies) > 0:
+    if modifies is not None and len(modifies) > 0:
         r['diff'] = []
         r['changed'] = False
         for path in modifies:
