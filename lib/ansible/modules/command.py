@@ -251,11 +251,39 @@ import datetime
 import glob
 import os
 import shlex
+import tempfile
+import shutil
 
+# from ansible import constants as C
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native, to_bytes, to_text
 from ansible.module_utils.common.collections import is_iterable
 
+def _get_diff_data(before_path, after_path) -> dict:
+  with open(before_path) as before_file:
+    before_contents = before_file.read()
+  with open(after_path) as after_file:
+    after_contents = after_file.read()
+  return {
+    "before": before_contents,
+    "after": after_contents
+  }
+
+def _create_copy_or_empty_tempfile(path:str):
+    '''
+    Create a tempfile containing a copy of the file at `path`.
+    If `path` does not point to a file, create an empty tempfile.
+    '''
+    # TODO get temp dir
+    # fd, tempfile_path = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
+    fd, tempfile_path = tempfile.mkstemp(dir="/tmp")
+    if os.path.isfile(path):
+        try:
+            shutil.copy(path, tempfile_path)
+        except Exception as err:
+            os.remove(tempfile_path)
+            raise Exception(err)
+    return tempfile_path
 
 def main():
 
@@ -287,6 +315,7 @@ def main():
     argv = module.params['argv']
     creates = module.params['creates']
     removes = module.params['removes']
+    modifies = module.params['modifies']
     stdin = module.params['stdin']
     stdin_add_newline = module.params['stdin_add_newline']
     strip = module.params['strip_empty_ends']
@@ -354,6 +383,12 @@ def main():
 
     r['changed'] = True
 
+    # make copies of files before command execution so that we can compare later
+    if len(modifies) > 0:
+        file_copy_paths_before = dict()
+        for path in modifies:
+            file_copy_paths_before[path] = _create_copy_or_empty_tempfile(path)
+
     # actually executes command (or not ...)
     if not module.check_mode:
         r['start'] = datetime.datetime.now()
@@ -369,6 +404,18 @@ def main():
             r['skipped'] = True
             # skipped=True and changed=True are mutually exclusive
             r['changed'] = False
+
+    # compare current state of files to their before-command tempfile copies
+    if len(modifies) > 0:
+        r['diff'] = []
+        r['changed'] = False
+        for path in modifies:
+            copy_path_before = file_copy_paths_before[path]
+            diff = _get_diff_data(copy_path_before, path)
+            r['diff'].append(diff)
+            if not r['changed'] and diff['before'] != diff['after']:
+                r['changed'] = True
+            os.remove(copy_path_before)
 
     # convert to text for jsonization and usability
     if r['start'] is not None and r['end'] is not None:
