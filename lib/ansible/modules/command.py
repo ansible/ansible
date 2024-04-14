@@ -254,29 +254,26 @@ import shlex
 import tempfile
 import shutil
 
-# from ansible import constants as C
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native, to_bytes, to_text
 from ansible.module_utils.common.collections import is_iterable
 
 def _get_diff_data(before_path, after_path) -> dict:
-  with open(before_path) as before_file:
+  with open(before_path, "rb") as before_file:
     before_contents = before_file.read()
-  with open(after_path) as after_file:
+  with open(after_path, "rb") as after_file:
     after_contents = after_file.read()
   return {
     "before": before_contents,
     "after": after_contents
   }
 
-def _create_copy_or_empty_tempfile(path:str):
+def _create_copy_or_empty_tempfile(path:str, tempfile_dir:str) -> str:
     '''
     Create a tempfile containing a copy of the file at `path`.
     If `path` does not point to a file, create an empty tempfile.
     '''
-    # TODO get temp dir
-    # fd, tempfile_path = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
-    fd, tempfile_path = tempfile.mkstemp(dir="/tmp")
+    fd, tempfile_path = tempfile.mkstemp(dir=tempfile_dir)
     if os.path.isfile(path):
         try:
             shutil.copy(path, tempfile_path)
@@ -387,7 +384,7 @@ def main():
     if len(modifies) > 0:
         file_copy_paths_before = dict()
         for path in modifies:
-            file_copy_paths_before[path] = _create_copy_or_empty_tempfile(path)
+            file_copy_paths_before[path] = _create_copy_or_empty_tempfile(path, module.tmpdir)
 
     # actually executes command (or not ...)
     if not module.check_mode:
