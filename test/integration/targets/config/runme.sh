@@ -40,3 +40,6 @@ do
 	ANSIBLE_LOOKUP_PLUGINS=./ ansible-config init types -t lookup -f "${format}" > "files/types.new.${format}"
 	diff -u "files/types.${format}" "files/types.new.${format}"
 done
+
+# ensure we don't show default templates, but templated defaults
+[ "$(ansible-config init |grep '={{' -c )" -eq 0 ]
