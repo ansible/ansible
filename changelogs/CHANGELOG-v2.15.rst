@@ -5,6 +5,26 @@ ansible-core 2.15 "Ten Years Gone" Release Notes
 .. contents:: Topics
 
 
+v2.15.11
+========
+
+Release Summary
+---------------
+
+| Release Date: 2024-04-15
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+
+Bugfixes
+--------
+
+- Fixes permission for cache json file from 600 to 644 (https://github.com/ansible/ansible/issues/82683).
+- allow_duplicates - fix evaluating if the current role allows duplicates instead of using the initial value from the duplicate's cached role.
+- ansible-test ansible-doc sanity test - do not remove underscores from plugin names in collections before calling ``ansible-doc`` (https://github.com/ansible/ansible/pull/82574).
+- dnf5 - replace removed API calls
+- unarchive modules now uses zipinfo options without relying on implementation defaults, making it more compatible with all OS/distributions.
+- winrm - Do not raise another exception during cleanup when a task is timed out - https://github.com/ansible/ansible/issues/81095
+
 v2.15.10
 ========
 
