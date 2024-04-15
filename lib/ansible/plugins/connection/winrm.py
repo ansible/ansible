@@ -177,7 +177,7 @@ from ansible.utils.display import Display
 try:
     import winrm
     from winrm import Response
-    from winrm.exceptions import WinRMError, WinRMOperationTimeoutError
+    from winrm.exceptions import WinRMError, WinRMOperationTimeoutError, WinRMTransportError
     from winrm.protocol import Protocol
     import requests.exceptions
     HAS_WINRM = True
@@ -582,7 +582,19 @@ class Connection(ConnectionBase):
             raise AnsibleConnectionFailure('winrm connection error: %s' % to_native(exc))
         finally:
             if command_id:
-                self.protocol.cleanup_command(self.shell_id, command_id)
+                # Due to a bug in how pywinrm works with message encryption we
+                # ignore a 400 error which can occur when a task timeout is
+                # set and the code tries to clean up the command. This happens
+                # as the cleanup msg is sent over a new socket but still uses
+                # the already encrypted payload bound to the other socket
+                # causing the server to reply with 400 Bad Request.
+                try:
+                    self.protocol.cleanup_command(self.shell_id, command_id)
+                except WinRMTransportError as e:
+                    if e.code != 400:
+                        raise
+
+                    display.warning("Failed to cleanup running WinRM command, resources might still be in use on the target server")
 
     def _connect(self):
 
