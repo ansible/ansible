@@ -73,12 +73,12 @@ class InventoryCLI(CLI):
 
         # list
         self.parser.add_argument("--export", action="store_true", default=C.INVENTORY_EXPORT, dest='export',
-                                 help="When doing an --list, represent in a way that is optimized for export,"
+                                 help="When doing --list, represent in a way that is optimized for export,"
                                       "not as an accurate representation of how Ansible has processed it")
         self.parser.add_argument('--output', default=None, dest='output_file',
                                  help="When doing --list, send the inventory to a file instead of to the screen")
         # self.parser.add_argument("--ignore-vars-plugins", action="store_true", default=False, dest='ignore_vars_plugins',
-        #                          help="When doing an --list, skip vars data from vars plugins, by default, this would include group_vars/ and host_vars/")
+        #                          help="When doing --list, skip vars data from vars plugins, by default, this would include group_vars/ and host_vars/")
 
     def post_process_args(self, options):
         options = super(InventoryCLI, self).post_process_args(options)
