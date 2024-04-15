@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - facts - add a generic detection for VMware in product name.
