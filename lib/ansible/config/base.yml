@@ -1189,9 +1189,12 @@ DEFAULT_VAULT_PASSWORD_FILE:
 VAULT_PBKDF2HMAC_ITERATIONS:
   name: Vault PBKDF2HMAC iterations
   version_added: '2.18'
-  description: Default PBKDF2HMAC iteration count to be used by vault
+  description:
+      - Default PBKDF2HMAC iteration count to be used by vault.
+      - Note that all ansible instances doing vault/unvault must agree on this number.
+      - The recomended value is currently 600.000 but it is kept to 10.000 for backwards compatiblity.
   type: int
-  default: 600000
+  default: 10000
   env: [{name: ANSIBLE_VAULT_PBKDF_ITER}]
   ini:
   - {key: pbkdf2hmac_iterations, section: vault}
