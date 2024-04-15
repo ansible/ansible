@@ -1304,7 +1304,8 @@ def _build_collection_tar(
         file_manifest,  # type: FilesManifestType
 ):  # type: (...) -> str
     """Build a tar.gz collection artifact from the manifest data."""
-    files_manifest_json = to_bytes(json.dumps(file_manifest, indent=True), errors='surrogate_or_strict')
+    file_manifest["files"] = sorted(file_manifest["files"], key=lambda x: x["is_valid"])
+    files_manifest_json = to_bytes(json.dumps(file_manifest, indent=True,sort_keys=True), errors='surrogate_or_strict')
     collection_manifest['file_manifest_file']['chksum_sha256'] = secure_hash_s(files_manifest_json, hash_func=sha256)
     collection_manifest_json = to_bytes(json.dumps(collection_manifest, indent=True), errors='surrogate_or_strict')
 
