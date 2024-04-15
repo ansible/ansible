@@ -1,0 +1,5 @@
+minor_changes:
+  - Added vault configuration (VAULT_PBKDF2HMAC_ITERATIONS) to allow user to fine tune encryption.
+bugfixes:
+  - Increased default vault pbkdf2hmac iterations to 600.000 as per current recomendations.
+  - Added cautionary text to vault salt configuration entry, also short hint on why it would be used.
