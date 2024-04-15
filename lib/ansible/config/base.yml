@@ -1133,15 +1133,6 @@ DEFAULT_VARS_PLUGIN_PATH:
   ini:
   - {key: vars_plugins, section: defaults}
   type: pathspec
-# TODO: unused?
-#DEFAULT_VAR_COMPRESSION_LEVEL:
-#  default: 0
-#  description: 'TODO: write it'
-#  env: [{name: ANSIBLE_VAR_COMPRESSION_LEVEL}]
-#  ini:
-#  - {key: var_compression_level, section: defaults}
-#  type: integer
-#  yaml: {key: defaults.var_compression_level}
 DEFAULT_VAULT_ID_MATCH:
   name: Force vault id match
   default: False
@@ -1161,7 +1152,9 @@ DEFAULT_VAULT_IDENTITY:
 VAULT_ENCRYPT_SALT:
   name: Vault salt to use for encryption
   default: ~
-  description: 'The salt to use for the vault encryption. If it is not provided, a random salt will be used.'
+  description:
+      - The salt to use for the vault encryption. If it is not provided, a random salt will be used.
+      - Specifying a salt decreases the security of vault, but it might be required if determinism is more important in your context.
   env: [{name: ANSIBLE_VAULT_ENCRYPT_SALT}]
   ini:
   - {key: vault_encrypt_salt, section: defaults}
@@ -1193,6 +1186,15 @@ DEFAULT_VAULT_PASSWORD_FILE:
   - {key: vault_password_file, section: defaults}
   type: path
   yaml: {key: defaults.vault_password_file}
+VAULT_PBKDF2HMAC_ITERATIONS:
+  name: Vault PBKDF2HMAC iterations
+  version_added: '2.18'
+  description: Default PBKDF2HMAC iteration count to be used by vault
+  type: int
+  default: 600000
+  env: [{name: ANSIBLE_VAULT_PBKDF_ITER}]
+  ini:
+  - {key: pbkdf2hmac_iterations, section: vault}
 DEFAULT_VERBOSITY:
   name: Verbosity
   default: 0
@@ -1395,15 +1397,6 @@ GALAXY_COLLECTIONS_PATH_WARNING:
   ini:
     - {key: collections_path_warning, section: galaxy}
   version_added: "2.16"
-# TODO: unused?
-#GALAXY_SCMS:
-#  name: Galaxy SCMS
-#  default: git, hg
-#  description: Available galaxy source control management systems.
-#  env: [{name: ANSIBLE_GALAXY_SCMS}]
-#  ini:
-#  - {key: scms, section: galaxy}
-#  type: list
 GALAXY_SERVER:
   default: https://galaxy.ansible.com
   description: "URL to prepend when roles don't specify the full URI, assume they are referencing this server as the source."

@@ -1161,7 +1161,7 @@ class VaultAES256:
             algorithm=hashes.SHA256(),
             length=2 * key_length + iv_length,
             salt=b_salt,
-            iterations=10000,
+            iterations=C.config.get_config_value('VAULT_PBKDF2HMAC_ITERATIONS'),
             backend=CRYPTOGRAPHY_BACKEND)
         b_derivedkey = kdf.derive(b_password)
 
