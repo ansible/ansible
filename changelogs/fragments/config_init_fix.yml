@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-config will now properly template defaults before dumping them.
