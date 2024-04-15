@@ -165,6 +165,7 @@ class BaseFileCacheModule(BaseCacheModule):
                 display.warning("error in '%s' cache plugin while trying to write to '%s' : %s" % (self.plugin_name, tmpfile_path, to_bytes(e)))
             try:
                 os.rename(tmpfile_path, cachefile)
+                os.chmod(cachefile, mode=0o644)
             except (OSError, IOError) as e:
                 display.warning("error in '%s' cache plugin while trying to move '%s' to '%s' : %s" % (self.plugin_name, tmpfile_path, cachefile, to_bytes(e)))
         finally:
