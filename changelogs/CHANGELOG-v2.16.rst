@@ -5,6 +5,36 @@ ansible-core 2.16 "All My Love" Release Notes
 .. contents:: Topics
 
 
+v2.16.6
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2024-04-15
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+
+Bugfixes
+--------
+
+- Consolidated the list of internal static vars, centralized them as constant and completed from some missing entries.
+- Fix check for missing _sub_plugin attribute in older connection plugins (https://github.com/ansible/ansible/pull/82954)
+- Fixes permission for cache json file from 600 to 644 (https://github.com/ansible/ansible/issues/82683).
+- Slight optimization to hostvars (instantiate template only once per host, vs per call to var).
+- allow_duplicates - fix evaluating if the current role allows duplicates instead of using the initial value from the duplicate's cached role.
+- ansible-config will now properly template defaults before dumping them.
+- ansible-test ansible-doc sanity test - do not remove underscores from plugin names in collections before calling ``ansible-doc`` (https://github.com/ansible/ansible/pull/82574).
+- async - Fix bug that stopped running async task in ``--check`` when ``check_mode: False`` was set as a task attribute - https://github.com/ansible/ansible/issues/82811
+- blockinfile - when ``create=true`` is used with a filename without path, the module crashed (https://github.com/ansible/ansible/pull/81638).
+- dnf - fix an issue when cached RPMs were left in the cache directory even when the keepcache setting was unset (https://github.com/ansible/ansible/issues/81954)
+- dnf5 - replace removed API calls
+- facts - add a generic detection for VMware in product name.
+- fetch - add error message when using ``dest`` with a trailing slash that becomes a local directory - https://github.com/ansible/ansible/issues/82878
+- find - do not fail on Permission errors (https://github.com/ansible/ansible/issues/82027).
+- unarchive modules now uses zipinfo options without relying on implementation defaults, making it more compatible with all OS/distributions.
+- winrm - Do not raise another exception during cleanup when a task is timed out - https://github.com/ansible/ansible/issues/81095
+
 v2.16.5
 =======
 
