@@ -80,7 +80,7 @@ if t.TYPE_CHECKING:
     ]
     ManifestValueType = t.Dict[CollectionInfoKeysType, t.Union[int, str, t.List[str], t.Dict[str, str], None]]
     CollectionManifestType = t.Dict[ManifestKeysType, ManifestValueType]
-    FileManifestEntryType = t.Dict[FileMetaKeysType, t.Union[str]]
+    FileManifestEntryType = t.Dict[FileMetaKeysType, t.Union[str,int,None]]
     FilesManifestType = t.Dict[t.Literal['files', 'format'], t.Union[t.List[FileManifestEntryType], int]]
 
 import ansible.constants as C
@@ -1258,7 +1258,7 @@ def _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patter
                         chksum=secure_hash(b_abs_path, hash_func=sha256)
                     )
                 )
-
+    manifest["files"].sort(key=lambda x: x["name"])
     _walk(b_collection_path, b_collection_path)
 
     return manifest
@@ -1304,9 +1304,8 @@ def _build_collection_tar(
         file_manifest,  # type: FilesManifestType
 ):  # type: (...) -> str
     """Build a tar.gz collection artifact from the manifest data."""
-    file_manifest['files'].sort(key=lambda x: str(x['name']) if isinstance(x['name'], int) else x['name'])
     files_manifest_json = to_bytes(json.dumps(file_manifest, indent=True,sort_keys=True), errors='surrogate_or_strict')
-    collection_manifest['file_manifest_file']['chksum_sha256'] = secure_hash_s(files_manifest_json, hash_func=sha256)
+    #collection_manifest['file_manifest_file']['chksum_sha256'] = secure_hash_s(files_manifest_json, hash_func=sha256)
     collection_manifest_json = to_bytes(json.dumps(collection_manifest, indent=True), errors='surrogate_or_strict')
 
     with _tempdir() as b_temp_path:
