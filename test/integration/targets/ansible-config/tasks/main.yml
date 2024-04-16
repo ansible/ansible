@@ -39,13 +39,13 @@
           - valid_cfg['results'][4] is failed
 
   - name: validate env vars
-    shell: ansible-config validate -t all -v -t env
+    shell: ansible-config validate -t all -v -f env
     register: valid_env
     environment:
       ANSIBLE_COW_SELECTION: 1
 
   - name: validate env vars
-    shell: ansible-config validate -t all -v -t env
+    shell: ansible-config validate -t all -v -f env
     register: invalid_env
     ignore_errors: true
     environment:
