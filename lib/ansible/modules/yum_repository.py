@@ -427,53 +427,13 @@ from ansible.module_utils.common.text.converters import to_native
 
 
 class YumRepo(object):
-    allowed_params = [
-        'async',
-        'bandwidth',
-        'baseurl',
-        'cost',
-        'countme',
-        'deltarpm_metadata_percentage',
-        'deltarpm_percentage',
-        'enabled',
-        'enablegroups',
-        'exclude',
-        'failovermethod',
-        'gpgcakey',
-        'gpgcheck',
-        'gpgkey',
-        'module_hotfixes',
-        'http_caching',
-        'include',
-        'includepkgs',
-        'ip_resolve',
-        'keepalive',
-        'keepcache',
-        'metadata_expire',
-        'metadata_expire_filter',
-        'metalink',
-        'mirrorlist',
-        'mirrorlist_expire',
-        'name',
-        'password',
-        'priority',
-        'protect',
-        'proxy',
-        'proxy_password',
-        'proxy_username',
-        'repo_gpgcheck',
-        'retries',
-        's3_enabled',
-        'skip_if_unavailable',
-        'sslcacert',
-        'ssl_check_cert_permissions',
-        'sslclientcert',
-        'sslclientkey',
-        'sslverify',
-        'throttle',
-        'timeout',
-        'ui_repoid_vars',
-        'username']
+    non_yum_args = frozenset((
+        "dest",
+        "file",
+        "repoid",
+        "reposdir",
+        "state",
+    ))
 
     def __init__(self, module):
         self.module = module
@@ -494,7 +454,7 @@ class YumRepo(object):
                 value = int(value)
 
             # Set the value only if it was defined (default is None)
-            if value is not None and key in self.allowed_params:
+            if value is not None and key not in self.non_yum_args:
                 if key == 'keepcache':
                     self.module.deprecate(
                         "'keepcache' parameter is deprecated.",
