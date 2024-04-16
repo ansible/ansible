@@ -1180,7 +1180,7 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_c
             )
 
         manifest['files'].append(manifest_entry)
-
+    manifest["files"].sort(key=lambda x: x["name"])
     return manifest
 
 
@@ -1253,6 +1253,7 @@ def _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patter
                 )
 
     _walk(b_collection_path, b_collection_path)
+    manifest["files"].sort(key=lambda x: x["name"])
 
     return manifest
 
@@ -1299,7 +1300,7 @@ def _build_collection_tar(
     """Build a tar.gz collection artifact from the manifest data."""
     file_manifest["files"].sort(key=lambda x: x["name"])
     files_manifest_json = to_bytes(json.dumps(file_manifest, indent=True), errors='surrogate_or_strict')
-    collection_manifest['file_manifest_file']['chksum_sha256'] = secure_hash_s(files_manifest_json, hash_func=sha256)
+    files_manifest_json = to_bytes(json.dumps(file_manifest, indent=True, sort_keys=True), errors='surrogate_or_strict')
     collection_manifest_json = to_bytes(json.dumps(collection_manifest, indent=True), errors='surrogate_or_strict')
 
     with _tempdir() as b_temp_path:

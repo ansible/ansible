@@ -83,7 +83,7 @@
 
 - name: Define extraction path
   set_fact:
-    extraction_path: "/tmp/ansible_collections_extraction"
+    extraction_path: "/tmp/new_ansible_collections_extraction"
 
 - name: Ensure extraction directory exists
   file:
@@ -99,7 +99,7 @@
 
 - name: Slurp FILES.json content
   slurp:
-    src: "/tmp/ansible_collections_extraction/FILES.json"
+    src: "/tmp/new_ansible_collections_extraction/FILES.json"
   register: files_content
 
 - name: Decode FILES.json content
