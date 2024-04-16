@@ -98,13 +98,23 @@ def generate_ansible_template_vars(path, fullpath=None, dest_path=None):
     else:
         temp_vars['template_fullpath'] = fullpath
 
+    t_file = temp_vars['template_path'].replace('%', '%%')
+    if is_possibly_template(t_file):
+        raise AnsibleError(f"Invalid file name '{t_file}', contains template.")
+    t_host = temp_vars['template_host'],
+    if is_possibly_template(t_host):
+        raise AnsibleError(f"Invalid host name '{t_host}', contains template.")
+    t_uid = temp_vars['template_uid'],
+    if is_possibly_template(t_uid):
+        raise AnsibleError(f"Invalid uid '{t_uid}', contains template.")
+
     managed_default = C.DEFAULT_MANAGED_STR
     managed_str = managed_default.format(
-        host=temp_vars['template_host'],
-        uid=temp_vars['template_uid'],
-        file=temp_vars['template_path'].replace('%', '%%'),
+        host=t_host,
+        uid=t_uid,
+        file=t_file,
     )
-    temp_vars['ansible_managed'] = to_unsafe_text(time.strftime(to_native(managed_str), time.localtime(os.path.getmtime(b_path))))
+    temp_vars['ansible_managed'] = time.strftime(to_native(managed_str), time.localtime(os.path.getmtime(b_path)))
 
     return temp_vars
 
