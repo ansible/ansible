@@ -427,13 +427,13 @@ class PlayIterator:
                     # might be there from previous flush
                     state.handlers = self.handlers[:]
                     state.update_handlers = False
-                    state.cur_handlers_task = 0
 
                 while True:
                     try:
                         task = state.handlers[state.cur_handlers_task]
                     except IndexError:
                         task = None
+                        state.cur_handlers_task = 0
                         state.run_state = state.pre_flushing_run_state
                         state.update_handlers = True
                         break

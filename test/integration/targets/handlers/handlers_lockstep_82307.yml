@@ -1,0 +1,25 @@
+- hosts: A,B
+  gather_facts: false
+  tasks:
+    - block:
+        - command: echo
+          notify:
+            - handler1
+            - handler2
+
+        - fail:
+          when: inventory_hostname == "B"
+
+        - meta: flush_handlers
+      always:
+        - name: always
+          debug:
+            msg: always
+  handlers:
+    - name: handler1
+      debug:
+        msg: handler1
+
+    - name: handler2
+      debug:
+        msg: handler2
