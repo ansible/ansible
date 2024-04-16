@@ -451,7 +451,7 @@ class YumRepo(object):
 
         for key, value in sorted(self.params.items()):
             if isinstance(value, bool):
-                value = int(value)
+                value = str(int(value))
 
             # Set the value only if it was defined (default is None)
             if value is not None and key not in self.non_yum_args:
