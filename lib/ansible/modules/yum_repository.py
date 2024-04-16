@@ -556,6 +556,7 @@ def main():
         username=dict(),
     )
 
+    # async is a Python keyword
     argument_spec['async'] = dict(type='bool')
 
     module = AnsibleModule(
