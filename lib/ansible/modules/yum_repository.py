@@ -450,17 +450,16 @@ class YumRepo(object):
         self.repofile.add_section(self.section)
 
         for key, value in sorted(self.params.items()):
+            if value is None or key in self.non_yum_args:
+                continue
+            if key == 'keepcache':
+                self.module.deprecate(
+                    "'keepcache' parameter is deprecated.",
+                    version='2.20'
+                )
             if isinstance(value, bool):
                 value = str(int(value))
-
-            # Set the value only if it was defined (default is None)
-            if value is not None and key not in self.non_yum_args:
-                if key == 'keepcache':
-                    self.module.deprecate(
-                        "'keepcache' parameter is deprecated.",
-                        version='2.20'
-                    )
-                self.repofile.set(self.section, key, value)
+            self.repofile.set(self.section, key, value)
 
     def save(self):
         if self.repofile.sections():
