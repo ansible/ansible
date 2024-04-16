@@ -101,10 +101,10 @@ def generate_ansible_template_vars(path, fullpath=None, dest_path=None):
     t_file = temp_vars['template_path'].replace('%', '%%')
     if is_possibly_template(t_file):
         raise AnsibleError(f"Invalid file name '{t_file}', contains template.")
-    t_host = temp_vars['template_host'],
+    t_host = temp_vars['template_host']
     if is_possibly_template(t_host):
         raise AnsibleError(f"Invalid host name '{t_host}', contains template.")
-    t_uid = temp_vars['template_uid'],
+    t_uid = temp_vars['template_uid']
     if is_possibly_template(t_uid):
         raise AnsibleError(f"Invalid uid '{t_uid}', contains template.")
 
