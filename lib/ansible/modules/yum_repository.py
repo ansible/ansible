@@ -427,12 +427,6 @@ from ansible.module_utils.common.text.converters import to_native
 
 
 class YumRepo(object):
-    # Class global variables
-    module = None
-    params = None
-    section = None
-    repofile = configparser.RawConfigParser()
-
     # List of parameters which will be allowed in the repo file output
     allowed_params = [
         'async',
@@ -492,6 +486,7 @@ class YumRepo(object):
         self.params = self.module.params
         # Section is always the repoid
         self.section = self.params['repoid']
+        self.repofile = configparser.RawConfigParser()
 
         # Check if repo directory exists
         repos_dir = self.params['reposdir']
