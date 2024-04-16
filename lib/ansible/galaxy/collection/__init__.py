@@ -1305,8 +1305,6 @@ def _build_collection_tar(
         file_manifest,  # type: FilesManifestType
 ):  # type: (...) -> str
     """Build a tar.gz collection artifact from the manifest data."""
-    file_manifest["files"].sort(key=lambda x: x["name"])
-    files_manifest_json = to_bytes(json.dumps(file_manifest, indent=True), errors='surrogate_or_strict')
     files_manifest_json = to_bytes(json.dumps(file_manifest, indent=True, sort_keys=True), errors='surrogate_or_strict')
     collection_manifest_json = to_bytes(json.dumps(collection_manifest, indent=True), errors='surrogate_or_strict')
 
