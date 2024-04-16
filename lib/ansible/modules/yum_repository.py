@@ -427,7 +427,6 @@ from ansible.module_utils.common.text.converters import to_native
 
 
 class YumRepo(object):
-    # List of parameters which will be allowed in the repo file output
     allowed_params = [
         'async',
         'bandwidth',
@@ -477,30 +476,22 @@ class YumRepo(object):
         'username']
 
     def __init__(self, module):
-        # To be able to use fail_json
         self.module = module
-        # Shortcut for the params
         self.params = self.module.params
         # Section is always the repoid
         self.section = self.params['repoid']
         self.repofile = configparser.RawConfigParser()
 
-        # Read the repo file if it exists
         if os.path.isfile(self.params['dest']):
             self.repofile.read(self.params['dest'])
 
     def add(self):
-        # Remove already existing repo and create a new one
         if self.repofile.has_section(self.section):
             self.repofile.remove_section(self.section)
-
-        # Add section
         self.repofile.add_section(self.section)
 
-        # Set options
         for key, value in sorted(self.params.items()):
             if isinstance(value, bool):
-                # Convert boolean value to integer
                 value = int(value)
 
             # Set the value only if it was defined (default is None)
@@ -514,7 +505,6 @@ class YumRepo(object):
 
     def save(self):
         if len(self.repofile.sections()):
-            # Write data into the file
             try:
                 with open(self.params['dest'], 'w') as fd:
                     self.repofile.write(fd)
@@ -523,7 +513,6 @@ class YumRepo(object):
                     msg="Problems handling file %s." % self.params['dest'],
                     details=to_native(e))
         else:
-            # Remove the file if there are not repos
             try:
                 os.remove(self.params['dest'])
             except OSError as e:
@@ -534,14 +523,12 @@ class YumRepo(object):
                     details=to_native(e))
 
     def remove(self):
-        # Remove section if exists
         if self.repofile.has_section(self.section):
             self.repofile.remove_section(self.section)
 
     def dump(self):
         repo_string = ""
 
-        # Compose the repo file
         for section in sorted(self.repofile.sections()):
             repo_string += "[%s]\n" % section
 
@@ -554,7 +541,6 @@ class YumRepo(object):
 
 
 def main():
-    # Module settings
     argument_spec = dict(
         bandwidth=dict(),
         baseurl=dict(type='list', elements='str'),
@@ -632,7 +618,6 @@ def main():
     module.params['name'] = module.params['description']
     del module.params['description']
 
-    # Change list type to string for baseurl and gpgkey
     for list_param in {'baseurl', 'gpgkey'}:
         v = module.params[list_param]
         if v is not None:
@@ -643,7 +628,6 @@ def main():
         if v is not None:
             module.params[list_param] = ' '.join(v)
 
-    # Define repo file name if it doesn't exist
     if module.params['file'] is None:
         module.params['file'] = module.params['repoid']
 
@@ -656,10 +640,8 @@ def main():
     # Set dest; also used to set dest parameter for the FS attributes
     module.params['dest'] = os.path.join(repos_dir, "%s.repo" % module.params['file'])
 
-    # Instantiate the YumRepo object
     yumrepo = YumRepo(module)
 
-    # Get repo status before change
     diff = {
         'before_header': yumrepo.params['dest'],
         'before': yumrepo.dump(),
@@ -667,28 +649,22 @@ def main():
         'after': ''
     }
 
-    # Perform action depending on the state
     if state == 'present':
         yumrepo.add()
     elif state == 'absent':
         yumrepo.remove()
 
-    # Get repo status after change
     diff['after'] = yumrepo.dump()
 
-    # Compare repo states
     changed = diff['before'] != diff['after']
 
-    # Save the file only if not in check mode and if there was a change
     if not module.check_mode and changed:
         yumrepo.save()
 
-    # Change file attributes if needed
     if os.path.isfile(module.params['dest']):
         file_args = module.load_file_common_arguments(module.params)
         changed = module.set_fs_attributes_if_different(file_args, changed)
 
-    # Print status of the change
     module.exit_json(changed=changed, repo=name, state=state, diff=diff)
 
 
