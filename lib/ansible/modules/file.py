@@ -133,6 +133,11 @@ EXAMPLES = r"""
     group: foo
     mode: '0644'
 
+- name: Change file group using gid
+  ansible.builtin.file:
+    path: /etc/bar.conf
+    group: "1000"
+
 - name: Give insecure permissions to an existing file
   ansible.builtin.file:
     path: /work
