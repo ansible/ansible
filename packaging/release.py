@@ -856,7 +856,7 @@ def test_built_artifact(path: pathlib.Path) -> None:
 
 def get_sdist_path(version: Version, dist_dir: pathlib.Path = DIST_DIR) -> pathlib.Path:
     """Return the path to the sdist file."""
-    return dist_dir / f"ansible-core-{version}.tar.gz"
+    return dist_dir / f"ansible_core-{version}.tar.gz"
 
 
 def get_wheel_path(version: Version, dist_dir: pathlib.Path = DIST_DIR) -> pathlib.Path:
