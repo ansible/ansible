@@ -510,15 +510,6 @@ class YumRepo(object):
         # Add section
         self.repofile.add_section(self.section)
 
-        # Baseurl/mirrorlist is not required because for removal we need only
-        # the repo name. This is why we check if the baseurl/mirrorlist is
-        # defined.
-        req_params = (self.params['baseurl'], self.params['metalink'], self.params['mirrorlist'])
-        if req_params == (None, None, None):
-            self.module.fail_json(
-                msg="Parameter 'baseurl', 'metalink' or 'mirrorlist' is required for "
-                    "adding a new repo.")
-
         # Set options
         for key, value in sorted(self.params.items()):
             if key in self.list_params and isinstance(value, list):
@@ -640,6 +631,10 @@ def main():
     argument_spec['async'] = dict(type='bool')
 
     module = AnsibleModule(
+        required_if=[
+            ["state", "present", ["baseurl", "mirrorlist", "metalink"], True],
+            ["state", "present", ["description"]],
+        ],
         argument_spec=argument_spec,
         add_file_common_args=True,
         supports_check_mode=True,
@@ -647,18 +642,6 @@ def main():
 
     name = module.params['name']
     state = module.params['state']
-
-    # Check if required parameters are present
-    if state == 'present':
-        if (
-                module.params['baseurl'] is None and
-                module.params['metalink'] is None and
-                module.params['mirrorlist'] is None):
-            module.fail_json(
-                msg="Parameter 'baseurl', 'metalink' or 'mirrorlist' is required.")
-        if module.params['description'] is None:
-            module.fail_json(
-                msg="Parameter 'description' is required.")
 
     # Rename "name" and "description" to ensure correct key sorting
     module.params['repoid'] = module.params['name']
