@@ -476,9 +476,6 @@ class YumRepo(object):
         'ui_repoid_vars',
         'username']
 
-    # List of parameters which can be a list
-    list_params = ['exclude', 'includepkgs']
-
     def __init__(self, module):
         # To be able to use fail_json
         self.module = module
@@ -487,16 +484,6 @@ class YumRepo(object):
         # Section is always the repoid
         self.section = self.params['repoid']
         self.repofile = configparser.RawConfigParser()
-
-        # Check if repo directory exists
-        repos_dir = self.params['reposdir']
-        if not os.path.isdir(repos_dir):
-            self.module.fail_json(
-                msg="Repo directory '%s' does not exist." % repos_dir)
-
-        # Set dest; also used to set dest parameter for the FS attributes
-        self.params['dest'] = os.path.join(
-            repos_dir, "%s.repo" % self.params['file'])
 
         # Read the repo file if it exists
         if os.path.isfile(self.params['dest']):
@@ -512,10 +499,7 @@ class YumRepo(object):
 
         # Set options
         for key, value in sorted(self.params.items()):
-            if key in self.list_params and isinstance(value, list):
-                # Join items into one string for specific parameters
-                value = ' '.join(value)
-            elif isinstance(value, bool):
+            if isinstance(value, bool):
                 # Convert boolean value to integer
                 value = int(value)
 
@@ -649,15 +633,28 @@ def main():
     del module.params['description']
 
     # Change list type to string for baseurl and gpgkey
-    for list_param in ['baseurl', 'gpgkey']:
-        if (
-                list_param in module.params and
-                module.params[list_param] is not None):
-            module.params[list_param] = "\n".join(module.params[list_param])
+    for list_param in {'baseurl', 'gpgkey'}:
+        v = module.params[list_param]
+        if v is not None:
+            module.params[list_param] = '\n'.join(v)
+
+    for list_param in {'exclude', 'includepkgs'}:
+        v = module.params[list_param]
+        if v is not None:
+            module.params[list_param] = ' '.join(v)
 
     # Define repo file name if it doesn't exist
     if module.params['file'] is None:
         module.params['file'] = module.params['repoid']
+
+    repos_dir = module.params['reposdir']
+    if not os.path.isdir(repos_dir):
+        module.fail_json(
+            msg="Repo directory '%s' does not exist." % repos_dir
+        )
+
+    # Set dest; also used to set dest parameter for the FS attributes
+    module.params['dest'] = os.path.join(repos_dir, "%s.repo" % module.params['file'])
 
     # Instantiate the YumRepo object
     yumrepo = YumRepo(module)
