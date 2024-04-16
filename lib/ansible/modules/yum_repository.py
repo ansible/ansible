@@ -486,8 +486,7 @@ class YumRepo(object):
             self.repofile.read(self.params['dest'])
 
     def add(self):
-        if self.repofile.has_section(self.section):
-            self.repofile.remove_section(self.section)
+        self.remove()
         self.repofile.add_section(self.section)
 
         for key, value in sorted(self.params.items()):
@@ -504,7 +503,7 @@ class YumRepo(object):
                 self.repofile.set(self.section, key, value)
 
     def save(self):
-        if len(self.repofile.sections()):
+        if self.repofile.sections():
             try:
                 with open(self.params['dest'], 'w') as fd:
                     self.repofile.write(fd)
@@ -523,8 +522,7 @@ class YumRepo(object):
                     details=to_native(e))
 
     def remove(self):
-        if self.repofile.has_section(self.section):
-            self.repofile.remove_section(self.section)
+        self.repofile.remove_section(self.section)
 
     def dump(self):
         repo_string = ""
