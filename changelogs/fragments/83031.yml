@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - lookup - Fixed examples of csv lookup plugin (https://github.com/ansible/ansible/issues/83031).
