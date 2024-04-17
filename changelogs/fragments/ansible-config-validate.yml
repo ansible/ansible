@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-config has new 'validate' option to find mispelled/forgein configurations in ini file or environment variables.
