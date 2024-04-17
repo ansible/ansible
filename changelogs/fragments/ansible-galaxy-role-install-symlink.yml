@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy role install - unbreak symlinks which cannot be expressed without '..' (https://github.com/ansible/ansible/issues/82702).

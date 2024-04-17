@@ -1,1 +1,3 @@
-dependencies: [setup_remote_tmp_dir]
+dependencies:
+  - setup_remote_tmp_dir
+  - setup_gnutar
