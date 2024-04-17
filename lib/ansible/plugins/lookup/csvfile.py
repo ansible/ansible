@@ -51,18 +51,30 @@ EXAMPLES = """
 - name: msg="Match 'Li' on the first column, but return the 3rd column (columns start counting after the match)"
   ansible.builtin.debug: msg="The atomic mass of Lithium is {{ lookup('ansible.builtin.csvfile', 'Li file=elements.csv delimiter=, col=2') }}"
 
-- name: Define Values From CSV File, this reads file in one go, but you could also use col= to read each in it's own lookup.
+# Contents of bgp_neighbors.csv
+# 127.0.0.1,10.0.0.1,24,nones,lola,pepe,127.0.0.2
+# 128.0.0.1,10.1.0.1,20,notes,lolita,pepito,128.0.0.2
+# 129.0.0.1,10.2.0.1,23,nines,aayush,pepete,129.0.0.2
+
+- name: Define values from CSV file, this reads file in one go, but you could also use col= to read each in it's own lookup.
   ansible.builtin.set_fact:
-    loop_ip: "{{ csvline[0] }}"
-    int_ip: "{{ csvline[1] }}"
-    int_mask: "{{ csvline[2] }}"
-    int_name: "{{ csvline[3] }}"
-    local_as: "{{ csvline[4] }}"
-    neighbor_as: "{{ csvline[5] }}"
-    neigh_int_ip: "{{ csvline[6] }}"
+    '{{ columns[item|int] }}': "{{ csvline }}"
   vars:
-    csvline: "{{ lookup('ansible.builtin.csvfile', bgp_neighbor_ip, file='bgp_neighbors.csv', delimiter=',') }}"
+    csvline: "{{ lookup('csvfile', bgp_neighbor_ip, file='bgp_neighbors.csv', delimiter=',', col=item) }}"
+    columns: ['loop_ip', 'int_ip', 'int_mask', 'int_name', 'local_as', 'neighbour_as', 'neight_int_ip']
+    bgp_neighbor_ip: '127.0.0.1'
+  loop: '{{ range(columns|length|int) }}'
   delegate_to: localhost
+  delegate_facts: true
+
+# Contents of people.csv
+# # Last,First,Email,Extension
+# Smith,Jane,jsmith@example.com,1234
+
+- name: Specify the column (by keycol) in which the string should be searched
+  assert:
+    that:
+    - lookup('ansible.builtin.csvfile', 'Jane', file='people.csv', delimiter=',', col=0, keycol=1) == "Smith"
 """
 
 RETURN = """
