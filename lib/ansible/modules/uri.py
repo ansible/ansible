@@ -368,7 +368,7 @@ EXAMPLES = r'''
   delay: 5 # Every 5 seconds
 
 - name: Provide SSL/TLS ciphers as a list
-  uri:
+  ansible.builtin.uri:
     url: https://example.org
     ciphers:
       - '@SECLEVEL=2'
@@ -383,7 +383,7 @@ EXAMPLES = r'''
       - '!AESCCM'
 
 - name: Provide SSL/TLS ciphers as an OpenSSL formatted cipher list
-  uri:
+  ansible.builtin.uri:
     url: https://example.org
     ciphers: '@SECLEVEL=2:ECDH+AESGCM:ECDH+CHACHA20:ECDH+AES:DHE+AES:!aNULL:!eNULL:!aDSS:!SHA1:!AESCCM'
 '''
