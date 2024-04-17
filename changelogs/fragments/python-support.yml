@@ -1,0 +1,2 @@
+removed_features:
+  - Removed Python 2.7 and Python 3.6 as a supported remote version. Python 3.7+ is now required for target execution.
