@@ -64,6 +64,8 @@ options:
         can give values over V(100), so V(200) means that the metadata is
         required to be half the size of the packages. Use V(0) to turn off
         this check, and always download metadata.
+      - This parameter is deprecated as it has no affect with dnf as an underlying package manager
+        and will be removed in ansible-core 2.22.
     type: str
   deltarpm_percentage:
     description:
@@ -112,6 +114,8 @@ options:
   gpgcakey:
     description:
       - A URL pointing to the ASCII-armored CA key file for the repository.
+      - This parameter is deprecated as it has no affect with dnf as an underlying package manager
+        and will be removed in ansible-core 2.22.
     type: str
   gpgcheck:
     description:
@@ -140,6 +144,8 @@ options:
       - V(packages) means that only RPM package downloads should be cached (but
          not repository metadata downloads).
       - V(none) means that no HTTP downloads should be cached.
+      - This parameter is deprecated as it has no affect with dnf as an underlying package manager
+        and will be removed in ansible-core 2.22.
     choices: [all, packages, none]
     type: str
   include:
@@ -170,12 +176,15 @@ options:
       - This tells yum whether or not HTTP/1.1 keepalive should be used with
         this repository. This can improve transfer speeds by using one
         connection when downloading multiple files from a repository.
+      - This parameter is deprecated as it has no affect with dnf as an underlying package manager
+        and will be removed in ansible-core 2.22.
     type: bool
   keepcache:
     description:
       - Either V(1) or V(0). Determines whether or not yum keeps the cache of
         headers and packages after successful installation.
-      - This parameter is deprecated and will be removed in version 2.20.
+      - This parameter is deprecated as it is only valid in the main configuration
+        and will be removed in ansible-core 2.20.
     choices: ['0', '1']
     type: str
   metadata_expire:
@@ -201,6 +210,8 @@ options:
         other commands which will require the latest metadata. Eg.
         C(yum check-update).
       - Note that this option does not override "yum clean expire-cache".
+      - This parameter is deprecated as it has no affect with dnf as an underlying package manager
+        and will be removed in ansible-core 2.22.
     choices: [never, 'read-only:past', 'read-only:present', 'read-only:future']
     type: str
   metalink:
@@ -222,6 +233,8 @@ options:
       - Time (in seconds) after which the mirrorlist locally cached will
         expire.
       - Default value is 6 hours.
+      - This parameter is deprecated as it has no affect with dnf as an underlying package manager
+        and will be removed in ansible-core 2.22.
     type: str
   name:
     description:
@@ -243,6 +256,8 @@ options:
   protect:
     description:
       - Protect packages from updates from other repositories.
+      - This parameter is deprecated as it has no affect with dnf as an underlying package manager
+        and will be removed in ansible-core 2.22.
     type: bool
   proxy:
     description:
@@ -291,6 +306,8 @@ options:
         O(skip_if_unavailable) to be V(true). This is most useful for non-root
         processes which use yum on repos that have client cert files which are
         readable only by root.
+      - This parameter is deprecated as it has no affect with dnf as an underlying package manager
+        and will be removed in ansible-core 2.22.
     type: bool
   sslcacert:
     description:
@@ -336,6 +353,8 @@ options:
       - When a repository id is displayed, append these yum variables to the
         string if they are used in the O(baseurl)/etc. Variables are appended
         in the order listed (and found).
+      - This parameter is deprecated as it has no affect with dnf as an underlying package manager
+        and will be removed in ansible-core 2.22.
     type: str
   username:
     description:
@@ -454,8 +473,25 @@ class YumRepo(object):
                 continue
             if key == 'keepcache':
                 self.module.deprecate(
-                    "'keepcache' parameter is deprecated.",
+                    "'keepcache' parameter is deprecated as it is only valid in "
+                    "the main configuration.",
                     version='2.20'
+                )
+            elif key in {
+                "deltarpm_metadata_percentage",
+                "gpgcakey",
+                "http_caching",
+                "keepalive",
+                "metadata_expire_filter",
+                "mirrorlist_expire",
+                "protect",
+                "ssl_check_cert_permissions",
+                "ui_repoid_vars",
+            }:
+                self.module.deprecate(
+                    f"'{key}' parameter is deprecated as it has no affect with dnf "
+                    "as an underlying package manager.",
+                    version='2.22'
                 )
             if isinstance(value, bool):
                 value = str(int(value))
