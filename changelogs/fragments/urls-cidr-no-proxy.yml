@@ -1,0 +1,2 @@
+minor_changes:
+- urls.py - Support CIDR ranges for no_proxy
