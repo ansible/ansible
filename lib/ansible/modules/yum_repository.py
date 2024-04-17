@@ -95,8 +95,11 @@ options:
         space separated list. Shell globs using wildcards (for example V(*) and V(?))
         are allowed.
       - The list can also be a regular YAML array.
+      - excludepkgs alias was added in ansible-core 2.18
     type: list
     elements: str
+    aliases:
+      - excludepkgs
   failovermethod:
     choices: [roundrobin, priority]
     description:
@@ -544,7 +547,7 @@ def main():
         description=dict(),
         enabled=dict(type='bool'),
         enablegroups=dict(type='bool'),
-        exclude=dict(type='list', elements='str'),
+        exclude=dict(type='list', elements='str', aliases=['excludepkgs']),
         failovermethod=dict(choices=['roundrobin', 'priority']),
         file=dict(),
         gpgcakey=dict(no_log=False),
