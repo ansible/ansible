@@ -9,9 +9,10 @@ from __future__ import annotations
 from ansible.cli import CLI
 
 import os
-import yaml
 import shlex
 import subprocess
+import sys
+import yaml
 
 from collections.abc import Mapping
 
@@ -47,6 +48,37 @@ def get_constants():
     if not hasattr(get_constants, 'cvars'):
         get_constants.cvars = {k: getattr(C, k) for k in dir(C) if not k.startswith('__')}
     return get_constants.cvars
+
+
+def _ansible_env_vars(varname):
+    ''' return true or false depending if variable name is possibly a 'configurable' ansible env variable '''
+    return all(
+        [
+            varname.startswith("ANSIBLE_"),
+            not varname.startswith(("ANSIBLE_TEST_", "ANSIBLE_LINT_")),
+            varname not in ("ANSIBLE_CONFIG", "ANSIBLE_DEV_HOME"),
+        ]
+    )
+
+
+def _get_evar_list(settings):
+    data = []
+    for setting in settings:
+        if 'env' in settings[setting] and settings[setting]['env']:
+            for varname in settings[setting]['env']:
+                data.append(varname.get('name'))
+    return data
+
+
+def _get_ini_entries(settings):
+    data = {}
+    for setting in settings:
+        if 'ini' in settings[setting] and settings[setting]['ini']:
+            for kv in settings[setting]['ini']:
+                if not kv['section'] in data:
+                    data[kv['section']] = set()
+                data[kv['section']].add(kv['key'])
+    return data
 
 
 class ConfigCLI(CLI):
@@ -99,9 +131,13 @@ class ConfigCLI(CLI):
         init_parser.add_argument('--disabled', dest='commented', action='store_true', default=False,
                                  help='Prefixes all entries with a comment character to disable them')
 
-        # search_parser = subparsers.add_parser('find', help='Search configuration')
-        # search_parser.set_defaults(func=self.execute_search)
-        # search_parser.add_argument('args', help='Search term', metavar='<search term>')
+        validate_parser = subparsers.add_parser('validate',
+                                                help='Validate the configuration file and environment variables. '
+                                                     'By default it only checks the base settings without accounting for plugins (see -t).',
+                                                parents=[common])
+        validate_parser.set_defaults(func=self.execute_validate)
+        validate_parser.add_argument('--format', '-f', dest='format', action='store', choices=['ini', 'env'] , default='ini',
+                                     help='Output format for init')
 
     def post_process_args(self, options):
         options = super(ConfigCLI, self).post_process_args(options)
@@ -239,6 +275,7 @@ class ConfigCLI(CLI):
             for ptype in C.CONFIGURABLE_PLUGINS:
                 config_entries['PLUGINS'][ptype.upper()] = self._list_plugin_settings(ptype)
         elif context.CLIARGS['type'] != 'base':
+            # only for requested types
             config_entries['PLUGINS'][context.CLIARGS['type']] = self._list_plugin_settings(context.CLIARGS['type'], context.CLIARGS['args'])
 
         return config_entries
@@ -358,7 +395,7 @@ class ConfigCLI(CLI):
                     elif default is None:
                         default = ''
 
-                    if context.CLIARGS['commented']:
+                    if context.CLIARGS.get('commented', False):
                         entry['key'] = ';%s' % entry['key']
 
                     key = desc + '\n%s=%s' % (entry['key'], default)
@@ -551,6 +588,64 @@ class ConfigCLI(CLI):
             text = json_dump(output)
 
         self.pager(to_text(text, errors='surrogate_or_strict'))
+
+    def execute_validate(self):
+
+        found = False
+        config_entries = self._list_entries_from_args()
+        plugin_types = config_entries.pop('PLUGINS', None)
+
+        if context.CLIARGS['format'] == 'ini':
+            if C.CONFIG_FILE is not None:
+                # validate ini config since it is found
+
+                sections = _get_ini_entries(config_entries)
+                # Also from plugins
+                if plugin_types:
+                    for ptype in plugin_types:
+                        for plugin in plugin_types[ptype].keys():
+                            plugin_sections = _get_ini_entries(plugin_types[ptype][plugin])
+                            for s in plugin_sections:
+                                if s in sections:
+                                    sections[s].update(plugin_sections[s])
+                                else:
+                                    sections[s] = plugin_sections[s]
+                if sections:
+                    p = C.config._parsers[C.CONFIG_FILE]
+                    for s in p.sections():
+                        # check for valid sections
+                        if s not in sections:
+                            display.error(f"Found unknown section '{s}' in '{C.CONFIG_FILE}.")
+                            found = True
+                            continue
+
+                        # check keys in valid sections
+                        for k in p.options(s):
+                            if k not in sections[s]:
+                                display.error(f"Found unknown key '{k}' in section '{s}' in '{C.CONFIG_FILE}.")
+                                found = True
+
+        elif context.CLIARGS['format'] == 'env':
+            # validate any 'ANSIBLE_' env vars found
+            evars = [varname for varname in os.environ.keys() if _ansible_env_vars(varname)]
+            if evars:
+                data = _get_evar_list(config_entries)
+                if plugin_types:
+                    for ptype in plugin_types:
+                        for plugin in plugin_types[ptype].keys():
+                            data.extend(_get_evar_list(plugin_types[ptype][plugin]))
+
+                for evar in evars:
+                    if evar not in data:
+                        display.error(f"Found unknown environment variable '{evar}'.")
+                        found = True
+
+        # we found discrepancies!
+        if found:
+            sys.exit(1)
+
+        # allsgood
+        display.display("All configurations seem valid!")
 
 
 def main(args=None):
