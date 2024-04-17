@@ -52,7 +52,11 @@ def get_constants():
 
 def _ansible_env_vars(varname):
     ''' return true or false depending if variable name is possibly a 'configurable' ansible env variable '''
-    return all([varname.startswith('ANSIBLE_'), not varname.startswith('ANSIBLE_TEST_'), varname not in ('ANSIBLE_CONFIG', 'ANSIBLE_DEV_HOME')])
+    return all([
+                varname.startswith('ANSIBLE_'),
+                not varname.startswith(('ANSIBLE_TEST_', 'ANSIBLE_LINT_')),
+                varname not in ('ANSIBLE_CONFIG', 'ANSIBLE_DEV_HOME')
+            ])
 
 
 def _get_evar_list(settings):
