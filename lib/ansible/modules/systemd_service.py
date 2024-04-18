@@ -495,6 +495,8 @@ def main():
                     if rc != 0:
                         # some versions of system CAN mask/unmask non existing services, we only fail on missing if they don't
                         fail_if_missing(module, found, unit, msg='host')
+                        # here if service was not missing, but failed for other reasons
+                        module.fail_json(msg=f"Failed to {action} the service ({unit}): {err.strip()}")
 
         # Enable/disable service startup at boot if requested
         if module.params['enabled'] is not None:
