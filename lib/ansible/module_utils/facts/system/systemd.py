@@ -32,7 +32,7 @@ class SystemdFactCollector(BaseFactCollector):
         if systemctl_bin and ServiceMgrFactCollector.is_systemd_managed(module):
             rc, stdout, stderr = module.run_command(
                 [systemctl_bin, "--version"],
-                check_rc=True,
+                check_rc=False,
             )
 
             systemd_facts = {}
