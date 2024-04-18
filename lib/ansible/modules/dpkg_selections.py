@@ -76,7 +76,7 @@ def main():
 
     # Get current settings.
     rc, out, err = module.run_command([dpkg, '--get-selections', name], check_rc=True)
-    if rc == 0:
+    if rc == 0 and out:
         current = out.split()[1]
     elif 'no packages found matching' in err:
         current = 'not found'
