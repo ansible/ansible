@@ -119,7 +119,7 @@ def ansible_environment(args: CommonConfig, color: bool = True, ansible_config: 
     )
 
     if isinstance(args, IntegrationConfig) and args.coverage:
-        # standard path injection is not effective for the networking connection helper, instead the location must be configured
+        # standard path injection is not effective for the persistent connection helper, instead the location must be configured
         # it only requires the injector for code coverage
         # the correct python interpreter is already selected using the sys.executable used to invoke ansible
         ansible.update(

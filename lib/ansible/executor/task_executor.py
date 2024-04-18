@@ -1191,7 +1191,7 @@ def start_connection(play_context, options, task_uuid):
     env.update({
         # HACK; most of these paths may change during the controller's lifetime
         # (eg, due to late dynamic role includes, multi-playbook execution), without a way
-        # to invalidate/update, the networking connection helper won't always see the same plugins the controller
+        # to invalidate/update, the persistent connection helper won't always see the same plugins the controller
         # can.
         'ANSIBLE_BECOME_PLUGINS': become_loader.print_paths(),
         'ANSIBLE_CLICONF_PLUGINS': cliconf_loader.print_paths(),

@@ -130,7 +130,7 @@ class Connection(object):
             data = json.dumps(req, cls=AnsibleJSONEncoder, vault_to_text=True)
         except TypeError as exc:
             raise ConnectionError(
-                "Failed to encode some variables as JSON for communication with the networking connection helper. "
+                "Failed to encode some variables as JSON for communication with the persistent connection helper. "
                 "The original exception was: %s" % to_text(exc)
             )
 

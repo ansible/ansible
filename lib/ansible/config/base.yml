@@ -4,7 +4,7 @@
 _ANSIBLE_CONNECTION_PATH:
   env:
   - name: _ANSIBLE_CONNECTION_PATH
-  name: Overrides the location of the Ansible network connection helper script.
+  name: Overrides the location of the Ansible persistent connection helper script.
   description:
     - For internal use only.
   type: path
