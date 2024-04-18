@@ -98,15 +98,20 @@ def generate_ansible_template_vars(path, j2env, fullpath=None, dest_path=None):
     else:
         temp_vars['template_fullpath'] = fullpath
 
+    safe = True
+    morsel = ''
     t_file = temp_vars['template_path'].replace('%', '%%')
     if is_possibly_template(t_file, j2env):
-        raise AnsibleError(f"Invalid file name '{t_file}', contains template.")
+        safe = False
+        morsel = f'template file name({t_file})'
     t_host = temp_vars['template_host']
-    if is_possibly_template(t_host, j2env):
-        raise AnsibleError(f"Invalid host name '{t_host}', contains template.")
+    elif is_possibly_template(t_host, j2env):
+        safe = False
+        morsel = f'host({t_host})'
     t_uid = temp_vars['template_uid']
-    if is_possibly_template(t_uid, j2env):
-        raise AnsibleError(f"Invalid uid '{t_uid}', contains template.")
+    elif is_possibly_template(t_uid, j2env):
+        safe = False
+        morsel = f'uid({t_uid})'
 
     managed_default = C.DEFAULT_MANAGED_STR
     managed_str = managed_default.format(
@@ -115,6 +120,10 @@ def generate_ansible_template_vars(path, j2env, fullpath=None, dest_path=None):
         file=t_file,
     )
     temp_vars['ansible_managed'] = time.strftime(to_native(managed_str), time.localtime(os.path.getmtime(b_path)))
+
+    if not safe:
+        temp_vars['ansible_managed'] = to_unsafe_text(temp_vars['ansible_managed'])
+        display.warning(f"Found templatable {morsel}, marking ansible_managed as unsafe, so it won't be templated.")
 
     return temp_vars
 
