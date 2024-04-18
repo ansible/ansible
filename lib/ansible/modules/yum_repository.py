@@ -52,7 +52,8 @@ options:
     type: str
   countme:
     description:
-      - Whether a special flag should be added to a randomly chosen query each week.
+      - Whether a special flag should be added to a randomly chosen metalink/mirrorlist query each week.
+        This allows the repository owner to estimate the number of systems consuming it. 
     default: ~
     type: bool
     version_added: '2.18'
