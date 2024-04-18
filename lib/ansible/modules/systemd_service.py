@@ -484,17 +484,19 @@ def main():
             masked = out.strip() == "masked"
 
             if masked != module.params['masked']:
-                action = "mask" if module.params['masked'] else "unmask"
+                result['changed'] = True
+                if module.params['masked']:
+                    action = 'mask'
+                else:
+                    action = 'unmask'
 
                 if not module.check_mode:
                     (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                     if rc != 0:
                         # some versions of system CAN mask/unmask non existing services, we only fail on missing if they don't
                         fail_if_missing(module, found, unit, msg='host')
-                        if "Failed to mask" in err:
-                            module.fail_json(msg=err.strip())
-                    else:
-                        result['changed'] = True
+                        # here if service was not missing, but failed for other reasons
+                        module.fail_json(msg=f"Failed to {action} the service ({unit}): {err.strip()}")
 
         # Enable/disable service startup at boot if requested
         if module.params['enabled'] is not None:
