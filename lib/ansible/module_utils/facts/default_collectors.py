@@ -53,6 +53,7 @@ from ansible.module_utils.facts.system.python import PythonFactCollector
 from ansible.module_utils.facts.system.selinux import SelinuxFactCollector
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
 from ansible.module_utils.facts.system.ssh_pub_keys import SshPubKeyFactCollector
+from ansible.module_utils.facts.system.systemd import SystemdFactCollector
 from ansible.module_utils.facts.system.user import UserFactCollector
 
 from ansible.module_utils.facts.hardware.base import HardwareCollector
@@ -118,7 +119,8 @@ _general = [
     EnvFactCollector,
     LoadAvgFactCollector,
     SshPubKeyFactCollector,
-    UserFactCollector
+    UserFactCollector,
+    SystemdFactCollector
 ]  # type: t.List[t.Type[BaseFactCollector]]
 
 # virtual, this might also limit hardware/networking
