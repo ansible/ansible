@@ -33,9 +33,8 @@
 
         - shell: "exec {{ output_dir | quote }}/79129-strftime.sh"
 
-    - name: Avoid templating 'injections' via file names
-      block:
-        - template:
+        - name: Avoid templating 'injections' via file names
+          template:
             src: !unsafe "templates/completely{{ 1 % 0 }} safe template.j2"
             dest: "{{ output_dir }}/79129-jinja.sh"
             mode: '0755'
@@ -46,3 +45,5 @@
         - assert:
             that:
               - "'Hello' in result.stdout"
+              - "'{' not in lookup('file', output_dir ~ '/79129-strftime.sh')"
+
