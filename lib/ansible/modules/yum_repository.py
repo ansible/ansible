@@ -23,9 +23,11 @@ options:
       - If set to V(true) Yum will download packages and metadata from this
         repo in parallel, if possible.
       - In ansible-core 2.11, 2.12, and 2.13 the default value is V(true).
-      - This option has been deprecated in RHEL 8. If you're using one of the
+      - This option has been removed in RHEL 8. If you're using one of the
         versions listed above, you can set this option to None to avoid passing an
         unknown configuration option.
+      - This parameter is deprecated as it has been removed on systems supported by ansible-core
+        and will be removed in ansible-core 2.22.
     type: bool
   bandwidth:
     description:
@@ -64,7 +66,7 @@ options:
         can give values over V(100), so V(200) means that the metadata is
         required to be half the size of the packages. Use V(0) to turn off
         this check, and always download metadata.
-      - This parameter is deprecated as it has no affect with dnf as an underlying package manager
+      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
         and will be removed in ansible-core 2.22.
     type: str
   deltarpm_percentage:
@@ -117,7 +119,7 @@ options:
   gpgcakey:
     description:
       - A URL pointing to the ASCII-armored CA key file for the repository.
-      - This parameter is deprecated as it has no affect with dnf as an underlying package manager
+      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
         and will be removed in ansible-core 2.22.
     type: str
   gpgcheck:
@@ -147,7 +149,7 @@ options:
       - V(packages) means that only RPM package downloads should be cached (but
          not repository metadata downloads).
       - V(none) means that no HTTP downloads should be cached.
-      - This parameter is deprecated as it has no affect with dnf as an underlying package manager
+      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
         and will be removed in ansible-core 2.22.
     choices: [all, packages, none]
     type: str
@@ -179,7 +181,7 @@ options:
       - This tells yum whether or not HTTP/1.1 keepalive should be used with
         this repository. This can improve transfer speeds by using one
         connection when downloading multiple files from a repository.
-      - This parameter is deprecated as it has no affect with dnf as an underlying package manager
+      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
         and will be removed in ansible-core 2.22.
     type: bool
   keepcache:
@@ -213,7 +215,7 @@ options:
         other commands which will require the latest metadata. Eg.
         C(yum check-update).
       - Note that this option does not override "yum clean expire-cache".
-      - This parameter is deprecated as it has no affect with dnf as an underlying package manager
+      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
         and will be removed in ansible-core 2.22.
     choices: [never, 'read-only:past', 'read-only:present', 'read-only:future']
     type: str
@@ -236,7 +238,7 @@ options:
       - Time (in seconds) after which the mirrorlist locally cached will
         expire.
       - Default value is 6 hours.
-      - This parameter is deprecated as it has no affect with dnf as an underlying package manager
+      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
         and will be removed in ansible-core 2.22.
     type: str
   name:
@@ -259,7 +261,7 @@ options:
   protect:
     description:
       - Protect packages from updates from other repositories.
-      - This parameter is deprecated as it has no affect with dnf as an underlying package manager
+      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
         and will be removed in ansible-core 2.22.
     type: bool
   proxy:
@@ -309,7 +311,7 @@ options:
         O(skip_if_unavailable) to be V(true). This is most useful for non-root
         processes which use yum on repos that have client cert files which are
         readable only by root.
-      - This parameter is deprecated as it has no affect with dnf as an underlying package manager
+      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
         and will be removed in ansible-core 2.22.
     type: bool
   sslcacert:
@@ -356,7 +358,7 @@ options:
       - When a repository id is displayed, append these yum variables to the
         string if they are used in the O(baseurl)/etc. Variables are appended
         in the order listed (and found).
-      - This parameter is deprecated as it has no affect with dnf as an underlying package manager
+      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
         and will be removed in ansible-core 2.22.
     type: str
   username:
@@ -480,6 +482,11 @@ class YumRepo(object):
                     "the main configuration.",
                     version='2.20'
                 )
+            elif key == 'async':
+                self.module.deprecate(
+                    "'async' parameter is deprecated as it has been removed on systems supported by ansible-core",
+                    version = '2.22',
+                )
             elif key in {
                 "deltarpm_metadata_percentage",
                 "gpgcakey",
@@ -492,7 +499,7 @@ class YumRepo(object):
                 "ui_repoid_vars",
             }:
                 self.module.deprecate(
-                    f"'{key}' parameter is deprecated as it has no affect with dnf "
+                    f"'{key}' parameter is deprecated as it has no effect with dnf "
                     "as an underlying package manager.",
                     version='2.22'
                 )
