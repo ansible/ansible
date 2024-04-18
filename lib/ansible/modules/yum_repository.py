@@ -446,35 +446,26 @@ state:
 import configparser
 import os
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, FILE_COMMON_ARGUMENTS
 from ansible.module_utils.common.text.converters import to_native
 
 
-class YumRepo(object):
-    non_yum_args = frozenset((
-        "dest",
-        "file",
-        "repoid",
-        "reposdir",
-        "state",
-    ))
-
-    def __init__(self, module):
+class YumRepo:
+    def __init__(self, module, params, repoid, dest):
         self.module = module
-        self.params = self.module.params
-        # Section is always the repoid
-        self.section = self.params['repoid']
+        self.params = params
+        self.section = repoid
         self.repofile = configparser.RawConfigParser()
-
-        if os.path.isfile(self.params['dest']):
-            self.repofile.read(self.params['dest'])
+        self.dest = dest
+        if os.path.isfile(dest):
+            self.repofile.read(dest)
 
     def add(self):
         self.remove()
         self.repofile.add_section(self.section)
 
         for key, value in sorted(self.params.items()):
-            if value is None or key in self.non_yum_args:
+            if value is None:
                 continue
             if key == 'keepcache':
                 self.module.deprecate(
@@ -510,20 +501,20 @@ class YumRepo(object):
     def save(self):
         if self.repofile.sections():
             try:
-                with open(self.params['dest'], 'w') as fd:
+                with open(self.dest, 'w') as fd:
                     self.repofile.write(fd)
             except IOError as e:
                 self.module.fail_json(
-                    msg="Problems handling file %s." % self.params['dest'],
+                    msg="Problems handling file %s." % self.dest,
                     details=to_native(e))
         else:
             try:
-                os.remove(self.params['dest'])
+                os.remove(self.dest)
             except OSError as e:
                 self.module.fail_json(
                     msg=(
                         "Cannot remove empty repo file %s." %
-                        self.params['dest']),
+                        self.dest),
                     details=to_native(e))
 
     def remove(self):
@@ -613,43 +604,43 @@ def main():
         add_file_common_args=True,
         supports_check_mode=True,
     )
+    yum_repo_params = module.params.copy()
+    for alias in module.aliases:
+        yum_repo_params.pop(alias, None)
+    file_common_params = {}
+    for param in FILE_COMMON_ARGUMENTS:
+        file_common_params[param] = yum_repo_params.pop(param)
+    state = yum_repo_params.pop("state")
 
-    name = module.params['name']
-    state = module.params['state']
-
-    # Rename "name" and "description" to ensure correct key sorting
-    module.params['repoid'] = module.params['name']
-    module.params['name'] = module.params['description']
-    del module.params['description']
+    name = yum_repo_params['name']
+    yum_repo_params['name'] = yum_repo_params.pop('description')
 
     for list_param in {'baseurl', 'gpgkey'}:
-        v = module.params[list_param]
+        v = yum_repo_params[list_param]
         if v is not None:
-            module.params[list_param] = '\n'.join(v)
+            yum_repo_params[list_param] = '\n'.join(v)
 
     for list_param in {'exclude', 'includepkgs'}:
-        v = module.params[list_param]
+        v = yum_repo_params[list_param]
         if v is not None:
-            module.params[list_param] = ' '.join(v)
+            yum_repo_params[list_param] = ' '.join(v)
 
-    if module.params['file'] is None:
-        module.params['file'] = module.params['repoid']
-
-    repos_dir = module.params['reposdir']
+    repos_dir = yum_repo_params.pop("reposdir")
     if not os.path.isdir(repos_dir):
         module.fail_json(
             msg="Repo directory '%s' does not exist." % repos_dir
         )
 
-    # Set dest; also used to set dest parameter for the FS attributes
-    module.params['dest'] = os.path.join(repos_dir, "%s.repo" % module.params['file'])
+    if (file := yum_repo_params.pop("file")) is None:
+        file = name
+    file_common_params["dest"] = os.path.join(repos_dir, f"{file}.repo")
 
-    yumrepo = YumRepo(module)
+    yumrepo = YumRepo(module, yum_repo_params, name, file_common_params["dest"])
 
     diff = {
-        'before_header': yumrepo.params['dest'],
+        'before_header': file_common_params["dest"],
         'before': yumrepo.dump(),
-        'after_header': yumrepo.params['dest'],
+        'after_header': file_common_params["dest"],
         'after': ''
     }
 
@@ -665,8 +656,8 @@ def main():
     if not module.check_mode and changed:
         yumrepo.save()
 
-    if os.path.isfile(module.params['dest']):
-        file_args = module.load_file_common_arguments(module.params)
+    if os.path.isfile(file_common_params["dest"]):
+        file_args = module.load_file_common_arguments(file_common_params)
         changed = module.set_fs_attributes_if_different(file_args, changed)
 
     module.exit_json(changed=changed, repo=name, state=state, diff=diff)
