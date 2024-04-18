@@ -46,4 +46,3 @@
             that:
               - "'Hello' in result.stdout"
               - "'{' not in lookup('file', output_dir ~ '/79129-strftime.sh')"
-
