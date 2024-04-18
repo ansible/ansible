@@ -72,7 +72,7 @@ JINJA2_END_TOKENS = frozenset(('variable_end', 'block_end', 'comment_end', 'raw_
 RANGE_TYPE = type(range(0))
 
 
-def generate_ansible_template_vars(path, fullpath=None, dest_path=None):
+def generate_ansible_template_vars(path, j2env, fullpath=None, dest_path=None):
 
     if fullpath is None:
         b_path = to_bytes(path)
@@ -99,13 +99,13 @@ def generate_ansible_template_vars(path, fullpath=None, dest_path=None):
         temp_vars['template_fullpath'] = fullpath
 
     t_file = temp_vars['template_path'].replace('%', '%%')
-    if is_possibly_template(t_file):
+    if is_possibly_template(t_file, j2env):
         raise AnsibleError(f"Invalid file name '{t_file}', contains template.")
     t_host = temp_vars['template_host']
-    if is_possibly_template(t_host):
+    if is_possibly_template(t_host, j2env):
         raise AnsibleError(f"Invalid host name '{t_host}', contains template.")
     t_uid = temp_vars['template_uid']
-    if is_possibly_template(t_uid):
+    if is_possibly_template(t_uid, j2env):
         raise AnsibleError(f"Invalid uid '{t_uid}', contains template.")
 
     managed_default = C.DEFAULT_MANAGED_STR
