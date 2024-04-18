@@ -100,18 +100,22 @@ def generate_ansible_template_vars(path, j2env, fullpath=None, dest_path=None):
 
     safe = True
     morsel = ''
+
     t_file = temp_vars['template_path'].replace('%', '%%')
+    t_host = temp_vars['template_host']
+    t_uid = temp_vars['template_uid']
+
     if is_possibly_template(t_file, j2env):
         safe = False
-        morsel = f'template file name({t_file})'
-    t_host = temp_vars['template_host']
-    elif is_possibly_template(t_host, j2env):
+        morsel += f' template file name({t_file})'
+
+    if is_possibly_template(t_host, j2env):
         safe = False
-        morsel = f'host({t_host})'
-    t_uid = temp_vars['template_uid']
-    elif is_possibly_template(t_uid, j2env):
+        morsel += f' host({t_host})'
+
+    if is_possibly_template(t_uid, j2env):
         safe = False
-        morsel = f'uid({t_uid})'
+        morsel += f' uid({t_uid})'
 
     managed_default = C.DEFAULT_MANAGED_STR
     managed_str = managed_default.format(
