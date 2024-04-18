@@ -1,4 +1,5 @@
-- when: ansible_facts.distribution not in ['MacOSX']
+# tinyproxy not available in RHEL repos, and no easy install method for us on macOS
+- when: ansible_facts.distribution not in ['MacOSX', 'RedHat']
   vars:
     packages:
       - tinyproxy
