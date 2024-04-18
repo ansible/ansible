@@ -1,0 +1,9 @@
+Priority: optional
+Standards-Version: 2.3.3
+Package: taz
+Version: 1.0.0
+Section: system
+Maintainer: John Doe <john@doe.com>
+Architecture: all
+Description: Dummy package
+suggests: ed

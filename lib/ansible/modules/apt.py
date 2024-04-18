@@ -68,18 +68,22 @@ options:
     type: str
   install_recommends:
     description:
-      - Corresponds to the C(--no-install-recommends) option for I(apt). V(true) installs recommended packages. V(false) does not install
-        recommended packages. By default, Ansible will use the same defaults as the operating system. Suggested packages are never installed
-        unless O(install_suggests=true).
+      - Corresponds to the C(--no-install-recommends) option for I(apt).
+      - V(true) installs recommended packages.
+      - V(false) does not install recommended packages.
+      - By default, Ansible will use the same defaults as the operating system.
+      - Suggested packages are never installed unless O(install_suggests=true).
     aliases: [ install-recommends ]
     type: bool
   install_suggests:
     description:
-      - Corresponds to the C(--install-suggests) option for I(apt). V(true) installs suggested packages. V(false) does not install
-        suggested packages. By default, Ansible will use the same defaults as the operating system.
+      - Corresponds to the C(--install-suggests) option for I(apt).
+      - V(true) installs suggested packages.
+      - V(false) does not install suggested packages.
+      - By default, Ansible will use the same defaults as the operating system.
     aliases: [ install-suggests ]
     type: bool
-    version_added: "2.16"
+    version_added: "2.18"
   force:
     description:
       - 'Corresponds to the C(--force-yes) to I(apt-get) and implies O(allow_unauthenticated=yes) and O(allow_downgrade=yes)'
@@ -1367,7 +1371,6 @@ def main():
 
     updated_cache = False
     updated_cache_time = 0
-    install_recommends = p['install_recommends']
     install_suggests = p['install_suggests']
     allow_unauthenticated = p['allow_unauthenticated']
     allow_downgrade = p['allow_downgrade']
