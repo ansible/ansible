@@ -102,7 +102,7 @@ def generate_ansible_template_vars(path, fullpath=None, dest_path=None):
     managed_str = managed_default.format(
         host="{{ template_host }}",
         uid="{{ template_uid }}",
-        file="{{ template_path.replace('%', '%%') }}"
+        file="{{ template_path }}"
     )
     temp_vars['ansible_managed'] = time.strftime(to_native(managed_str), time.localtime(os.path.getmtime(b_path)))
 
