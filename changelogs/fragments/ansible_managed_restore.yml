@@ -1,2 +1,2 @@
 bugfixes:
-  - ansible_managed will now be templatable if it's source data is confirmed to not be a template.
+  - ansible_managed restored it's 'templatability' by ensuring the possible injection routes are cut off earlier in the process.
