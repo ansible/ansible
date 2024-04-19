@@ -85,18 +85,18 @@ def generate_ansible_template_vars(path, fullpath=None, dest_path=None):
         template_uid = os.stat(b_path).st_uid
 
     temp_vars = {
-        'template_host': to_text(os.uname()[1]),
-        'template_path': path,
+        'template_host': to_unsafe_text(os.uname()[1]),
+        'template_path': to_unsafe_text(path),
         'template_mtime': datetime.datetime.fromtimestamp(os.path.getmtime(b_path)),
-        'template_uid': to_text(template_uid),
+        'template_uid': to_unsafe_text(template_uid),
         'template_run_date': datetime.datetime.now(),
-        'template_destpath': to_native(dest_path) if dest_path else None,
+        'template_destpath': wrap_var(to_native(dest_path)) if dest_path else None,
     }
 
     if fullpath is None:
-        temp_vars['template_fullpath'] = os.path.abspath(path)
+        temp_vars['template_fullpath'] = wrap_var(os.path.abspath(path))
     else:
-        temp_vars['template_fullpath'] = fullpath
+        temp_vars['template_fullpath'] = wrap_var(fullpath)
 
     managed_default = C.DEFAULT_MANAGED_STR
     managed_str = managed_default.format(
