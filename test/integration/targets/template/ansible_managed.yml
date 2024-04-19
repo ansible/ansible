@@ -5,8 +5,10 @@
   - name: set output_dir
     set_fact:
       output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+    tags: ['always']
 
   - name: Smoketest that ansible_managed with non-ascii chars works, https://github.com/ansible/ansible/issues/27262
+    tags: ['27262']
     block:
     - name: ensure output file does not exist
       file:
@@ -24,25 +26,27 @@
         path: '{{ output_dir }}/café.txt'
         state: 'absent'
 
-    - name: check strftime resolution in ansible_managed
+    - name: check strftime resolution in ansible_managed, https://github.com/ansible/ansible/pull/79129
+      tags: ['79129']
       block:
         - template:
             src: "templates/%necho Onii-chan help Im stuck;exit 1%n.j2"
-            dest: "{{ output_dir }}/79129-strftime.sh"
+            dest: "{{ output_dir }}/strftime.sh"
             mode: '0755'
 
-        - shell: "exec {{ output_dir | quote }}/79129-strftime.sh"
+        - shell: "exec {{ output_dir | quote }}/strftime.sh"
 
         - name: Avoid templating 'injections' via file names
           template:
             src: !unsafe "templates/completely{{ 1 % 0 }} safe template.j2"
-            dest: "{{ output_dir }}/79129-jinja.sh"
+            dest: "{{ output_dir }}/jinja.sh"
             mode: '0755'
 
-        - shell: "exec {{ output_dir | quote }}/79129-jinja.sh"
+        - shell: "exec {{ output_dir | quote }}/jinja.sh"
           register: result
 
         - assert:
             that:
               - "'Hello' in result.stdout"
-              - "'{' not in lookup('file', output_dir ~ '/79129-strftime.sh')"
+              - "'uname' not in lookup('file', output_dir ~ '/strftime.sh')"
+              - "'uname' not in lookup('file', output_dir ~ '/jinja.sh')"
