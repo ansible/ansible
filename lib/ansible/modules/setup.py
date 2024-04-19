@@ -25,7 +25,7 @@ options:
               V(processor_count), V(python), V(python_version), V(real_user_id), V(selinux), V(service_mgr),
               V(ssh_host_key_dsa_public), V(ssh_host_key_ecdsa_public), V(ssh_host_key_ed25519_public),
               V(ssh_host_key_rsa_public), V(ssh_host_pub_keys), V(ssh_pub_keys), V(system), V(system_capabilities),
-              V(system_capabilities_enforced), V(user), V(user_dir), V(user_gecos), V(user_gid), V(user_id),
+              V(system_capabilities_enforced), V(systemd), V(user), V(user_dir), V(user_gecos), V(user_gid), V(user_id),
               V(user_shell), V(user_uid), V(virtual), V(virtualization_role), V(virtualization_type).
              Can specify a list of values to specify a larger subset.
              Values can also be used with an initial C(!) to specify that
