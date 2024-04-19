@@ -72,7 +72,7 @@ JINJA2_END_TOKENS = frozenset(('variable_end', 'block_end', 'comment_end', 'raw_
 RANGE_TYPE = type(range(0))
 
 
-def generate_ansible_template_vars(path, j2env, fullpath=None, dest_path=None):
+def generate_ansible_template_vars(path, fullpath=None, dest_path=None):
 
     if fullpath is None:
         b_path = to_bytes(path)
@@ -98,36 +98,13 @@ def generate_ansible_template_vars(path, j2env, fullpath=None, dest_path=None):
     else:
         temp_vars['template_fullpath'] = fullpath
 
-    safe = True
-    morsel = ''
-
-    t_file = temp_vars['template_path'].replace('%', '%%')
-    t_host = temp_vars['template_host']
-    t_uid = temp_vars['template_uid']
-
-    if is_possibly_template(t_file, j2env):
-        safe = False
-        morsel += f' template file name({t_file})'
-
-    if is_possibly_template(t_host, j2env):
-        safe = False
-        morsel += f' host({t_host})'
-
-    if is_possibly_template(t_uid, j2env):
-        safe = False
-        morsel += f' uid({t_uid})'
-
     managed_default = C.DEFAULT_MANAGED_STR
     managed_str = managed_default.format(
-        host=t_host,
-        uid=t_uid,
-        file=t_file,
+        host="{{ template_host }}",
+        uid="{{ template_uid }}",
+        file="{{ template_path.replace('%', '%%') }}"
     )
     temp_vars['ansible_managed'] = time.strftime(to_native(managed_str), time.localtime(os.path.getmtime(b_path)))
-
-    if not safe:
-        temp_vars['ansible_managed'] = to_unsafe_text(temp_vars['ansible_managed'])
-        display.warning(f"Found templatable {morsel}, marking ansible_managed as unsafe, so it won't be templated.")
 
     return temp_vars
 

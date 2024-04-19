@@ -130,7 +130,7 @@ class ActionModule(ActionBase):
                 # NOTE in the case of ANSIBLE_DEBUG=1 task_vars is VarsWithSources(MutableMapping)
                 # so | operator cannot be used as it can be used only on dicts
                 # https://peps.python.org/pep-0584/#what-about-mapping-and-mutablemapping
-                temp_vars.update(generate_ansible_template_vars(self._task.args.get('src', None), self._templar.environment, source, dest))
+                temp_vars.update(generate_ansible_template_vars(self._task.args.get('src', None), source, dest))
 
                 # force templar to use AnsibleEnvironment to prevent issues with native types
                 # https://github.com/ansible/ansible/issues/46169

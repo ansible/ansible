@@ -146,7 +146,7 @@ class LookupModule(LookupBase):
                 # plus anything passed to the lookup with the template_vars=
                 # argument.
                 vars = deepcopy(variables)
-                vars.update(generate_ansible_template_vars(term, templar.environment, lookupfile))
+                vars.update(generate_ansible_template_vars(term, lookupfile))
                 vars.update(lookup_template_vars)
 
                 with templar.set_temporary_context(available_variables=vars, searchpath=searchpath):
