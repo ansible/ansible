@@ -127,17 +127,19 @@ options:
     type: bool
   enable_plugin:
     description:
-      - This is currently a no-op as dnf5 itself does not implement this feature.
       - I(Plugin) name to enable for the install/update operation.
         The enabled plugin will not persist beyond the transaction.
+      - O(disable_plugin) takes precedence in case a plugin is listed in both O(enable_plugin) and O(disable_plugin)
+      - Requires python3-libdnf5 5.2.0.0+
     type: list
     elements: str
     default: []
   disable_plugin:
     description:
-      - This is currently a no-op as dnf5 itself does not implement this feature.
       - I(Plugin) name to disable for the install/update operation.
         The disabled plugins will not persist beyond the transaction.
+      - O(disable_plugin) takes precedence in case a plugin is listed in both O(enable_plugin) and O(disable_plugin).
+      - Requires python3-libdnf5 5.2.0.0+
     type: list
     default: []
     elements: str
@@ -482,13 +484,6 @@ class Dnf5Module(YumDnf):
                 rc=1,
             )
 
-        if self.enable_plugin or self.disable_plugin:
-            self.module.fail_json(
-                msg="enable_plugin and disable_plugin options are not yet implemented in DNF5",
-                failures=[],
-                rc=1,
-            )
-
         base = libdnf5.base.Base()
         conf = base.get_config()
 
@@ -530,6 +525,18 @@ class Dnf5Module(YumDnf):
         conf.cacheonly = "all" if self.cacheonly else "none"
         if self.download_dir:
             conf.destdir = self.download_dir
+
+        if self.enable_plugin:
+            try:
+                base.enable_disable_plugins(self.enable_plugin, True)
+            except AttributeError:
+                self.module.fail_json(msg="'enable_plugin' requires python3-libdnf5 5.2.0.0+")
+
+        if self.disable_plugin:
+            try:
+                base.enable_disable_plugins(self.disable_plugin, False)
+            except AttributeError:
+                self.module.fail_json(msg="'disable_plugin' requires python3-libdnf5 5.2.0.0+")
 
         base.setup()
 
