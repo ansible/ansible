@@ -528,24 +528,24 @@ def ensure_absent(path):
     prev_state = get_state(b_path)
     result = {}
     file_args = module.load_file_common_arguments(module.params)
-    changed = False 
+    changed = False
 
     if prev_state != 'absent':
         diff = initial_diff(path, 'absent', prev_state)
 
         if not module.check_mode:
             if prev_state == 'directory':
-                # Check if 'attributes' in file_args 
+                # Check if 'attributes' in file_args
                 current_attributes = file_args.get('attributes', '')
                 if '-a' in current_attributes:
                     # Attempt to remove the append-only attribute before deletion
                     try:
-                        module.set_attributes_if_different(path, current_attributes, changed, 
+                        module.set_attributes_if_different(path, current_attributes, changed,
                                                            diff, expand=False)
                         changed = True  # Mark as changed if attributes were modified
                     except Exception as e:
-                        module.fail_json(msg="Failed to change attributes: %s" % to_native(e), 
-                                         path=to_native(b_path))            
+                        module.fail_json(msg="Failed to change attributes: %s" % to_native(e),
+                                         path=to_native(b_path))
                 try:
                     shutil.rmtree(b_path, ignore_errors=False)
                 except Exception as e:
