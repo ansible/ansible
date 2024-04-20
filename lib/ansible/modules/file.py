@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-
 DOCUMENTATION = r'''
 ---
 module: file
@@ -213,6 +212,12 @@ EXAMPLES = r'''
   ansible.builtin.file:
     path: /etc/foo
     state: absent
+
+- name: Remove file attributes and recursively remove directory
+  ansible.builtin.file:
+    path: /etc/foo
+    state: absent
+    attribute: -a
 
 '''
 RETURN = r'''
@@ -521,16 +526,29 @@ def ensure_absent(path):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
     result = {}
+    file_args = module.load_file_common_arguments(module.params)
+    changed = False 
 
     if prev_state != 'absent':
         diff = initial_diff(path, 'absent', prev_state)
 
         if not module.check_mode:
             if prev_state == 'directory':
+                # Check if 'attributes' in file_args 
+                current_attributes = file_args.get('attributes', '')
+                if '-a' in current_attributes:
+                    # Attempt to remove the append-only attribute before deletion
+                    try:
+                        module.set_attributes_if_different(path, current_attributes, changed, diff, expand=False)
+                        changed = True  # Mark as changed if attributes were modified
+                    except Exception as e:
+                        module.fail_json(msg="Failed to change attributes: %s" % to_native(e), path=to_native(b_path))            
                 try:
                     shutil.rmtree(b_path, ignore_errors=False)
                 except Exception as e:
-                    raise AnsibleModuleError(results={'msg': "rmtree failed: %s" % to_native(e)})
+                    # raise AnsibleModuleError(results={'msg': "rmtree failed: %s" % to_native(e)})
+                    raise AnsibleModuleError(results={'msg': "rmtree failed: %s" % to_native(e),
+                                                      'details': "Attributes before removal: %s, Changed: %s" % (file_args.get('attributes', 'None'), changed)})
             else:
                 try:
                     os.unlink(b_path)
