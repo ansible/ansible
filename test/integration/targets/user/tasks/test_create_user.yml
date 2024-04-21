@@ -95,4 +95,3 @@
     that:
       - user_creation_result is not changed
     fail_msg: "Failure: User state was changed, We expect it to be same."
-
