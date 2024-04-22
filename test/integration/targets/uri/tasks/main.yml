@@ -728,7 +728,7 @@
   import_tasks: install-socat-and-test-unix-socket.yml
 
 - name: Test proxy
-  import_tasks: install-proxy-and-test.yml
+  import_tasks: proxy.yml
 
 - name: ensure skip action
   uri:

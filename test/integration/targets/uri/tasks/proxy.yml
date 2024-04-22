@@ -1,55 +1,10 @@
+- include_role:
+    name: setup_proxy
+
 - name: Get IP address for ansible.http.tests
   command: >-
     {{ ansible_python_interpreter }} -c 'import socket; print(socket.gethostbyname("{{ httpbin_host }}"))'
   register: httpbin_ip
-
-- name: Get groups
-  ansible.builtin.getent:
-    database: group
-
-- name: Set var for nobody/nogroup group
-  set_fact:
-    nobody_group: '{{ ansible_facts.getent_group|list|select("match", "no(group|body)")|first }}'
-
-- name: Allow nobody to traverse remote_tmp_dir
-  file:
-    path: '{{ remote_tmp_dir }}'
-    mode: '0755'
-
-- name: Create log dir
-  file:
-    path: '{{ remote_tmp_dir }}/proxy-logs'
-    state: directory
-    owner: nobody
-    group: '{{ nobody_group }}'
-
-- name: Install tinyproxy config
-  copy:
-    dest: '{{ remote_tmp_dir }}/tinyproxy.conf'
-    content: |
-      User nobody
-      Group {{ nobody_group }}
-      Port 8080
-      Listen 127.0.0.1
-      Timeout 10
-      LogLevel Info
-      MaxClients 1
-      StartServers 1
-      Allow 127.0.0.1
-      Allow ::1
-      Allow ::
-      ViaProxyName "tinyproxy"
-      LogFile "{{ remote_tmp_dir }}/proxy-logs/tinyproxy.log"
-
-- name: Start tinyproxy
-  command: tinyproxy -d -c "{{ remote_tmp_dir }}/tinyproxy.conf"
-  async: 30
-  poll: 0
-  register: tinyproxy
-
-- name: Ensure tinyproxy started
-  async_status:
-    jid: '{{ tinyproxy.ansible_job_id }}'
 
 - name: Test http over http proxy
   uri:
@@ -57,7 +12,7 @@
   environment:
     http_proxy: http://127.0.0.1:8080
   register: http_over_http
-  failed_when: http_over_http.via is undefined
+  failed_when: http_over_http.x_sandwich is undefined
 
 - name: Test https over http proxy
   uri:
@@ -74,7 +29,7 @@
   uri:
     url: http://{{ httpbin_host }}/get
   register: request_without_proxy
-  failed_when: request_without_proxy.via is defined
+  failed_when: request_without_proxy.x_sandwich is defined
 
 - name: Test request with proxy and no_proxy=hostname
   uri:
@@ -83,7 +38,7 @@
     http_proxy: http://127.0.0.1:8080
     no_proxy: '{{ httpbin_host }}'
   register: no_proxy_hostname
-  failed_when: no_proxy_hostname.via is defined
+  failed_when: no_proxy_hostname.x_sandwich is defined
 
 - name: Test request with proxy and no_proxy=ip
   uri:
@@ -92,7 +47,7 @@
     http_proxy: http://127.0.0.1:8080
     no_proxy: '{{ httpbin_ip.stdout }}'
   register: no_proxy_ip
-  failed_when: no_proxy_ip.via is defined
+  failed_when: no_proxy_ip.x_sandwich is defined
 
 - name: Test request with proxy and no_proxy=cidr/32
   uri:
@@ -101,7 +56,7 @@
     http_proxy: http://127.0.0.1:8080
     no_proxy: '{{ httpbin_ip.stdout }}/32'
   register: no_proxy_cidr_32
-  failed_when: no_proxy_cidr_32.via is defined
+  failed_when: no_proxy_cidr_32.x_sandwich is defined
 
 - name: Test request with proxy and no_proxy=cidr/24
   uri:
@@ -112,7 +67,7 @@
   register: no_proxy_cidr_24
   vars:
     httpbin_cidr: "{{ httpbin_ip.stdout.split('.')[:3]|join('.') }}.0/24"
-  failed_when: no_proxy_cidr_24.via is defined
+  failed_when: no_proxy_cidr_24.x_sandwich is defined
 
 - name: Test request with proxy and non-matching no_proxy=cidr
   uri:
@@ -121,7 +76,7 @@
     http_proxy: http://127.0.0.1:8080
     no_proxy: 1.2.3.0/24
   register: no_proxy_non_matching_cidr
-  failed_when: no_proxy_non_matching_cidr.via is undefined
+  failed_when: no_proxy_non_matching_cidr.x_sandwich is undefined
 
 - name: Test request with proxy and no_proxy=cidr:port
   uri:
@@ -130,7 +85,7 @@
     http_proxy: http://127.0.0.1:8080
     no_proxy: '{{ httpbin_ip.stdout }}/32:80'
   register: no_proxy_cidr_port
-  failed_when: no_proxy_cidr_port.via is defined
+  failed_when: no_proxy_cidr_port.x_sandwich is defined
 
 - name: Test request with proxy and non-matching no_proxy=cidr:port
   uri:
@@ -139,11 +94,14 @@
     http_proxy: http://127.0.0.1:8080
     no_proxy: '{{ httpbin_ip.stdout }}/32:8080'
   register: no_proxy_non_matching_cidr_port
-  failed_when: no_proxy_non_matching_cidr_port.via is undefined
+  failed_when: no_proxy_non_matching_cidr_port.x_sandwich is undefined
 
 - slurp:
-    path: "{{ remote_tmp_dir }}/proxy-logs/tinyproxy.log"
-  register: tinyproxy_logs
+    path: "{{ remote_tmp_dir }}/proxy_py/proxy_py.log"
+  register: proxy_py_logs
+
+- debug:
+    msg: '{{ proxy_py_logs.content|b64decode }}'
 
 - assert:
     that:
@@ -151,9 +109,9 @@
         log_content is contains "CONNECT " ~ httpbin_host ~ ":443"
       # https over http
       - >-
-        log_content|regex_findall(": CONNECT ")|length == 1
+        log_content|regex_findall("CONNECT ")|length == 1
       # 3 http over http
       - >-
-        log_content|regex_findall(': GET')|length == 3
+        log_content|regex_findall('GET')|length == 3
   vars:
-    log_content: '{{ tinyproxy_logs.content|b64decode }}'
+    log_content: '{{ proxy_py_logs.content|b64decode }}'
