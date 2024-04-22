@@ -614,12 +614,12 @@ def main():
     name = yum_repo_params['name']
     yum_repo_params['name'] = yum_repo_params.pop('description')
 
-    for list_param in {'baseurl', 'gpgkey'}:
+    for list_param in ('baseurl', 'gpgkey'):
         v = yum_repo_params[list_param]
         if v is not None:
             yum_repo_params[list_param] = '\n'.join(v)
 
-    for list_param in {'exclude', 'includepkgs'}:
+    for list_param in ('exclude', 'includepkgs'):
         v = yum_repo_params[list_param]
         if v is not None:
             yum_repo_params[list_param] = ' '.join(v)
