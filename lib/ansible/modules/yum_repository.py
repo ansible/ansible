@@ -603,14 +603,17 @@ def main():
         add_file_common_args=True,
         supports_check_mode=True,
     )
+
+    # make copy of params as we need to split them into yum repo only and file params
     yum_repo_params = module.params.copy()
     for alias in module.aliases:
         yum_repo_params.pop(alias, None)
+
     file_common_params = {}
     for param in FILE_COMMON_ARGUMENTS:
         file_common_params[param] = yum_repo_params.pop(param)
-    state = yum_repo_params.pop("state")
 
+    state = yum_repo_params.pop("state")
     name = yum_repo_params['name']
     yum_repo_params['name'] = yum_repo_params.pop('description')
 
