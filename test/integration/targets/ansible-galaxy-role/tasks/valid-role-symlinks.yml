@@ -32,6 +32,7 @@
     file:
       path: "{{ item }}"
       state: absent
+    delegate_to: localhost
     loop:
       - "{{ remote_tmp_dir }}/roles/"
       - "{{ remote_tmp_dir }}/safe-symlinks.tar"
