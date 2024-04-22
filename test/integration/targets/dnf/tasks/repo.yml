@@ -320,7 +320,7 @@
         - present
 
     - dnf:
-        name: /foo.so
+        name: /foo.gif
         state: present
       register: dnf_result
 
