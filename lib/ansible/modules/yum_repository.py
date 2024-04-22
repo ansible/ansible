@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-
 DOCUMENTATION = '''
 ---
 module: yum_repository
@@ -476,7 +475,7 @@ class YumRepo:
             elif key == 'async':
                 self.module.deprecate(
                     "'async' parameter is deprecated as it has been removed on systems supported by ansible-core",
-                    version = '2.22',
+                    version='2.22',
                 )
             elif key in {
                 "deltarpm_metadata_percentage",
@@ -505,17 +504,17 @@ class YumRepo:
                     self.repofile.write(fd)
             except IOError as e:
                 self.module.fail_json(
-                    msg="Problems handling file %s." % self.dest,
-                    details=to_native(e))
+                    msg=f"Problems handling file {self.dest}.",
+                    details=to_native(e),
+                )
         else:
             try:
                 os.remove(self.dest)
             except OSError as e:
                 self.module.fail_json(
-                    msg=(
-                        "Cannot remove empty repo file %s." %
-                        self.dest),
-                    details=to_native(e))
+                    msg=f"Cannot remove empty repo file {self.dest}.",
+                    details=to_native(e),
+                )
 
     def remove(self):
         self.repofile.remove_section(self.section)
