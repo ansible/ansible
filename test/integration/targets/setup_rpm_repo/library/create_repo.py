@@ -12,11 +12,11 @@ from ansible.module_utils.common.respawn import has_respawned, probe_interpreter
 HAS_RPMFLUFF = True
 can_use_rpm_weak_deps = None
 try:
-    from rpmfluff import SimpleRpmBuild, GeneratedSourceFile, make_elf
+    from rpmfluff import SimpleRpmBuild, GeneratedSourceFile, make_gif
     from rpmfluff import YumRepoBuild
 except ImportError:
     try:
-        from rpmfluff.make import make_elf
+        from rpmfluff.make import make_gif
         from rpmfluff.sourcefile import GeneratedSourceFile
         from rpmfluff.rpmbuild import SimpleRpmBuild
         from rpmfluff.yumrepobuild import YumRepoBuild
@@ -47,8 +47,8 @@ SPECS = [
     RPM('dinginessentail-with-weak-dep', '1.0', '1', None, ['dinginessentail-weak-dep'], None, None),
     RPM('dinginessentail-weak-dep', '1.0', '1', None, None, None, None),
     RPM('noarchfake', '1.0', '1', None, None, None, 'noarch'),
-    RPM('provides_foo_a', '1.0', '1', None, None, 'foo.so', 'noarch'),
-    RPM('provides_foo_b', '1.0', '1', None, None, 'foo.so', 'noarch'),
+    RPM('provides_foo_a', '1.0', '1', None, None, 'foo.gif', 'noarch'),
+    RPM('provides_foo_b', '1.0', '1', None, None, 'foo.gif', 'noarch'),
     RPM('number-11-name', '11.0', '1', None, None, None, None),
     RPM('number-11-name', '11.1', '1', None, None, None, None),
     RPM('epochone', '1.0', '1', '1', None, None, "noarch"),
@@ -74,7 +74,7 @@ def create_repo(arch='x86_64'):
             pkg.add_installed_file(
                 "/" + spec.file,
                 GeneratedSourceFile(
-                    spec.file, make_elf()
+                    spec.file, make_gif()
                 )
             )
 
