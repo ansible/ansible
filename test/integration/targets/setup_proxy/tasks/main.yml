@@ -33,3 +33,7 @@
   slurp:
     path: '{{ remote_tmp_dir }}/proxy_py/proxy_py.pid'
   register: proxy_py_pid
+
+- name: set fact for proxy host
+  set_fact:
+    http_proxy: 'http://127.0.0.1:8080'
