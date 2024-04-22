@@ -905,6 +905,17 @@ releases:
     - ansible-test-pytest-8.yml
     - winrm-timeout.yml
     release_date: '2024-03-18'
+  2.15.11:
+    changes:
+      release_summary: '| Release Date: 2024-04-22
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+        '
+    codename: Ten Years Gone
+    fragments:
+    - 2.15.11_summary.yaml
+    release_date: '2024-04-22'
   2.15.11rc1:
     changes:
       bugfixes:
