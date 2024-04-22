@@ -1073,6 +1073,17 @@ releases:
     - 82708-unsafe-plugin-name-error.yml
     - ansible-test-pytest-8.yml
     release_date: '2024-03-18'
+  2.14.16:
+    changes:
+      release_summary: '| Release Date: 2024-04-22
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+        '
+    codename: C'mon Everybody
+    fragments:
+    - 2.14.16_summary.yaml
+    release_date: '2024-04-22'
   2.14.16rc1:
     changes:
       bugfixes:
