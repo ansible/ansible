@@ -297,10 +297,6 @@ class PlayIterator:
                             state.cur_block += 1
 
                 case IteratingStates.TASKS:
-                    # clear the pending setup flag, since we're past that and it didn't fail
-                    if state.pending_setup:
-                        state.pending_setup = False
-
                     # First, we check for a child task state that is not failed, and if we
                     # have one recurse into it for the next task. If we're done with the child
                     # state, we clear it and drop back to getting the next task from the list.
