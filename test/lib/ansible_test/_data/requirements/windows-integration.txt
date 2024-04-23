@@ -1,5 +1,5 @@
 ntlm-auth
 requests-ntlm
 requests-credssp
-pypsrp
+pypsrp>=0.4.0, <1.0.0
 pywinrm[credssp]
