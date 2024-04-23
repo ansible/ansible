@@ -327,10 +327,11 @@ class PlayIterator:
                     # we check to see if we've moved past the end of the list of tasks. If so,
                     # we move into the always portion of the block, otherwise we get the next
                     # task from the list.
-                    if state.cur_regular_task >= len(block.block):
+                    try:
+                        task = block.block[state.cur_regular_task]
+                    except IndexError:
                         state.run_state = IteratingStates.ALWAYS
                     else:
-                        task = block.block[state.cur_regular_task]
                         # if the current task is actually a child block, create a child
                         # state for us to recurse into on the next pass
                         if isinstance(task, Block):
@@ -354,12 +355,13 @@ class PlayIterator:
                             state.child_state = None
                             continue
                 else:
-                    if state.cur_rescue_task >= len(block.rescue):
-                        if len(block.rescue) > 0:
+                    try:
+                        task = block.rescue[state.cur_rescue_task]
+                    except IndexError:
+                        if block.rescue:
                             state.fail_state = FailedStates.NONE
                         state.run_state = IteratingStates.ALWAYS
                     else:
-                        task = block.rescue[state.cur_rescue_task]
                         if isinstance(task, Block):
                             state.child_state = HostState(blocks=[task])
                             state.child_state.run_state = IteratingStates.TASKS
@@ -381,7 +383,9 @@ class PlayIterator:
                             state.child_state = None
                             continue
                 else:
-                    if state.cur_always_task >= len(block.always):
+                    try:
+                        task = block.always[state.cur_always_task]
+                    except IndexError:
                         if state.fail_state != FailedStates.NONE:
                             state.run_state = IteratingStates.COMPLETE
                         else:
@@ -392,7 +396,6 @@ class PlayIterator:
                             state.run_state = IteratingStates.TASKS
                             state.child_state = None
                     else:
-                        task = block.always[state.cur_always_task]
                         if isinstance(task, Block):
                             state.child_state = HostState(blocks=[task])
                             state.child_state.run_state = IteratingStates.TASKS
