@@ -394,7 +394,6 @@ class PlayIterator:
                             state.cur_rescue_task = 0
                             state.cur_always_task = 0
                             state.run_state = IteratingStates.TASKS
-                            state.child_state = None
                     else:
                         if isinstance(task, Block):
                             state.child_state = HostState(blocks=[task])
