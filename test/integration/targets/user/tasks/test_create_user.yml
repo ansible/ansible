@@ -83,6 +83,7 @@
   user:
     name: bob
     shell: ~/custom_shell
+  register: user_create_result
 
 - name: Create a new user with custom shell to test ~ expansion second time should show ok not changed
   user:
@@ -90,8 +91,8 @@
     shell: ~/custom_shell
   register: user_creation_result
 
-- name: Assert that the user was not changed on subsequent runs
+- name: Assert that the user with a tilde in the shell path is created
   assert:
     that:
       - user_creation_result is not changed
-    fail_msg: "Failure: User state was changed, We expect it to be same."
+      - user_create_result is changed

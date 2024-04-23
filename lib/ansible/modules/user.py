@@ -74,6 +74,7 @@ options:
               Since Ansible 2.5, the default shell for non-system users on macOS is V(/bin/bash).
             - On other operating systems, the default shell is determined by the underlying tool
               invoked by this module. See Notes for a per platform list of invoked tools.
+            - From Ansible 2.18, the type is changed to I(path) from I(str).
         type: path
     home:
         description:
