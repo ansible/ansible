@@ -291,14 +291,9 @@ class PlayIterator:
                     # the flag and move onto the next block in the list while setting
                     # the run state to IteratingStates.TASKS
                     state.pending_setup = False
-
                     state.run_state = IteratingStates.TASKS
                     if not state.did_start_at_task:
                         state.cur_block += 1
-                        state.cur_regular_task = 0
-                        state.cur_rescue_task = 0
-                        state.cur_always_task = 0
-                        state.child_state = None
 
             elif state.run_state == IteratingStates.TASKS:
                 # clear the pending setup flag, since we're past that and it didn't fail
