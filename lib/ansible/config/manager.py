@@ -29,6 +29,26 @@ Setting = namedtuple('Setting', 'name value origin type')
 
 INTERNAL_DEFS = {'lookup': ('_terms',)}
 
+GALAXY_SERVER_DEF = [
+    ('url', True, 'str'),
+    ('username', False, 'str'),
+    ('password', False, 'str'),
+    ('token', False, 'str'),
+    ('auth_url', False, 'str'),
+    ('api_version', False, 'int'),
+    ('validate_certs', False, 'bool'),
+    ('client_id', False, 'str'),
+    ('timeout', False, 'int'),
+]
+
+# config definition fields
+GALAXY_SERVER_ADDITIONAL = {
+    'api_version': {'default': None, 'choices': [2, 3]},
+    'validate_certs': {'cli': [{'name': 'validate_certs'}]},
+    'timeout': {'cli': [{'name': 'timeout'}]},
+    'token': {'default': None},
+}
+
 
 def _get_entry(plugin_type, plugin_name, config):
     ''' construct entry for requested config '''
@@ -302,6 +322,41 @@ class ConfigManager(object):
         # ensure we always have config def entry
         self._base_defs['CONFIG_FILE'] = {'default': None, 'type': 'path'}
 
+    def load_galaxy_server_defs(self, server_list, default_timeout):
+
+        def server_config_def(section, key, required, option_type):
+            config_def = {
+                'description': 'The %s of the %s Galaxy server' % (key, section),
+                'ini': [
+                    {
+                        'section': 'galaxy_server.%s' % section,
+                        'key': key,
+                    }
+                ],
+                'env': [
+                    {'name': 'ANSIBLE_GALAXY_SERVER_%s_%s' % (section.upper(), key.upper())},
+                ],
+                'required': required,
+                'type': option_type,
+            }
+            if key in GALAXY_SERVER_ADDITIONAL:
+                config_def.update(GALAXY_SERVER_ADDITIONAL[key])
+                # handle default timeout by inheriting from passed in default_timeout
+                if key == 'timeout' and 'default' not in config_def:
+                    config_def['default'] = default_timeout
+
+            return config_def
+
+        for server_key in server_list:
+            if not server_key:
+                # To filter out empty strings or non truthy values as an empty server list env var is equal to [''].
+                continue
+
+            # Config definitions are looked up dynamically based on the C.GALAXY_SERVER_LIST entry. We look up the
+            # section [galaxy_server.<server>] for the values url, username, password, and token.
+            defs = dict((k, server_config_def(server_key, k, req, value_type)) for k, req, value_type in GALAXY_SERVER_DEF)
+            self.initialize_plugin_configuration_definitions('galaxy_server', server_key, defs)
+
     def template_default(self, value, variables):
         if isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')) and variables is not None:
             # template default values if possible
@@ -357,7 +412,7 @@ class ConfigManager(object):
     def get_plugin_options(self, plugin_type, name, keys=None, variables=None, direct=None):
 
         options = {}
-        defs = self.get_configuration_definitions(plugin_type, name)
+        defs = self.get_configuration_definitions(plugin_type=plugin_type, name=name)
         for option in defs:
             options[option] = self.get_config_value(option, plugin_type=plugin_type, plugin_name=name, keys=keys, variables=variables, direct=direct)
 
@@ -366,7 +421,7 @@ class ConfigManager(object):
     def get_plugin_vars(self, plugin_type, name):
 
         pvars = []
-        for pdef in self.get_configuration_definitions(plugin_type, name).values():
+        for pdef in self.get_configuration_definitions(plugin_type=plugin_type, name=name).values():
             if 'vars' in pdef and pdef['vars']:
                 for var_entry in pdef['vars']:
                     pvars.append(var_entry['name'])
@@ -375,7 +430,7 @@ class ConfigManager(object):
     def get_plugin_options_from_var(self, plugin_type, name, variable):
 
         options = []
-        for option_name, pdef in self.get_configuration_definitions(plugin_type, name).items():
+        for option_name, pdef in self.get_configuration_definitions(plugin_type=plugin_type, name=name).items():
             if 'vars' in pdef and pdef['vars']:
                 for var_entry in pdef['vars']:
                     if variable == var_entry['name']:
@@ -417,7 +472,6 @@ class ConfigManager(object):
             for cdef in list(ret.keys()):
                 if cdef.startswith('_'):
                     del ret[cdef]
-
         return ret
 
     def _loop_entries(self, container, entry_list):
@@ -472,7 +526,7 @@ class ConfigManager(object):
         origin = None
         origin_ftype = None
 
-        defs = self.get_configuration_definitions(plugin_type, plugin_name)
+        defs = self.get_configuration_definitions(plugin_type=plugin_type, name=plugin_name)
         if config in defs:
 
             aliases = defs[config].get('aliases', [])

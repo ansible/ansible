@@ -149,6 +149,10 @@ class ConfigCLI(CLI):
 
         super(ConfigCLI, self).run()
 
+        # initialize galaxy server options
+        self._galaxy_servers = [s for s in C.GALAXY_SERVER_LIST or [] if s]  # clean list
+        C.config.load_galaxy_server_defs(self._galaxy_servers, C.GALAXY_SERVER_TIMEOUT)
+
         if context.CLIARGS['config_file']:
             self.config_file = unfrackpath(context.CLIARGS['config_file'], follow=False)
             b_config = to_bytes(self.config_file)
@@ -266,6 +270,10 @@ class ConfigCLI(CLI):
         if context.CLIARGS['type'] in ('base', 'all'):
             # this dumps main/common configs
             config_entries = self.config.get_configuration_definitions(ignore_private=True)
+
+            # for base and all, we include galaxy servers
+            for server in self._galaxy_servers:
+                config_entries.update(C.config.get_plugin_options('galaxy_server', server))
 
         if context.CLIARGS['type'] != 'base':
             config_entries['PLUGINS'] = {}
@@ -476,10 +484,20 @@ class ConfigCLI(CLI):
         return entries
 
     def _get_global_configs(self):
-        config = self.config.get_configuration_definitions(ignore_private=True).copy()
+
+        # Add base
+        config = self.config.get_configuration_definitions(ignore_private=True)
+        # convert to settings
         for setting in config.keys():
             v, o = C.config.get_config_value_and_origin(setting, cfile=self.config_file, variables=get_constants())
             config[setting] = Setting(setting, v, o, None)
+
+        # Add galaxy, which is dynamic
+        for server in self._galaxy_servers:
+            s_config= C.config.get_plugin_options('galaxy_server', server)
+            for setting in s_config.keys():
+                v, o = C.config.get_config_value_and_origin(setting, plugin_type='galaxy_server', plugin_name=server, cfile=self.config_file, variables=get_constants())
+                config[setting] = Setting(setting, v, o, None)
 
         return self._render_settings(config)
 
