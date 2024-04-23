@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible_managed restored it's 'templatability' by ensuring the possible injection routes are cut off earlier in the process.
