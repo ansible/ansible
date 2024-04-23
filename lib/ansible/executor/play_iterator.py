@@ -47,8 +47,7 @@ class HostState:
     def __init__(self, blocks):
         self._blocks = blocks[:]
         self.handlers = []
-
-        self.handler_notifications = []
+        self.handler_notifications = {}
 
         self.cur_block = 0
         self.cur_regular_task = 0
@@ -103,7 +102,7 @@ class HostState:
     def copy(self):
         new_state = HostState(self._blocks)
         new_state.handlers = self.handlers[:]
-        new_state.handler_notifications = self.handler_notifications[:]
+        new_state.handler_notifications = self.handler_notifications.copy()
         new_state.cur_block = self.cur_block
         new_state.cur_regular_task = self.cur_regular_task
         new_state.cur_rescue_task = self.cur_rescue_task
@@ -538,13 +537,14 @@ class PlayIterator:
         self._host_states[hostname].fail_state = fail_state
 
     def add_notification(self, hostname: str, notification: str) -> None:
-        # preserve order
-        host_state = self._host_states[hostname]
-        if notification not in host_state.handler_notifications:
-            host_state.handler_notifications.append(notification)
+        self._host_states[hostname].handler_notifications[notification] = ...
 
     def clear_notification(self, hostname: str, notification: str) -> None:
         self._host_states[hostname].handler_notifications.remove(notification)
+        try:
+            self._host_states[hostname].handler_notifications.pop(notification)
+        except KeyError as e:
+            raise AnsibleAssertionError(f"Failed to remove a handler notification: {e}")
 
     def end_host(self, hostname: str) -> None:
         """Used by ``end_host``, ``end_batch`` and ``end_play`` meta tasks to end executing given host."""
