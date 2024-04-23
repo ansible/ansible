@@ -44,6 +44,9 @@ class IteratingStates(IntEnum):
     COMPLETE = 5
 
 
+# TODO this can be probably just replaced with introducing:
+#      `HostState.failed: bool` as we do not need to track
+#      in which section the host failed
 class FailedStates(IntFlag):
     NONE = 0
     SETUP = 1
@@ -448,7 +451,6 @@ class PlayIterator:
                     s.run_state = IteratingStates.COMPLETE
         return state
 
-
     def mark_host_failed(self, host):
         s = self.get_host_state(host)
         display.debug("marking host %s failed, current state: %s" % (host, s))
@@ -461,6 +463,7 @@ class PlayIterator:
         return dict((host, True) for (host, state) in self._host_states.items() if self._check_failed_state(state))
 
     def _check_failed_state(self, state):
+        # TODO this can be moved into HostState
         if state is None:
             return False
         return state.fail_state != FailedStates.NONE and state.run_state == IteratingStates.COMPLETE
@@ -479,6 +482,7 @@ class PlayIterator:
         '''
         Finds the active state, recursively if necessary when there are child states.
         '''
+        # TODO this can be moved into HostState
         s = state
         if s.run_state in {
             IteratingStates.TASKS,
@@ -495,6 +499,7 @@ class PlayIterator:
         Given the current HostState state, determines if the current block, or any child blocks,
         are in rescue mode.
         '''
+        # TODO this can be moved into HostState
         s = state
         while s is not None:
             if s.run_state == IteratingStates.TASKS and s.get_current_block().rescue:
