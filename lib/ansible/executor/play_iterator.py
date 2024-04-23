@@ -524,33 +524,25 @@ class PlayIterator:
         return False
 
     def _insert_tasks_into_state(self, state, task_list):
-        # if we've failed at all, or if the task list is empty, just return the current state
-        if (state.fail_state != FailedStates.NONE and state.run_state == IteratingStates.TASKS) or not task_list:
+        if not task_list:
             return state
 
-        if state.run_state == IteratingStates.TASKS:
-            if state.child_state:
-                state.child_state = self._insert_tasks_into_state(state.child_state, task_list)
-            else:
-                target_block = state._blocks[state.cur_block].copy()
-                target_block.block[state.cur_regular_task:state.cur_regular_task] = task_list
-                state._blocks[state.cur_block] = target_block
-        elif state.run_state == IteratingStates.RESCUE:
-            if state.child_state:
-                state.child_state = self._insert_tasks_into_state(state.child_state, task_list)
-            else:
-                target_block = state._blocks[state.cur_block].copy()
-                target_block.rescue[state.cur_rescue_task:state.cur_rescue_task] = task_list
-                state._blocks[state.cur_block] = target_block
-        elif state.run_state == IteratingStates.ALWAYS:
-            if state.child_state:
-                state.child_state = self._insert_tasks_into_state(state.child_state, task_list)
-            else:
-                target_block = state._blocks[state.cur_block].copy()
-                target_block.always[state.cur_always_task:state.cur_always_task] = task_list
-                state._blocks[state.cur_block] = target_block
-        elif state.run_state == IteratingStates.HANDLERS:
+        if state.run_state == IteratingStates.HANDLERS:
             state.handlers[state.cur_handlers_task:state.cur_handlers_task] = [h for b in task_list for h in b.block]
+        else:
+            if state.child_state:
+                state.child_state = self._insert_tasks_into_state(state.child_state, task_list)
+            else:
+                target_block = state._blocks[state.cur_block].copy()
+
+                match state.run_state:
+                    case IteratingStates.TASKS:
+                        target_block.block[state.cur_regular_task:state.cur_regular_task] = task_list
+                    case IteratingStates.RESCUE:
+                        target_block.rescue[state.cur_rescue_task:state.cur_rescue_task] = task_list
+                    case IteratingStates.ALWAYS:
+                        target_block.always[state.cur_always_task:state.cur_always_task] = task_list
+                state._blocks[state.cur_block] = target_block
 
         return state
 
