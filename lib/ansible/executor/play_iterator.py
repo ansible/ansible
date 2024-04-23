@@ -244,7 +244,7 @@ class PlayIterator:
             # if we run past the end of the list we know we're done with
             # this block
             try:
-                block = state._blocks[state.cur_block]
+                block = state.get_current_block()
             except IndexError:
                 state.run_state = IteratingStates.COMPLETE
                 return state, None
@@ -418,15 +418,15 @@ class PlayIterator:
             match s.run_state:
                 case IteratingStates.TASKS:
                     s.fail_state |= FailedStates.TASKS
-                    if s._blocks[s.cur_block].rescue:
+                    if s.get_current_block().rescue:
                         s.run_state = IteratingStates.RESCUE
-                    elif s._blocks[s.cur_block].always:
+                    elif s.get_current_block().always:
                         s.run_state = IteratingStates.ALWAYS
                     else:
                         s.run_state = IteratingStates.COMPLETE
                 case IteratingStates.RESCUE:
                     s.fail_state |= FailedStates.RESCUE
-                    if s._blocks[s.cur_block].always:
+                    if s.get_current_block().always:
                         s.run_state = IteratingStates.ALWAYS
                     else:
                         s.run_state = IteratingStates.COMPLETE
@@ -498,7 +498,7 @@ class PlayIterator:
         if s.run_state == IteratingStates.HANDLERS:
             s.handlers[s.cur_handlers_task:s.cur_handlers_task] = [h for b in task_list for h in b.block]
         else:
-            target_block = s._blocks[s.cur_block].copy()
+            target_block = s.get_current_block().copy()
             match s.run_state:
                 case IteratingStates.TASKS:
                     target_block.block[s.cur_regular_task:s.cur_regular_task] = task_list
