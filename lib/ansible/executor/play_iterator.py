@@ -249,153 +249,152 @@ class PlayIterator:
                 state.run_state = IteratingStates.COMPLETE
                 return state, None
 
-            match state.run_state:
-                case IteratingStates.SETUP:
-                    # First, we check to see if we were pending setup. If not, this is
-                    # the first trip through IteratingStates.SETUP, so we set the pending_setup
-                    # flag and try to determine if we do in fact want to gather facts for
-                    # the specified host.
-                    if not state.pending_setup:
-                        state.pending_setup = True
+            if state.run_state == IteratingStates.SETUP:
+                # First, we check to see if we were pending setup. If not, this is
+                # the first trip through IteratingStates.SETUP, so we set the pending_setup
+                # flag and try to determine if we do in fact want to gather facts for
+                # the specified host.
+                if not state.pending_setup:
+                    state.pending_setup = True
 
-                        # Gather facts if the default is 'smart' and we have not yet
-                        # done it for this host; or if 'explicit' and the play sets
-                        # gather_facts to True; or if 'implicit' and the play does
-                        # NOT explicitly set gather_facts to False.
+                    # Gather facts if the default is 'smart' and we have not yet
+                    # done it for this host; or if 'explicit' and the play sets
+                    # gather_facts to True; or if 'implicit' and the play does
+                    # NOT explicitly set gather_facts to False.
 
-                        gathering = C.DEFAULT_GATHERING
-                        implied = self._play.gather_facts is None or boolean(self._play.gather_facts, strict=False)
+                    gathering = C.DEFAULT_GATHERING
+                    implied = self._play.gather_facts is None or boolean(self._play.gather_facts, strict=False)
 
-                        if (gathering == 'implicit' and implied) or \
-                           (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or \
-                           (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name, {}).get('_ansible_facts_gathered', False))):
-                            # The setup block is always self._blocks[0], as we inject it
-                            # during the play compilation in __init__ above.
-                            setup_block = self._blocks[0]
-                            if setup_block.has_tasks() and len(setup_block.block) > 0:
-                                task = setup_block.block[0]
+                    if (gathering == 'implicit' and implied) or \
+                       (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or \
+                       (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name, {}).get('_ansible_facts_gathered', False))):
+                        # The setup block is always self._blocks[0], as we inject it
+                        # during the play compilation in __init__ above.
+                        setup_block = self._blocks[0]
+                        if setup_block.has_tasks() and len(setup_block.block) > 0:
+                            task = setup_block.block[0]
+                else:
+                    # This is the second trip through IteratingStates.SETUP, so we clear
+                    # the flag and move onto the next block in the list while setting
+                    # the run state to IteratingStates.TASKS
+                    state.pending_setup = False
+                    state.run_state = IteratingStates.TASKS
+                    if not state.did_start_at_task:
+                        state.cur_block += 1
+
+            elif state.run_state == IteratingStates.TASKS:
+                # First, we check for a child task state that is not failed, and if we
+                # have one recurse into it for the next task. If we're done with the child
+                # state, we clear it and drop back to getting the next task from the list.
+                if state.child_state:
+                    state.child_state, task = self._get_next_task_from_state(state.child_state, host=host)
+                    if self._check_failed_state(state.child_state):
+                        # failed child state, so clear it and move into the rescue portion
+                        state.child_state = None
+                        self._set_failed_state(state)
+                    elif state.child_state.run_state == IteratingStates.COMPLETE:
+                        # we're done with the child state, so clear it and continue
+                        # back to the top of the loop to get the next task
+                        state.child_state = None
+                else:
+                    # First here, we check to see if we've failed anywhere down the chain
+                    # of states we have, and if so we move onto the rescue portion. Otherwise,
+                    # we check to see if we've moved past the end of the list of tasks. If so,
+                    # we move into the always portion of the block, otherwise we get the next
+                    # task from the list.
+                    try:
+                        task = block.block[state.cur_regular_task]
+                    except IndexError:
+                        state.run_state = IteratingStates.ALWAYS
                     else:
-                        # This is the second trip through IteratingStates.SETUP, so we clear
-                        # the flag and move onto the next block in the list while setting
-                        # the run state to IteratingStates.TASKS
-                        state.pending_setup = False
-                        state.run_state = IteratingStates.TASKS
-                        if not state.did_start_at_task:
-                            state.cur_block += 1
-
-                case IteratingStates.TASKS:
-                    # First, we check for a child task state that is not failed, and if we
-                    # have one recurse into it for the next task. If we're done with the child
-                    # state, we clear it and drop back to getting the next task from the list.
-                    if state.child_state:
-                        state.child_state, task = self._get_next_task_from_state(state.child_state, host=host)
-                        if self._check_failed_state(state.child_state):
-                            # failed child state, so clear it and move into the rescue portion
-                            state.child_state = None
-                            self._set_failed_state(state)
-                        elif state.child_state.run_state == IteratingStates.COMPLETE:
-                            # we're done with the child state, so clear it and continue
-                            # back to the top of the loop to get the next task
-                            state.child_state = None
-                    else:
-                        # First here, we check to see if we've failed anywhere down the chain
-                        # of states we have, and if so we move onto the rescue portion. Otherwise,
-                        # we check to see if we've moved past the end of the list of tasks. If so,
-                        # we move into the always portion of the block, otherwise we get the next
-                        # task from the list.
-                        try:
-                            task = block.block[state.cur_regular_task]
-                        except IndexError:
-                            state.run_state = IteratingStates.ALWAYS
-                        else:
-                            # if the current task is actually a child block, create a child
-                            # state for us to recurse into on the next pass
-                            if isinstance(task, Block):
-                                state.child_state = HostState(blocks=[task])
-                                state.child_state.run_state = IteratingStates.TASKS
-                                # since we've created the child state, clear the task
-                                # so we can pick up the child state on the next pass
-                                task = None
-                            state.cur_regular_task += 1
-
-                case IteratingStates.RESCUE:
-                    # The process here is identical to IteratingStates.TASKS, except instead
-                    # we move into the always portion of the block.
-                    if state.child_state:
-                        state.child_state, task = self._get_next_task_from_state(state.child_state, host=host)
-                        if self._check_failed_state(state.child_state):
-                            state.child_state = None
-                            self._set_failed_state(state)
-                        elif state.child_state.run_state == IteratingStates.COMPLETE:
-                            state.child_state = None
-                    else:
-                        try:
-                            task = block.rescue[state.cur_rescue_task]
-                        except IndexError:
-                            if block.rescue:
-                                state.fail_state = FailedStates.NONE
-                            state.run_state = IteratingStates.ALWAYS
-                        else:
-                            if isinstance(task, Block):
-                                state.child_state = HostState(blocks=[task])
-                                state.child_state.run_state = IteratingStates.TASKS
-                                task = None
-                            state.cur_rescue_task += 1
-
-                case IteratingStates.ALWAYS:
-                    # And again, the process here is identical to IteratingStates.TASKS, except
-                    # instead we either move onto the next block in the list, or we set the
-                    # run state to IteratingStates.COMPLETE in the event of any errors, or when we
-                    # have hit the end of the list of blocks.
-                    if state.child_state:
-                        state.child_state, task = self._get_next_task_from_state(state.child_state, host=host)
-                        if self._check_failed_state(state.child_state):
-                            state.child_state = None
-                            self._set_failed_state(state)
-                        elif state.child_state.run_state == IteratingStates.COMPLETE:
-                            state.child_state = None
-                    else:
-                        try:
-                            task = block.always[state.cur_always_task]
-                        except IndexError:
-                            if state.fail_state != FailedStates.NONE:
-                                state.run_state = IteratingStates.COMPLETE
-                            else:
-                                state.cur_block += 1
-                                state.cur_regular_task = 0
-                                state.cur_rescue_task = 0
-                                state.cur_always_task = 0
-                                state.run_state = IteratingStates.TASKS
-                        else:
-                            if isinstance(task, Block):
-                                state.child_state = HostState(blocks=[task])
-                                state.child_state.run_state = IteratingStates.TASKS
-                                task = None
-                            state.cur_always_task += 1
-
-                case IteratingStates.HANDLERS:
-                    if state.update_handlers:
-                        # reset handlers for HostState since handlers from include_tasks
-                        # might be there from previous flush
-                        state.handlers = self.handlers[:]
-                        state.update_handlers = False
-
-                    while True:
-                        try:
-                            task = state.handlers[state.cur_handlers_task]
-                        except IndexError:
+                        # if the current task is actually a child block, create a child
+                        # state for us to recurse into on the next pass
+                        if isinstance(task, Block):
+                            state.child_state = HostState(blocks=[task])
+                            state.child_state.run_state = IteratingStates.TASKS
+                            # since we've created the child state, clear the task
+                            # so we can pick up the child state on the next pass
                             task = None
-                            state.cur_handlers_task = 0
-                            state.run_state = state.pre_flushing_run_state
-                            state.update_handlers = True
-                            break
-                        else:
-                            state.cur_handlers_task += 1
-                            if task.is_host_notified(host):
-                                break
+                        state.cur_regular_task += 1
 
-                case IteratingStates.COMPLETE:
-                    return state, None
+            elif state.run_state == IteratingStates.RESCUE:
+                # The process here is identical to IteratingStates.TASKS, except instead
+                # we move into the always portion of the block.
+                if state.child_state:
+                    state.child_state, task = self._get_next_task_from_state(state.child_state, host=host)
+                    if self._check_failed_state(state.child_state):
+                        state.child_state = None
+                        self._set_failed_state(state)
+                    elif state.child_state.run_state == IteratingStates.COMPLETE:
+                        state.child_state = None
+                else:
+                    try:
+                        task = block.rescue[state.cur_rescue_task]
+                    except IndexError:
+                        if block.rescue:
+                            state.fail_state = FailedStates.NONE
+                        state.run_state = IteratingStates.ALWAYS
+                    else:
+                        if isinstance(task, Block):
+                            state.child_state = HostState(blocks=[task])
+                            state.child_state.run_state = IteratingStates.TASKS
+                            task = None
+                        state.cur_rescue_task += 1
+
+            elif state.run_state == IteratingStates.ALWAYS:
+                # And again, the process here is identical to IteratingStates.TASKS, except
+                # instead we either move onto the next block in the list, or we set the
+                # run state to IteratingStates.COMPLETE in the event of any errors, or when we
+                # have hit the end of the list of blocks.
+                if state.child_state:
+                    state.child_state, task = self._get_next_task_from_state(state.child_state, host=host)
+                    if self._check_failed_state(state.child_state):
+                        state.child_state = None
+                        self._set_failed_state(state)
+                    elif state.child_state.run_state == IteratingStates.COMPLETE:
+                        state.child_state = None
+                else:
+                    try:
+                        task = block.always[state.cur_always_task]
+                    except IndexError:
+                        if state.fail_state != FailedStates.NONE:
+                            state.run_state = IteratingStates.COMPLETE
+                        else:
+                            state.cur_block += 1
+                            state.cur_regular_task = 0
+                            state.cur_rescue_task = 0
+                            state.cur_always_task = 0
+                            state.run_state = IteratingStates.TASKS
+                    else:
+                        if isinstance(task, Block):
+                            state.child_state = HostState(blocks=[task])
+                            state.child_state.run_state = IteratingStates.TASKS
+                            task = None
+                        state.cur_always_task += 1
+
+            elif state.run_state == IteratingStates.HANDLERS:
+                if state.update_handlers:
+                    # reset handlers for HostState since handlers from include_tasks
+                    # might be there from previous flush
+                    state.handlers = self.handlers[:]
+                    state.update_handlers = False
+
+                while True:
+                    try:
+                        task = state.handlers[state.cur_handlers_task]
+                    except IndexError:
+                        task = None
+                        state.cur_handlers_task = 0
+                        state.run_state = state.pre_flushing_run_state
+                        state.update_handlers = True
+                        break
+                    else:
+                        state.cur_handlers_task += 1
+                        if task.is_host_notified(host):
+                            break
+
+            elif state.run_state == IteratingStates.COMPLETE:
+                return state, None
 
             # if something above set the task, break out of the loop now
             if task:
