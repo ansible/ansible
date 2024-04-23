@@ -491,63 +491,58 @@ class PlayIterator:
         return self._check_failed_state(s)
 
     def clear_host_errors(self, host):
-        self._clear_state_errors(self.get_state_for_host(host.name))
-
-    def _clear_state_errors(self, state: HostState) -> None:
-        state.fail_state = FailedStates.NONE
-
-        if state.child_state is not None:
-            self._clear_state_errors(state.child_state)
+        s = self.get_state_for_host(host.name)
+        while s is not None:
+            s.fail_state = FailedStates.NONE
+            s = s.child_state
 
     def get_active_state(self, state):
         '''
         Finds the active state, recursively if necessary when there are child states.
         '''
-        if state.child_state is not None and state.run_state in {
+        s = state
+        if s.run_state in {
             IteratingStates.TASKS,
             IteratingStates.RESCUE,
             IteratingStates.ALWAYS
         }:
-            return self.get_active_state(state.child_state)
+            while s.child_state is not None:
+                s = s.child_state
 
-        return state
+        return s
 
     def is_any_block_rescuing(self, state):
         '''
         Given the current HostState state, determines if the current block, or any child blocks,
         are in rescue mode.
         '''
-        if state.run_state == IteratingStates.TASKS and state.get_current_block().rescue:
-            return True
-        if state.child_state is not None:
-            return self.is_any_block_rescuing(state.child_state)
+        s = state
+        while s is not None:
+            if s.run_state == IteratingStates.TASKS and s.get_current_block().rescue:
+                return True
+            s = s.child_state
+
         return False
 
-    def _insert_tasks_into_state(self, state, task_list):
-        if not task_list:
-            return state
-
-        if state.run_state == IteratingStates.HANDLERS:
-            state.handlers[state.cur_handlers_task:state.cur_handlers_task] = [h for b in task_list for h in b.block]
-        else:
-            if state.child_state:
-                state.child_state = self._insert_tasks_into_state(state.child_state, task_list)
-            else:
-                target_block = state._blocks[state.cur_block].copy()
-
-                match state.run_state:
-                    case IteratingStates.TASKS:
-                        target_block.block[state.cur_regular_task:state.cur_regular_task] = task_list
-                    case IteratingStates.RESCUE:
-                        target_block.rescue[state.cur_rescue_task:state.cur_rescue_task] = task_list
-                    case IteratingStates.ALWAYS:
-                        target_block.always[state.cur_always_task:state.cur_always_task] = task_list
-                state._blocks[state.cur_block] = target_block
-
-        return state
-
     def add_tasks(self, host, task_list):
-        self.set_state_for_host(host.name, self._insert_tasks_into_state(self.get_host_state(host), task_list))
+        if not task_list:
+            return
+
+        s = self.get_active_state(self._host_states[host.name])
+        if s.run_state == IteratingStates.HANDLERS:
+            s.handlers[s.cur_handlers_task:s.cur_handlers_task] = [h for b in task_list for h in b.block]
+        else:
+            target_block = s._blocks[s.cur_block].copy()
+            match s.run_state:
+                case IteratingStates.TASKS:
+                    target_block.block[s.cur_regular_task:s.cur_regular_task] = task_list
+                case IteratingStates.RESCUE:
+                    target_block.rescue[s.cur_rescue_task:s.cur_rescue_task] = task_list
+                case IteratingStates.ALWAYS:
+                    target_block.always[s.cur_always_task:s.cur_always_task] = task_list
+            s._blocks[s.cur_block] = target_block
+
+        return s
 
     @property
     def host_states(self):
