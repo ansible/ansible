@@ -79,7 +79,7 @@ class HostState:
                     self.pre_flushing_run_state,
                     self.update_handlers,
                     self.pending_setup,
-                    self.child_state,
+                    bool(self.child_state),
                     self.did_start_at_task,
                 ))
 
