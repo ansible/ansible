@@ -273,7 +273,7 @@ class ConfigCLI(CLI):
 
             # for base and all, we include galaxy servers
             for server in self._galaxy_servers:
-                config_entries.update(C.config.get_plugin_options('galaxy_server', server))
+                config_entries.update({f'GALAXY_SERVER.{server}': C.config.get_plugin_options('galaxy_server', server)})
 
         if context.CLIARGS['type'] != 'base':
             config_entries['PLUGINS'] = {}
@@ -497,7 +497,7 @@ class ConfigCLI(CLI):
             s_config= C.config.get_plugin_options('galaxy_server', server)
             for setting in s_config.keys():
                 v, o = C.config.get_config_value_and_origin(setting, plugin_type='galaxy_server', plugin_name=server, cfile=self.config_file, variables=get_constants())
-                config[setting] = Setting(setting, v, o, None)
+                config[f'galaxy_server.{server}.{setting}'] = Setting(setting, v, o, None)
 
         return self._render_settings(config)
 
