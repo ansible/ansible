@@ -494,9 +494,10 @@ class ConfigCLI(CLI):
 
         # Add galaxy, which is dynamic
         for server in self._galaxy_servers:
-            s_config= C.config.get_plugin_options('galaxy_server', server)
+            s_config = C.config.get_plugin_options('galaxy_server', server)
             for setting in s_config.keys():
-                v, o = C.config.get_config_value_and_origin(setting, plugin_type='galaxy_server', plugin_name=server, cfile=self.config_file, variables=get_constants())
+                v, o = C.config.get_config_value_and_origin(setting, plugin_type='galaxy_server', plugin_name=server,
+                                                            cfile=self.config_file, variables=get_constants())
                 config[f'galaxy_server.{server}.{setting}'] = Setting(setting, v, o, None)
 
         return self._render_settings(config)

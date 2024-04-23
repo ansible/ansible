@@ -55,7 +55,6 @@ from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils import six
 from ansible.parsing.dataloader import DataLoader
-from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionConfig
@@ -65,6 +64,7 @@ from ansible.utils.vars import load_extra_vars
 
 display = Display()
 urlparse = six.moves.urllib.parse.urlparse
+
 
 def with_collection_artifacts_manager(wrapped_method):
     """Inject an artifacts manager if not passed explicitly.
@@ -598,6 +598,12 @@ class GalaxyCLI(CLI):
 
         C.config.load_galaxy_server_defs(C.GALAXY_SERVER_LIST, C.GALAXY_SERVER_TIMEOUT)
 
+        galaxy_options = {}
+        for optional_key in ['clear_response_cache', 'no_cache']:
+            if optional_key in context.CLIARGS:
+                galaxy_options[optional_key] = context.CLIARGS[optional_key]
+
+        config_servers = []
         # Need to filter out empty strings or non truthy values as an empty server list env var is equal to [''].
         server_list = [s for s in C.GALAXY_SERVER_LIST or [] if s]
         for server_priority, server_key in enumerate(server_list, start=1):
