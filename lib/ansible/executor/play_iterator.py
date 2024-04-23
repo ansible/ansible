@@ -327,9 +327,7 @@ class PlayIterator:
                     # we check to see if we've moved past the end of the list of tasks. If so,
                     # we move into the always portion of the block, otherwise we get the next
                     # task from the list.
-                    if self._check_failed_state(state):
-                        state.run_state = IteratingStates.RESCUE
-                    elif state.cur_regular_task >= len(block.block):
+                    if state.cur_regular_task >= len(block.block):
                         state.run_state = IteratingStates.ALWAYS
                     else:
                         task = block.block[state.cur_regular_task]
@@ -356,9 +354,7 @@ class PlayIterator:
                             state.child_state = None
                             continue
                 else:
-                    if state.fail_state & FailedStates.RESCUE == FailedStates.RESCUE:
-                        state.run_state = IteratingStates.ALWAYS
-                    elif state.cur_rescue_task >= len(block.rescue):
+                    if state.cur_rescue_task >= len(block.rescue):
                         if len(block.rescue) > 0:
                             state.fail_state = FailedStates.NONE
                         state.run_state = IteratingStates.ALWAYS
