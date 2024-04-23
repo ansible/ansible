@@ -176,11 +176,11 @@ def debug_closure(func):
             _queued_task_args = self._queued_task_cache.pop((host.name, task._uuid), None)
             task_vars = _queued_task_args['task_vars']
             play_context = _queued_task_args['play_context']
-            # Try to grab the previous host state, if it doesn't exist use get_host_state to generate an empty state
+            # Try to grab the previous host state, if it doesn't exist use get_state_for_host to generate an empty state
             try:
                 prev_host_state = prev_host_states[host.name]
             except KeyError:
-                prev_host_state = iterator.get_host_state(host)
+                prev_host_state = iterator.get_state_for_host(host.name)
 
             while result.needs_debugger(globally_enabled=self.debugger_active):
                 next_action = NextAction()
