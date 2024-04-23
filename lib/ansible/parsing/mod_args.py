@@ -25,7 +25,11 @@ from ansible.parsing.splitter import parse_kv, split_args
 from ansible.plugins.loader import module_loader, action_loader
 from ansible.template import Templar
 from ansible.utils.fqcn import add_internal_fqcns
+from ansible.utils.lazy_import import lazy_import
 from ansible.utils.sentinel import Sentinel
+
+playbook_task = lazy_import('ansible.playbook.task')
+playbook_handler = lazy_import('ansible.playbook.handler')
 
 
 # For filtering out modules correctly below
@@ -107,12 +111,9 @@ class ModuleArgsParser:
             raise AnsibleAssertionError("the type of 'task_ds' should be a dict, but is a %s" % type(task_ds))
         self._task_ds = task_ds
         self._collection_list = collection_list
-        # delayed local imports to prevent circular import
-        from ansible.playbook.task import Task
-        from ansible.playbook.handler import Handler
         # store the valid Task/Handler attrs for quick access
-        self._task_attrs = set(Task.fattributes)
-        self._task_attrs.update(set(Handler.fattributes))
+        self._task_attrs = set(playbook_task.Task.fattributes)
+        self._task_attrs.update(set(playbook_handler.Handler.fattributes))
         # HACK: why are these not FieldAttributes on task with a post-validate to check usage?
         self._task_attrs.update(['local_action', 'static'])
         self._task_attrs = frozenset(self._task_attrs)

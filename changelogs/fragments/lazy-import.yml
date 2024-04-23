@@ -1,0 +1,2 @@
+minor_changes:
+- Add new ``lazy_import`` util function
