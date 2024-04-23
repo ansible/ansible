@@ -310,13 +310,10 @@ class PlayIterator:
                             # failed child state, so clear it and move into the rescue portion
                             state.child_state = None
                             self._set_failed_state(state)
-                        else:
-                            # get the next task recursively
-                            if task is None or state.child_state.run_state == IteratingStates.COMPLETE:
-                                # we're done with the child state, so clear it and continue
-                                # back to the top of the loop to get the next task
-                                state.child_state = None
-                                continue
+                        elif state.child_state.run_state == IteratingStates.COMPLETE:
+                            # we're done with the child state, so clear it and continue
+                            # back to the top of the loop to get the next task
+                            state.child_state = None
                     else:
                         # First here, we check to see if we've failed anywhere down the chain
                         # of states we have, and if so we move onto the rescue portion. Otherwise,
@@ -346,10 +343,8 @@ class PlayIterator:
                         if self._check_failed_state(state.child_state):
                             state.child_state = None
                             self._set_failed_state(state)
-                        else:
-                            if task is None or state.child_state.run_state == IteratingStates.COMPLETE:
-                                state.child_state = None
-                                continue
+                        elif state.child_state.run_state == IteratingStates.COMPLETE:
+                            state.child_state = None
                     else:
                         try:
                             task = block.rescue[state.cur_rescue_task]
@@ -374,10 +369,8 @@ class PlayIterator:
                         if self._check_failed_state(state.child_state):
                             state.child_state = None
                             self._set_failed_state(state)
-                        else:
-                            if task is None or state.child_state.run_state == IteratingStates.COMPLETE:
-                                state.child_state = None
-                                continue
+                        elif state.child_state.run_state == IteratingStates.COMPLETE:
+                            state.child_state = None
                     else:
                         try:
                             task = block.always[state.cur_always_task]
