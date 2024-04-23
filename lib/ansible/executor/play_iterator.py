@@ -434,45 +434,41 @@ class PlayIterator:
         return (state, task)
 
     def _set_failed_state(self, state):
+        if state.run_state == IteratingStates.HANDLERS:
+            # we are failing `meta: flush_handlers`, so just reset the state to whatever
+            # it was before and let `_set_failed_state` figure out the next state
+            state.run_state = state.pre_flushing_run_state
+            state.update_handlers = True
+
         if state.run_state == IteratingStates.SETUP:
             state.fail_state |= FailedStates.SETUP
             state.run_state = IteratingStates.COMPLETE
-        elif state.run_state == IteratingStates.TASKS:
-            if state.child_state is not None:
-                state.child_state = self._set_failed_state(state.child_state)
-            else:
-                state.fail_state |= FailedStates.TASKS
-                if state._blocks[state.cur_block].rescue:
-                    state.run_state = IteratingStates.RESCUE
-                elif state._blocks[state.cur_block].always:
-                    state.run_state = IteratingStates.ALWAYS
-                else:
-                    state.run_state = IteratingStates.COMPLETE
-        elif state.run_state == IteratingStates.RESCUE:
-            if state.child_state is not None:
-                state.child_state = self._set_failed_state(state.child_state)
-            else:
-                state.fail_state |= FailedStates.RESCUE
-                if state._blocks[state.cur_block].always:
-                    state.run_state = IteratingStates.ALWAYS
-                else:
-                    state.run_state = IteratingStates.COMPLETE
-        elif state.run_state == IteratingStates.ALWAYS:
-            if state.child_state is not None:
-                state.child_state = self._set_failed_state(state.child_state)
-            else:
-                state.fail_state |= FailedStates.ALWAYS
-                state.run_state = IteratingStates.COMPLETE
+        else:
+            s = self.get_active_state(state)
+            match s.run_state:
+                case IteratingStates.TASKS:
+                    s.fail_state |= FailedStates.TASKS
+                    if s._blocks[s.cur_block].rescue:
+                        s.run_state = IteratingStates.RESCUE
+                    elif s._blocks[s.cur_block].always:
+                        s.run_state = IteratingStates.ALWAYS
+                    else:
+                        s.run_state = IteratingStates.COMPLETE
+                case IteratingStates.RESCUE:
+                    s.fail_state |= FailedStates.RESCUE
+                    if s._blocks[s.cur_block].always:
+                        s.run_state = IteratingStates.ALWAYS
+                    else:
+                        s.run_state = IteratingStates.COMPLETE
+                case IteratingStates.ALWAYS:
+                    s.fail_state |= FailedStates.ALWAYS
+                    s.run_state = IteratingStates.COMPLETE
         return state
+
 
     def mark_host_failed(self, host):
         s = self.get_host_state(host)
         display.debug("marking host %s failed, current state: %s" % (host, s))
-        if s.run_state == IteratingStates.HANDLERS:
-            # we are failing `meta: flush_handlers`, so just reset the state to whatever
-            # it was before and let `_set_failed_state` figure out the next state
-            s.run_state = s.pre_flushing_run_state
-            s.update_handlers = True
         s = self._set_failed_state(s)
         display.debug("^ failed state is now: %s" % s)
         self.set_state_for_host(host.name, s)
