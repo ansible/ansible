@@ -642,6 +642,7 @@ class ConfigCLI(CLI):
         found = False
         config_entries = self._list_entries_from_args()
         plugin_types = config_entries.pop('PLUGINS', None)
+        galaxy_servers = config_entries.pop('GALAXY_SERVERS', None)
 
         if context.CLIARGS['format'] == 'ini':
             if C.CONFIG_FILE is not None:
@@ -658,6 +659,14 @@ class ConfigCLI(CLI):
                                     sections[s].update(plugin_sections[s])
                                 else:
                                     sections[s] = plugin_sections[s]
+                if galaxy_servers:
+                    for server in galaxy_servers:
+                        server_sections = _get_ini_entries(galaxy_servers[server])
+                        for s in server_sections:
+                            if s in sections:
+                                sections[s].update(server_sections[s])
+                            else:
+                                sections[s] = server_sections[s]
                 if sections:
                     p = C.config._parsers[C.CONFIG_FILE]
                     for s in p.sections():
