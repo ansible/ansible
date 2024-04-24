@@ -582,8 +582,8 @@ class StrategyBase:
             if task_result.is_failed():
                 role_ran = True
                 ignore_errors = original_task.ignore_errors
-                rescued = iterator.is_any_block_rescuing(iterator.get_state_for_host(original_host.name))
                 if not ignore_errors:
+                    rescued = iterator.is_any_block_rescuing(iterator.get_state_for_host(original_host.name))
                     display.debug("marking %s as failed" % original_host.name)
                     if original_task.run_once:
                         # if we're using run_once, we have to fail every host here

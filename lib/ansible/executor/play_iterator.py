@@ -43,6 +43,7 @@ class FailedStates(IntFlag):
     HANDLERS = 16  # NOTE not in use anymore
 
 
+# FIXME investigate turning HostState into a dataclass
 class HostState:
     def __init__(self, blocks):
         self._blocks = blocks[:]
@@ -506,8 +507,6 @@ class PlayIterator:
                 case IteratingStates.ALWAYS:
                     target_block.always[s.cur_always_task:s.cur_always_task] = task_list
             s._blocks[s.cur_block] = target_block
-
-        return s
 
     @property
     def host_states(self):
