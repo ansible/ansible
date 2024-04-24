@@ -347,15 +347,16 @@ class ConfigManager(object):
 
             return config_def
 
-        for server_key in server_list:
-            if not server_key:
-                # To filter out empty strings or non truthy values as an empty server list env var is equal to [''].
-                continue
+        if server_list:
+            for server_key in server_list:
+                if not server_key:
+                    # To filter out empty strings or non truthy values as an empty server list env var is equal to [''].
+                    continue
 
-            # Config definitions are looked up dynamically based on the C.GALAXY_SERVER_LIST entry. We look up the
-            # section [galaxy_server.<server>] for the values url, username, password, and token.
-            defs = dict((k, server_config_def(server_key, k, req, value_type)) for k, req, value_type in GALAXY_SERVER_DEF)
-            self.initialize_plugin_configuration_definitions('galaxy_server', server_key, defs)
+                # Config definitions are looked up dynamically based on the C.GALAXY_SERVER_LIST entry. We look up the
+                # section [galaxy_server.<server>] for the values url, username, password, and token.
+                defs = dict((k, server_config_def(server_key, k, req, value_type)) for k, req, value_type in GALAXY_SERVER_DEF)
+                self.initialize_plugin_configuration_definitions('galaxy_server', server_key, defs)
 
     def template_default(self, value, variables):
         if isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')) and variables is not None:
