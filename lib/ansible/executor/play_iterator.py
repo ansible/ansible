@@ -209,11 +209,13 @@ class PlayIterator:
         self.cur_task = 0
 
     def get_host_state(self, host):
-        display.deprecated(
-             "PlayIterator.get_host_state is deprecated, use PlayIterator.get_state_for_host instead and "
-             "create a copy (using the copy() method) of the state it returns when needed.",
-             version="2.22"
-         )
+        """Returns a **copy** of the HostState object for a given host,
+        creating a stub in case it does not exist.
+        """
+        # NOTE This is now unused in the core codebase as we try and operate
+        #      on HostState objects in-place for efficiency, only for when we
+        #      peek at the next state we create a copy of the HostState
+        #      object ourselves.
         if host.name not in self._host_states:
             self.set_state_for_host(host.name, HostState(blocks=[]))
         return self._host_states[host.name].copy()

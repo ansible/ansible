@@ -311,7 +311,8 @@ class StrategyBase:
         # execute one more pass through the iterator without peeking, to
         # make sure that all of the hosts are advanced to their final task.
         # This should be safe, as everything should be IteratingStates.COMPLETE by
-        # this point, though the strategy may not advance the hosts itself.
+        # this point, though the strategy may not advance the hosts itself as it
+        # may just end operating once peeking at the next state shows IteratingStates.COMPLETE.
 
         for host in self._hosts_cache:
             if host not in self._tqm._unreachable_hosts:
