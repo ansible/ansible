@@ -266,14 +266,15 @@ class ConfigCLI(CLI):
         '''
         build a dict with the list requested configs
         '''
-        config_entries = {}
+
         if context.CLIARGS['type'] in ('base', 'all'):
             # this dumps main/common configs
             config_entries = self.config.get_configuration_definitions(ignore_private=True)
 
             # for base and all, we include galaxy servers
+            config_entries['GALAXY_SERVERS'] = {}
             for server in self._galaxy_servers:
-                config_entries.update({f'GALAXY_SERVER.{server}': C.config.get_plugin_options('galaxy_server', server)})
+                config_entries['GALAXY_SERVERS'][server.upper()] = self.config.get_configuration_definitions('galaxy_server', server)
 
         if context.CLIARGS['type'] != 'base':
             config_entries['PLUGINS'] = {}
@@ -492,14 +493,6 @@ class ConfigCLI(CLI):
             v, o = C.config.get_config_value_and_origin(setting, cfile=self.config_file, variables=get_constants())
             config[setting] = Setting(setting, v, o, None)
 
-        # Add galaxy, which is dynamic
-        for server in self._galaxy_servers:
-            s_config = C.config.get_plugin_options('galaxy_server', server)
-            for setting in s_config.keys():
-                v, o = C.config.get_config_value_and_origin(setting, plugin_type='galaxy_server', plugin_name=server,
-                                                            cfile=self.config_file, variables=get_constants())
-                config[f'galaxy_server.{server}.{setting}'] = Setting(setting, v, o, None)
-
         return self._render_settings(config)
 
     def _get_plugin_configs(self, ptype, plugins):
@@ -572,17 +565,52 @@ class ConfigCLI(CLI):
 
         return output
 
+    def _get_galaxy_server_configs(self):
+
+        output = []
+        # add galaxy servers
+        for server in self._galaxy_servers:
+            server_config = {}
+            name = f'GALAXY_SERVER.{server.upper()}'
+            s_config = self.config.get_configuration_definitions('galaxy_server', server)
+            for setting in s_config.keys():
+                try:
+                    v, o = C.config.get_config_value_and_origin(setting, plugin_type='galaxy_server', plugin_name=server, cfile=self.config_file)
+                    print(server, v, o)
+                except AnsibleError as e:
+                    if to_text(e).startswith('No setting was provided for required configuration'):
+                        v = None
+                        o = 'REQUIRED'
+                    else:
+                        raise e
+                if v is None and o is None:
+                    # not all cases will be error
+                    o = 'REQUIRED'
+                server_config[setting] = Setting(setting, v, o, None)
+            if context.CLIARGS['format'] == 'display':
+                if not context.CLIARGS['only_changed'] or server_config:
+                    equals = '=' * len(name)
+                    output.append(f'\n{name}\n{equals}')
+                    output.extend(self._render_settings(server_config))
+            else:
+                output.append({name: server_config})
+
+        return output
+
     def execute_dump(self):
         '''
         Shows the current settings, merges ansible.cfg if specified
         '''
-        if context.CLIARGS['type'] == 'base':
+        output = []
+        if context.CLIARGS['type'] in ('base', 'all'):
             # deal with base
             output = self._get_global_configs()
-        elif context.CLIARGS['type'] == 'all':
-            # deal with base
-            output = self._get_global_configs()
-            # deal with plugins
+
+            # add galaxy servers
+            output.extend(self._get_galaxy_server_configs())
+
+        if context.CLIARGS['type'] == 'all':
+            # add all plugins
             for ptype in C.CONFIGURABLE_PLUGINS:
                 plugin_list = self._get_plugin_configs(ptype, context.CLIARGS['args'])
                 if context.CLIARGS['format'] == 'display':
@@ -595,8 +623,9 @@ class ConfigCLI(CLI):
                     else:
                         pname = '%s_PLUGINS' % ptype.upper()
                     output.append({pname: plugin_list})
-        else:
-            # deal with plugins
+
+        elif context.CLIARGS['type'] != 'base':
+            # deal with specific plugin
             output = self._get_plugin_configs(context.CLIARGS['type'], context.CLIARGS['args'])
 
         if context.CLIARGS['format'] == 'display':
