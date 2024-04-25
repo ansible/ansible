@@ -165,7 +165,7 @@ def debug_closure(func):
         )
 
         # We don't know the host yet, copy the previous states, for lookup after we process new results
-        prev_host_states = iterator.host_states.copy()
+        prev_host_states = {hostname: state.copy() for hostname, state in iterator.host_states.items()}
 
         results = func(self, iterator, one_pass=one_pass, max_passes=max_passes)
         _processed_results = []
