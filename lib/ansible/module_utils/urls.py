@@ -303,17 +303,15 @@ class UnixHTTPHandler(urllib.request.HTTPHandler):
 
 
 class ProxyHandler(urllib.request.ProxyHandler):
-    _SPLITPORT_RE = re.compile('(.*):([0-9]*)', re.DOTALL)
+    _SPLITPORT_RE = re.compile('(.*):([0-9]{1,5})', re.DOTALL)
 
     @classmethod
     def _splitport(cls, host):
-        # Copied from cpython urllib.parse
-        match = cls._SPLITPORT_RE.fullmatch(host)
-        if match:
+        # Derived from cpython urllib.parse
+        port = None
+        if (match := cls._SPLITPORT_RE.fullmatch(host)):
             host, port = match.groups()
-            if port:
-                return host, port
-        return host, None
+        return host, port or None
 
     @staticmethod
     def _matches(host, port, bypass_network, bypass_port, scheme):
