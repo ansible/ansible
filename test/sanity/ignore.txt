@@ -15,7 +15,6 @@ lib/ansible/parsing/yaml/constructor.py mypy-3.12:type-var  # too many occurrenc
 lib/ansible/keyword_desc.yml no-unwanted-files
 lib/ansible/modules/apt.py validate-modules:parameter-invalid
 lib/ansible/modules/apt_repository.py validate-modules:parameter-invalid
-lib/ansible/modules/assemble.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/async_status.py validate-modules!skip
 lib/ansible/modules/async_wrapper.py ansible-doc!skip  # not an actual module
 lib/ansible/modules/async_wrapper.py pylint:ansible-bad-function # ignore, required
