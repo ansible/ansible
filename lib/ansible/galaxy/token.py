@@ -21,8 +21,9 @@
 from __future__ import annotations
 
 import base64
-import os
 import json
+import os
+import time
 from stat import S_IRUSR, S_IWUSR
 from urllib.error import HTTPError
 from urllib.parse import urlencode
@@ -61,6 +62,7 @@ class KeycloakToken(object):
         if self.client_id is None:
             self.client_id = 'cloud-services'
         self.client_secret = client_secret
+        self._expiration = None
 
     def _form_payload(self):
         payload = {
@@ -76,6 +78,9 @@ class KeycloakToken(object):
         return urlencode(payload)
 
     def get(self):
+        if self._expiration and time.time() >= self._expiration:
+            self._token = None
+
         if self._token:
             return self._token
 
@@ -90,7 +95,11 @@ class KeycloakToken(object):
         except HTTPError as e:
             raise GalaxyError(e, 'Unable to get access token')
 
-        data = json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
+        data = json.load(resp)
+
+        # So that we have a buffer, expire the token in ~2/3 the given value
+        expires_in = data['expires_in'] // 3 * 2
+        self._expiration = time.time() + expires_in
 
         self._token = data.get('access_token')
         if token_type := data.get('token_type'):
