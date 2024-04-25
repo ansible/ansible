@@ -1,2 +1,2 @@
 - name: stop proxy.py
-  command: kill {{ proxy_py_pid.content|b64decode }}
+  command: kill {{ proxy_py_pid }}

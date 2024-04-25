@@ -32,7 +32,11 @@
 - name: get proxy.py pid
   slurp:
     path: '{{ remote_tmp_dir }}/proxy_py/proxy_py.pid'
-  register: proxy_py_pid
+  register: proxy_py_slurp_pid
+
+- name: set fact for proxy.py pid
+  set_fact:
+    proxy_py_pid: '{{ proxy_py_slurp_pid.content|b64decode }}'
 
 - name: set fact for proxy host
   set_fact:
