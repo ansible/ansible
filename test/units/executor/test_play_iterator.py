@@ -20,7 +20,7 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch, MagicMock
 
-from ansible.executor.play_iterator import HostState, PlayIterator, IteratingStates, FailedStates
+from ansible.executor.play_iterator import HostState, PlayIterator
 from ansible.playbook import Playbook
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import init_plugin_loader
