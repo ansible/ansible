@@ -267,6 +267,7 @@ class ConfigCLI(CLI):
         build a dict with the list requested configs
         '''
 
+        config_entries = {}
         if context.CLIARGS['type'] in ('base', 'all'):
             # this dumps main/common configs
             config_entries = self.config.get_configuration_definitions(ignore_private=True)
