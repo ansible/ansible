@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - assemble - update argument_spec with 'decrypt' option which is required by action plugin (https://github.com/ansible/ansible/issues/80840).

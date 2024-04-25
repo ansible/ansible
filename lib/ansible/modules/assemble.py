@@ -205,6 +205,11 @@ def main():
             regexp=dict(type='str'),
             ignore_hidden=dict(type='bool', default=False),
             validate=dict(type='str'),
+
+            # Options that are for the action plugin, but ignored by the module itself.
+            # We have them here so that the tests pass without ignores, which
+            # reduces the likelihood of further bugs added.
+            decrypt=dict(type='bool', default=True),
         ),
         add_file_common_args=True,
     )
