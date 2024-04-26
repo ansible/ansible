@@ -18,7 +18,6 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import ansible.constants as C
 from ansible import context
-from ansible.cli import galaxy
 from ansible.cli.galaxy import GalaxyCLI
 from ansible.errors import AnsibleError
 from ansible.galaxy import api, collection, token
