@@ -540,8 +540,8 @@ def main():
             break
 
         # substitute aliases for aliased
-        for aliased in ALIASES:
-            if pkgmgr in ALIASES[aliased]
+        for aliased in ALIASES.keys():
+            if pkgmgr in ALIASES[aliased]:
                 pkgmgr = aliased
                 break
 
