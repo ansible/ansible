@@ -50,6 +50,7 @@ options:
     version_added: "2.8"
 version_added: "2.5"
 requirements:
+    - See details per package manager in the O(manager) option.
 author:
   - Matthew Jones (@matburt)
   - Brian Coca (@bcoca)
@@ -260,7 +261,7 @@ from ansible.module_utils.facts.packages import LibMgr, CLIMgr, get_all_pkg_mana
 
 
 ALIASES = {
-    'rpm': ['dnf', 'dfn5','yum' , 'zypper'],
+    'rpm': ['dnf', 'dfn5', 'yum' , 'zypper'],
     'pkg': ['pkg5', 'pkgng'],
     'pkg_info': ['openbsd_pkg'],
 }
