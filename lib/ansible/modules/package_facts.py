@@ -23,20 +23,20 @@ options:
     default: ['auto']
     choices:
         auto: Depending on O(strategy), will match the first or all package managers provided, in order
-        rpm: For .rpm based distros, requires RPM Python bindings, not installed by default on Suse (python3-rpm)
+        rpm: For RPM based distros, requires RPM Python bindings, not installed by default on Suse (python3-rpm)
         yum: Alias to rpm
         dnf: Alias to rpm
         dnf5: Alias to rpm
         zypper: Alias to rpm
-        apt: For .deb based distros, C(python-apt) package must be installed on targeted hosts
+        apt: For DEB based distros, C(python-apt) package must be installed on targeted hosts
         portage: Handles ebuild packages, it requires the C(qlist) utility, which is part of 'app-portage/portage-utils'
         pkg: libpkg front end (FreeBSD)
         pkg5: Alias to pkg
         pkgng: Alias to pkg
-        pacman: Archlinux package managaer/builder
-        apk: Alpine linux package manager
+        pacman: Archlinux package manager/builder
+        apk: Alpine Linux package manager
         pkg_info: OpenBSD package manager
-        openbsd_pkg: Alias To pkg_info
+        openbsd_pkg: Alias to pkg_info
     type: list
     elements: str
   strategy:
@@ -44,7 +44,7 @@ options:
       - This option controls how the module queries the package managers on the system.
     choices:
         first: means it will return only information for the first supported package manager available.
-        all: will return information for all supported and available package managers on the system.
+        all: returns information for all supported and available package managers on the system.
     default: 'first'
     type: str
     version_added: "2.8"
@@ -261,7 +261,7 @@ from ansible.module_utils.facts.packages import LibMgr, CLIMgr, get_all_pkg_mana
 
 
 ALIASES = {
-    'rpm': ['dnf', 'dfn5', 'yum' , 'zypper'],
+    'rpm': ['dnf', 'dnf5', 'yum' , 'zypper'],
     'pkg': ['pkg5', 'pkgng'],
     'pkg_info': ['openbsd_pkg'],
 }
