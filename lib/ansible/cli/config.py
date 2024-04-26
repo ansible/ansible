@@ -577,7 +577,6 @@ class ConfigCLI(CLI):
             for setting in s_config.keys():
                 try:
                     v, o = C.config.get_config_value_and_origin(setting, plugin_type='galaxy_server', plugin_name=server, cfile=self.config_file)
-                    print(server, v, o)
                 except AnsibleError as e:
                     if to_text(e).startswith('No setting was provided for required configuration'):
                         v = None
