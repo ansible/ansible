@@ -85,7 +85,7 @@
     loop:
     - base
     - all
-  register: galaxy_server_dump
+    register: galaxy_server_dump
 
 #  - set_fact:
 #      galaxy_server_dump_base: '{{ (galaxy_server_dump.results[0].stdout | from_json | selectattr("GALAXY_SERVER", "defined"))}}'
