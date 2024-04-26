@@ -43,7 +43,7 @@ options:
     description:
       - This option controls how the module queries the package managers on the system.
     choices:
-        first: means it will return only information for the first supported package manager available.
+        first: returns only information for the first supported package manager available.
         all: returns information for all supported and available package managers on the system.
     default: 'first'
     type: str
