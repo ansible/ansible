@@ -253,11 +253,28 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 
 
-def write_changes(module, b_lines, dest):
+try:
+    import zos_util
+    is_ZOS = True
+except:
+  is_ZOS = False
 
+
+def write_changes(module, b_lines, dest):
     tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
-    with os.fdopen(tmpfd, 'wb') as f:
-        f.writelines(b_lines)
+    # if z/OS and file is tagged TEXT
+    if is_ZOS and zos_util.get_tag_info(dest)[1]:
+      ccsid = zos_util.get_tag_info(dest)[0]
+      if ccsid == 819:
+          with os.fdopen(tmpfd, 'w', encoding="utf-8") as f:
+              f.writelines([x.decode("utf-8") for x in b_lines])
+
+      elif ccsid == 1047:
+          with os.fdopen(tmpfd, 'w', encoding="cp1047") as f:
+              f.writelines([x.decode("utf-8") for x in b_lines])
+    else:
+      with os.fdopen(tmpfd, 'wb') as f:
+          f.writelines(b_lines)
 
     validate = module.params.get('validate', None)
     valid = not validate
@@ -309,8 +326,21 @@ def present(module, dest, regexp, search_string, line, insertafter, insertbefore
 
         b_lines = []
     else:
-        with open(b_dest, 'rb') as f:
-            b_lines = f.readlines()
+
+        ## z/OS modification ##
+        # if target is on z/OS and target file is tagged text:
+        if is_ZOS and zos_util.get_tag_info(dest)[1]:
+            # error handling..
+            try:
+                with open(b_dest, 'r') as f:
+                    b_lines = f.readlines()
+                b_lines = [x.encode('utf-8') for x in b_lines] #  back to bytes
+            except:
+                module.fail_json(msg='The file tagging may have been a little screwy. Also KETAN WAS HERE')
+        ## z/OS modification ##
+        else:
+            with open(b_dest, 'rb') as f:
+              b_lines = f.readlines()
 
     if module._diff:
         diff['before'] = to_native(b''.join(b_lines))
@@ -513,8 +543,20 @@ def absent(module, dest, regexp, search_string, line, backup):
             'before_header': '%s (content)' % dest,
             'after_header': '%s (content)' % dest}
 
-    with open(b_dest, 'rb') as f:
-        b_lines = f.readlines()
+    ## z/OS modification ##
+    # if target is on z/OS and target file is tagged text:
+    if is_ZOS and zos_util.get_tag_info(dest)[1]:
+        # error handling..
+        try:
+            with open(b_dest, 'r') as f:
+                b_lines = f.readlines()
+            b_lines = [x.encode('utf-8') for x in b_lines] #  back to bytes
+        except:
+            module.fail_json(msg='The file tagging may have been a little screwy. Also KETAN WAS HERE')
+    ## z/OS modification ##
+    else:
+      with open(b_dest, 'rb') as f:
+          b_lines = f.readlines()
 
     if module._diff:
         diff['before'] = to_native(b''.join(b_lines))
