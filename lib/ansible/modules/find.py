@@ -154,6 +154,14 @@ options:
             - When doing a C(contains) search, determine the encoding of the files to be searched.
         type: str
         version_added: "2.17"
+    max_matches:
+        description:
+            - Set the maximum number of matches to make before returning.
+            - Set to V(-1) for unlimited matches.
+            - Default is unlimited matches.
+        type: int
+        default: -1
+        version_added: "2.17"
 extends_documentation_fragment: action_common_attributes
 attributes:
     check_mode:
