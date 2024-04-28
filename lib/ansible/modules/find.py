@@ -602,6 +602,10 @@ def main():
                             r.update(statinfo(st))
                             filelist.append(r)
 
+                    if len(filelist) == params["max_matches"]:
+                        # Breaks out of directory files loop only
+                        break
+
                 if not params['recurse'] or len(filelist) == params["max_matches"]:
                     break
         except Exception as e:
