@@ -162,7 +162,7 @@ options:
             - Default is unlimited matches.
         type: int
         default: -1
-        version_added: "2.17"
+        version_added: "2.18"
 extends_documentation_fragment: action_common_attributes
 attributes:
     check_mode:
