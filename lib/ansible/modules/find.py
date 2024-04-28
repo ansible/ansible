@@ -236,6 +236,16 @@ EXAMPLES = r'''
       - '^_[0-9]{2,4}_.*.log$'
       - '^[a-z]{1,5}_.*log$'
 
+- name: Find file containing "wally" without necessarily reading all files
+  ansible.builtin.find:
+    paths: /var/log
+    file_type: file
+    contains: wally
+    read_whole_file: true
+    patterns: "^.*\\.log$"
+    use_regex: true
+    recurse: true
+    max_matches: 1
 '''
 
 RETURN = r'''
