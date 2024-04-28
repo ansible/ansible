@@ -521,9 +521,7 @@ def main():
         else:
             module.fail_json(size=params['size'], msg="failed to process size")
 
-    if params['max_matches'] == 0:
-        module.fail_json(msg="max_matches cannot be 0 (use -1 for unlimited)")
-    elif params['max_matches'] < -1:
+    if params['max_matches'] == 0 or params['max_matches'] < -1:
         module.fail_json(msg="max_matches cannot be %d (use -1 for unlimited)" % params['max_matches'])
 
     now = time.time()
