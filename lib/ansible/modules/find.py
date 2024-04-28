@@ -157,6 +157,7 @@ options:
     max_matches:
         description:
             - Set the maximum number of matches to make before returning.
+            - Matches are made from the top down (i.e. shallowest directory first).
             - Set to V(-1) for unlimited matches.
             - Default is unlimited matches.
         type: int
@@ -542,7 +543,8 @@ def main():
             if not os.path.isdir(npath):
                 raise Exception("'%s' is not a directory" % to_native(npath))
 
-            for root, dirs, files in os.walk(npath, onerror=handle_walk_errors, followlinks=params['follow']):
+            # Setting `topdown=True` to explicitly guarantee matches are made from the shallowest directory first
+            for root, dirs, files in os.walk(npath, onerror=handle_walk_errors, followlinks=params['follow'], topdown=True):
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
                     fsname = os.path.normpath(os.path.join(root, fsobj))
