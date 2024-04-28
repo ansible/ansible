@@ -157,7 +157,7 @@ options:
     max_matches:
         description:
             - Set the maximum number of matches to make before returning.
-            - Matches are made from the top down (i.e. shallowest directory first).
+            - Matches are made from the top, down (i.e. shallowest directory first).
             - Set to V(-1) for unlimited matches.
             - Default is unlimited matches.
         type: int
