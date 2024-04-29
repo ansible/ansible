@@ -4,6 +4,29 @@ ansible-core 2.17 "Gallows Pole" Release Notes
 
 .. contents:: Topics
 
+v2.17.0rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2024-04-29
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+Removed Features (previously deprecated)
+----------------------------------------
+
+- Removed Python 2.7 and Python 3.6 as a supported remote version. Python 3.7+ is now required for target execution.
+
+Bugfixes
+--------
+
+- Fix handlers not being executed in lockstep using the linear strategy in some cases (https://github.com/ansible/ansible/issues/82307)
+- ansible-config will now properly template defaults before dumping them.
+- ansible_managed restored it's 'templatability' by ensuring the possible injection routes are cut off earlier in the process.
+- dnf5 - replace removed API calls
+- facts - add a generic detection for VMware in product name.
+
 v2.17.0b1
 =========
 
@@ -180,6 +203,7 @@ Bugfixes
 - ansible-galaxy info - fix reporting no role found when lookup_role_by_name returns None.
 - ansible-galaxy role import - exit with 1 when the import fails (https://github.com/ansible/ansible/issues/82175).
 - ansible-galaxy role install - fix installing roles from Galaxy that have version ``None`` (https://github.com/ansible/ansible/issues/81832).
+- ansible-galaxy role install - fix symlinks (https://github.com/ansible/ansible/issues/82702, https://github.com/ansible/ansible/issues/81965).
 - ansible-galaxy role install - normalize tarfile paths and symlinks using ``ansible.utils.path.unfrackpath`` and consider them valid as long as the realpath is in the tarfile's role directory (https://github.com/ansible/ansible/issues/81965).
 - ansible-inventory - index available_hosts for major performance boost when dumping large inventories
 - ansible-pull now will expand relative paths for the ``-d|--directory`` option is now expanded before use.
