@@ -129,7 +129,7 @@ options:
     description:
       - I(Plugin) name to enable for the install/update operation.
         The enabled plugin will not persist beyond the transaction.
-      - O(disable_plugin) takes precedence in case a plugin is listed in both O(enable_plugin) and O(disable_plugin)
+      - O(disable_plugin) takes precedence in case a plugin is listed in both O(enable_plugin) and O(disable_plugin).
       - Requires python3-libdnf5 5.2.0.0+.
     type: list
     elements: str
