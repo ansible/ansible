@@ -442,11 +442,11 @@ class Dnf5Module(YumDnf):
         msg = []
         if enable_unmatched := set(self.enable_plugin).difference(plugin_names):
             msg.append(
-                f"No matches were found for the following plugin name patterns while enabling libdnf5 plugins: {", ".join(enable_unmatched)}."
+                f"No matches were found for the following plugin name patterns while enabling libdnf5 plugins: {', '.join(enable_unmatched)}."
             )
         if disable_unmatched := set(self.disable_plugin).difference(plugin_names):
             msg.append(
-                f"No matches were found for the following plugin name patterns while disabling libdnf5 plugins: {", ".join(disable_unmatched)}."
+                f"No matches were found for the following plugin name patterns while disabling libdnf5 plugins: {', '.join(disable_unmatched)}."
             )
         if msg:
             self.module.fail_json(msg=" ".join(msg))
