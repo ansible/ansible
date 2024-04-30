@@ -105,7 +105,6 @@ def ansible_environment(args: CommonConfig, color: bool = True, ansible_config: 
         ANSIBLE_HOST_KEY_CHECKING='false',
         ANSIBLE_RETRY_FILES_ENABLED='false',
         ANSIBLE_CONFIG=ansible_config,
-        ANSIBLE_LIB_ROOT=ANSIBLE_LIB_ROOT,  # used by the coverage injector
         ANSIBLE_LIBRARY='/dev/null',
         ANSIBLE_DEVEL_WARNING='false',  # Don't show warnings that CI is running devel
         PYTHONPATH=get_ansible_python_path(args),
@@ -116,6 +115,8 @@ def ansible_environment(args: CommonConfig, color: bool = True, ansible_config: 
         # enabled even when not using code coverage to surface warnings when worker processes do not exit cleanly
         ANSIBLE_WORKER_SHUTDOWN_POLL_COUNT='100',
         ANSIBLE_WORKER_SHUTDOWN_POLL_DELAY='0.1',
+        # ansible-test specific environment variables require an 'ANSIBLE_TEST_' prefix to distinguish them from ansible-core env vars defined by config
+        ANSIBLE_TEST_ANSIBLE_LIB_ROOT=ANSIBLE_LIB_ROOT,  # used by the coverage injector
     )
 
     if isinstance(args, IntegrationConfig) and args.coverage:
