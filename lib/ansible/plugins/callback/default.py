@@ -21,6 +21,7 @@ DOCUMENTATION = '''
 
 from ansible import constants as C
 from ansible import context
+from ansible.executor.task_result import TaskResult
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
@@ -47,7 +48,20 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).__init__()
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
+        # type: (TaskResult, bool) -> None
+        """Show result, output, and optional information, based on verbosity level, vars, and
+        ansible.cfg settings, if a task failed.
 
+        Customization notes - In this method:
+        - You can access TaskResult class methods and attributes like result.is_changed()
+          and result.task_name
+        - The ansible.executor.task_result.TaskResult class is defined in
+          lib/ansible/executor/task_result.py
+
+        :param TaskResult result: The result and output of a task
+        :param bool ignore_errors: The value of the ignore_errors vars
+        :return: None
+        """
         host_label = self.host_label(result)
         self._clean_results(result._result, result._task.action)
 
