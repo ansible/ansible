@@ -1296,10 +1296,11 @@ class DocCLI(CLI, RoleMixin):
 
             if doc.get('description'):
                 if isinstance(doc['description'], list):
-                    desc = " ".join(doc['description'])
+                    descs = doc['description']
                 else:
-                    desc = doc['description']
-                text.append("%s" % DocCLI.warp_fill(DocCLI.tty_ify(desc), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                    descs = [doc['description']]
+                for desc in descs:
+                    text.append("%s" % DocCLI.warp_fill(DocCLI.tty_ify(desc), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
                 text.append('')
 
             if doc.get('options'):
@@ -1355,12 +1356,13 @@ class DocCLI(CLI, RoleMixin):
         text.append("> %s %s (%s)" % (plugin_type.upper(), _format(doc.pop('plugin_name'), 'bold'), doc.pop('filename')))
 
         if isinstance(doc['description'], list):
-            desc = " ".join(doc.pop('description'))
+            descs = doc.pop('description')
         else:
-            desc = doc.pop('description')
+            descs = [doc.pop('description')]
 
         text.append('')
-        text.append(DocCLI.warp_fill(DocCLI.tty_ify(desc), limit, initial_indent=base_indent, subsequent_indent=base_indent))
+        for desc in descs:
+            text.append(DocCLI.warp_fill(DocCLI.tty_ify(desc), limit, initial_indent=base_indent, subsequent_indent=base_indent))
 
         if display.verbosity > 0:
             doc['added_in'] = DocCLI._format_version_added(doc.pop('version_added', 'historical'), doc.pop('version_added_collection', 'ansible-core'))
