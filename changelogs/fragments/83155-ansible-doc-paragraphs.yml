@@ -1,0 +1,2 @@
+bugfixes:
+  - "ansible-doc - format top-level descriptions with multiple paragraphs as multiple paragraphs, instead of concatenating them (https://github.com/ansible/ansible/pull/83155)."
