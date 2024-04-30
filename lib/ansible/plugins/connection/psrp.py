@@ -13,7 +13,7 @@ description:
   underlying transport but instead runs in a PowerShell interpreter.
 version_added: "2.7"
 requirements:
-- pypsrp>=0.4.0 (Python library)
+- pypsrp>=0.4.0, <1.0.0 (Python library)
 extends_documentation_fragment:
     - connection_pipelining
 options:
