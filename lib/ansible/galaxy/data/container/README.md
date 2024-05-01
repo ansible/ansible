@@ -1,3 +1,4 @@
+#SPDX-License-Identifier: MIT-0
 # Role Name
 
 Adds a <SERVICE_NAME> service to your [Ansible Container](https://github.com/ansible/ansible-container) project. Run the following commands
