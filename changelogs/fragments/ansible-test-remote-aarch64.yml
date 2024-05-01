@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Managed remote Linux and FreeBSD instance provisioning now defaults to aarch64 instead of x86_64.
