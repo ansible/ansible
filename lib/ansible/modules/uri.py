@@ -107,12 +107,14 @@ options:
     default: no
   follow_redirects:
     description:
-      - Whether or not the URI module should follow redirects. V(all) will follow all redirects.
-        V(safe) will follow only "safe" redirects, where "safe" means that the client is only
-        doing a GET or HEAD on the URI to which it is being redirected. V(none) will not follow
-        any redirects. Note that V(true) and V(false) choices are accepted for backwards compatibility,
-        where V(true) is the equivalent of V(all) and V(false) is the equivalent of V(safe). V(true) and V(false)
-        are deprecated and will be removed in some future version of Ansible.
+      - Whether or not the URI module should follow redirects.
+      - V(all) will follow all redirects.
+      - V(safe) will follow only "safe" redirects, where "safe" means that the client is only
+        doing a GET or HEAD on the URI to which it is being redirected.
+      - V(none) will not follow any redirects.
+      - Note that V(true) and V(false) choices are accepted for backwards compatibility,
+        where V(true) is the equivalent of V(all) and V(false) is the equivalent of V(safe).
+        V(true) and V(false) are deprecated and will be removed in Ansible 2.22.
     type: str
     choices: ['all', 'no', 'none', 'safe', 'urllib2', 'yes']
     default: safe
@@ -579,6 +581,12 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
     if dest is not None and os.path.isfile(dest):
         # if destination file already exist, only download if file newer
         kwargs['last_mod_time'] = utcfromtimestamp(os.path.getmtime(dest))
+
+    if module.params.get('follow_redirects') in ('no', 'yes'):
+        module.deprecate(
+            "Using 'yes' or 'no' for 'follow_redirects' parameter is deprecated.",
+            version='2.22'
+        )
 
     resp, info = fetch_url(module, url, data=data, headers=headers,
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
