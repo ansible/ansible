@@ -18,3 +18,7 @@ ATTRIBUTES:
           support: full
 
 AUTHOR: Ansible Core (@ansible)
+
+EXAMPLES:
+This is an example.
+It has two lines.

@@ -1339,6 +1339,17 @@ class DocCLI(CLI, RoleMixin):
                     # use empty indent since this affects the start of the yaml doc, not it's keys
                     text.append(DocCLI._indent_lines(DocCLI._dump_yaml({k.upper(): doc[k]}), ''))
 
+            if doc.get('examples', False):
+                text.append('')
+                text.append(_format("EXAMPLES:", 'bold'))
+                if isinstance(doc['examples'], string_types):
+                    text.append(doc.pop('examples').strip())
+                else:
+                    try:
+                        text.append(yaml_dump(doc.pop('examples'), indent=2, default_flow_style=False))
+                    except Exception as e:
+                        raise AnsibleParserError("Unable to parse examples section", orig_exc=e)
+
         return text
 
     @staticmethod
