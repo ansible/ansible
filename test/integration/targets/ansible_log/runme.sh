@@ -21,3 +21,6 @@ if [ "$rc" == "0" ]; then
     false  # fail if we found EXEC in stdout
 fi
 grep -q EXEC "${ALOG}"
+
+# Test that setting verbosity with no log won't crash
+ANSIBLE_LOG_VERBOSITY=2 ansible-playbook logit.yml
