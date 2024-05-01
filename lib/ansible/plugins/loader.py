@@ -409,10 +409,17 @@ class PluginLoader:
             if type_name in C.CONFIGURABLE_PLUGINS and not C.config.has_configuration_definition(type_name, name):
                 dstring = AnsibleLoader(getattr(module, 'DOCUMENTATION', ''), file_name=path).get_single_data()
 
-                # TODO: allow configurable plugins to use sidecar
-                # if not dstring:
-                #     filename, cn = find_plugin_docfile( name, type_name, self, [os.path.dirname(path)], C.YAML_DOC_EXTENSIONS)
-                #     # TODO: dstring = AnsibleLoader(, file_name=path).get_single_data()
+                # allow configurable plugins to use sidecar
+                if not dstring:
+                    # turns `community.general.module` into just `module`
+                    short_module_name = os.path.splitext(name)[1][1:]
+                    for extension in C.YAML_DOC_EXTENSIONS:
+                        possible_sidecar_file = os.path.join(os.path.dirname(path), short_module_name + extension)
+                        if not os.path.exists(possible_sidecar_file):
+                            continue
+                        with open(possible_sidecar_file) as fp:
+                            dstring = AnsibleLoader(fp).get_single_data().get("DOCUMENTATION", "")
+                            break
 
                 if dstring:
                     add_fragments(dstring, path, fragment_loader=fragment_loader, is_module=(type_name == 'module'))
