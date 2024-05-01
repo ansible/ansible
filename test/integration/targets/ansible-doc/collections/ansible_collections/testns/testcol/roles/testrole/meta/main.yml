@@ -28,3 +28,6 @@ argument_specs:
                 description: altopt1 description
                 type: "int"
                 required: true
+        examples: |-
+          This is an example.
+          It has two lines.
