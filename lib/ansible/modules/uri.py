@@ -108,14 +108,15 @@ options:
     default: no
   follow_redirects:
     description:
-      - Whether or not the URI module should follow redirects. C(all) will follow all redirects.
-        C(safe) will follow only "safe" redirects, where "safe" means that the client is only
-        doing a GET or HEAD on the URI to which it is being redirected. C(none) will not follow
-        any redirects. Note that C(true) and C(false) choices are accepted for backwards compatibility,
-        where C(true) is the equivalent of C(all) and C(false) is the equivalent of C(safe). C(true) and C(false)
-        are deprecated and will be removed in some future version of Ansible.
+      - Whether or not the URI module should follow redirects.
+    choices:
+      all: Will follow all redirects.
+      none: Will not follow any redirects.
+      safe: Only redirects doing GET or HEAD requests will be followed.
+      urllib2: Defer to urllib2 behavior (As of writing this follows HTTP redirects).
+      'no': (DEPRECATED, will be removed in the future version) alias of V(none).
+      'yes': (DEPRECATED, will be removed in the future version) alias of V(all).
     type: str
-    choices: ['all', 'no', 'none', 'safe', 'urllib2', 'yes']
     default: safe
   creates:
     description:
