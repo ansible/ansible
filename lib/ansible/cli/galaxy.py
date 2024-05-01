@@ -596,7 +596,8 @@ class GalaxyCLI(CLI):
 
         self.galaxy = Galaxy()
 
-        C.config.load_galaxy_server_defs(C.GALAXY_SERVER_LIST, C.GALAXY_SERVER_TIMEOUT)
+        # dynamically add per server config depending on declared servers
+        C.config.load_galaxy_server_defs(C.GALAXY_SERVER_LIST)
 
         galaxy_options = {}
         for optional_key in ['clear_response_cache', 'no_cache']:

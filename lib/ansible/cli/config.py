@@ -149,9 +149,9 @@ class ConfigCLI(CLI):
 
         super(ConfigCLI, self).run()
 
-        # initialize galaxy server options
-        self._galaxy_servers = [s for s in C.GALAXY_SERVER_LIST or [] if s]  # clean list
-        C.config.load_galaxy_server_defs(self._galaxy_servers, C.GALAXY_SERVER_TIMEOUT)
+        # initialize each galaxy server's options from known listed servers
+        self._galaxy_servers = [s for s in C.GALAXY_SERVER_LIST or [] if s]  # clean list, reused later here
+        C.config.load_galaxy_server_defs(self._galaxy_servers)
 
         if context.CLIARGS['config_file']:
             self.config_file = unfrackpath(context.CLIARGS['config_file'], follow=False)

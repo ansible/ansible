@@ -322,7 +322,7 @@ class ConfigManager(object):
         # ensure we always have config def entry
         self._base_defs['CONFIG_FILE'] = {'default': None, 'type': 'path'}
 
-    def load_galaxy_server_defs(self, server_list, default_timeout):
+    def load_galaxy_server_defs(self, server_list):
 
         def server_config_def(section, key, required, option_type):
             config_def = {
@@ -341,9 +341,9 @@ class ConfigManager(object):
             }
             if key in GALAXY_SERVER_ADDITIONAL:
                 config_def.update(GALAXY_SERVER_ADDITIONAL[key])
-                # handle default timeout by inheriting from passed in default_timeout
+                # ensure we always have a default timeout
                 if key == 'timeout' and 'default' not in config_def:
-                    config_def['default'] = default_timeout
+                    config_def['default'] = self.get_config_value('GALAXY_TIMEOUT')
 
             return config_def
 
