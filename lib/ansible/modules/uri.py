@@ -115,8 +115,8 @@ options:
       none: Will not follow any redirects.
       safe: Only redirects doing GET or HEAD requests will be followed.
       urllib2: Automatically follows HTTP redirects.
-      no: (DEPRECATED, removed in 2.22) alias of V(none).
-      yes: (DEPRECATED, removed in 2.22) alias of V(all).
+      'no': (DEPRECATED, removed in 2.22) alias of V(none).
+      'yes': (DEPRECATED, removed in 2.22) alias of V(all).
   creates:
     description:
       - A filename, when it already exists, this step will not be run.
