@@ -109,13 +109,13 @@ options:
   follow_redirects:
     description:
       - Whether or not the URI module should follow redirects.
-    choices:
-      all: Will follow all redirects.
-      none: Will not follow any redirects.
-      safe: Only redirects doing GET or HEAD requests will be followed.
-      urllib2: Defer to urllib2 behavior (As of writing this follows HTTP redirects).
-      'no': (DEPRECATED, will be removed in the future version) alias of V(none).
-      'yes': (DEPRECATED, will be removed in the future version) alias of V(all).
+      - V(all) Will follow all redirects.
+      - V(none) Will not follow any redirects.
+      - V(safe) Only redirects doing GET or HEAD requests will be followed.
+      - V(urllib2) Defer to urllib2 behavior (As of writing this follows HTTP redirects).
+      - V('no') (DEPRECATED, will be removed in the future version) alias of V(none).
+      - V('yes') (DEPRECATED, will be removed in the future version) alias of V(all).
+    choices: ['all', 'none', 'safe', 'urllib2', 'yes', 'no']
     type: str
     default: safe
   creates:
