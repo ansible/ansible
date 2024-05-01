@@ -87,9 +87,11 @@
     - all
     register: galaxy_server_dump
 
+  - debug: msg="{{ (galaxy_server_dump.results[1].stdout | from_json | rejectattr('name', 'defined')) }}"
+
   - set_fact:
-      galaxy_server_dump_base: '{{ (galaxy_server_dump.results[0].stdout | from_json | selectattr("GALAXY_SERVER", "defined"))}}'
-      galaxy_server_dump_all: '{{ (galaxy_server_dump.results[1].stdout | from_json | selectattr("GALAXY_SERVER", "defined")}}'
+      galaxy_server_dump_base: '{{ (galaxy_server_dump.results[0].stdout | from_json | rejectattr("name", "defined")) }}'
+      galaxy_server_dump_all: '{{ (galaxy_server_dump.results[1].stdout | from_json | rejectattr("name", "defined")) }}'
 
   - name: Check galaxy server values are present and match expectations
     vars:
@@ -119,14 +121,14 @@
           timeout:
       origin: '{{ role_path ~ "/files/galaxy_server.ini" }}'
     block:
-
+    - debug: var=galaxy_server_dump_base[2]
     - name: Check galaxy server config reflects what we expect
       assert:
         that:
         - (galaxy_server_dump_base | count) == 4
 
 
-        - galaxy_server_dump_base[2].keys() | list == ["test_galaxy"]
+        - galaxy_server_dump_base[2].keys() | list == ["GALAXY_SERVER.TEST_GALAXY"]
         #- (galaxy_server_dump_base[2].test_galaxy | selectattr("name", "equalto", "url"))[0].value == "https://galaxy-dev.ansible.com/"
 
 
