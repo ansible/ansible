@@ -307,7 +307,7 @@ class ValidRoleTests(object):
         for d in need_main_ymls:
             main_yml = os.path.join(self.role_dir, d, 'main.yml')
             self.assertTrue(os.path.exists(main_yml))
-            expected_string = "---\n# {0} file for {1}".format(d, self.role_name)
+            expected_string = "#SPDX-License-Identifier: MIT-0\n---\n# {0} file for {1}".format(d, self.role_name)
             with open(main_yml, 'r') as f:
                 self.assertEqual(expected_string, f.read().strip())
 
@@ -721,7 +721,7 @@ def test_collection_build(collection_artifact):
             elif file_entry['name'] == 'README.md':
                 assert file_entry['ftype'] == 'file'
                 assert file_entry['chksum_type'] == 'sha256'
-                assert file_entry['chksum_sha256'] == '6d8b5f9b5d53d346a8cd7638a0ec26e75e8d9773d952162779a49d25da6ef4f5'
+                assert file_entry['chksum_sha256'] == 'd072cd6bdb6bd56cd045ec50e07de2f6e8540511e679a29d73ce200cac951b08'
             else:
                 assert file_entry['ftype'] == 'dir'
                 assert file_entry['chksum_type'] is None
