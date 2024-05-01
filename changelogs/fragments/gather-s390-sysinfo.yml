@@ -1,0 +1,2 @@
+minor_changes:
+- fact gathering - Gather /proc/sysinfo facts on s390 Linux on Z
