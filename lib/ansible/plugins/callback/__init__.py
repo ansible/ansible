@@ -28,6 +28,7 @@ from collections.abc import MutableMapping
 from copy import deepcopy
 
 from ansible import constants as C
+from ansible.executor.task_result import TaskResult
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.six import text_type
 from ansible.parsing.ajson import AnsibleJSONEncoder
@@ -502,6 +503,20 @@ class CallbackBase(AnsiblePlugin):
         self.on_any(args, kwargs)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
+        # type: (TaskResult, bool) -> None
+        """Show result, output, and optional information, based on verbosity level, vars, and
+        ansible.cfg settings, if a task failed.
+
+        Customization notes - In this method:
+        - You can access TaskResult class methods and attributes like result.is_changed()
+          and result.task_name
+        - The ansible.executor.task_result.TaskResult class is defined in
+          lib/ansible/executor/task_result.py
+
+        :param TaskResult result: The result and output of a task
+        :param bool ignore_errors: The value of the ignore_errors vars
+        :return: None
+        """
         host = result._host.get_name()
         self.runner_on_failed(host, result._result, ignore_errors)
 
