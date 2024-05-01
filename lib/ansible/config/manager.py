@@ -343,7 +343,7 @@ class ConfigManager(object):
                 config_def.update(GALAXY_SERVER_ADDITIONAL[key])
                 # ensure we always have a default timeout
                 if key == 'timeout' and 'default' not in config_def:
-                    config_def['default'] = self.get_config_value('GALAXY_TIMEOUT')
+                    config_def['default'] = self.get_config_value('GALAXY_SERVER_TIMEOUT')
 
             return config_def
 
