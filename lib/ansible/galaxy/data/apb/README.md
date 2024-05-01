@@ -1,4 +1,3 @@
-#SPDX-License-Identifier: MIT-0
 APB Name
 =========
 
