@@ -99,12 +99,12 @@ options:
         - section: url_lookup
           key: follow_redirects
     choices:
-        - urllib2
-        - all
-        - 'yes'
-        - safe
-        - none
-        - 'no'
+      all: Will follow all redirects.
+      none: Will not follow any redirects.
+      safe: Only redirects doing GET or HEAD requests will be followed.
+      urllib2: Defer to urllib2 behavior (As of writing this follows HTTP redirects).
+      'no': (DEPRECATED, removed in 2.22) alias of V(none).
+      'yes': (DEPRECATED, removed in 2.22) alias of V(all).
   use_gssapi:
     description:
     - Use GSSAPI handler of requests
@@ -234,6 +234,11 @@ class LookupModule(LookupBase):
         ret = []
         for term in terms:
             display.vvvv("url lookup connecting to %s" % term)
+            if self.get_option('follow_redirects') in ('yes', 'no'):
+                display.deprecated(
+                    "Using 'yes' or 'no' for 'follow_redirects' parameter is deprecated.",
+                    version='2.22'
+                )
             try:
                 response = open_url(
                     term, validate_certs=self.get_option('validate_certs'),
