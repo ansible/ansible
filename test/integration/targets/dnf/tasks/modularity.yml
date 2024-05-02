@@ -1,12 +1,3 @@
-# FUTURE - look at including AppStream support in our local repo
-- name: Include distribution specific variables
-  include_vars: "{{ item }}"
-  with_first_found:
-    - files:
-        - "{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}.yml"
-        - "{{ ansible_facts.distribution }}.yml"
-      paths: ../vars
-
 - name: install "{{ astream_name }}" module
   dnf:
     name: "{{ astream_name }}"
