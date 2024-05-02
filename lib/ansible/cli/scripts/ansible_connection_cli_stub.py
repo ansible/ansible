@@ -1,10 +1,8 @@
-#!/usr/bin/env python
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
 import fcntl
-import hashlib
 import io
 import os
 import pickle
@@ -39,13 +37,6 @@ def read_stream(byte_stream):
     data = byte_stream.read(size)
     if len(data) < size:
         raise Exception("EOF found before data was complete")
-
-    data_hash = to_text(byte_stream.readline().strip())
-    if data_hash != hashlib.sha1(data).hexdigest():
-        raise Exception("Read {0} bytes, but data did not match checksum".format(size))
-
-    # restore escaped loose \r characters
-    data = data.replace(br'\r', b'\r')
 
     return data
 
@@ -221,7 +212,7 @@ def main(args=None):
     """ Called to initiate the connect to the remote device
     """
 
-    parser = opt_help.create_base_parser(prog='ansible-connection')
+    parser = opt_help.create_base_parser(prog=None)
     opt_help.add_verbosity_options(parser)
     parser.add_argument('playbook_pid')
     parser.add_argument('task_uuid')

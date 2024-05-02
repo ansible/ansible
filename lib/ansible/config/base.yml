@@ -1,6 +1,14 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
+_ANSIBLE_CONNECTION_PATH:
+  env:
+  - name: _ANSIBLE_CONNECTION_PATH
+  name: Overrides the location of the Ansible persistent connection helper script.
+  description:
+    - For internal use only.
+  type: path
+  version_added: "2.18"
 ANSIBLE_HOME:
   name: The Ansible home path
   description:
@@ -25,6 +33,9 @@ ANSIBLE_CONNECTION_PATH:
   - {key: ansible_connection_path, section: persistent_connection}
   yaml: {key: persistent_connection.ansible_connection_path}
   version_added: "2.8"
+  deprecated:
+    why: This setting has no effect.
+    version: "2.22"
 ANSIBLE_COW_SELECTION:
   name: Cowsay filter selection
   default: default
