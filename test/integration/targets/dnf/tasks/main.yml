@@ -57,12 +57,30 @@
     - ansible_distribution == 'Fedora'
     - ansible_distribution_major_version is version('23', '>=')
 
-- include_tasks: modularity.yml
-  when:
+- when:
     - (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('29', '>=')) or
       (ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('8', '>='))
-  tags:
-    - dnf_modularity
+    - not dnf5|default(false)
+  block:
+    # FUTURE - look at including AppStream support in our local repo
+    - name: list modules
+      command: dnf module list -q
+      register: module_list
+
+    # A module that only has a single version
+    - name: Find a module that meets our testing needs
+      set_fact:
+        astream_name: '@{{ module.name }}:{{ module.version }}/{{ module.profile }}'
+        astream_name_no_stream: '@{{ module.name }}/{{ module.profile }}'
+      vars:
+        module: '{{ module_list.stdout|get_first_single_version_module }}'
+
+    - include_tasks: modularity.yml
+      tags:
+        - dnf_modularity
+  rescue:
+    # Just in case something crazy happens when listing or parsing modules
+    - meta: noop
 
 - include_tasks: logging.yml
   when: (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('31', '>=')) or
