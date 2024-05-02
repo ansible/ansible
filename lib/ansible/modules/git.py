@@ -500,7 +500,7 @@ def set_git_ssh_env(key_file, ssh_opts, git_version, module):
     # older than 2.3 does not know how to use git_ssh_command,
     # so we force it into get_ssh var
     # https://github.com/gitster/git/commit/09d60d785c68c8fa65094ecbe46fbc2a38d0fc1f
-    if git_version < LooseVersion('2.3.0'):
+    if git_version is not None and git_version < LooseVersion('2.3.0'):
         # for use in wrapper
         os.environ["GIT_SSH_OPTS"] = ssh_opts
 
@@ -669,8 +669,6 @@ def get_diff(module, git_path, dest, repo, remote, depth, bare, before, after):
     elif before != after:
         # Ensure we have the object we are referring to during git diff !
         git_version_used = git_version(git_path, module)
-        if git_version_used is None:
-            module.fail_json(msg='Cannot find git executable at %s' % git_path)
         fetch(git_path, module, repo, dest, after, remote, depth, bare, '', git_version_used)
         cmd = '%s diff %s %s' % (git_path, before, after)
         (rc, out, err) = module.run_command(cmd, cwd=dest)
@@ -915,7 +913,7 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, g
             refspecs = ['+refs/heads/*:refs/heads/*', '+refs/tags/*:refs/tags/*']
         else:
             # ensure all tags are fetched
-            if git_version_used >= LooseVersion('1.9'):
+            if git_version_used is not None and git_version_used >= LooseVersion('1.9'):
                 fetch_cmd.append('--tags')
             else:
                 # old git versions have a bug in --tags that prevents updating existing tags
@@ -1306,13 +1304,11 @@ def main():
 
     # iface changes so need it to make decisions
     git_version_used = git_version(git_path, module)
-    if git_version_used is None:
-        module.fail_json(msg='Cannot find git executable at %s' % git_path)
 
     # GIT_SSH=<path> as an environment variable, might create sh wrapper script for older versions.
     set_git_ssh_env(key_file, ssh_opts, git_version_used, module)
 
-    if depth is not None and git_version_used < LooseVersion('1.9.1'):
+    if depth is not None and git_version_used is not None and git_version_used < LooseVersion('1.9.1'):
         module.warn("git version is too old to fully support the depth argument. Falling back to full checkouts.")
         depth = None
 
