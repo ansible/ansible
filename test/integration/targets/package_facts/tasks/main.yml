@@ -58,7 +58,9 @@
 
     - name: check for ansible_facts.packages exists
       assert:
-        that: ansible_facts.packages is defined
+        that:
+        	- ansible_facts.packages is defined
+        	- ansible_facts.packages | length > 1
   when: ansible_facts['os_family'] in ["openSUSE Leap", "Suse", "RedHat", "Debian"]
 
 # Check that auto detection works also
