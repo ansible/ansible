@@ -4,23 +4,23 @@
 from __future__ import annotations
 
 import os
-import pty
 import time
 import json
+import pathlib
 import signal
 import subprocess
 import sys
-import termios
 import traceback
 
 from ansible import constants as C
+from ansible.cli import scripts
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.task_result import TaskResult
 from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import binary_type
 from ansible.module_utils.common.text.converters import to_text, to_native
-from ansible.module_utils.connection import write_to_file_descriptor
+from ansible.module_utils.connection import write_to_stream
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.plugins import get_plugin_class
@@ -1179,26 +1179,19 @@ class TaskExecutor:
         return handler, module
 
 
+CLI_STUB_NAME = 'ansible_connection_cli_stub.py'
+
+
 def start_connection(play_context, options, task_uuid):
     '''
     Starts the persistent connection
     '''
-    candidate_paths = [C.ANSIBLE_CONNECTION_PATH or os.path.dirname(sys.argv[0])]
-    candidate_paths.extend(os.environ.get('PATH', '').split(os.pathsep))
-    for dirname in candidate_paths:
-        ansible_connection = os.path.join(dirname, 'ansible-connection')
-        if os.path.isfile(ansible_connection):
-            display.vvvv("Found ansible-connection at path {0}".format(ansible_connection))
-            break
-    else:
-        raise AnsibleError("Unable to find location of 'ansible-connection'. "
-                           "Please set or check the value of ANSIBLE_CONNECTION_PATH")
 
     env = os.environ.copy()
     env.update({
         # HACK; most of these paths may change during the controller's lifetime
         # (eg, due to late dynamic role includes, multi-playbook execution), without a way
-        # to invalidate/update, ansible-connection won't always see the same plugins the controller
+        # to invalidate/update, the persistent connection helper won't always see the same plugins the controller
         # can.
         'ANSIBLE_BECOME_PLUGINS': become_loader.print_paths(),
         'ANSIBLE_CLICONF_PLUGINS': cliconf_loader.print_paths(),
@@ -1211,30 +1204,19 @@ def start_connection(play_context, options, task_uuid):
     verbosity = []
     if display.verbosity:
         verbosity.append('-%s' % ('v' * display.verbosity))
-    python = sys.executable
-    master, slave = pty.openpty()
+
+    if not (cli_stub_path := C.config.get_config_value('_ANSIBLE_CONNECTION_PATH')):
+        cli_stub_path = str(pathlib.Path(scripts.__file__).parent / CLI_STUB_NAME)
+
     p = subprocess.Popen(
-        [python, ansible_connection, *verbosity, to_text(os.getppid()), to_text(task_uuid)],
-        stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+        [sys.executable, cli_stub_path, *verbosity, to_text(os.getppid()), to_text(task_uuid)],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
     )
-    os.close(slave)
 
-    # We need to set the pty into noncanonical mode. This ensures that we
-    # can receive lines longer than 4095 characters (plus newline) without
-    # truncating.
-    old = termios.tcgetattr(master)
-    new = termios.tcgetattr(master)
-    new[3] = new[3] & ~termios.ICANON
+    write_to_stream(p.stdin, options)
+    write_to_stream(p.stdin, play_context.serialize())
 
-    try:
-        termios.tcsetattr(master, termios.TCSANOW, new)
-        write_to_file_descriptor(master, options)
-        write_to_file_descriptor(master, play_context.serialize())
-
-        (stdout, stderr) = p.communicate()
-    finally:
-        termios.tcsetattr(master, termios.TCSANOW, old)
-    os.close(master)
+    (stdout, stderr) = p.communicate()
 
     if p.returncode == 0:
         result = json.loads(to_text(stdout, errors='surrogate_then_replace'))

@@ -300,6 +300,7 @@ def get_injector_path() -> str:
     injector_names = sorted(list(ANSIBLE_BIN_SYMLINK_MAP) + [
         'importer.py',
         'pytest',
+        'ansible_connection_cli_stub.py',
     ])
 
     scripts = (

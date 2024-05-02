@@ -115,14 +115,16 @@ def ansible_environment(args: CommonConfig, color: bool = True, ansible_config: 
         # enabled even when not using code coverage to surface warnings when worker processes do not exit cleanly
         ANSIBLE_WORKER_SHUTDOWN_POLL_COUNT='100',
         ANSIBLE_WORKER_SHUTDOWN_POLL_DELAY='0.1',
+        # ansible-test specific environment variables require an 'ANSIBLE_TEST_' prefix to distinguish them from ansible-core env vars defined by config
+        ANSIBLE_TEST_ANSIBLE_LIB_ROOT=ANSIBLE_LIB_ROOT,  # used by the coverage injector
     )
 
     if isinstance(args, IntegrationConfig) and args.coverage:
-        # standard path injection is not effective for ansible-connection, instead the location must be configured
-        # ansible-connection only requires the injector for code coverage
+        # standard path injection is not effective for the persistent connection helper, instead the location must be configured
+        # it only requires the injector for code coverage
         # the correct python interpreter is already selected using the sys.executable used to invoke ansible
         ansible.update(
-            ANSIBLE_CONNECTION_PATH=os.path.join(get_injector_path(), 'ansible-connection'),
+            _ANSIBLE_CONNECTION_PATH=os.path.join(get_injector_path(), 'ansible_connection_cli_stub.py'),
         )
 
     if isinstance(args, PosixIntegrationConfig):

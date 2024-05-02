@@ -37,7 +37,6 @@ SECCOMP_CHOICES = [
 ANSIBLE_BIN_SYMLINK_MAP = {
     'ansible': '../lib/ansible/cli/adhoc.py',
     'ansible-config': '../lib/ansible/cli/config.py',
-    'ansible-connection': '../lib/ansible/cli/scripts/ansible_connection_cli_stub.py',
     'ansible-console': '../lib/ansible/cli/console.py',
     'ansible-doc': '../lib/ansible/cli/doc.py',
     'ansible-galaxy': '../lib/ansible/cli/galaxy.py',

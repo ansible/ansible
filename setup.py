@@ -24,7 +24,6 @@ setup(
             'ansible-playbook=ansible.cli.playbook:main',
             'ansible-pull=ansible.cli.pull:main',
             'ansible-vault=ansible.cli.vault:main',
-            'ansible-connection=ansible.cli.scripts.ansible_connection_cli_stub:main',
         ],
     },
 )
