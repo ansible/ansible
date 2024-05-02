@@ -275,7 +275,7 @@ class ConfigCLI(CLI):
             # for base and all, we include galaxy servers
             config_entries['GALAXY_SERVERS'] = {}
             for server in self._galaxy_servers:
-                config_entries['GALAXY_SERVERS'][server.upper()] = self.config.get_configuration_definitions('galaxy_server', server)
+                config_entries['GALAXY_SERVERS'][server] = self.config.get_configuration_definitions('galaxy_server', server)
 
         if context.CLIARGS['type'] != 'base':
             config_entries['PLUGINS'] = {}
@@ -478,6 +478,8 @@ class ConfigCLI(CLI):
             else:
                 entry = {}
                 for key in config[setting]._fields:
+                    if key == 'type':
+                        continue
                     entry[key] = getattr(config[setting], key)
 
             if not context.CLIARGS['only_changed'] or changed:
@@ -572,7 +574,6 @@ class ConfigCLI(CLI):
         # add galaxy servers
         for server in self._galaxy_servers:
             server_config = {}
-            name = f'GALAXY_SERVER.{server.upper()}'
             s_config = self.config.get_configuration_definitions('galaxy_server', server)
             for setting in s_config.keys():
                 try:
@@ -589,11 +590,11 @@ class ConfigCLI(CLI):
                 server_config[setting] = Setting(setting, v, o, None)
             if context.CLIARGS['format'] == 'display':
                 if not context.CLIARGS['only_changed'] or server_config:
-                    equals = '=' * len(name)
-                    output.append(f'\n{name}\n{equals}')
+                    equals = '=' * len(server)
+                    output.append(f'\n{server}\n{equals}')
                     output.extend(self._render_settings(server_config))
             else:
-                output.append({name: server_config})
+                output.append({server: server_config})
 
         return output
 
@@ -607,7 +608,11 @@ class ConfigCLI(CLI):
             output = self._get_global_configs()
 
             # add galaxy servers
-            output.extend(self._get_galaxy_server_configs())
+            server_config_list = self._get_galaxy_server_configs()
+            if context.CLIARGS['format'] == 'display':
+                output.append('\nGALAXY_SERVERS:\n')
+            else:
+                output.append({'GALAXY_SERVERS': server_config_list})
 
         if context.CLIARGS['type'] == 'all':
             # add all plugins

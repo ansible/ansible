@@ -79,7 +79,6 @@
       release_galaxy:
       test_galaxy:
       my_galaxy_ng:
-    gen_keys: '{{expected.keys()|map("regex_replace", "^.+$", "GALAXY_SERVER.\1") }}'
   block:
   - ansible.builtin.command: ansible-config dump --type {{ item }} --format json
     loop:
@@ -87,11 +86,11 @@
     - all
     register: galaxy_server_dump
 
-  - debug: msg="{{ (galaxy_server_dump.results[1].stdout | from_json | rejectattr('name', 'defined')) }}"
+  - debug: msg='{{ (galaxy_server_dump.results[0].stdout | from_json) }}'
 
   - set_fact:
-      galaxy_server_dump_base: '{{ (galaxy_server_dump.results[0].stdout | from_json | rejectattr("name", "defined")) }}'
-      galaxy_server_dump_all: '{{ (galaxy_server_dump.results[1].stdout | from_json | rejectattr("name", "defined")) }}'
+      galaxy_server_dump_base: '{{ (galaxy_server_dump.results[0].stdout | from_json).get("GALAXY_SERVERS") }}'
+      #galaxy_server_dump_all: '{{ (galaxy_server_dump.results[1].stdout | from_json | rejectattr("name", "defined")) }}'
 
   - name: Check galaxy server values are present and match expectations
     vars:
