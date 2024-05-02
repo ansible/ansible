@@ -424,7 +424,7 @@ class Display(metaclass=Singleton):
                 msg2 = msg2 + u'\n'
 
             # Note: After Display() class is refactored need to update the log capture
-            # code in 'bin/ansible-connection' (and other relevant places).
+            # code in 'cli/scripts/ansible_connection_cli_stub.py' (and other relevant places).
             if not stderr:
                 fileobj = sys.stdout
             else:
