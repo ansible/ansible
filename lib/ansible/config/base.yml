@@ -1922,9 +1922,9 @@ TASK_TIMEOUT:
   default: 0
   description:
     - Set the maximum time (in seconds) for a task action to execute in.
-    - Timeout runs independently from templating or looping. 
+    - Timeout runs independently from templating or looping.
       It applies per each attempt of executing the task's action and remains unchanged by the total time spent on a task.
-    - When the action execution exceeds the timeout, Ansible interrupts the process. 
+    - When the action execution exceeds the timeout, Ansible interrupts the process.
       This is registered as a failure due to outside circumstances, not a task failure, to receive appropriate response and recovery process.
     - If set to 0 (the default) there is no timeout.
   env: [{name: ANSIBLE_TASK_TIMEOUT}]
