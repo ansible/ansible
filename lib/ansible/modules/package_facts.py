@@ -14,30 +14,43 @@ description:
 options:
   manager:
     description:
-      - The package manager used by the system so we can query the package information.
-      - Since 2.8 this is a list and can support multiple package managers per system.
+      - The package manager(s) used by the system so we can query the package information.
+        This is a list and can support multiple package managers per system, since version 2.8.
       - The 'portage' and 'pkg' options were added in version 2.8.
       - The 'apk' option was added in version 2.11.
       - The 'pkg_info' option was added in version 2.13.
+      - Aliases were added in 2.18, to support using C(auto={{ansible_facts['pkg_mgr']}})
     default: ['auto']
-    choices: ['auto', 'rpm', 'apt', 'portage', 'pkg', 'pacman', 'apk', 'pkg_info']
+    choices:
+        auto: Depending on O(strategy), will match the first or all package managers provided, in order
+        rpm: For RPM based distros, requires RPM Python bindings, not installed by default on Suse (python3-rpm)
+        yum: Alias to rpm
+        dnf: Alias to rpm
+        dnf5: Alias to rpm
+        zypper: Alias to rpm
+        apt: For DEB based distros, C(python-apt) package must be installed on targeted hosts
+        portage: Handles ebuild packages, it requires the C(qlist) utility, which is part of 'app-portage/portage-utils'
+        pkg: libpkg front end (FreeBSD)
+        pkg5: Alias to pkg
+        pkgng: Alias to pkg
+        pacman: Archlinux package manager/builder
+        apk: Alpine Linux package manager
+        pkg_info: OpenBSD package manager
+        openbsd_pkg: Alias to pkg_info
     type: list
     elements: str
   strategy:
     description:
       - This option controls how the module queries the package managers on the system.
-        V(first) means it will return only information for the first supported package manager available.
-        V(all) will return information for all supported and available package managers on the system.
-    choices: ['first', 'all']
+    choices:
+        first: returns only information for the first supported package manager available.
+        all: returns information for all supported and available package managers on the system.
     default: 'first'
     type: str
     version_added: "2.8"
 version_added: "2.5"
 requirements:
-    - For 'portage' support it requires the C(qlist) utility, which is part of 'app-portage/portage-utils'.
-    - For Debian-based systems C(python-apt) package must be installed on targeted hosts.
-    - For SUSE-based systems C(python3-rpm) package must be installed on targeted hosts.
-      This package is required because SUSE does not include RPM Python bindings by default.
+    - See details per package manager in the O(manager) option.
 author:
   - Matthew Jones (@matburt)
   - Brian Coca (@bcoca)
@@ -245,6 +258,13 @@ from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 from ansible.module_utils.facts.packages import LibMgr, CLIMgr, get_all_pkg_managers
+
+
+ALIASES = {
+    'rpm': ['dnf', 'dnf5', 'yum' , 'zypper'],
+    'pkg': ['pkg5', 'pkgng'],
+    'pkg_info': ['openbsd_pkg'],
+}
 
 
 class RPM(LibMgr):
@@ -485,9 +505,13 @@ def main():
     # get supported pkg managers
     PKG_MANAGERS = get_all_pkg_managers()
     PKG_MANAGER_NAMES = [x.lower() for x in PKG_MANAGERS.keys()]
+    # add aliases
+    PKG_MANAGER_NAMES.extend([alias for alist in ALIASES.values() for alias in alist])
 
     # start work
     global module
+
+    # choices are not set for 'manager' as they are computed dynamically and validated below instead of in argspec
     module = AnsibleModule(argument_spec=dict(manager={'type': 'list', 'elements': 'str', 'default': ['auto']},
                                               strategy={'choices': ['first', 'all'], 'default': 'first'}),
                            supports_check_mode=True)
@@ -513,12 +537,19 @@ def main():
     seen = set()
     for pkgmgr in managers:
 
-        if found and strategy == 'first':
+        if strategy == 'first' and found:
             break
+
+        # substitute aliases for aliased
+        for aliased in ALIASES.keys():
+            if pkgmgr in ALIASES[aliased]:
+                pkgmgr = aliased
+                break
 
         # dedupe as per above
         if pkgmgr in seen:
             continue
+
         seen.add(pkgmgr)
         try:
             try:
