@@ -1,0 +1,2 @@
+minor_changes:
+  - package_facts module now supports using aliases for supported package managers, for example managers=yum or managers=dnf will resolve to using the underlying rpm.
