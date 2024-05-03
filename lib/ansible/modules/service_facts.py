@@ -49,7 +49,7 @@ EXAMPLES = r'''
 - name: show only existing systemd services
   debug: msg={{existing_systemd_services}}
   vars:
-     existing_systemd_services: "{{ ansible_facts['services'].values() | selectattr('status', 'defined') | rejectattr('status', 'equalto', 'not-found') }}"
+     existing_systemd_services: "{{ ansible_facts['services'].values() | selectattr('source', 'equalsto', 'systemd') | rejectattr('status', 'equalto', 'not-found') }}"
 
 - name: restart systemd service if it exists
   service:
