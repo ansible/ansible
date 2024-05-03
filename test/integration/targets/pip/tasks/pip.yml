@@ -628,7 +628,7 @@
     chdir: checkout-dir # a relative path
     requirements: "{{ remote_tmp_dir}}/pipreq.txt" #we dont care about what we are trying to install here
     virtualenv: venv
-    virtualenv_command: python3 -m venv
+    virtualenv_command: "{{ ansible_python_interpreter }} -m venv"
   register: pip_output  # Registering the output of the pip task
 
 - assert:
