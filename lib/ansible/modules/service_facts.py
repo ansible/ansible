@@ -45,6 +45,18 @@ EXAMPLES = r'''
 - name: Print service facts
   ansible.builtin.debug:
     var: ansible_facts.services
+
+- name: show only existing systemd services
+  debug: msg={{existing_systemd_services}}
+  vars:
+     existing_systemd_services: '{{ ansible_facts['services'] | selectattr('status', 'defined') | rejectattr('status', 'equalto', 'not-found') }}'
+
+- name: restart systemd service if it exists
+  service:
+    state: restarted
+    name: ntpd.service
+  when: ansible_facts['services']['ntpd.service']['status'] | default('not-found') != 'not-found'
+
 '''
 
 RETURN = r'''
