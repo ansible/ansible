@@ -451,7 +451,7 @@ class Display(metaclass=Singleton):
 
     def _log(self, msg: str, color: str | None = None, caplevel: int | None = None):
 
-        if caplevel is None or self.log_verbosity > caplevel:
+        if logger and (caplevel is None or self.log_verbosity > caplevel):
             msg2 = msg.lstrip('\n')
 
             lvl = logging.INFO
@@ -462,6 +462,7 @@ class Display(metaclass=Singleton):
                 except KeyError:
                     # this should not happen, but JIC
                     raise AnsibleAssertionError('Invalid color supplied to display: %s' % color)
+
             # actually log
             logger.log(lvl, msg2)
 
