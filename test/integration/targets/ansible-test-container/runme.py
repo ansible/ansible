@@ -11,6 +11,7 @@ import functools
 import json
 import os
 import pathlib
+import platform
 import pwd
 import re
 import secrets
@@ -977,9 +978,11 @@ class DnfBootstrapper(Bootstrapper):
             # In Fedora 39, the current version of containerd, 1.6.23, prevents Docker from working.
             # The previously tested version, 1.6.19, did not have this issue.
             # See: https://bugzilla.redhat.com/show_bug.cgi?id=2237396
+            arch = platform.machine()
+
             run_command(
                 'dnf', 'install', '-y',
-                'https://kojipkgs.fedoraproject.org/packages/containerd/1.6.19/2.fc39/x86_64/containerd-1.6.19-2.fc39.x86_64.rpm'
+                f'https://kojipkgs.fedoraproject.org/packages/containerd/1.6.19/2.fc39/{arch}/containerd-1.6.19-2.fc39.{arch}.rpm'
             )
 
         if os_release.id == 'rhel':
