@@ -640,7 +640,7 @@ class TaskExecutor:
                 return dict(unreachable=True, msg=to_text(e))
             except TaskTimeoutError as e:
                 msg = 'The %s action failed to execute in the expected time frame (%d) and was terminated' % (self._task.action, self._task.timeout)
-                return dict(failed=True, msg=msg)
+                return dict(error='TaskTimeout',failed=True, msg=msg)
             finally:
                 if self._task.timeout:
                     signal.alarm(0)
