@@ -9105,6 +9105,8 @@ plugin_routing:
       redirect: community.general.pfexec
     pmrun:
       redirect: community.general.pmrun
+    run0:
+      redirect: community.general.run0
     sesu:
       redirect: community.general.sesu
     enable:
