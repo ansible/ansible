@@ -2,3 +2,11 @@
   pip:
     name: gssapi
     state: absent
+
+- name: Remove cacert from capath
+  file:
+    state: absent
+    path: "{{ capath.stdout }}/ansible-http-test.pem"
+
+- name: Unregister cacert
+  command: openssl rehash {{ capath.stdout }}
