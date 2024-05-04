@@ -962,8 +962,7 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
 
         if track_submodules:
             # Compare against submodule HEAD
-            # FIXME: determine this from .gitmodules
-            version = 'master'
+            version = '$(git config -f $toplevel/.gitmodules submodule.$name.branch || echo master)'
             after = get_submodule_versions(git_path, module, dest, '%s/%s' % (remote, version))
             if begin != after:
                 changed = True
