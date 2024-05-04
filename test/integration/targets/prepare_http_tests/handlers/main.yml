@@ -10,3 +10,9 @@
 
 - name: Unregister cacert
   command: openssl rehash {{ capath.stdout }}
+
+- name: Remove cacert from cafile
+  blockinfile:
+    path: "{{ capaths.cafile }}"
+    block: "{{ cacert_pem.content }}"
+    state: absent

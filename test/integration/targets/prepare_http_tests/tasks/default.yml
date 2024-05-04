@@ -45,20 +45,29 @@
         return_content: true
       register: cacert_pem
 
-    - name: Locate capath
-      command: '{{ ansible_python_interpreter }} -c "import ssl; print(ssl.get_default_verify_paths().capath)"'
-      register: capath
+    - name: Get cafile and capath
+      command: '{{ ansible_python_interpreter }} -c "import ssl, json; paths = ssl.get_default_verify_paths(); print(json.dumps(dict(cafile=paths.cafile, capath=paths.capath)));"'
+      register: capaths
 
-    - name: Assert capath is set
-      assert:
-        that: capath.stdout
+    - name: Parse cafile and capath
+      set_fact:
+        capaths: "{{ capaths.stdout | from_json }}"
 
     - name: Add cacert to capath
       copy:
         content: "{{ cacert_pem.content }}"
-        dest: "{{ capath.stdout }}/ansible-http-test.pem"
+        dest: "{{ capaths.capath }}/ansible-http-test.pem"
       notify: Remove cacert from capath
+      when: capaths.capath is not none
 
     - name: Register cacert
-      command: openssl rehash {{ capath.stdout }}
+      command: openssl rehash {{ capaths.capath }}
       notify: Unregister cacert
+      when: capaths.capath is not none
+
+    - name: Add cacert to cafile
+      blockinfile:
+        path: "{{ capaths.cafile }}"
+        block: "{{ cacert_pem.content }}"
+      notify: Remove cacert from cafile
+      when: capaths.capath is none
