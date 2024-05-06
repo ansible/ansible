@@ -885,3 +885,27 @@
     - dnf:
         name: langpacks-ja
         state: absent
+
+- name: test passing non existing plugins, should fail
+  block:
+    - dnf:
+        name: sos
+        enable_plugin: nonexisting
+      ignore_errors: true
+      register: enable_plugin_result
+
+    - dnf:
+        name: sos
+        disable_plugin: nonexisting
+      ignore_errors: true
+      register: disable_plugin_result
+
+    - assert:
+        that:
+          - enable_plugin_result is failed
+          - disable_plugin_result is failed
+          - '"No matches were found for the following plugin name patterns while enabling libdnf5 plugins: " in enable_plugin_result.msg'
+          - '"No matches were found for the following plugin name patterns while disabling libdnf5 plugins: " in disable_plugin_result.msg'
+          - '"nonexisting" in enable_plugin_result.msg'
+          - '"nonexisting" in disable_plugin_result.msg'
+  when: dnf5|default(false)
