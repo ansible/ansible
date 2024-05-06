@@ -4,7 +4,7 @@ This directory contains scripts useful for dealing with and maintaining
 backports. Scripts in it depend on pygithub, and expect a valid environment
 variable called `GITHUB_TOKEN`.
 
-To generate a Github token, go to https://github.com/settings/tokens/new
+To generate a Github token, go to <https://github.com/settings/tokens/new>
 
 ## `backport_of_line_adder.py`
 
