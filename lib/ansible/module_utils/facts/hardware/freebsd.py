@@ -173,13 +173,50 @@ class FreeBSDHardware(Hardware):
 
         sysdir = '/dev'
         device_facts['devices'] = {}
-        drives = re.compile(r'(ada?\d+|da\d+|a?cd\d+)')  # TODO: rc, disks, err = self.module.run_command("/sbin/sysctl kern.disks")
-        slices = re.compile(r'(ada?\d+s\d+\w*|da\d+s\d+\w*)')
+        # TODO: rc, disks, err = self.module.run_command("/sbin/sysctl kern.disks")
+        drives = re.compile(
+            r"""(?x)(
+              (?:
+                ada?   # ATA/SATA disk device
+                |da    # SCSI disk device
+                |a?cd  # SCSI CDROM drive
+                |amrd  # AMI MegaRAID drive
+                |idad  # Compaq RAID array
+                |ipsd  # IBM ServeRAID RAID array
+                |md    # md(4) disk device
+                |mfid  # LSI MegaRAID SAS array
+                |mlxd  # Mylex RAID disk
+                |twed  # 3ware ATA RAID array
+                |vtbd  # VirtIO Block Device
+              )\d+
+            )
+            """
+        )
+
+        slices = re.compile(
+            r"""(?x)(
+              (?:
+                ada?   # ATA/SATA disk device
+                |a?cd  # SCSI CDROM drive
+                |amrd  # AMI MegaRAID drive
+                |da    # SCSI disk device
+                |idad  # Compaq RAID array
+                |ipsd  # IBM ServeRAID RAID array
+                |md    # md(4) disk device
+                |mfid  # LSI MegaRAID SAS array
+                |mlxd  # Mylex RAID disk
+                |twed  # 3ware ATA RAID array
+                |vtbd  # VirtIO Block Device
+              )\d+[ps]\d+\w*
+            )
+            """
+        )
+
         if os.path.isdir(sysdir):
             dirlist = sorted(os.listdir(sysdir))
             for device in dirlist:
                 d = drives.match(device)
-                if d:
+                if d and d.group(1) not in device_facts['devices']:
                     device_facts['devices'][d.group(1)] = []
                 s = slices.match(device)
                 if s:

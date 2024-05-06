@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - freebsd - update disk and slices regex for fact gathering (https://github.com/ansible/ansible/pull/82081).
