@@ -1304,7 +1304,7 @@ class DocCLI(CLI, RoleMixin):
                 text.append('')
 
             if doc.get('options'):
-                text.append(_format("Options", 'bold') + " (%s inicates it is required):" % ("=" if C.ANSIBLE_NOCOLOR else 'red'))
+                text.append(_format("Options", 'bold') + " (%s indicates it is required):" % ("=" if C.ANSIBLE_NOCOLOR else 'red'))
                 DocCLI.add_fields(text, doc.pop('options'), limit, opt_indent)
 
             if doc.get('attributes', False):
@@ -1398,7 +1398,7 @@ class DocCLI(CLI, RoleMixin):
 
         if doc.get('options', False):
             text.append("")
-            text.append(_format("OPTIONS", 'bold') + " (%s inicates it is required):" % ("=" if C.ANSIBLE_NOCOLOR else 'red'))
+            text.append(_format("OPTIONS", 'bold') + " (%s indicates it is required):" % ("=" if C.ANSIBLE_NOCOLOR else 'red'))
             DocCLI.add_fields(text, doc.pop('options'), limit, opt_indent, man=(display.verbosity == 0))
 
         if doc.get('attributes', False):

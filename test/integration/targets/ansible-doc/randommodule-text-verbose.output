@@ -7,7 +7,7 @@ DEPRECATED:
 	Will be removed in: Ansible 3.0.0
 	Alternatives: Use some other module
 
-OPTIONS (= inicates it is required):
+OPTIONS (= indicates it is required):
 
 - sub     Suboptions.
         set_via:

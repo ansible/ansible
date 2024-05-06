@@ -1,6 +1,6 @@
   Test module
 
-OPTIONS (= inicates it is required):
+OPTIONS (= indicates it is required):
 
 - with_suboptions  An option with suboptions.
                     Use with care.

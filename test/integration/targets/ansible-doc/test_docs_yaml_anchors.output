@@ -1,6 +1,6 @@
   Test module
 
-OPTIONS (= inicates it is required):
+OPTIONS (= indicates it is required):
 
 - at_the_top  Short desc
         default: some string

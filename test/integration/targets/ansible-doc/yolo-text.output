@@ -2,7 +2,7 @@
 
   This is always true
 
-OPTIONS (= inicates it is required):
+OPTIONS (= indicates it is required):
 
 = _input  does not matter
         type: raw

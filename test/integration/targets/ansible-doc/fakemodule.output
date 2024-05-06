@@ -2,7 +2,7 @@
 
   this is a fake module
 
-OPTIONS (= inicates it is required):
+OPTIONS (= indicates it is required):
 
 - _notreal  really not a real option
         default: null
