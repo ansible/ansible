@@ -42,11 +42,12 @@ __all__ = ['TaskExecutor']
 
 
 class TaskTimeoutError(BaseException):
-    pass
-
+    def __init__(self, message="", frame=None):
+        self.frame = str(frame)
+        super(TaskTimeoutError, self).__init__(message)
 
 def task_timeout(signum, frame):
-    raise TaskTimeoutError
+    raise TaskTimeoutError(frame=frame)
 
 
 def remove_omit(task_args, omit_token):
@@ -640,7 +641,7 @@ class TaskExecutor:
                 return dict(unreachable=True, msg=to_text(e))
             except TaskTimeoutError as e:
                 msg = 'The %s action failed to execute in the expected time frame (%d) and was terminated' % (self._task.action, self._task.timeout)
-                return dict(failed=True, msg=msg)
+                return dict(failed=True, msg=msg, timedout=e.frame)
             finally:
                 if self._task.timeout:
                     signal.alarm(0)
