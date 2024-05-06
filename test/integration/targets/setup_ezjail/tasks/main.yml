@@ -1,0 +1,99 @@
+# Copyright (c) Ansible Project
+# GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+#
+# Instructions for setting up a jail
+# https://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/jails-ezjail.html
+#
+- name: Setup cloned interfaces
+  lineinfile:
+    dest: /etc/rc.conf
+    regexp: ^cloned_interfaces=lo1
+    line: cloned_interfaces=lo1
+
+- name: Activate cloned interfaces
+  command: "service netif cloneup"
+  changed_when: false
+
+- name: Add nat rule for cloned interfaces
+  copy:
+    dest: /etc/pf.conf
+    content: |
+      nat on {{ ansible_default_ipv4.interface }} from 127.0.1.0/24 -> {{ ansible_default_ipv4.interface }}:0
+    validate: "pfctl -nf %s"
+
+- name: Start pf firewall
+  service:
+    name: pf
+    state: started
+    enabled: true
+
+- name: Install ezjail
+  pkgng:
+    name: ezjail
+
+- name: Configure ezjail to use http
+  when: ansible_distribution_version is version('11.01', '>')
+  lineinfile:
+    dest: /usr/local/etc/ezjail.conf
+    regexp: ^ezjail_ftphost
+    line: ezjail_ftphost=http://ftp.freebsd.org
+
+- name: Configure ezjail to use archive for old freebsd releases
+  when: ansible_distribution_version is version('11.01', '<=')
+  lineinfile:
+    dest: /usr/local/etc/ezjail.conf
+    regexp: ^ezjail_ftphost
+    line: ezjail_ftphost=http://ftp-archive.freebsd.org
+
+- name: Start ezjail
+  ignore_errors: true
+  service:
+    name: ezjail
+    state: started
+    enabled: true
+
+- name: Redirect logs depending on verbosity
+  set_fact:
+    pkgng_jail_log_redirect: "2>&1 | tee -a /tmp/ezjail.log {{ '> /dev/null' if ansible_verbosity < 2 else '' }}"
+
+- name: Has ezjail
+  register: ezjail_base_jail
+  stat:
+    path: /usr/jails/basejail
+
+- name: Setup ezjail base
+  when: not ezjail_base_jail.stat.exists
+  shell: "ezjail-admin install {{ pkgng_jail_log_redirect }}"
+  changed_when: false
+
+- name: Has testjail
+  register: ezjail_test_jail
+  stat:
+    path: /usr/jails/testjail
+
+- name: Create testjail
+  when: not ezjail_test_jail.stat.exists
+  shell: "ezjail-admin create testjail 'lo1|127.0.1.1' {{ pkgng_jail_log_redirect }}"
+  changed_when: false
+
+- name: Configure testjail to use Cloudflare DNS
+  lineinfile:
+    dest: /usr/jails/testjail/etc/resolv.conf
+    regexp: "^nameserver[[:blank:]]+{{ item }}$"
+    line: "nameserver {{ item }}"
+    create: true
+  loop:
+    - "1.1.1.1"
+    - "1.0.0.1"
+
+- name: Is testjail running
+  shell: "jls | grep testjail"
+  changed_when: false
+  failed_when: false
+  register: is_testjail_up
+
+- name: Start testjail
+  when: is_testjail_up.rc == 1
+  command: "ezjail-admin start testjail"

@@ -1,0 +1,11 @@
+---
+# tasks file for test_ezjail
+- name: Is testjail running
+  shell: "jls | grep testjail"
+  changed_when: false
+  failed_when: false
+  register: is_testjail_up
+
+- name: Start testjail
+  when: is_testjail_up.rc == 1
+  command: "ezjail-admin start testjail"
