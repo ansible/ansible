@@ -13,7 +13,7 @@ DEPRECATED:
 	Will be removed in: Ansible 3.0.0
 	Alternatives: Use some other module
 
-OPTIONS (= inicates it is required):
+OPTIONS (= indicates it is required):
 
 - sub     Suboptions. Contains `sub.subtest', which can be set to `123'.
            You can use `TEST_ENV' to set this.
