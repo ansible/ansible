@@ -322,7 +322,11 @@ class ValidRoleTests(object):
         with open(os.path.join(self.role_dir, 'README.md'), 'r') as readme:
             contents = readme.read()
 
-        with open(os.path.join(self.role_skeleton_path, 'README.md'), 'r') as f:
+        if os.path.exists(os.path.join(self.role_skeleton_path, 'README.md.j2')):
+            readme_filename = 'README.md.j2'
+        else:
+            readme_filename = 'README.md'
+        with open(os.path.join(self.role_skeleton_path, readme_filename), 'r') as f:
             expected_contents = f.read()
 
         self.assertEqual(expected_contents, contents, msg='README.md does not match expected')
@@ -444,6 +448,14 @@ class TestGalaxyInitSkeleton(unittest.TestCase, ValidRoleTests):
             contents = f.read()
         expected_contents = '[defaults]\ntest_key = {{ test_variable }}'
         self.assertEqual(expected_contents, contents.strip(), msg="test.conf.j2 doesn't contain what it should, is it being rendered?")
+
+    def test_file_not_masked_by_template(self):
+        test_conf = os.path.join(self.role_dir, 'templates', 'test.conf')
+        self.assertTrue(os.path.exists(test_conf), msg="The test.conf file doesn't seem to exist, was it not copied because test.conf.j2 does exist too?")
+        with open(test_conf, 'r') as f:
+            contents = f.read()
+        expected_contents = '[defaults]\ntest_key = not_a_jinja_file_at_all'
+        self.assertEqual(expected_contents, contents.strip(), msg="test.conf doesn't contain what it should, is it being rendered?")
 
     def test_template_ignore_jinja_subfolder(self):
         test_conf_j2 = os.path.join(self.role_dir, 'templates', 'subfolder', 'test.conf.j2')

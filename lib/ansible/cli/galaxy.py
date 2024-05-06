@@ -1224,6 +1224,9 @@ class GalaxyCLI(CLI):
                         raise AnsibleError(f"Failed to create {galaxy_type.title()} {obj_name}. Templating {src_template} failed with the error: {e}") from e
                     with open(dest_file, 'wb') as df:
                         df.write(b_rendered)
+                elif f + '.j2' in files and not in_templates_dir:
+                    # We have two possible sources for the same file, we prefer the jinja template
+                    continue
                 else:
                     f_rel_path = os.path.relpath(os.path.join(root, f), obj_skeleton)
                     shutil.copyfile(os.path.join(root, f), os.path.join(obj_path, f_rel_path), follow_symlinks=False)

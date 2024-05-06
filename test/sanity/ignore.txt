@@ -189,7 +189,6 @@ lib/ansible/galaxy/data/network/README.md pymarkdown:line-length
 README.md pymarkdown:line-length
 test/integration/targets/ansible-vault/invalid_format/README.md pymarkdown:no-bare-urls
 test/support/README.md pymarkdown:no-bare-urls
-test/units/cli/test_data/role_skeleton/README.md pymarkdown:line-length
 test/integration/targets/find/files/hello_world.gbk no-smart-quotes
 test/integration/targets/find/files/hello_world.gbk no-unwanted-characters
 lib/ansible/galaxy/collection/__init__.py pylint:ansible-deprecated-version-comment  # 2.18 deprecation
