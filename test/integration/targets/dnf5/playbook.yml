@@ -11,9 +11,7 @@
             dnf5: true
             dnf_log_files:
               - /var/log/dnf5.log
-      when:
-        - ansible_distribution == 'Fedora'
-        - ansible_distribution_major_version is version('37', '>=')
+      when: ansible_distribution == 'Fedora'
       module_defaults:
         dnf:
           use_backend: dnf5
