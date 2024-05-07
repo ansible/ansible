@@ -393,20 +393,24 @@ class LinuxHardware(Hardware):
                 'product_version': 'system-version',
                 'system_vendor': 'system-manufacturer',
             }
-            for (k, v) in DMI_DICT.items():
-                if dmi_bin is not None:
-                    (rc, out, err) = self.module.run_command('%s -s %s' % (dmi_bin, v))
-                    if rc == 0:
-                        # Strip out commented lines (specific dmidecode output)
-                        thisvalue = ''.join([line for line in out.splitlines() if not line.startswith('#')])
-                        try:
-                            json.dumps(thisvalue)
-                        except UnicodeDecodeError:
-                            thisvalue = "NA"
+            if dmi_bin is None:
+                dmi_facts = dict.fromkeys(
+                    DMI_DICT.keys(),
+                    'NA'
+                )
+                return dmi_facts
 
-                        dmi_facts[k] = thisvalue
-                    else:
-                        dmi_facts[k] = 'NA'
+            for (k, v) in DMI_DICT.items():
+                (rc, out, err) = self.module.run_command('%s -s %s' % (dmi_bin, v))
+                if rc == 0:
+                    # Strip out commented lines (specific dmidecode output)
+                    thisvalue = ''.join([line for line in out.splitlines() if not line.startswith('#')])
+                    try:
+                        json.dumps(thisvalue)
+                    except UnicodeDecodeError:
+                        thisvalue = "NA"
+
+                    dmi_facts[k] = thisvalue
                 else:
                     dmi_facts[k] = 'NA'
 
