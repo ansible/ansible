@@ -19,7 +19,6 @@ from __future__ import annotations
 import struct
 import time
 
-from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.sysctl import get_sysctl
 
@@ -41,7 +40,7 @@ class DarwinHardware(Hardware):
     def populate(self, collected_facts=None):
         hardware_facts = {}
 
-        self.sysctl = get_sysctl(self.module, ['hw', 'machdep', 'kern'])
+        self.sysctl = get_sysctl(self.module, ['hw', 'machdep', 'kern', 'hw.model'])
         mac_facts = self.get_mac_facts()
         cpu_facts = self.get_cpu_facts()
         memory_facts = self.get_memory_facts()
@@ -67,9 +66,8 @@ class DarwinHardware(Hardware):
 
     def get_mac_facts(self):
         mac_facts = {}
-        rc, out, err = self.module.run_command("sysctl hw.model")
-        if rc == 0:
-            mac_facts['model'] = mac_facts['product_name'] = out.splitlines()[-1].split()[1]
+        if 'hw.model' in self.sysctl:
+            mac_facts['model'] = mac_facts['product_name'] = self.sysctl['hw.model']
         mac_facts['osversion'] = self.sysctl['kern.osversion']
         mac_facts['osrevision'] = self.sysctl['kern.osrevision']
 
@@ -96,9 +94,8 @@ class DarwinHardware(Hardware):
 
         total_used = 0
         page_size = 4096
-        try:
-            vm_stat_command = get_bin_path('vm_stat')
-        except ValueError:
+        vm_stat_command = self.module.get_bin_path('vm_stat')
+        if vm_stat_command is None:
             return memory_facts
 
         rc, out, err = self.module.run_command(vm_stat_command)
