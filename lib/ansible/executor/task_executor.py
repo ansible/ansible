@@ -46,6 +46,7 @@ class TaskTimeoutError(BaseException):
         self.frame = str(frame)
         super(TaskTimeoutError, self).__init__(message)
 
+
 def task_timeout(signum, frame):
     raise TaskTimeoutError(frame=frame)
 
