@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Darwin - add unit tests for Darwin hardware fact gathering.
