@@ -1,21 +1,4 @@
-# UNINSTALL 'python2-dnf'
-#  The `dnf` module has the smarts to auto-install the relevant python
-#  bindings.  To test, we will first uninstall python2-dnf (so that the tests
-#  on python2 will require python2-dnf)
-- name: check python2-dnf with rpm
-  shell: rpm -q python2-dnf
-  register: rpm_result
-  ignore_errors: true
-
-# Don't uninstall python2-dnf with the `dnf` module in case it needs to load
-# some dnf python files after the package is uninstalled.
-- name: uninstall python2-dnf with shell
-  shell: dnf -y remove python2-dnf
-  when: rpm_result is successful
-
 # UNINSTALL
-#   With 'python2-dnf' uninstalled, the first call to 'dnf' should install
-#   python2-dnf.
 - name: uninstall sos
   dnf:
     name: sos
@@ -549,17 +532,22 @@
     - "'results' in dnf_result"
     - landsidescalping_result.rc == 0
 
-# Fedora 28 (DNF 2) does not support this, just remove the package itself
-- name: remove landsidescalping package on Fedora 28
+- name: uninstall Custom Environment Group
   dnf:
-    name: landsidescalping
+    name: "@Custom Environment Group"
     state: absent
-  when: ansible_distribution == 'Fedora' and ansible_distribution_major_version|int <= 28
+  register: dnf_result
 
-# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-- name: remove Custom Environment Group
-  shell: dnf -y group install "Custom Environment Group" && dnf -y group remove "Custom Environment Group"
-  when: not (ansible_distribution == 'Fedora' and ansible_distribution_major_version|int <= 28)
+- name: check landsidescalping with rpm
+  command: rpm -q landsidescalping
+  register: landsidescalping_result
+  ignore_errors: yes
+
+- name: verify removal of the environment
+  assert:
+    that:
+      - dnf_result is changed
+      - landsidescalping_result.rc != 0
 
 # https://github.com/ansible/ansible/issues/39704
 - name: install non-existent rpm, state=latest
