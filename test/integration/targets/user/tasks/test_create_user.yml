@@ -81,13 +81,13 @@
 #https://github.com/ansible/ansible/issues/82490
 - name: Create a new user with custom shell to test ~ expansion
   user:
-    name: bob
+    name: doesnotmatter
     shell: ~/custom_shell
   register: user_create_result
 
 - name: Create a new user with custom shell to test ~ expansion second time should show ok not changed
   user:
-    name: bob
+    name: doesnotmatter
     shell: ~/custom_shell
   register: user_creation_result
 
