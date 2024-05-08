@@ -340,21 +340,6 @@ cache_update_time:
     returned: success, in some cases
     type: int
     sample: 1425828348000
-stdout:
-    description: output from apt
-    returned: success, when needed
-    type: str
-    sample: |-
-        Reading package lists...
-        Building dependency tree...
-        Reading state information...
-        The following extra packages will be installed:
-          apache2-bin ...
-stderr:
-    description: error output from apt
-    returned: success, when needed
-    type: str
-    sample: "AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to ..."
 '''  # NOQA
 
 # added to stave off future warnings about apt api

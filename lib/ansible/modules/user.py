@@ -437,16 +437,6 @@ ssh_public_key:
     'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC95opt4SPEC06tOYsJQJIuN23BbLMGmYo8ysVZQc4h2DZE9ugbjWWGS1/pweUGjVstgzMkBEeBCByaEf/RJKNecKRPeGd2Bw9DCj/bn5Z6rGfNENKBmo
     618mUJBvdlEgea96QGjOwSB7/gmonduC7gsWDMNcOdSE3wJMTim4lddiBx4RgC9yXsJ6Tkz9BHD73MXPpT5ETnse+A3fw3IGVSjaueVnlUyUmOBf7fzmZbhlFVXf2Zi2rFTXqvbdGHKkzpw1U8eB8xFPP7y
     d5u1u0e6Acju/8aZ/l17IDFiLke5IzlqIMRTEbDwLNeO84YQKWTm9fODHzhYe0yvxqLiK07 ansible-generated on host'
-stderr:
-  description: Standard error from running commands.
-  returned: When stderr is returned by a command that is run
-  type: str
-  sample: Group wheels does not exist
-stdout:
-  description: Standard output from running commands.
-  returned: When standard output is returned by the command that is run
-  type: str
-  sample:
 system:
   description: Whether or not the account is a system account.
   returned: When O(system) is passed to the module and the account does not exist
