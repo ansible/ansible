@@ -145,9 +145,11 @@ def get_password_value(module, pkg, question, vtype):
     if not desired_line:
         module.fail_json(msg="Failed to find the value '%s' from '%s'" % (question, pkg))
 
-    (dpkg, dquestion, dvtype, dvalue) = desired_line.split()
+    (dpkg, dquestion, dvtype, *dvalue) = desired_line.split()
     if dquestion == question and dvtype == vtype:
-        return dvalue
+        if len(dvalue) >= 1:
+            return dvalue[0]
+        return ''
     return ''
 
 
