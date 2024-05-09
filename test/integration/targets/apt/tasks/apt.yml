@@ -328,7 +328,7 @@
 - name: verify logical error message
   assert:
     that:
-      - "'Failed to fetch' in apt_result['msg']"
+      - "'Failed to update apt cache' in apt_result['msg']"
       - "'403' in apt_result['msg']"
 
 - name: Clean up

@@ -738,29 +738,38 @@ def main():
 
     if changed and not module.check_mode:
         try:
+            err = ''
             sourceslist.save()
             if update_cache:
-                err = ''
                 update_cache_retries = module.params.get('update_cache_retries')
                 update_cache_retry_max_delay = module.params.get('update_cache_retry_max_delay')
                 randomize = random.randint(0, 1000) / 1000.0
 
+                cache = apt.Cache()
                 for retry in range(update_cache_retries):
                     try:
-                        cache = apt.Cache()
                         cache.update()
                         break
-                    except apt.cache.FetchFailedException as e:
-                        err = to_native(e)
+                    except apt.cache.FetchFailedException as fetch_failed_exc:
+                        err = fetch_failed_exc
+                        module.warn(
+                            f"Failed to update cache after {retry + 1} due "
+                            f"to {to_native(fetch_failed_exc)} retry, retrying"
+                        )
 
                     # Use exponential backoff with a max fail count, plus a little bit of randomness
                     delay = 2 ** retry + randomize
                     if delay > update_cache_retry_max_delay:
                         delay = update_cache_retry_max_delay + randomize
                     time.sleep(delay)
+                    module.warn(f"Sleeping for {int(round(delay))} seconds, before attempting to update the cache again")
                 else:
                     revert_sources_list(sources_before, sources_after, sourceslist_before)
-                    module.fail_json(msg='Failed to update apt cache: %s' % (err if err else 'unknown reason'))
+                    msg = (
+                        f"Failed to update apt cache after {update_cache_retries} retries: "
+                        f"{err if err else 'unknown reason'}"
+                    )
+                    module.fail_json(msg=msg)
 
         except (OSError, IOError) as ex:
             revert_sources_list(sources_before, sources_after, sourceslist_before)
