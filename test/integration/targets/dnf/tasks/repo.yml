@@ -307,3 +307,88 @@
         - dinginessentail-with-weak-dep
         - dinginessentail-weak-dep
         state: absent
+
+- name: >
+    test that when a package providing a file is installed then installing by specifying the file doesn't result in
+    installing a different package providing the same file
+  block:
+    - dnf:
+        name: provides_foo_b
+        state: "{{ item }}"
+      loop:
+        - absent
+        - present
+
+    - dnf:
+        name: /foo.gif
+        state: present
+      register: dnf_result
+
+    - command: rpm -q package_foo_a
+      ignore_errors: true
+      register: rpm_result
+
+    - assert:
+        that:
+          - dnf_result is not changed
+          - rpm_result.rc == 1
+  always:
+    - name: Clean up
+      dnf:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - provides_foo_b
+
+- name: ensure that a package named "$str-$number-$str" is parsed correctly
+  block:
+    - dnf:
+        name: number-11-name-11.0
+        state: "{{ item }}"
+      loop:
+        - absent
+        - present
+
+    - dnf:
+        name: number-11-name
+        state: present
+      register: dnf_result
+
+    - assert:
+        that:
+          - dnf_result is not changed
+
+    - dnf:
+        name: number-11-name
+        state: latest
+        update_only: true
+      register: dnf_result
+
+    - assert:
+        that:
+          - dnf_result is changed
+  always:
+    - name: Clean up
+      dnf:
+        name: number-11-name
+        state: absent
+
+- name: test that epochs are handled the same way as via DNF on the command line
+  block:
+    - dnf:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - "epochone-1.0-1.noarch"
+        - "epochone-1.1-1.noarch"
+      register: dnf_results
+
+    - assert:
+        that:
+          - dnf_results["results"][0] is changed
+          - dnf_results["results"][1] is changed
+  always:
+    - name: Clean up
+      dnf:
+        name: epochone
+        state: absent
