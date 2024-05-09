@@ -1,0 +1,2 @@
+bugfixes:
+  - "linear strategy: fix handlers included via ``include_tasks`` handler to be executed in lockstep (https://github.com/ansible/ansible/issues/83019)"
