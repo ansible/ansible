@@ -33,7 +33,6 @@ options:
     required: true
     type: list
     elements: str
-    default: []
   state:
     description:
       - Whether to install (V(present)), or remove (V(absent)) a package.
