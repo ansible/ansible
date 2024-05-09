@@ -1,0 +1,9 @@
+deprecated_features:
+  - yum_repository - deprecate ``async`` option as it has been removed in RHEL 8 and will be removed in ansible-core 2.22.
+  - >-
+    yum_repository - the following options are deprecated: ``deltarpm_metadata_percentage``, ``gpgcakey``, ``http_caching``,
+    ``keepalive``, ``metadata_expire_filter``, ``mirrorlist_expire``, ``protect``, ``ssl_check_cert_permissions``,
+    ``ui_repoid_vars`` as they have no effect for dnf as an underlying package manager.
+    The options will be removed in ansible-core 2.22.
+minor_changes:
+  - yum_repository - add ``excludepkgs`` alias to the ``exclude`` option.
