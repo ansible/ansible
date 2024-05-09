@@ -177,8 +177,8 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-msg:
-  description: changed
+changed:
+  description: False if skipped due to O(creates)/O(removes) options, otherwise True
   returned: always
   type: bool
   sample: True
