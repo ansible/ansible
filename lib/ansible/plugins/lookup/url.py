@@ -88,7 +88,14 @@ options:
         - section: url_lookup
           key: force_basic_auth
   follow_redirects:
-    description: String of urllib2, all/yes, safe, none to determine how redirects are followed, see RedirectHandlerFactory for more information
+    description:
+      - String of urllib2, all/yes, safe, none to determine how redirects are followed, see RedirectHandlerFactory for more information.
+      - V(all) Will follow all redirects.
+      - V(none) Will not follow any redirects.
+      - V(safe) Only redirects doing GET or HEAD requests will be followed.
+      - V(urllib2) Defer to urllib2 behavior (As of writing this follows HTTP redirects).
+      - V('no') (DEPRECATED, will be removed in the future version) alias of V(none).
+      - V('yes') (DEPRECATED, will be removed in the future version) alias of V(all).
     type: string
     version_added: "2.10"
     default: 'urllib2'
@@ -99,6 +106,7 @@ options:
     ini:
         - section: url_lookup
           key: follow_redirects
+    choices: ['all', 'none', 'safe', 'urllib2', 'yes', 'no']
   use_gssapi:
     description:
     - Use GSSAPI handler of requests
