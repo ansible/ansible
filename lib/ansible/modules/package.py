@@ -31,6 +31,9 @@ options:
       - Package names also vary with package manager; this module will not "translate" them per distribution. For example V(libyaml-dev), V(libyaml-devel).
       - To operate on several packages this can accept a comma separated string of packages or a list of packages, depending on the underlying package manager.
     required: true
+    type: list
+    elements: str
+    default: []
   state:
     description:
       - Whether to install (V(present)), or remove (V(absent)) a package.
