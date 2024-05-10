@@ -919,7 +919,7 @@ class DnfModule(YumDnf):
                 else:
                     return True         # No stream provided, but module found
 
-        return False  # seems like a sane default
+        return False  # seems like a logical default
 
     def ensure(self):
 
