@@ -611,6 +611,7 @@ class ConfigCLI(CLI):
             server_config_list = self._get_galaxy_server_configs()
             if context.CLIARGS['format'] == 'display':
                 output.append('\nGALAXY_SERVERS:\n')
+                output.extend(server_config_list)
             else:
                 output.append({'GALAXY_SERVERS': server_config_list})
 
