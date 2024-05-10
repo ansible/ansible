@@ -319,13 +319,13 @@
     dest: /etc/apt/sources.list.d/non-existing.list
     content: deb http://ppa.launchpad.net/non-existing trusty main
 
-- name: test for sane error message
+- name: test for logical error message
   apt:
     update_cache: yes
   register: apt_result
   ignore_errors: yes
 
-- name: verify sane error message
+- name: verify logical error message
   assert:
     that:
       - "'Failed to fetch' in apt_result['msg']"
