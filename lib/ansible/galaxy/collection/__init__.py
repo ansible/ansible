@@ -516,6 +516,7 @@ def download_collections(
         apis,  # type: t.Iterable[GalaxyAPI]
         no_deps,  # type: bool
         allow_pre_release,  # type: bool
+        forbid_inevitable_pre_releases,  # type: bool
         artifacts_manager,  # type: ConcreteArtifactsManager
 ):  # type: (...) -> None
     """Download Ansible collections as their tarball from a Galaxy server to the path specified and creates a requirements
@@ -527,6 +528,7 @@ def download_collections(
     :param validate_certs: Whether to validate the certificate if downloading a tarball from a non-Galaxy host.
     :param no_deps: Ignore any collection dependencies and only download the base requirements.
     :param allow_pre_release: Do not ignore pre-release versions when selecting the latest.
+    :param forbid_inevitable_pre_releases: Error out if the dependency tree requires pre-releases.
     """
     with _display_progress("Process download dependency map"):
         dep_map = _resolve_depenency_map(
@@ -536,6 +538,7 @@ def download_collections(
             concrete_artifacts_manager=artifacts_manager,
             no_deps=no_deps,
             allow_pre_release=allow_pre_release,
+            forbid_inevitable_pre_releases=forbid_inevitable_pre_releases,
             upgrade=False,
             # Avoid overhead getting signatures since they are not currently applicable to downloaded collections
             include_signatures=False,
@@ -659,6 +662,7 @@ def install_collections(
         force_deps,  # type: bool
         upgrade,  # type: bool
         allow_pre_release,  # type: bool
+        forbid_inevitable_pre_releases,  # type: bool
         artifacts_manager,  # type: ConcreteArtifactsManager
         disable_gpg_verify,  # type: bool
         offline,  # type: bool
@@ -674,6 +678,7 @@ def install_collections(
     :param no_deps: Ignore any collection dependencies and only install the base requirements.
     :param force: Re-install a collection if it has already been installed.
     :param force_deps: Re-install a collection as well as its dependencies if they have already been installed.
+    :param forbid_inevitable_pre_releases: Error out if the dependency tree requires pre-releases.
     """
     existing_collections = {
         Requirement(coll.fqcn, coll.ver, coll.src, coll.type, None)
@@ -739,6 +744,7 @@ def install_collections(
             concrete_artifacts_manager=artifacts_manager,
             no_deps=no_deps,
             allow_pre_release=allow_pre_release,
+            forbid_inevitable_pre_releases=forbid_inevitable_pre_releases,
             upgrade=upgrade,
             include_signatures=not disable_gpg_verify,
             offline=offline,
@@ -1803,6 +1809,7 @@ def _resolve_depenency_map(
         preferred_candidates,  # type: t.Iterable[Candidate] | None
         no_deps,  # type: bool
         allow_pre_release,  # type: bool
+        forbid_inevitable_pre_releases,  # type: bool
         upgrade,  # type: bool
         include_signatures,  # type: bool
         offline,  # type: bool
@@ -1849,7 +1856,7 @@ def _resolve_depenency_map(
         offline=offline,
     )
     try:
-        return collection_dep_resolver.resolve(
+        dependency_map = collection_dep_resolver.resolve(
             requested_requirements,
             max_rounds=2000000,  # NOTE: same constant pip uses
         ).mapping
@@ -1903,3 +1910,27 @@ def _resolve_depenency_map(
         raise AnsibleError('\n'.join(error_msg_lines)) from dep_exc
     except ValueError as exc:
         raise AnsibleError(to_native(exc)) from exc
+    else:
+        if not allow_pre_release:
+            pre_release_candidates = tuple(
+                concrete_coll_pin
+                for concrete_coll_pin in dependency_map.values()
+                if concrete_coll_pin.is_pre_release
+            )
+            if pre_release_candidates:
+                log_msg_lines = [
+                    'The pre-release collections versions have been selected, '
+                    'being the only way to satisfy the dependency tree '
+                    'constraints, despite the user not requesting them '
+                    'globally:',
+                ]
+                for collection_candidate in pre_release_candidates:
+                    log_msg_lines.append(f'* {collection_candidate!s}')
+                log_msg_lines.append(pre_release_hint)
+                log_msg = '\n'.join(log_msg_lines)
+                if forbid_inevitable_pre_releases:
+                    raise AnsibleError(log_msg) from None
+                else:
+                    display.warning(log_msg, formatted=True)
+
+        return dependency_map

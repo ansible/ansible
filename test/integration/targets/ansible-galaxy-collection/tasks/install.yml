@@ -105,6 +105,9 @@
     that:
     - '"Installing ''namespace1.name1:1.1.0-beta.1'' to" in install_prerelease.stdout'
     - (install_prerelease_actual.content | b64decode | from_json).collection_info.version == '1.1.0-beta.1'
+    - >-
+      'The pre-release collections versions have been selected'
+      in install_prerelease.stderr
 
 - name: Remove beta
   file:
@@ -134,6 +137,12 @@
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
     ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
   register: install_multiple_with_dep
+
+- assert:
+    that:
+    - >-
+      'The pre-release collections versions have been selected'
+      not in install_multiple_with_dep.stderr
 
 - name: get result of install multiple collections with dependencies - {{ test_id }}
   slurp:
