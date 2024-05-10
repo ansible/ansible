@@ -15,6 +15,7 @@ from .config import (
 
 from .host_configs import (
     PosixConfig,
+    DockerConfig,
 )
 
 from .util import (
@@ -54,8 +55,15 @@ def run_pypi_proxy(args, targets_use_pypi):  # type: (EnvironmentConfig, bool) -
     if args.pypi_endpoint:
         return  # user has overridden the proxy endpoint, there is nothing to provision
 
+    versions_needing_proxy: tuple[str, ...] = ('2.6',)
+    containers_needing_proxy: set[str] = {'centos7'}
     posix_targets = [target for target in args.targets if isinstance(target, PosixConfig)]
-    need_proxy = targets_use_pypi and any(target.python.version == '2.6' for target in posix_targets)
+    need_proxy = targets_use_pypi and any(
+        target.python.version in versions_needing_proxy or
+        (isinstance(target, DockerConfig) and target.name in containers_needing_proxy)
+        for target in posix_targets
+    )
+
     use_proxy = args.pypi_proxy or need_proxy
 
     if not use_proxy:
