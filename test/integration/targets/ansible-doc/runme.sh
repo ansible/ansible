@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# always set sane error behaviors, enable execution tracing later if sufficient verbosity requested
+# always set logical error behaviors, enable execution tracing later if sufficient verbosity requested
 set -eu
 
 verbosity=0
