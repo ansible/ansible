@@ -944,6 +944,28 @@ releases:
     - unarchive_fix.yml
     - winrm-task-timeout.yml
     release_date: '2024-04-16'
+  2.15.12rc1:
+    changes:
+      bugfixes:
+      - Add a version ceiling constraint for pypsrp to avoid potential breaking changes
+        in the 1.0.0 release.
+      - ansible-test - Automatically enable the PyPI proxy for the ``centos7`` container
+        to restore the ability to use ``pip`` in that container.
+      - facts - add a generic detection for VMware in product name.
+      - uri - update the documentation for follow_redirects.
+      release_summary: '| Release Date: 2024-05-13
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+        '
+    codename: Ten Years Gone
+    fragments:
+    - 2.15.12rc1_summary.yaml
+    - ansible-test-centos7-pypi-proxy.yml
+    - psrp-version-req.yml
+    - uri_follow_redirect_bool.yml
+    - vmware_facts.yml
+    release_date: '2024-05-13'
   2.15.1rc1:
     changes:
       bugfixes:
@@ -1396,6 +1418,8 @@ releases:
       - '``ansible-test sanity --test runtime-metadata`` - add ``action_plugin`` as
         a valid field for modules in the schema (https://github.com/ansible/ansible/pull/82562).'
       - ansible-config init will now dedupe ini entries from plugins.
+      - ansible-galaxy role install - fix symlinks (https://github.com/ansible/ansible/issues/82702,
+        https://github.com/ansible/ansible/issues/81965).
       - ansible-galaxy role install - normalize tarfile paths and symlinks using ``ansible.utils.path.unfrackpath``
         and consider them valid as long as the realpath is in the tarfile's role directory
         (https://github.com/ansible/ansible/issues/81965).
