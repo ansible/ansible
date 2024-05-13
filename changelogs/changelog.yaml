@@ -652,3 +652,27 @@ releases:
     - python-support.yml
     - vmware_facts.yml
     release_date: '2024-04-29'
+  2.17.0rc2:
+    changes:
+      bugfixes:
+      - Add a version ceiling constraint for pypsrp to avoid potential breaking changes
+        in the 1.0.0 release.
+      - ansible-doc - fixed "inicates" typo in output
+      - ansible-doc - format top-level descriptions with multiple paragraphs as multiple
+        paragraphs, instead of concatenating them (https://github.com/ansible/ansible/pull/83155).
+      - ensure we have logger before we log when we have increased verbosity.
+      - uri - update the documentation for follow_redirects.
+      release_summary: '| Release Date: 2024-05-13
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+        '
+    codename: Gallows Pole
+    fragments:
+    - 2.17.0rc2_summary.yaml
+    - 83155-ansible-doc-paragraphs.yml
+    - ansible-doc-inicate.yml
+    - fix_log_verbosity.yml
+    - psrp-version-req.yml
+    - uri_follow_redirect_bool.yml
+    release_date: '2024-05-13'
