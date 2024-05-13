@@ -1016,6 +1016,8 @@ releases:
       bugfixes:
       - '``ansible-test sanity --test runtime-metadata`` - add ``action_plugin`` as
         a valid field for modules in the schema (https://github.com/ansible/ansible/pull/82562).'
+      - ansible-galaxy role install - fix symlinks (https://github.com/ansible/ansible/issues/82702,
+        https://github.com/ansible/ansible/issues/81965).
       - ansible-galaxy role install - normalize tarfile paths and symlinks using ``ansible.utils.path.unfrackpath``
         and consider them valid as long as the realpath is in the tarfile's role directory
         (https://github.com/ansible/ansible/issues/81965).
@@ -1102,6 +1104,21 @@ releases:
     - 82574-ansible-test-ansible-doc-underscore.yml
     - winrm-task-timeout.yml
     release_date: '2024-04-16'
+  2.14.17rc1:
+    changes:
+      bugfixes:
+      - ansible-test - Automatically enable the PyPI proxy for the ``centos7`` container
+        to restore the ability to use ``pip`` in that container.
+      release_summary: '| Release Date: 2024-05-13
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.14/porting_guides/porting_guide_core_2.14.html>`__
+
+        '
+    codename: C'mon Everybody
+    fragments:
+    - 2.14.17rc1_summary.yaml
+    - ansible-test-centos7-pypi-proxy.yml
+    release_date: '2024-05-13'
   2.14.1rc1:
     changes:
       bugfixes:
