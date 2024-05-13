@@ -4,6 +4,24 @@ ansible-core 2.17 "Gallows Pole" Release Notes
 
 .. contents:: Topics
 
+v2.17.0rc2
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2024-05-13
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+Bugfixes
+--------
+
+- Add a version ceiling constraint for pypsrp to avoid potential breaking changes in the 1.0.0 release.
+- ansible-doc - fixed "inicates" typo in output
+- ansible-doc - format top-level descriptions with multiple paragraphs as multiple paragraphs, instead of concatenating them (https://github.com/ansible/ansible/pull/83155).
+- ensure we have logger before we log when we have increased verbosity.
+- uri - update the documentation for follow_redirects.
+
 v2.17.0rc1
 ==========
 
