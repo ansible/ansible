@@ -115,6 +115,13 @@ class StrategyModule(StrategyBase):
                     # some work which needs to be done
                     work_to_do = True
 
+                if workers_free == 0 and work_to_do:
+                    # If we have no workers free, break out of the queueing loop.
+                    # This is generally not needed, but meta tasks don't block the host in a meaningful way
+                    # and the below check of the host being blocked doesn't prevent additional tasks from being
+                    # queued for arbitrary hosts which causes an issue with host_pinned and fork affinity
+                    break
+
                 if not self._tqm._unreachable_hosts.get(host_name, False) and task:
                     # check to see if this host is blocked (still executing a previous task)
                     if not self._blocked_hosts.get(host_name, False):
