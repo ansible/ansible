@@ -5,6 +5,36 @@ ansible-core 2.16 "All My Love" Release Notes
 .. contents:: Topics
 
 
+v2.16.7rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2024-05-13
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible.builtin.user - Remove user not found warning (https://github.com/ansible/ansible/issues/80267)
+
+Bugfixes
+--------
+
+- Add a version ceiling constraint for pypsrp to avoid potential breaking changes in the 1.0.0 release.
+- Fix NEVRA parsing of package names that include digit(s) in them (https://github.com/ansible/ansible/issues/76463, https://github.com/ansible/ansible/issues/81018)
+- Fix handlers not being executed in lockstep using the linear strategy in some cases (https://github.com/ansible/ansible/issues/82307)
+- Give the tombstone error for ``include`` pre-fork like other tombstoned action/module plugins.
+- Include the task location when a module or action plugin is deprecated (https://github.com/ansible/ansible/issues/82450).
+- Mirror the behavior of dnf on the command line when handling NEVRAs with omitted epoch (https://github.com/ansible/ansible/issues/71808)
+- ansible-test - Automatically enable the PyPI proxy for the ``centos7`` container to restore the ability to use ``pip`` in that container.
+- ansible_managed restored it's 'templatability' by ensuring the possible injection routes are cut off earlier in the process.
+- assemble - fixed missing parameter 'content' in _get_diff_data API (https://github.com/ansible/ansible/issues/82359).
+- dnf - fix an issue when installing a package by specifying a file it provides could result in installing a different package providing the same file than the package already installed resulting in resolution failure (https://github.com/ansible/ansible/issues/82461)
+- uri - update the documentation for follow_redirects.
+
 v2.16.6
 =======
 
@@ -100,6 +130,7 @@ Bugfixes
 - ``ansible-test sanity --test runtime-metadata`` - add ``action_plugin`` as a valid field for modules in the schema (https://github.com/ansible/ansible/pull/82562).
 - ansible-config init will now dedupe ini entries from plugins.
 - ansible-galaxy role import - exit with 1 when the import fails (https://github.com/ansible/ansible/issues/82175).
+- ansible-galaxy role install - fix symlinks (https://github.com/ansible/ansible/issues/82702, https://github.com/ansible/ansible/issues/81965).
 - ansible-galaxy role install - normalize tarfile paths and symlinks using ``ansible.utils.path.unfrackpath`` and consider them valid as long as the realpath is in the tarfile's role directory (https://github.com/ansible/ansible/issues/81965).
 - delegate_to when set to an empty or undefined variable will now give a proper error.
 - dwim functions for lookups should be better at detectging role context even in abscense of tasks/main.
