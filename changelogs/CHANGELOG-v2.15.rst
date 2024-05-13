@@ -5,6 +5,24 @@ ansible-core 2.15 "Ten Years Gone" Release Notes
 .. contents:: Topics
 
 
+v2.15.12rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2024-05-13
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+
+Bugfixes
+--------
+
+- Add a version ceiling constraint for pypsrp to avoid potential breaking changes in the 1.0.0 release.
+- ansible-test - Automatically enable the PyPI proxy for the ``centos7`` container to restore the ability to use ``pip`` in that container.
+- facts - add a generic detection for VMware in product name.
+- uri - update the documentation for follow_redirects.
+
 v2.15.11
 ========
 
@@ -73,6 +91,7 @@ Bugfixes
 - ``ansible-galaxy role import`` - fix using the ``role_name`` in a standalone role's ``galaxy_info`` metadata by disabling automatic removal of the ``ansible-role-`` prefix. This matches the behavior of the Galaxy UI which also no longer implicitly removes the ``ansible-role-`` prefix. Use the ``--role-name`` option or add a ``role_name`` to the ``galaxy_info`` dictionary in the role's ``meta/main.yml`` to use an alternate role name.
 - ``ansible-test sanity --test runtime-metadata`` - add ``action_plugin`` as a valid field for modules in the schema (https://github.com/ansible/ansible/pull/82562).
 - ansible-config init will now dedupe ini entries from plugins.
+- ansible-galaxy role install - fix symlinks (https://github.com/ansible/ansible/issues/82702, https://github.com/ansible/ansible/issues/81965).
 - ansible-galaxy role install - normalize tarfile paths and symlinks using ``ansible.utils.path.unfrackpath`` and consider them valid as long as the realpath is in the tarfile's role directory (https://github.com/ansible/ansible/issues/81965).
 - delegate_to when set to an empty or undefined variable will now give a proper error.
 - unsafe data - Enable directly using ``AnsibleUnsafeText`` with Python ``pathlib`` (https://github.com/ansible/ansible/issues/82414)
