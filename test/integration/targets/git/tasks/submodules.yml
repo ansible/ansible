@@ -36,6 +36,12 @@
           - test_submodules_newer.git
         exec:
           - 'git submodule add --name submodule1 git://localhost/test_submodules_subm1.git submodule1'
+          # workaround for changing default submodule branch name
+          # ubuntu2004 docker image uses
+          # https://git-scm.com/docs/git-submodule/2.25.0#Documentation/git-submodule.txt-set-branch-d--default--ltpathgt
+          # which changes to HEAD in 2.28.0+
+          # https://git-scm.com/docs/git-submodule/2.28.0#Documentation/git-submodule.txt-set-branch-d--default--ltpathgt
+          - 'git submodule set-branch --branch {{ git_default_branch }} submodule1'
           - 'git submodule sync && git submodule update --init'
           - 'git add . && git commit -m "Add submodule1"'
           - 'git tag v0.2'
@@ -65,6 +71,8 @@
         exec:
           - 'git submodule add --name submodule2 git://localhost/test_submodules_subm2.git submodule2'
           - 'git config -f .gitmodules submodule.submodule1.url git://localhost/test_submodules_subm1_newer.git'
+          # same workaround as above
+          - 'git submodule set-branch --branch {{ git_default_branch }} submodule2'
           - 'rm -rf submodule1'
           - 'rm -rf .git/modules/submodule1'
           - 'git submodule sync && git submodule update --init'
