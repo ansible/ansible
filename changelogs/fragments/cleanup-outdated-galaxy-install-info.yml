@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy collection install - remove old installation info when installing collections (https://github.com/ansible/ansible/issues/83182).
