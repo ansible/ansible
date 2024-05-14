@@ -8,6 +8,7 @@ from __future__ import annotations
 import errno
 import fnmatch
 import functools
+import glob
 import inspect
 import json
 import os
@@ -1525,6 +1526,7 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
             artifacts_manager.required_successful_signature_count,
             artifacts_manager.ignore_signature_errors,
         )
+        remove_source_metadata(collection, b_collection_path)
         if (collection.is_online_index_pointer and isinstance(collection.src, GalaxyAPI)):
             write_source_metadata(
                 collection,
@@ -1559,6 +1561,22 @@ def write_source_metadata(collection, b_collection_path, artifacts_manager):
         if os.path.isdir(b_info_dir):
             shutil.rmtree(b_info_dir)
         raise
+
+
+def remove_source_metadata(collection, b_collection_path):
+    pattern = f"{collection.namespace}.{collection.name}-*.info"
+    info_path = os.path.join(
+        b_collection_path,
+        b'../../',
+        to_bytes(pattern, errors='surrogate_or_strict')
+    )
+    if (outdated_info := glob.glob(info_path)):
+        display.vvvv(f"Removing {pattern} metadata from previous installations")
+    for info_dir in outdated_info:
+        try:
+            shutil.rmtree(info_dir)
+        except Exception:
+            pass
 
 
 def verify_artifact_manifest(manifest_file, signatures, keyring, required_signature_count, ignore_signature_errors):
