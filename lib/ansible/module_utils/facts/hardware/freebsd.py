@@ -253,18 +253,22 @@ class FreeBSDHardware(Hardware):
             'product_version': 'system-version',
             'system_vendor': 'system-manufacturer',
         }
+        if dmi_bin is None:
+            dmi_facts = dict.fromkeys(
+                DMI_DICT.keys(),
+                'NA'
+            )
+            return dmi_facts
+
         for (k, v) in DMI_DICT.items():
-            if dmi_bin is not None:
-                (rc, out, err) = self.module.run_command('%s -s %s' % (dmi_bin, v))
-                if rc == 0:
-                    # Strip out commented lines (specific dmidecode output)
-                    # FIXME: why add the fact and then test if it is json?
-                    dmi_facts[k] = ''.join([line for line in out.splitlines() if not line.startswith('#')])
-                    try:
-                        json.dumps(dmi_facts[k])
-                    except UnicodeDecodeError:
-                        dmi_facts[k] = 'NA'
-                else:
+            (rc, out, err) = self.module.run_command('%s -s %s' % (dmi_bin, v))
+            if rc == 0:
+                # Strip out commented lines (specific dmidecode output)
+                # FIXME: why add the fact and then test if it is json?
+                dmi_facts[k] = ''.join([line for line in out.splitlines() if not line.startswith('#')])
+                try:
+                    json.dumps(dmi_facts[k])
+                except UnicodeDecodeError:
                     dmi_facts[k] = 'NA'
             else:
                 dmi_facts[k] = 'NA'
