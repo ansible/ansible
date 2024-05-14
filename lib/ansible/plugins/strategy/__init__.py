@@ -409,7 +409,7 @@ class StrategyBase:
                     if task.action in C._ACTION_META:
                         if iterator is not None:
                             self._tqm.send_callback('v2_runner_on_start', host, task)
-                            self._execute_meta(task, play_context, iterator, host)
+                            self._execute_meta(task, play_context, iterator, host, _compat=False)
                     else:
                         # Pass WorkerProcess its strategy worker number so it can send an identifier along with intra-task requests
                         worker_prc = WorkerProcess(
@@ -943,7 +943,7 @@ class StrategyBase:
     def _cond_not_supported_warn(self, task_name):
         display.warning("%s task does not support when conditional" % task_name)
 
-    def _execute_meta(self, task, play_context, iterator, target_host):
+    def _execute_meta(self, task, play_context, iterator, target_host, _compat=True):
 
         # meta tasks store their args in the _raw_params field of args,
         # since they do not use k=v pairs, so get that
@@ -958,6 +958,11 @@ class StrategyBase:
         skipped = False
         msg = meta_action
         skip_reason = '%s conditional evaluated to False' % meta_action
+        if _compat:
+            if isinstance(task, Handler):
+                self._tqm.send_callback('v2_playbook_on_handler_task_start', task)
+            else:
+                self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
 
         # These don't support "when" conditionals
         if meta_action in ('noop', 'refresh_inventory', 'reset_connection') and task.when:
@@ -1099,9 +1104,18 @@ class StrategyBase:
         else:
             result['changed'] = False
 
+        if _compat and not task.implicit:
+            header = skip_reason if skipped else msg
+            display.vv(f"META: {header}")
+
         res = TaskResult(target_host, task, result)
-        with self._results_lock:
-            self._results.append(res)
+
+        if _compat and skipped:
+            self._tqm.send_callback('v2_runner_on_skipped', res)
+
+        if not _compat:
+            with self._results_lock:
+                self._results.append(res)
         return [res]
 
     def _get_cached_role(self, task, play):
