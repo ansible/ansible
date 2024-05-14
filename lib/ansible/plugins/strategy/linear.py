@@ -143,7 +143,7 @@ class StrategyModule(StrategyBase):
                 display.debug("done getting the remaining hosts for this loop")
 
                 # queue up this task for each host in the inventory
-                callback_sent = False
+                prev_uuid = None
                 work_to_do = False
 
                 host_tasks = self._get_next_task_lockstep(hosts_left, iterator)
@@ -194,51 +194,47 @@ class StrategyModule(StrategyBase):
                         # corresponding action plugin
                         action = None
 
+                    # handle step if needed, skip meta actions as they are used internally
+                    if task.action not in C._ACTION_META and self._step and choose_step:
+                        if self._take_step(task):
+                            choose_step = False
+                        else:
+                            skip_rest = True
+                            break
+
+                    run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
                     if task_action in C._ACTION_META:
                         # for the linear strategy, we run meta tasks just once and for
                         # all hosts currently being iterated over rather than one host
-                        results.extend(self._execute_meta(task, play_context, iterator, host))
                         if task.args.get('_raw_params', None) not in ('noop', 'reset_connection', 'end_host', 'role_complete', 'flush_handlers'):
                             run_once = True
-                        if (task.any_errors_fatal or run_once) and not task.ignore_errors:
-                            any_errors_fatal = True
-                    else:
-                        # handle step if needed, skip meta actions as they are used internally
-                        if self._step and choose_step:
-                            if self._take_step(task):
-                                choose_step = False
-                            else:
-                                skip_rest = True
-                                break
 
-                        run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
+                    if (task.any_errors_fatal or run_once) and not task.ignore_errors:
+                        any_errors_fatal = True
 
-                        if (task.any_errors_fatal or run_once) and not task.ignore_errors:
-                            any_errors_fatal = True
+                    if prev_uuid != task._uuid:
+                        display.debug("sending task start callback, copying the task so we can template it temporarily")
+                        saved_name = task.name
+                        display.debug("done copying, going to template now")
+                        try:
+                            task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
+                            display.debug("done templating")
+                        except Exception:
+                            # just ignore any errors during task name templating,
+                            # we don't care if it just shows the raw name
+                            display.debug("templating failed for some reason")
+                        display.debug("here goes the callback...")
+                        if isinstance(task, Handler):
+                            self._tqm.send_callback('v2_playbook_on_handler_task_start', task)
+                        else:
+                            self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
+                        task.name = saved_name
+                        prev_uuid = task._uuid
+                        display.debug("sending task start callback")
 
-                        if not callback_sent:
-                            display.debug("sending task start callback, copying the task so we can template it temporarily")
-                            saved_name = task.name
-                            display.debug("done copying, going to template now")
-                            try:
-                                task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
-                                display.debug("done templating")
-                            except Exception:
-                                # just ignore any errors during task name templating,
-                                # we don't care if it just shows the raw name
-                                display.debug("templating failed for some reason")
-                            display.debug("here goes the callback...")
-                            if isinstance(task, Handler):
-                                self._tqm.send_callback('v2_playbook_on_handler_task_start', task)
-                            else:
-                                self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
-                            task.name = saved_name
-                            callback_sent = True
-                            display.debug("sending task start callback")
-
-                        self._blocked_hosts[host.get_name()] = True
-                        self._queue_task(host, task, task_vars, play_context)
-                        del task_vars
+                    self._blocked_hosts[host.get_name()] = True
+                    self._queue_task(host, task, task_vars, play_context, iterator)
+                    del task_vars
 
                     if isinstance(task, Handler):
                         if run_once:

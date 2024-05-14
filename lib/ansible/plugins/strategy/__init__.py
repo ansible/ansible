@@ -347,7 +347,7 @@ class StrategyBase:
         vars['ansible_current_hosts'] = self.get_hosts_remaining(play)
         vars['ansible_failed_hosts'] = self.get_failed_hosts(play)
 
-    def _queue_task(self, host, task, task_vars, play_context):
+    def _queue_task(self, host, task, task_vars, play_context, iterator=None):
         ''' handles queueing the task up to be sent to a worker '''
 
         display.debug("entering _queue_task() for %s/%s" % (host.name, task.action))
@@ -406,14 +406,19 @@ class StrategyBase:
                         'play_context': play_context
                     }
 
-                    # Pass WorkerProcess its strategy worker number so it can send an identifier along with intra-task requests
-                    worker_prc = WorkerProcess(
-                        self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader, self._cur_worker,
-                    )
-                    self._workers[self._cur_worker] = worker_prc
-                    self._tqm.send_callback('v2_runner_on_start', host, task)
-                    worker_prc.start()
-                    display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
+                    if task.action in C._ACTION_META:
+                        if iterator is not None:
+                            self._tqm.send_callback('v2_runner_on_start', host, task)
+                            self._execute_meta(task, play_context, iterator, host)
+                    else:
+                        # Pass WorkerProcess its strategy worker number so it can send an identifier along with intra-task requests
+                        worker_prc = WorkerProcess(
+                            self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader, self._cur_worker,
+                        )
+                        self._workers[self._cur_worker] = worker_prc
+                        self._tqm.send_callback('v2_runner_on_start', host, task)
+                        worker_prc.start()
+                        display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
                     queued = True
 
                 self._cur_worker += 1
@@ -628,7 +633,7 @@ class StrategyBase:
                         )
                     else:
                         self._tqm._stats.increment('failures', original_host.name)
-                else:
+                elif not original_task.implicit:
                     self._tqm._stats.increment('ok', original_host.name)
                     self._tqm._stats.increment('ignored', original_host.name)
                     if 'changed' in task_result._result and task_result._result['changed']:
@@ -640,7 +645,7 @@ class StrategyBase:
                     self._tqm._unreachable_hosts[original_host.name] = True
                     iterator._play._removed_hosts.append(original_host.name)
                     self._tqm._stats.increment('dark', original_host.name)
-                else:
+                elif not original_task.implicit:
                     self._tqm._stats.increment('ok', original_host.name)
                     self._tqm._stats.increment('ignored', original_host.name)
                 self._tqm.send_callback('v2_runner_on_unreachable', task_result)
@@ -770,13 +775,14 @@ class StrategyBase:
                     if self._diff or getattr(original_task, 'diff', False):
                         self._tqm.send_callback('v2_on_file_diff', task_result)
 
-                if not isinstance(original_task, TaskInclude):
+                if not isinstance(original_task, TaskInclude) and not original_task.implicit:
                     self._tqm._stats.increment('ok', original_host.name)
                     if 'changed' in task_result._result and task_result._result['changed']:
                         self._tqm._stats.increment('changed', original_host.name)
 
                 # finally, send the ok for this task
-                self._tqm.send_callback('v2_runner_on_ok', task_result)
+                if not original_task.implicit:
+                    self._tqm.send_callback('v2_runner_on_ok', task_result)
 
             # register final results
             if original_task.register:
@@ -952,10 +958,6 @@ class StrategyBase:
         skipped = False
         msg = meta_action
         skip_reason = '%s conditional evaluated to False' % meta_action
-        if isinstance(task, Handler):
-            self._tqm.send_callback('v2_playbook_on_handler_task_start', task)
-        else:
-            self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
 
         # These don't support "when" conditionals
         if meta_action in ('noop', 'refresh_inventory', 'reset_connection') and task.when:
@@ -1097,13 +1099,9 @@ class StrategyBase:
         else:
             result['changed'] = False
 
-        if not task.implicit:
-            header = skip_reason if skipped else msg
-            display.vv(f"META: {header}")
-
         res = TaskResult(target_host, task, result)
-        if skipped:
-            self._tqm.send_callback('v2_runner_on_skipped', res)
+        with self._results_lock:
+            self._results.append(res)
         return [res]
 
     def _get_cached_role(self, task, play):

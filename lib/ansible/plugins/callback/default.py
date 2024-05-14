@@ -90,6 +90,9 @@ class CallbackModule(CallbackBase):
             if self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
 
+            if result._task.action in C._ACTION_META:
+                self._display.vv(f'META: {result._result["msg"]}')
+
             msg = "ok: [%s]" % (host_label,)
             color = C.COLOR_OK
 
@@ -115,6 +118,9 @@ class CallbackModule(CallbackBase):
 
             if result._task.loop is not None and 'results' in result._result:
                 self._process_items(result)
+
+            if result._task.action in C._ACTION_META:
+                self._display.vv(f'META: {result._result["skip_reason"]}')
 
             msg = "skipping: [%s]" % result._host.get_name()
             if self._run_is_verbose(result):
