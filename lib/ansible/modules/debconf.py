@@ -140,16 +140,15 @@ def get_password_value(module, pkg, question, vtype):
     for line in out.split("\n"):
         if line.startswith(pkg):
             desired_line = line
-            break
+            (dpkg, dquestion, dvtype, *dvalue) = line.split()
+            if dquestion == question and dvtype == vtype:
+                if len(dvalue) >= 1:
+                    return dvalue[0]
+                return ''
 
     if not desired_line:
         module.fail_json(msg="Failed to find the value '%s' from '%s'" % (question, pkg))
 
-    (dpkg, dquestion, dvtype, *dvalue) = desired_line.split()
-    if dquestion == question and dvtype == vtype:
-        if len(dvalue) >= 1:
-            return dvalue[0]
-        return ''
     return ''
 
 

@@ -82,6 +82,34 @@
         that:
           - debconf_test2.changed
 
+    - name: Set different question for same package name
+      debconf:
+        name: ddclient2
+        question: ddclient/password1
+        value: "Sample"
+        vtype: password
+      no_log: false
+      register: debconf_test1
+
+    - name: validate if different question for same package name is set
+      assert:
+        that:
+          - debconf_test1.changed
+
+    - name: Set different question for same package name again (idempotency)
+      debconf:
+        name: ddclient2
+        question: ddclient/password1
+        value: "Sample"
+        vtype: password
+      no_log: false
+      register: debconf_test2
+
+    - name: validate if different question for same package name is set (idempotency)
+      assert:
+        that:
+          - not debconf_test2.changed
+
     - name: Multiselect value
       debconf:
         name: libnss-ldapd
