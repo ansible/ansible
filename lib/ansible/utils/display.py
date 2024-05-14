@@ -45,7 +45,6 @@ import typing as t
 
 from functools import wraps
 from struct import unpack, pack
-from textwrap import wrap
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive
@@ -416,7 +415,7 @@ class Display(metaclass=Singleton):
             istty = stderr and sys.__stderr__.isatty() or not stderr and sys.__stdout__.isatty()
 
             if istty and not nowrap:
-                wrapped = wrap(msg, self.columns, drop_whitespace=False)
+                wrapped = textwrap.wrap(msg, self.columns, drop_whitespace=False)
                 msg2 = "\n".join(wrapped) + "\n"
             else:
                 msg2 = msg
@@ -644,7 +643,7 @@ class Display(metaclass=Singleton):
     def error(self, msg: str, wrap_text: bool = C.NOTTY_WRAP) -> None:
         if wrap_text:
             new_msg = u"\n[ERROR]: %s" % msg
-            wrapped = wrap(new_msg, self.columns)
+            wrapped = textwrap.wrap(new_msg, self.columns)
             new_msg = u"\n".join(wrapped) + u"\n"
         else:
             new_msg = u"ERROR! %s" % msg
