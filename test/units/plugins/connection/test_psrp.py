@@ -198,8 +198,6 @@ class TestConnectionPSRP(object):
         ),
     )
 
-    # pylint bug: https://github.com/PyCQA/pylint/issues/511
-    # pylint: disable=undefined-variable
     @pytest.mark.parametrize('options, expected',
                              ((o, e) for o, e in OPTIONS_DATA))
     def test_set_options(self, options, expected):
