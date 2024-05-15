@@ -22,12 +22,12 @@ import unittest
 from ansible.module_utils.facts.network import generic_bsd
 
 
-def get_bin_path(command):
-    if command == 'ifconfig':
-        return 'fake/ifconfig'
-    elif command == 'route':
-        return 'fake/route'
-    return None
+def get_bin_path(command, warning=None):
+    cmds = {
+        'ifconfig': 'fake/ifconfig',
+        'route': 'fake/route',
+    }
+    return cmds.get(command, None)
 
 
 netbsd_ifconfig_a_out_7_1 = r'''

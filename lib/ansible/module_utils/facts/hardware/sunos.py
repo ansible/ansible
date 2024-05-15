@@ -172,7 +172,14 @@ class SunOSHardware(Hardware):
         rc, platform, err = self.module.run_command('/usr/bin/uname -i')
         platform_sbin = '/usr/platform/' + platform.rstrip() + '/sbin'
 
-        prtdiag_path = self.module.get_bin_path("prtdiag", opt_dirs=[platform_sbin])
+        prtdiag_path = self.module.get_bin_path(
+            "prtdiag",
+            opt_dirs=[platform_sbin],
+            warning="skipping dmi facts"
+        )
+        if prtdiag_path is None:
+            return dmi_facts
+
         rc, out, err = self.module.run_command(prtdiag_path)
         # rc returns 1
         if out:

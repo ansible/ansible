@@ -21,7 +21,6 @@ import sys
 
 import ansible.module_utils.compat.typing as t
 
-from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.network.base import NetworkCollector
 
@@ -80,9 +79,11 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
                     iscsi_facts['iscsi_iqn'] = line.split('=', 1)[1]
                     break
         elif sys.platform.startswith('aix'):
-            try:
-                cmd = get_bin_path('lsattr')
-            except ValueError:
+            cmd = module.get_bin_path(
+                'lsattr',
+                warning="skipping iscsi initiator facts"
+            )
+            if cmd is None:
                 return iscsi_facts
 
             cmd += " -E -l iscsi0"
@@ -92,10 +93,12 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
                 iscsi_facts['iscsi_iqn'] = line.split()[1].rstrip()
 
         elif sys.platform.startswith('hp-ux'):
-            # try to find it in the default PATH and opt_dirs
-            try:
-                cmd = get_bin_path('iscsiutil', opt_dirs=['/opt/iscsi/bin'])
-            except ValueError:
+            cmd = module.get_bin_path(
+                'iscsiutil',
+                opt_dirs=['/opt/iscsi/bin'],
+                warning="skipping iscsi initiator facts"
+            )
+            if cmd is None:
                 return iscsi_facts
 
             cmd += " -l"

@@ -29,7 +29,11 @@ class HPUXNetwork(Network):
 
     def populate(self, collected_facts=None):
         network_facts = {}
-        netstat_path = self.module.get_bin_path('netstat')
+        netstat_path = self.module.get_bin_path(
+            'netstat',
+            opt_dirs=['/usr/bin'],
+            warning="skipping network facts"
+        )
 
         if netstat_path is None:
             return network_facts
@@ -46,7 +50,15 @@ class HPUXNetwork(Network):
 
     def get_default_interfaces(self):
         default_interfaces = {}
-        rc, out, err = self.module.run_command("/usr/bin/netstat -nr")
+        netstat_path = self.module.get_bin_path(
+            'netstat',
+            opt_dirs=['/usr/bin'],
+            warning="skipping default interface facts"
+        )
+
+        if netstat_path is None:
+            return default_interfaces
+        rc, out, err = self.module.run_command("%s -nr" % netstat_path)
         lines = out.splitlines()
         for line in lines:
             words = line.split()
@@ -59,7 +71,15 @@ class HPUXNetwork(Network):
 
     def get_interfaces_info(self):
         interfaces = {}
-        rc, out, err = self.module.run_command("/usr/bin/netstat -niw")
+        netstat_path = self.module.get_bin_path(
+            'netstat',
+            opt_dirs=['/usr/bin'],
+            warning="skipping default interface info facts"
+        )
+
+        if netstat_path is None:
+            return interfaces
+        rc, out, err = self.module.run_command("%s -niw" % netstat_path)
         lines = out.splitlines()
         for line in lines:
             words = line.split()

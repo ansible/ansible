@@ -63,7 +63,10 @@ class HurdPfinetNetwork(Network):
     def populate(self, collected_facts=None):
         network_facts = {}
 
-        fsysopts_path = self.module.get_bin_path('fsysopts')
+        fsysopts_path = self.module.get_bin_path(
+            'fsysopts',
+            warning="skipping network facts"
+        )
         if fsysopts_path is None:
             return network_facts
 

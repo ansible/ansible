@@ -34,12 +34,18 @@ class GenericBsdIfconfigNetwork(Network):
 
     def populate(self, collected_facts=None):
         network_facts = {}
-        ifconfig_path = self.module.get_bin_path('ifconfig')
+        ifconfig_path = self.module.get_bin_path(
+            'ifconfig',
+            warning="skipping network facts"
+        )
 
         if ifconfig_path is None:
             return network_facts
 
-        route_path = self.module.get_bin_path('route')
+        route_path = self.module.get_bin_path(
+            'route',
+            warning="skipping network facts"
+        )
 
         if route_path is None:
             return network_facts
