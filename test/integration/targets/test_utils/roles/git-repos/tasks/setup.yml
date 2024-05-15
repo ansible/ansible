@@ -31,5 +31,7 @@
   when: (found_git is failed or found_daemon is failed) and ansible_facts['os_family'] == 'Alpine'
 
 - name: start git daemon
-  shell: "git daemon --reuseaddr --export-all --enable=receive-pack --base-path={{ repo_path }} {{ repo_path }}&"
+  command: "git daemon --export-all --enable=receive-pack --base-path={{ repo_path }} {{ repo_path }}"
+  async: "{{ serve_timeout }}"
+  poll: 0
   register: started_daemon
