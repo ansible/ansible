@@ -1,36 +1,20 @@
 # -*- coding: utf-8 -*-
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
 
-from unittest.mock import Mock
-import unittest
+import pytest
 
 from ansible.module_utils.facts.network import generic_bsd
 
 
-def get_bin_path(command, warning=None):
-    cmds = {
-        'ifconfig': 'fake/ifconfig',
-        'route': 'fake/route',
-    }
-    return cmds.get(command, None)
+def mock_get_bin_path(command, warning=None):
+    commands = {"ifconfig": "fake/ifconfig", "route": "fake/route"}
+    return commands.get(command, None)
 
 
-netbsd_ifconfig_a_out_7_1 = r'''
+NETBSD_IFCONFIG_A_OUT_7_1 = r"""
 lo0: flags=8049<UP,LOOPBACK,RUNNING,MULTICAST> mtu 33624
         inet 127.0.0.1 netmask 0xff000000
         inet6 ::1 prefixlen 128
@@ -46,9 +30,9 @@ re0: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
         status: active
         inet 192.168.122.205 netmask 0xffffff00 broadcast 192.168.122.255
         inet6 fe80::5054:ff:fe63:55af%re0 prefixlen 64 scopeid 0x2
-'''
+"""
 
-netbsd_ifconfig_a_out_post_7_1 = r'''
+NETBSD_IFCONFIG_A_OUT_POST_7_1 = r"""
 lo0: flags=0x8049<UP,LOOPBACK,RUNNING,MULTICAST> mtu 33624
         inet 127.0.0.1/8 flags 0x0
         inet6 ::1/128 flags 0x20<NODAD>
@@ -64,152 +48,173 @@ re0: flags=0x8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
         status: active
         inet 192.168.122.205/24 broadcast 192.168.122.255 flags 0x0
         inet6 fe80::5054:ff:fe63:55af%re0/64 flags 0x0 scopeid 0x2
-'''
+"""
 
-NETBSD_EXPECTED = {'all_ipv4_addresses': ['192.168.122.205'],
-                   'all_ipv6_addresses': ['fe80::5054:ff:fe63:55af%re0'],
-                   'default_ipv4': {},
-                   'default_ipv6': {},
-                   'interfaces': ['lo0', 're0'],
-                   'lo0': {'device': 'lo0',
-                           'flags': ['UP', 'LOOPBACK', 'RUNNING', 'MULTICAST'],
-                           'ipv4': [{'address': '127.0.0.1',
-                                     'broadcast': '127.255.255.255',
-                                     'netmask': '255.0.0.0',
-                                     'network': '127.0.0.0'}],
-                           'ipv6': [{'address': '::1', 'prefix': '128'},
-                                    {'address': 'fe80::1%lo0', 'prefix': '64', 'scope': '0x1'}],
-                           'macaddress': 'unknown',
-                           'mtu': '33624',
-                           'type': 'loopback'},
-                   're0': {'device': 're0',
-                           'flags': ['UP', 'BROADCAST', 'RUNNING', 'SIMPLEX', 'MULTICAST'],
-                           'ipv4': [{'address': '192.168.122.205',
-                                     'broadcast': '192.168.122.255',
-                                     'netmask': '255.255.255.0',
-                                     'network': '192.168.122.0'}],
-                           'ipv6': [{'address': 'fe80::5054:ff:fe63:55af%re0',
-                                     'prefix': '64',
-                                     'scope': '0x2'}],
-                           'macaddress': 'unknown',
-                           'media': 'Ethernet',
-                           'media_options': [],
-                           'media_select': 'autoselect',
-                           'media_type': '100baseTX',
-                           'mtu': '1500',
-                           'status': 'active',
-                           'type': 'ether'}}
+NETBSD_EXPECTED = {
+    "all_ipv4_addresses": ["192.168.122.205"],
+    "all_ipv6_addresses": ["fe80::5054:ff:fe63:55af%re0"],
+    "default_ipv4": {},
+    "default_ipv6": {},
+    "interfaces": ["lo0", "re0"],
+    "lo0": {
+        "device": "lo0",
+        "flags": ["UP", "LOOPBACK", "RUNNING", "MULTICAST"],
+        "ipv4": [
+            {
+                "address": "127.0.0.1",
+                "broadcast": "127.255.255.255",
+                "netmask": "255.0.0.0",
+                "network": "127.0.0.0",
+            }
+        ],
+        "ipv6": [
+            {"address": "::1", "prefix": "128"},
+            {"address": "fe80::1%lo0", "prefix": "64", "scope": "0x1"},
+        ],
+        "macaddress": "unknown",
+        "mtu": "33624",
+        "type": "loopback",
+    },
+    "re0": {
+        "device": "re0",
+        "flags": ["UP", "BROADCAST", "RUNNING", "SIMPLEX", "MULTICAST"],
+        "ipv4": [
+            {
+                "address": "192.168.122.205",
+                "broadcast": "192.168.122.255",
+                "netmask": "255.255.255.0",
+                "network": "192.168.122.0",
+            }
+        ],
+        "ipv6": [
+            {"address": "fe80::5054:ff:fe63:55af%re0", "prefix": "64", "scope": "0x2"}
+        ],
+        "macaddress": "unknown",
+        "media": "Ethernet",
+        "media_options": [],
+        "media_select": "autoselect",
+        "media_type": "100baseTX",
+        "mtu": "1500",
+        "status": "active",
+        "type": "ether",
+    },
+}
 
 
-def run_command_old_ifconfig(command):
-    if command == 'fake/route':
-        return 0, 'Foo', ''
-    if command == ['fake/ifconfig', '-a']:
-        return 0, netbsd_ifconfig_a_out_7_1, ''
-    return 1, '', ''
+@pytest.mark.parametrize(
+    ("test_input", "expected"),
+    [
+        pytest.param(
+            {
+                "mock_run_command": [
+                    (0, "Foo", ""),
+                    (0, "Foo", ""),
+                    (0, NETBSD_IFCONFIG_A_OUT_7_1, ""),
+                ],
+            },
+            NETBSD_EXPECTED,
+            id="old-ifconfig",
+        ),
+        pytest.param(
+            {
+                "mock_run_command": [
+                    (0, "Foo", ""),
+                    (0, "Foo", ""),
+                    (0, NETBSD_IFCONFIG_A_OUT_POST_7_1, ""),
+                ],
+            },
+            NETBSD_EXPECTED,
+            id="post-7-1-ifconfig",
+        ),
+    ],
+)
+def test_generic_bsd_ifconfig(mocker, test_input, expected):
+    module = mocker.MagicMock()
+    mocker.patch.object(module, "get_bin_path", side_effect=mock_get_bin_path)
+    mocker.patch.object(
+        module, "run_command", side_effect=test_input["mock_run_command"]
+    )
+
+    bsd_net = generic_bsd.GenericBsdIfconfigNetwork(module)
+    res = bsd_net.populate()
+    assert res == expected
 
 
-def run_command_post_7_1_ifconfig(command):
-    if command == 'fake/route':
-        return 0, 'Foo', ''
-    if command == ['fake/ifconfig', '-a']:
-        return 0, netbsd_ifconfig_a_out_post_7_1, ''
-    return 1, '', ''
+def test_compare_old_new_ifconfig(mocker):
+    old_ifconfig_module = mocker.MagicMock()
+    mocker.patch.object(old_ifconfig_module, "get_bin_path", side_effect=mock_get_bin_path)
+    mocker.patch.object(
+        old_ifconfig_module,
+        "run_command",
+        side_effect=[
+            (0, "Foo", ""),
+            (0, "Foo", ""),
+            (0, NETBSD_IFCONFIG_A_OUT_7_1, ""),
+        ],
+    )
+    old_bsd_net = generic_bsd.GenericBsdIfconfigNetwork(old_ifconfig_module)
+    old_res = old_bsd_net.populate()
+
+    new_ifconfig_module = mocker.MagicMock()
+    mocker.patch.object(new_ifconfig_module, "get_bin_path", side_effect=mock_get_bin_path)
+    mocker.patch.object(
+        new_ifconfig_module,
+        "run_command",
+        side_effect=[
+            (0, "Foo", ""),
+            (0, "Foo", ""),
+            (0, NETBSD_IFCONFIG_A_OUT_POST_7_1, ""),
+        ],
+    )
+    new_bsd_net = generic_bsd.GenericBsdIfconfigNetwork(new_ifconfig_module)
+    new_res = new_bsd_net.populate()
+    assert old_res == new_res
 
 
-class TestGenericBsdNetworkNetBSD(unittest.TestCase):
-    gather_subset = ['all']
-
-    def setUp(self):
-        self.maxDiff = None
-        self.longMessage = True
-
-    # TODO: extract module run_command/get_bin_path usage to methods I can mock without mocking all of run_command
-    def test(self):
-        module = self._mock_module()
-        module.get_bin_path.side_effect = get_bin_path
-        module.run_command.side_effect = run_command_old_ifconfig
-
-        bsd_net = generic_bsd.GenericBsdIfconfigNetwork(module)
-
-        res = bsd_net.populate()
-        self.assertDictEqual(res, NETBSD_EXPECTED)
-
-    def test_ifconfig_post_7_1(self):
-        module = self._mock_module()
-        module.get_bin_path.side_effect = get_bin_path
-        module.run_command.side_effect = run_command_post_7_1_ifconfig
-
-        bsd_net = generic_bsd.GenericBsdIfconfigNetwork(module)
-
-        res = bsd_net.populate()
-        self.assertDictEqual(res, NETBSD_EXPECTED)
-
-    def test_netbsd_ifconfig_old_and_new(self):
-        module_new = self._mock_module()
-        module_new.get_bin_path.side_effect = get_bin_path
-        module_new.run_command.side_effect = run_command_post_7_1_ifconfig
-
-        bsd_net_new = generic_bsd.GenericBsdIfconfigNetwork(module_new)
-        res_new = bsd_net_new.populate()
-
-        module_old = self._mock_module()
-        module_old.get_bin_path.side_effect = get_bin_path
-        module_old.run_command.side_effect = run_command_old_ifconfig
-
-        bsd_net_old = generic_bsd.GenericBsdIfconfigNetwork(module_old)
-        res_old = bsd_net_old.populate()
-
-        self.assertDictEqual(res_old, res_new)
-        self.assertDictEqual(res_old, NETBSD_EXPECTED)
-        self.assertDictEqual(res_new, NETBSD_EXPECTED)
-
-    def _mock_module(self):
-        mock_module = Mock()
-        mock_module.params = {'gather_subset': self.gather_subset,
-                              'gather_timeout': 5,
-                              'filter': '*'}
-        mock_module.get_bin_path = Mock(return_value=None)
-        return mock_module
-
-    def test_ensure_correct_netmask_parsing(self):
-        n = generic_bsd.GenericBsdIfconfigNetwork(None)
-        lines = [
-            'inet 192.168.7.113 netmask 0xffffff00 broadcast 192.168.7.255',
-            'inet 10.109.188.206 --> 10.109.188.206 netmask 0xffffe000',
-        ]
-        expected = [
+@pytest.mark.parametrize(
+    ("test_input", "expected"),
+    [
+        pytest.param(
+            "inet 192.168.7.113 netmask 0xffffff00 broadcast 192.168.7.255",
             (
                 {
-                    'ipv4': [
+                    "ipv4": [
                         {
-                            'address': '192.168.7.113',
-                            'netmask': '255.255.255.0',
-                            'network': '192.168.7.0',
-                            'broadcast': '192.168.7.255'
+                            "address": "192.168.7.113",
+                            "netmask": "255.255.255.0",
+                            "network": "192.168.7.0",
+                            "broadcast": "192.168.7.255",
                         }
                     ]
                 },
-                {'all_ipv4_addresses': ['192.168.7.113']},
+                {"all_ipv4_addresses": ["192.168.7.113"]},
             ),
+            id="ifconfig-output-1",
+        ),
+        pytest.param(
+            "inet 10.109.188.206 --> 10.109.188.206 netmask 0xffffe000",
             (
                 {
-                    'ipv4': [
+                    "ipv4": [
                         {
-                            'address': '10.109.188.206',
-                            'netmask': '255.255.224.0',
-                            'network': '10.109.160.0',
-                            'broadcast': '10.109.191.255'
+                            "address": "10.109.188.206",
+                            "netmask": "255.255.224.0",
+                            "network": "10.109.160.0",
+                            "broadcast": "10.109.191.255",
                         }
                     ]
                 },
-                {'all_ipv4_addresses': ['10.109.188.206']},
+                {"all_ipv4_addresses": ["10.109.188.206"]},
             ),
-        ]
-        for i, line in enumerate(lines):
-            words = line.split()
-            current_if = {'ipv4': []}
-            ips = {'all_ipv4_addresses': []}
-            n.parse_inet_line(words, current_if, ips)
-            self.assertDictEqual(current_if, expected[i][0])
-            self.assertDictEqual(ips, expected[i][1])
+            id="ifconfig-output-2",
+        ),
+    ],
+)
+def test_ensure_correct_netmask_parsing(test_input, expected):
+    n = generic_bsd.GenericBsdIfconfigNetwork(None)
+    words = test_input.split()
+    current_if = {"ipv4": []}
+    ips = {"all_ipv4_addresses": []}
+    n.parse_inet_line(words, current_if, ips)
+    assert current_if == expected[0]
+    assert ips == expected[1]
