@@ -73,7 +73,7 @@ class StrategyModule(StrategyBase):
         result = self._tqm.RUN_OK
 
         # start with all workers being counted as being free
-        workers_free = len(self._workers)
+        fork_max = workers_free = len(self._workers)
 
         self._set_hosts_cache(iterator._play)
 
@@ -92,6 +92,7 @@ class StrategyModule(StrategyBase):
 
             work_to_do = False        # assume we have no more work to do
             starting_host = last_host  # save current position so we know when we've looped back around and need to break
+            task_count = 0  # Count of times we've executed/queued a task in the inner loop
 
             # try and find an unblocked host with a task to run
             host_results = []
@@ -115,7 +116,7 @@ class StrategyModule(StrategyBase):
                     # some work which needs to be done
                     work_to_do = True
 
-                if workers_free == 0 and work_to_do:
+                if self._host_pinned and workers_free == 0 and work_to_do:
                     # If we have no workers free, break out of the queueing loop.
                     # This is generally not needed, but meta tasks don't block the host in a meaningful way
                     # and the below check of the host being blocked doesn't prevent additional tasks from being
@@ -187,6 +188,7 @@ class StrategyModule(StrategyBase):
                                 del self._blocked_hosts[host_name]
                                 continue
 
+                        task_count += 1
                         if task.action in C._ACTION_META:
                             self._execute_meta(task, play_context, iterator, target_host=host)
                             self._blocked_hosts[host_name] = False
@@ -211,6 +213,13 @@ class StrategyModule(StrategyBase):
                 # loop back to starting host and break out
                 if self._host_pinned and workers_free == 0 and work_to_do:
                     last_host = starting_host
+                    break
+
+                # We've executed or queued the max number of tasks for the configured forks
+                # in this loop, break and collect results, meta tasks aren't calculated in workers_free
+                if self._host_pinned and task_count == fork_max:
+                    last_host = starting_host
+                    task_count = 0
                     break
 
                 # move on to the next host and make sure we
