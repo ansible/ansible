@@ -89,34 +89,28 @@ FCMSUTIL_OUT = """
 """
 
 
-def mock_get_bin_path(cmd, required=False, opt_dirs=None):
-    result = None
-    if cmd == 'lsdev':
-        result = '/usr/sbin/lsdev'
-    elif cmd == 'lscfg':
-        result = '/usr/sbin/lscfg'
-    elif cmd == 'fcinfo':
-        result = '/usr/sbin/fcinfo'
-    elif cmd == 'ioscan':
-        result = '/usr/bin/ioscan'
-    elif cmd == 'fcmsutil':
-        result = '/opt/fcms/bin/fcmsutil'
-    return result
+def mock_get_bin_path(cmd, required=False, opt_dirs=None, warning=None):
+    cmds = {
+        'lsdev': '/usr/sbin/lsdev',
+        'lscfg': '/usr/sbin/lscfg',
+        'fcinfo': '/usr/sbin/fcinfo',
+        'ioscan': '/usr/bin/ioscan',
+        'fcmsutil': '/opt/fcms/bin/fcmsutil',
+    }
+    return cmds.get(cmd, None)
 
 
 def mock_run_command(cmd):
     rc = 0
-    if 'lsdev' in cmd:
-        result = LSDEV_OUTPUT
-    elif 'lscfg' in cmd:
-        result = LSCFG_OUTPUT
-    elif 'fcinfo' in cmd:
-        result = FCINFO_OUTPUT
-    elif 'ioscan' in cmd:
-        result = IOSCAN_OUT
-    elif 'fcmsutil' in cmd:
-        result = FCMSUTIL_OUT
-    else:
+    COMMANDS = {
+        '/usr/sbin/lsdev': LSDEV_OUTPUT,
+        '/usr/sbin/lscfg': LSCFG_OUTPUT,
+        '/usr/sbin/fcinfo': FCINFO_OUTPUT,
+        '/usr/bin/ioscan': IOSCAN_OUT,
+        '/opt/fcms/bin/fcmsutil': FCMSUTIL_OUT,
+    }
+    result = COMMANDS.get(cmd.split()[0])
+    if result is None:
         rc = 1
         result = 'Error'
     return (rc, result, '')

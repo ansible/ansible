@@ -36,10 +36,12 @@ class OhaiFactCollector(BaseFactCollector):
                                                 namespace=namespace)
 
     def find_ohai(self, module):
-        ohai_path = module.get_bin_path('ohai')
-        return ohai_path
+        return module.get_bin_path(
+            'ohai',
+            warning="skipping ohai facts"
+        )
 
-    def run_ohai(self, module, ohai_path,):
+    def run_ohai(self, module, ohai_path):
         rc, out, err = module.run_command(ohai_path)
         return rc, out, err
 
@@ -67,7 +69,6 @@ class OhaiFactCollector(BaseFactCollector):
         try:
             ohai_facts = json.loads(ohai_output)
         except Exception:
-            # FIXME: useful error, logging, something...
-            pass
+            module.warn("Failed to gather ohai facts")
 
         return ohai_facts
