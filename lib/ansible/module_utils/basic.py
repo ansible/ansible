@@ -1367,7 +1367,7 @@ class AnsibleModule(object):
             if required:
                 self.fail_json(msg=to_text(e))
             elif warning is not None:
-                self.module.warn("Unable to find %s, %s" % (arg, warning))
+                self.warn("Unable to find %s, %s" % (arg, warning))
 
         return bin_path
 
