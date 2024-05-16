@@ -91,11 +91,11 @@ FCMSUTIL_OUT = """
 
 def mock_get_bin_path(cmd, required=False, opt_dirs=None, warning=None):
     cmds = {
-        "lsdev": "/usr/sbin/lsdev",
-        "lscfg": "/usr/sbin/lscfg",
-        "fcinfo": "/usr/sbin/fcinfo",
-        "ioscan": "/usr/bin/ioscan",
-        "fcmsutil": "/opt/fcms/bin/fcmsutil",
+        'lsdev': '/usr/sbin/lsdev',
+        'lscfg': '/usr/sbin/lscfg',
+        'fcinfo': '/usr/sbin/fcinfo',
+        'ioscan': '/usr/bin/ioscan',
+        'fcmsutil': '/opt/fcms/bin/fcmsutil',
     }
     return cmds.get(cmd, None)
 

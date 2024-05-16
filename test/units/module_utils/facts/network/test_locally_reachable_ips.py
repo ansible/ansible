@@ -26,14 +26,18 @@ multicast ff00::/8 dev enp94s0f0np0 proto kernel metric 256 pref medium
 
 # Hash returned by get_locally_reachable_ips()
 IP_ROUTE_SHOW_LOCAL_EXPECTED = {
-    "ipv4": ["127.0.0.0/8", "127.0.0.1", "192.168.1.0/24"],
-    "ipv6": [
-        "::1",
-        "2a02:123:3:1::e",
-        "2a02:123:15::/48",
-        "2a02:123:16::/48",
-        "fe80::2eea:7fff:feca:fe68",
+    'ipv4': [
+        '127.0.0.0/8',
+        '127.0.0.1',
+        '192.168.1.0/24'
     ],
+    'ipv6': [
+        '::1',
+        '2a02:123:3:1::e',
+        '2a02:123:15::/48',
+        '2a02:123:16::/48',
+        'fe80::2eea:7fff:feca:fe68'
+    ]
 }
 
 
