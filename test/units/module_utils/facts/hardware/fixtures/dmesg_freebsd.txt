@@ -1,0 +1,9 @@
+CPU: Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz (2893.05-MHz K8-class CPU)
+  Origin = "GenuineIntel"  Id = 0x206d7  Stepping = 7
+  Features=0xbfebfbff<FPU,VME,DE,PSE,TSC,MSR,PAE,MCE,CX8,APIC,SEP,MTRR,PGE,MCA,CMOV,PAT,PSE36,CLFLUSH,DTS,ACPI,MMX,FXSR,SSE,SSE2,SS,HTT,TM,PBE>
+  Features2=0x15bee3ff<SSE3,<b1>,DTES64,MON,DS_CPL,VMX,SMX,EST,TM2,SSSE3,CX16,xTPR,PDCM,<b17>,DCA,SSE4.1,SSE4.2,x2APIC,POPCNT,<b24>,XSAVE,<b28>>
+  AMD Features=0x2c100800<SYSCALL,NX,Page1GB,RDTSCP,LM>
+  AMD Features2=0x1<LAHF>
+  TSC: P-state invariant
+  Cores per package: 16
+  Logical CPUs per core: 2
