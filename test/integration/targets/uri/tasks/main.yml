@@ -444,7 +444,7 @@
 - name: Assert multipart/form-data
   assert:
     that:
-      - multipart.json.files.file1 == '_multipart/form-data_\n'
+      - multipart.json.files.file1 | b64decode == '_multipart/form-data_\n'
       - multipart.json.files.file2 == 'text based file content'
       - multipart.json.form.text_form_field1 == 'value1'
       - multipart.json.form.text_form_field2 == 'value2'
