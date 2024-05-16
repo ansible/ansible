@@ -63,10 +63,7 @@ class FreeBSDHardware(Hardware):
 
         dmesg_boot = get_file_content(FreeBSDHardware.DMESG_BOOT)
         if not dmesg_boot:
-            dmesg_cmd = self.module.get_bin_path(
-                "dmesg",
-                warning="falling back to sysctl for processor_count, default to [] for processor"
-            )
+            dmesg_cmd = self.module.get_bin_path("dmesg")
             if dmesg_cmd is None:
                 return cpu_facts
             try:
@@ -99,7 +96,7 @@ class FreeBSDHardware(Hardware):
             if freecount is not None:
                 memory_facts['memfree_mb'] = pagesize * freecount // 1024 // 1024
 
-        swapinfo_cmd = self.module.get_bin_path('swapinfo', warning="skipping swap facts")
+        swapinfo_cmd = self.module.get_bin_path('swapinfo')
         if swapinfo_cmd is None:
             return memory_facts
 
@@ -121,13 +118,13 @@ class FreeBSDHardware(Hardware):
     def get_uptime_facts(self):
         # On FreeBSD, the default format is annoying to parse.
         # Use -b to get the raw value and decode it.
-        sysctl_cmd = self.module.get_bin_path('sysctl', warning="skipping uptime fact")
+        sysctl_cmd = self.module.get_bin_path('sysctl')
         if not sysctl_cmd:
             return {}
         cmd = [sysctl_cmd, '-b', 'kern.boottime']
 
         # We need to get raw bytes, not UTF-8.
-        rc, out, _ = self.module.run_command(cmd, encoding=None)
+        rc, out, dummy = self.module.run_command(cmd, encoding=None)
 
         # kern.boottime returns seconds and microseconds as two 64-bits
         # fields, but we are only interested in the first field.
@@ -229,7 +226,7 @@ class FreeBSDHardware(Hardware):
         dmi_facts = {}
 
         # Fall back to using dmidecode, if available
-        dmi_bin = self.module.get_bin_path('dmidecode', warning="skipping dmi facts")
+        dmi_bin = self.module.get_bin_path('dmidecode')
         if not dmi_bin:
             return dmi_facts
         DMI_DICT = {
