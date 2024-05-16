@@ -46,7 +46,7 @@ class TestAnsibleModuleExitJson:
         assert return_val == expected
 
     @pytest.mark.parametrize('args, expected, stdin',
-                             ((a, e, {}) for a, e in DATA if 'msg' in a),  # pylint: disable=undefined-variable
+                             ((a, e, {}) for a, e in DATA if 'msg' in a),
                              indirect=['stdin'])
     def test_fail_json_exits(self, am, capfd, args, expected, monkeypatch):
         monkeypatch.setattr(warnings, '_global_deprecations', [])
