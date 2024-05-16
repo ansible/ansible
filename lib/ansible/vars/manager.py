@@ -21,7 +21,7 @@ import os
 import sys
 
 from collections import defaultdict
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, MutableMapping
 from hashlib import sha1
 
 from jinja2.exceptions import UndefinedError
@@ -31,6 +31,7 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.module_utils.common.text.converters import to_text
+from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.six import text_type, string_types
 from ansible.plugins.loader import lookup_loader
 from ansible.vars.fact_cache import FactCache
@@ -320,68 +321,83 @@ class VariableManager:
             all_vars = _combine_and_track(all_vars, play.get_vars(), "play vars")
 
             vars_files = play.get_vars_files()
-            try:
-                for vars_file_item in vars_files:
-                    # create a set of temporary vars here, which incorporate the extra
-                    # and magic vars so we can properly template the vars_files entries
-                    # NOTE: this makes them depend on host vars/facts so things like
-                    #       ansible_facts['os_distribution'] can be used, ala include_vars.
-                    #       Consider DEPRECATING this in the future, since we have include_vars ...
-                    temp_vars = combine_vars(all_vars, self._extra_vars)
-                    temp_vars = combine_vars(temp_vars, magic_variables)
-                    templar = Templar(loader=self._loader, variables=temp_vars)
+            if not is_sequence(vars_files):
+                raise AnsibleParserError("Error while reading vars files - please supply a list of file names. "
+                                         "Got '%s' of type %s" % (vars_files, type(vars_files)))
 
-                    # we assume each item in the list is itself a list, as we
-                    # support "conditional includes" for vars_files, which mimics
-                    # the with_first_found mechanism.
-                    vars_file_list = vars_file_item
-                    if not isinstance(vars_file_list, list):
-                        vars_file_list = [vars_file_list]
+            vars_files_templar = Templar(loader=self._loader)
+            for vars_file_item in vars_files:
+                if not is_sequence(vars_file_item, include_strings=True):
+                    raise AnsibleError(
+                        "Invalid vars_files entry found: %r\n"
+                        "vars_files entries should be either a string type or "
+                        "a list of string types after template expansion" % vars_file_item
+                    )
 
-                    # now we iterate through the (potential) files, and break out
-                    # as soon as we read one from the list. If none are found, we
-                    # raise an error, which is silently ignored at this point.
+                # create a set of temporary vars here, which incorporate the extra
+                # and magic vars so we can properly template the vars_files entries
+                # NOTE: this makes them depend on host vars/facts so things like
+                #       ansible_facts['os_distribution'] can be used, ala include_vars.
+                #       Consider DEPRECATING this in the future, since we have include_vars ...
+                temp_vars = combine_vars(all_vars, self._extra_vars)
+                temp_vars = combine_vars(temp_vars, magic_variables)
+                vars_files_templar.available_variables = temp_vars
+
+                # we assume each item in the list is itself a list, as we
+                # support "conditional includes" for vars_files, which mimics
+                # the with_first_found mechanism.
+                vars_file_list = vars_file_item
+                if not isinstance(vars_file_list, list):
+                    vars_file_list = [vars_file_list]
+
+                # now we iterate through the (potential) files, and break out
+                # as soon as we read one from the list. If none are found, we
+                # raise an error, which is silently ignored at this point.
+                attempted_files = []
+                vars_file_count = len(vars_file_list)
+                skip_count = 0
+                for vars_file in vars_file_list:
                     try:
-                        for vars_file in vars_file_list:
-                            vars_file = templar.template(vars_file)
-                            if not (isinstance(vars_file, Sequence)):
-                                raise AnsibleError(
-                                    "Invalid vars_files entry found: %r\n"
-                                    "vars_files entries should be either a string type or "
-                                    "a list of string types after template expansion" % vars_file
-                                )
-                            try:
-                                play_search_stack = play.get_search_path()
-                                found_file = self._loader.path_dwim_relative_stack(play_search_stack, 'vars', vars_file)
-                                data = preprocess_vars(self._loader.load_from_file(found_file, unsafe=True, cache='vaulted'))
-                                if data is not None:
-                                    for item in data:
-                                        all_vars = _combine_and_track(all_vars, item, "play vars_files from '%s'" % vars_file)
-                                break
-                            except AnsibleFileNotFound:
-                                # we continue on loader failures
-                                continue
-                            except AnsibleParserError:
-                                raise
-                        else:
-                            # if include_delegate_to is set to False or we don't have a host, we ignore the missing
-                            # vars file here because we're working on a delegated host or require host vars, see NOTE above
-                            if include_delegate_to and host:
-                                raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
-                    except (UndefinedError, AnsibleUndefinedVariable):
-                        if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
-                            raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'"
-                                                           % vars_file_item, obj=vars_file_item)
+                        vars_file = vars_files_templar.template(vars_file, fail_on_undefined=True)
+                    except (UndefinedError, AnsibleUndefinedVariable) as exc:
+                        # The only variable data that can impact vars_files are host vars and technically
+                        # role defaults, but codifying role defaults isn't really possible here, so we
+                        # restrict to just hosts
+                        if host:
+                            raise AnsibleUndefinedVariable(
+                                f"an undefined variable was found when attempting to template the vars_files item '{vars_file_item}'",
+                                obj=vars_file_item
+                            )
                         else:
                             # we do not have a full context here, and the missing variable could be because of that
                             # so just show a warning and continue
-                            display.vvv("skipping vars_file '%s' due to an undefined variable" % vars_file_item)
+                            skip_count += 1
+                            display.vvv(f"skipping vars_file '{vars_file_item}' due to an undefined variable: {exc}")
                             continue
+                    finally:
+                        attempted_files.append(vars_file)
 
-                    display.vvv("Read vars_file '%s'" % vars_file_item)
-            except TypeError:
-                raise AnsibleParserError("Error while reading vars files - please supply a list of file names. "
-                                         "Got '%s' of type %s" % (vars_files, type(vars_files)))
+                    if not isinstance(vars_file, text_type):
+                        raise AnsibleError(f"Invalid vars_file entry {vars_file}, expected a string, got {vars_file.__class__.__name__}")
+
+                    try:
+                        play_search_stack = play.get_search_path()
+                        found_file = self._loader.path_dwim_relative_stack(play_search_stack, 'vars', vars_file)
+                        data = preprocess_vars(self._loader.load_from_file(found_file, unsafe=True, cache='vaulted'))
+                        if data is not None:
+                            for item in data:
+                                all_vars = _combine_and_track(all_vars, item, "play vars_files from '%s'" % vars_file)
+                        break
+                    except AnsibleFileNotFound:
+                        # we continue on loader failures
+                        continue
+                    except AnsibleParserError:
+                        raise
+                else:
+                    if skip_count != vars_file_count:
+                        raise AnsibleFileNotFound("The following vars files were not found: %s" % ', '.join(attempted_files))
+
+                display.vvv("Read vars_file '%s'" % vars_file_item)
 
             # We now merge in all exported vars from all roles in the play (very high precedence)
             for role in play.roles:
