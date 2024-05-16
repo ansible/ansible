@@ -8,17 +8,14 @@
       password bar
     mode: "0600"
 
-- name: test Url lookup with ~/.netrc forced Basic auth
+- name: test Url lookup with netrc forced Basic auth
   set_fact:
-    web_data: "{{ lookup('ansible.builtin.url', 'https://' ~ httpbin_host ~ '/bearer', headers={'Authorization':'Bearer foobar'}) }}"
-  ignore_errors: yes
+    web_data: "{{ lookup('ansible.builtin.url', 'https://' ~ httpbin_host ~ '/basic-auth/foo/bar', headers={'Authorization':'Bearer foobar'}) }}"
 
-- name: assert test Url lookup with ~/.netrc forced Basic auth
+- name: assert test Url lookup with netrc forced Basic auth
   assert:
     that:
-    - "web_data.token.find('v=' ~ 'Zm9vOmJhcg==') == -1"
-    fail_msg: "Was expecting 'foo:bar' in base64, but received: {{ web_data }}"
-    success_msg: "Expected Basic authentication even Bearer headers were sent"
+     - web_data.user == 'foo'
 
 - name: test Url lookup with use_netrc=False
   set_fact:
@@ -27,9 +24,7 @@
 - name: assert test Url lookup with netrc=False used Bearer authentication
   assert:
     that:
-    - "web_data.token.find('v=' ~ 'foobar') == -1"
-    fail_msg: "Was expecting 'foobar' Bearer token, but received: {{ web_data }}"
-    success_msg: "Expected to ignore ~/.netrc and authorize with Bearer token"
+     - web_data.token == 'foobar'
 
 - name: Clean up. Removing ~/.netrc
   file:
