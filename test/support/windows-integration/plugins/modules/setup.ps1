@@ -459,6 +459,10 @@ if($gather_subset.Contains('winrm')) {
         $winrm_cert_thumbprints += $https_listener | Where-Object {$_.Name -EQ "CertificateThumbprint" } | Select-Object Value
     }
 
+    if ($winrm_cert_thumbprints) {
+        $ansible_facts.Add("ansible_win_rm_certificate_thumbprint", $winrm_cert_thumbprints[0].Value)
+    }
+
     $winrm_cert_expiry = @()
     foreach ($winrm_cert_thumbprint in $winrm_cert_thumbprints) {
         Try {
