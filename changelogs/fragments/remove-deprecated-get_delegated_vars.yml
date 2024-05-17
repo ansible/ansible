@@ -1,0 +1,2 @@
+removed_features:
+  - Remove deprecated `VariableManager._get_delegated_vars` method (https://github.com/ansible/ansible/issues/82950)
