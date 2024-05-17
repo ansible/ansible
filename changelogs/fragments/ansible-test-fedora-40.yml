@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - replace support for Fedora 39 with 40 (https://github.com/ansible/ansible/issues/83097)
