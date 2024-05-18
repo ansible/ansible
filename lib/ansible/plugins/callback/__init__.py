@@ -22,6 +22,7 @@ import json
 import re
 import sys
 import textwrap
+import typing
 
 from collections import OrderedDict
 from collections.abc import MutableMapping
@@ -40,6 +41,9 @@ from ansible.utils.unsafe_proxy import AnsibleUnsafeText, NativeJinjaUnsafeText
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
 import yaml
+
+if typing.TYPE_CHECKING:
+    from ansible.executor.task_result import TaskResult
 
 global_display = Display()
 
@@ -501,7 +505,20 @@ class CallbackBase(AnsiblePlugin):
     def v2_on_any(self, *args, **kwargs):
         self.on_any(args, kwargs)
 
-    def v2_runner_on_failed(self, result, ignore_errors=False):
+    def v2_runner_on_failed(self, result: 'TaskResult', ignore_errors: bool = False) -> None:
+        """Show result, output, and optional information, based on verbosity level, vars, and
+        ansible.cfg settings, if a task failed.
+
+        Customization notes - In this method:
+        - You can access TaskResult class methods and attributes like result.is_changed()
+          and result.task_name
+        - The ansible.executor.task_result.TaskResult class is defined in
+          lib/ansible/executor/task_result.py
+
+        :param TaskResult result: The result and output of a task
+        :param bool ignore_errors: The value of the ignore_errors vars
+        :return: None
+        """
         host = result._host.get_name()
         self.runner_on_failed(host, result._result, ignore_errors)
 
