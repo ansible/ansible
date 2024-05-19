@@ -2,5 +2,5 @@
 badssl_host: fail.ansible.http.tests
 httpbin_host: ansible.http.tests
 sni_host: sni1.ansible.http.tests
-badssl_host_substring: HTTP Client Testing Service
+badssl_host_substring: httpbin.org
 self_signed_host: self-signed.ansible.http.tests

@@ -27,28 +27,9 @@
     that:
       - badssl_host_substring in web_data
 
-- vars:
-    url: https://{{ httpbin_host }}/get
-  block:
-    - name: test good cipher
-      debug:
-        msg: '{{ lookup("url", url) }}'
-      vars:
-        ansible_lookup_url_ciphers: ECDHE-RSA-AES128-SHA256
-      register: good_ciphers
-
-    - name: test bad cipher
-      debug:
-        msg: '{{ lookup("url", url) }}'
-      vars:
-        ansible_lookup_url_ciphers: ECDHE-ECDSA-AES128-SHA
-      ignore_errors: true
-      register: bad_ciphers
-
-    - assert:
-        that:
-          - good_ciphers is successful
-          - bad_ciphers is failed
+- name: Test ciphers
+  import_tasks: ciphers.yml
+  when: false  # skipped until we have a way to disable TLS 1.3 on the client or server, since cipher suite selection won't break TLS 1.3
 
 - name: Test use_netrc=False
   import_tasks: use_netrc.yml

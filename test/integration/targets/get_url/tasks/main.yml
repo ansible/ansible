@@ -672,6 +672,7 @@
 
 - name: Test ciphers
   import_tasks: ciphers.yml
+  when: false  # skipped until we have a way to disable TLS 1.3 on the client or server, since cipher suite selection won't break TLS 1.3
 
 - name: Test use_netrc=False
   import_tasks: use_netrc.yml

@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Update ``http-test-container`` to version 3.0.0.
