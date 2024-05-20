@@ -282,10 +282,22 @@ def _strip_comments(source):
     return b'\n'.join(buf)
 
 
-def _create_powershell_wrapper(b_module_data, module_path, module_args,
-                               environment, async_timeout, become,
-                               become_method, become_user, become_password,
-                               become_flags, substyle, task_vars, module_fqn):
+def _create_powershell_wrapper(
+    b_module_data,
+    module_path,
+    module_args,
+    environment,
+    async_timeout: int,
+    wrap_async: bool,
+    become,
+    become_method,
+    become_user,
+    become_password,
+    become_flags,
+    substyle,
+    task_vars,
+    module_fqn,
+):
     # creates the manifest/wrapper used in PowerShell/C# modules to enable
     # things like become and async - this is also called in action/script.py
 
@@ -311,7 +323,7 @@ def _create_powershell_wrapper(b_module_data, module_path, module_args,
     )
     finder.scan_exec_script(module_wrapper)
 
-    if async_timeout > 0:
+    if wrap_async or async_timeout > 0:
         finder.scan_exec_script('exec_wrapper')
         finder.scan_exec_script('async_watchdog')
         finder.scan_exec_script('async_wrapper')

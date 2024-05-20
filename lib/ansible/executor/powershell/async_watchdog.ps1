@@ -25,7 +25,13 @@ $entrypoint = $payload.($actions[0])
 $entrypoint = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($entrypoint))
 
 $resultfile_path = $payload.async_results_path
-$max_exec_time_sec = $payload.async_timeout_sec
+if ($payload.async_timeout_sec -eq 0) {
+    # module_manifest sets timeout as 0 for infinite.
+    $max_exec_time_ms = -1
+}
+else {
+    $max_exec_time_ms = $payload.async_timeout_sec * 1000
+}
 
 Write-AnsibleLog "INFO - deserializing existing result file args at: '$resultfile_path'" "async_watchdog"
 if (-not (Test-Path -Path $resultfile_path)) {
@@ -62,8 +68,8 @@ $ps.AddScript($entrypoint).AddArgument($payload) > $null
 Write-AnsibleLog "INFO - async job start, calling BeginInvoke()" "async_watchdog"
 $job_async_result = $ps.BeginInvoke()
 
-Write-AnsibleLog "INFO - waiting '$max_exec_time_sec' seconds for async job to complete" "async_watchdog"
-$job_async_result.AsyncWaitHandle.WaitOne($max_exec_time_sec * 1000) > $null
+Write-AnsibleLog "INFO - waiting '$max_exec_time_ms' ms for async job to complete" "async_watchdog"
+$job_async_result.AsyncWaitHandle.WaitOne($max_exec_time_ms) > $null
 $result.finished = 1
 
 if ($job_async_result.IsCompleted) {

@@ -77,6 +77,11 @@ class ShellModule(ShellBase):
         # powershell/winrm env handling is handled in the exec wrapper
         return ""
 
+    def dirname(self, path: str) -> str:
+        # Using os.path.dirname will return an empty string when path uses
+        # backslashes. Using ntpath can handle both cases for Windows.
+        return ntpath.dirname(path)
+
     def join_path(self, *args):
         # use normpath() to remove doubled slashed and convert forward to backslashes
         parts = [ntpath.normpath(self._unquote(arg)) for arg in args]

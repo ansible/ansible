@@ -1,0 +1,2 @@
+minor_changes:
+- shell - Added ``dirname`` method to provide a shell specific function for getting the directory path from the provided path.
