@@ -276,7 +276,7 @@ class ActionBase(ABC):
             raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
 
         # insert shared code and arguments into the module
-        final_environment = dict()
+        final_environment: dict = dict()
         self._compute_environment_string(final_environment)
 
         become_kwargs = {}
