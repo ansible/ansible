@@ -35,6 +35,9 @@ from ansible.utils.path import unfrackpath
 display = Display()
 
 
+_IGNORE_CHANGED = frozenset({'_terms', '_input'})
+
+
 def yaml_dump(data, default_flow_style=False, default_style=None):
     return yaml.dump(data, Dumper=AnsibleDumper, default_flow_style=default_flow_style, default_style=default_style)
 
@@ -455,13 +458,13 @@ class ConfigCLI(CLI):
 
         entries = []
         for setting in sorted(config):
-            changed = (config[setting].origin not in ('default', 'REQUIRED'))
+            changed = (config[setting].origin not in ('default', 'REQUIRED') and setting not in _IGNORE_CHANGED)
 
             if context.CLIARGS['format'] == 'display':
                 if isinstance(config[setting], Setting):
                     # proceed normally
                     value = config[setting].value
-                    if config[setting].origin == 'default':
+                    if config[setting].origin == 'default' or setting in _IGNORE_CHANGED:
                         color = 'green'
                         value = self.config.template_default(value, get_constants())
                     elif config[setting].origin == 'REQUIRED':
@@ -613,7 +616,12 @@ class ConfigCLI(CLI):
                 output.append('\nGALAXY_SERVERS:\n')
                 output.extend(server_config_list)
             else:
-                output.append({'GALAXY_SERVERS': server_config_list})
+                configs = {}
+                for server_config in server_config_list:
+                    server = list(server_config.keys())[0]
+                    server_reduced_config = server_config.pop(server)
+                    configs[server]  = server_reduced_config
+                output.append({'GALAXY_SERVERS': configs})
 
         if context.CLIARGS['type'] == 'all':
             # add all plugins
