@@ -1030,6 +1030,17 @@ releases:
     - vmware_facts.yml
     - winrm-task-timeout.yml
     release_date: '2024-04-15'
+  2.16.7:
+    changes:
+      release_summary: '| Release Date: 2024-05-20
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+    codename: All My Love
+    fragments:
+    - 2.16.7_summary.yaml
+    release_date: '2024-05-20'
   2.16.7rc1:
     changes:
       bugfixes:
