@@ -1,0 +1,14 @@
+- hosts: all
+  gather_facts: false
+  strategy: host_pinned
+  tasks:
+    - name: start
+      debug:
+        msg: start
+
+    - ping:
+
+    - meta: noop
+
+    - debug:
+        msg: end
