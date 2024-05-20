@@ -4,54 +4,13 @@ ansible-core 2.17 "Gallows Pole" Release Notes
 
 .. contents:: Topics
 
-v2.17.0rc2
-==========
+v2.17.0
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2024-05-13
-| `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
-
-Bugfixes
---------
-
-- Add a version ceiling constraint for pypsrp to avoid potential breaking changes in the 1.0.0 release.
-- ansible-doc - fixed "inicates" typo in output
-- ansible-doc - format top-level descriptions with multiple paragraphs as multiple paragraphs, instead of concatenating them (https://github.com/ansible/ansible/pull/83155).
-- ensure we have logger before we log when we have increased verbosity.
-- uri - update the documentation for follow_redirects.
-
-v2.17.0rc1
-==========
-
-Release Summary
----------------
-
-| Release Date: 2024-04-29
-| `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
-
-Removed Features (previously deprecated)
-----------------------------------------
-
-- Removed Python 2.7 and Python 3.6 as a supported remote version. Python 3.7+ is now required for target execution.
-
-Bugfixes
---------
-
-- Fix handlers not being executed in lockstep using the linear strategy in some cases (https://github.com/ansible/ansible/issues/82307)
-- ansible-config will now properly template defaults before dumping them.
-- ansible_managed restored it's 'templatability' by ensuring the possible injection routes are cut off earlier in the process.
-- dnf5 - replace removed API calls
-- facts - add a generic detection for VMware in product name.
-
-v2.17.0b1
-=========
-
-Release Summary
----------------
-
-| Release Date: 2024-04-08
+| Release Date: 2024-05-20
 | `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
 
 Major Changes
@@ -153,6 +112,7 @@ Removed Features (previously deprecated)
 - Remove deprecated JINJA2_NATIVE_WARNING environment variable (https://github.com/ansible/ansible/issues/81714)
 - Remove deprecated ``scp_if_ssh`` from ssh connection plugin (https://github.com/ansible/ansible/issues/81715).
 - Remove deprecated crypt support from ansible.utils.encrypt (https://github.com/ansible/ansible/issues/81717)
+- Removed Python 2.7 and Python 3.6 as a supported remote version. Python 3.7+ is now required for target execution.
 - With the removal of Python 2 support, the yum module and yum action plugin are removed and redirected to ``dnf``.
 
 Security Fixes
@@ -165,6 +125,7 @@ Security Fixes
 Bugfixes
 --------
 
+- Add a version ceiling constraint for pypsrp to avoid potential breaking changes in the 1.0.0 release.
 - All core lookups now use set_option(s) even when doing their own custom parsing. This ensures that the options are always the proper type.
 - Allow for searching handler subdir for included task via include_role (https://github.com/ansible/ansible/issues/81722)
 - AnsibleModule.atomic_move - fix preserving extended ACLs of the destination when it exists (https://github.com/ansible/ansible/issues/72929).
@@ -181,6 +142,7 @@ Bugfixes
 - Fix check for missing _sub_plugin attribute in older connection plugins (https://github.com/ansible/ansible/pull/82954)
 - Fix condition for unquoting configuration strings from ini files (https://github.com/ansible/ansible/issues/82387).
 - Fix for when ``any_errors_fatal`` was ignored if error occurred in a block with always (https://github.com/ansible/ansible/issues/31543)
+- Fix handlers not being executed in lockstep using the linear strategy in some cases (https://github.com/ansible/ansible/issues/82307)
 - Fix handling missing urls in ansible.module_utils.urls.fetch_file for Python 3.
 - Fix issue where an ``include_tasks`` handler in a role was not able to locate a file in ``tasks/`` when ``tasks_from`` was used as a role entry point and ``main.yml`` was not present (https://github.com/ansible/ansible/issues/82241)
 - Fix issues when tasks withing nested blocks wouldn't run when ``force_handlers`` is set (https://github.com/ansible/ansible/issues/81533)
@@ -211,6 +173,9 @@ Bugfixes
 - ``include_role`` - properly execute ``v2_playbook_on_include`` and ``v2_runner_on_failed`` callbacks as well as increase ``ok`` and ``failed`` stats in the play recap, when appropriate (https://github.com/ansible/ansible/issues/77336)
 - allow_duplicates - fix evaluating if the current role allows duplicates instead of using the initial value from the duplicate's cached role.
 - ansible-config init will now dedupe ini entries from plugins.
+- ansible-config will now properly template defaults before dumping them.
+- ansible-doc - fixed "inicates" typo in output
+- ansible-doc - format top-level descriptions with multiple paragraphs as multiple paragraphs, instead of concatenating them (https://github.com/ansible/ansible/pull/83155).
 - ansible-galaxy - Deprecate use of the Galaxy v2 API (https://github.com/ansible/ansible/issues/81781)
 - ansible-galaxy - Provide a better error message when using a requirements file with an invalid format - https://github.com/ansible/ansible/issues/81901
 - ansible-galaxy - Resolve issue with the dataclass used for galaxy.yml manifest caused by using future annotations
@@ -239,6 +204,7 @@ Bugfixes
 - ansible-test — Python 3.8–3.12 will use ``coverage`` v7.3.2.
 - ansible.builtin.apt - calling clean = true does not properly clean certain cache files such as /var/cache/apt/pkgcache.bin and /var/cache/apt/pkgcache.bin (https://github.com/ansible/ansible/issues/82611)
 - ansible.builtin.uri - the module was ignoring the ``force`` parameter and always requesting a cached copy (via the ``If-Modified-Since`` header) when downloading to an existing local file. Disable caching when ``force`` is ``true``, as documented (https://github.com/ansible/ansible/issues/82166).
+- ansible_managed restored it's 'templatability' by ensuring the possible injection routes are cut off earlier in the process.
 - apt - honor install_recommends and dpkg_options while installing python3-apt library (https://github.com/ansible/ansible/issues/40608).
 - apt - install recommended packages when installing package via deb file (https://github.com/ansible/ansible/issues/29726).
 - apt_repository - do not modify repo files if the file is a symlink (https://github.com/ansible/ansible/issues/49809).
@@ -259,11 +225,14 @@ Bugfixes
 - dnf - properly set gpg check options on enabled repositories according to the ``disable_gpg_check`` option (https://github.com/ansible/ansible/issues/80110)
 - dnf - properly skip unavailable packages when ``skip_broken`` is enabled (https://github.com/ansible/ansible/issues/80590)
 - dnf - the ``nobest`` option only overrides the distribution default when explicitly used, and is used for all supported operations (https://github.com/ansible/ansible/issues/82616)
+- dnf5 - replace removed API calls
 - dnf5 - respect ``allow_downgrade`` when installing packages directly from rpm files
 - dnf5 - the ``nobest`` option only overrides the distribution default when used
 - dwim functions for lookups should be better at detectging role context even in abscense of tasks/main.
+- ensure we have logger before we log when we have increased verbosity.
 - expect - fix argument spec error using timeout=null (https://github.com/ansible/ansible/issues/80982).
 - fact gathering on linux now handles thread count by using rounding vs dropping decimals, it should give slightly more accurate numbers.
+- facts - add a generic detection for VMware in product name.
 - facts - detect VMware ESXi 8.0 virtualization by product name VMware20,1
 - fetch - Do not calculate the file size for Windows fetch targets to improve performance.
 - fetch - add error message when using ``dest`` with a trailing slash that becomes a local directory - https://github.com/ansible/ansible/issues/82878
@@ -299,6 +268,7 @@ Bugfixes
 - unsafe data - Address an incompatibility when iterating or getting a single index from ``AnsibleUnsafeBytes``
 - unsafe data - Address an incompatibility with ``AnsibleUnsafeText`` and ``AnsibleUnsafeBytes`` when pickling with ``protocol=0``
 - unsafe data - Enable directly using ``AnsibleUnsafeText`` with Python ``pathlib`` (https://github.com/ansible/ansible/issues/82414)
+- uri - update the documentation for follow_redirects.
 - uri action plugin now skipped during check mode (not supported) instead of even trying to execute the module, which already skipped, this does not really change the result, but returns much faster.
 - vars - handle exception while combining VarsWithSources and dict (https://github.com/ansible/ansible/issues/81659).
 - wait_for should not handle 'non mmapable files' again.

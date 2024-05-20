@@ -1,5 +1,16 @@
 ancestor: 2.16.0
 releases:
+  2.17.0:
+    changes:
+      release_summary: '| Release Date: 2024-05-20
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+        '
+    codename: Gallows Pole
+    fragments:
+    - 2.17.0_summary.yaml
+    release_date: '2024-05-20'
   2.17.0b1:
     changes:
       breaking_changes:
