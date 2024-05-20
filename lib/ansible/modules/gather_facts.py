@@ -27,6 +27,7 @@ options:
             - By default it will be true if more than one fact module is used.
             - For low cost/delay fact modules parallelism overhead might end up meaning the whole process takes longer.
               Test your specific case to see if it is a speed improvement or not.
+            - The C(ansible_facts_parallel) variable can be used to set the default for this option.
         type: bool
 attributes:
     action:
