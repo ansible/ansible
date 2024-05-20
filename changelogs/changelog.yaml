@@ -944,6 +944,17 @@ releases:
     - unarchive_fix.yml
     - winrm-task-timeout.yml
     release_date: '2024-04-16'
+  2.15.12:
+    changes:
+      release_summary: '| Release Date: 2024-05-20
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.15/porting_guides/porting_guide_core_2.15.html>`__
+
+        '
+    codename: Ten Years Gone
+    fragments:
+    - 2.15.12_summary.yaml
+    release_date: '2024-05-20'
   2.15.12rc1:
     changes:
       bugfixes:
