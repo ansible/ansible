@@ -31,7 +31,7 @@ class HttptesterProvider(CloudProvider):
     def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
-        self.image = os.environ.get('ANSIBLE_HTTP_TEST_CONTAINER', 'quay.io/ansible/http-test-container:3.0.0')
+        self.image = os.environ.get('ANSIBLE_HTTP_TEST_CONTAINER', 'quay.io/ansible/http-test-container:3.0.1')
 
         self.uses_docker = True
 
@@ -44,6 +44,7 @@ class HttptesterProvider(CloudProvider):
             88,
             443,
             444,
+            445,
             749,
         ]
 
@@ -52,6 +53,7 @@ class HttptesterProvider(CloudProvider):
             'sni1.ansible.http.tests',
             'fail.ansible.http.tests',
             'self-signed.ansible.http.tests',
+            'insecure.ansible.http.tests',
         ]
 
         descriptor = run_support_container(

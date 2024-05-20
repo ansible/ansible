@@ -1,5 +1,5 @@
 - vars:
-    url: https://{{ httpbin_host }}/get
+    url: https://{{ insecure_host }}:445/
   block:
     - name: test good cipher
       debug:
