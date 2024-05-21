@@ -195,10 +195,7 @@ class PlaybookExecutor:
                                 result = self._tqm.RUN_FAILED_HOSTS
                                 break_play = True
 
-                            # check the number of failures here, to see if they're above the maximum
-                            # failure percentage allowed, or if any errors are fatal. If either of those
-                            # conditions are met, we break out, otherwise we only break out if the entire
-                            # batch failed
+                            # check the number of failures here and break out if the entire batch failed
                             failed_hosts_count = len(self._tqm._failed_hosts) + len(self._tqm._unreachable_hosts) - \
                                 (previously_failed + previously_unreachable)
 
