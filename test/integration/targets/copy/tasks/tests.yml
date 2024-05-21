@@ -31,22 +31,6 @@
     that:
       - "file_result_check.mode == '0444'"
 
-- name: Check the stat results of the file
-  stat:
-    path: "{{ remote_file }}"
-  register: stat_results
-
-- name: Check the stat results of the src file
-  stat:
-    path: foo.txt
-  register: stat_results_src
-
-- name: Assert the mtime/atime updated
-  assert:
-    that:
-      - "stat_results_src.stat.atime < stat_results.stat.atime"
-      - "stat_results_src.stat.mtime < stat_results.stat.mtime"
-
 # same as expanduser & expandvars
 - command: 'echo {{ remote_dir }}'
   register: echo
@@ -2464,3 +2448,44 @@
       loop:
         - '{{ src }}'
         - '{{ src }}_dest'
+
+- name: Record the output directory
+  set_fact:
+    remote_file: foo.txt
+
+- name: Create a dest file
+  shell: "echo Test content > {{ remote_file }}"
+  register: create_dest_result
+
+- name: Check the stat results of the file before copying
+  stat:
+    path: "{{ remote_file }}"
+  register: stat_results_before_copy
+
+- name: Overwrite the file using the content system
+  copy:
+    content: "modified"
+    dest: "{{ remote_file }}"
+    decrypt: no
+  register: copy_result
+
+- name: Check the stat results of the file after copying
+  stat:
+    path: "{{ remote_file }}"
+  register: stat_results_after_copy
+
+- name: Assert that the file has changed
+  assert:
+     that:
+       - "create_dest_result is changed"
+       - "copy_result is changed"
+       - "'content' not in copy_result"
+       - "stat_results_before_copy.stat.atime < stat_results_after_copy.stat.atime"
+       - "stat_results_before_copy.stat.mtime < stat_results_after_copy.stat.mtime"
+
+- name: clean up dest file
+  file:
+    path: '{{ item }}'
+    state: absent
+  loop:
+    - '{{ remote_file }}'
