@@ -8,4 +8,6 @@
     that:
       - ansible_systemd.version | int
       - ansible_systemd.version is match('^[1-9][0-9][0-9]$')
+      - ansible_systemd.full_version | string
+      - ansible_systemd.full_version is match('^[1-9][0-9][0-9](.|-|~)')
       - ansible_systemd.features | regex_search('(\\+|-)(PAM|AUDIT)')
