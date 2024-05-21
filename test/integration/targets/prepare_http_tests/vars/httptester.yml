@@ -4,4 +4,5 @@ httpbin_host: ansible.http.tests
 sni_host: sni1.ansible.http.tests
 badssl_host_substring: httpbin.org
 self_signed_host: self-signed.ansible.http.tests
-insecure_host: insecure.ansible.http.tests
+no_tls13_host: no-tls13.ansible.http.tests
+no_tls13_weak_host: no-tls13-weak.ansible.http.tests

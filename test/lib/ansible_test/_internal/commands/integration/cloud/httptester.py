@@ -53,7 +53,8 @@ class HttptesterProvider(CloudProvider):
             'sni1.ansible.http.tests',
             'fail.ansible.http.tests',
             'self-signed.ansible.http.tests',
-            'insecure.ansible.http.tests',
+            'no-tls13.ansible.http.tests',
+            'no-tls13-weak.ansible.http.tests',
         ]
 
         descriptor = run_support_container(

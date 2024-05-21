@@ -1,32 +1,45 @@
-- name: test good cipher
+- name: baseline test against strong ciphers
   uri:
-    url: https://{{ insecure_host }}:445/
-    ciphers: ECDHE-RSA-AES128-SHA256
-  register: good_ciphers
+    url: https://{{ no_tls13_host }}:445/
+
+- name: baseline test against weak ciphers
+  uri:
+    url: https://{{ no_tls13_weak_host }}:445/
+  register: result
+  failed_when: result is successful
+
+- name: ensure lower cipher against higher cipher fails
+  uri:
+    url: https://{{ no_tls13_host }}:445/
+    ciphers: AES128-SHA
+  register: result
+  failed_when: result is successful
+
+- name: ensure higher cipher against lower cipher fails
+  uri:
+    url: https://{{ no_tls13_weak_host }}:445/
+    ciphers: ECDHE-RSA-AES256-GCM-SHA384
+  register: result
+  failed_when: result is successful
+
+- name: ensure high cipher match works
+  uri:
+    url: https://{{ no_tls13_host }}:445/
+    ciphers: ECDHE-RSA-AES256-GCM-SHA384
+
+- name: ensure low cipher match works
+  uri:
+    url: https://{{ no_tls13_weak_host }}:445/
+    ciphers: AES128-SHA
 
 - name: test good cipher redirect
   uri:
-    url: http://{{ insecure_host }}/redir
-    ciphers: ECDHE-RSA-AES128-SHA256
-  register: good_ciphers_redir
-
-- name: test bad cipher
-  uri:
-    url: https://{{ insecure_host }}:445/
-    ciphers: ECDHE-ECDSA-AES128-SHA
-  ignore_errors: true
-  register: bad_ciphers
+    url: http://{{ no_tls13_host }}/redir
+    ciphers: ECDHE-RSA-AES256-GCM-SHA384
 
 - name: test bad cipher redirect
   uri:
-    url: http://{{ insecure_host }}/redir
-    ciphers: ECDHE-ECDSA-AES128-SHA
-  ignore_errors: true
-  register: bad_ciphers_redir
-
-- assert:
-    that:
-      - good_ciphers is successful
-      - good_ciphers_redir is successful
-      - bad_ciphers is failed
-      - bad_ciphers_redir is failed
+    url: http://{{ no_tls13_weak_host }}/redir
+    ciphers: ECDHE-RSA-AES256-GCM-SHA384
+  register: result
+  failed_when: result is successful
