@@ -89,9 +89,13 @@
   #- debug: msg='{{ (galaxy_server_dump.results[0].stdout | from_json) }}'
   #- debug: msg='{{ (galaxy_server_dump.results[1].stdout | from_json) }}'
 
-  - set_fact:
+  - name: extract galaxy servers from config dump
+    set_fact:
       galaxy_server_dump_base: '{{ (galaxy_server_dump.results[0].stdout | from_json | select("contains", "GALAXY_SERVERS"))[0].get("GALAXY_SERVERS") }}'
       galaxy_server_dump_all: '{{ (galaxy_server_dump.results[1].stdout | from_json | select("contains", "GALAXY_SERVERS"))[0].get("GALAXY_SERVERS") }}'
+
+  - name: set keys vars as we reuse a few times
+    set_fact:
       galaxy_server_dump_base_keys: '{{ galaxy_server_dump_base.keys() }}'
       galaxy_server_dump_all_keys: '{{ galaxy_server_dump_all.keys() }}'
 
