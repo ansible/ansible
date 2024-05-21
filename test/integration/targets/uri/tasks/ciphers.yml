@@ -4,42 +4,42 @@
 
 - name: baseline test against weak ciphers
   uri:
-    url: https://{{ no_tls13_weak_host }}:445/
+    url: https://{{ no_tls13_weak_host }}:446/
   register: result
   failed_when: result is successful
 
 - name: ensure lower cipher against higher cipher fails
   uri:
     url: https://{{ no_tls13_host }}:445/
-    ciphers: AES128-SHA
+    ciphers: '{{ tls_weak_cipher }}'
   register: result
   failed_when: result is successful
 
 - name: ensure higher cipher against lower cipher fails
   uri:
-    url: https://{{ no_tls13_weak_host }}:445/
-    ciphers: ECDHE-RSA-AES256-GCM-SHA384
+    url: https://{{ no_tls13_weak_host }}:446/
+    ciphers: '{{ tls_strong_cipher }}'
   register: result
   failed_when: result is successful
 
 - name: ensure high cipher match works
   uri:
     url: https://{{ no_tls13_host }}:445/
-    ciphers: ECDHE-RSA-AES256-GCM-SHA384
+    ciphers: '{{ tls_strong_cipher }}'
 
 - name: ensure low cipher match works
   uri:
-    url: https://{{ no_tls13_weak_host }}:445/
-    ciphers: AES128-SHA
+    url: https://{{ no_tls13_weak_host }}:446/
+    ciphers: '{{ tls_weak_cipher }}'
 
 - name: test good cipher redirect
   uri:
     url: http://{{ no_tls13_host }}/redir
-    ciphers: ECDHE-RSA-AES256-GCM-SHA384
+    ciphers: '{{ tls_strong_cipher }}'
 
 - name: test bad cipher redirect
   uri:
     url: http://{{ no_tls13_weak_host }}/redir
-    ciphers: ECDHE-RSA-AES256-GCM-SHA384
+    ciphers: '{{ tls_strong_cipher }}'
   register: result
   failed_when: result is successful
