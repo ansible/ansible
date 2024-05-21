@@ -620,7 +620,7 @@ class ConfigCLI(CLI):
                 for server_config in server_config_list:
                     server = list(server_config.keys())[0]
                     server_reduced_config = server_config.pop(server)
-                    configs[server]  = server_reduced_config
+                    configs[server] = server_reduced_config
                 output.append({'GALAXY_SERVERS': configs})
 
         if context.CLIARGS['type'] == 'all':
