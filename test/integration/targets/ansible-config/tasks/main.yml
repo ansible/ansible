@@ -92,6 +92,8 @@
   - set_fact:
       galaxy_server_dump_base: '{{ (galaxy_server_dump.results[0].stdout | from_json | select("contains", "GALAXY_SERVERS"))[0].get("GALAXY_SERVERS") }}'
       galaxy_server_dump_all: '{{ (galaxy_server_dump.results[1].stdout | from_json | select("contains", "GALAXY_SERVERS"))[0].get("GALAXY_SERVERS") }}'
+      galaxy_server_dump_base_keys: '{{ galaxy_server_dump_base.keys() }}'
+      galaxy_server_dump_all_keys: '{{ galaxy_server_dump_all.keys() }}'
 
   - name: Check galaxy server values are present and match expectations
     vars:
@@ -121,15 +123,13 @@
           timeout:
       origin: '{{ role_path ~ "/files/galaxy_server.ini" }}'
     block:
-    - debug: var=galaxy_server_dump_base[2]
+    - debug: var=(galaxy_server_dump_base.keys()|list)[2]
     - name: Check galaxy server config reflects what we expect
       assert:
         that:
-        - (galaxy_server_dump_base | count) == 4
-
-
-        - galaxy_server_dump_base[2].keys() | list == gs.keys()
+        - (galaxy_server_dump_base_keys | count) == 4
+        - galaxy_server_dump_base_keys == gs.keys()
+        - (galaxy_server_dump_all_keys | count) == 4
+        - galaxy_server_dump_all_keys == gs.keys()
         #- (galaxy_server_dump_base[2].test_galaxy | selectattr("name", "equalto", "url"))[0].value == "https://galaxy-dev.ansible.com/"
-
-
         #- galaxy_server_dump_base == galaxy_server_dump_all
