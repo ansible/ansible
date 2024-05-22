@@ -3,15 +3,11 @@
 
 from __future__ import annotations
 
-import stat
-from collections import namedtuple
+from os import stat_result
 
 import pytest
 
-
 from ansible.module_utils.facts.system.chroot import ChrootFactCollector
-
-MOCKSTAT = namedtuple("mock_stat", ["st_dev", "st_ino", "st_size", "st_mtime"])
 
 
 class TestChrootFacts:
@@ -24,22 +20,19 @@ class TestChrootFacts:
         mocker.patch(
             "os.stat",
             side_effect=[
-                MOCKSTAT(st_dev=stat.S_IFDIR, st_ino=2, st_size=0, st_mtime=0),
-                MOCKSTAT(st_dev=stat.S_IFDIR, st_ino=3, st_size=1, st_mtime=0),
+                stat_result([0, 2, 0, 0, 0, 0, 0, 0, 0, 0]),
+                stat_result([0, 3, 0, 0, 0, 0, 0, 0, 0, 0]),
             ],
         )
         chroot_facts = ChrootFactCollector().collect()
         assert chroot_facts["is_chroot"] is True
 
-    def _mock_os_stat_exception(self):
-        raise Exception("fake os.stat exception")
-
     def test_detect_chroot_no_btrfs_no_xfs(self, mocker):
         mocker.patch(
             "os.stat",
             side_effect=[
-                MOCKSTAT(st_dev=stat.S_IFDIR, st_ino=2, st_size=0, st_mtime=0),
-                self._mock_os_stat_exception,
+                stat_result([0, 2, 0, 0, 0, 0, 0, 0, 0, 0]),
+                Exception("fake os.stat exception"),
             ],
         )
         chroot_facts = ChrootFactCollector().collect()
@@ -49,8 +42,8 @@ class TestChrootFacts:
         mocker.patch(
             "os.stat",
             side_effect=[
-                MOCKSTAT(st_dev=stat.S_IFDIR, st_ino=2, st_size=0, st_mtime=0),
-                self._mock_os_stat_exception,
+                stat_result([0, 2, 0, 0, 0, 0, 0, 0, 0, 0]),
+                Exception("fake os.stat exception"),
             ],
         )
 
@@ -75,8 +68,8 @@ class TestChrootFacts:
         mocker.patch(
             "os.stat",
             side_effect=[
-                MOCKSTAT(st_dev=stat.S_IFDIR, st_ino=2, st_size=0, st_mtime=0),
-                self._mock_os_stat_exception,
+                stat_result([0, 2, 0, 0, 0, 0, 0, 0, 0, 0]),
+                Exception("fake os.stat exception"),
             ],
         )
         mocker.patch.object(module, "get_bin_path", return_value="/usr/bin/stat")
