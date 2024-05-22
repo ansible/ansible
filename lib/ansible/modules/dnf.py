@@ -443,7 +443,8 @@ class DnfModule(YumDnf):
         """
         if (
             'no package matched' in to_native(error) or
-            'No match for argument:' in to_native(error)
+            'No match for argument:' in to_native(error) or
+            'All matches were filtered out by exclude filtering for argument:' in to_native(error)
         ):
             return (False, "{0} is not installed".format(spec))
 
