@@ -96,8 +96,8 @@
 
   - name: set keys vars as we reuse a few times
     set_fact:
-      galaxy_server_dump_base_keys: '{{ galaxy_server_dump_base.keys() }}'
-      galaxy_server_dump_all_keys: '{{ galaxy_server_dump_all.keys() }}'
+      galaxy_server_dump_base_keys: '{{ galaxy_server_dump_base.keys()|list|sort }}'
+      galaxy_server_dump_all_keys: '{{ galaxy_server_dump_all.keys()|list|sort }}'
 
   - name: Check galaxy server values are present and match expectations
     vars:
@@ -126,14 +126,21 @@
           api_version:
           timeout:
       origin: '{{ role_path ~ "/files/galaxy_server.ini" }}'
+      gs_keys: '{{ gs.keys()|list|sort }}'
     block:
-    - debug: var=(galaxy_server_dump_base.keys()|list)[2]
     - name: Check galaxy server config reflects what we expect
       assert:
         that:
         - (galaxy_server_dump_base_keys | count) == 4
-        - galaxy_server_dump_base_keys == gs.keys()
+        - galaxy_server_dump_base_keys == gs_keys
         - (galaxy_server_dump_all_keys | count) == 4
-        - galaxy_server_dump_all_keys == gs.keys()
-        #- (galaxy_server_dump_base[2].test_galaxy | selectattr("name", "equalto", "url"))[0].value == "https://galaxy-dev.ansible.com/"
-        #- galaxy_server_dump_base == galaxy_server_dump_all
+        - galaxy_server_dump_all_keys == gs_keys
+
+    - name: Check individual settings
+      assert:
+        that:
+          - gs[item[0]][item[1]] == galaxy_server_dump_base[item[0]][item[1]][1]
+          - gs[item[0]][item[1]] == galaxy_server_dump_all[item[0]][item[1]][1]
+      when:
+        - item[1] in gs[item[0]]
+      loop: '{{gs_keys | product(gs_all) }}'
