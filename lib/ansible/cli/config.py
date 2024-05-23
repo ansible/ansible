@@ -22,7 +22,7 @@ import ansible.plugins.loader as plugin_loader
 from ansible import constants as C
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.config.manager import ConfigManager, Setting
-from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleRequiredOptionError
 from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible.module_utils.common.json import json_dump
 from ansible.module_utils.six import string_types
@@ -546,12 +546,9 @@ class ConfigCLI(CLI):
             for setting in config_entries[finalname].keys():
                 try:
                     v, o = C.config.get_config_value_and_origin(setting, cfile=self.config_file, plugin_type=ptype, plugin_name=name, variables=get_constants())
-                except AnsibleError as e:
-                    if to_text(e).startswith('No setting was provided for required configuration'):
-                        v = None
-                        o = 'REQUIRED'
-                    else:
-                        raise e
+                except AnsibleRequiredOptionError:
+                    v = None
+                    o = 'REQUIRED'
 
                 if v is None and o is None:
                     # not all cases will be error
@@ -582,6 +579,7 @@ class ConfigCLI(CLI):
                 try:
                     v, o = C.config.get_config_value_and_origin(setting, plugin_type='galaxy_server', plugin_name=server, cfile=self.config_file)
                 except AnsibleError as e:
+                    if s_config[setting].get('required', False):
                     if to_text(e).startswith('No setting was provided for required configuration'):
                         v = None
                         o = 'REQUIRED'

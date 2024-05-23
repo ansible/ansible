@@ -15,7 +15,7 @@ from collections import namedtuple
 from collections.abc import Mapping, Sequence
 from jinja2.nativetypes import NativeEnvironment
 
-from ansible.errors import AnsibleOptionsError, AnsibleError
+from ansible.errors import AnsibleOptionsError, AnsibleError, AnsibleRequiredOptionsError
 from ansible.module_utils.common.text.converters import to_text, to_bytes, to_native
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.six import string_types
@@ -617,8 +617,8 @@ class ConfigManager(object):
             if value is None:
                 if defs[config].get('required', False):
                     if not plugin_type or config not in INTERNAL_DEFS.get(plugin_type, {}):
-                        raise AnsibleError("No setting was provided for required configuration %s" %
-                                           to_native(_get_entry(plugin_type, plugin_name, config)))
+                        raise AnsibleRequiredOptionError("No setting was provided for required configuration %s" %
+                                                         to_native(_get_entry(plugin_type, plugin_name, config)))
                 else:
                     origin = 'default'
                     value = self.template_default(defs[config].get('default'), variables)
