@@ -15,7 +15,7 @@ from collections import namedtuple
 from collections.abc import Mapping, Sequence
 from jinja2.nativetypes import NativeEnvironment
 
-from ansible.errors import AnsibleOptionsError, AnsibleError, AnsibleRequiredOptionsError
+from ansible.errors import AnsibleOptionsError, AnsibleError, AnsibleRequiredOptionError
 from ansible.module_utils.common.text.converters import to_text, to_bytes, to_native
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.six import string_types
