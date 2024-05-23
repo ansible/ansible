@@ -70,7 +70,7 @@ class KeycloakToken(object):
         }
         if self.client_secret:
             payload['client_secret'] = self.client_secret
-            payload['scope'] = 'openid api.iam.service_accounts'
+            payload['scope'] = 'api.console'
             payload['grant_type'] = 'client_credentials'
         else:
             payload['refresh_token'] = self.access_token
