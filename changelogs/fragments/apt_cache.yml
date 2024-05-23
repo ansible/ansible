@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - apt_* - add more info messages raised while updating apt cache (https://github.com/ansible/ansible/issues/77941).
