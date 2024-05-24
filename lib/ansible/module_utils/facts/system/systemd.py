@@ -40,11 +40,16 @@ class SystemdFactCollector(BaseFactCollector):
             if rc != 0:
                 return systemd_facts
 
+            systemd_version = str(stdout.split(" ")[1])
+
             systemd_facts["systemd"] = {}
             systemd_facts["systemd"]["features"] = str(stdout.split("\n")[1])
             systemd_facts["systemd"]["full_version"] = str(
                 (stdout.split(" ")[2]).split(")")[0][1:],
             )
-            systemd_facts["systemd"]["version"] = int(stdout.split(" ")[1][:3])
+            try:
+                systemd_facts["systemd"]["version"] = int(systemd_version)
+            except ValueError:
+                systemd_facts["systemd"]["version"] = str(systemd_version)
 
             return systemd_facts
