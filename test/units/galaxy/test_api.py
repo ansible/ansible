@@ -200,6 +200,18 @@ def test_api_token_auth():
     assert actual == {'Authorization': 'Token my_token'}
 
 
+def test_keycloak_token(monkeypatch):
+    token = KeycloakToken(auth_url='https://api.test/')
+    mock_open = MagicMock()
+
+    def _mock_exception():
+        raise Exception("mock exception")
+
+    mock_open.side_effect = _mock_exception
+    monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
+    assert token.get() is None
+
+
 def test_api_token_auth_with_token_type(monkeypatch):
     token = KeycloakToken(auth_url='https://api.test/')
     mock_token_get = MagicMock()

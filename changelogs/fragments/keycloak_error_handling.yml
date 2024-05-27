@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - galaxy - handle exception raised while retrieving keycloak token.

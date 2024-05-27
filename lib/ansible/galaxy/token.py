@@ -24,6 +24,7 @@ import base64
 import os
 import json
 from stat import S_IRUSR, S_IWUSR
+from urllib.error import HTTPError, URLError
 
 from ansible import constants as C
 from ansible.galaxy.user_agent import user_agent
@@ -45,7 +46,7 @@ class KeycloakToken(object):
     '''A token granted by a Keycloak server.
 
     Like sso.redhat.com as used by cloud.redhat.com
-    ie Automation Hub'''
+    that is Automation Hub'''
 
     token_type = 'Bearer'
 
@@ -76,18 +77,33 @@ class KeycloakToken(object):
         #         or 'azp' (Authorized party - the party to which the ID Token was issued)
         payload = self._form_payload()
 
-        resp = open_url(to_native(self.auth_url),
-                        data=payload,
-                        validate_certs=self.validate_certs,
-                        method='POST',
-                        http_agent=user_agent())
+        try:
+            resp = open_url(
+                to_native(self.auth_url),
+                data=payload,
+                validate_certs=self.validate_certs,
+                method='POST',
+                http_agent=user_agent()
+            )
+        except HTTPError as e:
+            display.vvv(f"Failed to retrieve token from {self.auth_url}, due to {to_native(e)}")
+            return self._token
+        except URLError as e:
+            display.vvv(f"Unable to retrieve token from {self.auth_url}, due to {to_native(e)}")
+            return self._token
+        except Exception as e:
+            display.vvv(f"Unknown error occurred while retrieving token from {self.auth_url} : {to_native(e)}")
+            return self._token
 
-        # TODO: handle auth errors
-
-        data = json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
+        data = {}
+        try:
+            data = json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
+        except ValueError as e:
+            display.vvv(f"Failed to parse JSON response from {self.auth_url}")
+            return self._token
 
         # - extract 'access_token'
-        self._token = data.get('access_token')
+        self._token = data.get('access_token', None)
 
         return self._token
 
