@@ -580,7 +580,6 @@ class ConfigCLI(CLI):
                     v, o = C.config.get_config_value_and_origin(setting, plugin_type='galaxy_server', plugin_name=server, cfile=self.config_file)
                 except AnsibleError as e:
                     if s_config[setting].get('required', False):
-                    if to_text(e).startswith('No setting was provided for required configuration'):
                         v = None
                         o = 'REQUIRED'
                     else:
