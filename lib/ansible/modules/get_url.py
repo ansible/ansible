@@ -99,6 +99,8 @@ options:
         checksum equals C(destination_checksum), the file download would be skipped
         (unless O(force) is V(true)). If the checksum does not equal C(destination_checksum),
         the destination file is deleted.
+      - If the checksum URL requires username and password, C(username) and C(password) are used
+        to download the checksum file.
     type: str
     default: ''
     version_added: "2.0"
