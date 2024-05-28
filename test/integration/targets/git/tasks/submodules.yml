@@ -81,6 +81,23 @@
           - 'git tag v0.3'
           - 'git push origin {{ git_default_branch }} --tags'
 
+- name: Determine commits for each tag
+  command: "git rev-list -n 1 {{ tag }}"
+  args:
+    chdir: "{{ remote_tmp_dir }}/git_repositories/test_submodules_newer.git"
+  loop_control:
+    loop_var: tag
+  loop:
+    - v0.1
+    - v0.2
+    - v0.3
+  register: main_repo_commit
+
+- set_fact:
+    commit_0: "{{ main_repo_commit.results[0].stdout }}"
+    commit_1: "{{ main_repo_commit.results[1].stdout }}"
+    commit_2: "{{ main_repo_commit.results[2].stdout }}"
+
 - name: SUBMODULES | clear checkout_dir
   file:
     state: absent
@@ -89,7 +106,7 @@
 - name: SUBMODULES | Test that clone without recursive does not retrieve submodules
   git:
     repo: "{{ repo_submodules }}"
-    version: v0.2
+    version: "{{ commit_1 }}"
     dest: "{{ checkout_dir }}"
     recursive: no
 
@@ -111,7 +128,7 @@
   git:
     repo: "{{ repo_submodules }}"
     dest: "{{ checkout_dir }}"
-    version: v0.2
+    version: "{{ commit_1 }}"
     recursive: yes
 
 - name: SUBMODULES | List submodule1
@@ -129,7 +146,7 @@
 - name: SUBMODULES | Test that update without recursive does not change submodules
   git:
     repo: "{{ repo_submodules }}"
-    version: v0.3
+    version: "{{ commit_2 }}"
     dest: "{{ checkout_dir }}"
     recursive: no
     update: yes
@@ -167,7 +184,7 @@
 - name: SUBMODULES | Test that update with recursive updated existing submodules
   git:
     repo: "{{ repo_submodules }}"
-    version: v0.3
+    version: "{{ commit_2 }}"
     dest: "{{ checkout_dir }}"
     update: yes
     recursive: yes
@@ -200,7 +217,7 @@
   git:
     repo: "{{ repo_submodules }}"
     dest: "{{ checkout_dir }}/test.gitdir"
-    version: v0.2
+    version: "{{ commit_1 }}"
     recursive: yes
 
 - name: SUBMODULES | Test that cloning submodule with .git in directory name works
