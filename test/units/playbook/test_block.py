@@ -20,6 +20,10 @@ from __future__ import annotations
 import unittest
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
+from ansible.plugins.loader import init_plugin_loader
+
+
+init_plugin_loader()
 
 
 class TestBlock(unittest.TestCase):
@@ -46,9 +50,9 @@ class TestBlock(unittest.TestCase):
 
     def test_load_block_with_tasks(self):
         ds = dict(
-            block=[dict(action='ping')],
-            rescue=[dict(action='ping')],
-            always=[dict(action='ping')],
+            block=[dict(action='block')],
+            rescue=[dict(action='rescue')],
+            always=[dict(action='always')],
             # otherwise=[dict(action='otherwise')],
         )
         b = Block.load(ds)
@@ -63,16 +67,16 @@ class TestBlock(unittest.TestCase):
         # self.assertIsInstance(b.otherwise[0], Task)
 
     def test_load_implicit_block(self):
-        ds = [dict(action='ping')]
+        ds = [dict(action='foo')]
         b = Block.load(ds)
         self.assertEqual(len(b.block), 1)
         self.assertIsInstance(b.block[0], Task)
 
     def test_deserialize(self):
         ds = dict(
-            block=[dict(action='ping')],
-            rescue=[dict(action='ping')],
-            always=[dict(action='ping')],
+            block=[dict(action='block')],
+            rescue=[dict(action='rescue')],
+            always=[dict(action='always')],
         )
         b = Block.load(ds)
         data = dict(parent=ds, parent_type='Block')
