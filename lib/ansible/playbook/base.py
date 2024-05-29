@@ -7,6 +7,7 @@ from __future__ import annotations
 import itertools
 import operator
 import os
+import inspect
 
 from copy import copy as shallowcopy
 from functools import cache
@@ -589,10 +590,12 @@ class FieldAttributeBase:
                 _validate_variable_keys(ds)
                 return combine_vars(self.vars, ds)
             elif isinstance(ds, list):
+                frame_info = inspect.stack()[1]
+                line_number = frame_info.lineno
                 display.deprecated(
                     (
                         'Specifying a list of dictionaries for vars is deprecated in favor of '
-                        'specifying a dictionary.'
+                        'specifying a dictionary. Error occurred in file: %s, line: %d' % (__file__, line_number)
                     ),
                     version='2.18'
                 )
