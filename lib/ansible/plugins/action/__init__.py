@@ -1002,7 +1002,7 @@ class ActionBase(ABC):
         module_args['_ansible_target_log_info'] = C.config.get_config_value('TARGET_LOG_INFO', variables=task_vars)
 
         # pass through confidential environment variables
-        module_args['_ansible_private_env'] = getattr(self._task, 'private_environment', {})
+        module_args['_ansible_module_env'] = getattr(self._task, 'module_env', {})
 
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False,
                         ignore_unknown_opts: bool = False):

@@ -400,7 +400,7 @@ class AnsibleModule(object):
         self._legal_inputs = []
         self._options_context = list()
         self._tmpdir = None
-        self._private_environment = {}
+        self._module_env = {}
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -419,8 +419,8 @@ class AnsibleModule(object):
         self._set_internal_properties()
 
         # setup env based on private env vars
-        for varname in self._private_environment.keys():
-            os.environ[varname] = self._private_environment[varname]
+        for varname in self._module_env.keys():
+            os.environ[varname] = self._module_env[varname]
 
         self.validator = ModuleArgumentSpecValidator(self.argument_spec,
                                                      self.mutually_exclusive,
