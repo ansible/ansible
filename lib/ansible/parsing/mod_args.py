@@ -58,9 +58,8 @@ def _get_action_context(action_or_module, collection_list):
     if module_context and module_context.resolved and module_context.action_plugin:
         action_or_module = module_context.action_plugin
 
-    if action_loader.has_plugin(action_or_module, collection_list=collection_list):
-        context = action_loader.find_plugin_with_context(action_or_module, collection_list=collection_list)
-    else:
+    context = action_loader.find_plugin_with_context(action_or_module, collection_list=collection_list)
+    if not context or not context.resolved:
         context = module_context
     return context
 
