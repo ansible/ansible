@@ -339,6 +339,54 @@ COLOR_WARN:
   env: [{name: ANSIBLE_COLOR_WARN}]
   ini:
   - {key: warn, section: colors}
+COLOR_DOC_MODULE:
+  name: Color for module name in the ansible-doc output
+  default: yellow
+  description: Defines the color to use when emitting a module name in the ansible-doc output.
+  env: [{name: ANSIBLE_COLOR_DOC_MODULE}]
+  ini:
+  - {key: doc_module, section: colors}
+  version_added: '2.18'
+COLOR_DOC_REFERENCE:
+  name: Color for cross-reference in the ansible-doc output
+  default: magenta
+  description: Defines the color to use when emitting cross-reference in the ansible-doc output.
+  env: [{name: ANSIBLE_COLOR_DOC_REFERENCE}]
+  ini:
+  - {key: doc_reference, section: colors}
+  version_added: '2.18'
+COLOR_DOC_LINK:
+  name: Color for Link in ansible-doc output
+  default: cyan
+  description: Defines the color to use when emitting a link in the ansible-doc output.
+  env: [{name: ANSIBLE_COLOR_DOC_LINK}]
+  ini:
+  - {key: doc_link, section: colors}
+  version_added: '2.18'
+COLOR_DOC_DEPRECATED:
+  name: Color for deprecated value in ansible-doc output
+  default: magenta
+  description: Defines the color to use when emitting a deprecated value in the ansible-doc output.
+  env: [{name: ANSIBLE_COLOR_DOC_DEPRECATED}]
+  ini:
+  - {key: doc_deprecated, section: colors}
+  version_added: '2.18'
+COLOR_DOC_CONSTANT:
+  name: Color for constant in ansible-doc output
+  default: dark gray
+  description: Defines the color to use when emitting a constant in the ansible-doc output.
+  env: [{name: ANSIBLE_COLOR_DOC_CONSTANT}]
+  ini:
+  - {key: doc_constant, section: colors}
+  version_added: '2.18'
+COLOR_DOC_PLUGIN:
+  name: Color for the plugin in ansible-doc output
+  default: yellow
+  description: Defines the color to use when emitting a plugin name in the ansible-doc output.
+  env: [{name: ANSIBLE_COLOR_DOC_PLUGIN}]
+  ini:
+  - {key: doc_plugin, section: colors}
+  version_added: '2.18'
 CONNECTION_PASSWORD_FILE:
   name: Connection password file
   default: ~
