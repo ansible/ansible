@@ -1,0 +1,9 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: ensure extra vars only exist when they should
+      assert:
+        that:
+          - "'myhostvar' in hostvars[inventory_hostname]"
+          - "hostvars[inventory_hostname]['myhostvar'] == 'from_extra_vars'"
+          - "'only_extra' not in hostvars[inventory_hostname]"

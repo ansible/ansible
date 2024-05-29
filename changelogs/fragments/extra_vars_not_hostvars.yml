@@ -1,0 +1,2 @@
+bugfixes:
+  - hostvars now does not contain extra vars any more, unless they have a matching variable name that will be overwritten due to precedence rules.
