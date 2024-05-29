@@ -71,8 +71,14 @@ NOCOLOR = {
     'PLUGIN': r'[%s]',
 }
 
-# TODO: make configurable
-ref_style = {'MODULE': 'yellow', 'REF': 'magenta', 'LINK': 'cyan', 'DEP': 'magenta', 'CONSTANT': 'dark gray', 'PLUGIN': 'yellow'}
+ref_style = {
+    'MODULE': C.COLOR_DOC_MODULE,
+    'REF': C.COLOR_DOC_REFERENCE,
+    'LINK': C.COLOR_DOC_LINK,
+    'DEP': C.COLOR_DOC_DEPRECATED,
+    'CONSTANT': C.COLOR_DOC_CONSTANT,
+    'PLUGIN': C.COLOR_DOC_PLUGIN,
+}
 
 
 def jdump(text):
