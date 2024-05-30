@@ -114,6 +114,17 @@ ANSIBLE_PIPELINING:
   - section: connection
     key: pipelining
   type: boolean
+ALLOW_EXTRA_VARS_BLEED:
+  name: Push all extra_vars into hostvars
+  description: Normally only extra vars that match existing hostvars will update the value of the hostvars dictionary, this adds all existing extravars when enabled.
+  env:
+  - name: ANSIBLE_EXTRA_VARS_BLEED
+  ini:
+    - section:  defaults
+      key: allow_extra_vars_bleed
+  type: boolean
+  default: False
+  version_added: '2.18'
 ANY_ERRORS_FATAL:
   name: Make Task failures fatal
   default: False
