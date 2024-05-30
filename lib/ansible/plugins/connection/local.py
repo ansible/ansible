@@ -163,7 +163,7 @@ class Connection(ConnectionBase):
         while True:
             events = selector.select(1)
             for key, event in events:
-                output = ''
+                output = b''
                 if key.fileobj == p.stdout:
                     output = os.read(p.stdout.fileno(), 9000)
                     if output == b'':
