@@ -55,6 +55,17 @@ BUILTIN_TASKS = frozenset(add_internal_fqcns((
 )))
 
 
+def _get_action_context(action_or_module, collection_list):
+    module_context = module_loader.find_plugin_with_context(action_or_module, collection_list=collection_list)
+    if module_context and module_context.resolved and module_context.action_plugin:
+        action_or_module = module_context.action_plugin
+
+    context = action_loader.find_plugin_with_context(action_or_module, collection_list=collection_list)
+    if not context or not context.resolved:
+        context = module_context
+    return context
+
+
 class ModuleArgsParser:
 
     """
@@ -289,6 +300,11 @@ class ModuleArgsParser:
             delegate_to = 'localhost'
             action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
 
+        if action is not None and not skip_action_validation:
+            context = _get_action_context(action, self._collection_list)
+            if context is not None and context.resolved:
+                self.resolved_action = context.resolved_fqcn
+
         # module: <stuff> is the more new-style invocation
 
         # filter out task attributes so we're only querying unrecognized keys as actions/modules
@@ -304,9 +320,7 @@ class ModuleArgsParser:
                 is_action_candidate = True
             else:
                 try:
-                    context = action_loader.find_plugin_with_context(item, collection_list=self._collection_list)
-                    if not context.resolved:
-                        context = module_loader.find_plugin_with_context(item, collection_list=self._collection_list)
+                    context = _get_action_context(item, self._collection_list)
                 except AnsibleError as e:
                     if e.obj is None:
                         e.obj = self._task_ds
