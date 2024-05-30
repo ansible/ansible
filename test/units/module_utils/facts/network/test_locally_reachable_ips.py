@@ -1,25 +1,8 @@
-# This file is part of Ansible
-# -*- coding: utf-8 -*-
-#
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
 
-from unittest.mock import Mock
-import unittest
 from ansible.module_utils.facts.network import linux
 
 # ip -4 route show table local
@@ -58,34 +41,20 @@ IP_ROUTE_SHOW_LOCAL_EXPECTED = {
 }
 
 
-class TestLocalRoutesLinux(unittest.TestCase):
-    gather_subset = ['all']
+def mock_get_bin_path(command):
+    cmds = {"ip": "fake/ip"}
+    return cmds.get(command, None)
 
-    def get_bin_path(self, command):
-        if command == 'ip':
-            return 'fake/ip'
-        return None
 
-    def run_command(self, command):
-        if command == ['fake/ip', '-4', 'route', 'show', 'table', 'local']:
-            return 0, IP4_ROUTE_SHOW_LOCAL, ''
-        if command == ['fake/ip', '-6', 'route', 'show', 'table', 'local']:
-            return 0, IP6_ROUTE_SHOW_LOCAL, ''
-        return 1, '', ''
+def test_linux_local_routes(mocker):
+    module = mocker.MagicMock()
+    mocker.patch.object(module, "get_bin_path", side_effect=mock_get_bin_path)
+    mocker.patch.object(
+        module,
+        "run_command",
+        side_effect=[(0, IP4_ROUTE_SHOW_LOCAL, ""), (0, IP6_ROUTE_SHOW_LOCAL, "")],
+    )
 
-    def test(self):
-        module = self._mock_module()
-        module.get_bin_path.side_effect = self.get_bin_path
-        module.run_command.side_effect = self.run_command
-
-        net = linux.LinuxNetwork(module)
-        res = net.get_locally_reachable_ips('fake/ip')
-        self.assertDictEqual(res, IP_ROUTE_SHOW_LOCAL_EXPECTED)
-
-    def _mock_module(self):
-        mock_module = Mock()
-        mock_module.params = {'gather_subset': self.gather_subset,
-                              'gather_timeout': 5,
-                              'filter': '*'}
-        mock_module.get_bin_path = Mock(return_value=None)
-        return mock_module
+    net = linux.LinuxNetwork(module)
+    res = net.get_locally_reachable_ips(mock_get_bin_path("ip"))
+    assert res == IP_ROUTE_SHOW_LOCAL_EXPECTED
