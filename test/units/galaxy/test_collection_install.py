@@ -127,6 +127,7 @@ def test_concrete_artifact_manager_scm_no_executable(monkeypatch):
     ]
 )
 def test_concrete_artifact_manager_scm_cmd(url, version, trailing_slash, monkeypatch):
+    context.CLIARGS._store = {'ignore_certs': False}
     mock_subprocess_check_call = MagicMock()
     monkeypatch.setattr(collection.concrete_artifact_manager.subprocess, 'check_call', mock_subprocess_check_call)
     mock_mkdtemp = MagicMock(return_value='')
@@ -141,7 +142,7 @@ def test_concrete_artifact_manager_scm_cmd(url, version, trailing_slash, monkeyp
         repo += '/'
 
     git_executable = get_bin_path('git')
-    clone_cmd = (git_executable, 'clone', repo, '')
+    clone_cmd = [git_executable, 'clone', repo, '']
 
     assert mock_subprocess_check_call.call_args_list[0].args[0] == clone_cmd
     assert mock_subprocess_check_call.call_args_list[1].args[0] == (git_executable, 'checkout', 'commitish')
@@ -158,6 +159,7 @@ def test_concrete_artifact_manager_scm_cmd(url, version, trailing_slash, monkeyp
     ]
 )
 def test_concrete_artifact_manager_scm_cmd_shallow(url, version, trailing_slash, monkeypatch):
+    context.CLIARGS._store = {'ignore_certs': False}
     mock_subprocess_check_call = MagicMock()
     monkeypatch.setattr(collection.concrete_artifact_manager.subprocess, 'check_call', mock_subprocess_check_call)
     mock_mkdtemp = MagicMock(return_value='')
@@ -171,7 +173,7 @@ def test_concrete_artifact_manager_scm_cmd_shallow(url, version, trailing_slash,
     if trailing_slash:
         repo += '/'
     git_executable = get_bin_path('git')
-    shallow_clone_cmd = (git_executable, 'clone', '--depth=1', repo, '')
+    shallow_clone_cmd = [git_executable, 'clone', '--depth=1', repo, '']
 
     assert mock_subprocess_check_call.call_args_list[0].args[0] == shallow_clone_cmd
     assert mock_subprocess_check_call.call_args_list[1].args[0] == (git_executable, 'checkout', 'HEAD')
