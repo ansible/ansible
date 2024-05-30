@@ -1,0 +1,24 @@
+---
+- name: Test async_status tail
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Run long task
+      ansible.builtin.shell: |
+        for i in $(seq 1 30); do
+          echo $i | tee -a ~/long.log;
+          sleep 1
+        done
+      register: long_task
+      async: 120
+      poll: 0
+
+    - name: Check status
+      ansible.builtin.async_status:
+        jid: "{{ long_task.ansible_job_id }}"
+        log_file: ~/long.log
+        tail_length: 5
+      register: long_task_status
+      until: long_task_status.finished
+      retries: 10
+      delay: 5

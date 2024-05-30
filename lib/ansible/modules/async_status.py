@@ -27,6 +27,16 @@ options:
     type: str
     choices: [ cleanup, status ]
     default: status
+  log_file:
+    description:
+    - Path to the logfile to tail
+    type: path
+    required: false
+  tail_length:
+    description:
+    - Number of lines to tail from log_file
+    type: int
+    default: 10
 extends_documentation_fragment:
 - action_common_attributes
 - action_common_attributes.flow
@@ -75,6 +85,26 @@ EXAMPLES = r'''
   ansible.builtin.async_status:
     jid: '{{ dnf_sleeper.ansible_job_id }}'
     mode: cleanup
+
+- name: Run long task
+  ansible.builtin.shell: |
+    for i in {1..30}; do
+      echo $i | tee -a long.log;
+      sleep 1
+    done
+  register: long_task
+  async: 120
+  poll: 0
+
+- name: Check status and tail log file
+  ansible.builtin.async_status:
+    jid: "{{ long_task.ansible_job_id }}"
+    log_path: ~/long.log
+    tail_length: 5
+  register: long_task_status
+  until: long_task_status.finished
+  retries: 10
+  delay: 5
 '''
 
 RETURN = r'''
@@ -105,6 +135,10 @@ erased:
   description: Path to erased job file
   returned: when file is erased
   type: str
+log_lines:
+  description: Last tail_length lines of tailed log file
+  return: always
+  type: list
 '''
 
 import json
@@ -115,12 +149,50 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.common.text.converters import to_native
 
 
+def tail(f, window=20):
+    # https://stackoverflow.com/a/45960693/15428810
+
+    """Returns the last `window` lines of file `f` as a list.
+    """
+    if window == 0:
+        return []
+
+    BUFSIZ = 1024
+    f.seek(0, 2)
+    remaining_bytes = f.tell()
+    size = window + 1
+    block = -1
+    data = []
+
+    while size > 0 and remaining_bytes > 0:
+        if remaining_bytes - BUFSIZ > 0:
+            # Seek back one whole BUFSIZ
+            f.seek(block * BUFSIZ, 2)
+            # read BUFFER
+            bunch = f.read(BUFSIZ)
+        else:
+            # file too small, start from beginning
+            f.seek(0, 0)
+            # only read what was not read
+            bunch = f.read(remaining_bytes)
+
+        bunch = bunch.decode('utf-8')
+        data.insert(0, bunch)
+        size -= bunch.count('\n')
+        remaining_bytes -= BUFSIZ
+        block -= 1
+
+    return ''.join(data).splitlines()[-window:]
+
+
 def main():
 
     module = AnsibleModule(
         argument_spec=dict(
             jid=dict(type="str", required=True),
             mode=dict(type="str", default="status", choices=["cleanup", "status"]),
+            log_file=dict(type="path", required=False),
+            tail_length=dict(type="int", default=10),
             # passed in from the async_status action plugin
             _async_dir=dict(type="path", required=True),
         ),
@@ -162,6 +234,17 @@ def main():
         data['ansible_job_id'] = jid
     elif 'finished' not in data:
         data['finished'] = 0
+
+    # Try to get some log lines
+
+    if 'log_file' in module.params and module.params['log_file'] is not None:
+        try:
+            with open(module.params['log_file'], 'rb') as f:
+                log_lines = tail(f, module.params['tail_length'])
+                data['log_lines'] = log_lines
+
+        except Exception:
+            pass
 
     # Fix error: TypeError: exit_json() keywords must be strings
     data = {to_native(k): v for k, v in iteritems(data)}

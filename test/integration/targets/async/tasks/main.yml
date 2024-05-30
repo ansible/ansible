@@ -337,3 +337,18 @@
       retries: 100
       delay: 10
       timeout: 30
+
+- name: run async status tail test playbook
+  command: ansible-playbook {{ role_path }}/async-status-tail-test.yml
+  delegate_to: localhost
+  register: async_status_output
+  environment:
+    ANSIBLE_NOCOLOR: 'true'
+    ANSIBLE_FORCE_COLOR: 'false'
+
+- name: Ensure that we have tailed output in ansible output
+  assert:
+    that:
+      - |
+        async_status_output.stdout is
+        search('tail --lines=5 .*/long.log\n\d+\n\d+\n\d+\n\d+\n\d+\n')

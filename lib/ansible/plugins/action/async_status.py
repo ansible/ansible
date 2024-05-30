@@ -6,6 +6,9 @@ from __future__ import annotations
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import merge_hash
 
+from ansible.utils.display import Display
+display = Display()
+
 
 class ActionModule(ActionBase):
 
@@ -24,6 +27,8 @@ class ActionModule(ActionBase):
             argument_spec={
                 'jid': {'type': 'str', 'required': True},
                 'mode': {'type': 'str', 'choices': ['status', 'cleanup'], 'default': 'status'},
+                'log_file': {'type': 'path', 'required': False},
+                'tail_length': {'type': 'int', 'default': 10}
             },
         )
 
@@ -47,5 +52,22 @@ class ActionModule(ActionBase):
 
         new_module_args['_async_dir'] = async_dir
         results = merge_hash(results, self._execute_module(module_name='ansible.legacy.async_status', task_vars=task_vars, module_args=new_module_args))
+
+        try:
+            if 'log_file' in results['invocation']['module_args'] and 'log_lines' in results:
+                msg = (
+                    f"tail --lines={results['invocation']['module_args']['tail_length']} "
+                    f"{results['invocation']['module_args']['log_file']}"
+                )
+                display.display(
+                    msg=msg,
+                    color='yellow'
+                )
+
+                display.display(
+                    msg='\n'.join(results['log_lines']),
+                    color='green')
+        except Exception:
+            pass
 
         return results
