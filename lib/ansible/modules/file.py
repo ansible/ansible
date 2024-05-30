@@ -872,6 +872,8 @@ def ensure_hardlink(path, src, follow, force, timestamps):
                                                   'path': path})
         else:
             try:
+                if follow and os.path.islink(b_src):
+                    b_src = os.readlink(b_src)
                 os.link(b_src, b_path)
             except OSError as e:
                 raise AnsibleModuleError(results={'msg': 'Error while linking: %s'
