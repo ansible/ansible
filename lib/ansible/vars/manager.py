@@ -415,11 +415,11 @@ class VariableManager:
 
         # updated with extra vars
         if self._extra_vars:
-            if host and not play and not task:
+            if C.ALLOW_EXTRA_VARS_BLEED or (host and (play or task)):
+                all_vars = _combine_and_track(all_vars, self._extra_vars, "extra vars")
+            else:
                 # Only take extra vars that override existing hostvars as that is what we are returning in this case
                 all_vars = _combine_and_track(all_vars, {k: v for (k, v) in self._extra_vars.items() if k in all_vars}, "extra vars")
-            else:
-                all_vars = _combine_and_track(all_vars, self._extra_vars, "extra vars")
 
         # magic variables
         all_vars = _combine_and_track(all_vars, magic_variables, "magic vars")
