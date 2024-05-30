@@ -28,13 +28,13 @@ def main():
             module_names.add(full_name)
 
     for path in paths:
-        full_name = get_full_name(path, action_prefixes)
+        full_name = get_full_name(path, action_prefixes, extensions=('.py',))
 
         if full_name and full_name not in module_names:
             print('%s: action plugin has no matching module to provide documentation' % path)
 
 
-def get_full_name(path, prefixes):
+def get_full_name(path: str, prefixes: dict[str, bool], extensions: tuple[str] | None = None) -> str | None:
     """Return the full name of the plugin at the given path by matching against the given path prefixes, or None if no match is found."""
     for prefix, flat in prefixes.items():
         if path.startswith(prefix):
@@ -45,11 +45,14 @@ def get_full_name(path, prefixes):
             else:
                 full_name = relative_path
 
-            full_name = os.path.splitext(full_name)[0]
+            full_name, file_ext = os.path.splitext(full_name)
 
             name = os.path.basename(full_name)
 
             if name == '__init__':
+                return None
+
+            if extensions and file_ext not in extensions:
                 return None
 
             if name.startswith('_'):
