@@ -24,13 +24,16 @@ from unittest.mock import MagicMock
 from units.mock.loader import DictDataLoader
 
 from ansible import errors
+from ansible.playbook import helpers
 from ansible.playbook.block import Block
 from ansible.playbook.handler import Handler
 from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role.include import RoleInclude
+from ansible.plugins.loader import init_plugin_loader
 
-from ansible.playbook import helpers
+
+init_plugin_loader()
 
 
 class MixinForMocks(object):

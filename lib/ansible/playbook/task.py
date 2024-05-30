@@ -208,6 +208,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             # But if it wasn't, we can add the yaml object now to get more detail
             raise AnsibleParserError(to_native(e), obj=ds, orig_exc=e)
         else:
+            # Set the resolved action plugin (or if it does not exist, module) for callbacks.
             self.resolved_action = args_parser.resolved_action
 
         # the command/shell/script modules used to support the `cmd` arg,

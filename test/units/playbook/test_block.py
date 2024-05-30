@@ -20,6 +20,10 @@ from __future__ import annotations
 import unittest
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
+from ansible.plugins.loader import init_plugin_loader
+
+
+init_plugin_loader()
 
 
 class TestBlock(unittest.TestCase):
