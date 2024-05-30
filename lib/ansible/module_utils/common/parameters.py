@@ -210,7 +210,7 @@ def _handle_aliases(argument_spec, parameters, alias_warnings=None, alias_deprec
     each containing deprecation information for each alias found in argument_spec.
 
     :param argument_spec: Dictionary of parameters, their type, and valid values.
-    type argument_spec: dict
+    :type argument_spec: dict
 
     :param parameters: Dictionary of parameters.
     :type parameters: dict
