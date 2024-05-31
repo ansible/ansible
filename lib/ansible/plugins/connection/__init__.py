@@ -255,7 +255,7 @@ class ConnectionBase(AnsiblePlugin):
         if b'_ansible_update' in data:
             # consume update data
             try:
-                updates, rest_data = _consume_json(to_text(data))
+                updates, rest_data = _filter_non_json_lines(str(data))
             except ValueError:
                 # improper json, incomplete, ignore try later
                 updates = None

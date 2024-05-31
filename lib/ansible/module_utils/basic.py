@@ -1298,8 +1298,8 @@ class AnsibleModule(object):
                 self._log_to_syslog(journal_msg)
 
             # TODO: does 'return log data' need diff setting?
-            if self._debug and syslog_msg:
-                self.update_json({'log': syslog_msg})
+            if self._debug and journal_msg:
+                self.update_json({'log': journal_msg})
 
     def _log_invocation(self):
         ''' log that ansible ran the module '''
@@ -1728,10 +1728,10 @@ class AnsibleModule(object):
                            exception=traceback.format_exc())
 
     def _read_from_pipes(self, rpipes, rfds, file_descriptor):
-        data = b('')
+        data = b''
         if file_descriptor in rfds:
             data = os.read(file_descriptor.fileno(), 9000)
-            if data == b(''):
+            if data == b'':
                 rpipes.remove(file_descriptor)
         return data
 
