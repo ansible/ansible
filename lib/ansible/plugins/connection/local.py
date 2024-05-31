@@ -139,7 +139,7 @@ class Connection(ConnectionBase):
                         stdout, stderr = p.communicate()
                         raise AnsibleError('privilege output closed while waiting for password prompt:\n' + to_native(become_output))
                     become_output += chunk
-            except:
+            except BaseException:
                 selector.close()
                 raise
 
