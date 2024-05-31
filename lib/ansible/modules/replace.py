@@ -191,9 +191,8 @@ from ansible.module_utils.basic import AnsibleModule
 def write_changes(module, contents, path):
 
     tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
-    f = os.fdopen(tmpfd, 'wb')
-    f.write(contents)
-    f.close()
+    with os.fdopen(tmpfd, 'wb') as f:
+        f.write(contents)
 
     validate = module.params.get('validate', None)
     valid = not validate
