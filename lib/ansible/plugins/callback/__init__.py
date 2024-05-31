@@ -22,7 +22,7 @@ import json
 import re
 import sys
 import textwrap
-import typing
+from typing import TYPE_CHECKING
 
 from collections import OrderedDict
 from collections.abc import MutableMapping
@@ -42,7 +42,7 @@ from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
 import yaml
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from ansible.executor.task_result import TaskResult
 
 global_display = Display()
@@ -505,7 +505,7 @@ class CallbackBase(AnsiblePlugin):
     def v2_on_any(self, *args, **kwargs):
         self.on_any(args, kwargs)
 
-    def v2_runner_on_failed(self, result: 'TaskResult', ignore_errors: bool = False) -> None:
+    def v2_runner_on_failed(self, result: TaskResult, ignore_errors: bool = False) -> None:
         """Show result, output, and optional information, based on verbosity level, vars, and
         ansible.cfg settings, if a task failed.
 
