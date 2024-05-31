@@ -20,7 +20,7 @@ version_added: "1.3"
 options:
     key:
       description:
-        - Key that will be modified. Can be a url, a file on the managed node, or a keyid if the key
+        - Key that will be modified. Can be a http https or ftp url, a file on the managed node, or a keyid if the key
           already exists in the database.
       type: str
       required: true
