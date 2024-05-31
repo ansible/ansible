@@ -151,7 +151,7 @@ class RpmKey(object):
     def fetch_key(self, url):
         """Downloads a key from url, returns a valid path to a gpg key"""
         rsp, info = fetch_url(self.module, url)
-        if info['status'] != 200:
+        if info['status'] != 200 or ( url.startswith("ftp://") and info['status'] == None):
             self.module.fail_json(msg="failed to fetch key at %s , error was: %s" % (url, info['msg']))
 
         key = rsp.read()
