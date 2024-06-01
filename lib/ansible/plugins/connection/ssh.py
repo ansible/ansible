@@ -1119,7 +1119,7 @@ class Connection(ConnectionBase):
                     elif self._flags['become_prompt']:
                         display.debug(u'Sending become_password in response to prompt')
                         become_pass = self.become.get_option('become_pass', playcontext=self._play_context)
-                        become_pass = [become_pass] if type(become_pass) != list else become_pass
+                        become_pass = [become_pass] if not isinstance(become_pass, list) else become_pass
                         if self._become_attempts >= len(become_pass):
                             self._terminate_process(p)
                             raise AnsibleError('Incorrect %s password' % self.become.name)
