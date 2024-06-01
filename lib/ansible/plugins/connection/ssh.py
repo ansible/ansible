@@ -1013,6 +1013,9 @@ class Connection(ConnectionBase):
             become_error=False, become_nopasswd_error=False
         )
 
+        # How many times have we sent the password when prompted for it.
+        self._become_attempts = 0
+
         # select timeout should be longer than the connect timeout, otherwise
         # they will race each other when we can't connect, and the connect
         # timeout usually fails
@@ -1095,31 +1098,14 @@ class Connection(ConnectionBase):
                     b_stderr += b_tmp_stderr
                     b_tmp_stdout = b_tmp_stderr = b''
 
-                # If we see a privilege escalation prompt, we send the password.
-                # (If we're expecting a prompt but the escalation succeeds, we
-                # didn't need the password and can carry on regardless.)
+                # We are in the escalation part of the loop. We might be requested for zero
+                # or more passwords.
 
-                if states[state] == 'awaiting_prompt':
-                    if self._flags['become_prompt']:
-                        display.debug(u'Sending become_password in response to prompt')
-                        become_pass = self.become.get_option('become_pass', playcontext=self._play_context)
-                        stdin.write(to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
-                        # On python3 stdin is a BufferedWriter, and we don't have a guarantee
-                        # that the write will happen without a flush
-                        stdin.flush()
-                        self._flags['become_prompt'] = False
-                        state += 1
-                    elif self._flags['become_success']:
-                        state += 1
-
-                # We've requested escalation (with or without a password), now we
-                # wait for an error message or a successful escalation.
-
-                if states[state] == 'awaiting_escalation':
+                if states[state] == 'awaiting_prompt' or states[state] == 'awaiting_escalation':
                     if self._flags['become_success']:
                         display.vvv(u'Escalation succeeded')
                         self._flags['become_success'] = False
-                        state += 1
+                        state = states.index('ready_to_send')
                     elif self._flags['become_error']:
                         display.vvv(u'Escalation failed')
                         self._terminate_process(p)
@@ -1131,12 +1117,19 @@ class Connection(ConnectionBase):
                         self._flags['become_nopasswd_error'] = False
                         raise AnsibleError('Missing %s password' % self.become.name)
                     elif self._flags['become_prompt']:
-                        # This shouldn't happen, because we should see the "Sorry,
-                        # try again" message first.
-                        display.vvv(u'Escalation prompt repeated')
-                        self._terminate_process(p)
+                        display.debug(u'Sending become_password in response to prompt')
+                        become_pass = self.become.get_option('become_pass', playcontext=self._play_context)
+                        become_pass = [become_pass] if type(become_pass) != list else become_pass
+                        if self._become_attempts >= len(become_pass):
+                            self._terminate_process(p)
+                            raise AnsibleError('Incorrect %s password' % self.become.name)
+                        stdin.write(to_bytes(become_pass[self._become_attempts], errors='surrogate_or_strict') + b'\n')
+                        self._become_attempts += 1
+                        # On python3 stdin is a BufferedWriter, and we don't have a guarantee
+                        # that the write will happen without a flush
+                        stdin.flush()
                         self._flags['become_prompt'] = False
-                        raise AnsibleError('Incorrect %s password' % self.become.name)
+                        state = states.index('awaiting_escalation')
 
                 # Once we're sure that the privilege escalation prompt, if any, has
                 # been dealt with, we can send any initial data and start waiting

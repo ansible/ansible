@@ -436,9 +436,10 @@ class TestSSHConnectionRun(object):
         assert self.conn._send_initial_data.call_args[0][1] == 'this is more data'
 
     def _password_with_prompt_examine_output(self, sourice, state, b_chunk, sudoable):
-        if state == 'awaiting_prompt':
+        if b_chunk == b'Password:':
+            assert state == 'awaiting_prompt' or state == 'awaiting_escalation'
             self.conn._flags['become_prompt'] = True
-        else:
+        elif b_chunk == b'BECOME-SUCCESS-abcdefg':
             assert state == 'awaiting_escalation'
             self.conn._flags['become_success'] = True
         return (b'', b'')
@@ -447,8 +448,9 @@ class TestSSHConnectionRun(object):
         # test with password prompting enabled
         self.pc.password = None
         self.conn.become.prompt = b'Password:'
+        self.pc.success_key = 'BECOME-SUCCESS-abcdefg'
         self.conn._examine_output.side_effect = self._password_with_prompt_examine_output
-        self.mock_popen_res.stdout.read.side_effect = [b"Password:", b"Success", b""]
+        self.mock_popen_res.stdout.read.side_effect = [b"Password:", b"BECOME-SUCCESS-abcdefg", b""]
         self.mock_popen_res.stderr.read.side_effect = [b""]
         self.mock_selector.select.side_effect = [
             [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
@@ -472,6 +474,7 @@ class TestSSHConnectionRun(object):
         # test with some become settings
         self.pc.prompt = b'Password:'
         self.conn.become.prompt = b'Password:'
+        self.conn.become.set_option('become_pass', 'secretpass')
         self.pc.become = True
         self.pc.success_key = 'BECOME-SUCCESS-abcdefg'
         self.conn.become._id = 'abcdefg'
@@ -488,9 +491,44 @@ class TestSSHConnectionRun(object):
 
         return_code, b_stdout, b_stderr = self.conn._run("ssh", "this is input data")
         self.mock_popen_res.stdin.flush.assert_called_once_with()
+        self.mock_popen_res.stdin.write.assert_called_with(b'secretpass\n')
         assert return_code == 0
         assert b_stdout == b'abc'
         assert b_stderr == b'123'
+        assert self.mock_selector.register.called is True
+        assert self.mock_selector.register.call_count == 2
+        assert self.conn._send_initial_data.called is True
+        assert self.conn._send_initial_data.call_count == 1
+        assert self.conn._send_initial_data.call_args[0][1] == 'this is input data'
+
+    def test_password_with_mfa(self):
+        # test with some become settings
+        self.pc.prompt = b'Password:'
+        self.conn.become.prompt = b'Password:'
+        self.conn.become.set_option('become_pass', ['secretpass', '1234'])
+        self.pc.become = True
+        self.pc.success_key = 'BECOME-SUCCESS-abcdefg'
+        self.conn.become._id = 'abcdefg'
+        self.conn._examine_output.side_effect = self._password_with_prompt_examine_output
+        self.mock_popen_res.stdout.read.side_effect = [b"Password:", b"Password:", b"BECOME-SUCCESS-abcdefg", b"abc"]
+        self.mock_popen_res.stderr.read.side_effect = [b"123", b""]
+        self.mock_selector.select.side_effect = [
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
+            []]
+        self.mock_selector.get_map.side_effect = lambda: True
+
+        return_code, b_stdout, b_stderr = self.conn._run("ssh", "this is input data")
+        assert return_code == 0
+        assert b_stdout == b'abc'
+        assert b_stderr == b'123'
+        assert self.mock_popen_res.stdin.write.call_count == 2
+        assert self.mock_popen_res.stdin.write.call_args_list[0][0][0] == b'secretpass\n'
+        assert self.mock_popen_res.stdin.write.call_args_list[1][0][0] == b'1234\n'
         assert self.mock_selector.register.called is True
         assert self.mock_selector.register.call_count == 2
         assert self.conn._send_initial_data.called is True
