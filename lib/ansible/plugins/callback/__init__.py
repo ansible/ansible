@@ -522,11 +522,35 @@ class CallbackBase(AnsiblePlugin):
         host = result._host.get_name()
         self.runner_on_failed(host, result._result, ignore_errors)
 
-    def v2_runner_on_ok(self, result):
+    def v2_runner_on_ok(self, result: TaskResult) -> None:
+        """Show result, output, and optional information, based on verbosity level and
+        ansible.cfg settings, if a task passed.
+
+        Customization Notes - In this method:
+        - You can access TaskResult class methods and attributes like result.is_changed()
+          and result.task_name
+        - The ansible.executor.task_result.TaskResult class is defined in
+          lib/ansible/executor/task_result.py
+
+        :param TaskResult result: The result and output of a task
+        :return: None
+        """
         host = result._host.get_name()
         self.runner_on_ok(host, result._result)
 
-    def v2_runner_on_skipped(self, result):
+    def v2_runner_on_skipped(self, result: TaskResult) -> None:
+        """Show result, output, and optional information, based on verbosity level and
+        ansible.cfg settings, if a task is skipped.
+
+        Customization Notes - In this method:
+        - You can access TaskResult class methods and attributes like result.is_changed()
+          and result.task_name
+        - The ansible.executor.task_result.TaskResult class is defined in
+          lib/ansible/executor/task_result.py
+
+        :param TaskResult result: The result and output of a task
+        :return: None
+        """
         if C.DISPLAY_SKIPPED_HOSTS:
             host = result._host.get_name()
             self.runner_on_skipped(host, self._get_item_label(getattr(result._result, 'results', {})))
