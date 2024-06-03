@@ -178,6 +178,7 @@ $($ErrorRecord.InvocationInfo.PositionMessage)
 
     Write-AnsibleLog "INFO - converting json raw to a payload" "exec_wrapper"
     $payload = ConvertFrom-AnsibleJson -InputObject $json_raw
+    $payload.module_args._ansible_exec_wrapper_warnings = [System.Collections.Generic.List[string]]@()
 
     # TODO: handle binary modules
     # TODO: handle persistence
