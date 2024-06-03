@@ -325,7 +325,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
             try:
                 display.verbosity = int(arg)
                 display.v('verbosity level set to %s' % arg)
-            except (TypeError, ValueError) as e:
+            except ValueError as e:
                 display.error('The verbosity must be a valid integer: %s' % to_text(e))
 
     def help_verbosity(self):
