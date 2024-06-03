@@ -1064,7 +1064,7 @@ class TaskExecutor:
         # add extras if plugin supports them
         if getattr(self._connection, 'allow_extras', False):
             for k in variables:
-                if k.startswith('ansible_%s_' % self._connection._load_name) and k not in options:
+                if k.startswith('ansible_%s_' % self._connection.extras_prefix) and k not in options:
                     options['_extras'][k] = templar.template(variables[k])
 
         task_keys = self._task.dump_attrs()

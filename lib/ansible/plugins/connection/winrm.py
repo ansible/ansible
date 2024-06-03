@@ -254,6 +254,7 @@ class Connection(ConnectionBase):
     allow_executable = False
     has_pipelining = True
     allow_extras = True
+    extras_prefix = 'winrm'
 
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
 

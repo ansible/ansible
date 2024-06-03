@@ -345,6 +345,7 @@ class Connection(ConnectionBase):
     allow_executable = False
     has_pipelining = True
     allow_extras = True
+    extras_prefix = 'psrp'
 
     # Satisfies mypy as this connection only ever runs with this plugin
     _shell: PowerShellPlugin
