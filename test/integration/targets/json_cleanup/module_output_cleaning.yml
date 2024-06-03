@@ -2,10 +2,17 @@
   hosts: localhost
   gather_facts: false
   tasks:
+    - name: where is bash
+      shell: command -v bash
+      register: bash
+      changed_when: false
+
     - name: call module that spews extra stuff
       bad_json:
       register: clean_json
       ignore_errors: true
+      vars:
+        ansible_bash_interpreter: '{{ bash.stdout }}'
 
     - name: all expected is there
       assert:
