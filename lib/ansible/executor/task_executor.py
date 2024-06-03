@@ -378,6 +378,8 @@ class TaskExecutor:
                 res,
                 task_fields=task_fields,
             )
+            tr.connection = self._task._connection.get('ansible_name')
+
             if tr.is_failed() or tr.is_unreachable():
                 self._final_q.send_callback('v2_runner_item_on_failed', tr)
             elif tr.is_skipped():

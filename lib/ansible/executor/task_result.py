@@ -31,6 +31,7 @@ class TaskResult:
     def __init__(self, host, task, return_data, task_fields=None):
         self._host = host
         self._task = task
+        self.connection = None
 
         if isinstance(return_data, dict):
             self._result = return_data.copy()
