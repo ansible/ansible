@@ -372,14 +372,16 @@ class TaskExecutor:
                     'msg': 'Failed to template loop_control.label: %s' % to_text(e)
                 })
 
-            task_fields['connection'] = self._connection['ansible_name']
+            if self._connection:
+                # if plugin is loaded, get resolved name, otherwise leave original task connection
+                task_fields['connection'] = self._connection['ansible_name']
+
             tr = TaskResult(
                 self._host.name,
                 self._task._uuid,
                 res,
                 task_fields=task_fields,
             )
-            tr.connection = self._task._connection.get('ansible_name')
 
             if tr.is_failed() or tr.is_unreachable():
                 self._final_q.send_callback('v2_runner_item_on_failed', tr)
