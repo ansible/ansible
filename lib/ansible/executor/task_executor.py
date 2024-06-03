@@ -374,7 +374,7 @@ class TaskExecutor:
 
             if self._connection:
                 # if plugin is loaded, get resolved name, otherwise leave original task connection
-                task_fields['connection'] = self._connection['ansible_name']
+                task_fields['connection'] = self._connection.get('ansible_name')
 
             tr = TaskResult(
                 self._host.name,
