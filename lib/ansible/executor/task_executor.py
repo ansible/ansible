@@ -372,6 +372,7 @@ class TaskExecutor:
                     'msg': 'Failed to template loop_control.label: %s' % to_text(e)
                 })
 
+            task_fields['connection'] = tmp_task._connection.get('ansible_name')
             tr = TaskResult(
                 self._host.name,
                 self._task._uuid,
