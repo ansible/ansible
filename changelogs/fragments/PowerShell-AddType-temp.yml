@@ -1,0 +1,7 @@
+bugfixes:
+- >-
+  powershell - Implement more robust deletion mechanism for C# code compilation
+  temporary files. This should avoid scenarios where the underlying temporary
+  directory may be temporarily locked by antivirus tools or other IO problems.
+  A failure to delete one of these temporary directories will result in a
+  warning rather than an outright failure.
