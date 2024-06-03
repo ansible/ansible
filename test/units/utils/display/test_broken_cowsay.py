@@ -12,13 +12,13 @@ from unittest.mock import MagicMock
 
 
 def test_display_with_fake_cowsay_binary(capsys, mocker):
-    display = Display()
 
     mocker.patch("ansible.constants.ANSIBLE_COW_PATH", "./cowsay.sh")
-
     mock_popen = MagicMock()
     mock_popen.return_value.returncode = 1
     mocker.patch("subprocess.Popen", mock_popen)
 
+    display = Display()
+
     assert not hasattr(display, "cows_available")
-    assert display.b_cowsay is None
+    assert display.b_cowsay is False
