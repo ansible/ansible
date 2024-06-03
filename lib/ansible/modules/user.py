@@ -3209,7 +3209,7 @@ def main():
             authorization=dict(type='str'),
             role=dict(type='str'),
             umask=dict(type='str'),
-            inactive=dict(type='int'),
+            account_inactive=dict(type='int'),
         ),
         supports_check_mode=True,
     )
