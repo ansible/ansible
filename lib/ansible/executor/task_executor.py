@@ -44,7 +44,7 @@ __all__ = ['TaskExecutor']
 class TaskTimeoutError(BaseException):
     def __init__(self, message="", frame=None):
 
-        root = pathlib.Path(ansible.__file__).parent
+        root = pathlib.Path(__file__).parent
         while not pathlib.Path(frame.f_code.co_filename).is_relative_to(root):
             frame = frame.f_back
 
