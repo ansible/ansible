@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - facts - add facts about x86_64 flags to detect microarchitecture (https://github.com/ansible/ansible/issues/83331).
