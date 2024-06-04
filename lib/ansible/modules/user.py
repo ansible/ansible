@@ -271,6 +271,7 @@ options:
     account_inactive:
         description:
             - Number of days after a password expires until the account is disabled.
+            - Currently not supported on FreeBSD.
         type: int
         version_added: "2.18"
 extends_documentation_fragment: action_common_attributes
@@ -1462,10 +1463,6 @@ class FreeBsdUser(User):
                 cmd.append('0')
             else:
                 cmd.append(str(calendar.timegm(self.expires)))
-
-        if self.inactive is not None:
-            cmd.append('-f')
-            cmd.append(str(self.inactive))
 
         # system cannot be handled currently - should we error if its requested?
         # create the user
