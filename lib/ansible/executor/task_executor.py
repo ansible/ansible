@@ -44,11 +44,14 @@ __all__ = ['TaskExecutor']
 class TaskTimeoutError(BaseException):
     def __init__(self, message="", frame=None):
 
-        root = pathlib.Path(__file__).parent
-        while not pathlib.Path(frame.f_code.co_filename).is_relative_to(root):
-            frame = frame.f_back
+        if frame is not None:
+            orig = frame
+            root = pathlib.Path(__file__).parent
+            while not pathlib.Path(frame.f_code.co_filename).is_relative_to(root):
+                frame = frame.f_back
 
-        self.frame = str(frame)
+            self.frame = 'Interrupted at %s called from %s' % (orig, frame)
+
         super(TaskTimeoutError, self).__init__(message)
 
 
