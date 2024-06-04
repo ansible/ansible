@@ -60,7 +60,10 @@ class AnsiblePlugin(ABC):
     def __init__(self):
         self._options = {}
         self._defs = None
-        self.extras_prefix = self._load_name
+        self.extras_prefix = None
+
+        if getattr(self, '_load_name', False):
+            self.extras_prefix = self._load_name
 
     def matches_name(self, possible_names):
         possible_fqcns = set()
