@@ -64,6 +64,8 @@ class VaultCLI(CLI):
         opt_help.add_vault_options(common)
         opt_help.add_verbosity_options(common)
 
+        # add to common <parser>.add_argument('--vault-salt', dest='vault_salt', action='store', help='Static salt to use for encrypting the data. Deaults to random salt, use this at your own risk')
+
         subparsers = self.parser.add_subparsers(dest='action')
         subparsers.required = True
 
@@ -87,6 +89,7 @@ class VaultCLI(CLI):
         decrypt_parser = subparsers.add_parser('decrypt', help='Decrypt vault encrypted file', parents=[output, common])
         decrypt_parser.set_defaults(func=self.execute_decrypt)
         decrypt_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
+        # remove salt option
 
         edit_parser = subparsers.add_parser('edit', help='Edit vault encrypted file', parents=[vault_id, common])
         edit_parser.set_defaults(func=self.execute_edit)

@@ -1159,6 +1159,8 @@ VAULT_ENCRYPT_SALT:
   ini:
   - {key: vault_encrypt_salt, section: defaults}
   version_added: '2.15'
+  cli:
+  - name: vault-salt
 DEFAULT_VAULT_ENCRYPT_IDENTITY:
   name: Vault id to use for encryption
   description: 'The vault_id to use for encrypting by default. If multiple vault_ids are provided, this specifies which to use for encryption. The ``--encrypt-vault-id`` CLI option overrides the configured value.'
