@@ -28,6 +28,7 @@ from ansible.module_utils.six import string_types, integer_types, reraise, text_
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.yaml import yaml_load, yaml_load_all
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.template import recursive_check_defined
@@ -80,14 +81,26 @@ def to_nice_json(a, indent=4, sort_keys=True, *args, **kw):
     return to_json(a, indent=indent, sort_keys=sort_keys, separators=(',', ': '), *args, **kw)
 
 
-def to_bool(a):
+def to_bool(a, strategy='yaml'):
     ''' return a bool for the arg '''
+
+    # nothing to do
     if a is None or isinstance(a, bool):
         return a
-    if isinstance(a, string_types):
-        a = a.lower()
-    if a in ('yes', 'on', '1', 'true', 1):
-        return True
+
+    try:
+        if strategy == 'yaml':
+            # make it lower case for easier matching
+            return boolean(a)
+        elif strategy == 'python':
+                return bool(a)
+        elif strategy == 'truthy':
+            return (if a)
+        else:
+            raise AnsibleFilterError(f"Invalid strategy provided ({strategy}), valid choices are: yaml, python, truthy")
+    except TypeError as e:
+        raise AnsibleFilterTypeError(f"Could not convert to boolean: {e}", orig_exec=e)
+
     return False
 
 
