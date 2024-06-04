@@ -75,12 +75,9 @@ def _get_evar_list(settings):
 
 def _get_ini_entries(settings):
     data = {}
-    for setting in settings:
-        if 'ini' in settings[setting] and settings[setting]['ini']:
-            for kv in settings[setting]['ini']:
-                if not kv['section'] in data:
-                    data[kv['section']] = set()
-                data[kv['section']].add(kv['key'])
+    for values in settings.values():
+        for kv in values.get('ini', []):
+            data.setdefault(kv['section'], set()).add(kv['key'])
     return data
 
 
