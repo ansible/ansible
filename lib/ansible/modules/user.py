@@ -268,7 +268,7 @@ options:
             - Requires O(local) is omitted or V(False).
         type: str
         version_added: "2.12"
-    account_inactive:
+    password_expire_account_disable:
         description:
             - Number of days after a password expires until the account is disabled.
             - Currently not supported on FreeBSD.
@@ -366,7 +366,7 @@ EXAMPLES = r'''
 - name: Set number of days after password expires until account is disabled
   ansible.builtin.user:
     name: jimholden2016
-    account_inactive: 15
+    password_expire_account_disable: 15
 '''
 
 RETURN = r'''
@@ -593,7 +593,7 @@ class User(object):
         self.password_expire_min = module.params['password_expire_min']
         self.password_expire_warn = module.params['password_expire_warn']
         self.umask = module.params['umask']
-        self.inactive = module.params['account_inactive']
+        self.inactive = module.params['password_expire_account_disable']
 
         if self.umask is not None and self.local:
             module.fail_json(msg="'umask' can not be used with 'local'")
@@ -3206,7 +3206,7 @@ def main():
             authorization=dict(type='str'),
             role=dict(type='str'),
             umask=dict(type='str'),
-            account_inactive=dict(type='int'),
+            password_expire_account_disable=dict(type='int', no_log=False),
         ),
         supports_check_mode=True,
     )
