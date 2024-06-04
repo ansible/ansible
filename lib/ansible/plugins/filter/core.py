@@ -93,7 +93,7 @@ def to_bool(a, strategy='yaml'):
             # make it lower case for easier matching
             return boolean(a)
         elif strategy == 'python':
-                return bool(a)
+            return bool(a)
         elif strategy == 'truthy':
             if a:
                 return True
