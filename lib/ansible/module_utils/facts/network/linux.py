@@ -1,17 +1,5 @@
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
 
@@ -48,18 +36,43 @@ class LinuxNetwork(Network):
         ip_path = self.module.get_bin_path('ip')
         if ip_path is None:
             return network_facts
-        default_ipv4, default_ipv6 = self.get_default_interfaces(ip_path,
-                                                                 collected_facts=collected_facts)
-        interfaces, ips = self.get_interfaces_info(ip_path, default_ipv4, default_ipv6)
+
+        default_ipv4, default_ipv6 = self.get_default_interfaces(
+            ip_path,
+            collected_facts=collected_facts
+        )
+        interfaces, ips = self.get_interfaces_info(
+            ip_path,
+            default_ipv4,
+            default_ipv6
+        )
         network_facts['interfaces'] = interfaces.keys()
-        for iface in interfaces:
-            network_facts[iface] = interfaces[iface]
-        network_facts['default_ipv4'] = default_ipv4
-        network_facts['default_ipv6'] = default_ipv6
-        network_facts['all_ipv4_addresses'] = ips['all_ipv4_addresses']
-        network_facts['all_ipv6_addresses'] = ips['all_ipv6_addresses']
-        network_facts['locally_reachable_ips'] = self.get_locally_reachable_ips(ip_path)
+        for iface, value in interfaces.items():
+            network_facts[iface] = value
+
+        network_facts.update({
+            'default_ipv4': default_ipv4,
+            'default_ipv6': default_ipv6,
+            'all_ipv4_addresses': ips['all_ipv4_addresses'],
+            'all_ipv6_addresses': ips['all_ipv6_addresses'],
+            'locally_reachable_ips': self.get_locally_reachable_ips(ip_path),
+        })
         return network_facts
+
+    def _parse_locally_reachable_ips(self, output, ips_data):
+        for line in output.splitlines():
+            if not line:
+                continue
+            words = line.split()
+            if words[0] != 'local':
+                continue
+            address = words[1]
+            if ":" in address:
+                if address not in ips_data['ipv6']:
+                    ips_data['ipv6'].append(address)
+            else:
+                if address not in ips_data['ipv4']:
+                    ips_data['ipv4'].append(address)
 
     # List all `scope host` routes/addresses.
     # They belong to routes, but it means the whole prefix is reachable
@@ -67,34 +80,16 @@ class LinuxNetwork(Network):
     # E.g.: 192.168.0.0/24, any IP address is reachable from this range
     # if assigned as scope host.
     def get_locally_reachable_ips(self, ip_path):
-        locally_reachable_ips = dict(
-            ipv4=[],
-            ipv6=[],
-        )
+        locally_reachable_ips = {
+            'ipv4': [],
+            'ipv6': [],
+        }
 
-        def parse_locally_reachable_ips(output):
-            for line in output.splitlines():
-                if not line:
-                    continue
-                words = line.split()
-                if words[0] != 'local':
-                    continue
-                address = words[1]
-                if ":" in address:
-                    if address not in locally_reachable_ips['ipv6']:
-                        locally_reachable_ips['ipv6'].append(address)
-                else:
-                    if address not in locally_reachable_ips['ipv4']:
-                        locally_reachable_ips['ipv4'].append(address)
-
-        args = [ip_path, '-4', 'route', 'show', 'table', 'local']
-        rc, routes, dummy = self.module.run_command(args)
-        if rc == 0:
-            parse_locally_reachable_ips(routes)
-        args = [ip_path, '-6', 'route', 'show', 'table', 'local']
-        rc, routes, dummy = self.module.run_command(args)
-        if rc == 0:
-            parse_locally_reachable_ips(routes)
+        for ip_ver in ['-4', '-6']:
+            args = [ip_path, ip_ver, 'route', 'show', 'table', 'local']
+            rc, routes, dummy = self.module.run_command(args)
+            if rc == 0:
+                self._parse_locally_reachable_ips(routes, ips_data=locally_reachable_ips)
 
         return locally_reachable_ips
 
@@ -104,11 +99,14 @@ class LinuxNetwork(Network):
         #     ip -4 route get 8.8.8.8                     -> Google public DNS
         #     ip -6 route get 2404:6800:400a:800::1012    -> ipv6.google.com
         # to find out the default outgoing interface, address, and gateway
-        command = dict(
-            v4=[ip_path, '-4', 'route', 'get', '8.8.8.8'],
-            v6=[ip_path, '-6', 'route', 'get', '2404:6800:400a:800::1012']
-        )
-        interface = dict(v4={}, v6={})
+        command = {
+            'v4': [ip_path, '-4', 'route', 'get', '8.8.8.8'],
+            'v6': [ip_path, '-6', 'route', 'get', '2404:6800:400a:800::1012']
+        }
+        interface = {
+            'v4': {},
+            'v6': {}
+        }
 
         for v in 'v4', 'v6':
             if (v == 'v6' and collected_facts.get('ansible_os_family') == 'RedHat' and
@@ -116,7 +114,7 @@ class LinuxNetwork(Network):
                 continue
             if v == 'v6' and not socket.has_ipv6:
                 continue
-            rc, out, err = self.module.run_command(command[v], errors='surrogate_then_replace')
+            dummy, out, dummy = self.module.run_command(command[v], errors='surrogate_then_replace')
             if not out:
                 # v6 routing may result in
                 #   RTNETLINK answers: Invalid argument
@@ -133,227 +131,243 @@ class LinuxNetwork(Network):
                         interface[v]['gateway'] = words[i + 1]
         return interface['v4'], interface['v6']
 
+    def _parse_ip_output(self, output, device, interfaces, ips, default_ipv4, default_ipv6, macaddress, secondary=False):
+        for line in output.splitlines():
+            if not line:
+                continue
+            words = line.split()
+            broadcast = ''
+            if words[0] == 'inet':
+                if '/' in words[1]:
+                    address, netmask_length = words[1].split('/')
+                    if len(words) > 3:
+                        if words[2] == 'brd':
+                            broadcast = words[3]
+                else:
+                    # pointopoint interfaces do not have a prefix
+                    address = words[1]
+                    netmask_length = "32"
+                address_bin = struct.unpack('!L', socket.inet_aton(address))[0]
+                netmask_bin = (1 << 32) - (1 << 32 >> int(netmask_length))
+                netmask = socket.inet_ntoa(struct.pack('!L', netmask_bin))
+                network = socket.inet_ntoa(struct.pack('!L', address_bin & netmask_bin))
+                iface = words[-1]
+
+                if iface != device:
+                    interfaces[iface] = {}
+                if not secondary and "ipv4" not in interfaces[iface]:
+                    interfaces[iface]['ipv4'] = {
+                        'address': address,
+                        'broadcast': broadcast,
+                        'netmask': netmask,
+                        'network': network,
+                        'prefix': netmask_length,
+                    }
+                else:
+                    if "ipv4_secondaries" not in interfaces[iface]:
+                        interfaces[iface]["ipv4_secondaries"] = []
+                    interfaces[iface]["ipv4_secondaries"].append({
+                        'address': address,
+                        'broadcast': broadcast,
+                        'netmask': netmask,
+                        'network': network,
+                        'prefix': netmask_length,
+                    })
+
+                # add this secondary IP to the main device
+                if secondary:
+                    if "ipv4_secondaries" not in interfaces[device]:
+                        interfaces[device]["ipv4_secondaries"] = []
+                    if device != iface:
+                        interfaces[device]["ipv4_secondaries"].append({
+                            'address': address,
+                            'broadcast': broadcast,
+                            'netmask': netmask,
+                            'network': network,
+                            'prefix': netmask_length,
+                        })
+
+                if 'address' in default_ipv4 and default_ipv4['address'] == address:
+                    default_ipv4['broadcast'] = broadcast
+                    default_ipv4['netmask'] = netmask
+                    default_ipv4['network'] = network
+                    default_ipv4['prefix'] = netmask_length
+                    default_ipv4['macaddress'] = macaddress
+                    default_ipv4['mtu'] = interfaces[device]['mtu']
+                    default_ipv4['type'] = interfaces[device].get("type", "unknown")
+                    default_ipv4['alias'] = words[-1]
+                if not address.startswith('127.'):
+                    ips['all_ipv4_addresses'].append(address)
+            elif words[0] == 'inet6':
+                if 'peer' == words[2]:
+                    address = words[1]
+                    dummy, prefix = words[3].split('/')
+                    scope = words[5]
+                else:
+                    address, prefix = words[1].split('/')
+                    scope = words[3]
+                if 'ipv6' not in interfaces[device]:
+                    interfaces[device]['ipv6'] = []
+                interfaces[device]['ipv6'].append({
+                    'address': address,
+                    'prefix': prefix,
+                    'scope': scope
+                })
+                # If this is the default address, update default_ipv6
+                if 'address' in default_ipv6 and default_ipv6['address'] == address:
+                    default_ipv6['prefix'] = prefix
+                    default_ipv6['scope'] = scope
+                    default_ipv6['macaddress'] = macaddress
+                    default_ipv6['mtu'] = interfaces[device]['mtu']
+                    default_ipv6['type'] = interfaces[device].get("type", "unknown")
+                if not address == '::1':
+                    ips['all_ipv6_addresses'].append(address)
+
     def get_interfaces_info(self, ip_path, default_ipv4, default_ipv6):
         interfaces = {}
-        ips = dict(
-            all_ipv4_addresses=[],
-            all_ipv6_addresses=[],
-        )
-
-        # FIXME: maybe split into smaller methods?
-        # FIXME: this is pretty much a constructor
+        ips = {
+            'all_ipv4_addresses': [],
+            'all_ipv6_addresses': [],
+        }
 
         for path in glob.glob('/sys/class/net/*'):
             if not os.path.isdir(path):
                 continue
             device = os.path.basename(path)
             interfaces[device] = {'device': device}
-            if os.path.exists(os.path.join(path, 'address')):
-                macaddress = get_file_content(os.path.join(path, 'address'), default='')
+
+            mac_address_file_path = os.path.join(path, 'address')
+            if os.path.exists(mac_address_file_path):
+                macaddress = get_file_content(mac_address_file_path, default='')
                 if macaddress and macaddress != '00:00:00:00:00:00':
                     interfaces[device]['macaddress'] = macaddress
-            if os.path.exists(os.path.join(path, 'mtu')):
-                interfaces[device]['mtu'] = int(get_file_content(os.path.join(path, 'mtu')))
-            if os.path.exists(os.path.join(path, 'operstate')):
-                interfaces[device]['active'] = get_file_content(os.path.join(path, 'operstate')) != 'down'
-            if os.path.exists(os.path.join(path, 'device', 'driver', 'module')):
-                interfaces[device]['module'] = os.path.basename(os.path.realpath(os.path.join(path, 'device', 'driver', 'module')))
-            if os.path.exists(os.path.join(path, 'type')):
-                _type = get_file_content(os.path.join(path, 'type'))
+
+            mtu_file_path = os.path.join(path, 'mtu')
+            if os.path.exists(mtu_file_path):
+                interfaces[device]['mtu'] = int(get_file_content(mtu_file_path))
+            operstate_file_path = os.path.join(path, 'operstate')
+            if os.path.exists(operstate_file_path):
+                interfaces[device]['active'] = get_file_content(operstate_file_path) != 'down'
+            module_file_path = os.path.join(path, 'device', 'driver', 'module')
+            if os.path.exists(module_file_path):
+                interfaces[device]['module'] = os.path.basename(os.path.realpath(module_file_path))
+            type_file_path = os.path.join(path, 'type')
+            if os.path.exists(type_file_path):
+                _type = get_file_content(type_file_path)
                 interfaces[device]['type'] = self.INTERFACE_TYPE.get(_type, 'unknown')
-            if os.path.exists(os.path.join(path, 'bridge')):
+            bridge_file_path = os.path.join(path, 'bridge')
+            if os.path.exists(bridge_file_path):
                 interfaces[device]['type'] = 'bridge'
                 interfaces[device]['interfaces'] = [os.path.basename(b) for b in glob.glob(os.path.join(path, 'brif', '*'))]
-                if os.path.exists(os.path.join(path, 'bridge', 'bridge_id')):
-                    interfaces[device]['id'] = get_file_content(os.path.join(path, 'bridge', 'bridge_id'), default='')
-                if os.path.exists(os.path.join(path, 'bridge', 'stp_state')):
-                    interfaces[device]['stp'] = get_file_content(os.path.join(path, 'bridge', 'stp_state')) == '1'
-            if os.path.exists(os.path.join(path, 'bonding')):
+                bridge_id_file_path = os.path.join(bridge_file_path, 'bridge_id')
+                if os.path.exists(bridge_id_file_path):
+                    interfaces[device]['id'] = get_file_content(bridge_id_file_path, default='')
+                bridge_stp_state_file_path = os.path.join(bridge_file_path, 'stp_state')
+                if os.path.exists(bridge_stp_state_file_path):
+                    interfaces[device]['stp'] = get_file_content(bridge_stp_state_file_path) == '1'
+            bonding_file_path = os.path.join(path, 'bonding')
+            if os.path.exists(bonding_file_path):
                 interfaces[device]['type'] = 'bonding'
-                interfaces[device]['slaves'] = get_file_content(os.path.join(path, 'bonding', 'slaves'), default='').split()
-                interfaces[device]['mode'] = get_file_content(os.path.join(path, 'bonding', 'mode'), default='').split()[0]
-                interfaces[device]['miimon'] = get_file_content(os.path.join(path, 'bonding', 'miimon'), default='').split()[0]
-                interfaces[device]['lacp_rate'] = get_file_content(os.path.join(path, 'bonding', 'lacp_rate'), default='').split()[0]
-                primary = get_file_content(os.path.join(path, 'bonding', 'primary'))
+                interfaces[device]['slaves'] = get_file_content(os.path.join(bonding_file_path, 'slaves'), default='').split()
+                interfaces[device]['mode'] = get_file_content(os.path.join(bonding_file_path, 'mode'), default='').split()[0]
+                interfaces[device]['miimon'] = get_file_content(os.path.join(bonding_file_path, 'miimon'), default='').split()[0]
+                interfaces[device]['lacp_rate'] = get_file_content(os.path.join(bonding_file_path, 'lacp_rate'), default='').split()[0]
+                primary = get_file_content(os.path.join(bonding_file_path, 'primary'))
                 if primary:
                     interfaces[device]['primary'] = primary
-                    path = os.path.join(path, 'bonding', 'all_slaves_active')
+                    path = os.path.join(bonding_file_path, 'all_slaves_active')
                     if os.path.exists(path):
                         interfaces[device]['all_slaves_active'] = get_file_content(path) == '1'
-            if os.path.exists(os.path.join(path, 'bonding_slave')):
-                interfaces[device]['perm_macaddress'] = get_file_content(os.path.join(path, 'bonding_slave', 'perm_hwaddr'), default='')
-            if os.path.exists(os.path.join(path, 'device')):
-                interfaces[device]['pciid'] = os.path.basename(os.readlink(os.path.join(path, 'device')))
-            if os.path.exists(os.path.join(path, 'speed')):
-                speed = get_file_content(os.path.join(path, 'speed'))
+            bonding_client_path = os.path.join(path, 'bonding_slave')
+            if os.path.exists(bonding_client_path):
+                interfaces[device]['perm_macaddress'] = get_file_content(os.path.join(bonding_client_path, 'perm_hwaddr'), default='')
+            device_file_path = os.path.join(path, 'device')
+            if os.path.exists(device_file_path):
+                interfaces[device]['pciid'] = os.path.basename(os.readlink(device_file_path))
+            speed_file_path = os.path.join(path, 'speed')
+            if os.path.exists(speed_file_path):
+                speed = get_file_content(speed_file_path)
                 if speed is not None:
                     interfaces[device]['speed'] = int(speed)
 
             # Check whether an interface is in promiscuous mode
-            if os.path.exists(os.path.join(path, 'flags')):
+            flags_file_path = os.path.join(path, 'flags')
+            if os.path.exists(flags_file_path):
                 promisc_mode = False
                 # The second byte indicates whether the interface is in promiscuous mode.
                 # 1 = promisc
                 # 0 = no promisc
-                data = int(get_file_content(os.path.join(path, 'flags')), 16)
-                promisc_mode = (data & 0x0100 > 0)
+                data = int(get_file_content(flags_file_path), 16)
+                promisc_mode = data & 0x0100 > 0
                 interfaces[device]['promisc'] = promisc_mode
-
-            # TODO: determine if this needs to be in a nested scope/closure
-            def parse_ip_output(output, secondary=False):
-                for line in output.splitlines():
-                    if not line:
-                        continue
-                    words = line.split()
-                    broadcast = ''
-                    if words[0] == 'inet':
-                        if '/' in words[1]:
-                            address, netmask_length = words[1].split('/')
-                            if len(words) > 3:
-                                if words[2] == 'brd':
-                                    broadcast = words[3]
-                        else:
-                            # pointopoint interfaces do not have a prefix
-                            address = words[1]
-                            netmask_length = "32"
-                        address_bin = struct.unpack('!L', socket.inet_aton(address))[0]
-                        netmask_bin = (1 << 32) - (1 << 32 >> int(netmask_length))
-                        netmask = socket.inet_ntoa(struct.pack('!L', netmask_bin))
-                        network = socket.inet_ntoa(struct.pack('!L', address_bin & netmask_bin))
-                        iface = words[-1]
-                        # NOTE: device is ref to outside scope
-                        # NOTE: interfaces is also ref to outside scope
-                        if iface != device:
-                            interfaces[iface] = {}
-                        if not secondary and "ipv4" not in interfaces[iface]:
-                            interfaces[iface]['ipv4'] = {'address': address,
-                                                         'broadcast': broadcast,
-                                                         'netmask': netmask,
-                                                         'network': network,
-                                                         'prefix': netmask_length,
-                                                         }
-                        else:
-                            if "ipv4_secondaries" not in interfaces[iface]:
-                                interfaces[iface]["ipv4_secondaries"] = []
-                            interfaces[iface]["ipv4_secondaries"].append({
-                                'address': address,
-                                'broadcast': broadcast,
-                                'netmask': netmask,
-                                'network': network,
-                                'prefix': netmask_length,
-                            })
-
-                        # add this secondary IP to the main device
-                        if secondary:
-                            if "ipv4_secondaries" not in interfaces[device]:
-                                interfaces[device]["ipv4_secondaries"] = []
-                            if device != iface:
-                                interfaces[device]["ipv4_secondaries"].append({
-                                    'address': address,
-                                    'broadcast': broadcast,
-                                    'netmask': netmask,
-                                    'network': network,
-                                    'prefix': netmask_length,
-                                })
-
-                        # NOTE: default_ipv4 is ref to outside scope
-                        # If this is the default address, update default_ipv4
-                        if 'address' in default_ipv4 and default_ipv4['address'] == address:
-                            default_ipv4['broadcast'] = broadcast
-                            default_ipv4['netmask'] = netmask
-                            default_ipv4['network'] = network
-                            default_ipv4['prefix'] = netmask_length
-                            # NOTE: macaddress is ref from outside scope
-                            default_ipv4['macaddress'] = macaddress
-                            default_ipv4['mtu'] = interfaces[device]['mtu']
-                            default_ipv4['type'] = interfaces[device].get("type", "unknown")
-                            default_ipv4['alias'] = words[-1]
-                        if not address.startswith('127.'):
-                            ips['all_ipv4_addresses'].append(address)
-                    elif words[0] == 'inet6':
-                        if 'peer' == words[2]:
-                            address = words[1]
-                            dummy, prefix = words[3].split('/')
-                            scope = words[5]
-                        else:
-                            address, prefix = words[1].split('/')
-                            scope = words[3]
-                        if 'ipv6' not in interfaces[device]:
-                            interfaces[device]['ipv6'] = []
-                        interfaces[device]['ipv6'].append({
-                            'address': address,
-                            'prefix': prefix,
-                            'scope': scope
-                        })
-                        # If this is the default address, update default_ipv6
-                        if 'address' in default_ipv6 and default_ipv6['address'] == address:
-                            default_ipv6['prefix'] = prefix
-                            default_ipv6['scope'] = scope
-                            default_ipv6['macaddress'] = macaddress
-                            default_ipv6['mtu'] = interfaces[device]['mtu']
-                            default_ipv6['type'] = interfaces[device].get("type", "unknown")
-                        if not address == '::1':
-                            ips['all_ipv6_addresses'].append(address)
 
             ip_path = self.module.get_bin_path("ip")
 
             args = [ip_path, 'addr', 'show', 'primary', 'dev', device]
-            rc, primary_data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
+            rc, primary_data, dummy = self.module.run_command(args, errors='surrogate_then_replace')
             if rc == 0:
-                parse_ip_output(primary_data)
+                self._parse_ip_output(primary_data, device, interfaces, ips, default_ipv4, default_ipv6, macaddress)
             else:
                 # possibly busybox, fallback to running without the "primary" arg
                 # https://github.com/ansible/ansible/issues/50871
                 args = [ip_path, 'addr', 'show', 'dev', device]
-                rc, data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
+                rc, data, dummy = self.module.run_command(args, errors='surrogate_then_replace')
                 if rc == 0:
-                    parse_ip_output(data)
+                    self._parse_ip_output(data, device, interfaces, ips, default_ipv4, default_ipv6, macaddress)
 
             args = [ip_path, 'addr', 'show', 'secondary', 'dev', device]
-            rc, secondary_data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
+            rc, secondary_data, dummy = self.module.run_command(args, errors='surrogate_then_replace')
             if rc == 0:
-                parse_ip_output(secondary_data, secondary=True)
+                self._parse_ip_output(
+                    secondary_data,
+                    device,
+                    interfaces,
+                    ips,
+                    default_ipv4,
+                    default_ipv6,
+                    macaddress,
+                    secondary=True
+                )
 
             interfaces[device].update(self.get_ethtool_data(device))
 
         # replace : by _ in interface name since they are hard to use in template
         new_interfaces = {}
-        # i is a dict key (string) not an index int
-        for i in interfaces:
+        for i, v in interfaces.items():
             if ':' in i:
-                new_interfaces[i.replace(':', '_')] = interfaces[i]
+                new_interfaces[i.replace(':', '_')] = v
             else:
-                new_interfaces[i] = interfaces[i]
+                new_interfaces[i] = v
         return new_interfaces, ips
 
     def get_ethtool_data(self, device):
 
         data = {}
         ethtool_path = self.module.get_bin_path("ethtool")
-        # FIXME: exit early on falsey ethtool_path and un-indent
-        if ethtool_path:
-            args = [ethtool_path, '-k', device]
-            rc, stdout, stderr = self.module.run_command(args, errors='surrogate_then_replace')
-            # FIXME: exit early on falsey if we can
-            if rc == 0:
-                features = {}
-                for line in stdout.strip().splitlines():
-                    if not line or line.endswith(":"):
-                        continue
-                    key, value = line.split(": ")
-                    if not value:
-                        continue
-                    features[key.strip().replace('-', '_')] = value.strip()
-                data['features'] = features
+        if ethtool_path is None:
+            return data
 
-            args = [ethtool_path, '-T', device]
-            rc, stdout, stderr = self.module.run_command(args, errors='surrogate_then_replace')
-            if rc == 0:
-                data['timestamping'] = [m.lower() for m in re.findall(r'SOF_TIMESTAMPING_(\w+)', stdout)]
-                data['hw_timestamp_filters'] = [m.lower() for m in re.findall(r'HWTSTAMP_FILTER_(\w+)', stdout)]
-                m = re.search(r'PTP Hardware Clock: (\d+)', stdout)
-                if m:
-                    data['phc_index'] = int(m.groups()[0])
+        args = [ethtool_path, '-k', device]
+        rc, stdout, dummy = self.module.run_command(args, errors='surrogate_then_replace')
+        if rc == 0:
+            features = {}
+            for line in stdout.strip().splitlines():
+                if not line or line.endswith(":"):
+                    continue
+                key, value = line.split(": ")
+                if not value:
+                    continue
+                features[key.strip().replace('-', '_')] = value.strip()
+            data['features'] = features
+
+        args = [ethtool_path, '-T', device]
+        rc, stdout, dummy = self.module.run_command(args, errors='surrogate_then_replace')
+        if rc == 0:
+            data['timestamping'] = [m.lower() for m in re.findall(r'SOF_TIMESTAMPING_(\w+)', stdout)]
+            data['hw_timestamp_filters'] = [m.lower() for m in re.findall(r'HWTSTAMP_FILTER_(\w+)', stdout)]
+            m = re.search(r'PTP Hardware Clock: (\d+)', stdout)
+            if m:
+                data['phc_index'] = int(m.groups()[0])
 
         return data
 
