@@ -209,6 +209,9 @@ class LinuxHardware(Hardware):
                     if 'vme' not in val:
                         xen_paravirt = True
 
+            if key == "flags":
+                cpu_facts['flags'] = val.split()
+
             # model name is for Intel arch, Processor (mind the uppercase P)
             # works for some ARM devices, like the Sheevaplug.
             if key in ['model name', 'Processor', 'vendor_id', 'cpu', 'Vendor', 'processor']:
