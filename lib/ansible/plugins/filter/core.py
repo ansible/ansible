@@ -95,11 +95,12 @@ def to_bool(a, strategy='yaml'):
         elif strategy == 'python':
                 return bool(a)
         elif strategy == 'truthy':
-            return (if a)
+            if a:
+                return True
         else:
             raise AnsibleFilterError(f"Invalid strategy provided ({strategy}), valid choices are: yaml, python, truthy")
     except TypeError as e:
-        raise AnsibleFilterTypeError(f"Could not convert to boolean: {e}", orig_exec=e)
+        raise AnsibleFilterTypeError(f"Could not convert to boolean: {e}", orig_exc=e)
 
     return False
 
