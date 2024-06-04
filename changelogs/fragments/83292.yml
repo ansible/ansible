@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix the issue of playbook with any_errors_fatal as true, the rescue section only executes on the host where a fail task with run_once as true is triggered, not affecting other hosts as expected.(https://github.com/ansible/ansible/issues/83292)
