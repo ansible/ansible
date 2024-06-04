@@ -11,16 +11,16 @@ DOCUMENTATION:
       type: raw
       required: true
     strategy:
-      description: Which evaluation engine to use
+      description: Evaluation engine to use while evaluating boolean.
       default: yaml
       choices:
         yaml: Use YAML 1.1 allowed booleans
         python: Pass through the Python C(bool) function
-        truthy: Just let Python evaluate in in an C(if) statement
+        truthy: Just let Python evaluate in an C(if) statement
       version_added: '2.18'
   notes:
-    - prior to adding the 'strategy' option, evaluation was aproximating the 'yaml' strategy.
-    - if the value is already a boolean or C(None) this filter just returns the original value.
+    - Before adding the 'strategy' option, evaluation approximated the 'yaml' strategy.
+    - if the value is already a boolean or C(None), this filter returns the original value.
 
 EXAMPLES: |
 

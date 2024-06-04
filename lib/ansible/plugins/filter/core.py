@@ -88,20 +88,21 @@ def to_bool(a, strategy='yaml'):
     if a is None or isinstance(a, bool):
         return a
 
+    valid_choices = ('yaml', 'python', 'truthy')
+    if strategy not in valid_choices:
+        raise AnsibleFilterError(f"Invalid strategy provided ({strategy}), valid choices are: {', '.join(valid_choices)}")
+
     try:
         if strategy == 'yaml':
             # make it lower case for easier matching
             return boolean(a)
-        elif strategy == 'python':
+        if strategy == 'python':
             return bool(a)
-        elif strategy == 'truthy':
+        if strategy == 'truthy':
             if a:
                 return True
-        else:
-            raise AnsibleFilterError(f"Invalid strategy provided ({strategy}), valid choices are: yaml, python, truthy")
     except TypeError as e:
-        raise AnsibleFilterTypeError(f"Could not convert to boolean: {e}", orig_exc=e)
-
+        raise AnsibleFilterTypeError(f"Could not convert to boolean using strategy {strategy}: {e}", orig_exc=e)
     return False
 
 
