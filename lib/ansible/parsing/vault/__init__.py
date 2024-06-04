@@ -25,12 +25,14 @@ import shlex
 import shutil
 import subprocess
 import sys
+import pickle
 import tempfile
 import warnings
 
 from binascii import hexlify
 from binascii import unhexlify
 from binascii import Error as BinasciiError
+from packaging.version import Version
 
 HAS_CRYPTOGRAPHY = False
 CRYPTOGRAPHY_BACKEND = None
@@ -126,21 +128,33 @@ def is_encrypted_file(file_obj, start_pos=0, count=-1):
 
 def _parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None):
 
+    # $ANSIBLE_VAULT;1.3;AES256;example1;pickled_options_hash
+    # $ANSIBLE_VAULT;1.2;AES256;example1
+    # $ANSIBLE_VAULT;1.1;AES256
+
     b_tmpdata = b_vaulttext_envelope.splitlines()
     b_tmpheader = b_tmpdata[0].strip().split(b';')
 
-    b_version = b_tmpheader[1].strip()
-    cipher_name = to_text(b_tmpheader[2].strip())
-    vault_id = default_vault_id
-
-    # Only attempt to find vault_id if the vault file is version 1.2 or newer
-    # if self.b_version == b'1.2':
-    if len(b_tmpheader) >= 4:
-        vault_id = to_text(b_tmpheader[3].strip())
-
     b_ciphertext = b''.join(b_tmpdata[1:])
 
-    return b_ciphertext, b_version, cipher_name, vault_id
+    while len(b_tmpheader) < 5:
+        b_tmpheader.append(b'')
+
+    tag, version, cipher, vault_id, options =  [str(x.strip()) for x in b_tmpheader]
+
+    if b_tag != b'$ANSIBLE_VAULT':
+        raise Exception('huh?')
+
+    if not vault_id:
+        # This should be version 1.1 or 1.2 w/o specific id
+        vault_id = default_vault_id
+
+    if options:
+        options = pickle.load(options)
+    else:
+        options = {}
+
+    return b_ciphertext, version, cipher, vault_id, options
 
 
 def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None, filename=None):
@@ -670,7 +684,20 @@ class VaultLib:
                 msg += "%s is not a vault encrypted file" % to_native(filename)
             raise AnsibleError(msg)
 
-        b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext, filename=filename)
+        b_vaulttext, version, cipher_name, vault_id, vault_options = parse_vaulttext_envelope(b_vaulttext, filename=filename)
+
+        if Version(version) >= Version('1.3'):
+            # TODO: implement the 1.3 decryption
+            return self._open_vault(b_vaulttext, version, cipher_name, vault_id, vault_options)
+        else:
+            return self._open_old_vault(b_vaulttext, version, cipher_name, vault_id)
+
+    def _open_vault(self, b_vaulttext, version, cipher_name, vault_id, vault_options):
+        # TODO: actually implement
+        b_plaintext = vault_id_used = vault_secret_used = None
+        return b_plaintext, vault_id_used, vault_secret_used
+
+    def _open_old_vault(self, b_vaulttext, version, cipher_name, vault_id):
 
         # create the cipher object, note that the cipher used for decrypt can
         # be different than the cipher used for encrypt
@@ -954,7 +981,7 @@ class VaultEditor:
 
         # Figure out the vault id from the file, to select the right secret to re-encrypt it
         # (duplicates parts of decrypt, but alas...)
-        dummy, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext, filename=filename)
+        dummy, version, cipher_name, vault_id, vault_options = parse_vaulttext_envelope(b_vaulttext, filename=filename)
 
         # vault id here may not be the vault id actually used for decrypting
         # as when the edited file has no vault-id but is decrypted by non-default id in secrets
@@ -1161,7 +1188,7 @@ class VaultAES256:
             algorithm=hashes.SHA256(),
             length=2 * key_length + iv_length,
             salt=b_salt,
-            iterations=C.config.get_config_value('VAULT_PBKDF2HMAC_ITERATIONS'),
+            iterations=10000,
             backend=CRYPTOGRAPHY_BACKEND)
         b_derivedkey = kdf.derive(b_password)
 
