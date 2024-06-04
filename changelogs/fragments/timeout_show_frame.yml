@@ -1,0 +1,2 @@
+minor_changes:
+  - task timeout now returns timedout key with frame/code that was in execution when the timeout is triggered.
