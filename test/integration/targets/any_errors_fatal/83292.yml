@@ -1,4 +1,3 @@
-
 - hosts: testhost,testhost2
   gather_facts: false
   any_errors_fatal: true
