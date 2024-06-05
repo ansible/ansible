@@ -50,7 +50,7 @@ options:
   free_form:
     description:
       - The command module takes a free form string as a command to run.
-      - There is no actual parameter named 'free form'.
+      - There is no actual parameter named C(free_form).
   cmd:
     type: str
     description:
