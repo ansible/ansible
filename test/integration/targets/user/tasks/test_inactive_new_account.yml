@@ -25,7 +25,7 @@
           - not getent_shadow['ansibulluser'][7] or getent_shadow['ansibulluser'][7] | int != 15
 
 - name: Verify inactive setting for BSD
-  when: ansible_facts.system in ['OpenBSD']
+  when: ansible_facts.system in ['NetBSD','OpenBSD']
   block:
     - name: BSD | Get inactive value for ansibulluser
       getent:
@@ -60,7 +60,7 @@
           - not getent_shadow['ansibulluser'][7] or getent_shadow['ansibulluser'][7] | int != 10
 
 - name: Verify updated inactive setting for BSD
-  when: ansible_facts.system in ['OpenBSD']
+  when: ansible_facts.system in ['NetBSD','OpenBSD']
   block:
     - name: BSD | Get inactive value for ansibulluser
       getent:

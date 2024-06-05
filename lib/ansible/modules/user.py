@@ -271,7 +271,7 @@ options:
     password_expire_account_disable:
         description:
             - Number of days after a password expires until the account is disabled.
-            - Currently not supported on FreeBSD.
+            - Currently supported on AIX, Linux, NetBSD, OpenBSD.
         type: int
         version_added: "2.18"
 extends_documentation_fragment: action_common_attributes
@@ -1600,10 +1600,6 @@ class FreeBsdUser(User):
                     cmd.append(str(calendar.timegm(self.expires)))
 
         (rc, out, err) = (None, '', '')
-
-        if self.inactive is not None:
-            cmd.append('-f')
-            cmd.append(str(self.inactive))
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
