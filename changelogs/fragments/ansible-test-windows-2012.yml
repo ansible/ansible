@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Removed support for provisioning remote Windows 2012 and 2012-R2 instances.
