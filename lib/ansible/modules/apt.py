@@ -63,7 +63,7 @@ options:
     default: 'no'
   default_release:
     description:
-      - Corresponds to the C(-t) option for C(apt) and sets pin priorities.
+      - Corresponds to the C(-t) option for I(apt) and sets pin priorities.
     aliases: [ default-release ]
     type: str
   install_recommends:
