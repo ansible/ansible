@@ -74,7 +74,7 @@ options:
     type: bool
   force:
     description:
-      - 'Corresponds to the C(--force-yes) to I(apt-get) and implies O(allow_unauthenticated=yes) and O(allow_downgrade=yes).'
+      - 'Corresponds to the C(--force-yes) to C(apt-get) and implies O(allow_unauthenticated=yes) and O(allow_downgrade=yes).'
       - "This option will disable checking both the packages' signatures and the certificates of the web servers they are downloaded from."
       - 'This option *is not* the equivalent of passing the C(-f) flag to C(apt-get) on the command line.'
       - '**This is a destructive operation with the potential to destroy your system, and it should almost never be used.**
@@ -92,7 +92,7 @@ options:
   allow_unauthenticated:
     description:
       - Ignore if packages cannot be authenticated. This is useful for bootstrapping environments that manage their own apt-key setup.
-      - 'O(allow_unauthenticated) is only supported with O(state=install) or O(state=present).'
+      - 'O(allow_unauthenticated) is only supported with O(state): V()install/V(present).'
     aliases: [ allow-unauthenticated ]
     type: bool
     default: 'no'
@@ -205,7 +205,7 @@ attributes:
         platforms: debian
 notes:
    - Three of the upgrade modes (V(full), V(safe) and its alias V(true)) required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a fall-back.
-   - In most cases, packages installed with C(apt) will start newly installed services by default. Most distributions have mechanisms to avoid this.
+   - In most cases, packages installed with I(apt) will start newly installed services by default. Most distributions have mechanisms to avoid this.
      For example when installing Postgresql-9.5 in Debian 9, creating an executable shell script (/usr/sbin/policy-rc.d) that throws
      a return code of 101 will stop Postgresql 9.5 starting up after install. Remove the file or its execute permission afterward.
    - The C(apt-get) commandline supports implicit regex matches here but we do not because it can let typos through easier
