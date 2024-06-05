@@ -270,7 +270,7 @@ extends_documentation_fragment:
 - action_common_attributes.flow
 attributes:
     action:
-        details: dnf has 2 action plugins that use it under the hood, P(ansible.builtin.dnf#action) and P(ansible.builtin.package#action).
+        details: dnf has 2 action plugins that use it under the hood, M(ansible.builtin.dnf) and M(ansible.builtin.package).
         support: partial
     async:
         support: none
