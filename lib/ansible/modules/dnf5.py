@@ -17,7 +17,7 @@ options:
   name:
     description:
       - "A package name or package specifier with version, like C(name-1.0).
-        When using state=latest, this can be '*' which means run: dnf -y update.
+        When using O(state=latest), this can be C(*) which means run: C(dnf -y update).
         You can also pass a url or a local path to an rpm file.
         To operate on several packages this can accept a comma separated string of packages or a list of packages."
       - Comparison operators for package version are valid here C(>), C(<), C(>=), C(<=). Example - C(name >= 1.0).
@@ -37,15 +37,15 @@ options:
   state:
     description:
       - Whether to install (V(present), V(latest)), or remove (V(absent)) a package.
-      - Default is V(None), however in effect the default action is V(present) unless the V(autoremove) option is
-        enabled for this module, then V(absent) is inferred.
+      - Default is V(None), however in effect the default action is V(present) unless the O(autoremove=true),
+        then V(absent) is inferred.
     choices: ['absent', 'present', 'installed', 'removed', 'latest']
     type: str
   enablerepo:
     description:
       - I(Repoid) of repositories to enable for the install/update operation.
         These repos will not persist beyond the transaction.
-        When specifying multiple repos, separate them with a ",".
+        When specifying multiple repos, separate them with a C(,).
     type: list
     elements: str
     default: []
@@ -53,7 +53,7 @@ options:
     description:
       - I(Repoid) of repositories to disable for the install/update operation.
         These repos will not persist beyond the transaction.
-        When specifying multiple repos, separate them with a ",".
+        When specifying multiple repos, separate them with a C(,).
     type: list
     elements: str
     default: []
@@ -84,12 +84,12 @@ options:
     description:
       - If V(true), removes all "leaf" packages from the system that were originally
         installed as dependencies of user-installed packages but which are no longer
-        required by any such package. Should be used alone or when O(state) is V(absent)
+        required by any such package. Should be used alone or when O(state=absent).
     type: bool
     default: "no"
   exclude:
     description:
-      - Package name(s) to exclude when state=present, or latest. This can be a
+      - Package name(s) to exclude when O(state=present) or O(state=latest). This can be a
         list or a comma separated string.
     type: list
     elements: str
@@ -97,20 +97,20 @@ options:
   skip_broken:
     description:
       - Skip all unavailable packages or packages with broken dependencies
-        without raising an error. Equivalent to passing the --skip-broken option.
+        without raising an error. Equivalent to passing the C(--skip-broken) option.
     type: bool
     default: "no"
   update_cache:
     description:
       - Force dnf to check if cache is out of date and redownload if needed.
-        Has an effect only if O(state) is V(present) or V(latest).
+        Has an effect only if O(state=present) or O(state=latest).
     type: bool
     default: "no"
     aliases: [ expire-cache ]
   update_only:
     description:
       - When using latest, only update installed packages. Do not install packages.
-      - Has an effect only if O(state) is V(latest)
+      - Has an effect only if O(state=present) or O(state=latest).
     default: "no"
     type: bool
   security:
@@ -147,7 +147,7 @@ options:
     description:
       - Disable the excludes defined in DNF config files.
       - If set to V(all), disables all excludes.
-      - If set to V(main), disable excludes defined in [main] in dnf.conf.
+      - If set to V(main), disable excludes defined in C([main]) in C(dnf.conf).
       - If set to V(repoid), disable excludes defined for given repo id.
     type: str
   validate_certs:
@@ -166,7 +166,7 @@ options:
     description:
       - Specify if the named package and version is allowed to downgrade
         a maybe already installed higher version of that package.
-        Note that setting allow_downgrade=True can make this module
+        Note that setting O(allow_downgrade=true) can make this module
         behave in a non-idempotent way. The task could end up with a set
         of packages that does not match the complete list of specified
         packages to install (because dependencies between the downgraded
@@ -232,7 +232,7 @@ extends_documentation_fragment:
 - action_common_attributes.flow
 attributes:
     action:
-        details: dnf5 has 2 action plugins that use it under the hood, M(ansible.builtin.dnf) and M(ansible.builtin.package).
+        details: dnf5 has 2 action plugins that use it under the hood, P(ansible.builtin.dnf#action) and P(ansible.builtin.package#action).
         support: partial
     async:
         support: none

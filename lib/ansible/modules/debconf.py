@@ -29,24 +29,24 @@ notes:
     - Several questions have to be answered (depending on the package).
       Use 'debconf-show <package>' on any Debian or derivative with the package
       installed to see questions/settings available.
-    - Some distros will always record tasks involving the setting of passwords as changed. This is due to debconf-get-selections masking passwords.
+    - Some distros will always record tasks involving the setting of passwords as changed. This is due to C(debconf-get-selections) masking passwords.
     - It is highly recommended to add C(no_log=True) to the task while handling sensitive information using this module.
-    - The debconf module does not reconfigure packages, it just updates the debconf database.
+    - The M(ansible.builtin.debconf) module does not reconfigure packages, it just updates the debconf database.
       An additional step is needed (typically with C(notify) if debconf makes a change)
       to reconfigure the package and apply the changes.
-      debconf is extensively used for pre-seeding configuration prior to installation
+      C(debconf) is extensively used for pre-seeding configuration prior to installation
       rather than modifying configurations.
-      So, while dpkg-reconfigure does use debconf data, it is not always authoritative
+      So, while C(dpkg-reconfigure) does use debconf data, it is not always authoritative
       and you may need to check how your package is handled.
-    - Also note dpkg-reconfigure is a 3-phase process. It invokes the
+    - Also note C(dpkg-reconfigure) is a 3-phase process. It invokes the
       control scripts from the C(/var/lib/dpkg/info) directory with the
       C(<package>.prerm  reconfigure <version>),
       C(<package>.config reconfigure <version>) and C(<package>.postinst control <version>) arguments.
     - The main issue is that the C(<package>.config reconfigure) step for many packages
       will first reset the debconf database (overriding changes made by this module) by
       checking the on-disk configuration. If this is the case for your package then
-      dpkg-reconfigure will effectively ignore changes made by debconf.
-    - However as dpkg-reconfigure only executes the C(<package>.config) step if the file
+      C(dpkg-reconfigure) will effectively ignore changes made by debconf.
+    - However as C(dpkg-reconfigure) only executes the C(<package>.config) step if the file
       exists, it is possible to rename it to C(/var/lib/dpkg/info/<package>.config.ignore)
       before executing C(dpkg-reconfigure -f noninteractive <package>) and then restore it.
       This seems to be compliant with Debian policy for the .config file.
@@ -76,12 +76,12 @@ options:
   value:
     description:
       - Value to set the configuration to.
-      - After Ansible 2.17, C(value) is of type 'raw'.
+      - After Ansible 2.17, C(value) is of type C(raw).
     type: raw
     aliases: [ answer ]
   unseen:
     description:
-      - Do not set 'seen' flag when pre-seeding.
+      - Do not set C(seen) flag when pre-seeding.
     type: bool
     default: false
 author:
