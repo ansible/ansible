@@ -61,7 +61,7 @@ notes:
 - The alias O(host) of the parameter O(name) is only available on Ansible 2.4 and newer.
 - Since Ansible 2.4, the C(inventory_dir) variable is now set to V(None) instead of the 'global inventory source',
   because you can now have multiple sources.  An example was added that shows how to partially restore the previous behaviour.
-- Though this module does not change the remote host, we do provide 'changed' status as it can be useful for those trying to track inventory changes.
+- Though this module does not change the remote host, we do provide C(changed) status as it can be useful for those trying to track inventory changes.
 - The hosts added will not bypass the C(--limit) from the command line, so both of those need to be in agreement to make them available as play targets.
   They are still available from hostvars and for delegation as a normal part of the inventory.
 seealso:
