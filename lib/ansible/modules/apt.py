@@ -92,7 +92,7 @@ options:
   allow_unauthenticated:
     description:
       - Ignore if packages cannot be authenticated. This is useful for bootstrapping environments that manage their own apt-key setup.
-      - 'O(allow_unauthenticated) is only supported with O(state): V()install/V(present).'
+      - 'O(allow_unauthenticated) is only supported with O(state): V(install)/V(present).'
     aliases: [ allow-unauthenticated ]
     type: bool
     default: 'no'
