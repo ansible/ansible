@@ -135,8 +135,6 @@ stages:
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Alpine 3
-              test: alpine3
             - name: CentOS 7
               test: centos7
             - name: Fedora 36
@@ -154,8 +152,6 @@ stages:
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Alpine 3
-              test: alpine3
             - name: Fedora 36
               test: fedora36
             - name: Ubuntu 22.04
