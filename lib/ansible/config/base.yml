@@ -818,7 +818,9 @@ DEFAULT_LOCAL_TMP:
 DEFAULT_LOG_PATH:
   name: Ansible log file path
   default: ~
-  description: File to which Ansible will log on the controller. When empty logging is disabled.
+  description:
+  - File to which Ansible will log on the controller.
+  - When not set the logging is disabled.
   env: [{name: ANSIBLE_LOG_PATH}]
   ini:
   - {key: log_path, section: defaults}

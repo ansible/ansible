@@ -154,16 +154,19 @@ logger = None
 if getattr(C, 'DEFAULT_LOG_PATH'):
     path = C.DEFAULT_LOG_PATH
     if path and (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
-        # NOTE: level is kept at INFO to avoid security disclosures caused by certain libraries when using DEBUG
-        logging.basicConfig(filename=path, level=logging.INFO,  # DO NOT set to logging.DEBUG
-                            format='%(asctime)s p=%(process)d u=%(user)s n=%(name)s | %(message)s')
+        if not os.path.isdir(path):
+            # NOTE: level is kept at INFO to avoid security disclosures caused by certain libraries when using DEBUG
+            logging.basicConfig(filename=path, level=logging.INFO,  # DO NOT set to logging.DEBUG
+                                format='%(asctime)s p=%(process)d u=%(user)s n=%(name)s | %(message)s')
 
-        logger = logging.getLogger('ansible')
-        for handler in logging.root.handlers:
-            handler.addFilter(FilterBlackList(getattr(C, 'DEFAULT_LOG_FILTER', [])))
-            handler.addFilter(FilterUserInjector())
+            logger = logging.getLogger('ansible')
+            for handler in logging.root.handlers:
+                handler.addFilter(FilterBlackList(getattr(C, 'DEFAULT_LOG_FILTER', [])))
+                handler.addFilter(FilterUserInjector())
+        else:
+            print(f"[WARNING]: DEFAULT_LOG_PATH can not be a directory '{path}', aborting", file=sys.stderr)
     else:
-        print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
+        print(f"[WARNING]: log file at '{path}' is not writeable and we cannot create it, aborting\n", file=sys.stderr)
 
 # map color to log levels
 color_to_log_level = {C.COLOR_ERROR: logging.ERROR,
