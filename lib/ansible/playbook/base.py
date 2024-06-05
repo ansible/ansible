@@ -590,12 +590,12 @@ class FieldAttributeBase:
                 _validate_variable_keys(ds)
                 return combine_vars(self.vars, ds)
             elif isinstance(ds, list):
-                frame_info = inspect.stack()[1]
-                line_number = frame_info.lineno
+                yml_filename = ds._data_source
+                line_number = ds._line_number
                 display.deprecated(
                     (
                         'Specifying a list of dictionaries for vars is deprecated in favor of '
-                        'specifying a dictionary. Error occurred in file: %s, line: %d' % (__file__, line_number)
+                        'specifying a dictionary. Error occurred in the file: %s, line: %d'  % (yml_filename, line_number)
                     ),
                     version='2.18'
                 )
