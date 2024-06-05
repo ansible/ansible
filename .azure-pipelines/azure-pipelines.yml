@@ -12,15 +12,6 @@ pr:
       - devel
       - stable-*
 
-schedules:
-  - cron: 0 7 * * *
-    displayName: Nightly
-    always: true
-    branches:
-      include:
-        - devel
-        - stable-*
-
 variables:
   - name: checkoutPath
     value: ansible
