@@ -17,14 +17,14 @@ version_added: "1.5"
 options:
   that:
     description:
-      - A list of string expressions of the same form that can be passed to the 'when' statement.
+      - A list of string expressions of the same form that can be passed to the C(when) statement.
     type: list
     elements: str
     required: true
   fail_msg:
     description:
       - The customized message used for a failing assertion.
-      - This argument was called 'msg' before Ansible 2.7, now it is renamed to 'fail_msg' with alias 'msg'.
+      - This argument was called O(msg) before Ansible 2.7, now it is renamed to O(fail_msg) with alias O(msg).
     type: str
     aliases: [ msg ]
     version_added: "2.7"
@@ -85,7 +85,7 @@ EXAMPLES = r'''
       - >
         "reject" not in some_command_result.stderr
 
-- name: After version 2.7 both 'msg' and 'fail_msg' can customize failing assertion message
+- name: After version 2.7 both O(msg) and O(fail_msg) can customize failing assertion message
   ansible.builtin.assert:
     that:
       - my_param <= 100
@@ -93,7 +93,7 @@ EXAMPLES = r'''
     fail_msg: "'my_param' must be between 0 and 100"
     success_msg: "'my_param' is between 0 and 100"
 
-- name: Please use 'msg' when ansible version is smaller than 2.7
+- name: Please use O(msg) when ansible version is smaller than 2.7
   ansible.builtin.assert:
     that:
       - my_param <= 100

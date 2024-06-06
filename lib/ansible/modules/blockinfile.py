@@ -33,7 +33,7 @@ options:
   marker:
     description:
     - The marker line template.
-    - C({mark}) will be replaced with the values in O(marker_begin) (default="BEGIN") and O(marker_end) (default="END").
+    - C({mark}) will be replaced with the values in O(marker_begin) (default=C(BEGIN)) and O(marker_end) (default=C(END)).
     - Using a custom marker without the C({mark}) variable may result in the block being repeatedly inserted on subsequent playbook runs.
     - Multi-line markers are not supported and will result in the block being repeatedly inserted on subsequent playbook runs.
     - A newline is automatically appended by the module to O(marker_begin) and O(marker_end).
@@ -106,7 +106,7 @@ options:
     default: no
     version_added: '2.16'
 notes:
-  - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
+  - When using C(with_*) loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - As of Ansible 2.3, the O(dest) option has been changed to O(path) as default, but O(dest) still works as well.
   - Option O(ignore:follow) has been removed in Ansible 2.5, because this module modifies the contents of the file
     so O(ignore:follow=no) does not make sense.

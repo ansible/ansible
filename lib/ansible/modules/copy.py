@@ -28,8 +28,8 @@ options:
     - Local path to a file to copy to the remote server.
     - This can be absolute or relative.
     - If path is a directory, it is copied recursively. In this case, if path ends
-      with "/", only inside contents of that directory are copied to destination.
-      Otherwise, if it does not end with "/", the directory itself with all contents
+      with C(/), only inside contents of that directory are copied to destination.
+      Otherwise, if it does not end with C(/), the directory itself with all contents
       is copied. This behavior is similar to the C(rsync) command line tool.
     type: path
   content:
@@ -44,7 +44,7 @@ options:
     description:
     - Remote absolute path where the file should be copied to.
     - If O(src) is a directory, this must be a directory too.
-    - If O(dest) is a non-existent path and if either O(dest) ends with "/" or O(src) is a directory, O(dest) is created.
+    - If O(dest) is a non-existent path and if either O(dest) ends with C(/) or O(src) is a directory, O(dest) is created.
     - If O(dest) is a relative path, the starting directory is determined by the remote host.
     - If O(src) and O(dest) are files, the parent directory of O(dest) is not created and the task fails if it does not already exist.
     type: path
@@ -92,7 +92,7 @@ options:
     description:
     - Influence whether O(src) needs to be transferred or already is present remotely.
     - If V(false), it will search for O(src) on the controller node.
-    - If V(true) it will search for O(src) on the managed (remote) node.
+    - If V(true), it will search for O(src) on the managed (remote) node.
     - O(remote_src) supports recursive copying as of version 2.8.
     - O(remote_src) only works with O(mode=preserve) as of version 2.6.
     - Auto-decryption of files does not work when O(remote_src=yes).
