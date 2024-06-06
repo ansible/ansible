@@ -15,8 +15,6 @@ if [ "${res}" -eq 0 ] ; then
     exit 1
 fi
 
-set -ux
-
 ansible-playbook -i inventory "$@" always_block.yml | tee out.txt | grep 'any_errors_fatal_always_block_start'
 res=$?
 cat out.txt
@@ -24,8 +22,6 @@ cat out.txt
 if [ "${res}" -ne 0 ] ; then
     exit 1
 fi
-
-set -ux
 
 for test_name in test_include_role test_include_tasks; do
   ansible-playbook -i inventory "$@" -e test_name=$test_name 50897.yml | tee out.txt | grep 'any_errors_fatal_this_should_never_be_reached'
