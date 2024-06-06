@@ -34,3 +34,5 @@
   with_items:
   - powershell
   - sh
+
+- import_tasks: command-building.yml

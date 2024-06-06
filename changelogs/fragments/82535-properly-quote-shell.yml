@@ -1,0 +1,2 @@
+bugfixes:
+- shell plugin - properly quote all needed components of shell commands (https://github.com/ansible/ansible/issues/82535)
