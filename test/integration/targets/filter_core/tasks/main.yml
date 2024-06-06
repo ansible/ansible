@@ -301,28 +301,14 @@
       - no_match_is_none_inline
       - failure is failed
 
-- name: to_bool
-  tags:
-    - to_bool
-  block:
-  - name: Verify to_bool, using default 'yaml' strategy
-    assert:
-      that:
-        - 'None|bool == None'
-        - 'False|bool == False'
-        - '"TrUe"|bool == True'
-        - '"FalSe"|bool == False'
-
-  - name: non valid bool should fail
-    set_fact:
-      failbool: '{{7|bool}}'
-    register: should_fail
-    ignore_errors: true
-
-  - name: ensure we failed
-    assert:
-      that:
-          - should_fail is failed
+- name: Verify to_bool
+  assert:
+    that:
+      - 'None|bool == None'
+      - 'False|bool == False'
+      - '"TrUe"|bool == True'
+      - '"FalSe"|bool == False'
+      - '7|bool == False'
 
 - name: Verify to_datetime
   assert:
