@@ -36,6 +36,8 @@ for test_name in test_include_role test_include_tasks; do
   fi
 done
 
+set -e
+
 ansible-playbook -i inventory "$@" 31543.yml | tee out.txt
 [ "$(grep -c 'SHOULD NOT HAPPEN' out.txt)" -eq 0 ]
 
@@ -47,5 +49,5 @@ ansible-playbook -i inventory "$@" 73246.yml | tee out.txt
 
 ansible-playbook -i inventory "$@" 80981.yml | tee out.txt
 [ "$(grep -c 'SHOULD NOT HAPPEN' out.txt)" -eq 0 ]
-[ "$(grep -c 'rescue' out.txt)" -eq 2 ]
+[ "$(grep -c 'rescuedd' out.txt)" -eq 2 ]
 [ "$(grep -c 'recovered' out.txt)" -eq 2 ]
