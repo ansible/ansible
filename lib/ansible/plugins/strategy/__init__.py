@@ -558,7 +558,7 @@ class StrategyBase:
                     handler.fattributes.get('listen'),
                     listeners,
                     templar,
-                )
+                ).copy()
                 if handler._role is not None:
                     for listener in listeners.copy():
                         listeners.extend([

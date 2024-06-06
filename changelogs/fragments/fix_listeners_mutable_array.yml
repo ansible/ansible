@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix issue where using ``listen`` parameter for handlers in collections could lead to memory issues (https://github.com/ansible/ansible/issues/83392).
