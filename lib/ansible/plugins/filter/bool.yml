@@ -10,17 +10,31 @@ DOCUMENTATION:
       description: Data to cast.
       type: raw
       required: true
+    strategy:
+      description: Evaluation engine to use while evaluating boolean.
+      default: yaml
+      choices:
+        yaml: Use YAML 1.1 allowed booleans
+        python: Pass through the Python C(bool) function
+        truthy: Just let Python evaluate in an C(if) statement
+      version_added: '2.18'
+  notes:
+    - Before adding the 'strategy' option, evaluation approximated the 'yaml' strategy.
+    - if the value is already a boolean or C(None), this filter returns the original value.
 
 EXAMPLES: |
 
   # in vars
   vars:
     isbool: "{{ (a == b) | bool }} "
-    otherbool: "{{ anothervar | bool }} "
+    otherbool: "{{ anothervar | bool('yaml') }} "
+    yetanotherbool: "{{ pythonbool | bool(strategy='python') }} "
 
   # in a task
   ...
-  when: some_string_value | bool
+  when:
+    - some_string_value | bool
+    - other != notsame
 
 RETURN:
   _value:
