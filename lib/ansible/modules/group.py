@@ -37,7 +37,7 @@ options:
     force:
         description:
             - Whether to delete a group even if it is the primary group of a user.
-            - Only applicable on platforms which implement a --force flag on the group deletion command.
+            - Only applicable on platforms which implement a C(--force) flag on the group deletion command.
         type: bool
         default: false
         version_added: "2.15"
