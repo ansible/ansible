@@ -48,6 +48,7 @@ RAW_PARAM_MODULES = FREEFORM_ACTIONS.union(add_internal_fqcns((
 
 BUILTIN_TASKS = frozenset(add_internal_fqcns((
     'meta',
+    'include',
     'include_tasks',
     'include_role',
     'import_tasks',
