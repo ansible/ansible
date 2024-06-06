@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - fixed unit test test_borken_cowsay to address mock not been properly applied when existing unix system already have cowsay installed.
