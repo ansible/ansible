@@ -102,23 +102,23 @@ class ShellBase(AnsiblePlugin):
     def chmod(self, paths, mode):
         cmd = ['chmod', mode]
         cmd.extend(paths)
-        return self.join(cmd)
+        return shlex.join(cmd)
 
     def chown(self, paths, user):
         cmd = ['chown', user]
         cmd.extend(paths)
-        return self.join(cmd)
+        return shlex.join(cmd)
 
     def chgrp(self, paths, group):
         cmd = ['chgrp', group]
         cmd.extend(paths)
-        return self.join(cmd)
+        return shlex.join(cmd)
 
     def set_user_facl(self, paths, user, mode):
         """Only sets acls for users as that's really all we need"""
         cmd = ['setfacl', '-m', 'u:%s:%s' % (user, mode)]
         cmd.extend(paths)
-        return self.join(cmd)
+        return shlex.join(cmd)
 
     def remove(self, path, recurse=False):
         path = self.quote(path)
@@ -212,7 +212,7 @@ class ShellBase(AnsiblePlugin):
             arg_path,
         ]
 
-        return f'{env_string}%s' % self.join(cps for cp in cmd_parts if cp and (cps := cp.strip()))
+        return f'{env_string}%s' % shlex.join(cps for cp in cmd_parts if cp and (cps := cp.strip()))
 
     def append_command(self, cmd, cmd_to_append):
         """Append an additional command if supported by the shell"""
@@ -229,7 +229,3 @@ class ShellBase(AnsiblePlugin):
     def quote(self, cmd):
         """Returns a shell-escaped string that can be safely used as one token in a shell command line"""
         return shlex.quote(cmd)
-
-    def join(self, cmd_parts):
-        """Returns a shell-escaped string from a list that can be safely used in a shell command line"""
-        return shlex.join(cmd_parts)
