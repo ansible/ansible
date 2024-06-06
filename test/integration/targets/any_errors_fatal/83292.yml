@@ -1,12 +1,12 @@
 - hosts: testhost,testhost2
   gather_facts: false
-  any_errors_fatal: true
+  any_errors_fatal: "{{ any_errors_fatal | default(omit) }}"
   tasks:
     - block:
         - debug:
             msg: Some task running for all hosts
         - fail:
-          run_once: true
+          run_once: "{{ run_once | default(omit) }}"
         - name: any_errors_fatal fails all hosts when any of them fails
           debug:
             msg: SHOULD NOT HAPPEN

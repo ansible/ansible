@@ -200,7 +200,7 @@ class StrategyModule(StrategyBase):
                         results.extend(self._execute_meta(task, play_context, iterator, host))
                         if task.args.get('_raw_params', None) not in ('noop', 'reset_connection', 'end_host', 'role_complete', 'flush_handlers'):
                             run_once = True
-                        if (task.any_errors_fatal or run_once) and not task.ignore_errors:
+                        if task.any_errors_fatal and not task.ignore_errors:
                             any_errors_fatal = True
                     else:
                         # handle step if needed, skip meta actions as they are used internally
@@ -213,7 +213,7 @@ class StrategyModule(StrategyBase):
 
                         run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
 
-                        if (task.any_errors_fatal or run_once) and not task.ignore_errors:
+                        if task.any_errors_fatal and not task.ignore_errors:
                             any_errors_fatal = True
 
                         if not callback_sent:
