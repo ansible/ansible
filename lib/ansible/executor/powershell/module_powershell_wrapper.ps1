@@ -29,7 +29,18 @@ if ($csharp_utils.Count -gt 0) {
 
     # add any C# references so the module does not have to do so
     $new_tmp = [System.Environment]::ExpandEnvironmentVariables($Payload.module_args["_ansible_remote_tmp"])
-    Add-CSharpType -References $csharp_utils -TempPath $new_tmp -IncludeDebugInfo
+
+    # We use a fake module object to capture warnings
+    $fake_module = [PSCustomObject]@{
+        Tmpdir = $new_tmp
+        Verbosity = 3
+    }
+    $warning_func = New-Object -TypeName System.Management.Automation.PSScriptMethod -ArgumentList Warn, {
+        param($message)
+        $Payload.module_args._ansible_exec_wrapper_warnings.Add($message)
+    }
+    $fake_module.PSObject.Members.Add($warning_func)
+    Add-CSharpType -References $csharp_utils -AnsibleModule $fake_module
 }
 
 if ($Payload.ContainsKey("coverage") -and $null -ne $host.Runspace -and $null -ne $host.Runspace.Debugger) {
