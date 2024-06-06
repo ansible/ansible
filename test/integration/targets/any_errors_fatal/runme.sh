@@ -54,9 +54,12 @@ args=(
   "-e any_errors_fatal=true run_once=true"
   ""
 )
-
 for arg in "${args[@]}"; do
-  ansible-playbook -i inventory "$@" 83292.yml "$arg" | tee out.txt
+  if [ -z "$arg" ]; then
+    ansible-playbook -i inventory "$@" 83292.yml | tee out.txt
+  else
+    ansible-playbook -i inventory "$@" 83292.yml "$arg" | tee out.txt
+  fi
 
   [ "$(grep -c 'SHOULD NOT HAPPEN' out.txt)" -eq 0 ]
   [ "$(grep -c 'rescuedd' out.txt)" -eq 2 ]
