@@ -1,2 +1,0 @@
-minor_changes:
-  - bool filter now has new strategy option and by default equates YAML 1.1 booleanization, before it just aproximated it.
