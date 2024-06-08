@@ -25,7 +25,7 @@ Coverage.py, executed through CLI with coverage run -m pytest and coverage repor
 
 Karina Sudnicina
 
-evaluate_conditional_with_result(self, templar: Templar, all_vars: dict[str, t.Any])
+def evaluate_conditional_with_result(self, templar: Templar, all_vars: dict[str, t.Any])
 
 <Show a patch (diff) or a link to a commit made in your forked repository that shows the instrumented code to gather coverage measurements>
 
