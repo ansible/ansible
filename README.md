@@ -23,13 +23,14 @@ Coverage.py, executed through CLI with coverage run -m pytest and coverage repor
 
 <The following is supposed to be repeated for each group member>
 
-<Group member name>
+Karina Sudnicina
 
-<Function 1 name>
+evaluate_conditional_with_result(self, templar: Templar, all_vars: dict[str, t.Any])
 
 <Show a patch (diff) or a link to a commit made in your forked repository that shows the instrumented code to gather coverage measurements>
 
-<Provide a screenshot of the coverage results output by the instrumentation>
+![image](https://github.com/careena/SEP-ansible/assets/76873802/89ea6bae-34cf-46e7-9e9f-3682bb5c50bc)
+
 
 <Function 2 name>
 
