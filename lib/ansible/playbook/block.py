@@ -163,14 +163,22 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
             raise AnsibleParserError("'%s' keyword cannot be used without 'block'" % name, obj=self._ds)
 
     _validate_rescue = _validate_always
-
+    coverage = {i: False for i in range(5)}
     def get_dep_chain(self):
+        coverage[0] = True
         if self._dep_chain is None:
+            coverage[1] = True
             if self._parent:
+                coverage[2] = True
+                print("Coverage" + str(coverage))
                 return self._parent.get_dep_chain()
             else:
+                coverage[3] = True
+                print("Coverage" + str(coverage))
                 return None
         else:
+            coverage[4] = True
+            print("Coverage" + str(coverage))
             return self._dep_chain[:]
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
