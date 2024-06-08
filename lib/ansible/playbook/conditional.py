@@ -35,6 +35,7 @@ class Conditional:
     '''
 
     when = FieldAttribute(isa='list', default=list, extend=True, prepend=True)
+    coverage = {i: False for i in range(7)}
 
     def __init__(self, loader=None):
         # when used directly, this class needs a loader, but we want to
@@ -63,15 +64,21 @@ class Conditional:
         False if any of them evaluate as such as well as the condition
         that was false.
         """
+        coverage[0] = True
         for conditional in self.when:
+            coverage[1] = True
             if conditional is None or conditional == "":
+                coverage[2] = True
                 res = True
             elif isinstance(conditional, bool):
+                coverage[3] = True
                 res = conditional
             else:
                 try:
+                    coverage[4] = True
                     res = self._check_conditional(conditional, templar, all_vars)
                 except AnsibleError as e:
+                    coverage[5] = True
                     raise AnsibleError(
                         "The conditional check '%s' failed. The error was: %s" % (to_native(conditional), to_native(e)),
                         obj=getattr(self, '_ds', None)
@@ -79,8 +86,9 @@ class Conditional:
 
             display.debug("Evaluated conditional (%s): %s" % (conditional, res))
             if not res:
+                coverage[6] = True
                 return res, conditional
-
+        print(f'Coverage for {self.when}: coverage')
         return True, None
 
     def _check_conditional(self, conditional: str, templar: Templar, all_vars: dict[str, t.Any]) -> bool:
