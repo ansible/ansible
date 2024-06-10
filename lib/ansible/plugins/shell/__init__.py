@@ -85,7 +85,7 @@ class ShellBase(AnsiblePlugin):
         return 'ansible-tmp-%s-%s-%s' % (time.time(), os.getpid(), random.randint(0, 2**48))
 
     def env_prefix(self, **kwargs):
-        return ' '.join(['%s=%s' % (k, shlex.quote(text_type(v))) for k, v in kwargs.items()])
+        return ' '.join(['%s=%s' % (k, self.quote(text_type(v))) for k, v in kwargs.items()])
 
     def join_path(self, *args):
         return os.path.join(*args)
@@ -101,41 +101,33 @@ class ShellBase(AnsiblePlugin):
     def chmod(self, paths, mode):
         cmd = ['chmod', mode]
         cmd.extend(paths)
-        cmd = [shlex.quote(c) for c in cmd]
-
-        return ' '.join(cmd)
+        return shlex.join(cmd)
 
     def chown(self, paths, user):
         cmd = ['chown', user]
         cmd.extend(paths)
-        cmd = [shlex.quote(c) for c in cmd]
-
-        return ' '.join(cmd)
+        return shlex.join(cmd)
 
     def chgrp(self, paths, group):
         cmd = ['chgrp', group]
         cmd.extend(paths)
-        cmd = [shlex.quote(c) for c in cmd]
-
-        return ' '.join(cmd)
+        return shlex.join(cmd)
 
     def set_user_facl(self, paths, user, mode):
         """Only sets acls for users as that's really all we need"""
         cmd = ['setfacl', '-m', 'u:%s:%s' % (user, mode)]
         cmd.extend(paths)
-        cmd = [shlex.quote(c) for c in cmd]
-
-        return ' '.join(cmd)
+        return shlex.join(cmd)
 
     def remove(self, path, recurse=False):
-        path = shlex.quote(path)
+        path = self.quote(path)
         cmd = 'rm -f '
         if recurse:
             cmd += '-r '
         return cmd + "%s %s" % (path, self._SHELL_REDIRECT_ALLNULL)
 
     def exists(self, path):
-        cmd = ['test', '-e', shlex.quote(path)]
+        cmd = ['test', '-e', self.quote(path)]
         return ' '.join(cmd)
 
     def mkdtemp(self, basefile=None, system=False, mode=0o700, tmpdir=None):
@@ -194,8 +186,7 @@ class ShellBase(AnsiblePlugin):
         # Check that the user_path to expand is safe
         if user_home_path != '~':
             if not _USER_HOME_PATH_RE.match(user_home_path):
-                # shlex.quote will make the shell return the string verbatim
-                user_home_path = shlex.quote(user_home_path)
+                user_home_path = self.quote(user_home_path)
         elif username:
             # if present the user name is appended to resolve "that user's home"
             user_home_path += username
@@ -207,20 +198,20 @@ class ShellBase(AnsiblePlugin):
         return 'echo %spwd%s' % (self._SHELL_SUB_LEFT, self._SHELL_SUB_RIGHT)
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None):
-        # don't quote the cmd if it's an empty string, because this will break pipelining mode
-        if cmd.strip() != '':
-            cmd = shlex.quote(cmd)
+        env_string = env_string.strip()
+        if env_string:
+            env_string += ' '
 
-        cmd_parts = []
-        if shebang:
-            shebang = shebang.replace("#!", "").strip()
-        else:
-            shebang = ""
-        cmd_parts.extend([env_string.strip(), shebang, cmd])
-        if arg_path is not None:
-            cmd_parts.append(arg_path)
-        new_cmd = " ".join(cmd_parts)
-        return new_cmd
+        if shebang is None:
+            shebang = ''
+
+        cmd_parts = [
+            shebang.removeprefix('#!').strip(),
+            cmd.strip(),
+            arg_path,
+        ]
+
+        return f'{env_string}%s' % shlex.join(cps for cp in cmd_parts if cp and (cps := cp.strip()))
 
     def append_command(self, cmd, cmd_to_append):
         """Append an additional command if supported by the shell"""
