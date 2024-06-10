@@ -64,23 +64,26 @@ class VaultCLI(CLI):
         opt_help.add_vault_options(common)
         opt_help.add_verbosity_options(common)
 
-        # add to common <parser>.add_argument('--vault-salt', dest='vault_salt', action='store', help='Static salt to use for encrypting the data. Deaults to random salt, use this at your own risk')
+        # For encrypting actions, we can also specify these choices
+        common_encrypt = opt_help.ArgumentParser(add_help=False)
+        common_encrypt.add_argument.add_argument('--vault-salt', dest='vault_salt', action='store', type=str, default=C.VAULT_ENCRYPT_SALT,
+                                                 help='Static salt to use for encrypting the data. Deaults to random salt, use this at your own risk')
+        common_encrypt.add_argument('--vault-version', dest='vault_version', action='store',  type=str,
+                                    help='Which version of vault container to use.', default=C.VAULT_VERSION)
+        common_encrypt.add_argument('--encrypt-vault-id', default=[], dest='encrypt_vault_id', action='store', type=str,
+                                    help='the vault id used to encrypt (required if more than one vault-id is provided)')
 
-        subparsers = self.parser.add_subparsers(dest='action')
-        subparsers.required = True
 
+        # for those that output to stdout by default, allow redirect to file
         output = opt_help.ArgumentParser(add_help=False)
         output.add_argument('--output', default=None, dest='output_file',
                             help='output file name for encrypt or decrypt; use - for stdout',
                             type=opt_help.unfrack_path())
 
-        # For encrypting actions, we can also specify which of multiple vault ids should be used for encrypting
-        vault_id = opt_help.ArgumentParser(add_help=False)
-        vault_id.add_argument('--encrypt-vault-id', default=[], dest='encrypt_vault_id',
-                              action='store', type=str,
-                              help='the vault id used to encrypt (required if more than one vault-id is provided)')
+        subparsers = self.parser.add_subparsers(dest='action')
+        subparsers.required = True
 
-        create_parser = subparsers.add_parser('create', help='Create new vault encrypted file', parents=[vault_id, common])
+        create_parser = subparsers.add_parser('create', help='Create new vault encrypted file', parents=[common_encrypt, common])
         create_parser.set_defaults(func=self.execute_create)
         create_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
         create_parser.add_argument('--skip-tty-check', default=False, help='allows editor to be opened when no tty attached',
@@ -91,7 +94,7 @@ class VaultCLI(CLI):
         decrypt_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
         # remove salt option
 
-        edit_parser = subparsers.add_parser('edit', help='Edit vault encrypted file', parents=[vault_id, common])
+        edit_parser = subparsers.add_parser('edit', help='Edit vault encrypted file', parents=[common_encrypt, common])
         edit_parser.set_defaults(func=self.execute_edit)
         edit_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
 
@@ -99,11 +102,11 @@ class VaultCLI(CLI):
         view_parser.set_defaults(func=self.execute_view)
         view_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
 
-        encrypt_parser = subparsers.add_parser('encrypt', help='Encrypt YAML file', parents=[common, output, vault_id])
+        encrypt_parser = subparsers.add_parser('encrypt', help='Encrypt YAML file', parents=[common, output, common_encrypt])
         encrypt_parser.set_defaults(func=self.execute_encrypt)
         encrypt_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
 
-        enc_str_parser = subparsers.add_parser('encrypt_string', help='Encrypt a string', parents=[common, output, vault_id])
+        enc_str_parser = subparsers.add_parser('encrypt_string', help='Encrypt a string', parents=[common, output, common_encrypt])
         enc_str_parser.set_defaults(func=self.execute_encrypt_string)
         enc_str_parser.add_argument('args', help='String to encrypt', metavar='string_to_encrypt', nargs='*')
         enc_str_parser.add_argument('-p', '--prompt', dest='encrypt_string_prompt',
@@ -118,7 +121,7 @@ class VaultCLI(CLI):
                                     default=None,
                                     help="Specify the variable name for stdin")
 
-        rekey_parser = subparsers.add_parser('rekey', help='Re-key a vault encrypted file', parents=[common, vault_id])
+        rekey_parser = subparsers.add_parser('rekey', help='Re-key a vault encrypted file', parents=[common, common_encrypt])
         rekey_parser.set_defaults(func=self.execute_rekey)
         rekey_new_group = rekey_parser.add_mutually_exclusive_group()
         rekey_new_group.add_argument('--new-vault-password-file', default=None, dest='new_vault_password_file',

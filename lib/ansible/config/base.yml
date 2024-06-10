@@ -1161,6 +1161,19 @@ VAULT_ENCRYPT_SALT:
   version_added: '2.15'
   cli:
   - name: vault-salt
+VAULT_VERSION:
+  name: Version of vault container to use when encrypting
+  description:
+    - The version of the vault encrypted container to use when creating or updating a vault.
+    - It is recommended to use '1.3' as other options have static settings and over time security value has decreased.
+    - The '1.1' and '1.2' versions are still available for environments that have to keep compatiblity with older versions of Ansible.
+  default: '1.3'
+  choices: [ '1.1', '1.2', '1.3']
+  env: [{name: ANSIBLE_VAULT_VERSION}]
+  ini:
+  - {key: vault_version, section: defaults}
+  cli:
+  - name: vault-version
 DEFAULT_VAULT_ENCRYPT_IDENTITY:
   name: Vault id to use for encryption
   description: 'The vault_id to use for encrypting by default. If multiple vault_ids are provided, this specifies which to use for encryption. The ``--encrypt-vault-id`` CLI option overrides the configured value.'
