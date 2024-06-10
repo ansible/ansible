@@ -154,9 +154,9 @@ options:
             - When doing a C(contains) search, determine the encoding of the files to be searched.
         type: str
         version_added: "2.17"
-    max_matches:
+    limit:
         description:
-            - Set the maximum number of matches to make before returning.
+            - Limit the maximum number of matches to make before returning.
             - Matches are made from the top, down (i.e. shallowest directory first).
             - Set to V(None) for unlimited matches.
             - Default is unlimited matches.
@@ -245,7 +245,7 @@ EXAMPLES = r'''
     patterns: "^.*\\.log$"
     use_regex: true
     recurse: true
-    max_matches: 1
+    limit: 1
 '''
 
 RETURN = r'''
@@ -487,7 +487,7 @@ def main():
             mode=dict(type='raw'),
             exact_mode=dict(type='bool', default=True),
             encoding=dict(type='str'),
-            max_matches=dict(type='int', default=None)
+            limit=dict(type='int', default=None)
         ),
         supports_check_mode=True,
     )
@@ -540,8 +540,8 @@ def main():
         else:
             module.fail_json(size=params['size'], msg="failed to process size")
 
-    if params['max_matches'] is None or params['max_matches'] <= 0:
-        module.fail_json(msg="max_matches cannot be %d (use None for unlimited)" % params['max_matches'])
+    if params['limit'] is None or params['limit'] <= 0:
+        module.fail_json(msg="limit cannot be %d (use None for unlimited)" % params['limit'])
 
     now = time.time()
     msg = 'All paths examined'
@@ -620,11 +620,11 @@ def main():
                             r.update(statinfo(st))
                             filelist.append(r)
 
-                    if len(filelist) == params["max_matches"]:
+                    if len(filelist) == params["limit"]:
                         # Breaks out of directory files loop only
                         break
 
-                if not params['recurse'] or len(filelist) == params["max_matches"]:
+                if not params['recurse'] or len(filelist) == params["limit"]:
                     break
         except Exception as e:
             skipped[npath] = to_text(e)
