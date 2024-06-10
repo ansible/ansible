@@ -4,6 +4,25 @@ ansible-core 2.17 "Gallows Pole" Release Notes
 
 .. contents:: Topics
 
+v2.17.1rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2024-06-10
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+Bugfixes
+--------
+
+- Fix rapid memory usage growth when notifying handlers using the ``listen`` keyword (https://github.com/ansible/ansible/issues/83392)
+- Fix the task attribute ``resolved_action`` to show the FQCN instead of ``None`` when ``action`` or ``local_action`` is used in the playbook.
+- Fix using ``module_defaults`` with ``local_action``/``action`` (https://github.com/ansible/ansible/issues/81905).
+- fixed unit test test_borken_cowsay to address mock not been properly applied when existing unix system already have cowsay installed.
+- powershell - Implement more robust deletion mechanism for C# code compilation temporary files. This should avoid scenarios where the underlying temporary directory may be temporarily locked by antivirus tools or other IO problems. A failure to delete one of these temporary directories will result in a warning rather than an outright failure.
+- shell plugin - properly quote all needed components of shell commands (https://github.com/ansible/ansible/issues/82535)
+
 v2.17.0
 =======
 
