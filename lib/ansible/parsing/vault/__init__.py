@@ -692,16 +692,16 @@ class VaultLib:
 
         if Version(version) >= Version('1.3'):
             # TODO: implement the 1.3 decryption
-            return self._open_vault(b_vaulttext, version, cipher_name, vault_id, vault_options)
+            return self._open_vault(b_vaulttext, version, cipher_name, vault_id, vault_options, obj)
         else:
-            return self._open_old_vault(b_vaulttext, version, cipher_name, vault_id, filename)
+            return self._open_old_vault(b_vaulttext, version, cipher_name, vault_id, filename, obj)
 
-    def _open_vault(self, b_vaulttext, version, cipher_name, vault_id, vault_options, filename):
+    def _open_vault(self, b_vaulttext, version, cipher_name, vault_id, vault_options, filename, obj):
         # TODO: actually implement
         b_plaintext = vault_id_used = vault_secret_used = None
         return b_plaintext, vault_id_used, vault_secret_used
 
-    def _open_old_vault(self, b_vaulttext, version, cipher_name, vault_id, filename):
+    def _open_old_vault(self, b_vaulttext, version, cipher_name, vault_id, filename, obj):
 
         # create the cipher object, note that the cipher used for decrypt can
         # be different than the cipher used for encrypt
