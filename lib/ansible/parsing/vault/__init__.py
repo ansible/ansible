@@ -32,7 +32,6 @@ import warnings
 from binascii import hexlify
 from binascii import unhexlify
 from binascii import Error as BinasciiError
-from packaging.version import Version
 
 HAS_CRYPTOGRAPHY = False
 CRYPTOGRAPHY_BACKEND = None
@@ -69,6 +68,11 @@ CIPHER_WRITE_ALLOWLIST = frozenset((u'AES256',))
 # (used in VaultFile header) to a cipher class
 
 NEED_CRYPTO_LIBRARY = "ansible-vault requires the cryptography library in order to function"
+
+
+class Version():
+    #TODO: placeholder till i find alt to packaging
+    pass
 
 
 class AnsibleVaultError(AnsibleError):
