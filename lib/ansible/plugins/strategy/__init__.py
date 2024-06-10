@@ -549,27 +549,13 @@ class StrategyBase:
                 yield handler
                 break
 
-        templar.available_variables = {}
-        seen = []
+        seen = set()
         for handler in handlers:
-            if listeners := handler.listen:
-                listeners = handler.get_validated_value(
-                    'listen',
-                    handler.fattributes.get('listen'),
-                    listeners,
-                    templar,
-                )
-                if handler._role is not None:
-                    for listener in listeners.copy():
-                        listeners.extend([
-                            handler._role.get_name(include_role_fqcn=True) + ' : ' + listener,
-                            handler._role.get_name(include_role_fqcn=False) + ' : ' + listener
-                        ])
-                if notification in listeners:
-                    if handler.name and handler.name in seen:
-                        continue
-                    seen.append(handler.name)
-                    yield handler
+            if notification in handler.listen:
+                if handler.name and handler.name in seen:
+                    continue
+                seen.add(handler.name)
+                yield handler
 
     @debug_closure
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None):

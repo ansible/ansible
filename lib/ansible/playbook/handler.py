@@ -37,6 +37,16 @@ class Handler(Task):
         ''' returns a human-readable representation of the handler '''
         return "HANDLER: %s" % self.get_name()
 
+    def _validate_listen(self, attr, name, value):
+        new_value = self.get_validated_value(name, attr, value, None)
+        if self._role is not None:
+            for listener in new_value.copy():
+                new_value.extend([
+                    f"{self._role.get_name(include_role_fqcn=True)} : {listener}",
+                    f"{self._role.get_name(include_role_fqcn=False)} : {listener}",
+                ])
+        setattr(self, name, new_value)
+
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
         t = Handler(block=block, role=role, task_include=task_include)

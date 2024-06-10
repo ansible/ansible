@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix rapid memory usage growth when notifying handlers using the ``listen`` keyword (https://github.com/ansible/ansible/issues/83392)
