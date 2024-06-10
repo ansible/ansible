@@ -487,7 +487,7 @@ def main():
             mode=dict(type='raw'),
             exact_mode=dict(type='bool', default=True),
             encoding=dict(type='str'),
-            limit=dict(type='int', default=None)
+            limit=dict(type='int')
         ),
         supports_check_mode=True,
     )
