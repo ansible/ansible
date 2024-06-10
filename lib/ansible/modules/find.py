@@ -622,6 +622,7 @@ def main():
 
                     if len(filelist) == params["limit"]:
                         # Breaks out of directory files loop only
+                        msg = "Limit of matches reached"
                         break
 
                 if not params['recurse'] or len(filelist) == params["limit"]:
