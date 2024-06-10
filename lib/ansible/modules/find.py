@@ -156,7 +156,7 @@ options:
         version_added: "2.17"
     limit:
         description:
-            - Limit the maximum number of matches to make before returning.
+            - Limit the maximum number of matching paths returned. After finding this many, the find action will stop looking.
             - Matches are made from the top, down (i.e. shallowest directory first).
             - Set to V(None) for unlimited matches.
             - Default is unlimited matches.
