@@ -540,7 +540,7 @@ def main():
         else:
             module.fail_json(size=params['size'], msg="failed to process size")
 
-    if params['limit'] is None or params['limit'] <= 0:
+    if params['limit'] is not None and params['limit'] <= 0:
         module.fail_json(msg="limit cannot be %d (use None for unlimited)" % params['limit'])
 
     now = time.time()
