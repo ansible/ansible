@@ -158,10 +158,10 @@ options:
         description:
             - Set the maximum number of matches to make before returning.
             - Matches are made from the top, down (i.e. shallowest directory first).
-            - Set to V(-1) for unlimited matches.
+            - Set to V(None) for unlimited matches.
             - Default is unlimited matches.
         type: int
-        default: -1
+        default: None
         version_added: "2.18"
 extends_documentation_fragment: action_common_attributes
 attributes:
@@ -487,7 +487,7 @@ def main():
             mode=dict(type='raw'),
             exact_mode=dict(type='bool', default=True),
             encoding=dict(type='str'),
-            max_matches=dict(type='int', default=-1)
+            max_matches=dict(type='int', default=None)
         ),
         supports_check_mode=True,
     )
@@ -540,8 +540,8 @@ def main():
         else:
             module.fail_json(size=params['size'], msg="failed to process size")
 
-    if params['max_matches'] == 0 or params['max_matches'] < -1:
-        module.fail_json(msg="max_matches cannot be %d (use -1 for unlimited)" % params['max_matches'])
+    if params['max_matches'] is None or params['max_matches'] <= 0:
+        module.fail_json(msg="max_matches cannot be %d (use None for unlimited)" % params['max_matches'])
 
     now = time.time()
     msg = 'All paths examined'
