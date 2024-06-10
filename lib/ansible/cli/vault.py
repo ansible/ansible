@@ -68,11 +68,10 @@ class VaultCLI(CLI):
         common_encrypt = opt_help.ArgumentParser(add_help=False)
         common_encrypt.add_argument.add_argument('--vault-salt', dest='vault_salt', action='store', type=str, default=C.VAULT_ENCRYPT_SALT,
                                                  help='Static salt to use for encrypting the data. Deaults to random salt, use this at your own risk')
-        common_encrypt.add_argument('--vault-version', dest='vault_version', action='store',  type=str,
+        common_encrypt.add_argument('--vault-version', dest='vault_version', action='store', type=str,
                                     help='Which version of vault container to use.', default=C.VAULT_VERSION)
         common_encrypt.add_argument('--encrypt-vault-id', default=[], dest='encrypt_vault_id', action='store', type=str,
                                     help='the vault id used to encrypt (required if more than one vault-id is provided)')
-
 
         # for those that output to stdout by default, allow redirect to file
         output = opt_help.ArgumentParser(add_help=False)

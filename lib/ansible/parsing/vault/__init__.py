@@ -71,7 +71,7 @@ NEED_CRYPTO_LIBRARY = "ansible-vault requires the cryptography library in order 
 
 
 class Version():
-    #TODO: placeholder till i find alt to packaging
+    ''' TODO: placeholder till i find alt to packaging '''
     pass
 
 
@@ -144,7 +144,7 @@ def _parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None):
     while len(b_tmpheader) < 5:
         b_tmpheader.append(b'')
 
-    tag, version, cipher, vault_id, options =  [str(x.strip()) for x in b_tmpheader]
+    tag, version, cipher, vault_id, options =  [ str(x.strip()) for x in b_tmpheader ]
 
     if b_tag != b'$ANSIBLE_VAULT':
         raise Exception('huh?')
@@ -694,14 +694,14 @@ class VaultLib:
             # TODO: implement the 1.3 decryption
             return self._open_vault(b_vaulttext, version, cipher_name, vault_id, vault_options)
         else:
-            return self._open_old_vault(b_vaulttext, version, cipher_name, vault_id)
+            return self._open_old_vault(b_vaulttext, version, cipher_name, vault_id, filename)
 
-    def _open_vault(self, b_vaulttext, version, cipher_name, vault_id, vault_options):
+    def _open_vault(self, b_vaulttext, version, cipher_name, vault_id, vault_options, filename):
         # TODO: actually implement
         b_plaintext = vault_id_used = vault_secret_used = None
         return b_plaintext, vault_id_used, vault_secret_used
 
-    def _open_old_vault(self, b_vaulttext, version, cipher_name, vault_id):
+    def _open_old_vault(self, b_vaulttext, version, cipher_name, vault_id, filename):
 
         # create the cipher object, note that the cipher used for decrypt can
         # be different than the cipher used for encrypt
