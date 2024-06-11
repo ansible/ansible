@@ -57,8 +57,6 @@ class TestAnsibleModuleTmpDir:
         ),
     )
 
-    # pylint bug: https://github.com/PyCQA/pylint/issues/511
-    # pylint: disable=undefined-variable
     @pytest.mark.parametrize('args, expected, stat_exists', ((s, e, t) for s, t, e in DATA))
     def test_tmpdir_property(self, monkeypatch, args, expected, stat_exists):
         makedirs = {'called': False}

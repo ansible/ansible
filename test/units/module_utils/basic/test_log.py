@@ -16,8 +16,7 @@ class TestAnsibleModuleLogSmokeTest:
     DATA = DATA + [d.encode('utf-8') for d in DATA]
     DATA += [b'non-utf8 :\xff: test']
 
-    # pylint bug: https://github.com/PyCQA/pylint/issues/511
-    @pytest.mark.parametrize('msg, stdin', ((m, {}) for m in DATA), indirect=['stdin'])  # pylint: disable=undefined-variable
+    @pytest.mark.parametrize('msg, stdin', ((m, {}) for m in DATA), indirect=['stdin'])
     def test_smoketest_syslog(self, am, mocker, msg):
         # These talk to the live daemons on the system.  Need to do this to
         # show that what we send doesn't cause an issue once it gets to the
@@ -55,9 +54,8 @@ class TestAnsibleModuleLogSyslog:
         else:
             mock_syslog.assert_called_once_with(syslog.LOG_INFO, 'unittest no_log')
 
-    # pylint bug: https://github.com/PyCQA/pylint/issues/511
     @pytest.mark.parametrize('msg, param, stdin',
-                             ((m, p, {}) for m, p in OUTPUT_DATA),  # pylint: disable=undefined-variable
+                             ((m, p, {}) for m, p in OUTPUT_DATA),
                              indirect=['stdin'])
     def test_output_matches(self, am, mocker, msg, param):
         """Check that log messages are sent correctly"""

@@ -199,8 +199,6 @@ class TestConnectionWinRM(object):
         ),
     )
 
-    # pylint bug: https://github.com/PyCQA/pylint/issues/511
-    # pylint: disable=undefined-variable
     @pytest.mark.parametrize('options, direct, expected, kerb',
                              ((o, d, e, k) for o, d, e, k in OPTIONS_DATA))
     def test_set_options(self, options, direct, expected, kerb):
