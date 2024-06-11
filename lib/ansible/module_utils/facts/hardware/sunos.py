@@ -174,8 +174,7 @@ class SunOSHardware(Hardware):
 
         prtdiag_path = self.module.get_bin_path(
             "prtdiag",
-            opt_dirs=[platform_sbin],
-            warning="skipping dmi facts"
+            opt_dirs=[platform_sbin]
         )
         if prtdiag_path is None:
             return dmi_facts

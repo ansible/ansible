@@ -89,7 +89,7 @@ FCMSUTIL_OUT = """
 """
 
 
-def mock_get_bin_path(cmd, required=False, opt_dirs=None, warning=None):
+def mock_get_bin_path(cmd, required=False, opt_dirs=None):
     cmds = {
         'lsdev': '/usr/sbin/lsdev',
         'lscfg': '/usr/sbin/lscfg',
