@@ -1682,10 +1682,10 @@ def install_src(collection, b_collection_path, b_collection_output_path, artifac
 
 def _extract_tar_dir(tar, dirname, b_dest):
     """ Extracts a directory from a collection tar. """
-    dirname = to_native(dirname, errors='surrogate_or_strict').removesuffix(os.path.sep)
+    dirname = to_native(dirname, errors='surrogate_or_strict')
 
     try:
-        tar_member = tar._ansible_normalized_cache[dirname]
+        tar_member = tar.getmember(dirname)
     except KeyError:
         raise AnsibleError("Unable to extract '%s' from collection" % dirname)
 
