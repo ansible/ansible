@@ -61,13 +61,27 @@ from ansible.utils.path import makedirs_safe, unfrackpath
 display = Display()
 
 
-b_HEADER = b'$ANSIBLE_VAULT'
-CIPHER_ALLOWLIST = frozenset((u'AES256',))
-CIPHER_WRITE_ALLOWLIST = frozenset((u'AES256',))
 # See also CIPHER_MAPPING at the bottom of the file which maps cipher strings
 # (used in VaultFile header) to a cipher class
 
 NEED_CRYPTO_LIBRARY = "ansible-vault requires the cryptography library in order to function"
+
+class Vault_1_1():
+
+    b_HEADER = b'$ANSIBLE_VAULT'
+    CIPHER_ALLOWLIST = frozenset((u'AES256',))
+    CIPHER_WRITE_ALLOWLIST = frozenset((u'AES256',))
+    HEADER_LENGTH = 4
+
+
+class Vault_1_2(Vault_1_1):
+
+    HEADER_LENGTH = 5
+
+
+class Vault_1_3(Vault_1_2):
+
+    HEADER_LENGTH = 6
 
 
 class Version():
@@ -144,13 +158,11 @@ def _parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None):
     while len(b_tmpheader) < 5:
         b_tmpheader.append(b'')
 
-    tag, version, cipher, vault_id, options =  [ str(x.strip()) for x in b_tmpheader ]
-
-    if b_tag != b'$ANSIBLE_VAULT':
-        raise Exception('huh?')
+    # tag is unused
+    tag, version, cipher, vault_id, options = [str(x.strip()) for x in b_tmpheader]
 
     if not vault_id:
-        # This should be version 1.1 or 1.2 w/o specific id
+        # This should be version 1.1 or a higher version w/o specific id
         vault_id = default_vault_id
 
     if options:
