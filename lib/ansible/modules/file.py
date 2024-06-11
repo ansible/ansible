@@ -73,7 +73,7 @@ options:
     - This flag indicates that filesystem links, if they exist, should be followed.
     - O(follow=yes) and O(state=link) can modify O(src) when combined with parameters such as O(mode).
     - Previous to Ansible 2.5, this was V(false) by default.
-    - While creating a symlink with a non-existent destination, set O(follow) to V(false) to avoid a warning message related to permission issues.
+    - While creating a symlink with a non-existent destination, set O(follow=false) to avoid a warning message related to permission issues.
       The warning message is added to notify the user that we can not set permissions to the non-existent destination.
     type: bool
     default: yes
