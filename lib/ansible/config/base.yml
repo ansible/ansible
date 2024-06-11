@@ -1733,7 +1733,7 @@ INJECT_FACTS_AS_VARS:
   default: True
   description:
     - Facts are available inside the `ansible_facts` variable, this setting also pushes them as their own vars in the main namespace.
-    - Unlike inside the `ansible_facts` dictionary, these will have an `ansible_` prefix.
+    - Unlike inside the `ansible_facts` dictionary where the prefix `ansible_` is removed from fact names, these will have the exact names that are returned by the module.
   env: [{name: ANSIBLE_INJECT_FACT_VARS}]
   ini:
   - {key: inject_facts_as_vars, section: defaults}
