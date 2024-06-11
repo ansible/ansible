@@ -33,8 +33,6 @@ class TestAnsibleModuleExitJson:
          {'msg': 'message', 'datetime': DATETIME.isoformat(), 'invocation': EMPTY_INVOCATION}),
     )
 
-    # pylint bug: https://github.com/PyCQA/pylint/issues/511
-    # pylint: disable=undefined-variable
     @pytest.mark.parametrize('args, expected, stdin', ((a, e, {}) for a, e in DATA), indirect=['stdin'])
     def test_exit_json_exits(self, am, capfd, args, expected, monkeypatch):
         monkeypatch.setattr(warnings, '_global_deprecations', [])
@@ -47,10 +45,8 @@ class TestAnsibleModuleExitJson:
         return_val = json.loads(out)
         assert return_val == expected
 
-    # Fail_json is only legal if it's called with a message
-    # pylint bug: https://github.com/PyCQA/pylint/issues/511
     @pytest.mark.parametrize('args, expected, stdin',
-                             ((a, e, {}) for a, e in DATA if 'msg' in a),  # pylint: disable=undefined-variable
+                             ((a, e, {}) for a, e in DATA if 'msg' in a),
                              indirect=['stdin'])
     def test_fail_json_exits(self, am, capfd, args, expected, monkeypatch):
         monkeypatch.setattr(warnings, '_global_deprecations', [])
@@ -141,10 +137,9 @@ class TestAnsibleModuleExitValuesRemoved:
         ),
     )
 
-    # pylint bug: https://github.com/PyCQA/pylint/issues/511
     @pytest.mark.parametrize('am, stdin, return_val, expected',
                              (({'username': {}, 'password': {'no_log': True}, 'token': {'no_log': True}}, s, r, e)
-                              for s, r, e in DATA),  # pylint: disable=undefined-variable
+                              for s, r, e in DATA),
                              indirect=['am', 'stdin'])
     def test_exit_json_removes_values(self, am, capfd, return_val, expected, monkeypatch):
         monkeypatch.setattr(warnings, '_global_deprecations', [])
@@ -154,10 +149,9 @@ class TestAnsibleModuleExitValuesRemoved:
 
         assert json.loads(out) == expected
 
-    # pylint bug: https://github.com/PyCQA/pylint/issues/511
     @pytest.mark.parametrize('am, stdin, return_val, expected',
                              (({'username': {}, 'password': {'no_log': True}, 'token': {'no_log': True}}, s, r, e)
-                              for s, r, e in DATA),  # pylint: disable=undefined-variable
+                              for s, r, e in DATA),
                              indirect=['am', 'stdin'])
     def test_fail_json_removes_values(self, am, capfd, return_val, expected, monkeypatch):
         monkeypatch.setattr(warnings, '_global_deprecations', [])

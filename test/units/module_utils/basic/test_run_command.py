@@ -126,8 +126,6 @@ class TestRunCommandArgs:
                 ('/bin/ls a " b" "c "', [b'/bin/ls', b'a', b' b', b'c '], b'/bin/ls a " b" "c "'),
     )
 
-    # pylint bug: https://github.com/PyCQA/pylint/issues/511
-    # pylint: disable=undefined-variable
     @pytest.mark.parametrize('cmd, expected, shell, stdin',
                              ((arg, cmd_str if sh else cmd_lst, sh, {})
                               for (arg, cmd_lst, cmd_str), sh in product(ARGS_DATA, (True, False))),
