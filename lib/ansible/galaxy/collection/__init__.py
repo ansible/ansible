@@ -1914,7 +1914,7 @@ def _resolve_depenency_map(
 
         for req in dep_exc.criterion.iter_requirement():
             error_msg_lines.append(
-                '* {req.fqcn!s}:{req.ver!s}'.format(req=req)
+                f'* {req.fqcn!s}:{req.ver!s}'
             )
         error_msg_lines.append(pre_release_hint)
 

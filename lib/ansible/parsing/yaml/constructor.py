@@ -147,30 +147,32 @@ class AnsibleConstructor(SafeConstructor):
 
 AnsibleConstructor.add_constructor(
     u'tag:yaml.org,2002:map',
-    AnsibleConstructor.construct_yaml_map)
+    AnsibleConstructor.construct_yaml_map)  # type: ignore[type-var]
 
 AnsibleConstructor.add_constructor(
     u'tag:yaml.org,2002:python/dict',
-    AnsibleConstructor.construct_yaml_map)
+    AnsibleConstructor.construct_yaml_map)  # type: ignore[type-var]
 
 AnsibleConstructor.add_constructor(
     u'tag:yaml.org,2002:str',
-    AnsibleConstructor.construct_yaml_str)
+    AnsibleConstructor.construct_yaml_str)  # type: ignore[type-var]
 
 AnsibleConstructor.add_constructor(
     u'tag:yaml.org,2002:python/unicode',
-    AnsibleConstructor.construct_yaml_str)
+    AnsibleConstructor.construct_yaml_str)  # type: ignore[type-var]
 
 AnsibleConstructor.add_constructor(
     u'tag:yaml.org,2002:seq',
-    AnsibleConstructor.construct_yaml_seq)
+    AnsibleConstructor.construct_yaml_seq)  # type: ignore[type-var]
 
 AnsibleConstructor.add_constructor(
     u'!unsafe',
-    AnsibleConstructor.construct_yaml_unsafe)
+    AnsibleConstructor.construct_yaml_unsafe)  # type: ignore[type-var]
 
 AnsibleConstructor.add_constructor(
     u'!vault',
-    AnsibleConstructor.construct_vault_encrypted_unicode)
+    AnsibleConstructor.construct_vault_encrypted_unicode)  # type: ignore[type-var]
 
-AnsibleConstructor.add_constructor(u'!vault-encrypted', AnsibleConstructor.construct_vault_encrypted_unicode)
+AnsibleConstructor.add_constructor(
+    u'!vault-encrypted',
+    AnsibleConstructor.construct_vault_encrypted_unicode)  # type: ignore[type-var]
