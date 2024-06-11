@@ -413,7 +413,7 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
     b_checkout_path = mkdtemp(
         dir=b_path,
         prefix=to_bytes(name, errors='surrogate_or_strict'),
-    )  # type: bytes
+    )
 
     try:
         git_executable = get_bin_path('git')
