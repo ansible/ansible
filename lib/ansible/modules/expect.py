@@ -70,10 +70,10 @@ notes:
   - If you want to run a command through the shell (say you are using C(<),
     C(>), C(|), and so on), you must specify a shell in the command such as
     C(/bin/bash -c "/path/to/something | grep else").
-  - Case insensitive searches are indicated with a prefix of C(?i).
+  - Case insensitive searches are indicated with a prefix of C((?i)).
   - The C(pexpect) library used by this module operates with a search window
     of 2000 bytes, and does not use a multiline regex match. To perform a
-    start of line bound match, use a pattern like ``(?m)^pattern``
+    start of line bound match, use a pattern like C((?m)^pattern).
   - The M(ansible.builtin.expect) module is designed for simple scenarios.
     For more complex needs, consider the use of expect code with the M(ansible.builtin.shell)
     or M(ansible.builtin.script) modules. (An example is part of the M(ansible.builtin.shell) module documentation).

@@ -58,8 +58,8 @@ options:
     contains:
         description:
             - A regular expression or pattern which should be matched against the file content.
-            - If O(read_whole_file) is V(false) it matches against the beginning of the line (uses
-              V(re.match(\))). If O(read_whole_file) is V(true), it searches anywhere for that pattern
+            - If O(read_whole_file=false) it matches against the beginning of the line (uses
+              V(re.match(\))). If O(read_whole_file=true), it searches anywhere for that pattern
               (uses V(re.search(\))).
             - Works only when O(file_type) is V(file).
         type: str
@@ -82,7 +82,7 @@ options:
     file_type:
         description:
             - Type of file to select.
-            - The 'link' and 'any' choices were added in Ansible 2.3.
+            - The V(link) and V(any) choices were added in Ansible 2.3.
         type: str
         choices: [ any, directory, file, link ]
         default: file
@@ -116,7 +116,7 @@ options:
               restricted to modes that can be applied using the python
               C(os.chmod) function.
             - The mode can be provided as an octal such as V("0644") or
-              as symbolic such as V(u=rw,g=r,o=r)
+              as symbolic such as V(u=rw,g=r,o=r).
         type: raw
         version_added: '2.16'
     exact_mode:
@@ -145,13 +145,13 @@ options:
     depth:
         description:
             - Set the maximum number of levels to descend into.
-            - Setting recurse to V(false) will override this value, which is effectively depth 1.
+            - Setting O(recurse=false) will override this value, which is effectively depth 1.
             - Default is unlimited depth.
         type: int
         version_added: "2.6"
     encoding:
         description:
-            - When doing a C(contains) search, determine the encoding of the files to be searched.
+            - When doing a O(contains) search, determine the encoding of the files to be searched.
         type: str
         version_added: "2.17"
 extends_documentation_fragment: action_common_attributes

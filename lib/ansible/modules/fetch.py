@@ -28,8 +28,8 @@ options:
   dest:
     description:
     - A directory to save the file into.
-    - For example, if the O(dest) directory is C(/backup) a O(src) file named C(/etc/profile) on host
-      C(host.example.com), would be saved into C(/backup/host.example.com/etc/profile).
+    - For example, if O(dest=/backup), then O(src=/etc/profile) on host
+      C(host.example.com), would save the file into C(/backup/host.example.com/etc/profile).
       The host name is based on the inventory name.
     required: yes
   fail_on_missing:
