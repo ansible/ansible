@@ -7,7 +7,7 @@ from __future__ import annotations
 import itertools
 import operator
 import os
-import inspect
+
 
 from copy import copy as shallowcopy
 from functools import cache
@@ -590,12 +590,12 @@ class FieldAttributeBase:
                 _validate_variable_keys(ds)
                 return combine_vars(self.vars, ds)
             elif isinstance(ds, list):
-                yml_filename = ds._data_source
-                line_number = ds._line_number
+
+                line_file = getattr(ds, 'ansible_pos', ("unknown", 0))
                 display.deprecated(
                     (
                         'Specifying a list of dictionaries for vars is deprecated in favor of '
-                        'specifying a dictionary. Error occurred in the file: %s, line: %d'  % (yml_filename, line_number)
+                        'specifying a dictionary. Error occurred in the file: %s, line: %d' % (line_file[0], line_file[1])
                     ),
                     version='2.18'
                 )
