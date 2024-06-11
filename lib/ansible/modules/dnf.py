@@ -19,9 +19,15 @@ description:
 options:
   use_backend:
     description:
-      - By default, this module will select the backend based on the C(ansible_pkg_mgr) fact.
+      - Backend module to use.
     default: "auto"
-    choices: [ auto, yum, yum4, dnf4, dnf5 ]
+    choices:
+        auto: Automatically select the backend based on the C(ansible_facts.pkg_mgr) fact.
+        yum: Alias for V(auto)
+        dnf: M(ansible.builtin.dnf)
+        yum4: Alias for V(dnf)
+        dnf4: Alias for V(dnf)
+        dnf5: M(ansible.builtin.dnf5)
     type: str
     version_added: 2.15
   name:
@@ -1340,7 +1346,7 @@ def main():
     #   list=repos
     #   list=pkgspec
 
-    yumdnf_argument_spec['argument_spec']['use_backend'] = dict(default='auto', choices=['auto', 'yum', 'yum4', 'dnf4', 'dnf5'])
+    yumdnf_argument_spec['argument_spec']['use_backend'] = dict(default='auto', choices=['auto', 'dnf', 'yum', 'yum4', 'dnf4', 'dnf5'])
 
     module = AnsibleModule(
         **yumdnf_argument_spec
