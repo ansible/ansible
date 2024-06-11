@@ -95,10 +95,7 @@ class DarwinHardware(Hardware):
         total_used = 0
         page_size = 4096
 
-        vm_stat_command = self.module.get_bin_path(
-            'vm_stat',
-            warning='falling back to sysctl for memtotal_mb, default to 0 for memfree_mb'
-        )
+        vm_stat_command = self.module.get_bin_path('vm_stat')
         if vm_stat_command is None:
             return memory_facts
 
@@ -136,7 +133,7 @@ class DarwinHardware(Hardware):
 
         # On Darwin, the default format is annoying to parse.
         # Use -b to get the raw value and decode it.
-        sysctl_cmd = self.module.get_bin_path('sysctl', warning='skipping uptime facts')
+        sysctl_cmd = self.module.get_bin_path('sysctl')
         if not sysctl_cmd:
             return {}
 

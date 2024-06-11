@@ -24,13 +24,11 @@ class FacterFactCollector(BaseFactCollector):
     def find_facter(self, module):
         facter_path = module.get_bin_path(
             'facter',
-            opt_dirs=['/opt/puppetlabs/bin'],
-            warning="falling back to cfacter to gather facter facts"
+            opt_dirs=['/opt/puppetlabs/bin']
         )
         cfacter_path = module.get_bin_path(
             'cfacter',
-            opt_dirs=['/opt/puppetlabs/bin'],
-            warning="skipping facter facts"
+            opt_dirs=['/opt/puppetlabs/bin']
         )
 
         # Prefer to use cfacter if available

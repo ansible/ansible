@@ -304,7 +304,7 @@ class LinuxHardware(Hardware):
             )
         except AttributeError:
             # In Python < 3.3, os.sched_getaffinity() is not available
-            nproc_cmd = self.module.get_bin_path('nproc', warning="skipping processor_nproc")
+            nproc_cmd = self.module.get_bin_path('nproc')
             if nproc_cmd is not None:
                 rc, out, _err = self.module.run_command(nproc_cmd)
                 if rc == 0:
@@ -391,10 +391,7 @@ class LinuxHardware(Hardware):
                 'product_version': 'system-version',
                 'system_vendor': 'system-manufacturer',
             }
-            dmi_bin = self.module.get_bin_path(
-                'dmidecode',
-                warning="skipping dmi facts"
-            )
+            dmi_bin = self.module.get_bin_path('dmidecode')
             if dmi_bin is None:
                 dmi_facts = dict.fromkeys(
                     DMI_DICT.keys(),
@@ -865,10 +862,7 @@ class LinuxHardware(Hardware):
         """ Get LVM Facts if running as root and lvm utils are available """
 
         lvm_facts = {'lvm': 'N/A'}
-        vgs_cmd = self.module.get_bin_path(
-            'vgs',
-            warning="skipping LVM facts"
-        )
+        vgs_cmd = self.module.get_bin_path('vgs')
         if vgs_cmd is None:
             return lvm_facts
 

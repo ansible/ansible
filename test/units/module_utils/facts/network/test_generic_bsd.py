@@ -9,7 +9,7 @@ import pytest
 from ansible.module_utils.facts.network import generic_bsd
 
 
-def mock_get_bin_path(command, warning=None):
+def mock_get_bin_path(command):
     cmds = {
         'ifconfig': 'fake/ifconfig',
         'route': 'fake/route',

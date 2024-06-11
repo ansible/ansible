@@ -47,10 +47,7 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
         elif sys.platform.startswith('sunos'):
             # on solaris 10 or solaris 11 should use `fcinfo hba-port`
             # TBD (not implemented): on solaris 9 use `prtconf -pv`
-            cmd = module.get_bin_path(
-                'fcinfo',
-                warning="skipping fibre wwn initiator facts"
-            )
+            cmd = module.get_bin_path('fcinfo')
             if cmd:
                 cmd = cmd + " hba-port"
                 rc, fcinfo_out, err = module.run_command(cmd)
@@ -62,14 +59,8 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
                             data = line.split(' ')
                             fc_facts['fibre_channel_wwn'].append(data[-1].rstrip())
         elif sys.platform.startswith('aix'):
-            cmd = module.get_bin_path(
-                'lsdev',
-                warning="skipping fibre wwn initiator facts"
-            )
-            lscfg_cmd = module.get_bin_path(
-                'lscfg',
-                warning="skipping fibre wwn initiator facts"
-            )
+            cmd = module.get_bin_path('lsdev')
+            lscfg_cmd = module.get_bin_path('lscfg')
             if cmd and lscfg_cmd:
                 # get list of available fibre-channel devices (fcs)
                 cmd = cmd + " -Cc adapter -l fcs*"
@@ -90,14 +81,10 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
                                         data = line.split('.')
                                         fc_facts['fibre_channel_wwn'].append(data[-1].rstrip())
         elif sys.platform.startswith('hp-ux'):
-            cmd = module.get_bin_path(
-                'ioscan',
-                warning="skipping fibre wwn initiator facts"
-            )
+            cmd = module.get_bin_path('ioscan')
             fcmsu_cmd = module.get_bin_path(
                 'fcmsutil',
                 opt_dirs=['/opt/fcms/bin'],
-                warning="skipping fibre wwn initiator facts"
             )
             # go ahead if we have both commands available
             if cmd and fcmsu_cmd:

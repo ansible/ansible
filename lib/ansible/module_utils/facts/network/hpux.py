@@ -31,8 +31,7 @@ class HPUXNetwork(Network):
         network_facts = {}
         netstat_path = self.module.get_bin_path(
             'netstat',
-            opt_dirs=['/usr/bin'],
-            warning="skipping network facts"
+            opt_dirs=['/usr/bin']
         )
 
         if netstat_path is None:
@@ -52,8 +51,7 @@ class HPUXNetwork(Network):
         default_interfaces = {}
         netstat_path = self.module.get_bin_path(
             'netstat',
-            opt_dirs=['/usr/bin'],
-            warning="skipping default interface facts"
+            opt_dirs=['/usr/bin']
         )
 
         if netstat_path is None:
@@ -73,8 +71,7 @@ class HPUXNetwork(Network):
         interfaces = {}
         netstat_path = self.module.get_bin_path(
             'netstat',
-            opt_dirs=['/usr/bin'],
-            warning="skipping default interface info facts"
+            opt_dirs=['/usr/bin']
         )
 
         if netstat_path is None:

@@ -1348,14 +1348,13 @@ class AnsibleModule(object):
         # and we don't want to break modules unnecessarily
         return None
 
-    def get_bin_path(self, arg, required=False, opt_dirs=None, warning=None):
+    def get_bin_path(self, arg, required=False, opt_dirs=None):
         '''
         Find system executable in PATH.
 
         :param arg: The executable to find.
         :param required: if the executable is not found and required is ``True``, fail_json
         :param opt_dirs: optional list of directories to search in addition to ``PATH``
-        :param warning: optional message when arg not found, only works when required=False
         :returns: if found return full path; otherwise return original arg, unless 'warning' then return None
         :raises: Sysexit: if arg is not found and required=True (via fail_json)
         '''
@@ -1366,8 +1365,6 @@ class AnsibleModule(object):
         except ValueError as e:
             if required:
                 self.fail_json(msg=to_text(e))
-            elif warning is not None:
-                self.warn("Unable to find %s, %s" % (arg, warning))
 
         return bin_path
 
