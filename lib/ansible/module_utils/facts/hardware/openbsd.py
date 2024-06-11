@@ -112,10 +112,7 @@ class OpenBSDHardware(Hardware):
 
     def get_uptime_facts(self):
         # On openbsd, we need to call it with -n to get this value as an int.
-        sysctl_cmd = self.module.get_bin_path(
-            'sysctl',
-            warning="skipping uptime facts"
-        )
+        sysctl_cmd = self.module.get_bin_path('sysctl')
         if sysctl_cmd is None:
             return {}
 

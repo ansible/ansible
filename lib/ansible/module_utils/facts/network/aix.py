@@ -31,10 +31,7 @@ class AIXNetwork(GenericBsdIfconfigNetwork):
     def get_default_interfaces(self, route_path):
         interface = dict(v4={}, v6={})
 
-        netstat_path = self.module.get_bin_path(
-            'netstat',
-            warning="skipping default interface facts"
-        )
+        netstat_path = self.module.get_bin_path('netstat')
         if netstat_path is None:
             return interface['v4'], interface['v6']
 

@@ -37,8 +37,7 @@ class OhaiFactCollector(BaseFactCollector):
 
     def find_ohai(self, module):
         return module.get_bin_path(
-            'ohai',
-            warning="skipping ohai facts"
+            'ohai'
         )
 
     def run_ohai(self, module, ohai_path):
