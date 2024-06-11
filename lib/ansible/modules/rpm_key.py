@@ -8,7 +8,6 @@
 from __future__ import annotations
 
 
-
 DOCUMENTATION = '''
 ---
 module: rpm_key
