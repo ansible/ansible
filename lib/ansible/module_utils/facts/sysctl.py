@@ -23,7 +23,7 @@ from ansible.module_utils.common.text.converters import to_text
 def get_sysctl(module, prefixes):
 
     sysctl = dict()
-    sysctl_cmd = module.get_bin_path('sysctl', warning='skipping sysctl based facts')
+    sysctl_cmd = module.get_bin_path('sysctl')
     if sysctl_cmd is not None:
 
         cmd = [sysctl_cmd]
