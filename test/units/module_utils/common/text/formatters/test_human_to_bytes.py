@@ -185,72 +185,73 @@ def test_human_to_bytes_isbits_wrong_default_unit(test_input, unit, isbits):
 
 
 @pytest.mark.parametrize(
-    'test_input,expected',
+    'test_input',
     [
-        ('10 BBQ sticks please', "can't interpret following string"),
-        ('3000 GB guns of justice', "can't interpret following string"),
-        ('1 EBOOK please', "can't interpret following string"),
-        ('3 eBulletins please', "can't interpret following string"),
-        ('1 bBig family', "can't interpret following string"),
+        '10 BBQ sticks please',
+        '3000 GB guns of justice',
+        '1 EBOOK please',
+        '3 eBulletins please',
+        '1 bBig family',
     ]
 )
-def test_human_to_bytes_nonsensical_inputs_first_two_letter_unit(test_input, expected):
+def test_human_to_bytes_nonsensical_inputs_first_two_letter_unit(test_input):
     """Test of human_to_bytes function to ensure it raises ValueError for nonsensical inputs that has the first two
     letters as a unit."""
+    expected = "can't interpret following string"
     with pytest.raises(ValueError, match=expected):
         human_to_bytes(test_input)
 
 
 @pytest.mark.parametrize(
-    'test_input,expected',
+    'test_input',
     [
-        ('12,000 MB', "can't interpret following string"),
-        ('12 000 MB', "can't interpret following string"),
-        ('- |\n   1\n   kB', "can't interpret following string"),
-        ('          12', "can't interpret following string"),
-        (' 12 MB', "can't interpret following string"),  # OGHAM SPACE MARK
-        ('1\u200B000 MB', "can't interpret following string")  # U+200B zero-width space after 1
-
+        '12,000 MB',
+        '12 000 MB',
+        '- |\n   1\n   kB',
+        '          12',
+        ' 12 MB',  # OGHAM SPACE MARK
+        '1\u200B000 MB',  # U+200B zero-width space after 1
     ]
 )
-def test_human_to_bytes_non_number_truncate_result(test_input, expected):
+def test_human_to_bytes_non_number_truncate_result(test_input):
     """Test of human_to_bytes function to ensure it raises ValueError for handling non-number character and
     truncating result"""
+    expected = "can't interpret following string"
     with pytest.raises(ValueError, match=expected):
         human_to_bytes(test_input)
 
 
 @pytest.mark.parametrize(
-    'test_input,expected',
+    'test_input',
     [
-        ('3 eBulletins', "Value is not a valid string"),
-        ('.1 Geggabytes', "Value is not a valid string"),
-        ('3 prettybytes', "Value is not a valid string"),
-        ('13youcanhaveabyteofmysandwich', "Value is not a valid string"),
-        ('.1 Geggabytes', "Value is not a valid string"),
-        ('10 texasburgerbytes', "Value is not a valid string"),
-        ('12 muppetbytes', "Value is not a valid string"),
-
+        '3 eBulletins',
+        '.1 Geggabytes',
+        '3 prettybytes',
+        '13youcanhaveabyteofmysandwich',
+        '.1 Geggabytes',
+        '10 texasburgerbytes',
+        '12 muppetbytes',
     ]
 )
-def test_human_to_bytes_nonsensical(test_input, expected):
+def test_human_to_bytes_nonsensical(test_input):
     """Test of human_to_bytes function to ensure it raises ValueError for nonsensical input with first letter matches
     [BEGKMPTYZ] and word contains byte"""
+    expected = "Value is not a valid string"
     with pytest.raises(ValueError, match=expected):
         human_to_bytes(test_input)
 
 
 @pytest.mark.parametrize(
-    'test_input,expected',
+    'test_input',
     [
-        ('8𖭙B', "can't interpret following string"),
-        ('၀k', "can't interpret following string"),
-        ('1.၀k?', "can't interpret following string"),
-        ('᭔ MB', "can't interpret following string")
-
+        '8𖭙B',
+        '၀k',
+        '1.၀k?',
+        '᭔ MB'
     ]
 )
-def test_human_to_bytes_non_ascii_number(test_input, expected):
+def test_human_to_bytes_non_ascii_number(test_input):
     """Test of human_to_bytes function,correctly filtering out non ASCII characters"""
+    expected = "can't interpret following string"
     with pytest.raises(ValueError, match=expected):
         human_to_bytes(test_input)
