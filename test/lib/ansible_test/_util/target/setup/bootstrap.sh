@@ -53,14 +53,14 @@ customize_bashrc()
     fi
 
     # Improve shell prompts for interactive use.
-    echo "export PS1='\[\e]0;\u@\h: \w\a\]\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '" >> ~/.bashrc
+    echo "export PS1='"'\[\e]0;\u@\h: \w\a\]\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '"'" >> ~/.bashrc
 }
 
 install_pip() {
     if ! "${python_interpreter}" -m pip.__main__ --version --disable-pip-version-check 2>/dev/null; then
         case "${python_version}" in
             *)
-                pip_bootstrap_url="https://ci-files.testing.ansible.com/ansible-test/get-pip-23.1.2.py"
+                pip_bootstrap_url="https://ci-files.testing.ansible.com/ansible-test/get-pip-24.0.py"
                 ;;
         esac
 
