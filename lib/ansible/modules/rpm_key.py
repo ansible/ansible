@@ -6,7 +6,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
 
 DOCUMENTATION = '''
@@ -153,7 +152,7 @@ class RpmKey(object):
         """Downloads a key from url, returns a valid path to a gpg key"""
         rsp, info = fetch_url(self.module, url)
         if info['status'] != 200 and not url.startswith('file:/') and not (url.startswith('ftp:/') and info.get('msg', '').startswith('OK')):
-            self.module.fail_json(msg="failed to fetch key at %s , error was: %s" % (url, info ))
+            self.module.fail_json(msg="failed to fetch key at %s , error was: %s" % (url, info['msg']))
 
         key = rsp.read()
         if not is_pubkey(key):
