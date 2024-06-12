@@ -35,7 +35,7 @@ options:
             commands unless necessary.
           - V(restarted) will always bounce the service.
           - V(reloaded) will always reload.
-          - B(At least one of O(state) and O(enabled) are required.)
+          - At least one of O(state) and O(enabled) are required.
           - Note that V(reloaded) will start the service if it is not already started,
             even if your chosen init system wouldn't normally.
         type: str
