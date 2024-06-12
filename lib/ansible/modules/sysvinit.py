@@ -31,7 +31,7 @@ options:
     enabled:
         type: bool
         description:
-            - Whether the service should start on boot. B(At least one of O(state) and O(enabled) are required.)
+            - Whether the service should start on boot. At least one of O(state) and O(enabled) are required.
     sleep:
         default: 1
         description:
