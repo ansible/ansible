@@ -210,7 +210,7 @@ options:
         version_added: "2.6"
     local:
         description:
-            - Forces the use of I(local) command alternatives on platforms that implement it.
+            - Forces the use of "local" command alternatives on platforms that implement it.
             - This is useful in environments that use centralized authentication when you want to manipulate the local users
               (in other words, it uses C(luseradd) instead of C(useradd)).
             - This will check C(/etc/passwd) for an existing account before invoking commands. If the local account database
