@@ -61,7 +61,7 @@ options:
     enabled:
         description:
         - Whether the service should start on boot.
-        - B(At least one of O(state) and O(enabled) are required.)
+        - At least one of O(state) and O(enabled) are required.
         type: bool
     runlevel:
         description:
