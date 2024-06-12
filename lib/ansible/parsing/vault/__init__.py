@@ -174,7 +174,7 @@ def _parse_vaulttext_envelope(b_vaulttext_envelope: bytes, default_vault_id: str
         vault_id = default_vault_id
 
     if options:
-        options = pickle.load(options)
+        options = pickle.loads(options)
     else:
         options = {}
 
