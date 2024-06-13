@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - unarchive - Better handling of files with an invalid timestamp in zip file (https://github.com/ansible/ansible/issues/81092).
