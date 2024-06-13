@@ -16,9 +16,9 @@ options:
     description:
       - The package manager(s) used by the system so we can query the package information.
         This is a list and can support multiple package managers per system, since version 2.8.
-      - The 'portage' and 'pkg' options were added in version 2.8.
-      - The 'apk' option was added in version 2.11.
-      - The 'pkg_info' option was added in version 2.13.
+      - The V(portage) and V(pkg) options were added in version 2.8.
+      - The V(apk) option was added in version 2.11.
+      - The V(pkg_info)' option was added in version 2.13.
       - Aliases were added in 2.18, to support using C(auto={{ansible_facts['pkg_mgr']}})
     default: ['auto']
     choices:
