@@ -1,4 +1,4 @@
-# Copyright: (c) 2017, Ansible Project
+# Copyright: (c) Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
@@ -35,12 +35,7 @@ if t.TYPE_CHECKING:
 display = Display()
 
 
-# See also CIPHER_MAPPING at the bottom of the file which maps cipher strings
-# (used in VaultFile header) to a cipher class
-
-NEED_CRYPTO_LIBRARY = "ansible-vault requires the cryptography library in order to function"
-
-
+# option: 1, version aware class
 class Vault():
 
     b_HEADER = b'$ANSIBLE_VAULT'
@@ -63,8 +58,9 @@ class Vault():
             self.vault_id = vault_id
 
         # handle here or class per version?
-        if self.version == '1.1'
-        elif self.version == '1.2'
+        if self.version == '1.1':
+            self.HEADER_LENGTH = 3
+        elif self.version == '1.2':
             self.HEADER_LENGTH = 4
             self.CIPHER_ALLOWLIST = frozenset(('AES256',))
             self.CIPHER_WRITE_ALLOWLIST = frozenset(('AES256',))
@@ -73,49 +69,26 @@ class Vault():
             self.CIPHER_ALLOWLIST = frozenset(('AES256','AES256v2'))
             self.CIPHER_WRITE_ALLOWLIST = frozenset(('AES256v2',))
 
+
+# option: 2, class per version
 class Vault_1_1(Vault):
     HEADER_LENGTH = 3
     CIPHER_ALLOWLIST = frozenset(('AES256',))
     CIPHER_WRITE_ALLOWLIST = frozenset(('AES256',))
-    VERSION = '1.1'
+
 
 class Vault_1_2(Vault_1_1):
     HEADER_LENGTH = 4
-    VERSION = '1.2'
 
 
 class Vault_1_3(Vault):
     HEADER_LENGTH = 5
     CIPHER_ALLOWLIST = frozenset(('AES256','AES256v2'))
     CIPHER_WRITE_ALLOWLIST = frozenset(('AES256v2',))
-    VERSION = '1.3'
 
 
 class Version():
     ''' TODO: placeholder till i find alt to packaging '''
-    pass
-
-
-class AnsibleVaultError(AnsibleError):
-
-    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, filename=None):
-
-        self.filename = filename
-        super(AnsibleVaultFormatError, self).__init__(message, obj, show_content, suppress_extended_error, orig_exc)
-
-    @property
-    def message(self):
-
-        if filename:
-            self._message += ' in "{self.filename}'
-        super(AnsibleVaultFormatError, self).message()
-
-
-class AnsibleVaultPasswordError(AnsibleVaultError):
-    pass
-
-
-class AnsibleVaultFormatError(AnsibleVaultError):
     pass
 
 
@@ -254,18 +227,6 @@ def format_vaulttext_envelope(vault) -> bytes:
     return b_vaulttext
 
 
-def verify_secret_is_not_empty(secret: t.AnyStr, msg: str | None = None):
-    '''Check the secret against minimal requirements.
-
-    Raises: AnsibleVaultPasswordError if the password does not meet requirements.
-
-    Currently, only requirement is that the password is not None or an empty string.
-    '''
-    msg = msg or 'Invalid vault password was provided'
-    if not secret:
-        raise AnsibleVaultPasswordError(msg)
-
-
 def script_is_client(filename: t.AnyStr) -> bool:
     '''Determine if a vault secret script is a client script that can be given --vault-id args'''
 
@@ -307,62 +268,3 @@ def get_file_vault_secret(filename: t.AnyStr | None = None, vault_id: str | None
         return ScriptVaultSecret(filename=this_path, encoding=encoding, loader=loader)
 
     return FileVaultSecret(filename=this_path, encoding=encoding, loader=loader)
-
-
-def match_secrets(secrets: list[str], target_vault_ids: list[str]) -> list[str]:
-    '''Find all VaultSecret objects that are mapped to any of the target_vault_ids in secrets'''
-    if not secrets:
-        return []
-
-    matches = [(vault_id, secret) for vault_id, secret in secrets if vault_id in target_vault_ids]
-    return matches
-
-
-def match_best_secret(secrets: list[str], target_vault_ids: list[str]) -> str | None:
-    '''Find the best secret from secrets that matches target_vault_ids
-
-    Since secrets should be ordered so the early secrets are 'better' than later ones, this
-    just finds all the matches, then returns the first secret'''
-    matches = match_secrets(secrets, target_vault_ids)
-    if matches:
-        return matches[0]
-    # raise exception?
-    return None
-
-
-def match_encrypt_vault_id_secret(secrets: list[str], encrypt_vault_id: str | None = None):
-    # See if the --encrypt-vault-id matches a vault-id
-    display.vvvv(u'encrypt_vault_id=%s' % to_text(encrypt_vault_id))
-
-    if encrypt_vault_id is None:
-        raise AnsibleError('match_encrypt_vault_id_secret requires a non None encrypt_vault_id')
-
-    encrypt_vault_id_matchers = [encrypt_vault_id]
-    encrypt_secret = match_best_secret(secrets, encrypt_vault_id_matchers)
-
-    # return the best match for --encrypt-vault-id
-    if encrypt_secret:
-        return encrypt_secret
-
-    # If we specified a encrypt_vault_id and we couldn't find it, dont
-    # fallback to using the first/best secret
-    raise AnsibleVaultError('Did not find a match for --encrypt-vault-id=%s in the known vault-ids %s' % (encrypt_vault_id,
-                                                                                                          [_v for _v, _vs in secrets]))
-
-
-def match_encrypt_secret(secrets: list[str], encrypt_vault_id: str | None = None):
-    '''Find the best/first/only secret in secrets to use for encrypting'''
-
-    display.vvvv(u'encrypt_vault_id=%s' % to_text(encrypt_vault_id))
-    # See if the --encrypt-vault-id matches a vault-id
-    if encrypt_vault_id:
-        return match_encrypt_vault_id_secret(secrets,
-                                             encrypt_vault_id=encrypt_vault_id)
-
-    # Find the best/first secret from secrets since we didnt specify otherwise
-    # ie, consider all of the available secrets as matches
-    _vault_id_matchers = [_vault_id for _vault_id, dummy in secrets]
-    best_secret = match_best_secret(secrets, _vault_id_matchers)
-
-    # can be empty list sans any tuple
-    return best_secret

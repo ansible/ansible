@@ -382,3 +382,26 @@ class AnsibleFilterTypeError(AnsibleTemplateError, TypeError):
 class AnsiblePluginNotFound(AnsiblePluginError):
     ''' Indicates we did not find an Ansible plugin '''
     pass
+
+
+class AnsibleVaultError(AnsibleError):
+
+    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, filename=None):
+
+        self.filename = filename
+        super(AnsibleVaultFormatError, self).__init__(message, obj, show_content, suppress_extended_error, orig_exc)
+
+    @property
+    def message(self):
+
+        if filename:
+            self._message += ' in "{self.filename}'
+        super(AnsibleVaultFormatError, self).message()
+
+
+class AnsibleVaultPasswordError(AnsibleVaultError):
+    pass
+
+
+class AnsibleVaultFormatError(AnsibleVaultError):
+    pass

@@ -1,4 +1,27 @@
+# Copyright: (c) Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import annotations
+
+import subprocess
+import typing as t
+
+from ansible.errors import AnsibleError, AnsibleVaultError, AnsibleVaultPasswordError
+from ansible.utils.display import Display
+
+display = Display()
+
+
+def verify_secret_is_not_empty(secret: t.AnyStr, msg: str | None = None):
+    '''Check the secret against minimal requirements.
+
+    Raises: AnsibleVaultPasswordError if the password does not meet requirements.
+
+    Currently, only requirement is that the password is not None or an empty string.
+    '''
+    msg = msg or 'Invalid vault password was provided'
+    if not secret:
+        raise AnsibleVaultPasswordError(msg)
 
 
 class VaultSecret:
@@ -51,7 +74,7 @@ class PromptVaultSecret(VaultSecret):
 
             verify_secret_is_not_empty(vault_pass)
 
-            b_vault_pass = to_bytes(vault_pass, errors='strict', nonstring='simplerepr').strip()
+            b_vault_pass = bytes(vault_pass, errors='strict', nonstring='simplerepr').strip()
             b_vault_passwords.append(b_vault_pass)
 
         # Make sure the passwords match by comparing them all to the first password
@@ -171,7 +194,7 @@ class ClientScriptVaultSecret(ScriptVaultSecret):
                                                       encoding=encoding,
                                                       loader=loader)
         self._vault_id = vault_id
-        display.vvvv(u'Executing vault password client script: %s --vault-id %s' % (to_text(filename), to_text(vault_id)))
+        display.vvvv(u'Executing vault password client script: %s --vault-id %s' % (str(filename), str(vault_id)))
 
     def _run(self, command):
         try:

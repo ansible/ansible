@@ -1,12 +1,15 @@
-# Copyright: (c) 2017, Ansible Project
+# Copyright: (c) Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
 
+import os
+import typing as t
+import warnings
+
 from binascii import hexlify
 from binascii import unhexlify
-
-import typing as t
+from binascii import Error as BinasciiError
 
 HAS_CRYPTOGRAPHY = False
 CRYPTOGRAPHY_BACKEND = None
@@ -26,12 +29,29 @@ try:
 except ImportError:
     pass
 
+from ansible import constants as C
+from ansible.errors import AnsibleError, AnsibleVaultError, AnsibleVaultFormatError
+
+NEED_CRYPTO_LIBRARY = "ansible-vault requires the cryptography library in order to function"
+
 
 def _unhexlify(b_data: bytes) -> bytes:
     try:
         return unhexlify(b_data)
     except (BinasciiError, TypeError) as exc:
         raise AnsibleVaultFormatError('Vault format unhexlify error', orig_exc=exc)
+
+
+def parse_vaulttext_old(b_vaulttext: bytes) -> list[bytes]:
+    ''' old format does double hexing, only use with versions 1.1 and 1.2
+    :arg b_vaulttext: byte str containing the vaulttext (ciphertext, salt, crypted_hmac)
+    :returns: A tuple of byte str of the ciphertext suitable for passing to a
+        Cipher class's decrypt() function, a byte str of the salt,
+        and a byte str of the crypted_hmac
+    :raises: AnsibleVaultFormatError: if the vaulttext format is invalid
+    '''
+    b_vaulttext = _unhexlify(b_vaulttext)
+    return parse_vaulttext(b_vaulttext)
 
 
 def parse_vaulttext(b_vaulttext: bytes) -> list[bytes]:
@@ -44,15 +64,14 @@ def parse_vaulttext(b_vaulttext: bytes) -> list[bytes]:
     """
     # SPLIT SALT, DIGEST, AND DATA
     try:
-        b_vaulttext = _unhexlify(b_vaulttext)
         b_salt, b_crypted_hmac, b_ciphertext = b_vaulttext.split(b"\n", 2)
         b_salt = _unhexlify(b_salt)
         b_ciphertext = _unhexlify(b_ciphertext)
     except AnsibleVaultFormatError:
         raise
     except Exception as exc:
-        msg = "Vault vaulttext format error: %s" % exc
-        raise AnsibleVaultFormatError(msg)
+        raise AnsibleVaultFormatError('Vault encrypted text format error', orig_exc=exc)
+
     return b_ciphertext, b_salt, b_crypted_hmac
 
 
@@ -65,15 +84,13 @@ class VaultCipher:
         pass
 
     @staticmethod
-    def _is_equal(b_a, b_b):
+    def _is_equal(b_a: bytes, b_b: bytes):
         """
         Comparing 2 byte arrays in constant time to avoid timing attacks.
         It would be nice if there were a library for this but hey.
-        """
-        if not (isinstance(b_a, binary_type) and isinstance(b_b, binary_type)):
-            raise TypeError('_is_equal can only be used to compare two byte strings')
 
-        # http://codahale.com/a-lesson-in-timing-attacks/
+        http://codahale.com/a-lesson-in-timing-attacks/
+        """
         if len(b_a) != len(b_b):
             return False
 
@@ -140,14 +157,14 @@ class VaultAES256(VaultCipher):
         hmac.update(b_ciphertext)
         b_hmac = hmac.finalize()
 
-        return to_bytes(hexlify(b_hmac), errors='surrogate_or_strict'), hexlify(b_ciphertext)
+        return bytes(hexlify(b_hmac)), hexlify(b_ciphertext)
 
     @classmethod
     def _get_salt(cls):
         custom_salt = C.config.get_config_value('VAULT_ENCRYPT_SALT')
         if not custom_salt:
             custom_salt = os.urandom(32)
-        return to_bytes(custom_salt)
+        return bytes(custom_salt)
 
     @classmethod
     def encrypt(cls, b_plaintext, secret, salt=None):
@@ -160,7 +177,7 @@ class VaultAES256(VaultCipher):
         elif not salt:
             raise AnsibleVaultError('Empty or invalid salt passed to encrypt()')
         else:
-            b_salt = to_bytes(salt)
+            b_salt = bytes(salt)
 
         b_password = secret.bytes
         b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt)
@@ -199,7 +216,7 @@ class VaultAES256(VaultCipher):
     @classmethod
     def decrypt(cls, b_vaulttext, secret):
 
-        b_ciphertext, b_salt, b_crypted_hmac = parse_vaulttext(b_vaulttext)
+        b_ciphertext, b_salt, b_crypted_hmac = parse_vaulttext_old(b_vaulttext)
 
         # TODO: would be nice if a VaultSecret could be passed directly to _decrypt_*
         #       (move _gen_key_initctr() to a AES256 VaultSecret or VaultContext impl?)
