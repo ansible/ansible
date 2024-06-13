@@ -183,6 +183,13 @@ class StrategyModule(StrategyBase):
                         if task.action in C._ACTION_META:
                             self._execute_meta(task, play_context, iterator, target_host=host)
                             self._blocked_hosts[host_name] = False
+                            if self._host_pinned:
+                                # NOTE A meta task executed and a worker was not needed,
+                                # so try the same host again for a regular task?
+                                # This could lead to one host executing many subsequent meta tasks before
+                                # moving on to another host and "breaking" the round-robin
+                                # mechanism of host_pinned but obeying the host/fork affinity ¯\_(ツ)_/¯ ???
+                                continue
                         else:
                             # handle step if needed, skip meta actions as they are used internally
                             if not self._step or self._take_step(task, host_name):
