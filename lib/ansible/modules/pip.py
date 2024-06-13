@@ -28,21 +28,21 @@ options:
   requirements:
     description:
       - The path to a pip requirements file, which should be local to the remote system.
-        File can be specified as a relative path if using the chdir option.
+        File can be specified as a relative path if using the O(chdir) option.
     type: str
   virtualenv:
     description:
       - An optional path to a I(virtualenv) directory to install into.
-        It cannot be specified together with the 'executable' parameter
+        It cannot be specified together with the O(executable) parameter
         (added in 2.1).
         If the virtualenv does not exist, it will be created before installing
-        packages. The optional virtualenv_site_packages, virtualenv_command,
-        and virtualenv_python options affect the creation of the virtualenv.
+        packages. The optional O(virtualenv_site_packages), O(virtualenv_command),
+        and O(virtualenv_python) options affect the creation of the virtualenv.
     type: path
   virtualenv_site_packages:
     description:
       - Whether the virtual environment will inherit packages from the
-        global site-packages directory.  Note that if this setting is
+        global C(site-packages) directory. Note that if this setting is
         changed on an already existing virtual environment it will not
         have any effect, the environment must be deleted and newly
         created.
@@ -68,14 +68,14 @@ options:
     version_added: "2.0"
   state:
     description:
-      - The state of module
-      - The 'forcereinstall' option is only available in Ansible 2.1 and above.
+      - The state of module.
+      - The V(forcereinstall) option is only available in Ansible 2.1 and above.
     type: str
     choices: [ absent, forcereinstall, latest, present ]
     default: present
   extra_args:
     description:
-      - Extra arguments passed to pip.
+      - Extra arguments passed to C(pip).
     type: str
     version_added: "1.0"
   editable:
@@ -86,18 +86,18 @@ options:
     version_added: "2.0"
   chdir:
     description:
-      - cd into this directory before running the command
+      - cd into this directory before running the command.
     type: path
     version_added: "1.3"
   executable:
     description:
-      - The explicit executable or pathname for the pip executable,
+      - The explicit executable or pathname for the C(pip) executable,
         if different from the Ansible Python interpreter. For
         example V(pip3.3), if there are both Python 2.7 and 3.3 installations
         in the system and you want to run pip for the Python 3.3 installation.
       - Mutually exclusive with O(virtualenv) (added in 2.1).
       - Does not affect the Ansible Python interpreter.
-      - The setuptools package must be installed for both the Ansible Python interpreter
+      - The C(setuptools) package must be installed for both the Ansible Python interpreter
         and for the version of Python specified by this option.
     type: path
     version_added: "1.3"
@@ -105,14 +105,14 @@ options:
     description:
       - The system umask to apply before installing the pip package. This is
         useful, for example, when installing on systems that have a very
-        restrictive umask by default (e.g., "0077") and you want to pip install
+        restrictive umask by default (e.g., C(0077)) and you want to C(pip install)
         packages which are to be used by all users. Note that this requires you
-        to specify desired umask mode as an octal string, (e.g., "0022").
+        to specify desired umask mode as an octal string, (e.g., C(0022)).
     type: str
     version_added: "2.1"
   break_system_packages:
     description:
-      - Allow pip to modify an externally-managed Python installation as defined by PEP 668.
+      - Allow C(pip) to modify an externally-managed Python installation as defined by PEP 668.
       - This is typically required when installing packages outside a virtual environment on modern systems.
     type: bool
     default: false

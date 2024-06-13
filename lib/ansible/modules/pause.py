@@ -29,11 +29,12 @@ options:
   prompt:
     description:
       - Optional text to use for the prompt message.
-      - User input is only returned if O(seconds=None) and O(minutes=None), otherwise this is just a custom message before playbook execution is paused.
+      - User input is only returned if O(seconds) and O(minutes) are both not specified,
+        otherwise this is just a custom message before playbook execution is paused.
   echo:
     description:
       - Controls whether or not keyboard input is shown when typing.
-      - Only has effect if O(seconds=None) and O(minutes=None).
+      - Only has effect if neither O(seconds) nor O(minutes) are set.
     type: bool
     default: 'yes'
     version_added: 2.5
@@ -62,7 +63,7 @@ attributes:
     platform:
         platforms: all
 notes:
-      - Starting in 2.2,  if you specify 0 or negative for minutes or seconds, it will wait for 1 second, previously it would wait indefinitely.
+      - Starting in 2.2, if you specify 0 or negative for minutes or seconds, it will wait for 1 second, previously it would wait indefinitely.
       - User input is not captured or echoed, regardless of echo setting, when minutes or seconds is specified.
 '''
 

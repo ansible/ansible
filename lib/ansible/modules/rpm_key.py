@@ -15,7 +15,7 @@ author:
   - Hector Acosta (@hacosta) <hector.acosta@gazzang.com>
 short_description: Adds or removes a gpg key from the rpm db
 description:
-  - Adds or removes (rpm --import) a gpg key to your rpm database.
+  - Adds or removes C(rpm --import) a gpg key to your rpm database.
 version_added: "1.3"
 options:
     key:
