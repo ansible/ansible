@@ -341,7 +341,7 @@ def get_state(path):
 
 
 # This should be moved into the common file utilities
-def recursive_set_attributes(b_path, follow, file_args, mtime, atime, diff_list = None):
+def recursive_set_attributes(b_path, follow, file_args, mtime, atime, diff_list=None):
     changed = False
 
     try:
@@ -387,7 +387,7 @@ def recursive_set_attributes(b_path, follow, file_args, mtime, atime, diff_list 
     return changed
 
 
-def recursive_create_directory(path, file_args, mtime, atime, diff_list = None) -> bool:
+def recursive_create_directory(path, file_args, mtime, atime, diff_list=None) -> bool:
     # I don't understand why mypy complains when I reference `module` but it doesn't complain for anything else
     if module is None:
         raise AnsibleModuleError("module is None!")
