@@ -23,7 +23,7 @@ from yaml.nodes import MappingNode
 from ansible import constants as C
 from ansible.module_utils.common.text.converters import to_bytes, to_native
 from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode, AnsibleVaultEncryptedUnicode
-from ansible.parsing.vault import VaultLib
+from ansible.parsing.vault.manager import VaultLib
 from ansible.utils.display import Display
 from ansible.utils.unsafe_proxy import wrap_var
 

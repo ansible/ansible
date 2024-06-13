@@ -232,3 +232,7 @@ class VaultAES256(VaultCipher):
             raise AnsibleError(NEED_CRYPTO_LIBRARY + '(Detected in decrypt)')
 
         return b_plaintext
+
+
+class VaultAES256v2(VaultCipher):
+    pass

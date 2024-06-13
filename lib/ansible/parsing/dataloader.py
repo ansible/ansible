@@ -18,7 +18,9 @@ from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.parsing.quoting import unquote
 from ansible.parsing.utils.yaml import from_yaml
-from ansible.parsing.vault import VaultLib, is_encrypted, is_encrypted_file, parse_vaulttext_envelope, PromptVaultSecret
+from ansible.parsing.vault import is_encrypted, is_encrypted_file, parse_vaulttext_envelope
+from ansible.parsing.vault.manager import VaultLib
+from ansible.parsing.vault.secrets import PromptVaultSecret
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
 

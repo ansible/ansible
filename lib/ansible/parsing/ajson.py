@@ -8,7 +8,7 @@ import json
 # Imported for backwards compat
 from ansible.module_utils.common.json import AnsibleJSONEncoder  # pylint: disable=unused-import
 
-from ansible.parsing.vault import VaultLib
+from ansible.parsing.vault.manager import VaultLib
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.unsafe_proxy import wrap_var
 
