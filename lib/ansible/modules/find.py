@@ -158,7 +158,7 @@ options:
         description:
             - Limit the maximum number of matching paths returned. After finding this many, the find action will stop looking.
             - Matches are made from the top, down (i.e. shallowest directory first).
-            - Set to V(None) for unlimited matches.
+            - If not set, or set to v(null), it will do unlimited matches
             - Default is unlimited matches.
         type: int
         version_added: "2.18"
