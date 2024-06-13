@@ -341,7 +341,7 @@ def get_state(path):
 
 
 # This should be moved into the common file utilities
-def recursive_set_attributes(b_path, follow, file_args, mtime, atime, diff_list: list = None):
+def recursive_set_attributes(b_path, follow, file_args, mtime, atime, diff_list = None):
     changed = False
 
     try:
