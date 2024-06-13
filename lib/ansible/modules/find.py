@@ -105,6 +105,22 @@ options:
         type: str
         choices: [ atime, ctime, mtime ]
         default: mtime
+    users:
+        description:
+            - If set, only elements owned by a user in the list are returned
+        type: list
+        aliases: [ user ]
+        elements: str
+        version_added: "2.17"
+        default: []
+    groups:
+        description:
+            - If set, only elements owned by a group in the list are returned
+        type: list
+        aliases: [ group ]
+        elements: str
+        version_added: "2.17"
+        default: []
     hidden:
         description:
             - Set this to V(true) to include hidden files, otherwise they will be ignored.
@@ -226,6 +242,19 @@ EXAMPLES = r'''
     patterns:
       - '^_[0-9]{2,4}_.*.log$'
       - '^[a-z]{1,5}_.*log$'
+
+- name: find all elements owned by user and group root:shadow
+  find:
+    paths: /etc
+    user: root
+    group: shadow
+
+- name: find all elements owned by one of the user in a given list
+  find:
+    paths: /etc
+    users:
+      - user1
+      - user2
 
 '''
 
@@ -447,6 +476,22 @@ def statinfo(st):
     }
 
 
+def owner_filter(st, users, groups):
+    '''filter files that do not belong to a certain owner/group'''
+    if (users is None or (iter(users) and len(users) < 1)) and \
+       (groups is None or (iter(groups) and len(groups) < 1)):
+        return True
+    if (iter(users) and len(users) > 0) or (iter(groups) and len(groups) > 0):
+        stinfo = statinfo(st)
+        if iter(users) and len(users) > 0:
+            if stinfo['pw_name'] not in users:
+                return False
+        if iter(groups) and len(groups) > 0:
+            if stinfo['gr_name'] not in groups:
+                return False
+    return True
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -457,6 +502,8 @@ def main():
             read_whole_file=dict(type='bool', default=False),
             file_type=dict(type='str', default="file", choices=['any', 'directory', 'file', 'link']),
             age=dict(type='str'),
+            users=dict(type='list', default=[], aliases=['user'], elements='str'),
+            groups=dict(type='list', default=[], aliases=['group'], elements='str'),
             age_stamp=dict(type='str', default="mtime", choices=['atime', 'ctime', 'mtime']),
             size=dict(type='str'),
             recurse=dict(type='bool', default=False),
@@ -556,6 +603,7 @@ def main():
                     if params['file_type'] == 'any':
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
                                 agefilter(st, now, age, params['age_stamp']) and
+                                owner_filter(st, params['users'], params['groups']) and
                                 mode_filter(st, params['mode'], params['exact_mode'], module)):
 
                             r.update(statinfo(st))
@@ -571,6 +619,7 @@ def main():
                     elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
                                 agefilter(st, now, age, params['age_stamp']) and
+                                owner_filter(st, params['users'], params['groups']) and
                                 mode_filter(st, params['mode'], params['exact_mode'], module)):
 
                             r.update(statinfo(st))
@@ -580,6 +629,7 @@ def main():
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
                                 agefilter(st, now, age, params['age_stamp']) and
                                 sizefilter(st, size) and
+                                owner_filter(st, params['users'], params['groups']) and
                                 contentfilter(fsname, params['contains'], params['encoding'], params['read_whole_file']) and
                                 mode_filter(st, params['mode'], params['exact_mode'], module)):
 
@@ -591,6 +641,7 @@ def main():
                     elif stat.S_ISLNK(st.st_mode) and params['file_type'] == 'link':
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
                                 agefilter(st, now, age, params['age_stamp']) and
+                                owner_filter(st, params['users'], params['groups']) and
                                 mode_filter(st, params['mode'], params['exact_mode'], module)):
 
                             r.update(statinfo(st))
