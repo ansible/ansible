@@ -161,7 +161,6 @@ options:
             - Set to V(None) for unlimited matches.
             - Default is unlimited matches.
         type: int
-        default: None
         version_added: "2.18"
 extends_documentation_fragment: action_common_attributes
 attributes:
