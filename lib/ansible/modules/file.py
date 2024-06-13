@@ -387,7 +387,10 @@ def recursive_set_attributes(b_path, follow, file_args, mtime, atime, diff_list:
     return changed
 
 
-def recursive_create_directory(path, file_args, mtime, atime, diff_list: list = None) -> bool:
+def recursive_create_directory(path, file_args, mtime, atime, diff_list = None) -> bool:
+    # I don't understand why mypy complains when I reference `module` but it doesn't complain for anything else
+    if module is None:
+        raise AnsibleModuleError("module is None!")
     changed = False
     parent_dir_path = os.path.dirname(path)
     if not os.path.exists(parent_dir_path):
