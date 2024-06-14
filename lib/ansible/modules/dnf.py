@@ -23,7 +23,7 @@ options:
     default: "auto"
     choices:
         auto: Automatically select the backend based on the C(ansible_facts.pkg_mgr) fact.
-        yum: Alias for V(auto)
+        yum: Alias for V(auto) (see Notes)
         dnf: M(ansible.builtin.dnf)
         yum4: Alias for V(dnf)
         dnf4: Alias for V(dnf)
@@ -294,6 +294,11 @@ notes:
     upstream dnf's API doesn't properly mark groups as installed, therefore upon
     removal the module is unable to detect that the group is installed
     U(https://bugzilla.redhat.com/show_bug.cgi?id=1620324).
+  - While O(use_backend=yum) and the ability to call the action plugin as
+    M(ansible.builtin.yum) are provided for syntax compatibility, the YUM
+    backend was removed in ansible-core 2.17 because the required libraries are
+    not available for any supported version of Python. If you rely on this
+    functionality, use an older version of Ansible.
 requirements:
   - python3-dnf
   - for the autoremove option you need dnf >= 2.0.1"
