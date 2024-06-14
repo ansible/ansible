@@ -1376,10 +1376,16 @@ class Connection(ConnectionBase):
         run_reset = False
         self.host = self.get_option('host') or self._play_context.remote_addr
 
+        conn_password = self.get_option('password') or self._play_context.password
+        
         # If we have a persistent ssh connection (ControlPersist), we can ask it to stop listening.
         # only run the reset if the ControlPath already exists or if it isn't configured and ControlPersist is set
         # 'check' will determine this.
         cmd = self._build_command(self.get_option('ssh_executable'), 'ssh', '-O', 'check', self.host)
+        # _build_command opens a pipe that we don't actually use, so we close it.
+        if conn_password:
+            os.close(self.sshpass_pipe[0])
+            os.close(self.sshpass_pipe[1])  
         display.vvv(u'sending connection check: %s' % to_text(cmd))
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
@@ -1391,6 +1397,10 @@ class Connection(ConnectionBase):
 
         if run_reset:
             cmd = self._build_command(self.get_option('ssh_executable'), 'ssh', '-O', 'stop', self.host)
+            # _build_command opens a pipe that we don't actually use, so we close it.
+            if conn_password:
+                os.close(self.sshpass_pipe[0])
+                os.close(self.sshpass_pipe[1])  
             display.vvv(u'sending connection stop: %s' % to_text(cmd))
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()
