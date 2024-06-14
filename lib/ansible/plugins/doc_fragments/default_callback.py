@@ -53,7 +53,7 @@ class ModuleDocFragment(object):
             section: defaults
       show_per_host_start:
         name: Show per host task start
-        description: 'This adds output that shows when a task is started to execute for each host.'
+        description: 'This adds output that shows when a task starts to execute for each host.'
         type: bool
         default: no
         env:
