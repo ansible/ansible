@@ -13,7 +13,7 @@ from ansible.utils.path import unfrackpath
 
 display = Display()
 
-if t.TYPE_CHECKING
+if t.TYPE_CHECKING:
     from ansible.parsing.dataloader import DataLoader
 
 

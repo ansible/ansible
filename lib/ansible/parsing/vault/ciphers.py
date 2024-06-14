@@ -359,7 +359,7 @@ class VaultAES256v2(VaultCipher):
 
         b_ciphertext, b_salt, b_crypted_hmac = parse_vaulttext(vault.vaulted)
         b_password = bytes(secret)
-        iterations = vault.options.get('iterations', cls.DEFAULT_ITERATIONS))
+        iterations = vault.options.get('iterations', cls.DEFAULT_ITERATIONS)
         b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt, iterations)
 
         vault.plain = cls._decrypt_cryptography(vault.vaulted, b_crypted_hmac, b_key1, b_key2, b_iv)
