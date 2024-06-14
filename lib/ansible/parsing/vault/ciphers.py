@@ -318,7 +318,7 @@ class VaultAES256v2(VaultCipher):
             b_salt = bytes(vault.salt)
 
         b_password = bytes(secret)
-        iterations = vault.options.get('iterations', cls.DEFAULT_ITERATIONS))
+        iterations = vault.options.get('iterations', cls.DEFAULT_ITERATIONS)
         b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt, iterations)
 
         if HAS_CRYPTOGRAPHY:

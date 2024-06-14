@@ -239,17 +239,3 @@ def is_vault_file(file_obj: t.IO[t.AnyStr], start_pos: int = 0, count: int = len
 
 # TODO: deprecate is_encrypted_file, we specifically look for vaults
 is_encrypted_file = is_vault_file
-
-
-def script_is_client(filename: t.AnyStr) -> bool:
-    '''Determine if a vault secret script is a client script that can be given --vault-id args'''
-
-    # if password script is 'something-client' or 'something-client.[sh|py|rb|etc]'
-    # script_name can still have '.' or could be entire filename if there is no ext
-    script_name, dummy = os.path.splitext(filename)
-
-    # TODO: for now, this is entirely based on filename
-    if script_name.endswith('-client'):
-        return True
-
-    return False

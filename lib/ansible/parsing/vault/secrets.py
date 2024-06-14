@@ -3,13 +3,32 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import typing as t
 
 from ansible.errors import AnsibleError, AnsibleVaultError, AnsibleVaultPasswordError
 from ansible.utils.display import Display
+from ansible.utils.path import unfrackpath
 
 display = Display()
+
+if t.TYPE_CHECKING
+    from ansible.parsing.dataloader import DataLoader
+
+
+def script_is_client(filename: t.AnyStr) -> bool:
+    '''Determine if a vault secret script is a client script that can be given --vault-id args'''
+
+    # if password script is 'something-client' or 'something-client.[sh|py|rb|etc]'
+    # script_name can still have '.' or could be entire filename if there is no ext
+    script_name, dummy = os.path.splitext(filename)
+
+    # TODO: for now, this is entirely based on filename
+    if script_name.endswith('-client'):
+        return True
+
+    return False
 
 
 def get_file_vault_secret(filename: t.AnyStr | None = None, vault_id: str | None = None, encoding: str | None = None, loader: DataLoader | None = None):
@@ -28,7 +47,7 @@ def get_file_vault_secret(filename: t.AnyStr | None = None, vault_id: str | None
 
         if script_is_client(filename):
             # this is special script type that handles vault ids
-            display.vvvv(u'The vault password file %s is a client script.' % to_text(this_path))
+            display.vvvv(f'The vault password file "{this_path" is a client script.')
             # TODO: pass vault_id_name to script via cli
             return ClientScriptVaultSecret(filename=this_path, vault_id=vault_id, encoding=encoding, loader=loader)
 

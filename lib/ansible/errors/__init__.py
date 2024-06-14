@@ -389,14 +389,14 @@ class AnsibleVaultError(AnsibleError):
     def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, filename=None):
 
         self.filename = filename
-        super(AnsibleVaultFormatError, self).__init__(message, obj, show_content, suppress_extended_error, orig_exc)
+        super(AnsibleVaultError, self).__init__(message, obj, show_content, suppress_extended_error, orig_exc)
 
     @property
     def message(self):
 
-        if filename:
+        if self.filename:
             self._message += ' in "{self.filename}'
-        super(AnsibleVaultFormatError, self).message()
+        super(AnsibleVaultError, self).message()
 
 
 class AnsibleVaultPasswordError(AnsibleVaultError):

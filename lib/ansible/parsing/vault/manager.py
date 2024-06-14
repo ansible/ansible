@@ -125,7 +125,7 @@ class VaultLib:
 
         b_plaintext = bytes(vault.raw)
 
-        if is_encrypted(b_plaintext):
+        if is_vault(b_plaintext):
             raise AnsibleError("input is already encrypted")
 
         try:
@@ -177,7 +177,7 @@ class VaultLib:
                 msg += " in file %s" % to_native(filename)
             raise AnsibleVaultError(msg)
 
-        if not is_encrypted(b_vaulttext):
+        if not is_vault(b_vaulttext):
             msg = "input is not vault encrypted data. "
             if filename:
                 msg += "%s is not a vault encrypted file" % to_native(filename)
@@ -220,9 +220,9 @@ class VaultLib:
             vault_id_matchers.append(vault.vault_id)
             _matches = match_secrets(self.secrets, vault_id_matchers)
             if _matches:
-                display.vvvvv(f'We have a secret associated with vault id (vault.vault_id), will try to use to decrypt: {vaultfilename}')
+                display.vvvvv(f'We have a secret associated with vault id (vault.vault_id), will try to use to decrypt: {vault.filename}')
             else:
-                display.vvvvv(f'Found a vault_id (vault.vault_id) in the vault text, but we do not have a associated secret (--vault-id)')
+                display.vvvvv(f'Found a vault_id ({vault.vault_id}) in the vault text, but we do not have a associated secret (--vault-id)')
 
         # Not adding the other secrets to vault_secret_ids enforces a match between the vault_id from the vault_text and
         # the known vault secrets.
