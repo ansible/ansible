@@ -32,6 +32,9 @@ except ImportError:
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleVaultError, AnsibleVaultFormatError
 
+if t.TYPE_CHECKING:
+    from ansible.parsing.vault import Vault
+
 NEED_CRYPTO_LIBRARY = "ansible-vault requires the cryptography library in order to function"
 
 
@@ -39,10 +42,10 @@ def _unhexlify(b_data: bytes) -> bytes:
     try:
         return unhexlify(b_data)
     except (BinasciiError, TypeError) as exc:
-        raise AnsibleVaultFormatError('Vault format unhexlify error', orig_exc=exc)
+        raise AnsibleVaultFormatError('Vault failed to unhexlify the encrypted text', orig_exc=exc)
 
 
-def parse_vaulttext_old(b_vaulttext: bytes) -> list[bytes]:
+def parse_vaulttext_old(b_vaulttext: bytes) -> bytes, bytes, bytes:
     ''' old format does double hexing, only use with versions 1.1 and 1.2
     :arg b_vaulttext: byte str containing the vaulttext (ciphertext, salt, crypted_hmac)
     :returns: A tuple of byte str of the ciphertext suitable for passing to a
@@ -54,7 +57,7 @@ def parse_vaulttext_old(b_vaulttext: bytes) -> list[bytes]:
     return parse_vaulttext(b_vaulttext)
 
 
-def parse_vaulttext(b_vaulttext: bytes) -> list[bytes]:
+def parse_vaulttext(b_vaulttext: bytes) -> bytes, bytes, bytes:
     """
     :arg b_vaulttext: byte str containing the vaulttext (ciphertext, salt, crypted_hmac)
     :returns: A tuple of byte str of the ciphertext suitable for passing to a
@@ -70,20 +73,28 @@ def parse_vaulttext(b_vaulttext: bytes) -> list[bytes]:
     except AnsibleVaultFormatError:
         raise
     except Exception as exc:
-        raise AnsibleVaultFormatError('Vault encrypted text format error', orig_exc=exc)
+        raise AnsibleVaultFormatError('Vault failed to parse the encrypted text', orig_exc=exc)
 
     return b_ciphertext, b_salt, b_crypted_hmac
 
 
 class VaultCipher:
 
-    # TODO: make them take vault object
     @classmethod
     def encrypt(cls, b_plaintext: bytes, secret: str, salt: str | None = None) -> bytes:
         pass
 
+    # TODO: using override or should we just kill old methods?
+    @classmethod
+    def encrypt(cls, vault: Vault) -> bytes:
+        pass
+
     @classmethod
     def decrypt(cls, b_vaultedtext: bytes, secret: str) -> bytes:
+        pass
+
+    @classmethod
+    def decrypt(cls, vault: Vault) -> bytes:
         pass
 
     @staticmethod
@@ -229,14 +240,15 @@ class VaultAES256(VaultCipher):
         return cls._decrypt_cryptography(b_ciphertext, b_crypted_hmac, b_key1, b_key2, b_iv)
 
 
-class VaultAES256(VaultCipher):
+class VaultAES256v2(VaultCipher):
     """
-    Vault implementation using AES-CTR with an HMAC-SHA256 authentication code.
+    Vault cipher implementation using AES-CTR with an HMAC-SHA256 authentication code.
     Keys are derived using PBKDF2
     """
 
     # http://www.daemonology.net/blog/2009-06-11-cryptographic-right-answers.html
     # Note: strings in this class should be byte strings by default.
+    DEFAULT_ITERATIONS = 600000
 
     def __init__(self) -> t.Self:
         if not HAS_CRYPTOGRAPHY:
@@ -255,7 +267,7 @@ class VaultAES256(VaultCipher):
 
 
     @classmethod
-    def _gen_key_initctr(cls, b_password: bytes, b_salt: bytes) -> bytes, bytes, bytes:
+    def _gen_key_initctr(cls, b_password: bytes, b_salt: bytes, iterations: int) -> bytes, bytes, bytes:
         # 16 for AES 128, 32 for AES256
         key_length = 32
 
@@ -263,7 +275,7 @@ class VaultAES256(VaultCipher):
             # AES is a 128-bit block cipher, so IVs and counter nonces are 16 bytes
             iv_length = algorithms.AES.block_size // 8
 
-            b_derivedkey = cls._create_key_cryptography(b_password, b_salt, key_length, iv_length)
+            b_derivedkey = cls._create_key_cryptography(b_password, b_salt, key_length, iv_length, iterations)
         else:
             raise AnsibleError(NEED_CRYPTO_LIBRARY + ' and generate keys')
 
@@ -292,32 +304,36 @@ class VaultAES256(VaultCipher):
         return bytes(custom_salt)
 
     @classmethod
-    def encrypt(cls, b_plaintext: bytes, secret: str, salt: bytes | str | None = None) -> bytes:
+    #def encrypt(cls, b_plaintext: bytes, secret: str, salt: bytes | str | None = None) -> bytes:
+    def encrypt(cls, vault: Vault, secret: str) -> bytes:
 
-        if secret is None:
+        if vault.secret is None:
             raise AnsibleVaultError('The secret passed to encrypt() was None')
 
-        if salt is None:
+        if vault.salt is None:
             b_salt = cls._get_salt()
         elif not salt:
             raise AnsibleVaultError('Empty or invalid salt passed to encrypt()')
         else:
-            b_salt = bytes(salt)
+            b_salt = bytes(vault.salt)
 
         b_password = bytes(secret)
-        b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt)
+        iterations = vault.options.get('iterations', cls.DEFAULT_ITERATIONS))
+        b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt, iterations)
 
         if HAS_CRYPTOGRAPHY:
-            b_hmac, b_ciphertext = cls._encrypt_cryptography(b_plaintext, b_key1, b_key2, b_iv)
+            b_hmac, b_ciphertext = cls._encrypt_cryptography(bytes(vault.plain), b_key1, b_key2, b_iv)
         else:
             raise AnsibleError(NEED_CRYPTO_LIBRARY + ' and encrypt')
 
         # only need to hexlify salt as others were already done
-        return b'\n'.join([hexlify(b_salt), b_hmac, b_ciphertext])
+        vault.vaulted= b'\n'.join([hexlify(b_salt), b_hmac, b_ciphertext])
+        vault.options['iterations'] = iterations
+
+        return vault.vaulted
 
     @classmethod
     def _decrypt_cryptography(cls, b_ciphertext: bytes, b_crypted_hmac: bytes, b_key1: bytes, b_key2: bytes, b_iv: bytes) -> bytes:
-        # b_key1, b_key2, b_iv = self._gen_key_initctr(b_password, b_salt)
         # EXIT EARLY IF DIGEST DOESN'T MATCH
         hmac = HMAC(b_key2, hashes.SHA256(), CRYPTOGRAPHY_BACKEND)
         hmac.update(b_ciphertext)
@@ -336,18 +352,17 @@ class VaultAES256(VaultCipher):
         return b_plaintext
 
     @classmethod
-    def decrypt(cls, b_vaulttext: bytes, secret: bytes | str) -> bytes:
+    def decrypt(cls, vault: Vault, secret: bytes | str) -> bytes:
 
         if not HAS_CRYPTOGRAPHY:
             raise AnsibleError(NEED_CRYPTO_LIBRARY + ' and decrypt')
 
-        b_ciphertext, b_salt, b_crypted_hmac = parse_vaulttext(b_vaulttext)
+        b_ciphertext, b_salt, b_crypted_hmac = parse_vaulttext(vault.vaulted)
+        b_password = bytes(secret)
+        iterations = vault.options.get('iterations', cls.DEFAULT_ITERATIONS))
+        b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt, iterations)
 
-        # TODO: would be nice if a VaultSecret could be passed directly to _decrypt_*
-        #       (move _gen_key_initctr() to a AES256 VaultSecret or VaultContext impl?)
-        # though, likely needs to be python cryptography specific impl that basically
-        # creates a Cipher() with b_key1, a Mode.CTR() with b_iv, and a HMAC() with sign key b_key2
-        b_password = secret.bytes
+        vault.plain = cls._decrypt_cryptography(vault.vaulted, b_crypted_hmac, b_key1, b_key2, b_iv)
+        vault.options['iterations'] = iterations
 
-        b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt)
-        return cls._decrypt_cryptography(b_ciphertext, b_crypted_hmac, b_key1, b_key2, b_iv)
+        return vault.plain
