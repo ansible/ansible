@@ -79,15 +79,15 @@ class VaultCipher:
 
     # TODO: make them take vault object
     @classmethod
-    def encrypt(cls, b_plaintext, secret, salt=None):
+    def encrypt(cls, b_plaintext: bytes, secret: str, salt: str | None = None) -> bytes:
         pass
 
     @classmethod
-    def decrypt(cls, b_vaultedtext, secret):
+    def decrypt(cls, b_vaultedtext: bytes, secret: str) -> bytes:
         pass
 
     @staticmethod
-    def _is_equal(b_a: bytes, b_b: bytes):
+    def _is_equal(b_a: bytes, b_b: bytes) -> bool:
         """
         Comparing 2 byte arrays in constant time to avoid timing attacks.
         It would be nice if there were a library for this but hey.
@@ -112,12 +112,12 @@ class VaultAES256(VaultCipher):
     # http://www.daemonology.net/blog/2009-06-11-cryptographic-right-answers.html
     # Note: strings in this class should be byte strings by default.
 
-    def __init__(self):
+    def __init__(self) -> t.Self:
         if not HAS_CRYPTOGRAPHY:
             raise AnsibleError(NEED_CRYPTO_LIBRARY)
 
     @staticmethod
-    def _create_key_cryptography(b_password, b_salt, key_length, iv_length):
+    def _create_key_cryptography(b_password: bytes, b_salt: bytes, key_length: int, iv_length: int) -> bytes:
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=2 * key_length + iv_length,
@@ -129,7 +129,7 @@ class VaultAES256(VaultCipher):
         return b_derivedkey
 
     @classmethod
-    def _gen_key_initctr(cls, b_password, b_salt):
+    def _gen_key_initctr(cls, b_password: bytes, b_salt: bytes) -> list[bytes]:
         # 16 for AES 128, 32 for AES256
         key_length = 32
 
@@ -148,7 +148,7 @@ class VaultAES256(VaultCipher):
         return b_key1, b_key2, b_iv
 
     @staticmethod
-    def _encrypt_cryptography(b_plaintext, b_key1, b_key2, b_iv):
+    def _encrypt_cryptography(b_plaintext: bytes, b_key1: bytes, b_key2: bytes, b_iv: bytes):
         cipher = C_Cipher(algorithms.AES(b_key1), modes.CTR(b_iv), CRYPTOGRAPHY_BACKEND)
         encryptor = cipher.encryptor()
         padder = padding.PKCS7(algorithms.AES.block_size).padder()
@@ -163,14 +163,14 @@ class VaultAES256(VaultCipher):
         return bytes(hexlify(b_hmac)), hexlify(b_ciphertext)
 
     @classmethod
-    def _get_salt(cls):
+    def _get_salt(cls) -> str:
         custom_salt = C.config.get_config_value('VAULT_ENCRYPT_SALT')
         if not custom_salt:
             custom_salt = os.urandom(32)
         return bytes(custom_salt)
 
     @classmethod
-    def encrypt(cls, b_plaintext, secret, salt=None):
+    def encrypt(cls, b_plaintext: bytes, secret: str, salt: bytes | str | None = None):
 
         if secret is None:
             raise AnsibleVaultError('The secret passed to encrypt() was None')
@@ -182,7 +182,7 @@ class VaultAES256(VaultCipher):
         else:
             b_salt = bytes(salt)
 
-        b_password = secret.bytes
+        b_password = bytes(secret)
         b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt)
 
         if HAS_CRYPTOGRAPHY:

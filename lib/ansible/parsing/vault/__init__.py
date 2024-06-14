@@ -44,7 +44,7 @@ class Vault:
 
     b_HEADER = b'$ANSIBLE_VAULT'
 
-    def __init__(self, cipher, version='1.3', vault_id=None, options=None, filename=None, line=None):
+    def __init__(self, cipher, version='1.3', vault_id=None, options=None, filename=None, line=None) -> t.Self:
 
         self.plain: str | None = None
         self.vaulted: bytes | None = None
@@ -75,6 +75,8 @@ class Vault:
             self.CIPHER_ALLOWLIST = frozenset(('AES256', 'AES256v2'))
             self.CIPHER_WRITE_ALLOWLIST = frozenset(('AES256v2',))
 
+    # TODO: move hexing/unhexing into here as it is verion dependant
+    # NOTE: should we just use python serialization methods?
     def to_envelope(self) -> bytes:
         """ Add header and format to 80 columns
 
@@ -109,7 +111,7 @@ class Vault:
         return b'\n'.join(b_envelope)
 
     @classmethod
-    def from_envelope(cls, b_envelope: bytes, default_vault_id: str | None = None, filename: t.AnyStr | None = None) -> Vault:
+    def from_envelope(cls, b_envelope: bytes, default_vault_id: str | None = None, filename: t.AnyStr | None = None) -> t.Self:
         """
         When data is saved, it has a header prepended and is formatted into 80
         character lines.  This method extracts the information from the header
