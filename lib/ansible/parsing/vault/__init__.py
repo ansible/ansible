@@ -29,6 +29,10 @@ from ansible.module_utils.common.text.converters import to_bytes, to_text, to_na
 from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe, unfrackpath
 
+# backwards compat
+from ansible.parsing.vault.manager import VaultLib, VaultEditor
+from ansible.parsing.vault.secrets import VaultSecret
+
 if t.TYPE_CHECKING:
     from ansible.parsing.dataloader import DataLoader
 
@@ -66,7 +70,7 @@ class Vault():
             self.CIPHER_WRITE_ALLOWLIST = frozenset(('AES256',))
         else:
             self.HEADER_LENGTH = 5
-            self.CIPHER_ALLOWLIST = frozenset(('AES256','AES256v2'))
+            self.CIPHER_ALLOWLIST = frozenset(('AES256', 'AES256v2'))
             self.CIPHER_WRITE_ALLOWLIST = frozenset(('AES256v2',))
 
 
@@ -131,7 +135,6 @@ def is_encrypted_file(file_obj: t.IO[t.AnyStr], start_pos: int = 0, count: int =
 
     finally:
         file_obj.seek(current_position)
-
 
 
 def parse_vaulttext_envelope(b_vaulttext_envelope: bytes, default_vault_id: str | None = None, filename: t.AnyStr | None = None) -> Vault:
@@ -204,8 +207,8 @@ def format_vaulttext_envelope(vault) -> bytes:
     version = vault.version
 
     # If we specify a vault_id, use format version 1.2. For no vault_id, stick to 1.1
-    #if version <= '1.1' and vault_id and vault_id != u'default':
-    #    version = '1.2'
+    # if version <= '1.1' and vault_id and vault_id != u'default':
+    #     version = '1.2'
 
     b_version = to_bytes(version, 'utf-8', errors='strict')
     b_vault_id = to_bytes(vault.vault_id, 'utf-8', errors='strict')

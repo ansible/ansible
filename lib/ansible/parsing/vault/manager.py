@@ -73,6 +73,7 @@ def match_encrypt_vault_id_secret(secrets: list[str], encrypt_vault_id: str | No
     raise AnsibleVaultError('Did not find a match for --encrypt-vault-id=%s in the known vault-ids %s' % (encrypt_vault_id,
                                                                                                           [_v for _v, _vs in secrets]))
 
+
 def match_encrypt_secret(secrets: list[str], encrypt_vault_id: str | None = None):
     '''Find the best/first/only secret in secrets to use for encrypting'''
 
@@ -215,13 +216,13 @@ class VaultLib:
         vault_secret_used = None
 
         if vault.vault_id:
-            display.vvvvv(u'Found a vault_id (%s) in the vaulttext' % to_text(vault.vault_id))
+            display.vvvvv(f'Found a vault_id ({vault.vault_id}) in the vaulttext')
             vault_id_matchers.append(vault.vault_id)
             _matches = match_secrets(self.secrets, vault_id_matchers)
             if _matches:
-                display.vvvvv(u'We have a secret associated with vault id (%s), will try to use to decrypt %s' % (to_text(vault.vault_id), to_text(vault.filename)))
+                display.vvvvv(f'We have a secret associated with vault id (vault.vault_id), will try to use to decrypt: {vaultfilename}')
             else:
-                display.vvvvv(u'Found a vault_id (%s) in the vault text, but we do not have a associated secret (--vault-id)' % to_text(vault.vault_id))
+                display.vvvvv(f'Found a vault_id (vault.vault_id) in the vault text, but we do not have a associated secret (--vault-id)')
 
         # Not adding the other secrets to vault_secret_ids enforces a match between the vault_id from the vault_text and
         # the known vault secrets.
@@ -233,11 +234,11 @@ class VaultLib:
 
         # for vault_secret_id in vault_secret_ids:
         for vault_secret_id, vault_secret in matched_secrets:
-            display.vvvvv(u'Trying to use vault secret=(%s) id=%s to decrypt %s' % (to_text(vault_secret), to_text(vault_secret_id), to_text(vault.filename)))
+            display.vvvvv(f'Trying to use matched vault secret id={vault.vault_id} to decrypt: {vault.filename}')
 
             try:
                 # secret = self.secrets[vault_secret_id]
-                display.vvvv(u'Trying secret %s for vault_id=%s' % (to_text(vault_secret), to_text(vault_secret_id)))
+                display.vvvv(f'Trying matched secret for vault_id={vault.vault_id}')
                 b_plaintext = this_cipher.decrypt(vault.raw, vault_secret)
                 if b_plaintext is not None:
                     vault_id_used = vault_secret_id
@@ -245,17 +246,14 @@ class VaultLib:
                     file_slug = ''
                     if vault.filename:
                         file_slug = ' of "%s"' % vault.filename
-                    display.vvvvv(
-                        u'Decrypt%s successful with secret=%s and vault_id=%s' % (to_text(file_slug), to_text(vault_secret), to_text(vault_secret_id))
-                    )
+                    display.vvvvv(f'Decrypt successful for vault_id={vault.vault_id}')
                     break
             except AnsibleVaultFormatError as exc:
                 exc.obj = obj
                 exc.filename = vault.filename
                 raise exc
             except AnsibleError as e:
-                display.vvvv(u'Tried to use the vault secret (%s) to decrypt (%s) but it failed. Error: %s' %
-                             (to_text(vault_secret_id), to_text(vault.filename), e))
+                display.vvvv(f'Tried to use the vault secret (id={vault.vault_id}) to decrypt ({vault.filename}) but it failed: {e}')
                 continue
         else:
             raise AnsibleVaultError("Decryption failed (no vault secrets were found that could decrypt)", filename=vault.filename)
