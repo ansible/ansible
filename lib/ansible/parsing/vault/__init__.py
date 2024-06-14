@@ -22,7 +22,7 @@ from binascii import unhexlify
 from binascii import Error as BinasciiError
 
 
-from ansible.errors import AnsibleError, AnsibleAssertionError
+from ansible.errors import AnsibleError, AnsibleVaultFormatError
 from ansible import constants as C
 from ansible.module_utils.six import binary_type
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
@@ -31,7 +31,7 @@ from ansible.utils.path import makedirs_safe, unfrackpath
 
 # backwards compat
 from ansible.parsing.vault.manager import VaultLib, VaultEditor
-from ansible.parsing.vault.secrets import VaultSecret
+from ansible.parsing.vault.secrets import VaultSecret, get_file_vault_secret
 
 if t.TYPE_CHECKING:
     from ansible.parsing.dataloader import DataLoader
@@ -40,13 +40,15 @@ display = Display()
 
 
 # option: 1, version aware class
-class Vault():
+class Vault:
 
     b_HEADER = b'$ANSIBLE_VAULT'
 
-    def __init__(self, b_ciphertext, cipher, version='1.3', vault_id=None, options=None, filename=None, line=None):
+    def __init__(self, cipher, version='1.3', vault_id=None, options=None, filename=None, line=None):
 
-        self._raw = b_ciphertext
+        self.plain: str | None = None
+        self.vaulted: bytes | None = None
+
         self.cipher = cipher
         self.version = version
 
@@ -73,6 +75,98 @@ class Vault():
             self.CIPHER_ALLOWLIST = frozenset(('AES256', 'AES256v2'))
             self.CIPHER_WRITE_ALLOWLIST = frozenset(('AES256v2',))
 
+    def to_envelope(self) -> bytes:
+        """ Add header and format to 80 columns
+
+            :returns: a byte str that should be dumped into a file.  It's
+                formatted to 80 char columns and has the header prepended
+        """
+
+        if not self.cipher:
+            raise AnsibleError("The cipher must be set before creating an envelope")
+
+        if not self.vaulted:
+            raise AnsibleError("Cannot create an envelope without encrypted content")
+
+        # convert to bytes
+        b_version = to_bytes(self.version, 'utf-8', errors='strict')
+        b_vault_id = to_bytes(self.vault_id, 'utf-8', errors='strict')
+        b_cipher = to_bytes(self.cipher, 'utf-8', errors='strict')
+        b_options = pickle.dumps(self.options)
+
+        header_parts = [self.b_HEADER, b_version, b_cipher]
+
+        if b_version != b'1.1' and b_vault_id:
+            header_parts.append(b_vault_id)
+
+        header = b';'.join(header_parts)
+
+        # compose envelope
+        b_envelope = [header]
+        b_envelope += [self.vaulted[i:i + 80] for i in range(0, len(self.vaulted), 80)]
+        b_envelope += [b'']
+
+        return b'\n'.join(b_envelope)
+
+    @classmethod
+    def from_envelope(cls, b_envelope: bytes, default_vault_id: str | None = None, filename: t.AnyStr | None = None) -> Vault:
+        """
+        When data is saved, it has a header prepended and is formatted into 80
+        character lines.  This method extracts the information from the header
+        and then removes the header and the inserted newlines.  The string returned
+        is suitable for processing by the Cipher classes.
+
+        :arg b_vaulttext: byte str containing the data from a save file
+        :kwarg default_vault_id: The vault_id name to use if the vaulttext does not provide one.
+        :kwarg filename: The filename that the data came from.  This is only
+            used to make better error messages in case the data cannot be
+            decrypted. This is optional.
+        :returns: A tuple of byte str of the vaulttext suitable to pass to parse_vaultext,
+            a byte str of the vault format version,
+            the name of the cipher used, and the vault_id.
+        :raises: AnsibleVaultFormatError: if the vaulttext_envelope format is invalid
+        """
+        # used by decrypt
+        default_vault_id = default_vault_id or C.DEFAULT_VAULT_IDENTITY
+
+        try:
+            # examples per version
+            # $ANSIBLE_VAULT;1.3;AES256;example1;<pickled_options_hash>
+            # $ANSIBLE_VAULT;1.2;AES256;example1
+            # $ANSIBLE_VAULT;1.1;AES256
+
+            b_tmpdata = b_envelope.splitlines()
+            b_tmpheader = b_tmpdata[0].strip().split(b';')
+
+            b_vaultedtext = b''.join(b_tmpdata[1:])
+
+            while len(b_tmpheader) < 5:
+                b_tmpheader.append(b'')
+
+            b_tag, b_version, b_cipher, b_vault_id, b_options = [(x.strip()) for x in b_tmpheader]
+
+            if b_tag != Vault.b_HEADER:
+                raise AnsibleVaultFormatError(f"Invalid vault tag found: {b_tag}", filename=filename)
+
+            if not b_vault_id:
+                # This should be version 1.1 or a higher version w/o specific id
+                vault_id = default_vault_id
+            else:
+                vault_id = str(vault_id)
+
+            if b_options:
+                options = pickle.loads(b_options)
+            else:
+                options = {}
+
+        except Exception as exc:
+            raise AnsibleVaultFormatError("Vault envelope format error", filename=filename, orig_exc=exc)
+
+        v = Vault(str(b_cipher), str(b_version), vault_id, options, filename)
+        v.vaulted = b_vaultedtext
+
+        return v
+
 
 # option: 2, class per version
 class Vault_1_1(Vault):
@@ -96,7 +190,7 @@ class Version():
     pass
 
 
-def is_encrypted(data: t.AnyStr) -> bool:
+def is_vault(data: t.AnyStr) -> bool:
     """ Test if this is vault encrypted data blob
 
     :arg data: a byte or text string to test whether it is recognized as vault
@@ -116,7 +210,11 @@ def is_encrypted(data: t.AnyStr) -> bool:
     return b_data.startswith(Vault.b_HEADER)
 
 
-def is_encrypted_file(file_obj: t.IO[t.AnyStr], start_pos: int = 0, count: int = len(Vault.b_HEADER)):
+# TODO: deprecate is_encrypted, we specifically look for vaults
+is_encrypted = is_vault
+
+
+def is_vault_file(file_obj: t.IO[t.AnyStr], start_pos: int = 0, count: int = len(Vault.b_HEADER)):
     """Test if the contents of a file obj are a vault encrypted data blob.
 
     :arg file_obj: A file object that will be read from.
@@ -131,103 +229,14 @@ def is_encrypted_file(file_obj: t.IO[t.AnyStr], start_pos: int = 0, count: int =
     current_position = file_obj.tell()
     try:
         file_obj.seek(start_pos)
-        return is_encrypted(file_obj.read(count))
+        return is_vault(file_obj.read(count))
 
     finally:
         file_obj.seek(current_position)
 
 
-def parse_vaulttext_envelope(b_vaulttext_envelope: bytes, default_vault_id: str | None = None, filename: t.AnyStr | None = None) -> Vault:
-    """
-    When data is saved, it has a header prepended and is formatted into 80
-    character lines.  This method extracts the information from the header
-    and then removes the header and the inserted newlines.  The string returned
-    is suitable for processing by the Cipher classes.
-
-    :arg b_vaulttext: byte str containing the data from a save file
-    :kwarg default_vault_id: The vault_id name to use if the vaulttext does not provide one.
-    :kwarg filename: The filename that the data came from.  This is only
-        used to make better error messages in case the data cannot be
-        decrypted. This is optional.
-    :returns: A tuple of byte str of the vaulttext suitable to pass to parse_vaultext,
-        a byte str of the vault format version,
-        the name of the cipher used, and the vault_id.
-    :raises: AnsibleVaultFormatError: if the vaulttext_envelope format is invalid
-    """
-    # used by decrypt
-    default_vault_id = default_vault_id or C.DEFAULT_VAULT_IDENTITY
-
-    try:
-        # examples per version
-        # $ANSIBLE_VAULT;1.3;AES256;example1;<pickled_options_hash>
-        # $ANSIBLE_VAULT;1.2;AES256;example1
-        # $ANSIBLE_VAULT;1.1;AES256
-
-        b_tmpdata = b_vaulttext_envelope.splitlines()
-        b_tmpheader = b_tmpdata[0].strip().split(b';')
-
-        b_ciphertext = b''.join(b_tmpdata[1:])
-
-        while len(b_tmpheader) < 5:
-            b_tmpheader.append(b'')
-
-        b_tag, b_version, b_cipher, b_vault_id, b_options = [(x.strip()) for x in b_tmpheader]
-
-        if b_tag != Vault.b_HEADER:
-            raise AnsibleVaultFormatError(f"Invalid vault tag found: {b_tag}", filename=filename)
-
-        if not b_vault_id:
-            # This should be version 1.1 or a higher version w/o specific id
-            vault_id = default_vault_id
-        else:
-            vault_id = str(vault_id)
-
-        if b_options:
-            options = pickle.loads(b_options)
-        else:
-            options = {}
-
-    except Exception as exc:
-        raise AnsibleVaultFormatError("Vault envelope format error", filename=filename, orig_exc=exc)
-
-    return Vault(b_ciphertext, str(b_version), str(b_cipher), vault_id, options, filename)
-
-
-def format_vaulttext_envelope(vault) -> bytes:
-    """ Add header and format to 80 columns
-
-        :arg vault: a vault class object
-        :returns: a byte str that should be dumped into a file.  It's
-            formatted to 80 char columns and has the header prepended
-    """
-
-    if not vault.cipher:
-        raise AnsibleError("the cipher must be set before adding a header")
-
-    version = vault.version
-
-    # If we specify a vault_id, use format version 1.2. For no vault_id, stick to 1.1
-    # if version <= '1.1' and vault_id and vault_id != u'default':
-    #     version = '1.2'
-
-    b_version = to_bytes(version, 'utf-8', errors='strict')
-    b_vault_id = to_bytes(vault.vault_id, 'utf-8', errors='strict')
-    b_cipher_name = to_bytes(vault.cipher, 'utf-8', errors='strict')
-    b_options = pickle.dumps(vault.options)
-
-    header_parts = [Vault.b_HEADER, b_version, b_cipher_name]
-
-    if b_version != b'1.1' and b_vault_id:
-        header_parts.append(b_vault_id)
-
-    header = b';'.join(header_parts)
-
-    b_vaulttext = [header]
-    b_vaulttext += [vault.raw[i:i + 80] for i in range(0, len(vault.raw), 80)]
-    b_vaulttext += [b'']
-    b_vaulttext = b'\n'.join(b_vaulttext)
-
-    return b_vaulttext
+# TODO: deprecate is_encrypted_file, we specifically look for vaults
+is_encrypted_file = is_vault_file
 
 
 def script_is_client(filename: t.AnyStr) -> bool:
@@ -242,32 +251,3 @@ def script_is_client(filename: t.AnyStr) -> bool:
         return True
 
     return False
-
-
-def get_file_vault_secret(filename: t.AnyStr | None = None, vault_id: str | None = None, encoding: str | None = None, loader: DataLoader | None = None):
-    ''' Get secret from file content or execute file and get secret from stdout '''
-
-    # we unfrack but not follow the full path/context to possible vault script
-    # so when the script uses 'adjacent' file for configuration or similar
-    # it still works (as inventory scripts often also do).
-    # while files from --vault-password-file are already unfracked, other sources are not
-    this_path = unfrackpath(filename, follow=False)
-    if not os.path.exists(this_path):
-        raise AnsibleError("The vault password file %s was not found" % this_path)
-
-    if os.path.isdir(this_path):
-        raise AnsibleError(f"The vault password file provided '{this_path}' can not be a directory")
-
-    # it is a script?
-    if loader.is_executable(this_path):
-
-        if script_is_client(filename):
-            # this is special script type that handles vault ids
-            display.vvvv(u'The vault password file %s is a client script.' % to_text(this_path))
-            # TODO: pass vault_id_name to script via cli
-            return ClientScriptVaultSecret(filename=this_path, vault_id=vault_id, encoding=encoding, loader=loader)
-
-        # just a plain vault password script. No args, returns a byte array
-        return ScriptVaultSecret(filename=this_path, encoding=encoding, loader=loader)
-
-    return FileVaultSecret(filename=this_path, encoding=encoding, loader=loader)

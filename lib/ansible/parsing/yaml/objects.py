@@ -109,7 +109,7 @@ class AnsibleVaultEncryptedUnicode(Sequence, AnsibleBaseYAMLObject):
         self._ciphertext = to_bytes(value)
 
     def is_encrypted(self):
-        return self.vault and self.vault.is_encrypted(self._ciphertext)
+        return self.vault and self.vault.is_vault(self._ciphertext)
 
     def __eq__(self, other):
         if self.vault:

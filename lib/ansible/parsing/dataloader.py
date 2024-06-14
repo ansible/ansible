@@ -18,7 +18,7 @@ from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.parsing.quoting import unquote
 from ansible.parsing.utils.yaml import from_yaml
-from ansible.parsing.vault import is_encrypted, is_encrypted_file, parse_vaulttext_envelope
+from ansible.parsing.vault import is_vault, is_vault_file
 from ansible.parsing.vault.manager import VaultLib
 from ansible.parsing.vault.secrets import PromptVaultSecret
 from ansible.utils.path import unfrackpath
@@ -142,11 +142,10 @@ class DataLoader:
     def _decrypt_if_vault_data(self, b_vault_data: bytes, b_file_name: bytes | None = None) -> tuple[bytes, bool]:
         '''Decrypt b_vault_data if encrypted and return b_data and the show_content flag'''
 
-        if not is_encrypted(b_vault_data):
+        if not is_vault(b_vault_data):
             show_content = True
             return b_vault_data, show_content
 
-        b_ciphertext, b_version, cipher_name, vault_id = parse_vaulttext_envelope(b_vault_data)
         b_data = self._vault.decrypt(b_vault_data, filename=b_file_name)
 
         show_content = False
@@ -391,7 +390,7 @@ class DataLoader:
                     # Limit how much of the file is read since we do not know
                     # whether this is a vault file and therefore it could be very
                     # large.
-                    if is_encrypted_file(f):
+                    if is_vault_file(f):
                         # if the file is encrypted and no password was specified,
                         # the decrypt call would throw an error, but we check first
                         # since the decrypt function doesn't know the file name

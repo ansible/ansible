@@ -77,10 +77,13 @@ def parse_vaulttext(b_vaulttext: bytes) -> list[bytes]:
 
 class VaultCipher:
 
-    def encrypt():
+    # TODO: make them take vault object
+    @classmethod
+    def encrypt(cls, b_plaintext, secret, salt=None):
         pass
 
-    def decrypt():
+    @classmethod
+    def decrypt(cls, b_vaultedtext, secret):
         pass
 
     @staticmethod

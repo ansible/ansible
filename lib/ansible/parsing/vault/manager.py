@@ -20,7 +20,7 @@ import ansible.parsing.vault.ciphers as CI
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError, AnsibleVaultError, AnsibleVaultFormatError
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
-from ansible.parsing.vault import Vault, is_encrypted, format_vaulttext_envelope, parse_vaulttext_envelope
+from ansible.parsing.vault import Vault, is_vault
 from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe
 
@@ -98,8 +98,11 @@ class VaultLib:
         self.default_version = '1.3'
 
     @staticmethod
-    def is_encrypted(vaulttext: t.AnyStr):
-        return is_encrypted(vaulttext)
+    def is_vault(vaulttext: t.AnyStr):
+        return is_vault(vaulttext)
+
+    # TODO: deprecate is_encrypted
+    is_encrypted = is_vault
 
     def encrypt(self, vault: Vault, secret: str | None = None):
         """Vault encrypt a piece of data.
@@ -136,13 +139,10 @@ class VaultLib:
         else:
             display.vvvvv('Encrypting without a vault_id using')
 
-        b_ciphertext = this_cipher.encrypt(b_plaintext, secret, vault.salt)
+        vault.vaulted = this_cipher.encrypt(b_plaintext, secret, vault.salt)
 
         # format the data for output to the file
-        b_vaulttext = format_vaulttext_envelope(b_ciphertext,
-                                                vault.cipher,
-                                                vault_id=vault.vault_id)
-        return b_vaulttext
+        return vault.to_envelope()
 
     def decrypt(self, vaulttext: str, filename: str | None = None, obj: object | None = None):
         '''Decrypt a piece of vault encrypted data.
@@ -183,7 +183,7 @@ class VaultLib:
                 msg += "%s is not a vault encrypted file" % to_native(filename)
             raise AnsibleError(msg)
 
-        vault = parse_vaulttext_envelope(b_vaulttext, filename=filename)
+        vault = Vault.from_envelope(b_vaulttext, filename=filename)
 
         return self._open_vault(vault, obj)
 
@@ -458,7 +458,7 @@ class VaultEditor:
 
         # Figure out the vault id from the file, to select the right secret to re-encrypt it
         # (duplicates parts of decrypt, but alas...)
-        vault = parse_vaulttext_envelope(b_vaulttext, filename=filename)
+        vault = Vault.from_envelope(b_vaulttext, filename=filename)
 
         # vault id here may not be the vault id actually used for decrypting
         # as when the edited file has no vault-id but is decrypted by non-default id in secrets

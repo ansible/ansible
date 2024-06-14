@@ -12,6 +12,32 @@ from ansible.utils.display import Display
 display = Display()
 
 
+def get_file_vault_secret(filename: t.AnyStr | None = None, vault_id: str | None = None, encoding: str | None = None, loader: DataLoader | None = None):
+    ''' Get secret from file content or execute file and get secret from stdout '''
+
+    # we unfrack but not follow the full path/context to possible vault script
+    # so when the script uses 'adjacent' file for configuration or similar
+    # it still works (as inventory scripts often also do).
+    # while files from --vault-password-file are already unfracked, other sources are not
+    this_path = unfrackpath(filename, follow=False)
+    if not os.path.exists(this_path):
+        raise AnsibleError("The vault password file %s was not found" % this_path)
+
+    # it is a script?
+    if loader.is_executable(this_path):
+
+        if script_is_client(filename):
+            # this is special script type that handles vault ids
+            display.vvvv(u'The vault password file %s is a client script.' % to_text(this_path))
+            # TODO: pass vault_id_name to script via cli
+            return ClientScriptVaultSecret(filename=this_path, vault_id=vault_id, encoding=encoding, loader=loader)
+
+        # just a plain vault password script. No args, returns a byte array
+        return ScriptVaultSecret(filename=this_path, encoding=encoding, loader=loader)
+
+    return FileVaultSecret(filename=this_path, encoding=encoding, loader=loader)
+
+
 def verify_secret_is_not_empty(secret: t.AnyStr, msg: str | None = None):
     '''Check the secret against minimal requirements.
 
