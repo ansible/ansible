@@ -506,9 +506,9 @@ class CallbackBase(AnsiblePlugin):
         self.on_any(args, kwargs)
 
     def v2_runner_on_failed(self, result: TaskResult, ignore_errors: bool = False) -> None:
-        """Get details about a failed task and whether or not Ansible should continue running
-        tasks on the host where the failure occurred. Process the details for output, profiling,
-        logging, etc., as needed for the callback.
+        """Get details about a failed task and whether or not Ansible should continue
+        running tasks on the host where the failure occurred, then process the details
+        as required by the callback (output, profiling, logging, notifications, etc.)
 
         Note: The 'ignore_errors' directive only works when the task can run and returns
         a value of 'failed'. It does not make Ansible ignore undefined variable errors,
@@ -516,7 +516,7 @@ class CallbackBase(AnsiblePlugin):
 
         Customization notes:
         - You can access and use other TaskResult class attributes and methods like
-          result._task, result._task_fields, result.task_name(), or result.is_failed()
+          result._task, result._task_fields, result.task_name(), and result.is_failed()
         - The ansible.executor.task_result.TaskResult class is defined in
           lib/ansible/executor/task_result.py
 
@@ -530,12 +530,12 @@ class CallbackBase(AnsiblePlugin):
         self.runner_on_failed(host, result._result, ignore_errors)
 
     def v2_runner_on_ok(self, result: TaskResult) -> None:
-        """Get details about a successful task and process them for output, profiling,
-        logging, etc., as needed for the callback.
+        """Get details about a successful task and process them as required by the callback
+        (output, profiling, logging, notifications, etc.)
 
         Customization notes:
         - You can access and use other TaskResult class attributes and methods like
-          result._task, result._task_fields, result.task_name(), or result.is_changed()
+          result._task, result._task_fields, result.task_name(), and result.is_changed()
         - The ansible.executor.task_result.TaskResult class is defined in
           lib/ansible/executor/task_result.py
 
@@ -547,12 +547,12 @@ class CallbackBase(AnsiblePlugin):
         self.runner_on_ok(host, result._result)
 
     def v2_runner_on_skipped(self, result: TaskResult) -> None:
-        """Get details about a skipped task and process them for output, profiling,
-        logging, etc., as needed for the callback.
+        """Get details about a skipped task and process them as required by the callback
+        (output, profiling, logging, notifications, etc.)
 
         Customization notes:
         - You can access and use other TaskResult class attributes and methods like
-          result._task, result._task_fields, result.task_name(), or result.is_skipped()
+          result._task, result._task_fields, result.task_name(), and result.is_skipped()
         - The ansible.executor.task_result.TaskResult class is defined in
           lib/ansible/executor/task_result.py
 
