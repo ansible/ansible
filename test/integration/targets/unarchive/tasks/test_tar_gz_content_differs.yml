@@ -1,0 +1,56 @@
+- set_fact:
+    dest: '{{remote_tmp_dir}}/test-unarchive-tar-gz-content-differs'
+
+- name: create our tar.gz unarchive destination
+  file:
+    path: "{{ dest }}"
+    state: directory
+
+- name: unarchive a tar.gz file
+  unarchive:
+    src: 'content_differs.tar.gz'
+    dest: '{{ dest }}'
+    remote_src: no
+  register: unarchive_content_differs_01
+
+- name: verify that the task was marked as changed
+  assert:
+    that:
+      - unarchive_content_differs_01.changed
+
+- name: checksum the file after first unarchive
+  stat:
+    path: '{{ dest }}/hello.txt'
+    checksum_algorithm: sha256
+    get_checksum: yes
+  register: first_unarchive_content
+
+- name: unarchive a tar.gz file with same name, size but different content
+  unarchive:
+    src: 'content_differs_2.tar.gz'
+    dest: '{{ dest }}'
+    remote_src: no
+  register: unarchive_content_differs_01
+
+- name: verify that the task was marked as changed
+  assert:
+    that:
+      - unarchive_content_differs_01.changed
+
+- name: checksum the file after second unarchive
+  stat:
+    path: '{{ dest }}/hello.txt'
+    checksum_algorithm: sha256
+    get_checksum: yes
+  register: second_unarchive_content
+
+- name: verify that unarchive extracted file with new content
+  assert:
+    that:
+      - first_unarchive_content.stat.checksum != second_unarchive_content.stat.checksum
+      - first_unarchive_content.stat.size == second_unarchive_content.stat.size
+
+- name: remove our tar.gz unarchive destination
+  file:
+    path: '{{ dest }}'
+    state: absent
