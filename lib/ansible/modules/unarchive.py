@@ -250,8 +250,9 @@ import re
 import stat
 import time
 import traceback
+from shlex import quote
 from functools import partial
-from zipfile import ZipFile
+from zipfile import ZipFile, BadZipFile
 
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
@@ -259,8 +260,6 @@ from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.urls import fetch_file
 
-from shlex import quote
-from zipfile import BadZipFile
 
 # String from tar that shows the tar contents are different from the
 # filesystem
@@ -298,7 +297,7 @@ class UnarchiveError(Exception):
     pass
 
 
-class ZipArchive(object):
+class ZipArchive:
 
     def __init__(self, src, b_dest, file_args, module):
         self.src = src
@@ -320,6 +319,51 @@ class ZipArchive(object):
             ('zipinfo', 'zipinfo_cmd_path'),
         )
 
+    def _parse_infolist(self):
+        ''' Parse zip file for metadata information such as CRC32 and filenames '''
+        mask_utf_filename = 1 << 11
+        try:
+            archive = ZipFile(self.src)
+        except BadZipFile as e:
+            if e.args[0].lower().startswith('bad magic number'):
+                # Try using /usr/bin/unzip instead
+                self._legacy_file_list()
+            else:
+                raise
+        else:
+            try:
+                for item in archive.infolist():
+                    # Get information about CRC
+                    if item.flag_bits & mask_utf_filename:
+                        # UTF-8 file names extension
+                        filename = to_text(item.filename)
+                    else:
+                        # Historical ZIP filename encoding
+                        filename = to_text(item.filename.encode('cp437'))
+                    self._infodict[filename] = int(item.CRC)
+
+                    if self.include_files:
+                        # Get information about files to include
+                        for include in self.include_files:
+                            if fnmatch.fnmatch(filename, include):
+                                self._files_in_archive.append(filename)
+                    else:
+                        # Get information about files to exclude
+                        exclude_flag = False
+                        if self.excludes:
+                            for exclude in self.excludes:
+                                if fnmatch.fnmatch(filename, exclude):
+                                    exclude_flag = True
+                                    break
+                        if not exclude_flag:
+                            self._files_in_archive.append(filename)
+            except Exception as exc:
+                archive.close()
+                raise UnarchiveError(f'Unable to list files in the archive {self.src} due to {to_native(exc)}')
+
+            # close the zip file
+            archive.close()
+
     def _permstr_to_octal(self, modestr, umask):
         ''' Convert a Unix permission string (rw-r--r--) into a mode (0644) '''
         revstr = modestr[::-1]
@@ -337,7 +381,7 @@ class ZipArchive(object):
         rc, out, err = self.module.run_command([self.cmd_path, '-v', self.src])
         if rc:
             self.module.debug(err)
-            raise UnarchiveError('Neither python zipfile nor unzip can read %s' % self.src)
+            raise UnarchiveError(f'Neither Python zipfile nor unzip can read {self.src} due to {err}')
 
         for line in out.splitlines()[3:-2]:
             fields = line.split(None, 7)
@@ -345,64 +389,10 @@ class ZipArchive(object):
             self._infodict[fields[7]] = int(fields[6])
 
     def _crc32(self, path):
-        if self._infodict:
-            return self._infodict[path]
-
-        try:
-            archive = ZipFile(self.src)
-        except BadZipFile as e:
-            if e.args[0].lower().startswith('bad magic number'):
-                # Python2.4 can't handle zipfiles with > 64K files.  Try using
-                # /usr/bin/unzip instead
-                self._legacy_file_list()
-            else:
-                raise
-        else:
-            try:
-                for item in archive.infolist():
-                    self._infodict[item.filename] = int(item.CRC)
-            except Exception:
-                archive.close()
-                raise UnarchiveError('Unable to list files in the archive')
-
-        return self._infodict[path]
+        return self._infodict.get(path, None)
 
     @property
     def files_in_archive(self):
-        if self._files_in_archive:
-            return self._files_in_archive
-
-        self._files_in_archive = []
-        try:
-            archive = ZipFile(self.src)
-        except BadZipFile as e:
-            if e.args[0].lower().startswith('bad magic number'):
-                # Python2.4 can't handle zipfiles with > 64K files.  Try using
-                # /usr/bin/unzip instead
-                self._legacy_file_list()
-            else:
-                raise
-        else:
-            try:
-                for member in archive.namelist():
-                    if self.include_files:
-                        for include in self.include_files:
-                            if fnmatch.fnmatch(member, include):
-                                self._files_in_archive.append(to_native(member))
-                    else:
-                        exclude_flag = False
-                        if self.excludes:
-                            for exclude in self.excludes:
-                                if fnmatch.fnmatch(member, exclude):
-                                    exclude_flag = True
-                                    break
-                        if not exclude_flag:
-                            self._files_in_archive.append(to_native(member))
-            except Exception as e:
-                archive.close()
-                raise UnarchiveError('Unable to list files in the archive: %s' % to_native(e))
-
-            archive.close()
         return self._files_in_archive
 
     def _valid_time_stamp(self, timestamp_str):
@@ -772,6 +762,7 @@ class ZipArchive(object):
         cmd = [self.cmd_path, '-l', self.src]
         rc, out, err = self.module.run_command(cmd)
         if rc == 0:
+            self._parse_infolist()
             return True, None
 
         self.module.debug(err)

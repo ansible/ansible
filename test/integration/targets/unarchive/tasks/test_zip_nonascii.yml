@@ -1,0 +1,42 @@
+- set_fact:
+    dest: '{{ remote_tmp_dir }}/test-unarchive-nonascii-zip'
+
+- name: create our zip unarchive destination
+  file:
+    path: '{{ dest }}'
+    state: directory
+
+- name: unarchive a zip file with non-ascii filenames
+  unarchive:
+    src: 'test-zip-nonascii.zip'
+    dest: '{{ dest }}'
+    remote_src: no
+  register: unarchive_non_ascii_01
+
+- name: verify that the file was unarchived
+  stat:
+    path: '{{ dest }}/Café.txt'
+  register: r
+
+- name: verify that the unarchive extracts zip file with non-ascii
+  assert:
+    that:
+      - unarchive_non_ascii_01.changed
+      - "'Café.txt' in r.stat.path"
+
+- name: unarchive a zip file with non-ascii filenames (idempotency)
+  unarchive:
+    src: 'test-zip-nonascii.zip'
+    dest: '{{ dest }}'
+    remote_src: no
+  register: unarchive_non_ascii_02
+
+- name: verify that the unarchive extracts zip file with non-ascii (idempotency)
+  assert:
+    that:
+      - not unarchive_non_ascii_02.changed
+
+- name: delete zip destination
+  file:
+    path: '{{ dest }}'
+    state: absent
