@@ -62,8 +62,7 @@ def should_retry_error(exception):
         if isinstance(orig_exc, URLError):
             orig_exc = orig_exc.reason
 
-        # Handle common URL related errors such as TimeoutError, and BadStatusLine
-        # Note: socket.timeout is only required for Py3.9
+        # Handle common URL related errors
         if isinstance(orig_exc, (TimeoutError, BadStatusLine, IncompleteRead)):
             return True
 

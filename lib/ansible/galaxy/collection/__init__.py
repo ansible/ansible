@@ -1602,13 +1602,6 @@ def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatur
     """
     try:
         with tarfile.open(b_coll_targz_path, mode='r') as collection_tar:
-            # Remove this once py3.11 is our controller minimum
-            # Workaround for https://bugs.python.org/issue47231
-            # See _extract_tar_dir
-            collection_tar._ansible_normalized_cache = {
-                m.name.removesuffix(os.path.sep): m for m in collection_tar.getmembers()
-            }  # deprecated: description='TarFile member index' core_version='2.18' python_version='3.11'
-
             # Verify the signature on the MANIFEST.json before extracting anything else
             _extract_tar_file(collection_tar, MANIFEST_FILENAME, b_collection_path, b_temp_path)
 
@@ -1689,10 +1682,10 @@ def install_src(collection, b_collection_path, b_collection_output_path, artifac
 
 def _extract_tar_dir(tar, dirname, b_dest):
     """ Extracts a directory from a collection tar. """
-    dirname = to_native(dirname, errors='surrogate_or_strict').removesuffix(os.path.sep)
+    dirname = to_native(dirname, errors='surrogate_or_strict')
 
     try:
-        tar_member = tar._ansible_normalized_cache[dirname]
+        tar_member = tar.getmember(dirname)
     except KeyError:
         raise AnsibleError("Unable to extract '%s' from collection" % dirname)
 

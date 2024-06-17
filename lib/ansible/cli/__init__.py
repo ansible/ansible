@@ -11,9 +11,9 @@ import sys
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
-if sys.version_info < (3, 10):
+if sys.version_info < (3, 11):
     raise SystemExit(
-        'ERROR: Ansible requires Python 3.10 or newer on the controller. '
+        'ERROR: Ansible requires Python 3.11 or newer on the controller. '
         'Current version: %s' % ''.join(sys.version.splitlines())
     )
 
