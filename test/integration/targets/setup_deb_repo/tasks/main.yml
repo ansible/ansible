@@ -72,5 +72,12 @@
     with_items:
     - ''
     - -updates
+    when: ansible_distribution_version is version('24.04', '<')
+
+  - name: Enable deb-src in ubuntu.sources
+    # see: https://askubuntu.com/questions/1512042/ubuntu-24-04-getting-error-you-must-put-some-deb-src-uris-in-your-sources-list
+    command: |
+      sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
+    when: ansible_distribution_version is version('24.04', '>=')
 
   when: ansible_distribution in ['Ubuntu', 'Debian']
