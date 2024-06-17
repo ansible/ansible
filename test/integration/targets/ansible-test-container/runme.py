@@ -320,7 +320,23 @@ def run_test(scenario: TestScenario) -> TestResult:
             run_command('update-crypto-policies', '--set', 'DEFAULT:SHA1')
 
         for test_command in test_commands:
-            retry_command(lambda: run_command(*test_command))
+            def run_test_command() -> SubprocessResult:
+                if os_release.id == 'alpine' and scenario.user_scenario.actual.name != 'root':
+                    # Make sure rootless networking works on Alpine.
+                    # NOTE: The path used below differs slightly from the referenced issue.
+                    # See: https://gitlab.alpinelinux.org/alpine/aports/-/issues/16137
+                    actual_pwnam = scenario.user_scenario.actual.pwnam
+                    root_path = pathlib.Path(f'/tmp/storage-run-{actual_pwnam.pw_uid}')
+                    run_path = root_path / 'containers/networks/rootless-netns/run'
+                    run_path.mkdir(mode=0o755, parents=True, exist_ok=True)
+
+                    while run_path.is_relative_to(root_path):
+                        os.chown(run_path, actual_pwnam.pw_uid, actual_pwnam.pw_gid)
+                        run_path = run_path.parent
+
+                return run_command(*test_command)
+
+            retry_command(run_test_command)
     except SubprocessError as ex:
         message = str(ex)
         display.error(f'{scenario} {message}')

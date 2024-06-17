@@ -268,19 +268,12 @@ bootstrap_remote_rhel_9()
     packages="
         gcc
         ${py_pkg_prefix}-devel
+        ${py_pkg_prefix}-pip
         "
-
-    # pip is not included in the Python devel package under Python 3.11
-    if [ "${python_version}" != "3.9" ]; then
-        packages="
-            ${packages}
-            ${py_pkg_prefix}-pip
-        "
-    fi
 
     # Jinja2 is not installed with an OS package since the provided version is too old.
     # Instead, ansible-test will install it using pip.
-    # packaging and resolvelib are missing for Python 3.11 (and possible later) so we just
+    # packaging and resolvelib are missing for controller supported Python versions, so we just
     # skip them and let ansible-test install them from PyPI.
     if [ "${controller}" ]; then
         packages="
@@ -329,10 +322,6 @@ bootstrap_remote_ubuntu()
         # For these ansible-test will use pip to install the requirements instead.
         # Only the platform is checked since Ubuntu shares Python packages across Python versions.
         case "${platform_version}" in
-            "20.04")
-                jinja2_pkg=""  # too old
-                resolvelib_pkg=""  # not available
-                ;;
         esac
 
         packages="
