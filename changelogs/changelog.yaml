@@ -687,6 +687,20 @@ releases:
     - psrp-version-req.yml
     - uri_follow_redirect_bool.yml
     release_date: '2024-05-13'
+  2.17.1:
+    changes:
+      minor_changes:
+      - ansible-test - Update ``pypi-test-container`` to version 3.1.0.
+      release_summary: '| Release Date: 2024-06-17
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+        '
+    codename: Gallows Pole
+    fragments:
+    - 2.17.1_summary.yaml
+    - ansible-test-pypi-test-container-update.yml
+    release_date: '2024-06-17'
   2.17.1rc1:
     changes:
       bugfixes:
