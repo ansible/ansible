@@ -1085,6 +1085,20 @@ releases:
     - psrp-version-req.yml
     - uri_follow_redirect_bool.yml
     release_date: '2024-05-13'
+  2.16.8:
+    changes:
+      minor_changes:
+      - ansible-test - Update ``pypi-test-container`` to version 3.1.0.
+      release_summary: '| Release Date: 2024-06-17
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+    codename: All My Love
+    fragments:
+    - 2.16.8_summary.yaml
+    - ansible-test-pypi-test-container-update.yml
+    release_date: '2024-06-17'
   2.16.8rc1:
     changes:
       bugfixes:
