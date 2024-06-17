@@ -14,7 +14,7 @@ echo "Grepping for ${EXPECTED_REGEX} in stdout."
 grep -e "${EXPECTED_REGEX}" "${OUTFILE}"
 
 # test connection tracking
-EXPECTED_CONNECTION='{"testhost":{"local":4}}'
+EXPECTED_CONNECTION='{"testhost":{"ssh":4}}'
 OUTPUT_TAIL=$(tail -n5 ${OUTFILE} | tr -d '[:space:]')
 [ "${EXPECTED_CONNECTION}" == "${OUTPUT_TAIL}" ]
 echo $?
