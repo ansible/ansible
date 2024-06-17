@@ -5,15 +5,20 @@ ansible-core 2.16 "All My Love" Release Notes
 .. contents:: Topics
 
 
-v2.16.8rc1
-==========
+v2.16.8
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2024-06-10
+| Release Date: 2024-06-17
 | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
 
+
+Minor Changes
+-------------
+
+- ansible-test - Update ``pypi-test-container`` to version 3.1.0.
 
 Bugfixes
 --------
