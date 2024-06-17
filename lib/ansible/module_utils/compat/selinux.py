@@ -11,8 +11,8 @@ from ctypes import CDLL, c_char_p, c_int, byref, POINTER, get_errno
 
 try:
     _selinux_lib = CDLL('libselinux.so.1', use_errno=True)
-except OSError:
-    raise ImportError('unable to load libselinux.so')
+except OSError as ex:
+    raise ImportError('unable to load libselinux.so') from ex
 
 
 def _module_setup():
