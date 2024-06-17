@@ -514,11 +514,8 @@ class CallbackBase(AnsiblePlugin):
         a value of 'failed'. It does not make Ansible ignore undefined variable errors,
         connection failures, execution issues (for example, missing packages), or syntax errors.
 
-        Customization notes:
-        - You can access and use other TaskResult class attributes and methods like
-          result._task, result._task_fields, result.task_name(), and result.is_failed()
-        - The ansible.executor.task_result.TaskResult class is defined in
-          lib/ansible/executor/task_result.py
+        Customization note: For more information about the attributes and methods of the
+        TaskResult class, see lib/ansible/executor/task_result.py.
 
         :param TaskResult result: An object that contains details about the task
         :param bool ignore_errors: Whether or not Ansible should continue running tasks on the host
@@ -533,11 +530,8 @@ class CallbackBase(AnsiblePlugin):
         """Get details about a successful task and process them as required by the callback
         (output, profiling, logging, notifications, etc.)
 
-        Customization notes:
-        - You can access and use other TaskResult class attributes and methods like
-          result._task, result._task_fields, result.task_name(), and result.is_changed()
-        - The ansible.executor.task_result.TaskResult class is defined in
-          lib/ansible/executor/task_result.py
+        Customization note: For more information about the attributes and methods of the
+        TaskResult class, see lib/ansible/executor/task_result.py.
 
         :param TaskResult result: An object that contains details about the task
 
@@ -550,11 +544,8 @@ class CallbackBase(AnsiblePlugin):
         """Get details about a skipped task and process them as required by the callback
         (output, profiling, logging, notifications, etc.)
 
-        Customization notes:
-        - You can access and use other TaskResult class attributes and methods like
-          result._task, result._task_fields, result.task_name(), and result.is_skipped()
-        - The ansible.executor.task_result.TaskResult class is defined in
-          lib/ansible/executor/task_result.py
+        Customization note: For more information about the attributes and methods of the
+        TaskResult class, see lib/ansible/executor/task_result.py.
 
         :param TaskResult result: An object that contains details about the task
 
