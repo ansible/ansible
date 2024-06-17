@@ -272,15 +272,18 @@ class SystemctlScanService(BaseService):
                 state_val = "stopped"
                 status_val = "unknown"
                 fields = line.split()
+
+                # systemd sometimes gives misleading status
+                # check all fields for bad states
                 for bad in self.BAD_STATES:
-                    if bad in fields:  # dot is 0
+                    # except description
+                    if bad in fields[:-1]:
                         status_val = bad
                         break
                 else:
                     # active/inactive
                     status_val = fields[2]
 
-                # array is normalize so predictable now
                 service_name = fields[0]
                 if fields[3] == "running":
                     state_val = "running"
