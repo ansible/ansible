@@ -866,8 +866,9 @@ def get_wheel_path(version: Version, dist_dir: pathlib.Path = DIST_DIR) -> pathl
 
 def calculate_digest(path: pathlib.Path) -> str:
     """Return the digest for the specified file."""
-    # TODO: use hashlib.file_digest once Python 3.11 is the minimum supported version
-    return hashlib.new(DIGEST_ALGORITHM, path.read_bytes()).hexdigest()
+    with open(path, "rb") as f:
+        digest = hashlib.file_digest(f, DIGEST_ALGORITHM)
+    return digest.hexdigest()
 
 
 @functools.cache
