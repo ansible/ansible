@@ -16,6 +16,10 @@
     state: present
   when: not ansible_distribution == 'MacOSX'
 
+- name: install required package jq for test
+  ansible.builtin.command: brew install jq
+  when: ansible_distribution == 'MacOSX'
+
 - name: "Create user with ssh key and {{ rounds }} of rounds specified"
   ansible.builtin.user:
     name: ansibulluser
