@@ -27,14 +27,14 @@
   register: keyfile_creation_result
 
 - name: Get rounds value of resulting key file
-  ansible.builtin.shell: "sudo -u ansibulluser python3 -m openssh_key {{ keyfile_creation_result.ssh_key_file|quote }} --passphrase {{ passphrase }} | jq '.kdf_options.data.rounds'"
+  ansible.builtin.shell: "{{ ansible_playbook_python }} -m openssh_key {{ keyfile_creation_result.ssh_key_file|quote }} --passphrase {{ passphrase }} | jq '.kdf_options.data.rounds'"
   register: result
 
 - name: Check that rounds of file match the rounds specified in module execution
   ansible.builtin.assert:
     that:
       - result.stdout | int == rounds
-    fail_msg: "{{ result.stdout }} rounds given"
+    fail_msg: "{{ result.stdout }} rounds given instead of {{ rounds }}"
 
 # Test creating ssh key with passphrase and NO specified key rounds
 - name: Remove ansibulluser
@@ -54,14 +54,14 @@
   register: keyfile_creation_result
 
 - name: Get rounds value of resulting key file
-  ansible.builtin.shell: "python3 -m openssh_key {{ keyfile_creation_result.ssh_key_file|quote }} --passphrase {{ passphrase }} | jq '.kdf_options.data.rounds'"
+  ansible.builtin.shell: "{{ ansible_playbook_python }} -m openssh_key {{ keyfile_creation_result.ssh_key_file|quote }} --passphrase {{ passphrase }} | jq '.kdf_options.data.rounds'"
   register: result
 
 - name: Check that rounds of file are as default of openssh
   ansible.builtin.assert:
     that:
-      - result.stdout | int == 16
-    fail_msg: "{{ result.stdout }} rounds given"
+      - result.stdout | int == default_rounds
+    fail_msg: "{{ result.stdout }} rounds given instead of {{ default_rounds }}"
 
 # Test creating ssh key without passphrase but key rounds specified
 - name: Remove ansibulluser
@@ -81,14 +81,14 @@
   register: keyfile_creation_result
 
 - name: Get rounds value of resulting key file
-  ansible.builtin.shell: "python3 -m openssh_key {{ keyfile_creation_result.ssh_key_file|quote }} | jq '.kdf_options.data.rounds'"
+  ansible.builtin.shell: "{{ ansible_playbook_python }} -m openssh_key {{ keyfile_creation_result.ssh_key_file|quote }} | jq '.kdf_options.data.rounds'"
   register: result
 
 - name: Check that no rounds are given, because key is not encrypted
   ansible.builtin.assert:
     that:
       - result.stdout == 'null'
-    fail_msg: "{{ result.stdout }} rounds given"
+    fail_msg: "{{ result.stdout }} rounds given instead of null"
 
 - name: Remove ansibulluser
   user:
