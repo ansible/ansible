@@ -16,7 +16,7 @@
     state: present
 
 - name: "Create user with ssh key and {{ rounds }} of rounds specified"
-  usertest:
+  ansible.builtin.user:
     name: ansibulluser
     state: present
     generate_ssh_key: yes
@@ -44,7 +44,7 @@
     remove: true
 
 - name: Create user with ssh key and openssh default rounds (16)
-  usertest:
+  ansible.builtin.user:
     name: ansibulluser
     state: present
     generate_ssh_key: yes
@@ -71,7 +71,7 @@
     remove: true
 
 - name: Create user with not encrypted ssh key but specified rounds to create
-  usertest:
+  ansible.builtin.user:
     name: ansibulluser
     state: present
     generate_ssh_key: yes

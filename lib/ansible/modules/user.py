@@ -191,7 +191,7 @@ options:
             - It only takes effect when O(ssh_key_passphrase) is provided, because in this case the private key is encrypted.
         type: int
         default: 16
-        version_added: "2.17"
+        version_added: "2.18"
     update_password:
         description:
             - V(always) will update passwords if they differ.
@@ -3165,7 +3165,7 @@ def main():
             ssh_key_file=dict(type='path'),
             ssh_key_comment=dict(type='str', default=ssh_defaults['comment']),
             ssh_key_passphrase=dict(type='str', no_log=True),
-            ssh_key_rounds=dict(type='int'),
+            ssh_key_rounds=dict(type='int', no_log=False),
             update_password=dict(type='str', default='always', choices=['always', 'on_create'], no_log=False),
             expires=dict(type='float'),
             password_lock=dict(type='bool', no_log=False),
@@ -3286,7 +3286,9 @@ def main():
             result['ssh_key_file'] = user.get_ssh_key_path()
             result['ssh_public_key'] = user.get_ssh_public_key()
             if user.ssh_passphrase is None and user.ssh_key_rounds is not None:
-                result['warnings'].append('Option \'ssh_key_rounds\' of module \'ansible.builtin.user\' is useless without \'ssh_passphrase\' specified. See module documentation.')
+                warning_msg = 'Option \'ssh_key_rounds\' of module \'ansible.builtin.user\' is useless'\
+                    ' without \'ssh_passphrase\' specified. See module documentation.'
+                result['warnings'].append(warning_msg)
 
         (rc, out, err) = user.set_password_expire()
         if rc is None:
