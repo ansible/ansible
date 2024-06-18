@@ -14,7 +14,7 @@
   ansible.builtin.package:
     name: jq
     state: present
-  when: not ansible_distribution == 'macOS'
+  when: not ansible_distribution == 'MacOSX'
 
 - name: "Create user with ssh key and {{ rounds }} of rounds specified"
   ansible.builtin.user:
