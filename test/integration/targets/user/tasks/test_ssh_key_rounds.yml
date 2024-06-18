@@ -1,0 +1,97 @@
+# Test creating ssh key with passphrase and specified key rounds
+- name: Remove ansibulluser
+  user:
+    name: ansibulluser
+    state: absent
+    remove: true
+  
+- name: install required pip module openssh_key_parser for test
+  ansible.builtin.pip:
+    name: openssh_key_parser
+    state: present
+
+- name: install required package jq for test
+  ansible.builtin.package:
+    name: jq
+    state: present
+
+- name: "Create user with ssh key and {{ rounds }} of rounds specified"
+  usertest:
+    name: ansibulluser
+    state: present
+    generate_ssh_key: yes
+    force: yes
+    ssh_key_file: .ssh/test_id_rsa
+    ssh_key_passphrase: "{{ passphrase }}"
+    ssh_key_rounds: "{{ rounds }}"
+  register: keyfile_creation_result
+
+- name: Get rounds value of resulting key file
+  ansible.builtin.shell: "sudo -u ansibulluser python3 -m openssh_key {{ keyfile_creation_result.ssh_key_file|quote }} --passphrase {{ passphrase }} | jq '.kdf_options.data.rounds'"
+  register: result
+
+- name: Check that rounds of file match the rounds specified in module execution
+  ansible.builtin.assert:
+    that:
+      - result.stdout | int == rounds
+    fail_msg: "{{ result.stdout }} rounds given"
+
+# Test creating ssh key with passphrase and NO specified key rounds
+- name: Remove ansibulluser
+  user:
+    name: ansibulluser
+    state: absent
+    remove: true
+
+- name: Create user with ssh key and openssh default rounds (16)
+  usertest:
+    name: ansibulluser
+    state: present
+    generate_ssh_key: yes
+    force: yes
+    ssh_key_file: .ssh/test_id_rsa
+    ssh_key_passphrase: "{{ passphrase }}"
+  register: keyfile_creation_result
+
+- name: Get rounds value of resulting key file
+  ansible.builtin.shell: "python3 -m openssh_key {{ keyfile_creation_result.ssh_key_file|quote }} --passphrase {{ passphrase }} | jq '.kdf_options.data.rounds'"
+  register: result
+
+- name: Check that rounds of file are as default of openssh
+  ansible.builtin.assert:
+    that:
+      - result.stdout | int == 16
+    fail_msg: "{{ result.stdout }} rounds given"
+
+# Test creating ssh key without passphrase but key rounds specified
+- name: Remove ansibulluser
+  user:
+    name: ansibulluser
+    state: absent
+    remove: true
+
+- name: Create user with not encrypted ssh key but specified rounds to create
+  usertest:
+    name: ansibulluser
+    state: present
+    generate_ssh_key: yes
+    force: yes
+    ssh_key_file: .ssh/test_id_rsa
+    ssh_key_rounds: "{{ rounds }}"
+  register: keyfile_creation_result
+
+- name: Get rounds value of resulting key file
+  ansible.builtin.shell: "python3 -m openssh_key {{ keyfile_creation_result.ssh_key_file|quote }} | jq '.kdf_options.data.rounds'"
+  register: result
+
+- name: Check that no rounds are given, because key is not encrypted
+  ansible.builtin.assert:
+    that:
+      - result.stdout == 'null'
+    fail_msg: "{{ result.stdout }} rounds given"
+
+- name: Remove ansibulluser
+  user:
+    name: ansibulluser
+    state: absent
+    remove: true

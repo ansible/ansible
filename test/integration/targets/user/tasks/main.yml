@@ -36,6 +36,10 @@
 - import_tasks: test_expires_warn.yml
 - import_tasks: test_shadow_backup.yml
 - import_tasks: test_ssh_key_passphrase.yml
+- import_tasks: test_ssh_key_rounds.yml
+  vars:
+    passphrase: secret_passphrase
+    rounds: 100
 - import_tasks: test_password_lock.yml
 - import_tasks: test_password_lock_new_user.yml
 - import_tasks: test_local.yml

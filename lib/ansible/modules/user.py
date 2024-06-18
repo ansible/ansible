@@ -183,6 +183,15 @@ options:
             - If no passphrase is provided, the SSH key will default to having no passphrase.
         type: str
         version_added: "0.9"
+    ssh_key_rounds:
+        description:
+            - Optionally specify the number of KDF (key derivation function) rounds used to provide higher resistance to brute-force password cracking.
+            - This increases time do decrypt the encrypted private key file.
+            - If this option is not set, it defaults to the OpenSSH default, which is 16.
+            - It only takes effect when O(ssh_key_passphrase) is provided, because in this case the private key is encrypted.
+        type: int
+        default: 16
+        version_added: "2.17"
     update_password:
         description:
             - V(always) will update passwords if they differ.
@@ -329,6 +338,15 @@ EXAMPLES = r'''
     generate_ssh_key: yes
     ssh_key_bits: 2048
     ssh_key_file: .ssh/id_rsa
+
+- name: Create a 2048-bit SSH key for user johndoe with 100 KDF rounds
+  ansible.builtin.user:
+    name: johndoe
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: .ssh/id_rsa
+    ssh_key_passphrase: secret_passphrase
+    ssh_key_rounds: 100
 
 - name: Added a consultant whose account you want to expire
   ansible.builtin.user:
@@ -569,6 +587,7 @@ class User(object):
         self.ssh_type = module.params['ssh_key_type']
         self.ssh_comment = module.params['ssh_key_comment']
         self.ssh_passphrase = module.params['ssh_key_passphrase']
+        self.ssh_key_rounds = module.params['ssh_key_rounds']
         self.update_password = module.params['update_password']
         self.home = module.params['home']
         self.expires = None
@@ -1198,6 +1217,10 @@ class User(object):
             if self.module.check_mode:
                 self.module.debug('In check mode, would have run: "%s"' % cmd)
                 return (0, '', '')
+
+            if self.ssh_key_rounds is not None:
+                cmd.append('-a')
+                cmd.append(self.ssh_key_rounds)
 
             master_in_fd, slave_in_fd = pty.openpty()
             master_out_fd, slave_out_fd = pty.openpty()
@@ -3142,6 +3165,7 @@ def main():
             ssh_key_file=dict(type='path'),
             ssh_key_comment=dict(type='str', default=ssh_defaults['comment']),
             ssh_key_passphrase=dict(type='str', no_log=True),
+            ssh_key_rounds=dict(type='int'),
             update_password=dict(type='str', default='always', choices=['always', 'on_create'], no_log=False),
             expires=dict(type='float'),
             password_lock=dict(type='bool', no_log=False),
@@ -3167,6 +3191,7 @@ def main():
     result = {}
     result['name'] = user.name
     result['state'] = user.state
+    result['warnings'] = []
     if user.state == 'absent':
         if user.user_exists():
             if module.check_mode:
@@ -3260,6 +3285,8 @@ def main():
                 result['ssh_fingerprint'] = err.strip()
             result['ssh_key_file'] = user.get_ssh_key_path()
             result['ssh_public_key'] = user.get_ssh_public_key()
+            if user.ssh_passphrase is None and user.ssh_key_rounds is not None:
+                result['warnings'].append('Option \'ssh_key_rounds\' of module \'ansible.builtin.user\' is useless without \'ssh_passphrase\' specified. See module documentation.')
 
         (rc, out, err) = user.set_password_expire()
         if rc is None:
