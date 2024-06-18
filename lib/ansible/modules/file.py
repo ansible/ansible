@@ -393,7 +393,7 @@ def recursive_create_directory(path, file_args, mtime, atime, diff_list=None) ->
         raise AnsibleModuleError("module is None!")
     changed = False
     parent_dir_path = os.path.dirname(path)
-    if not os.path.exists(parent_dir_path):
+    if parent_dir_path and not os.path.exists(parent_dir_path):
         changed |= recursive_create_directory(parent_dir_path, file_args, mtime, atime, diff_list)
     prev_state = get_state(path)
     creation_diff = initial_diff(path, 'directory', prev_state)
