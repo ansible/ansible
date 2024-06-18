@@ -3,29 +3,12 @@
 
 from __future__ import annotations
 
-import errno
-import fcntl
-import os
-import random
-import shlex
-import shutil
-import subprocess
-import sys
 import pickle
-import tempfile
-import warnings
-
 import typing as t
-
-from binascii import hexlify
-from binascii import unhexlify
-from binascii import Error as BinasciiError
-
 
 from ansible.errors import AnsibleError, AnsibleVaultFormatError
 from ansible import constants as C
-from ansible.module_utils.six import binary_type
-from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe, unfrackpath
 
@@ -96,7 +79,7 @@ class Vault:
         b_cipher = to_bytes(self.cipher, 'utf-8', errors='strict')
         b_options = pickle.dumps(self.options)
 
-        header_parts = [self.b_HEADER, b_version, b_cipher]
+        header_parts = [self.b_HEADER, b_version, b_cipher, b_options]
 
         if b_version != b'1.1' and b_vault_id:
             header_parts.append(b_vault_id)
