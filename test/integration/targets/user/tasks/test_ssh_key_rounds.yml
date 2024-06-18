@@ -14,6 +14,13 @@
   ansible.builtin.package:
     name: jq
     state: present
+  when: not ansible_distribution == 'macOS'
+
+- name: install required package jq for test
+  community.general.homebrew:
+    name: jq
+    state: present
+  when: ansible_distribution == 'macOS'
 
 - name: "Create user with ssh key and {{ rounds }} of rounds specified"
   ansible.builtin.user:
@@ -43,7 +50,7 @@
     state: absent
     remove: true
 
-- name: Create user with ssh key and openssh default rounds (16)
+- name: "Create user with ssh key and openssh default rounds {{ default_rounds }}"
   ansible.builtin.user:
     name: ansibulluser
     state: present
@@ -57,7 +64,7 @@
   ansible.builtin.shell: "{{ ansible_python_interpreter }} -m openssh_key {{ keyfile_creation_result.ssh_key_file|quote }} --passphrase {{ passphrase }} | jq '.kdf_options.data.rounds'"
   register: result
 
-- name: Check that rounds of file are as default of openssh
+- name: "Check that rounds of file are as default of openssh ({{ default_rounds }})"
   ansible.builtin.assert:
     that:
       - result.stdout | int == default_rounds
