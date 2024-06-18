@@ -375,7 +375,7 @@ def recursive_set_attributes(b_path, follow, file_args, mtime, atime, diff_list=
                             tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
                             changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, diff, expand=False)
                             changed |= update_timestamp_for_file(tmp_file_args['path'], mtime, atime, diff)
-                if diff_list is not None:
+                if diff_list is not None and diff["before"] != diff["after"]:
                     diff_list.append(diff)
     except RuntimeError as e:
         # on Python3 "RecursionError" is raised which is derived from "RuntimeError"
