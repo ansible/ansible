@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - user - create home directory using createhomedir command instead of mkdir (https://github.com/ansible/ansible/issues/44186).

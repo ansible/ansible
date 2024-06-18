@@ -82,7 +82,8 @@ options:
     skeleton:
         description:
             - Optionally set a home skeleton directory.
-            - Requires O(create_home) option!
+            - Requires O(create_home) option.
+            - The option is not supported for macOS.
         type: str
         version_added: "2.0"
     password:
@@ -2526,15 +2527,6 @@ class DarwinUser(User):
         if self.uid is None:
             self.uid = str(self._get_next_uid(self.system))
 
-        # Homedir is not created by default
-        if self.create_home:
-            if self.home is None:
-                self.home = '/Users/%s' % self.name
-            if not self.module.check_mode:
-                if not os.path.exists(self.home):
-                    os.makedirs(self.home)
-                self.chown_homedir(int(self.uid), int(self.group), self.home)
-
         # dscl sets shell to /usr/bin/false when UserShell is not specified
         # so set the shell to /bin/bash when the user is not a system user
         if not self.system and self.shell is None:
@@ -2553,6 +2545,22 @@ class DarwinUser(User):
                 err += _err
                 if rc != 0:
                     return (rc, _out, _err)
+
+        # Homedir is not created by default
+        if self.create_home:
+            if self.home is None:
+                self.home = '/Users/%s' % self.name
+            if not self.module.check_mode:
+                create_home_dir_bin = self.module.get_bin_path('createhomedir')
+                if create_home_dir_bin is None:
+                    if not os.path.exists(self.home):
+                        os.makedirs(self.home)
+                    self.chown_homedir(int(self.uid), int(self.group), self.home)
+                else:
+                    cmd = [create_home_dir_bin, '-c', '-u', self.name]
+                    rc, out, err = self.execute_command(cmd)
+                    if rc != 0:
+                        self.module.fail_json(msg=f"Failed to create home directory for user {self.name} due to {err}")
 
         (rc, _out, _err) = self._change_user_password()
         out += _out

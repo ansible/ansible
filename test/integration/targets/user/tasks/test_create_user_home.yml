@@ -137,7 +137,7 @@
 
 - name: Create user home directory with /dev/null as skeleton, https://github.com/ansible/ansible/issues/75063
   # create_homedir is mostly used by linux, rest of OSs take care of it themselves via -k option (which fails this task)
-  when: ansible_system == 'Linux'  
+  when: ansible_system == 'Linux'
   block:
     - name: "Create user home directory with /dev/null as skeleton"
       user:
@@ -150,5 +150,32 @@
     - name: "Remove test user"
       user:
         name: withskeleton
+        state: absent
+        remove: yes
+
+- name: Create user home directory in MacOS
+  when: ansible_system == 'Darwin'
+  block:
+    - name: Create user home directory under /Users/
+      user:
+        name: testuser01
+        state: present
+        createhome: yes
+      register: r_01
+
+    - name: Stat directory under /Users/testuser01 is created
+      stat:
+        path: /Users/testuser01/Desktop
+      register: stat_01
+
+    - name: Check if directory under /Users/testuser01 is created
+      assert:
+        that:
+          - r_01.changed
+          - stat_01.stat.path == '/Users/testuser01/Desktop'
+  always:
+    - name: "Remove test user"
+      user:
+        name: testuser01
         state: absent
         remove: yes
