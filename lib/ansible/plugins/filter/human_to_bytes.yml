@@ -27,6 +27,15 @@ EXAMPLES: |
 
   # this is an error, wants bits, got bytes
   ERROR: '{{ "1.15 GB" | human_to_bytes(isbits=true) }}'
+  
+  # size => 2684354560
+  size: '{{ "2.5 gigabyte" | human_to_bytes }}'
+  
+  # size => 1234803098
+  size: '{{ "1 Gigabyte" | human_to_bytes }}'
+
+  # this is an error, because gigggabyte is not a valid unit
+  size: '{{ "1 gigggabyte" | human_to_bytes }}'
 
 RETURN:
   _value:
