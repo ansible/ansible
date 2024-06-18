@@ -397,6 +397,8 @@ def recursive_create_directory(path, file_args, mtime, atime, diff_list=None) ->
         changed |= recursive_create_directory(parent_dir_path, file_args, mtime, atime, diff_list)
     prev_state = get_state(path)
     creation_diff = initial_diff(path, 'directory', prev_state)
+    if diff_list is not None and creation_diff["before"] != creation_diff["after"]:
+        diff_list.append(creation_diff)
     b_path = to_bytes(path, errors='surrogate_or_strict')
     if not os.path.exists(b_path):
         changed = True
@@ -418,9 +420,8 @@ def recursive_create_directory(path, file_args, mtime, atime, diff_list=None) ->
         update_timestamp_for_file(
             file_args['path'], mtime, atime, attributes_and_timestamp_diff
         )
-    if diff_list is not None:
-        diff_list.append(creation_diff)
-        diff_list.append(attributes_and_timestamp_diff)
+        if diff_list is not None and attributes_and_timestamp_diff["before"] != attributes_and_timestamp_diff["after"]:
+            diff_list.append(attributes_and_timestamp_diff)
     return changed
 
 
