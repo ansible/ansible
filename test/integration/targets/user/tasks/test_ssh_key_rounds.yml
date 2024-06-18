@@ -4,6 +4,17 @@
     name: ansibulluser
     state: absent
     remove: true
+  
+- name: install required pip module openssh_key_parser for test
+  ansible.builtin.pip:
+    name: openssh_key_parser
+    state: present
+
+- name: install required package jq for test
+  ansible.builtin.package:
+    name: jq
+    state: present
+  when: not ansible_distribution == 'macOS'
 
 - name: "Create user with ssh key and {{ rounds }} of rounds specified"
   ansible.builtin.user:
