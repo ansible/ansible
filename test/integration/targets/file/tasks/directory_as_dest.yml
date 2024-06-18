@@ -24,6 +24,29 @@
     content: 'Hello World'
 
 #
+# uncaught bugs in PR#83445
+#
+
+- name: create a new directory with a relative destination path
+  file:
+    path: "{{ lookup('password', '/dev/null', length=10) }}"
+    state: directory
+  register: relative_temp_dir
+
+- name: create a new directory with a destination path that ends in a slash
+  file:
+    path: '{{ remote_tmp_dir_test }}/ends_with_slash/'
+    state: directory
+
+- name: cleanup
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - '{{ relative_temp_dir.path }}'
+    - '{{ remote_tmp_dir_test }}/ends_with_slash/'
+
+#
 # Error condtion: specify a directory with state={link,file}, force=False
 #
 
