@@ -114,9 +114,8 @@ stages:
               test: fedora/40
             - name: RHEL 9.4
               test: rhel/9.4
-# Temporarily disabled to unblock merging of other Ubuntu 24.04 changes.
-#            - name: Ubuntu 24.04
-#              test: ubuntu/24.04
+            - name: Ubuntu 24.04
+              test: ubuntu/24.04
           groups:
             - 6
   - stage: Docker
