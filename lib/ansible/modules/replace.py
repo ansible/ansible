@@ -140,7 +140,7 @@ EXAMPLES = r'''
   ansible.builtin.replace:
     path: /etc/hosts
     after: '(?m)^<VirtualHost [*]>'
-    before: '(?m)^</VirtualHost>'
+    before: '</VirtualHost>'
     regexp: '^(.+)$'
     replace: '# \1'
 
