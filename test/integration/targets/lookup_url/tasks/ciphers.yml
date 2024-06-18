@@ -1,22 +1,17 @@
-- vars:
-    url: https://{{ httpbin_host }}/get
-  block:
-    - name: test good cipher
-      debug:
-        msg: '{{ lookup("url", url) }}'
-      vars:
-        ansible_lookup_url_ciphers: ECDHE-RSA-AES128-SHA256
-      register: good_ciphers
+- name: test good cipher
+  debug:
+    msg: '{{ lookup("url", url, ciphers=[tls_strong_cipher]) }}'
+  vars:
+    url: https://{{ no_tls13_host }}:445/
 
-    - name: test bad cipher
-      debug:
-        msg: '{{ lookup("url", url) }}'
-      vars:
-        ansible_lookup_url_ciphers: ECDHE-ECDSA-AES128-SHA
-      ignore_errors: true
-      register: bad_ciphers
+- name: test bad cipher
+  debug:
+    msg: '{{ lookup("url", url, ciphers=[tls_weak_cipher]) }}'
+  vars:
+    url: https://{{ no_tls13_host }}:445/
+  register: result
+  ignore_errors: true
 
-    - assert:
-        that:
-          - good_ciphers is successful
-          - bad_ciphers is failed
+- assert:
+    that:
+      - result is failed
