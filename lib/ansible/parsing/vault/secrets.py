@@ -25,10 +25,7 @@ def script_is_client(filename: t.AnyStr) -> bool:
     script_name, dummy = os.path.splitext(filename)
 
     # TODO: for now, this is entirely based on filename
-    if script_name.endswith('-client'):
-        return True
-
-    return False
+    return script_name.endswith('-client'):
 
 
 def get_file_vault_secret(filename: t.AnyStr | None = None, vault_id: str | None = None, encoding: str | None = None, loader: DataLoader | None = None):
@@ -40,14 +37,17 @@ def get_file_vault_secret(filename: t.AnyStr | None = None, vault_id: str | None
     # while files from --vault-password-file are already unfracked, other sources are not
     this_path = unfrackpath(filename, follow=False)
     if not os.path.exists(this_path):
-        raise AnsibleError("The vault password file %s was not found" % this_path)
+        raise AnsibleError(f"The vault password file provided '{this_path}' was not found")
+
+    if os.path.isdir(this_path):
+        raise AnsibleError(f"The vault password file provided '{this_path}' is invalid as it is a directory")
 
     # it is a script?
     if loader.is_executable(this_path):
 
         if script_is_client(filename):
             # this is special script type that handles vault ids
-            display.vvvv(f'The vault password file "{this_path" is a client script.')
+            display.vvvv(f'The vault password file "{this_path}" is a client script.')
             # TODO: pass vault_id_name to script via cli
             return ClientScriptVaultSecret(filename=this_path, vault_id=vault_id, encoding=encoding, loader=loader)
 
@@ -243,9 +243,7 @@ class ClientScriptVaultSecret(ScriptVaultSecret):
 
     def _run(self, command):
         try:
-            p = subprocess.Popen(command,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE)
+            p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError as e:
             msg_format = "Problem running vault password client script %s (%s)." \
                 " If this is not a script, remove the executable bit from the file."
