@@ -183,8 +183,7 @@ def is_vault(data: t.AnyStr) -> bool:
     :returns: True if it is recognized.  Otherwise, False.
     """
     try:
-        # Make sure we have a byte string and that it only contains ascii
-        # bytes.
+        # Make sure we have a byte string and that it only contains ascii bytes.
         b_data = to_bytes(to_text(data, encoding='ascii', errors='strict', nonstring='strict'), encoding='ascii', errors='strict')
     except (UnicodeError, TypeError):
         # The vault format is pure ascii so if we failed to encode to bytes

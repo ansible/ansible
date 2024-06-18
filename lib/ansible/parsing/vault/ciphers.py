@@ -45,7 +45,7 @@ def _unhexlify(b_data: bytes) -> bytes:
         raise AnsibleVaultFormatError('Vault failed to unhexlify the encrypted text', orig_exc=exc)
 
 
-def parse_vaulttext_old(b_vaulttext: bytes) -> bytes, bytes, bytes:
+def parse_vaulttext_old(b_vaulttext: bytes) -> tuple[bytes, bytes, bytes]:
     ''' old format does double hexing, only use with versions 1.1 and 1.2
     :arg b_vaulttext: byte str containing the vaulttext (ciphertext, salt, crypted_hmac)
     :returns: A tuple of byte str of the ciphertext suitable for passing to a
@@ -57,7 +57,7 @@ def parse_vaulttext_old(b_vaulttext: bytes) -> bytes, bytes, bytes:
     return parse_vaulttext(b_vaulttext)
 
 
-def parse_vaulttext(b_vaulttext: bytes) -> bytes, bytes, bytes:
+def parse_vaulttext(b_vaulttext: bytes) -> tuple[bytes, bytes, bytes]:
     """
     :arg b_vaulttext: byte str containing the vaulttext (ciphertext, salt, crypted_hmac)
     :returns: A tuple of byte str of the ciphertext suitable for passing to a
@@ -140,7 +140,7 @@ class VaultAES256(VaultCipher):
         return b_derivedkey
 
     @classmethod
-    def _gen_key_initctr(cls, b_password: bytes, b_salt: bytes) -> bytes, bytes, bytes:
+    def _gen_key_initctr(cls, b_password: bytes, b_salt: bytes) -> tuple[bytes, bytes, bytes]:
         # 16 for AES 128, 32 for AES256
         key_length = 32
 
@@ -159,7 +159,7 @@ class VaultAES256(VaultCipher):
         return b_key1, b_key2, b_iv
 
     @staticmethod
-    def _encrypt_cryptography(b_plaintext: bytes, b_key1: bytes, b_key2: bytes, b_iv: bytes) -> bytes, bytes:
+    def _encrypt_cryptography(b_plaintext: bytes, b_key1: bytes, b_key2: bytes, b_iv: bytes) -> tuple[bytes, bytes]:
         cipher = C_Cipher(algorithms.AES(b_key1), modes.CTR(b_iv), CRYPTOGRAPHY_BACKEND)
         encryptor = cipher.encryptor()
         padder = padding.PKCS7(algorithms.AES.block_size).padder()
@@ -265,9 +265,8 @@ class VaultAES256v2(VaultCipher):
 
         return kdf.derive(b_password)
 
-
     @classmethod
-    def _gen_key_initctr(cls, b_password: bytes, b_salt: bytes, iterations: int) -> bytes, bytes, bytes:
+    def _gen_key_initctr(cls, b_password: bytes, b_salt: bytes, iterations: int) -> tuple[bytes, bytes, bytes]:
         # 16 for AES 128, 32 for AES256
         key_length = 32
 
@@ -282,7 +281,7 @@ class VaultAES256v2(VaultCipher):
         return b_derivedkey[:key_length], b_derivedkey[key_length:(key_length * 2)], b_derivedkey[(key_length * 2):(key_length * 2) + iv_length]
 
     @staticmethod
-    def _encrypt_cryptography(b_plaintext: bytes, b_key1: bytes, b_key2: bytes, b_iv: bytes) -> bytes, bytes:
+    def _encrypt_cryptography(b_plaintext: bytes, b_key1: bytes, b_key2: bytes, b_iv: bytes) -> tuple[bytes, bytes]:
         cipher = C_Cipher(algorithms.AES(b_key1), modes.CTR(b_iv), CRYPTOGRAPHY_BACKEND)
         encryptor = cipher.encryptor()
         padder = padding.PKCS7(algorithms.AES.block_size).padder()
@@ -304,7 +303,6 @@ class VaultAES256v2(VaultCipher):
         return bytes(custom_salt)
 
     @classmethod
-    #def encrypt(cls, b_plaintext: bytes, secret: str, salt: bytes | str | None = None) -> bytes:
     def encrypt(cls, vault: Vault, secret: str) -> bytes:
 
         if vault.secret is None:
@@ -327,7 +325,7 @@ class VaultAES256v2(VaultCipher):
             raise AnsibleError(NEED_CRYPTO_LIBRARY + ' and encrypt')
 
         # only need to hexlify salt as others were already done
-        vault.vaulted= b'\n'.join([hexlify(b_salt), b_hmac, b_ciphertext])
+        vault.vaulted = b'\n'.join([hexlify(b_salt), b_hmac, b_ciphertext])
         vault.options['iterations'] = iterations
 
         return vault.vaulted
