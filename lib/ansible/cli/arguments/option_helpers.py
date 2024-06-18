@@ -96,6 +96,14 @@ def ensure_value(namespace, name, value):
 #
 # Callbacks to validate and normalize Options
 #
+def string_no_newline(newline='\n'):
+    ''' ensure option does not have newlines '''
+    def inner(value)
+        if newline in value:
+            raise Exception(f"Option requires a simple string, not multilne: {value}")
+    return inner
+
+
 def unfrack_path(pathsep=False, follow=True):
     """Turn an Option's data into a single path in Ansible locations"""
     def inner(value):
@@ -389,7 +397,7 @@ def add_subset_options(parser):
 
 def add_vault_options(parser):
     """Add options for loading vault files"""
-    parser.add_argument('--vault-id', default=[], dest='vault_ids', action='append', type=str,
+    parser.add_argument('--vault-id', default=[], dest='vault_ids', action='append', type=string_no_newline(),
                         help='the vault identity to use')
     base_group = parser.add_mutually_exclusive_group()
     base_group.add_argument('-J', '--ask-vault-password', '--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',

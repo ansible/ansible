@@ -66,11 +66,13 @@ class VaultCLI(CLI):
 
         # For encrypting actions, we can also specify these choices
         common_encrypt = opt_help.ArgumentParser(add_help=False)
-        common_encrypt.add_argument.add_argument('--vault-salt', dest='vault_salt', action='store', type=str, default=C.VAULT_ENCRYPT_SALT,
+        common_encrypt.add_argument.add_argument('--vault-salt', dest='vault_salt', action='store', type=opt_help.string_no_newline(),
+                                                 default=C.VAULT_ENCRYPT_SALT,
                                                  help='Static salt to use for encrypting the data. Deaults to random salt, use this at your own risk')
-        common_encrypt.add_argument('--vault-version', dest='vault_version', action='store', type=str,
+        common_encrypt.add_argument('--vault-version', dest='vault_version', action='store', type=opt_help.string_no_newline(),
                                     help='Which version of vault container to use.', default=C.VAULT_VERSION)
-        common_encrypt.add_argument('--encrypt-vault-id', default=[], dest='encrypt_vault_id', action='store', type=str,
+        common_encrypt.add_argument('--encrypt-vault-id', default=[], dest='encrypt_vault_id', action='store',
+                                    type=opt_help.string_no_newline(),
                                     help='the vault id used to encrypt (required if more than one vault-id is provided)')
 
         # for those that output to stdout by default, allow redirect to file
@@ -91,7 +93,6 @@ class VaultCLI(CLI):
         decrypt_parser = subparsers.add_parser('decrypt', help='Decrypt vault encrypted file', parents=[output, common])
         decrypt_parser.set_defaults(func=self.execute_decrypt)
         decrypt_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
-        # remove salt option
 
         edit_parser = subparsers.add_parser('edit', help='Edit vault encrypted file', parents=[common_encrypt, common])
         edit_parser.set_defaults(func=self.execute_edit)
