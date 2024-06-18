@@ -455,6 +455,15 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         if self._parent:
             self._parent.set_loader(loader)
 
+    def get_parent_block_name(self):
+
+        name = ''
+        parent_block = self.get_first_parent_block(static=True)
+        if parent_block:
+            name = getattr(parent_block, 'name', '')
+
+        return name
+
     def _get_parent_attribute(self, attr, omit=False):
         '''
         Generic logic to get the attribute or parent attribute for a task value.
@@ -507,6 +516,21 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
                 return self._parent
             return self._parent.get_first_parent_include()
         return None
+
+    def get_first_parent_block(self, static=False):
+        parent = None
+        if self._parent:
+            if isinstance(self._parent, Block):
+                if static:
+                    if getattr(self._parent, 'statically_loaded', True):
+                        parent = self._parent
+                    else:
+                        parent = self._parent.get_first_parent_block()
+                else:
+                    parent = self._parent
+            else:
+                parent = self._parent.get_first_parent_block()
+        return parent
 
     def get_play(self):
         parent = self._parent

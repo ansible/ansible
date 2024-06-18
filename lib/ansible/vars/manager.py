@@ -466,7 +466,10 @@ class VariableManager:
             variables['ansible_play_name'] = play.get_name()
 
         if task:
+            variables['ansible_parent_block_name'] = task.get_parent_block_name()
+
             if task._role:
+                # TODO: (data tagging!!) eventually deprecate 'non' ansible_ prefixed
                 variables['role_name'] = task._role.get_name(include_role_fqcn=False)
                 variables['role_path'] = task._role._role_path
                 variables['role_uuid'] = text_type(task._role._uuid)
@@ -491,7 +494,7 @@ class VariableManager:
                 variables['ansible_play_hosts'] = [x for x in variables['ansible_play_hosts_all'] if x not in play._removed_hosts]
                 variables['ansible_play_batch'] = [x for x in _hosts if x not in play._removed_hosts]
 
-                # DEPRECATED: play_hosts should be deprecated in favor of ansible_play_batch,
+                # TODO: DEPRECATE! (data tagging!!) play_hosts should be deprecated in favor of ansible_play_batch,
                 # however this would take work in the templating engine, so for now we'll add both
                 variables['play_hosts'] = variables['ansible_play_batch']
 
