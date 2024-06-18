@@ -1,0 +1,2 @@
+bugfixes:
+  - service_facts - don't crash if OpenBSD rcctl variable contains '=' character (https://github.com/ansible/ansible/issues/83457)
