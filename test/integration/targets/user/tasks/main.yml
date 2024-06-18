@@ -37,19 +37,20 @@
 - import_tasks: test_shadow_backup.yml
 - import_tasks: test_ssh_key_passphrase.yml
 - import_tasks: test_ssh_key_rounds.yml
-  when: not (ansible_distribution == 'Fedora' and ansible_distribution_version is version('40', '>=')) or
-        not (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('24.04', '>='))
-  vars:
-    passphrase: secret_passphrase
-    rounds: 100
-    default_rounds: 16
-- import_tasks: test_ssh_key_rounds.yml
   when: (ansible_distribution == 'Fedora' and ansible_distribution_version is version('40', '>=')) or
         (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('24.04', '>='))
   vars:
     passphrase: secret_passphrase
     rounds: 100
     default_rounds: 24
+- import_tasks: test_ssh_key_rounds.yml
+  when: not ((ansible_distribution == 'Fedora' and ansible_distribution_version is version('40', '>=')) or
+            (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('24.04', '>=')))
+  vars:
+    passphrase: secret_passphrase
+    rounds: 100
+    default_rounds: 16
+
 - import_tasks: test_password_lock.yml
 - import_tasks: test_password_lock_new_user.yml
 - import_tasks: test_local.yml

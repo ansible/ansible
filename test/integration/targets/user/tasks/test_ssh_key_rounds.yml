@@ -27,7 +27,7 @@
   register: keyfile_creation_result
 
 - name: Get rounds value of resulting key file
-  ansible.builtin.shell: "{{ ansible_playbook_python }} -m openssh_key {{ keyfile_creation_result.ssh_key_file|quote }} --passphrase {{ passphrase }} | jq '.kdf_options.data.rounds'"
+  ansible.builtin.shell: "{{ ansible_python_interpreter }} -m openssh_key {{ keyfile_creation_result.ssh_key_file|quote }} --passphrase {{ passphrase }} | jq '.kdf_options.data.rounds'"
   register: result
 
 - name: Check that rounds of file match the rounds specified in module execution
@@ -54,7 +54,7 @@
   register: keyfile_creation_result
 
 - name: Get rounds value of resulting key file
-  ansible.builtin.shell: "{{ ansible_playbook_python }} -m openssh_key {{ keyfile_creation_result.ssh_key_file|quote }} --passphrase {{ passphrase }} | jq '.kdf_options.data.rounds'"
+  ansible.builtin.shell: "{{ ansible_python_interpreter }} -m openssh_key {{ keyfile_creation_result.ssh_key_file|quote }} --passphrase {{ passphrase }} | jq '.kdf_options.data.rounds'"
   register: result
 
 - name: Check that rounds of file are as default of openssh
@@ -81,7 +81,7 @@
   register: keyfile_creation_result
 
 - name: Get rounds value of resulting key file
-  ansible.builtin.shell: "{{ ansible_playbook_python }} -m openssh_key {{ keyfile_creation_result.ssh_key_file|quote }} | jq '.kdf_options.data.rounds'"
+  ansible.builtin.shell: "{{ ansible_python_interpreter }} -m openssh_key {{ keyfile_creation_result.ssh_key_file|quote }} | jq '.kdf_options.data.rounds'"
   register: result
 
 - name: Check that no rounds are given, because key is not encrypted
