@@ -188,9 +188,8 @@ options:
             - Optionally specify the number of KDF (key derivation function) rounds used to provide higher resistance to brute-force password cracking.
             - If set to higher values, decrypting the encrypted private key file will take longer.
             - It only takes effect when O(ssh_key_passphrase) is provided because in that case the private key is encrypted.
-            - Default value depends on Platform and Distribution. Standard is 16, but newer Fedora, Ubuntu or FreeBSD use 24.
+            - Default value depends on Platform and Distribution. Standard is L(16), but newer Fedora, Ubuntu or FreeBSD use L(24) for example.
         type: int
-        default: 16 or 24
         version_added: "2.18"
     update_password:
         description:
