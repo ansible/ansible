@@ -1190,7 +1190,7 @@ class User(object):
         ssh_dir = os.path.dirname(ssh_key_file)
         if not os.path.exists(ssh_dir):
             if self.module.check_mode:
-                return (0, '', 'Debug 1')
+                return (0, '', '')
             try:
                 os.mkdir(ssh_dir, int('0700', 8))
                 os.chown(ssh_dir, info[2], info[3])
@@ -1201,7 +1201,7 @@ class User(object):
                 # ssh-keygen doesn't support overwriting the key interactively, so send 'y' to confirm
                 overwrite = 'y'
             else:
-                return (None, 'Key already exists, use "force: yes" to overwrite', 'Debug 2')
+                return (None, 'Key already exists, use "force: yes" to overwrite', '')
         cmd = [self.module.get_bin_path('ssh-keygen', True)]
         cmd.append('-t')
         cmd.append(self.ssh_type)
@@ -1218,7 +1218,7 @@ class User(object):
                 cmd.append(self.ssh_key_rounds)
             if self.module.check_mode:
                 self.module.debug('In check mode, would have run: "%s"' % cmd)
-                return (0, '', 'Debug 3')
+                return (0, '', '')
 
             master_in_fd, slave_in_fd = pty.openpty()
             master_out_fd, slave_out_fd = pty.openpty()
@@ -1254,7 +1254,7 @@ class User(object):
                                 prompt = second_prompt
                         if b'Overwrite (y/n)?' in out_buffer or b'Overwrite (y/n)?' in err_buffer:
                             # The key was created between us checking for existence and now
-                            return (None, 'Key already exists', 'Debug 4')
+                            return (None, 'Key already exists', '')
 
                 rc = p.returncode
                 out = to_native(out_buffer)
@@ -1272,7 +1272,7 @@ class User(object):
             # to tweak ownership.
             os.chown(ssh_key_file, info[2], info[3])
             os.chown('%s.pub' % ssh_key_file, info[2], info[3])
-        return (rc, out, cmd)
+        return (rc, out, err)
 
     def ssh_key_fingerprint(self):
         ssh_key_file = self.get_ssh_key_path()
@@ -3272,7 +3272,6 @@ def main():
         if user.sshkeygen:
             # generate ssh key (note: this function is check mode aware)
             (rc, out, err) = user.ssh_key_gen()
-            result['actual_cmd'] = err
             if rc is not None and rc != 0:
                 module.fail_json(name=user.name, msg=err, rc=rc)
             if rc == 0:

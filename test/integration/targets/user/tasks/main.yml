@@ -39,7 +39,8 @@
 - import_tasks: test_ssh_key_rounds.yml
   when: (ansible_distribution == 'Fedora' and ansible_distribution_version is version('40', '>=')) or
         (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('24.04', '>=')) or
-        (ansible_distribution == 'FreeBSD' and ansible_distribution_version is version('13.3', '>='))
+        (ansible_distribution == 'FreeBSD' and ansible_distribution_version is version('13.3', '>=')) or
+        (ansible_distribution == 'MacOSX' and ansible_distribution_version is version('14.3', '>='))
   vars:
     passphrase: secret_passphrase
     rounds: 10
@@ -47,7 +48,8 @@
 - import_tasks: test_ssh_key_rounds.yml
   when: not ((ansible_distribution == 'Fedora' and ansible_distribution_version is version('40', '>=')) or
             (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('24.04', '>=')) or
-            (ansible_distribution == 'FreeBSD' and ansible_distribution_version is version('13.3', '>=')))
+            (ansible_distribution == 'FreeBSD' and ansible_distribution_version is version('13.3', '>=')) or
+            (ansible_distribution == 'MacOSX' and ansible_distribution_version is version('14.3', '>=')))
   vars:
     passphrase: secret_passphrase
     rounds: 10
