@@ -4,6 +4,7 @@
     name: ansibulluser
     state: absent
     remove: true
+    force: true
   
 - name: install required pip module openssh_key_parser for test
   ansible.builtin.pip:
@@ -41,6 +42,7 @@
     name: ansibulluser
     state: absent
     remove: true
+    force: true
 
 - name: "Create user with ssh key and openssh default rounds {{ default_rounds }}"
   ansible.builtin.user:
@@ -72,6 +74,7 @@
     name: ansibulluser
     state: absent
     remove: true
+    force: true
 
 - name: Create user with not encrypted ssh key but specified rounds to create
   ansible.builtin.user:
@@ -102,3 +105,4 @@
     name: ansibulluser
     state: absent
     remove: true
+    force: true
