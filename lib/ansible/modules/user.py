@@ -186,11 +186,11 @@ options:
     ssh_key_rounds:
         description:
             - Optionally specify the number of KDF (key derivation function) rounds used to provide higher resistance to brute-force password cracking.
-            - This increases time do decrypt the encrypted private key file.
-            - If this option is not set, it defaults to the OpenSSH default, which is 16.
-            - It only takes effect when O(ssh_key_passphrase) is provided, because in this case the private key is encrypted.
+            - If set to higher values, decrypting the encrypted private key file will take longer.
+            - It only takes effect when O(ssh_key_passphrase) is provided because in that case the private key is encrypted.
+            - Default value depends on Platform and Distribution. Standard is 16, but newer Fedora, Ubuntu or FreeBSD use 24.
         type: int
-        default: 16
+        default: 16 or 24
         version_added: "2.18"
     update_password:
         description:
