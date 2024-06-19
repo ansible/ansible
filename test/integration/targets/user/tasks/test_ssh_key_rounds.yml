@@ -27,7 +27,7 @@
 
 - name: safe rounds value in variable
   ansible.builtin.set_fact:
-    actual_key_rounds: "{{ result.stdout | from_json | json_query('kdf_options.data.rounds') }}"
+    actual_key_rounds: "{{ (result.stdout | from_json).kdf_options.data.rounds }}"
 
 - name: Check that rounds of file match the rounds specified in module execution
   ansible.builtin.assert:
@@ -58,7 +58,7 @@
 
 - name: safe rounds value in variable
   ansible.builtin.set_fact:
-    actual_key_rounds: "{{ result.stdout | from_json | json_query('kdf_options.data.rounds') }}"
+    actual_key_rounds: "{{ (result.stdout | from_json).kdf_options.data.rounds }}"
 
 - name: "Check that rounds of file are as default of openssh ({{ default_rounds }})"
   ansible.builtin.assert:
@@ -89,13 +89,13 @@
 
 - name: safe rounds value in variable
   ansible.builtin.set_fact:
-    actual_key_rounds: "{{ result.stdout | from_json | json_query('kdf_options.data.rounds') }}"
+    actual_key_rounds: "{{ (result.stdout | from_json).kdf_options.data }}"
 
 - name: Check that no rounds are given, because key is not encrypted
   ansible.builtin.assert:
     that:
-      - actual_key_rounds == ''
-    fail_msg: "{{ actual_key_rounds }} rounds given instead of ''"
+      - actual_key_rounds == {}
+    fail_msg: "{{ actual_key_rounds }} rounds given instead of '{}'"
 
 - name: Remove ansibulluser
   user:
