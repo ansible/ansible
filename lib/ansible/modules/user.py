@@ -3272,7 +3272,7 @@ def main():
         if user.sshkeygen:
             # generate ssh key (note: this function is check mode aware)
             (rc, out, err) = user.ssh_key_gen()
-            result['actual_cmd'] = err.strip()
+            result['actual_cmd'] = err
             if rc is not None and rc != 0:
                 module.fail_json(name=user.name, msg=err, rc=rc)
             if rc == 0:
