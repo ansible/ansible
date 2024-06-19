@@ -1213,13 +1213,12 @@ class User(object):
         cmd.append('-f')
         cmd.append(ssh_key_file)
         if self.ssh_passphrase is not None:
-            if self.module.check_mode:
-                self.module.debug('In check mode, would have run: "%s"' % cmd)
-                return (0, '', '')
-
             if self.ssh_key_rounds is not None:
                 cmd.append('-a')
                 cmd.append(self.ssh_key_rounds)
+            if self.module.check_mode:
+                self.module.debug('In check mode, would have run: "%s"' % cmd)
+                return (0, '', '')
 
             master_in_fd, slave_in_fd = pty.openpty()
             master_out_fd, slave_out_fd = pty.openpty()
@@ -1273,7 +1272,7 @@ class User(object):
             # to tweak ownership.
             os.chown(ssh_key_file, info[2], info[3])
             os.chown('%s.pub' % ssh_key_file, info[2], info[3])
-        return (rc, out, err)
+        return (rc, out, cmd)
 
     def ssh_key_fingerprint(self):
         ssh_key_file = self.get_ssh_key_path()
@@ -3273,6 +3272,7 @@ def main():
         if user.sshkeygen:
             # generate ssh key (note: this function is check mode aware)
             (rc, out, err) = user.ssh_key_gen()
+            result['actual_cmd'] = err.strip()
             if rc is not None and rc != 0:
                 module.fail_json(name=user.name, msg=err, rc=rc)
             if rc == 0:
