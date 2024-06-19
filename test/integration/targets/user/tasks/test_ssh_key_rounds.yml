@@ -10,8 +10,6 @@
     name: openssh_key_parser
     state: present
 
-- command: man ssh-keygen
-
 - name: "Create user with ssh key and {{ rounds }} of rounds specified"
   ansible.builtin.user:
     name: ansibulluser
