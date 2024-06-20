@@ -275,6 +275,8 @@ ZIP_FILE_MODE_RE = re.compile(r'([r-][w-][SsTtx-]){3}')
 INVALID_OWNER_RE = re.compile(r': Invalid owner')
 INVALID_GROUP_RE = re.compile(r': Invalid group')
 SYMLINK_DIFF_RE = re.compile(r': Symlink differs$')
+CONTENT_DIFF_RE = re.compile(r': Contents differ$')
+SIZE_DIFF_RE = re.compile(r': Size differs$')
 
 
 def crc32(path, buffer_size):
@@ -891,16 +893,15 @@ class TgzArchive(object):
                 out += line + '\n'
             if not self.file_args['mode'] and MODE_DIFF_RE.search(line):
                 out += line + '\n'
-            if MOD_TIME_DIFF_RE.search(line):
-                out += line + '\n'
-            if MISSING_FILE_RE.search(line):
-                out += line + '\n'
-            if INVALID_OWNER_RE.search(line):
-                out += line + '\n'
-            if INVALID_GROUP_RE.search(line):
-                out += line + '\n'
-            if SYMLINK_DIFF_RE.search(line):
-                out += line + '\n'
+            differ_regexes = [
+                MOD_TIME_DIFF_RE, MISSING_FILE_RE, INVALID_OWNER_RE,
+                INVALID_GROUP_RE, SYMLINK_DIFF_RE, CONTENT_DIFF_RE,
+                SIZE_DIFF_RE
+            ]
+            for regex in differ_regexes:
+                if regex.search(line):
+                    out += line + '\n'
+
         if out:
             unarchived = False
         return dict(unarchived=unarchived, rc=rc, out=out, err=err, cmd=cmd)
