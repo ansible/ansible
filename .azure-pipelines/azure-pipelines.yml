@@ -85,8 +85,8 @@ stages:
               test: rhel/9.4@3.12
             - name: FreeBSD 13.3
               test: freebsd/13.3
-            - name: FreeBSD 14.0
-              test: freebsd/14.0
+            - name: FreeBSD 14.1
+              test: freebsd/14.1
           groups:
             - 1
             - 2
@@ -99,8 +99,8 @@ stages:
               test: rhel/9.4
             - name: FreeBSD 13.3
               test: freebsd/13.3
-            - name: FreeBSD 14.0
-              test: freebsd/14.0
+            - name: FreeBSD 14.1
+              test: freebsd/14.1
           groups:
             - 3
             - 4
