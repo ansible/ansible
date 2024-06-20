@@ -223,7 +223,7 @@ class VaultAES256(VaultCipher):
         return unpadder.update(decryptor.update(b_ciphertext) + decryptor.finalize()) + unpadder.finalize()
 
     @classmethod
-    def decrypt(cls, b_vaulttext: bytes, secret: str | bytes) -> bytes:
+    def decrypt(cls, b_vaultedtext: bytes, secret: str | bytes) -> bytes:
 
         if not HAS_CRYPTOGRAPHY:
             raise AnsibleError(NEED_CRYPTO_LIBRARY + ' and decrypt')
@@ -310,7 +310,7 @@ class VaultAES256v2(VaultCipher):
 
         if vault.salt is None:
             b_salt = cls._get_salt()
-        elif not salt:
+        elif not vault.salt:
             raise AnsibleVaultError('Empty or invalid salt passed to encrypt()')
         else:
             b_salt = bytes(vault.salt)
