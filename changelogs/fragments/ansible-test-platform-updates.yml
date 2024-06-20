@@ -4,3 +4,4 @@ minor_changes:
   - ansible-test - Replace Ubuntu 20.04 container with Ubuntu 24.04 container.
   - ansible-test - Add Ubuntu 24.04 remote.
   - ansible-test - Replace RHEL 9.3 remote with RHEL 9.4.
+  - ansible-test - Replace FreeBSD 14.0 remote with FreeBSD 14.1.

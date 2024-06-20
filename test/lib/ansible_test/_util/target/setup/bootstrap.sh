@@ -176,10 +176,10 @@ bootstrap_remote_freebsd()
                 cryptography_pkg=""  # not available
                 pyyaml_pkg=""  # not available
                 ;;
-            14.0/3.9)
+            14.1/3.9)
                 # defaults above 'just work'TM
                 ;;
-            14.0/3.11)
+            14.1/3.11)
                 cryptography_pkg=""  # not available
                 jinja2_pkg=""  # not available
                 pyyaml_pkg=""  # not available
