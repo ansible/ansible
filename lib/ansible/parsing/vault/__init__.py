@@ -166,7 +166,7 @@ class Vault_1_2(Vault_1_1):
 
 class Vault_1_3(Vault):
     HEADER_LENGTH = 5
-    CIPHER_ALLOWLIST = frozenset(('AES256','AES256v2'))
+    CIPHER_ALLOWLIST = frozenset(('AES256', 'AES256v2'))
     CIPHER_WRITE_ALLOWLIST = frozenset(('AES256v2',))
 
 
