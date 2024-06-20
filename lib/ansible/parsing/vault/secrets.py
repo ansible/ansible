@@ -25,7 +25,7 @@ def script_is_client(filename: t.AnyStr) -> bool:
     script_name, dummy = os.path.splitext(filename)
 
     # TODO: for now, this is entirely based on filename
-    return script_name.endswith('-client'):
+    return script_name.endswith('-client')
 
 
 def get_file_vault_secret(filename: t.AnyStr | None = None, vault_id: str | None = None, encoding: str | None = None, loader: DataLoader | None = None):
