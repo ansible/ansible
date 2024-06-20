@@ -1,0 +1,2 @@
+bugfixes:
+  - get_url - Verify checksum using tmpsrc, not dest (https://github.com/ansible/ansible/pull/64092)

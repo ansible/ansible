@@ -676,3 +676,46 @@
 
 - name: Test use_netrc=False
   import_tasks: use_netrc.yml
+
+# https://github.com/ansible/ansible/pull/64092
+# Calling get_url with bad checksum should not delete the target file
+- name: Define test files for checksum verification
+  set_fact:
+    checksum_verify_dstfile: "{{ remote_tmp_dir }}/checksum-verify-test.txt"
+
+- name: Download file
+  get_url:
+    url: https://{{ httpbin_host }}/get
+    dest: "{{ checksum_verify_dstfile}}"
+  register: result
+
+- stat:
+    path: "{{ checksum_verify_dstfile }}"
+  register: stat_result_checksum_verify
+
+- name: Assert success
+  assert:
+    that:
+      - result is changed
+      - '"OK" in result.msg'
+      - stat_result_checksum_verify.stat.exists
+
+- name: Download file again, with wrong checksum
+  get_url:
+    url: https://{{ httpbin_host }}/get
+    dest: "{{ checksum_verify_dstfile}}"
+    checksum: "sha256:18b2a70b53c350ad49e4eafb69560bf77ba2ef4f3c93376b65f18b753c912809"
+  register: result
+  failed_when:
+    - result is successful
+
+- stat:
+    path: "{{ checksum_verify_dstfile }}"
+  register: stat_result_checksum_verify
+
+- name: Assert destination file was not removed
+  assert:
+    that:
+      - result is not changed
+      - '"did not match" in result.msg'
+      - stat_result_checksum_verify.stat.exists

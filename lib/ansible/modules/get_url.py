@@ -663,6 +663,16 @@ def main():
                              result['checksum_src'] != result['checksum_dest'])
         module.exit_json(msg=info.get('msg', ''), **result)
 
+    # If a checksum was provided, ensure that the temporary file matches this checksum
+    # before moving it to the destination.
+    if checksum != '':
+        tmpsrc_checksum = module.digest_from_file(tmpsrc, algorithm)
+
+        if checksum != tmpsrc_checksum:
+            os.remove(tmpsrc)
+            module.fail_json(msg=f"The checksum for {tmpsrc} did not match {checksum}; it was {tmpsrc_checksum}.", **result)
+
+    # Copy temporary file to destination if necessary
     backup_file = None
     if result['checksum_src'] != result['checksum_dest']:
         try:
@@ -680,13 +690,6 @@ def main():
         result['changed'] = False
         if os.path.exists(tmpsrc):
             os.remove(tmpsrc)
-
-    if checksum != '':
-        destination_checksum = module.digest_from_file(dest, algorithm)
-
-        if checksum != destination_checksum:
-            os.remove(dest)
-            module.fail_json(msg="The checksum for %s did not match %s; it was %s." % (dest, checksum, destination_checksum), **result)
 
     # allow file attribute changes
     file_args = module.load_file_common_arguments(module.params, path=dest)
