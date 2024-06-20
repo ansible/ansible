@@ -98,7 +98,7 @@ def ensure_value(namespace, name, value):
 #
 def string_no_newline(newline='\n'):
     ''' ensure option does not have newlines '''
-    def inner(value)
+    def inner(value):
         if newline in value:
             raise Exception(f"Option requires a simple string, not multilne: {value}")
     return inner
