@@ -1,2 +1,0 @@
-bugfixes:
-    - collection dependency resolver - modified the '__lt__' comparison to depend on '_priority' field only.
