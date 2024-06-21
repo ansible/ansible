@@ -268,6 +268,12 @@ options:
             - Requires O(local) is omitted or V(False).
         type: str
         version_added: "2.12"
+    password_expire_account_disable:
+        description:
+            - Number of days after a password expires until the account is disabled.
+            - Currently supported on AIX, Linux, NetBSD, OpenBSD.
+        type: int
+        version_added: "2.18"
 extends_documentation_fragment: action_common_attributes
 attributes:
     check_mode:
@@ -356,6 +362,11 @@ EXAMPLES = r'''
   ansible.builtin.user:
     name: jane157
     password_expire_warn: 30
+
+- name: Set number of days after password expires until account is disabled
+  ansible.builtin.user:
+    name: jimholden2016
+    password_expire_account_disable: 15
 '''
 
 RETURN = r'''
@@ -582,6 +593,7 @@ class User(object):
         self.password_expire_min = module.params['password_expire_min']
         self.password_expire_warn = module.params['password_expire_warn']
         self.umask = module.params['umask']
+        self.inactive = module.params['password_expire_account_disable']
 
         if self.umask is not None and self.local:
             module.fail_json(msg="'umask' can not be used with 'local'")
@@ -756,6 +768,10 @@ class User(object):
                 cmd.append('')
             else:
                 cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+
+        if self.inactive is not None:
+            cmd.append('-f')
+            cmd.append(int(self.inactive))
 
         if self.password is not None:
             cmd.append('-p')
@@ -945,6 +961,10 @@ class User(object):
                     else:
                         cmd.append('-e')
                         cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+
+        if self.inactive is not None:
+            cmd.append('-f')
+            cmd.append(self.inactive)
 
         # Lock if no password or unlocked, unlock only if locked
         if self.password_lock and not info[1].startswith('!'):
@@ -1694,6 +1714,10 @@ class OpenBSDUser(User):
                 cmd.append('-K')
                 cmd.append('UMASK=' + self.umask)
 
+        if self.inactive is not None:
+            cmd.append('-f')
+            cmd.append(self.inactive)
+
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -1763,6 +1787,10 @@ class OpenBSDUser(User):
         if self.shell is not None and info[6] != self.shell:
             cmd.append('-s')
             cmd.append(self.shell)
+
+        if self.inactive is not None:
+            cmd.append('-f')
+            cmd.append(self.inactive)
 
         if self.login_class is not None:
             # find current login class
@@ -1860,6 +1888,10 @@ class NetBSDUser(User):
             cmd.append('-p')
             cmd.append(self.password)
 
+        if self.inactive is not None:
+            cmd.append('-f')
+            cmd.append(self.inactive)
+
         if self.create_home:
             cmd.append('-m')
 
@@ -1945,6 +1977,10 @@ class NetBSDUser(User):
         if self.login_class is not None:
             cmd.append('-L')
             cmd.append(self.login_class)
+
+        if self.inactive is not None:
+            cmd.append('-f')
+            cmd.append(self.inactive)
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
@@ -2072,6 +2108,10 @@ class SunOS(User):
             cmd.append('-R')
             cmd.append(self.role)
 
+        if self.inactive is not None:
+            cmd.append('-f')
+            cmd.append(self.inactive)
+
         cmd.append(self.name)
 
         (rc, out, err) = self.execute_command(cmd)
@@ -2188,6 +2228,10 @@ class SunOS(User):
         if self.role is not None and info[9] != self.role:
             cmd.append('-R')
             cmd.append(self.role)
+
+        if self.inactive is not None:
+            cmd.append('-f')
+            cmd.append(self.inactive)
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
@@ -2674,6 +2718,10 @@ class AIX(User):
                 cmd.append('-K')
                 cmd.append('UMASK=' + self.umask)
 
+        if self.inactive is not None:
+            cmd.append('-f')
+            cmd.append(self.inactive)
+
         cmd.append(self.name)
         (rc, out, err) = self.execute_command(cmd)
 
@@ -2741,6 +2789,10 @@ class AIX(User):
         if self.shell is not None and info[6] != self.shell:
             cmd.append('-s')
             cmd.append(self.shell)
+
+        if self.inactive is not None:
+            cmd.append('-f')
+            cmd.append(self.inactive)
 
         # skip if no changes to be made
         if len(cmd) == 1:
@@ -3150,6 +3202,7 @@ def main():
             authorization=dict(type='str'),
             role=dict(type='str'),
             umask=dict(type='str'),
+            password_expire_account_disable=dict(type='int', no_log=False),
         ),
         supports_check_mode=True,
     )
