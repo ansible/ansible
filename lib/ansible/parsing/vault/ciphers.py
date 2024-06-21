@@ -80,17 +80,9 @@ def parse_vaulttext(b_vaulttext: bytes) -> tuple[bytes, bytes, bytes]:
 
 class VaultCipher:
 
-    @classmethod
-    def encrypt(cls, b_plaintext: bytes, secret: str, salt: str | None = None) -> bytes:
-        pass
-
     # TODO: using override or should we just kill old methods?
     @classmethod
     def encrypt(cls, vault: Vault) -> bytes:
-        pass
-
-    @classmethod
-    def decrypt(cls, b_vaultedtext: bytes, secret: str) -> bytes:
         pass
 
     @classmethod
@@ -181,28 +173,27 @@ class VaultAES256(VaultCipher):
         return bytes(custom_salt)
 
     @classmethod
-    def encrypt(cls, b_plaintext: bytes, secret: str, salt: bytes | str | None = None) -> bytes:
+    def encrypt(cls, vault: Vault, secret: str) -> bytes:
 
         if secret is None:
             raise AnsibleVaultError('The secret passed to encrypt() was None')
 
-        if salt is None:
+        if vault.salt is None:
             b_salt = cls._get_salt()
-        elif not salt:
+        elif not vault.salt:
             raise AnsibleVaultError('Empty or invalid salt passed to encrypt()')
         else:
-            b_salt = bytes(salt)
+            b_salt = bytes(vault.salt)
 
         b_password = bytes(secret)
         b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt)
 
         if HAS_CRYPTOGRAPHY:
-            h_hmac, h_ciphertext = cls._encrypt_cryptography(b_plaintext, b_key1, b_key2, b_iv)
+            h_hmac, h_ciphertext = cls._encrypt_cryptography(bytes(vault.plain), b_key1, b_key2, b_iv)
         else:
             raise AnsibleError(NEED_CRYPTO_LIBRARY + ' and encrypt')
 
-        # Unnecessary outer hexlifybut getting rid of it is a backwards incompatible vault
-        # format change
+        # Redundant outer hexlifybut getting rid of it is a backwards incompatible cipher change
         return hexlify(b'\n'.join([hexlify(b_salt), h_hmac, h_ciphertext]))
 
     @classmethod
@@ -223,12 +214,12 @@ class VaultAES256(VaultCipher):
         return unpadder.update(decryptor.update(b_ciphertext) + decryptor.finalize()) + unpadder.finalize()
 
     @classmethod
-    def decrypt(cls, b_vaultedtext: bytes, secret: str | bytes) -> bytes:
+    def decrypt(cls, vault: Vault, secret: bytes | str) -> bytes:
 
         if not HAS_CRYPTOGRAPHY:
             raise AnsibleError(NEED_CRYPTO_LIBRARY + ' and decrypt')
 
-        b_ciphertext, b_salt, b_crypted_hmac = parse_vaulttext_old(b_vaulttext)
+        b_ciphertext, b_salt, b_crypted_hmac = parse_vaulttext_old(vault.vaulted)
 
         # TODO: would be nice if a VaultSecret could be passed directly to _decrypt_*
         #       (move _gen_key_initctr() to a AES256 VaultSecret or VaultContext impl?)
