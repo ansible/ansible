@@ -99,8 +99,7 @@ from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.file import is_executable
 from ansible.parsing.dataloader import DataLoader
-from ansible.parsing.vault import get_file_vault_secret
-from ansible.parsing.vault.secrets import PromptVaultSecret
+from ansible.parsing.vault.secrets import PromptVaultSecret, get_file_vault_secret
 from ansible.plugins.loader import add_all_plugin_dirs, init_plugin_loader
 from ansible.release import __version__
 from ansible.utils.collection_loader import AnsibleCollectionConfig

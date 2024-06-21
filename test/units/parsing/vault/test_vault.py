@@ -1,21 +1,5 @@
-# -*- coding: utf-8 -*-
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-# (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
 
@@ -29,9 +13,12 @@ import pytest
 import unittest
 from unittest.mock import patch, MagicMock
 
-from ansible import errors
+from ansible import errors as e
 from ansible.module_utils.common.text.converters import to_bytes, to_text
-from ansible.parsing import vault
+from ansible.parsing.vault import Vault
+from ansible.parsing.vault.ciphers import _unhexlify
+from ansible.parsing.vault.manager import VaultLib
+from ansible.parsing.vault.secrets import VaultSecret
 
 from units.mock.loader import DictDataLoader
 from units.mock.vault_helper import TextVaultSecret
@@ -41,27 +28,29 @@ class TestUnhexlify(unittest.TestCase):
     def test(self):
         b_plain_data = b'some text to hexlify'
         b_data = hexlify(b_plain_data)
-        res = vault._unhexlify(b_data)
+        res = _unhexlify(b_data)
         self.assertEqual(res, b_plain_data)
 
     def test_odd_length(self):
         b_data = b'123456789abcdefghijklmnopqrstuvwxyz'
-
-        self.assertRaisesRegex(vault.AnsibleVaultFormatError,
+        self.assertRaisesRegex(e.AnsibleVaultFormatError,
                                '.*Vault format unhexlify error.*',
-                               vault._unhexlify,
+                               _unhexlify,
                                b_data)
 
     def test_nonhex(self):
         b_data = b'6z36316566653264333665333637623064303639353237620a636366633565663263336335656532'
 
-        self.assertRaisesRegex(vault.AnsibleVaultFormatError,
+        self.assertRaisesRegex(e.AnsibleVaultFormatError,
                                '.*Vault format unhexlify error.*Non-hexadecimal digit found',
-                               vault._unhexlify,
+                               _unhexlify,
                                b_data)
 
 
 class TestParseVaulttext(unittest.TestCase):
+
+    self.vault = Vault()
+
     def test(self):
         vaulttext_envelope = u'''$ANSIBLE_VAULT;1.1;AES256
 33363965326261303234626463623963633531343539616138316433353830356566396130353436
@@ -71,11 +60,10 @@ class TestParseVaulttext(unittest.TestCase):
 3138'''
 
         b_vaulttext_envelope = to_bytes(vaulttext_envelope, errors='strict', encoding='utf-8')
-        b_vaulttext, b_version, cipher_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext_envelope)
-        res = vault.parse_vaulttext(b_vaulttext)
-        self.assertIsInstance(res[0], bytes)
-        self.assertIsInstance(res[1], bytes)
-        self.assertIsInstance(res[2], bytes)
+        self.vault.from_envelope(b_vaulttext_envelope)
+        self.assertIsInstance(self.vault.vaulted, bytes)
+        self.assertIsInstance(self.vault.version, bytes)
+        self.assertIsInstance(self.vault.cipher, bytes)
 
     def test_non_hex(self):
         vaulttext_envelope = u'''$ANSIBLE_VAULT;1.1;AES256
@@ -86,23 +74,23 @@ class TestParseVaulttext(unittest.TestCase):
 3138'''
 
         b_vaulttext_envelope = to_bytes(vaulttext_envelope, errors='strict', encoding='utf-8')
-        b_vaulttext, b_version, cipher_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext_envelope)
-        self.assertRaisesRegex(vault.AnsibleVaultFormatError,
+        self.vault.from_envelope(b_vaulttext_envelope)
+        self.assertRaisesRegex(e.AnsibleVaultFormatError,
                                '.*Vault format unhexlify error.*Non-hexadecimal digit found',
-                               vault.parse_vaulttext,
+                               self.vault.from_envelope,
                                b_vaulttext_envelope)
 
 
 class TestVaultSecret(unittest.TestCase):
     def test(self):
-        secret = vault.VaultSecret()
+        secret = VaultSecret()
         secret.load()
         self.assertIsNone(secret._bytes)
 
     def test_bytes(self):
         some_text = u'私はガラスを食べられます。それは私を傷つけません。'
         _bytes = to_bytes(some_text)
-        secret = vault.VaultSecret(_bytes)
+        secret = VaultSecret(_bytes)
         secret.load()
         self.assertEqual(secret.bytes, _bytes)
 
@@ -138,7 +126,7 @@ class TestPromptVaultSecret(unittest.TestCase):
         secret = vault.PromptVaultSecret(vault_id='test_id',
                                          prompt_formats=['Vault password: ',
                                                          'Confirm Vault password: '])
-        self.assertRaisesRegex(errors.AnsibleError,
+        self.assertRaisesRegex(e.AnsibleError,
                                'Passwords do not match',
                                secret.load)
 
@@ -237,7 +225,7 @@ class TestFileVaultSecret(unittest.TestCase):
         fake_loader = DictDataLoader({filename: 'sdfadf'})
 
         secret = vault.FileVaultSecret(loader=fake_loader, filename=filename)
-        self.assertRaisesRegex(errors.AnsibleError,
+        self.assertRaisesRegex(e.AnsibleError,
                                '.*Could not read vault password file.*/dev/null/foobar.*Not a directory',
                                secret.load)
 
@@ -249,7 +237,7 @@ class TestFileVaultSecret(unittest.TestCase):
         fake_loader = DictDataLoader({filename: 'sdfadf'})
 
         secret = vault.FileVaultSecret(loader=fake_loader, filename=filename)
-        self.assertRaisesRegex(errors.AnsibleError,
+        self.assertRaisesRegex(e.AnsibleError,
                                '.*Could not read vault password file.*%s.*' % filename,
                                secret.load)
 
@@ -292,7 +280,7 @@ class TestScriptVaultSecret(unittest.TestCase):
         secret = vault.ScriptVaultSecret()
         with patch.object(secret, 'loader') as mock_loader:
             mock_loader.is_executable = MagicMock(return_value=True)
-            self.assertRaisesRegex(errors.AnsibleError,
+            self.assertRaisesRegex(e.AnsibleError,
                                    'Problem running vault password script.*',
                                    secret.load)
 
@@ -315,7 +303,7 @@ class TestScriptVaultSecret(unittest.TestCase):
         secret = vault.ScriptVaultSecret(filename='/dev/null/some_vault_secret')
         with patch.object(secret, 'loader') as mock_loader:
             mock_loader.is_executable = MagicMock(return_value=True)
-            self.assertRaisesRegex(errors.AnsibleError,
+            self.assertRaisesRegex(e.AnsibleError,
                                    r'Vault password script.*returned non-zero \(%s\): %s' % (rc, stderr),
                                    secret.load)
 
@@ -378,7 +366,7 @@ class TestGetFileVaultSecret(unittest.TestCase):
         filename = '/dev/null/foobar'
         fake_loader = DictDataLoader({filename: 'sdfadf'})
 
-        self.assertRaisesRegex(errors.AnsibleError,
+        self.assertRaisesRegex(e.AnsibleError,
                                '.*The vault password file %s was not found.*' % filename,
                                vault.get_file_vault_secret,
                                filename=filename,
@@ -391,7 +379,7 @@ class TestGetFileVaultSecret(unittest.TestCase):
 
         fake_loader = DictDataLoader({filename: 'sdfadf'})
 
-        self.assertRaisesRegex(errors.AnsibleError,
+        self.assertRaisesRegex(e.AnsibleError,
                                '.*The vault password file %s was not found.*' % filename,
                                vault.get_file_vault_secret,
                                filename=filename,
@@ -600,7 +588,7 @@ class TestVaultLib(unittest.TestCase):
         text_secret = TextVaultSecret(self.vault_password)
         self.vault_secrets = [('default', text_secret),
                               ('test_id', text_secret)]
-        self.v = vault.VaultLib(self.vault_secrets)
+        self.v = VaultLib(self.vault_secrets)
 
     def _vault_secrets_from_password(self, vault_id, password):
         return [(vault_id, TextVaultSecret(password))]
@@ -635,7 +623,7 @@ class TestVaultLib(unittest.TestCase):
 
     def test_encrypt_no_secret_empty_secrets(self):
         vault_secrets = []
-        v = vault.VaultLib(vault_secrets)
+        v = VaultLib(vault_secrets)
 
         plaintext = u'Some text to encrypt in a café'
         self.assertRaisesRegex(vault.AnsibleVaultError,
@@ -696,13 +684,13 @@ class TestVaultLib(unittest.TestCase):
 
     def test_encrypt_decrypt_aes256_none_secrets(self):
         vault_secrets = self._vault_secrets_from_password('default', 'ansible')
-        v = vault.VaultLib(vault_secrets)
+        v = VaultLib(vault_secrets)
 
         plaintext = u"foobar"
         b_vaulttext = v.encrypt(plaintext)
 
         # VaultLib will default to empty {} if secrets is None
-        v_none = vault.VaultLib(None)
+        v_none = VaultLib(None)
         # so set secrets None explicitly
         v_none.secrets = None
         self.assertRaisesRegex(vault.AnsibleVaultError,
@@ -712,13 +700,13 @@ class TestVaultLib(unittest.TestCase):
 
     def test_encrypt_decrypt_aes256_empty_secrets(self):
         vault_secrets = self._vault_secrets_from_password('default', 'ansible')
-        v = vault.VaultLib(vault_secrets)
+        v = VaultLib(vault_secrets)
 
         plaintext = u"foobar"
         b_vaulttext = v.encrypt(plaintext)
 
         vault_secrets_empty = []
-        v_none = vault.VaultLib(vault_secrets_empty)
+        v_none = VaultLib(vault_secrets_empty)
 
         self.assertRaisesRegex(vault.AnsibleVaultError,
                                '.*Attempting to decrypt but no vault secrets found.*',
@@ -732,8 +720,8 @@ class TestVaultLib(unittest.TestCase):
         vault_secrets = [('default', TextVaultSecret('another-wrong-password')),
                          ('wrong-password', TextVaultSecret('wrong-password'))]
 
-        v_multi = vault.VaultLib(vault_secrets)
-        self.assertRaisesRegex(errors.AnsibleError,
+        v_multi = VaultLib(vault_secrets)
+        self.assertRaisesRegex(e.AnsibleError,
                                '.*Decryption failed.*',
                                v_multi.decrypt,
                                b_vaulttext,
@@ -750,7 +738,7 @@ class TestVaultLib(unittest.TestCase):
                          ('corect_secret', correct_secret),
                          ('wrong_secret', wrong_secret)]
 
-        v_multi = vault.VaultLib(vault_secrets)
+        v_multi = VaultLib(vault_secrets)
         b_plaintext = v_multi.decrypt(b_vaulttext)
         self.assertNotEqual(b_vaulttext, to_bytes(plaintext), msg="encryption failed")
         self.assertEqual(b_plaintext, to_bytes(plaintext), msg="decryption failed")
@@ -782,7 +770,7 @@ class TestVaultLib(unittest.TestCase):
 6264'''
 
         vault_secrets = self._vault_secrets_from_password('ansible_devel', 'ansible')
-        v = vault.VaultLib(vault_secrets)
+        v = VaultLib(vault_secrets)
 
         b_vaulttext = to_bytes(vaulttext)
 
@@ -802,7 +790,7 @@ class TestVaultLib(unittest.TestCase):
 6264'''
 
         vault_secrets = self._vault_secrets_from_password('default', 'ansible')
-        v = vault.VaultLib(vault_secrets)
+        v = VaultLib(vault_secrets)
 
         b_vaulttext = to_bytes(vaulttext)
 
@@ -815,10 +803,10 @@ class TestVaultLib(unittest.TestCase):
 
     def test_decrypt_decrypted(self):
         plaintext = u"ansible"
-        self.assertRaises(errors.AnsibleError, self.v.decrypt, plaintext)
+        self.assertRaises(e.AnsibleError, self.v.decrypt, plaintext)
 
         b_plaintext = b"ansible"
-        self.assertRaises(errors.AnsibleError, self.v.decrypt, b_plaintext)
+        self.assertRaises(e.AnsibleError, self.v.decrypt, b_plaintext)
 
     def test_cipher_not_set(self):
         plaintext = u"ansible"
