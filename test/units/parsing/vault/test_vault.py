@@ -49,7 +49,7 @@ class TestUnhexlify(unittest.TestCase):
 
 class TestParseVaulttext(unittest.TestCase):
 
-    self.vault = Vault()
+    vault = Vault()
 
     def test(self):
         vaulttext_envelope = u'''$ANSIBLE_VAULT;1.1;AES256

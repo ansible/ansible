@@ -13,8 +13,8 @@ from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe, unfrackpath
 
 # backwards compat
-#from ansible.parsing.vault.manager import VaultLib, VaultEditor
-#from ansible.parsing.vault.secrets import VaultSecret, get_file_vault_secret
+# from ansible.parsing.vault.manager import VaultLib, VaultEditor
+# from ansible.parsing.vault.secrets import VaultSecret, get_file_vault_secret
 
 if t.TYPE_CHECKING:
     from ansible.parsing.dataloader import DataLoader

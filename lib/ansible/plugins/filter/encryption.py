@@ -9,7 +9,9 @@ from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.common.text.converters import to_native, to_bytes
 from ansible.module_utils.six import string_types, binary_type
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
-from ansible.parsing.vault import is_encrypted, VaultSecret, VaultLib
+from ansible.parsing.vault import is_encrypted
+from ansible.parsing.vault.manager import VaultLib
+from ansible.parsing.vault.secrets import VaultSecret
 from ansible.utils.display import Display
 
 display = Display()
