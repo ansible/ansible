@@ -1114,15 +1114,24 @@ class VaultEditor:
                 os.umask(current_umask)
 
     def shuffle_files(self, src, dest):
+        ''' attempts to atomically move file into place'''
+
         prev = None
         # overwrite dest with src
         if os.path.isfile(dest):
-            prev = os.stat(dest)
-            # old file 'dest' was encrypted, no need to _shred_file
-            os.remove(dest)
+            # have existing file, try to preserve properties
+            try:
+                # try to copy all modes/perms
+                shutil.copystat(dest, src)
+            except (IOError, OSError) as e:
+                # copystat failed, fallback to chmod/chown
+                display.warning(f"Unable to completly preserve permissions for {dest}: {e}")
+                prev = os.stat(dest)
+
+        # move file into place, ensures atomic operation on same partition
         shutil.move(src, dest)
 
-        # reset permissions if needed
+        # fallback property preserving
         if prev is not None:
             # TODO: selinux, ACLs, xattr?
             os.chmod(dest, prev.st_mode)
