@@ -21,6 +21,7 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import binary_type
 from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.connection import write_to_stream
+from ansible.module_utils.six import string_types
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.plugins import get_plugin_class
@@ -372,12 +373,17 @@ class TaskExecutor:
                     'msg': 'Failed to template loop_control.label: %s' % to_text(e)
                 })
 
+            # if plugin is loaded, get resolved name, otherwise leave original task connection
+            if self._connection and not isinstance(self._connection, string_types):
+                task_fields['connection'] = getattr(self._connection, 'ansible_name')
+
             tr = TaskResult(
                 self._host.name,
                 self._task._uuid,
                 res,
                 task_fields=task_fields,
             )
+
             if tr.is_failed() or tr.is_unreachable():
                 self._final_q.send_callback('v2_runner_item_on_failed', tr)
             elif tr.is_skipped():
