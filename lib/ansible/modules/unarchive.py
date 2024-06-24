@@ -248,8 +248,8 @@ import platform
 import pwd
 import re
 import stat
-import time
 import traceback
+from datetime import datetime
 from functools import partial
 from zipfile import ZipFile
 
@@ -405,48 +405,47 @@ class ZipArchive(object):
             archive.close()
         return self._files_in_archive
 
-    def _valid_time_stamp(self, timestamp_str):
-        """ Return a valid time object from the given time string """
-        DT_RE = re.compile(r'^(\d{4})(\d{2})(\d{2})\.(\d{2})(\d{2})(\d{2})$')
-        match = DT_RE.match(timestamp_str)
-        epoch_date_time = (1980, 1, 1, 0, 0, 0, 0, 0, 0)
-        if match:
+    def _get_owner(self, run_uid):
+        (fut_owner, fut_uid) = (None, None)
+        if self.file_args['owner']:
             try:
-                if int(match.groups()[0]) < 1980:
-                    date_time = epoch_date_time
-                elif int(match.groups()[0]) > 2107:
-                    date_time = (2107, 12, 31, 23, 59, 59, 0, 0, 0)
-                else:
-                    date_time = (int(m) for m in match.groups() + (0, 0, 0))
-            except ValueError:
-                date_time = epoch_date_time
-        else:
-            # Assume epoch date
-            date_time = epoch_date_time
+                tpw = pwd.getpwnam(self.file_args['owner'])
+            except KeyError:
+                try:
+                    tpw = pwd.getpwuid(int(self.file_args['owner']))
+                except (TypeError, KeyError, ValueError):
+                    tpw = pwd.getpwuid(run_uid)
+            fut_owner = tpw.pw_name
+            fut_uid = tpw.pw_uid
+        return (fut_owner, fut_uid)
 
-        return time.mktime(time.struct_time(date_time))
+    def _get_group(self, run_gid):
+        (fut_group, fut_gid) = (None, None)
+        if self.file_args['group']:
+            try:
+                tgr = grp.getgrnam(self.file_args['group'])
+            except (ValueError, KeyError):
+                try:
+                    # no need to check isdigit() explicitly here, if we fail to
+                    # parse, the ValueError will be caught.
+                    tgr = grp.getgrgid(int(self.file_args['group']))
+                except (KeyError, ValueError, OverflowError):
+                    tgr = grp.getgrgid(run_gid)
+            fut_group = tgr.gr_name
+            fut_gid = tgr.gr_gid
+        return (fut_group, fut_gid)
+
+    def _get_grp_name_by_id(self, grp_id):
+        try:
+            return grp.getgrgid(grp_id).gr_name
+        except (KeyError, ValueError, OverflowError):
+            return None
 
     def is_unarchived(self):
-        # BSD unzip doesn't support zipinfo listings with timestamp.
-        if self.zipinfoflag:
-            cmd = [self.zipinfo_cmd_path, self.zipinfoflag, '-T', '-s', self.src]
-        else:
-            cmd = [self.zipinfo_cmd_path, '-T', '-s', self.src]
-
-        if self.excludes:
-            cmd.extend(['-x', ] + self.excludes)
-        if self.include_files:
-            cmd.extend(self.include_files)
-        rc, out, err = self.module.run_command(cmd)
-        self.module.debug(err)
-
-        old_out = out
+        err = ''
         diff = ''
         out = ''
-        if rc == 0:
-            unarchived = True
-        else:
-            unarchived = False
+        unarchived = True
 
         # Get some information related to user/group ownership
         umask = os.umask(0)
@@ -461,85 +460,42 @@ class ZipArchive(object):
             run_owner = pwd.getpwuid(run_uid).pw_name
         except (TypeError, KeyError):
             run_owner = run_uid
-        try:
-            run_group = grp.getgrgid(run_gid).gr_name
-        except (KeyError, ValueError, OverflowError):
-            run_group = run_gid
+        run_group = self._get_grp_name_by_id(run_gid) or run_gid
 
         # Get future user ownership
-        fut_owner = fut_uid = None
-        if self.file_args['owner']:
-            try:
-                tpw = pwd.getpwnam(self.file_args['owner'])
-            except KeyError:
-                try:
-                    tpw = pwd.getpwuid(int(self.file_args['owner']))
-                except (TypeError, KeyError, ValueError):
-                    tpw = pwd.getpwuid(run_uid)
-            fut_owner = tpw.pw_name
-            fut_uid = tpw.pw_uid
-        else:
-            try:
-                fut_owner = run_owner
-            except Exception:
-                pass
-            fut_uid = run_uid
+        fut_owner = self._get_owner(run_uid)[0] or run_owner
+        fut_uid = self._get_owner(run_uid)[1] or run_uid
 
         # Get future group ownership
-        fut_group = fut_gid = None
-        if self.file_args['group']:
-            try:
-                tgr = grp.getgrnam(self.file_args['group'])
-            except (ValueError, KeyError):
-                try:
-                    # no need to check isdigit() explicitly here, if we fail to
-                    # parse, the ValueError will be caught.
-                    tgr = grp.getgrgid(int(self.file_args['group']))
-                except (KeyError, ValueError, OverflowError):
-                    tgr = grp.getgrgid(run_gid)
-            fut_group = tgr.gr_name
-            fut_gid = tgr.gr_gid
-        else:
-            try:
-                fut_group = run_group
-            except Exception:
-                pass
-            fut_gid = run_gid
+        fut_group = self._get_group(run_gid)[0] or run_group
+        fut_gid = self._get_group(run_gid)[1] or run_gid
 
-        for line in old_out.splitlines():
+        zip_file = ZipFile(self.src)
+        processed = []
+        for file_info in zip_file.infolist():
             change = False
-
-            pcs = line.split(None, 7)
-            if len(pcs) != 8:
-                # Too few fields... probably a piece of the header or footer
-                continue
-
-            # Check first and seventh field in order to skip header/footer
-            # 7 or 8 are FAT, 10 is normal unix perms
-            if len(pcs[0]) not in (7, 8, 10):
-                continue
-            if len(pcs[6]) != 15:
-                continue
-
-            # Possible entries:
-            #   -rw-rws---  1.9 unx    2802 t- defX 11-Aug-91 13:48 perms.2660
-            #   -rw-a--     1.0 hpf    5358 Tl i4:3  4-Dec-91 11:33 longfilename.hpfs
-            #   -r--ahs     1.1 fat    4096 b- i4:2 14-Jul-91 12:58 EA DATA. SF
-            #   --w-------  1.0 mac   17357 bx i8:2  4-May-92 04:02 unzip.macr
-            if pcs[0][0] not in 'dl-?' or not frozenset(pcs[0][1:]).issubset('rwxstah-'):
-                continue
-
-            ztype = pcs[0][0]
-            permstr = pcs[0][1:]
-            version = pcs[1]
-            ostype = pcs[2]
-            size = int(pcs[3])
-            path = to_text(pcs[7], errors='surrogate_or_strict')
-
-            # Skip excluded files
-            if path in self.excludes:
+            path = to_text(file_info.filename, errors='surrogate_or_strict')
+            # Skip the file which in exclude list
+            if self.excludes and path in self.excludes:
                 out += 'Path %s is excluded on request\n' % path
                 continue
+            if self.include_files and path in self.include_files:
+                if path not in processed:
+                    processed.append(path)
+            if not self.include_files:
+                if path not in processed:
+                    processed.append(path)
+
+            if file_info.external_attr == 0:
+                permission = 420
+            else:
+                permission = file_info.external_attr >> 16
+
+            filemode = stat.filemode(permission)
+
+            ztype = filemode[0]
+            permstr = filemode[1:]
+            size = file_info.file_size
 
             # Itemized change requires L for symlink
             if path[-1] == '/':
@@ -548,9 +504,7 @@ class ZipArchive(object):
                 ftype = 'd'
             elif ztype == 'l':
                 ftype = 'L'
-            elif ztype == '-':
-                ftype = 'f'
-            elif ztype == '?':
+            elif ztype in ('-', '?'):
                 ftype = 'f'
 
             # Some files may be storing FAT permissions, not Unix permissions
@@ -581,10 +535,7 @@ class ZipArchive(object):
 
             # Test string conformity
             if len(permstr) != 9 or not ZIP_FILE_MODE_RE.match(permstr):
-                raise UnarchiveError('ZIP info perm format incorrect, %s' % permstr)
-
-            # DEBUG
-#            err += "%s%s %10d %s\n" % (ztype, permstr, size, path)
+                raise UnarchiveError(f'ZIP file permission info format incorrect, {permstr}')
 
             b_dest = os.path.join(self.b_dest, to_bytes(path, errors='surrogate_or_strict'))
             try:
@@ -621,10 +572,7 @@ class ZipArchive(object):
 
             itemized = list('.%s.......??' % ftype)
 
-            # Note: this timestamp calculation has a rounding error
-            # somewhere... unzip and this timestamp can be one second off
-            # When that happens, we report a change and re-unzip the file
-            timestamp = self._valid_time_stamp(pcs[6])
+            timestamp = datetime(*(file_info.date_time)).timestamp()
 
             # Compare file timestamps
             if stat.S_ISREG(st.st_mode):
@@ -640,7 +588,7 @@ class ZipArchive(object):
                         self.excludes.append(path)
                         continue
                 else:
-                    if timestamp != st.st_mtime:
+                    if timestamp != st.st_mtime and (timestamp - st.st_mtime) > 1:
                         change = True
                         self.includes.append(path)
                         err += 'File %s differs in mtime (%f vs %f)\n' % (path, timestamp, st.st_mtime)
@@ -709,10 +657,9 @@ class ZipArchive(object):
                 itemized[6] = 'o'
 
             # Compare file group ownership
-            group = gid = None
-            try:
-                group = grp.getgrgid(st.st_gid).gr_name
-            except (KeyError, ValueError, OverflowError):
+            gid = None
+            group = self._get_grp_name_by_id(st.st_gid)
+            if not group:
                 gid = st.st_gid
 
             if run_uid != 0 and (fut_group != run_group or fut_gid != run_gid) and fut_gid not in groups:
@@ -736,10 +683,7 @@ class ZipArchive(object):
         if self.includes:
             unarchived = False
 
-        # DEBUG
-#        out = old_out + out
-
-        return dict(unarchived=unarchived, rc=rc, out=out, err=err, cmd=cmd, diff=diff)
+        return dict(unarchived=unarchived, out=out, err=err, diff=diff)
 
     def unarchive(self):
         cmd = [self.cmd_path, '-o']
