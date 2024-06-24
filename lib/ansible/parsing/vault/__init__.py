@@ -52,6 +52,7 @@ except ImportError:
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible import constants as C
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import binary_type
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.utils.display import Display
@@ -1116,26 +1117,12 @@ class VaultEditor:
     def shuffle_files(self, src, dest):
         ''' attempts to atomically move file into place'''
 
-        prev = None
-        # overwrite dest with src
-        if os.path.isfile(dest):
-            # have existing file, try to preserve properties
-            try:
-                # try to copy all modes/perms
-                shutil.copystat(dest, src)
-            except (IOError, OSError) as e:
-                # copystat failed, fallback to chmod/chown
-                display.warning(f"Unable to completly preserve permissions for {dest}: {e}")
-                prev = os.stat(dest)
+        def fj2exc(self, msg, *kwargs):
+            raise AnsibleError(msg)
 
-        # move file into place, ensures atomic operation on same partition
-        shutil.move(src, dest)
-
-        # fallback property preserving
-        if prev is not None:
-            # TODO: selinux, ACLs, xattr?
-            os.chmod(dest, prev.st_mode)
-            os.chown(dest, prev.st_uid, prev.st_gid)
+        m = AnsibleModule()
+        m.fail_json = fj2exc
+        m.atomic_move(src, dest, unsafe_writes=True, keep_dest_attrs=True)
 
     def _editor_shell_command(self, filename):
         env_editor = C.config.get_config_value('EDITOR')
