@@ -110,4 +110,4 @@
   assert:
     that:
       - ansible_parent_block_name is defined
-      - "ansible_parent_block_name is None"
+      - "ansible_parent_block_name is none"
