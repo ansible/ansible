@@ -1120,7 +1120,9 @@ class VaultEditor:
         def fj2exc(self, msg, *kwargs):
             raise AnsibleError(msg)
 
-        m = AnsibleModule({})
+        global _ANSIBLE_ARGS
+        _ANSIBLE_ARGS = {}
+        m = AnsibleModule({}, bypass_checks=True)
         m.fail_json = fj2exc
         m.atomic_move(src, dest, unsafe_writes=True, keep_dest_attrs=True)
 
