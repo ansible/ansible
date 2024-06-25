@@ -38,6 +38,17 @@ from ansible.module_utils.six import iteritems
 # import this as a module to ensure we get the same module instance
 from ansible.module_utils.facts import timeout
 
+_OCTAL_ESCAPE_RE = re.compile(r'\\[0-9]{3}')
+
+
+def _replace_octal_escapes(value):
+
+    def _replace_octal_escapes_helper(match):
+        # Convert to integer using base8 and then convert to character
+        return chr(int(match.group()[1:], 8))
+
+    return _OCTAL_ESCAPE_RE.sub(_replace_octal_escapes_helper, value)
+
 
 def _timeout_handler(signum, frame):
     raise TimeoutError(f"Timeout reached in:{frame}")
@@ -85,7 +96,7 @@ class LinuxHardware(Hardware):
     MTAB_BIND_MOUNT_RE = re.compile(r'.*bind.*"')
 
     # regex used for replacing octal escape sequences
-    OCTAL_ESCAPE_RE = re.compile(r'\\[0-9]{3}')
+    OCTAL_ESCAPE_RE = _OCTAL_ESCAPE_RE
 
     def populate(self, collected_facts=None):
         hardware_facts = {}
@@ -552,13 +563,8 @@ class LinuxHardware(Hardware):
             mtab_entries.append(fields)
         return mtab_entries
 
-    @staticmethod
-    def _replace_octal_escapes_helper(match):
-        # Convert to integer using base8 and then convert to character
-        return chr(int(match.group()[1:], 8))
-
     def _replace_octal_escapes(self, value):
-        return self.OCTAL_ESCAPE_RE.sub(self._replace_octal_escapes_helper, value)
+        return _replace_octal_escapes(value)
 
     def get_mount_info(self, mount, device, uuids):
 
