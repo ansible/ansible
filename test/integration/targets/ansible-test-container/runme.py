@@ -181,6 +181,11 @@ def get_test_scenarios() -> list[TestScenario]:
             # See: https://access.redhat.com/solutions/6816771
             enable_sha1 = os_release.id == 'rhel' and os_release.version_id.startswith('9.') and container_name == 'centos6'
 
+            # Starting with Fedora 40, use of /usr/sbin/unix-chkpwd fails under Ubuntu 24.04 due to AppArmor.
+            # This prevents SSH logins from completing due to unix-chkpwd failing to look up the user with getpwnam.
+            # Disabling the 'unix-chkpwd' profile works around the issue, but does not solve the underlying problem.
+            disable_apparmor_profile_unix_chkpwd = engine == 'podman' and os_release.id == 'ubuntu' and container_name == 'fedora40'
+
             cgroup_version = get_docker_info(engine).cgroup_version
 
             user_scenarios = [
@@ -189,14 +194,17 @@ def get_test_scenarios() -> list[TestScenario]:
             ]
 
             if engine == 'podman':
-                user_scenarios.append(UserScenario(ssh=ROOT_USER))
+                if os_release.id not in ('ubuntu',):
+                    # rootfull podman is not supported by all systems
+                    user_scenarios.append(UserScenario(ssh=ROOT_USER))
 
                 # TODO: test podman remote on Alpine and Ubuntu hosts
                 # TODO: combine remote with ssh using different unprivileged users
                 if os_release.id not in ('alpine', 'ubuntu'):
                     user_scenarios.append(UserScenario(remote=unprivileged_user))
 
-                if LOGINUID_MISMATCH:
+                if LOGINUID_MISMATCH and os_release.id not in ('ubuntu',):
+                    # rootfull podman is not supported by all systems
                     user_scenarios.append(UserScenario())
 
             for user_scenario in user_scenarios:
@@ -225,6 +233,7 @@ def get_test_scenarios() -> list[TestScenario]:
                         enable_sha1=enable_sha1,
                         debug_systemd=debug_systemd,
                         probe_cgroups=probe_cgroups,
+                        disable_apparmor_profile_unix_chkpwd=disable_apparmor_profile_unix_chkpwd,
                     )
                 )
 
@@ -319,6 +328,10 @@ def run_test(scenario: TestScenario) -> TestResult:
         if scenario.enable_sha1:
             run_command('update-crypto-policies', '--set', 'DEFAULT:SHA1')
 
+        if scenario.disable_apparmor_profile_unix_chkpwd:
+            os.symlink('/etc/apparmor.d/unix-chkpwd', '/etc/apparmor.d/disable/unix-chkpwd')
+            run_command('apparmor_parser', '-R', '/etc/apparmor.d/unix-chkpwd')
+
         for test_command in test_commands:
             def run_test_command() -> SubprocessResult:
                 if os_release.id == 'alpine' and scenario.user_scenario.actual.name != 'root':
@@ -341,6 +354,10 @@ def run_test(scenario: TestScenario) -> TestResult:
         message = str(ex)
         display.error(f'{scenario} {message}')
     finally:
+        if scenario.disable_apparmor_profile_unix_chkpwd:
+            os.unlink('/etc/apparmor.d/disable/unix-chkpwd')
+            run_command('apparmor_parser', '/etc/apparmor.d/unix-chkpwd')
+
         if scenario.enable_sha1:
             run_command('update-crypto-policies', '--set', 'DEFAULT')
 
@@ -600,6 +617,7 @@ class TestScenario:
     enable_sha1: bool
     debug_systemd: bool
     probe_cgroups: bool
+    disable_apparmor_profile_unix_chkpwd: bool
 
     @property
     def tags(self) -> tuple[str, ...]:
@@ -619,6 +637,9 @@ class TestScenario:
 
         if self.enable_sha1:
             tags.append('sha1: enabled')
+
+        if self.disable_apparmor_profile_unix_chkpwd:
+            tags.append('apparmor(unix-chkpwd): disabled')
 
         return tuple(tags)
 
