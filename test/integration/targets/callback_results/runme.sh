@@ -16,5 +16,11 @@ grep -e "${EXPECTED_REGEX}" "${OUTFILE}"
 # test connection tracking
 EXPECTED_CONNECTION='{"testhost":{"ssh":4}}'
 OUTPUT_TAIL=$(tail -n5 ${OUTFILE} | tr -d '[:space:]')
+echo "Checking for connection strin ${OUTPUT_TAIL} in stdout."
 [ "${EXPECTED_CONNECTION}" == "${OUTPUT_TAIL}" ]
 echo $?
+
+# check variables are interpolated in 'started'
+UNTEMPLATED_STARTED="^.*\[started .*{{.*}}.*$"
+echo "Checking we dont have untemplated started in stdout."
+grep -e "${UNTEMPLATED_STARTED}" "${OUTFILE}" || exit 0
