@@ -1,0 +1,5 @@
+bugfixes:
+  - connection plugins using the 'extras' option feature would need to match the plugin's loaded name,
+    sometimes requiring fqcn in the variable name, which is not the same as the documented/declared/expected variables.
+    To fix this they can now declare a 'prefix' that will be matched against instead.
+  - winrm and psrps connection plugins now declare a variable prefix to avoid issues with fqcn and the 'extras' option feature.
