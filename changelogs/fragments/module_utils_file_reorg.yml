@@ -1,0 +1,3 @@
+minor_changes:
+  - moved several file related functions out of AnsibleModule to a common area, so plugin
+    developers can now use several file related functions without instanciating AnsibleModule.

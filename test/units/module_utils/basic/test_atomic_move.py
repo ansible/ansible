@@ -14,6 +14,7 @@ from itertools import product
 import pytest
 
 from ansible.module_utils import basic
+from ansible.module_utils.common import file as file_common
 from ansible.module_utils.common.file import S_IRWU_RG_RO
 
 
@@ -24,6 +25,12 @@ def atomic_am(am, mocker):
     am.selinux_default_context = mocker.MagicMock()
     am.set_context_if_different = mocker.MagicMock()
     am._unsafe_writes = mocker.MagicMock()
+
+    # update origin of logic to mocked functions
+    file_common.is_selinux_enabled = am.selinux_enabled
+    file_common.get_path_selinux_context = am.selinux_context
+    file_common.get_path_default_selinux_context = am.selinux_default_context
+    file_common.write_unsafely = am._unsafe_writes
 
     yield am
 
@@ -95,9 +102,10 @@ def test_new_file(atomic_am, atomic_mocks, mocker, selinux):
 @pytest.mark.parametrize('stdin, selinux', product([{}], (True, False)), indirect=['stdin'])
 def test_existing_file(atomic_am, atomic_mocks, fake_stat, mocker, selinux):
     # Test destination already present
-    mock_context = atomic_am.selinux_context.return_value
+    mock_context = file_common.get_path_selinux_context.return_value
     atomic_mocks['stat'].return_value = fake_stat
     atomic_mocks['path_exists'].return_value = True
+    file_common.is_selinux_enabled.return_value = selinux
     atomic_am.selinux_enabled.return_value = selinux
 
     atomic_am.atomic_move('/path/to/src', '/path/to/dest')
