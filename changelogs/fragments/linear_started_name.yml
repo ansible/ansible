@@ -1,0 +1,2 @@
+bugfixes:
+  - linear strategy now provides a properly templated task name to the v2_runner_on_started callback event.
