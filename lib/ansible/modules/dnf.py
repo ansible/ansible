@@ -739,7 +739,7 @@ class DnfModule(YumDnf):
 
     def _is_installed(self, pkg):
         installed_query = dnf.subject.Subject(pkg).get_best_query(sack=self.base.sack).installed()
-        if "*" in pkg:
+        if dnf.util.is_glob_pattern(pkg):
             available_query = dnf.subject.Subject(pkg).get_best_query(sack=self.base.sack).available()
             return not (
                 {p.name for p in available_query} - {p.name for p in installed_query}

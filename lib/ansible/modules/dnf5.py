@@ -362,7 +362,10 @@ def is_installed(base, spec):
     installed_query.filter_installed()
     match, nevra = installed_query.resolve_pkg_spec(spec, settings, True)
 
-    if "*" in spec:
+    # FIXME use `is_glob_pattern` function when available:
+    # https://github.com/rpm-software-management/dnf5/issues/1563
+    glob_patterns = set("*[?")
+    if any(set(char) & glob_patterns for char in spec):
         available_query = libdnf5.rpm.PackageQuery(base)
         available_query.filter_available()
         available_query.resolve_pkg_spec(spec, settings, True)
