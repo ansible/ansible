@@ -189,14 +189,17 @@ def get_test_scenarios() -> list[TestScenario]:
             ]
 
             if engine == 'podman':
-                user_scenarios.append(UserScenario(ssh=ROOT_USER))
+                if os_release.id not in ('ubuntu',):
+                    # rootfull podman is not supported by all systems
+                    user_scenarios.append(UserScenario(ssh=ROOT_USER))
 
                 # TODO: test podman remote on Alpine and Ubuntu hosts
                 # TODO: combine remote with ssh using different unprivileged users
                 if os_release.id not in ('alpine', 'ubuntu'):
                     user_scenarios.append(UserScenario(remote=unprivileged_user))
 
-                if LOGINUID_MISMATCH:
+                if LOGINUID_MISMATCH and os_release.id not in ('ubuntu',):
+                    # rootfull podman is not supported by all systems
                     user_scenarios.append(UserScenario())
 
             for user_scenario in user_scenarios:
