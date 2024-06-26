@@ -208,12 +208,7 @@
     dest: /tmp/KEY_83493
 
 - name: Issue 83493 - Verify key fingerprints. This should fail due to multiple key signatures
-  my_module:
-    key: /tmp/KEY_83493
-    state: absent
-
-- name: Issue 83493 - Verify key fingerprints. This should fail due to multiple key signatures
-  my_module:
+  rpm_key:
     key: /tmp/KEY_83493
     fingerprint: 1B09 0CE4 7562 66D7 1203 13F6 3BAC 309A 6EB4 25D5
   register: result
@@ -226,7 +221,7 @@
        - result is not changed
 
 - name: Issue 83493 - Add KEY_83493 GPG keys to system
-  my_module:
+  rpm_key:
     key: /tmp/KEY_83493
     fingerprint:
       - 1B09 0CE4 7562 66D7 1203 13F6 3BAC 309A 6EB4 25D5
