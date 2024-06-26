@@ -520,3 +520,25 @@
       dnf:
         name: epochone
         state: absent
+
+# https://github.com/ansible/ansible/issues/83373
+- name: test installing a set of packages by specifying them using a wildcard character
+  block:
+    - dnf:
+        name: provides_foo_a
+        state: present
+
+    - dnf:
+        name: provides_foo*
+        state: present
+      register: dnf_results
+
+    - assert:
+        that:
+          - dnf_results is changed
+          - "'Installed: provides_foo_b' in dnf_results['results'][0]"
+  always:
+    - name: Clean up
+      dnf:
+        name: provides_foo*
+        state: absent
