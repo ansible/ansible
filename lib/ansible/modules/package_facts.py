@@ -20,23 +20,19 @@ options:
       - The V(apk) option was added in version 2.11.
       - The V(pkg_info)' option was added in version 2.13.
       - Aliases were added in 2.18, to support using C(auto={{ansible_facts['pkg_mgr']}})
+      - V(auto) depending on O(strategy) will match the first or all package managers provided in order.
+      - V(rpm) requires RPM Python bindings for RPM based distros and not installed by default on Suse C(python3-rpm).
+      - V(yum) and V(dnf) and V(dnf5) and V(zypper) are aliases to C(rpm)
+      - V(apt) C(python-apt) package must be installed on targeted hosts for Debian based distros
+      - V(portage) handles ebuild packages and requires the C(qlist) utility available from 'app-portage/portage-utils'
+      - V(pkg) libpkg front end C(FreeBSD)
+      - V(pkg5) and V(pkgng) Alias to C(pkg)
+      - V(pacman) Archlinux package manager/builder
+      - V(apk) Alpine Linux package manager
+      - V(pkg_info) OpenBSD package manager
+      - V(openbsd_pkg) Alias to C(pkg_info)
     default: ['auto']
-    choices:
-        auto: Depending on O(strategy), will match the first or all package managers provided, in order
-        rpm: For RPM based distros, requires RPM Python bindings, not installed by default on Suse (python3-rpm)
-        yum: Alias to rpm
-        dnf: Alias to rpm
-        dnf5: Alias to rpm
-        zypper: Alias to rpm
-        apt: For DEB based distros, C(python-apt) package must be installed on targeted hosts
-        portage: Handles ebuild packages, it requires the C(qlist) utility, which is part of 'app-portage/portage-utils'
-        pkg: libpkg front end (FreeBSD)
-        pkg5: Alias to pkg
-        pkgng: Alias to pkg
-        pacman: Archlinux package manager/builder
-        apk: Alpine Linux package manager
-        pkg_info: OpenBSD package manager
-        openbsd_pkg: Alias to pkg_info
+    choices: ['auto', 'rpm', 'yum', 'dnf', 'dnf5', 'zypper', 'apt', 'portage', 'pkg', 'pkg5', 'pkgng', 'pacman', 'apk', 'pkg_info', 'openbsd_pkg']
     type: list
     elements: str
   strategy:
