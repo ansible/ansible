@@ -738,9 +738,14 @@ class DnfModule(YumDnf):
         self.module.exit_json(msg="", results=results)
 
     def _is_installed(self, pkg):
-        return bool(
-            dnf.subject.Subject(pkg).get_best_query(sack=self.base.sack).installed().run()
-        )
+        installed_query = dnf.subject.Subject(pkg).get_best_query(sack=self.base.sack).installed()
+        if dnf.util.is_glob_pattern(pkg):
+            available_query = dnf.subject.Subject(pkg).get_best_query(sack=self.base.sack).available()
+            return not (
+                {p.name for p in available_query} - {p.name for p in installed_query}
+            )
+        else:
+            return bool(installed_query)
 
     def _is_newer_version_installed(self, pkg_name):
         try:

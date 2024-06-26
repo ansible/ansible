@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf, dnf5 - fix for installing a set of packages by specifying them using a wildcard character (https://github.com/ansible/ansible/issues/83373)
