@@ -120,7 +120,7 @@ class RpmKey(object):
             keyids = self.getkeyids(keyfile)
             should_cleanup_keyfile = True
         elif self.is_keyid(key):
-            keyids = [ key ]
+            keyids = [key]
         elif os.path.isfile(key):
             keyfile = key
             keyids = self.getkeyids(keyfile)
@@ -239,12 +239,12 @@ class RpmKey(object):
         cmd += ' --qf "%{description}" | ' + self.gpg + ' --no-tty --batch --with-colons --fixed-list-mode -'
         stdout, stderr = self.execute_command(cmd)
 
-        imported_ids = set()             
+        imported_ids = set()
         for line in stdout.splitlines():
             imported_id = line.split(":")[4]
             # Add imported_id to imported_ids
             imported_ids.add(imported_id)
-     
+
             # Also add "short" (rpm --queryformat %{version}) keyids (self.is_keyid(keyid)) to imported_ids
             for keyid in keyids:
                 # if they are "short" id (self.is_keyid(keyid)) and substring of an imported_id
