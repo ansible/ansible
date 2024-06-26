@@ -136,7 +136,7 @@ class RpmKey(object):
                     self.module.fail_json(msg="When importing a key, a valid file must be given")
                 if fingerprint:
                     has_fingerprint = self.getfingerprint(keyfile)
-                    if fingerprint != has_fingerprint:
+                    if set(fingerprint) != set(has_fingerprint):
                         self.module.fail_json(
                             msg="The specified fingerprint, '%s', does not match the key fingerprint '%s'" % (fingerprint, has_fingerprint)
                         )
@@ -244,7 +244,10 @@ class RpmKey(object):
         for line in stdout.splitlines():
             imported_ids.add(line.split(":")[4])
 
-        return set(keyids) == imported_ids
+        keyids = set(keyids)
+        imported_cnt = len(keyids.intersection(imported_ids))
+
+        return imported_cnt == len(keyids)
 
     def import_key(self, keyfile):
         if not self.module.check_mode:
