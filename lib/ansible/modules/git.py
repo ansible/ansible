@@ -265,26 +265,26 @@ EXAMPLES = '''
 
 - name: Checkout a github repo and use refspec to fetch all pull requests
   ansible.builtin.git:
-    repo: https://github.com/ansible/ansible-examples.git
-    dest: /src/ansible-examples
+    repo: git@github.com:mylogin/hello.git
+    dest: /home/mylogin/hello
     refspec: '+refs/pull/*:refs/heads/*'
 
 - name: Create git archive from repo
   ansible.builtin.git:
-    repo: https://github.com/ansible/ansible-examples.git
-    dest: /src/ansible-examples
-    archive: /tmp/ansible-examples.zip
+    repo: git@github.com:mylogin/hello.git
+    dest: /home/mylogin/hello
+    archive: /home/mylogin/hello.zip
 
 - name: Clone a repo with separate git directory
   ansible.builtin.git:
-    repo: https://github.com/ansible/ansible-examples.git
-    dest: /src/ansible-examples
-    separate_git_dir: /src/ansible-examples.git
+    repo: git@github.com:mylogin/hello.git
+    dest: /home/mylogin/hello
+    separate_git_dir: /home/mylogin/hello.git
 
 - name: Example clone of a single branch
   ansible.builtin.git:
-    repo: https://github.com/ansible/ansible-examples.git
-    dest: /src/ansible-examples
+    repo: git@github.com:mylogin/hello.git
+    dest: /home/mylogin/hello
     single_branch: yes
     version: master
 
