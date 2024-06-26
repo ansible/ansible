@@ -168,17 +168,21 @@ class RpmKey(object):
         return tmpname
 
     def normalize_keyids(self, keyids):
-        """Ensure a keyid doesn't have a leading 0x, has leading or trailing whitespace, and make sure is uppercase"""
         normalized_keyids = []
         for keyid in keyids:
-            ret = keyid.strip().upper()
-            if ret.startswith('0x'):
-                normalized_keyids.append(ret[2:])
-            elif ret.startswith('0X'):
-                normalized_keyids.append(ret[2:])
-            else:
-                normalized_keyids.append(ret)
+            normalized_keyids.append(self.normalize_keyid(keyid))
+
         return normalized_keyids
+
+    def normalize_keyid(self, keyid):
+        """Ensure a keyid doesn't have a leading 0x, has leading or trailing whitespace, and make sure is uppercase"""
+        ret = keyid.strip().upper()
+        if ret.startswith("0x"):
+            return ret[2:]
+        elif ret.startswith("0X"):
+            return ret[2:]
+        else:
+            return ret
 
     def getkeyids(self, keyfile):
         stdout, stderr = self.execute_command([self.gpg, '--no-tty', '--batch', '--with-colons', '--fixed-list-mode', keyfile])
@@ -236,15 +240,11 @@ class RpmKey(object):
         cmd += ' --qf "%{description}" | ' + self.gpg + ' --no-tty --batch --with-colons --fixed-list-mode -'
         stdout, stderr = self.execute_command(cmd)
 
-        matching_keys = 0
+        imported_ids = set()
         for line in stdout.splitlines():
-            if matching_keys == len(keyids):
-                return True
-            for keyid in keyids:
-                if keyid in line.split(':')[4]:
-                    matching_keys += 1
+            imported_ids.add(line.split(":")[4])
 
-        return False
+        return set(keyids) == imported_ids
 
     def import_key(self, keyfile):
         if not self.module.check_mode:
