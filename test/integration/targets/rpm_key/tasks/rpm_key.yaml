@@ -187,28 +187,53 @@
       - result is success
       - result is not changed
 
-- name: Issue 50615 - Verify key fingerprints. This should fail due to multiple key signatures
-  rpm_key:
-    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/linux_signing_key.pub
-    fingerprint: EB4C 1BFD 4F04 2F6D DDCC EC91 7721 F63B D38B 4796
+- name: Issue 83493 - create fragments directory
+  file:
+    path: /tmp/fragments
+    state: directory
+
+- name: Issue 83493 - download AlmaLinux-9 GPG key
+  get_url:
+    url: https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux-9
+    dest: /tmp/fragments/RPM-GPG-KEY-AlmaLinux-9
+
+- name: Issue 83493 - download PGDG RHEL9 GPG key
+  get_url:
+    url: https://download.postgresql.org/pub/repos/yum/keys/RPM-GPG-KEY-PGDG-AARCH64-RHEL9
+    dest: /tmp/fragments/RPM-GPG-KEY-PGDG-AARCH64-RHEL9
+
+- name: Issue 83493 - Assemble key from fragments
+  ansible.builtin.assemble:
+    src: /tmp/fragments
+    dest: /tmp/KEY_83493
+
+- name: Issue 83493 - Verify key fingerprints. This should fail due to multiple key signatures
+  my_module:
+    key: /tmp/KEY_83493
+    state: absent
+
+- name: Issue 83493 - Verify key fingerprints. This should fail due to multiple key signatures
+  my_module:
+    key: /tmp/KEY_83493
+    fingerprint: 1B09 0CE4 7562 66D7 1203 13F6 3BAC 309A 6EB4 25D5
   register: result
   ignore_errors: true
 
-- name: Issue 50615 - Assert Verify fingerprints of keys, insufficent fingerprints
+- name: Issue 83493 - Assert Verify fingerprints of keys, insufficent fingerprints
   assert:
     that:
        - result is not success
        - result is not changed
 
-- name: Issue 50615 - Add Google GPG keys to system
-  rpm_key:
-    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/linux_signing_key.pub
+- name: Issue 83493 - Add KEY_83493 GPG keys to system
+  my_module:
+    key: /tmp/KEY_83493
     fingerprint:
-      - 4CCA 1EAF 950C EE4A B839 76DC A040 830F 7FAC 5991
-      - EB4C 1BFD 4F04 2F6D DDCC EC91 7721 F63B D38B 4796
+      - 1B09 0CE4 7562 66D7 1203 13F6 3BAC 309A 6EB4 25D5
+      - BF18 AC28 7617 8908 D6E7 1267 D36C B86C B86B 3716
   register: result
 
-- name: Issue 50615 - Assert Verify fingerprints of keys, valid fingerprints
+- name: Issue Issue 83493 - Assert Verify fingerprints of keys, valid fingerprints
   assert:
     that:
       - result is success
