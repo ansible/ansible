@@ -4,37 +4,33 @@
 """Dependency structs."""
 # FIXME: add caching all over the place
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import json
 import os
+import typing as t
+
 from collections import namedtuple
+from collections.abc import MutableSequence, MutableMapping
 from glob import iglob
+from urllib.parse import urlparse
+from yaml import safe_load
 
-try:
-    from typing import TYPE_CHECKING
-except ImportError:
-    TYPE_CHECKING = False
-
-if TYPE_CHECKING:
-    from typing import Tuple, Type, TypeVar
+if t.TYPE_CHECKING:
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
     )
-    Collection = TypeVar(
+    Collection = t.TypeVar(
         'Collection',
         'Candidate', 'Requirement',
         '_ComputedReqKindsMixin',
     )
 
-import yaml
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.galaxy.api import GalaxyAPI
-from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.six.moves.urllib.parse import urlparse
-from ansible.module_utils.six import raise_from
+from ansible.galaxy.collection import HAS_PACKAGING, PkgReq
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 
@@ -42,9 +38,68 @@ from ansible.utils.display import Display
 _ALLOW_CONCRETE_POINTER_IN_SOURCE = False  # NOTE: This is a feature flag
 _GALAXY_YAML = b'galaxy.yml'
 _MANIFEST_JSON = b'MANIFEST.json'
-
+_SOURCE_METADATA_FILE = b'GALAXY.yml'
 
 display = Display()
+
+
+def get_validated_source_info(b_source_info_path, namespace, name, version):
+    source_info_path = to_text(b_source_info_path, errors='surrogate_or_strict')
+
+    if not os.path.isfile(b_source_info_path):
+        return None
+
+    try:
+        with open(b_source_info_path, mode='rb') as fd:
+            metadata = safe_load(fd)
+    except OSError as e:
+        display.warning(
+            f"Error getting collection source information at '{source_info_path}': {to_text(e, errors='surrogate_or_strict')}"
+        )
+        return None
+
+    if not isinstance(metadata, MutableMapping):
+        display.warning(f"Error getting collection source information at '{source_info_path}': expected a YAML dictionary")
+        return None
+
+    schema_errors = _validate_v1_source_info_schema(namespace, name, version, metadata)
+    if schema_errors:
+        display.warning(f"Ignoring source metadata file at {source_info_path} due to the following errors:")
+        display.warning("\n".join(schema_errors))
+        display.warning("Correct the source metadata file by reinstalling the collection.")
+        return None
+
+    return metadata
+
+
+def _validate_v1_source_info_schema(namespace, name, version, provided_arguments):
+    argument_spec_data = dict(
+        format_version=dict(choices=["1.0.0"]),
+        download_url=dict(),
+        version_url=dict(),
+        server=dict(),
+        signatures=dict(
+            type=list,
+            suboptions=dict(
+                signature=dict(),
+                pubkey_fingerprint=dict(),
+                signing_service=dict(),
+                pulp_created=dict(),
+            )
+        ),
+        name=dict(choices=[name]),
+        namespace=dict(choices=[namespace]),
+        version=dict(choices=[version]),
+    )
+
+    if not isinstance(provided_arguments, dict):
+        raise AnsibleError(
+            f'Invalid offline source info for {namespace}.{name}:{version}, expected a dict and got {type(provided_arguments)}'
+        )
+    validator = ArgumentSpecValidator(argument_spec_data)
+    validation_result = validator.validate(provided_arguments)
+
+    return validation_result.error_messages
 
 
 def _is_collection_src_dir(dir_path):
@@ -111,10 +166,30 @@ def _is_concrete_artifact_pointer(tested_str):
 
 
 class _ComputedReqKindsMixin:
+    UNIQUE_ATTRS = ('fqcn', 'ver', 'src', 'type')
+
+    def __init__(self, *args, **kwargs):
+        if not self.may_have_offline_galaxy_info:
+            self._source_info = None
+        else:
+            info_path = self.construct_galaxy_info_path(to_bytes(self.src, errors='surrogate_or_strict'))
+
+            self._source_info = get_validated_source_info(
+                info_path,
+                self.namespace,
+                self.name,
+                self.ver
+            )
+
+    def __hash__(self):
+        return hash(tuple(getattr(self, attr) for attr in _ComputedReqKindsMixin.UNIQUE_ATTRS))
+
+    def __eq__(self, candidate):
+        return hash(self) == hash(candidate)
 
     @classmethod
     def from_dir_path_as_unknown(  # type: ignore[misc]
-            cls,  # type: Type[Collection]
+            cls,  # type: t.Type[Collection]
             dir_path,  # type: bytes
             art_mgr,  # type: ConcreteArtifactsManager
     ):  # type: (...)  -> Collection
@@ -125,7 +200,7 @@ class _ComputedReqKindsMixin:
         falls back to guessing the FQCN based on the directory path and
         sets the version to "*".
 
-        It raises a ValueError immediatelly if the input is not an
+        It raises a ValueError immediately if the input is not an
         existing directory path.
         """
         if not os.path.isdir(dir_path):
@@ -140,10 +215,15 @@ class _ComputedReqKindsMixin:
             return cls.from_dir_path_implicit(dir_path)
 
     @classmethod
-    def from_dir_path(cls, dir_path, art_mgr):
+    def from_dir_path(  # type: ignore[misc]
+            cls,  # type: t.Type[Collection]
+            dir_path,  # type: bytes
+            art_mgr,  # type: ConcreteArtifactsManager
+    ):  # type: (...)  -> Collection
         """Make collection from an directory with metadata."""
-        b_dir_path = to_bytes(dir_path, errors='surrogate_or_strict')
-        if not _is_collection_dir(b_dir_path):
+        if dir_path.endswith(to_bytes(os.path.sep)):
+            dir_path = dir_path.rstrip(to_bytes(os.path.sep))
+        if not _is_collection_dir(dir_path):
             display.warning(
                 u"Collection at '{path!s}' does not have a {manifest_json!s} "
                 u'file, nor has it {galaxy_yml!s}: cannot detect version.'.
@@ -158,15 +238,31 @@ class _ComputedReqKindsMixin:
                 ' collection directory.',
             )
 
-        tmp_inst_req = cls(None, None, dir_path, 'dir')
-        req_name = art_mgr.get_direct_collection_fqcn(tmp_inst_req)
+        tmp_inst_req = cls(None, None, dir_path, 'dir', None)
         req_version = art_mgr.get_direct_collection_version(tmp_inst_req)
+        try:
+            req_name = art_mgr.get_direct_collection_fqcn(tmp_inst_req)
+        except TypeError as err:
+            # Looks like installed/source dir but isn't: doesn't have valid metadata.
+            display.warning(
+                u"Collection at '{path!s}' has a {manifest_json!s} "
+                u"or {galaxy_yml!s} file but it contains invalid metadata.".
+                format(
+                    galaxy_yml=to_text(_GALAXY_YAML),
+                    manifest_json=to_text(_MANIFEST_JSON),
+                    path=to_text(dir_path, errors='surrogate_or_strict'),
+                ),
+            )
+            raise ValueError(
+                "Collection at '{path!s}' has invalid metadata".
+                format(path=to_text(dir_path, errors='surrogate_or_strict'))
+            ) from err
 
-        return cls(req_name, req_version, dir_path, 'dir')
+        return cls(req_name, req_version, dir_path, 'dir', None)
 
     @classmethod
     def from_dir_path_implicit(  # type: ignore[misc]
-            cls,  # type: Type[Collection]
+            cls,  # type: t.Type[Collection]
             dir_path,  # type: bytes
     ):  # type: (...)  -> Collection
         """Construct a collection instance based on an arbitrary dir.
@@ -176,31 +272,56 @@ class _ComputedReqKindsMixin:
         regardless of whether any of known metadata files are present.
         """
         # There is no metadata, but it isn't required for a functional collection. Determine the namespace.name from the path.
+        if dir_path.endswith(to_bytes(os.path.sep)):
+            dir_path = dir_path.rstrip(to_bytes(os.path.sep))
         u_dir_path = to_text(dir_path, errors='surrogate_or_strict')
         path_list = u_dir_path.split(os.path.sep)
         req_name = '.'.join(path_list[-2:])
-        return cls(req_name, '*', dir_path, 'dir')  # type: ignore[call-arg]
+        return cls(req_name, '*', dir_path, 'dir', None)  # type: ignore[call-arg]
 
     @classmethod
-    def from_string(cls, collection_input, artifacts_manager):
+    def from_string(cls, collection_input, artifacts_manager, supplemental_signatures):
         req = {}
-        if _is_concrete_artifact_pointer(collection_input):
-            # Arg is a file path or URL to a collection
+        if _is_concrete_artifact_pointer(collection_input) or AnsibleCollectionRef.is_valid_collection_name(collection_input):
+            # Arg is a file path or URL to a collection, or just a collection
             req['name'] = collection_input
-        else:
+        elif ':' in collection_input:
             req['name'], _sep, req['version'] = collection_input.partition(':')
             if not req['version']:
                 del req['version']
+        else:
+            if not HAS_PACKAGING:
+                raise AnsibleError("Failed to import packaging, check that a supported version is installed")
+            try:
+                pkg_req = PkgReq(collection_input)
+            except Exception as e:
+                # packaging doesn't know what this is, let it fly, better errors happen in from_requirement_dict
+                req['name'] = collection_input
+            else:
+                req['name'] = pkg_req.name
+                if pkg_req.specifier:
+                    req['version'] = to_text(pkg_req.specifier)
+        req['signatures'] = supplemental_signatures
 
         return cls.from_requirement_dict(req, artifacts_manager)
 
     @classmethod
-    def from_requirement_dict(cls, collection_req, art_mgr):
+    def from_requirement_dict(cls, collection_req, art_mgr, validate_signature_options=True):
         req_name = collection_req.get('name', None)
         req_version = collection_req.get('version', '*')
         req_type = collection_req.get('type')
         # TODO: decide how to deprecate the old src API behavior
         req_source = collection_req.get('source', None)
+        req_signature_sources = collection_req.get('signatures', None)
+        if req_signature_sources is not None:
+            if validate_signature_options and art_mgr.keyring is None:
+                raise AnsibleError(
+                    f"Signatures were provided to verify {req_name} but no keyring was configured."
+                )
+
+            if not isinstance(req_signature_sources, MutableSequence):
+                req_signature_sources = [req_signature_sources]
+            req_signature_sources = frozenset(req_signature_sources)
 
         if req_type is None:
             if (  # FIXME: decide on the future behavior:
@@ -243,7 +364,7 @@ class _ComputedReqKindsMixin:
                     'not an FQCN. A valid collection name must be in '
                     'the format <namespace>.<collection>. Please make '
                     'sure that the namespace and the collection name '
-                    ' contain characters from [a-zA-Z0-9_] only.'
+                    'contain characters from [a-zA-Z0-9_] only.'
                     '{extra_tip!s}'.format(extra_tip=tip),
                 )
 
@@ -312,7 +433,10 @@ class _ComputedReqKindsMixin:
                 format(not_url=req_source.api_server),
             )
 
-        tmp_inst_req = cls(req_name, req_version, req_source, req_type)
+        if req_type == 'dir' and req_source.endswith(os.path.sep):
+            req_source = req_source.rstrip(os.path.sep)
+
+        tmp_inst_req = cls(req_name, req_version, req_source, req_type, req_signature_sources)
 
         if req_type not in {'galaxy', 'subdirs'} and req_name is None:
             req_name = art_mgr.get_direct_collection_fqcn(tmp_inst_req)  # TODO: fix the cache key in artifacts manager?
@@ -323,6 +447,7 @@ class _ComputedReqKindsMixin:
         return cls(
             req_name, req_version,
             req_source, req_type,
+            req_signature_sources,
         )
 
     def __repr__(self):
@@ -337,8 +462,8 @@ class _ComputedReqKindsMixin:
     def __unicode__(self):
         if self.fqcn is None:
             return (
-                u'"virtual collection Git repo"' if self.is_scm
-                else u'"virtual collection namespace"'
+                f'{self.type} collection from a Git repo' if self.is_scm
+                else f'{self.type} collection from a namespace'
             )
 
         return (
@@ -346,20 +471,46 @@ class _ComputedReqKindsMixin:
             format(fqcn=to_text(self.fqcn), ver=to_text(self.ver))
         )
 
+    @property
+    def may_have_offline_galaxy_info(self):
+        if self.fqcn is None:
+            # Virtual collection
+            return False
+        elif not self.is_dir or self.src is None or not _is_collection_dir(self.src):
+            # Not a dir or isn't on-disk
+            return False
+        return True
+
+    def construct_galaxy_info_path(self, b_collection_path):
+        if not self.may_have_offline_galaxy_info and not self.type == 'galaxy':
+            raise TypeError('Only installed collections from a Galaxy server have offline Galaxy info')
+
+        # Store Galaxy metadata adjacent to the namespace of the collection
+        # Chop off the last two parts of the path (/ns/coll) to get the dir containing the ns
+        b_src = to_bytes(b_collection_path, errors='surrogate_or_strict')
+        b_path_parts = b_src.split(to_bytes(os.path.sep))[0:-2]
+        b_metadata_dir = to_bytes(os.path.sep).join(b_path_parts)
+
+        # ns.coll-1.0.0.info
+        b_dir_name = to_bytes(f"{self.namespace}.{self.name}-{self.ver}.info", errors="surrogate_or_strict")
+
+        # collections/ansible_collections/ns.coll-1.0.0.info/GALAXY.yml
+        return os.path.join(b_metadata_dir, b_dir_name, _SOURCE_METADATA_FILE)
+
     def _get_separate_ns_n_name(self):  # FIXME: use LRU cache
         return self.fqcn.split('.')
 
     @property
     def namespace(self):
         if self.is_virtual:
-            raise TypeError('Virtual collections do not have a namespace')
+            raise TypeError(f'{self.type} collections do not have a namespace')
 
         return self._get_separate_ns_n_name()[0]
 
     @property
     def name(self):
         if self.is_virtual:
-            raise TypeError('Virtual collections do not have a name')
+            raise TypeError(f'{self.type} collections do not have a name')
 
         return self._get_separate_ns_n_name()[-1]
 
@@ -412,16 +563,71 @@ class _ComputedReqKindsMixin:
     def is_online_index_pointer(self):
         return not self.is_concrete_artifact
 
+    @property
+    def is_pinned(self):
+        """Indicate if the version set is considered pinned.
+
+        This essentially computes whether the version field of the current
+        requirement explicitly requests a specific version and not an allowed
+        version range.
+
+        It is then used to help the resolvelib-based dependency resolver judge
+        whether it's acceptable to consider a pre-release candidate version
+        despite pre-release installs not being requested by the end-user
+        explicitly.
+
+        See https://github.com/ansible/ansible/pull/81606 for extra context.
+        """
+        version_string = self.ver[0]
+        return version_string.isdigit() or not (
+            version_string == '*' or
+            version_string.startswith(('<', '>', '!='))
+        )
+
+    @property
+    def source_info(self):
+        return self._source_info
+
+
+RequirementNamedTuple = namedtuple('Requirement', ('fqcn', 'ver', 'src', 'type', 'signature_sources'))  # type: ignore[name-match]
+
+
+CandidateNamedTuple = namedtuple('Candidate', ('fqcn', 'ver', 'src', 'type', 'signatures'))  # type: ignore[name-match]
+
 
 class Requirement(
         _ComputedReqKindsMixin,
-        namedtuple('Requirement', ('fqcn', 'ver', 'src', 'type')),
+        RequirementNamedTuple,
 ):
     """An abstract requirement request."""
+
+    def __new__(cls, *args, **kwargs):
+        self = RequirementNamedTuple.__new__(cls, *args, **kwargs)
+        return self
+
+    def __init__(self, *args, **kwargs):
+        super(Requirement, self).__init__()
 
 
 class Candidate(
         _ComputedReqKindsMixin,
-        namedtuple('Candidate', ('fqcn', 'ver', 'src', 'type'))
+        CandidateNamedTuple,
 ):
     """A concrete collection candidate with its version resolved."""
+
+    def __new__(cls, *args, **kwargs):
+        self = CandidateNamedTuple.__new__(cls, *args, **kwargs)
+        return self
+
+    def __init__(self, *args, **kwargs):
+        super(Candidate, self).__init__()
+
+    def with_signatures_repopulated(self):  # type: (Candidate) -> Candidate
+        """Populate a new Candidate instance with Galaxy signatures.
+        :raises AnsibleAssertionError: If the supplied candidate is not sourced from a Galaxy-like index.
+        """
+        if self.type != 'galaxy':
+            raise AnsibleAssertionError(f"Invalid collection type for {self!r}: unable to get signatures from a galaxy server.")
+
+        signatures = self.src.get_collection_signatures(self.namespace, self.name, self.ver)
+        return self.__class__(self.fqcn, self.ver, self.src, self.type, frozenset([*self.signatures, *signatures]))

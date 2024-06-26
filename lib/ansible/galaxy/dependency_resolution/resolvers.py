@@ -3,10 +3,13 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """Requirement resolver implementations."""
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from resolvelib import Resolver
+try:
+    from resolvelib import Resolver
+except ImportError:
+    class Resolver:  # type: ignore[no-redef]
+        pass
 
 
 class CollectionDependencyResolver(Resolver):

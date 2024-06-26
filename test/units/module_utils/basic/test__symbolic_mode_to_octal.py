@@ -4,9 +4,7 @@
 #   (c) 2016-2017 Ansible Project
 # License: GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
 
@@ -63,6 +61,14 @@ DATA = (  # Going from no permissions to setting all for user, group, and/or oth
     # Multiple permissions
     (0o040000, u'u=rw-x+X,g=r-x+X,o=r-x+X', 0o0755),
     (0o100000, u'u=rw-x+X,g=r-x+X,o=r-x+X', 0o0644),
+    (0o040000, u'ug=rx,o=', 0o0550),
+    (0o100000, u'ug=rx,o=', 0o0550),
+    (0o040000, u'u=rx,g=r', 0o0540),
+    (0o100000, u'u=rx,g=r', 0o0540),
+    (0o040777, u'ug=rx,o=', 0o0550),
+    (0o100777, u'ug=rx,o=', 0o0550),
+    (0o040777, u'u=rx,g=r', 0o0547),
+    (0o100777, u'u=rx,g=r', 0o0547),
 )
 
 UMASK_DATA = (

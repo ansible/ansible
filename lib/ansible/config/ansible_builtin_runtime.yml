@@ -2162,7 +2162,7 @@ plugin_routing:
       redirect: community.network.exos_vlans
     bigip_asm_policy:
       tombstone:
-        removal_date: 2019-11-06
+        removal_date: "2019-11-06"
         warning_text: bigip_asm_policy has been removed please use bigip_asm_policy_manage instead.
     bigip_device_facts:
       redirect: f5networks.f5_modules.bigip_device_info
@@ -2176,11 +2176,11 @@ plugin_routing:
       redirect: f5networks.f5_modules.bigip_device_traffic_group
     bigip_facts:
       tombstone:
-        removal_date: 2019-11-06
+        removal_date: "2019-11-06"
         warning_text: bigip_facts has been removed please use bigip_device_info module.
     bigip_gtm_facts:
       tombstone:
-        removal_date: 2019-11-06
+        removal_date: "2019-11-06"
         warning_text: bigip_gtm_facts has been removed please use bigip_device_info module.
     faz_device:
       redirect: community.fortios.faz_device
@@ -7641,7 +7641,7 @@ plugin_routing:
       redirect: ngine_io.exoscale.exoscale
     f5_utils:
       tombstone:
-        removal_date: 2019-11-06
+        removal_date: "2019-11-06"
     firewalld:
       redirect: ansible.posix.firewalld
     gcdns:
@@ -9084,6 +9084,12 @@ plugin_routing:
       redirect: dellemc.os6.os6
     vyos:
       redirect: vyos.vyos.vyos
+    include:
+      tombstone:
+        removal_date: "2023-05-16"
+        warning_text: Use include_tasks or import_tasks instead.
+    yum:
+      redirect: ansible.builtin.dnf
   become:
     doas:
       redirect: community.general.doas
@@ -9676,3 +9682,67 @@ import_redirection:
     redirect: ansible.module_utils
   ansible_collections.ansible.builtin.plugins:
     redirect: ansible.plugins
+action_groups:
+  testgroup:
+    # The list items under a group should always be action/module name strings except
+    # for a special 'metadata' dictionary.
+    # The only valid key currently for the metadata dictionary is 'extend_group', which is a
+    # list of other groups, the actions of which will be included in this group.
+    # (Note: it's still possible to also have a module/action named 'metadata' in the list)
+    - metadata:
+        extend_group:
+          - testns.testcoll.testgroup
+          - testns.testcoll.anothergroup
+          - testns.boguscoll.testgroup
+    - ping
+    - legacy_ping  # Includes ansible.builtin.legacy_ping, not ansible.legacy.legacy_ping
+    - formerly_core_ping
+  testlegacy:
+    - ansible.legacy.legacy_ping
+  aws:
+    - metadata:
+        extend_group:
+          - amazon.aws.aws
+          - community.aws.aws
+  acme:
+    - metadata:
+        extend_group:
+          - community.crypto.acme
+  azure:
+    - metadata:
+        extend_group:
+          - azure.azcollection.azure
+  cpm:
+    - metadata:
+        extend_group:
+          - wti.remote.cpm
+  docker:
+    - metadata:
+        extend_group:
+          - community.general.docker
+          - community.docker.docker
+  gcp:
+    - metadata:
+        extend_group:
+          - google.cloud.gcp
+  k8s:
+    - metadata:
+        extend_group:
+          - community.kubernetes.k8s
+          - community.general.k8s
+          - community.kubevirt.k8s
+          - community.okd.k8s
+          - kubernetes.core.k8s
+  os:
+    - metadata:
+        extend_group:
+          - openstack.cloud.os
+  ovirt:
+    - metadata:
+        extend_group:
+          - ovirt.ovirt.ovirt
+          - community.general.ovirt
+  vmware:
+    - metadata:
+        extend_group:
+          - community.vmware.vmware

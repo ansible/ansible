@@ -1,11 +1,9 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright:  Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -19,60 +17,57 @@ version_added: "2.4"
 options:
   free-form:
     description:
-      - The name of the imported file is specified directly without any other option.
-      - Most keywords, including loops and conditionals, only applied to the imported tasks, not to this statement itself.
+      - |
+        Specifies the name of the imported file directly without any other option C(- import_tasks: file.yml).
+      - Most keywords, including loops and conditionals, only apply to the imported tasks, not to this statement itself.
       - If you need any of those to apply, use M(ansible.builtin.include_tasks) instead.
+  file:
+    description:
+      - Specifies the name of the file that lists tasks to add to the current playbook.
+    type: str
+    version_added: '2.7'
 extends_documentation_fragment:
-- action_common_attributes
+    - action_common_attributes
+    - action_common_attributes.conn
+    - action_common_attributes.flow
+    - action_core
+    - action_core.import
 attributes:
-    async:
-        support: none
-    become:
-        support: none
-    bypass_host_loop:
-        support: partial
-    conditional:
-        support: none
-    connection:
-        support: none
-    delegation:
-        support: none
-    loops:
-        support: none
-    tags:
-        support: none
-    until:
-        support: none
+    check_mode:
+      support: none
+    diff_mode:
+      support: none
 notes:
-  - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module.
+  - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module
 seealso:
 - module: ansible.builtin.import_playbook
 - module: ansible.builtin.import_role
 - module: ansible.builtin.include_role
 - module: ansible.builtin.include_tasks
-- ref: playbooks_reuse_includes
+- ref: playbooks_reuse
   description: More information related to including and importing playbooks, roles and tasks.
 '''
 
 EXAMPLES = r'''
 - hosts: all
   tasks:
-    - debug:
+    - ansible.builtin.debug:
         msg: task1
 
     - name: Include task list in play
-      import_tasks: stuff.yaml
+      ansible.builtin.import_tasks:
+        file: stuff.yaml
 
-    - debug:
+    - ansible.builtin.debug:
         msg: task10
 
 - hosts: all
   tasks:
-    - debug:
+    - ansible.builtin.debug:
         msg: task1
 
     - name: Apply conditional to all imported tasks
-      import_tasks: stuff.yaml
+      ansible.builtin.import_tasks: stuff.yaml
       when: hostvar is defined
 '''
 

@@ -7,3 +7,6 @@
         explicit_pass: abc
         suboption:
           explicit_sub_pass: def
+      environment:
+        SECRET_ENV: ghi
+        SECRET_SUB_ENV: jkl

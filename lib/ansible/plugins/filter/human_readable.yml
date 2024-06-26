@@ -1,0 +1,35 @@
+DOCUMENTATION:
+  name: human_redable
+  version_added: "historical"
+  short_description: Make bytes/bits human-readable
+  description:
+    - Convert byte or bit figures to more human-readable formats.
+  positional: _input, isbits, unit
+  options:
+    _input:
+      description: Number of bytes, or bits. Depends on O(isbits).
+      type: int
+      required: true
+    isbits:
+      description: Whether the input is bits, instead of bytes.
+      type: bool
+      default: false
+    unit:
+      description: Unit to force output into. If none specified the largest unit arrived at will be used.
+      type: str
+      choices: [ 'Y', 'Z', 'E', 'P', 'T', 'G', 'M', 'K', 'B']
+EXAMPLES: |
+
+  # size => "1.15 GB"
+  size: "{{ 1232345345 | human_readable }}"
+
+  # size => "1.15 Gb"
+  size_bits: "{{ 1232345345 | human_readable(true) }}"
+
+  # size => "1175.26 MB"
+  size_MB: "{{ 1232345345 | human_readable(unit='M') }}"
+
+RETURN:
+  _value:
+    description: human-readable byte or bit size.
+    type: str

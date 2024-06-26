@@ -1,0 +1,8 @@
+build  # required to build sdist
+wheel  # required to build wheel
+jinja2
+pyyaml
+resolvelib < 1.1.0
+rstcheck < 6  # newer versions have too many dependencies
+antsibull-changelog
+setuptools == 66.1.0  # minimum supported setuptools

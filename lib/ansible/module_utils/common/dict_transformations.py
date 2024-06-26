@@ -3,14 +3,13 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 import re
 from copy import deepcopy
 
-from ansible.module_utils.common._collections_compat import MutableMapping
+from ansible.module_utils.six.moves.collections_abc import MutableMapping
 
 
 def camel_dict_to_snake_dict(camel_dict, reversible=False, ignore_list=()):

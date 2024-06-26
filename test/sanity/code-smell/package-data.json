@@ -1,6 +1,6 @@
 {
-    "intercept": true,
     "disabled": true,
     "all_targets": true,
+    "include_symlinks": true,
     "output": "path-message"
 }

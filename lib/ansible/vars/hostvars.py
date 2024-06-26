@@ -15,31 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.module_utils.common._collections_compat import Mapping
+from collections.abc import Mapping
+
+from ansible import constants as C
 from ansible.template import Templar, AnsibleUndefined
 
-STATIC_VARS = [
-    'ansible_version',
-    'ansible_play_hosts',
-    'ansible_dependent_role_names',
-    'ansible_play_role_names',
-    'ansible_role_names',
-    'inventory_hostname',
-    'inventory_hostname_short',
-    'inventory_file',
-    'inventory_dir',
-    'groups',
-    'group_names',
-    'omit',
-    'playbook_dir',
-    'play_hosts',
-    'role_names',
-    'ungrouped',
-]
 
 __all__ = ['HostVars', 'HostVarsVars']
 
@@ -109,8 +91,7 @@ class HostVars(Mapping):
         return self._find_host(host_name) is not None
 
     def __iter__(self):
-        for host in self._inventory.hosts:
-            yield host
+        yield from self._inventory.hosts
 
     def __len__(self):
         return len(self._inventory.hosts)
@@ -133,22 +114,21 @@ class HostVarsVars(Mapping):
     def __init__(self, variables, loader):
         self._vars = variables
         self._loader = loader
+        # NOTE: this only has access to the host's own vars,
+        # so templates that depend on vars in other scopes will not work.
+        self._templar = Templar(variables=self._vars, loader=self._loader)
 
     def __getitem__(self, var):
-        templar = Templar(variables=self._vars, loader=self._loader)
-        foo = templar.template(self._vars[var], fail_on_undefined=False, static_vars=STATIC_VARS)
-        return foo
+        return self._templar.template(self._vars[var], fail_on_undefined=False, static_vars=C.INTERNAL_STATIC_VARS)
 
     def __contains__(self, var):
         return (var in self._vars)
 
     def __iter__(self):
-        for var in self._vars.keys():
-            yield var
+        yield from self._vars.keys()
 
     def __len__(self):
         return len(self._vars.keys())
 
     def __repr__(self):
-        templar = Templar(variables=self._vars, loader=self._loader)
-        return repr(templar.template(self._vars, fail_on_undefined=False, static_vars=STATIC_VARS))
+        return repr(self._templar.template(self._vars, fail_on_undefined=False, static_vars=C.INTERNAL_STATIC_VARS))

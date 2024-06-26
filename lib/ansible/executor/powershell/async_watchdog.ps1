@@ -2,7 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 param(
-    [Parameter(Mandatory=$true)][System.Collections.IDictionary]$Payload
+    [Parameter(Mandatory = $true)][System.Collections.IDictionary]$Payload
 )
 
 # help with debugging errors as we don't have visibility of this running process
@@ -49,7 +49,12 @@ $ps.Runspace = $rs
 Write-AnsibleLog "INFO - adding global functions to PowerShell pipeline script" "async_watchdog"
 $ps.AddScript($script:common_functions).AddStatement() > $null
 $ps.AddScript($script:wrapper_functions).AddStatement() > $null
-$ps.AddCommand("Set-Variable").AddParameters(@{Name="common_functions"; Value=$script:common_functions; Scope="script"}).AddStatement() > $null
+$function_params = @{
+    Name = "common_functions"
+    Value = $script:common_functions
+    Scope = "script"
+}
+$ps.AddCommand("Set-Variable").AddParameters($function_params).AddStatement() > $null
 
 Write-AnsibleLog "INFO - adding $($actions[0]) to PowerShell pipeline script" "async_watchdog"
 $ps.AddScript($entrypoint).AddArgument($payload) > $null
@@ -79,7 +84,8 @@ if ($job_async_result.IsCompleted) {
         $module_result = ConvertFrom-AnsibleJson -InputObject $job_output
         # TODO: check for conflicting keys
         $result = $result + $module_result
-    } catch {
+    }
+    catch {
         $result.failed = $true
         $result.msg = "failed to parse module output: $($_.Exception.Message)"
         # return output back to Ansible to help with debugging errors
@@ -91,7 +97,8 @@ if ($job_async_result.IsCompleted) {
     Set-Content -Path $resultfile_path -Value $result_json
 
     Write-AnsibleLog "INFO - wrote output to $resultfile_path" "async_watchdog"
-} else {
+}
+else {
     Write-AnsibleLog "ERROR - reached timeout on async job, stopping job" "async_watchdog"
     $ps.BeginStop($null, $null)  > $null # best effort stop
 

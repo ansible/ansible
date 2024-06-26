@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Update the ``import`` sanity test to avoid a new warning in Python 3.10.

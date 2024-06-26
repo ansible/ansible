@@ -59,3 +59,41 @@
       # 2) the AnsibleModule.log method is not working
       - good_message in grep.stdout
       - bad_message not in grep.stdout
+
+- name: Ensure we do not obscure what we should not
+  block:
+    - module_that_has_secret:
+        secret: u
+        notsecret: u
+      register: ouch
+      ignore_errors: true
+
+    - name: no log wont obscure booleans when True, but still hide in msg
+      assert:
+        that:
+          - ouch['changed'] is boolean
+          - "'*' in ouch['msg']"
+
+    - module_that_has_secret:
+        secret: a
+        notsecret: b
+      register: ouch
+      ignore_errors: true
+
+    - name: no log wont obscure booleans when False, but still hide in msg
+      assert:
+        that:
+          - ouch['changed'] is boolean
+          - "'*' in ouch['msg']"
+
+    - module_that_has_secret:
+        secret: True
+        notsecret: False
+      register: ouch
+      ignore_errors: true
+
+    - name: no log does not hide bool values
+      assert:
+        that:
+          - ouch['changed'] is boolean
+          - "'*' not in ouch['msg']"

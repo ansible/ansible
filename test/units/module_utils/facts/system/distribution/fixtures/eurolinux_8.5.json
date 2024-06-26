@@ -1,0 +1,46 @@
+{
+    "name": "EuroLinux 8.5",
+    "distro": {
+        "codename": "Tirana",
+        "id": "eurolinux",
+        "name": "EuroLinux",
+        "version": "8.5",
+        "version_best": "8.5",
+        "lsb_release_info": {},
+        "os_release_info": {
+            "name": "EuroLinux",
+            "version": "8.5 (Tirana)",
+            "id": "eurolinux",
+            "id_like": "rhel fedora centos",
+            "version_id": "8.5",
+            "platform_id": "platform:el8",
+            "pretty_name": "EuroLinux 8.5 (Tirana)",
+            "ansi_color": "0;34",
+            "cpe_name": "cpe:/o:eurolinux:eurolinux:8",
+            "home_url": "https://www.euro-linux.com/",
+            "bug_report_url": "https://github.com/EuroLinux/eurolinux-distro-bugs-and-rfc/",
+            "redhat_support_product": "EuroLinux",
+            "redhat_support_product_version": "8",
+            "codename": "Tirana"
+        }
+    },
+    "input": {
+        "/etc/redhat-release": "EuroLinux release 8.5 (Tirana) \n",
+        "/etc/system-release": "EuroLinux release 8.5 (Tirana) \n",
+        "/etc/os-release": "NAME=\"EuroLinux\"\nVERSION=\"8.5 (Tirana)\"\nID=\"eurolinux\"\nID_LIKE=\"rhel fedora centos\"\nVERSION_ID=\"8.5\"\nPLATFORM_ID=\"platform:el8\"\nPRETTY_NAME=\"EuroLinux 8.5 (Tirana)\"\nANSI_COLOR=\"0;34\"\nCPE_NAME=\"cpe:/o:eurolinux:eurolinux:8\"\nHOME_URL=\"https://www.euro-linux.com/\"\nBUG_REPORT_URL=\"https://github.com/EuroLinux/eurolinux-distro-bugs-and-rfc/\"\nREDHAT_SUPPORT_PRODUCT=\"EuroLinux\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"8\"\n",
+        "/usr/lib/os-release": "NAME=\"EuroLinux\"\nVERSION=\"8.5 (Tirana)\"\nID=\"eurolinux\"\nID_LIKE=\"rhel fedora centos\"\nVERSION_ID=\"8.5\"\nPLATFORM_ID=\"platform:el8\"\nPRETTY_NAME=\"EuroLinux 8.5 (Tirana)\"\nANSI_COLOR=\"0;34\"\nCPE_NAME=\"cpe:/o:eurolinux:eurolinux:8\"\nHOME_URL=\"https://www.euro-linux.com/\"\nBUG_REPORT_URL=\"https://github.com/EuroLinux/eurolinux-distro-bugs-and-rfc/\"\nREDHAT_SUPPORT_PRODUCT=\"EuroLinux\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"8\"\n"
+    },
+    "platform.dist": [
+        "eurolinux",
+        "8.5",
+        "Tirana"
+    ],
+    "result": {
+        "distribution": "EuroLinux",
+        "distribution_version": "8.5",
+        "distribution_release": "Tirana",
+        "distribution_major_version": "8",
+        "os_family": "RedHat"
+    },
+    "platform.release": "4.18.0-348.2.1.el8_5.x86_64"
+}

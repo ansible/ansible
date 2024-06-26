@@ -1,7 +1,6 @@
 # Copyright (c) 2021 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 
 class ModuleDocFragment(object):
@@ -10,7 +9,7 @@ class ModuleDocFragment(object):
     DOCUMENTATION = """
 options:
     pipelining:
-          default: ANSIBLE_PIPELINING
+          default: false
           description:
             - Pipelining reduces the number of connection operations required to execute a module on the remote server,
               by executing many Ansible modules without actual file transfers.
@@ -22,6 +21,8 @@ options:
             - name: ANSIBLE_PIPELINING
           ini:
             - section: defaults
+              key: pipelining
+            - section: connection
               key: pipelining
           type: boolean
           vars:

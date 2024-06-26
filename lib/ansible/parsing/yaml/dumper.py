@@ -15,16 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import yaml
 
-from ansible.module_utils.six import PY3, text_type, binary_type
+from ansible.module_utils.six import text_type, binary_type
 from ansible.module_utils.common.yaml import SafeDumper
 from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping, AnsibleVaultEncryptedUnicode
-from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes, NativeJinjaUnsafeText, NativeJinjaText
+from ansible.template import AnsibleUndefined
 from ansible.vars.hostvars import HostVars, HostVarsVars
 from ansible.vars.manager import VarsWithSources
 
@@ -45,18 +44,19 @@ def represent_vault_encrypted_unicode(self, data):
     return self.represent_scalar(u'!vault', data._ciphertext.decode(), style='|')
 
 
-if PY3:
-    def represent_unicode(self, data):
-        return yaml.representer.SafeRepresenter.represent_str(self, text_type(data))
+def represent_unicode(self, data):
+    return yaml.representer.SafeRepresenter.represent_str(self, text_type(data))
 
-    def represent_binary(self, data):
-        return yaml.representer.SafeRepresenter.represent_binary(self, binary_type(data))
-else:
-    def represent_unicode(self, data):
-        return yaml.representer.SafeRepresenter.represent_unicode(self, text_type(data))
 
-    def represent_binary(self, data):
-        return yaml.representer.SafeRepresenter.represent_str(self, binary_type(data))
+def represent_binary(self, data):
+    return yaml.representer.SafeRepresenter.represent_binary(self, binary_type(data))
+
+
+def represent_undefined(self, data):
+    # Here bool will ensure _fail_with_undefined_error happens
+    # if the value is Undefined.
+    # This happens because Jinja sets __bool__ on StrictUndefined
+    return bool(data)
 
 
 AnsibleDumper.add_representer(
@@ -102,4 +102,19 @@ AnsibleDumper.add_representer(
 AnsibleDumper.add_representer(
     AnsibleVaultEncryptedUnicode,
     represent_vault_encrypted_unicode,
+)
+
+AnsibleDumper.add_representer(
+    AnsibleUndefined,
+    represent_undefined,
+)
+
+AnsibleDumper.add_representer(
+    NativeJinjaUnsafeText,
+    represent_unicode,
+)
+
+AnsibleDumper.add_representer(
+    NativeJinjaText,
+    represent_unicode,
 )

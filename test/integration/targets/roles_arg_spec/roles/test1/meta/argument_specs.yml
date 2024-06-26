@@ -73,6 +73,11 @@ argument_specs:
          some_second_level:
            type: "bool"
            default: true
+     some_more_dict_options:
+       type: "dict"
+       options:
+         some_second_level:
+           type: "str"
      some_str_removed_in:
        type: "str"
        removed_in: 2.10

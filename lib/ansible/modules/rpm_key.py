@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Ansible module to import third party repo keys to your rpm db
@@ -6,8 +5,7 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -17,7 +15,7 @@ author:
   - Hector Acosta (@hacosta) <hector.acosta@gazzang.com>
 short_description: Adds or removes a gpg key from the rpm db
 description:
-  - Adds or removes (rpm --import) a gpg key to your rpm database.
+  - Adds or removes C(rpm --import) a gpg key to your rpm database.
 version_added: "1.3"
 options:
     key:
@@ -34,7 +32,7 @@ options:
       choices: [ absent, present ]
     validate_certs:
       description:
-        - If C(no) and the C(key) is a url starting with https, SSL certificates will not be validated.
+        - If V(false) and the O(key) is a url starting with V(https), SSL certificates will not be validated.
         - This should only be used on personally controlled sites using self-signed certificates.
       type: bool
       default: 'yes'
@@ -45,8 +43,15 @@ options:
       type: list
       elements: str
       version_added: 2.9
-notes:
-  - Supports C(check_mode).
+extends_documentation_fragment:
+    - action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: rhel
 '''
 
 EXAMPLES = '''
@@ -80,7 +85,7 @@ import tempfile
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 
 
 def is_pubkey(string):

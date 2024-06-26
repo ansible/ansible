@@ -15,18 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
+
+from collections.abc import Iterable
 
 from ansible.module_utils.six import string_types
-from ansible.module_utils.common._collections_compat import Iterable
+from ansible.utils.display import Display
 
+display = Display()
 
 __all__ = ['listify_lookup_plugin_terms']
 
 
-def listify_lookup_plugin_terms(terms, templar, loader, fail_on_undefined=True, convert_bare=False):
+def listify_lookup_plugin_terms(terms, templar, fail_on_undefined=True, convert_bare=False):
 
     if isinstance(terms, string_types):
         terms = templar.template(terms.strip(), convert_bare=convert_bare, fail_on_undefined=fail_on_undefined)

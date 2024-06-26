@@ -5,7 +5,7 @@
     state: directory
 
 - name: download collection with multiple dependencies with --no-deps
-  command: ansible-galaxy collection download parent_dep.parent_collection:1.0.0 --no-deps -s pulp_v2 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection download parent_dep.parent_collection:1.0.0 --no-deps -s galaxy_ng {{ galaxy_verbosity }}
   register: download_collection
   args:
     chdir: '{{ galaxy_dir }}/download'
@@ -34,7 +34,7 @@
     - (download_collection_actual.files[1].path | basename) in ['requirements.yml', 'parent_dep-parent_collection-1.0.0.tar.gz']
 
 - name: download collection with multiple dependencies
-  command: ansible-galaxy collection download parent_dep.parent_collection:1.0.0 -s pulp_v2 {{ galaxy_verbosity }}
+  command: ansible-galaxy collection download parent_dep.parent_collection:1.0.0 -s galaxy_ng {{ galaxy_verbosity }}
   register: download_collection
   args:
     chdir: '{{ galaxy_dir }}/download'
@@ -169,3 +169,35 @@
         that:
         - '"Downloading collection ''ansible_test.my_collection:1.0.0'' to" in download_collection.stdout'
         - download_collection_actual.stat.exists
+
+- block:
+  - name: create skeleton collection for trailing slash test
+    command: ansible-galaxy collection init trailing_dir.name --init-path "{{ galaxy_dir }}"
+
+  - name: install collection with directory source and trailing slash - {{ test_id }}
+    command: ansible-galaxy collection download '{{ galaxy_dir }}/trailing_dir/name/' {{ galaxy_verbosity }}
+    args:
+      chdir: '{{ galaxy_dir }}/download'
+    register: download_dir_slash
+
+  - name: get result of install collections with with trailing slash - {{ test_id }}
+    stat:
+      path: '{{ galaxy_dir }}/download/collections/trailing_dir-name-1.0.0.tar.gz'
+    register: download_dir_slash_actual
+
+  - name: assert install collections with with trailing slash - {{ test_id }}
+    assert:
+      that:
+      - '"Downloading collection ''trailing_dir.name:1.0.0'' to" in download_dir_slash.stdout'
+      - download_dir_slash_actual.stat.exists
+
+  always:
+  - name: remove trailing dir skeleton
+    file:
+      path: '{{ galaxy_dir }}/trailing_dir'
+      state: absent
+
+- name: remove test download dir
+  file:
+    path: '{{ galaxy_dir }}/download'
+    state: absent

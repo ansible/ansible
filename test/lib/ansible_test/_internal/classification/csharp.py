@@ -1,6 +1,5 @@
 """Analyze C# import statements."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import re
@@ -13,7 +12,7 @@ from ..util import (
     display,
 )
 
-from ..util_common import (
+from .common import (
     resolve_csharp_ps_util,
 )
 
@@ -21,14 +20,13 @@ from ..data import (
     data_context,
 )
 
+from ..target import (
+    TestTarget,
+)
 
-def get_csharp_module_utils_imports(powershell_targets, csharp_targets):
-    """Return a dictionary of module_utils names mapped to sets of powershell file paths.
-    :type powershell_targets: list[TestTarget] - C# files
-    :type csharp_targets: list[TestTarget] - PS files
-    :rtype: dict[str, set[str]]
-    """
 
+def get_csharp_module_utils_imports(powershell_targets: list[TestTarget], csharp_targets: list[TestTarget]) -> dict[str, set[str]]:
+    """Return a dictionary of module_utils names mapped to sets of powershell file paths."""
     module_utils = enumerate_module_utils()
 
     imports_by_target_path = {}
@@ -39,10 +37,10 @@ def get_csharp_module_utils_imports(powershell_targets, csharp_targets):
     for target in csharp_targets:
         imports_by_target_path[target.path] = extract_csharp_module_utils_imports(target.path, module_utils, True)
 
-    imports = dict([(module_util, set()) for module_util in module_utils])
+    imports: dict[str, set[str]] = {module_util: set() for module_util in module_utils}
 
-    for target_path in imports_by_target_path:
-        for module_util in imports_by_target_path[target_path]:
+    for target_path, modules in imports_by_target_path.items():
+        for module_util in modules:
             imports[module_util].add(target_path)
 
     for module_util in sorted(imports):
@@ -52,7 +50,7 @@ def get_csharp_module_utils_imports(powershell_targets, csharp_targets):
     return imports
 
 
-def get_csharp_module_utils_name(path):  # type: (str) -> str
+def get_csharp_module_utils_name(path: str) -> str:
     """Return a namespace and name from the given module_utils path."""
     base_path = data_context().content.module_utils_csharp_path
 
@@ -66,22 +64,15 @@ def get_csharp_module_utils_name(path):  # type: (str) -> str
     return name
 
 
-def enumerate_module_utils():
-    """Return a list of available module_utils imports.
-    :rtype: set[str]
-    """
+def enumerate_module_utils() -> set[str]:
+    """Return a set of available module_utils imports."""
     return set(get_csharp_module_utils_name(p)
                for p in data_context().content.walk_files(data_context().content.module_utils_csharp_path)
                if os.path.splitext(p)[1] == '.cs')
 
 
-def extract_csharp_module_utils_imports(path, module_utils, is_pure_csharp):
-    """Return a list of module_utils imports found in the specified source file.
-    :type path: str
-    :type module_utils: set[str]
-    :type is_pure_csharp: bool
-    :rtype: set[str]
-    """
+def extract_csharp_module_utils_imports(path: str, module_utils: set[str], is_pure_csharp: bool) -> set[str]:
+    """Return a set of module_utils imports found in the specified source file."""
     imports = set()
     if is_pure_csharp:
         pattern = re.compile(r'(?i)^using\s((?:Ansible|AnsibleCollections)\..+);$')

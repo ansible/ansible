@@ -33,10 +33,10 @@
     test_override:
     register: result
 
-  - name: Make sure the we used the local facts.py, not the one shipped with ansible
+  - name: Make sure the we used the local ansible_release.py, not the one shipped with ansible
     assert:
       that:
-        - 'result["data"] == "overridden facts.py"'
+        - 'result["data"] == "overridden ansible_release.py"'
 
   - name: Test that importing something from the module_utils in the env_vars works
     test_env_override:

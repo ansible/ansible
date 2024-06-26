@@ -1,5 +1,4 @@
-yamllint == 1.26.0
-
-# dependencies
-pathspec  # not frozen since it should not impact test results
-pyyaml  # not frozen due to usage outside sanity tests
+# edit "sanity.yamllint.in" and generate with: hacking/update-sanity-requirements.py --test yamllint
+pathspec==0.12.1
+PyYAML==6.0.2rc1
+yamllint==1.35.1

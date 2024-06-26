@@ -30,6 +30,7 @@
   always:
     # Reset back to original hostname
     - name: Move back original file if it existed
+      become: 'yes'
       command: mv -f {{ _hostname_file }}.orig {{ _hostname_file }}
       when: hn_stat.stat.exists | default(False)
 
@@ -40,6 +41,7 @@
       when: not hn_stat.stat.exists | default(True)
 
     - name: Reset back to original hostname
+      become: 'yes'
       hostname:
         name: "{{ original.stdout }}"
       register: revert

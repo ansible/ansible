@@ -1,0 +1,146 @@
+- name: test ansible-config init for valid output and no dupes
+  block:
+    - name: Create temporary file
+      tempfile:
+        path: '{{output_dir}}'
+        state: file
+        suffix: temp.ini
+      register: ini_tempfile
+
+    - name: run config full dump
+      shell: ansible-config init -t all > {{ini_tempfile.path}}
+
+    - name: run ini tester, for correctness and dupes
+      shell: "{{ansible_playbook_python}} '{{role_path}}/files/ini_dupes.py' '{{ini_tempfile.path}}'"
+
+- name: test ansible-config validate
+  block:
+  # not testing w/o -t all as ansible-test uses it's own plugins and would give false positives
+  - name: validate config files
+    shell: ansible-config validate -t all -v
+    register: valid_cfg
+    loop:
+        - empty.cfg
+        - base_valid.cfg
+        - base_all_valid.cfg
+        - invalid_base.cfg
+        - invalid_plugins_config.ini
+    ignore_errors: true
+    environment:
+      ANSIBLE_CONFIG: "{{role_path ~ '/files/' ~ item}}"
+
+  - name: ensure expected cfg check results
+    assert:
+      that:
+          - valid_cfg['results'][0] is success
+          - valid_cfg['results'][1] is success
+          - valid_cfg['results'][2] is success
+          - valid_cfg['results'][3] is failed
+          - valid_cfg['results'][4] is failed
+
+  - name: validate env vars
+    shell: ansible-config validate -t all -v -f env
+    register: valid_env
+    environment:
+      ANSIBLE_COW_SELECTION: 1
+
+  - name: validate env vars
+    shell: ansible-config validate -t all -v -f env
+    register: invalid_env
+    ignore_errors: true
+    environment:
+      ANSIBLE_COW_DESTRUCTION: 1
+
+  - name: ensure env check is what we expected
+    assert:
+      that:
+          - valid_env is success
+          - invalid_env is failed
+
+
+- name: dump galaxy_server config
+  environment:
+    ANSIBLE_CONFIG: '{{ role_path }}/files/galaxy_server.ini'
+  vars:
+    expected:
+      my_org_hub:
+        url:
+          value: "https://automation.my_org/"
+          origin: role_path ~ "/files/galaxy_server.ini"
+        username:
+          value: my_user
+          origin: role_path ~ "/files/galaxy_server.ini"
+        password:
+          value: my_pass
+          origin: role_path ~ "/files/galaxy_server.ini"
+        api_version:
+          value: None
+          origin: default
+      release_galaxy:
+      test_galaxy:
+      my_galaxy_ng:
+  block:
+  - ansible.builtin.command: ansible-config dump --type {{ item }} --format json
+    loop:
+    - base
+    - all
+    register: galaxy_server_dump
+
+  #- debug: msg='{{ (galaxy_server_dump.results[0].stdout | from_json) }}'
+  #- debug: msg='{{ (galaxy_server_dump.results[1].stdout | from_json) }}'
+
+  - name: extract galaxy servers from config dump
+    set_fact:
+      galaxy_server_dump_base: '{{ (galaxy_server_dump.results[0].stdout | from_json | select("contains", "GALAXY_SERVERS"))[0].get("GALAXY_SERVERS") }}'
+      galaxy_server_dump_all: '{{ (galaxy_server_dump.results[1].stdout | from_json | select("contains", "GALAXY_SERVERS"))[0].get("GALAXY_SERVERS") }}'
+
+  - name: set keys vars as we reuse a few times
+    set_fact:
+      galaxy_server_dump_base_keys: '{{ galaxy_server_dump_base.keys()|list|sort }}'
+      galaxy_server_dump_all_keys: '{{ galaxy_server_dump_all.keys()|list|sort }}'
+
+  - name: Check galaxy server values are present and match expectations
+    vars:
+      gs:
+        my_org_hub:
+          url: "https://automation.my_org/"
+          username: "my_user"
+          password: "my_pass"
+        release_galaxy:
+          url: "https://galaxy.ansible.com/"
+          token: "my_token"
+        test_galaxy:
+          url: "https://galaxy-dev.ansible.com/"
+          token: "my_test_token"
+        my_galaxy_ng:
+          url: "http://my_galaxy_ng:8000/api/automation-hub/"
+          token: "my_keycloak_access_token"
+          auth_url: "http://my_keycloak:8080/auth/realms/myco/protocol/openid-connect/token"
+          client_id: "galaxy-ng"
+      gs_all:
+          url:
+          token:
+          auth_url:
+          username:
+          password:
+          api_version:
+          timeout:
+      origin: '{{ role_path ~ "/files/galaxy_server.ini" }}'
+      gs_keys: '{{ gs.keys()|list|sort }}'
+    block:
+    - name: Check galaxy server config reflects what we expect
+      assert:
+        that:
+        - (galaxy_server_dump_base_keys | count) == 4
+        - galaxy_server_dump_base_keys == gs_keys
+        - (galaxy_server_dump_all_keys | count) == 4
+        - galaxy_server_dump_all_keys == gs_keys
+
+    - name: Check individual settings
+      assert:
+        that:
+          - gs[item[0]][item[1]] == galaxy_server_dump_base[item[0]][item[1]][1]
+          - gs[item[0]][item[1]] == galaxy_server_dump_all[item[0]][item[1]][1]
+      when:
+        - item[1] in gs[item[0]]
+      loop: '{{gs_keys | product(gs_all) }}'

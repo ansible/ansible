@@ -14,4 +14,4 @@ fi
 
 # Generate stubs using docker (if supported) otherwise fall back to using a virtual environment instead.
 # The use of docker is required when Powershell code is present, but Ansible 2.12 was the first version to support --docker with coverage.
-ansible-test coverage xml --stub --docker --color -v || ansible-test coverage xml --stub --venv --venv-system-site-packages --color -v
+ansible-test coverage xml --group-by command --stub --docker --color -v || ansible-test coverage xml --group-by command --stub --venv --color -v

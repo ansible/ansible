@@ -2,8 +2,7 @@
 # Copyright (c) 2020 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
 
@@ -35,5 +34,5 @@ def test_get_path_path_raise_valueerror(mocker):
     mocker.patch('os.path.isdir', return_value=False)
     mocker.patch('ansible.module_utils.common.process.is_executable', return_value=True)
 
-    with pytest.raises(ValueError, match='Failed to find required executable notacommand'):
+    with pytest.raises(ValueError, match='Failed to find required executable "notacommand"'):
         get_bin_path('notacommand')

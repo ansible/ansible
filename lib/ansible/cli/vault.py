@@ -1,19 +1,22 @@
+#!/usr/bin/env python
 # (c) 2014, James Tanner <tanner.jc@gmail.com>
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# PYTHON_ARGCOMPLETE_OK
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
+
+# ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
+from ansible.cli import CLI
 
 import os
 import sys
 
 from ansible import constants as C
 from ansible import context
-from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleOptionsError
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils.common.text.converters import to_text, to_bytes
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import VaultEditor, VaultLib, match_encrypt_secret
 from ansible.utils.display import Display
@@ -31,6 +34,8 @@ class VaultCLI(CLI):
     Because Ansible tasks, handlers, and other objects are data, these can also be encrypted with vault.
     If you'd like to not expose what variables you are using, you can keep an individual task file entirely encrypted.
     '''
+
+    name = 'ansible-vault'
 
     FROM_STDIN = "stdin"
     FROM_ARGS = "the command line args"
@@ -55,20 +60,20 @@ class VaultCLI(CLI):
             epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
 
-        common = opt_help.argparse.ArgumentParser(add_help=False)
+        common = opt_help.ArgumentParser(add_help=False)
         opt_help.add_vault_options(common)
         opt_help.add_verbosity_options(common)
 
         subparsers = self.parser.add_subparsers(dest='action')
         subparsers.required = True
 
-        output = opt_help.argparse.ArgumentParser(add_help=False)
+        output = opt_help.ArgumentParser(add_help=False)
         output.add_argument('--output', default=None, dest='output_file',
                             help='output file name for encrypt or decrypt; use - for stdout',
                             type=opt_help.unfrack_path())
 
         # For encrypting actions, we can also specify which of multiple vault ids should be used for encrypting
-        vault_id = opt_help.argparse.ArgumentParser(add_help=False)
+        vault_id = opt_help.ArgumentParser(add_help=False)
         vault_id.add_argument('--encrypt-vault-id', default=[], dest='encrypt_vault_id',
                               action='store', type=str,
                               help='the vault id used to encrypt (required if more than one vault-id is provided)')
@@ -76,6 +81,8 @@ class VaultCLI(CLI):
         create_parser = subparsers.add_parser('create', help='Create new vault encrypted file', parents=[vault_id, common])
         create_parser.set_defaults(func=self.execute_create)
         create_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
+        create_parser.add_argument('--skip-tty-check', default=False, help='allows editor to be opened when no tty attached',
+                                   dest='skip_tty_check', action='store_true')
 
         decrypt_parser = subparsers.add_parser('decrypt', help='Decrypt vault encrypted file', parents=[output, common])
         decrypt_parser.set_defaults(func=self.execute_decrypt)
@@ -370,12 +377,20 @@ class VaultCLI(CLI):
         # Format the encrypted strings and any corresponding stderr output
         outputs = self._format_output_vault_strings(b_plaintext_list, vault_id=self.encrypt_vault_id)
 
+        b_outs = []
         for output in outputs:
             err = output.get('err', None)
             out = output.get('out', '')
             if err:
                 sys.stderr.write(err)
-            print(out)
+            b_outs.append(to_bytes(out))
+
+        # The output must end with a newline to play nice with terminal representation.
+        # Refs:
+        # * https://stackoverflow.com/a/729795/595220
+        # * https://github.com/ansible/ansible/issues/78932
+        b_outs.append(b'')
+        self.editor.write_data(b'\n'.join(b_outs), context.CLIARGS['output_file'] or '-')
 
         if sys.stdout.isatty():
             display.display("Encryption successful", stderr=True)
@@ -399,8 +414,7 @@ class VaultCLI(CLI):
             # (the text itself, which input it came from, its name)
             b_plaintext, src, name = b_plaintext_info
 
-            b_ciphertext = self.editor.encrypt_bytes(b_plaintext, self.encrypt_secret,
-                                                     vault_id=vault_id)
+            b_ciphertext = self.editor.encrypt_bytes(b_plaintext, self.encrypt_secret, vault_id=vault_id)
 
             # block formatting
             yaml_text = self.format_ciphertext_yaml(b_ciphertext, name=name)
@@ -434,8 +448,11 @@ class VaultCLI(CLI):
         if len(context.CLIARGS['args']) != 1:
             raise AnsibleOptionsError("ansible-vault create can take only one filename argument")
 
-        self.editor.create_file(context.CLIARGS['args'][0], self.encrypt_secret,
-                                vault_id=self.encrypt_vault_id)
+        if sys.stdout.isatty() or context.CLIARGS['skip_tty_check']:
+            self.editor.create_file(context.CLIARGS['args'][0], self.encrypt_secret,
+                                    vault_id=self.encrypt_vault_id)
+        else:
+            raise AnsibleOptionsError("not a tty, editor cannot be opened")
 
     def execute_edit(self):
         ''' open and decrypt an existing vaulted file in an editor, that will be encrypted again when closed'''
@@ -462,3 +479,11 @@ class VaultCLI(CLI):
                                    self.new_encrypt_vault_id)
 
         display.display("Rekey successful", stderr=True)
+
+
+def main(args=None):
+    VaultCLI.cli_executor(args)
+
+
+if __name__ == '__main__':
+    main()

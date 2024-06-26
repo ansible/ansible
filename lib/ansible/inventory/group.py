@@ -14,15 +14,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+from collections.abc import Mapping, MutableMapping
+from enum import Enum
 from itertools import chain
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common._collections_compat import Mapping, MutableMapping
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
 
@@ -53,8 +53,14 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
     return name
 
 
+class InventoryObjectType(Enum):
+    HOST = 0
+    GROUP = 1
+
+
 class Group:
     ''' a group of ansible hosts '''
+    base_type = InventoryObjectType.GROUP
 
     # __slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', '_hosts_cache' ]
 
@@ -100,7 +106,7 @@ class Group:
         return result
 
     def deserialize(self, data):
-        self.__init__()
+        self.__init__()  # used by __setstate__ to deserialize in place  # pylint: disable=unnecessary-dunder-call
         self.name = data.get('name')
         self.vars = data.get('vars', dict())
         self.depth = data.get('depth', 0)

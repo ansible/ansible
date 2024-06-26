@@ -1,3 +1,4 @@
 ---
 dependencies:
 - setup_remote_tmp_dir
+- setup_gnutar

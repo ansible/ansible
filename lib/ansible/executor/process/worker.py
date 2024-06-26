@@ -15,19 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import sys
 import traceback
 
 from jinja2.exceptions import TemplateNotFound
+from multiprocessing.queues import Queue
 
-from ansible.errors import AnsibleConnectionFailure
+from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.executor.task_executor import TaskExecutor
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.utils.display import Display
 from ansible.utils.multiprocessing import context as multiprocessing_context
 
@@ -35,15 +34,26 @@ __all__ = ['WorkerProcess']
 
 display = Display()
 
+current_worker = None
 
-class WorkerProcess(multiprocessing_context.Process):
+
+class WorkerQueue(Queue):
+    """Queue that raises AnsibleError items on get()."""
+    def get(self, *args, **kwargs):
+        result = super(WorkerQueue, self).get(*args, **kwargs)
+        if isinstance(result, AnsibleError):
+            raise result
+        return result
+
+
+class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defined]
     '''
     The worker thread class, which uses TaskExecutor to run tasks
     read from a job queue and pushes results into a results queue
     for reading later.
     '''
 
-    def __init__(self, final_q, task_vars, host, task, play_context, loader, variable_manager, shared_loader_obj):
+    def __init__(self, final_q, task_vars, host, task, play_context, loader, variable_manager, shared_loader_obj, worker_id):
 
         super(WorkerProcess, self).__init__()
         # takes a task queue manager as the sole param:
@@ -59,6 +69,9 @@ class WorkerProcess(multiprocessing_context.Process):
         # NOTE: this works due to fork, if switching to threads this should change to per thread storage of temp files
         # clear var to ensure we only delete files for this child
         self._loader._tempfiles = set()
+
+        self.worker_queue = WorkerQueue(ctx=multiprocessing_context)
+        self.worker_id = worker_id
 
     def _save_stdin(self):
         self._new_stdin = None
@@ -87,10 +100,12 @@ class WorkerProcess(multiprocessing_context.Process):
         '''
 
         self._save_stdin()
-        try:
-            return super(WorkerProcess, self).start()
-        finally:
-            self._new_stdin.close()
+        # FUTURE: this lock can be removed once a more generalized pre-fork thread pause is in place
+        with display._lock:
+            try:
+                return super(WorkerProcess, self).start()
+            finally:
+                self._new_stdin.close()
 
     def _hard_exit(self, e):
         '''
@@ -127,15 +142,17 @@ class WorkerProcess(multiprocessing_context.Process):
         finally:
             # This is a hack, pure and simple, to work around a potential deadlock
             # in ``multiprocessing.Process`` when flushing stdout/stderr during process
-            # shutdown. We have various ``Display`` calls that may fire from a fork
-            # so we cannot do this early. Instead, this happens at the very end
-            # to avoid that deadlock, by simply side stepping it. This should not be
-            # treated as a long term fix. Additionally this behavior only presents itself
-            # on Python3. Python2 does not exhibit the deadlock behavior.
-            # TODO: Evaluate overhauling ``Display`` to not write directly to stdout
-            # and evaluate migrating away from the ``fork`` multiprocessing start method.
-            if sys.version_info[0] >= 3:
-                sys.stdout = sys.stderr = open(os.devnull, 'w')
+            # shutdown.
+            #
+            # We should no longer have a problem with ``Display``, as it now proxies over
+            # the queue from a fork. However, to avoid any issues with plugins that may
+            # be doing their own printing, this has been kept.
+            #
+            # This happens at the very end to avoid that deadlock, by simply side
+            # stepping it. This should not be treated as a long term fix.
+            #
+            # TODO: Evaluate migrating away from the ``fork`` multiprocessing start method.
+            sys.stdout = sys.stderr = open(os.devnull, 'w')
 
     def _run(self):
         '''
@@ -148,6 +165,12 @@ class WorkerProcess(multiprocessing_context.Process):
         # pr = cProfile.Profile()
         # pr.enable()
 
+        # Set the queue on Display so calls to Display.display are proxied over the queue
+        display.set_queue(self._final_q)
+
+        global current_worker
+        current_worker = self
+
         try:
             # execute the task and build a TaskResult from the result
             display.debug("running TaskExecutor() for %s/%s" % (self._host, self._task))
@@ -159,7 +182,8 @@ class WorkerProcess(multiprocessing_context.Process):
                 self._new_stdin,
                 self._loader,
                 self._shared_loader_obj,
-                self._final_q
+                self._final_q,
+                self._variable_manager,
             ).run()
 
             display.debug("done running TaskExecutor() for %s/%s [%s]" % (self._host, self._task, self._task._uuid))
@@ -168,12 +192,27 @@ class WorkerProcess(multiprocessing_context.Process):
 
             # put the result on the result queue
             display.debug("sending task result for task %s" % self._task._uuid)
-            self._final_q.send_task_result(
-                self._host.name,
-                self._task._uuid,
-                executor_result,
-                task_fields=self._task.dump_attrs(),
-            )
+            try:
+                self._final_q.send_task_result(
+                    self._host.name,
+                    self._task._uuid,
+                    executor_result,
+                    task_fields=self._task.dump_attrs(),
+                )
+            except Exception as e:
+                display.debug(f'failed to send task result ({e}), sending surrogate result')
+                self._final_q.send_task_result(
+                    self._host.name,
+                    self._task._uuid,
+                    # Overriding the task result, to represent the failure
+                    {
+                        'failed': True,
+                        'msg': f'{e}',
+                        'exception': traceback.format_exc(),
+                    },
+                    # The failure pickling may have been caused by the task attrs, omit for safety
+                    {},
+                )
             display.debug("done sending task result for task %s" % self._task._uuid)
 
         except AnsibleConnectionFailure:

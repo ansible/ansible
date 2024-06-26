@@ -1,6 +1,9 @@
 # Current pip unconditionally uses md5.
 # We can re-enable if pip switches to a different hash or allows us to not check md5.
 
+- include_tasks:
+    file: break_system_packages.yml
+
 - name: Python 2
   when: ansible_python.version.major == 2
   block:
@@ -37,8 +40,12 @@
     - name: ensure wheel is installed
       pip:
         name: wheel
+        extra_args: "-c {{ remote_constraints }}"
 
     - include_tasks: pip.yml
+
+    - include_tasks: no_setuptools.yml
+      when: ansible_python.version_info[:2] >= [3, 8]
   always:
     - name: platform specific cleanup
       include_tasks: "{{ cleanup_filename }}"

@@ -1,2 +1,0 @@
-deprecated_features:
-  - include action is deprecated in favor of include_tasks, import_tasks and import_playbook.

@@ -2,7 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 param(
-    [Parameter(Mandatory=$true)][System.Collections.IDictionary]$Payload
+    [Parameter(Mandatory = $true)][System.Collections.IDictionary]$Payload
 )
 
 #AnsibleRequires -Wrapper module_wrapper
@@ -29,7 +29,18 @@ if ($csharp_utils.Count -gt 0) {
 
     # add any C# references so the module does not have to do so
     $new_tmp = [System.Environment]::ExpandEnvironmentVariables($Payload.module_args["_ansible_remote_tmp"])
-    Add-CSharpType -References $csharp_utils -TempPath $new_tmp -IncludeDebugInfo
+
+    # We use a fake module object to capture warnings
+    $fake_module = [PSCustomObject]@{
+        Tmpdir = $new_tmp
+        Verbosity = 3
+    }
+    $warning_func = New-Object -TypeName System.Management.Automation.PSScriptMethod -ArgumentList Warn, {
+        param($message)
+        $Payload.module_args._ansible_exec_wrapper_warnings.Add($message)
+    }
+    $fake_module.PSObject.Members.Add($warning_func)
+    Add-CSharpType -References $csharp_utils -AnsibleModule $fake_module
 }
 
 if ($Payload.ContainsKey("coverage") -and $null -ne $host.Runspace -and $null -ne $host.Runspace.Debugger) {
@@ -38,7 +49,8 @@ if ($Payload.ContainsKey("coverage") -and $null -ne $host.Runspace -and $null -n
     $params = @{
         Payload = $Payload
     }
-} else {
+}
+else {
     # get the common module_wrapper code and invoke that to run the module
     $module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Payload.module_entry))
     $variables = [System.Collections.ArrayList]@(@{ Name = "complex_args"; Value = $Payload.module_args; Scope = "Global" })
@@ -58,7 +70,8 @@ $entrypoint = [ScriptBlock]::Create($entrypoint)
 
 try {
     &$entrypoint @params
-} catch {
+}
+catch {
     # failed to invoke the PowerShell module, capture the exception and
     # output a pretty error for Ansible to parse
     $result = @{

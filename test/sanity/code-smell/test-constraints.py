@@ -1,7 +1,7 @@
-#!/usr/bin/env python
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+import os
+import pathlib
 import re
 import sys
 
@@ -12,19 +12,27 @@ def main():
     requirements = {}
 
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
-        if path == 'test/lib/ansible_test/_data/requirements/sanity.import-plugins.txt':
-            # This file is an exact copy of requirements.txt that is used in the import
-            # sanity test.  There is a code-smell test which ensures that the two files
-            # are identical, and it is only used inside an empty venv, so we can ignore
-            # it here.
+        if path == 'test/lib/ansible_test/_data/requirements/ansible.txt':
+            # This file is an exact copy of the ansible requirements.txt and should not conflict with other constraints.
             continue
+
         with open(path, 'r') as path_fd:
             requirements[path] = parse_requirements(path_fd.read().splitlines())
+
+        if path == 'test/lib/ansible_test/_data/requirements/ansible-test.txt':
+            # Special handling is required for ansible-test's requirements file.
+            check_ansible_test(path, requirements.pop(path))
+            continue
 
     frozen_sanity = {}
     non_sanity_requirements = set()
 
     for path, requirements in requirements.items():
+        filename = os.path.basename(path)
+
+        is_sanity = filename.startswith('sanity.') or filename.endswith('.requirements.txt')
+        is_constraints = path == constraints_path
+
         for lineno, line, requirement in requirements:
             if not requirement:
                 print('%s:%d:%d: cannot parse requirement: %s' % (path, lineno, 1, line))
@@ -32,14 +40,10 @@ def main():
 
             name = requirement.group('name').lower()
             raw_constraints = requirement.group('constraints')
-            raw_markers = requirement.group('markers')
             constraints = raw_constraints.strip()
-            markers = raw_markers.strip()
             comment = requirement.group('comment')
 
-            is_sanity = path.startswith('test/lib/ansible_test/_data/requirements/sanity.') or path.startswith('test/sanity/code-smell/')
-            is_pinned = re.search('^ *== *[0-9.]+$', constraints)
-            is_constraints = path == constraints_path
+            is_pinned = re.search('^ *== *[0-9.]+(rc[0-9]+)?(\\.post[0-9]+)?$', constraints)
 
             if is_sanity:
                 sanity = frozen_sanity.setdefault(name, [])
@@ -47,31 +51,43 @@ def main():
             elif not is_constraints:
                 non_sanity_requirements.add(name)
 
+            if is_sanity:
+                if not is_pinned:
+                    # sanity test requirements must be pinned
+                    print('%s:%d:%d: sanity test requirement (%s%s) must be frozen (use `==`)' % (path, lineno, 1, name, raw_constraints))
+
+                continue
+
             if constraints and not is_constraints:
                 allow_constraints = 'sanity_ok' in comment
 
-                if is_sanity and is_pinned and not markers:
-                    allow_constraints = True  # sanity tests can use frozen requirements without markers
-
                 if not allow_constraints:
-                    if is_sanity:
-                        # sanity test requirements which need constraints should be frozen to maintain consistent test results
-                        # use of anything other than frozen constraints will make evaluation of conflicts extremely difficult
-                        print('%s:%d:%d: sanity test constraint (%s%s) must be frozen (use `==`)' % (path, lineno, 1, name, raw_constraints))
-                    else:
-                        # keeping constraints for tests other than sanity tests in one file helps avoid conflicts
-                        print('%s:%d:%d: put the constraint (%s%s) in `%s`' % (path, lineno, 1, name, raw_constraints, constraints_path))
+                    # keeping constraints for tests other than sanity tests in one file helps avoid conflicts
+                    print('%s:%d:%d: put the constraint (%s%s) in `%s`' % (path, lineno, 1, name, raw_constraints, constraints_path))
 
-    for name, requirements in frozen_sanity.items():
-        for req in requirements:
-            if name in non_sanity_requirements and req[3].group('constraints').strip():
-                print('%s:%d:%d: sanity constraint (%s) for package `%s` is not allowed because `%s` is used outside sanity tests' % (
-                    req[0], req[1], req[3].start('constraints') + 1, req[3].group('constraints'), name, name))
 
-        if len(set(req[3].group('constraints').strip() for req in requirements)) != 1:
-            for req in requirements:
-                print('%s:%d:%d: sanity constraint (%s) does not match others for package `%s`' % (
-                    req[0], req[1], req[3].start('constraints') + 1, req[3].group('constraints'), name))
+def check_ansible_test(path: str, requirements: list[tuple[int, str, re.Match]]) -> None:
+    sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.parent.joinpath('lib')))
+
+    from ansible_test._internal.coverage_util import COVERAGE_VERSIONS
+    from ansible_test._internal.util import version_to_str
+
+    expected_lines = set((
+        f"coverage == {item.coverage_version} ; python_version >= '{version_to_str(item.min_python)}' and python_version <= '{version_to_str(item.max_python)}'"
+        for item in COVERAGE_VERSIONS
+    ))
+
+    for idx, requirement in enumerate(requirements):
+        lineno, line, match = requirement
+
+        if line in expected_lines:
+            expected_lines.remove(line)
+            continue
+
+        print('%s:%d:%d: unexpected line: %s' % (path, lineno, 1, line))
+
+    for expected_line in sorted(expected_lines):
+        print('%s:%d:%d: missing line: %s' % (path, requirements[-1][0] + 1, 1, expected_line))
 
 
 def parse_requirements(lines):

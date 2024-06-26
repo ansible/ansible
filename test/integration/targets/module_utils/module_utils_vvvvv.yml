@@ -7,11 +7,10 @@
   # Invocation usually is output with 3vs or more, our callback plugin displays it anyway
   - name: Check no_log invocation results
     command: ansible-playbook -i {{ inventory_file }} module_utils_test_no_log.yml
+    delegate_to: localhost
     environment:
       ANSIBLE_CALLBACK_PLUGINS: callback
       ANSIBLE_STDOUT_CALLBACK: pure_json
-      SECRET_ENV: ghi
-      SECRET_SUB_ENV: jkl
     register: no_log_invocation
 
   - set_fact:

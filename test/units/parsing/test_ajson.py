@@ -2,18 +2,16 @@
 # Copyright 2019, Andrew Klychkov @Andersson007 <aaklychkov@mail.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import json
 
 import pytest
 
-from datetime import date, datetime
-from pytz import timezone as tz
+from collections.abc import Mapping
+from datetime import date, datetime, timezone, timedelta
 
-from ansible.module_utils.common._collections_compat import Mapping
 from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.unsafe_proxy import AnsibleUnsafeText
@@ -110,7 +108,11 @@ class TestAnsibleJSONEncoder:
             def __len__(self):
                 return len(self.__dict__)
 
-        return M(request.param)
+        mapping = M(request.param)
+
+        assert isinstance(len(mapping), int)   # ensure coverage of __len__
+
+        return mapping
 
     @pytest.fixture
     def ansible_json_encoder(self):
@@ -127,8 +129,8 @@ class TestAnsibleJSONEncoder:
             (datetime(2019, 5, 14, 13, 47, 16, 923866), '2019-05-14T13:47:16.923866'),
             (date(2019, 5, 14), '2019-05-14'),
             (date(2020, 5, 14), '2020-05-14'),
-            (datetime(2019, 6, 15, 14, 45, tzinfo=tz('UTC')), '2019-06-15T14:45:00+00:00'),
-            (datetime(2019, 6, 15, 14, 45, tzinfo=tz('Europe/Helsinki')), '2019-06-15T14:45:00+01:40'),
+            (datetime(2019, 6, 15, 14, 45, tzinfo=timezone.utc), '2019-06-15T14:45:00+00:00'),
+            (datetime(2019, 6, 15, 14, 45, tzinfo=timezone(timedelta(hours=1, minutes=40))), '2019-06-15T14:45:00+01:40'),
         ]
     )
     def test_date_datetime(self, ansible_json_encoder, test_input, expected):

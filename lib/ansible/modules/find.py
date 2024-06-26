@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2014, Ruggero Marchei <ruggero.marchei@daemonzone.net>
@@ -7,8 +6,7 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -20,6 +18,9 @@ short_description: Return a list of files based on specific criteria
 description:
     - Return a list of files based on specific criteria. Multiple criteria are AND'd together.
     - For Windows targets, use the M(ansible.windows.win_find) module instead.
+    - This module does not use the C(find) command, it is a much simpler and slower Python implementation.
+      It is intended for small and simple uses. Those that need the extra power or speed and have expertise
+      with the UNIX command, should use it directly.
 options:
     age:
         description:
@@ -31,24 +32,24 @@ options:
     patterns:
         default: []
         description:
-            - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
+            - One or more (shell or regex) patterns, which type is controlled by O(use_regex) option.
             - The patterns restrict the list of files to be returned to those whose basenames match at
               least one of the patterns specified. Multiple patterns can be specified using a list.
             - The pattern is matched against the file base name, excluding the directory.
             - When using regexen, the pattern MUST match the ENTIRE file name, not just parts of it. So
-              if you are looking to match all files ending in .default, you'd need to use '.*\.default'
-              as a regexp and not just '\.default'.
+              if you are looking to match all files ending in .default, you'd need to use C(.*\.default)
+              as a regexp and not just C(\.default).
             - This parameter expects a list, which can be either comma separated or YAML. If any of the
               patterns contain a comma, make sure to put them in a list to avoid splitting the patterns
               in undesirable ways.
-            - Defaults to '*' when C(use_regex=False), or '.*' when C(use_regex=True).
+            - Defaults to V(*) when O(use_regex=False), or V(.*) when O(use_regex=True).
         type: list
         aliases: [ pattern ]
         elements: str
     excludes:
         description:
-            - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
-            - Items whose basenames match an C(excludes) pattern are culled from C(patterns) matches.
+            - One or more (shell or regex) patterns, which type is controlled by O(use_regex) option.
+            - Items whose basenames match an O(excludes) pattern are culled from O(patterns) matches.
               Multiple patterns can be specified using a list.
         type: list
         aliases: [ exclude ]
@@ -57,14 +58,17 @@ options:
     contains:
         description:
             - A regular expression or pattern which should be matched against the file content.
-            - Works only when I(file_type) is C(file).
+            - If O(read_whole_file=false) it matches against the beginning of the line (uses
+              V(re.match(\))). If O(read_whole_file=true), it searches anywhere for that pattern
+              (uses V(re.search(\))).
+            - Works only when O(file_type) is V(file).
         type: str
     read_whole_file:
         description:
             - When doing a C(contains) search, determines whether the whole file should be read into
               memory or if the regex should be applied to the file line-by-line.
             - Setting this to C(true) can have performance and memory implications for large files.
-            - This uses C(re.search()) instead of C(re.match()).
+            - This uses V(re.search(\)) instead of V(re.match(\)).
         type: bool
         default: false
         version_added: "2.11"
@@ -78,7 +82,7 @@ options:
     file_type:
         description:
             - Type of file to select.
-            - The 'link' and 'any' choices were added in Ansible 2.3.
+            - The V(link) and V(any) choices were added in Ansible 2.3.
         type: str
         choices: [ any, directory, file, link ]
         default: file
@@ -103,32 +107,70 @@ options:
         default: mtime
     hidden:
         description:
-            - Set this to C(yes) to include hidden files, otherwise they will be ignored.
+            - Set this to V(true) to include hidden files, otherwise they will be ignored.
         type: bool
         default: no
+    mode:
+        description:
+            - Choose objects matching a specified permission. This value is
+              restricted to modes that can be applied using the python
+              C(os.chmod) function.
+            - The mode can be provided as an octal such as V("0644") or
+              as symbolic such as V(u=rw,g=r,o=r).
+        type: raw
+        version_added: '2.16'
+    exact_mode:
+        description:
+            - Restrict mode matching to exact matches only, and not as a
+              minimum set of permissions to match.
+        type: bool
+        default: true
+        version_added: '2.16'
     follow:
         description:
-            - Set this to C(yes) to follow symlinks in path for systems with python 2.6+.
+            - Set this to V(true) to follow symlinks in path for systems with python 2.6+.
         type: bool
         default: no
     get_checksum:
         description:
-            - Set this to C(yes) to retrieve a file's SHA1 checksum.
+            - Set this to V(true) to retrieve a file's SHA1 checksum.
         type: bool
         default: no
     use_regex:
         description:
-            - If C(no), the patterns are file globs (shell).
-            - If C(yes), they are python regexes.
+            - If V(false), the patterns are file globs (shell).
+            - If V(true), they are python regexes.
         type: bool
         default: no
     depth:
         description:
             - Set the maximum number of levels to descend into.
-            - Setting recurse to C(no) will override this value, which is effectively depth 1.
+            - Setting O(recurse=false) will override this value, which is effectively depth 1.
             - Default is unlimited depth.
         type: int
         version_added: "2.6"
+    encoding:
+        description:
+            - When doing a O(contains) search, determine the encoding of the files to be searched.
+        type: str
+        version_added: "2.17"
+    limit:
+        description:
+            - Limit the maximum number of matching paths returned. After finding this many, the find action will stop looking.
+            - Matches are made from the top, down (i.e. shallowest directory first).
+            - If not set, or set to v(null), it will do unlimited matches.
+            - Default is unlimited matches.
+        type: int
+        version_added: "2.18"
+extends_documentation_fragment: action_common_attributes
+attributes:
+    check_mode:
+        details: since this action does not modify the target it just executes normally during check mode
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
 seealso:
 - module: ansible.windows.win_find
 '''
@@ -136,41 +178,41 @@ seealso:
 
 EXAMPLES = r'''
 - name: Recursively find /tmp files older than 2 days
-  find:
+  ansible.builtin.find:
     paths: /tmp
     age: 2d
     recurse: yes
 
 - name: Recursively find /tmp files older than 4 weeks and equal or greater than 1 megabyte
-  find:
+  ansible.builtin.find:
     paths: /tmp
     age: 4w
     size: 1m
     recurse: yes
 
 - name: Recursively find /var/tmp files with last access time greater than 3600 seconds
-  find:
+  ansible.builtin.find:
     paths: /var/tmp
     age: 3600
     age_stamp: atime
     recurse: yes
 
 - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz
-  find:
+  ansible.builtin.find:
     paths: /var/log
     patterns: '*.old,*.log.gz'
     size: 10m
 
 # Note that YAML double quotes require escaping backslashes but yaml single quotes do not.
 - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz via regex
-  find:
+  ansible.builtin.find:
     paths: /var/log
     patterns: "^.*?\\.(?:old|log\\.gz)$"
     size: 10m
     use_regex: yes
 
 - name: Find /var/log all directories, exclude nginx and mysql
-  find:
+  ansible.builtin.find:
     paths: /var/log
     recurse: no
     file_type: directory
@@ -178,14 +220,14 @@ EXAMPLES = r'''
 
 # When using patterns that contain a comma, make sure they are formatted as lists to avoid splitting the pattern
 - name: Use a single pattern that contains a comma formatted as a list
-  find:
+  ansible.builtin.find:
     paths: /var/log
     file_type: file
     use_regex: yes
     patterns: ['^_[0-9]{2,4}_.*.log$']
 
 - name: Use multiple patterns that contain a comma formatted as a YAML list
-  find:
+  ansible.builtin.find:
     paths: /var/log
     file_type: file
     use_regex: yes
@@ -193,6 +235,16 @@ EXAMPLES = r'''
       - '^_[0-9]{2,4}_.*.log$'
       - '^[a-z]{1,5}_.*log$'
 
+- name: Find file containing "wally" without necessarily reading all files
+  ansible.builtin.find:
+    paths: /var/log
+    file_type: file
+    contains: wally
+    read_whole_file: true
+    patterns: "^.*\\.log$"
+    use_regex: true
+    recurse: true
+    limit: 1
 '''
 
 RETURN = r'''
@@ -228,6 +280,7 @@ skipped_paths:
     version_added: '2.12'
 '''
 
+import errno
 import fnmatch
 import grp
 import os
@@ -236,8 +289,15 @@ import re
 import stat
 import time
 
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import string_types
+
+
+class _Object:
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
 
 def pfilter(f, patterns=None, excludes=None, use_regex=False):
@@ -283,9 +343,9 @@ def agefilter(st, now, age, timestamp):
     '''filter files older than age'''
     if age is None:
         return True
-    elif age >= 0 and now - st.__getattribute__("st_%s" % timestamp) >= abs(age):
+    elif age >= 0 and now - getattr(st, "st_%s" % timestamp) >= abs(age):
         return True
-    elif age < 0 and now - st.__getattribute__("st_%s" % timestamp) <= abs(age):
+    elif age < 0 and now - getattr(st, "st_%s" % timestamp) <= abs(age):
         return True
     return False
 
@@ -301,11 +361,12 @@ def sizefilter(st, size):
     return False
 
 
-def contentfilter(fsname, pattern, read_whole_file=False):
+def contentfilter(fsname, pattern, encoding, read_whole_file=False):
     """
     Filter files which contain the given expression
     :arg fsname: Filename to scan for lines matching a pattern
     :arg pattern: Pattern to look for inside of line
+    :arg encoding: Encoding of the file to be scanned
     :arg read_whole_file: If true, the whole file is read into memory before the regex is applied against it. Otherwise, the regex is applied line-by-line.
     :rtype: bool
     :returns: True if one of the lines in fsname matches the pattern. Otherwise False
@@ -316,7 +377,7 @@ def contentfilter(fsname, pattern, read_whole_file=False):
     prog = re.compile(pattern)
 
     try:
-        with open(fsname) as f:
+        with open(fsname, encoding=encoding) as f:
             if read_whole_file:
                 return bool(prog.search(f.read()))
 
@@ -324,10 +385,36 @@ def contentfilter(fsname, pattern, read_whole_file=False):
                 if prog.match(line):
                     return True
 
+    except LookupError as e:
+        raise e
+    except UnicodeDecodeError as e:
+        if encoding is None:
+            encoding = 'None (default determined by the Python built-in function "open")'
+        msg = f'Failed to read the file {fsname} due to an encoding error. current encoding: {encoding}'
+        raise Exception(msg) from e
     except Exception:
         pass
 
     return False
+
+
+def mode_filter(st, mode, exact, module):
+    if not mode:
+        return True
+
+    st_mode = stat.S_IMODE(st.st_mode)
+
+    try:
+        mode = int(mode, 8)
+    except ValueError:
+        mode = module._symbolic_mode_to_octal(_Object(st_mode=0), mode)
+
+    mode = stat.S_IMODE(mode)
+
+    if exact:
+        return st_mode == mode
+
+    return bool(st_mode & mode)
 
 
 def statinfo(st):
@@ -378,10 +465,6 @@ def statinfo(st):
     }
 
 
-def handle_walk_errors(e):
-    raise e
-
-
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -400,11 +483,20 @@ def main():
             get_checksum=dict(type='bool', default=False),
             use_regex=dict(type='bool', default=False),
             depth=dict(type='int'),
+            mode=dict(type='raw'),
+            exact_mode=dict(type='bool', default=True),
+            encoding=dict(type='str'),
+            limit=dict(type='int')
         ),
         supports_check_mode=True,
     )
 
     params = module.params
+
+    if params['mode'] and not isinstance(params['mode'], string_types):
+        module.fail_json(
+            msg="argument 'mode' is not a string and conversion is not allowed, value is of type %s" % params['mode'].__class__.__name__
+        )
 
     # Set the default match pattern to either a match-all glob or
     # regex depending on use_regex being set.  This makes sure if you
@@ -418,6 +510,12 @@ def main():
 
     filelist = []
     skipped = {}
+
+    def handle_walk_errors(e):
+        if e.errno in (errno.EPERM, errno.EACCES):
+            skipped[e.filename] = to_text(e)
+            return
+        raise e
 
     if params['age'] is None:
         age = None
@@ -441,6 +539,9 @@ def main():
         else:
             module.fail_json(size=params['size'], msg="failed to process size")
 
+    if params['limit'] is not None and params['limit'] <= 0:
+        module.fail_json(msg="limit cannot be %d (use None for unlimited)" % params['limit'])
+
     now = time.time()
     msg = 'All paths examined'
     looked = 0
@@ -451,7 +552,8 @@ def main():
             if not os.path.isdir(npath):
                 raise Exception("'%s' is not a directory" % to_native(npath))
 
-            for root, dirs, files in os.walk(npath, onerror=handle_walk_errors, followlinks=params['follow']):
+            # Setting `topdown=True` to explicitly guarantee matches are made from the shallowest directory first
+            for root, dirs, files in os.walk(npath, onerror=handle_walk_errors, followlinks=params['follow'], topdown=True):
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
                     fsname = os.path.normpath(os.path.join(root, fsobj))
@@ -460,7 +562,7 @@ def main():
                         depth = int(fsname.count(os.path.sep)) - int(wpath.count(os.path.sep)) + 1
                         if depth > params['depth']:
                             # Empty the list used by os.walk to avoid traversing deeper unnecessarily
-                            del(dirs[:])
+                            del dirs[:]
                             continue
                     if os.path.basename(fsname).startswith('.') and not params['hidden']:
                         continue
@@ -475,7 +577,9 @@ def main():
 
                     r = {'path': fsname}
                     if params['file_type'] == 'any':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                        if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
+                                agefilter(st, now, age, params['age_stamp']) and
+                                mode_filter(st, params['mode'], params['exact_mode'], module)):
 
                             r.update(statinfo(st))
                             if stat.S_ISREG(st.st_mode) and params['get_checksum']:
@@ -488,15 +592,19 @@ def main():
                                 filelist.append(r)
 
                     elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                        if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
+                                agefilter(st, now, age, params['age_stamp']) and
+                                mode_filter(st, params['mode'], params['exact_mode'], module)):
 
                             r.update(statinfo(st))
                             filelist.append(r)
 
                     elif stat.S_ISREG(st.st_mode) and params['file_type'] == 'file':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and \
-                           agefilter(st, now, age, params['age_stamp']) and \
-                           sizefilter(st, size) and contentfilter(fsname, params['contains'], params['read_whole_file']):
+                        if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
+                                agefilter(st, now, age, params['age_stamp']) and
+                                sizefilter(st, size) and
+                                contentfilter(fsname, params['contains'], params['encoding'], params['read_whole_file']) and
+                                mode_filter(st, params['mode'], params['exact_mode'], module)):
 
                             r.update(statinfo(st))
                             if params['get_checksum']:
@@ -504,16 +612,23 @@ def main():
                             filelist.append(r)
 
                     elif stat.S_ISLNK(st.st_mode) and params['file_type'] == 'link':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                        if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and
+                                agefilter(st, now, age, params['age_stamp']) and
+                                mode_filter(st, params['mode'], params['exact_mode'], module)):
 
                             r.update(statinfo(st))
                             filelist.append(r)
 
-                if not params['recurse']:
+                    if len(filelist) == params["limit"]:
+                        # Breaks out of directory files loop only
+                        msg = "Limit of matches reached"
+                        break
+
+                if not params['recurse'] or len(filelist) == params["limit"]:
                     break
         except Exception as e:
-            module.warn("Skipped '%s' path due to this access issue: %s\n" % (npath, to_text(e)))
             skipped[npath] = to_text(e)
+            module.warn("Skipped '%s' path due to this access issue: %s\n" % (to_text(npath), skipped[npath]))
             has_warnings = True
 
     if has_warnings:

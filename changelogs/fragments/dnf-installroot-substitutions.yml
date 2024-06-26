@@ -1,0 +1,3 @@
+bugfixes:
+  - dnf - honor installroot for ``cachedir``, ``logdir`` and ``persistdir``
+  - dnf - perform variable substitutions in ``logdir`` and ``persistdir``

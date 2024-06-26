@@ -15,17 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import re
 import textwrap
 import types
 
-from units.compat import unittest
-from units.compat.mock import MagicMock
+import unittest
+from unittest.mock import MagicMock
 
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
@@ -56,7 +54,7 @@ class TestCallback(unittest.TestCase):
     def test_host_label(self):
         result = TaskResult(host=Host('host1'), task=mock_task, return_data={})
 
-        self.assertEquals(CallbackBase.host_label(result), 'host1')
+        self.assertEqual(CallbackBase.host_label(result), 'host1')
 
     def test_host_label_delegated(self):
         mock_task.delegate_to = 'host2'
@@ -65,7 +63,7 @@ class TestCallback(unittest.TestCase):
             task=mock_task,
             return_data={'_ansible_delegated_vars': {'ansible_host': 'host2'}},
         )
-        self.assertEquals(CallbackBase.host_label(result), 'host1 -> host2')
+        self.assertEqual(CallbackBase.host_label(result), 'host1 -> host2')
 
     # TODO: import callback module so we can patch callback.cli/callback.C
 

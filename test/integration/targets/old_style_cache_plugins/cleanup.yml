@@ -1,0 +1,41 @@
+---
+- hosts: localhost
+  gather_facts: no
+  ignore_errors: yes
+  tasks:
+    - command: redis-cli keys
+
+    - name: delete cache keys
+      command: redis-cli del {{ item }}
+      loop:
+        - ansible_facts_localhost
+        - ansible_inventory_localhost
+        - ansible_cache_keys
+
+    - name: shutdown the server
+      command: redis-cli shutdown
+
+    - name: cleanup set up files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - redis-stable.tar.gz
+
+    - name: remove executables
+      file:
+        state: absent
+        path: "/usr/local/bin/{{ item }}"
+        follow: no
+      become: yes
+      loop:
+        - redis-server
+        - redis-cli
+
+    - name: clean the rest of the files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - ./redis-stable.tar.gz
+        - ./redis-stable

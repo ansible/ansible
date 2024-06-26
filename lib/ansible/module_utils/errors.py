@@ -2,8 +2,7 @@
 # Copyright (c) 2021 Ansible Project
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 class AnsibleFallbackNotFound(Exception):
@@ -73,6 +72,10 @@ class ArgumentTypeError(AnsibleValidationError):
 
 class ArgumentValueError(AnsibleValidationError):
     """Error with parameter value"""
+
+
+class DeprecationError(AnsibleValidationError):
+    """Error processing parameter deprecations"""
 
 
 class ElementError(AnsibleValidationError):

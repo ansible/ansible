@@ -1,0 +1,11 @@
+- hosts: A
+  gather_facts: false
+  tasks:
+    - command: echo
+      notify:
+        - handler
+    - name: EXPECTED FAILURE
+      fail:
+  handlers:
+    - name: handler
+      include_tasks: include_handlers_fail_force-handlers.yml

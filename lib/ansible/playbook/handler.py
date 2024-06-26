@@ -15,18 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.task import Task
 from ansible.module_utils.six import string_types
 
 
 class Handler(Task):
 
-    _listen = FieldAttribute(isa='list', default=list, listof=string_types, static=True)
+    listen = NonInheritableFieldAttribute(isa='list', default=list, listof=string_types, static=True)
 
     def __init__(self, block=None, role=None, task_include=None):
         self.notified_hosts = []
@@ -36,8 +34,18 @@ class Handler(Task):
         super(Handler, self).__init__(block=block, role=role, task_include=task_include)
 
     def __repr__(self):
-        ''' returns a human readable representation of the handler '''
+        ''' returns a human-readable representation of the handler '''
         return "HANDLER: %s" % self.get_name()
+
+    def _validate_listen(self, attr, name, value):
+        new_value = self.get_validated_value(name, attr, value, None)
+        if self._role is not None:
+            for listener in new_value.copy():
+                new_value.extend([
+                    f"{self._role.get_name(include_role_fqcn=True)} : {listener}",
+                    f"{self._role.get_name(include_role_fqcn=False)} : {listener}",
+                ])
+        setattr(self, name, new_value)
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
@@ -49,6 +57,12 @@ class Handler(Task):
             self.notified_hosts.append(host)
             return True
         return False
+
+    def remove_host(self, host):
+        self.notified_hosts = [h for h in self.notified_hosts if h != host]
+
+    def clear_hosts(self):
+        self.notified_hosts = []
 
     def is_host_notified(self, host):
         return host in self.notified_hosts

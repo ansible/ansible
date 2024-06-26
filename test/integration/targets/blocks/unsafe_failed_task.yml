@@ -1,7 +1,7 @@
 - hosts: localhost
   gather_facts: false
   vars:
-    - data: {}
+    data: {}
   tasks:
     - block:
         - name: template error

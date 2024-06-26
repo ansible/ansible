@@ -18,8 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 ########################################################################
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import base64
 import os
@@ -28,7 +27,7 @@ from stat import S_IRUSR, S_IWUSR
 
 from ansible import constants as C
 from ansible.galaxy.user_agent import user_agent
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
@@ -50,14 +49,18 @@ class KeycloakToken(object):
 
     token_type = 'Bearer'
 
-    def __init__(self, access_token=None, auth_url=None, validate_certs=True):
+    def __init__(self, access_token=None, auth_url=None, validate_certs=True, client_id=None):
         self.access_token = access_token
         self.auth_url = auth_url
         self._token = None
         self.validate_certs = validate_certs
+        self.client_id = client_id
+        if self.client_id is None:
+            self.client_id = 'cloud-services'
 
     def _form_payload(self):
-        return 'grant_type=refresh_token&client_id=cloud-services&refresh_token=%s' % self.access_token
+        return 'grant_type=refresh_token&client_id=%s&refresh_token=%s' % (self.client_id,
+                                                                           self.access_token)
 
     def get(self):
         if self._token:
@@ -65,7 +68,7 @@ class KeycloakToken(object):
 
         # - build a request to POST to auth_url
         #  - body is form encoded
-        #    - 'request_token' is the offline token stored in ansible.cfg
+        #    - 'refresh_token' is the offline token stored in ansible.cfg
         #    - 'grant_type' is 'refresh_token'
         #    - 'client_id' is 'cloud-services'
         #       - should probably be based on the contents of the

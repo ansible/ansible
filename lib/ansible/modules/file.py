@@ -1,12 +1,10 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -14,11 +12,11 @@ DOCUMENTATION = r'''
 module: file
 version_added: historical
 short_description: Manage files and file properties
-extends_documentation_fragment: files
+extends_documentation_fragment: [files, action_common_attributes]
 description:
-- Set attributes of files, symlinks or directories.
+- Set attributes of files, directories, or symlinks and their targets.
 - Alternatively, remove files, symlinks or directories.
-- Many other modules support the same options as the C(file) module - including M(ansible.builtin.copy),
+- Many other modules support the same options as the M(ansible.builtin.file) module - including M(ansible.builtin.copy),
   M(ansible.builtin.template), and M(ansible.builtin.assemble).
 - For Windows targets, use the M(ansible.windows.win_file) module instead.
 options:
@@ -30,35 +28,35 @@ options:
     aliases: [ dest, name ]
   state:
     description:
-    - If C(absent), directories will be recursively deleted, and files or symlinks will
+    - If V(absent), directories will be recursively deleted, and files or symlinks will
       be unlinked. In the case of a directory, if C(diff) is declared, you will see the files and folders deleted listed
-      under C(path_contents). Note that C(absent) will not cause C(file) to fail if the C(path) does
+      under C(path_contents). Note that V(absent) will not cause M(ansible.builtin.file) to fail if the O(path) does
       not exist as the state did not change.
-    - If C(directory), all intermediate subdirectories will be created if they
+    - If V(directory), all intermediate subdirectories will be created if they
       do not exist. Since Ansible 1.7 they will be created with the supplied permissions.
-    - If C(file), with no other options, returns the current state of C(path).
-    - If C(file), even with other options (such as C(mode)), the file will be modified if it exists but will NOT be created if it does not exist.
-      Set to C(touch) or use the M(ansible.builtin.copy) or M(ansible.builtin.template) module if you want to create the file if it does not exist.
-    - If C(hard), the hard link will be created or changed.
-    - If C(link), the symbolic link will be created or changed.
-    - If C(touch) (new in 1.4), an empty file will be created if the C(path) does not
+    - If V(file), with no other options, returns the current state of C(path).
+    - If V(file), even with other options (such as O(mode)), the file will be modified if it exists but will NOT be created if it does not exist.
+      Set to V(touch) or use the M(ansible.builtin.copy) or M(ansible.builtin.template) module if you want to create the file if it does not exist.
+    - If V(hard), the hard link will be created or changed.
+    - If V(link), the symbolic link will be created or changed.
+    - If V(touch) (new in 1.4), an empty file will be created if the file does not
       exist, while an existing file or directory will receive updated file access and
-      modification times (similar to the way C(touch) works from the command line).
+      modification times (similar to the way V(touch) works from the command line).
+    - Default is the current state of the file if it exists, V(directory) if O(recurse=yes), or V(file) otherwise.
     type: str
-    default: file
     choices: [ absent, directory, file, hard, link, touch ]
   src:
     description:
     - Path of the file to link to.
-    - This applies only to C(state=link) and C(state=hard).
-    - For C(state=link), this will also accept a non-existing path.
-    - Relative paths are relative to the file being created (C(path)) which is how
+    - This applies only to O(state=link) and O(state=hard).
+    - For O(state=link), this will also accept a non-existing path.
+    - Relative paths are relative to the file being created (O(path)) which is how
       the Unix command C(ln -s SRC DEST) treats relative paths.
     type: path
   recurse:
     description:
     - Recursively set the specified file attributes on directory contents.
-    - This applies only when C(state) is set to C(directory).
+    - This applies only when O(state) is set to V(directory).
     type: bool
     default: no
     version_added: '1.1'
@@ -67,26 +65,29 @@ options:
     - >
       Force the creation of the symlinks in two cases: the source file does
       not exist (but will appear later); the destination exists and is a file (so, we need to unlink the
-      C(path) file and create symlink to the C(src) file in place of it).
+      O(path) file and create a symlink to the O(src) file in place of it).
     type: bool
     default: no
   follow:
     description:
     - This flag indicates that filesystem links, if they exist, should be followed.
-    - Previous to Ansible 2.5, this was C(no) by default.
+    - O(follow=yes) and O(state=link) can modify O(src) when combined with parameters such as O(mode).
+    - Previous to Ansible 2.5, this was V(false) by default.
+    - While creating a symlink with a non-existent destination, set O(follow=false) to avoid a warning message related to permission issues.
+      The warning message is added to notify the user that we can not set permissions to the non-existent destination.
     type: bool
     default: yes
     version_added: '1.8'
   modification_time:
     description:
     - This parameter indicates the time the file's modification time should be set to.
-    - Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or C(now).
-    - Default is None meaning that C(preserve) is the default for C(state=[file,directory,link,hard]) and C(now) is default for C(state=touch).
+    - Should be V(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or V(now).
+    - Default is None meaning that V(preserve) is the default for O(state=[file,directory,link,hard]) and V(now) is default for O(state=touch).
     type: str
     version_added: "2.7"
   modification_time_format:
     description:
-    - When used with C(modification_time), indicates the time format that must be used.
+    - When used with O(modification_time), indicates the time format that must be used.
     - Based on default Python format (see time.strftime doc).
     type: str
     default: "%Y%m%d%H%M.%S"
@@ -94,13 +95,13 @@ options:
   access_time:
     description:
     - This parameter indicates the time the file's access time should be set to.
-    - Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or C(now).
-    - Default is C(None) meaning that C(preserve) is the default for C(state=[file,directory,link,hard]) and C(now) is default for C(state=touch).
+    - Should be V(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or V(now).
+    - Default is V(None) meaning that V(preserve) is the default for O(state=[file,directory,link,hard]) and V(now) is default for O(state=touch).
     type: str
     version_added: '2.7'
   access_time_format:
     description:
-    - When used with C(access_time), indicates the time format that must be used.
+    - When used with O(access_time), indicates the time format that must be used.
     - Based on default Python format (see time.strftime doc).
     type: str
     default: "%Y%m%d%H%M.%S"
@@ -111,8 +112,14 @@ seealso:
 - module: ansible.builtin.stat
 - module: ansible.builtin.template
 - module: ansible.windows.win_file
-notes:
-- Supports C(check_mode).
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        details: permissions and ownership will be shown but file contents on absent/touch will not.
+        support: partial
+    platform:
+        platforms: posix
 author:
 - Ansible Core Team
 - Michael DeHaan
@@ -210,13 +217,13 @@ EXAMPLES = r'''
 '''
 RETURN = r'''
 dest:
-    description: Destination file/path, equal to the value passed to I(path).
-    returned: state=touch, state=hard, state=link
+    description: Destination file/path, equal to the value passed to O(path).
+    returned: O(state=touch), O(state=hard), O(state=link)
     type: str
     sample: /path/to/file.txt
 path:
-    description: Destination file/path, equal to the value passed to I(path).
-    returned: state=absent, state=directory, state=file
+    description: Destination file/path, equal to the value passed to O(path).
+    returned: O(state=absent), O(state=directory), O(state=file)
     type: str
     sample: /path/to/file.txt
 '''
@@ -231,7 +238,7 @@ from pwd import getpwnam, getpwuid
 from grp import getgrnam, getgrgid
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.common.text.converters import to_bytes, to_native
 
 
 # There will only be a single AnsibleModule object per module
@@ -464,7 +471,8 @@ def update_timestamp_for_file(path, mtime, atime, diff=None):
 
             set_time = (atime, mtime)
 
-        os.utime(b_path, set_time)
+        if not module.check_mode:
+            os.utime(b_path, set_time)
 
         if diff is not None:
             if 'before' not in diff:
@@ -546,34 +554,38 @@ def execute_touch(path, follow, timestamps):
     mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
     atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
 
-    if not module.check_mode:
-        if prev_state == 'absent':
-            # Create an empty file if the filename did not already exist
-            try:
-                open(b_path, 'wb').close()
-                changed = True
-            except (OSError, IOError) as e:
-                raise AnsibleModuleError(results={'msg': 'Error, could not touch target: %s'
-                                                         % to_native(e, nonstring='simplerepr'),
-                                                  'path': path})
-
-        # Update the attributes on the file
-        diff = initial_diff(path, 'touch', prev_state)
-        file_args = module.load_file_common_arguments(module.params)
+    # If the file did not already exist
+    if prev_state == 'absent':
+        # if we are in check mode and the file is absent
+        # we can set the changed status to True and return
+        if module.check_mode:
+            result['changed'] = True
+            return result
+        # Create an empty file
         try:
-            changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
-            changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
-        except SystemExit as e:
-            if e.code:  # this is the exit code passed to sys.exit, not a constant -- pylint: disable=using-constant-test
-                # We take this to mean that fail_json() was called from
-                # somewhere in basic.py
-                if prev_state == 'absent':
-                    # If we just created the file we can safely remove it
-                    os.remove(b_path)
-            raise
+            open(b_path, 'wb').close()
+            changed = True
+        except (OSError, IOError) as e:
+            raise AnsibleModuleError(results={'msg': 'Error, could not touch target: %s'
+                                              % to_native(e, nonstring='simplerepr'),
+                                              'path': path})
+    # Update the attributes on the file
+    diff = initial_diff(path, 'touch', prev_state)
+    file_args = module.load_file_common_arguments(module.params)
+    try:
+        changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
+        changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
+    except SystemExit as e:
+        if e.code:  # this is the exit code passed to sys.exit, not a constant -- pylint: disable=using-constant-test
+            # We take this to mean that fail_json() was called from
+            # somewhere in basic.py
+            if prev_state == 'absent':
+                # If we just created the file we can safely remove it
+                os.remove(b_path)
+        raise
 
-        result['changed'] = changed
-        result['diff'] = diff
+    result['changed'] = changed
+    result['diff'] = diff
     return result
 
 
@@ -683,7 +695,7 @@ def ensure_symlink(path, src, follow, force, timestamps):
     # source is both the source of a symlink or an informational passing of the src for a template module
     # or copy module, even if this module never uses it, it is needed to key off some things
     if src is None:
-        if follow:
+        if follow and os.path.exists(b_path):
             # use the current target of the link as the source
             src = to_native(os.readlink(b_path), errors='strict')
             b_src = to_bytes(src, errors='surrogate_or_strict')
@@ -694,9 +706,14 @@ def ensure_symlink(path, src, follow, force, timestamps):
         b_relpath = os.path.dirname(b_path)
         relpath = to_native(b_relpath, errors='strict')
 
-    absrc = os.path.join(relpath, src)
+    # If src is None that means we are expecting to update an existing link.
+    if src is None:
+        absrc = None
+    else:
+        absrc = os.path.join(relpath, src)
+
     b_absrc = to_bytes(absrc, errors='surrogate_or_strict')
-    if not force and not os.path.exists(b_absrc):
+    if not force and src is not None and not os.path.exists(b_absrc):
         raise AnsibleModuleError(results={'msg': 'src file does not exist, use "force=yes" if you'
                                                  ' really want to create the link: %s' % absrc,
                                           'path': path, 'src': src})
@@ -720,13 +737,16 @@ def ensure_symlink(path, src, follow, force, timestamps):
     changed = False
 
     if prev_state in ('hard', 'file', 'directory', 'absent'):
+        if src is None:
+            raise AnsibleModuleError(results={'msg': 'src is required for creating new symlinks'})
         changed = True
     elif prev_state == 'link':
-        b_old_src = os.readlink(b_path)
-        if b_old_src != b_src:
-            diff['before']['src'] = to_native(b_old_src, errors='strict')
-            diff['after']['src'] = src
-            changed = True
+        if src is not None:
+            b_old_src = os.readlink(b_path)
+            if b_old_src != b_src:
+                diff['before']['src'] = to_native(b_old_src, errors='strict')
+                diff['after']['src'] = src
+                changed = True
     else:
         raise AnsibleModuleError(results={'msg': 'unexpected position reached', 'dest': path, 'src': src})
 
@@ -787,10 +807,12 @@ def ensure_hardlink(path, src, follow, force, timestamps):
 
     # src is the source of a hardlink.  We require it if we are creating a new hardlink.
     # We require path in the argument_spec so we know it is present at this point.
-    if src is None:
+    if prev_state != 'hard' and src is None:
         raise AnsibleModuleError(results={'msg': 'src is required for creating new hardlinks'})
 
-    if not os.path.exists(b_src):
+    # Even if the link already exists, if src was specified it needs to exist.
+    # The inode number will be compared to ensure the link has the correct target.
+    if src is not None and not os.path.exists(b_src):
         raise AnsibleModuleError(results={'msg': 'src does not exist', 'dest': path, 'src': src})
 
     diff = initial_diff(path, 'hard', prev_state)
@@ -805,7 +827,7 @@ def ensure_hardlink(path, src, follow, force, timestamps):
             diff['after']['src'] = src
             changed = True
     elif prev_state == 'hard':
-        if not os.stat(b_path).st_ino == os.stat(b_src).st_ino:
+        if src is not None and not os.stat(b_path).st_ino == os.stat(b_src).st_ino:
             changed = True
             if not force:
                 raise AnsibleModuleError(results={'msg': 'Cannot link, different hard link exists at destination',
@@ -850,6 +872,8 @@ def ensure_hardlink(path, src, follow, force, timestamps):
                                                   'path': path})
         else:
             try:
+                if follow and os.path.islink(b_src):
+                    b_src = os.readlink(b_src)
                 os.link(b_src, b_path)
             except OSError as e:
                 raise AnsibleModuleError(results={'msg': 'Error while linking: %s'

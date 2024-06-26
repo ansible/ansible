@@ -1,11 +1,9 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2014, Brian Coca <briancoca+ansible@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -16,14 +14,42 @@ description:
      - Configure a .deb package using debconf-set-selections.
      - Or just query existing selections.
 version_added: "1.6"
+extends_documentation_fragment:
+- action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: full
+    platform:
+        support: full
+        platforms: debian
 notes:
     - This module requires the command line debconf tools.
-    - A number of questions have to be answered (depending on the package).
+    - Several questions have to be answered (depending on the package).
       Use 'debconf-show <package>' on any Debian or derivative with the package
       installed to see questions/settings available.
-    - Some distros will always record tasks involving the setting of passwords as changed. This is due to debconf-get-selections masking passwords.
-    - It is highly recommended to add I(no_log=True) to task while handling sensitive information using this module.
-    - Supports C(check_mode).
+    - Some distros will always record tasks involving the setting of passwords as changed. This is due to C(debconf-get-selections) masking passwords.
+    - It is highly recommended to add C(no_log=True) to the task while handling sensitive information using this module.
+    - The M(ansible.builtin.debconf) module does not reconfigure packages, it just updates the debconf database.
+      An additional step is needed (typically with C(notify) if debconf makes a change)
+      to reconfigure the package and apply the changes.
+      C(debconf) is extensively used for pre-seeding configuration prior to installation
+      rather than modifying configurations.
+      So, while C(dpkg-reconfigure) does use debconf data, it is not always authoritative
+      and you may need to check how your package is handled.
+    - Also note C(dpkg-reconfigure) is a 3-phase process. It invokes the
+      control scripts from the C(/var/lib/dpkg/info) directory with the
+      C(<package>.prerm  reconfigure <version>),
+      C(<package>.config reconfigure <version>) and C(<package>.postinst control <version>) arguments.
+    - The main issue is that the C(<package>.config reconfigure) step for many packages
+      will first reset the debconf database (overriding changes made by this module) by
+      checking the on-disk configuration. If this is the case for your package then
+      C(dpkg-reconfigure) will effectively ignore changes made by debconf.
+    - However as C(dpkg-reconfigure) only executes the C(<package>.config) step if the file
+      exists, it is possible to rename it to C(/var/lib/dpkg/info/<package>.config.ignore)
+      before executing C(dpkg-reconfigure -f noninteractive <package>) and then restore it.
+      This seems to be compliant with Debian policy for the .config file.
 requirements:
 - debconf
 - debconf-utils
@@ -42,18 +68,20 @@ options:
   vtype:
     description:
       - The type of the value supplied.
-      - It is highly recommended to add I(no_log=True) to task while specifying I(vtype=password).
-      - C(seen) was added in Ansible 2.2.
+      - It is highly recommended to add C(no_log=True) to task while specifying O(vtype=password).
+      - V(seen) was added in Ansible 2.2.
+      - After Ansible 2.17, user can specify C(value) as a list, if C(vtype) is set as V(multiselect).
     type: str
     choices: [ boolean, error, multiselect, note, password, seen, select, string, text, title ]
   value:
     description:
-      -  Value to set the configuration to.
-    type: str
+      - Value to set the configuration to.
+      - After Ansible 2.17, C(value) is of type C(raw).
+    type: raw
     aliases: [ answer ]
   unseen:
     description:
-      - Do not set 'seen' flag when pre-seeding.
+      - Do not set C(seen) flag when pre-seeding.
     type: bool
     default: false
 author:
@@ -97,8 +125,30 @@ EXAMPLES = r'''
 
 RETURN = r'''#'''
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
+
+
+def get_password_value(module, pkg, question, vtype):
+    getsel = module.get_bin_path('debconf-get-selections', True)
+    cmd = [getsel]
+    rc, out, err = module.run_command(cmd)
+    if rc != 0:
+        module.fail_json(msg="Failed to get the value '%s' from '%s'" % (question, pkg))
+
+    desired_line = None
+    for line in out.split("\n"):
+        if line.startswith(pkg):
+            desired_line = line
+            break
+
+    if not desired_line:
+        module.fail_json(msg="Failed to find the value '%s' from '%s'" % (question, pkg))
+
+    (dpkg, dquestion, dvtype, dvalue) = desired_line.split()
+    if dquestion == question and dvtype == vtype:
+        return dvalue
+    return ''
 
 
 def get_selections(module, pkg):
@@ -124,10 +174,7 @@ def set_selection(module, pkg, question, vtype, value, unseen):
         cmd.append('-u')
 
     if vtype == 'boolean':
-        if value == 'True':
-            value = 'true'
-        elif value == 'False':
-            value = 'false'
+        value = value.lower()
     data = ' '.join([pkg, question, vtype, value])
 
     return module.run_command(cmd, data=data)
@@ -139,7 +186,7 @@ def main():
             name=dict(type='str', required=True, aliases=['pkg']),
             question=dict(type='str', aliases=['selection', 'setting']),
             vtype=dict(type='str', choices=['boolean', 'error', 'multiselect', 'note', 'password', 'seen', 'select', 'string', 'text', 'title']),
-            value=dict(type='str', aliases=['answer']),
+            value=dict(type='raw', aliases=['answer']),
             unseen=dict(type='bool', default=False),
         ),
         required_together=(['question', 'vtype', 'value'],),
@@ -166,19 +213,31 @@ def main():
         if question not in prev:
             changed = True
         else:
-
             existing = prev[question]
 
             # ensure we compare booleans supplied to the way debconf sees them (true/false strings)
             if vtype == 'boolean':
                 value = to_text(value).lower()
                 existing = to_text(prev[question]).lower()
+            elif vtype == 'password':
+                existing = get_password_value(module, pkg, question, vtype)
+            elif vtype == 'multiselect' and isinstance(value, list):
+                try:
+                    value = sorted(value)
+                except TypeError as exc:
+                    module.fail_json(msg="Invalid value provided for 'multiselect': %s" % to_native(exc))
+                existing = sorted([i.strip() for i in existing.split(",")])
 
             if value != existing:
                 changed = True
 
     if changed:
         if not module.check_mode:
+            if vtype == 'multiselect' and isinstance(value, list):
+                try:
+                    value = ", ".join(value)
+                except TypeError as exc:
+                    module.fail_json(msg="Invalid value provided for 'multiselect': %s" % to_native(exc))
             rc, msg, e = set_selection(module, pkg, question, vtype, value, unseen)
             if rc:
                 module.fail_json(msg=e)
@@ -188,12 +247,12 @@ def main():
             prev = {question: prev[question]}
         else:
             prev[question] = ''
+
+        diff_dict = {}
         if module._diff:
             after = prev.copy()
             after.update(curr)
             diff_dict = {'before': prev, 'after': after}
-        else:
-            diff_dict = {}
 
         module.exit_json(changed=changed, msg=msg, current=curr, previous=prev, diff=diff_dict)
 

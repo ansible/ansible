@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Split out shell command implementation.

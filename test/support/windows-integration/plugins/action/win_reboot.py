@@ -1,13 +1,11 @@
 # Copyright: (c) 2018, Matt Davis <mdavis@ansible.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
-from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.action import ActionBase
 from ansible.plugins.action.reboot import ActionModule as RebootActionModule
 from ansible.utils.display import Display
@@ -65,7 +63,7 @@ class ActionModule(RebootActionModule, ActionBase):
 
         result = {}
         reboot_result = self._low_level_execute_command(reboot_command, sudoable=self.DEFAULT_SUDOABLE)
-        result['start'] = datetime.utcnow()
+        result['start'] = datetime.now(timezone.utc)
 
         # Test for "A system shutdown has already been scheduled. (1190)" and handle it gracefully
         stdout = reboot_result['stdout']

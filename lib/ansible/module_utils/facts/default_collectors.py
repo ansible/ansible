@@ -25,9 +25,11 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+import ansible.module_utils.compat.typing as t
+
+from ansible.module_utils.facts.collector import BaseFactCollector
 
 from ansible.module_utils.facts.other.facter import FacterFactCollector
 from ansible.module_utils.facts.other.ohai import OhaiFactCollector
@@ -41,6 +43,7 @@ from ansible.module_utils.facts.system.date_time import DateTimeFactCollector
 from ansible.module_utils.facts.system.env import EnvFactCollector
 from ansible.module_utils.facts.system.dns import DnsFactCollector
 from ansible.module_utils.facts.system.fips import FipsFactCollector
+from ansible.module_utils.facts.system.loadavg import LoadAvgFactCollector
 from ansible.module_utils.facts.system.local import LocalFactCollector
 from ansible.module_utils.facts.system.lsb import LSBFactCollector
 from ansible.module_utils.facts.system.pkg_mgr import PkgMgrFactCollector
@@ -50,6 +53,7 @@ from ansible.module_utils.facts.system.python import PythonFactCollector
 from ansible.module_utils.facts.system.selinux import SelinuxFactCollector
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
 from ansible.module_utils.facts.system.ssh_pub_keys import SshPubKeyFactCollector
+from ansible.module_utils.facts.system.systemd import SystemdFactCollector
 from ansible.module_utils.facts.system.user import UserFactCollector
 
 from ansible.module_utils.facts.hardware.base import HardwareCollector
@@ -93,7 +97,7 @@ _base = [
     PlatformFactCollector,
     DistributionFactCollector,
     LSBFactCollector
-]
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 # These restrict what is possible in others
 _restrictive = [
@@ -101,7 +105,7 @@ _restrictive = [
     ApparmorFactCollector,
     ChrootFactCollector,
     FipsFactCollector
-]
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 # general info, not required but probably useful for other facts
 _general = [
@@ -113,9 +117,11 @@ _general = [
     CmdLineFactCollector,
     DateTimeFactCollector,
     EnvFactCollector,
+    LoadAvgFactCollector,
     SshPubKeyFactCollector,
-    UserFactCollector
-]
+    UserFactCollector,
+    SystemdFactCollector
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 # virtual, this might also limit hardware/networking
 _virtual = [
@@ -127,7 +133,7 @@ _virtual = [
     NetBSDVirtualCollector,
     SunOSVirtualCollector,
     HPUXVirtualCollector
-]
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 _hardware = [
     HardwareCollector,
@@ -141,7 +147,7 @@ _hardware = [
     NetBSDHardwareCollector,
     OpenBSDHardwareCollector,
     SunOSHardwareCollector
-]
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 _network = [
     DnsFactCollector,
@@ -159,14 +165,14 @@ _network = [
     NetBSDNetworkCollector,
     OpenBSDNetworkCollector,
     SunOSNetworkCollector
-]
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 # other fact sources
 _extra_facts = [
     LocalFactCollector,
     FacterFactCollector,
     OhaiFactCollector
-]
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 # TODO: make config driven
 collectors = _base + _restrictive + _general + _virtual + _hardware + _network + _extra_facts

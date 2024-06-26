@@ -1,0 +1,16 @@
+- name: This worked unintentionally, make sure it does not anymore
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - command: echo
+      notify:
+        - include_handler
+
+    - meta: flush_handlers
+
+    - command: echo
+      notify:
+        - handler_from_include
+  handlers:
+    - name: include_handler
+      include_tasks: test_notify_included-handlers.yml

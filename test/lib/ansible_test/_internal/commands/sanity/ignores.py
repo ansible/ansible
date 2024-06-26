@@ -1,6 +1,5 @@
 """Sanity test for the sanity ignore file."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -10,11 +9,13 @@ from . import (
     SanityVersionNeutral,
     SanitySuccess,
     SanityMessage,
+    SanityTargets,
 )
 
 from ...test import (
     calculate_confidence,
     calculate_best_confidence,
+    TestResult,
 )
 
 from ...config import (
@@ -24,26 +25,21 @@ from ...config import (
 
 class IgnoresTest(SanityVersionNeutral):
     """Sanity test for sanity test ignore entries."""
+
     @property
-    def can_ignore(self):  # type: () -> bool
+    def can_ignore(self) -> bool:
         """True if the test supports ignore entries."""
         return False
 
     @property
-    def no_targets(self):  # type: () -> bool
+    def no_targets(self) -> bool:
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return True
 
-    # noinspection PyUnusedLocal
-    def test(self, args, targets):  # pylint: disable=locally-disabled, unused-argument
-        """
-        :type args: SanityConfig
-        :type targets: SanityTargets
-        :rtype: TestResult
-        """
+    def test(self, args: SanityConfig, targets: SanityTargets) -> TestResult:
         sanity_ignore = SanityIgnoreParser.load(args)
 
-        messages = []
+        messages: list[SanityMessage] = []
 
         # parse errors
 

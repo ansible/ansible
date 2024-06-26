@@ -1,0 +1,11 @@
+- name: test include_role and import_role cannot be used as handlers
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - command: "echo"
+      notify:
+        - role_handler
+  handlers:
+    - name: role_handler
+      include_role:
+        name: doesnotmatter_fails_at_parse_time

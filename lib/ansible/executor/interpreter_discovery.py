@@ -1,8 +1,7 @@
 # Copyright: (c) 2018 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import bisect
 import json
@@ -10,12 +9,16 @@ import pkgutil
 import re
 
 from ansible import constants as C
-from ansible.module_utils._text import to_native, to_text
+from ansible.errors import AnsibleError
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.distro import LinuxDistribution
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_versioned_doclink
 from ansible.module_utils.compat.version import LooseVersion
+from ansible.module_utils.facts.system.distribution import Distribution
 from traceback import format_exc
+
+OS_FAMILY_LOWER = {k.lower(): v.lower() for k, v in Distribution.OS_FAMILY.items()}
 
 display = Display()
 foundre = re.compile(r'(?s)PLATFORM[\r\n]+(.*)FOUND(.*)ENDFOUND')
@@ -50,12 +53,12 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
     host = task_vars.get('inventory_hostname', 'unknown')
     res = None
     platform_type = 'unknown'
-    found_interpreters = [u'/usr/bin/python']  # fallback value
+    found_interpreters = [u'/usr/bin/python3']  # fallback value
     is_auto_legacy = discovery_mode.startswith('auto_legacy')
     is_silent = discovery_mode.endswith('_silent')
 
     try:
-        platform_python_map = C.config.get_config_value('INTERPRETER_PYTHON_DISTRO_MAP', variables=task_vars)
+        platform_python_map = C.config.get_config_value('_INTERPRETER_PYTHON_DISTRO_MAP', variables=task_vars)
         bootstrap_python_list = C.config.get_config_value('INTERPRETER_PYTHON_FALLBACK', variables=task_vars)
 
         display.vvv(msg=u"Attempting {0} interpreter discovery".format(interpreter_name), host=host)
@@ -86,7 +89,7 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
                 action._discovery_warnings.append(u'No python interpreters found for '
                                                   u'host {0} (tried {1})'.format(host, bootstrap_python_list))
             # this is lame, but returning None or throwing an exception is uglier
-            return u'/usr/bin/python'
+            return u'/usr/bin/python3'
 
         if platform_type != 'linux':
             raise NotImplementedError('unsupported platform for extended discovery: {0}'.format(to_native(platform_type)))
@@ -103,11 +106,12 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
         platform_info = json.loads(res.get('stdout'))
 
         distro, version = _get_linux_distro(platform_info)
-
         if not distro or not version:
             raise NotImplementedError('unable to get Linux distribution/version info')
 
-        version_map = platform_python_map.get(distro.lower().strip())
+        family = OS_FAMILY_LOWER.get(distro.lower().strip())
+
+        version_map = platform_python_map.get(distro.lower().strip()) or platform_python_map.get(family)
         if not version_map:
             raise NotImplementedError('unsupported Linux distribution: {0}'.format(distro))
 
@@ -115,18 +119,15 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
 
         # provide a transition period for hosts that were using /usr/bin/python previously (but shouldn't have been)
         if is_auto_legacy:
-            if platform_interpreter != u'/usr/bin/python' and u'/usr/bin/python' in found_interpreters:
-                # FIXME: support comments in sivel's deprecation scanner so we can get reminded on this
+            if platform_interpreter != u'/usr/bin/python3' and u'/usr/bin/python3' in found_interpreters:
                 if not is_silent:
-                    action._discovery_deprecation_warnings.append(dict(
-                        msg=u"Distribution {0} {1} on host {2} should use {3}, but is using "
-                            u"/usr/bin/python for backward compatibility with prior Ansible releases. "
-                            u"A future Ansible release will default to using the discovered platform "
-                            u"python for this host. See {4} for more information"
-                            .format(distro, version, host, platform_interpreter,
-                                    get_versioned_doclink('reference_appendices/interpreter_discovery.html')),
-                        version='2.12'))
-                return u'/usr/bin/python'
+                    action._discovery_warnings.append(
+                        u"Distribution {0} {1} on host {2} should use {3}, but is using "
+                        u"/usr/bin/python3 for backward compatibility with prior Ansible releases. "
+                        u"See {4} for more information"
+                        .format(distro, version, host, platform_interpreter,
+                                get_versioned_doclink('reference_appendices/interpreter_discovery.html')))
+                return u'/usr/bin/python3'
 
         if platform_interpreter not in found_interpreters:
             if platform_interpreter not in bootstrap_python_list:
@@ -148,6 +149,8 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
         return platform_interpreter
     except NotImplementedError as ex:
         display.vvv(msg=u'Python interpreter discovery fallback ({0})'.format(to_text(ex)), host=host)
+    except AnsibleError:
+        raise
     except Exception as ex:
         if not is_silent:
             display.warning(msg=u'Unhandled error in Python interpreter discovery for host {0}: {1}'.format(host, to_text(ex)))

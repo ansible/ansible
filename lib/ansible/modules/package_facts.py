@@ -1,11 +1,9 @@
-#!/usr/bin/python
 # (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # most of it copied from AWX's scan_packages module
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -16,33 +14,59 @@ description:
 options:
   manager:
     description:
-      - The package manager used by the system so we can query the package information.
-      - Since 2.8 this is a list and can support multiple package managers per system.
-      - The 'portage' and 'pkg' options were added in version 2.8.
-      - The 'apk' option was added in version 2.11.
+      - The package manager(s) used by the system so we can query the package information.
+        This is a list and can support multiple package managers per system, since version 2.8.
+      - The V(portage) and V(pkg) options were added in version 2.8.
+      - The V(apk) option was added in version 2.11.
+      - The V(pkg_info)' option was added in version 2.13.
+      - Aliases were added in 2.18, to support using C(auto={{ansible_facts['pkg_mgr']}})
     default: ['auto']
-    choices: ['auto', 'rpm', 'apt', 'portage', 'pkg', 'pacman', 'apk']
+    choices:
+        auto: Depending on O(strategy), will match the first or all package managers provided, in order
+        rpm: For RPM based distros, requires RPM Python bindings, not installed by default on Suse (python3-rpm)
+        yum: Alias to rpm
+        dnf: Alias to rpm
+        dnf5: Alias to rpm
+        zypper: Alias to rpm
+        apt: For DEB based distros, C(python-apt) package must be installed on targeted hosts
+        portage: Handles ebuild packages, it requires the C(qlist) utility, which is part of 'app-portage/portage-utils'
+        pkg: libpkg front end (FreeBSD)
+        pkg5: Alias to pkg
+        pkgng: Alias to pkg
+        pacman: Archlinux package manager/builder
+        apk: Alpine Linux package manager
+        pkg_info: OpenBSD package manager
+        openbsd_pkg: Alias to pkg_info
     type: list
     elements: str
   strategy:
     description:
       - This option controls how the module queries the package managers on the system.
-        C(first) means it will return only information for the first supported package manager available.
-        C(all) will return information for all supported and available package managers on the system.
-    choices: ['first', 'all']
+    choices:
+        first: returns only information for the first supported package manager available.
+        all: returns information for all supported and available package managers on the system.
     default: 'first'
     type: str
     version_added: "2.8"
 version_added: "2.5"
 requirements:
-    - For 'portage' support it requires the C(qlist) utility, which is part of 'app-portage/portage-utils'.
-    - For Debian-based systems C(python-apt) package must be installed on targeted hosts.
+    - See details per package manager in the O(manager) option.
 author:
   - Matthew Jones (@matburt)
   - Brian Coca (@bcoca)
   - Adam Miller (@maxamillion)
-notes:
-  - Supports C(check_mode).
+extends_documentation_fragment:
+  -  action_common_attributes
+  -  action_common_attributes.facts
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    facts:
+        support: full
+    platform:
+        platforms: posix
 '''
 
 EXAMPLES = '''
@@ -205,15 +229,42 @@ ansible_facts:
             ],
           }
         }
+        # Sample pkg_info
+        {
+          "packages": {
+            "curl": [
+              {
+                  "name": "curl",
+                  "source": "pkg_info",
+                  "version": "7.79.0"
+              }
+            ],
+            "intel-firmware": [
+              {
+                  "name": "intel-firmware",
+                  "source": "pkg_info",
+                  "version": "20210608v0"
+              }
+            ],
+          }
+        }
 '''
 
 import re
 
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 from ansible.module_utils.facts.packages import LibMgr, CLIMgr, get_all_pkg_managers
+
+
+ALIASES = {
+    'rpm': ['dnf', 'dnf5', 'yum' , 'zypper'],
+    'pkg': ['pkg5', 'pkgng'],
+    'pkg_info': ['openbsd_pkg'],
+}
 
 
 class RPM(LibMgr):
@@ -310,7 +361,8 @@ class PACMAN(CLIMgr):
     CLI = 'pacman'
 
     def list_installed(self):
-        rc, out, err = module.run_command([self._cli, '-Qi'], environ_update=dict(LC_ALL='C'))
+        locale = get_best_parsable_locale(module)
+        rc, out, err = module.run_command([self._cli, '-Qi'], environ_update=dict(LC_ALL=locale))
         if rc != 0 or err:
             raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
         return out.split("\n\n")[:-1]
@@ -408,7 +460,7 @@ class APK(CLIMgr):
 
     def list_installed(self):
         rc, out, err = module.run_command([self._cli, 'info', '-v'])
-        if rc != 0 or err:
+        if rc != 0:
             raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
         return out.splitlines()
 
@@ -425,14 +477,41 @@ class APK(CLIMgr):
             return raw_pkg_details
 
 
+class PKG_INFO(CLIMgr):
+
+    CLI = 'pkg_info'
+
+    def list_installed(self):
+        rc, out, err = module.run_command([self._cli, '-a'])
+        if rc != 0 or err:
+            raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
+        return out.splitlines()
+
+    def get_package_details(self, package):
+        raw_pkg_details = {'name': package, 'version': ''}
+        details = package.split(maxsplit=1)[0].rsplit('-', maxsplit=1)
+
+        try:
+            return {
+                'name': details[0],
+                'version': details[1],
+            }
+        except IndexError:
+            return raw_pkg_details
+
+
 def main():
 
     # get supported pkg managers
     PKG_MANAGERS = get_all_pkg_managers()
     PKG_MANAGER_NAMES = [x.lower() for x in PKG_MANAGERS.keys()]
+    # add aliases
+    PKG_MANAGER_NAMES.extend([alias for alist in ALIASES.values() for alias in alist])
 
     # start work
     global module
+
+    # choices are not set for 'manager' as they are computed dynamically and validated below instead of in argspec
     module = AnsibleModule(argument_spec=dict(manager={'type': 'list', 'elements': 'str', 'default': ['auto']},
                                               strategy={'choices': ['first', 'all'], 'default': 'first'}),
                            supports_check_mode=True)
@@ -458,12 +537,19 @@ def main():
     seen = set()
     for pkgmgr in managers:
 
-        if found and strategy == 'first':
+        if strategy == 'first' and found:
             break
+
+        # substitute aliases for aliased
+        for aliased in ALIASES.keys():
+            if pkgmgr in ALIASES[aliased]:
+                pkgmgr = aliased
+                break
 
         # dedupe as per above
         if pkgmgr in seen:
             continue
+
         seen.add(pkgmgr)
         try:
             try:

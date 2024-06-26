@@ -27,9 +27,9 @@ git_list_commands:
   tgz: tar -tf
   zip: unzip -Z1
 
-checkout_dir: '{{ output_dir }}/git'
-repo_dir: '{{ output_dir }}/local_repos'
-separate_git_dir: '{{ output_dir }}/sep_git_dir'
+checkout_dir: '{{ remote_tmp_dir }}/git'
+repo_dir: '{{ remote_tmp_dir }}/local_repos'
+separate_git_dir: '{{ remote_tmp_dir }}/sep_git_dir'
 repo_format1: 'https://github.com/jimi-c/test_role'
 repo_format2: 'git@github.com:jimi-c/test_role.git'
 repo_format3: 'ssh://git@github.com/jimi-c/test_role.git'
@@ -41,6 +41,7 @@ repo_update_url_2: 'https://github.com/ansible-test-robinro/git-test-new'
 known_host_files:
   - "{{ lookup('env','HOME') }}/.ssh/known_hosts"
   - '/etc/ssh/ssh_known_hosts'
+git_default_branch: main
 git_version_supporting_depth: 1.9.1
 git_version_supporting_ls_remote: 1.7.5
 git_version_supporting_single_branch: 1.7.10

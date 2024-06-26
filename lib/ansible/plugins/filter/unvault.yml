@@ -1,0 +1,36 @@
+DOCUMENTATION:
+  name: unvault
+  author: Brian Coca (@bcoca)
+  version_added: "2.12"
+  short_description: Open an Ansible Vault
+  description:
+    - Retrieve your information from an encrypted Ansible Vault.
+  positional: secret
+  options:
+    _input:
+      description: Vault string, or an C(AnsibleVaultEncryptedUnicode) string object.
+      type: string
+      required: true
+    secret:
+      description: Vault secret, the key that lets you open the vault.
+      type: string
+      required: true
+    vault_id:
+      description: Secret identifier, used internally to try to best match a secret when multiple are provided.
+      type: string
+      default: 'filter_default'
+
+EXAMPLES: |
+  # simply decrypt my key from a vault
+  vars:
+    mykey: "{{ myvaultedkey | unvault(passphrase) }} "
+
+  - name: save templated unvaulted data
+    template: src=dump_template_data.j2 dest=/some/key/clear.txt
+    vars:
+      template_data: '{{ secretdata | unvault(vaultsecret) }}'
+
+RETURN:
+  _value:
+    description: The string that was contained in the vault.
+    type: string

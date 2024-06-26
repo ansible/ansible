@@ -4,7 +4,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
@@ -80,7 +79,7 @@ namespace Ansible.Become
 
         public enum SECURITY_LOGON_TYPE
         {
-            System = 0, // Used only by the Sytem account
+            System = 0, // Used only by the System account
             Interactive = 2,
             Network,
             Batch,
@@ -175,7 +174,6 @@ namespace Ansible.Become
     {
         public SafeLsaHandle() : base(true) { }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         protected override bool ReleaseHandle()
         {
             UInt32 res = NativeMethods.LsaDeregisterLogonProcess(handle);
@@ -187,7 +185,6 @@ namespace Ansible.Become
     {
         public SafeLsaMemoryBuffer() : base(true) { }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         protected override bool ReleaseHandle()
         {
             UInt32 res = NativeMethods.LsaFreeReturnBuffer(handle);
@@ -200,7 +197,6 @@ namespace Ansible.Become
         public NoopSafeHandle() : base(IntPtr.Zero, false) { }
         public override bool IsInvalid { get { return false; } }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         protected override bool ReleaseHandle() { return true; }
     }
 

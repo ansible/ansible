@@ -1,4 +1,4 @@
-- name: remove git fromn FreeBSD
+- name: remove git from FreeBSD
   pkgng:
     name: git
     state: absent

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # (c) 2018, Matt Martz <matt@sivel.net>
 #
@@ -17,8 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import mmap
 import os
@@ -57,8 +55,7 @@ def find_deprecations(obj, path=None):
         this_path.append(key)
 
         if key != 'deprecated':
-            for result in find_deprecations(value, path=this_path):
-                yield result
+            yield from find_deprecations(value, path=this_path)
         else:
             try:
                 version = value['version']
@@ -91,11 +88,14 @@ def main():
             )
 
     base = os.path.join(os.path.dirname(ansible.config.__file__), 'base.yml')
+    root_path = os.path.dirname(os.path.dirname(os.path.dirname(ansible.__file__)))
+    relative_base = os.path.relpath(base, root_path)
+
     with open(base) as f:
         data = yaml.safe_load(f)
 
     for result in find_deprecations(data):
-        print('%s: %s is scheduled for removal in %s' % (base, '.'.join(str(i) for i in result[0][:-2]), result[1]))
+        print('%s: %s is scheduled for removal in %s' % (relative_base, '.'.join(str(i) for i in result[0][:-2]), result[1]))
 
 
 if __name__ == '__main__':

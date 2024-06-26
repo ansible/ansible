@@ -33,4 +33,124 @@
               - 'debconf_test0.current is defined'
               - '"tzdata/Zones/Etc" in debconf_test0.current'
               - 'debconf_test0.current["tzdata/Zones/Etc"] == "UTC"'
+
+    - name: install debconf-utils
+      apt:
+        name: debconf-utils
+        state: present
+      register: debconf_utils_deb_install
+
+    - name: Check if password is set
+      debconf:
+        name: ddclient
+        question: ddclient/password
+        value: "MySecretValue"
+        vtype: password
+      register: debconf_test1
+
+    - name: validate results for test 1
+      assert:
+          that:
+              - debconf_test1.changed
+
+    - name: Change password again
+      debconf:
+        name: ddclient
+        question: ddclient/password
+        value: "MySecretValue"
+        vtype: password
+      no_log: yes
+      register: debconf_test2
+
+    - name: validate results for test 1
+      assert:
+          that:
+              - not debconf_test2.changed
+
+    - name: Multiselect value
+      debconf:
+        name: libnss-ldapd
+        question: libnss-ldapd/nsswitch
+        vtype: multiselect
+        value:
+          - passwd
+          - group
+          - shadow
+      register: debconf_multiselect_test
+
+    - name: validate results for multiselect test
+      assert:
+        that:
+          - debconf_multiselect_test.changed
+
+    - name: Multiselect value again (idempotency)
+      debconf:
+        name: libnss-ldapd
+        question: libnss-ldapd/nsswitch
+        vtype: multiselect
+        value:
+          - passwd
+          - group
+          - shadow
+      register: debconf_multiselect_test_idem
+
+    - name: validate results for multiselect test (idempotency)
+      assert:
+        that:
+          - not debconf_multiselect_test_idem.changed
+
+    - name: Multiselect value to check if ordered value
+      debconf:
+        name: libnss-ldapd
+        question: libnss-ldapd/nsswitch
+        vtype: multiselect
+        value:
+          - group
+          - shadow
+          - passwd
+      register: debconf_multiselect_test_idem_2
+
+    - name: validate results for multiselect test for ordered value
+      assert:
+        that:
+          - not debconf_multiselect_test_idem_2.changed
+
+    - name: Multiselect value to check backward compatibility
+      debconf:
+        name: libnss-ldapd
+        question: libnss-ldapd/nsswitch
+        vtype: multiselect
+        value: group, shadow, passwd
+      register: debconf_multiselect_test_idem_3
+
+    - name: validate results for multiselect test for backward compatibility
+      assert:
+        that:
+          - debconf_multiselect_test_idem_3.changed
+
+    - name: Multiselect value to check if value contains invalid user input
+      debconf:
+        name: libnss-ldapd
+        question: libnss-ldapd/nsswitch
+        vtype: multiselect
+        value:
+          - group
+          - 1
+          - passwd
+      register: debconf_multiselect_test_idem_4
+      ignore_errors: yes
+
+    - name: validate results for multiselect test for invalid value
+      assert:
+        that:
+          - not debconf_multiselect_test_idem_4.changed
+          - '"Invalid value provided" in debconf_multiselect_test_idem_4.msg'
+
+  always:
+    - name: uninstall debconf-utils
+      apt:
+        name: debconf-utils
+        state: absent
+      when: debconf_utils_deb_install is changed
+
   when: ansible_distribution in ('Ubuntu', 'Debian')

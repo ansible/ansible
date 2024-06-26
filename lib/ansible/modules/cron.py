@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Dane Summers <dsummers@pinedesk.biz>
@@ -8,8 +7,7 @@
 # Copyright: (c) 2015, Luca Berruti <nadirio@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -20,19 +18,19 @@ description:
   - Use this module to manage crontab and environment variables entries. This module allows
     you to create environment variables and named crontab entries, update, or delete them.
   - 'When crontab jobs are managed: the module includes one line with the description of the
-    crontab entry C("#Ansible: <name>") corresponding to the "name" passed to the module,
-    which is used by future ansible/module calls to find/check the state. The "name"
-    parameter should be unique, and changing the "name" value will result in a new cron
+    crontab entry C("#Ansible: <name>") corresponding to the O(name) passed to the module,
+    which is used by future ansible/module calls to find/check the state. The O(name)
+    parameter should be unique, and changing the O(name) value will result in a new cron
     task being created (or a different one being removed).'
   - When environment variables are managed, no comment line is added, but, when the module
-    needs to find/check the state, it uses the "name" parameter to find the environment
+    needs to find/check the state, it uses the O(name) parameter to find the environment
     variable definition line.
-  - When using symbols such as %, they must be properly escaped.
+  - When using symbols such as C(%), they must be properly escaped.
 version_added: "0.9"
 options:
   name:
     description:
-      - Description of a crontab entry or, if env is set, the name of environment variable.
+      - Description of a crontab entry or, if O(env) is set, the name of environment variable.
       - This parameter is always required as of ansible-core 2.12.
     type: str
     required: yes
@@ -43,9 +41,9 @@ options:
     type: str
   job:
     description:
-      - The command to execute or, if env is set, the value of environment variable.
+      - The command to execute or, if O(env) is set, the value of environment variable.
       - The command should not contain line breaks.
-      - Required if I(state=present).
+      - Required if O(state=present).
     type: str
     aliases: [ value ]
   state:
@@ -59,42 +57,42 @@ options:
       - If specified, uses this file instead of an individual user's crontab.
         The assumption is that this file is exclusively managed by the module,
         do not use if the file contains multiple entries, NEVER use for /etc/crontab.
-      - If this is a relative path, it is interpreted with respect to I(/etc/cron.d).
-      - Many linux distros expect (and some require) the filename portion to consist solely
+      - If this is a relative path, it is interpreted with respect to C(/etc/cron.d).
+      - Many Linux distros expect (and some require) the filename portion to consist solely
         of upper- and lower-case letters, digits, underscores, and hyphens.
-      - Using this parameter requires you to specify the I(user) as well, unless I(state) is not I(present).
-      - Either this parameter or I(name) is required
+      - Using this parameter requires you to specify the O(user) as well, unless O(state=absent).
+      - Either this parameter or O(name) is required.
     type: path
   backup:
     description:
       - If set, create a backup of the crontab before it is modified.
-        The location of the backup is returned in the C(backup_file) variable by this module.
+        The location of the backup is returned in the RV(ignore:backup_file) variable by this module.
     type: bool
     default: no
   minute:
     description:
-      - Minute when the job should run (C(0-59), C(*), C(*/2), and so on).
+      - Minute when the job should run (V(0-59), V(*), V(*/2), and so on).
     type: str
     default: "*"
   hour:
     description:
-      - Hour when the job should run (C(0-23), C(*), C(*/2), and so on).
+      - Hour when the job should run (V(0-23), V(*), V(*/2), and so on).
     type: str
     default: "*"
   day:
     description:
-      - Day of the month the job should run (C(1-31), C(*), C(*/2), and so on).
+      - Day of the month the job should run (V(1-31), V(*), V(*/2), and so on).
     type: str
     default: "*"
     aliases: [ dom ]
   month:
     description:
-      - Month of the year the job should run (C(1-12), C(*), C(*/2), and so on).
+      - Month of the year the job should run (V(1-12), V(*), V(*/2), and so on).
     type: str
     default: "*"
   weekday:
     description:
-      - Day of the week that the job should run (C(0-6) for Sunday-Saturday, C(*), and so on).
+      - Day of the week that the job should run (V(0-6) for Sunday-Saturday, V(*), and so on).
     type: str
     default: "*"
     aliases: [ dow ]
@@ -107,7 +105,7 @@ options:
   disabled:
     description:
       - If the job should be disabled (commented out) in the crontab.
-      - Only has effect if I(state=present).
+      - Only has effect if O(state=present).
     type: bool
     default: no
     version_added: "2.0"
@@ -115,32 +113,40 @@ options:
     description:
       - If set, manages a crontab's environment variable.
       - New variables are added on top of crontab.
-      - I(name) and I(value) parameters are the name and the value of environment variable.
+      - O(name) and O(value) parameters are the name and the value of environment variable.
     type: bool
     default: false
     version_added: "2.1"
   insertafter:
     description:
-      - Used with I(state=present) and I(env).
+      - Used with O(state=present) and O(env).
       - If specified, the environment variable will be inserted after the declaration of specified environment variable.
     type: str
     version_added: "2.1"
   insertbefore:
     description:
-      - Used with I(state=present) and I(env).
+      - Used with O(state=present) and O(env).
       - If specified, the environment variable will be inserted before the declaration of specified environment variable.
     type: str
     version_added: "2.1"
 requirements:
-  - cron (or cronie on CentOS)
+  - cron (any 'vixie cron' conformant variant, like cronie)
 author:
   - Dane Summers (@dsummersl)
   - Mike Grozak (@rhaido)
   - Patrick Callahan (@dirtyharrycallahan)
   - Evan Kaufman (@EvanK)
   - Luca Berruti (@lberruti)
-notes:
-  - Supports C(check_mode).
+extends_documentation_fragment:
+    - action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: full
+    platform:
+        support: full
+        platforms: posix
 '''
 
 EXAMPLES = r'''
@@ -208,6 +214,7 @@ import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.file import S_IRWU_RWG_RWO
 from ansible.module_utils.common.text.converters import to_bytes, to_native
 from ansible.module_utils.six.moves import shlex_quote
 
@@ -301,7 +308,7 @@ class CronTab(object):
             fileh = open(self.b_cron_file, 'wb')
         else:
             filed, path = tempfile.mkstemp(prefix='crontab')
-            os.chmod(path, int('0644', 8))
+            os.chmod(path, S_IRWU_RWG_RWO)
             fileh = os.fdopen(filed, 'wb')
 
         fileh.write(to_bytes(self.render()))

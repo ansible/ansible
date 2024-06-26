@@ -1,12 +1,10 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2014, 2015 YAEGASHI Takeshi <yaegashi@debian.org>
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -22,7 +20,7 @@ options:
   path:
     description:
     - The file to modify.
-    - Before Ansible 2.3 this option was only usable as I(dest), I(destfile) and I(name).
+    - Before Ansible 2.3 this option was only usable as O(dest), O(destfile) and O(name).
     type: path
     required: yes
     aliases: [ dest, destfile, name ]
@@ -35,30 +33,36 @@ options:
   marker:
     description:
     - The marker line template.
-    - C({mark}) will be replaced with the values in C(marker_begin) (default="BEGIN") and C(marker_end) (default="END").
+    - C({mark}) will be replaced with the values in O(marker_begin) (default=C(BEGIN)) and O(marker_end) (default=C(END)).
     - Using a custom marker without the C({mark}) variable may result in the block being repeatedly inserted on subsequent playbook runs.
+    - Multi-line markers are not supported and will result in the block being repeatedly inserted on subsequent playbook runs.
+    - A newline is automatically appended by the module to O(marker_begin) and O(marker_end).
     type: str
     default: '# {mark} ANSIBLE MANAGED BLOCK'
   block:
     description:
     - The text to insert inside the marker lines.
-    - If it is missing or an empty string, the block will be removed as if C(state) were specified to C(absent).
+    - If it is missing or an empty string, the block will be removed as if O(state) were specified to V(absent).
     type: str
     default: ''
     aliases: [ content ]
   insertafter:
     description:
-    - If specified and no begin/ending C(marker) lines are found, the block will be inserted after the last match of specified regular expression.
-    - A special value is available; C(EOF) for inserting the block at the end of the file.
-    - If specified regular expression has no matches, C(EOF) will be used instead.
+    - If specified and no begin/ending O(marker) lines are found, the block will be inserted after the last match of specified regular expression.
+    - A special value is available; V(EOF) for inserting the block at the end of the file.
+    - If specified regular expression has no matches, V(EOF) will be used instead.
+    - The presence of the multiline flag (?m) in the regular expression controls whether the match is done line by line or with multiple lines.
+      This behaviour was added in ansible-core 2.14.
     type: str
     choices: [ EOF, '*regex*' ]
     default: EOF
   insertbefore:
     description:
-    - If specified and no begin/ending C(marker) lines are found, the block will be inserted before the last match of specified regular expression.
-    - A special value is available; C(BOF) for inserting the block at the beginning of the file.
+    - If specified and no begin/ending O(marker) lines are found, the block will be inserted before the last match of specified regular expression.
+    - A special value is available; V(BOF) for inserting the block at the beginning of the file.
     - If specified regular expression has no matches, the block will be inserted at the end of the file.
+    - The presence of the multiline flag (?m) in the regular expression controls whether the match is done line by line or with multiple lines.
+      This behaviour was added in ansible-core 2.14.
     type: str
     choices: [ BOF, '*regex*' ]
   create:
@@ -74,40 +78,72 @@ options:
     default: no
   marker_begin:
     description:
-    - This will be inserted at C({mark}) in the opening ansible block marker.
+    - This will be inserted at C({mark}) in the opening ansible block O(marker).
     type: str
     default: BEGIN
     version_added: '2.5'
   marker_end:
     required: false
     description:
-    - This will be inserted at C({mark}) in the closing ansible block marker.
+    - This will be inserted at C({mark}) in the closing ansible block O(marker).
     type: str
     default: END
     version_added: '2.5'
+  append_newline:
+    required: false
+    description:
+    - Append a blank line to the inserted block, if this does not appear at the end of the file.
+    - Note that this attribute is not considered when C(state) is set to C(absent)
+    type: bool
+    default: no
+    version_added: '2.16'
+  prepend_newline:
+    required: false
+    description:
+    - Prepend a blank line to the inserted block, if this does not appear at the beginning of the file.
+    - Note that this attribute is not considered when C(state) is set to C(absent)
+    type: bool
+    default: no
+    version_added: '2.16'
 notes:
-  - This module supports check mode.
-  - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
-  - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
-  - Option I(follow) has been removed in Ansible 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
-  - When more then one block should be handled in one file you must change the I(marker) per task.
+  - When using C(with_*) loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
+  - As of Ansible 2.3, the O(dest) option has been changed to O(path) as default, but O(dest) still works as well.
+  - Option O(ignore:follow) has been removed in Ansible 2.5, because this module modifies the contents of the file
+    so O(ignore:follow=no) does not make sense.
+  - When more than one block should be handled in one file you must change the O(marker) per task.
 extends_documentation_fragment:
-- files
-- validate
+    - action_common_attributes
+    - action_common_attributes.files
+    - files
+    - validate
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: full
+    safe_file_operations:
+      support: full
+    platform:
+      support: full
+      platforms: posix
+    vault:
+      support: none
 '''
 
 EXAMPLES = r'''
 # Before Ansible 2.3, option 'dest' or 'name' was used instead of 'path'
-- name: Insert/Update "Match User" configuration block in /etc/ssh/sshd_config
-  blockinfile:
+- name: Insert/Update "Match User" configuration block in /etc/ssh/sshd_config prepending and appending a new line
+  ansible.builtin.blockinfile:
     path: /etc/ssh/sshd_config
+    append_newline: true
+    prepend_newline: true
     block: |
       Match User ansible-agent
       PasswordAuthentication no
 
 - name: Insert/Update eth0 configuration stanza in /etc/network/interfaces
         (it might be better to copy files into /etc/network/interfaces.d/)
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: /etc/network/interfaces
     block: |
       iface eth0 inet static
@@ -115,14 +151,14 @@ EXAMPLES = r'''
           netmask 255.255.255.0
 
 - name: Insert/Update configuration using a local file and validate it
-  blockinfile:
-    block: "{{ lookup('file', './local/sshd_config') }}"
+  ansible.builtin.blockinfile:
+    block: "{{ lookup('ansible.builtin.file', './local/sshd_config') }}"
     path: /etc/ssh/sshd_config
     backup: yes
     validate: /usr/sbin/sshd -T -f %s
 
 - name: Insert/Update HTML surrounded by custom markers after <body> line
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: /var/www/html/index.html
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
     insertafter: "<body>"
@@ -131,13 +167,13 @@ EXAMPLES = r'''
       <p>Last updated on {{ ansible_date_time.iso8601 }}</p>
 
 - name: Remove HTML as well as surrounding markers
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: /var/www/html/index.html
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
     block: ""
 
 - name: Add mappings to /etc/hosts
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: /etc/hosts
     block: |
       {{ item.ip }} {{ item.name }}
@@ -146,6 +182,14 @@ EXAMPLES = r'''
     - { name: host1, ip: 10.10.1.10 }
     - { name: host2, ip: 10.10.1.11 }
     - { name: host3, ip: 10.10.1.12 }
+
+- name: Search with a multiline search flags regex and if found insert after
+  blockinfile:
+    path: listener.ora
+    block: "{{ listener_line | indent(width=8, first=True) }}"
+    insertafter: '(?m)SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
+    marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK -->"
+
 '''
 
 import re
@@ -153,7 +197,7 @@ import os
 import tempfile
 from ansible.module_utils.six import b
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.text.converters import to_bytes, to_native
 
 
 def write_changes(module, contents, path):
@@ -204,6 +248,8 @@ def main():
             validate=dict(type='str'),
             marker_begin=dict(type='str', default='BEGIN'),
             marker_end=dict(type='str', default='END'),
+            append_newline=dict(type='bool', default=False),
+            prepend_newline=dict(type='bool', default=False),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
@@ -222,17 +268,18 @@ def main():
             module.fail_json(rc=257,
                              msg='Path %s does not exist !' % path)
         destpath = os.path.dirname(path)
-        if not os.path.exists(destpath) and not module.check_mode:
+        if destpath and not os.path.exists(destpath) and not module.check_mode:
             try:
                 os.makedirs(destpath)
+            except OSError as e:
+                module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (destpath, e.errno, e.strerror))
             except Exception as e:
-                module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (destpath, e[0], e[1]))
+                module.fail_json(msg='Error creating %s Error: %s' % (destpath, to_native(e)))
         original = None
         lines = []
     else:
-        f = open(path, 'rb')
-        original = f.read()
-        f.close()
+        with open(path, 'rb') as f:
+            original = f.read()
         lines = original.splitlines(True)
 
     diff = {'before': '',
@@ -248,6 +295,7 @@ def main():
     block = to_bytes(params['block'])
     marker = to_bytes(params['marker'])
     present = params['state'] == 'present'
+    blank_line = [b(os.linesep)]
 
     if not present and not path_exists:
         module.exit_json(changed=False, msg="File %s not present" % path)
@@ -281,9 +329,17 @@ def main():
     if None in (n0, n1):
         n0 = None
         if insertre is not None:
-            for i, line in enumerate(lines):
-                if insertre.search(line):
-                    n0 = i
+            if insertre.flags & re.MULTILINE:
+                match = insertre.search(original)
+                if match:
+                    if insertafter:
+                        n0 = to_native(original).count('\n', 0, match.end())
+                    elif insertbefore:
+                        n0 = to_native(original).count('\n', 0, match.start())
+            else:
+                for i, line in enumerate(lines):
+                    if insertre.search(line):
+                        n0 = i
             if n0 is None:
                 n0 = len(lines)
             elif insertafter is not None:
@@ -303,7 +359,26 @@ def main():
         if not lines[n0 - 1].endswith(b(os.linesep)):
             lines[n0 - 1] += b(os.linesep)
 
+    # Before the block: check if we need to prepend a blank line
+    # If yes, we need to add the blank line if we are not at the beginning of the file
+    # and the previous line is not a blank line
+    # In both cases, we need to shift by one on the right the inserting position of the block
+    if params['prepend_newline'] and present:
+        if n0 != 0 and lines[n0 - 1] != b(os.linesep):
+            lines[n0:n0] = blank_line
+            n0 += 1
+
+    # Insert the block
     lines[n0:n0] = blocklines
+
+    # After the block: check if we need to append a blank line
+    # If yes, we need to add the blank line if we are not at the end of the file
+    # and the line right after is not a blank line
+    if params['append_newline'] and present:
+        line_after_block = n0 + len(blocklines)
+        if line_after_block < len(lines) and lines[line_after_block] != b(os.linesep):
+            lines[line_after_block:line_after_block] = blank_line
+
     if lines:
         result = b''.join(lines)
     else:

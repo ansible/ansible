@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-pull - update documentation for ``--directory`` option to clarify path must be absolute.

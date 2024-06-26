@@ -1,7 +1,6 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 
@@ -15,6 +14,8 @@ pytestmark = pytest.mark.usefixtures('patch_ansible_module')
 
 @pytest.mark.parametrize('patch_ansible_module', [{'name': 'six'}], indirect=['patch_ansible_module'])
 def test_failure_when_pip_absent(mocker, capfd):
+    mocker.patch('ansible.modules.pip._have_pip_module').return_value = False
+
     get_bin_path = mocker.patch('ansible.module_utils.basic.AnsibleModule.get_bin_path')
     get_bin_path.return_value = None
 

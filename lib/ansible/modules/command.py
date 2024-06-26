@@ -1,12 +1,10 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
 # Copyright: (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -15,22 +13,44 @@ module: command
 short_description: Execute commands on targets
 version_added: historical
 description:
-     - The C(command) module takes the command name followed by a list of space-delimited arguments.
+     - The M(ansible.builtin.command) module takes the command name followed by a list of space-delimited arguments.
      - The given command will be executed on all selected nodes.
      - The command(s) will not be
        processed through the shell, so variables like C($HOSTNAME) and operations
        like C("*"), C("<"), C(">"), C("|"), C(";") and C("&") will not work.
        Use the M(ansible.builtin.shell) module if you need these features.
      - To create C(command) tasks that are easier to read than the ones using space-delimited
-       arguments, pass parameters using the C(args) L(task keyword,../reference_appendices/playbooks_keywords.html#task)
-       or use C(cmd) parameter.
-     - Either a free form command or C(cmd) parameter is required, see the examples.
+       arguments, pass parameters using the C(args) L(task keyword,https://docs.ansible.com/ansible/latest/reference_appendices/playbooks_keywords.html#task)
+       or use O(cmd) parameter.
+     - Either a free form command or O(cmd) parameter is required, see the examples.
      - For Windows targets, use the M(ansible.windows.win_command) module instead.
+extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.raw
+attributes:
+    check_mode:
+        details: while the command itself is arbitrary and cannot be subject to the check mode semantics it adds O(creates)/O(removes) options as a workaround
+        support: partial
+    diff_mode:
+        support: none
+    platform:
+      support: full
+      platforms: posix
+    raw:
+      support: full
 options:
+  expand_argument_vars:
+    description:
+      - Expands the arguments that are variables, for example C($HOME) will be expanded before being passed to the
+        command to run.
+      - Set to V(false) to disable expansion and treat the value as a literal argument.
+    type: bool
+    default: true
+    version_added: "2.16"
   free_form:
     description:
       - The command module takes a free form string as a command to run.
-      - There is no actual parameter named 'free form'.
+      - There is no actual parameter named C(free_form).
   cmd:
     type: str
     description:
@@ -40,33 +60,25 @@ options:
     elements: str
     description:
       - Passes the command as a list rather than a string.
-      - Use C(argv) to avoid quoting values that would otherwise be interpreted incorrectly (for example "user name").
+      - Use O(argv) to avoid quoting values that would otherwise be interpreted incorrectly (for example "user name").
       - Only the string (free form) or the list (argv) form can be provided, not both.  One or the other must be provided.
     version_added: "2.6"
   creates:
     type: path
     description:
       - A filename or (since 2.0) glob pattern. If a matching file already exists, this step B(will not) be run.
-      - This is checked before I(removes) is checked.
+      - This is checked before O(removes) is checked.
   removes:
     type: path
     description:
       - A filename or (since 2.0) glob pattern. If a matching file exists, this step B(will) be run.
-      - This is checked after I(creates) is checked.
+      - This is checked after O(creates) is checked.
     version_added: "0.8"
   chdir:
     type: path
     description:
       - Change into this directory before running the command.
     version_added: "0.6"
-  warn:
-    description:
-      - (deprecated) Enable or disable task warnings.
-      - This feature is deprecated and will be removed in 2.14.
-      - As of version 2.11, this option is now disabled by default.
-    type: bool
-    default: no
-    version_added: "1.8"
   stdin:
     description:
       - Set the stdin of the command directly to the specified value.
@@ -76,7 +88,7 @@ options:
     type: bool
     default: yes
     description:
-      - If set to C(yes), append a newline to stdin data.
+      - If set to V(true), append a newline to stdin data.
     version_added: "2.8"
   strip_empty_ends:
     description:
@@ -88,14 +100,16 @@ notes:
     -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), and so on),
        you actually want the M(ansible.builtin.shell) module instead.
        Parsing shell metacharacters can lead to unexpected commands being executed if quoting is not done correctly so it is more secure to
-       use the C(command) module when possible.
-    -  C(creates), C(removes), and C(chdir) can be specified after the command.
+       use the M(ansible.builtin.command) module when possible.
+    -  O(creates), O(removes), and O(chdir) can be specified after the command.
        For instance, if you only want to run a command if a certain file does not exist, use this.
-    -  Check mode is supported when passing C(creates) or C(removes). If running in check mode and either of these are specified, the module will
+    -  Check mode is supported when passing O(creates) or O(removes). If running in check mode and either of these are specified, the module will
        check for the existence of the file and report the correct changed status. If these are not supplied, the task will be skipped.
-    -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(ansible.builtin.shell) module instead.
+    -  The O(ignore:executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(ansible.builtin.shell) module instead.
     -  For Windows targets, use the M(ansible.windows.win_command) module instead.
     -  For rebooting systems, use the M(ansible.builtin.reboot) or M(ansible.windows.win_reboot) module.
+    -  If the command returns non UTF-8 data, it must be encoded to avoid issues. This may necessitate using M(ansible.builtin.shell) so the output
+       can be piped through C(base64).
 seealso:
 - module: ansible.builtin.raw
 - module: ansible.builtin.script
@@ -145,6 +159,17 @@ EXAMPLES = r'''
       - Username with whitespace
       - dbname with whitespace
     creates: /path/to/database
+
+- name: Run command using argv with mixed argument formats
+  ansible.builtin.command:
+    argv:
+      - /path/to/binary
+      - -v
+      - --debug
+      - --longopt
+      - value for longopt
+      - --other-longopt=value for other longopt
+      - positional
 
 - name: Safely use templated variable to run command. Always use the quote filter to avoid injection issues
   ansible.builtin.command: cat {{ myfile|quote }}
@@ -212,44 +237,8 @@ import os
 import shlex
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native, to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_native, to_bytes, to_text
 from ansible.module_utils.common.collections import is_iterable
-
-
-def check_command(module, commandline):
-    arguments = {'chown': 'owner', 'chmod': 'mode', 'chgrp': 'group',
-                 'ln': 'state=link', 'mkdir': 'state=directory',
-                 'rmdir': 'state=absent', 'rm': 'state=absent', 'touch': 'state=touch'}
-    commands = {'curl': 'get_url or uri', 'wget': 'get_url or uri',
-                'svn': 'subversion', 'service': 'service',
-                'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
-                'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'replace, lineinfile or template',
-                'dnf': 'dnf', 'zypper': 'zypper'}
-    become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun', 'machinectl']
-    if isinstance(commandline, list):
-        command = commandline[0]
-    else:
-        command = commandline.split()[0]
-    command = os.path.basename(command)
-
-    disable_suffix = "If you need to use '{cmd}' because the {mod} module is insufficient you can add" \
-                     " 'warn: false' to this command task or set 'command_warnings=False' in" \
-                     " the defaults section of ansible.cfg to get rid of this message."
-    substitutions = {'mod': None, 'cmd': command}
-
-    if command in arguments:
-        msg = "Consider using the {mod} module with {subcmd} rather than running '{cmd}'.  " + disable_suffix
-        substitutions['mod'] = 'file'
-        substitutions['subcmd'] = arguments[command]
-        module.warn(msg.format(**substitutions))
-
-    if command in commands:
-        msg = "Consider using the {mod} module rather than running '{cmd}'.  " + disable_suffix
-        substitutions['mod'] = commands[command]
-        module.warn(msg.format(**substitutions))
-
-    if command in become:
-        module.warn("Consider using 'become', 'become_method', and 'become_user' rather than running %s" % (command,))
 
 
 def main():
@@ -264,10 +253,10 @@ def main():
             argv=dict(type='list', elements='str'),
             chdir=dict(type='path'),
             executable=dict(),
+            expand_argument_vars=dict(type='bool', default=True),
             creates=dict(type='path'),
             removes=dict(type='path'),
             # The default for this really comes from the action plugin
-            warn=dict(type='bool', default=False, removed_in_version='2.14', removed_from_collection='ansible.builtin'),
             stdin=dict(required=False),
             stdin_add_newline=dict(type='bool', default=True),
             strip_empty_ends=dict(type='bool', default=True),
@@ -281,12 +270,12 @@ def main():
     argv = module.params['argv']
     creates = module.params['creates']
     removes = module.params['removes']
-    warn = module.params['warn']
     stdin = module.params['stdin']
     stdin_add_newline = module.params['stdin_add_newline']
     strip = module.params['strip_empty_ends']
+    expand_argument_vars = module.params['expand_argument_vars']
 
-    # we promissed these in 'always' ( _lines get autoaded on action plugin)
+    # we promised these in 'always' ( _lines get auto-added on action plugin)
     r = {'changed': False, 'stdout': '', 'stderr': '', 'rc': None, 'cmd': None, 'start': None, 'end': None, 'delta': None, 'msg': ''}
 
     if not shell and executable:
@@ -312,9 +301,6 @@ def main():
         args = [to_native(arg, errors='surrogate_or_strict', nonstring='simplerepr') for arg in args]
 
     r['cmd'] = args
-    if warn:
-        # nany telling you to use module instead!
-        check_command(module, args)
 
     if chdir:
         chdir = to_bytes(chdir, errors='surrogate_or_strict')
@@ -349,19 +335,23 @@ def main():
     if r['msg']:
         module.exit_json(**r)
 
+    r['changed'] = True
+
     # actually executes command (or not ...)
     if not module.check_mode:
         r['start'] = datetime.datetime.now()
         r['rc'], r['stdout'], r['stderr'] = module.run_command(args, executable=executable, use_unsafe_shell=shell, encoding=None,
-                                                               data=stdin, binary_data=(not stdin_add_newline))
+                                                               data=stdin, binary_data=(not stdin_add_newline),
+                                                               expand_user_and_vars=expand_argument_vars)
         r['end'] = datetime.datetime.now()
     else:
         # this is partial check_mode support, since we end up skipping if we get here
         r['rc'] = 0
         r['msg'] = "Command would have run if not in check mode"
-        r['skipped'] = True
-
-    r['changed'] = True
+        if creates is None and removes is None:
+            r['skipped'] = True
+            # skipped=True and changed=True are mutually exclusive
+            r['changed'] = False
 
     # convert to text for jsonization and usability
     if r['start'] is not None and r['end'] is not None:

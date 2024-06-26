@@ -13,8 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import glob
 import os
@@ -110,6 +109,16 @@ class LinuxVirtual(Virtual):
                 virtual_facts['virtualization_role'] = 'guest'
                 found_virt = True
 
+        # If docker/containerd has a custom cgroup parent, checking /proc/1/cgroup (above) might fail.
+        # https://docs.docker.com/engine/reference/commandline/dockerd/#default-cgroup-parent
+        # Fallback to more rudimentary checks.
+        if os.path.exists('/.dockerenv') or os.path.exists('/.dockerinit'):
+            guest_tech.add('docker')
+            if not found_virt:
+                virtual_facts['virtualization_type'] = 'docker'
+                virtual_facts['virtualization_role'] = 'guest'
+                found_virt = True
+
         # ensure 'container' guest_tech is appropriately set
         if guest_tech.intersection(set(['docker', 'lxc', 'podman', 'openvz', 'containerd'])) or systemd_container:
             guest_tech.add('container')
@@ -166,7 +175,7 @@ class LinuxVirtual(Virtual):
                     virtual_facts['virtualization_type'] = 'RHEV'
                     found_virt = True
 
-        if product_name in ('VMware Virtual Platform', 'VMware7,1'):
+        if product_name and product_name.startswith(("VMware",)):
             guest_tech.add('VMware')
             if not found_virt:
                 virtual_facts['virtualization_type'] = 'VMware'

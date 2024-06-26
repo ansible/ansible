@@ -1,0 +1,90 @@
+# test code for the iptables module
+# (c) 2021, Éloi Rivard <eloi@yaal.coop>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+---
+- name: get the state of the iptable rules
+  shell: "{{ iptables_bin }} -L"
+  become: true
+  register: result
+
+- name: assert the rule is absent
+  assert:
+    that:
+      - result is not failed
+      - '"FOOBAR-CHAIN" not in result.stdout'
+
+- name: create the foobar chain
+  become: true
+  iptables:
+    chain: FOOBAR-CHAIN
+    chain_management: true
+    state: present
+
+- name: get the state of the iptable rules after chain is created
+  become: true
+  shell: "{{ iptables_bin }} -L"
+  register: result
+
+- name: assert the rule is present
+  assert:
+    that:
+      - result is not failed
+      - '"FOOBAR-CHAIN" in result.stdout'
+
+- name: add rule to foobar chain
+  become: true
+  iptables:
+    chain: FOOBAR-CHAIN
+    source: 0.0.0.0
+    destination: 0.0.0.0
+    jump: DROP
+    comment: "FOOBAR-CHAIN RULE"
+
+- name: get the state of the iptable rules after rule is added to foobar chain
+  become: true
+  shell: "{{ iptables_bin }} -L"
+  register: result
+
+- name: assert rule is present in foobar chain
+  assert:
+    that:
+      - result is not failed
+      - '"FOOBAR-CHAIN RULE" in result.stdout'
+
+- name: flush the foobar chain
+  become: true
+  iptables:
+    chain: FOOBAR-CHAIN
+    flush: true
+
+- name: delete the foobar chain
+  become: true
+  iptables:
+    chain: FOOBAR-CHAIN
+    chain_management: true
+    state: absent
+
+- name: get the state of the iptable rules after chain is deleted
+  become: true
+  shell: "{{ iptables_bin }} -L"
+  register: result
+
+- name: assert the rule is absent
+  assert:
+    that:
+      - result is not failed
+      - '"FOOBAR-CHAIN" not in result.stdout'

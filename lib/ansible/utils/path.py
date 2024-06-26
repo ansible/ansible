@@ -14,15 +14,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import shutil
 
 from errno import EEXIST
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 
 
 __all__ = ['unfrackpath', 'makedirs_safe']
@@ -34,6 +33,9 @@ def unfrackpath(path, follow=True, basedir=None):
 
     :arg path: A byte or text string representing a path to be canonicalized
     :arg follow: A boolean to indicate of symlinks should be resolved or not
+    :arg basedir: A byte string, text string, PathLike object, or `None`
+        representing where a relative path should be resolved from.
+        `None` will be substituted for the current working directory.
     :raises UnicodeDecodeError: If the canonicalized version of the path
         contains non-utf8 byte sequences.
     :rtype: A text string (unicode on pyyhon2, str on python3).
@@ -134,7 +136,7 @@ def cleanup_tmp_file(path, warn=False):
         pass
 
 
-def is_subpath(child, parent):
+def is_subpath(child, parent, real=False):
     """
     Compares paths to check if one is contained in the other
     :arg: child: Path to test
@@ -144,6 +146,10 @@ def is_subpath(child, parent):
 
     abs_child = unfrackpath(child, follow=False)
     abs_parent = unfrackpath(parent, follow=False)
+
+    if real:
+        abs_child = os.path.realpath(abs_child)
+        abs_parent = os.path.realpath(abs_parent)
 
     c = abs_child.split(os.path.sep)
     p = abs_parent.split(os.path.sep)

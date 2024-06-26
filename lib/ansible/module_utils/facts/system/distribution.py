@@ -3,16 +3,17 @@
 # Copyright: (c) Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import platform
 import re
 
+import ansible.module_utils.compat.typing as t
+
 from ansible.module_utils.common.sys_info import get_distribution, get_distribution_version, \
     get_distribution_codename
-from ansible.module_utils.facts.utils import get_file_content
+from ansible.module_utils.facts.utils import get_file_content, get_file_lines
 from ansible.module_utils.facts.collector import BaseFactCollector
 
 
@@ -73,7 +74,7 @@ class DistributionFiles:
         {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
         {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
         {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
-        {'path': '/etc/flatcar/update.conf', 'name': 'Flatcar'},
+        {'path': '/etc/os-release', 'name': 'Flatcar'},
         {'path': '/etc/os-release', 'name': 'NA'},
     )
 
@@ -332,6 +333,12 @@ class DistributionFiles:
                     rc, out, err = self.module.run_command(cmd)
                     if rc == 0:
                         debian_facts['distribution_release'] = out.strip()
+            debian_version_path = '/etc/debian_version'
+            distdata = get_file_lines(debian_version_path)
+            for line in distdata:
+                m = re.search(r'(\d+)\.(\d+)', line.strip())
+                if m:
+                    debian_facts['distribution_minor_version'] = m.groups()[1]
         elif 'Ubuntu' in data:
             debian_facts['distribution'] = 'Ubuntu'
             # nothing else to do, Ubuntu gets correct info from python functions
@@ -369,6 +376,24 @@ class DistributionFiles:
                 debian_facts['distribution_release'] = release.groups()[0]
         elif "Mint" in data:
             debian_facts['distribution'] = 'Linux Mint'
+            version = re.search(r"VERSION_ID=\"(.*)\"", data)
+            if version:
+                debian_facts['distribution_version'] = version.group(1)
+                debian_facts['distribution_major_version'] = version.group(1).split('.')[0]
+        elif 'UOS' in data or 'Uos' in data or 'uos' in data:
+            debian_facts['distribution'] = 'Uos'
+            release = re.search(r"VERSION_CODENAME=\"?([^\"]+)\"?", data)
+            if release:
+                debian_facts['distribution_release'] = release.groups()[0]
+            version = re.search(r"VERSION_ID=\"(.*)\"", data)
+            if version:
+                debian_facts['distribution_version'] = version.group(1)
+                debian_facts['distribution_major_version'] = version.group(1).split('.')[0]
+        elif 'Deepin' in data or 'deepin' in data:
+            debian_facts['distribution'] = 'Deepin'
+            release = re.search(r"VERSION_CODENAME=\"?([^\"]+)\"?", data)
+            if release:
+                debian_facts['distribution_release'] = release.groups()[0]
             version = re.search(r"VERSION_ID=\"(.*)\"", data)
             if version:
                 debian_facts['distribution_version'] = version.group(1)
@@ -427,14 +452,16 @@ class DistributionFiles:
         flatcar_facts = {}
         distro = get_distribution()
 
-        if distro.lower() == 'flatcar':
-            if not data:
-                return False, flatcar_facts
-            release = re.search("^GROUP=(.*)", data)
-            if release:
-                flatcar_facts['distribution_release'] = release.group(1).strip('"')
-        else:
+        if distro.lower() != 'flatcar':
             return False, flatcar_facts
+
+        if not data:
+            return False, flatcar_facts
+
+        version = re.search("VERSION=(.*)", data)
+        if version:
+            flatcar_facts['distribution_major_version'] = version.group(1).strip('"').split('.')[0]
+            flatcar_facts['distribution_version'] = version.group(1).strip('"')
 
         return True, flatcar_facts
 
@@ -464,6 +491,10 @@ class DistributionFiles:
             centos_facts['distribution_release'] = 'Stream'
             return True, centos_facts
 
+        if "TencentOS Server" in data:
+            centos_facts['distribution'] = 'TencentOS'
+            return True, centos_facts
+
         return False, centos_facts
 
 
@@ -477,21 +508,22 @@ class Distribution(object):
     """
 
     # keep keys in sync with Conditionals page of docs
-    OS_FAMILY_MAP = {'RedHat': ['RedHat', 'Fedora', 'CentOS', 'Scientific', 'SLC',
+    OS_FAMILY_MAP = {'RedHat': ['RedHat', 'RHEL', 'Fedora', 'CentOS', 'Scientific', 'SLC',
                                 'Ascendos', 'CloudLinux', 'PSBM', 'OracleLinux', 'OVS',
-                                'OEL', 'Amazon', 'Virtuozzo', 'XenServer', 'Alibaba',
-                                'EulerOS', 'openEuler', 'AlmaLinux', 'Rocky'],
+                                'OEL', 'Amazon', 'Amzn', 'Virtuozzo', 'XenServer', 'Alibaba',
+                                'EulerOS', 'openEuler', 'AlmaLinux', 'Rocky', 'TencentOS',
+                                'EuroLinux', 'Kylin Linux Advanced Server', 'MIRACLE'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
                                 'Linux Mint', 'SteamOS', 'Devuan', 'Kali', 'Cumulus Linux',
-                                'Pop!_OS', 'Parrot', 'Pardus GNU/Linux'],
+                                'Pop!_OS', 'Parrot', 'Pardus GNU/Linux', 'Uos', 'Deepin', 'OSMC'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
-                              'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
+                              'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap', 'ALP-Dolomite'],
                      'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],
                      'Mandrake': ['Mandrake', 'Mandriva'],
                      'Solaris': ['Solaris', 'Nexenta', 'OmniOS', 'OpenIndiana', 'SmartOS'],
                      'Slackware': ['Slackware'],
                      'Altlinux': ['Altlinux'],
-                     'SGML': ['SGML'],
+                     'SMGL': ['SMGL'],
                      'Gentoo': ['Gentoo', 'Funtoo'],
                      'Alpine': ['Alpine'],
                      'AIX': ['AIX'],
@@ -679,7 +711,7 @@ class DistributionFactCollector(BaseFactCollector):
     _fact_ids = set(['distribution_version',
                      'distribution_release',
                      'distribution_major_version',
-                     'os_family'])
+                     'os_family'])  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         collected_facts = collected_facts or {}

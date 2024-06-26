@@ -2,8 +2,7 @@
 
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 
 class ModuleDocFragment(object):
@@ -16,11 +15,6 @@ class ModuleDocFragment(object):
         type: bool
         default: yes
         env:
-          - name: DISPLAY_SKIPPED_HOSTS
-            deprecated:
-              why: environment variables without "ANSIBLE_" prefix are deprecated
-              version: "2.12"
-              alternatives: the "ANSIBLE_DISPLAY_SKIPPED_HOSTS" environment variable
           - name: ANSIBLE_DISPLAY_SKIPPED_HOSTS
         ini:
           - key: display_skipped_hosts

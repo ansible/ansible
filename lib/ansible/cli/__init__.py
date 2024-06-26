@@ -3,31 +3,107 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import getpass
+import locale
 import os
-import subprocess
 import sys
 
-from abc import ABCMeta, abstractmethod
+# Used for determining if the system is running a new enough python version
+# and should only restrict on our documented minimum versions
+if sys.version_info < (3, 11):
+    raise SystemExit(
+        'ERROR: Ansible requires Python 3.11 or newer on the controller. '
+        'Current version: %s' % ''.join(sys.version.splitlines())
+    )
 
-from ansible.cli.arguments import option_helpers as opt_help
-from ansible import constants as C
+
+def check_blocking_io():
+    """Check stdin/stdout/stderr to make sure they are using blocking IO."""
+    handles = []
+
+    for handle in (sys.stdin, sys.stdout, sys.stderr):
+        # noinspection PyBroadException
+        try:
+            fd = handle.fileno()
+        except Exception:
+            continue  # not a real file handle, such as during the import sanity test
+
+        if not os.get_blocking(fd):
+            handles.append(getattr(handle, 'name', None) or '#%s' % fd)
+
+    if handles:
+        raise SystemExit('ERROR: Ansible requires blocking IO on stdin/stdout/stderr. '
+                         'Non-blocking file handles detected: %s' % ', '.join(_io for _io in handles))
+
+
+check_blocking_io()
+
+
+def initialize_locale():
+    """Set the locale to the users default setting and ensure
+    the locale and filesystem encoding are UTF-8.
+    """
+    try:
+        locale.setlocale(locale.LC_ALL, '')
+        dummy, encoding = locale.getlocale()
+    except (locale.Error, ValueError) as e:
+        raise SystemExit(
+            'ERROR: Ansible could not initialize the preferred locale: %s' % e
+        )
+
+    if not encoding or encoding.lower() not in ('utf-8', 'utf8'):
+        raise SystemExit('ERROR: Ansible requires the locale encoding to be UTF-8; Detected %s.' % encoding)
+
+    fs_enc = sys.getfilesystemencoding()
+    if fs_enc.lower() != 'utf-8':
+        raise SystemExit('ERROR: Ansible requires the filesystem encoding to be UTF-8; Detected %s.' % fs_enc)
+
+
+initialize_locale()
+
+
+from importlib.metadata import version
+from ansible.module_utils.compat.version import LooseVersion
+
+# Used for determining if the system is running a new enough Jinja2 version
+# and should only restrict on our documented minimum versions
+jinja2_version = version('jinja2')
+if jinja2_version < LooseVersion('3.0'):
+    raise SystemExit(
+        'ERROR: Ansible requires Jinja2 3.0 or newer on the controller. '
+        'Current version: %s' % jinja2_version
+    )
+
+import errno
+import getpass
+import subprocess
+import traceback
+from abc import ABC, abstractmethod
+from pathlib import Path
+
+try:
+    from ansible import constants as C
+    from ansible.utils.display import Display
+    display = Display()
+except Exception as e:
+    print('ERROR: %s' % e, file=sys.stderr)
+    sys.exit(5)
+
 from ansible import context
-from ansible.errors import AnsibleError
+from ansible.cli.arguments import option_helpers as opt_help
+from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.inventory.manager import InventoryManager
-from ansible.module_utils.six import with_metaclass, string_types
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.six import string_types
+from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.common.file import is_executable
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
-from ansible.plugins.loader import add_all_plugin_dirs
+from ansible.plugins.loader import add_all_plugin_dirs, init_plugin_loader
 from ansible.release import __version__
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
-from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
 from ansible.utils.unsafe_proxy import to_unsafe_text
 from ansible.vars.manager import VariableManager
@@ -39,13 +115,10 @@ except ImportError:
     HAS_ARGCOMPLETE = False
 
 
-display = Display()
-
-
-class CLI(with_metaclass(ABCMeta, object)):
+class CLI(ABC):
     ''' code behind bin/ansible* programs '''
 
-    PAGER = 'less'
+    PAGER = C.config.get_config_value('PAGER')
 
     # -F (quit-if-one-screen) -R (allow raw ansi control chars)
     # -S (chop long lines) -X (disable termcap init and de-init)
@@ -79,6 +152,13 @@ class CLI(with_metaclass(ABCMeta, object)):
         running an Ansible command.
         """
         self.parse()
+
+        # Initialize plugin loader after parse, so that the init code can utilize parsed arguments
+        cli_collections_path = context.CLIARGS.get('collections_path') or []
+        if not is_sequence(cli_collections_path):
+            # In some contexts ``collections_path`` is singular
+            cli_collections_path = [cli_collections_path]
+        init_plugin_loader(cli_collections_path)
 
         display.vv(to_text(opt_help.version(self.parser.prog)))
 
@@ -114,8 +194,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     @staticmethod
     def build_vault_ids(vault_ids, vault_password_files=None,
-                        ask_vault_pass=None, create_new_password=None,
-                        auto_prompt=True):
+                        ask_vault_pass=None, auto_prompt=True):
         vault_password_files = vault_password_files or []
         vault_ids = vault_ids or []
 
@@ -138,7 +217,6 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         return vault_ids
 
-    # TODO: remove the now unused args
     @staticmethod
     def setup_vault_secrets(loader, vault_ids, vault_password_files=None,
                             ask_vault_pass=None, create_new_password=False,
@@ -172,9 +250,9 @@ class CLI(with_metaclass(ABCMeta, object)):
         vault_ids = CLI.build_vault_ids(vault_ids,
                                         vault_password_files,
                                         ask_vault_pass,
-                                        create_new_password,
                                         auto_prompt=auto_prompt)
 
+        last_exception = found_vault_secret = None
         for vault_id_slug in vault_ids:
             vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
             if vault_id_value in ['prompt', 'prompt_ask_vault_pass']:
@@ -198,6 +276,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                     display.warning('Error in vault password prompt (%s): %s' % (vault_id_name, exc))
                     raise
 
+                found_vault_secret = True
                 vault_secrets.append((built_vault_id, prompted_vault_secret))
 
                 # update loader with new secrets incrementally, so we can load a vault password
@@ -208,17 +287,23 @@ class CLI(with_metaclass(ABCMeta, object)):
             # assuming anything else is a password file
             display.vvvvv('Reading vault password file: %s' % vault_id_value)
             # read vault_pass from a file
-            file_vault_secret = get_file_vault_secret(filename=vault_id_value,
-                                                      vault_id=vault_id_name,
-                                                      loader=loader)
+            try:
+                file_vault_secret = get_file_vault_secret(filename=vault_id_value,
+                                                          vault_id=vault_id_name,
+                                                          loader=loader)
+            except AnsibleError as exc:
+                display.warning('Error getting vault password file (%s): %s' % (vault_id_name, to_text(exc)))
+                last_exception = exc
+                continue
 
-            # an invalid password file will error globally
             try:
                 file_vault_secret.load()
             except AnsibleError as exc:
                 display.warning('Error in vault password file loading (%s): %s' % (vault_id_name, to_text(exc)))
-                raise
+                last_exception = exc
+                continue
 
+            found_vault_secret = True
             if vault_id_name:
                 vault_secrets.append((vault_id_name, file_vault_secret))
             else:
@@ -227,7 +312,20 @@ class CLI(with_metaclass(ABCMeta, object)):
             # update loader with as-yet-known vault secrets
             loader.set_vault_secrets(vault_secrets)
 
+        # An invalid or missing password file will error globally
+        # if no valid vault secret was found.
+        if last_exception and not found_vault_secret:
+            raise last_exception
+
         return vault_secrets
+
+    @staticmethod
+    def _get_secret(prompt):
+
+        secret = getpass.getpass(prompt=prompt)
+        if secret:
+            secret = to_unsafe_text(secret)
+        return secret
 
     @staticmethod
     def ask_passwords():
@@ -241,25 +339,22 @@ class CLI(with_metaclass(ABCMeta, object)):
         become_prompt_method = "BECOME" if C.AGNOSTIC_BECOME_PROMPT else op['become_method'].upper()
 
         try:
+            become_prompt = "%s password: " % become_prompt_method
             if op['ask_pass']:
-                sshpass = getpass.getpass(prompt="SSH password: ")
+                sshpass = CLI._get_secret("SSH password: ")
                 become_prompt = "%s password[defaults to SSH password]: " % become_prompt_method
-            else:
-                become_prompt = "%s password: " % become_prompt_method
+            elif op['connection_password_file']:
+                sshpass = CLI.get_password_from_file(op['connection_password_file'])
 
             if op['become_ask_pass']:
-                becomepass = getpass.getpass(prompt=become_prompt)
+                becomepass = CLI._get_secret(become_prompt)
                 if op['ask_pass'] and becomepass == '':
                     becomepass = sshpass
+            elif op['become_password_file']:
+                becomepass = CLI.get_password_from_file(op['become_password_file'])
+
         except EOFError:
             pass
-
-        # we 'wrap' the passwords to prevent templating as
-        # they can contain special chars and trigger it incorrectly
-        if sshpass:
-            sshpass = to_unsafe_text(sshpass)
-        if becomepass:
-            becomepass = to_unsafe_text(becomepass)
 
         return (sshpass, becomepass)
 
@@ -287,7 +382,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 ansible.arguments.option_helpers.add_runas_options(self.parser)
                 self.parser.add_option('--my-option', dest='my_option', action='store')
         """
-        self.parser = opt_help.create_base_parser(os.path.basename(self.args[0]), usage=usage, desc=desc, epilog=epilog, )
+        self.parser = opt_help.create_base_parser(self.name, usage=usage, desc=desc, epilog=epilog)
 
     @abstractmethod
     def post_process_args(self, options):
@@ -330,6 +425,10 @@ class CLI(with_metaclass(ABCMeta, object)):
                     skip_tags.add(tag.strip())
             options.skip_tags = list(skip_tags)
 
+        # Make sure path argument doesn't have a backslash
+        if hasattr(options, 'action') and options.action in ['install', 'download'] and hasattr(options, 'args'):
+            options.args = [path.rstrip("/") for path in options.args]
+
         # process inventory options except for CLIs that require their own processing
         if hasattr(options, 'inventory') and not self.SKIP_INVENTORY_DEFAULTS:
 
@@ -343,16 +442,6 @@ class CLI(with_metaclass(ABCMeta, object)):
                 options.inventory = [unfrackpath(opt, follow=False) if ',' not in opt else opt for opt in options.inventory]
             else:
                 options.inventory = C.DEFAULT_HOST_LIST
-
-        # Dup args set on the root parser and sub parsers results in the root parser ignoring the args. e.g. doing
-        # 'ansible-galaxy -vvv init' has no verbosity set but 'ansible-galaxy init -vvv' sets a level of 3. To preserve
-        # back compat with pre-argparse changes we manually scan and set verbosity based on the argv values.
-        if self.parser.prog in ['ansible-galaxy', 'ansible-vault'] and not options.verbosity:
-            verbosity_arg = next(iter([arg for arg in self.args if arg.startswith('-v')]), None)
-            if verbosity_arg:
-                display.deprecated("Setting verbosity before the arg sub command is deprecated, set the verbosity "
-                                   "after the sub command", "2.13", collection_name='ansible.builtin')
-                options.verbosity = verbosity_arg.count('v')
 
         return options
 
@@ -373,8 +462,8 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         try:
             options = self.parser.parse_args(self.args[1:])
-        except SystemExit as e:
-            if(e.code != 0):
+        except SystemExit as ex:
+            if ex.code != 0:
                 self.parser.exit(status=2, message=" \n%s" % self.parser.format_help())
             raise
         options = self.post_process_args(options)
@@ -412,11 +501,11 @@ class CLI(with_metaclass(ABCMeta, object)):
         # this is a much simpler form of what is in pydoc.py
         if not sys.stdout.isatty():
             display.display(text, screen_only=True)
-        elif 'PAGER' in os.environ:
+        elif CLI.PAGER:
             if sys.platform == 'win32':
                 display.display(text, screen_only=True)
             else:
-                CLI.pager_pipe(text, os.environ['PAGER'])
+                CLI.pager_pipe(text)
         else:
             p = subprocess.Popen('less --version', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             p.communicate()
@@ -426,12 +515,12 @@ class CLI(with_metaclass(ABCMeta, object)):
                 display.display(text, screen_only=True)
 
     @staticmethod
-    def pager_pipe(text, cmd):
+    def pager_pipe(text):
         ''' pipe text through a pager '''
-        if 'LESS' not in os.environ:
+        if 'less' in CLI.PAGER:
             os.environ['LESS'] = CLI.LESS_OPTS
         try:
-            cmd = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
+            cmd = subprocess.Popen(CLI.PAGER, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
             cmd.communicate(input=to_bytes(text))
         except IOError:
             pass
@@ -440,6 +529,10 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     @staticmethod
     def _play_prereqs():
+        # TODO: evaluate moving all of the code that touches ``AnsibleCollectionConfig``
+        # into ``init_plugin_loader`` so that we can specifically remove
+        # ``AnsibleCollectionConfig.playbook_paths`` to make it immutable after instantiation
+
         options = context.CLIARGS
 
         # all needs loader
@@ -467,7 +560,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         loader.set_vault_secrets(vault_secrets)
 
         # create the inventory, and filter it based on the subset specified (if any)
-        inventory = InventoryManager(loader=loader, sources=options['inventory'])
+        inventory = InventoryManager(loader=loader, sources=options['inventory'], cache=(not options.get('flush_cache')))
 
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables
@@ -489,6 +582,119 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         hosts = inventory.list_hosts(pattern)
         if not hosts and no_hosts is False:
-            raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
+            raise AnsibleError("Specified inventory, host pattern and/or --limit leaves us with no hosts to target.")
 
         return hosts
+
+    @staticmethod
+    def get_password_from_file(pwd_file):
+
+        b_pwd_file = to_bytes(pwd_file)
+        secret = None
+        if b_pwd_file == b'-':
+            # ensure its read as bytes
+            secret = sys.stdin.buffer.read()
+
+        elif not os.path.exists(b_pwd_file):
+            raise AnsibleError("The password file %s was not found" % pwd_file)
+
+        elif is_executable(b_pwd_file):
+            display.vvvv(u'The password file %s is a script.' % to_text(pwd_file))
+            cmd = [b_pwd_file]
+
+            try:
+                p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            except OSError as e:
+                raise AnsibleError("Problem occurred when trying to run the password script %s (%s)."
+                                   " If this is not a script, remove the executable bit from the file." % (pwd_file, e))
+
+            stdout, stderr = p.communicate()
+            if p.returncode != 0:
+                raise AnsibleError("The password script %s returned an error (rc=%s): %s" % (pwd_file, p.returncode, stderr))
+            secret = stdout
+
+        else:
+            try:
+                f = open(b_pwd_file, "rb")
+                secret = f.read().strip()
+                f.close()
+            except (OSError, IOError) as e:
+                raise AnsibleError("Could not read password file %s: %s" % (pwd_file, e))
+
+        secret = secret.strip(b'\r\n')
+
+        if not secret:
+            raise AnsibleError('Empty password was provided from file (%s)' % pwd_file)
+
+        return to_unsafe_text(secret)
+
+    @classmethod
+    def cli_executor(cls, args=None):
+        if args is None:
+            args = sys.argv
+
+        try:
+            display.debug("starting run")
+
+            ansible_dir = Path(C.ANSIBLE_HOME).expanduser()
+            try:
+                ansible_dir.mkdir(mode=0o700)
+            except OSError as exc:
+                if exc.errno != errno.EEXIST:
+                    display.warning(
+                        "Failed to create the directory '%s': %s" % (ansible_dir, to_text(exc, errors='surrogate_or_replace'))
+                    )
+            else:
+                display.debug("Created the '%s' directory" % ansible_dir)
+
+            try:
+                args = [to_text(a, errors='surrogate_or_strict') for a in args]
+            except UnicodeError:
+                display.error('Command line args are not in utf-8, unable to continue.  Ansible currently only understands utf-8')
+                display.display(u"The full traceback was:\n\n%s" % to_text(traceback.format_exc()))
+                exit_code = 6
+            else:
+                cli = cls(args)
+                exit_code = cli.run()
+
+        except AnsibleOptionsError as e:
+            cli.parser.print_help()
+            display.error(to_text(e), wrap_text=False)
+            exit_code = 5
+        except AnsibleParserError as e:
+            display.error(to_text(e), wrap_text=False)
+            exit_code = 4
+    # TQM takes care of these, but leaving comment to reserve the exit codes
+    #    except AnsibleHostUnreachable as e:
+    #        display.error(str(e))
+    #        exit_code = 3
+    #    except AnsibleHostFailed as e:
+    #        display.error(str(e))
+    #        exit_code = 2
+        except AnsibleError as e:
+            display.error(to_text(e), wrap_text=False)
+            exit_code = 1
+        except KeyboardInterrupt:
+            display.error("User interrupted execution")
+            exit_code = 99
+        except Exception as e:
+            if C.DEFAULT_DEBUG:
+                # Show raw stacktraces in debug mode, It also allow pdb to
+                # enter post mortem mode.
+                raise
+            have_cli_options = bool(context.CLIARGS)
+            display.error("Unexpected Exception, this is probably a bug: %s" % to_text(e), wrap_text=False)
+            if not have_cli_options or have_cli_options and context.CLIARGS['verbosity'] > 2:
+                log_only = False
+                if hasattr(e, 'orig_exc'):
+                    display.vvv('\nexception type: %s' % to_text(type(e.orig_exc)))
+                    why = to_text(e.orig_exc)
+                    if to_text(e) != why:
+                        display.vvv('\noriginal msg: %s' % why)
+            else:
+                display.display("to see the full traceback, use -vvv")
+                log_only = True
+            display.display(u"the full traceback was:\n\n%s" % to_text(traceback.format_exc()), log_only=log_only)
+            exit_code = 250
+
+        sys.exit(exit_code)

@@ -15,12 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from units.compat import unittest
-from units.compat.mock import patch
+import unittest
+from unittest.mock import patch
 
 from ansible.playbook import Play
 from ansible.playbook.role_include import IncludeRole
@@ -94,13 +92,11 @@ class TestIncludeRole(unittest.TestCase):
             if isinstance(task, IncludeRole):
                 blocks, handlers = task.get_block_list(loader=self.loader)
                 for block in blocks:
-                    for t in self.flatten_tasks(block.block):
-                        yield t
+                    yield from self.flatten_tasks(block.block)
             elif isinstance(task, Task):
                 yield task
             else:
-                for t in self.flatten_tasks(task.block):
-                    yield t
+                yield from self.flatten_tasks(task.block)
 
     def get_tasks_vars(self, play, tasks):
         for task in self.flatten_tasks(tasks):
@@ -108,8 +104,6 @@ class TestIncludeRole(unittest.TestCase):
                 # skip meta: role_complete
                 continue
             role = task._role
-            if not role:
-                continue
 
             yield (role.get_name(),
                    self.var_manager.get_vars(play=play, task=task))
@@ -201,7 +195,7 @@ class TestIncludeRole(unittest.TestCase):
                 self.assertEqual(task_vars.get('l3_variable'), 'l3-main')
                 self.assertEqual(task_vars.get('test_variable'), 'l3-main')
             else:
-                self.fail()
+                self.fail()  # pragma: nocover
         self.assertFalse(expected_roles)
 
     @patch('ansible.playbook.role.definition.unfrackpath',
@@ -247,5 +241,5 @@ class TestIncludeRole(unittest.TestCase):
                 self.assertEqual(task_vars.get('l3_variable'), 'l3-alt')
                 self.assertEqual(task_vars.get('test_variable'), 'l3-alt')
             else:
-                self.fail()
+                self.fail()  # pragma: nocover
         self.assertFalse(expected_roles)

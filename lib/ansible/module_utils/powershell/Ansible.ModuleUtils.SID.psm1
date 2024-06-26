@@ -9,7 +9,8 @@ Function Convert-FromSID($sid) {
     $account_object = New-Object System.Security.Principal.SecurityIdentifier($sid)
     try {
         $nt_account = $account_object.Translate([System.Security.Principal.NTAccount])
-    } catch {
+    }
+    catch {
         Fail-Json -obj @{} -message "failed to convert sid '$sid' to a logon name: $($_.Exception.Message)"
     }
 
@@ -17,7 +18,8 @@ Function Convert-FromSID($sid) {
 }
 
 Function Convert-ToSID {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingEmptyCatchBlock", "", Justification="We don't care if converting to a SID fails, just that it failed or not")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingEmptyCatchBlock", "",
+        Justification = "We don't care if converting to a SID fails, just that it failed or not")]
     param($account_name)
     # Converts an account name to a SID, it can take in the following forms
     # SID: Will just return the SID value that was passed in
@@ -34,21 +36,20 @@ Function Convert-ToSID {
     try {
         $sid = New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList $account_name
         return $sid.Value
-    } catch {}
+    }
+    catch {}
 
     if ($account_name -like "*\*") {
         $account_name_split = $account_name -split "\\"
         if ($account_name_split[0] -eq ".") {
             $domain = $env:COMPUTERNAME
-        } else {
+        }
+        else {
             $domain = $account_name_split[0]
         }
         $username = $account_name_split[1]
-    } elseif ($account_name -like "*@*") {
-        $account_name_split = $account_name -split "@"
-        $domain = $account_name_split[1]
-        $username = $account_name_split[0]
-    } else {
+    }
+    else {
         $domain = $null
         $username = $account_name
     }
@@ -59,30 +60,35 @@ Function Convert-ToSID {
         if ($domain -eq $env:COMPUTERNAME) {
             $adsi = [ADSI]("WinNT://$env:COMPUTERNAME,computer")
             $group = $adsi.psbase.children | Where-Object { $_.schemaClassName -eq "group" -and $_.Name -eq $username }
-        } else {
+        }
+        else {
             $group = $null
         }
         if ($group) {
             $account = New-Object System.Security.Principal.NTAccount($username)
-        } else {
+        }
+        else {
             $account = New-Object System.Security.Principal.NTAccount($domain, $username)
         }
-    } else {
+    }
+    else {
         # when in a domain NTAccount(String) will favour domain lookups check
-        # if username is a local user and explictly search on the localhost for
+        # if username is a local user and explicitly search on the localhost for
         # that account
         $adsi = [ADSI]("WinNT://$env:COMPUTERNAME,computer")
         $user = $adsi.psbase.children | Where-Object { $_.schemaClassName -eq "user" -and $_.Name -eq $username }
         if ($user) {
             $account = New-Object System.Security.Principal.NTAccount($env:COMPUTERNAME, $username)
-        } else {
+        }
+        else {
             $account = New-Object System.Security.Principal.NTAccount($username)
         }
     }
 
     try {
         $account_sid = $account.Translate([System.Security.Principal.SecurityIdentifier])
-    } catch {
+    }
+    catch {
         Fail-Json @{} "account_name $account_name is not a valid account, cannot get SID: $($_.Exception.Message)"
     }
 

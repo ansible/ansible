@@ -1,11 +1,9 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright 2021 Red Hat
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -18,16 +16,72 @@ version_added: "2.11"
 options:
   argument_spec:
     description:
-        - A dictionary like AnsibleModule argument_spec
+        - A dictionary like AnsibleModule argument_spec. See R(argument spec definition,argument_spec)
     required: true
   provided_arguments:
     description:
         - A dictionary of the arguments that will be validated according to argument_spec
 author:
     - Ansible Core Team
+extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.conn
+    - action_common_attributes.flow
+attributes:
+    action:
+        support: full
+    async:
+        support: none
+    become:
+        support: none
+    bypass_host_loop:
+        support: none
+    connection:
+        support: none
+    check_mode:
+        support: full
+    delegation:
+        support: none
+    diff_mode:
+        support: none
+    platform:
+        platforms: all
 '''
 
 EXAMPLES = r'''
+- name: verify vars needed for this task file are present when included
+  ansible.builtin.validate_argument_spec:
+        argument_spec: '{{ required_data }}'
+  vars:
+    required_data:
+      # unlike spec file, just put the options in directly
+      stuff:
+        description: stuff
+        type: str
+        choices: ['who', 'knows', 'what']
+        default: what
+      but:
+        description: i guess we need one
+        type: str
+        required: true
+
+
+- name: verify vars needed for this task file are present when included, with spec from a spec file
+  ansible.builtin.validate_argument_spec:
+    argument_spec: "{{ (lookup('ansible.builtin.file', 'myargspec.yml') | from_yaml )['specname']['options'] }}"
+
+
+- name: verify vars needed for next include and not from inside it, also with params i'll only define there
+  block:
+    - ansible.builtin.validate_argument_spec:
+        argument_spec: "{{ lookup('ansible.builtin.file', 'nakedoptions.yml') }}"
+        provided_arguments:
+          but: "that i can define on the include itself, like in it's `vars:` keyword"
+
+    - name: the include itself
+      vars:
+        stuff: knows
+        but: nobuts!
 '''
 
 RETURN = r'''

@@ -1,23 +1,21 @@
 """Sanity test using yamllint."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import os
-
-from ... import types as t
-
-from ...ansible_util import (
-    check_pyyaml,
-)
+import typing as t
 
 from . import (
     SanitySingleVersion,
     SanityMessage,
     SanityFailure,
-    SanitySkipped,
     SanitySuccess,
+    SanityTargets,
     SANITY_ROOT,
+)
+
+from ...test import (
+    TestResult,
 )
 
 from ...target import (
@@ -28,7 +26,6 @@ from ...util import (
     SubprocessError,
     display,
     is_subdir,
-    find_python,
 )
 
 from ...util_common import (
@@ -43,15 +40,25 @@ from ...data import (
     data_context,
 )
 
+from ...host_configs import (
+    PythonConfig,
+)
+
 
 class YamllintTest(SanitySingleVersion):
     """Sanity test using yamllint."""
+
     @property
-    def error_code(self):  # type: () -> t.Optional[str]
+    def error_code(self) -> t.Optional[str]:
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'ansible-test'
 
-    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+    @property
+    def require_libyaml(self) -> bool:
+        """True if the test requires PyYAML to have libyaml support."""
+        return True
+
+    def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         yaml_targets = [target for target in targets if os.path.splitext(target.path)[1] in ('.yml', '.yaml')]
 
@@ -66,24 +73,10 @@ class YamllintTest(SanitySingleVersion):
 
         return yaml_targets
 
-    def test(self, args, targets, python_version):
-        """
-        :type args: SanityConfig
-        :type targets: SanityTargets
-        :type python_version: str
-        :rtype: TestResult
-        """
-        pyyaml_presence = check_pyyaml(args, python_version, quiet=True)
-        if not pyyaml_presence['cloader']:
-            display.warning("Skipping sanity test '%s' due to missing libyaml support in PyYAML."
-                            % self.name)
-            return SanitySkipped(self.name)
-
+    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
         settings = self.load_processor(args)
 
         paths = [target.path for target in targets.include]
-
-        python = find_python(python_version)
 
         results = self.test_paths(args, paths, python)
         results = settings.process_errors(results, paths)
@@ -94,15 +87,10 @@ class YamllintTest(SanitySingleVersion):
         return SanitySuccess(self.name)
 
     @staticmethod
-    def test_paths(args, paths, python):
-        """
-        :type args: SanityConfig
-        :type paths: list[str]
-        :type python: str
-        :rtype: list[SanityMessage]
-        """
+    def test_paths(args: SanityConfig, paths: list[str], python: PythonConfig) -> list[SanityMessage]:
+        """Test the specified paths using the given Python and return the results."""
         cmd = [
-            python,
+            python.path,
             os.path.join(SANITY_ROOT, 'yamllint', 'yamllinter.py'),
         ]
 

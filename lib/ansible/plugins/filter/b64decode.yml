@@ -1,0 +1,29 @@
+DOCUMENTATION:
+  name: b64decode
+  author: ansible core team
+  version_added: 'historical'
+  short_description: Decode a Base64 string
+  description:
+    - Base64 decoding function.
+    - The return value is a string.
+    - Trying to store a binary blob in a string most likely corrupts the binary. To Base64 decode a binary blob,
+      use the I(base64) command and pipe the encoded data through standard input.
+      For example, in the M(ansible.builtin.shell) module, ``cmd="base64 --decode > myfile.bin" stdin="{{ encoded }}"``.
+  positional: _input
+  options:
+    _input:
+      description: A Base64 string to decode.
+      type: string
+      required: true
+
+EXAMPLES: |
+  # Base64 decode a string
+  lola: "{{ 'bG9sYQ==' | b64decode }}"
+
+  # Base64 decode the content of 'b64stuff' variable
+  stuff: "{{ b64stuff | b64decode }}"
+
+RETURN:
+  _value:
+    description: The contents of the Base64 encoded string.
+    type: string

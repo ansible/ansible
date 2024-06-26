@@ -1,10 +1,8 @@
 """Sanity test for proper import exception handling."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+import collections.abc as c
 import os
-
-from ... import types as t
 
 from . import (
     SanityMultipleVersion,
@@ -12,7 +10,19 @@ from . import (
     SanityFailure,
     SanitySuccess,
     SanitySkipped,
-    SANITY_ROOT,
+    TARGET_SANITY_ROOT,
+    SanityTargets,
+    create_sanity_virtualenv,
+    check_sanity_virtualenv_yaml,
+)
+
+from ...constants import (
+    CONTROLLER_MIN_PYTHON_VERSION,
+    REMOTE_ONLY_PYTHON_VERSIONS,
+)
+
+from ...test import (
+    TestResult,
 )
 
 from ...target import (
@@ -20,31 +30,21 @@ from ...target import (
 )
 
 from ...util import (
-    ANSIBLE_TEST_DATA_ROOT,
+    cache,
     SubprocessError,
-    remove_tree,
     display,
     parse_to_list_of_dict,
     is_subdir,
-    generate_pip_command,
-    find_python,
-    get_hash,
-    REMOTE_ONLY_PYTHON_VERSIONS,
+    ANSIBLE_TEST_TOOLS_ROOT,
 )
 
 from ...util_common import (
-    intercept_command,
-    run_command,
     ResultType,
+    create_temp_dir,
 )
 
 from ...ansible_util import (
     ansible_environment,
-)
-
-from ...executor import (
-    generate_pip_install,
-    install_cryptography,
 )
 
 from ...config import (
@@ -52,19 +52,19 @@ from ...config import (
 )
 
 from ...coverage_util import (
-    coverage_context,
-)
-
-from ...venv import (
-    create_virtual_environment,
+    cover_python,
 )
 
 from ...data import (
     data_context,
 )
 
+from ...host_configs import (
+    PythonConfig,
+)
 
-def _get_module_test(module_restrictions):  # type: (bool) -> t.Callable[[str], bool]
+
+def _get_module_test(module_restrictions: bool) -> c.Callable[[str], bool]:
     """Create a predicate which tests whether a path can be used by modules or not."""
     module_path = data_context().content.module_path
     module_utils_path = data_context().content.module_utils_path
@@ -75,74 +75,65 @@ def _get_module_test(module_restrictions):  # type: (bool) -> t.Callable[[str], 
 
 class ImportTest(SanityMultipleVersion):
     """Sanity test for proper import exception handling."""
-    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
-        """Return the given list of test targets, filtered to include only those relevant for the test."""
-        return [target for target in targets if os.path.splitext(target.path)[1] == '.py' and
-                any(is_subdir(target.path, path) for path in data_context().content.plugin_paths.values())]
 
-    def test(self, args, targets, python_version):
-        """
-        :type args: SanityConfig
-        :type targets: SanityTargets
-        :type python_version: str
-        :rtype: TestResult
-        """
-        settings = self.load_processor(args, python_version)
+    def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
+        """Return the given list of test targets, filtered to include only those relevant for the test."""
+        if data_context().content.is_ansible:
+            # all of ansible-core must pass the import test, not just plugins/modules
+            # modules/module_utils will be tested using the module context
+            # everything else will be tested using the plugin context
+            paths = ['lib/ansible']
+        else:
+            # only plugins/modules must pass the import test for collections
+            paths = list(data_context().content.plugin_paths.values())
+
+        return [target for target in targets if os.path.splitext(target.path)[1] == '.py' and
+                any(is_subdir(target.path, path) for path in paths)]
+
+    @property
+    def needs_pypi(self) -> bool:
+        """True if the test requires PyPI, otherwise False."""
+        return True
+
+    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
+        settings = self.load_processor(args, python.version)
 
         paths = [target.path for target in targets.include]
-
-        capture_pip = args.verbosity < 2
-
-        python = find_python(python_version)
-
-        if python_version.startswith('2.') and args.requirements:
-            # hack to make sure that virtualenv is available under Python 2.x
-            # on Python 3.x we can use the built-in venv
-            pip = generate_pip_command(python)
-            run_command(args, generate_pip_install(pip, '', packages=['virtualenv']), capture=capture_pip)
-
-        env = ansible_environment(args, color=False)
 
         temp_root = os.path.join(ResultType.TMP.path, 'sanity', 'import')
 
         messages = []
 
-        for import_type, test, add_ansible_requirements in (
-                ('module', _get_module_test(True), False),
-                ('plugin', _get_module_test(False), True),
+        for import_type, test in (
+            ('module', _get_module_test(True)),
+            ('plugin', _get_module_test(False)),
         ):
-            if import_type == 'plugin' and python_version in REMOTE_ONLY_PYTHON_VERSIONS:
-                continue
+            if import_type == 'plugin' and python.version in REMOTE_ONLY_PYTHON_VERSIONS:
+                # Plugins are not supported on remote-only Python versions.
+                # However, the collection loader is used by the import sanity test and unit tests on remote-only Python versions.
+                # To support this, it is tested as a plugin, but using a venv which installs no requirements.
+                # Filtering of paths relevant to the Python version tested has already been performed by filter_remote_targets.
+                venv_type = 'empty'
+            else:
+                venv_type = import_type
 
             data = '\n'.join([path for path in paths if test(path)])
-            if not data:
+
+            if not data and not args.prime_venvs:
                 continue
 
-            requirements_file = None
+            virtualenv_python = create_sanity_virtualenv(args, python, f'{self.name}.{venv_type}', coverage=args.coverage, minimize=True)
 
-            # create a clean virtual environment to minimize the available imports beyond the python standard library
-            virtual_environment_dirname = 'minimal-py%s' % python_version.replace('.', '')
-            if add_ansible_requirements:
-                requirements_file = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'sanity.import-plugins.txt')
-                virtual_environment_dirname += '-requirements-%s' % get_hash(requirements_file)
-            virtual_environment_path = os.path.join(temp_root, virtual_environment_dirname)
-            virtual_environment_bin = os.path.join(virtual_environment_path, 'bin')
+            if not virtualenv_python:
+                display.warning(f'Skipping sanity test "{self.name}" on Python {python.version} due to missing virtual environment support.')
+                return SanitySkipped(self.name, python.version)
 
-            remove_tree(virtual_environment_path)
+            virtualenv_yaml = args.explain or check_sanity_virtualenv_yaml(virtualenv_python)
 
-            if not create_virtual_environment(args, python_version, virtual_environment_path):
-                display.warning("Skipping sanity test '%s' on Python %s due to missing virtual environment support." % (self.name, python_version))
-                return SanitySkipped(self.name, python_version)
+            if virtualenv_yaml is False:
+                display.warning(f'Sanity test "{self.name}" ({import_type}) on Python {python.version} may be slow due to missing libyaml support in PyYAML.')
 
-            # add the importer to our virtual environment so it can be accessed through the coverage injector
-            importer_path = os.path.join(virtual_environment_bin, 'importer.py')
-            yaml_to_json_path = os.path.join(virtual_environment_bin, 'yaml_to_json.py')
-            if not args.explain:
-                os.symlink(os.path.abspath(os.path.join(SANITY_ROOT, 'import', 'importer.py')), importer_path)
-                os.symlink(os.path.abspath(os.path.join(SANITY_ROOT, 'import', 'yaml_to_json.py')), yaml_to_json_path)
-
-            # activate the virtual environment
-            env['PATH'] = '%s:%s' % (virtual_environment_bin, env['PATH'])
+            env = ansible_environment(args, color=False)
 
             env.update(
                 SANITY_TEMP_PATH=ResultType.TMP.path,
@@ -150,46 +141,30 @@ class ImportTest(SanityMultipleVersion):
             )
 
             if data_context().content.collection:
+                external_python = create_sanity_virtualenv(args, args.controller_python, self.name)
+
                 env.update(
                     SANITY_COLLECTION_FULL_NAME=data_context().content.collection.full_name,
-                    SANITY_EXTERNAL_PYTHON=python,
+                    SANITY_EXTERNAL_PYTHON=external_python.path,
+                    SANITY_YAML_TO_JSON=os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'yaml_to_json.py'),
+                    ANSIBLE_CONTROLLER_MIN_PYTHON_VERSION=CONTROLLER_MIN_PYTHON_VERSION,
+                    PYTHONPATH=':'.join((get_ansible_test_python_path(), env["PYTHONPATH"])),
                 )
 
-            virtualenv_python = os.path.join(virtual_environment_bin, 'python')
-            virtualenv_pip = generate_pip_command(virtualenv_python)
-
-            # make sure requirements are installed if needed
-            if requirements_file:
-                install_cryptography(args, virtualenv_python, python_version, virtualenv_pip)
-                run_command(args, generate_pip_install(virtualenv_pip, 'sanity', context='import-plugins'), env=env, capture=capture_pip)
-
-            # make sure coverage is available in the virtual environment if needed
-            if args.coverage:
-                run_command(args, generate_pip_install(virtualenv_pip, '', packages=['setuptools']), env=env, capture=capture_pip)
-                run_command(args, generate_pip_install(virtualenv_pip, '', packages=['coverage']), env=env, capture=capture_pip)
-
-            try:
-                # In some environments pkg_resources is installed as a separate pip package which needs to be removed.
-                # For example, using Python 3.8 on Ubuntu 18.04 a virtualenv is created with only pip and setuptools.
-                # However, a venv is created with an additional pkg-resources package which is independent of setuptools.
-                # Making sure pkg-resources is removed preserves the import test consistency between venv and virtualenv.
-                # Additionally, in the above example, the pyparsing package vendored with pkg-resources is out-of-date and generates deprecation warnings.
-                # Thus it is important to remove pkg-resources to prevent system installed packages from generating deprecation warnings.
-                run_command(args, virtualenv_pip + ['uninstall', '--disable-pip-version-check', '-y', 'pkg-resources'], env=env, capture=capture_pip)
-            except SubprocessError:
-                pass
-
-            run_command(args, virtualenv_pip + ['uninstall', '--disable-pip-version-check', '-y', 'setuptools'], env=env, capture=capture_pip)
-            run_command(args, virtualenv_pip + ['uninstall', '--disable-pip-version-check', '-y', 'pip'], env=env, capture=capture_pip)
+            if args.prime_venvs:
+                continue
 
             display.info(import_type + ': ' + data, verbosity=4)
 
             cmd = ['importer.py']
 
+            # add the importer to the path so it can be accessed through the coverage injector
+            env.update(
+                PATH=os.pathsep.join([os.path.join(TARGET_SANITY_ROOT, 'import'), env['PATH']]),
+            )
+
             try:
-                with coverage_context(args):
-                    stdout, stderr = intercept_command(args, cmd, self.name, env, capture=True, data=data, python_version=python_version,
-                                                       virtualenv=virtualenv_python)
+                stdout, stderr = cover_python(args, virtualenv_python, cmd, self.name, env, capture=True, data=data)
 
                 if stdout or stderr:
                     raise SubprocessError(cmd, stdout=stdout, stderr=stderr)
@@ -210,9 +185,22 @@ class ImportTest(SanityMultipleVersion):
                     column=int(r['column']),
                 ) for r in parsed]
 
+        if args.prime_venvs:
+            return SanitySkipped(self.name, python_version=python.version)
+
         results = settings.process_errors(messages, paths)
 
         if results:
-            return SanityFailure(self.name, messages=results, python_version=python_version)
+            return SanityFailure(self.name, messages=results, python_version=python.version)
 
-        return SanitySuccess(self.name, python_version=python_version)
+        return SanitySuccess(self.name, python_version=python.version)
+
+
+@cache
+def get_ansible_test_python_path() -> str:
+    """
+    Return a directory usable for PYTHONPATH, containing only the ansible-test collection loader.
+    The temporary directory created will be cached for the lifetime of the process and cleaned up at exit.
+    """
+    python_path = create_temp_dir(prefix='ansible-test-')
+    return python_path

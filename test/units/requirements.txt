@@ -1,5 +1,4 @@
-passlib
-pywinrm
-pytz
-unittest2 ; python_version < '2.7'
-pexpect
+bcrypt ; python_version >= '3.11'  # controller only
+passlib ; python_version >= '3.11'  # controller only
+pexpect ; python_version >= '3.11'  # controller only
+pywinrm ; python_version >= '3.11'  # controller only

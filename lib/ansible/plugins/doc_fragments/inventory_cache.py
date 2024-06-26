@@ -2,8 +2,7 @@
 
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 
 class ModuleDocFragment(object):
@@ -67,12 +66,6 @@ options:
       - name: ANSIBLE_CACHE_PLUGIN_PREFIX
       - name: ANSIBLE_INVENTORY_CACHE_PLUGIN_PREFIX
     ini:
-      - section: default
-        key: fact_caching_prefix
-        deprecated:
-          alternatives: Use the 'defaults' section instead
-          why: Fixes typing error in INI section name
-          version: '2.16'
       - section: defaults
         key: fact_caching_prefix
       - section: inventory

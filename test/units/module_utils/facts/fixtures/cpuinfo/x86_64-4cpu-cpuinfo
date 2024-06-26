@@ -16,8 +16,7 @@ fpu     : yes
 fpu_exception   : yes
 cpuid level : 1
 wp      : yes
-flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt '
-rdtscp lm 3dnowext 3dnow art rep_good nopl extd_apicid pni cx16 lahf_lm cmp_legacy svm extapic cr8_legacy retpoline_amd vmmcall
+flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt rdtscp lm 3dnowext 3dnow art rep_good nopl extd_apicid pni cx16 lahf_lm cmp_legacy svm extapic cr8_legacy retpoline_amd vmmcall
 bogomips    : 1994.60
 TLB size    : 1024 4K pages
 clflush size    : 64
@@ -42,8 +41,7 @@ fpu     : yes
 fpu_exception   : yes
 cpuid level : 1
 wp      : yes
-flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt '
-rdtscp lm 3dnowext 3dnow art rep_good nopl extd_apicid pni cx16 lahf_lm cmp_legacy svm extapic cr8_legacy retpoline_amd vmmcall
+flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt rdtscp lm 3dnowext 3dnow art rep_good nopl extd_apicid pni cx16 lahf_lm cmp_legacy svm extapic cr8_legacy retpoline_amd vmmcall
 bogomips    : 1994.60
 TLB size    : 1024 4K pages
 clflush size    : 64
@@ -68,8 +66,7 @@ fpu     : yes
 fpu_exception   : yes
 cpuid level : 1
 wp      : yes
-flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt '
-rdtscp lm 3dnowext 3dnow art rep_good nopl extd_apicid pni cx16 lahf_lm cmp_legacy svm extapic cr8_legacy retpoline_amd vmmcall
+flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt rdtscp lm 3dnowext 3dnow art rep_good nopl extd_apicid pni cx16 lahf_lm cmp_legacy svm extapic cr8_legacy retpoline_amd vmmcall
 bogomips    : 1994.60
 TLB size    : 1024 4K pages
 clflush size    : 64
@@ -94,8 +91,7 @@ fpu     : yes
 fpu_exception   : yes
 cpuid level : 1
 wp      : yes
-flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt '
-rdtscp lm 3dnowext 3dnow art rep_good nopl extd_apicid pni cx16 lahf_lm cmp_legacy svm extapic cr8_legacy retpoline_amd vmmcall
+flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt rdtscp lm 3dnowext 3dnow art rep_good nopl extd_apicid pni cx16 lahf_lm cmp_legacy svm extapic cr8_legacy retpoline_amd vmmcall
 bogomips    : 1994.60
 TLB size    : 1024 4K pages
 clflush size    : 64

@@ -17,7 +17,7 @@ ansible -m include_role -a name=role1 localhost
 ## Import (static)
 
 # Playbook
-test "$(ANSIBLE_DEPRECATION_WARNINGS=1 ansible-playbook -i ../../inventory playbook/test_import_playbook.yml "$@" 2>&1 | grep -c '\[DEPRECATION WARNING\]: Additional parameters in import_playbook')" = 1
+ansible-playbook playbook/test_import_playbook.yml -i inventory "$@"
 
 ANSIBLE_STRATEGY='linear' ansible-playbook playbook/test_import_playbook_tags.yml -i inventory "$@" --tags canary1,canary22,validate --skip-tags skipme
 
@@ -121,6 +121,15 @@ ansible-playbook valid_include_keywords/playbook.yml "$@"
 ansible-playbook tasks/test_allow_single_role_dup.yml 2>&1 | tee test_allow_single_role_dup.out
 test "$(grep -c 'ok=3' test_allow_single_role_dup.out)" = 1
 
+# Test allow_duplicate with include_role and import_role
+test "$(ansible-playbook tasks/test_dynamic_allow_dup.yml --tags include | grep -c 'Tasks file inside role')" = 2
+test "$(ansible-playbook tasks/test_dynamic_allow_dup.yml --tags import | grep -c 'Tasks file inside role')" = 2
+
+# test templating public, allow_duplicates, and rolespec_validate
+ansible-playbook tasks/test_templating_IncludeRole_FA.yml 2>&1 | tee IncludeRole_FA_template.out
+test "$(grep -c 'ok=6' IncludeRole_FA_template.out)" = 1
+test "$(grep -c 'failed=0' IncludeRole_FA_template.out)" = 1
+
 # https://github.com/ansible/ansible/issues/66764
 ANSIBLE_HOST_PATTERN_MISMATCH=error ansible-playbook empty_group_warning/playbook.yml
 
@@ -128,3 +137,14 @@ ansible-playbook test_include_loop.yml "$@"
 ansible-playbook test_include_loop_fqcn.yml "$@"
 
 ansible-playbook include_role_omit/playbook.yml "$@"
+
+# Test templating import_playbook, import_tasks, and import_role files
+ansible-playbook playbook/test_templated_filenames.yml -e "pb=validate_templated_playbook.yml tasks=validate_templated_tasks.yml tasks_from=templated.yml" "$@" | tee out.txt
+cat out.txt
+test "$(grep out.txt -ce 'In imported playbook')" = 2
+test "$(grep out.txt -ce 'In imported tasks')" = 3
+test "$(grep out.txt -ce 'In imported role')" = 3
+
+# https://github.com/ansible/ansible/issues/73657
+ansible-playbook issue73657.yml 2>&1 | tee issue73657.out
+test "$(grep -c 'SHOULD_NOT_EXECUTE' issue73657.out)" = 0

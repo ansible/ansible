@@ -1,10 +1,8 @@
 """Analyze code coverage data to determine which integration test targets provide coverage for each arc or line."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
-
-from ..... import types as t
+import typing as t
 
 from .....encoding import (
     to_text,
@@ -16,6 +14,15 @@ from .....data import (
 
 from .....util_common import (
     ResultType,
+)
+
+from .....executor import (
+    Delegate,
+)
+
+from .....provisioning import (
+    prepare_profiles,
+    HostState,
 )
 
 from ... import (
@@ -36,44 +43,50 @@ from . import (
     write_report,
 )
 
-if t.TYPE_CHECKING:
-    from . import (
-        Arcs,
-        Lines,
-        TargetIndexes,
-    )
+from . import (
+    Arcs,
+    Lines,
+    TargetIndexes,
+)
 
 
 class CoverageAnalyzeTargetsGenerateConfig(CoverageAnalyzeTargetsConfig):
     """Configuration for the `coverage analyze targets generate` command."""
-    def __init__(self, args):  # type: (t.Any) -> None
-        super(CoverageAnalyzeTargetsGenerateConfig, self).__init__(args)
 
-        self.input_dir = args.input_dir or ResultType.COVERAGE.path  # type: str
-        self.output_file = args.output_file  # type: str
+    def __init__(self, args: t.Any) -> None:
+        super().__init__(args)
+
+        self.input_dir: str = args.input_dir or ResultType.COVERAGE.path
+        self.output_file: str = args.output_file
 
 
-def command_coverage_analyze_targets_generate(args):  # type: (CoverageAnalyzeTargetsGenerateConfig) -> None
+def command_coverage_analyze_targets_generate(args: CoverageAnalyzeTargetsGenerateConfig) -> None:
     """Analyze code coverage data to determine which integration test targets provide coverage for each arc or line."""
+    host_state = prepare_profiles(args)  # coverage analyze targets generate
+
+    if args.delegate:
+        raise Delegate(host_state)
+
     root = data_context().content.root
-    target_indexes = {}
-    arcs = dict((os.path.relpath(path, root), data) for path, data in analyze_python_coverage(args, args.input_dir, target_indexes).items())
+    target_indexes: TargetIndexes = {}
+    arcs = dict((os.path.relpath(path, root), data) for path, data in analyze_python_coverage(args, host_state, args.input_dir, target_indexes).items())
     lines = dict((os.path.relpath(path, root), data) for path, data in analyze_powershell_coverage(args, args.input_dir, target_indexes).items())
     report = make_report(target_indexes, arcs, lines)
     write_report(args, report, args.output_file)
 
 
 def analyze_python_coverage(
-        args,  # type: CoverageAnalyzeTargetsGenerateConfig
-        path,  # type: str
-        target_indexes,  # type: TargetIndexes
-):  # type: (...) -> Arcs
+    args: CoverageAnalyzeTargetsGenerateConfig,
+    host_state: HostState,
+    path: str,
+    target_indexes: TargetIndexes,
+) -> Arcs:
     """Analyze Python code coverage."""
-    results = {}  # type: Arcs
+    results: Arcs = {}
     collection_search_re, collection_sub_re = get_collection_path_regexes()
     modules = get_python_modules()
     python_files = get_python_coverage_files(path)
-    coverage = initialize_coverage(args)
+    coverage = initialize_coverage(args, host_state)
 
     for python_file in python_files:
         if not is_integration_coverage_file(python_file):
@@ -95,12 +108,12 @@ def analyze_python_coverage(
 
 
 def analyze_powershell_coverage(
-        args,  # type: CoverageAnalyzeTargetsGenerateConfig
-        path,  # type: str
-        target_indexes,  # type: TargetIndexes
-):  # type: (...) -> Lines
+    args: CoverageAnalyzeTargetsGenerateConfig,
+    path: str,
+    target_indexes: TargetIndexes,
+) -> Lines:
     """Analyze PowerShell code coverage"""
-    results = {}  # type: Lines
+    results: Lines = {}
     collection_search_re, collection_sub_re = get_collection_path_regexes()
     powershell_files = get_powershell_coverage_files(path)
 
@@ -124,10 +137,10 @@ def analyze_powershell_coverage(
 
 
 def prune_invalid_filenames(
-        args,  # type: CoverageAnalyzeTargetsGenerateConfig
-        results,  # type: t.Dict[str, t.Any]
-        collection_search_re=None,  # type: t.Optional[str]
-):  # type: (...) -> None
+    args: CoverageAnalyzeTargetsGenerateConfig,
+    results: dict[str, t.Any],
+    collection_search_re: t.Optional[t.Pattern] = None,
+) -> None:
     """Remove invalid filenames from the given result set."""
     path_checker = PathChecker(args, collection_search_re)
 
@@ -136,11 +149,11 @@ def prune_invalid_filenames(
             del results[path]
 
 
-def get_target_name(path):  # type: (str) -> str
+def get_target_name(path: str) -> str:
     """Extract the test target name from the given coverage path."""
     return to_text(os.path.basename(path).split('=')[1])
 
 
-def is_integration_coverage_file(path):  # type: (str) -> bool
+def is_integration_coverage_file(path: str) -> bool:
     """Returns True if the coverage file came from integration tests, otherwise False."""
     return os.path.basename(path).split('=')[0] in ('integration', 'windows-integration', 'network-integration')

@@ -1,9 +1,10 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
+
+import ansible.module_utils.compat.typing as t
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 
@@ -41,7 +42,7 @@ def is_chroot(module=None):
 
 class ChrootFactCollector(BaseFactCollector):
     name = 'chroot'
-    _fact_ids = set(['is_chroot'])
+    _fact_ids = set(['is_chroot'])  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         return {'is_chroot': is_chroot(module)}

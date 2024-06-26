@@ -1,0 +1,46 @@
+- command: echo {% raw %}{{ foo }}{% endraw %}
+  register: result
+
+- assert:
+    that:
+      - result.stdout_lines|first == expected
+  vars:
+    expected: !unsafe '{{ foo }}'
+
+- name: Assert that templating can convert JSON null, true, and false to Python
+  assert:
+    that:
+      - foo.null is none
+      - foo.true is true
+      - foo.false is false
+  vars:
+    # Kind of hack to just send a JSON string through jinja, by templating out nothing
+    foo: '{{ "" }}{"null": null, "true": true, "false": false}'
+
+- name: Make sure that test with name that isn't a valid Ansible plugin name does not result in a crash (1/2)
+  set_fact:
+    foo: '{{ [{"failed": false}] | selectattr("failed", "==", true) }}'
+
+- name: Make sure that test with name that isn't a valid Ansible plugin name does not result in a crash (2/2)
+  template:
+    src: invalid_test_name.j2
+    dest: /tmp/foo
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+      - result is failed
+      - >-
+        "TemplateSyntaxError: Could not load \"asdf \": 'invalid plugin name: ansible.builtin.asdf '" in result.msg
+
+- name: Make sure syntax errors originating from a template being compiled into Python code object result in a failure
+  debug:
+    msg: "{{ lookup('vars', 'v1', default='', default='') }}"
+  ignore_errors: true
+  register: r
+
+- assert:
+    that:
+      - r is failed
+      - "'keyword argument repeated' in r.msg"

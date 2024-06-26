@@ -13,16 +13,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import json
 import re
+import struct
+import time
 
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.timeout import TimeoutError, timeout
-
 from ansible.module_utils.facts.utils import get_file_content, get_mount_size
 
 
@@ -37,6 +37,7 @@ class FreeBSDHardware(Hardware):
     - processor_cores
     - processor_count
     - devices
+    - uptime_seconds
     """
     platform = 'FreeBSD'
     DMESG_BOOT = '/var/run/dmesg.boot'
@@ -46,6 +47,7 @@ class FreeBSDHardware(Hardware):
 
         cpu_facts = self.get_cpu_facts()
         memory_facts = self.get_memory_facts()
+        uptime_facts = self.get_uptime_facts()
         dmi_facts = self.get_dmi_facts()
         device_facts = self.get_device_facts()
 
@@ -57,6 +59,7 @@ class FreeBSDHardware(Hardware):
 
         hardware_facts.update(cpu_facts)
         hardware_facts.update(memory_facts)
+        hardware_facts.update(uptime_facts)
         hardware_facts.update(dmi_facts)
         hardware_facts.update(device_facts)
         hardware_facts.update(mount_facts)
@@ -121,6 +124,28 @@ class FreeBSDHardware(Hardware):
 
         return memory_facts
 
+    def get_uptime_facts(self):
+        # On FreeBSD, the default format is annoying to parse.
+        # Use -b to get the raw value and decode it.
+        sysctl_cmd = self.module.get_bin_path('sysctl')
+        cmd = [sysctl_cmd, '-b', 'kern.boottime']
+
+        # We need to get raw bytes, not UTF-8.
+        rc, out, err = self.module.run_command(cmd, encoding=None)
+
+        # kern.boottime returns seconds and microseconds as two 64-bits
+        # fields, but we are only interested in the first field.
+        struct_format = '@L'
+        struct_size = struct.calcsize(struct_format)
+        if rc != 0 or len(out) < struct_size:
+            return {}
+
+        (kern_boottime, ) = struct.unpack(struct_format, out[:struct_size])
+
+        return {
+            'uptime_seconds': int(time.time() - kern_boottime),
+        }
+
     @timeout()
     def get_mount_facts(self):
         mount_facts = {}
@@ -147,13 +172,50 @@ class FreeBSDHardware(Hardware):
 
         sysdir = '/dev'
         device_facts['devices'] = {}
-        drives = re.compile(r'(ada?\d+|da\d+|a?cd\d+)')  # TODO: rc, disks, err = self.module.run_command("/sbin/sysctl kern.disks")
-        slices = re.compile(r'(ada?\d+s\d+\w*|da\d+s\d+\w*)')
+        # TODO: rc, disks, err = self.module.run_command("/sbin/sysctl kern.disks")
+        drives = re.compile(
+            r"""(?x)(
+              (?:
+                ada?   # ATA/SATA disk device
+                |da    # SCSI disk device
+                |a?cd  # SCSI CDROM drive
+                |amrd  # AMI MegaRAID drive
+                |idad  # Compaq RAID array
+                |ipsd  # IBM ServeRAID RAID array
+                |md    # md(4) disk device
+                |mfid  # LSI MegaRAID SAS array
+                |mlxd  # Mylex RAID disk
+                |twed  # 3ware ATA RAID array
+                |vtbd  # VirtIO Block Device
+              )\d+
+            )
+            """
+        )
+
+        slices = re.compile(
+            r"""(?x)(
+              (?:
+                ada?   # ATA/SATA disk device
+                |a?cd  # SCSI CDROM drive
+                |amrd  # AMI MegaRAID drive
+                |da    # SCSI disk device
+                |idad  # Compaq RAID array
+                |ipsd  # IBM ServeRAID RAID array
+                |md    # md(4) disk device
+                |mfid  # LSI MegaRAID SAS array
+                |mlxd  # Mylex RAID disk
+                |twed  # 3ware ATA RAID array
+                |vtbd  # VirtIO Block Device
+              )\d+[ps]\d+\w*
+            )
+            """
+        )
+
         if os.path.isdir(sysdir):
             dirlist = sorted(os.listdir(sysdir))
             for device in dirlist:
                 d = drives.match(device)
-                if d:
+                if d and d.group(1) not in device_facts['devices']:
                     device_facts['devices'][d.group(1)] = []
                 s = slices.match(device)
                 if s:
@@ -190,18 +252,22 @@ class FreeBSDHardware(Hardware):
             'product_version': 'system-version',
             'system_vendor': 'system-manufacturer',
         }
+        if dmi_bin is None:
+            dmi_facts = dict.fromkeys(
+                DMI_DICT.keys(),
+                'NA'
+            )
+            return dmi_facts
+
         for (k, v) in DMI_DICT.items():
-            if dmi_bin is not None:
-                (rc, out, err) = self.module.run_command('%s -s %s' % (dmi_bin, v))
-                if rc == 0:
-                    # Strip out commented lines (specific dmidecode output)
-                    # FIXME: why add the fact and then test if it is json?
-                    dmi_facts[k] = ''.join([line for line in out.splitlines() if not line.startswith('#')])
-                    try:
-                        json.dumps(dmi_facts[k])
-                    except UnicodeDecodeError:
-                        dmi_facts[k] = 'NA'
-                else:
+            (rc, out, err) = self.module.run_command('%s -s %s' % (dmi_bin, v))
+            if rc == 0:
+                # Strip out commented lines (specific dmidecode output)
+                # FIXME: why add the fact and then test if it is json?
+                dmi_facts[k] = ''.join([line for line in out.splitlines() if not line.startswith('#')])
+                try:
+                    json.dumps(dmi_facts[k])
+                except UnicodeDecodeError:
                     dmi_facts[k] = 'NA'
             else:
                 dmi_facts[k] = 'NA'

@@ -79,8 +79,6 @@
       - "31 == ['x','y']|map('extract',{'x':42,'y':31})|list|last"
       - "'local' == ['localhost']|map('extract',hostvars,'ansible_connection')|list|first"
       - "'local' == ['localhost']|map('extract',hostvars,['ansible_connection'])|list|first"
-  # map was added to jinja2 in version 2.7
-  when: lookup('pipe', ansible_python.executable ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.7', '>=')
 
 - name: Test extract filter with defaults
   vars:
@@ -283,6 +281,7 @@
     multi_line: "{{ 'hello\nworld' | regex_search('^world', multiline=true) }}"
     named_groups: "{{ 'goodbye' | regex_search('(?P<first>good)(?P<second>bye)', '\\g<second>', '\\g<first>') }}"
     numbered_groups: "{{ 'goodbye' | regex_search('(good)(bye)', '\\2', '\\1') }}"
+    no_match_is_none_inline: "{{ 'hello' | regex_search('world') == none }}"
 
 - name: regex_search unknown argument (failure expected)
   set_fact:
@@ -299,6 +298,7 @@
       - multi_line == 'world'
       - named_groups == ['bye', 'good']
       - numbered_groups == ['bye', 'good']
+      - no_match_is_none_inline
       - failure is failed
 
 - name: Verify to_bool
@@ -334,6 +334,27 @@
   assert:
     that:
       - '"hElLo there"|regex_replace("hello", "hi", ignorecase=True) == "hi there"'
+
+- name: Verify regex_replace with count
+  assert:
+    that:
+      - '"foo=bar=baz"|regex_replace("=", ":", count=1) == "foo:bar=baz"'
+
+- name: Verify regex_replace with correct mandatory_count
+  assert:
+    that:
+      - '"foo=bar=baz"|regex_replace("=", ":", mandatory_count=2) == "foo:bar:baz"'
+
+- name: Verify regex_replace with incorrect mandatory_count
+  debug:
+    msg: "{{ 'foo=bar=baz'|regex_replace('=', ':', mandatory_count=1) }}"
+  ignore_errors: yes
+  register: incorrect_mandatory_count
+
+- assert:
+    that:
+      - "incorrect_mandatory_count is failed"
+      - "' times, but matches ' in incorrect_mandatory_count.msg"
 
 - name: Verify case-insensitive regex_findall
   assert:
@@ -447,12 +468,24 @@
 - name: Verify password_hash
   assert:
     that:
-      - "'what in the WORLD is up?'|password_hash|length == 106"
+      - "'what in the WORLD is up?'|password_hash|length == 120 or 'what in the WORLD is up?'|password_hash|length == 106"
       # This throws a vastly different error on py2 vs py3, so we just check
       # that it's a failure, not a substring of the exception.
       - password_hash_1 is failed
       - password_hash_2 is failed
       - "'not support' in password_hash_2.msg"
+
+- name: test using passlib with an unsupported hash type
+  set_fact:
+    foo: '{{"hey"|password_hash("msdcc")}}'
+  ignore_errors: yes
+  register: unsupported_hash_type
+
+- assert:
+    that:
+      - unsupported_hash_type.msg == msg
+  vars:
+    msg: "msdcc is not in the list of supported passlib algorithms: md5, blowfish, sha256, sha512"
 
 - name: Verify to_uuid throws on weird namespace
   set_fact:
@@ -491,6 +524,39 @@
       - "mandatory_1.msg == \"Mandatory variable 'hey'  not defined.\""
       - mandatory_2 is failed
       - "mandatory_2.msg == 'You did not give me a variable. I am a sad wolf.'"
+
+- name: Verify undef throws if resolved
+  set_fact:
+    foo: '{{ fail_foo }}'
+  vars:
+    fail_foo: '{{ undef("Expected failure") }}'
+  ignore_errors: yes
+  register: fail_1
+
+- name: Setup fail_foo for overriding in test
+  block:
+    - name: Verify undef not executed if overridden
+      set_fact:
+        foo: '{{ fail_foo }}'
+      vars:
+        fail_foo: 'overridden value'
+      register: fail_2
+  vars:
+    fail_foo: '{{ undef(hint="Expected failure") }}'
+
+- name: Verify undef is inspectable
+  debug:
+    var: fail_foo
+  vars:
+    fail_foo: '{{ undef("Expected failure") }}'
+  register: fail_3
+
+- name: Verify undef
+  assert:
+    that:
+      - fail_1 is failed
+      - not (fail_2 is failed)
+      - not (fail_3 is failed)
 
 - name: Verify comment
   assert:
@@ -566,7 +632,7 @@
       - dict2items_fail is failed
       - '"dict2items requires a dictionary" in dict2items_fail.msg'
 
-- name: Verify items2dict throws on non-Mapping
+- name: Verify items2dict throws on non-list
   set_fact:
     foo: '{{True|items2dict}}'
   ignore_errors: yes
@@ -578,6 +644,50 @@
       - '[{"key": "foo", "value": "bar"}, {"key": "banana", "value": "fruit"}]|items2dict == {"foo": "bar", "banana": "fruit"}'
       - items2dict_fail is failed
       - '"items2dict requires a list" in items2dict_fail.msg'
+
+- name: Verify items2dict throws on list of non-Mapping
+  set_fact:
+    foo: '{{[True]|items2dict}}'
+  ignore_errors: yes
+  register: items2dict_fail
+
+- name: Verify items2dict
+  assert:
+    that:
+      - items2dict_fail is failed
+      - '"items2dict requires a list of dictionaries" in items2dict_fail.msg'
+
+- name: Verify items2dict throws on missing key
+  set_fact:
+    foo: '{{ list_of_dicts | items2dict}}'
+  vars:
+    list_of_dicts: [{"key": "foo", "value": "bar"}, {"notkey": "banana", "value": "fruit"}]
+  ignore_errors: yes
+  register: items2dict_fail
+
+- name: Verify items2dict
+  assert:
+    that:
+      - items2dict_fail is failed
+      - error in items2dict_fail.msg
+  vars:
+    error: "items2dict requires each dictionary in the list to contain the keys 'key' and 'value'"
+
+- name: Verify items2dict throws on missing value
+  set_fact:
+    foo: '{{ list_of_dicts | items2dict}}'
+  vars:
+    list_of_dicts: [{"key": "foo", "value": "bar"}, {"key": "banana", "notvalue": "fruit"}]
+  ignore_errors: yes
+  register: items2dict_fail
+
+- name: Verify items2dict
+  assert:
+    that:
+      - items2dict_fail is failed
+      - error in items2dict_fail.msg
+  vars:
+    error: "items2dict requires each dictionary in the list to contain the keys 'key' and 'value'"
 
 - name: Verify path_join throws on non-string and non-sequence
   set_fact:

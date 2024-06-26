@@ -2,8 +2,7 @@
 # Copyright (c) 2020 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
 
@@ -14,7 +13,7 @@ from ansible.galaxy.dependency_resolution.dataclasses import Requirement
 @pytest.fixture
 def collection_object():
     def _cobj(fqcn='sandwiches.ham'):
-        return Requirement(fqcn, '1.5.0', None, 'galaxy')
+        return Requirement(fqcn, '1.5.0', None, 'galaxy', None)
     return _cobj
 
 

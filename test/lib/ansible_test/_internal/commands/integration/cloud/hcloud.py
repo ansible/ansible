@@ -1,11 +1,9 @@
 """Hetzner Cloud plugin for integration tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from .... import types as t
+import configparser
 
 from ....util import (
-    ConfigParser,
     display,
 )
 
@@ -19,6 +17,7 @@ from ....target import (
 
 from ....core_ci import (
     AnsibleCoreCI,
+    CloudResource,
 )
 
 from . import (
@@ -30,28 +29,29 @@ from . import (
 
 class HcloudCloudProvider(CloudProvider):
     """Hetzner Cloud provider plugin. Sets up cloud resources before delegation."""
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
-        super(HcloudCloudProvider, self).__init__(args)
+
+    def __init__(self, args: IntegrationConfig) -> None:
+        super().__init__(args)
 
         self.uses_config = True
 
-    def filter(self, targets, exclude):  # type: (t.Tuple[IntegrationTarget, ...], t.List[str]) -> None
+    def filter(self, targets: tuple[IntegrationTarget, ...], exclude: list[str]) -> None:
         """Filter out the cloud tests when the necessary config and resources are not available."""
         aci = self._create_ansible_core_ci()
 
         if aci.available:
             return
 
-        super(HcloudCloudProvider, self).filter(targets, exclude)
+        super().filter(targets, exclude)
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Setup the cloud resource before delegation and register a cleanup callback."""
-        super(HcloudCloudProvider, self).setup()
+        super().setup()
 
         if not self._use_static_config():
             self._setup_dynamic()
 
-    def _setup_dynamic(self):  # type: () -> None
+    def _setup_dynamic(self) -> None:
         """Request Hetzner credentials through the Ansible Core CI service."""
         display.info('Provisioning %s cloud environment.' % self.platform, verbosity=1)
 
@@ -77,16 +77,17 @@ class HcloudCloudProvider(CloudProvider):
 
         self._write_config(config)
 
-    def _create_ansible_core_ci(self):  # type: () -> AnsibleCoreCI
+    def _create_ansible_core_ci(self) -> AnsibleCoreCI:
         """Return a Heztner instance of AnsibleCoreCI."""
-        return AnsibleCoreCI(self.args, 'hetzner', 'hetzner', persist=False, stage=self.args.remote_stage, provider='hetzner', internal=True)
+        return AnsibleCoreCI(self.args, CloudResource(platform='hetzner'))
 
 
 class HcloudCloudEnvironment(CloudEnvironment):
     """Hetzner Cloud cloud environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+
+    def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
-        parser = ConfigParser()
+        parser = configparser.ConfigParser()
         parser.read(self.config_path)
 
         env_vars = dict(

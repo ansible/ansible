@@ -1,11 +1,9 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012 Dag Wieers <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -16,7 +14,7 @@ description:
 - This module prints statements during execution and can be useful
   for debugging variables or expressions without necessarily halting
   the playbook.
-- Useful for debugging together with the 'when:' directive.
+- Useful for debugging together with the C(when:) directive.
 - This module is also supported for Windows targets.
 version_added: '0.8'
 options:
@@ -28,7 +26,7 @@ options:
   var:
     description:
     - A variable name to debug.
-    - Mutually exclusive with the C(msg) option.
+    - Mutually exclusive with the O(msg) option.
     - Be aware that this option already runs in Jinja2 context and has an implicit C({{ }}) wrapping,
       so you should not be using Jinja2 delimiters unless you are looking for double interpolation.
     type: str
@@ -38,8 +36,32 @@ options:
     type: int
     default: 0
     version_added: '2.1'
-notes:
-    - This module is also supported for Windows targets.
+extends_documentation_fragment:
+- action_common_attributes
+- action_common_attributes.conn
+- action_common_attributes.flow
+
+attributes:
+    action:
+        support: full
+    async:
+        support: none
+    bypass_host_loop:
+        support: none
+    become:
+        support: none
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    connection:
+        support: none
+    delegation:
+        details: Aside from C(register) and/or in combination with C(delegate_facts), it has little effect.
+        support:  partial
+    platform:
+        support: full
+        platforms: all
 seealso:
 - module: ansible.builtin.assert
 - module: ansible.builtin.fail
@@ -71,6 +93,6 @@ EXAMPLES = r'''
 - name: Prints two lines of messages, but only if there is an environment value set
   ansible.builtin.debug:
     msg:
-    - "Provisioning based on YOUR_KEY which is: {{ lookup('env', 'YOUR_KEY') }}"
+    - "Provisioning based on YOUR_KEY which is: {{ lookup('ansible.builtin.env', 'YOUR_KEY') }}"
     - "These servers were built using the password of '{{ password_used }}'. Please retain this for later use."
 '''

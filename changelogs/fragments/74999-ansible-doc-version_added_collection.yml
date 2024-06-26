@@ -1,2 +1,0 @@
-bugfixes:
-- "ansible-doc - in text output, do not show empty ``version_added_collection`` values (https://github.com/ansible/ansible/pull/74999)."

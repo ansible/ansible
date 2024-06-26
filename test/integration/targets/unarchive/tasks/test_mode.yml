@@ -3,6 +3,29 @@
     path: '{{remote_tmp_dir}}/test-unarchive-tar-gz'
     state: directory
 
+- name: test invalid modes
+  unarchive:
+    src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
+    remote_src: yes
+    mode: "{{ item }}"
+    list_files: True
+  register: unarchive_mode_errors
+  ignore_errors: yes
+  loop:
+    - u=foo
+    - foo=r
+    - ufoo=r
+    - abc=r
+    - ao=r
+    - oa=r
+
+- assert:
+    that:
+      - item.failed
+      - "'bad symbolic permission for mode: ' + item.item == item.details"
+  loop: "{{ unarchive_mode_errors.results }}"
+
 - name: unarchive and set mode to 0600, directories 0700
   unarchive:
     src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"

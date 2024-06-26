@@ -1,6 +1,5 @@
 """Analyze powershell import statements."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import re
@@ -13,7 +12,7 @@ from ..util import (
     display,
 )
 
-from ..util_common import (
+from .common import (
     resolve_csharp_ps_util,
 )
 
@@ -21,13 +20,13 @@ from ..data import (
     data_context,
 )
 
+from ..target import (
+    TestTarget,
+)
 
-def get_powershell_module_utils_imports(powershell_targets):
-    """Return a dictionary of module_utils names mapped to sets of powershell file paths.
-    :type powershell_targets: list[TestTarget]
-    :rtype: dict[str, set[str]]
-    """
 
+def get_powershell_module_utils_imports(powershell_targets: list[TestTarget]) -> dict[str, set[str]]:
+    """Return a dictionary of module_utils names mapped to sets of powershell file paths."""
     module_utils = enumerate_module_utils()
 
     imports_by_target_path = {}
@@ -35,10 +34,10 @@ def get_powershell_module_utils_imports(powershell_targets):
     for target in powershell_targets:
         imports_by_target_path[target.path] = extract_powershell_module_utils_imports(target.path, module_utils)
 
-    imports = dict([(module_util, set()) for module_util in module_utils])
+    imports: dict[str, set[str]] = {module_util: set() for module_util in module_utils}
 
-    for target_path in imports_by_target_path:
-        for module_util in imports_by_target_path[target_path]:
+    for target_path, modules in imports_by_target_path.items():
+        for module_util in modules:
             imports[module_util].add(target_path)
 
     for module_util in sorted(imports):
@@ -48,7 +47,7 @@ def get_powershell_module_utils_imports(powershell_targets):
     return imports
 
 
-def get_powershell_module_utils_name(path):  # type: (str) -> str
+def get_powershell_module_utils_name(path: str) -> str:
     """Return a namespace and name from the given module_utils path."""
     base_path = data_context().content.module_utils_powershell_path
 
@@ -62,21 +61,15 @@ def get_powershell_module_utils_name(path):  # type: (str) -> str
     return name
 
 
-def enumerate_module_utils():
-    """Return a list of available module_utils imports.
-    :rtype: set[str]
-    """
+def enumerate_module_utils() -> set[str]:
+    """Return a set of available module_utils imports."""
     return set(get_powershell_module_utils_name(p)
                for p in data_context().content.walk_files(data_context().content.module_utils_powershell_path)
                if os.path.splitext(p)[1] == '.psm1')
 
 
-def extract_powershell_module_utils_imports(path, module_utils):
-    """Return a list of module_utils imports found in the specified source file.
-    :type path: str
-    :type module_utils: set[str]
-    :rtype: set[str]
-    """
+def extract_powershell_module_utils_imports(path: str, module_utils: set[str]) -> set[str]:
+    """Return a set of module_utils imports found in the specified source file."""
     imports = set()
 
     code = read_text_file(path)
@@ -89,7 +82,7 @@ def extract_powershell_module_utils_imports(path, module_utils):
 
     for line in lines:
         line_number += 1
-        match = re.search(r'(?i)^#\s*(?:requires\s+-module(?:s?)|ansiblerequires\s+-powershell)\s*((?:Ansible|ansible_collections|\.)\..+)', line)
+        match = re.search(r'(?i)^#\s*(?:requires\s+-modules?|ansiblerequires\s+-powershell)\s*((?:Ansible|ansible_collections|\.)\..+)', line)
 
         if not match:
             continue

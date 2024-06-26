@@ -1,2 +1,0 @@
-minor_changes:
-- YAML parsing - Create common utils for loading and dumping YAML that prefer the C extensions if available

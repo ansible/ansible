@@ -2,8 +2,7 @@
 # Copyright (c) 2019 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import pytest
@@ -21,7 +20,8 @@ def test_input():
 
 
 def test_parse_distribution_file_clear_linux(mock_module, test_input):
-    test_input['data'] = open(os.path.join(os.path.dirname(__file__), '../../fixtures/distribution_files/ClearLinux')).read()
+    with open(os.path.join(os.path.dirname(__file__), '../../fixtures/distribution_files/ClearLinux')) as file:
+        test_input['data'] = file.read()
 
     result = (
         True,
@@ -43,7 +43,8 @@ def test_parse_distribution_file_clear_linux_no_match(mock_module, distro_file, 
     Test against data from Linux Mint and CoreOS to ensure we do not get a reported
     match from parse_distribution_file_ClearLinux()
     """
-    test_input['data'] = open(os.path.join(os.path.dirname(__file__), '../../fixtures/distribution_files', distro_file)).read()
+    with open(os.path.join(os.path.dirname(__file__), '../../fixtures/distribution_files', distro_file)) as file:
+        test_input['data'] = file.read()
 
     result = (False, {})
 

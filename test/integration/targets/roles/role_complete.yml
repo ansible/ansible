@@ -1,0 +1,47 @@
+- name: test deduping allows for 1 successful execution of role after it is skipped
+  hosts: testhost
+  gather_facts: false
+  tags: [ 'conditional_skipped' ]
+  roles:
+    # Skipped the first time it executes
+    - role: a
+      when: role_set_var is defined
+
+    - role: set_var
+
+    # No longer skipped
+    - role: a
+      when: role_set_var is defined
+    # Deduplicated with the previous success
+    - role: a
+      when: role_set_var is defined
+
+- name: test deduping allows for successful execution of role after host is unreachable
+  hosts: fake,testhost
+  gather_facts: false
+  tags: [ 'unreachable' ]
+  ignore_unreachable: yes
+  roles:
+    # unreachable by the first host
+    - role: test_connectivity
+
+    # unreachable host will try again,
+    # the successful host will not because it's deduplicated
+    - role: test_connectivity
+
+- name: test deduping role for failed host
+  hosts: testhost,localhost
+  gather_facts: false
+  tags: [ 'conditional_failed' ]
+  ignore_errors: yes
+  roles:
+    # Uses run_once to fail on the first host the first time it executes
+    - role: failed_when
+
+    - role: set_var
+    - role: recover
+
+    # Deduplicated after the failure, ONLY runs for localhost
+    - role: failed_when
+    # Deduplicated with the previous success
+    - role: failed_when

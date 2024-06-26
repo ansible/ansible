@@ -1,10 +1,7 @@
 """Sanity test for proper python syntax."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
-
-from ... import types as t
 
 from . import (
     SanityMultipleVersion,
@@ -12,7 +9,12 @@ from . import (
     SanityFailure,
     SanitySuccess,
     SanityTargets,
-    SANITY_ROOT,
+    SanitySkipped,
+    TARGET_SANITY_ROOT,
+)
+
+from ...test import (
+    TestResult,
 )
 
 from ...target import (
@@ -22,7 +24,6 @@ from ...target import (
 from ...util import (
     SubprocessError,
     display,
-    find_python,
     parse_to_list_of_dict,
     is_subdir,
 )
@@ -35,25 +36,27 @@ from ...config import (
     SanityConfig,
 )
 
+from ...host_configs import (
+    PythonConfig,
+)
+
 
 class CompileTest(SanityMultipleVersion):
     """Sanity test for proper python syntax."""
-    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+
+    def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         return [target for target in targets if os.path.splitext(target.path)[1] == '.py' or is_subdir(target.path, 'bin')]
 
-    def test(self, args, targets, python_version):
-        """
-        :type args: SanityConfig
-        :type targets: SanityTargets
-        :type python_version: str
-        :rtype: TestResult
-        """
-        settings = self.load_processor(args, python_version)
+    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
+        if args.prime_venvs:
+            return SanitySkipped(self.name, python_version=python.version)
+
+        settings = self.load_processor(args, python.version)
 
         paths = [target.path for target in targets.include]
 
-        cmd = [find_python(python_version), os.path.join(SANITY_ROOT, 'compile', 'compile.py')]
+        cmd = [python.path, os.path.join(TARGET_SANITY_ROOT, 'compile', 'compile.py')]
 
         data = '\n'.join(paths)
 
@@ -71,7 +74,7 @@ class CompileTest(SanityMultipleVersion):
             raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
 
         if args.explain:
-            return SanitySuccess(self.name, python_version=python_version)
+            return SanitySuccess(self.name, python_version=python.version)
 
         pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
 
@@ -87,6 +90,6 @@ class CompileTest(SanityMultipleVersion):
         results = settings.process_errors(results, paths)
 
         if results:
-            return SanityFailure(self.name, messages=results, python_version=python_version)
+            return SanityFailure(self.name, messages=results, python_version=python.version)
 
-        return SanitySuccess(self.name, python_version=python_version)
+        return SanitySuccess(self.name, python_version=python.version)

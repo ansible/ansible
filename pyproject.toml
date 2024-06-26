@@ -1,0 +1,3 @@
+[build-system]
+requires = ["setuptools >= 66.1.0"]  # minimum setuptools version supporting Python 3.12
+build-backend = "setuptools.build_meta"

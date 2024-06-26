@@ -15,18 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from jinja2.runtime import Context
 
-from units.compat import unittest
-from units.compat.mock import patch
+import unittest
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
-from ansible.module_utils.six import string_types
+from ansible.plugins.loader import init_plugin_loader
 from ansible.template import Templar, AnsibleContext, AnsibleEnvironment, AnsibleUndefined
 from ansible.utils.unsafe_proxy import AnsibleUnsafe, wrap_var
 from units.mock.loader import DictDataLoader
@@ -34,6 +31,7 @@ from units.mock.loader import DictDataLoader
 
 class BaseTemplar(object):
     def setUp(self):
+        init_plugin_loader()
         self.test_vars = dict(
             foo="bar",
             bam="{{foo}}",
@@ -60,14 +58,6 @@ class BaseTemplar(object):
 
     def is_unsafe(self, obj):
         return self._ansible_context._is_unsafe(obj)
-
-
-# class used for testing arbitrary objects passed to template
-class SomeClass(object):
-    foo = 'bar'
-
-    def __init__(self):
-        self.blip = 'blip'
 
 
 class SomeUnsafeClass(AnsibleUnsafe):
@@ -187,8 +177,7 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
         self.assertTrue(res)
         self.assertEqual(res, 'bar')
 
-    @patch('ansible.template.safe_eval', side_effect=AnsibleError)
-    def test_template_convert_data_template_in_data(self, mock_safe_eval):
+    def test_template_convert_data_template_in_data(self):
         res = self.templar.template('{{bam}}', convert_data=True)
         self.assertTrue(res)
         self.assertEqual(res, 'bar')
@@ -220,10 +209,10 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
 
     def test_weird(self):
         data = u'''1 2 #}huh{# %}ddfg{% }}dfdfg{{  {%what%} {{#foo#}} {%{bar}%} {#%blip%#} {{asdfsd%} 3 4 {{foo}} 5 6 7'''
-        self.assertRaisesRegexp(AnsibleError,
-                                'template error while templating string',
-                                self.templar.template,
-                                data)
+        self.assertRaisesRegex(AnsibleError,
+                               'template error while templating string',
+                               self.templar.template,
+                               data)
 
     def test_template_with_error(self):
         """Check that AnsibleError is raised, fail if an unhandled exception is raised"""
@@ -267,8 +256,6 @@ class TestTemplarMisc(BaseTemplar, unittest.TestCase):
             templar.available_variables = "foo=bam"
         except AssertionError:
             pass
-        except Exception as e:
-            self.fail(e)
 
     def test_templar_escape_backslashes(self):
         # Rule of thumb: If escape backslashes is True you should end up with
@@ -298,21 +285,21 @@ class TestTemplarMisc(BaseTemplar, unittest.TestCase):
 
 class TestTemplarLookup(BaseTemplar, unittest.TestCase):
     def test_lookup_missing_plugin(self):
-        self.assertRaisesRegexp(AnsibleError,
-                                r'lookup plugin \(not_a_real_lookup_plugin\) not found',
-                                self.templar._lookup,
-                                'not_a_real_lookup_plugin',
-                                'an_arg', a_keyword_arg='a_keyword_arg_value')
+        self.assertRaisesRegex(AnsibleError,
+                               r'lookup plugin \(not_a_real_lookup_plugin\) not found',
+                               self.templar._lookup,
+                               'not_a_real_lookup_plugin',
+                               'an_arg', a_keyword_arg='a_keyword_arg_value')
 
     def test_lookup_list(self):
         res = self.templar._lookup('list', 'an_arg', 'another_arg')
         self.assertEqual(res, 'an_arg,another_arg')
 
     def test_lookup_jinja_undefined(self):
-        self.assertRaisesRegexp(AnsibleUndefinedVariable,
-                                "'an_undefined_jinja_var' is undefined",
-                                self.templar._lookup,
-                                'list', '{{ an_undefined_jinja_var }}')
+        self.assertRaisesRegex(AnsibleUndefinedVariable,
+                               "'an_undefined_jinja_var' is undefined",
+                               self.templar._lookup,
+                               'list', '{{ an_undefined_jinja_var }}')
 
     def test_lookup_jinja_defined(self):
         res = self.templar._lookup('list', '{{ some_var }}')
@@ -320,18 +307,18 @@ class TestTemplarLookup(BaseTemplar, unittest.TestCase):
         # self.assertIsInstance(res, AnsibleUnsafe)
 
     def test_lookup_jinja_dict_string_passed(self):
-        self.assertRaisesRegexp(AnsibleError,
-                                "with_dict expects a dict",
-                                self.templar._lookup,
-                                'dict',
-                                '{{ some_var }}')
+        self.assertRaisesRegex(AnsibleError,
+                               "with_dict expects a dict",
+                               self.templar._lookup,
+                               'dict',
+                               '{{ some_var }}')
 
     def test_lookup_jinja_dict_list_passed(self):
-        self.assertRaisesRegexp(AnsibleError,
-                                "with_dict expects a dict",
-                                self.templar._lookup,
-                                'dict',
-                                ['foo', 'bar'])
+        self.assertRaisesRegex(AnsibleError,
+                               "with_dict expects a dict",
+                               self.templar._lookup,
+                               'dict',
+                               ['foo', 'bar'])
 
     def test_lookup_jinja_kwargs(self):
         res = self.templar._lookup('list', 'blip', random_keyword='12345')
@@ -343,12 +330,12 @@ class TestTemplarLookup(BaseTemplar, unittest.TestCase):
         self.assertEqual(res, ["blip"])
 
     def test_lookup_jinja_list_wantlist_undefined(self):
-        self.assertRaisesRegexp(AnsibleUndefinedVariable,
-                                "'some_undefined_var' is undefined",
-                                self.templar._lookup,
-                                'list',
-                                '{{ some_undefined_var }}',
-                                wantlist=True)
+        self.assertRaisesRegex(AnsibleUndefinedVariable,
+                               "'some_undefined_var' is undefined",
+                               self.templar._lookup,
+                               'list',
+                               '{{ some_undefined_var }}',
+                               wantlist=True)
 
     def test_lookup_jinja_list_wantlist_unsafe(self):
         res = self.templar._lookup('list', '{{ some_unsafe_var }}', wantlist=True)
@@ -444,3 +431,28 @@ class TestAnsibleContext(BaseTemplar, unittest.TestCase):
     def test_is_unsafe(self):
         context = self._context()
         self.assertFalse(context._is_unsafe(AnsibleUndefined()))
+
+
+def test_unsafe_lookup():
+    res = Templar(
+        None,
+        variables={
+            'var0': '{{ var1 }}',
+            'var1': ['unsafe'],
+        }
+    ).template('{{ lookup("list", var0) }}')
+    assert getattr(res[0], '__UNSAFE__', False)
+
+
+def test_unsafe_lookup_no_conversion():
+    res = Templar(
+        None,
+        variables={
+            'var0': '{{ var1 }}',
+            'var1': ['unsafe'],
+        }
+    ).template(
+        '{{ lookup("list", var0) }}',
+        convert_data=False,
+    )
+    assert getattr(res, '__UNSAFE__', False)

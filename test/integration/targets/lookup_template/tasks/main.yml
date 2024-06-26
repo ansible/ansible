@@ -17,3 +17,18 @@
 - assert:
     that:
       - "hello_world_string|trim == 'Hello world!'"
+
+- name: Test that we have a proper jinja search path in template lookup with different comment start and end string
+  set_fact:
+    hello_world_comment: "{{ lookup('template', 'hello_comment.txt', comment_start_string='[#', comment_end_string='#]') }}"
+
+- assert:
+    that:
+      - "hello_world_comment|trim == 'Hello world!'"
+
+# 77004
+- assert:
+    that:
+      - lookup('template', 'dict.j2') is mapping
+      - lookup('template', 'dict.j2', convert_data=True) is mapping
+      - lookup('template', 'dict.j2', convert_data=False) is not mapping

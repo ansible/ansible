@@ -1,0 +1,304 @@
+
+
+PLAY [testhost] ****************************************************************
+
+TASK [Changed task] ************************************************************
+changed: [testhost] => 
+    changed: true
+    cmd:
+    - echo
+    - foo
+    delta: '0:00:00.000000'
+    end: '0000-00-00 00:00:00.000000'
+    msg: ''
+    rc: 0
+    start: '0000-00-00 00:00:00.000000'
+    stderr: ''
+    stderr_lines: <omitted>
+    stdout: foo
+    stdout_lines: <omitted>
+
+TASK [Ok task] *****************************************************************
+ok: [testhost] => 
+    changed: false
+    cmd:
+    - echo
+    - foo
+    delta: '0:00:00.000000'
+    end: '0000-00-00 00:00:00.000000'
+    msg: ''
+    rc: 0
+    start: '0000-00-00 00:00:00.000000'
+    stderr: ''
+    stderr_lines: <omitted>
+    stdout: foo
+    stdout_lines: <omitted>
+
+TASK [Failed task] *************************************************************
+fatal: [testhost]: FAILED! => 
+    changed: false
+    msg: no reason
+...ignoring
+
+TASK [Skipped task] ************************************************************
+skipping: [testhost] => 
+    changed: false
+    false_condition: false
+    skip_reason: Conditional result was False
+
+TASK [Task with var in name (foo bar)] *****************************************
+changed: [testhost] => 
+    changed: true
+    cmd:
+    - echo
+    - foo
+    delta: '0:00:00.000000'
+    end: '0000-00-00 00:00:00.000000'
+    msg: ''
+    rc: 0
+    start: '0000-00-00 00:00:00.000000'
+    stderr: ''
+    stderr_lines: <omitted>
+    stdout: foo
+    stdout_lines: <omitted>
+
+TASK [Loop task] ***************************************************************
+changed: [testhost] => (item=foo-1) => 
+    ansible_loop_var: item
+    changed: true
+    cmd:
+    - echo
+    - foo
+    delta: '0:00:00.000000'
+    end: '0000-00-00 00:00:00.000000'
+    item: 1
+    msg: ''
+    rc: 0
+    start: '0000-00-00 00:00:00.000000'
+    stderr: ''
+    stderr_lines: <omitted>
+    stdout: foo
+    stdout_lines: <omitted>
+changed: [testhost] => (item=foo-2) => 
+    ansible_loop_var: item
+    changed: true
+    cmd:
+    - echo
+    - foo
+    delta: '0:00:00.000000'
+    end: '0000-00-00 00:00:00.000000'
+    item: 2
+    msg: ''
+    rc: 0
+    start: '0000-00-00 00:00:00.000000'
+    stderr: ''
+    stderr_lines: <omitted>
+    stdout: foo
+    stdout_lines: <omitted>
+changed: [testhost] => (item=foo-3) => 
+    ansible_loop_var: item
+    changed: true
+    cmd:
+    - echo
+    - foo
+    delta: '0:00:00.000000'
+    end: '0000-00-00 00:00:00.000000'
+    item: 3
+    msg: ''
+    rc: 0
+    start: '0000-00-00 00:00:00.000000'
+    stderr: ''
+    stderr_lines: <omitted>
+    stdout: foo
+    stdout_lines: <omitted>
+
+TASK [debug loop] **************************************************************
+changed: [testhost] => (item=debug-1) => 
+    msg: debug-1
+failed: [testhost] (item=debug-2) => 
+    msg: debug-2
+ok: [testhost] => (item=debug-3) => 
+    msg: debug-3
+skipping: [testhost] => (item=debug-4)  => 
+    ansible_loop_var: item
+    false_condition: item != 4
+    item: 4
+fatal: [testhost]: FAILED! => 
+    msg: One or more items failed
+...ignoring
+
+TASK [EXPECTED FAILURE Failed task to be rescued] ******************************
+fatal: [testhost]: FAILED! => 
+    changed: false
+    msg: Failed as requested from task
+
+TASK [Rescue task] *************************************************************
+changed: [testhost] => 
+    changed: true
+    cmd:
+    - echo
+    - rescued
+    delta: '0:00:00.000000'
+    end: '0000-00-00 00:00:00.000000'
+    msg: ''
+    rc: 0
+    start: '0000-00-00 00:00:00.000000'
+    stderr: ''
+    stderr_lines: <omitted>
+    stdout: rescued
+    stdout_lines: <omitted>
+
+TASK [include_tasks] ***********************************************************
+included: .../test/integration/targets/callback_default/include_me.yml for testhost => (item=1)
+
+TASK [debug] *******************************************************************
+ok: [testhost] => 
+    item: 1
+
+TASK [copy] ********************************************************************
+changed: [testhost] => 
+    changed: true
+    checksum: 0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33
+    dest: .../test_diff.txt
+    gid: 0
+    group: root
+    md5sum: acbd18db4cc2f85cedef654fccc4a4d8
+    mode: '0644'
+    owner: root
+    size: 3
+    src: .../.source.txt
+    state: file
+    uid: 0
+
+TASK [replace] *****************************************************************
+--- before: .../test_diff.txt
++++ after: .../test_diff.txt
+@@ -1 +1 @@
+-foo
+\ No newline at end of file
++bar
+\ No newline at end of file
+
+changed: [testhost] => 
+    changed: true
+    msg: 1 replacements made
+    rc: 0
+
+TASK [replace] *****************************************************************
+ok: [testhost] => 
+    changed: false
+    msg: 1 replacements made
+    rc: 0
+
+TASK [debug] *******************************************************************
+skipping: [testhost] => 
+    skipped_reason: No items in the list
+
+TASK [debug] *******************************************************************
+skipping: [testhost] => 
+    skipped_reason: No items in the list
+
+TASK [debug] *******************************************************************
+skipping: [testhost] => (item=1)  => 
+    ansible_loop_var: item
+    false_condition: false
+    item: 1
+skipping: [testhost] => (item=2)  => 
+    ansible_loop_var: item
+    false_condition: false
+    item: 2
+skipping: [testhost] => 
+    msg: All items skipped
+
+RUNNING HANDLER [Test handler 1] ***********************************************
+changed: [testhost] => 
+    changed: true
+    cmd:
+    - echo
+    - foo
+    delta: '0:00:00.000000'
+    end: '0000-00-00 00:00:00.000000'
+    msg: ''
+    rc: 0
+    start: '0000-00-00 00:00:00.000000'
+    stderr: ''
+    stderr_lines: <omitted>
+    stdout: foo
+    stdout_lines: <omitted>
+
+RUNNING HANDLER [Test handler 2] ***********************************************
+ok: [testhost] => 
+    changed: false
+    cmd:
+    - echo
+    - foo
+    delta: '0:00:00.000000'
+    end: '0000-00-00 00:00:00.000000'
+    msg: ''
+    rc: 0
+    start: '0000-00-00 00:00:00.000000'
+    stderr: ''
+    stderr_lines: <omitted>
+    stdout: foo
+    stdout_lines: <omitted>
+
+RUNNING HANDLER [Test handler 3] ***********************************************
+changed: [testhost] => 
+    changed: true
+    cmd:
+    - echo
+    - foo
+    delta: '0:00:00.000000'
+    end: '0000-00-00 00:00:00.000000'
+    msg: ''
+    rc: 0
+    start: '0000-00-00 00:00:00.000000'
+    stderr: ''
+    stderr_lines: <omitted>
+    stdout: foo
+    stdout_lines: <omitted>
+
+PLAY [testhost] ****************************************************************
+
+TASK [First free task] *********************************************************
+changed: [testhost] => 
+    changed: true
+    cmd:
+    - echo
+    - foo
+    delta: '0:00:00.000000'
+    end: '0000-00-00 00:00:00.000000'
+    msg: ''
+    rc: 0
+    start: '0000-00-00 00:00:00.000000'
+    stderr: ''
+    stderr_lines: <omitted>
+    stdout: foo
+    stdout_lines: <omitted>
+
+TASK [Second free task] ********************************************************
+changed: [testhost] => 
+    changed: true
+    cmd:
+    - echo
+    - foo
+    delta: '0:00:00.000000'
+    end: '0000-00-00 00:00:00.000000'
+    msg: ''
+    rc: 0
+    start: '0000-00-00 00:00:00.000000'
+    stderr: ''
+    stderr_lines: <omitted>
+    stdout: foo
+    stdout_lines: <omitted>
+
+TASK [Include some tasks] ******************************************************
+included: .../test/integration/targets/callback_default/include_me.yml for testhost => (item=1)
+
+TASK [debug] *******************************************************************
+ok: [testhost] => 
+    item: 1
+
+PLAY RECAP *********************************************************************
+testhost                   : ok=19   changed=11   unreachable=0    failed=0    skipped=4    rescued=1    ignored=2   
+

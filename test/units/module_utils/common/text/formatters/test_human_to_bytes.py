@@ -3,8 +3,7 @@
 # Copyright 2019, Sviatoslav Sydorenko <webknjaz@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
 
@@ -183,3 +182,76 @@ def test_human_to_bytes_isbits_wrong_default_unit(test_input, unit, isbits):
     """Test of human_to_bytes function, default_unit is in an invalid format for isbits value."""
     with pytest.raises(ValueError, match="Value is not a valid string"):
         human_to_bytes(test_input, default_unit=unit, isbits=isbits)
+
+
+@pytest.mark.parametrize(
+    'test_input',
+    [
+        '10 BBQ sticks please',
+        '3000 GB guns of justice',
+        '1 EBOOK please',
+        '3 eBulletins please',
+        '1 bBig family',
+    ]
+)
+def test_human_to_bytes_nonsensical_inputs_first_two_letter_unit(test_input):
+    """Test of human_to_bytes function to ensure it raises ValueError for nonsensical inputs that has the first two
+    letters as a unit."""
+    expected = "can't interpret following string"
+    with pytest.raises(ValueError, match=expected):
+        human_to_bytes(test_input)
+
+
+@pytest.mark.parametrize(
+    'test_input',
+    [
+        '12,000 MB',
+        '12 000 MB',
+        '- |\n   1\n   kB',
+        '          12',
+        ' 12 MB',  # OGHAM SPACE MARK
+        '1\u200B000 MB',  # U+200B zero-width space after 1
+    ]
+)
+def test_human_to_bytes_non_number_truncate_result(test_input):
+    """Test of human_to_bytes function to ensure it raises ValueError for handling non-number character and
+    truncating result"""
+    expected = "can't interpret following string"
+    with pytest.raises(ValueError, match=expected):
+        human_to_bytes(test_input)
+
+
+@pytest.mark.parametrize(
+    'test_input',
+    [
+        '3 eBulletins',
+        '.1 Geggabytes',
+        '3 prettybytes',
+        '13youcanhaveabyteofmysandwich',
+        '.1 Geggabytes',
+        '10 texasburgerbytes',
+        '12 muppetbytes',
+    ]
+)
+def test_human_to_bytes_nonsensical(test_input):
+    """Test of human_to_bytes function to ensure it raises ValueError for nonsensical input with first letter matches
+    [BEGKMPTYZ] and word contains byte"""
+    expected = "Value is not a valid string"
+    with pytest.raises(ValueError, match=expected):
+        human_to_bytes(test_input)
+
+
+@pytest.mark.parametrize(
+    'test_input',
+    [
+        '8𖭙B',
+        '၀k',
+        '1.၀k?',
+        '᭔ MB'
+    ]
+)
+def test_human_to_bytes_non_ascii_number(test_input):
+    """Test of human_to_bytes function,correctly filtering out non ASCII characters"""
+    expected = "can't interpret following string"
+    with pytest.raises(ValueError, match=expected):
+        human_to_bytes(test_input)

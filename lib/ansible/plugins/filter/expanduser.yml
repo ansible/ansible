@@ -1,0 +1,21 @@
+DOCUMENTATION:
+  name: basename
+  author: ansible core team
+  version_added: "1.5"
+  short_description: Returns a path with C(~) translation.
+  description:
+    - Translates C(~) in a path to the proper user's home directory.
+  options:
+    _input:
+      description: A string that contains a path.
+      type: path
+      required: true
+EXAMPLES: |
+
+  # To get '/home/myuser/stuff.txt' from '~/stuff.txt'.
+  {{ mypath | expanduser }}
+
+RETURN:
+  _value:
+    description: The translated path.
+    type: path

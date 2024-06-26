@@ -2,7 +2,6 @@ using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
@@ -123,7 +122,6 @@ namespace Ansible.AccessToken
             base.SetHandle(handle);
         }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         protected override bool ReleaseHandle()
         {
             Marshal.FreeHGlobal(handle);
@@ -247,7 +245,6 @@ namespace Ansible.AccessToken
         public SafeNativeHandle() : base(true) { }
         public SafeNativeHandle(IntPtr handle) : base(true) { this.handle = handle; }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         protected override bool ReleaseHandle()
         {
             return NativeMethods.CloseHandle(handle);
@@ -395,7 +392,7 @@ namespace Ansible.AccessToken
         {
             SafeNativeHandle hToken;
             if (!NativeMethods.OpenProcessToken(hProcess, access, out hToken))
-                throw new Win32Exception(String.Format("Failed to open proces token with access {0}",
+                throw new Win32Exception(String.Format("Failed to open process token with access {0}",
                     access.ToString()));
 
             return hToken;

@@ -83,11 +83,25 @@
       - apt_install_fnmatch is changed
       - apt_uninstall_fnmatch is changed
 
+- name: Test update_cache 1 (check mode)
+  apt:
+    update_cache: true
+    cache_valid_time: 10
+  register: apt_update_cache_1_check_mode
+  check_mode: true
+
 - name: Test update_cache 1
   apt:
     update_cache: true
     cache_valid_time: 10
   register: apt_update_cache_1
+
+- name: Test update_cache 2 (check mode)
+  apt:
+    update_cache: true
+    cache_valid_time: 10
+  register: apt_update_cache_2_check_mode
+  check_mode: true
 
 - name: Test update_cache 2
   apt:
@@ -98,7 +112,9 @@
 - name: verify update_cache
   assert:
     that:
+      - apt_update_cache_1_check_mode is changed
       - apt_update_cache_1 is changed
+      - apt_update_cache_2_check_mode is not changed
       - apt_update_cache_2 is not changed
 
 - name: uninstall apt bindings with apt again
@@ -205,7 +221,7 @@
 
 # INSTALL WITHOUT REMOVALS
 - name: Install hello, that conflicts with hello-traditional
-  apt: 
+  apt:
     pkg: hello
     state: present
     update_cache: no
@@ -221,7 +237,7 @@
         - "dpkg_result.rc == 0"
 
 - name: Try installing hello-traditional, that conflicts with hello
-  apt: 
+  apt:
     pkg: hello-traditional
     state: present
     fail_on_autoremove: yes
@@ -235,7 +251,7 @@
       - '"Packages need to be removed but remove is disabled." in apt_result.msg'
 
 - name: uninstall hello with apt
-  apt: 
+  apt:
     pkg: hello
     state: absent
     purge: yes
@@ -303,16 +319,16 @@
     dest: /etc/apt/sources.list.d/non-existing.list
     content: deb http://ppa.launchpad.net/non-existing trusty main
 
-- name: test for sane error message
+- name: test for logical error message
   apt:
     update_cache: yes
   register: apt_result
   ignore_errors: yes
 
-- name: verify sane error message
+- name: verify logical error message
   assert:
     that:
-      - "'Failed to fetch' in apt_result['msg']"
+      - "'Failed to update apt cache' in apt_result['msg']"
       - "'403' in apt_result['msg']"
 
 - name: Clean up
@@ -356,7 +372,7 @@
       - libcaca-dev
       - libslang2-dev
 
-# https://github.com/ansible/ansible/issues/38995
+# # https://github.com/ansible/ansible/issues/38995
 - name: build-dep for a package
   apt:
     name: tree
@@ -437,3 +453,167 @@
   file:
     path: /usr/sbin/policy-rc.d
     state: absent
+
+# https://github.com/ansible/ansible/issues/65325
+- name: Download and install old version of hello (to test allow_change_held_packages option)
+  apt: "deb=https://ci-files.testing.ansible.com/test/integration/targets/dpkg_selections/hello_{{ hello_old_version }}_amd64.deb"
+  notify:
+    - remove package hello
+
+- name: Put hello on hold
+  shell: apt-mark hold hello
+
+- name: Get hold list
+  shell: apt-mark showhold
+  register: allow_change_held_packages_hold
+
+- name: Check that the package hello is on the hold list
+  assert:
+    that:
+      - "'hello' in allow_change_held_packages_hold.stdout"
+
+- name: Try updating package to the latest version (allow_change_held_packages=no)
+  apt:
+    name: hello
+    state: latest
+  ignore_errors: True
+  register: allow_change_held_packages_failed_update
+
+- name: Get the version of the package
+  shell: dpkg -s hello | grep Version | awk '{print $2}'
+  register: allow_change_held_packages_hello_version
+
+- name: Verify that the package was not updated (apt returns with an error)
+  assert:
+    that:
+      - "allow_change_held_packages_failed_update is failed"
+      - "'--allow-change-held-packages' in allow_change_held_packages_failed_update.stderr"
+      - "allow_change_held_packages_hello_version.stdout == hello_old_version"
+
+- name: Try updating package to the latest version (allow_change_held_packages=yes)
+  apt:
+    name: hello
+    state: latest
+    allow_change_held_packages: yes
+  register: allow_change_held_packages_successful_update
+
+- name: Get the version of the package
+  shell: dpkg -s hello | grep Version | awk '{print $2}'
+  register: allow_change_held_packages_hello_version
+
+- name: Verify that the package was updated
+  assert:
+    that:
+      - "allow_change_held_packages_successful_update is changed"
+      - "allow_change_held_packages_hello_version.stdout != hello_old_version"
+
+- name: Try updating package to the latest version again
+  apt:
+    name: hello
+    state: latest
+    allow_change_held_packages: yes
+  register: allow_change_held_packages_no_update
+
+- name: Get the version of the package
+  shell: dpkg -s hello | grep Version | awk '{print $2}'
+  register: allow_change_held_packages_hello_version_again
+
+- name: Verify that the package was not updated
+  assert:
+    that:
+      - "allow_change_held_packages_no_update is not changed"
+      - "allow_change_held_packages_hello_version.stdout == allow_change_held_packages_hello_version_again.stdout"
+
+# Remove pkg on hold
+- name: Put hello on hold
+  shell: apt-mark hold hello
+
+- name: Get hold list
+  shell: apt-mark showhold
+  register: hello_hold
+
+- name: Check that the package hello is on the hold list
+  assert:
+    that:
+      - "'hello' in hello_hold.stdout"
+
+- name: Try removing package hello
+  apt:
+    name: hello
+    state: absent
+  register: package_removed
+  ignore_errors: true
+
+- name: verify the package is not removed with dpkg
+  shell: dpkg -l hello
+  register: dpkg_result
+
+- name: Verify that package was not removed
+  assert:
+    that:
+    - package_removed is failed
+    - dpkg_result is success
+
+- name: Try removing package (allow_change_held_packages=yes)
+  apt:
+    name: hello
+    state: absent
+    allow_change_held_packages: yes
+  register: package_removed
+
+- name: verify the package is removed with dpkg
+  shell: dpkg -l hello
+  register: dpkg_result
+  ignore_errors: true
+
+- name: Verify that package removal was succesfull
+  assert:
+    that:
+    - package_removed is success
+    - dpkg_result is failed
+    - package_removed.changed
+
+# Virtual package
+- name: Install a virtual package
+  apt:
+    package:
+      - emacs-nox
+      - yaml-mode # <- the virtual package
+    state: latest
+  register: install_virtual_package_result
+
+- name: Check the virtual package install result
+  assert:
+    that:
+      - install_virtual_package_result is changed
+
+- name: Clean up virtual-package install
+  apt:
+    package:
+      - emacs-nox
+      - elpa-yaml-mode
+    state: absent
+    purge: yes
+
+# https://github.com/ansible/ansible/issues/82611
+- name: clean apt cache
+  apt:
+    clean: true
+
+- name: check for /var/cache/apt/pkgcache.bin
+  stat:
+    path: /var/cache/apt/pkgcache.bin
+  register: pkgcache_bin
+
+- name: check for /var/cache/apt/srcpkgcache.bin
+  stat:
+    path: /var/cache/apt/srcpkgcache.bin
+  register: srcpkgcache_bin
+
+- name: verify apt cache files are cleaned
+  assert:
+    that:
+      - not pkgcache_bin.stat.exists
+      - not srcpkgcache_bin.stat.exists
+    fail_msg: "apt cache files still exist."
+    success_msg: "apt cache files are cleaned."

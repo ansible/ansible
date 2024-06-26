@@ -2,13 +2,13 @@
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 Function Backup-File {
-<#
+    <#
     .SYNOPSIS
     Helper function to make a backup of a file.
     .EXAMPLE
     Backup-File -path $path -WhatIf:$check_mode
 #>
-    [CmdletBinding(SupportsShouldProcess=$true)]
+    [CmdletBinding(SupportsShouldProcess = $true)]
 
     Param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
@@ -18,10 +18,11 @@ Function Backup-File {
     Process {
         $backup_path = $null
         if (Test-Path -LiteralPath $path -PathType Leaf) {
-            $backup_path = "$path.$pid." + [DateTime]::Now.ToString("yyyyMMdd-HHmmss") + ".bak";
+            $backup_path = "$path.$pid." + [DateTime]::Now.ToString("yyyyMMdd-HHmmss") + ".bak"
             Try {
                 Copy-Item -LiteralPath $path -Destination $backup_path
-            } Catch {
+            }
+            Catch {
                 throw "Failed to create backup file '$backup_path' from '$path'. ($($_.Exception.Message))"
             }
         }

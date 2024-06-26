@@ -15,30 +15,24 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import ast
 import datetime
+import functools
 import os
-import pkgutil
 import pwd
 import re
 import time
 
+from collections.abc import Iterator, Sequence, Mapping, MappingView, MutableMapping
 from contextlib import contextmanager
-from ansible.module_utils.compat.version import LooseVersion
 from numbers import Number
 from traceback import format_exc
 
-try:
-    from hashlib import sha1
-except ImportError:
-    from sha import sha as sha1
-
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 from jinja2.loaders import FileSystemLoader
+from jinja2.nativetypes import NativeEnvironment
 from jinja2.runtime import Context, StrictUndefined
 
 from ansible import constants as C
@@ -48,63 +42,32 @@ from ansible.errors import (
     AnsibleFilterError,
     AnsibleLookupError,
     AnsibleOptionsError,
-    AnsiblePluginRemovedError,
     AnsibleUndefinedVariable,
 )
-from ansible.module_utils.six import iteritems, string_types, text_type
-from ansible.module_utils.six.moves import range
-from ansible.module_utils._text import to_native, to_text, to_bytes
-from ansible.module_utils.common._collections_compat import Iterator, Sequence, Mapping, MappingView, MutableMapping
+from ansible.module_utils.six import string_types
+from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible.module_utils.common.collections import is_sequence
-from ansible.module_utils.compat.importlib import import_module
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
-from ansible.template.safe_eval import safe_eval
+from ansible.template.native_helpers import ansible_native_concat, ansible_eval_concat, ansible_concat
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
-from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
-from ansible.utils.collection_loader._collection_finder import _get_collection_metadata
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.unsafe_proxy import wrap_var
+from ansible.utils.native_jinja import NativeJinjaText
+from ansible.utils.unsafe_proxy import to_unsafe_text, wrap_var
 
 display = Display()
 
 
 __all__ = ['Templar', 'generate_ansible_template_vars']
 
-# A regex for checking to see if a variable we're trying to
-# expand is just a single variable name.
-
 # Primitive Types which we don't want Jinja to convert to strings.
 NON_TEMPLATED_TYPES = (bool, Number)
 
 JINJA2_OVERRIDE = '#jinja2:'
 
-from jinja2 import __version__ as j2_version
-from jinja2 import Environment
-from jinja2.utils import concat as j2_concat
-
-
-USE_JINJA2_NATIVE = False
-if C.DEFAULT_JINJA2_NATIVE:
-    try:
-        from jinja2.nativetypes import NativeEnvironment
-        from ansible.template.native_helpers import ansible_native_concat
-        from ansible.utils.native_jinja import NativeJinjaText
-        USE_JINJA2_NATIVE = True
-    except ImportError:
-        from jinja2 import Environment
-        from jinja2.utils import concat as j2_concat
-        if C.JINJA2_NATIVE_WARNING:
-            display.warning(
-                'jinja2_native requires Jinja 2.10 and above. '
-                'Version detected: %s. Falling back to default.' % j2_version
-            )
-
-
 JINJA2_BEGIN_TOKENS = frozenset(('variable_begin', 'block_begin', 'comment_begin', 'raw_begin'))
 JINJA2_END_TOKENS = frozenset(('variable_end', 'block_end', 'comment_end', 'raw_end'))
-
 
 RANGE_TYPE = type(range(0))
 
@@ -122,26 +85,26 @@ def generate_ansible_template_vars(path, fullpath=None, dest_path=None):
         template_uid = os.stat(b_path).st_uid
 
     temp_vars = {
-        'template_host': to_text(os.uname()[1]),
-        'template_path': path,
+        'template_host': to_unsafe_text(os.uname()[1]),
+        'template_path': to_unsafe_text(path),
         'template_mtime': datetime.datetime.fromtimestamp(os.path.getmtime(b_path)),
-        'template_uid': to_text(template_uid),
+        'template_uid': to_unsafe_text(template_uid),
         'template_run_date': datetime.datetime.now(),
-        'template_destpath': to_native(dest_path) if dest_path else None,
+        'template_destpath': wrap_var(to_native(dest_path)) if dest_path else None,
     }
 
     if fullpath is None:
-        temp_vars['template_fullpath'] = os.path.abspath(path)
+        temp_vars['template_fullpath'] = wrap_var(os.path.abspath(path))
     else:
-        temp_vars['template_fullpath'] = fullpath
+        temp_vars['template_fullpath'] = wrap_var(fullpath)
 
     managed_default = C.DEFAULT_MANAGED_STR
     managed_str = managed_default.format(
-        host=temp_vars['template_host'],
-        uid=temp_vars['template_uid'],
-        file=temp_vars['template_path'],
+        host="{{ template_host }}",
+        uid="{{ template_uid }}",
+        file="{{ template_path }}"
     )
-    temp_vars['ansible_managed'] = to_text(time.strftime(to_native(managed_str), time.localtime(os.path.getmtime(b_path))))
+    temp_vars['ansible_managed'] = time.strftime(to_native(managed_str), time.localtime(os.path.getmtime(b_path)))
 
     return temp_vars
 
@@ -166,7 +129,7 @@ def _escape_backslashes(data, jinja_env):
     backslashes inside of a jinja2 expression.
 
     """
-    if '\\' in data and '{{' in data:
+    if '\\' in data and jinja_env.variable_start_string in data:
         new_data = []
         d2 = jinja_env.preprocess(data)
         in_var = False
@@ -189,6 +152,58 @@ def _escape_backslashes(data, jinja_env):
     return data
 
 
+def _create_overlay(data, overrides, jinja_env):
+    if overrides is None:
+        overrides = {}
+
+    try:
+        has_override_header = data.startswith(JINJA2_OVERRIDE)
+    except (TypeError, AttributeError):
+        has_override_header = False
+
+    if overrides or has_override_header:
+        overlay = jinja_env.overlay(**overrides)
+    else:
+        overlay = jinja_env
+
+    # Get jinja env overrides from template
+    if has_override_header:
+        eol = data.find('\n')
+        line = data[len(JINJA2_OVERRIDE):eol]
+        data = data[eol + 1:]
+        for pair in line.split(','):
+            if ':' not in pair:
+                raise AnsibleError("failed to parse jinja2 override '%s'."
+                                   " Did you use something different from colon as key-value separator?" % pair.strip())
+            (key, val) = pair.split(':', 1)
+            key = key.strip()
+            if hasattr(overlay, key):
+                setattr(overlay, key, ast.literal_eval(val.strip()))
+            else:
+                display.warning(f"Could not find Jinja2 environment setting to override: '{key}'")
+
+    return data, overlay
+
+
+def is_possibly_template(data, jinja_env):
+    """Determines if a string looks like a template, by seeing if it
+    contains a jinja2 start delimiter. Does not guarantee that the string
+    is actually a template.
+
+    This is different than ``is_template`` which is more strict.
+    This method may return ``True`` on a string that is not templatable.
+
+    Useful when guarding passing a string for templating, but when
+    you want to allow the templating engine to make the final
+    assessment which may result in ``TemplateSyntaxError``.
+    """
+    if isinstance(data, string_types):
+        for marker in (jinja_env.block_start_string, jinja_env.variable_start_string, jinja_env.comment_start_string):
+            if marker in data:
+                return True
+    return False
+
+
 def is_template(data, jinja_env):
     """This function attempts to quickly detect whether a value is a jinja2
     template. To do so, we look for the first 2 matching jinja2 tokens for
@@ -198,6 +213,11 @@ def is_template(data, jinja_env):
     start = True
     comment = False
     d2 = jinja_env.preprocess(data)
+
+    # Quick check to see if this is remotely like a template before doing
+    # more expensive investigation.
+    if not is_possibly_template(d2, jinja_env):
+        return False
 
     # This wraps a lot of code, but this is due to lex returning a generator
     # so we may get an exception at any part of the loop
@@ -266,7 +286,7 @@ def _is_rolled(value):
 
 
 def _unroll_iterator(func):
-    """Wrapper function, that intercepts the result of a filter
+    """Wrapper function, that intercepts the result of a templating
     and auto unrolls a generator, so that users are not required to
     explicitly use ``|list`` to unroll.
     """
@@ -276,23 +296,7 @@ def _unroll_iterator(func):
             return list(ret)
         return ret
 
-    return _update_wrapper(wrapper, func)
-
-
-def _update_wrapper(wrapper, func):
-    # This code is duplicated from ``functools.update_wrapper`` from Py3.7.
-    # ``functools.update_wrapper`` was failing when the func was ``functools.partial``
-    for attr in ('__module__', '__name__', '__qualname__', '__doc__', '__annotations__'):
-        try:
-            value = getattr(func, attr)
-        except AttributeError:
-            pass
-        else:
-            setattr(wrapper, attr, value)
-    for attr in ('__dict__',):
-        getattr(wrapper, attr).update(getattr(func, attr, {}))
-    wrapper.__wrapped__ = func
-    return wrapper
+    return functools.update_wrapper(wrapper, func)
 
 
 def _wrap_native_text(func):
@@ -305,7 +309,7 @@ def _wrap_native_text(func):
         ret = func(*args, **kwargs)
         return NativeJinjaText(ret)
 
-    return _update_wrapper(wrapper, func)
+    return functools.update_wrapper(wrapper, func)
 
 
 class AnsibleUndefined(StrictUndefined):
@@ -326,7 +330,11 @@ class AnsibleUndefined(StrictUndefined):
         return self
 
     def __repr__(self):
-        return 'AnsibleUndefined'
+        return 'AnsibleUndefined(hint={0!r}, obj={1!r}, name={2!r})'.format(
+            self._undefined_hint,
+            self._undefined_obj,
+            self._undefined_name
+        )
 
     def __contains__(self, item):
         # Return original Undefined object to preserve the first failure context
@@ -335,7 +343,7 @@ class AnsibleUndefined(StrictUndefined):
 
 class AnsibleContext(Context):
     '''
-    A custom context, which intercepts resolve() calls and sets a flag
+    A custom context, which intercepts resolve_or_missing() calls and sets a flag
     internally if any variable lookup returns an AnsibleUnsafe value. This
     flag is checked post-templating, and (when set) will result in the
     final templated result being wrapped in AnsibleUnsafe.
@@ -367,15 +375,6 @@ class AnsibleContext(Context):
         if val is not None and not self.unsafe and self._is_unsafe(val):
             self.unsafe = True
 
-    def resolve(self, key):
-        '''
-        The intercepted resolve(), which uses the helper above to set the
-        internal flag whenever an unsafe variable value is returned.
-        '''
-        val = super(AnsibleContext, self).resolve(key)
-        self._update_unsafe(val)
-        return val
-
     def resolve_or_missing(self, key):
         val = super(AnsibleContext, self).resolve_or_missing(key)
         self._update_unsafe(val)
@@ -403,11 +402,10 @@ class AnsibleContext(Context):
         Also see ``AnsibleJ2Template``and
         https://github.com/pallets/jinja/commit/d67f0fd4cc2a4af08f51f4466150d49da7798729
         """
-        if LooseVersion(j2_version) >= LooseVersion('2.9'):
-            if not self.vars:
-                return self.parent
-            if not self.parent:
-                return self.vars
+        if not self.vars:
+            return self.parent
+        if not self.parent:
+            return self.vars
 
         if isinstance(self.parent, AnsibleJ2Vars):
             return self.parent.add_locals(self.vars)
@@ -417,170 +415,67 @@ class AnsibleContext(Context):
 
 
 class JinjaPluginIntercept(MutableMapping):
-    def __init__(self, delegatee, pluginloader, jinja2_native, *args, **kwargs):
+    ''' Simulated dict class that loads Jinja2Plugins at request
+        otherwise all plugins would need to be loaded a priori.
+
+        NOTE: plugin_loader still loads all 'builtin/legacy' at
+        start so only collection plugins are really at request.
+    '''
+
+    def __init__(self, delegatee, pluginloader, *args, **kwargs):
+
         super(JinjaPluginIntercept, self).__init__(*args, **kwargs)
-        self._delegatee = delegatee
+
         self._pluginloader = pluginloader
-        self._jinja2_native = jinja2_native
 
-        if self._pluginloader.class_name == 'FilterModule':
-            self._method_map_name = 'filters'
-            self._dirname = 'filter'
-        elif self._pluginloader.class_name == 'TestModule':
-            self._method_map_name = 'tests'
-            self._dirname = 'test'
+        # Jinja environment's mapping of known names (initially just J2 builtins)
+        self._delegatee = delegatee
 
-        self._collection_jinja_func_cache = {}
+        # our names take precedence over Jinja's, but let things we've tried to resolve skip the pluginloader
+        self._seen_it = set()
 
-        self._ansible_plugins_loaded = False
-
-    def _load_ansible_plugins(self):
-        if self._ansible_plugins_loaded:
-            return
-
-        for plugin in self._pluginloader.all():
-            try:
-                method_map = getattr(plugin, self._method_map_name)
-                self._delegatee.update(method_map())
-            except Exception as e:
-                display.warning("Skipping %s plugin %s as it seems to be invalid: %r" % (self._dirname, to_text(plugin._original_path), e))
-                continue
-
-        if self._pluginloader.class_name == 'FilterModule':
-            for plugin_name, plugin in self._delegatee.items():
-                if self._jinja2_native and plugin_name in C.STRING_TYPE_FILTERS:
-                    self._delegatee[plugin_name] = _wrap_native_text(plugin)
-                else:
-                    self._delegatee[plugin_name] = _unroll_iterator(plugin)
-
-        self._ansible_plugins_loaded = True
-
-    # FUTURE: we can cache FQ filter/test calls for the entire duration of a run, since a given collection's impl's
-    # aren't supposed to change during a run
     def __getitem__(self, key):
-        self._load_ansible_plugins()
 
-        try:
-            if not isinstance(key, string_types):
-                raise ValueError('key must be a string')
+        if not isinstance(key, string_types):
+            raise ValueError('key must be a string, got %s instead' % type(key))
 
-            key = to_native(key)
-
-            if '.' not in key:  # might be a built-in or legacy, check the delegatee dict first, then try for a last-chance base redirect
-                func = self._delegatee.get(key)
-
-                if func:
-                    return func
-
-                # didn't find it in the pre-built Jinja env, assume it's a former builtin and follow the normal routing path
-                leaf_key = key
-                key = 'ansible.builtin.' + key
-            else:
-                leaf_key = key.split('.')[-1]
-
-            acr = AnsibleCollectionRef.try_parse_fqcr(key, self._dirname)
-
-            if not acr:
-                raise KeyError('invalid plugin name: {0}'.format(key))
-
-            ts = _get_collection_metadata(acr.collection)
-
-            # TODO: implement support for collection-backed redirect (currently only builtin)
-            # TODO: implement cycle detection (unified across collection redir as well)
-
-            routing_entry = ts.get('plugin_routing', {}).get(self._dirname, {}).get(leaf_key, {})
-
-            deprecation_entry = routing_entry.get('deprecation')
-            if deprecation_entry:
-                warning_text = deprecation_entry.get('warning_text')
-                removal_date = deprecation_entry.get('removal_date')
-                removal_version = deprecation_entry.get('removal_version')
-
-                if not warning_text:
-                    warning_text = '{0} "{1}" is deprecated'.format(self._dirname, key)
-
-                display.deprecated(warning_text, version=removal_version, date=removal_date, collection_name=acr.collection)
-
-            tombstone_entry = routing_entry.get('tombstone')
-
-            if tombstone_entry:
-                warning_text = tombstone_entry.get('warning_text')
-                removal_date = tombstone_entry.get('removal_date')
-                removal_version = tombstone_entry.get('removal_version')
-
-                if not warning_text:
-                    warning_text = '{0} "{1}" has been removed'.format(self._dirname, key)
-
-                exc_msg = display.get_deprecation_message(warning_text, version=removal_version, date=removal_date,
-                                                          collection_name=acr.collection, removed=True)
-
-                raise AnsiblePluginRemovedError(exc_msg)
-
-            redirect_fqcr = routing_entry.get('redirect', None)
-            if redirect_fqcr:
-                acr = AnsibleCollectionRef.from_fqcr(ref=redirect_fqcr, ref_type=self._dirname)
-                display.vvv('redirecting {0} {1} to {2}.{3}'.format(self._dirname, key, acr.collection, acr.resource))
-                key = redirect_fqcr
-            # TODO: handle recursive forwarding (not necessary for builtin, but definitely for further collection redirs)
-
-            func = self._collection_jinja_func_cache.get(key)
-
-            if func:
-                return func
-
+        original_exc = None
+        if key not in self._seen_it:
+            # this looks too early to set this- it isn't. Setting it here keeps requests for Jinja builtins from
+            # going through the pluginloader more than once, which is extremely slow for something that won't ever succeed.
+            self._seen_it.add(key)
+            plugin = None
             try:
-                pkg = import_module(acr.n_python_package_name)
-            except ImportError:
-                raise KeyError()
+                plugin = self._pluginloader.get(key)
+            except (AnsibleError, KeyError) as e:
+                original_exc = e
+            except Exception as e:
+                display.vvvv('Unexpected plugin load (%s) exception: %s' % (key, to_native(e)))
+                raise e
 
-            parent_prefix = acr.collection
+            # if a plugin was found/loaded
+            if plugin:
+                # set in filter cache and avoid expensive plugin load
+                self._delegatee[key] = plugin.j2_function
 
-            if acr.subdirs:
-                parent_prefix = '{0}.{1}'.format(parent_prefix, acr.subdirs)
+        # raise template syntax error if we could not find ours or jinja2 one
+        try:
+            func = self._delegatee[key]
+        except KeyError as e:
+            self._seen_it.remove(key)
+            raise TemplateSyntaxError('Could not load "%s": %s' % (key, to_native(original_exc or e)), 0)
 
-            # TODO: implement collection-level redirect
+        # if i do have func and it is a filter, it needs wrapping
+        if self._pluginloader.type == 'filter':
+            # filter need wrapping
+            if key in C.STRING_TYPE_FILTERS:
+                # avoid litera_eval when you WANT strings
+                func = _wrap_native_text(func)
+            else:
+                # conditionally unroll iterators/generators to avoid having to use `|list` after every filter
+                func = _unroll_iterator(func)
 
-            for dummy, module_name, ispkg in pkgutil.iter_modules(pkg.__path__, prefix=parent_prefix + '.'):
-                if ispkg:
-                    continue
-
-                try:
-                    plugin_impl = self._pluginloader.get(module_name)
-                except Exception as e:
-                    raise TemplateSyntaxError(to_native(e), 0)
-
-                method_map = getattr(plugin_impl, self._method_map_name)
-
-                try:
-                    func_items = iteritems(method_map())
-                except Exception as e:
-                    display.warning(
-                        "Skipping %s plugin %s as it seems to be invalid: %r" % (self._dirname, to_text(plugin_impl._original_path), e),
-                    )
-                    continue
-
-                for func_name, func in func_items:
-                    fq_name = '.'.join((parent_prefix, func_name))
-                    # FIXME: detect/warn on intra-collection function name collisions
-                    if self._pluginloader.class_name == 'FilterModule':
-                        if self._jinja2_native and fq_name.startswith(('ansible.builtin.', 'ansible.legacy.')) and \
-                                func_name in C.STRING_TYPE_FILTERS:
-                            self._collection_jinja_func_cache[fq_name] = _wrap_native_text(func)
-                        else:
-                            self._collection_jinja_func_cache[fq_name] = _unroll_iterator(func)
-                    else:
-                        self._collection_jinja_func_cache[fq_name] = func
-
-            function_impl = self._collection_jinja_func_cache[key]
-            return function_impl
-        except AnsiblePluginRemovedError as apre:
-            raise TemplateSyntaxError(to_native(apre), 0)
-        except KeyError:
-            raise
-        except Exception as ex:
-            display.warning('an unexpected error occurred during Jinja2 environment setup: {0}'.format(to_native(ex)))
-            display.vvv('exception during Jinja2 environment setup: {0}'.format(format_exc()))
-            raise TemplateSyntaxError(to_native(ex), 0)
+        return func
 
     def __setitem__(self, key, value):
         return self._delegatee.__setitem__(key, value)
@@ -597,41 +492,71 @@ class JinjaPluginIntercept(MutableMapping):
         return len(self._delegatee)
 
 
-class AnsibleEnvironment(Environment):
+def _fail_on_undefined(data):
+    """Recursively find an undefined value in a nested data structure
+    and properly raise the undefined exception.
+    """
+    if isinstance(data, Mapping):
+        for value in data.values():
+            _fail_on_undefined(value)
+    elif is_sequence(data):
+        for item in data:
+            _fail_on_undefined(item)
+    else:
+        if isinstance(data, StrictUndefined):
+            # To actually raise the undefined exception we need to
+            # access the undefined object otherwise the exception would
+            # be raised on the next access which might not be properly
+            # handled.
+            # See https://github.com/ansible/ansible/issues/52158
+            # and StrictUndefined implementation in upstream Jinja2.
+            str(data)
+    return data
+
+
+@_unroll_iterator
+def _ansible_finalize(thing):
+    """A custom finalize function for jinja2, which prevents None from being
+    returned. This avoids a string of ``"None"`` as ``None`` has no
+    importance in YAML.
+
+    The function is decorated with ``_unroll_iterator`` so that users are not
+    required to explicitly use ``|list`` to unroll a generator. This only
+    affects the scenario where the final result of templating
+    is a generator, e.g. ``range``, ``dict.items()`` and so on. Filters
+    which can produce a generator in the middle of a template are already
+    wrapped with ``_unroll_generator`` in ``JinjaPluginIntercept``.
+    """
+    return thing if _fail_on_undefined(thing) is not None else ''
+
+
+class AnsibleEnvironment(NativeEnvironment):
     '''
     Our custom environment, which simply allows us to override the class-level
     values for the Template and Context classes used by jinja2 internally.
-
-    NOTE: Any changes to this class must be reflected in
-          :class:`AnsibleNativeEnvironment` as well.
     '''
     context_class = AnsibleContext
     template_class = AnsibleJ2Template
+    concat = staticmethod(ansible_eval_concat)  # type: ignore[assignment]
 
     def __init__(self, *args, **kwargs):
-        super(AnsibleEnvironment, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
-        self.filters = JinjaPluginIntercept(self.filters, filter_loader, jinja2_native=False)
-        self.tests = JinjaPluginIntercept(self.tests, test_loader, jinja2_native=False)
+        self.filters = JinjaPluginIntercept(self.filters, filter_loader)
+        self.tests = JinjaPluginIntercept(self.tests, test_loader)
+
+        self.trim_blocks = True
+
+        self.undefined = AnsibleUndefined
+        self.finalize = _ansible_finalize
 
 
-if USE_JINJA2_NATIVE:
-    class AnsibleNativeEnvironment(NativeEnvironment):
-        '''
-        Our custom environment, which simply allows us to override the class-level
-        values for the Template and Context classes used by jinja2 internally.
+class AnsibleNativeEnvironment(AnsibleEnvironment):
+    concat = staticmethod(ansible_native_concat)  # type: ignore[assignment]
 
-        NOTE: Any changes to this class must be reflected in
-              :class:`AnsibleEnvironment` as well.
-        '''
-        context_class = AnsibleContext
-        template_class = AnsibleJ2Template
-
-        def __init__(self, *args, **kwargs):
-            super(AnsibleNativeEnvironment, self).__init__(*args, **kwargs)
-
-            self.filters = JinjaPluginIntercept(self.filters, filter_loader, jinja2_native=True)
-            self.tests = JinjaPluginIntercept(self.tests, test_loader, jinja2_native=True)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.finalize = _unroll_iterator(_fail_on_undefined)
 
 
 class Templar:
@@ -639,52 +564,39 @@ class Templar:
     The main class for templating, with the main entry-point of template().
     '''
 
-    def __init__(self, loader, shared_loader_obj=None, variables=None):
-        # NOTE shared_loader_obj is deprecated, ansible.plugins.loader is used
-        # directly. Keeping the arg for now in case 3rd party code "uses" it.
+    def __init__(self, loader, variables=None):
         self._loader = loader
-        self._filters = None
-        self._tests = None
         self._available_variables = {} if variables is None else variables
-        self._cached_result = {}
-        self._basedir = loader.get_basedir() if loader else './'
 
         self._fail_on_undefined_errors = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
 
-        environment_class = AnsibleNativeEnvironment if USE_JINJA2_NATIVE else AnsibleEnvironment
+        environment_class = AnsibleNativeEnvironment if C.DEFAULT_JINJA2_NATIVE else AnsibleEnvironment
 
         self.environment = environment_class(
-            trim_blocks=True,
-            undefined=AnsibleUndefined,
             extensions=self._get_extensions(),
-            finalize=self._finalize,
-            loader=FileSystemLoader(self._basedir),
+            loader=FileSystemLoader(loader.get_basedir() if loader else '.'),
         )
-
-        # jinja2 global is inconsistent across versions, this normalizes them
-        self.environment.globals['dict'] = dict
+        self.environment.template_class.environment_class = environment_class
 
         # Custom globals
         self.environment.globals['lookup'] = self._lookup
         self.environment.globals['query'] = self.environment.globals['q'] = self._query_lookup
         self.environment.globals['now'] = self._now_datetime
-        self.environment.globals['finalize'] = self._finalize
+        self.environment.globals['undef'] = self._make_undefined
 
         # the current rendering context under which the templar class is working
         self.cur_context = None
 
-        # FIXME these regular expressions should be re-compiled each time variable_start_string and variable_end_string are changed
-        self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))
-        self._no_type_regex = re.compile(r'.*?\|\s*(?:%s)(?:\([^\|]*\))?\s*\)?\s*(?:%s)' %
-                                         ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
+        # this regex is re-compiled each time variable_start_string and variable_end_string are possibly changed
+        self._compile_single_var(self.environment)
 
-    @property
-    def jinja2_native(self):
-        return not isinstance(self.environment, AnsibleEnvironment)
+        self.jinja2_native = C.DEFAULT_JINJA2_NATIVE
+
+    def _compile_single_var(self, env):
+        self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (env.variable_start_string, env.variable_end_string))
 
     def copy_with_new_env(self, environment_class=AnsibleEnvironment, **kwargs):
-        r"""Creates a new copy of Templar with a new environment. The new environment is based on
-        given environment class and kwargs.
+        r"""Creates a new copy of Templar with a new environment.
 
         :kwarg environment_class: Environment class used for creating a new environment.
         :kwarg \*\*kwargs: Optional arguments for the new environment that override existing
@@ -701,6 +613,8 @@ class Templar:
         new_templar.__dict__.update(self.__dict__)
         new_templar.environment = new_env
 
+        new_templar.jinja2_native = environment_class is AnsibleNativeEnvironment
+
         mapping = {
             'available_variables': new_templar,
             'searchpath': new_env.loader,
@@ -712,7 +626,7 @@ class Templar:
                 if value is not None:
                     setattr(obj, key, value)
             except AttributeError:
-                # Ignore invalid attrs, lstrip_blocks was added in jinja2==2.7
+                # Ignore invalid attrs
                 pass
 
         return new_templar
@@ -749,14 +663,6 @@ class Templar:
         if not isinstance(variables, Mapping):
             raise AnsibleAssertionError("the type of 'variables' should be a Mapping but was a %s" % (type(variables)))
         self._available_variables = variables
-        self._cached_result = {}
-
-    def set_available_variables(self, variables):
-        display.deprecated(
-            'set_available_variables is being deprecated. Use "@available_variables.setter" instead.',
-            version='2.13', collection_name='ansible.builtin'
-        )
-        self.available_variables = variables
 
     @contextmanager
     def set_temporary_context(self, **kwargs):
@@ -779,7 +685,7 @@ class Templar:
                 if value is not None:
                     setattr(obj, key, value)
             except AttributeError:
-                # Ignore invalid attrs, lstrip_blocks was added in jinja2==2.7
+                # Ignore invalid attrs
                 pass
 
         yield
@@ -789,13 +695,16 @@ class Templar:
             setattr(obj, key, original[key])
 
     def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None,
-                 convert_data=True, static_vars=None, cache=True, disable_lookups=False):
+                 convert_data=True, static_vars=None, cache=None, disable_lookups=False):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
         before being sent through the template engine.
         '''
         static_vars = [] if static_vars is None else static_vars
+
+        if cache is not None:
+            display.deprecated("The `cache` option to `Templar.template` is no longer functional, and will be removed in a future release.", version='2.18')
 
         # Don't template unsafe variables, just return them.
         if hasattr(variable, '__UNSAFE__'):
@@ -808,7 +717,7 @@ class Templar:
             variable = self._convert_bare_variable(variable)
 
         if isinstance(variable, string_types):
-            if not self.is_possibly_template(variable):
+            if not self.is_possibly_template(variable, overrides):
                 return variable
 
             # Check to see if the string we are trying to render is just referencing a single
@@ -824,23 +733,6 @@ class Templar:
                     elif resolved_val is None:
                         return C.DEFAULT_NULL_REPRESENTATION
 
-            # Using a cache in order to prevent template calls with already templated variables
-            sha1_hash = None
-            if cache:
-                variable_hash = sha1(text_type(variable).encode('utf-8'))
-                options_hash = sha1(
-                    (
-                        text_type(preserve_trailing_newlines) +
-                        text_type(escape_backslashes) +
-                        text_type(fail_on_undefined) +
-                        text_type(overrides)
-                    ).encode('utf-8')
-                )
-                sha1_hash = variable_hash.hexdigest() + options_hash.hexdigest()
-
-                if sha1_hash in self._cached_result:
-                    return self._cached_result[sha1_hash]
-
             result = self.do_template(
                 variable,
                 preserve_trailing_newlines=preserve_trailing_newlines,
@@ -848,26 +740,9 @@ class Templar:
                 fail_on_undefined=fail_on_undefined,
                 overrides=overrides,
                 disable_lookups=disable_lookups,
+                convert_data=convert_data,
             )
-
-            if not self.jinja2_native:
-                unsafe = hasattr(result, '__UNSAFE__')
-                if convert_data and not self._no_type_regex.match(variable):
-                    # if this looks like a dictionary or list, convert it to such using the safe_eval method
-                    if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
-                            result.startswith("[") or result in ("True", "False"):
-                        eval_results = safe_eval(result, include_exceptions=True)
-                        if eval_results[1] is None:
-                            result = eval_results[0]
-                            if unsafe:
-                                result = wrap_var(result)
-                        # FIXME: if the safe_eval raised an error, should we do something with it?
-
-            # we only cache in the case where we have a single variable
-            # name, to make sure we're not putting things which may otherwise
-            # be dynamic in the cache (filters, lookups, etc.)
-            if cache and only_one:
-                self._cached_result[sha1_hash] = result
+            self._compile_single_var(self.environment)
 
             return result
 
@@ -914,24 +789,9 @@ class Templar:
 
     templatable = is_template
 
-    def is_possibly_template(self, data):
-        '''Determines if a string looks like a template, by seeing if it
-        contains a jinja2 start delimiter. Does not guarantee that the string
-        is actually a template.
-
-        This is different than ``is_template`` which is more strict.
-        This method may return ``True`` on a string that is not templatable.
-
-        Useful when guarding passing a string for templating, but when
-        you want to allow the templating engine to make the final
-        assessment which may result in ``TemplateSyntaxError``.
-        '''
-        env = self.environment
-        if isinstance(data, string_types):
-            for marker in (env.block_start_string, env.variable_start_string, env.comment_start_string):
-                if marker in data:
-                    return True
-        return False
+    def is_possibly_template(self, data, overrides=None):
+        data, env = _create_overlay(data, overrides, self.environment)
+        return is_possibly_template(data, env)
 
     def _convert_bare_variable(self, variable):
         '''
@@ -949,34 +809,13 @@ class Templar:
         # so just return it as-is
         return variable
 
-    def _finalize(self, thing):
-        '''
-        A custom finalize method for jinja2, which prevents None from being returned. This
-        avoids a string of ``"None"`` as ``None`` has no importance in YAML.
-
-        If using ANSIBLE_JINJA2_NATIVE we bypass this and return the actual value always
-        '''
-        if _is_rolled(thing):
-            # Auto unroll a generator, so that users are not required to
-            # explicitly use ``|list`` to unroll
-            # This only affects the scenario where the final result of templating
-            # is a generator, and not where a filter creates a generator in the middle
-            # of a template. See ``_unroll_iterator`` for the other case. This is probably
-            # unncessary
-            return list(thing)
-
-        if self.jinja2_native:
-            return thing
-
-        return thing if thing is not None else ''
-
     def _fail_lookup(self, name, *args, **kwargs):
         raise AnsibleError("The lookup `%s` was found, however lookups were disabled from templating" % name)
 
     def _now_datetime(self, utc=False, fmt=None):
         '''jinja2 global function to return current datetime, potentially formatted via strftime'''
         if utc:
-            now = datetime.datetime.utcnow()
+            now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
         else:
             now = datetime.datetime.now()
 
@@ -985,12 +824,12 @@ class Templar:
 
         return now
 
-    def _query_lookup(self, name, *args, **kwargs):
+    def _query_lookup(self, name, /, *args, **kwargs):
         ''' wrapper for lookup, force wantlist true'''
         kwargs['wantlist'] = True
         return self._lookup(name, *args, **kwargs)
 
-    def _lookup(self, name, *args, **kwargs):
+    def _lookup(self, name, /, *args, **kwargs):
         instance = lookup_loader.get(name, loader=self._loader, templar=self)
 
         if instance is None:
@@ -1000,7 +839,7 @@ class Templar:
         allow_unsafe = kwargs.pop('allow_unsafe', C.DEFAULT_ALLOW_UNSAFE_LOOKUPS)
         errors = kwargs.pop('errors', 'strict')
 
-        loop_terms = listify_lookup_plugin_terms(terms=args, templar=self, loader=self._loader, fail_on_undefined=True, convert_bare=False)
+        loop_terms = listify_lookup_plugin_terms(terms=args, templar=self, fail_on_undefined=True, convert_bare=False)
         # safely catch run failures per #5059
         try:
             ran = instance.run(loop_terms, variables=self._available_variables, **kwargs)
@@ -1032,6 +871,14 @@ class Templar:
                 raise AnsibleError(to_native(msg), orig_exc=e)
             return [] if wantlist else None
 
+        if not is_sequence(ran):
+            display.deprecated(
+                f'The lookup plugin \'{name}\' was expected to return a list, got \'{type(ran)}\' instead. '
+                f'The lookup plugin \'{name}\' needs to be changed to return a list. '
+                'This will be an error in Ansible 2.18',
+                version='2.18'
+            )
+
         if ran and allow_unsafe is False:
             if self.cur_context:
                 self.cur_context.unsafe = True
@@ -1040,7 +887,7 @@ class Templar:
                 return wrap_var(ran)
 
             try:
-                if self.jinja2_native and isinstance(ran[0], NativeJinjaText):
+                if isinstance(ran[0], NativeJinjaText):
                     ran = wrap_var(NativeJinjaText(",".join(ran)))
                 else:
                     ran = wrap_var(",".join(ran))
@@ -1057,10 +904,24 @@ class Templar:
                     ran = wrap_var(ran[0])
                 else:
                     ran = wrap_var(ran)
+            except KeyError:
+                # Lookup Plugin returned a dict.  Return comma-separated string of keys
+                # for backwards compat.
+                # FIXME this can be removed when support for non-list return types is removed.
+                # See https://github.com/ansible/ansible/pull/77789
+                ran = wrap_var(",".join(ran))
 
         return ran
 
-    def do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, disable_lookups=False):
+    def _make_undefined(self, hint=None):
+        from jinja2.runtime import Undefined
+
+        if hint is None or isinstance(hint, Undefined) or hint == '':
+            hint = "Mandatory variable has not been overridden"
+        return AnsibleUndefined(hint)
+
+    def do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, disable_lookups=False,
+                    convert_data=False):
         if self.jinja2_native and not isinstance(data, string_types):
             return data
 
@@ -1072,21 +933,11 @@ class Templar:
             fail_on_undefined = self._fail_on_undefined_errors
 
         try:
-            # allows template header overrides to change jinja2 options.
-            if overrides is None:
-                myenv = self.environment
-            else:
-                myenv = self.environment.overlay(overrides)
-
-            # Get jinja env overrides from template
-            if hasattr(data, 'startswith') and data.startswith(JINJA2_OVERRIDE):
-                eol = data.find('\n')
-                line = data[len(JINJA2_OVERRIDE):eol]
-                data = data[eol + 1:]
-                for pair in line.split(','):
-                    (key, val) = pair.split(':')
-                    key = key.strip()
-                    setattr(myenv, key, ast.literal_eval(val.strip()))
+            # NOTE Creating an overlay that lives only inside do_template means that overrides are not applied
+            # when templating nested variables in AnsibleJ2Vars where Templar.environment is used, not the overlay.
+            data, myenv = _create_overlay(data, overrides, self.environment)
+            # in case delimiters change
+            self._compile_single_var(myenv)
 
             if escape_backslashes:
                 # Allow users to specify backslashes in playbooks as "\\" instead of as "\\\\".
@@ -1094,11 +945,11 @@ class Templar:
 
             try:
                 t = myenv.from_string(data)
-            except TemplateSyntaxError as e:
-                raise AnsibleError("template error while templating string: %s. String: %s" % (to_native(e), to_native(data)))
+            except (TemplateSyntaxError, SyntaxError) as e:
+                raise AnsibleError("template error while templating string: %s. String: %s" % (to_native(e), to_native(data)), orig_exc=e)
             except Exception as e:
                 if 'recursion' in to_native(e):
-                    raise AnsibleError("recursive loop detected in template string: %s" % to_native(data))
+                    raise AnsibleError("recursive loop detected in template string: %s" % to_native(data), orig_exc=e)
                 else:
                     return data
 
@@ -1107,54 +958,69 @@ class Templar:
 
             jvars = AnsibleJ2Vars(self, t.globals)
 
-            self.cur_context = new_context = t.new_context(jvars, shared=True)
-            rf = t.root_render_func(new_context)
+            # In case this is a recursive call to do_template we need to
+            # save/restore cur_context to prevent overriding __UNSAFE__.
+            cached_context = self.cur_context
+
+            # In case this is a recursive call and we set different concat
+            # function up the stack, reset it in case the value of convert_data
+            # changed in this call
+            myenv.concat = myenv.__class__.concat
+            # the concat function is set for each Ansible environment,
+            # however for convert_data=False we need to use the concat
+            # function that avoids any evaluation and set it temporarily
+            # on the environment so it is used correctly even when
+            # the concat function is called internally in Jinja,
+            # most notably for macro execution
+            if not self.jinja2_native and not convert_data:
+                myenv.concat = ansible_concat
+
+            self.cur_context = t.new_context(jvars, shared=True)
+            rf = t.root_render_func(self.cur_context)
 
             try:
-                if self.jinja2_native:
-                    res = ansible_native_concat(rf)
-                else:
-                    res = j2_concat(rf)
-                unsafe = getattr(new_context, 'unsafe', False)
+                res = myenv.concat(rf)
+                unsafe = getattr(self.cur_context, 'unsafe', False)
                 if unsafe:
                     res = wrap_var(res)
             except TypeError as te:
                 if 'AnsibleUndefined' in to_native(te):
                     errmsg = "Unable to look up a name or access an attribute in template string (%s).\n" % to_native(data)
                     errmsg += "Make sure your variable name does not contain invalid characters like '-': %s" % to_native(te)
-                    raise AnsibleUndefinedVariable(errmsg)
+                    raise AnsibleUndefinedVariable(errmsg, orig_exc=te)
                 else:
                     display.debug("failing because of a type error, template data is: %s" % to_text(data))
-                    raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_native(data), to_native(te)))
+                    raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_native(data), to_native(te)), orig_exc=te)
+            finally:
+                self.cur_context = cached_context
 
-            if self.jinja2_native and not isinstance(res, string_types):
-                return res
-
-            if preserve_trailing_newlines:
+            if isinstance(res, string_types) and preserve_trailing_newlines:
                 # The low level calls above do not preserve the newline
                 # characters at the end of the input data, so we use the
                 # calculate the difference in newlines and append them
                 # to the resulting output for parity
                 #
-                # jinja2 added a keep_trailing_newline option in 2.7 when
-                # creating an Environment.  That would let us make this code
-                # better (remove a single newline if
-                # preserve_trailing_newlines is False).  Once we can depend on
-                # that version being present, modify our code to set that when
-                # initializing self.environment and remove a single trailing
-                # newline here if preserve_newlines is False.
+                # Using Environment's keep_trailing_newline instead would
+                # result in change in behavior when trailing newlines
+                # would be kept also for included templates, for example:
+                # "Hello {% include 'world.txt' %}!" would render as
+                # "Hello world\n!\n" instead of "Hello world!\n".
                 res_newlines = _count_newlines_from_end(res)
                 if data_newlines > res_newlines:
-                    res += self.environment.newline_sequence * (data_newlines - res_newlines)
+                    res += myenv.newline_sequence * (data_newlines - res_newlines)
                     if unsafe:
                         res = wrap_var(res)
             return res
-        except (UndefinedError, AnsibleUndefinedVariable) as e:
+        except UndefinedError as e:
             if fail_on_undefined:
                 raise AnsibleUndefinedVariable(e)
-            else:
-                display.debug("Ignoring undefined failure: %s" % to_text(e))
-                return data
+            display.debug("Ignoring undefined failure: %s" % to_text(e))
+            return data
+        except AnsibleUndefinedVariable as e:
+            if fail_on_undefined:
+                raise
+            display.debug("Ignoring undefined failure: %s" % to_text(e))
+            return data
 
     # for backwards compatibility in case anyone is using old private method directly
     _do_template = do_template

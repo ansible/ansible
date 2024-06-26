@@ -1,8 +1,7 @@
 # (c) 2013, Bradley Young <young.bradley@gmail.com>
 # (c) 2012-17 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: together
@@ -22,7 +21,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: item.0 returns from the 'a' list, item.1 returns from the '1' list
-  debug:
+  ansible.builtin.debug:
     msg: "{{ item.0 }} and {{ item.1 }}"
   with_together:
     - ['a', 'b', 'c', 'd']
@@ -35,8 +34,9 @@ RETURN = """
     type: list
     elements: list
 """
+import itertools
+
 from ansible.errors import AnsibleError
-from ansible.module_utils.six.moves import zip_longest
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
 
@@ -52,7 +52,7 @@ class LookupModule(LookupBase):
     def _lookup_variables(self, terms):
         results = []
         for x in terms:
-            intermediate = listify_lookup_plugin_terms(x, templar=self._templar, loader=self._loader)
+            intermediate = listify_lookup_plugin_terms(x, templar=self._templar)
             results.append(intermediate)
         return results
 
@@ -64,4 +64,4 @@ class LookupModule(LookupBase):
         if len(my_list) == 0:
             raise AnsibleError("with_together requires at least one element in each list")
 
-        return [self._flatten(x) for x in zip_longest(*my_list, fillvalue=None)]
+        return [self._flatten(x) for x in itertools.zip_longest(*my_list, fillvalue=None)]

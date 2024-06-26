@@ -24,10 +24,9 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import json
+import json  # pylint: disable=unused-import
 
 
 # NB: a copy of this function exists in ../../modules/core/async_wrapper.py. Ensure any

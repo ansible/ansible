@@ -15,17 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
-from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
-from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
@@ -43,7 +41,7 @@ display = Display()
 
 class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
-    _role = FieldAttribute(isa='string')
+    role = NonInheritableFieldAttribute(isa='string')
 
     def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=None):
 
@@ -99,7 +97,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         # result and the role name
         if isinstance(ds, dict):
             (new_role_def, role_params) = self._split_role_params(ds)
-            new_ds.update(new_role_def)
+            new_ds |= new_role_def
             self._role_params = role_params
 
         # set the role name in the new ds
@@ -210,8 +208,8 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
         role_def = dict()
         role_params = dict()
-        base_attribute_names = frozenset(self._valid_attrs.keys())
-        for (key, value) in iteritems(ds):
+        base_attribute_names = frozenset(self.fattributes)
+        for (key, value) in ds.items():
             # use the list of FieldAttribute values to determine what is and is not
             # an extra parameter for this role (or sub-class of this role)
             # FIXME: hard-coded list of exception key names here corresponds to the

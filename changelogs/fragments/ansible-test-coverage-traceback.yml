@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Fix traceback when generating coverage reports and no coverage directory exists.

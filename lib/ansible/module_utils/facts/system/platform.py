@@ -13,12 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 import socket
 import platform
+
+import ansible.module_utils.compat.typing as t
 
 from ansible.module_utils.facts.utils import get_file_content
 
@@ -37,7 +38,7 @@ class PlatformFactCollector(BaseFactCollector):
                      'machine',
                      'python_version',
                      'architecture',
-                     'machine_id'])
+                     'machine_id'])  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         platform_facts = {}

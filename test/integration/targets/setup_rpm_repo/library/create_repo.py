@@ -1,10 +1,7 @@
 #!/usr/bin/python
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import subprocess
-import sys
 import tempfile
 
 from collections import namedtuple
@@ -15,10 +12,12 @@ from ansible.module_utils.common.respawn import has_respawned, probe_interpreter
 HAS_RPMFLUFF = True
 can_use_rpm_weak_deps = None
 try:
-    from rpmfluff import SimpleRpmBuild
+    from rpmfluff import SimpleRpmBuild, GeneratedSourceFile, make_gif
     from rpmfluff import YumRepoBuild
 except ImportError:
     try:
+        from rpmfluff.make import make_gif
+        from rpmfluff.sourcefile import GeneratedSourceFile
         from rpmfluff.rpmbuild import SimpleRpmBuild
         from rpmfluff.yumrepobuild import YumRepoBuild
     except ImportError:
@@ -35,20 +34,25 @@ if HAS_RPMFLUFF:
             pass
 
 
-RPM = namedtuple('RPM', ['name', 'version', 'release', 'epoch', 'recommends', 'arch'])
-
+RPM = namedtuple('RPM', ['name', 'version', 'release', 'epoch', 'recommends', 'file', 'arch'])
 
 SPECS = [
-    RPM('dinginessentail', '1.0', '1', None, None, None),
-    RPM('dinginessentail', '1.0', '2', '1', None, None),
-    RPM('dinginessentail', '1.1', '1', '1', None, None),
-    RPM('dinginessentail-olive', '1.0', '1', None, None, None),
-    RPM('dinginessentail-olive', '1.1', '1', None, None, None),
-    RPM('landsidescalping', '1.0', '1', None, None, None),
-    RPM('landsidescalping', '1.1', '1', None, None, None),
-    RPM('dinginessentail-with-weak-dep', '1.0', '1', None, ['dinginessentail-weak-dep'], None),
-    RPM('dinginessentail-weak-dep', '1.0', '1', None, None, None),
-    RPM('noarchfake', '1.0', '1', None, None, 'noarch'),
+    RPM('dinginessentail', '1.0', '1', None, None, None, None),
+    RPM('dinginessentail', '1.0', '2', '1', None, None, None),
+    RPM('dinginessentail', '1.1', '1', '1', None, None, None),
+    RPM('dinginessentail-olive', '1.0', '1', None, None, None, None),
+    RPM('dinginessentail-olive', '1.1', '1', None, None, None, None),
+    RPM('landsidescalping', '1.0', '1', None, None, None, None),
+    RPM('landsidescalping', '1.1', '1', None, None, None, None),
+    RPM('dinginessentail-with-weak-dep', '1.0', '1', None, ['dinginessentail-weak-dep'], None, None),
+    RPM('dinginessentail-weak-dep', '1.0', '1', None, None, None, None),
+    RPM('noarchfake', '1.0', '1', None, None, None, 'noarch'),
+    RPM('provides_foo_a', '1.0', '1', None, None, 'foo.gif', 'noarch'),
+    RPM('provides_foo_b', '1.0', '1', None, None, 'foo.gif', 'noarch'),
+    RPM('number-11-name', '11.0', '1', None, None, None, None),
+    RPM('number-11-name', '11.1', '1', None, None, None, None),
+    RPM('epochone', '1.0', '1', '1', None, None, "noarch"),
+    RPM('epochone', '1.1', '1', '1', None, None, "noarch"),
 ]
 
 
@@ -66,21 +70,18 @@ def create_repo(arch='x86_64'):
             for recommend in spec.recommends:
                 pkg.add_recommends(recommend)
 
+        if spec.file:
+            pkg.add_installed_file(
+                "/" + spec.file,
+                GeneratedSourceFile(
+                    spec.file, make_gif()
+                )
+            )
+
         pkgs.append(pkg)
 
-    # HACK: EPEL6 version of rpmfluff can't do multi-arch packaging, so we'll just build separately and copy
-    # the noarch stuff in, since we don't currently care about the repodata for noarch
-    if sys.version_info[0:2] == (2, 6):
-        noarch_repo = YumRepoBuild([p for p in pkgs if 'noarch' in p.get_build_archs()])
-        noarch_repo.make('noarch')
-
-        repo = YumRepoBuild([p for p in pkgs if arch in p.get_build_archs()])
-        repo.make(arch)
-
-        subprocess.call("cp {0}/*.rpm {1}".format(noarch_repo.repoDir, repo.repoDir), shell=True)
-    else:
-        repo = YumRepoBuild(pkgs)
-        repo.make(arch, 'noarch')
+    repo = YumRepoBuild(pkgs)
+    repo.make(arch, 'noarch')
 
     for pkg in pkgs:
         pkg.clean()

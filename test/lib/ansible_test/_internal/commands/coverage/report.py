@@ -1,8 +1,8 @@
 """Generate console code coverage reports."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
+import typing as t
 
 from ...io import (
     read_json_file,
@@ -16,8 +16,12 @@ from ...data import (
     data_context,
 )
 
+from ...provisioning import (
+    prepare_profiles,
+)
+
 from .combine import (
-    command_coverage_combine,
+    combine_coverage_files,
     CoverageCombineConfig,
 )
 
@@ -26,11 +30,10 @@ from . import (
 )
 
 
-def command_coverage_report(args):
-    """
-    :type args: CoverageReportConfig
-    """
-    output_files = command_coverage_combine(args)
+def command_coverage_report(args: CoverageReportConfig) -> None:
+    """Generate a console coverage report."""
+    host_state = prepare_profiles(args)  # coverage report
+    output_files = combine_coverage_files(args, host_state)
 
     for output_file in output_files:
         if args.group_by or args.stub:
@@ -50,15 +53,11 @@ def command_coverage_report(args):
             if args.omit:
                 options.extend(['--omit', args.omit])
 
-            run_coverage(args, output_file, 'report', options)
+            run_coverage(args, host_state, output_file, 'report', options)
 
 
-def _generate_powershell_output_report(args, coverage_file):
-    """
-    :type args: CoverageReportConfig
-    :type coverage_file: str
-    :rtype: str
-    """
+def _generate_powershell_output_report(args: CoverageReportConfig, coverage_file: str) -> str:
+    """Generate and return a PowerShell coverage report for the given coverage file."""
     coverage_info = read_json_file(coverage_file)
 
     root_path = data_context().content.root + '/'
@@ -82,7 +81,7 @@ def _generate_powershell_output_report(args, coverage_file):
             continue
 
         stmts = len(hit_info)
-        miss = len([c for c in hit_info.values() if c == 0])
+        miss = len([hit for hit in hit_info.values() if hit == 0])
 
         name_padding = max(name_padding, len(filename) + 3)
 
@@ -145,12 +144,10 @@ def _generate_powershell_output_report(args, coverage_file):
 
 class CoverageReportConfig(CoverageCombineConfig):
     """Configuration for the coverage report command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(CoverageReportConfig, self).__init__(args)
 
-        self.show_missing = args.show_missing  # type: bool
-        self.include = args.include  # type: str
-        self.omit = args.omit  # type: str
+    def __init__(self, args: t.Any) -> None:
+        super().__init__(args)
+
+        self.show_missing: bool = args.show_missing
+        self.include: str = args.include
+        self.omit: str = args.omit

@@ -1,12 +1,11 @@
-pylint == 2.6.0
-pyyaml  # needed for collection_detail.py
-
-# dependencies
-astroid == 2.4.2
-isort == 5.7.0
-lazy-object-proxy == 1.4.3
-mccabe == 0.6.1
-six  # not frozen due to usage outside sanity tests
-toml == 0.10.2
-typed-ast == 1.4.3
-wrapt == 1.12.1
+# edit "sanity.pylint.in" and generate with: hacking/update-sanity-requirements.py --test pylint
+astroid==3.1.0
+dill==0.3.8
+isort==5.13.2
+mccabe==0.7.0
+platformdirs==4.2.0
+pylint==3.1.0
+PyYAML==6.0.1
+tomli==2.0.1
+tomlkit==0.12.4
+typing_extensions==4.10.0

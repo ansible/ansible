@@ -30,22 +30,37 @@
 - name: Test tempdir is removed
   hosts: testhost
   gather_facts: false
+  vars:
+    # These tests cannot be run with pipelining as it defeats the purpose of
+    # ensuring remote_tmp is cleaned up. Pipelining is enabled in the test
+    # inventory
+    ansible_pipelining: false
+    # Ensure that the remote_tmp_dir we create allows the unpriv connection user
+    # to create the remote_tmp
+    ansible_become: false
   tasks:
-    - file:
-        state: touch
-        path: "{{ output_dir }}/65393"
+    - import_role:
+        name: ../setup_remote_tmp_dir
 
-    - copy:
-        src: "{{ output_dir }}/65393"
-        dest: "{{ output_dir }}/65393.2"
-        remote_src: true
+    - vars:
+        # Isolate the remote_tmp used by these tests
+        ansible_remote_tmp: "{{ remote_tmp_dir }}/remote_tmp"
+      block:
+        - file:
+            state: touch
+            path: "{{ remote_tmp_dir }}/65393"
 
-    - find:
-        path: "~/.ansible/tmp"
-        use_regex: yes
-        patterns: 'AnsiballZ_.+\.py'
-        recurse: true
-      register: result
+        - copy:
+            src: "{{ remote_tmp_dir }}/65393"
+            dest: "{{ remote_tmp_dir }}/65393.2"
+            remote_src: true
+
+        - find:
+            path: "{{ ansible_remote_tmp }}"
+            use_regex: yes
+            patterns: 'AnsiballZ_.+\.py'
+            recurse: true
+          register: result
 
     - debug:
         var: result

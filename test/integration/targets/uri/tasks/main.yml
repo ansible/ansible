@@ -19,8 +19,8 @@
 - name: set role facts
   set_fact:
     http_port: 15260
-    files_dir: '{{ output_dir|expanduser }}/files'
-    checkout_dir: '{{ output_dir }}/git'
+    files_dir: '{{ remote_tmp_dir|expanduser }}/files'
+    checkout_dir: '{{ remote_tmp_dir }}/git'
 
 - name: create a directory to serve files from
   file:
@@ -39,11 +39,11 @@
 
 - copy:
     src: "testserver.py"
-    dest: "{{ output_dir }}/testserver.py"
+    dest: "{{ remote_tmp_dir }}/testserver.py"
 
 - name: start SimpleHTTPServer
-  shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ output_dir}}/testserver.py {{ http_port }}
-  async: 120 # this test set can take ~1m to run on FreeBSD (via Shippable)
+  shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ remote_tmp_dir}}/testserver.py {{ http_port }}
+  async: 180 # this test is slower on remotes like FreeBSD, and running split slows it down further
   poll: 0
 
 - wait_for: port={{ http_port }}
@@ -53,6 +53,18 @@
   stat: path={{ files_dir }}/{{ item }}.json get_checksum=yes
   register: pass_checksum
   with_sequence: start=0 end=4 format=pass%d
+
+
+- name: test basic auth with urlencoded
+  register: result
+  uri:
+    url: 'https://foo%40example.com:test%40@{{ httpbin_host }}/basic-auth/foo%40example.com/test%40'
+
+- name: Ensure basic auth credentials where URL-decoded
+  assert:
+    that:
+      - result.json.authenticated
+      - result.json.user == 'foo@example.com'
 
 - name: fetch pass_json
   uri: return_content=yes url=http://localhost:{{ http_port }}/{{ item }}.json
@@ -91,12 +103,12 @@
 - name: test https fetch to a site with mismatched hostname and certificate
   uri:
     url: "https://{{ badssl_host }}/"
-    dest: "{{ output_dir }}/shouldnotexist.html"
+    dest: "{{ remote_tmp_dir }}/shouldnotexist.html"
   ignore_errors: True
   register: result
 
 - stat:
-    path: "{{ output_dir }}/shouldnotexist.html"
+    path: "{{ remote_tmp_dir }}/shouldnotexist.html"
   register: stat_result
 
 - name: Assert that the file was not downloaded
@@ -111,18 +123,18 @@
 
 - name: Clean up any cruft from the results directory
   file:
-    name: "{{ output_dir }}/kreitz.html"
+    name: "{{ remote_tmp_dir }}/kreitz.html"
     state: absent
 
 - name: test https fetch to a site with mismatched hostname and certificate and validate_certs=no
   uri:
     url: "https://{{ badssl_host }}/"
-    dest: "{{ output_dir }}/kreitz.html"
+    dest: "{{ remote_tmp_dir }}/kreitz.html"
     validate_certs: no
   register: result
 
 - stat:
-    path: "{{ output_dir }}/kreitz.html"
+    path: "{{ remote_tmp_dir }}/kreitz.html"
   register: stat_result
 
 - name: Assert that the file was downloaded
@@ -132,20 +144,20 @@
       - "result.changed == true"
 
 - name: "get ca certificate {{ self_signed_host }}"
-  get_url:
+  uri:
     url: "http://{{ httpbin_host }}/ca2cert.pem"
     dest: "{{ remote_tmp_dir }}/ca2cert.pem"
 
 - name: test https fetch to a site with self signed certificate using ca_path
   uri:
     url: "https://{{ self_signed_host }}:444/"
-    dest: "{{ output_dir }}/self-signed_using_ca_path.html"
+    dest: "{{ remote_tmp_dir }}/self-signed_using_ca_path.html"
     ca_path: "{{ remote_tmp_dir }}/ca2cert.pem"
     validate_certs: yes
   register: result
 
 - stat:
-    path: "{{ output_dir }}/self-signed_using_ca_path.html"
+    path: "{{ remote_tmp_dir }}/self-signed_using_ca_path.html"
   register: stat_result
 
 - name: Assert that the file was downloaded
@@ -157,13 +169,13 @@
 - name: test https fetch to a site with self signed certificate without using ca_path
   uri:
     url: "https://{{ self_signed_host }}:444/"
-    dest: "{{ output_dir }}/self-signed-without_using_ca_path.html"
+    dest: "{{ remote_tmp_dir }}/self-signed-without_using_ca_path.html"
     validate_certs: yes
   register: result
   ignore_errors: true
 
 - stat:
-    path: "{{ output_dir }}/self-signed-without_using_ca_path.html"
+    path: "{{ remote_tmp_dir }}/self-signed-without_using_ca_path.html"
   register: stat_result
 
 - name: Assure that https access to a host with self-signed certificate without providing ca_path fails
@@ -172,6 +184,25 @@
       - "stat_result.stat.exists == false"
       - result is failed
       - "'certificate verify failed' in result.msg"
+
+- name: Locate ca-bundle
+  stat:
+    path: '{{ item }}'
+  loop:
+    - /etc/ssl/certs/ca-bundle.crt
+    - /etc/ssl/certs/ca-certificates.crt
+    - /var/lib/ca-certificates/ca-bundle.pem
+    - /usr/local/share/certs/ca-root-nss.crt
+    - '{{ cafile_path.stdout_lines|default(["/_i_dont_exist_ca.pem"])|first }}'
+    - /etc/ssl/cert.pem
+  register: ca_bundle_candidates
+
+- name: Test that ca_path can be a full bundle
+  uri:
+    url: "https://{{ httpbin_host }}/get"
+    ca_path: '{{ ca_bundle }}'
+  vars:
+    ca_bundle: '{{ ca_bundle_candidates.results|selectattr("stat.exists")|map(attribute="item")|first }}'
 
 - name: test redirect without follow_redirects
   uri:
@@ -228,6 +259,43 @@
     headers:
       Cookie: "fake=fake_value"
 
+- name: test digest auth failure
+  uri:
+    url: 'https://{{ httpbin_host }}/digest-auth/auth/user/passwd'
+    user: user
+    password: wrong
+    headers:
+      Cookie: "fake=fake_value"
+  register: result
+  failed_when: result.status != 401
+
+- name: test unredirected_headers
+  uri:
+    url: 'https://{{ httpbin_host }}/redirect-to?status_code=301&url=/basic-auth/user/passwd'
+    user: user
+    password: passwd
+    force_basic_auth: true
+    unredirected_headers:
+      - authorization
+  ignore_errors: true
+  register: unredirected_headers
+
+- name: test omitting unredirected headers
+  uri:
+    url: 'https://{{ httpbin_host }}/redirect-to?status_code=301&url=/basic-auth/user/passwd'
+    user: user
+    password: passwd
+    force_basic_auth: true
+  register: redirected_headers
+
+- name: ensure unredirected_headers caused auth to fail
+  assert:
+    that:
+      - unredirected_headers is failed
+      - unredirected_headers.status == 401
+      - redirected_headers is successful
+      - redirected_headers.status == 200
+
 - name: test PUT
   uri:
     url: 'https://{{ httpbin_host }}/put'
@@ -245,11 +313,25 @@
     that:
       - 'result.allow.split(", ")|sort == ["GET", "HEAD", "OPTIONS"]'
 
-# Ubuntu12.04 doesn't have python-urllib3, this makes handling required dependencies a pain across all variations
-# We'll use this to just skip 12.04 on those tests.  We should be sufficiently covered with other OSes and versions
-- name: Set fact if running on Ubuntu 12.04
-  set_fact:
-    is_ubuntu_precise: "{{ ansible_distribution == 'Ubuntu' and ansible_distribution_release == 'precise' }}"
+- name: Testing support of https_proxy (with failure expected)
+  environment:
+    https_proxy: 'https://localhost:3456'
+  uri:
+    url: 'https://{{ httpbin_host }}/get'
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - result is failed
+      - result.status == -1
+
+- name: Testing use_proxy=no is honored
+  environment:
+    https_proxy: 'https://localhost:3456'
+  uri:
+    url: 'https://{{ httpbin_host }}/get'
+    use_proxy: no
 
 - name: Test that SNI succeeds on python versions that have SNI
   uri:
@@ -264,113 +346,6 @@
       - result is successful
       - 'sni_host in result.content'
   when: ansible_python.has_sslcontext
-
-- name: Verify SNI verification fails on old python without urllib3 contrib
-  uri:
-    url: 'https://{{ sni_host }}'
-  ignore_errors: true
-  when: not ansible_python.has_sslcontext
-  register: result
-
-- name: Assert SNI verification fails on old python
-  assert:
-    that:
-      - result is failed
-  when: result is not skipped
-
-- name: check if urllib3 is installed as an OS package
-  package:
-    name: "{{ uri_os_packages[ansible_os_family].urllib3 }}"
-  check_mode: yes
-  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool and uri_os_packages[ansible_os_family].urllib3|default
-  register: urllib3
-
-- name: uninstall conflicting urllib3 pip package
-  pip:
-    name: urllib3
-    state: absent
-  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool and uri_os_packages[ansible_os_family].urllib3|default and urllib3.changed
-
-- name: install OS packages that are needed for SNI on old python
-  package:
-    name: "{{ item }}"
-  with_items: "{{ uri_os_packages[ansible_os_family].step1 | default([]) }}"
-  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
-
-- name: install python modules for Older Python SNI verification
-  pip:
-    name: "{{ item }}"
-  with_items:
-    - ndg-httpsclient
-  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
-
-- name: Verify SNI verification succeeds on old python with urllib3 contrib
-  uri:
-    url: 'https://{{ sni_host }}'
-    return_content: true
-  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
-  register: result
-
-- name: Assert SNI verification succeeds on old python
-  assert:
-    that:
-      - result is successful
-      - 'sni_host in result.content'
-  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
-
-- name: Uninstall ndg-httpsclient
-  pip:
-    name: "{{ item }}"
-    state: absent
-  with_items:
-    - ndg-httpsclient
-  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
-
-- name: uninstall OS packages that are needed for SNI on old python
-  package:
-    name: "{{ item }}"
-    state: absent
-  with_items: "{{ uri_os_packages[ansible_os_family].step1 | default([]) }}"
-  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
-
-- name: install OS packages that are needed for building cryptography
-  package:
-    name: "{{ item }}"
-  with_items: "{{ uri_os_packages[ansible_os_family].step2 | default([]) }}"
-  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
-
-- name: install urllib3 and pyopenssl via pip
-  pip:
-    name: "{{ item }}"
-    state: latest
-    extra_args: "-c {{ remote_constraints }}"
-  with_items:
-    - urllib3
-    - PyOpenSSL
-  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
-
-- name: Verify SNI verification succeeds on old python with pip urllib3 contrib
-  uri:
-    url: 'https://{{ sni_host }}'
-    return_content: true
-  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
-  register: result
-
-- name: Assert SNI verification succeeds on old python with pip urllib3 contrib
-  assert:
-    that:
-      - result is successful
-      - 'sni_host in result.content'
-  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
-
-- name: Uninstall urllib3 and PyOpenSSL
-  pip:
-    name: "{{ item }}"
-    state: absent
-  with_items:
-    - urllib3
-    - PyOpenSSL
-  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
 - name: validate the status_codes are correct
   uri:
@@ -469,7 +444,7 @@
 - name: Assert multipart/form-data
   assert:
     that:
-      - multipart.json.files.file1 == '_multipart/form-data_\n'
+      - multipart.json.files.file1 | b64decode == '_multipart/form-data_\n'
       - multipart.json.files.file2 == 'text based file content'
       - multipart.json.form.text_form_field1 == 'value1'
       - multipart.json.form.text_form_field2 == 'value2'
@@ -547,9 +522,18 @@
 - assert:
     that:
       - result['set_cookie'] == 'Foo=bar, Baz=qux'
-      # Python sorts cookies in order of most specific (ie. longest) path first
+      # Python 3.10 and earlier sorts cookies in order of most specific (ie. longest) path first
       # items with the same path are reversed from response order
       - result['cookies_string'] == 'Baz=qux; Foo=bar'
+  when: ansible_python_version is version('3.11', '<')
+
+- assert:
+    that:
+      - result['set_cookie'] == 'Foo=bar, Baz=qux'
+      # Python 3.11 no longer sorts cookies.
+      # See: https://github.com/python/cpython/issues/86232
+      - result['cookies_string'] == 'Foo=bar; Baz=qux'
+  when: ansible_python_version is version('3.11', '>=')
 
 - name: Write out netrc template
   template:
@@ -596,6 +580,18 @@
     that:
       - result.json.json[0] == 'JSON Test Pattern pass1'
 
+- name: Test find JSON as subtype
+  uri:
+    url: "https://{{ httpbin_host }}/response-headers?content-type=application/ld%2Bjson"
+    method: POST
+    return_content: true
+  register: result
+
+- name: Validate JSON as subtype
+  assert:
+    that:
+      - result.json is defined
+
 - name: Make request that includes password in JSON keys
   uri:
     url: "https://{{ httpbin_host}}/get?key-password=value-password"
@@ -608,19 +604,40 @@
     that:
       - sanitize_keys.json.args['key-********'] == 'value-********'
 
+- name: Test gzip encoding
+  uri:
+    url: "https://{{ httpbin_host }}/gzip"
+  register: result
+
+- name: Validate gzip decoding
+  assert:
+    that:
+      - result.json.gzipped
+
+- name: test gzip encoding no auto decompress
+  uri:
+    url: "https://{{ httpbin_host }}/gzip"
+    decompress: false
+  register: result
+
+- name: Assert gzip wasn't decompressed
+  assert:
+    that:
+      - result.json is undefined
+
 - name: Create a testing file
   copy:
     content: "content"
-    dest: "{{ output_dir }}/output"
+    dest: "{{ remote_tmp_dir }}/output"
 
 - name: Download a file from non existing location
   uri:
     url: http://does/not/exist
-    dest: "{{ output_dir }}/output"
+    dest: "{{ remote_tmp_dir }}/output"
   ignore_errors: yes
 
 - name: Save testing file's output
-  command: "cat {{ output_dir }}/output"
+  command: "cat {{ remote_tmp_dir }}/output"
   register: file_out
 
 - name: Test the testing file was not overwritten
@@ -628,10 +645,50 @@
     that:
       - "'content' in file_out.stdout"
 
+- name: Test downloading cached file
+  uri:
+    url: "https://{{ httpbin_host }}/cache"
+
+- name: Test downloading cached file to existing file results in "304 Not Modified"
+  uri:
+    url: "https://{{ httpbin_host }}/cache"
+    dest: "{{ remote_tmp_dir }}/output"
+    status_code: [304]
+
+- name: Test downloading cached file to existing file with "force"
+  uri:
+    url: "https://{{ httpbin_host }}/cache"
+    dest: "{{ remote_tmp_dir }}/output"
+    force: true
+
 - name: Clean up
   file:
-    dest: "{{ output_dir }}/output"
+    dest: "{{ remote_tmp_dir }}/output"
     state: absent
+
+- name: Test download root to dir without content-disposition
+  uri:
+    url: "https://{{ httpbin_host }}/"
+    dest: "{{ remote_tmp_dir }}"
+  register: get_root_no_filename
+
+- name: Test downloading to dir without content-disposition
+  uri:
+    url: "https://{{ httpbin_host }}/response-headers"
+    dest: "{{ remote_tmp_dir }}"
+  register: get_dir_no_filename
+
+- name: Test downloading to dir with content-disposition
+  uri:
+    url: 'https://{{ httpbin_host }}/response-headers?Content-Disposition=attachment%3B%20filename%3D%22filename.json%22'
+    dest: "{{ remote_tmp_dir }}"
+  register: get_dir_filename
+
+- assert:
+    that:
+      - get_root_no_filename.path == remote_tmp_dir ~ "/index.html"
+      - get_dir_no_filename.path == remote_tmp_dir ~ "/response-headers"
+      - get_dir_filename.path == remote_tmp_dir ~ "/filename.json"
 
 - name: Test follow_redirects=none
   import_tasks: redirect-none.yml
@@ -658,4 +715,26 @@
       environment:
         KRB5_CONFIG: '{{ krb5_config }}'
         KRB5CCNAME: FILE:{{ remote_tmp_dir }}/krb5.cc
+        OPENSSL_CONF: '{{ krb5_openssl_conf }}'
   when: krb5_config is defined
+
+- name: Test ciphers
+  import_tasks: ciphers.yml
+  when: false  # skipped until we have a way to disable TLS 1.3 on the client or server, since cipher suite selection won't break TLS 1.3
+
+- name: Test use_netrc.yml
+  import_tasks: use_netrc.yml
+
+- name: Test unix socket
+  import_tasks: install-socat-and-test-unix-socket.yml
+
+- name: ensure skip action
+  uri:
+    url: http://example.com
+  check_mode: True
+  register: uri_check
+
+- name: check that we skipped at action
+  assert:
+    that:
+      - uri_check.msg == "This action (uri) does not support check mode."

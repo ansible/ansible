@@ -1,0 +1,43 @@
+- name: Write out netrc
+  copy:
+    dest: "{{ remote_tmp_dir }}/netrc"
+    content: |
+      machine {{ httpbin_host }}
+      login foo
+      password bar
+
+- name: Test with netrc forced Basic auth
+  uri:
+    url: https://{{ httpbin_host }}/basic-auth/foo/bar
+    return_content: yes
+    headers:
+      Authorization: Bearer foobar
+  environment:
+    NETRC: "{{ remote_tmp_dir }}/netrc"
+  register: response
+
+- name: assert Test with netrc forced Basic auth
+  assert:
+    that:
+     - response.json.user == 'foo'
+
+- name: Test Bearer authorization is successful with use_netrc=False
+  uri:
+    url: https://{{ httpbin_host }}/bearer
+    use_netrc: false
+    return_content: yes
+    headers:
+      Authorization: Bearer foobar
+  environment:
+    NETRC: "{{ remote_tmp_dir }}/netrc"
+  register: response
+
+- name: assert Test Bearer authorization is successful with use_netrc=False
+  assert:
+    that:
+     - response.json.token == 'foobar'
+
+- name: Clean up
+  file:
+    dest: "{{ remote_tmp_dir }}/netrc"
+    state: absent

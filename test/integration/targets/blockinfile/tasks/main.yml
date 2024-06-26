@@ -17,20 +17,21 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - set_fact:
-    output_dir_test: "{{ output_dir }}/test_blockinfile"
+    remote_tmp_dir_test: "{{ remote_tmp_dir }}/test_blockinfile"
 
 - name: make sure our testing sub-directory does not exist
   file:
-    path: "{{ output_dir_test }}"
+    path: "{{ remote_tmp_dir_test }}"
     state: absent
 
 - name: create our testing sub-directory
   file:
-    path: "{{ output_dir_test }}"
+    path: "{{ remote_tmp_dir_test }}"
     state: directory
 
 - import_tasks: add_block_to_existing_file.yml
 - import_tasks: create_file.yml
+- import_tasks: create_dir.yml
 - import_tasks: preserve_line_endings.yml
 - import_tasks: block_without_trailing_newline.yml
 - import_tasks: file_without_trailing_newline.yml
@@ -38,3 +39,6 @@
 - import_tasks: validate.yml
 - import_tasks: insertafter.yml
 - import_tasks: insertbefore.yml
+- import_tasks: multiline_search.yml
+- import_tasks: append_newline.yml
+- import_tasks: prepend_newline.yml

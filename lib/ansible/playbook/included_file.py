@@ -15,16 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.task_executor import remove_omit
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.playbook.handler import Handler
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role_include import IncludeRole
@@ -43,6 +41,7 @@ class IncludedFile:
         self._task = task
         self._hosts = []
         self._is_role = is_role
+        self._results = []
 
     def add_host(self, host):
         if host not in self._hosts:
@@ -71,8 +70,6 @@ class IncludedFile:
             original_task = res._task
 
             if original_task.action in C._ACTION_ALL_INCLUDES:
-                if original_task.action in C._ACTION_INCLUDE:
-                    display.deprecated('"include" is deprecated, use include_tasks/import_tasks/import_playbook instead', "2.16")
 
                 if original_task.loop:
                     if 'results' not in res._result:
@@ -92,14 +89,16 @@ class IncludedFile:
                     except KeyError:
                         task_vars = task_vars_cache[cache_key] = variable_manager.get_vars(play=iterator._play, host=original_host, task=original_task)
 
-                    include_args = include_result.get('include_args', dict())
+                    include_args = include_result.pop('include_args', dict())
                     special_vars = {}
                     loop_var = include_result.get('ansible_loop_var', 'item')
                     index_var = include_result.get('ansible_index_var')
                     if loop_var in include_result:
                         task_vars[loop_var] = special_vars[loop_var] = include_result[loop_var]
+                        task_vars['ansible_loop_var'] = special_vars['ansible_loop_var'] = loop_var
                     if index_var and index_var in include_result:
                         task_vars[index_var] = special_vars[index_var] = include_result[index_var]
+                        task_vars['ansible_index_var'] = special_vars['ansible_index_var'] = index_var
                     if '_ansible_item_label' in include_result:
                         task_vars['_ansible_item_label'] = special_vars['_ansible_item_label'] = include_result['_ansible_item_label']
                     if 'ansible_loop' in include_result:
@@ -117,7 +116,7 @@ class IncludedFile:
 
                     templar = Templar(loader=loader, variables=task_vars)
 
-                    if original_task.action in C._ACTION_ALL_INCLUDE_TASKS:
+                    if original_task.action in C._ACTION_INCLUDE_TASKS:
                         include_file = None
 
                         if original_task._parent:
@@ -147,9 +146,12 @@ class IncludedFile:
                                     cumulative_path = parent_include_dir
                                 include_target = templar.template(include_result['include'])
                                 if original_task._role:
-                                    new_basedir = os.path.join(original_task._role._role_path, 'tasks', cumulative_path)
-                                    candidates = [loader.path_dwim_relative(original_task._role._role_path, 'tasks', include_target),
-                                                  loader.path_dwim_relative(new_basedir, 'tasks', include_target)]
+                                    dirname = 'handlers' if isinstance(original_task, Handler) else 'tasks'
+                                    new_basedir = os.path.join(original_task._role._role_path, dirname, cumulative_path)
+                                    candidates = [
+                                        loader.path_dwim_relative(original_task._role._role_path, dirname, include_target, is_role=True),
+                                        loader.path_dwim_relative(new_basedir, dirname, include_target, is_role=True)
+                                    ]
                                     for include_file in candidates:
                                         try:
                                             # may throw OSError
@@ -186,10 +188,11 @@ class IncludedFile:
                             role_name = templar.template(role_name)
 
                         new_task = original_task.copy()
+                        new_task.post_validate(templar=templar)
                         new_task._role_name = role_name
                         for from_arg in new_task.FROM_ARGS:
                             if from_arg in include_args:
-                                from_key = from_arg.replace('_from', '')
+                                from_key = from_arg.removesuffix('_from')
                                 new_task._from_files[from_key] = templar.template(include_args.pop(from_arg))
 
                         omit_token = task_vars.get('omit')
@@ -212,6 +215,7 @@ class IncludedFile:
 
                         try:
                             inc_file.add_host(original_host)
+                            inc_file._results.append(res)
                         except ValueError:
                             # The host already exists for this include, advance forward, this is a new include
                             idx += pos + 1

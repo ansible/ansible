@@ -13,10 +13,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
+
+import ansible.module_utils.compat.typing as t
 
 from ansible.module_utils.six import iteritems
 
@@ -25,7 +26,7 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 
 class EnvFactCollector(BaseFactCollector):
     name = 'env'
-    _fact_ids = set()
+    _fact_ids = set()  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         env_facts = {}

@@ -1,2 +1,0 @@
-bugfixes:
-  - roles - make sure argspec validation task templates suboptions (https://github.com/ansible/ansible/issues/75070).

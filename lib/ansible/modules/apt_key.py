@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
@@ -6,8 +5,7 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -19,24 +17,33 @@ version_added: "1.0"
 short_description: Add or remove an apt key
 description:
     - Add or remove an I(apt) key, optionally downloading it.
+extends_documentation_fragment: action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: debian
 notes:
-    - The apt-key command has been deprecated and suggests to 'manage keyring files in trusted.gpg.d instead'. See the Debian wiki for details.
-      This module is kept for backwards compatiblity for systems that still use apt-key as the main way to manage apt repository keys.
+    - The apt-key command used by this module has been deprecated. See the L(Debian wiki,https://wiki.debian.org/DebianRepository/UseThirdParty) for details.
+      This module is kept for backwards compatibility for systems that still use apt-key as the main way to manage apt repository keys.
     - As a sanity check, downloaded key id must match the one specified.
     - "Use full fingerprint (40 characters) key ids to avoid key collisions.
       To generate a full-fingerprint imported key: C(apt-key adv --list-public-keys --with-fingerprint --with-colons)."
-    - If you specify both the key id and the URL with C(state=present), the task can verify or add the key as needed.
+    - If you specify both the key id and the URL with O(state=present), the task can verify or add the key as needed.
     - Adding a new key requires an apt cache update (e.g. using the M(ansible.builtin.apt) module's update_cache option).
-    - Supports C(check_mode).
 requirements:
     - gpg
+seealso:
+  - module: ansible.builtin.deb822_repository
 options:
     id:
         description:
             - The identifier of the key.
             - Including this allows check mode to correctly report the changed state.
             - If specifying a subkey's id be aware that apt-key does not understand how to remove keys via a subkey id.  Specify the primary key's id instead.
-            - This parameter is required when C(state) is set to C(absent).
+            - This parameter is required when O(state) is set to V(absent).
         type: str
     data:
         description:
@@ -68,13 +75,26 @@ options:
         default: present
     validate_certs:
         description:
-            - If C(no), SSL certificates for the target url will not be validated. This should only be used
+            - If V(false), SSL certificates for the target url will not be validated. This should only be used
               on personally controlled sites using self-signed certificates.
         type: bool
         default: 'yes'
 '''
 
 EXAMPLES = '''
+- name: One way to avoid apt_key once it is removed from your distro, armored keys should use .asc extension, binary should use .gpg
+  block:
+    - name: somerepo | no apt key
+      ansible.builtin.get_url:
+        url: https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x36a1d7869245c8950f966e92d8576a8ba88d21e9
+        dest: /etc/apt/keyrings/myrepo.asc
+        checksum: sha256:bb42f0db45d46bab5f9ec619e1a47360b94c27142e57aa71f7050d08672309e0
+
+    - name: somerepo | apt source
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/myrepo.asc] https://download.example.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+
 - name: Add an apt key by id from a keyserver
   ansible.builtin.apt_key:
     keyserver: keyserver.ubuntu.com
@@ -99,7 +119,7 @@ EXAMPLES = '''
 # Use armored file since utf-8 string is expected. Must be of "PGP PUBLIC KEY BLOCK" type.
 - name: Add a key from a file on the Ansible server
   ansible.builtin.apt_key:
-    data: "{{ lookup('file', 'apt.asc') }}"
+    data: "{{ lookup('ansible.builtin.file', 'apt.asc') }}"
     state: present
 
 - name: Add an Apt signing key to a specific keyring file
@@ -142,7 +162,7 @@ key_id:
     type: str
     sample: "36A1D7869245C8950F966E92D8576A8BA88D21E9"
 short_id:
-    description: caclulated short key id
+    description: calculated short key id
     returned: always
     type: str
     sample: "A88D21E9"
@@ -153,14 +173,24 @@ import os
 # FIXME: standardize into module_common
 from traceback import format_exc
 
+from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.urls import fetch_url
 
 
 apt_key_bin = None
 gpg_bin = None
-lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+locale = None
+
+
+def lang_env(module):
+
+    if not hasattr(lang_env, 'result'):
+        locale = get_best_parsable_locale(module)
+        lang_env.result = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
+
+    return lang_env.result
 
 
 def find_needed_binaries(module):
@@ -288,12 +318,11 @@ def get_key_id_from_file(module, filename, data=None):
     native_data = to_native(data)
     is_armored = native_data.find("-----BEGIN PGP PUBLIC KEY BLOCK-----") >= 0
 
-    global lang_env
     key = None
 
     cmd = [gpg_bin, '--with-colons', filename]
 
-    (rc, out, err) = module.run_command(cmd, environ_update=lang_env, data=(native_data if is_armored else data), binary_data=not is_armored)
+    (rc, out, err) = module.run_command(cmd, environ_update=lang_env(module), data=(native_data if is_armored else data), binary_data=not is_armored)
     if rc != 0:
         module.fail_json(msg="Unable to extract key from '%s'" % ('inline data' if data is not None else filename), stdout=out, stderr=err)
 
@@ -311,7 +340,6 @@ def get_key_id_from_data(module, data):
 
 def import_key(module, keyring, keyserver, key_id):
 
-    global lang_env
     if keyring:
         cmd = "%s --keyring %s adv --no-tty --keyserver %s" % (apt_key_bin, keyring, keyserver)
     else:
@@ -324,17 +352,17 @@ def import_key(module, keyring, keyserver, key_id):
     cmd = "%s --recv %s" % (cmd, key_id)
 
     for retry in range(5):
-        (rc, out, err) = module.run_command(cmd, environ_update=lang_env)
+        (rc, out, err) = module.run_command(cmd, environ_update=lang_env(module))
         if rc == 0:
             break
     else:
         # Out of retries
         if rc == 2 and 'not found on keyserver' in out:
             msg = 'Key %s not found on keyserver %s' % (key_id, keyserver)
-            module.fail_json(cmd=cmd, msg=msg, forced_environment=lang_env)
+            module.fail_json(cmd=cmd, msg=msg, forced_environment=lang_env(module))
         else:
             msg = "Error fetching key %s from keyserver: %s" % (key_id, keyserver)
-            module.fail_json(cmd=cmd, msg=msg, forced_environment=lang_env, rc=rc, stdout=out, stderr=err)
+            module.fail_json(cmd=cmd, msg=msg, forced_environment=lang_env(module), rc=rc, stdout=out, stderr=err)
     return True
 
 
@@ -396,7 +424,6 @@ def main():
             url=dict(type='str'),
             data=dict(type='str'),
             file=dict(type='path'),
-            key=dict(type='str', removed_in_version='2.14', removed_from_collection='ansible.builtin', no_log=False),
             keyring=dict(type='path'),
             validate_certs=dict(type='bool', default=True),
             keyserver=dict(type='str'),

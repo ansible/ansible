@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import annotations
 
 ANSIBLE_METADATA = {
     "metadata_version": "1.1",
@@ -34,7 +35,8 @@ extends_documentation_fragment:
 - cisco.ios.ios
 notes:
 - Tested against IOS 15.6
-- Abbreviated commands are NOT idempotent, see L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
+- Abbreviated commands are NOT idempotent,
+  see L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
 options:
   lines:
     description:
@@ -326,7 +328,7 @@ time:
 """
 import json
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.connection import ConnectionError
 from ansible_collections.cisco.ios.plugins.module_utils.network.ios.ios import (
     run_commands,
@@ -575,6 +577,7 @@ def main():
             )
 
             if running_config.sha1 != base_config.sha1:
+                before, after = "", ""
                 if module.params["diff_against"] == "intended":
                     before = running_config
                     after = base_config

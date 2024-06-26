@@ -1,17 +1,23 @@
 """Sanity test for ansible-doc."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import collections
+import json
 import os
 import re
 
-from ... import types as t
-
 from . import (
+    DOCUMENTABLE_PLUGINS,
+    MULTI_FILE_PLUGINS,
     SanitySingleVersion,
     SanityFailure,
     SanitySuccess,
+    SanityTargets,
+    SanityMessage,
+)
+
+from ...test import (
+    TestResult,
 )
 
 from ...target import (
@@ -24,12 +30,9 @@ from ...util import (
     is_subdir,
 )
 
-from ...util_common import (
-    intercept_command,
-)
-
 from ...ansible_util import (
     ansible_environment,
+    intercept_python,
 )
 
 from ...config import (
@@ -40,31 +43,17 @@ from ...data import (
     data_context,
 )
 
-from ...coverage_util import (
-    coverage_context,
+from ...host_configs import (
+    PythonConfig,
 )
 
 
 class AnsibleDocTest(SanitySingleVersion):
     """Sanity test for ansible-doc."""
-    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
-        """Return the given list of test targets, filtered to include only those relevant for the test."""
-        # This should use documentable plugins from constants instead
-        unsupported_plugin_types = set([
-            # not supported by ansible-doc
-            'action',
-            'doc_fragments',
-            'filter',
-            'module_utils',
-            'terminal',
-            'test',
-            # The following are plugin directories not directly supported by ansible-core (and thus also not by ansible-doc)
-            # (https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst#modules--plugins)
-            'plugin_utils',
-            'sub_plugins',
-        ])
 
-        plugin_paths = [plugin_path for plugin_type, plugin_path in data_context().content.plugin_paths.items() if plugin_type not in unsupported_plugin_types]
+    def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
+        """Return the given list of test targets, filtered to include only those relevant for the test."""
+        plugin_paths = [plugin_path for plugin_type, plugin_path in data_context().content.plugin_paths.items() if plugin_type in DOCUMENTABLE_PLUGINS]
 
         return [target for target in targets
                 if os.path.splitext(target.path)[1] == '.py'
@@ -72,19 +61,12 @@ class AnsibleDocTest(SanitySingleVersion):
                 and any(is_subdir(target.path, path) for path in plugin_paths)
                 ]
 
-    def test(self, args, targets, python_version):
-        """
-        :type args: SanityConfig
-        :type targets: SanityTargets
-        :type python_version: str
-        :rtype: TestResult
-        """
+    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
         settings = self.load_processor(args)
 
         paths = [target.path for target in targets.include]
 
-        doc_targets = collections.defaultdict(list)
-        target_paths = collections.defaultdict(dict)
+        doc_targets: dict[str, list[str]] = collections.defaultdict(list)
 
         remap_types = dict(
             modules='module',
@@ -94,16 +76,56 @@ class AnsibleDocTest(SanitySingleVersion):
             plugin_type = remap_types.get(plugin_type, plugin_type)
 
             for plugin_file_path in [target.name for target in targets.include if is_subdir(target.path, plugin_path)]:
-                plugin_name = os.path.splitext(os.path.basename(plugin_file_path))[0]
+                plugin_parts = os.path.relpath(plugin_file_path, plugin_path).split(os.path.sep)
+                plugin_name = os.path.splitext(plugin_parts[-1])[0]
 
-                if plugin_name.startswith('_'):
+                if plugin_name.startswith('_') and not data_context().content.collection:
                     plugin_name = plugin_name[1:]
 
-                doc_targets[plugin_type].append(data_context().content.prefix + plugin_name)
-                target_paths[plugin_type][data_context().content.prefix + plugin_name] = plugin_file_path
+                plugin_fqcn = data_context().content.prefix + '.'.join(plugin_parts[:-1] + [plugin_name])
+
+                doc_targets[plugin_type].append(plugin_fqcn)
 
         env = ansible_environment(args, color=False)
-        error_messages = []
+
+        for doc_type in MULTI_FILE_PLUGINS:
+            if doc_targets.get(doc_type):
+                # List plugins
+                cmd = ['ansible-doc', '-l', '--json', '-t', doc_type]
+                prefix = data_context().content.prefix if data_context().content.collection else 'ansible.builtin.'
+                cmd.append(prefix[:-1])
+                try:
+                    stdout, stderr = intercept_python(args, python, cmd, env, capture=True)
+                    status = 0
+                except SubprocessError as ex:
+                    stdout = ex.stdout
+                    stderr = ex.stderr
+                    status = ex.status
+
+                if status:
+                    summary = '%s' % SubprocessError(cmd=cmd, status=status, stderr=stderr)
+                    return SanityFailure(self.name, summary=summary)
+
+                if stdout:
+                    display.info(stdout.strip(), verbosity=3)
+
+                if stderr:
+                    summary = 'Output on stderr from ansible-doc is considered an error.\n\n%s' % SubprocessError(cmd, stderr=stderr)
+                    return SanityFailure(self.name, summary=summary)
+
+                if args.explain:
+                    continue
+
+                plugin_list_json = json.loads(stdout)
+                doc_targets[doc_type] = []
+                for plugin_name, plugin_value in sorted(plugin_list_json.items()):
+                    if plugin_value != 'UNDOCUMENTED':
+                        doc_targets[doc_type].append(plugin_name)
+
+                if not doc_targets[doc_type]:
+                    del doc_targets[doc_type]
+
+        error_messages: list[SanityMessage] = []
 
         for doc_type in sorted(doc_targets):
             for format_option in [None, '--json']:
@@ -113,9 +135,7 @@ class AnsibleDocTest(SanitySingleVersion):
                 cmd.extend(sorted(doc_targets[doc_type]))
 
                 try:
-                    with coverage_context(args):
-                        stdout, stderr = intercept_command(args, cmd, target_name='ansible-doc', env=env, capture=True, python_version=python_version)
-
+                    stdout, stderr = intercept_python(args, python, cmd, env, capture=True)
                     status = 0
                 except SubprocessError as ex:
                     stdout = ex.stdout
@@ -123,7 +143,7 @@ class AnsibleDocTest(SanitySingleVersion):
                     status = ex.status
 
                 if status:
-                    summary = u'%s' % SubprocessError(cmd=cmd, status=status, stderr=stderr)
+                    summary = '%s' % SubprocessError(cmd=cmd, status=status, stderr=stderr)
                     return SanityFailure(self.name, summary=summary)
 
                 if stdout:
@@ -134,7 +154,7 @@ class AnsibleDocTest(SanitySingleVersion):
                     stderr = re.sub(r'\[WARNING]: [^ ]+ [^ ]+ has been removed\n', '', stderr).strip()
 
                 if stderr:
-                    summary = u'Output on stderr from ansible-doc is considered an error.\n\n%s' % SubprocessError(cmd, stderr=stderr)
+                    summary = 'Output on stderr from ansible-doc is considered an error.\n\n%s' % SubprocessError(cmd, stderr=stderr)
                     return SanityFailure(self.name, summary=summary)
 
         if args.explain:

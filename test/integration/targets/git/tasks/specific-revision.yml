@@ -70,11 +70,11 @@
 # Same as the previous test, but this time we specify which ref
 # contains the SHA1
 - name: SPECIFIC-REVISION | update to revision by specifying the refspec
-  git:
-    repo: https://github.com/ansible/ansible-examples.git
+  git: &git_ref_spec
+    repo: "{{ repo_dir }}/shallow_branches/.git"
     dest: '{{ checkout_dir }}'
-    version: 5473e343e33255f2da0b160f53135c56921d875c
-    refspec: refs/pull/7/merge
+    version: "{{ test_branch_ref_head_id }}"
+    refspec: refs/heads/test_branch
 
 - name: SPECIFIC-REVISION | check HEAD after update with refspec
   command: git rev-parse HEAD
@@ -84,7 +84,7 @@
 
 - assert:
     that:
-      - 'git_result.stdout == "5473e343e33255f2da0b160f53135c56921d875c"'
+      - 'git_result.stdout == test_branch_ref_head_id'
 
 # try out combination of refspec and depth
 - name: SPECIFIC-REVISION | clear checkout_dir
@@ -94,11 +94,8 @@
 
 - name: SPECIFIC-REVISION | update to revision by specifying the refspec with depth=1
   git:
-    repo: https://github.com/ansible/ansible-examples.git
-    dest: '{{ checkout_dir }}'
-    version: 5473e343e33255f2da0b160f53135c56921d875c
-    refspec: refs/pull/7/merge
     depth: 1
+    <<: *git_ref_spec
 
 - name: SPECIFIC-REVISION | check HEAD after update with refspec
   command: git rev-parse HEAD
@@ -108,7 +105,7 @@
 
 - assert:
     that:
-      - 'git_result.stdout == "5473e343e33255f2da0b160f53135c56921d875c"'
+      - 'git_result.stdout == test_branch_ref_head_id'
 
 - name: SPECIFIC-REVISION | try to access other commit
   shell: git checkout 0ce1096
@@ -130,11 +127,7 @@
     path: "{{ checkout_dir }}"
 
 - name: SPECIFIC-REVISION | clone to revision by specifying the refspec
-  git:
-    repo: https://github.com/ansible/ansible-examples.git
-    dest: "{{ checkout_dir }}"
-    version: 5473e343e33255f2da0b160f53135c56921d875c
-    refspec: refs/pull/7/merge
+  git: *git_ref_spec
 
 - name: SPECIFIC-REVISION | check HEAD after update with refspec
   command: git rev-parse HEAD
@@ -144,7 +137,7 @@
 
 - assert:
     that:
-      - 'git_result.stdout == "5473e343e33255f2da0b160f53135c56921d875c"'
+      - 'git_result.stdout == test_branch_ref_head_id'
 
 # Test that a forced shallow checkout referincing branch only always fetches latest head
 
@@ -162,7 +155,14 @@
     path: "{{ checkout_dir }}"
 
 - name: SPECIFIC-REVISION | prepare origina repo
-  shell: git init; echo "1" > a; git add a; git commit -m "1"
+  shell: |
+    set -eEu
+
+    git init
+
+    echo "1" > a
+    git add a
+    git commit -m "1"
   args:
     chdir: "{{ checkout_dir }}"
 
@@ -191,7 +191,14 @@
     force: yes
 
 - name: SPECIFIC-REVISION | create new commit in original
-  shell: git init; echo "2" > b; git add b; git commit -m "2"
+  shell: |
+    set -eEu
+
+    git init
+
+    echo "2" > b
+    git add b
+    git commit -m "2"
   args:
     chdir: "{{ checkout_dir }}"
 

@@ -38,6 +38,7 @@ docs/docsite/rst/cli/ansible-*.rst
 docs/docsite/rst/cli/ansible.rst
 docs/docsite/rst/dev_guide/collections_galaxy_meta.rst
 docs/docsite/rst/dev_guide/testing/sanity/index.rst.new
+docs/docsite/rst/dev_guide/index.rst
 docs/docsite/rst/modules/*.rst
 docs/docsite/rst/collections/*.rst
 !docs/docsite/rst/collections/all_plugins.rst
@@ -52,12 +53,10 @@ docs/docsite/searchindex.js
 docs/docsite/_static/*.gif
 docs/docsite/_static/*.png
 docs/docsite/_static/websupport.js
-# deb building stuff...
-/debian/
-deb-build
 # Vim swap files
 *.swp
 *.swo
+[._]*.un~
 credentials.yml
 # test output
 *.retry
@@ -74,7 +73,16 @@ coverage.xml
 /test/cache/*
 # Development
 /test/develop
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 venv
+env
 Vagrantfile
 .vagrant
 # Backwards compatibility with `stable-2.9` and earlier branches.
@@ -84,11 +92,13 @@ Vagrantfile
 /lib/ansible_base.egg-info/
 # First used in the `devel` branch during Ansible 2.11 development.
 /lib/ansible_core.egg-info/
+# vendored lib dir
+lib/ansible/_vendor/*
+!lib/ansible/_vendor/__init__.py
+# test stuff
 /test/integration/cloud-config-*.*
 !/test/integration/cloud-config-*.*.template
 .python-version
-/hacking/tests/selinux/*.mod
-/hacking/tests/selinux/*.pp
 # Release directory
 packaging/release/ansible_release
 /.cache/

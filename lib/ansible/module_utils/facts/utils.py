@@ -13,8 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import fcntl
 import os
@@ -32,6 +31,7 @@ def get_file_content(path, default=None, strip=True):
     '''
     data = default
     if os.path.exists(path) and os.access(path, os.R_OK):
+        datafile = None
         try:
             datafile = open(path)
             try:
@@ -55,7 +55,8 @@ def get_file_content(path, default=None, strip=True):
             # ignore errors as some jails/containers might have readable permissions but not allow reads
             pass
         finally:
-            datafile.close()
+            if datafile is not None:
+                datafile.close()
 
     return data
 

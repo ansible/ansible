@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import sys
@@ -15,7 +14,7 @@ throttledir = os.path.expanduser(throttledir)
 throttlefile = os.path.join(throttledir, inventory_hostname)
 try:
     # create the file
-    with(open(throttlefile, 'a')):
+    with open(throttlefile, 'a'):
         os.utime(throttlefile, None)
     # count the number of files in the dir
     throttlelist = os.listdir(throttledir)

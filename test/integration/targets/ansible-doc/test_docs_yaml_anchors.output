@@ -1,49 +1,35 @@
-> TEST_DOCS_YAML_ANCHORS    (library/test_docs_yaml_anchors.py)
+  Test module
 
-        Test module
+OPTIONS (= indicates it is required):
 
-OPTIONS (= is mandatory):
-
-- at_the_top
-        Short desc
-        [Default: some string]
+- at_the_top  Short desc
+        default: some string
         type: str
 
-- egress
-        Egress firewall rules
-        [Default: (null)]
+- egress  Egress firewall rules
+        default: null
         elements: dict
         type: list
+        suboptions:
 
-        SUBOPTIONS:
+        = port          Rule port
+          type: int
 
-        = port
-            Rule port
-
-            type: int
-
-- ingress
-        Ingress firewall rules
-        [Default: (null)]
+- ingress  Ingress firewall rules
+        default: null
         elements: dict
         type: list
+        suboptions:
 
-        SUBOPTIONS:
+        = port          Rule port
+          type: int
 
-        = port
-            Rule port
-
-            type: int
-
-- last_one
-        Short desc
-        [Default: some string]
+- last_one  Short desc
+        default: some string
         type: str
-
 
 AUTHOR: Ansible Core Team
 
 EXAMPLES:
-
 
 

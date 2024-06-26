@@ -16,14 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- set_fact: output_dir_test={{output_dir}}/at
-
-- name: make sure our testing sub-directory does not exist
-  file: path="{{ output_dir_test }}" state=absent
-
-- name: create our testing sub-directory
-  file: path="{{ output_dir_test }}" state=directory
-
 # Verify correct default package manager for Fedora
 # Validates: https://github.com/ansible/ansible/issues/34014
 - block:
@@ -157,17 +149,17 @@
   when: ansible_distribution in package_distros
 
 ##
-## yum
+## dnf
 ##
-#Validation for new parameter 'use' in yum action plugin which aliases to 'use_backend'
+#Validation for new parameter 'use' in dnf action plugin which aliases to 'use_backend'
 #Issue: https://github.com/ansible/ansible/issues/70774
 - block:
     - name: verify if using both the parameters 'use' and 'use_backend' throw error
-      yum:
+      dnf:
         name: at
         state: present
-        use_backend: yum
-        use: yum
+        use_backend: dnf
+        use: dnf
       ignore_errors: yes
       register: result
 
@@ -178,7 +170,7 @@
           - "not result is changed"
 
     - name: verify if package installation is successful using 'use' parameter
-      yum:
+      dnf:
         name: at
         state: present
         use: dnf
@@ -190,7 +182,7 @@
           - "result is changed"
 
     - name: remove at package
-      yum:
+      dnf:
         name: at
         state: absent
         use: dnf
@@ -202,7 +194,7 @@
           - "result is changed"
 
     - name: verify if package installation is successful using 'use_backend' parameter
-      yum:
+      dnf:
         name: at
         state: present
         use_backend: dnf
@@ -214,7 +206,7 @@
           - "result is changed"
 
     - name: remove at package
-      yum:
+      dnf:
         name: at
         state: absent
         use_backend: dnf
@@ -226,7 +218,7 @@
           - "result is changed"
 
     - name: verify if package installation is successful without using 'use_backend' and 'use' parameters
-      yum:
+      dnf:
         name: at
         state: present
       register: result
@@ -237,7 +229,7 @@
           - "result is changed"
 
     - name: remove at package
-      yum:
+      dnf:
         name: at
         state: absent
       register: result
@@ -248,3 +240,19 @@
           - "result is changed"
 
   when: ansible_distribution == "Fedora"
+
+
+- name: test ansible_package_use
+  block:
+  - name: test with var
+    package:
+      name: doesnotmatter
+    vars:
+      ansible_package_use: lola
+    ignore_errors: true
+    register: use_to_use
+
+  - assert:
+      that:
+        - use_to_use is failed
+        - "'Could not find a matching action' in use_to_use['msg']"

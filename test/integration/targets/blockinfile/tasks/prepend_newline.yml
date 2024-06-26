@@ -1,0 +1,119 @@
+- name: Create prepend_newline test file
+  copy:
+    dest: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+    content: |
+      line1
+      line2
+      line3
+
+- name: add content to file prepending a new line at the beginning of the file
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+    prepend_newline: true
+    insertbefore: "line1"
+    block: |
+      line0.5
+  register: insert_prepending_a_new_line_at_the_beginning_of_the_file
+
+- name: get file content after adding content prepending a new line at the beginning of the file
+  stat:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+  register: prepended_a_new_line_at_the_beginning_of_the_file
+
+- name: check content is the expected one after prepending a new line at the beginning of the file
+  assert:
+    that:
+      - insert_prepending_a_new_line_at_the_beginning_of_the_file is changed
+      - prepended_a_new_line_at_the_beginning_of_the_file.stat.checksum == "bfd32c880bbfadd1983c67836c46bf8ed9d50343"
+
+- name: add content to file prepending a new line
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+    prepend_newline: true
+    marker: "#{mark} WRAPPED TEXT"
+    insertafter: "line1"
+    block: |
+      line1.5
+  register: insert_prepending_a_new_line
+
+- name: add content to file prepending a new line (again)
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+    prepend_newline: true
+    marker: "#{mark} WRAPPED TEXT"
+    insertafter: "line1"
+    block: |
+      line1.5
+  register: insert_prepending_a_new_line_again
+
+- name: get file content after adding content prepending a new line
+  stat:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+  register: prepended_a_new_line
+
+- name: check content is the expected one after inserting content prepending a new line
+  assert:
+    that:
+      - insert_prepending_a_new_line is changed
+      - insert_prepending_a_new_line_again is not changed
+      - prepended_a_new_line.stat.checksum == "d5b8b42690f4a38b9a040adc3240a6f81ad5f8ee"
+
+- name: add content to file without prepending a new line
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+    marker: "#{mark} UNWRAPPED TEXT"
+    insertafter: "line3"
+    block: |
+      line3.5
+  register: insert_without_prepending_new_line
+
+- name: get file content after adding content without prepending a new line
+  stat:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+  register: without_prepending_new_line
+
+- name: check content is the expected one after inserting without prepending a new line
+  assert:
+    that:
+      - insert_without_prepending_new_line is changed
+      - without_prepending_new_line.stat.checksum == "ad06200e7ee5b22b7eff4c57075b42d038eaffb6"
+
+- name: prepend a new line to existing block
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+    prepend_newline: true
+    marker: "#{mark} UNWRAPPED TEXT"
+    insertafter: "line3"
+    block: |
+      line3.5
+  register: prepend_new_line_to_existing_block
+
+- name: get file content after prepending a new line to an existing block
+  stat:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+  register: new_line_prepended
+
+- name: check content is the expected one after prepending a new line to an existing block
+  assert:
+    that:
+      - prepend_new_line_to_existing_block is changed
+      - new_line_prepended.stat.checksum == "f2dd48160fb3c7c8e02d292666a1a3f08503f6bf"
+
+- name: Removing a block with prepend_newline set to true does not prepend another line
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+    prepend_newline: true
+    marker: "#{mark} UNWRAPPED TEXT"
+    state: absent
+  register: remove_block_prepending_new_line
+
+- name: get file content after removing existing block prepending new line
+  stat:
+    path: "{{ remote_tmp_dir_test }}/prepend_newline.txt"
+  register: removed_block_prepending_new_line
+
+- name: check content is the expected one after removing a block prepending a new line
+  assert:
+    that:
+      - remove_block_prepending_new_line is changed
+      - removed_block_prepending_new_line.stat.checksum == "c97c3da7d607acfd5d786fbb81f3d93d867c914a"

@@ -1,11 +1,9 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -22,8 +20,8 @@ description:
     - This module is a proxy for multiple more specific service manager modules
       (such as M(ansible.builtin.systemd) and M(ansible.builtin.sysvinit)).
       This allows management of a heterogeneous environment of machines without creating a specific task for
-      each service manager. The module to be executed is determined by the I(use) option, which defaults to the
-      service manager discovered by M(ansible.builtin.setup).  If `setup` was not yet run, this module may run it.
+      each service manager. The module to be executed is determined by the O(use) option, which defaults to the
+      service manager discovered by M(ansible.builtin.setup).  If M(ansible.builtin.setup) was not yet run, this module may run it.
     - For Windows targets, use the M(ansible.windows.win_service) module instead.
 options:
     name:
@@ -33,10 +31,10 @@ options:
         required: true
     state:
         description:
-          - C(started)/C(stopped) are idempotent actions that will not run
+          - V(started)/V(stopped) are idempotent actions that will not run
             commands unless necessary.
-          - C(restarted) will always bounce the service.
-          - C(reloaded) will always reload.
+          - V(restarted) will always bounce the service.
+          - V(reloaded) will always reload.
           - B(At least one of state and enabled are required.)
           - Note that reloaded will start the service if it is not already started,
             even if your chosen init system wouldn't normally.
@@ -44,7 +42,7 @@ options:
         choices: [ reloaded, restarted, started, stopped ]
     sleep:
         description:
-        - If the service is being C(restarted) then sleep this many seconds
+        - If the service is being V(restarted) then sleep this many seconds
           between the stop and start command.
         - This helps to work around badly-behaving init scripts that exit immediately
           after signaling a process to stop.
@@ -77,17 +75,40 @@ options:
         - Additional arguments provided on the command line.
         - While using remote hosts with systemd this setting will be ignored.
         type: str
+        default: ''
         aliases: [ args ]
     use:
         description:
         - The service module actually uses system specific modules, normally through auto detection, this setting can force a specific module.
         - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
+        - The 'old service module' still uses autodetection and in no way does it correspond to the C(service) command.
         type: str
         default: auto
         version_added: 2.2
+extends_documentation_fragment:
+  -  action_common_attributes
+  -  action_common_attributes.flow
+attributes:
+    action:
+        support: full
+    async:
+        support: full
+    bypass_host_loop:
+        support: none
+    check_mode:
+        details: support depends on the underlying plugin invoked
+        support: N/A
+    diff_mode:
+        details: support depends on the underlying plugin invoked
+        support: N/A
+    platform:
+        details: The support depends on the availability for the specific plugin for each platform and if fact gathering is able to detect it
+        platforms: all
 notes:
     - For AIX, group subsystem names can be used.
-    - Supports C(check_mode).
+    - The C(service) command line utility is not part of any service manager system but a convenience.
+      It does not have a standard implementation across systems, and this action cannot use it directly.
+      Though it might be used if found in certain circumstances, the detected system service manager is normally preferred.
 seealso:
     - module: ansible.windows.win_service
 author:
@@ -154,10 +175,11 @@ import time
 if platform.system() != 'SunOS':
     from ansible.module_utils.compat.version import LooseVersion
 
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.sys_info import get_platform_subclass
-from ansible.module_utils.service import fail_if_missing
+from ansible.module_utils.service import fail_if_missing, is_systemd_managed
 from ansible.module_utils.six import PY2, b
 
 
@@ -224,11 +246,13 @@ class Service(object):
 
     def execute_command(self, cmd, daemonize=False):
 
+        locale = get_best_parsable_locale(self.module)
+        lang_env = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
+
         # Most things don't need to be daemonized
         if not daemonize:
             # chkconfig localizes messages and we're screen scraping so make
             # sure we use the C locale
-            lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
             return self.module.run_command(cmd, environ_update=lang_env)
 
         # This is complex because daemonization is hard for people.
@@ -273,7 +297,6 @@ class Service(object):
 
             # chkconfig localizes messages and we're screen scraping so make
             # sure we use the C locale
-            lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
             p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=lang_env, preexec_fn=lambda: os.close(pipe[1]))
             stdout = b("")
             stderr = b("")
@@ -383,30 +406,27 @@ class Service(object):
 
         self.changed = None
         entry = '%s="%s"\n' % (self.rcconf_key, self.rcconf_value)
-        RCFILE = open(self.rcconf_file, "r")
-        new_rc_conf = []
+        with open(self.rcconf_file, "r") as RCFILE:
+            new_rc_conf = []
 
-        # Build a list containing the possibly modified file.
-        for rcline in RCFILE:
-            # Parse line removing whitespaces, quotes, etc.
-            rcarray = shlex.split(rcline, comments=True)
-            if len(rcarray) >= 1 and '=' in rcarray[0]:
-                (key, value) = rcarray[0].split("=", 1)
-                if key == self.rcconf_key:
-                    if value.upper() == self.rcconf_value:
-                        # Since the proper entry already exists we can stop iterating.
-                        self.changed = False
-                        break
-                    else:
-                        # We found the key but the value is wrong, replace with new entry.
-                        rcline = entry
-                        self.changed = True
+            # Build a list containing the possibly modified file.
+            for rcline in RCFILE:
+                # Parse line removing whitespaces, quotes, etc.
+                rcarray = shlex.split(rcline, comments=True)
+                if len(rcarray) >= 1 and '=' in rcarray[0]:
+                    (key, value) = rcarray[0].split("=", 1)
+                    if key == self.rcconf_key:
+                        if value.upper() == self.rcconf_value:
+                            # Since the proper entry already exists we can stop iterating.
+                            self.changed = False
+                            break
+                        else:
+                            # We found the key but the value is wrong, replace with new entry.
+                            rcline = entry
+                            self.changed = True
 
-            # Add line to the list.
-            new_rc_conf.append(rcline.strip() + '\n')
-
-        # We are done with reading the current rc.conf, close it.
-        RCFILE.close()
+                # Add line to the list.
+                new_rc_conf.append(rcline.strip() + '\n')
 
         # If we did not see any trace of our entry we need to add it.
         if self.changed is None:
@@ -464,24 +484,7 @@ class LinuxService(Service):
 
             # tools must be installed
             if location.get('systemctl', False):
-
-                # this should show if systemd is the boot init system
-                # these mirror systemd's own sd_boot test http://www.freedesktop.org/software/systemd/man/sd_booted.html
-                for canary in ["/run/systemd/system/", "/dev/.run/systemd/", "/dev/.systemd/"]:
-                    if os.path.exists(canary):
-                        return True
-
-                # If all else fails, check if init is the systemd command, using comm as cmdline could be symlink
-                try:
-                    f = open('/proc/1/comm', 'r')
-                except IOError:
-                    # If comm doesn't exist, old kernel, no systemd
-                    return False
-
-                for line in f:
-                    if 'systemd' in line:
-                        return True
-
+                return is_systemd_managed(self.module)
             return False
 
         # Locate a tool to enable/disable a service
@@ -1009,7 +1012,7 @@ class FreeBsdService(Service):
         self.sysrc_cmd = self.module.get_bin_path('sysrc')
 
     def get_service_status(self):
-        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'onestatus', self.arguments))
+        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.arguments, self.name, 'onestatus'))
         if self.name == "pf":
             self.running = "Enabled" in stdout
         else:
@@ -1029,7 +1032,7 @@ class FreeBsdService(Service):
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'rcvar', self.arguments))
+        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.arguments, self.name, 'rcvar'))
         try:
             rcvars = shlex.split(stdout, comments=True)
         except Exception:
@@ -1094,7 +1097,7 @@ class FreeBsdService(Service):
         if self.action == "reload":
             self.action = "onereload"
 
-        ret = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, self.action, self.arguments))
+        ret = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.arguments, self.name, self.action))
 
         if self.sleep:
             time.sleep(self.sleep)
@@ -1174,107 +1177,31 @@ class OpenBsdService(Service):
             return self.execute_command("%s -f %s" % (self.svc_cmd, self.action))
 
     def service_enable(self):
+
         if not self.enable_cmd:
             return super(OpenBsdService, self).service_enable()
 
-        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.enable_cmd, 'getdef', self.name, 'flags'))
-
-        if stderr:
-            self.module.fail_json(msg=stderr)
-
-        getdef_string = stdout.rstrip()
-
-        # Depending on the service the string returned from 'getdef' may be
-        # either a set of flags or the boolean YES/NO
-        if getdef_string == "YES" or getdef_string == "NO":
-            default_flags = ''
-        else:
-            default_flags = getdef_string
-
-        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.enable_cmd, 'get', self.name, 'flags'))
-
-        if stderr:
-            self.module.fail_json(msg=stderr)
-
-        get_string = stdout.rstrip()
-
-        # Depending on the service the string returned from 'get' may be
-        # either a set of flags or the boolean YES/NO
-        if get_string == "YES" or get_string == "NO":
-            current_flags = ''
-        else:
-            current_flags = get_string
-
-        # If there are arguments from the user we use these as flags unless
-        # they are already set.
-        if self.arguments and self.arguments != current_flags:
-            changed_flags = self.arguments
-        # If the user has not supplied any arguments and the current flags
-        # differ from the default we reset them.
-        elif not self.arguments and current_flags != default_flags:
-            changed_flags = ' '
-        # Otherwise there is no need to modify flags.
-        else:
-            changed_flags = ''
-
         rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.enable_cmd, 'get', self.name, 'status'))
 
+        status_action = None
         if self.enable:
-            if rc == 0 and not changed_flags:
-                return
-
             if rc != 0:
-                status_action = "set %s status on" % (self.name)
-            else:
-                status_action = ''
-            if changed_flags:
-                flags_action = "set %s flags %s" % (self.name, changed_flags)
-            else:
-                flags_action = ''
-        else:
-            if rc == 1:
-                return
+                status_action = "on"
+        elif self.enable is not None:
+            # should be explicit False at this point
+            if rc != 1:
+                status_action = "off"
 
-            status_action = "set %s status off" % self.name
-            flags_action = ''
+        if status_action is not None:
+            self.changed = True
+            if not self.module.check_mode:
+                rc, stdout, stderr = self.execute_command("%s set %s status %s" % (self.enable_cmd, self.name, status_action))
 
-        # Verify state assumption
-        if not status_action and not flags_action:
-            self.module.fail_json(msg="neither status_action or status_flags is set, this should never happen")
-
-        if self.module.check_mode:
-            self.module.exit_json(changed=True, msg="changing service enablement")
-
-        status_modified = 0
-        if status_action:
-            rc, stdout, stderr = self.execute_command("%s %s" % (self.enable_cmd, status_action))
-
-            if rc != 0:
-                if stderr:
-                    self.module.fail_json(msg=stderr)
-                else:
-                    self.module.fail_json(msg="rcctl failed to modify service status")
-
-            status_modified = 1
-
-        if flags_action:
-            rc, stdout, stderr = self.execute_command("%s %s" % (self.enable_cmd, flags_action))
-
-            if rc != 0:
-                if stderr:
-                    if status_modified:
-                        error_message = "rcctl modified service status but failed to set flags: " + stderr
+                if rc != 0:
+                    if stderr:
+                        self.module.fail_json(msg=stderr)
                     else:
-                        error_message = stderr
-                else:
-                    if status_modified:
-                        error_message = "rcctl modified service status but failed to set flags"
-                    else:
-                        error_message = "rcctl failed to modify service flags"
-
-                self.module.fail_json(msg=error_message)
-
-        self.changed = True
+                        self.module.fail_json(msg="rcctl failed to modify service status")
 
 
 class NetBsdService(Service):
@@ -1575,9 +1502,11 @@ class AIX(Service):
             srccmd = self.refresh_cmd
         elif self.action == 'restart':
             self.execute_command("%s %s %s" % (self.stopsrc_cmd, srccmd_parameter, self.name))
+            if self.sleep:
+                time.sleep(self.sleep)
             srccmd = self.startsrc_cmd
 
-        if self.arguments and self.action == 'start':
+        if self.arguments and self.action in ('start', 'restart'):
             return self.execute_command("%s -a \"%s\" %s %s" % (srccmd, self.arguments, srccmd_parameter, self.name))
         else:
             return self.execute_command("%s %s %s" % (srccmd, srccmd_parameter, self.name))

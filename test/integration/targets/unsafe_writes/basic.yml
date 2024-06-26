@@ -1,9 +1,23 @@
 - hosts: testhost
   gather_facts: false
-  vars:
-    testudir: '{{output_dir}}/unsafe_writes_test'
-    testufile: '{{testudir}}/unreplacablefile.txt'
   tasks:
+    - import_role:
+        name: ../setup_remote_tmp_dir
+    - name: define test directory
+      set_fact:
+        testudir: '{{remote_tmp_dir}}/unsafe_writes_test'
+    - name: define test file
+      set_fact:
+        testufile: '{{testudir}}/unreplacablefile.txt'
+    - name: define test environment with unsafe writes set
+      set_fact:
+        test_env:
+          ANSIBLE_UNSAFE_WRITES: "{{ lookup('env', 'ANSIBLE_UNSAFE_WRITES') }}"
+      when: lookup('env', 'ANSIBLE_UNSAFE_WRITES')
+    - name: define test environment without unsafe writes set
+      set_fact:
+        test_env: {}
+      when: not lookup('env', 'ANSIBLE_UNSAFE_WRITES')
     - name: test unsafe_writes on immutable dir (file cannot be atomically replaced)
       block:
       - name: create target dir
@@ -61,6 +75,7 @@
                 msg: "Failed with envvar: {{env_enabled}}, due AUW: to {{q('env', 'ANSIBLE_UNSAFE_WRITES')}}"
                 that:
                   - env_enabled and copy_with_env is changed or not env_enabled and copy_with_env is failed
+      environment: "{{ test_env }}"
       always:
       - name: remove immutable flag from dir to prevent issues with cleanup
         file: path={{testudir}} state=directory attributes="-i"

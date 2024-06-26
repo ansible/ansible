@@ -13,8 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 
@@ -30,8 +29,10 @@ class AIXHardware(Hardware):
     - swapfree_mb
     - swaptotal_mb
     - processor (a list)
-    - processor_cores
     - processor_count
+    - processor_cores
+    - processor_threads_per_core
+    - processor_vcpus
     """
     platform = 'AIX'
 
@@ -58,7 +59,11 @@ class AIXHardware(Hardware):
         cpu_facts = {}
         cpu_facts['processor'] = []
 
-        rc, out, err = self.module.run_command("/usr/sbin/lsdev -Cc processor")
+        # FIXME: not clear how to detect multi-sockets
+        cpu_facts['processor_count'] = 1
+        rc, out, err = self.module.run_command(
+            "/usr/sbin/lsdev -Cc processor"
+        )
         if out:
             i = 0
             for line in out.splitlines():
@@ -69,17 +74,25 @@ class AIXHardware(Hardware):
                         cpudev = data[0]
 
                     i += 1
-            cpu_facts['processor_count'] = int(i)
+            cpu_facts['processor_cores'] = int(i)
 
-            rc, out, err = self.module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a type")
+            rc, out, err = self.module.run_command(
+                "/usr/sbin/lsattr -El " + cpudev + " -a type"
+            )
 
             data = out.split(' ')
-            cpu_facts['processor'] = data[1]
+            cpu_facts['processor'] = [data[1]]
 
-            rc, out, err = self.module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a smt_threads")
+            cpu_facts['processor_threads_per_core'] = 1
+            rc, out, err = self.module.run_command(
+                "/usr/sbin/lsattr -El " + cpudev + " -a smt_threads"
+            )
             if out:
                 data = out.split(' ')
-                cpu_facts['processor_cores'] = int(data[1])
+                cpu_facts['processor_threads_per_core'] = int(data[1])
+            cpu_facts['processor_vcpus'] = (
+                cpu_facts['processor_cores'] * cpu_facts['processor_threads_per_core']
+            )
 
         return cpu_facts
 
@@ -182,34 +195,35 @@ class AIXHardware(Hardware):
         # AIX does not have mtab but mount command is only source of info (or to use
         # api calls to get same info)
         mount_path = self.module.get_bin_path('mount')
-        rc, mount_out, err = self.module.run_command(mount_path)
-        if mount_out:
-            for line in mount_out.split('\n'):
-                fields = line.split()
-                if len(fields) != 0 and fields[0] != 'node' and fields[0][0] != '-' and re.match('^/.*|^[a-zA-Z].*|^[0-9].*', fields[0]):
-                    if re.match('^/', fields[0]):
-                        # normal mount
-                        mount = fields[1]
-                        mount_info = {'mount': mount,
-                                      'device': fields[0],
-                                      'fstype': fields[2],
-                                      'options': fields[6],
-                                      'time': '%s %s %s' % (fields[3], fields[4], fields[5])}
-                        mount_info.update(get_mount_size(mount))
-                    else:
-                        # nfs or cifs based mount
-                        # in case of nfs if no mount options are provided on command line
-                        # add into fields empty string...
-                        if len(fields) < 8:
-                            fields.append("")
+        if mount_path:
+            rc, mount_out, err = self.module.run_command(mount_path)
+            if mount_out:
+                for line in mount_out.split('\n'):
+                    fields = line.split()
+                    if len(fields) != 0 and fields[0] != 'node' and fields[0][0] != '-' and re.match('^/.*|^[a-zA-Z].*|^[0-9].*', fields[0]):
+                        if re.match('^/', fields[0]):
+                            # normal mount
+                            mount = fields[1]
+                            mount_info = {'mount': mount,
+                                          'device': fields[0],
+                                          'fstype': fields[2],
+                                          'options': fields[6],
+                                          'time': '%s %s %s' % (fields[3], fields[4], fields[5])}
+                            mount_info.update(get_mount_size(mount))
+                        else:
+                            # nfs or cifs based mount
+                            # in case of nfs if no mount options are provided on command line
+                            # add into fields empty string...
+                            if len(fields) < 8:
+                                fields.append("")
 
-                        mount_info = {'mount': fields[2],
-                                      'device': '%s:%s' % (fields[0], fields[1]),
-                                      'fstype': fields[3],
-                                      'options': fields[7],
-                                      'time': '%s %s %s' % (fields[4], fields[5], fields[6])}
+                            mount_info = {'mount': fields[2],
+                                          'device': '%s:%s' % (fields[0], fields[1]),
+                                          'fstype': fields[3],
+                                          'options': fields[7],
+                                          'time': '%s %s %s' % (fields[4], fields[5], fields[6])}
 
-                    mounts.append(mount_info)
+                        mounts.append(mount_info)
 
         mount_facts['mounts'] = mounts
 
@@ -219,30 +233,31 @@ class AIXHardware(Hardware):
         device_facts = {}
         device_facts['devices'] = {}
 
-        lsdev_cmd = self.module.get_bin_path('lsdev', True)
-        lsattr_cmd = self.module.get_bin_path('lsattr', True)
-        rc, out_lsdev, err = self.module.run_command(lsdev_cmd)
+        lsdev_cmd = self.module.get_bin_path('lsdev')
+        lsattr_cmd = self.module.get_bin_path('lsattr')
+        if lsdev_cmd and lsattr_cmd:
+            rc, out_lsdev, err = self.module.run_command(lsdev_cmd)
 
-        for line in out_lsdev.splitlines():
-            field = line.split()
+            for line in out_lsdev.splitlines():
+                field = line.split()
 
-            device_attrs = {}
-            device_name = field[0]
-            device_state = field[1]
-            device_type = field[2:]
-            lsattr_cmd_args = [lsattr_cmd, '-E', '-l', device_name]
-            rc, out_lsattr, err = self.module.run_command(lsattr_cmd_args)
-            for attr in out_lsattr.splitlines():
-                attr_fields = attr.split()
-                attr_name = attr_fields[0]
-                attr_parameter = attr_fields[1]
-                device_attrs[attr_name] = attr_parameter
+                device_attrs = {}
+                device_name = field[0]
+                device_state = field[1]
+                device_type = field[2:]
+                lsattr_cmd_args = [lsattr_cmd, '-E', '-l', device_name]
+                rc, out_lsattr, err = self.module.run_command(lsattr_cmd_args)
+                for attr in out_lsattr.splitlines():
+                    attr_fields = attr.split()
+                    attr_name = attr_fields[0]
+                    attr_parameter = attr_fields[1]
+                    device_attrs[attr_name] = attr_parameter
 
-            device_facts['devices'][device_name] = {
-                'state': device_state,
-                'type': ' '.join(device_type),
-                'attributes': device_attrs
-            }
+                device_facts['devices'][device_name] = {
+                    'state': device_state,
+                    'type': ' '.join(device_type),
+                    'attributes': device_attrs
+                }
 
         return device_facts
 

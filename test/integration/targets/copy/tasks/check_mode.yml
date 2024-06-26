@@ -113,8 +113,7 @@
       - check_mode_subdir_first is changed
 
       - check_mode_trailing_slash_first is changed
-      # TODO: This is a legitimate bug
-      #- not check_mode_trailing_slash_first_stat.stat.exists
+      - not check_mode_trailing_slash_first_stat.stat.exists
       - check_mode_trailing_slash_real is changed
       - check_mode_trailing_slash_real_stat.stat.exists
       - check_mode_trailing_slash_second is not changed
@@ -124,3 +123,41 @@
       - check_mode_foo_real is changed
       - check_mode_foo_real_stat.stat.exists
       - check_mode_foo_second is not changed
+
+  - name: check_mode - Do a basic copy to setup next test (without check mode)
+    copy:
+      src: foo.txt
+      dest: "{{ remote_dir }}/foo-check_mode.txt"
+      mode: 0444
+
+  - name: check_mode - Copy the same src with a different mode (check mode)
+    copy:
+      src: foo.txt
+      dest: "{{ remote_dir }}/foo-check_mode.txt"
+      mode: 0666
+    check_mode: True
+    register: check_mode_file_attribute
+
+  - name: stat the file to make sure the mode was not updated in check mode
+    stat:
+      path: "{{ remote_dir }}/foo-check_mode.txt"
+    register: check_mode_file_attribute_stat
+
+  - name: check_mode - Copy the same src with a different mode (without check mode)
+    copy:
+      src: foo.txt
+      dest: "{{ remote_dir }}/foo-check_mode.txt"
+      mode: 0666
+    register: real_file_attribute
+
+  - name: stat the file to make sure the mode was updated without check mode
+    stat:
+      path: "{{ remote_dir }}/foo-check_mode.txt"
+    register: real_file_attribute_stat
+
+  - assert:
+      that:
+        - check_mode_file_attribute is changed
+        - real_file_attribute is changed
+        - "check_mode_file_attribute_stat.stat.mode == '0444'"
+        - "real_file_attribute_stat.stat.mode == '0666'"

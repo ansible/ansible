@@ -1,6 +1,6 @@
 - name: Create a file with blockinfile
   blockinfile:
-    path: "{{ output_dir_test }}/empty.txt"
+    path: "{{ remote_tmp_dir_test }}/empty.txt"
     block: |
       Hey
       there
@@ -10,7 +10,7 @@
 
 - name: Run a task that results in an empty file
   blockinfile:
-    path: "{{ output_dir_test }}/empty.txt"
+    path: "{{ remote_tmp_dir_test }}/empty.txt"
     block: |
       Hey
       there
@@ -19,7 +19,7 @@
   register: empty_test_2
 
 - stat:
-    path: "{{ output_dir_test }}/empty.txt"
+    path: "{{ remote_tmp_dir_test }}/empty.txt"
   register: empty_test_stat
 
 - name: Ensure empty file was created
@@ -30,3 +30,17 @@
       - empty_test_2 is changed
       - "'Block removed' in empty_test_2.msg"
       - empty_test_stat.stat.size == 0
+
+- block:
+  - name: Create file in current directory
+    blockinfile:
+      path: "empty.txt"
+      block: Hello.
+      state: present
+      create: yes
+
+  always:
+  - name: Remove file
+    file:
+      path: "empty.txt"
+      state: absent

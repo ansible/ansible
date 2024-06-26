@@ -1,0 +1,15 @@
+- command: ansible-playbook {{ role_path }}/test.yml -vvv -i {{ '-i '.join(ansible_inventory_sources) }}
+  environment:
+    ANSIBLE_REMOTE_TEMP: /i/dont/exist
+    ANSIBLE_NOCOLOR: 'true'
+  register: result
+
+- assert:
+    that:
+      - >-
+        result.stdout is search('PUT ' ~ ansible_local ~ ' TO ' ~ ansible_local)
+      - >-
+        '/i/dont/exist' not in result.stdout
+  vars:
+    local_tmp: '{{ q("config", "remote_tmp", plugin_type="shell", plugin_name="sh")|first|expanduser|realpath }}'
+    ansible_local: '{{ local_tmp }}/ansible-local-\S+'

@@ -15,14 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 
-from units.compat import unittest
-from units.compat.builtins import BUILTINS
-from units.compat.mock import mock_open, patch
+import unittest
+from unittest.mock import mock_open, patch
 from ansible.errors import AnsibleError
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 
@@ -38,12 +35,12 @@ class TestErrors(unittest.TestCase):
     def test_basic_error(self):
         e = AnsibleError(self.message)
         self.assertEqual(e.message, self.message)
-        self.assertEqual(e.__repr__(), self.message)
+        self.assertEqual(repr(e), self.message)
 
     def test_basic_unicode_error(self):
         e = AnsibleError(self.unicode_message)
         self.assertEqual(e.message, self.unicode_message)
-        self.assertEqual(e.__repr__(), self.unicode_message)
+        self.assertEqual(repr(e), self.unicode_message)
 
     @patch.object(AnsibleError, '_get_error_lines_from_file')
     def test_error_with_kv(self, mock_method):
@@ -87,7 +84,7 @@ class TestErrors(unittest.TestCase):
         m = mock_open()
         m.return_value.readlines.return_value = ['this is line 1\n']
 
-        with patch('{0}.open'.format(BUILTINS), m):
+        with patch('builtins.open', m):
             # this line will be found in the file
             self.obj.ansible_pos = ('foo.yml', 1, 1)
             e = AnsibleError(self.message, self.obj)
@@ -110,7 +107,7 @@ class TestErrors(unittest.TestCase):
         m = mock_open()
         m.return_value.readlines.return_value = ['this line has unicode \xf0\x9f\x98\xa8 in it!\n']
 
-        with patch('{0}.open'.format(BUILTINS), m):
+        with patch('builtins.open', m):
             # this line will be found in the file
             self.obj.ansible_pos = ('foo.yml', 1, 1)
             e = AnsibleError(self.unicode_message, self.obj)
@@ -125,7 +122,7 @@ class TestErrors(unittest.TestCase):
         m = mock_open()
         m.return_value.readlines.return_value = ['this is line 1\n', 'this is line 2\n', 'this is line 3\n']
 
-        with patch('{0}.open'.format(BUILTINS), m):
+        with patch('builtins.open', m):
             # If the error occurs in the last line of the file, use the correct index to get the line
             # and avoid the IndexError
             self.obj.ansible_pos = ('foo.yml', 4, 1)
@@ -141,7 +138,7 @@ class TestErrors(unittest.TestCase):
         m = mock_open()
         m.return_value.readlines.return_value = ['this is line 1\n', 'this is line 2\n', 'this is line 3\n', '  \n', '   \n', ' ']
 
-        with patch('{0}.open'.format(BUILTINS), m):
+        with patch('builtins.open', m):
             self.obj.ansible_pos = ('foo.yml', 5, 1)
             e = AnsibleError(self.message, self.obj)
             self.assertEqual(

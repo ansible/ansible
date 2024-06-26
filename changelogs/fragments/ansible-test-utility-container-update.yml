@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Update ``ansible-test-utility-container`` to version 3.1.0.

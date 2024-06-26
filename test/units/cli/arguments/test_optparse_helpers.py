@@ -2,8 +2,7 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import sys
 
@@ -14,10 +13,7 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible import __path__ as ansible_path
 from ansible.release import __version__ as ansible_version
 
-if C.DEFAULT_MODULE_PATH is None:
-    cpath = u'Default w/o overrides'
-else:
-    cpath = C.DEFAULT_MODULE_PATH
+cpath = C.DEFAULT_MODULE_PATH
 
 FAKE_PROG = u'ansible-cli-test'
 VERSION_OUTPUT = opt_help.version(prog=FAKE_PROG)

@@ -1,0 +1,17 @@
+- name: Verify variables are set
+  assert:
+    that:
+      - aws_access_key
+      - aws_region
+      - aws_secret_key
+      - resource_prefix
+      - security_token
+      - tiny_prefix
+- name: Show variables
+  debug:
+    msg: "{{ lookup('vars', item) }}"
+  with_items:
+      - aws_access_key
+      - aws_region
+      - resource_prefix
+      - tiny_prefix

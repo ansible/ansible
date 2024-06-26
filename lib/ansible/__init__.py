@@ -15,23 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 # make vendored top-level modules accessible EARLY
 import ansible._vendor
-
-# patch Jinja2 >= 3.0 for backwards compatibility
-try:
-    import sys as _sys
-    from jinja2.filters import pass_context as _passctx, pass_environment as _passenv, pass_eval_context as _passevalctx
-    _mod = _sys.modules['jinja2.filters']
-    _mod.contextfilter = _passctx
-    _mod.environmentfilter = _passenv
-    _mod.evalcontextfilter = _passevalctx
-except ImportError:
-    _sys = None
 
 # Note: Do not add any code to this file.  The ansible module may be
 # a namespace package when using Ansible-2.1+ Anything in this file may not be

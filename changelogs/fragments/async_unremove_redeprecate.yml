@@ -1,2 +1,0 @@
-bugfixes:
-  - async_status, resurrected module to deprecate for those that were invoking it directly.

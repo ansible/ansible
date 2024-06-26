@@ -1,0 +1,43 @@
+---
+- name: test out Windows WinRM specific tests
+  hosts: windows
+  force_handlers: yes
+  serial: 1
+  gather_facts: no
+
+  tasks:
+  - name: reboot the host
+    ansible.windows.win_reboot:
+
+  - name: setup remote tmp dir
+    import_role:
+      name: ../../setup_remote_tmp_dir
+
+  - name: copy across empty file
+    win_copy:
+      content: ''
+      dest: '{{ remote_tmp_dir }}\empty.txt'
+    register: winrm_copy_empty
+
+  - name: get result of copy across empty file
+    win_stat:
+      path: '{{ remote_tmp_dir }}\empty.txt'
+    register: winrm_copy_empty_actual
+
+  - name: assert copy across empty file
+    assert:
+      that:
+      - winrm_copy_empty is changed
+      - winrm_copy_empty_actual.stat.size == 0
+
+  # Ensures the connection plugin can handle a timeout
+  # without raising another error.
+  - name: run command with timeout
+    win_shell: Start-Sleep -Seconds 10
+    timeout: 5
+    register: timeout_cmd
+    ignore_errors: true
+
+  - assert:
+      that:
+      - timeout_cmd.msg == 'The win_shell action failed to execute in the expected time frame (5) and was terminated'

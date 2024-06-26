@@ -1,16 +1,22 @@
 """Sanity test for symlinks in the bin directory."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
-
-from ... import types as t
 
 from . import (
     SanityVersionNeutral,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
+    SanityTargets,
+)
+
+from ...constants import (
+    __file__ as symlink_map_full_path,
+)
+
+from ...test import (
+    TestResult,
 )
 
 from ...config import (
@@ -23,44 +29,34 @@ from ...data import (
 
 from ...payload import (
     ANSIBLE_BIN_SYMLINK_MAP,
-    __file__ as symlink_map_full_path,
 )
 
 from ...util import (
-    ANSIBLE_BIN_PATH,
-    ANSIBLE_TEST_DATA_ROOT,
+    ANSIBLE_SOURCE_ROOT,
 )
 
 
 class BinSymlinksTest(SanityVersionNeutral):
     """Sanity test for symlinks in the bin directory."""
+
     ansible_only = True
 
     @property
-    def can_ignore(self):  # type: () -> bool
+    def can_ignore(self) -> bool:
         """True if the test supports ignore entries."""
         return False
 
     @property
-    def no_targets(self):  # type: () -> bool
+    def no_targets(self) -> bool:
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return True
 
-    # noinspection PyUnusedLocal
-    def test(self, args, targets):  # pylint: disable=locally-disabled, unused-argument
-        """
-        :type args: SanityConfig
-        :type targets: SanityTargets
-        :rtype: TestResult
-        """
-        bin_root = ANSIBLE_BIN_PATH
+    def test(self, args: SanityConfig, targets: SanityTargets) -> TestResult:
+        bin_root = os.path.join(ANSIBLE_SOURCE_ROOT, 'bin')
         bin_names = os.listdir(bin_root)
         bin_paths = sorted(os.path.join(bin_root, path) for path in bin_names)
 
-        injector_root = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'injector')
-        injector_names = os.listdir(injector_root)
-
-        errors = []  # type: t.List[t.Tuple[str, str]]
+        errors: list[tuple[str, str]] = []
 
         symlink_map_path = os.path.relpath(symlink_map_full_path, data_context().content.root)
 
@@ -97,10 +93,6 @@ class BinSymlinksTest(SanityVersionNeutral):
             if bin_name not in bin_names:
                 bin_path = os.path.join(bin_root, bin_name)
                 errors.append((bin_path, 'missing symlink to "%s" defined in ANSIBLE_BIN_SYMLINK_MAP in file "%s"' % (dest, symlink_map_path)))
-
-            if bin_name not in injector_names:
-                injector_path = os.path.join(injector_root, bin_name)
-                errors.append((injector_path, 'missing symlink to "python.py"'))
 
         messages = [SanityMessage(message=message, path=os.path.relpath(path, data_context().content.root), confidence=100) for path, message in errors]
 

@@ -2,7 +2,7 @@
 # Most of these names are only available via PluginLoader so pylint doesn't
 # know they exist
 # pylint: disable=no-name-in-module
-__metaclass__ = type
+from __future__ import annotations
 
 results = {}
 
@@ -11,8 +11,8 @@ import ansible.module_utils.foo0
 results['foo0'] = ansible.module_utils.foo0.data
 
 # Test depthful import with no from
-import ansible.module_utils.bar0.foo
-results['bar0'] = ansible.module_utils.bar0.foo.data
+import ansible.module_utils.bar0.foo3
+results['bar0'] = ansible.module_utils.bar0.foo3.data
 
 # Test import of module_utils/foo1.py
 from ansible.module_utils import foo1
@@ -72,12 +72,12 @@ from ansible.module_utils.spam8.ham import eggs
 results['spam8'] = (bacon.data, eggs)
 
 # Test that import of module_utils/qux1/quux.py using as works
-from ansible.module_utils.qux1 import quux as one
-results['qux1'] = one.data
+from ansible.module_utils.qux1 import quux as two
+results['qux1'] = two.data
 
 # Test that importing qux2/quux.py and qux2/quuz.py using as works
-from ansible.module_utils.qux2 import quux as one, quuz as two
-results['qux2'] = (one.data, two.data)
+from ansible.module_utils.qux2 import quux as three, quuz as four
+results['qux2'] = (three.data, four.data)
 
 # Test depth
 from ansible.module_utils.a.b.c.d.e.f.g.h import data

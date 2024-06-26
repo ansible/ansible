@@ -1,8 +1,7 @@
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: nested
@@ -19,7 +18,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: give users access to multiple databases
-  mysql_user:
+  community.mysql.mysql_user:
     name: "{{ item[0] }}"
     priv: "{{ item[1] }}.*:ALL"
     append_privs: yes
@@ -30,7 +29,7 @@ EXAMPLES = """
 # As with the case of 'with_items' above, you can use previously defined variables.:
 
 - name: here, 'users' contains the above list of employees
-  mysql_user:
+  community.mysql.mysql_user:
     name: "{{ item[0] }}"
     priv: "{{ item[1] }}.*:ALL"
     append_privs: yes
@@ -60,7 +59,7 @@ class LookupModule(LookupBase):
         results = []
         for x in terms:
             try:
-                intermediate = listify_lookup_plugin_terms(x, templar=self._templar, loader=self._loader, fail_on_undefined=True)
+                intermediate = listify_lookup_plugin_terms(x, templar=self._templar, fail_on_undefined=True)
             except UndefinedError as e:
                 raise AnsibleUndefinedVariable("One of the nested variables was undefined. The error was: %s" % e)
             results.append(intermediate)

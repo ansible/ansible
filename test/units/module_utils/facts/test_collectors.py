@@ -15,11 +15,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from units.compat.mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from . base import BaseFactsTest
 
@@ -91,7 +89,7 @@ class TestApparmorFacts(BaseFactsTest):
     collector_class = ApparmorFactCollector
 
     def test_collect(self):
-        facts_dict = super(TestApparmorFacts, self).test_collect()
+        facts_dict = super(TestApparmorFacts, self)._test_collect()
         self.assertIn('status', facts_dict['apparmor'])
 
 
@@ -189,7 +187,7 @@ class TestEnvFacts(BaseFactsTest):
     collector_class = EnvFactCollector
 
     def test_collect(self):
-        facts_dict = super(TestEnvFacts, self).test_collect()
+        facts_dict = super(TestEnvFacts, self)._test_collect()
         self.assertIn('HOME', facts_dict['env'])
 
 
@@ -353,7 +351,6 @@ class TestSelinuxFacts(BaseFactsTest):
             facts_dict = fact_collector.collect(module=module)
             self.assertIsInstance(facts_dict, dict)
             self.assertEqual(facts_dict['selinux']['status'], 'Missing selinux Python library')
-            return facts_dict
 
 
 class TestServiceMgrFacts(BaseFactsTest):
@@ -366,20 +363,6 @@ class TestServiceMgrFacts(BaseFactsTest):
     # TODO: dedupe some of this test code
 
     @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value=None)
-    @patch('ansible.module_utils.facts.system.service_mgr.ServiceMgrFactCollector.is_systemd_managed', return_value=False)
-    @patch('ansible.module_utils.facts.system.service_mgr.ServiceMgrFactCollector.is_systemd_managed_offline', return_value=False)
-    @patch('ansible.module_utils.facts.system.service_mgr.os.path.exists', return_value=False)
-    def test_service_mgr_runit(self, mock_gfc, mock_ism, mock_ismo, mock_ope):
-        # no /proc/1/comm, ps returns non-0
-        # should fallback to 'service'
-        module = self._mock_module()
-        module.run_command = Mock(return_value=(1, '', 'wat'))
-        fact_collector = self.collector_class()
-        facts_dict = fact_collector.collect(module=module)
-        self.assertIsInstance(facts_dict, dict)
-        self.assertEqual(facts_dict['service_mgr'], 'service')
-
-    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value=None)
     def test_no_proc1_ps_random_init(self, mock_gfc):
         # no /proc/1/comm, ps returns '/sbin/sys11' which we dont know
         # should end up return 'sys11'
@@ -390,27 +373,8 @@ class TestServiceMgrFacts(BaseFactsTest):
         self.assertIsInstance(facts_dict, dict)
         self.assertEqual(facts_dict['service_mgr'], 'sys11')
 
-    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value=None)
-    @patch('ansible.module_utils.facts.system.service_mgr.ServiceMgrFactCollector.is_systemd_managed', return_value=False)
-    @patch('ansible.module_utils.facts.system.service_mgr.ServiceMgrFactCollector.is_systemd_managed_offline', return_value=False)
-    @patch('ansible.module_utils.facts.system.service_mgr.os.path.exists', return_value=False)
-    def test_service_mgr_runit(self, mock_gfc, mock_ism, mock_ismo, mock_ope):
-        # no /proc/1/comm, ps fails, distro and system are clowncar
-        # should end up return 'sys11'
-        module = self._mock_module()
-        module.run_command = Mock(return_value=(1, '', ''))
-        collected_facts = {'distribution': 'clowncar',
-                           'system': 'ClownCarOS'}
-        fact_collector = self.collector_class()
-        facts_dict = fact_collector.collect(module=module,
-                                            collected_facts=collected_facts)
-        self.assertIsInstance(facts_dict, dict)
-        self.assertEqual(facts_dict['service_mgr'], 'service')
-
     @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value='runit-init')
-    @patch('ansible.module_utils.facts.system.service_mgr.os.path.islink', side_effect=lambda x: x == '/sbin/init')
-    @patch('ansible.module_utils.facts.system.service_mgr.os.readlink', side_effect=lambda x: '/sbin/runit-init' if x == '/sbin/init' else '/bin/false')
-    def test_service_mgr_runit(self, mock_gfc, mock_opl, mock_orl):
+    def test_service_mgr_runit(self, mock_gfc):
         # /proc/1/comm contains 'runit-init', ps fails, service manager is runit
         # should end up return 'runit'
         module = self._mock_module()
@@ -436,50 +400,6 @@ class TestServiceMgrFacts(BaseFactsTest):
                                             collected_facts=collected_facts)
         self.assertIsInstance(facts_dict, dict)
         self.assertEqual(facts_dict['service_mgr'], 'runit')
-
-    # TODO: reenable these tests when we can mock more easily
-
-#    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value=None)
-#    def test_sunos_fallback(self, mock_gfc):
-#        # no /proc/1/comm, ps fails, 'system' is SunOS
-#        # should end up return 'smf'?
-#        module = self._mock_module()
-#        # FIXME: the result here is a kluge to at least cover more of service_mgr.collect
-#        # TODO: remove
-#        # FIXME: have to force a pid for results here to get into any of the system/distro checks
-#        module.run_command = Mock(return_value=(1, ' 37 ', ''))
-#        collected_facts = {'system': 'SunOS'}
-#        fact_collector = self.collector_class(module=module)
-#        facts_dict = fact_collector.collect(collected_facts=collected_facts)
-#        print('facts_dict: %s' % facts_dict)
-#        self.assertIsInstance(facts_dict, dict)
-#        self.assertEqual(facts_dict['service_mgr'], 'smf')
-
-#    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value=None)
-#    def test_aix_fallback(self, mock_gfc):
-#        # no /proc/1/comm, ps fails, 'system' is SunOS
-#        # should end up return 'smf'?
-#        module = self._mock_module()
-#        module.run_command = Mock(return_value=(1, '', ''))
-#        collected_facts = {'system': 'AIX'}
-#        fact_collector = self.collector_class(module=module)
-#        facts_dict = fact_collector.collect(collected_facts=collected_facts)
-#        print('facts_dict: %s' % facts_dict)
-#        self.assertIsInstance(facts_dict, dict)
-#        self.assertEqual(facts_dict['service_mgr'], 'src')
-
-#    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value=None)
-#    def test_linux_fallback(self, mock_gfc):
-#        # no /proc/1/comm, ps fails, 'system' is SunOS
-#        # should end up return 'smf'?
-#        module = self._mock_module()
-#        module.run_command = Mock(return_value=(1, '  37 ', ''))
-#        collected_facts = {'system': 'Linux'}
-#        fact_collector = self.collector_class(module=module)
-#        facts_dict = fact_collector.collect(collected_facts=collected_facts)
-#        print('facts_dict: %s' % facts_dict)
-#        self.assertIsInstance(facts_dict, dict)
-#        self.assertEqual(facts_dict['service_mgr'], 'sdfadf')
 
 
 class TestSshPubKeyFactCollector(BaseFactsTest):

@@ -1,0 +1,24 @@
+DOCUMENTATION:
+  name: falsy
+  author: Ansible Core
+  version_added: "2.10"
+  short_description: Pythonic false
+  description:
+    - This check is a more Python version of what is 'false'.
+    - It is the opposite of 'truthy'.
+  options:
+    _input:
+      description: An expression that can be expressed in a boolean context.
+      type: string
+      required: True
+    convert_bool:
+      description: Attempts to convert the result to a strict Python boolean vs normally acceptable values (V(yes)/V(no), V(on)/V(off), V(0)/V(1), etc).
+      type: bool
+      default: false
+EXAMPLES: |
+    thisisfalse: '{{ "any string" is falsy }}'
+    thisistrue: '{{ "" is falsy }}'
+RETURN:
+  _value:
+    description: Returns V(False) if the condition is not "Python truthy", V(True) otherwise.
+    type: boolean

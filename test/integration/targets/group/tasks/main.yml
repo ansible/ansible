@@ -16,25 +16,4 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: ensure test groups are deleted before the test
-  group:
-    name: '{{ item }}'
-    state: absent
-  loop:
-  - ansibullgroup
-  - ansibullgroup2
-  - ansibullgroup3
-
-- block:
-  - name: run tests
-    include_tasks: tests.yml
-
-  always:
-  - name: remove test groups after test
-    group:
-      name: '{{ item }}'
-      state: absent
-    loop:
-    - ansibullgroup
-    - ansibullgroup2
-    - ansibullgroup3
+- import_tasks: tests.yml

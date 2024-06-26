@@ -1,6 +1,5 @@
 """Generate HTML code coverage reports."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -16,8 +15,12 @@ from ...util_common import (
     ResultType,
 )
 
+from ...provisioning import (
+    prepare_profiles,
+)
+
 from .combine import (
-    command_coverage_combine,
+    combine_coverage_files,
     CoverageCombineConfig,
 )
 
@@ -26,11 +29,10 @@ from . import (
 )
 
 
-def command_coverage_html(args):
-    """
-    :type args: CoverageHtmlConfig
-    """
-    output_files = command_coverage_combine(args)
+def command_coverage_html(args: CoverageHtmlConfig) -> None:
+    """Generate an HTML coverage report."""
+    host_state = prepare_profiles(args)  # coverage html
+    output_files = combine_coverage_files(args, host_state)
 
     for output_file in output_files:
         if output_file.endswith('-powershell'):
@@ -40,7 +42,7 @@ def command_coverage_html(args):
 
         dir_name = os.path.join(ResultType.REPORTS.path, os.path.basename(output_file))
         make_dirs(dir_name)
-        run_coverage(args, output_file, 'html', ['-i', '-d', dir_name])
+        run_coverage(args, host_state, output_file, 'html', ['-i', '-d', dir_name])
 
         display.info('HTML report generated: file:///%s' % os.path.join(dir_name, 'index.html'))
 

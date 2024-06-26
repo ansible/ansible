@@ -2,7 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 param(
-    [Parameter(Mandatory=$true)][System.Collections.IDictionary]$Payload
+    [Parameter(Mandatory = $true)][System.Collections.IDictionary]$Payload
 )
 
 $ErrorActionPreference = "Stop"
@@ -65,7 +65,7 @@ $bootstrap_wrapper = {
 
     $input_bytes = New-Object -TypeName byte[] -ArgumentList $bytes_length
     $pipe = New-Object -TypeName System.IO.Pipes.NamedPipeClientStream -ArgumentList @(
-        ".",  # localhost
+        ".", # localhost
         $pipe_name,
         [System.IO.Pipes.PipeDirection]::In,
         [System.IO.Pipes.PipeOptions]::None,
@@ -74,7 +74,8 @@ $bootstrap_wrapper = {
     try {
         $pipe.Connect()
         $pipe.Read($input_bytes, 0, $bytes_length) > $null
-    } finally {
+    }
+    finally {
         $pipe.Close()
     }
     $exec = [System.Text.Encoding]::UTF8.GetString($input_bytes)
@@ -114,12 +115,12 @@ $pipe = New-Object -TypeName System.IO.Pipes.NamedPipeServerStream -ArgumentList
 
 try {
     Write-AnsibleLog "INFO - creating async process '$exec_args'" "async_wrapper"
-    $process = Invoke-CimMethod -ClassName Win32_Process -Name Create -Arguments @{CommandLine=$exec_args}
+    $process = Invoke-CimMethod -ClassName Win32_Process -Name Create -Arguments @{CommandLine = $exec_args }
     $rc = $process.ReturnValue
 
     Write-AnsibleLog "INFO - return value from async process exec: $rc" "async_wrapper"
     if ($rc -ne 0) {
-        $error_msg = switch($rc) {
+        $error_msg = switch ($rc) {
             2 { "Access denied" }
             3 { "Insufficient privilege" }
             8 { "Unknown failure" }
@@ -134,11 +135,11 @@ try {
 
     # populate initial results before we send the async data to avoid result race
     $result = @{
-        started = 1;
-        finished = 0;
-        results_file = $results_path;
-        ansible_job_id = $local_jid;
-        _ansible_suppress_tmpdir_delete = $true;
+        started = 1
+        finished = 0
+        results_file = $results_path
+        ansible_job_id = $local_jid
+        _ansible_suppress_tmpdir_delete = $true
         ansible_async_watchdog_pid = $watchdog_pid
     }
 
@@ -163,7 +164,8 @@ try {
     $pipe.Write($payload_bytes, 0, $payload_bytes.Count)
     $pipe.Flush()
     $pipe.WaitForPipeDrain()
-} finally {
+}
+finally {
     $pipe.Close()
 }
 

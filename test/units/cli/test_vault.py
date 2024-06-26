@@ -16,20 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import pytest
 
-from units.compat import unittest
-from units.compat.mock import patch, MagicMock
+import unittest
+from unittest.mock import patch, MagicMock
 from units.mock.vault_helper import TextVaultSecret
 
 from ansible import context, errors
 from ansible.cli.vault import VaultCLI
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.utils import context_objects as co
 
 
@@ -70,18 +68,18 @@ class TestVaultCli(unittest.TestCase):
         mock_setup_vault_secrets.return_value = []
         cli = VaultCLI(args=['ansible-vault', 'view', '/dev/null/foo'])
         cli.parse()
-        self.assertRaisesRegexp(errors.AnsibleOptionsError,
-                                "A vault password is required to use Ansible's Vault",
-                                cli.run)
+        self.assertRaisesRegex(errors.AnsibleOptionsError,
+                               "A vault password is required to use Ansible's Vault",
+                               cli.run)
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     def test_encrypt_missing_file_no_secret(self, mock_setup_vault_secrets):
         mock_setup_vault_secrets.return_value = []
         cli = VaultCLI(args=['ansible-vault', 'encrypt', '/dev/null/foo'])
         cli.parse()
-        self.assertRaisesRegexp(errors.AnsibleOptionsError,
-                                "A vault password is required to use Ansible's Vault",
-                                cli.run)
+        self.assertRaisesRegex(errors.AnsibleOptionsError,
+                               "A vault password is required to use Ansible's Vault",
+                               cli.run)
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')
@@ -171,7 +169,28 @@ class TestVaultCli(unittest.TestCase):
         mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
         cli = VaultCLI(args=['ansible-vault', 'create', '/dev/null/foo'])
         cli.parse()
+        self.assertRaisesRegex(errors.AnsibleOptionsError,
+                               "not a tty, editor cannot be opened",
+                               cli.run)
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
+    def test_create_skip_tty_check(self, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault', 'create', '--skip-tty-check', '/dev/null/foo'])
+        cli.parse()
         cli.run()
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
+    def test_create_with_tty(self, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        self.tty_stdout_patcher = patch('ansible.cli.sys.stdout.isatty', return_value=True)
+        self.tty_stdout_patcher.start()
+        cli = VaultCLI(args=['ansible-vault', 'create', '/dev/null/foo'])
+        cli.parse()
+        cli.run()
+        self.tty_stdout_patcher.stop()
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')
@@ -209,11 +228,7 @@ class TestVaultCli(unittest.TestCase):
 @pytest.mark.parametrize('cli_args, expected', [
     (['ansible-vault', 'view', 'vault.txt'], 0),
     (['ansible-vault', 'view', 'vault.txt', '-vvv'], 3),
-    (['ansible-vault', '-vv', 'view', 'vault.txt'], 2),
-    # Due to our manual parsing we want to verify that -v set in the sub parser takes precedence. This behaviour is
-    # deprecated and tests should be removed when the code that handles it is removed
-    (['ansible-vault', '-vv', 'view', 'vault.txt', '-v'], 1),
-    (['ansible-vault', '-vv', 'view', 'vault.txt', '-vvvv'], 4),
+    (['ansible-vault', 'view', 'vault.txt', '-vv'], 2),
 ])
 def test_verbosity_arguments(cli_args, expected, tmp_path_factory, monkeypatch):
     # Add a password file so we don't get a prompt in the test

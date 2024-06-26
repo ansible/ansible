@@ -1,8 +1,7 @@
 # (c) 2015, Brian Coca <bcoca@ansible.com>
 # (c) 2012-17 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
 name: url
@@ -64,7 +63,7 @@ options:
         - section: url_lookup
           key: timeout
   http_agent:
-    description: User-Agent to use in the request. The default was changed in 2.11 to C(ansible-httpget).
+    description: User-Agent to use in the request. The default was changed in 2.11 to V(ansible-httpget).
     type: string
     version_added: "2.10"
     default: ansible-httpget
@@ -81,14 +80,14 @@ options:
     version_added: "2.10"
     default: False
     vars:
-        - name: ansible_lookup_url_agent
+        - name: ansible_lookup_url_force_basic_auth
     env:
-        - name: ANSIBLE_LOOKUP_URL_AGENT
+        - name: ANSIBLE_LOOKUP_URL_FORCE_BASIC_AUTH
     ini:
         - section: url_lookup
-          key: agent
+          key: force_basic_auth
   follow_redirects:
-    description: String of urllib2, all/yes, safe, none to determine how redirects are followed, see RedirectHandlerFactory for more information
+    description: String of urllib2, all/yes, safe, none to determine how redirects are followed
     type: string
     version_added: "2.10"
     default: 'urllib2'
@@ -99,10 +98,17 @@ options:
     ini:
         - section: url_lookup
           key: follow_redirects
+    choices:
+      all: Will follow all redirects.
+      none: Will not follow any redirects.
+      safe: Only redirects doing GET or HEAD requests will be followed.
+      urllib2: Defer to urllib2 behavior (As of writing this follows HTTP redirects).
+      'no': (DEPRECATED, removed in 2.22) alias of V(none).
+      'yes': (DEPRECATED, removed in 2.22) alias of V(all).
   use_gssapi:
     description:
     - Use GSSAPI handler of requests
-    - As of Ansible 2.11, GSSAPI credentials can be specified with I(username) and I(password).
+    - As of Ansible 2.11, GSSAPI credentials can be specified with O(username) and O(password).
     type: boolean
     version_added: "2.10"
     default: False
@@ -113,6 +119,21 @@ options:
     ini:
         - section: url_lookup
           key: use_gssapi
+  use_netrc:
+    description:
+    - Determining whether to use credentials from ``~/.netrc`` file
+    - By default .netrc is used with Basic authentication headers
+    - When set to False, .netrc credentials are ignored
+    type: boolean
+    version_added: "2.14"
+    default: True
+    vars:
+        - name: ansible_lookup_url_use_netrc
+    env:
+        - name: ANSIBLE_LOOKUP_URL_USE_NETRC
+    ini:
+        - section: url_lookup
+          key: use_netrc
   unix_socket:
     description: String of file system path to unix socket file to use when establishing connection to the provided url
     type: string
@@ -138,6 +159,7 @@ options:
   unredirected_headers:
     description: A list of headers to not attach on a redirected request
     type: list
+    elements: string
     version_added: "2.10"
     vars:
         - name: ansible_lookup_url_unredir_headers
@@ -146,24 +168,43 @@ options:
     ini:
         - section: url_lookup
           key: unredirected_headers
+  ciphers:
+    description:
+      - SSL/TLS Ciphers to use for the request
+      - 'When a list is provided, all ciphers are joined in order with C(:)'
+      - See the L(OpenSSL Cipher List Format,https://www.openssl.org/docs/manmaster/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT)
+        for more details.
+      - The available ciphers is dependent on the Python and OpenSSL/LibreSSL versions
+    type: list
+    elements: string
+    version_added: '2.14'
+    vars:
+        - name: ansible_lookup_url_ciphers
+    env:
+        - name: ANSIBLE_LOOKUP_URL_CIPHERS
+    ini:
+        - section: url_lookup
+          key: ciphers
 """
 
 EXAMPLES = """
 - name: url lookup splits lines by default
-  debug: msg="{{item}}"
-  loop: "{{ lookup('url', 'https://github.com/gremlin.keys', wantlist=True) }}"
+  ansible.builtin.debug: msg="{{item}}"
+  loop: "{{ lookup('ansible.builtin.url', 'https://github.com/gremlin.keys', wantlist=True) }}"
 
 - name: display ip ranges
-  debug: msg="{{ lookup('url', 'https://ip-ranges.amazonaws.com/ip-ranges.json', split_lines=False) }}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.url', 'https://ip-ranges.amazonaws.com/ip-ranges.json', split_lines=False) }}"
 
 - name: url lookup using authentication
-  debug: msg="{{ lookup('url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2') }}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2') }}"
 
 - name: url lookup using basic authentication
-  debug: msg="{{ lookup('url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2', force_basic_auth='True') }}"
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2', force_basic_auth='True') }}"
 
 - name: url lookup using headers
-  debug: msg="{{ lookup('url', 'https://some.private.site.com/api/service', headers={'header1':'value1', 'header2':'value2'} ) }}"
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.url', 'https://some.private.site.com/api/service', headers={'header1':'value1', 'header2':'value2'} ) }}"
 """
 
 RETURN = """
@@ -173,9 +214,10 @@ RETURN = """
     elements: str
 """
 
+from urllib.error import HTTPError, URLError
+
 from ansible.errors import AnsibleError
-from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.display import Display
@@ -192,21 +234,30 @@ class LookupModule(LookupBase):
         ret = []
         for term in terms:
             display.vvvv("url lookup connecting to %s" % term)
+            if self.get_option('follow_redirects') in ('yes', 'no'):
+                display.deprecated(
+                    "Using 'yes' or 'no' for 'follow_redirects' parameter is deprecated.",
+                    version='2.22'
+                )
             try:
-                response = open_url(term, validate_certs=self.get_option('validate_certs'),
-                                    use_proxy=self.get_option('use_proxy'),
-                                    url_username=self.get_option('username'),
-                                    url_password=self.get_option('password'),
-                                    headers=self.get_option('headers'),
-                                    force=self.get_option('force'),
-                                    timeout=self.get_option('timeout'),
-                                    http_agent=self.get_option('http_agent'),
-                                    force_basic_auth=self.get_option('force_basic_auth'),
-                                    follow_redirects=self.get_option('follow_redirects'),
-                                    use_gssapi=self.get_option('use_gssapi'),
-                                    unix_socket=self.get_option('unix_socket'),
-                                    ca_path=self.get_option('ca_path'),
-                                    unredirected_headers=self.get_option('unredirected_headers'))
+                response = open_url(
+                    term, validate_certs=self.get_option('validate_certs'),
+                    use_proxy=self.get_option('use_proxy'),
+                    url_username=self.get_option('username'),
+                    url_password=self.get_option('password'),
+                    headers=self.get_option('headers'),
+                    force=self.get_option('force'),
+                    timeout=self.get_option('timeout'),
+                    http_agent=self.get_option('http_agent'),
+                    force_basic_auth=self.get_option('force_basic_auth'),
+                    follow_redirects=self.get_option('follow_redirects'),
+                    use_gssapi=self.get_option('use_gssapi'),
+                    unix_socket=self.get_option('unix_socket'),
+                    ca_path=self.get_option('ca_path'),
+                    unredirected_headers=self.get_option('unredirected_headers'),
+                    ciphers=self.get_option('ciphers'),
+                    use_netrc=self.get_option('use_netrc')
+                )
             except HTTPError as e:
                 raise AnsibleError("Received HTTP error for %s : %s" % (term, to_native(e)))
             except URLError as e:

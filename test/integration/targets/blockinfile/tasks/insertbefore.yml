@@ -1,6 +1,6 @@
 - name: Create insertbefore test file
   copy:
-    dest: "{{ output_dir }}/before.txt"
+    dest: "{{ remote_tmp_dir }}/before.txt"
     content: |
       line1
       line2
@@ -8,7 +8,7 @@
 
 - name: Add block using insertbefore
   blockinfile:
-    path: "{{ output_dir }}/before.txt"
+    path: "{{ remote_tmp_dir }}/before.txt"
     insertbefore: line2
     block: |
       block1
@@ -17,7 +17,7 @@
 
 - name: Add block using insertbefore again
   blockinfile:
-    path: "{{ output_dir }}/before.txt"
+    path: "{{ remote_tmp_dir }}/before.txt"
     insertbefore: line2
     block: |
       block1
@@ -26,10 +26,10 @@
 
 - name: Stat the before.txt file
   stat:
-    path: "{{ output_dir }}/before.txt"
+    path: "{{ remote_tmp_dir }}/before.txt"
   register: after_file
 
-- command: cat {{ output_dir }}/before.txt
+- command: cat {{ remote_tmp_dir }}/before.txt
 
 - name: Ensure insertbefore worked correctly
   assert:

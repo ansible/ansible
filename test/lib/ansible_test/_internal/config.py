@@ -1,22 +1,19 @@
 """Configuration classes."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+import dataclasses
+import enum
 import os
 import sys
-
-from . import types as t
+import typing as t
 
 from .util import (
-    find_python,
-    generate_pip_command,
-    ApplicationError,
+    verify_sys_executable,
+    version_to_str,
+    type_guard,
 )
 
 from .util_common import (
-    docker_qualify_image,
-    get_docker_completion,
-    get_remote_completion,
     CommonConfig,
 )
 
@@ -26,191 +23,214 @@ from .metadata import (
 
 from .data import (
     data_context,
+    PayloadConfig,
 )
 
-try:
-    # noinspection PyTypeChecker
-    TIntegrationConfig = t.TypeVar('TIntegrationConfig', bound='IntegrationConfig')
-except AttributeError:
-    TIntegrationConfig = None  # pylint: disable=invalid-name
+from .host_configs import (
+    ControllerConfig,
+    ControllerHostConfig,
+    HostConfig,
+    HostSettings,
+    OriginConfig,
+    PythonConfig,
+    VirtualPythonConfig,
+)
+
+THostConfig = t.TypeVar('THostConfig', bound=HostConfig)
 
 
-class ParsedRemote:
-    """A parsed version of a "remote" string."""
-    def __init__(self, arch, platform, version):  # type: (t.Optional[str], str, str) -> None
-        self.arch = arch
-        self.platform = platform
-        self.version = version
+class TerminateMode(enum.Enum):
+    """When to terminate instances."""
 
-    @staticmethod
-    def parse(value):  # type: (str) -> t.Optional['ParsedRemote']
-        """Return a ParsedRemote from the given value or None if the syntax is invalid."""
-        parts = value.split('/')
+    ALWAYS = enum.auto()
+    NEVER = enum.auto()
+    SUCCESS = enum.auto()
 
-        if len(parts) == 2:
-            arch = None
-            platform, version = parts
-        elif len(parts) == 3:
-            arch, platform, version = parts
-        else:
-            return None
+    def __str__(self):
+        return self.name.lower()
 
-        return ParsedRemote(arch, platform, version)
+
+@dataclasses.dataclass(frozen=True)
+class ModulesConfig:
+    """Configuration for modules."""
+
+    python_requires: str
+    python_versions: tuple[str, ...]
+    controller_only: bool
+
+
+@dataclasses.dataclass(frozen=True)
+class ContentConfig:
+    """Configuration for all content."""
+
+    modules: ModulesConfig
+    python_versions: tuple[str, ...]
 
 
 class EnvironmentConfig(CommonConfig):
     """Configuration common to all commands which execute in an environment."""
-    def __init__(self, args, command):
+
+    def __init__(self, args: t.Any, command: str) -> None:
+        super().__init__(args, command)
+
+        self.host_settings: HostSettings = args.host_settings
+        self.host_path: t.Optional[str] = args.host_path
+        self.containers: t.Optional[str] = args.containers
+        self.pypi_proxy: bool = args.pypi_proxy
+        self.pypi_endpoint: t.Optional[str] = args.pypi_endpoint
+
+        # Populated by content_config.get_content_config on the origin.
+        # Serialized and passed to delegated instances to avoid parsing a second time.
+        self.content_config: t.Optional[ContentConfig] = None
+
+        # Set by check_controller_python once HostState has been created by prepare_profiles.
+        # This is here for convenience, to avoid needing to pass HostState to some functions which already have access to EnvironmentConfig.
+        self.controller_python: t.Optional[PythonConfig] = None
         """
-        :type args: any
-        :type command: str
+        The Python interpreter used by the controller.
+        Only available after delegation has been performed or skipped (if delegation is not required).
         """
-        super(EnvironmentConfig, self).__init__(args, command)
 
-        self.pypi_endpoint = args.pypi_endpoint  # type: str
-        self.pypi_proxy = args.pypi_proxy  # type: bool
-
-        self.local = args.local is True
-        self.venv = args.venv
-        self.venv_system_site_packages = args.venv_system_site_packages
-
-        self.python = args.python if 'python' in args else None  # type: str
-
-        self.docker = docker_qualify_image(args.docker)  # type: str
-        self.docker_raw = args.docker  # type: str
-        self.remote = args.remote  # type: str
-
-        if self.remote:
-            self.parsed_remote = ParsedRemote.parse(self.remote)
-
-            if not self.parsed_remote or not self.parsed_remote.platform or not self.parsed_remote.version:
-                raise ApplicationError('Unrecognized remote "%s" syntax. Use "platform/version" or "arch/platform/version".' % self.remote)
+        if self.host_path:
+            self.delegate = False
         else:
-            self.parsed_remote = None
+            self.delegate = (
+                not isinstance(self.controller, OriginConfig)
+                or isinstance(self.controller.python, VirtualPythonConfig)
+                or self.controller.python.version != version_to_str(sys.version_info[:2])
+                or bool(verify_sys_executable(self.controller.python.path))
+            )
 
-        self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
-        self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
-        self.docker_keep_git = args.docker_keep_git if 'docker_keep_git' in args else False  # type: bool
-        self.docker_seccomp = args.docker_seccomp if 'docker_seccomp' in args else None  # type: str
-        self.docker_memory = args.docker_memory if 'docker_memory' in args else None
-        self.docker_terminate = args.docker_terminate if 'docker_terminate' in args else None  # type: str
-        self.docker_network = args.docker_network if 'docker_network' in args else None  # type: str
+        self.docker_network: t.Optional[str] = args.docker_network
+        self.docker_terminate: t.Optional[TerminateMode] = args.docker_terminate
 
-        if self.docker_seccomp is None:
-            self.docker_seccomp = get_docker_completion().get(self.docker_raw, {}).get('seccomp', 'default')
+        self.remote_endpoint: t.Optional[str] = args.remote_endpoint
+        self.remote_stage: t.Optional[str] = args.remote_stage
+        self.remote_terminate: t.Optional[TerminateMode] = args.remote_terminate
 
-        self.remote_stage = args.remote_stage  # type: str
-        self.remote_provider = args.remote_provider  # type: str
-        self.remote_endpoint = args.remote_endpoint  # type: t.Optional[str]
-        self.remote_terminate = args.remote_terminate  # type: str
+        self.prime_containers: bool = args.prime_containers
 
-        if self.remote_provider == 'default':
-            self.remote_provider = None
+        self.requirements: bool = args.requirements
 
-        self.requirements = args.requirements  # type: bool
+        self.delegate_args: list[str] = []
 
-        if self.python == 'default':
-            self.python = None
+        self.dev_systemd_debug: bool = args.dev_systemd_debug
+        self.dev_probe_cgroups: t.Optional[str] = args.dev_probe_cgroups
 
-        actual_major_minor = '.'.join(str(i) for i in sys.version_info[:2])
+        def host_callback(payload_config: PayloadConfig) -> None:
+            """Add the host files to the payload file list."""
+            config = self
 
-        self.python_version = self.python or actual_major_minor
-        self.python_interpreter = args.python_interpreter
+            if config.host_path:
+                settings_path = os.path.join(config.host_path, 'settings.dat')
+                state_path = os.path.join(config.host_path, 'state.dat')
+                config_path = os.path.join(config.host_path, 'config.dat')
 
-        self.pip_check = args.pip_check
+                files = payload_config.files
 
-        self.delegate = self.docker or self.remote or self.venv
-        self.delegate_args = []  # type: t.List[str]
+                files.append((os.path.abspath(settings_path), settings_path))
+                files.append((os.path.abspath(state_path), state_path))
+                files.append((os.path.abspath(config_path), config_path))
 
-        if self.delegate:
-            self.requirements = True
-
-        self.containers = args.containers  # type: t.Optional[t.Dict[str, t.Dict[str, t.Dict[str, t.Any]]]]
-
-        if self.get_delegated_completion().get('pip-check', 'enabled') == 'disabled':
-            self.pip_check = False
-
-        if args.check_python and args.check_python != actual_major_minor:
-            raise ApplicationError('Running under Python %s instead of Python %s as expected.' % (actual_major_minor, args.check_python))
-
-        if self.docker_keep_git:
-            def git_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
-                """Add files from the content root .git directory to the payload file list."""
-                for dirpath, _dirnames, filenames in os.walk(os.path.join(data_context().content.root, '.git')):
-                    paths = [os.path.join(dirpath, filename) for filename in filenames]
-                    files.extend((path, os.path.relpath(path, data_context().content.root)) for path in paths)
-
-            data_context().register_payload_callback(git_callback)
+        data_context().register_payload_callback(host_callback)
 
     @property
-    def python_executable(self):
-        """
-        :rtype: str
-        """
-        return find_python(self.python_version)
+    def controller(self) -> ControllerHostConfig:
+        """Host configuration for the controller."""
+        return self.host_settings.controller
 
     @property
-    def pip_command(self):
-        """
-        :rtype: list[str]
-        """
-        return generate_pip_command(self.python_executable)
+    def targets(self) -> list[HostConfig]:
+        """Host configuration for the targets."""
+        return self.host_settings.targets
 
-    def get_delegated_completion(self):
-        """Returns a dictionary of settings specific to the selected delegation system, if any. Otherwise returns an empty dictionary.
-        :rtype: dict[str, str]
+    def only_target(self, target_type: t.Type[THostConfig]) -> THostConfig:
         """
-        if self.docker:
-            return get_docker_completion().get(self.docker_raw, {})
+        Return the host configuration for the target.
+        Requires that there is exactly one target of the specified type.
+        """
+        targets = list(self.targets)
 
-        if self.remote:
-            return get_remote_completion().get(self.remote, {})
+        if len(targets) != 1:
+            raise Exception('There must be exactly one target.')
 
-        return {}
+        target = targets.pop()
+
+        if not isinstance(target, target_type):
+            raise Exception(f'Target is {type(target_type)} instead of {target_type}.')
+
+        return target
+
+    def only_targets(self, target_type: t.Type[THostConfig]) -> list[THostConfig]:
+        """
+        Return a list of target host configurations.
+        Requires that there are one or more targets, all the specified type.
+        """
+        if not self.targets:
+            raise Exception('There must be one or more targets.')
+
+        assert type_guard(self.targets, target_type)
+
+        return t.cast(list[THostConfig], self.targets)
+
+    @property
+    def target_type(self) -> t.Type[HostConfig]:
+        """
+        The true type of the target(s).
+        If the target is the controller, the controller type is returned.
+        Requires at least one target, and all targets must be of the same type.
+        """
+        target_types = set(type(target) for target in self.targets)
+
+        if len(target_types) != 1:
+            raise Exception('There must be one or more targets, all of the same type.')
+
+        target_type = target_types.pop()
+
+        if issubclass(target_type, ControllerConfig):
+            target_type = type(self.controller)
+
+        return target_type
 
 
 class TestConfig(EnvironmentConfig):
     """Configuration common to all test commands."""
-    def __init__(self, args, command):
-        """
-        :type args: any
-        :type command: str
-        """
-        super(TestConfig, self).__init__(args, command)
 
-        self.coverage = args.coverage  # type: bool
-        self.coverage_label = args.coverage_label  # type: str
-        self.coverage_check = args.coverage_check  # type: bool
-        self.coverage_config_base_path = None  # type: t.Optional[str]
-        self.include = args.include or []  # type: t.List[str]
-        self.exclude = args.exclude or []  # type: t.List[str]
-        self.require = args.require or []  # type: t.List[str]
+    def __init__(self, args: t.Any, command: str) -> None:
+        super().__init__(args, command)
 
-        self.changed = args.changed  # type: bool
-        self.tracked = args.tracked  # type: bool
-        self.untracked = args.untracked  # type: bool
-        self.committed = args.committed  # type: bool
-        self.staged = args.staged  # type: bool
-        self.unstaged = args.unstaged  # type: bool
-        self.changed_from = args.changed_from  # type: str
-        self.changed_path = args.changed_path  # type: t.List[str]
-        self.base_branch = args.base_branch  # type: str
+        self.coverage: bool = args.coverage
+        self.coverage_check: bool = args.coverage_check
+        self.include: list[str] = args.include or []
+        self.exclude: list[str] = args.exclude or []
+        self.require: list[str] = args.require or []
 
-        self.lint = args.lint if 'lint' in args else False  # type: bool
-        self.junit = args.junit if 'junit' in args else False  # type: bool
-        self.failure_ok = args.failure_ok if 'failure_ok' in args else False  # type: bool
+        self.changed: bool = args.changed
+        self.tracked: bool = args.tracked
+        self.untracked: bool = args.untracked
+        self.committed: bool = args.committed
+        self.staged: bool = args.staged
+        self.unstaged: bool = args.unstaged
+        self.changed_from: str = args.changed_from
+        self.changed_path: list[str] = args.changed_path
+        self.base_branch: str = args.base_branch
+
+        self.lint: bool = getattr(args, 'lint', False)
+        self.junit: bool = getattr(args, 'junit', False)
+        self.failure_ok: bool = getattr(args, 'failure_ok', False)
 
         self.metadata = Metadata.from_file(args.metadata) if args.metadata else Metadata()
-        self.metadata_path = None
+        self.metadata_path: t.Optional[str] = None
 
         if self.coverage_check:
             self.coverage = True
 
-        def metadata_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+        def metadata_callback(payload_config: PayloadConfig) -> None:
             """Add the metadata file to the payload file list."""
             config = self
+            files = payload_config.files
 
-            if self.metadata_path:
+            if config.metadata_path:
                 files.append((os.path.abspath(config.metadata_path), config.metadata_path))
 
         data_context().register_payload_callback(metadata_callback)
@@ -218,133 +238,112 @@ class TestConfig(EnvironmentConfig):
 
 class ShellConfig(EnvironmentConfig):
     """Configuration for the shell command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(ShellConfig, self).__init__(args, 'shell')
 
-        self.raw = args.raw  # type: bool
+    def __init__(self, args: t.Any) -> None:
+        super().__init__(args, 'shell')
+
+        self.cmd: list[str] = args.cmd
+        self.raw: bool = args.raw
+        self.check_layout = self.delegate  # allow shell to be used without a valid layout as long as no delegation is required
+        self.interactive = sys.stdin.isatty() and not args.cmd  # delegation should only be interactive when stdin is a TTY and no command was given
+        self.export: t.Optional[str] = args.export
+        self.display_stderr = True
 
 
 class SanityConfig(TestConfig):
     """Configuration for the sanity command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(SanityConfig, self).__init__(args, 'sanity')
 
-        self.test = args.test  # type: t.List[str]
-        self.skip_test = args.skip_test  # type: t.List[str]
-        self.list_tests = args.list_tests  # type: bool
-        self.allow_disabled = args.allow_disabled  # type: bool
-        self.enable_optional_errors = args.enable_optional_errors  # type: bool
-        self.info_stderr = self.lint
+    def __init__(self, args: t.Any) -> None:
+        super().__init__(args, 'sanity')
+
+        self.test: list[str] = args.test
+        self.skip_test: list[str] = args.skip_test
+        self.list_tests: bool = args.list_tests
+        self.allow_disabled: bool = args.allow_disabled
+        self.enable_optional_errors: bool = args.enable_optional_errors
+        self.prime_venvs: bool = args.prime_venvs
+
+        self.display_stderr = self.lint or self.list_tests
 
 
 class IntegrationConfig(TestConfig):
     """Configuration for the integration command."""
-    def __init__(self, args, command):
-        """
-        :type args: any
-        :type command: str
-        """
-        super(IntegrationConfig, self).__init__(args, command)
 
-        self.start_at = args.start_at  # type: str
-        self.start_at_task = args.start_at_task  # type: str
-        self.allow_destructive = args.allow_destructive  # type: bool
-        self.allow_root = args.allow_root  # type: bool
-        self.allow_disabled = args.allow_disabled  # type: bool
-        self.allow_unstable = args.allow_unstable  # type: bool
-        self.allow_unstable_changed = args.allow_unstable_changed  # type: bool
-        self.allow_unsupported = args.allow_unsupported  # type: bool
-        self.retry_on_error = args.retry_on_error  # type: bool
-        self.continue_on_error = args.continue_on_error  # type: bool
-        self.debug_strategy = args.debug_strategy  # type: bool
-        self.changed_all_target = args.changed_all_target  # type: str
-        self.changed_all_mode = args.changed_all_mode  # type: str
-        self.list_targets = args.list_targets  # type: bool
+    def __init__(self, args: t.Any, command: str) -> None:
+        super().__init__(args, command)
+
+        self.start_at: str = args.start_at
+        self.start_at_task: str = args.start_at_task
+        self.allow_destructive: bool = args.allow_destructive
+        self.allow_root: bool = args.allow_root
+        self.allow_disabled: bool = args.allow_disabled
+        self.allow_unstable: bool = args.allow_unstable
+        self.allow_unstable_changed: bool = args.allow_unstable_changed
+        self.allow_unsupported: bool = args.allow_unsupported
+        self.retry_on_error: bool = args.retry_on_error
+        self.continue_on_error: bool = args.continue_on_error
+        self.debug_strategy: bool = args.debug_strategy
+        self.changed_all_target: str = args.changed_all_target
+        self.changed_all_mode: str = args.changed_all_mode
+        self.list_targets: bool = args.list_targets
         self.tags = args.tags
         self.skip_tags = args.skip_tags
         self.diff = args.diff
-        self.no_temp_workdir = args.no_temp_workdir
-        self.no_temp_unicode = args.no_temp_unicode
-
-        if self.get_delegated_completion().get('temp-unicode', 'enabled') == 'disabled':
-            self.no_temp_unicode = True
+        self.no_temp_workdir: bool = args.no_temp_workdir
+        self.no_temp_unicode: bool = args.no_temp_unicode
 
         if self.list_targets:
             self.explain = True
-            self.info_stderr = True
+            self.display_stderr = True
 
-    def get_ansible_config(self):  # type: () -> str
+    def get_ansible_config(self) -> str:
         """Return the path to the Ansible config for the given config."""
         ansible_config_relative_path = os.path.join(data_context().content.integration_path, '%s.cfg' % self.command)
         ansible_config_path = os.path.join(data_context().content.root, ansible_config_relative_path)
 
         if not os.path.exists(ansible_config_path):
             # use the default empty configuration unless one has been provided
-            ansible_config_path = super(IntegrationConfig, self).get_ansible_config()
+            ansible_config_path = super().get_ansible_config()
 
         return ansible_config_path
+
+
+TIntegrationConfig = t.TypeVar('TIntegrationConfig', bound=IntegrationConfig)
 
 
 class PosixIntegrationConfig(IntegrationConfig):
     """Configuration for the posix integration command."""
 
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(PosixIntegrationConfig, self).__init__(args, 'integration')
+    def __init__(self, args: t.Any) -> None:
+        super().__init__(args, 'integration')
 
 
 class WindowsIntegrationConfig(IntegrationConfig):
     """Configuration for the windows integration command."""
 
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(WindowsIntegrationConfig, self).__init__(args, 'windows-integration')
-
-        self.windows = args.windows  # type: t.List[str]
-        self.inventory = args.inventory  # type: str
-
-        if self.windows:
-            self.allow_destructive = True
+    def __init__(self, args: t.Any) -> None:
+        super().__init__(args, 'windows-integration')
 
 
 class NetworkIntegrationConfig(IntegrationConfig):
     """Configuration for the network integration command."""
 
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(NetworkIntegrationConfig, self).__init__(args, 'network-integration')
+    def __init__(self, args: t.Any) -> None:
+        super().__init__(args, 'network-integration')
 
-        self.platform = args.platform  # type: t.List[str]
-        self.platform_collection = dict(args.platform_collection or [])  # type: t.Dict[str, str]
-        self.platform_connection = dict(args.platform_connection or [])  # type: t.Dict[str, str]
-        self.inventory = args.inventory  # type: str
-        self.testcase = args.testcase  # type: str
+        self.testcase: str = args.testcase
 
 
 class UnitsConfig(TestConfig):
     """Configuration for the units command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(UnitsConfig, self).__init__(args, 'units')
 
-        self.collect_only = args.collect_only  # type: bool
-        self.num_workers = args.num_workers  # type: int
+    def __init__(self, args: t.Any) -> None:
+        super().__init__(args, 'units')
 
-        self.requirements_mode = args.requirements_mode if 'requirements_mode' in args else ''
+        self.collect_only: bool = args.collect_only
+        self.num_workers: int = args.num_workers
+
+        self.requirements_mode: str = getattr(args, 'requirements_mode', '')
 
         if self.requirements_mode == 'only':
             self.requirements = True

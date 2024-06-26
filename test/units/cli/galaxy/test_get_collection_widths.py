@@ -2,8 +2,7 @@
 # Copyright (c) 2020 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
 
@@ -13,11 +12,11 @@ from ansible.galaxy.dependency_resolution.dataclasses import Requirement
 
 @pytest.fixture
 def collection_objects():
-    collection_ham = Requirement('sandwiches.ham', '1.5.0', None, 'galaxy')
+    collection_ham = Requirement('sandwiches.ham', '1.5.0', None, 'galaxy', None)
 
-    collection_pbj = Requirement('sandwiches.pbj', '2.5', None, 'galaxy')
+    collection_pbj = Requirement('sandwiches.pbj', '2.5', None, 'galaxy', None)
 
-    collection_reuben = Requirement('sandwiches.reuben', '4', None, 'galaxy')
+    collection_reuben = Requirement('sandwiches.reuben', '4', None, 'galaxy', None)
 
     return [collection_ham, collection_pbj, collection_reuben]
 
@@ -27,7 +26,7 @@ def test_get_collection_widths(collection_objects):
 
 
 def test_get_collection_widths_single_collection(mocker):
-    mocked_collection = Requirement('sandwiches.club', '3.0.0', None, 'galaxy')
+    mocked_collection = Requirement('sandwiches.club', '3.0.0', None, 'galaxy', None)
     # Make this look like it is not iterable
     mocker.patch('ansible.cli.galaxy.is_iterable', return_value=False)
 

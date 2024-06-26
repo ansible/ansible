@@ -28,6 +28,37 @@
   register: failed_fetch_dest_dir
   ignore_errors: true
 
+- block:
+  - name: create local dir for test
+    file:
+      path: "{{ output_dir }}/test dir/orig"
+      state: directory
+    delegate_to: localhost
+
+  - name: Dest is a path that is calculated as an existing directory, should fail
+    fetch:
+      src: "{{ remote_tmp_dir }}/orig"
+      dest: "{{ output_dir }}/test dir/"
+      flat: true
+    register: failed_detch_dest_calc_dir
+    ignore_errors: true
+
+  always:
+  - name: remote local dir for test
+    file:
+      path: "{{ output_dir }}/test dir"
+      state: absent
+    delegate_to: localhost
+
+- name: Test unreachable
+  fetch:
+    src: "{{ remote_tmp_dir }}/orig"
+    dest: "{{ output_dir }}"
+  register: unreachable_fetch
+  ignore_unreachable: true
+  vars:
+    ansible_user: wrong
+
 - name: Ensure fetch failed
   assert:
     that:
@@ -39,3 +70,6 @@
       - failed_fetch_no_access.msg is search('file is not readable')
       - failed_fetch_dest_dir is failed
       - failed_fetch_dest_dir.msg is search('dest is an existing directory')
+      - failed_detch_dest_calc_dir is failed
+      - failed_detch_dest_calc_dir.msg is search("calculated dest '" ~ output_dir ~ "/test dir/orig' is an existing directory")
+      - unreachable_fetch is unreachable

@@ -1,0 +1,48 @@
+DOCUMENTATION:
+  name: items2dict
+  author: Ansible core team
+  version_added: "2.7"
+  short_description: Consolidate a list of itemized dictionaries into a dictionary
+  positional: _input, key_name, value_name
+  description:
+    - Takes a list of dicts with each having a C(key) and C(value) keys, and transforms the list into a dictionary,
+      effectively as the reverse of R(dict2items,ansible_collections.ansible.builtin.dict2items_filter).
+  options:
+    _input:
+      description:
+        - A list of dictionaries.
+        - Every dictionary must have keys C(key) and C(value).
+      type: list
+      elements: dict
+      required: true
+    key_name:
+      description: The name of the key in the element dictionaries that holds the key to use at destination.
+      type: str
+      default: key
+    value_name:
+      description: The name of the key in the element dictionaries that holds the value to use at destination.
+      type: str
+      default: value
+  seealso:
+    - plugin_type: filter
+      plugin: ansible.builtin.dict2items
+
+EXAMPLES: |
+  # mydict =>  { "hi": "bye", "ciao": "ciao" }
+  mydict: {{ [{'key': 'hi', 'value': 'bye'}, {'key': 'ciao', 'value': 'ciao'} ]| items2dict}}
+
+  # The output is a dictionary with two key/value pairs:
+  #     Application: payment
+  #     Environment: dev
+  vars:
+    tags:
+      - key: Application
+        value: payment
+      - key: Environment
+        value: dev
+    consolidated: "{{ tags | items2dict }}"
+
+RETURN:
+  _value:
+    description: Dictionary with the consolidated key/values.
+    type: dict

@@ -1,14 +1,15 @@
 # Copyright: (c) 2019, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.utils.collection_loader import AnsibleCollectionConfig
-from ansible.template import is_template, Environment
+from ansible.template import is_template
 from ansible.utils.display import Display
+
+from jinja2.nativetypes import NativeEnvironment
 
 display = Display()
 
@@ -34,13 +35,13 @@ def _ensure_default_collection(collection_list=None):
 class CollectionSearch:
 
     # this needs to be populated before we can resolve tasks/roles/etc
-    _collections = FieldAttribute(isa='list', listof=string_types, priority=100, default=_ensure_default_collection,
-                                  always_post_validate=True, static=True)
+    collections = FieldAttribute(isa='list', listof=string_types, priority=100, default=_ensure_default_collection,
+                                 always_post_validate=True, static=True)
 
     def _load_collections(self, attr, ds):
         # We are always a mixin with Base, so we can validate this untemplated
         # field early on to guarantee we are dealing with a list.
-        ds = self.get_validated_value('collections', self._collections, ds, None)
+        ds = self.get_validated_value('collections', self.fattributes.get('collections'), ds, None)
 
         # this will only be called if someone specified a value; call the shared value
         _ensure_default_collection(collection_list=ds)
@@ -52,7 +53,7 @@ class CollectionSearch:
         # because if the user attempts to template a collection name, it may
         # error before it ever gets to the post_validate() warning (e.g. trying
         # to import a role from the collection).
-        env = Environment()
+        env = NativeEnvironment()
         for collection_name in ds:
             if is_template(collection_name, env):
                 display.warning('"collections" is not templatable, but we found: %s, '

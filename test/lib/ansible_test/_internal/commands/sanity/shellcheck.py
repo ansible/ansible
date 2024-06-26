@@ -1,15 +1,13 @@
 """Sanity test using shellcheck."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
+import typing as t
 
 from xml.etree.ElementTree import (
     fromstring,
     Element,
 )
-
-from ... import types as t
 
 from . import (
     SanityVersionNeutral,
@@ -17,7 +15,12 @@ from . import (
     SanityFailure,
     SanitySuccess,
     SanitySkipped,
+    SanityTargets,
     SANITY_ROOT,
+)
+
+from ...test import (
+    TestResult,
 )
 
 from ...target import (
@@ -41,21 +44,17 @@ from ...config import (
 
 class ShellcheckTest(SanityVersionNeutral):
     """Sanity test using shellcheck."""
+
     @property
-    def error_code(self):  # type: () -> t.Optional[str]
+    def error_code(self) -> t.Optional[str]:
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'AT1000'
 
-    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+    def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         return [target for target in targets if os.path.splitext(target.path)[1] == '.sh']
 
-    def test(self, args, targets):
-        """
-        :type args: SanityConfig
-        :type targets: SanityTargets
-        :rtype: TestResult
-        """
+    def test(self, args: SanityConfig, targets: SanityTargets) -> TestResult:
         exclude_file = os.path.join(SANITY_ROOT, 'shellcheck', 'exclude.txt')
         exclude = set(read_lines_without_comments(exclude_file, remove_blank_lines=True, optional=True))
 
@@ -70,7 +69,7 @@ class ShellcheckTest(SanityVersionNeutral):
             'shellcheck',
             '-e', ','.join(sorted(exclude)),
             '--format', 'checkstyle',
-        ] + paths
+        ] + paths  # fmt: skip
 
         try:
             stdout, stderr = run_command(args, cmd, capture=True)
@@ -87,12 +86,12 @@ class ShellcheckTest(SanityVersionNeutral):
             return SanitySuccess(self.name)
 
         # json output is missing file paths in older versions of shellcheck, so we'll use xml instead
-        root = fromstring(stdout)  # type: Element
+        root: Element = fromstring(stdout)
 
         results = []
 
-        for item in root:  # type: Element
-            for entry in item:  # type: Element
+        for item in root:
+            for entry in item:
                 results.append(SanityMessage(
                     message=entry.attrib['message'],
                     path=item.attrib['name'],

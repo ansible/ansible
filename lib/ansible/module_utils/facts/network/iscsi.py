@@ -15,20 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import sys
-import subprocess
 
-from ansible.module_utils.common.process import get_bin_path
+import ansible.module_utils.compat.typing as t
+
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.network.base import NetworkCollector
 
 
 class IscsiInitiatorNetworkCollector(NetworkCollector):
     name = 'iscsi'
-    _fact_ids = set()
+    _fact_ids = set()  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         """
@@ -80,9 +79,8 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
                     iscsi_facts['iscsi_iqn'] = line.split('=', 1)[1]
                     break
         elif sys.platform.startswith('aix'):
-            try:
-                cmd = get_bin_path('lsattr')
-            except ValueError:
+            cmd = module.get_bin_path('lsattr')
+            if cmd is None:
                 return iscsi_facts
 
             cmd += " -E -l iscsi0"
@@ -92,10 +90,11 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
                 iscsi_facts['iscsi_iqn'] = line.split()[1].rstrip()
 
         elif sys.platform.startswith('hp-ux'):
-            # try to find it in the default PATH and opt_dirs
-            try:
-                cmd = get_bin_path('iscsiutil', opt_dirs=['/opt/iscsi/bin'])
-            except ValueError:
+            cmd = module.get_bin_path(
+                'iscsiutil',
+                opt_dirs=['/opt/iscsi/bin']
+            )
+            if cmd is None:
                 return iscsi_facts
 
             cmd += " -l"

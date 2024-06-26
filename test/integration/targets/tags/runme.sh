@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 
-set -eu
-
-# Using set -x for this test causes the Shippable console to stop receiving updates and the job to time out for macOS.
-# Once that issue is resolved the set -x option can be added above.
+set -eux -o pipefail
 
 # Run these using en_US.UTF-8 because list-tasks is a user output function and so it tailors its output to the
 # user's locale.  For unicode tags, this means replacing non-ascii chars with "?"
@@ -76,3 +73,12 @@ ansible-playbook -i ../../inventory ansible_run_tags.yml -e expect=list --tags t
 ansible-playbook -i ../../inventory ansible_run_tags.yml -e expect=untagged --tags untagged "$@"
 ansible-playbook -i ../../inventory ansible_run_tags.yml -e expect=untagged_list --tags untagged,tag3 "$@"
 ansible-playbook -i ../../inventory ansible_run_tags.yml -e expect=tagged --tags tagged "$@"
+
+ansible-playbook test_template_parent_tags.yml "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'Tagged_task')" = "1" ]; rm out.txt
+
+ansible-playbook test_template_parent_tags.yml --tags tag1 "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'Tagged_task')" = "1" ]; rm out.txt
+
+ansible-playbook test_template_parent_tags.yml --skip-tags tag1 "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'Tagged_task')" = "0" ]; rm out.txt

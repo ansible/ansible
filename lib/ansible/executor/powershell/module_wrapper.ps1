@@ -83,7 +83,7 @@ if ($Modules) {
         Write-AnsibleLog "INFO - create module util '$($module.Key)' for $ModuleName" "module_wrapper"
         $module_name = $module.Key
         $module_code = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($module.Value))
-        $ps.AddCommand("New-Module").AddParameters(@{Name=$module_name; ScriptBlock=[ScriptBlock]::Create($module_code)}) > $null
+        $ps.AddCommand("New-Module").AddParameters(@{Name = $module_name; ScriptBlock = [ScriptBlock]::Create($module_code) }) > $null
         $ps.AddCommand("Import-Module").AddParameter("WarningAction", "SilentlyContinue") > $null
         $ps.AddCommand("Out-Null").AddStatement() > $null
     }
@@ -108,9 +108,10 @@ if ($Breakpoints.Count -gt 0) {
             'AddLineBreakpoint', [System.Reflection.BindingFlags]'Instance, NonPublic'
         )
         foreach ($b in $Breakpoints) {
-            $set_method.Invoke($ps.Runspace.Debugger, [Object[]]@(,$b)) > $null
+            $set_method.Invoke($ps.Runspace.Debugger, [Object[]]@(, $b)) > $null
         }
-    } else {
+    }
+    else {
         $ps.Runspace.Debugger.SetBreakpoints($Breakpoints)
     }
 }
@@ -126,7 +127,8 @@ $new_out = New-Object -TypeName System.IO.StringWriter -ArgumentList $sb
 try {
     [System.Console]::SetOut($new_out)
     $module_output = $ps.Invoke()
-} catch {
+}
+catch {
     # uncaught exception while executing module, present a prettier error for
     # Ansible to parse
     $error_params = @{
@@ -147,7 +149,8 @@ try {
     Write-AnsibleError @error_params
     $host.SetShouldExit(1)
     return
-} finally {
+}
+finally {
     [System.Console]::SetOut($orig_out)
     $new_out.Dispose()
 }
@@ -166,9 +169,11 @@ if ($ps.InvocationStateInfo.State -eq "Failed" -and $ModuleName -ne "script") {
     # options.
     if ($null -eq $reason) {
         $error_params.Message += ": Unknown error"
-    } elseif ($reason.PSObject.Properties.Name -contains "ErrorRecord") {
+    }
+    elseif ($reason.PSObject.Properties.Name -contains "ErrorRecord") {
         $error_params.ErrorRecord = $reason.ErrorRecord
-    } else {
+    }
+    else {
         $error_params.Message += ": $($reason.ToString())"
     }
 
@@ -202,7 +207,10 @@ if ($null -ne $rc) {
 # with the trap handler that's now in place, this should only write to the output if
 # $ErrorActionPreference != "Stop", that's ok because this is sent to the stderr output
 # for a user to manually debug if something went horribly wrong
-if ($ps.HadErrors -or ($PSVersionTable.PSVersion.Major -lt 4 -and $ps.Streams.Error.Count -gt 0)) {
+if (
+    $ps.Streams.Error.Count -and
+    ($ps.HadErrors -or $PSVersionTable.PSVersion.Major -lt 4)
+) {
     Write-AnsibleLog "WARN - module had errors, outputting error info $ModuleName" "module_wrapper"
     # if the rc wasn't explicitly set, we return an exit code of 1
     if ($null -eq $rc) {

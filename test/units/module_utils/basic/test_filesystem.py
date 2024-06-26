@@ -4,13 +4,12 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 from units.mock.procenv import ModuleTestCase
 
-from units.compat.mock import patch, MagicMock
-from ansible.module_utils.six.moves import builtins
+from unittest.mock import patch, MagicMock
+import builtins
 
 realimport = builtins.__import__
 
@@ -49,8 +48,6 @@ class TestOtherFilesystem(ModuleTestCase):
 
         def _mock_ismount(path):
             if path == b'/subdir/mount':
-                return True
-            if path == b'/':
                 return True
             return False
 
@@ -134,3 +131,29 @@ class TestOtherFilesystem(ModuleTestCase):
 
         with patch('os.lchown', side_effect=OSError) as m:
             self.assertRaises(SystemExit, am.set_group_if_different, '/path/to/file', 'root', False)
+
+    def test_module_utils_basic_ansible_module_set_directory_attributes_if_different(self):
+        from ansible.module_utils import basic
+        basic._ANSIBLE_ARGS = None
+
+        am = basic.AnsibleModule(
+            argument_spec=dict(),
+        )
+
+        am.selinux_enabled = lambda: False
+
+        file_args = {
+            'path': '/path/to/file',
+            'mode': None,
+            'owner': None,
+            'group': None,
+            'seuser': None,
+            'serole': None,
+            'setype': None,
+            'selevel': None,
+            'secontext': [None, None, None],
+            'attributes': None,
+        }
+
+        self.assertEqual(am.set_directory_attributes_if_different(file_args, True), True)
+        self.assertEqual(am.set_directory_attributes_if_different(file_args, False), False)

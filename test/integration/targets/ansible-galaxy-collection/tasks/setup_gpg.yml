@@ -1,0 +1,45 @@
+- name: create empty gpg homedir
+  file:
+    state: "{{ item }}"
+    path: "{{ gpg_homedir }}"
+    mode: 0700
+  loop:
+    - absent
+    - directory
+
+- when: ansible_facts.distribution == 'MacOSX'
+  block:
+    - name: MACOS | Find brew binary
+      command: which brew
+      register: brew_which
+
+    - name: MACOS | Get owner of brew binary
+      stat:
+        path: >-
+          {{ brew_which.stdout }}
+      register: brew_stat
+
+    - command: brew install gpg
+      become: yes
+      become_user: >-
+        {{ brew_stat.stat.pw_name }}
+      environment:
+        HOMEBREW_NO_AUTO_UPDATE: True
+      notify:
+        - uninstall gpg
+
+- name: get username for generating key
+  command: whoami
+  register: user
+
+- name: generate key for user with gpg
+  command: "gpg --no-tty --homedir {{ gpg_homedir }} --passphrase '' --pinentry-mode loopback --quick-gen-key {{ user.stdout }} default default"
+
+- name: list gpg keys for user
+  command: "gpg --no-tty --homedir {{ gpg_homedir }} --list-keys {{ user.stdout }}"
+  register: gpg_list_keys
+
+- name: save gpg user and fingerprint of new key
+  set_fact:
+    gpg_user: "{{ user.stdout }}"
+    fingerprint: "{{ gpg_list_keys.stdout_lines[1] | trim }}"

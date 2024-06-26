@@ -2,10 +2,8 @@
 # (c) 2018 Matt Martz <matt@sivel.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.module_utils.six import PY3
 from ansible.utils.unsafe_proxy import AnsibleUnsafe, AnsibleUnsafeBytes, AnsibleUnsafeText, wrap_var
 from ansible.module_utils.common.text.converters import to_text, to_bytes
 
@@ -19,10 +17,7 @@ def test_wrap_var_bytes():
 
 
 def test_wrap_var_string():
-    if PY3:
-        assert isinstance(wrap_var('foo'), AnsibleUnsafeText)
-    else:
-        assert isinstance(wrap_var('foo'), AnsibleUnsafeBytes)
+    assert isinstance(wrap_var('foo'), AnsibleUnsafeText)
 
 
 def test_wrap_var_dict():
@@ -95,12 +90,12 @@ def test_wrap_var_no_ref():
         'text': 'text',
     }
     wrapped_thing = wrap_var(thing)
-    thing is not wrapped_thing
-    thing['foo'] is not wrapped_thing['foo']
-    thing['bar'][0] is not wrapped_thing['bar'][0]
-    thing['baz'][0] is not wrapped_thing['baz'][0]
-    thing['none'] is not wrapped_thing['none']
-    thing['text'] is not wrapped_thing['text']
+    assert thing is not wrapped_thing
+    assert thing['foo'] is not wrapped_thing['foo']
+    assert thing['bar'][0] is not wrapped_thing['bar'][0]
+    assert thing['baz'][0] is not wrapped_thing['baz'][0]
+    assert thing['none'] is wrapped_thing['none']
+    assert thing['text'] is not wrapped_thing['text']
 
 
 def test_AnsibleUnsafeText():

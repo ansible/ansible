@@ -15,11 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible.errors import AnsibleActionFail
-from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import isidentifier
@@ -30,6 +29,7 @@ import ansible.constants as C
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
+    _requires_connection = False
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
@@ -42,7 +42,7 @@ class ActionModule(ActionBase):
         cacheable = boolean(self._task.args.pop('cacheable', False))
 
         if self._task.args:
-            for (k, v) in iteritems(self._task.args):
+            for (k, v) in self._task.args.items():
                 k = self._templar.template(k)
 
                 if not isidentifier(k):

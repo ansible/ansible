@@ -18,22 +18,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
+from __future__ import annotations
 
 import itertools
 import math
 
-from jinja2.filters import environmentfilter
+from collections.abc import Mapping, Iterable
+
+from jinja2.filters import pass_environment
 
 from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.common.text import formatters
 from ansible.module_utils.six import binary_type, text_type
-from ansible.module_utils.six.moves import zip, zip_longest
-from ansible.module_utils.common._collections_compat import Hashable, Mapping, Iterable
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.utils.display import Display
 
 try:
@@ -42,16 +39,11 @@ try:
 except ImportError:
     HAS_UNIQUE = False
 
-try:
-    from jinja2.filters import do_max, do_min
-    HAS_MIN_MAX = True
-except ImportError:
-    HAS_MIN_MAX = False
 
 display = Display()
 
 
-@environmentfilter
+@pass_environment
 # Use case_sensitive=None as a sentinel value, so we raise an error only when
 # explicitly set and cannot be handle (by Jinja2 w/o 'unique' or fallback version)
 def unique(environment, a, case_sensitive=None, attribute=None):
@@ -88,65 +80,41 @@ def unique(environment, a, case_sensitive=None, attribute=None):
     return c
 
 
-@environmentfilter
+@pass_environment
 def intersect(environment, a, b):
-    if isinstance(a, Hashable) and isinstance(b, Hashable):
-        c = set(a) & set(b)
-    else:
+    try:
+        c = list(set(a) & set(b))
+    except TypeError:
         c = unique(environment, [x for x in a if x in b], True)
     return c
 
 
-@environmentfilter
+@pass_environment
 def difference(environment, a, b):
-    if isinstance(a, Hashable) and isinstance(b, Hashable):
-        c = set(a) - set(b)
-    else:
+    try:
+        c = list(set(a) - set(b))
+    except TypeError:
         c = unique(environment, [x for x in a if x not in b], True)
     return c
 
 
-@environmentfilter
+@pass_environment
 def symmetric_difference(environment, a, b):
-    if isinstance(a, Hashable) and isinstance(b, Hashable):
-        c = set(a) ^ set(b)
-    else:
+    try:
+        c = list(set(a) ^ set(b))
+    except TypeError:
         isect = intersect(environment, a, b)
         c = [x for x in union(environment, a, b) if x not in isect]
     return c
 
 
-@environmentfilter
+@pass_environment
 def union(environment, a, b):
-    if isinstance(a, Hashable) and isinstance(b, Hashable):
-        c = set(a) | set(b)
-    else:
+    try:
+        c = list(set(a) | set(b))
+    except TypeError:
         c = unique(environment, a + b, True)
     return c
-
-
-@environmentfilter
-def min(environment, a, **kwargs):
-    if HAS_MIN_MAX:
-        return do_min(environment, a, **kwargs)
-    else:
-        if kwargs:
-            raise AnsibleFilterError("Ansible's min filter does not support any keyword arguments. "
-                                     "You need Jinja2 2.10 or later that provides their version of the filter.")
-        _min = __builtins__.get('min')
-        return _min(a)
-
-
-@environmentfilter
-def max(environment, a, **kwargs):
-    if HAS_MIN_MAX:
-        return do_max(environment, a, **kwargs)
-    else:
-        if kwargs:
-            raise AnsibleFilterError("Ansible's max filter does not support any keyword arguments. "
-                                     "You need Jinja2 2.10 or later that provides their version of the filter.")
-        _max = __builtins__.get('max')
-        return _max(a)
 
 
 def logarithm(x, base=math.e):
@@ -177,7 +145,7 @@ def inversepower(x, base=2):
 
 
 def human_readable(size, isbits=False, unit=None):
-    ''' Return a human readable string '''
+    ''' Return a human-readable string '''
     try:
         return formatters.bytes_to_human(size, isbits, unit)
     except TypeError as e:
@@ -187,7 +155,7 @@ def human_readable(size, isbits=False, unit=None):
 
 
 def human_to_bytes(size, default_unit=None, isbits=False):
-    ''' Return bytes count from a human readable string '''
+    ''' Return bytes count from a human-readable string '''
     try:
         return formatters.human_to_bytes(size, default_unit, isbits)
     except TypeError as e:
@@ -209,6 +177,9 @@ def rekey_on_member(data, key, duplicates='error'):
         raise AnsibleFilterError("duplicates parameter to rekey_on_member has unknown value: {0}".format(duplicates))
 
     new_obj = {}
+
+    # Ensure the positional args are defined - raise jinja2.exceptions.UndefinedError if not
+    bool(data) and bool(key)
 
     if isinstance(data, Mapping):
         iterate_over = data.values()
@@ -248,10 +219,6 @@ class FilterModule(object):
 
     def filters(self):
         filters = {
-            # general math
-            'min': min,
-            'max': max,
-
             # exponents and logarithms
             'log': logarithm,
             'pow': power,
@@ -276,7 +243,7 @@ class FilterModule(object):
 
             # zip
             'zip': zip,
-            'zip_longest': zip_longest,
+            'zip_longest': itertools.zip_longest,
 
         }
 

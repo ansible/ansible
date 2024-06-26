@@ -1,0 +1,14 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - assert:
+        that:
+          - quoted_str == '"hello"'
+          - empty_quoted_str == '""'
+      vars:
+        third_nested_lvl: '"hello"'
+        second_nested_lvl: "{{ third_nested_lvl }}"
+        first_nested_lvl: "{{ second_nested_lvl }}"
+        quoted_str: "{{ first_nested_lvl }}"
+        empty_quoted_str: "{{ empty_str }}"
+        empty_str: '""'

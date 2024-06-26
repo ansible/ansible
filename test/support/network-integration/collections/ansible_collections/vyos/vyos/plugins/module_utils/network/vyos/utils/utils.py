@@ -4,9 +4,8 @@
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # utils
-from __future__ import absolute_import, division, print_function
+from __future__ import annotations
 
-__metaclass__ = type
 from ansible.module_utils.six import iteritems
 from ansible_collections.ansible.netcommon.plugins.module_utils.compat import (
     ipaddress,

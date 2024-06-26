@@ -16,6 +16,7 @@
     - include_tasks: "{{ lookup('first_found', files)}}"
       vars:
         files:
+          - "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version }}.yml"
           - "{{ ansible_os_family | lower }}.yml"
           - "default.yml"
   when:

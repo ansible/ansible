@@ -107,3 +107,32 @@ ansible-playbook inherit_notify.yml "$@"
 ansible-playbook unsafe_failed_task.yml "$@"
 
 ansible-playbook finalized_task.yml "$@"
+
+# https://github.com/ansible/ansible/issues/72725
+ansible-playbook -i host1,host2 -vv 72725.yml
+
+# https://github.com/ansible/ansible/issues/72781
+set +e
+ansible-playbook -i host1,host2 -vv 72781.yml > 72781.out
+set -e
+cat 72781.out
+[ "$(grep -c 'SHOULD NOT HAPPEN' 72781.out)" -eq 0 ]
+rm -f 72781.out
+
+set +e
+ansible-playbook -i host1,host2 -vv 78612.yml | tee 78612.out
+set -e
+[ "$(grep -c 'PASSED' 78612.out)" -eq 1 ]
+rm -f 78612.out
+
+ansible-playbook -vv 43191.yml
+ansible-playbook -vv 43191-2.yml
+
+# https://github.com/ansible/ansible/issues/79711
+set +e
+ANSIBLE_FORCE_HANDLERS=0 ansible-playbook -vv 79711.yml | tee 79711.out
+set -e
+[ "$(grep -c 'ok=5' 79711.out)" -eq 1 ]
+[ "$(grep -c 'failed=1' 79711.out)" -eq 1 ]
+[ "$(grep -c 'rescued=1' 79711.out)" -eq 1 ]
+rm -f 79711.out

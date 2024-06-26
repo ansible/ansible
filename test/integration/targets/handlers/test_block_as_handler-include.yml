@@ -1,0 +1,8 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - command: echo
+      notify: handler
+  handlers:
+    - name: handler
+      include_tasks: test_block_as_handler-include_import-handlers.yml

@@ -1,2 +1,0 @@
-bugfixes:
-- PlayContext - Remove deprecated ``make_become_cmd`` (https://github.com/ansible/ansible/issues/74136)

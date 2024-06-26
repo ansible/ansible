@@ -1,0 +1,2 @@
+bugfixes:
+  - ensure we have logger before we log when we have increased verbosity.

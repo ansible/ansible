@@ -3,28 +3,29 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import base64
 import json
 import os
 import random
 import re
+import shlex
 import stat
 import tempfile
-from abc import ABCMeta, abstractmethod
+
+from abc import ABC, abstractmethod
+from collections.abc import Sequence
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
 from ansible.executor.module_common import modify_module
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
-from ansible.module_utils.common._collections_compat import Sequence
+from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.module_utils.errors import UnsupportedError
 from ansible.module_utils.json_utils import _filter_non_json_lines
-from ansible.module_utils.six import binary_type, string_types, text_type, iteritems, with_metaclass
-from ansible.module_utils.six.moves import shlex_quote
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.six import binary_type, string_types, text_type
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.release import __version__
 from ansible.utils.collection_loader import resource_from_fqcr
@@ -36,7 +37,19 @@ from ansible.utils.plugin_docs import get_versioned_doclink
 display = Display()
 
 
-class ActionBase(with_metaclass(ABCMeta, object)):
+def _validate_utf8_json(d):
+    if isinstance(d, text_type):
+        # Purposefully not using to_bytes here for performance reasons
+        d.encode(encoding='utf-8', errors='strict')
+    elif isinstance(d, dict):
+        for o in d.items():
+            _validate_utf8_json(o)
+    elif isinstance(d, (list, tuple)):
+        for o in d:
+            _validate_utf8_json(o)
+
+
+class ActionBase(ABC):
 
     '''
     This class is the base class for all action plugins, and defines
@@ -46,7 +59,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     '''
 
     # A set of valid arguments
-    _VALID_ARGS = frozenset([])
+    _VALID_ARGS = frozenset([])  # type: frozenset[str]
+
+    # behavioral attributes
+    BYPASS_HOST_LOOP = False
+    TRANSFERS_FILES = False
+    _requires_connection = True
+    _supports_check_mode = True
+    _supports_async = False
 
     def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj):
         self._task = task
@@ -57,19 +77,15 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         self._shared_loader_obj = shared_loader_obj
         self._cleanup_remote_tmp = False
 
-        self._supports_check_mode = True
-        self._supports_async = False
-
         # interpreter discovery state
         self._discovered_interpreter_key = None
         self._discovered_interpreter = False
         self._discovery_deprecation_warnings = []
         self._discovery_warnings = []
+        self._used_interpreter = None
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
-
-        self._used_interpreter = None
 
     @abstractmethod
     def run(self, tmp=None, task_vars=None):
@@ -84,7 +100,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             etc) associated with this task.
         :returns: dictionary of results from the module
 
-        Implementors of action modules may find the following variables especially useful:
+        Implementers of action modules may find the following variables especially useful:
 
         * Module parameters.  These are stored in self._task.args
         """
@@ -99,11 +115,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         del tmp
 
         if self._task.async_val and not self._supports_async:
-            raise AnsibleActionFail('async is not supported for this task.')
-        elif self._play_context.check_mode and not self._supports_check_mode:
-            raise AnsibleActionSkip('check mode is not supported for this task.')
-        elif self._task.async_val and self._play_context.check_mode:
-            raise AnsibleActionFail('check mode and async cannot be used on same task.')
+            raise AnsibleActionFail('This action (%s) does not support async.' % self._task.action)
+        elif self._task.check_mode and not self._supports_check_mode:
+            raise AnsibleActionSkip('This action (%s) does not support check mode.' % self._task.action)
 
         # Error if invalid argument is passed
         if self._VALID_ARGS:
@@ -116,6 +130,56 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             self._make_tmp_path()
 
         return result
+
+    def validate_argument_spec(self, argument_spec=None,
+                               mutually_exclusive=None,
+                               required_together=None,
+                               required_one_of=None,
+                               required_if=None,
+                               required_by=None,
+                               ):
+        """Validate an argument spec against the task args
+
+        This will return a tuple of (ValidationResult, dict) where the dict
+        is the validated, coerced, and normalized task args.
+
+        Be cautious when directly passing ``new_module_args`` directly to a
+        module invocation, as it will contain the defaults, and not only
+        the args supplied from the task. If you do this, the module
+        should not define ``mututally_exclusive`` or similar.
+
+        This code is roughly copied from the ``validate_argument_spec``
+        action plugin for use by other action plugins.
+        """
+
+        new_module_args = self._task.args.copy()
+
+        validator = ArgumentSpecValidator(
+            argument_spec,
+            mutually_exclusive=mutually_exclusive,
+            required_together=required_together,
+            required_one_of=required_one_of,
+            required_if=required_if,
+            required_by=required_by,
+        )
+        validation_result = validator.validate(new_module_args)
+
+        new_module_args.update(validation_result.validated_parameters)
+
+        try:
+            error = validation_result.errors[0]
+        except IndexError:
+            error = None
+
+        # Fail for validation errors, even in check mode
+        if error:
+            msg = validation_result.errors.msg
+            if isinstance(error, UnsupportedError):
+                msg = f"Unsupported parameters for ({self._load_name}) module: {msg}"
+
+            raise AnsibleActionFail(msg)
+
+        return validation_result, new_module_args
 
     def cleanup(self, force=False):
         """Method to perform a clean up at the end of an action plugin execution
@@ -231,9 +295,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             try:
                 (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, self._templar,
                                                                             task_vars=use_vars,
-                                                                            module_compression=self._play_context.module_compression,
+                                                                            module_compression=C.config.get_config_value('DEFAULT_MODULE_COMPRESSION',
+                                                                                                                         variables=task_vars),
                                                                             async_timeout=self._task.async_val,
                                                                             environment=final_environment,
+                                                                            remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
                                                                             **become_kwargs)
                 break
             except InterpreterDiscoveryRequiredError as idre:
@@ -341,6 +407,20 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         return self.get_shell_option('admin_users', ['root'])
 
+    def _get_remote_addr(self, tvars):
+        ''' consistently get the 'remote_address' for the action plugin '''
+        remote_addr = tvars.get('delegated_vars', {}).get('ansible_host', tvars.get('ansible_host', tvars.get('inventory_hostname', None)))
+        for variation in ('remote_addr', 'host'):
+            try:
+                remote_addr = self._connection.get_option(variation)
+            except KeyError:
+                continue
+            break
+        else:
+            # plugin does not have, fallback to play_context
+            remote_addr = self._play_context.remote_addr
+        return remote_addr
+
     def _get_remote_user(self):
         ''' consistently get the 'remote_user' for the action plugin '''
         # TODO: use 'current user running ansible' as fallback when moving away from play_context
@@ -399,7 +479,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 output = 'Authentication failure.'
             elif result['rc'] == 255 and self._connection.transport in ('ssh',):
 
-                if self._play_context.verbosity > 3:
+                if display.verbosity > 3:
                     output = u'SSH encountered an unknown error. The output was:\n%s%s' % (result['stdout'], result['stderr'])
                 else:
                     output = (u'SSH encountered an unknown error during the connection. '
@@ -408,13 +488,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             elif u'No space left on device' in result['stderr']:
                 output = result['stderr']
             else:
-                output = ('Failed to create temporary directory.'
+                output = ('Failed to create temporary directory. '
                           'In some cases, you may have been able to authenticate and did not have permissions on the target directory. '
                           'Consider changing the remote tmp path in ansible.cfg to a path rooted in "/tmp", for more error information use -vvv. '
                           'Failed command was: %s, exited with result %d' % (cmd, result['rc']))
             if 'stdout' in result and result['stdout'] != u'':
                 output = output + u", stdout output: %s" % result['stdout']
-            if self._play_context.verbosity > 3 and 'stderr' in result and result['stderr'] != u'':
+            if display.verbosity > 3 and 'stderr' in result and result['stderr'] != u'':
                 output += u", stderr output: %s" % result['stderr']
             raise AnsibleConnectionFailure(output)
         else:
@@ -606,7 +686,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             res = self._remote_chmod(remote_paths, 'u+x')
             if res['rc'] != 0:
                 raise AnsibleError(
-                    'Failed to set file mode on remote temporary files '
+                    'Failed to set file mode or acl on remote temporary files '
                     '(rc: {0}, err: {1})'.format(
                         res['rc'],
                         to_native(res['stderr'])))
@@ -621,9 +701,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if remote_user in self._get_admin_users():
             raise AnsibleError(
                 'Failed to change ownership of the temporary files Ansible '
-                'needs to create despite connecting as a privileged user. '
-                'Unprivileged become user would be unable to read the '
-                'file.')
+                '(via chmod nor setfacl) needs to create despite connecting as a '
+                'privileged user. Unprivileged become user would be unable to read'
+                ' the file.')
 
         # Step 3d: Try macOS's special chmod + ACL
         # macOS chmod's +a flag takes its own argument. As a slight hack, we
@@ -655,8 +735,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             return remote_paths
 
         # we'll need this down here
-        become_link = get_versioned_doclink('user_guide/become.html')
-
+        become_link = get_versioned_doclink('playbook_guide/playbooks_privilege_escalation.html')
         # Step 3f: Common group
         # Otherwise, we're a normal user. We failed to chown the paths to the
         # unprivileged user, but if we have a common group with them, we should
@@ -668,7 +747,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # create an extra round trip.
         #
         # Also note that due to the above, this can prevent the
-        # ALLOW_WORLD_READABLE_TMPFILES logic below from ever getting called. We
+        # world_readable_temp logic below from ever getting called. We
         # leave this up to the user to rectify if they have both of these
         # features enabled.
         group = self.get_shell_option('common_remote_group')
@@ -768,10 +847,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             path=path,
             follow=follow,
             get_checksum=checksum,
+            get_size=False,  # ansible.windows.win_stat added this in 1.11.0
             checksum_algorithm='sha1',
         )
+        # Unknown opts are ignored as module_args could be specific for the
+        # module that is being executed.
         mystat = self._execute_module(module_name='ansible.legacy.stat', module_args=module_args, task_vars=all_vars,
-                                      wrap_async=False)
+                                      wrap_async=False, ignore_unknown_opts=True)
 
         if mystat.get('failed'):
             msg = mystat.get('module_stderr')
@@ -792,38 +874,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             raise AnsibleError("Invalid checksum returned by stat: expected a string type but got %s" % type(mystat['stat']['checksum']))
 
         return mystat['stat']
-
-    def _remote_checksum(self, path, all_vars, follow=False):
-        """Deprecated. Use _execute_remote_stat() instead.
-
-        Produces a remote checksum given a path,
-        Returns a number 0-4 for specific errors instead of checksum, also ensures it is different
-        0 = unknown error
-        1 = file does not exist, this might not be an error
-        2 = permissions issue
-        3 = its a directory, not a file
-        4 = stat module failed, likely due to not finding python
-        5 = appropriate json module not found
-        """
-        self._display.deprecated("The '_remote_checksum()' method is deprecated. "
-                                 "The plugin author should update the code to use '_execute_remote_stat()' instead", "2.16")
-        x = "0"  # unknown error has occurred
-        try:
-            remote_stat = self._execute_remote_stat(path, all_vars, follow=follow)
-            if remote_stat['exists'] and remote_stat['isdir']:
-                x = "3"  # its a directory not a file
-            else:
-                x = remote_stat['checksum']  # if 1, file is missing
-        except AnsibleError as e:
-            errormsg = to_text(e)
-            if errormsg.endswith(u'Permission denied'):
-                x = "2"  # cannot read file
-            elif errormsg.endswith(u'MODULE FAILURE'):
-                x = "4"  # python not found or module uncaught exception
-            elif 'json' in errormsg:
-                x = "5"  # json module needed
-        finally:
-            return x  # pylint: disable=lost-exception
 
     def _remote_expand_user(self, path, sudoable=True, pathsep=None):
         ''' takes a remote path and performs tilde/$HOME expansion on the remote host '''
@@ -875,7 +925,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             expanded = initial_fragment
 
         if '..' in os.path.dirname(expanded).split('/'):
-            raise AnsibleError("'%s' returned an invalid relative home directory path containing '..'" % self._play_context.remote_addr)
+            raise AnsibleError("'%s' returned an invalid relative home directory path containing '..'" % self._get_remote_addr({}))
 
         return expanded
 
@@ -887,10 +937,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             data = re.sub(r'^((\r)?\n)?BECOME-SUCCESS.*(\r)?\n', '', data)
         return data
 
-    def _update_module_args(self, module_name, module_args, task_vars):
+    def _update_module_args(self, module_name, module_args, task_vars, ignore_unknown_opts: bool = False):
 
         # set check mode in the module arguments, if required
-        if self._play_context.check_mode:
+        if self._task.check_mode:
             if not self._supports_check_mode:
                 raise AnsibleError("check mode is not supported for this operation")
             module_args['_ansible_check_mode'] = True
@@ -899,13 +949,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # set no log in the module arguments, if required
         no_target_syslog = C.config.get_config_value('DEFAULT_NO_TARGET_SYSLOG', variables=task_vars)
-        module_args['_ansible_no_log'] = self._play_context.no_log or no_target_syslog
+        module_args['_ansible_no_log'] = self._task.no_log or no_target_syslog
 
         # set debug in the module arguments, if required
         module_args['_ansible_debug'] = C.DEFAULT_DEBUG
 
         # let module know we are in diff mode
-        module_args['_ansible_diff'] = self._play_context.diff
+        module_args['_ansible_diff'] = self._task.diff
 
         # let module know our verbosity
         module_args['_ansible_verbosity'] = display.verbosity
@@ -945,7 +995,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # make sure the remote_tmp value is sent through in case modules needs to create their own
         module_args['_ansible_remote_tmp'] = self.get_shell_option('remote_tmp', default='~/.ansible/tmp')
 
-    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False):
+        # tells the module to ignore options that are not in its argspec.
+        module_args['_ansible_ignore_unknown_opts'] = ignore_unknown_opts
+
+        # allow user to insert string to add context to remote loggging
+        module_args['_ansible_target_log_info'] = C.config.get_config_value('TARGET_LOG_INFO', variables=task_vars)
+
+    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False,
+                        ignore_unknown_opts: bool = False):
         '''
         Transfer and run a module along with its arguments.
         '''
@@ -981,27 +1038,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if module_args is None:
             module_args = self._task.args
 
-        self._update_module_args(module_name, module_args, task_vars)
+        self._update_module_args(module_name, module_args, task_vars, ignore_unknown_opts=ignore_unknown_opts)
 
-        # FIXME: convert async_wrapper.py to not rely on environment variables
-        # make sure we get the right async_dir variable, backwards compatibility
-        # means we need to lookup the env value ANSIBLE_ASYNC_DIR first
         remove_async_dir = None
         if wrap_async or self._task.async_val:
-            env_async_dir = [e for e in self._task.environment if
-                             "ANSIBLE_ASYNC_DIR" in e]
-            if len(env_async_dir) > 0:
-                msg = "Setting the async dir from the environment keyword " \
-                      "ANSIBLE_ASYNC_DIR is deprecated. Set the async_dir " \
-                      "shell option instead"
-                self._display.deprecated(msg, "2.12", collection_name='ansible.builtin')
-            else:
-                # ANSIBLE_ASYNC_DIR is not set on the task, we get the value
-                # from the shell option and temporarily add to the environment
-                # list for async_wrapper to pick up
-                async_dir = self.get_shell_option('async_dir', default="~/.ansible_async")
-                remove_async_dir = len(self._task.environment)
-                self._task.environment.append({"ANSIBLE_ASYNC_DIR": async_dir})
+            async_dir = self.get_shell_option('async_dir', default="~/.ansible_async")
+            remove_async_dir = len(self._task.environment)
+            self._task.environment.append({"ANSIBLE_ASYNC_DIR": async_dir})
 
         # FUTURE: refactor this along with module build process to better encapsulate "smart wrapper" functionality
         (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
@@ -1036,8 +1079,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # we need to dump the module args to a k=v string in a file on
                 # the remote system, which can be read and parsed by the module
                 args_data = ""
-                for k, v in iteritems(module_args):
-                    args_data += '%s=%s ' % (k, shlex_quote(text_type(v)))
+                for k, v in module_args.items():
+                    args_data += '%s=%s ' % (k, shlex.quote(text_type(v)))
                 self._transfer_data(args_file_path, args_data)
             elif module_style in ('non_native_want_json', 'binary'):
                 self._transfer_data(args_file_path, json.dumps(module_args))
@@ -1046,8 +1089,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         environment_string = self._compute_environment_string()
 
         # remove the ANSIBLE_ASYNC_DIR env entry if we added a temporary one for
-        # the async_wrapper task - this is so the async_status plugin doesn't
-        # fire a deprecation warning when it runs after this task
+        # the async_wrapper task.
         if remove_async_dir is not None:
             del self._task.environment[remove_async_dir]
 
@@ -1072,11 +1114,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             remote_files.append(remote_async_module_path)
 
             async_limit = self._task.async_val
-            async_jid = str(random.randint(0, 999999999999))
+            async_jid = f'j{random.randint(0, 999999999999)}'
 
             # call the interpreter for async_wrapper directly
             # this permits use of a script for an interpreter on non-Linux platforms
-            # TODO: re-implement async_wrapper as a regular module to avoid this special case
             interpreter = shebang.replace('#!', '').strip()
             async_cmd = [interpreter, remote_async_module_path, async_jid, async_limit, remote_module_path]
 
@@ -1122,7 +1163,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if data.pop("_ansible_suppress_tmpdir_delete", False):
             self._cleanup_remote_tmp = False
 
-        # NOTE: yum returns results .. but that made it 'compatible' with squashing, so we allow mappings, for now
+        # NOTE: dnf returns results .. but that made it 'compatible' with squashing, so we allow mappings, for now
         if 'results' in data and (not isinstance(data['results'], Sequence) or isinstance(data['results'], string_types)):
             data['ansible_module_results'] = data['results']
             del data['results']
@@ -1180,6 +1221,18 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 display.warning(w)
 
             data = json.loads(filtered_output)
+
+            if C.MODULE_STRICT_UTF8_RESPONSE and not data.pop('_ansible_trusted_utf8', None):
+                try:
+                    _validate_utf8_json(data)
+                except UnicodeEncodeError:
+                    # When removing this, also remove the loop and latin-1 from ansible.module_utils.common.text.converters.jsonify
+                    display.deprecated(
+                        f'Module "{self._task.resolved_action or self._task.action}" returned non UTF-8 data in '
+                        'the JSON response. This will become an error in the future',
+                        version='2.18',
+                    )
+
             data['_ansible_parsed'] = True
         except ValueError:
             # not valid json, lets try to capture error
@@ -1257,7 +1310,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # only applied for the default executable to avoid interfering with the raw action
                 cmd = self._connection._shell.append_command(cmd, 'sleep 0')
             if executable:
-                cmd = executable + ' -c ' + shlex_quote(cmd)
+                cmd = executable + ' -c ' + shlex.quote(cmd)
 
         display.debug("_low_level_execute_command(): executing: %s" % (cmd,))
 
@@ -1292,7 +1345,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         display.debug(u"_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, out, err))
         return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err, stderr_lines=err.splitlines())
 
-    def _get_diff_data(self, destination, source, task_vars, source_file=True):
+    def _get_diff_data(self, destination, source, task_vars, content=None, source_file=True):
 
         # Note: Since we do not diff the source and destination before we transform from bytes into
         # text the diff between source and destination may not be accurate.  To fix this, we'd need
@@ -1350,14 +1403,17 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     if b"\x00" in src_contents:
                         diff['src_binary'] = 1
                     else:
-                        diff['after_header'] = source
+                        if content:
+                            diff['after_header'] = destination
+                        else:
+                            diff['after_header'] = source
                         diff['after'] = to_text(src_contents)
             else:
                 display.debug(u"source of file passed in")
                 diff['after_header'] = u'dynamically generated'
                 diff['after'] = source
 
-        if self._play_context.no_log:
+        if self._task.no_log:
             if 'before' in diff:
                 diff["before"] = u""
             if 'after' in diff:

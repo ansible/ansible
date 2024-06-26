@@ -1,0 +1,48 @@
+DOCUMENTATION:
+  name: vault
+  author: Brian Coca (@bcoca)
+  version_added: "2.12"
+  short_description: vault your secrets
+  description:
+    - Put your information into an encrypted Ansible Vault.
+  positional: secret
+  options:
+    _input:
+      description: Data to vault.
+      type: string
+      required: true
+    secret:
+      description: Vault secret, the key that lets you open the vault.
+      type: string
+      required: true
+    salt:
+      description:
+        - Encryption salt, will be random if not provided.
+        - While providing one makes the resulting encrypted string reproducible, it can lower the security of the vault.
+      type: string
+    vault_id:
+      description: Secret identifier, used internally to try to best match a secret when multiple are provided.
+      type: string
+      default: 'filter_default'
+    wrap_object:
+      description:
+        - This toggle can force the return of an C(AnsibleVaultEncryptedUnicode) string object, when V(False), you get a simple string.
+        - Mostly useful when combining with the C(to_yaml) filter to output the 'inline vault' format.
+      type: bool
+      default: False
+
+EXAMPLES: |
+  # simply encrypt my key in a vault
+  vars:
+    myvaultedkey: "{{ keyrawdata|vault(passphrase) }} "
+
+  - name: save templated vaulted data
+    template: src=dump_template_data.j2 dest=/some/key/vault.txt
+    vars:
+      mysalt: '{{2**256|random(seed=inventory_hostname)}}'
+      template_data: '{{ secretdata|vault(vaultsecret, salt=mysalt) }}'
+
+RETURN:
+  _value:
+    description: The vault string that contains the secret data (or C(AnsibleVaultEncryptedUnicode) string object).
+    type: string

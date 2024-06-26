@@ -21,4 +21,3 @@
       - assert:
           that:
             - "\"'nested_and_undefined' is undefined\" in result.msg"
-      when: lookup('pipe', ansible_python_interpreter ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.10', '>=')

@@ -2,8 +2,7 @@
 # Copyright (c) 2019 Ansible Project
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import datetime
 import os
@@ -13,7 +12,6 @@ from itertools import chain
 
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.module_utils.common.text.formatters import lenient_lowercase
 from ansible.module_utils.common.warnings import warn
 from ansible.module_utils.errors import (
     AliasError,
@@ -33,7 +31,7 @@ from ansible.module_utils.errors import (
 )
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
 
-from ansible.module_utils.common._collections_compat import (
+from ansible.module_utils.six.moves.collections_abc import (
     KeysView,
     Set,
     Sequence,
@@ -84,14 +82,17 @@ _ADDITIONAL_CHECKS = (
 
 # if adding boolean attribute, also add to PASS_BOOL
 # some of this dupes defaults from controller config
+# keep in sync with copy in lib/ansible/module_utils/csharp/Ansible.Basic.cs
 PASS_VARS = {
     'check_mode': ('check_mode', False),
     'debug': ('_debug', False),
     'diff': ('_diff', False),
     'keep_remote_files': ('_keep_remote_files', False),
+    'ignore_unknown_opts': ('_ignore_unknown_opts', False),
     'module_name': ('_name', None),
     'no_log': ('no_log', False),
     'remote_tmp': ('_remote_tmp', None),
+    'target_log_info': ('_target_log_info', None),
     'selinux_special_fs': ('_selinux_special_fs', ['fuse', 'nfs', 'vboxsf', 'ramfs', '9p', 'vfat']),
     'shell_executable': ('_shell', '/bin/sh'),
     'socket': ('_socket_path', None),
@@ -102,7 +103,7 @@ PASS_VARS = {
     'version': ('ansible_version', '0.0'),
 }
 
-PASS_BOOLS = ('check_mode', 'debug', 'diff', 'keep_remote_files', 'no_log')
+PASS_BOOLS = ('check_mode', 'debug', 'diff', 'keep_remote_files', 'ignore_unknown_opts', 'no_log')
 
 DEFAULT_TYPE_VALIDATORS = {
     'str': check_type_str,
@@ -154,7 +155,7 @@ def _get_legal_inputs(argument_spec, parameters, aliases=None):
     return list(aliases.keys()) + list(argument_spec.keys())
 
 
-def _get_unsupported_parameters(argument_spec, parameters, legal_inputs=None, options_context=None):
+def _get_unsupported_parameters(argument_spec, parameters, legal_inputs=None, options_context=None, store_supported=None):
     """Check keys in parameters against those provided in legal_inputs
     to ensure they contain legal values. If legal_inputs are not supplied,
     they will be generated using the argument_spec.
@@ -181,6 +182,16 @@ def _get_unsupported_parameters(argument_spec, parameters, legal_inputs=None, op
                 context = tuple(options_context + [k])
 
             unsupported_parameters.add(context)
+
+            if store_supported is not None:
+                supported_aliases = _handle_aliases(argument_spec, parameters)
+                supported_params = []
+                for option in legal_inputs:
+                    if option in supported_aliases:
+                        continue
+                    supported_params.append(option)
+
+                store_supported.update({context: (supported_params, supported_aliases)})
 
     return unsupported_parameters
 
@@ -336,7 +347,7 @@ def _list_no_log_values(argument_spec, params):
                             sub_param = check_type_dict(sub_param)
 
                         if not isinstance(sub_param, Mapping):
-                            raise TypeError("Value '{1}' in the sub parameter field '{0}' must by a {2}, "
+                            raise TypeError("Value '{1}' in the sub parameter field '{0}' must be a {2}, "
                                             "not '{1.__class__.__name__}'".format(arg_name, sub_param, wanted_type))
 
                         no_log_values.update(_list_no_log_values(sub_argument_spec, sub_param))
@@ -354,13 +365,11 @@ def _return_datastructure_name(obj):
         return
     elif isinstance(obj, Mapping):
         for element in obj.items():
-            for subelement in _return_datastructure_name(element[1]):
-                yield subelement
+            yield from _return_datastructure_name(element[1])
     elif is_iterable(obj):
         for element in obj:
-            for subelement in _return_datastructure_name(element):
-                yield subelement
-    elif isinstance(obj, (bool, NoneType)):
+            yield from _return_datastructure_name(element)
+    elif obj is None or isinstance(obj, bool):
         # This must come before int because bools are also ints
         return
     elif isinstance(obj, tuple(list(integer_types) + [float])):
@@ -600,7 +609,7 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
             continue
 
         value = parameters[param]
-        if value is None:
+        if value is None and not spec.get('required') and spec.get('default') is None:
             continue
 
         wanted_type = spec.get('type')
@@ -651,27 +660,24 @@ def _validate_argument_values(argument_spec, parameters, options_context=None, e
             if param in parameters:
                 # Allow one or more when type='list' param with choices
                 if isinstance(parameters[param], list):
-                    diff_list = ", ".join([item for item in parameters[param] if item not in choices])
+                    diff_list = [item for item in parameters[param] if item not in choices]
                     if diff_list:
                         choices_str = ", ".join([to_native(c) for c in choices])
-                        msg = "value of %s must be one or more of: %s. Got no match for: %s" % (param, choices_str, diff_list)
+                        diff_str = ", ".join([to_native(c) for c in diff_list])
+                        msg = "value of %s must be one or more of: %s. Got no match for: %s" % (param, choices_str, diff_str)
                         if options_context:
                             msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
                         errors.append(ArgumentValueError(msg))
                 elif parameters[param] not in choices:
                     # PyYaml converts certain strings to bools. If we can unambiguously convert back, do so before checking
                     # the value. If we can't figure this out, module author is responsible.
-                    lowered_choices = None
                     if parameters[param] == 'False':
-                        lowered_choices = lenient_lowercase(choices)
                         overlap = BOOLEANS_FALSE.intersection(choices)
                         if len(overlap) == 1:
                             # Extract from a set
                             (parameters[param],) = overlap
 
                     if parameters[param] == 'True':
-                        if lowered_choices is None:
-                            lowered_choices = lenient_lowercase(choices)
                         overlap = BOOLEANS_TRUE.intersection(choices)
                         if len(overlap) == 1:
                             (parameters[param],) = overlap
@@ -689,7 +695,17 @@ def _validate_argument_values(argument_spec, parameters, options_context=None, e
             errors.append(ArgumentTypeError(msg))
 
 
-def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=None, errors=None, no_log_values=None, unsupported_parameters=None):
+def _validate_sub_spec(
+    argument_spec,
+    parameters,
+    prefix="",
+    options_context=None,
+    errors=None,
+    no_log_values=None,
+    unsupported_parameters=None,
+    supported_parameters=None,
+    alias_deprecations=None,
+):
     """Validate sub argument spec.
 
     This function is recursive.
@@ -706,6 +722,8 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
 
     if unsupported_parameters is None:
         unsupported_parameters = set()
+    if supported_parameters is None:
+        supported_parameters = dict()
 
     for param, value in argument_spec.items():
         wanted = value.get('type')
@@ -724,14 +742,17 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
             options_context.append(param)
 
             # Make sure we can iterate over the elements
-            if isinstance(parameters[param], dict):
+            if not isinstance(parameters[param], Sequence) or isinstance(parameters[param], string_types):
                 elements = [parameters[param]]
             else:
                 elements = parameters[param]
 
             for idx, sub_parameters in enumerate(elements):
+                no_log_values.update(set_fallbacks(sub_spec, sub_parameters))
+
                 if not isinstance(sub_parameters, dict):
                     errors.append(SubParameterTypeError("value of '%s' must be of type dict or list of dicts" % param))
+                    continue
 
                 # Set prefix for warning messages
                 new_prefix = prefix + param
@@ -739,18 +760,25 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
                     new_prefix += '[%d]' % idx
                 new_prefix += '.'
 
-                no_log_values.update(set_fallbacks(sub_spec, sub_parameters))
-
                 alias_warnings = []
-                alias_deprecations = []
+                alias_deprecations_sub = []
                 try:
-                    options_aliases = _handle_aliases(sub_spec, sub_parameters, alias_warnings, alias_deprecations)
+                    options_aliases = _handle_aliases(sub_spec, sub_parameters, alias_warnings, alias_deprecations_sub)
                 except (TypeError, ValueError) as e:
                     options_aliases = {}
                     errors.append(AliasError(to_native(e)))
 
                 for option, alias in alias_warnings:
-                    warn('Both option %s and its alias %s are set.' % (option, alias))
+                    warn('Both option %s%s and its alias %s%s are set.' % (new_prefix, option, new_prefix, alias))
+
+                if alias_deprecations is not None:
+                    for deprecation in alias_deprecations_sub:
+                        alias_deprecations.append({
+                            'name': '%s%s' % (new_prefix, deprecation['name']),
+                            'version': deprecation.get('version'),
+                            'date': deprecation.get('date'),
+                            'collection_name': deprecation.get('collection_name'),
+                        })
 
                 try:
                     no_log_values.update(_list_no_log_values(sub_spec, sub_parameters))
@@ -758,7 +786,15 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
                     errors.append(NoLogError(to_native(te)))
 
                 legal_inputs = _get_legal_inputs(sub_spec, sub_parameters, options_aliases)
-                unsupported_parameters.update(_get_unsupported_parameters(sub_spec, sub_parameters, legal_inputs, options_context))
+                unsupported_parameters.update(
+                    _get_unsupported_parameters(
+                        sub_spec,
+                        sub_parameters,
+                        legal_inputs,
+                        options_context,
+                        store_supported=supported_parameters,
+                    )
+                )
 
                 try:
                     check_mutually_exclusive(value.get('mutually_exclusive'), sub_parameters, options_context)
@@ -784,7 +820,9 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
                 no_log_values.update(_set_defaults(sub_spec, sub_parameters))
 
                 # Handle nested specs
-                _validate_sub_spec(sub_spec, sub_parameters, new_prefix, options_context, errors, no_log_values, unsupported_parameters)
+                _validate_sub_spec(
+                    sub_spec, sub_parameters, new_prefix, options_context, errors, no_log_values,
+                    unsupported_parameters, supported_parameters, alias_deprecations)
 
             options_context.pop()
 

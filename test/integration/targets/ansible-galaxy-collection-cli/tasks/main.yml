@@ -1,0 +1,19 @@
+- block:
+    - name: Install distlib
+      pip:
+        name: distlib
+        state: present
+      register: distlib
+
+    - set_fact:
+        output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+
+    - import_tasks: manifest.yml
+      environment:
+        ANSIBLE_NOCOLOR: 1
+  always:
+    - name: Uninstall distlib
+      pip:
+        name: distlib
+        state: absent
+      when: distlib is changed

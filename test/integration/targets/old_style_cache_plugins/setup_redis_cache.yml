@@ -1,0 +1,52 @@
+---
+- hosts: localhost
+  vars:
+    make: "{{ ( ansible_distribution != 'FreeBSD' ) | ternary('make', 'gmake') }}"
+  tasks:
+    - name: name ensure make is available
+      command: "which {{ make }}"
+      register: has_make
+      ignore_errors: yes
+
+    - command: apk add --no-cache make
+      when: "has_make is failed and ansible_distribution == 'Alpine'"
+      become: yes
+
+    - package:
+        name: "{{ make }}"
+        state: present
+      become: yes
+      when: "has_make is failed and ansible_distribution != 'Alpine'"
+
+    - name: get the latest stable redis server release
+      get_url:
+        url: https://download.redis.io/redis-stable.tar.gz
+        dest: ./
+        timeout: 60
+
+    - name: unzip download
+      unarchive:
+        src: redis-stable.tar.gz
+        dest: ./
+
+    - command: "{{ make }}"
+      args:
+        chdir: redis-stable
+
+    - name: copy the executable into the path
+      copy:
+        src: "redis-stable/src/{{ item }}"
+        dest: /usr/local/bin/
+        mode: 755
+      become: yes
+      loop:
+        - redis-server
+        - redis-cli
+
+    - name: start the redis server in the background
+      command: redis-server --daemonize yes
+
+    - name: install dependency for the cache plugin
+      pip:
+        name: redis>2.4.5
+        state: present

@@ -11,9 +11,7 @@ necessary to bring the current configuration to it's desired end-state is
 created
 """
 
-from __future__ import absolute_import, division, print_function
-
-__metaclass__ = type
+from __future__ import annotations
 
 
 from ansible_collections.ansible.netcommon.plugins.module_utils.network.common.cfg.base import (

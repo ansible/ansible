@@ -15,10 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import isidentifier
@@ -28,6 +26,7 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
     _VALID_ARGS = frozenset(('aggregate', 'data', 'per_host'))
+    _requires_connection = False
 
     # TODO: document this in non-empty set_stats.py module
     def run(self, tmp=None, task_vars=None):
@@ -59,7 +58,7 @@ class ActionModule(ActionBase):
                     else:
                         stats[opt] = val
 
-            for (k, v) in iteritems(data):
+            for (k, v) in data.items():
 
                 k = self._templar.template(k)
 

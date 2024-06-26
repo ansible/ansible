@@ -1,0 +1,2 @@
+PyYAML == 6.0.2rc1 # temporary hack to support Python 3.13
+yamllint

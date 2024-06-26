@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 import traceback
+
+from collections.abc import Sequence
 
 from ansible.errors.yaml_strings import (
     YAML_COMMON_DICT_ERROR,
@@ -32,8 +32,7 @@ from ansible.errors.yaml_strings import (
     YAML_POSITION_DETAILS,
     YAML_AND_SHORTHAND_ERROR,
 )
-from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common._collections_compat import Sequence
+from ansible.module_utils.common.text.converters import to_native, to_text
 
 
 class AnsibleError(Exception):
@@ -210,12 +209,25 @@ class AnsibleError(Exception):
         return error_message
 
 
+class AnsiblePromptInterrupt(AnsibleError):
+    '''User interrupt'''
+
+
+class AnsiblePromptNoninteractive(AnsibleError):
+    '''Unable to get user input'''
+
+
 class AnsibleAssertionError(AnsibleError, AssertionError):
     '''Invalid assertion'''
     pass
 
 
 class AnsibleOptionsError(AnsibleError):
+    ''' bad or incomplete options passed '''
+    pass
+
+
+class AnsibleRequiredOptionError(AnsibleOptionsError):
     ''' bad or incomplete options passed '''
     pass
 
@@ -364,4 +376,9 @@ class AnsibleCollectionUnsupportedVersionError(AnsiblePluginError):
 
 class AnsibleFilterTypeError(AnsibleTemplateError, TypeError):
     ''' a Jinja filter templating failure due to bad type'''
+    pass
+
+
+class AnsiblePluginNotFound(AnsiblePluginError):
+    ''' Indicates we did not find an Ansible plugin '''
     pass

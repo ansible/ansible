@@ -1,0 +1,24 @@
+- hosts: testhost
+  gather_facts: false
+  vars:
+    deep_undefined: "{{ nested_undefined_variable }}"
+  tasks:
+    - name: These do not throw an error, deep_undefined is just evaluated to undefined, since 2.14
+      assert:
+        that:
+          - lazy_eval or deep_undefined
+          - deep_undefined is undefined
+          - deep_undefined|default('defaulted') == 'defaulted'
+      vars:
+        lazy_eval: true
+
+    - name: EXPECTED FAILURE actually using deep_undefined fails
+      debug:
+        msg: "{{ deep_undefined }}"
+      ignore_errors: true
+      register: res
+
+    - assert:
+        that:
+          - res.failed
+          - res.msg is contains("'nested_undefined_variable' is undefined")

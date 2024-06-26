@@ -1,2 +1,0 @@
-bugfixes:
-  - Ensure we get full path for extra vars into cliargs to avoid realpath issues after initial load.

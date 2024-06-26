@@ -1,0 +1,2 @@
+minor_changes:
+  - "ansible-test - update HTTP test container to 3.2.0 (https://github.com/ansible/ansible/pull/83469)."

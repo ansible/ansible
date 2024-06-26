@@ -2,32 +2,20 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import os.path
 import pytest
 
-from ansible.config.manager import ConfigManager, Setting, ensure_type, resolve_path, get_config_type
+from ansible.config.manager import ConfigManager, ensure_type, resolve_path, get_config_type
 from ansible.errors import AnsibleOptionsError, AnsibleError
-from ansible.module_utils.six import integer_types, string_types
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 
 curdir = os.path.dirname(__file__)
 cfg_file = os.path.join(curdir, 'test.cfg')
 cfg_file2 = os.path.join(curdir, 'test2.cfg')
-
-expected_ini = {'CONFIG_FILE': Setting(name='CONFIG_FILE', value=cfg_file, origin='', type='string'),
-                'config_entry': Setting(name='config_entry', value=u'fromini', origin=cfg_file, type='string'),
-                'config_entry_bool': Setting(name='config_entry_bool', value=False, origin=cfg_file, type='bool'),
-                'config_entry_list': Setting(name='config_entry_list', value=['fromini'], origin=cfg_file, type='list'),
-                'config_entry_deprecated': Setting(name='config_entry_deprecated', value=u'fromini', origin=cfg_file, type='string'),
-                'config_entry_multi': Setting(name='config_entry_multi', value=u'morefromini', origin=cfg_file, type='string'),
-                'config_entry_multi_deprecated': Setting(name='config_entry_multi_deprecated', value=u'morefromini', origin=cfg_file, type='string'),
-                'config_entry_multi_deprecated_source': Setting(name='config_entry_multi_deprecated_source', value=u'morefromini',
-                                                                origin=cfg_file, type='string')}
+cfg_file3 = os.path.join(curdir, 'test3.cfg')
 
 ensure_test_data = [
     ('a,b', 'list', list),
@@ -50,29 +38,38 @@ ensure_test_data = [
     (0, 'bool', bool),
     (0.0, 'bool', bool),
     (False, 'bool', bool),
-    ('10', 'int', integer_types),
-    (20, 'int', integer_types),
+    ('10', 'int', int),
+    (20, 'int', int),
     ('0.10', 'float', float),
     (0.2, 'float', float),
     ('/tmp/test.yml', 'pathspec', list),
     ('/tmp/test.yml,/home/test2.yml', 'pathlist', list),
-    ('a', 'str', string_types),
-    ('a', 'string', string_types),
-    ('Café', 'string', string_types),
-    ('', 'string', string_types),
-    ('29', 'str', string_types),
-    ('13.37', 'str', string_types),
-    ('123j', 'string', string_types),
-    ('0x123', 'string', string_types),
-    ('true', 'string', string_types),
-    ('True', 'string', string_types),
-    (0, 'str', string_types),
-    (29, 'str', string_types),
-    (13.37, 'str', string_types),
-    (123j, 'string', string_types),
-    (0x123, 'string', string_types),
-    (True, 'string', string_types),
+    ('a', 'str', str),
+    ('a', 'string', str),
+    ('Café', 'string', str),
+    ('', 'string', str),
+    ('29', 'str', str),
+    ('13.37', 'str', str),
+    ('123j', 'string', str),
+    ('0x123', 'string', str),
+    ('true', 'string', str),
+    ('True', 'string', str),
+    (0, 'str', str),
+    (29, 'str', str),
+    (13.37, 'str', str),
+    (123j, 'string', str),
+    (0x123, 'string', str),
+    (True, 'string', str),
     ('None', 'none', type(None))
+]
+
+ensure_unquoting_test_data = [
+    ('"value"', '"value"', 'str', 'env: ENVVAR', None),
+    ('"value"', '"value"', 'str', os.path.join(curdir, 'test.yml'), 'yaml'),
+    ('"value"', 'value', 'str', cfg_file, 'ini'),
+    ('\'value\'', 'value', 'str', cfg_file, 'ini'),
+    ('\'\'value\'\'', '\'value\'', 'str', cfg_file, 'ini'),
+    ('""value""', '"value"', 'str', cfg_file, 'ini')
 ]
 
 
@@ -85,12 +82,14 @@ class TestConfigManager:
     def teardown_class(cls):
         cls.manager = None
 
-    def test_initial_load(self):
-        assert self.manager.data._global_settings == expected_ini
-
     @pytest.mark.parametrize("value, expected_type, python_type", ensure_test_data)
     def test_ensure_type(self, value, expected_type, python_type):
         assert isinstance(ensure_type(value, expected_type), python_type)
+
+    @pytest.mark.parametrize("value, expected_value, value_type, origin, origin_ftype", ensure_unquoting_test_data)
+    def test_ensure_type_unquoting(self, value, expected_value, value_type, origin, origin_ftype):
+        actual_value = ensure_type(value, value_type, origin, origin_ftype)
+        assert actual_value == expected_value
 
     def test_resolve_path(self):
         assert os.path.join(curdir, 'test.yml') == resolve_path('./test.yml', cfg_file)
@@ -155,3 +154,16 @@ class TestConfigManager:
 
         actual_value = ensure_type(vault_var, value_type)
         assert actual_value == "vault text"
+
+
+@pytest.mark.parametrize(("key", "expected_value"), (
+    ("COLOR_UNREACHABLE", "bright red"),
+    ("COLOR_VERBOSE", "rgb013"),
+    ("COLOR_DEBUG", "gray10")))
+def test_256color_support(key, expected_value):
+    # GIVEN: a config file containing 256-color values with default definitions
+    manager = ConfigManager(cfg_file3)
+    # WHEN: get config values
+    actual_value = manager.get_config_value(key)
+    # THEN: no error
+    assert actual_value == expected_value

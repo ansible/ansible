@@ -1,0 +1,25 @@
+DOCUMENTATION:
+  name: b64encode
+  author: ansible core team
+  version_added: 'historical'
+  short_description: Encode a string as Base64
+  description:
+    - Base64 encoding function.
+  positional: _input
+  options:
+    _input:
+      description: A string to encode.
+      type: string
+      required: true
+
+EXAMPLES: |
+  # Base64 encode a string
+  b64lola: "{{ 'lola'| b64encode }}"
+
+  # Base64 encode the content of 'stuff' variable
+  b64stuff: "{{ stuff | b64encode }}"
+
+RETURN:
+  _value:
+    description: A Base64 encoded string.
+    type: string

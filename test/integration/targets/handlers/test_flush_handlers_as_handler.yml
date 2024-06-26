@@ -1,0 +1,9 @@
+- hosts: A
+  gather_facts: false
+  tasks:
+    - command: echo
+      notify:
+        - handler
+  handlers:
+    - name: handler
+      meta: flush_handlers

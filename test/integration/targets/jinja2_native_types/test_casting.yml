@@ -13,7 +13,7 @@
 
 - assert:
     that:
-        - 'int_to_str == "2"'
+        - int_to_str == "'2'"
         - 'int_to_str|type_debug in ["str", "unicode"]'
         - 'int_to_str2 == "2"'
         - 'int_to_str2|type_debug in ["NativeJinjaText"]'

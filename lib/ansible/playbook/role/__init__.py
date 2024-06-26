@@ -15,28 +15,30 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
+from collections.abc import Container, Mapping, Set, Sequence
+from types import MappingProxyType
+
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
-from ansible.module_utils._text import to_text
-from ansible.module_utils.six import iteritems, binary_type, text_type
-from ansible.module_utils.common._collections_compat import Container, Mapping, Set, Sequence
+from ansible.module_utils.common.text.converters import to_text
+from ansible.module_utils.six import binary_type, text_type
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
+from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.collection_loader import AnsibleCollectionConfig
+from ansible.utils.path import is_subpath
+from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars
-
 
 __all__ = ['Role', 'hash_params']
 
@@ -94,22 +96,32 @@ def hash_params(params):
     return frozenset((params,))
 
 
-class Role(Base, Conditional, Taggable, CollectionSearch):
+class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
-    _delegate_to = FieldAttribute(isa='string')
-    _delegate_facts = FieldAttribute(isa='bool')
-
-    def __init__(self, play=None, from_files=None, from_include=False, validate=True):
+    def __init__(self, play=None, from_files=None, from_include=False, validate=True, public=None, static=True):
         self._role_name = None
         self._role_path = None
         self._role_collection = None
         self._role_params = dict()
         self._loader = None
+        self.static = static
 
-        self._metadata = None
+        # includes (static=false) default to private, while imports (static=true) default to public
+        # but both can be overriden by global config if set
+        if public is None:
+            global_private, origin = C.config.get_config_value_and_origin('DEFAULT_PRIVATE_ROLE_VARS')
+            if origin == 'default':
+                self.public = static
+            else:
+                self.public = not global_private
+        else:
+            self.public = public
+
+        self._metadata = RoleMetadata()
         self._play = play
         self._parents = []
         self._dependencies = []
+        self._all_dependencies = None
         self._task_blocks = []
         self._handler_blocks = []
         self._compiled_handler_blocks = None
@@ -126,6 +138,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         # Indicates whether this role was included via include/import_role
         self.from_include = from_include
 
+        self._hash = None
+
         super(Role, self).__init__()
 
     def __repr__(self):
@@ -136,49 +150,54 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             return '.'.join(x for x in (self._role_collection, self._role_name) if x)
         return self._role_name
 
-    @staticmethod
-    def load(role_include, play, parent_role=None, from_files=None, from_include=False, validate=True):
+    def get_role_path(self):
+        # Purposefully using realpath for canonical path
+        return os.path.realpath(self._role_path)
 
+    def _get_hash_dict(self):
+        if self._hash:
+            return self._hash
+        self._hash = MappingProxyType(
+            {
+                'name': self.get_name(),
+                'path': self.get_role_path(),
+                'params': MappingProxyType(self.get_role_params()),
+                'when': self.when,
+                'tags': self.tags,
+                'from_files': MappingProxyType(self._from_files),
+                'vars': MappingProxyType(self.vars),
+                'from_include': self.from_include,
+            }
+        )
+        return self._hash
+
+    def __eq__(self, other):
+        if not isinstance(other, Role):
+            return False
+
+        return self._get_hash_dict() == other._get_hash_dict()
+
+    @staticmethod
+    def load(role_include, play, parent_role=None, from_files=None, from_include=False, validate=True, public=None, static=True):
         if from_files is None:
             from_files = {}
         try:
-            # The ROLE_CACHE is a dictionary of role names, with each entry
-            # containing another dictionary corresponding to a set of parameters
-            # specified for a role as the key and the Role() object itself.
-            # We use frozenset to make the dictionary hashable.
-
-            params = role_include.get_role_params()
-            if role_include.when is not None:
-                params['when'] = role_include.when
-            if role_include.tags is not None:
-                params['tags'] = role_include.tags
-            if from_files is not None:
-                params['from_files'] = from_files
-            if role_include.vars:
-                params['vars'] = role_include.vars
-
-            params['from_include'] = from_include
-
-            hashed_params = hash_params(params)
-            if role_include.get_name() in play.ROLE_CACHE:
-                for (entry, role_obj) in iteritems(play.ROLE_CACHE[role_include.get_name()]):
-                    if hashed_params == entry:
-                        if parent_role:
-                            role_obj.add_parent(parent_role)
-                        return role_obj
-
             # TODO: need to fix cycle detection in role load (maybe use an empty dict
             #  for the in-flight in role cache as a sentinel that we're already trying to load
             #  that role?)
             # see https://github.com/ansible/ansible/issues/61527
-            r = Role(play=play, from_files=from_files, from_include=from_include, validate=validate)
+            r = Role(play=play, from_files=from_files, from_include=from_include, validate=validate, public=public, static=static)
             r._load_role_data(role_include, parent_role=parent_role)
 
-            if role_include.get_name() not in play.ROLE_CACHE:
-                play.ROLE_CACHE[role_include.get_name()] = dict()
+            role_path = r.get_role_path()
+            if role_path not in play.role_cache:
+                play.role_cache[role_path] = []
 
-            # FIXME: how to handle cache keys for collection-based roles, since they're technically adjustable per task?
-            play.ROLE_CACHE[role_include.get_name()][hashed_params] = r
+            # Using the role path as a cache key is done to improve performance when a large number of roles
+            # are in use in the play
+            if r not in play.role_cache[role_path]:
+                play.role_cache[role_path].append(r)
+
             return r
 
         except RuntimeError:
@@ -197,15 +216,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             self.add_parent(parent_role)
 
         # copy over all field attributes from the RoleInclude
-        # update self._attributes directly, to avoid squashing
-        for (attr_name, dump) in iteritems(self._valid_attrs):
-            if attr_name in ('when', 'tags'):
-                self._attributes[attr_name] = self._extend_value(
-                    self._attributes[attr_name],
-                    role_include._attributes[attr_name],
-                )
-            else:
-                self._attributes[attr_name] = role_include._attributes[attr_name]
+        # update self._attr directly, to avoid squashing
+        for attr_name in self.fattributes:
+            setattr(self, f'_{attr_name}', getattr(role_include, f'_{attr_name}', Sentinel))
 
         # vars and default vars are regular dictionaries
         self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'), allow_dir=True)
@@ -225,8 +238,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         if metadata:
             self._metadata = RoleMetadata.load(metadata, owner=self, variable_manager=self._variable_manager, loader=self._loader)
             self._dependencies = self._load_dependencies()
-        else:
-            self._metadata = RoleMetadata()
 
         # reset collections list; roles do not inherit collections from parents, just use the defaults
         # FUTURE: use a private config default for this so we can allow it to be overridden later
@@ -294,7 +305,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             if self._loader.path_exists(full_path):
                 # Note: _load_role_yaml() takes care of rebuilding the path.
                 argument_specs = self._load_role_yaml('meta', main='argument_specs')
-                return argument_specs.get('argument_specs', {})
+                try:
+                    return argument_specs.get('argument_specs') or {}
+                except AttributeError:
+                    return {}
 
         # We did not find the meta/argument_specs.[yml|yaml] file, so use the spec
         # dict from the role meta data, if it exists. Ansible 2.11 and later will
@@ -393,6 +407,11 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             found_files = self._loader.find_vars_files(file_path, _main, extensions, allow_dir)
             if found_files:
                 for found in found_files:
+
+                    if not is_subpath(found, file_path):
+                        raise AnsibleParserError("Failed loading '%s' for role (%s) as it is not inside the expected role path: '%s'" %
+                                                 (to_text(found), self._role_name, to_text(file_path)))
+
                     new_data = self._loader.load_from_file(found)
                     if new_data:
                         if data is not None and isinstance(new_data, Mapping):
@@ -417,10 +436,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         '''
 
         deps = []
-        if self._metadata:
-            for role_include in self._metadata.dependencies:
-                r = Role.load(role_include, play=self._play, parent_role=self)
-                deps.append(r)
+        for role_include in self._metadata.dependencies:
+            r = Role.load(role_include, play=self._play, parent_role=self, static=self.static)
+            deps.append(r)
 
         return deps
 
@@ -437,6 +455,13 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
     def get_parents(self):
         return self._parents
 
+    def get_dep_chain(self):
+        dep_chain = []
+        for parent in self._parents:
+            dep_chain.extend(parent.get_dep_chain())
+            dep_chain.append(parent)
+        return dep_chain
+
     def get_default_vars(self, dep_chain=None):
         dep_chain = [] if dep_chain is None else dep_chain
 
@@ -449,14 +474,15 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         default_vars = combine_vars(default_vars, self._default_vars)
         return default_vars
 
-    def get_inherited_vars(self, dep_chain=None):
+    def get_inherited_vars(self, dep_chain=None, only_exports=False):
         dep_chain = [] if dep_chain is None else dep_chain
 
         inherited_vars = dict()
 
         if dep_chain:
             for parent in dep_chain:
-                inherited_vars = combine_vars(inherited_vars, parent.vars)
+                if not only_exports:
+                    inherited_vars = combine_vars(inherited_vars, parent.vars)
                 inherited_vars = combine_vars(inherited_vars, parent._role_vars)
         return inherited_vars
 
@@ -470,18 +496,36 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         params = combine_vars(params, self._role_params)
         return params
 
-    def get_vars(self, dep_chain=None, include_params=True):
+    def get_vars(self, dep_chain=None, include_params=True, only_exports=False):
         dep_chain = [] if dep_chain is None else dep_chain
 
-        all_vars = self.get_inherited_vars(dep_chain)
+        all_vars = {}
 
+        # get role_vars: from parent objects
+        # TODO: is this right precedence for inherited role_vars?
+        all_vars = self.get_inherited_vars(dep_chain, only_exports=only_exports)
+
+        # get exported variables from meta/dependencies
+        seen = []
         for dep in self.get_all_dependencies():
-            all_vars = combine_vars(all_vars, dep.get_vars(include_params=include_params))
+            # Avoid reruning dupe deps since they can have vars from previous invocations and they accumulate in deps
+            # TODO: re-examine dep loading to see if we are somehow improperly adding the same dep too many times
+            if dep not in seen:
+                # only take 'exportable' vars from deps
+                all_vars = combine_vars(all_vars, dep.get_vars(include_params=False, only_exports=True))
+                seen.append(dep)
 
-        all_vars = combine_vars(all_vars, self.vars)
+        # role_vars come from vars/ in a role
         all_vars = combine_vars(all_vars, self._role_vars)
-        if include_params:
-            all_vars = combine_vars(all_vars, self.get_role_params(dep_chain=dep_chain))
+
+        if not only_exports:
+            # include_params are 'inline variables' in role invocation. - {role: x, varname: value}
+            if include_params:
+                # TODO: add deprecation notice
+                all_vars = combine_vars(all_vars, self.get_role_params(dep_chain=dep_chain))
+
+            # these come from vars: keyword in role invocation. - {role: x, vars: {varname: value}}
+            all_vars = combine_vars(all_vars, self.vars)
 
         return all_vars
 
@@ -493,15 +537,15 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         Returns a list of all deps, built recursively from all child dependencies,
         in the proper order in which they should be executed or evaluated.
         '''
+        if self._all_dependencies is None:
 
-        child_deps = []
+            self._all_dependencies = []
+            for dep in self.get_direct_dependencies():
+                for child_dep in dep.get_all_dependencies():
+                    self._all_dependencies.append(child_dep)
+                self._all_dependencies.append(dep)
 
-        for dep in self.get_direct_dependencies():
-            for child_dep in dep.get_all_dependencies():
-                child_deps.append(child_dep)
-            child_deps.append(dep)
-
-        return child_deps
+        return self._all_dependencies
 
     def get_task_blocks(self):
         return self._task_blocks[:]
@@ -540,7 +584,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         at least one task was run
         '''
 
-        return host.name in self._completed and not self._metadata.allow_duplicates
+        return host.name in self._completed
 
     def compile(self, play, dep_chain=None):
         '''
@@ -603,8 +647,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         res['_had_task_run'] = self._had_task_run.copy()
         res['_completed'] = self._completed.copy()
 
-        if self._metadata:
-            res['_metadata'] = self._metadata.serialize()
+        res['_metadata'] = self._metadata.serialize()
 
         if include_deps:
             deps = []

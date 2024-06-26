@@ -5,7 +5,7 @@
 
 - name: Test installing collections from git repositories
   environment:
-    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}'
+    ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/collections"
   vars:
     cleanup: True
     galaxy_dir: "{{ galaxy_dir }}"
@@ -23,7 +23,14 @@
   - include_tasks: ./multi_collection_repo_individual.yml
   - include_tasks: ./setup_recursive_scm_dependency.yml
   - include_tasks: ./scm_dependency_deduplication.yml
+  - include_tasks: ./test_supported_resolvelib_versions.yml
+    loop: "{{ supported_resolvelib_versions }}"
+    loop_control:
+      loop_var: resolvelib_version
   - include_tasks: ./download.yml
+  - include_tasks: ./setup_collection_bad_version.yml
+  - include_tasks: ./test_invalid_version.yml
+  - include_tasks: ./test_manifest_metadata.yml
 
   always:
 
@@ -32,8 +39,9 @@
       path: '{{ item }}'
       state: absent
     loop:
-      - '{{ galaxy_dir }}/ansible_collections'
-      - '{{ galaxy_dir }}/development'
+      - "{{ install_path }}"
+      - "{{ alt_install_path }}"
+      - "{{ scm_path }}"
 
   - name: remove git
     package:

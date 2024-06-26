@@ -1,6 +1,6 @@
 - name: RedHat - Enable the dynamic CA configuration feature
   command: update-ca-trust force-enable
-  when: ansible_os_family == 'RedHat'
+  when: ansible_os_family == 'RedHat' and ansible_distribution != "Fedora"
 
 - name: RedHat - Retrieve test cacert
   get_url:
@@ -36,29 +36,20 @@
   command: update-ca-certificates
   when: ansible_os_family in ['Debian', 'Alpine', 'Suse']
 
-- name: FreeBSD - Retrieve test cacert
-  get_url:
-    url: "http://ansible.http.tests/cacert.pem"
-    dest: "/tmp/ansible.pem"
-  when: ansible_os_family == 'FreeBSD'
-
-- name: FreeBSD - Add cacert to root certificate store
-  blockinfile:
-    path: "/etc/ssl/cert.pem"
-    block: "{{ lookup('file', '/tmp/ansible.pem') }}"
-  when: ansible_os_family == 'FreeBSD'
-
-- name: MacOS - Retrieve test cacert
-  when: ansible_os_family == 'Darwin'
+- name: Update cacert
+  when: ansible_os_family in ['FreeBSD', 'Darwin']
   block:
-    - uri:
+    - name: Retrieve test cacert
+      uri:
         url: "http://ansible.http.tests/cacert.pem"
         return_content: true
       register: cacert_pem
 
-    - raw: '{{ ansible_python_interpreter }} -c "import ssl; print(ssl.get_default_verify_paths().cafile)"'
-      register: macos_cafile
+    - name: Locate cacert
+      command: '{{ ansible_python_interpreter }} -c "import ssl; print(ssl.get_default_verify_paths().cafile)"'
+      register: cafile_path
 
-    - blockinfile:
-        path: "{{ macos_cafile.stdout_lines|first }}"
+    - name: Update cacert
+      blockinfile:
+        path: "{{ cafile_path.stdout_lines|first }}"
         block: "{{ cacert_pem.content }}"

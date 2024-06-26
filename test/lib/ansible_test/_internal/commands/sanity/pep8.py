@@ -1,17 +1,20 @@
 """Sanity test for PEP 8 style guidelines using pycodestyle."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
-
-from ... import types as t
+import typing as t
 
 from . import (
     SanitySingleVersion,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
+    SanityTargets,
     SANITY_ROOT,
+)
+
+from ...test import (
+    TestResult,
 )
 
 from ...target import (
@@ -22,7 +25,6 @@ from ...util import (
     SubprocessError,
     read_lines_without_comments,
     parse_to_list_of_dict,
-    find_python,
     is_subdir,
 )
 
@@ -34,25 +36,24 @@ from ...config import (
     SanityConfig,
 )
 
+from ...host_configs import (
+    PythonConfig,
+)
+
 
 class Pep8Test(SanitySingleVersion):
     """Sanity test for PEP 8 style guidelines using pycodestyle."""
+
     @property
-    def error_code(self):  # type: () -> t.Optional[str]
+    def error_code(self) -> t.Optional[str]:
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'A100'
 
-    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+    def filter_targets(self, targets: list[TestTarget]) -> list[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         return [target for target in targets if os.path.splitext(target.path)[1] == '.py' or is_subdir(target.path, 'bin')]
 
-    def test(self, args, targets, python_version):
-        """
-        :type args: SanityConfig
-        :type targets: SanityTargets
-        :type python_version: str
-        :rtype: TestResult
-        """
+    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
         current_ignore_file = os.path.join(SANITY_ROOT, 'pep8', 'current-ignore.txt')
         current_ignore = sorted(read_lines_without_comments(current_ignore_file, remove_blank_lines=True))
 
@@ -61,12 +62,12 @@ class Pep8Test(SanitySingleVersion):
         paths = [target.path for target in targets.include]
 
         cmd = [
-            find_python(python_version),
+            python.path,
             '-m', 'pycodestyle',
             '--max-line-length', '160',
             '--config', '/dev/null',
             '--ignore', ','.join(sorted(current_ignore)),
-        ] + paths
+        ] + paths  # fmt: skip
 
         if paths:
             try:
@@ -92,7 +93,7 @@ class Pep8Test(SanitySingleVersion):
         else:
             results = []
 
-        results = [SanityMessage(
+        messages = [SanityMessage(
             message=r['message'],
             path=r['path'],
             line=int(r['line']),
@@ -101,7 +102,7 @@ class Pep8Test(SanitySingleVersion):
             code=r['code'],
         ) for r in results]
 
-        errors = settings.process_errors(results, paths)
+        errors = settings.process_errors(messages, paths)
 
         if errors:
             return SanityFailure(self.name, messages=errors)

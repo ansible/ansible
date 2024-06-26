@@ -13,20 +13,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 import time
 
-from ansible.module_utils.six.moves import reduce
-
+from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.text.formatters import bytes_to_human
-
 from ansible.module_utils.facts.utils import get_file_content, get_mount_size
-
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts import timeout
+from ansible.module_utils.six.moves import reduce
 
 
 class SunOSHardware(Hardware):
@@ -42,7 +39,8 @@ class SunOSHardware(Hardware):
         # FIXME: could pass to run_command(environ_update), but it also tweaks the env
         #        of the parent process instead of altering an env provided to Popen()
         # Use C locale for hardware collection helpers to avoid locale specific number formatting (#24542)
-        self.module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_NUMERIC': 'C'}
+        locale = get_best_parsable_locale(self.module)
+        self.module.run_command_environ_update = {'LANG': locale, 'LC_ALL': locale, 'LC_NUMERIC': locale}
 
         cpu_facts = self.get_cpu_facts()
         memory_facts = self.get_memory_facts()
@@ -109,7 +107,7 @@ class SunOSHardware(Hardware):
         # Counting cores on Solaris can be complicated.
         # https://blogs.oracle.com/mandalika/entry/solaris_show_me_the_cpu
         # Treat 'processor_count' as physical sockets and 'processor_cores' as
-        # virtual CPUs visisble to Solaris. Not a true count of cores for modern SPARC as
+        # virtual CPUs visible to Solaris. Not a true count of cores for modern SPARC as
         # these processors have: sockets -> cores -> threads/virtual CPU.
         if len(sockets) > 0:
             cpu_facts['processor_count'] = len(sockets)
@@ -174,11 +172,15 @@ class SunOSHardware(Hardware):
         rc, platform, err = self.module.run_command('/usr/bin/uname -i')
         platform_sbin = '/usr/platform/' + platform.rstrip() + '/sbin'
 
-        prtdiag_path = self.module.get_bin_path("prtdiag", opt_dirs=[platform_sbin])
+        prtdiag_path = self.module.get_bin_path(
+            "prtdiag",
+            opt_dirs=[platform_sbin]
+        )
+        if prtdiag_path is None:
+            return dmi_facts
+
         rc, out, err = self.module.run_command(prtdiag_path)
-        """
-        rc returns 1
-        """
+        # rc returns 1
         if out:
             system_conf = out.split('\n')[0]
 

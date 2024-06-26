@@ -1,6 +1,5 @@
 """Erase code coverage files."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -8,13 +7,26 @@ from ...util_common import (
     ResultType,
 )
 
+from ...executor import (
+    Delegate,
+)
+
+from ...provisioning import (
+    prepare_profiles,
+)
+
 from . import (
     CoverageConfig,
 )
 
 
-def command_coverage_erase(args):  # type: (CoverageEraseConfig) -> None
+def command_coverage_erase(args: CoverageEraseConfig) -> None:
     """Erase code coverage data files collected during test runs."""
+    host_state = prepare_profiles(args)  # coverage erase
+
+    if args.delegate:
+        raise Delegate(host_state=host_state)
+
     coverage_dir = ResultType.COVERAGE.path
 
     for name in os.listdir(coverage_dir):

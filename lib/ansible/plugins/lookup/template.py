@@ -2,8 +2,7 @@
 # Copyright: (c) 2012-17, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
     name: template
@@ -20,6 +19,7 @@ DOCUMENTATION = """
         description:
             - Whether to convert YAML into data. If False, strings that are YAML will be left untouched.
             - Mutually exclusive with the jinja2_native option.
+        default: true
       variable_start_string:
         description: The string marking the beginning of a print statement.
         default: '{{'
@@ -45,16 +45,33 @@ DOCUMENTATION = """
         default: {}
         version_added: '2.3'
         type: dict
+      comment_start_string:
+        description: The string marking the beginning of a comment statement.
+        version_added: '2.12'
+        type: str
+        default: '{#'
+      comment_end_string:
+        description: The string marking the end of a comment statement.
+        version_added: '2.12'
+        type: str
+        default: '#}'
+    seealso:
+      - ref: playbook_task_paths
+        description: Search paths used for relative templates.
 """
 
 EXAMPLES = """
 - name: show templating results
-  debug:
-    msg: "{{ lookup('template', './some_template.j2') }}"
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.template', './some_template.j2') }}"
 
 - name: show templating results with different variable start and end string
-  debug:
-    msg: "{{ lookup('template', './some_template.j2', variable_start_string='[%', variable_end_string='%]') }}"
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.template', './some_template.j2', variable_start_string='[%', variable_end_string='%]') }}"
+
+- name: show templating results with different comment start and end string
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.template', './some_template.j2', comment_start_string='[#', comment_end_string='#]') }}"
 """
 
 RETURN = """
@@ -67,14 +84,14 @@ _raw:
 from copy import deepcopy
 import os
 
+import ansible.constants as C
+
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils._text import to_bytes, to_text
-from ansible.template import generate_ansible_template_vars, AnsibleEnvironment, USE_JINJA2_NATIVE
+from ansible.module_utils.common.text.converters import to_text
+from ansible.template import generate_ansible_template_vars, AnsibleEnvironment
 from ansible.utils.display import Display
-
-if USE_JINJA2_NATIVE:
-    from ansible.utils.native_jinja import NativeJinjaText
+from ansible.utils.native_jinja import NativeJinjaText
 
 
 display = Display()
@@ -91,14 +108,16 @@ class LookupModule(LookupBase):
         # capture options
         convert_data_p = self.get_option('convert_data')
         lookup_template_vars = self.get_option('template_vars')
-        jinja2_native = self.get_option('jinja2_native')
+        jinja2_native = self.get_option('jinja2_native') and C.DEFAULT_JINJA2_NATIVE
         variable_start_string = self.get_option('variable_start_string')
         variable_end_string = self.get_option('variable_end_string')
+        comment_start_string = self.get_option('comment_start_string')
+        comment_end_string = self.get_option('comment_end_string')
 
-        if USE_JINJA2_NATIVE and not jinja2_native:
-            templar = self._templar.copy_with_new_env(environment_class=AnsibleEnvironment)
-        else:
+        if jinja2_native:
             templar = self._templar
+        else:
+            templar = self._templar.copy_with_new_env(environment_class=AnsibleEnvironment)
 
         for term in terms:
             display.debug("File lookup term: %s" % term)
@@ -130,13 +149,18 @@ class LookupModule(LookupBase):
                 vars.update(generate_ansible_template_vars(term, lookupfile))
                 vars.update(lookup_template_vars)
 
-                with templar.set_temporary_context(variable_start_string=variable_start_string,
-                                                   variable_end_string=variable_end_string,
-                                                   available_variables=vars, searchpath=searchpath):
+                with templar.set_temporary_context(available_variables=vars, searchpath=searchpath):
+                    overrides = dict(
+                        variable_start_string=variable_start_string,
+                        variable_end_string=variable_end_string,
+                        comment_start_string=comment_start_string,
+                        comment_end_string=comment_end_string
+                    )
                     res = templar.template(template_data, preserve_trailing_newlines=True,
-                                           convert_data=convert_data_p, escape_backslashes=False)
+                                           convert_data=convert_data_p, escape_backslashes=False,
+                                           overrides=overrides)
 
-                if USE_JINJA2_NATIVE and not jinja2_native:
+                if (C.DEFAULT_JINJA2_NATIVE and not jinja2_native) or not convert_data_p:
                     # jinja2_native is true globally but off for the lookup, we need this text
                     # not to be processed by literal_eval anywhere in Ansible
                     res = NativeJinjaText(res)

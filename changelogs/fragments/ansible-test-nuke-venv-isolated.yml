@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - virtualenv-isolated.sh is no longer provided. Prefer virtualenv.sh in its place.

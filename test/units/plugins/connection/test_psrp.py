@@ -2,15 +2,13 @@
 # (c) 2018, Jordan Borean <jborean@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
 import sys
 
 from io import StringIO
-from units.compat.mock import MagicMock
+from unittest.mock import MagicMock
 
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import connection_loader
@@ -200,8 +198,6 @@ class TestConnectionPSRP(object):
         ),
     )
 
-    # pylint bug: https://github.com/PyCQA/pylint/issues/511
-    # pylint: disable=undefined-variable
     @pytest.mark.parametrize('options, expected',
                              ((o, e) for o, e in OPTIONS_DATA))
     def test_set_options(self, options, expected):

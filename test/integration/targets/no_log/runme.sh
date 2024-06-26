@@ -5,7 +5,7 @@ set -eux
 # This test expects 7 loggable vars and 0 non-loggable ones.
 # If either mismatches it fails, run the ansible-playbook command to debug.
 [ "$(ansible-playbook no_log_local.yml -i ../../inventory -vvvvv "$@" | awk \
-'BEGIN { logme = 0; nolog = 0; } /LOG_ME/ { logme += 1;} /DO_NOT_LOG/ { nolog += 1;} END { printf "%d/%d", logme, nolog; }')" = "26/0" ]
+'BEGIN { logme = 0; nolog = 0; } /LOG_ME/ { logme += 1;} /DO_NOT_LOG/ { nolog += 1;} END { printf "%d/%d", logme, nolog; }')" = "27/0" ]
 
 # deal with corner cases with no log and loops
 # no log enabled, should produce 6 censored messages
@@ -19,3 +19,8 @@ set -eux
 
 # test invalid data passed to a suboption
 [ "$(ansible-playbook no_log_suboptions_invalid.yml -i ../../inventory -vvvvv "$@" | grep -Ec '(SUPREME|IDIOM|MOCKUP|EDUCATED|FOOTREST|CRAFTY|FELINE|CRYSTAL|EXPECTANT|AGROUND|GOLIATH|FREEFALL)')" = "0" ]
+
+# test variations on ANSIBLE_NO_LOG
+[ "$(ansible-playbook no_log_config.yml -i ../../inventory -vvvvv "$@" | grep -Ec 'the output has been hidden')" = "1" ]
+[ "$(ANSIBLE_NO_LOG=0 ansible-playbook no_log_config.yml -i ../../inventory -vvvvv "$@" | grep -Ec 'the output has been hidden')" = "1" ]
+[ "$(ANSIBLE_NO_LOG=1 ansible-playbook no_log_config.yml -i ../../inventory -vvvvv "$@" | grep -Ec 'the output has been hidden')" = "6" ]

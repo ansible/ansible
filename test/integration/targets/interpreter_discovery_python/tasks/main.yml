@@ -11,6 +11,7 @@
   set_fact:
     distro: '{{ ansible_distribution | default("unknown") | lower }}'
     distro_version: '{{ ansible_distribution_version | default("unknown") }}'
+    distro_major_version: '{{ ansible_distribution_major_version | default("unknown") }}'
     os_family: '{{ ansible_os_family | default("unknown") }}'
 
 - name: test that python discovery is working and that fact persistence makes it only run once
@@ -76,10 +77,10 @@
     ping:
     register: legacy
 
-  - name: check for dep warning (only on platforms where auto result is not /usr/bin/python and legacy is)
+  - name: check for warning (only on platforms where auto result is not /usr/bin/python and legacy is)
     assert:
       that:
-      - legacy.deprecations | default([]) | length > 0
+      - legacy.warnings | default([]) | length > 0
     # only check for a dep warning if legacy returned /usr/bin/python and auto didn't
     when: legacy.ansible_facts.discovered_interpreter_python == '/usr/bin/python' and
           auto_out.ansible_facts.discovered_interpreter_python != '/usr/bin/python'
@@ -140,8 +141,6 @@
   - name: debian assertions
     assert:
       that:
-      # Debian 8 and older
-      - auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python' and distro_version is version('8', '<=') or distro_version is version('8', '>')
       # Debian 10 and newer
       - auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python3' and distro_version is version('10', '>=') or distro_version is version('10', '<')
     when: distro == 'debian'
@@ -149,25 +148,21 @@
   - name: fedora assertions
     assert:
       that:
-      - auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python3'
+      - "'/bin/python3' in auto_out.ansible_facts.discovered_interpreter_python"
     when: distro == 'fedora' and distro_version is version('23', '>=')
 
   - name: rhel assertions
     assert:
       that:
-      # rhel 6/7
-      - (auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python' and distro_version is version('8','<')) or distro_version is version('8','>=')
-      # rhel 8+
-      - (auto_out.ansible_facts.discovered_interpreter_python == '/usr/libexec/platform-python' and distro_version is version('8','>=')) or distro_version is version('8','<')
+      # rhel 9
+      - ('/bin/python3' in auto_out.ansible_facts.discovered_interpreter_python and distro_major_version is version('9','==')) or distro_major_version is version('9','!=')
     when: distro == 'redhat'
 
   - name: ubuntu assertions
     assert:
       that:
-      # ubuntu < 16
-      - (auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python' and distro_version is version('16.04','<')) or distro_version is version('16.04','>=')
       # ubuntu >= 16
-      - (auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python3' and distro_version is version('16.04','>=')) or distro_version is version('16.04','<')
+      - ('/bin/python3' in auto_out.ansible_facts.discovered_interpreter_python and distro_version is version('16.04','>=')) or distro_version is version('16.04','<')
     when: distro == 'ubuntu'
 
   - name: mac assertions

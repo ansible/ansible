@@ -1,3 +1,0 @@
-- name: collect a list of the datacenters
-  vmware.vmware_rest.vcenter_datacenter_info:
-  register: my_datacenters

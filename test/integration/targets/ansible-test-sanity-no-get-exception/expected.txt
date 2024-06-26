@@ -1,0 +1,2 @@
+plugins/modules/check-me.py:3:44: do not use `get_exception`
+plugins/modules/check-me.py:7:4: do not use `get_exception`

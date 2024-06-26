@@ -26,17 +26,12 @@ variables:
     value: ansible
   - name: coverageBranches
     value: devel
-  - name: pipelinesCoverage
-    value: coverage
   - name: entryPoint
-    value: test/utils/shippable/shippable.sh
+    value: .azure-pipelines/commands/entry-point.sh
   - name: fetchDepth
     value: 500
-
-resources:
-  containers:
-    - container: default
-      image: quay.io/ansible/azure-pipelines-test-container:1.9.0
+  - name: defaultContainer
+    value: quay.io/ansible/azure-pipelines-test-container:6.0.0
 
 pool: Standard
 
@@ -51,9 +46,6 @@ stages:
           targets:
             - test: 1
             - test: 2
-            - test: 3
-            - test: 4
-            - test: 5
   - stage: Units
     dependsOn: []
     jobs:
@@ -62,14 +54,12 @@ stages:
           nameFormat: Python {0}
           testFormat: units/{0}
           targets:
-            - test: 2.6
-            - test: 2.7
-            - test: 3.5
-            - test: 3.6
-            - test: 3.7
             - test: 3.8
             - test: 3.9
             - test: '3.10'
+            - test: 3.11
+            - test: 3.12
+            - test: 3.13
   - stage: Windows
     dependsOn: []
     jobs:
@@ -78,64 +68,85 @@ stages:
           nameFormat: Server {0}
           testFormat: windows/{0}/1
           targets:
-            - test: 2012
-            - test: 2012-R2
             - test: 2016
             - test: 2019
+            - test: 2022
   - stage: Remote
     dependsOn: []
     jobs:
-      - template: templates/matrix.yml
+      - template: templates/matrix.yml  # context/target
         parameters:
           targets:
-            - name: macOS 11.1
-              test: macos/11.1
-            - name: RHEL 7.9
-              test: rhel/7.9
-            - name: RHEL 8.3 py36
-              test: rhel/8.3@3.6
-            - name: RHEL 8.3 py38
-              test: rhel/8.3@3.8
-            - name: FreeBSD 12.2
-              test: freebsd/12.2
-            - name: FreeBSD 13.0
-              test: freebsd/13.0
+            - name: macOS 14.3
+              test: macos/14.3
+            - name: RHEL 9.4 py39
+              test: rhel/9.4@3.9
+            - name: RHEL 9.4 py312
+              test: rhel/9.4@3.12
+            - name: FreeBSD 13.3
+              test: freebsd/13.3
+            - name: FreeBSD 14.1
+              test: freebsd/14.1
           groups:
             - 1
             - 2
+      - template: templates/matrix.yml  # context/controller
+        parameters:
+          targets:
+            - name: macOS 14.3
+              test: macos/14.3
+            - name: RHEL 9.4
+              test: rhel/9.4
+            - name: FreeBSD 13.3
+              test: freebsd/13.3
+            - name: FreeBSD 14.1
+              test: freebsd/14.1
+          groups:
             - 3
             - 4
             - 5
+      - template: templates/matrix.yml  # context/controller (ansible-test container management)
+        parameters:
+          targets:
+            - name: Alpine 3.20
+              test: alpine/3.20
+            - name: Fedora 40
+              test: fedora/40
+            - name: RHEL 9.4
+              test: rhel/9.4
+            - name: Ubuntu 24.04
+              test: ubuntu/24.04
+          groups:
+            - 6
   - stage: Docker
     dependsOn: []
     jobs:
-      - template: templates/matrix.yml
+      - template: templates/matrix.yml  # context/target
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Alpine 3
-              test: alpine3
-            - name: CentOS 6
-              test: centos6
-            - name: CentOS 7
-              test: centos7
-            - name: CentOS 8
-              test: centos8
-            - name: Fedora 33
-              test: fedora33
-            - name: Fedora 34
-              test: fedora34
-            - name: openSUSE 15 py2
-              test: opensuse15py2
-            - name: openSUSE 15 py3
-              test: opensuse15
-            - name: Ubuntu 18.04
-              test: ubuntu1804
-            - name: Ubuntu 20.04
-              test: ubuntu2004
+            - name: Alpine 3.20
+              test: alpine320
+            - name: Fedora 40
+              test: fedora40
+            - name: Ubuntu 22.04
+              test: ubuntu2204
+            - name: Ubuntu 24.04
+              test: ubuntu2404
           groups:
             - 1
             - 2
+      - template: templates/matrix.yml  # context/controller
+        parameters:
+          testFormat: linux/{0}
+          targets:
+            - name: Alpine 3.20
+              test: alpine320
+            - name: Fedora 40
+              test: fedora40
+            - name: Ubuntu 24.04
+              test: ubuntu2404
+          groups:
             - 3
             - 4
             - 5
@@ -147,9 +158,9 @@ stages:
           nameFormat: Python {0}
           testFormat: galaxy/{0}/1
           targets:
-            - test: 3.8
-            - test: 3.9
-            - test: '3.10'
+            - test: 3.11
+            - test: 3.12
+            - test: 3.13
   - stage: Generic
     dependsOn: []
     jobs:
@@ -158,55 +169,9 @@ stages:
           nameFormat: Python {0}
           testFormat: generic/{0}/1
           targets:
-            - test: 3.8
-            - test: 3.9
-            - test: '3.10'
-  - stage: Incidental_Remote
-    displayName: Incidental Remote
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: i/{0}
-          targets:
-            - name: macOS 11.1
-              test: macos/11.1
-            - name: RHEL 7.9
-              test: rhel/7.9
-            - name: RHEL 8.3 py36
-              test: rhel/8.3@3.6
-            - name: RHEL 8.3 py38
-              test: rhel/8.3@3.8
-            - name: FreeBSD 12.2
-              test: freebsd/12.2
-            - name: FreeBSD 13.0
-              test: freebsd/13.0
-  - stage: Incidental_Docker
-    displayName: Incidental Docker
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: i/linux/{0}
-          targets:
-            - name: CentOS 6
-              test: centos6
-            - name: CentOS 7
-              test: centos7
-            - name: CentOS 8
-              test: centos8
-            - name: Fedora 33
-              test: fedora33
-            - name: Fedora 34
-              test: fedora34
-            - name: openSUSE 15 py2
-              test: opensuse15py2
-            - name: openSUSE 15 py3
-              test: opensuse15
-            - name: Ubuntu 18.04
-              test: ubuntu1804
-            - name: Ubuntu 20.04
-              test: ubuntu2004
+            - test: 3.11
+            - test: 3.12
+            - test: 3.13
   - stage: Incidental_Windows
     displayName: Incidental Windows
     dependsOn: []
@@ -216,10 +181,9 @@ stages:
           nameFormat: Server {0}
           testFormat: i/windows/{0}
           targets:
-            - test: 2012
-            - test: 2012-R2
             - test: 2016
             - test: 2019
+            - test: 2022
   - stage: Incidental
     dependsOn: []
     jobs:
@@ -231,12 +195,6 @@ stages:
               test: ios/csr1000v/
             - name: VyOS Python
               test: vyos/1.1.8/
-            - name: AWS Python 2.7
-              test: aws/2.7
-            - name: AWS Python 3.6
-              test: aws/3.6
-            - name: Cloud Python
-              test: cloud/
   - stage: Summary
     condition: succeededOrFailed()
     dependsOn:
@@ -247,8 +205,6 @@ stages:
       - Docker
       - Galaxy
       - Generic
-      - Incidental_Remote
-      - Incidental_Docker
       - Incidental_Windows
       - Incidental
     jobs:

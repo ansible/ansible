@@ -1,0 +1,22 @@
+---
+- hosts: testgroup
+  gather_facts: no
+  vars_files:
+    - "vars/common.yml"
+    -
+      - "vars/{{ foo }}.yml"
+      - "vars/defaults.yml"
+  tasks:
+    - import_tasks: validate.yml
+
+- hosts: testgroup
+  gather_facts: no
+  vars:
+    _vars_files:
+        - 'vars/{{ foo }}.yml'
+        - 'vars/defaults.yml'
+  vars_files:
+    - "vars/common.yml"
+    - "{{ lookup('first_found', _vars_files) }}"
+  tasks:
+    - import_tasks: validate.yml

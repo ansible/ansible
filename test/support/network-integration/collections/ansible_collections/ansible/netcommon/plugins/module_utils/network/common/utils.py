@@ -27,6 +27,7 @@
 #
 
 # Networking tools for network modules only
+from __future__ import annotations
 
 import re
 import ast
@@ -36,25 +37,11 @@ import json
 
 from itertools import chain
 
-from ansible.module_utils._text import to_text, to_bytes
-from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils.common.text.converters import to_text, to_bytes
+from ansible.module_utils.six.moves.collections_abc import Mapping
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils import basic
 from ansible.module_utils.parsing.convert_bool import boolean
-
-# Backwards compatibility for 3rd party modules
-# TODO(pabelanger): With move to ansible.netcommon, we should clean this code
-# up and have modules import directly themself.
-from ansible.module_utils.common.network import (  # noqa: F401
-    to_bits,
-    is_netmask,
-    is_masklen,
-    to_netmask,
-    to_masklen,
-    to_subnet,
-    to_ipv6_network,
-    VALID_MASKS,
-)
 
 try:
     from jinja2 import Environment, StrictUndefined
@@ -607,7 +594,7 @@ def remove_empties(cfg_dict):
         elif (
             isinstance(val, list)
             and val
-            and all([isinstance(x, dict) for x in val])
+            and all(isinstance(x, dict) for x in val)
         ):
             child_val = [remove_empties(x) for x in val]
             if child_val:

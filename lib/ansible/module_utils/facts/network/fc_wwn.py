@@ -15,11 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import sys
 import glob
+
+import ansible.module_utils.compat.typing as t
 
 from ansible.module_utils.facts.utils import get_file_lines
 from ansible.module_utils.facts.collector import BaseFactCollector
@@ -27,7 +28,7 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 
 class FcWwnInitiatorFactCollector(BaseFactCollector):
     name = 'fibre_channel_wwn'
-    _fact_ids = set()
+    _fact_ids = set()  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         """
@@ -44,18 +45,14 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
                 for line in get_file_lines(fcfile):
                     fc_facts['fibre_channel_wwn'].append(line.rstrip()[2:])
         elif sys.platform.startswith('sunos'):
-            """
-            on solaris 10 or solaris 11 should use `fcinfo hba-port`
-            TBD (not implemented): on solaris 9 use `prtconf -pv`
-            """
+            # on solaris 10 or solaris 11 should use `fcinfo hba-port`
+            # TBD (not implemented): on solaris 9 use `prtconf -pv`
             cmd = module.get_bin_path('fcinfo')
             if cmd:
                 cmd = cmd + " hba-port"
                 rc, fcinfo_out, err = module.run_command(cmd)
-                """
                 # fcinfo hba-port  | grep "Port WWN"
-                HBA Port WWN: 10000090fa1658de
-                """
+                # HBA Port WWN: 10000090fa1658de
                 if rc == 0 and fcinfo_out:
                     for line in fcinfo_out.splitlines():
                         if 'Port WWN' in line:
@@ -85,7 +82,10 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
                                         fc_facts['fibre_channel_wwn'].append(data[-1].rstrip())
         elif sys.platform.startswith('hp-ux'):
             cmd = module.get_bin_path('ioscan')
-            fcmsu_cmd = module.get_bin_path('fcmsutil', opt_dirs=['/opt/fcms/bin'])
+            fcmsu_cmd = module.get_bin_path(
+                'fcmsutil',
+                opt_dirs=['/opt/fcms/bin'],
+            )
             # go ahead if we have both commands available
             if cmd and fcmsu_cmd:
                 # ioscan / get list of available fibre-channel devices (fcd)

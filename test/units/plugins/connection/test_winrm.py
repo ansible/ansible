@@ -2,17 +2,17 @@
 # (c) 2018, Jordan Borean <jborean@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
+
+import os
 
 import pytest
 
 from io import StringIO
 
-from units.compat.mock import MagicMock
-from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils._text import to_bytes
+from unittest.mock import MagicMock
+from ansible.errors import AnsibleConnectionFailure, AnsibleError
+from ansible.module_utils.common.text.converters import to_bytes
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import connection_loader
 from ansible.plugins.connection import winrm
@@ -199,8 +199,6 @@ class TestConnectionWinRM(object):
         ),
     )
 
-    # pylint bug: https://github.com/PyCQA/pylint/issues/511
-    # pylint: disable=undefined-variable
     @pytest.mark.parametrize('options, direct, expected, kerb',
                              ((o, d, e, k) for o, d, e, k in OPTIONS_DATA))
     def test_set_options(self, options, direct, expected, kerb):
@@ -255,8 +253,9 @@ class TestWinRMKerbAuth(object):
         assert len(mock_calls) == 1
         assert mock_calls[0][1] == expected
         actual_env = mock_calls[0][2]['env']
-        assert list(actual_env.keys()) == ['KRB5CCNAME']
+        assert sorted(list(actual_env.keys())) == ['KRB5CCNAME', 'PATH']
         assert actual_env['KRB5CCNAME'].startswith("FILE:/")
+        assert actual_env['PATH'] == os.environ['PATH']
 
     @pytest.mark.parametrize('options, expected', [
         [{"_extras": {}},
@@ -287,8 +286,9 @@ class TestWinRMKerbAuth(object):
         mock_calls = mock_pexpect.mock_calls
         assert mock_calls[0][1] == expected
         actual_env = mock_calls[0][2]['env']
-        assert list(actual_env.keys()) == ['KRB5CCNAME']
+        assert sorted(list(actual_env.keys())) == ['KRB5CCNAME', 'PATH']
         assert actual_env['KRB5CCNAME'].startswith("FILE:/")
+        assert actual_env['PATH'] == os.environ['PATH']
         assert mock_calls[0][2]['echo'] is False
         assert mock_calls[1][0] == "().expect"
         assert mock_calls[1][1] == (".*:",)
@@ -437,3 +437,103 @@ class TestWinRMKerbAuth(object):
         assert str(err.value) == \
             "Kerberos auth failure for principal username with pexpect: " \
             "Error with kinit\n<redacted>"
+
+    def test_exec_command_with_timeout(self, monkeypatch):
+        requests_exc = pytest.importorskip("requests.exceptions")
+
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = connection_loader.get('winrm', pc, new_stdin)
+
+        mock_proto = MagicMock()
+        mock_proto.run_command.side_effect = requests_exc.Timeout("msg")
+
+        conn._connected = True
+        conn._winrm_host = 'hostname'
+
+        monkeypatch.setattr(conn, "_winrm_connect", lambda: mock_proto)
+
+        with pytest.raises(AnsibleConnectionFailure) as e:
+            conn.exec_command('cmd', in_data=None, sudoable=True)
+
+        assert str(e.value) == "winrm connection error: msg"
+
+    def test_exec_command_get_output_timeout(self, monkeypatch):
+        requests_exc = pytest.importorskip("requests.exceptions")
+
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = connection_loader.get('winrm', pc, new_stdin)
+
+        mock_proto = MagicMock()
+        mock_proto.run_command.return_value = "command_id"
+        mock_proto.send_message.side_effect = requests_exc.Timeout("msg")
+
+        conn._connected = True
+        conn._winrm_host = 'hostname'
+
+        monkeypatch.setattr(conn, "_winrm_connect", lambda: mock_proto)
+
+        with pytest.raises(AnsibleConnectionFailure) as e:
+            conn.exec_command('cmd', in_data=None, sudoable=True)
+
+        assert str(e.value) == "winrm connection error: msg"
+
+    def test_connect_failure_auth_401(self, monkeypatch):
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn.set_options(var_options={"ansible_winrm_transport": "basic", "_extras": {}})
+
+        mock_proto = MagicMock()
+        mock_proto.open_shell.side_effect = ValueError("Custom exc Code 401")
+
+        mock_proto_init = MagicMock()
+        mock_proto_init.return_value = mock_proto
+        monkeypatch.setattr(winrm, "Protocol", mock_proto_init)
+
+        with pytest.raises(AnsibleConnectionFailure, match="the specified credentials were rejected by the server"):
+            conn.exec_command('cmd', in_data=None, sudoable=True)
+
+    def test_connect_failure_other_exception(self, monkeypatch):
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn.set_options(var_options={"ansible_winrm_transport": "basic", "_extras": {}})
+
+        mock_proto = MagicMock()
+        mock_proto.open_shell.side_effect = ValueError("Custom exc")
+
+        mock_proto_init = MagicMock()
+        mock_proto_init.return_value = mock_proto
+        monkeypatch.setattr(winrm, "Protocol", mock_proto_init)
+
+        with pytest.raises(AnsibleConnectionFailure, match="basic: Custom exc"):
+            conn.exec_command('cmd', in_data=None, sudoable=True)
+
+    def test_connect_failure_operation_timed_out(self, monkeypatch):
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn.set_options(var_options={"ansible_winrm_transport": "basic", "_extras": {}})
+
+        mock_proto = MagicMock()
+        mock_proto.open_shell.side_effect = ValueError("Custom exc Operation timed out")
+
+        mock_proto_init = MagicMock()
+        mock_proto_init.return_value = mock_proto
+        monkeypatch.setattr(winrm, "Protocol", mock_proto_init)
+
+        with pytest.raises(AnsibleError, match="the connection attempt timed out"):
+            conn.exec_command('cmd', in_data=None, sudoable=True)
+
+    def test_connect_no_transport(self):
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = connection_loader.get('winrm', pc, new_stdin)
+        conn.set_options(var_options={"_extras": {}})
+        conn._build_winrm_kwargs()
+        conn._winrm_transport = []
+
+        with pytest.raises(AnsibleError, match="No transport found for WinRM connection"):
+            conn._winrm_connect()

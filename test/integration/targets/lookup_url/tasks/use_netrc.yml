@@ -1,0 +1,32 @@
+- name: Write out ~/.netrc
+  copy:
+    dest: "~/.netrc"
+    # writing directly to ~/.netrc because plug-in doesn't support NETRC environment overwrite
+    content: |
+      machine {{ httpbin_host }}
+      login foo
+      password bar
+    mode: "0600"
+
+- name: test Url lookup with netrc forced Basic auth
+  set_fact:
+    web_data: "{{ lookup('ansible.builtin.url', 'https://' ~ httpbin_host ~ '/basic-auth/foo/bar', headers={'Authorization':'Bearer foobar'}) }}"
+
+- name: assert test Url lookup with netrc forced Basic auth
+  assert:
+    that:
+     - web_data.user == 'foo'
+
+- name: test Url lookup with use_netrc=False
+  set_fact:
+    web_data: "{{ lookup('ansible.builtin.url', 'https://' ~ httpbin_host ~ '/bearer', headers={'Authorization':'Bearer foobar'}, use_netrc='False') }}"
+
+- name: assert test Url lookup with netrc=False used Bearer authentication
+  assert:
+    that:
+     - web_data.token == 'foobar'
+
+- name: Clean up. Removing ~/.netrc
+  file:
+    path: ~/.netrc
+    state: absent

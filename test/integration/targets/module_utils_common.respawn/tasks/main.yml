@@ -1,0 +1,24 @@
+- name: collect the default interpreter
+  respawnme:
+    mode: no_respawn
+  register: default_python
+
+- name: cause a respawn
+  respawnme:
+    mode: respawn
+  register: respawned_python
+
+- name: cause multiple respawns (should fail)
+  respawnme:
+    mode: multi_respawn
+  ignore_errors: true
+  register: multi_respawn
+
+- assert:
+    that:
+    # the respawn task should report the path of the interpreter it created, and that it's running under the new interpreter
+    - respawned_python.created_interpreter == respawned_python.interpreter_path
+    # ensure that the respawned interpreter is not the same as the default
+    - default_python.interpreter_path != respawned_python.interpreter_path
+    # multiple nested respawns should fail
+    - multi_respawn is failed and (multi_respawn.module_stdout + multi_respawn.module_stderr) is search('has already been respawned')

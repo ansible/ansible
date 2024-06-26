@@ -1,24 +1,19 @@
 """CloudStack plugin for integration tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
+import configparser
 import os
-
-from .... import types as t
+import urllib.parse
+import typing as t
 
 from ....util import (
     ApplicationError,
-    ConfigParser,
     display,
 )
 
 from ....config import (
     IntegrationConfig,
-)
-
-from ....http import (
-    urlparse,
 )
 
 from ....docker_util import (
@@ -39,35 +34,34 @@ from . import (
 
 class CsCloudProvider(CloudProvider):
     """CloudStack cloud provider plugin. Sets up cloud resources before delegation."""
-    DOCKER_SIMULATOR_NAME = 'cloudstack-sim'
 
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
-        super(CsCloudProvider, self).__init__(args)
+    def __init__(self, args: IntegrationConfig) -> None:
+        super().__init__(args)
 
-        self.image = os.environ.get('ANSIBLE_CLOUDSTACK_CONTAINER', 'quay.io/ansible/cloudstack-test-container:1.4.0')
+        self.image = os.environ.get('ANSIBLE_CLOUDSTACK_CONTAINER', 'quay.io/ansible/cloudstack-test-container:1.7.0')
         self.host = ''
         self.port = 0
 
         self.uses_docker = True
         self.uses_config = True
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Setup the cloud resource before delegation and register a cleanup callback."""
-        super(CsCloudProvider, self).setup()
+        super().setup()
 
         if self._use_static_config():
             self._setup_static()
         else:
             self._setup_dynamic()
 
-    def _setup_static(self):  # type: () -> None
+    def _setup_static(self) -> None:
         """Configure CloudStack tests for use with static configuration."""
-        parser = ConfigParser()
+        parser = configparser.ConfigParser()
         parser.read(self.config_static_path)
 
         endpoint = parser.get('cloudstack', 'endpoint')
 
-        parts = urlparse(endpoint)
+        parts = urllib.parse.urlparse(endpoint)
 
         self.host = parts.hostname
 
@@ -85,7 +79,7 @@ class CsCloudProvider(CloudProvider):
 
         display.info('Read cs host "%s" and port %d from config: %s' % (self.host, self.port, self.config_static_path), verbosity=1)
 
-    def _setup_dynamic(self):  # type: () -> None
+    def _setup_dynamic(self) -> None:
         """Create a CloudStack simulator using docker."""
         config = self._read_config_template()
 
@@ -99,17 +93,16 @@ class CsCloudProvider(CloudProvider):
             self.args,
             self.platform,
             self.image,
-            self.DOCKER_SIMULATOR_NAME,
+            'cloudstack-sim',
             ports,
-            allow_existing=True,
-            cleanup=True,
         )
 
-        descriptor.register(self.args)
+        if not descriptor:
+            return
 
         # apply work-around for OverlayFS issue
         # https://github.com/docker/for-linux/issues/72#issuecomment-319904698
-        docker_exec(self.args, self.DOCKER_SIMULATOR_NAME, ['find', '/var/lib/mysql', '-type', 'f', '-exec', 'touch', '{}', ';'])
+        docker_exec(self.args, descriptor.name, ['find', '/var/lib/mysql', '-type', 'f', '-exec', 'touch', '{}', ';'], capture=True)
 
         if self.args.explain:
             values = dict(
@@ -117,10 +110,10 @@ class CsCloudProvider(CloudProvider):
                 PORT=str(self.port),
             )
         else:
-            credentials = self._get_credentials(self.DOCKER_SIMULATOR_NAME)
+            credentials = self._get_credentials(descriptor.name)
 
             values = dict(
-                HOST=self.DOCKER_SIMULATOR_NAME,
+                HOST=descriptor.name,
                 PORT=str(self.port),
                 KEY=credentials['apikey'],
                 SECRET=credentials['secretkey'],
@@ -132,13 +125,15 @@ class CsCloudProvider(CloudProvider):
 
         self._write_config(config)
 
-    def _get_credentials(self, container_name):  # type: (str) -> t.Dict[str, t.Any]
+    def _get_credentials(self, container_name: str) -> dict[str, t.Any]:
         """Wait for the CloudStack simulator to return credentials."""
-        def check(value):
+
+        def check(value) -> bool:
+            """Return True if the given configuration is valid JSON, otherwise return False."""
             # noinspection PyBroadException
             try:
                 json.loads(value)
-            except Exception:   # pylint: disable=broad-except
+            except Exception:  # pylint: disable=broad-except
                 return False  # sometimes the file exists but is not yet valid JSON
 
             return True
@@ -150,9 +145,10 @@ class CsCloudProvider(CloudProvider):
 
 class CsCloudEnvironment(CloudEnvironment):
     """CloudStack cloud environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+
+    def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
-        parser = ConfigParser()
+        parser = configparser.ConfigParser()
         parser.read(self.config_path)
 
         config = dict(parser.items('default'))

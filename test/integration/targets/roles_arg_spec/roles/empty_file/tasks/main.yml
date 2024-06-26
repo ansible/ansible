@@ -1,0 +1,3 @@
+---
+- debug:
+    msg: "Role with empty argument_specs.yml"

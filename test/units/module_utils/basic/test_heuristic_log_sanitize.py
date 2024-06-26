@@ -16,11 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from units.compat import unittest
+import unittest
 from ansible.module_utils.basic import heuristic_log_sanitize
 
 
@@ -87,3 +85,6 @@ class TestHeuristicLogSanitize(unittest.TestCase):
     def test_hides_parameter_secrets(self):
         output = heuristic_log_sanitize('token="secret", user="person", token_entry="test=secret"', frozenset(['secret']))
         self.assertNotIn('secret', output)
+
+    def test_no_password(self):
+        self.assertEqual(heuristic_log_sanitize('foo@bar'), 'foo@bar')

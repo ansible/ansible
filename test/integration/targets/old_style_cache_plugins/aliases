@@ -1,4 +1,5 @@
-shippable/posix/group3
-skip/osx
+destructive
+needs/root
+shippable/posix/group5
+context/controller
 skip/macos
-disabled

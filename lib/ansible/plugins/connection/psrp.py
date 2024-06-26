@@ -1,8 +1,7 @@
 # Copyright (c) 2018 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
 author: Ansible Core Team
@@ -10,11 +9,11 @@ name: psrp
 short_description: Run tasks over Microsoft PowerShell Remoting Protocol
 description:
 - Run commands or put/fetch on a target via PSRP (WinRM plugin)
-- This is similar to the I(winrm) connection plugin which uses the same
+- This is similar to the P(ansible.builtin.winrm#connection) connection plugin which uses the same
   underlying transport but instead runs in a PowerShell interpreter.
 version_added: "2.7"
 requirements:
-- pypsrp>=0.4.0 (Python library)
+- pypsrp>=0.4.0, <1.0.0 (Python library)
 extends_documentation_fragment:
     - connection_pipelining
 options:
@@ -25,6 +24,7 @@ options:
     default: inventory_hostname
     type: str
     vars:
+    - name: inventory_hostname
     - name: ansible_host
     - name: ansible_psrp_host
   remote_user:
@@ -34,8 +34,10 @@ options:
     vars:
     - name: ansible_user
     - name: ansible_psrp_user
+    keyword:
+    - name: remote_user
   remote_password:
-    description: Authentication password for the C(remote_user). Can be supplied as CLI option.
+    description: Authentication password for the O(remote_user). Can be supplied as CLI option.
     type: str
     vars:
     - name: ansible_password
@@ -46,16 +48,18 @@ options:
   port:
     description:
     - The port for PSRP to connect on the remote target.
-    - Default is C(5986) if I(protocol) is not defined or is C(https),
-      otherwise the port is C(5985).
+    - Default is V(5986) if O(protocol) is not defined or is V(https),
+      otherwise the port is V(5985).
     type: int
     vars:
     - name: ansible_port
     - name: ansible_psrp_port
+    keyword:
+    - name: port
   protocol:
     description:
     - Set the protocol to use for the connection.
-    - Default is C(https) if I(port) is not defined or I(port) is not C(5985).
+    - Default is V(https) if O(port) is not defined or O(port) is not V(5985).
     choices:
     - http
     - https
@@ -72,8 +76,8 @@ options:
   auth:
     description:
     - The authentication protocol to use when authenticating the remote user.
-    - The default, C(negotiate), will attempt to use C(Kerberos) if it is
-      available and fall back to C(NTLM) if it isn't.
+    - The default, V(negotiate), will attempt to use Kerberos (V(kerberos)) if it is
+      available and fall back to NTLM (V(ntlm)) if it isn't.
     type: str
     vars:
     - name: ansible_psrp_auth
@@ -88,8 +92,8 @@ options:
   cert_validation:
     description:
     - Whether to validate the remote server's certificate or not.
-    - Set to C(ignore) to not validate any certificates.
-    - I(ca_cert) can be set to the path of a PEM certificate chain to
+    - Set to V(ignore) to not validate any certificates.
+    - O(ca_cert) can be set to the path of a PEM certificate chain to
       use in the validation.
     choices:
     - validate
@@ -102,7 +106,7 @@ options:
     description:
     - The path to a PEM certificate chain to use when validating the server's
       certificate.
-    - This value is ignored if I(cert_validation) is set to C(ignore).
+    - This value is ignored if O(cert_validation) is set to V(ignore).
     type: path
     vars:
     - name: ansible_psrp_cert_trust_path
@@ -119,7 +123,7 @@ options:
   read_timeout:
     description:
     - The read timeout for receiving data from the remote host.
-    - This value must always be greater than I(operation_timeout).
+    - This value must always be greater than O(operation_timeout).
     - This option requires pypsrp >= 0.3.
     - This is measured in seconds.
     type: int
@@ -151,15 +155,15 @@ options:
   message_encryption:
     description:
     - Controls the message encryption settings, this is different from TLS
-      encryption when I(ansible_psrp_protocol) is C(https).
-    - Only the auth protocols C(negotiate), C(kerberos), C(ntlm), and
-      C(credssp) can do message encryption. The other authentication protocols
-      only support encryption when C(protocol) is set to C(https).
-    - C(auto) means means message encryption is only used when not using
+      encryption when O(protocol) is V(https).
+    - Only the auth protocols V(negotiate), V(kerberos), V(ntlm), and
+      V(credssp) can do message encryption. The other authentication protocols
+      only support encryption when V(protocol) is set to V(https).
+    - V(auto) means means message encryption is only used when not using
       TLS/HTTPS.
-    - C(always) is the same as C(auto) but message encryption is always used
+    - V(always) is the same as V(auto) but message encryption is always used
       even when running over TLS/HTTPS.
-    - C(never) disables any encryption checks that are in place when running
+    - V(never) disables any encryption checks that are in place when running
       over HTTP and disables any authentication encryption processes.
     type: str
     vars:
@@ -179,11 +183,11 @@ options:
     description:
     - Will disable any environment proxy settings and connect directly to the
       remote host.
-    - This option is ignored if C(proxy) is set.
+    - This option is ignored if O(proxy) is set.
     vars:
     - name: ansible_psrp_ignore_proxy
     type: bool
-    default: 'no'
+    default: false
 
   # auth options
   certificate_key_pem:
@@ -201,7 +205,7 @@ options:
   credssp_auth_mechanism:
     description:
     - The sub authentication mechanism to use with CredSSP auth.
-    - When C(auto), both Kerberos and NTLM is attempted with kerberos being
+    - When V(auto), both Kerberos and NTLM is attempted with kerberos being
       preferred.
     type: str
     choices:
@@ -214,16 +218,16 @@ options:
   credssp_disable_tlsv1_2:
     description:
     - Disables the use of TLSv1.2 on the CredSSP authentication channel.
-    - This should not be set to C(yes) unless dealing with a host that does not
+    - This should not be set to V(yes) unless dealing with a host that does not
       have TLSv1.2.
-    default: no
+    default: false
     type: bool
     vars:
     - name: ansible_psrp_credssp_disable_tlsv1_2
   credssp_minimum_version:
     description:
     - The minimum CredSSP server authentication version that will be accepted.
-    - Set to C(5) to ensure the server has been patched and is not vulnerable
+    - Set to V(5) to ensure the server has been patched and is not vulnerable
       to CVE 2018-0886.
     default: 2
     type: int
@@ -257,7 +261,7 @@ options:
     - CBT is used to provide extra protection against Man in the Middle C(MitM)
       attacks by binding the outer transport channel to the auth channel.
     - CBT is not used when using just C(HTTP), only C(HTTPS).
-    default: yes
+    default: true
     type: bool
     vars:
     - name: ansible_psrp_negotiate_send_cbt
@@ -277,7 +281,7 @@ options:
     description:
     - Sets the WSMan timeout for each operation.
     - This is measured in seconds.
-    - This should not exceed the value for C(connection_timeout).
+    - This should not exceed the value for O(connection_timeout).
     type: int
     vars:
     - name: ansible_psrp_operation_timeout
@@ -304,13 +308,15 @@ import base64
 import json
 import logging
 import os
+import typing as t
 
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.errors import AnsibleFileNotFound
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
+from ansible.plugins.shell.powershell import ShellModule as PowerShellPlugin
 from ansible.plugins.shell.powershell import _common_args
 from ansible.utils.display import Display
 from ansible.utils.hashing import sha1
@@ -323,18 +329,11 @@ try:
     from pypsrp.exceptions import AuthenticationError, WinRMError
     from pypsrp.host import PSHost, PSHostUserInterface
     from pypsrp.powershell import PowerShell, RunspacePool
-    from pypsrp.shell import Process, SignalCode, WinRS
     from pypsrp.wsman import WSMan, AUTH_KWARGS
     from requests.exceptions import ConnectionError, ConnectTimeout
 except ImportError as err:
     HAS_PYPSRP = False
     PYPSRP_IMP_ERR = err
-
-NEWER_PYPSRP = True
-try:
-    import pypsrp.pwsh_scripts
-except ImportError:
-    NEWER_PYPSRP = False
 
 display = Display()
 
@@ -347,13 +346,16 @@ class Connection(ConnectionBase):
     has_pipelining = True
     allow_extras = True
 
-    def __init__(self, *args, **kwargs):
+    # Satifies mypy as this connection only ever runs with this plugin
+    _shell: PowerShellPlugin
+
+    def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
         self.always_pipeline_modules = True
         self.has_native_async = True
 
-        self.runspace = None
-        self.host = None
-        self._last_pipeline = False
+        self.runspace: RunspacePool | None = None
+        self.host: PSHost | None = None
+        self._last_pipeline: PowerShell | None = None
 
         self._shell_type = 'powershell'
         super(Connection, self).__init__(*args, **kwargs)
@@ -363,7 +365,7 @@ class Connection(ConnectionBase):
             logging.getLogger('requests_credssp').setLevel(logging.INFO)
             logging.getLogger('urllib3').setLevel(logging.INFO)
 
-    def _connect(self):
+    def _connect(self) -> Connection:
         if not HAS_PYPSRP:
             raise AnsibleError("pypsrp or dependencies are not installed: %s"
                                % to_native(PYPSRP_IMP_ERR))
@@ -376,7 +378,7 @@ class Connection(ConnectionBase):
         if not self.runspace:
             connection = WSMan(**self._psrp_conn_kwargs)
 
-            # create our psuedo host to capture the exit code and host output
+            # create our pseudo host to capture the exit code and host output
             host_ui = PSHostUserInterface()
             self.host = PSHost(None, None, False, "Ansible PSRP Host", None,
                                host_ui, None)
@@ -410,7 +412,7 @@ class Connection(ConnectionBase):
             self._last_pipeline = None
         return self
 
-    def reset(self):
+    def reset(self) -> None:
         if not self._connected:
             self.runspace = None
             return
@@ -426,9 +428,11 @@ class Connection(ConnectionBase):
         self.runspace = None
         self._connect()
 
-    def exec_command(self, cmd, in_data=None, sudoable=True):
+    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
         super(Connection, self).exec_command(cmd, in_data=in_data,
                                              sudoable=sudoable)
+
+        pwsh_in_data: bytes | str | None = None
 
         if cmd.startswith(" ".join(_common_args) + " -EncodedCommand"):
             # This is a PowerShell script encoded by the shell plugin, we will
@@ -436,16 +440,15 @@ class Connection(ConnectionBase):
             # starting a new interpreter to save on time
             b_command = base64.b64decode(cmd.split(" ")[-1])
             script = to_text(b_command, 'utf-16-le')
-            in_data = to_text(in_data, errors="surrogate_or_strict", nonstring="passthru")
+            pwsh_in_data = to_text(in_data, errors="surrogate_or_strict", nonstring="passthru")
 
-            if in_data and in_data.startswith(u"#!"):
+            if pwsh_in_data and isinstance(pwsh_in_data, str) and pwsh_in_data.startswith("#!"):
                 # ANSIBALLZ wrapper, we need to get the interpreter and execute
                 # that as the script - note this won't work as basic.py relies
                 # on packages not available on Windows, once fixed we can enable
                 # this path
-                interpreter = to_native(in_data.splitlines()[0][2:])
+                interpreter = to_native(pwsh_in_data.splitlines()[0][2:])
                 # script = "$input | &'%s' -" % interpreter
-                # in_data = to_text(in_data)
                 raise AnsibleError("cannot run the interpreter '%s' on the psrp "
                                    "connection plugin" % interpreter)
 
@@ -460,104 +463,18 @@ class Connection(ConnectionBase):
             # In other cases we want to execute the cmd as the script. We add on the 'exit $LASTEXITCODE' to ensure the
             # rc is propagated back to the connection plugin.
             script = to_text(u"%s\nexit $LASTEXITCODE" % cmd)
+            pwsh_in_data = in_data
             display.vvv(u"PSRP: EXEC %s" % script, host=self._psrp_host)
 
-        rc, stdout, stderr = self._exec_psrp_script(script, in_data)
+        rc, stdout, stderr = self._exec_psrp_script(script, pwsh_in_data)
         return rc, stdout, stderr
 
-    def put_file(self, in_path, out_path):
+    def put_file(self, in_path: str, out_path: str) -> None:
         super(Connection, self).put_file(in_path, out_path)
 
         out_path = self._shell._unquote(out_path)
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._psrp_host)
 
-        # The new method that uses PSRP directly relies on a feature added in pypsrp 0.4.0 (release 2019-09-19). In
-        # case someone still has an older version present we warn them asking to update their library to a newer
-        # release and fallback to the old WSMV shell.
-        if NEWER_PYPSRP:
-            rc, stdout, stderr, local_sha1 = self._put_file_new(in_path, out_path)
-
-        else:
-            display.deprecated("Older pypsrp library detected, please update to pypsrp>=0.4.0 to use the newer copy "
-                               "method over PSRP.", version="2.13", collection_name='ansible.builtin')
-            rc, stdout, stderr, local_sha1 = self._put_file_old(in_path, out_path)
-
-        if rc != 0:
-            raise AnsibleError(to_native(stderr))
-
-        put_output = json.loads(to_text(stdout))
-        remote_sha1 = put_output.get("sha1")
-
-        if not remote_sha1:
-            raise AnsibleError("Remote sha1 was not returned, stdout: '%s', stderr: '%s'"
-                               % (to_native(stdout), to_native(stderr)))
-
-        if not remote_sha1 == local_sha1:
-            raise AnsibleError("Remote sha1 hash %s does not match local hash %s"
-                               % (to_native(remote_sha1), to_native(local_sha1)))
-
-    def _put_file_old(self, in_path, out_path):
-        script = u'''begin {
-    $ErrorActionPreference = "Stop"
-    $ProgressPreference = 'SilentlyContinue'
-
-    $path = '%s'
-    $fd = [System.IO.File]::Create($path)
-    $algo = [System.Security.Cryptography.SHA1CryptoServiceProvider]::Create()
-    $bytes = @()
-} process {
-    $bytes = [System.Convert]::FromBase64String($input)
-    $algo.TransformBlock($bytes, 0, $bytes.Length, $bytes, 0) > $null
-    $fd.Write($bytes, 0, $bytes.Length)
-} end {
-    $fd.Close()
-    $algo.TransformFinalBlock($bytes, 0, 0) > $null
-    $hash = [System.BitConverter]::ToString($algo.Hash)
-    $hash = $hash.Replace("-", "").ToLowerInvariant()
-
-    Write-Output -InputObject "{`"sha1`":`"$hash`"}"
-}''' % out_path
-
-        cmd_parts = self._shell._encode_script(script, as_list=True,
-                                               strict_mode=False,
-                                               preserve_rc=False)
-        b_in_path = to_bytes(in_path, errors='surrogate_or_strict')
-        if not os.path.exists(b_in_path):
-            raise AnsibleFileNotFound('file or module does not exist: "%s"'
-                                      % to_native(in_path))
-
-        in_size = os.path.getsize(b_in_path)
-        buffer_size = int(self.runspace.connection.max_payload_size / 4 * 3)
-        sha1_hash = sha1()
-
-        # copying files is faster when using the raw WinRM shell and not PSRP
-        # we will create a WinRS shell just for this process
-        # TODO: speed this up as there is overhead creating a shell for this
-        with WinRS(self.runspace.connection, codepage=65001) as shell:
-            process = Process(shell, cmd_parts[0], cmd_parts[1:])
-            process.begin_invoke()
-
-            offset = 0
-            with open(b_in_path, 'rb') as src_file:
-                for data in iter((lambda: src_file.read(buffer_size)), b""):
-                    offset += len(data)
-                    display.vvvvv("PSRP PUT %s to %s (offset=%d, size=%d" %
-                                  (in_path, out_path, offset, len(data)),
-                                  host=self._psrp_host)
-                    b64_data = base64.b64encode(data) + b"\r\n"
-                    process.send(b64_data, end=(src_file.tell() == in_size))
-                    sha1_hash.update(data)
-
-                # the file was empty, return empty buffer
-                if offset == 0:
-                    process.send(b"", end=True)
-
-            process.end_invoke()
-            process.signal(SignalCode.CTRL_C)
-
-        return process.rc, process.stdout, process.stderr, sha1_hash.hexdigest()
-
-    def _put_file_new(self, in_path, out_path):
         copy_script = '''begin {
     $ErrorActionPreference = "Stop"
     $WarningPreference = "Continue"
@@ -685,9 +602,22 @@ end {
 
         rc, stdout, stderr = self._exec_psrp_script(copy_script, read_gen(), arguments=[out_path])
 
-        return rc, stdout, stderr, sha1_hash.hexdigest()
+        if rc != 0:
+            raise AnsibleError(to_native(stderr))
 
-    def fetch_file(self, in_path, out_path):
+        put_output = json.loads(to_text(stdout))
+        local_sha1 = sha1_hash.hexdigest()
+        remote_sha1 = put_output.get("sha1")
+
+        if not remote_sha1:
+            raise AnsibleError("Remote sha1 was not returned, stdout: '%s', stderr: '%s'"
+                               % (to_native(stdout), to_native(stderr)))
+
+        if not remote_sha1 == local_sha1:
+            raise AnsibleError("Remote sha1 hash %s does not match local hash %s"
+                               % (to_native(remote_sha1), to_native(local_sha1)))
+
+    def fetch_file(self, in_path: str, out_path: str) -> None:
         super(Connection, self).fetch_file(in_path, out_path)
         display.vvv("FETCH %s TO %s" % (in_path, out_path),
                     host=self._psrp_host)
@@ -765,7 +695,7 @@ if ($bytes_read -gt 0) {
                 display.warning("failed to close remote file stream of file "
                                 "'%s': %s" % (in_path, to_native(stderr)))
 
-    def close(self):
+    def close(self) -> None:
         if self.runspace and self.runspace.state == RunspacePoolState.OPENED:
             display.vvvvv("PSRP CLOSE RUNSPACE: %s" % (self.runspace.id),
                           host=self._psrp_host)
@@ -774,7 +704,7 @@ if ($bytes_read -gt 0) {
         self._connected = False
         self._last_pipeline = None
 
-    def _build_kwargs(self):
+    def _build_kwargs(self) -> None:
         self._psrp_host = self.get_option('remote_addr')
         self._psrp_user = self.get_option('remote_user')
         self._psrp_pass = self.get_option('remote_password')
@@ -828,8 +758,7 @@ if ($bytes_read -gt 0) {
         supported_args = []
         for auth_kwarg in AUTH_KWARGS.values():
             supported_args.extend(auth_kwarg)
-        extra_args = set([v.replace('ansible_psrp_', '') for v in
-                          self.get_option('_extras')])
+        extra_args = {v.replace('ansible_psrp_', '') for v in self.get_option('_extras')}
         unsupported_args = extra_args.difference(supported_args)
 
         for arg in unsupported_args:
@@ -879,7 +808,13 @@ if ($bytes_read -gt 0) {
             option = self.get_option('_extras')['ansible_psrp_%s' % arg]
             self._psrp_conn_kwargs[arg] = option
 
-    def _exec_psrp_script(self, script, input_data=None, use_local_scope=True, arguments=None):
+    def _exec_psrp_script(
+        self,
+        script: str,
+        input_data: bytes | str | t.Iterable | None = None,
+        use_local_scope: bool = True,
+        arguments: t.Iterable[str] | None = None,
+    ) -> tuple[int, bytes, bytes]:
         # Check if there's a command on the current pipeline that still needs to be closed.
         if self._last_pipeline:
             # Current pypsrp versions raise an exception if the current state was not RUNNING. We manually set it so we
@@ -905,7 +840,7 @@ if ($bytes_read -gt 0) {
 
         return rc, stdout, stderr
 
-    def _parse_pipeline_result(self, pipeline):
+    def _parse_pipeline_result(self, pipeline: PowerShell) -> tuple[int, bytes, bytes]:
         """
         PSRP doesn't have the same concept as other protocols with its output.
         We need some extra logic to convert the pipeline streams and host
@@ -954,7 +889,7 @@ if ($bytes_read -gt 0) {
                         % (command_name, str(error), position,
                            error.message, error.fq_error)
             stacktrace = error.script_stacktrace
-            if self._play_context.verbosity >= 3 and stacktrace is not None:
+            if display.verbosity >= 3 and stacktrace is not None:
                 error_msg += "\r\nStackTrace:\r\n%s" % stacktrace
             stderr_list.append(error_msg)
 

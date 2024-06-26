@@ -19,27 +19,57 @@
 #
 ########################################################################
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import errno
 import datetime
+import functools
 import os
 import tarfile
 import tempfile
-from ansible.module_utils.compat.version import LooseVersion
+
+from collections.abc import MutableSequence
 from shutil import rmtree
 
 from ansible import context
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.user_agent import user_agent
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
+from ansible.module_utils.compat.version import LooseVersion
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.utils.display import Display
+from ansible.utils.path import is_subpath, unfrackpath
 
 display = Display()
+
+
+@functools.cache
+def _check_working_data_filter() -> bool:
+    """
+    Check if tarfile.data_filter implementation is working
+    for the current Python version or not
+    """
+
+    # Implemented the following code to circumvent broken implementation of data_filter
+    # in tarfile. See for more information - https://github.com/python/cpython/issues/107845
+    # deprecated: description='probing broken data filter implementation' python_version='3.11'
+    ret = False
+    if hasattr(tarfile, 'data_filter'):
+        # We explicitly check if tarfile.data_filter is broken or not
+        ti = tarfile.TarInfo('docs/README.md')
+        ti.type = tarfile.SYMTYPE
+        ti.linkname = '../README.md'
+
+        try:
+            tarfile.data_filter(ti, '/foo')
+        except tarfile.LinkOutsideDestinationError:
+            pass
+        else:
+            ret = True
+    return ret
 
 
 class GalaxyRole(object):
@@ -53,6 +83,7 @@ class GalaxyRole(object):
     def __init__(self, galaxy, api, name, src=None, version=None, scm=None, path=None):
 
         self._metadata = None
+        self._metadata_dependencies = None
         self._requirements = None
         self._install_info = None
         self._validate_certs = not context.CLIARGS['ignore_certs']
@@ -60,11 +91,12 @@ class GalaxyRole(object):
         display.debug('Validate TLS certificates: %s' % self._validate_certs)
 
         self.galaxy = galaxy
-        self.api = api
+        self._api = api
 
         self.name = name
         self.version = version
         self.src = src or name
+        self.download_url = None
         self.scm = scm
         self.paths = [os.path.join(x, self.name) for x in galaxy.roles_paths]
 
@@ -84,7 +116,7 @@ class GalaxyRole(object):
             self.path = path
         else:
             # use the first path by default
-            self.path = os.path.join(galaxy.roles_paths[0], self.name)
+            self.path = self.paths[0]
 
     def __repr__(self):
         """
@@ -98,6 +130,12 @@ class GalaxyRole(object):
 
     def __eq__(self, other):
         return self.name == other.name
+
+    @property
+    def api(self):
+        if not isinstance(self._api, GalaxyAPI):
+            return self._api.api
+        return self._api
 
     @property
     def metadata(self):
@@ -118,6 +156,24 @@ class GalaxyRole(object):
                         break
 
         return self._metadata
+
+    @property
+    def metadata_dependencies(self):
+        """
+        Returns a list of dependencies from role metadata
+        """
+        if self._metadata_dependencies is None:
+            self._metadata_dependencies = []
+
+            if self.metadata is not None:
+                self._metadata_dependencies = self.metadata.get('dependencies') or []
+
+        if not isinstance(self._metadata_dependencies, MutableSequence):
+            raise AnsibleParserError(
+                f"Expected role dependencies to be a list. Role {self} has meta/main.yml with dependencies {self._metadata_dependencies}"
+            )
+
+        return self._metadata_dependencies
 
     @property
     def install_info(self):
@@ -155,7 +211,7 @@ class GalaxyRole(object):
 
         info = dict(
             version=self.version,
-            install_date=datetime.datetime.utcnow().strftime("%c"),
+            install_date=datetime.datetime.now(datetime.timezone.utc).strftime("%c"),
         )
         if not os.path.exists(os.path.join(self.path, 'meta')):
             os.makedirs(os.path.join(self.path, 'meta'))
@@ -190,7 +246,9 @@ class GalaxyRole(object):
         if role_data:
 
             # first grab the file and save it to a temp location
-            if "github_user" in role_data and "github_repo" in role_data:
+            if self.download_url is not None:
+                archive_url = self.download_url
+            elif "github_user" in role_data and "github_repo" in role_data:
                 archive_url = 'https://github.com/%s/%s/archive/%s.tar.gz' % (role_data["github_user"], role_data["github_repo"], self.version)
             else:
                 archive_url = self.src
@@ -239,7 +297,7 @@ class GalaxyRole(object):
                     # are no versions in the list, we'll grab the head
                     # of the master branch
                     if len(role_versions) > 0:
-                        loose_versions = [LooseVersion(a.get('name', None)) for a in role_versions]
+                        loose_versions = [v for a in role_versions if (v := LooseVersion()) and v.parse(a.get('name') or '') is None]
                         try:
                             loose_versions.sort()
                         except TypeError:
@@ -259,10 +317,12 @@ class GalaxyRole(object):
                                                                                                                                          self.name,
                                                                                                                                          role_versions))
 
-                # check if there's a source link for our role_version
+                # check if there's a source link/url for our role_version
                 for role_version in role_versions:
                     if role_version['name'] == self.version and 'source' in role_version:
                         self.src = role_version['source']
+                    if role_version['name'] == self.version and 'download_url' in role_version:
+                        self.download_url = role_version['download_url']
 
                 tmp_file = self.fetch(role_data)
 
@@ -303,11 +363,14 @@ class GalaxyRole(object):
                     except Exception:
                         raise AnsibleError("this role does not appear to have a valid meta/main.yml file.")
 
-                # we strip off any higher-level directories for all of the files contained within
-                # the tar file here. The default is 'github_repo-target'. Gerrit instances, on the other
-                # hand, does not have a parent directory at all.
-                installed = False
-                while not installed:
+                paths = self.paths
+                if self.path != paths[0]:
+                    # path can be passed though __init__
+                    # FIXME should this be done in __init__?
+                    paths[:0] = self.path
+                paths_len = len(paths)
+                for idx, path in enumerate(paths):
+                    self.path = path
                     display.display("- extracting %s to %s" % (self.name, self.path))
                     try:
                         if os.path.exists(self.path):
@@ -323,38 +386,54 @@ class GalaxyRole(object):
                         else:
                             os.makedirs(self.path)
 
-                        # now we do the actual extraction to the path
+                        resolved_archive = unfrackpath(archive_parent_dir, follow=False)
+
+                        # We strip off any higher-level directories for all of the files
+                        # contained within the tar file here. The default is 'github_repo-target'.
+                        # Gerrit instances, on the other hand, does not have a parent directory at all.
                         for member in members:
                             # we only extract files, and remove any relative path
                             # bits that might be in the file for security purposes
                             # and drop any containing directory, as mentioned above
-                            if member.isreg() or member.issym():
-                                n_member_name = to_native(member.name)
-                                n_archive_parent_dir = to_native(archive_parent_dir)
-                                n_parts = n_member_name.replace(n_archive_parent_dir, "", 1).split(os.sep)
-                                n_final_parts = []
-                                for n_part in n_parts:
-                                    # TODO if the condition triggers it produces a broken installation.
-                                    # It will create the parent directory as an empty file and will
-                                    # explode if the directory contains valid files.
-                                    # Leaving this as is since the whole module needs a rewrite.
-                                    if n_part != '..' and not n_part.startswith('~') and '$' not in n_part:
-                                        n_final_parts.append(n_part)
-                                member.name = os.path.join(*n_final_parts)
+                            if not (member.isreg() or member.issym()):
+                                continue
+
+                            for attr in ('name', 'linkname'):
+                                if not (attr_value := getattr(member, attr, None)):
+                                    continue
+
+                                if attr == 'linkname':
+                                    # Symlinks are relative to the link
+                                    relative_to = os.path.dirname(getattr(member, 'name', ''))
+                                else:
+                                    # Normalize paths that start with the archive dir
+                                    attr_value = attr_value.replace(archive_parent_dir, "", 1)
+                                    attr_value = os.path.join(*attr_value.split(os.sep))  # remove leading os.sep
+                                    relative_to = ''
+
+                                full_path = os.path.join(resolved_archive, relative_to, attr_value)
+                                if not is_subpath(full_path, resolved_archive, real=True):
+                                    err = f"Invalid {attr} for tarfile member: path {full_path} is not a subpath of the role {resolved_archive}"
+                                    raise AnsibleError(err)
+
+                                relative_path_dir = os.path.join(resolved_archive, relative_to)
+                                relative_path = os.path.join(*full_path.replace(relative_path_dir, "", 1).split(os.sep))
+                                setattr(member, attr, relative_path)
+
+                            if _check_working_data_filter():
+                                # deprecated: description='extract fallback without filter' python_version='3.11'
+                                role_tar_file.extract(member, to_native(self.path), filter='data')  # type: ignore[call-arg]
+                            else:
+                                # Remove along with manual path filter once Python 3.12 is minimum supported version
                                 role_tar_file.extract(member, to_native(self.path))
 
                         # write out the install info file for later use
                         self._write_galaxy_install_info()
-                        installed = True
+                        break
                     except OSError as e:
-                        error = True
-                        if e.errno == errno.EACCES and len(self.paths) > 1:
-                            current = self.paths.index(self.path)
-                            if len(self.paths) > current:
-                                self.path = self.paths[current + 1]
-                                error = False
-                        if error:
-                            raise AnsibleError("Could not update files in %s: %s" % (self.path, to_native(e)))
+                        if e.errno == errno.EACCES and idx < paths_len - 1:
+                            continue
+                        raise AnsibleError("Could not update files in %s: %s" % (self.path, to_native(e)))
 
                 # return the parsed yaml metadata
                 display.display("- %s was installed successfully" % str(self))
@@ -399,5 +478,8 @@ class GalaxyRole(object):
                         f.close()
 
                     break
+
+        if not isinstance(self._requirements, MutableSequence):
+            raise AnsibleParserError(f"Expected role dependencies to be a list. Role {self} has meta/requirements.yml {self._requirements}")
 
         return self._requirements

@@ -19,7 +19,7 @@
 - name: copy an existing file in place
   copy:
     src: existing_known_hosts
-    dest: "{{ output_dir }}/known_hosts"
+    dest: "{{ remote_tmp_dir }}/known_hosts"
 
 # test addition
 
@@ -29,14 +29,14 @@
     name: example.org
     key: "{{ example_org_rsa_key }}"
     state: present
-    path: "{{output_dir}}/known_hosts"
+    path: "{{remote_tmp_dir}}/known_hosts"
   register: diff
 
 - name: assert that the diff looks as expected (the key was added at the end)
   assert:
     that:
     - 'diff is changed'
-    - 'diff.diff.before_header == diff.diff.after_header == output_dir|expanduser + "/known_hosts"'
+    - 'diff.diff.before_header == diff.diff.after_header == remote_tmp_dir|expanduser + "/known_hosts"'
     - 'diff.diff.after.splitlines()[:-1] == diff.diff.before.splitlines()'
     - 'diff.diff.after.splitlines()[-1] == example_org_rsa_key.strip()'
 
@@ -45,11 +45,11 @@
     name: example.org
     key: "{{ example_org_rsa_key }}"
     state: present
-    path: "{{output_dir}}/known_hosts"
+    path: "{{remote_tmp_dir}}/known_hosts"
   register: result
 
 - name: get the file content
-  command: "cat {{output_dir}}/known_hosts"
+  command: "cat {{remote_tmp_dir}}/known_hosts"
   register: known_hosts
 
 - name: assert that the key was added and ordering preserved
@@ -57,7 +57,8 @@
     that:
     - 'result is changed'
     - 'known_hosts.stdout_lines[0].startswith("example.com")'
-    - 'known_hosts.stdout_lines[4].startswith("# example.net")'
+    - 'known_hosts.stdout_lines[4].startswith("@cert-authority")'
+    - 'known_hosts.stdout_lines[5].startswith("# example.net")'
     - 'known_hosts.stdout_lines[-1].strip() == example_org_rsa_key.strip()'
 
 # test idempotence of addition
@@ -68,7 +69,7 @@
     name: example.org
     key: "{{ example_org_rsa_key }}"
     state: present
-    path: "{{output_dir}}/known_hosts"
+    path: "{{remote_tmp_dir}}/known_hosts"
   register: check
 
 - name: assert that no changes were expected
@@ -82,11 +83,11 @@
     name: example.org
     key: "{{ example_org_rsa_key }}"
     state: present
-    path: "{{output_dir}}/known_hosts"
+    path: "{{remote_tmp_dir}}/known_hosts"
   register: result
 
 - name: get the file content
-  command: "cat {{output_dir}}/known_hosts"
+  command: "cat {{remote_tmp_dir}}/known_hosts"
   register: known_hosts_v2
 
 - name: assert that no changes happened
@@ -96,6 +97,37 @@
     - 'result.diff.before == result.diff.after'
     - 'known_hosts.stdout == known_hosts_v2.stdout'
 
+# https://github.com/ansible/ansible/issues/78598
+# test removing nonexistent host key when the other keys exist for the host
+- name: remove different key
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_ed25519_key }}"
+    state: absent
+    path: "{{remote_tmp_dir}}/known_hosts"
+  register: result
+
+- name: remove nonexistent key with check mode
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_ed25519_key }}"
+    state: absent
+    path: "{{remote_tmp_dir}}/known_hosts"
+  check_mode: yes
+  register: check_mode_result
+
+- name: get the file content
+  command: "cat {{remote_tmp_dir}}/known_hosts"
+  register: known_hosts_different_key_removal
+
+- name: assert that no changes happened
+  assert:
+    that:
+    - 'result is not changed'
+    - 'check_mode_result is not changed'
+    - 'result.diff.before == result.diff.after'
+    - 'known_hosts_v2.stdout == known_hosts_different_key_removal.stdout'
+
 # test removal
 
 - name: remove the host in check mode
@@ -104,13 +136,13 @@
     name: example.org
     key: "{{ example_org_rsa_key }}"
     state: absent
-    path: "{{output_dir}}/known_hosts"
+    path: "{{remote_tmp_dir}}/known_hosts"
   register: diff
 
 - name: assert that the diff looks as expected (the key was removed)
   assert:
     that:
-    - 'diff.diff.before_header == diff.diff.after_header == output_dir|expanduser + "/known_hosts"'
+    - 'diff.diff.before_header == diff.diff.after_header == remote_tmp_dir|expanduser + "/known_hosts"'
     - 'diff.diff.before.splitlines()[-1] == example_org_rsa_key.strip()'
     - 'diff.diff.after.splitlines() == diff.diff.before.splitlines()[:-1]'
 
@@ -119,16 +151,17 @@
     name: example.org
     key: "{{ example_org_rsa_key }}"
     state: absent
-    path: "{{output_dir}}/known_hosts"
+    path: "{{remote_tmp_dir}}/known_hosts"
   register: result
 
 - name: get the file content
-  command: "cat {{output_dir}}/known_hosts"
+  command: "cat {{remote_tmp_dir}}/known_hosts"
   register: known_hosts_v3
 
 - name: assert that the key was removed and ordering preserved
   assert:
     that:
+    - 'diff is changed'
     - 'result is changed'
     - '"example.org" not in known_hosts_v3.stdout'
     - 'known_hosts_v3.stdout_lines[0].startswith("example.com")'
@@ -142,7 +175,7 @@
     name: example.org
     key: "{{ example_org_rsa_key }}"
     state: absent
-    path: "{{output_dir}}/known_hosts"
+    path: "{{remote_tmp_dir}}/known_hosts"
   register: check
 
 - name: assert that no changes were expected
@@ -156,11 +189,11 @@
     name: example.org
     key: "{{ example_org_rsa_key }}"
     state: absent
-    path: "{{output_dir}}/known_hosts"
+    path: "{{remote_tmp_dir}}/known_hosts"
   register: result
 
 - name: get the file content
-  command: "cat {{output_dir}}/known_hosts"
+  command: "cat {{remote_tmp_dir}}/known_hosts"
   register: known_hosts_v4
 
 - name: assert that no changes happened
@@ -177,12 +210,12 @@
     name: example.org
     key: "{{ example_org_rsa_key }}"
     state: present
-    path: "{{output_dir}}/known_hosts"
+    path: "{{remote_tmp_dir}}/known_hosts"
     hash_host: yes
   register: result
 
 - name: get the file content
-  command: "cat {{output_dir}}/known_hosts"
+  command: "cat {{remote_tmp_dir}}/known_hosts"
   register: known_hosts_v5
 
 - name: assert that the key was added and ordering preserved
@@ -190,7 +223,7 @@
     that:
     - 'result is changed'
     - 'known_hosts_v5.stdout_lines[0].startswith("example.com")'
-    - 'known_hosts_v5.stdout_lines[4].startswith("# example.net")'
+    - 'known_hosts_v5.stdout_lines[5].startswith("# example.net")'
     - 'known_hosts_v5.stdout_lines[-1].strip().startswith("|1|")'
     - 'known_hosts_v5.stdout_lines[-1].strip().endswith(example_org_rsa_key.strip().split()[-1])'
 
@@ -201,12 +234,12 @@
     name: example.org
     key: "{{ example_org_rsa_key }}"
     state: present
-    path: "{{output_dir}}/known_hosts"
+    path: "{{remote_tmp_dir}}/known_hosts"
     hash_host: yes
   register: result
 
 - name: get the file content
-  command: "cat {{output_dir}}/known_hosts"
+  command: "cat {{remote_tmp_dir}}/known_hosts"
   register: known_hosts_v6
 
 - name: assert that no changes happened
@@ -223,11 +256,11 @@
     name: example.org
     key: "{{ example_org_rsa_key }}"
     state: absent
-    path: "{{output_dir}}/known_hosts"
+    path: "{{remote_tmp_dir}}/known_hosts"
   register: result
 
 - name: get the file content
-  command: "cat {{output_dir}}/known_hosts"
+  command: "cat {{remote_tmp_dir}}/known_hosts"
   register: known_hosts_v7
 
 - name: assert that the key was removed and ordering preserved
@@ -245,11 +278,11 @@
     name: example.org
     key: "{{ example_org_rsa_key }}"
     state: absent
-    path: "{{output_dir}}/known_hosts"
+    path: "{{remote_tmp_dir}}/known_hosts"
   register: result
 
 - name: get the file content
-  command: "cat {{output_dir}}/known_hosts"
+  command: "cat {{remote_tmp_dir}}/known_hosts"
   register: known_hosts_v8
 
 - name: assert that no changes happened
@@ -267,10 +300,10 @@
     name: example.org
     key: "{{ example_org_rsa_key }}"
     state: present
-    path: "{{output_dir}}/known_hosts"
+    path: "{{remote_tmp_dir}}/known_hosts"
 
 - name: get the file content
-  command: "cat {{output_dir}}/known_hosts"
+  command: "cat {{remote_tmp_dir}}/known_hosts"
   register: known_hosts_v8
 
 - name: assert the plaintext host is there
@@ -283,11 +316,11 @@
     name: example.org
     key: "{{ example_org_rsa_key }}"
     state: present
-    path: "{{output_dir}}/known_hosts"
+    path: "{{remote_tmp_dir}}/known_hosts"
     hash_host: true
 
 - name: get the file content
-  command: "cat {{output_dir}}/known_hosts"
+  command: "cat {{remote_tmp_dir}}/known_hosts"
   register: known_hosts_v9
 
 - name: assert the hashed host is there
@@ -301,23 +334,23 @@
     name: example.org
     key: "{{ example_org_rsa_key }}"
     state: present
-    path: "{{output_dir}}/known_hosts"
+    path: "{{remote_tmp_dir}}/known_hosts"
 
 - name: get the file content
-  command: "cat {{output_dir}}/known_hosts"
+  command: "cat {{remote_tmp_dir}}/known_hosts"
   register: known_hosts_v10
 
 - name: assert the plaintext host is there
   assert:
     that:
-      - 'known_hosts_v10.stdout_lines[5].strip() == example_org_rsa_key.strip()'
+      - 'known_hosts_v10.stdout_lines[6].strip() == example_org_rsa_key.strip()'
 
 # ... and remove the host again for the next test
 
 - name: copy an existing file in place
   copy:
     src: existing_known_hosts
-    dest: "{{ output_dir }}/known_hosts"
+    dest: "{{ remote_tmp_dir }}/known_hosts"
 
 # Test key changes
 
@@ -326,7 +359,7 @@
     name: example.org
     key: "{{ example_org_rsa_key }}"
     state: present
-    path: "{{output_dir}}/known_hosts"
+    path: "{{remote_tmp_dir}}/known_hosts"
     hash_host: true
 
 - name: change the key of a hashed host
@@ -334,11 +367,11 @@
     name: example.org
     key: "{{ example_org_rsa_key.strip()[:-7] + 'RANDOM=' }}"
     state: present
-    path: "{{output_dir}}/known_hosts"
+    path: "{{remote_tmp_dir}}/known_hosts"
     hash_host: true
 
 - name: get the file content
-  command: "cat {{output_dir}}/known_hosts"
+  command: "cat {{remote_tmp_dir}}/known_hosts"
   register: known_hosts_v11
 
 - name: assert the change took place and the key got modified
@@ -346,13 +379,112 @@
     that:
       - 'known_hosts_v11.stdout_lines[-1].strip().endswith("RANDOM=")'
 
+- name: add the ed25519 host key
+  known_hosts:
+    name: host.example.com
+    key: "{{ host_example_com_ed25519_key }}"
+    state: present
+    path: "{{remote_tmp_dir}}/known_hosts"
+  register: result
+
+- name: get the file content
+  command: "cat {{remote_tmp_dir}}/known_hosts"
+  register: known_hosts_v12
+
+- name: assert that the key was added and ordering preserved
+  assert:
+    that:
+    - 'result is changed'
+    - 'known_hosts_v12.stdout_lines[0].startswith("example.com")'
+    - 'known_hosts_v12.stdout_lines[4].startswith("@cert-authority")'
+    - 'known_hosts_v12.stdout_lines[5].startswith("# example.net")'
+    - 'known_hosts_v12.stdout_lines[-1].strip() == host_example_com_ed25519_key.strip()'
+
+- name: add the ed25519 ca key
+  known_hosts:
+    name: '*.example.com'
+    key: "{{ example_com_ed25519_ca }}"
+    state: present
+    path: "{{remote_tmp_dir}}/known_hosts"
+  register: result
+
+- name: get the file content
+  command: "cat {{remote_tmp_dir}}/known_hosts"
+  register: known_hosts_v13
+
+- name: assert that the key was added and ordering preserved
+  assert:
+    that:
+    - 'result is changed'
+    - 'known_hosts_v13.stdout_lines[0].startswith("example.com")'
+    - 'known_hosts_v13.stdout_lines[4].startswith("@cert-authority")'
+    - 'known_hosts_v13.stdout_lines[5].startswith("# example.net")'
+    - 'known_hosts_v13.stdout_lines[-1].strip() == example_com_ed25519_ca.strip()'
+
+- name: Remove the ed25519 ca key
+  known_hosts:
+    name: '*.example.com'
+    key: "{{ example_com_ed25519_ca }}"
+    state: absent
+    path: "{{remote_tmp_dir}}/known_hosts"
+  register: result
+
+- name: get the file content
+  command: "cat {{remote_tmp_dir}}/known_hosts"
+  register: known_hosts_v14
+
+- name: assert that the key was removed and ordering preserved
+  assert:
+    that:
+    - 'result is changed'
+    - 'known_hosts_v12.stdout == known_hosts_v14.stdout'
+
+- name: add the revoked ed25519 host key
+  known_hosts:
+    name: 'host.example.com'
+    key: "@revoked {{ host_example_com_ed25519_signedhost }}"
+    state: present
+    path: "{{remote_tmp_dir}}/known_hosts"
+  register: result
+
+- name: get the file content
+  command: "cat {{remote_tmp_dir}}/known_hosts"
+  register: known_hosts_v15
+
+- name: assert that the key was added and ordering preserved
+  assert:
+    that:
+    - 'result is changed'
+    - 'known_hosts_v15.stdout_lines[0].startswith("example.com")'
+    - 'known_hosts_v15.stdout_lines[4].startswith("@cert-authority")'
+    - 'known_hosts_v15.stdout_lines[5].startswith("# example.net")'
+    - 'known_hosts_v15.stdout_lines[-1].strip() == "@revoked " ~ host_example_com_ed25519_signedhost.strip()'
+
+- name: remove the revoked ed25519 host key
+  known_hosts:
+    name: 'host.example.com'
+    key: "@revoked {{ host_example_com_ed25519_signedhost }}"
+    state: absent
+    path: "{{remote_tmp_dir}}/known_hosts"
+  register: result
+
+- name: get the file content
+  command: "cat {{remote_tmp_dir}}/known_hosts"
+  register: known_hosts_v16
+
+- name: assert that the key was removed and ordering preserved
+  assert:
+    that:
+    - 'result is changed'
+    - 'known_hosts_v12.stdout == known_hosts_v16.stdout'
+
 # test errors
 
 - name: Try using a comma separated list of hosts
   known_hosts:
     name: example.org,acme.com
     key: "{{ example_org_rsa_key }}"
-    path: "{{output_dir}}/known_hosts"
+    path: "{{remote_tmp_dir}}/known_hosts"
   ignore_errors: yes
   register: result
 
@@ -366,7 +498,7 @@
   known_hosts:
     name: example.com
     key: "{{ example_org_rsa_key }}"
-    path: "{{output_dir}}/known_hosts"
+    path: "{{remote_tmp_dir}}/known_hosts"
   ignore_errors: yes
   register: result
 

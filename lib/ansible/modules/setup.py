@@ -1,11 +1,9 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = '''
@@ -18,14 +16,24 @@ options:
         version_added: "2.1"
         description:
             - "If supplied, restrict the additional facts collected to the given subset.
-              Possible values: C(all), C(min), C(hardware), C(network), C(virtual), C(ohai), and
-              C(facter). Can specify a list of values to specify a larger subset.
-              Values can also be used with an initial C(!) to specify that
+              Possible values: V(all), V(all_ipv4_addresses), V(all_ipv6_addresses), V(apparmor), V(architecture),
+              V(caps), V(chroot),V(cmdline), V(date_time), V(default_ipv4), V(default_ipv6), V(devices),
+              V(distribution), V(distribution_major_version), V(distribution_release), V(distribution_version),
+              V(dns), V(effective_group_ids), V(effective_user_id), V(env), V(facter), V(fips), V(hardware),
+              V(interfaces), V(is_chroot), V(iscsi), V(kernel), V(local), V(lsb), V(machine), V(machine_id),
+              V(mounts), V(network), V(ohai), V(os_family), V(pkg_mgr), V(platform), V(processor), V(processor_cores),
+              V(processor_count), V(python), V(python_version), V(real_user_id), V(selinux), V(service_mgr),
+              V(ssh_host_key_dsa_public), V(ssh_host_key_ecdsa_public), V(ssh_host_key_ed25519_public),
+              V(ssh_host_key_rsa_public), V(ssh_host_pub_keys), V(ssh_pub_keys), V(system), V(system_capabilities),
+              V(system_capabilities_enforced), V(systemd), V(user), V(user_dir), V(user_gecos), V(user_gid), V(user_id),
+              V(user_shell), V(user_uid), V(virtual), V(virtualization_role), V(virtualization_type).
+             Can specify a list of values to specify a larger subset.
+             Values can also be used with an initial C(!) to specify that
               that specific subset should not be collected.  For instance:
-              C(!hardware,!network,!virtual,!ohai,!facter). If C(!all) is specified
+              V(!hardware,!network,!virtual,!ohai,!facter). If V(!all) is specified
               then only the min subset is collected. To avoid collecting even the
-              min subset, specify C(!all,!min). To collect only specific facts,
-              use C(!all,!min), and specify the particular fact subsets.
+              min subset, specify V(!all,!min). To collect only specific facts,
+              use V(!all,!min), and specify the particular fact subsets.
               Use the filter parameter if you do not want to display some collected
               facts."
         type: list
@@ -55,12 +63,12 @@ options:
             - Path used for local ansible facts (C(*.fact)) - files in this dir
               will be run (if executable) and their results be added to C(ansible_local) facts.
               If a file is not executable it is read instead.
-              File/results format can be JSON or INI-format. The default C(fact_path) can be
+              File/results format can be JSON or INI-format. The default O(fact_path) can be
               specified in C(ansible.cfg) for when setup is automatically called as part of
               C(gather_facts).
               NOTE - For windows clients, the results will be added to a variable named after the
               local file (without extension suffix), rather than C(ansible_local).
-            - Since Ansible 2.1, Windows hosts can use C(fact_path). Make sure that this path
+            - Since Ansible 2.1, Windows hosts can use O(fact_path). Make sure that this path
               exists on the target host. Files in this path MUST be PowerShell scripts C(.ps1)
               which outputs an object. This object will be formatted by Ansible as json so the
               script should be outputting a raw hashtable, array, or other primitive object.
@@ -73,6 +81,18 @@ description:
       available to a host. Ansible provides many I(facts) about the system,
       automatically.
     - This module is also supported for Windows targets.
+extends_documentation_fragment:
+  -  action_common_attributes
+  -  action_common_attributes.facts
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    facts:
+        support: full
+    platform:
+        platforms: posix, windows
 notes:
     - More ansible facts will be added with successive releases. If I(facter) or
       I(ohai) are installed, variables from these programs will also be snapshotted
@@ -83,10 +103,8 @@ notes:
       remote systems. (See also M(community.general.facter) and M(community.general.ohai).)
     - The filter option filters only the first level subkey below ansible_facts.
     - If the target host is Windows, you will not currently have the ability to use
-      C(filter) as this is provided by a simpler implementation of the module.
-    - This module is also supported for Windows targets.
+      O(filter) as this is provided by a simpler implementation of the module.
     - This module should be run with elevated privileges on BSD systems to gather facts like ansible_product_version.
-    - Supports C(check_mode).
     - For more information about delegated facts,
       please check U(https://docs.ansible.com/ansible/latest/user_guide/playbooks_delegation.html#delegating-facts).
 author:
@@ -94,8 +112,8 @@ author:
     - "Michael DeHaan"
 '''
 
-EXAMPLES = """
-# Display facts from all hosts and store them indexed by I(hostname) at C(/tmp/facts).
+EXAMPLES = r"""
+# Display facts from all hosts and store them indexed by `hostname` at `/tmp/facts`.
 # ansible all -m ansible.builtin.setup --tree /tmp/facts
 
 # Display only facts regarding memory found by ansible on all hosts and output them.
@@ -105,16 +123,16 @@ EXAMPLES = """
 # ansible all -m ansible.builtin.setup -a 'filter=facter_*'
 
 # Collect only facts returned by facter.
-# ansible all -m ansible.builtin.setup -a 'gather_subset=!all,!any,facter'
+# ansible all -m ansible.builtin.setup -a 'gather_subset=!all,facter'
 
 - name: Collect only facts returned by facter
   ansible.builtin.setup:
     gather_subset:
       - '!all'
-      - '!any'
+      - '!<any valid subset>'
       - facter
 
-- name: Collect only selected facts
+- name: Filter and return only selected facts
   ansible.builtin.setup:
     filter:
       - 'ansible_distribution'
@@ -128,7 +146,7 @@ EXAMPLES = """
 # ansible all -m ansible.builtin.setup -a 'gather_subset=network,virtual'
 
 # Collect only network and virtual (excludes default minimum facts)
-# ansible all -m ansible.builtin.setup -a 'gather_subset=!all,!any,network,virtual'
+# ansible all -m ansible.builtin.setup -a 'gather_subset=!all,network,virtual'
 
 # Do not call puppet facter or ohai even if present.
 # ansible all -m ansible.builtin.setup -a 'gather_subset=!facter,!ohai'
@@ -139,8 +157,8 @@ EXAMPLES = """
 # Collect no facts, even the default minimum subset of facts:
 # ansible all -m ansible.builtin.setup -a 'gather_subset=!all,!min'
 
-# Display facts from Windows hosts with custom facts stored in C(C:\\custom_facts).
-# ansible windows -m ansible.builtin.setup -a "fact_path='c:\\custom_facts'"
+# Display facts from Windows hosts with custom facts stored in C:\custom_facts.
+# ansible windows -m ansible.builtin.setup -a "fact_path='c:\custom_facts'"
 
 # Gathers facts for the machines in the dbservers group (a.k.a Delegating facts)
 - hosts: app_servers
@@ -155,7 +173,7 @@ EXAMPLES = """
 # import module snippets
 from ..module_utils.basic import AnsibleModule
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.facts import ansible_collector, default_collectors
 from ansible.module_utils.facts.collector import CollectorNotFoundError, CycleFoundInFactDeps, UnresolvedFactDep
 from ansible.module_utils.facts.namespace import PrefixFactNamespace

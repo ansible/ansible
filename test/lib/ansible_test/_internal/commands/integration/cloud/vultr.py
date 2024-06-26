@@ -1,9 +1,9 @@
 """Vultr plugin for integration tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
+
+import configparser
 
 from ....util import (
-    ConfigParser,
     display,
 )
 
@@ -20,23 +20,25 @@ from . import (
 
 class VultrCloudProvider(CloudProvider):
     """Checks if a configuration file has been passed or fixtures are going to be used for testing"""
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
-        super(VultrCloudProvider, self).__init__(args)
+
+    def __init__(self, args: IntegrationConfig) -> None:
+        super().__init__(args)
 
         self.uses_config = True
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Setup the cloud resource before delegation and register a cleanup callback."""
-        super(VultrCloudProvider, self).setup()
+        super().setup()
 
         self._use_static_config()
 
 
 class VultrCloudEnvironment(CloudEnvironment):
     """Updates integration test environment after delegation. Will setup the config file as parameter."""
-    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+
+    def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
-        parser = ConfigParser()
+        parser = configparser.ConfigParser()
         parser.read(self.config_path)
 
         env_vars = dict(

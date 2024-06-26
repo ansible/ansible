@@ -1,6 +1,5 @@
 """ACME plugin for integration tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -21,29 +20,28 @@ from . import (
 
 class ACMEProvider(CloudProvider):
     """ACME plugin. Sets up cloud resources for tests."""
-    DOCKER_SIMULATOR_NAME = 'acme-simulator'
 
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
-        super(ACMEProvider, self).__init__(args)
+    def __init__(self, args: IntegrationConfig) -> None:
+        super().__init__(args)
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
         if os.environ.get('ANSIBLE_ACME_CONTAINER'):
             self.image = os.environ.get('ANSIBLE_ACME_CONTAINER')
         else:
-            self.image = 'quay.io/ansible/acme-test-container:2.0.0'
+            self.image = 'quay.io/ansible/acme-test-container:2.1.0'
 
         self.uses_docker = True
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Setup the cloud resource before delegation and register a cleanup callback."""
-        super(ACMEProvider, self).setup()
+        super().setup()
 
         if self._use_static_config():
             self._setup_static()
         else:
             self._setup_dynamic()
 
-    def _setup_dynamic(self):  # type: () -> None
+    def _setup_dynamic(self) -> None:
         """Create a ACME test container using docker."""
         ports = [
             5000,  # control port for flask app in container
@@ -54,23 +52,23 @@ class ACMEProvider(CloudProvider):
             self.args,
             self.platform,
             self.image,
-            self.DOCKER_SIMULATOR_NAME,
+            'acme-simulator',
             ports,
-            allow_existing=True,
-            cleanup=True,
         )
 
-        descriptor.register(self.args)
+        if not descriptor:
+            return
 
-        self._set_cloud_config('acme_host', self.DOCKER_SIMULATOR_NAME)
+        self._set_cloud_config('acme_host', descriptor.name)
 
-    def _setup_static(self):  # type: () -> None
+    def _setup_static(self) -> None:
         raise NotImplementedError()
 
 
 class ACMEEnvironment(CloudEnvironment):
     """ACME environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+
+    def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         ansible_vars = dict(
             acme_host=self._get_cloud_config('acme_host'),

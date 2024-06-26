@@ -1,10 +1,7 @@
 """Common code for source providers."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import abc
-
-from ... import types as t
 
 from .. import (
     PathProvider,
@@ -13,6 +10,7 @@ from .. import (
 
 class SourceProvider(PathProvider):
     """Base class for source providers."""
+
     @abc.abstractmethod
-    def get_paths(self, path):  # type: (str) -> t.List[str]
+    def get_paths(self, path: str) -> list[str]:
         """Return the list of available content paths under the given path."""

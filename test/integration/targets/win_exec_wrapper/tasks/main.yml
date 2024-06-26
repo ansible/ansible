@@ -194,16 +194,33 @@
     become_test_username: ansible_become_test
     gen_pw: "{{ 'password123!' + lookup('password', '/dev/null chars=ascii_letters,digits length=8') }}"
 
-- name: create unprivileged user
-  win_user:
-    name: "{{ become_test_username }}"
-    password: "{{ gen_pw }}"
-    update_password: always
-    groups: Users
-  register: become_test_user_result
-
 - name: execute tests and ensure that test user is deleted regardless of success/failure
   block:
+  - name: create unprivileged user
+    win_user:
+      name: "{{ become_test_username }}"
+      password: "{{ gen_pw }}"
+      update_password: always
+      groups: Users
+    register: become_test_user_result
+
+  - name: create tempdir for test user
+    win_file:
+      path: C:\Windows\TEMP\test-dir
+      state: directory
+
+  - name: deny delete permissions on new temp dir for test user
+    win_acl:
+      path: C:\Windows\TEMP\test-dir
+      user: '{{ become_test_user_result.sid }}'
+      type: '{{ item.type }}'
+      rights: '{{ item.rights }}'
+    loop:
+    - type: allow
+      rights: ListDirectory, CreateFiles, CreateDirectories, ReadAttributes, ReadExtendedAttributes, WriteData, WriteAttributes, WriteExtendedAttributes, Synchronize
+    - type: deny
+      rights: DeleteSubdirectoriesAndFiles, Delete
+
   - name: ensure current user is not the become user
     win_shell: whoami
     register: whoami_out
@@ -238,6 +255,21 @@
       - become_system is successful
       - become_system.output == become_test_user_result.sid
 
+  - name: run module with tempdir with no delete access
+    win_ping:
+    register: temp_deletion_warning
+    vars:
+      <<: *become_vars
+      ansible_remote_tmp: C:\Windows\TEMP\test-dir
+
+  - name: assert warning about tmpdir deletion is present
+    assert:
+      that:
+      - temp_deletion_warning.warnings | count == 1
+      - >-
+        temp_deletion_warning.warnings[0] is
+        regex("(?i).*Failed to cleanup temporary directory 'C:\\\\Windows\\\\TEMP\\\\test-dir\\\\.*' used for compiling C# code\\. Files may still be present after the task is complete\\..*")
+
   always:
   - name: ensure test user is deleted
     win_user:
@@ -249,7 +281,12 @@
     win_shell: rmdir /S /Q {{ profile_dir_out.stdout_lines[0] }}
     args:
       executable: cmd.exe
-    when: become_test_username in profile_dir_out.stdout_lines[0]
+    when: become_test_username in profile_dir_out.stdout_lines[0] | default("")
+
+  - name: remove test tempdir
+    win_file:
+      path: C:\Windows\TEMP\test-dir
+      state: absent
 
 - name: test common functions in exec
   test_common_functions:
@@ -272,3 +309,12 @@
   assert:
     that:
     - ps_log_count.stdout | int == 0
+
+- name: test module that sets HadErrors with no error records
+  test_rc_1:
+  register: module_had_errors
+
+- name: assert test module that sets HadErrors with no error records
+  assert:
+    that:
+    - module_had_errors.rc == 0

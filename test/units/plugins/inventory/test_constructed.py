@@ -17,8 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
 
@@ -194,11 +193,11 @@ def test_parent_group_templating_error(inventory_module):
             'parent_group': '{{ location.barn-yard }}'
         }
     ]
-    with pytest.raises(AnsibleParserError) as err_message:
+    with pytest.raises(AnsibleParserError) as ex:
         inventory_module._add_host_to_keyed_groups(
             keyed_groups, host.vars, host.name, strict=True
         )
-        assert 'Could not generate parent group' in err_message
+    assert 'Could not generate parent group' in str(ex.value)
     # invalid parent group did not raise an exception with strict=False
     inventory_module._add_host_to_keyed_groups(
         keyed_groups, host.vars, host.name, strict=False
@@ -213,17 +212,17 @@ def test_keyed_group_exclusive_argument(inventory_module):
     host = inventory_module.inventory.get_host('cow')
     keyed_groups = [
         {
-            'key': 'tag',
+            'key': 'nickname',
             'separator': '_',
             'default_value': 'default_value_name',
             'trailing_separator': True
         }
     ]
-    with pytest.raises(AnsibleParserError) as err_message:
+    with pytest.raises(AnsibleParserError) as ex:
         inventory_module._add_host_to_keyed_groups(
             keyed_groups, host.vars, host.name, strict=True
         )
-        assert 'parameters are mutually exclusive' in err_message
+    assert 'parameters are mutually exclusive' in str(ex.value)
 
 
 def test_keyed_group_empty_value(inventory_module):

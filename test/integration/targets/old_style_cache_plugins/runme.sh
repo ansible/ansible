@@ -4,77 +4,44 @@ set -eux
 
 source virtualenv.sh
 
-# Run test if dependencies are installed
-failed_dep_1=$(ansible localhost -m pip -a "name=redis>=2.4.5 state=present" "$@" | tee out.txt | grep -c 'FAILED!' || true)
-cat out.txt
+trap 'ansible-playbook cleanup.yml' EXIT
 
-installed_redis=$(ansible localhost -m package -a "name=redis-server state=present" --become "$@" | tee out.txt | grep -c '"changed": true' || true)
-failed_dep_2=$(grep out.txt -ce 'FAILED!' || true)
-cat out.txt
+export PATH="$PATH:/usr/local/bin"
 
-started_redis=$(ansible localhost -m service -a "name=redis-server state=started" --become "$@" | tee out.txt | grep -c '"changed": true' || true)
-failed_dep_3=$(grep out.txt -ce 'FAILED!' || true)
-cat out.txt
+ansible-playbook setup_redis_cache.yml "$@"
 
-CLEANUP_REDIS () { if [ "${installed_redis}" -eq 1 ] ; then ansible localhost -m package -a "name=redis-server state=absent" --become ; fi }
-STOP_REDIS () { if [ "${installed_redis}" -ne 1 ] && [ "${started_redis}" -eq 1 ] ; then ansible localhost -m service -a "name=redis-server state=stopped" --become ; fi }
+# Cache should start empty
+redis-cli keys ansible_
+[ "$(redis-cli keys ansible_)" = "" ]
 
-if [ "${failed_dep_1}" -eq 1 ] || [ "${failed_dep_2}" -eq 1 ] || [ "${failed_dep_3}" -eq 1 ] ; then
-    STOP_REDIS
-    CLEANUP_REDIS
-    exit 0
-fi
-
-export ANSIBLE_CACHE_PLUGIN=redis
-export ANSIBLE_CACHE_PLUGIN_CONNECTION=localhost:6379:0
 export ANSIBLE_CACHE_PLUGINS=./plugins/cache
+export ANSIBLE_CACHE_PLUGIN_CONNECTION=localhost:6379:0
+export ANSIBLE_CACHE_PLUGIN_PREFIX='ansible_facts_'
 
-# Use old redis for fact caching
-count=$(ansible-playbook test_fact_gathering.yml -vvv 2>&1 "$@" | tee out.txt | grep -c 'Gathering Facts' || true)
-failed_dep_version=$(grep out.txt -ce "'redis' python module (version 2.4.5 or newer) is required" || true)
-cat out.txt
-if [ "${failed_dep_version}" -eq 1 ] ; then
-    STOP_REDIS
-    CLEANUP_REDIS
-    exit 0
-fi
-if [ "${count}" -ne 1 ] ; then
-    STOP_REDIS
-    CLEANUP_REDIS
-    exit 1
-fi
+# Test legacy cache plugins (that use ansible.constants) and
+# new cache plugins that use config manager both work for facts.
+for fact_cache in legacy_redis configurable_redis; do
 
-# Attempt to use old redis for inventory caching; should not work
-export ANSIBLE_INVENTORY_CACHE=True
-export ANSIBLE_INVENTORY_CACHE_PLUGIN=redis
-export ANSIBLE_INVENTORY_ENABLED=test
-export ANSIBLE_INVENTORY_PLUGINS=./plugins/inventory
+    export ANSIBLE_CACHE_PLUGIN="$fact_cache"
 
-ansible-inventory -i inventory_config --graph 2>&1 "$@" | tee out.txt | grep 'Cache options were provided but may not reconcile correctly unless set via set_options'
-res=$?
-cat out.txt
-if [ "${res}" -eq 1 ] ; then
-    STOP_REDIS
-    CLEANUP_REDIS
-    exit 1
-fi
+    # test set_fact with cacheable: true
+    ansible-playbook test_fact_gathering.yml --tags set_fact "$@"
+    [ "$(redis-cli keys ansible_facts_localhost | wc -l)" -eq 1 ]
+    ansible-playbook inspect_cache.yml --tags set_fact "$@"
 
-# Use new style redis for fact caching
-unset ANSIBLE_CACHE_PLUGINS
-count=$(ansible-playbook test_fact_gathering.yml -vvv "$@" | tee out.txt | grep -c 'Gathering Facts' || true)
-cat out.txt
-if [ "${count}" -ne 1 ] ; then
-    STOP_REDIS
-    CLEANUP_REDIS
-    exit 1
-fi
+    # cache gathered facts in addition
+    ansible-playbook test_fact_gathering.yml --tags gather_facts "$@"
+    ansible-playbook inspect_cache.yml --tags additive_gather_facts "$@"
 
-# Use new redis for inventory caching
-ansible-inventory -i inventory_config --graph "$@" 2>&1 | tee out.txt | grep 'host2'
-res=$?
-cat out.txt
+    # flush cache and only cache gathered facts
+    ansible-playbook test_fact_gathering.yml --flush-cache --tags gather_facts --tags flush "$@"
+    ansible-playbook inspect_cache.yml --tags gather_facts "$@"
 
-STOP_REDIS
-CLEANUP_REDIS
+    redis-cli del ansible_facts_localhost
+    unset ANSIBLE_CACHE_PLUGIN
 
-exit $res
+done
+
+# Legacy cache plugins need to be updated to use set_options/get_option to be compatible with inventory plugins.
+# Inventory plugins load cache options with the config manager.
+ansible-playbook test_inventory_cache.yml "$@"

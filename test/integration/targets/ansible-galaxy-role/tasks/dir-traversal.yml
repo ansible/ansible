@@ -1,0 +1,130 @@
+- name: create test directories
+  file:
+    path: '{{ remote_tmp_dir }}/dir-traversal/{{ item }}'
+    state: directory
+  loop:
+    - source
+    - target
+    - roles
+
+- name: create test content
+  copy:
+    dest: '{{ remote_tmp_dir }}/dir-traversal/source/content.txt'
+    content: |
+      some content to write
+
+- name: build dangerous dir traversal role
+  script:
+    chdir: '{{ remote_tmp_dir }}/dir-traversal/source'
+    cmd: create-role-archive.py dangerous.tar content.txt {{ remote_tmp_dir }}/dir-traversal/target/target-file-to-overwrite.txt
+    executable: '{{ ansible_playbook_python }}'
+
+- name: install dangerous role
+  command:
+    cmd: ansible-galaxy role install --roles-path '{{ remote_tmp_dir }}/dir-traversal/roles' dangerous.tar
+    chdir: '{{ remote_tmp_dir }}/dir-traversal/source'
+  environment:
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
+  ignore_errors: true
+  register: galaxy_install_dangerous
+
+- name: check for overwritten file
+  stat:
+    path: '{{ remote_tmp_dir }}/dir-traversal/target/target-file-to-overwrite.txt'
+  register: dangerous_overwrite_stat
+
+- name: get overwritten content
+  slurp:
+    path: '{{ remote_tmp_dir }}/dir-traversal/target/target-file-to-overwrite.txt'
+  register: dangerous_overwrite_content
+  when: dangerous_overwrite_stat.stat.exists
+
+- assert:
+    that:
+      - dangerous_overwrite_content.content|default('')|b64decode == ''
+      - not dangerous_overwrite_stat.stat.exists
+      - galaxy_install_dangerous is failed
+      - "'is not a subpath of the role' in (galaxy_install_dangerous.stderr | regex_replace('\n', ' '))"
+
+- name: remove tarfile for next test
+  file:
+    path: '{{ item }}'
+    state: absent
+  loop:
+    - '{{ remote_tmp_dir }}/dir-traversal/source/dangerous.tar'
+    - '{{ remote_tmp_dir }}/dir-traversal/roles/dangerous.tar'
+
+- name: build dangerous dir traversal role that includes .. in the symlink path
+  script:
+    chdir: '{{ remote_tmp_dir }}/dir-traversal/source'
+    cmd: create-role-archive.py dangerous.tar content.txt {{ remote_tmp_dir }}/dir-traversal/source/../target/target-file-to-overwrite.txt
+    executable: '{{ ansible_playbook_python }}'
+
+- name: install dangerous role
+  command:
+    cmd: 'ansible-galaxy role install --roles-path {{ remote_tmp_dir }}/dir-traversal/roles dangerous.tar'
+    chdir: '{{ remote_tmp_dir }}/dir-traversal/source'
+  environment:
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
+  ignore_errors: true
+  register: galaxy_install_dangerous
+
+- name: check for overwritten file
+  stat:
+    path: '{{ remote_tmp_dir }}/dir-traversal/target/target-file-to-overwrite.txt'
+  register: dangerous_overwrite_stat
+
+- name: get overwritten content
+  slurp:
+    path: '{{ remote_tmp_dir }}/dir-traversal/target/target-file-to-overwrite.txt'
+  register: dangerous_overwrite_content
+  when: dangerous_overwrite_stat.stat.exists
+
+- assert:
+    that:
+      - dangerous_overwrite_content.content|default('')|b64decode == ''
+      - not dangerous_overwrite_stat.stat.exists
+      - galaxy_install_dangerous is failed
+      - "'is not a subpath of the role' in (galaxy_install_dangerous.stderr | regex_replace('\n', ' '))"
+
+- name: remove tarfile for next test
+  file:
+    path: '{{ remote_tmp_dir }}/dir-traversal/source/dangerous.tar'
+    state: absent
+
+- name: build dangerous dir traversal role that includes .. in the relative symlink path
+  script:
+    chdir: '{{ remote_tmp_dir }}/dir-traversal/source'
+    cmd: create-role-archive.py dangerous_rel.tar content.txt ../context.txt
+
+- name: install dangerous role with relative symlink
+  command:
+    cmd: 'ansible-galaxy role install --roles-path {{ remote_tmp_dir }}/dir-traversal/roles dangerous_rel.tar'
+    chdir: '{{ remote_tmp_dir }}/dir-traversal/source'
+  environment:
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
+  ignore_errors: true
+  register: galaxy_install_dangerous
+
+- name: check for symlink outside role
+  stat:
+    path: "{{ remote_tmp_dir | realpath }}/dir-traversal/roles/symlink"
+  register: symlink_outside_role
+
+- assert:
+    that:
+      - not symlink_outside_role.stat.exists
+      - galaxy_install_dangerous is failed
+      - "'is not a subpath of the role' in (galaxy_install_dangerous.stderr | regex_replace('\n', ' '))"
+
+- name: remove test directories
+  file:
+    path: '{{ remote_tmp_dir }}/dir-traversal/{{ item }}'
+    state: absent
+  loop:
+    - source
+    - target
+    - roles

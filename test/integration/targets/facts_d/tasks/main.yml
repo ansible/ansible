@@ -4,7 +4,7 @@
 - name: prep for local facts tests
   block:
     - name: set factdir var
-      set_fact: fact_dir={{output_dir}}/facts.d
+      set_fact: fact_dir={{remote_tmp_dir}}/facts.d
 
     - name: create fact dir
       file: path={{ fact_dir }} state=directory
@@ -19,6 +19,13 @@
           mode: '0775'
         - name: unreadable
           mode: '0000'
+
+    - name: Create dangling symlink
+      file:
+        path: "{{ fact_dir }}/dead_symlink.fact"
+        src: /tmp/dead_symlink
+        force: yes
+        state: link
 
 - name: force fact gather to get ansible_local
   setup:
@@ -43,3 +50,4 @@
         - setup_result['ansible_facts']['ansible_local']['goodscript']['script_ran']|bool
         - setup_result['ansible_facts']['ansible_local']['basdscript'].startswith("Failure executing fact script")
         - setup_result['ansible_facts']['ansible_local']['unreadable'].startswith('error loading facts')
+        - setup_result['ansible_facts']['ansible_local']['dead_symlink'].startswith('Could not stat fact')

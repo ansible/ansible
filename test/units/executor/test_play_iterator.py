@@ -15,16 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from units.compat import unittest
-from units.compat.mock import patch, MagicMock
+import unittest
+from unittest.mock import patch, MagicMock
 
-from ansible.executor.play_iterator import HostState, PlayIterator
+from ansible.executor.play_iterator import HostState, PlayIterator, IteratingStates, FailedStates
 from ansible.playbook import Playbook
 from ansible.playbook.play_context import PlayContext
+from ansible.plugins.loader import init_plugin_loader
 
 from units.mock.loader import DictDataLoader
 from units.mock.path import mock_unfrackpath_noop
@@ -37,11 +36,11 @@ class TestPlayIterator(unittest.TestCase):
         hs.tasks_child_state = HostState(blocks=[0])
         hs.rescue_child_state = HostState(blocks=[1])
         hs.always_child_state = HostState(blocks=[2])
-        hs.__repr__()
+        repr(hs)
         hs.run_state = 100
-        hs.__repr__()
+        repr(hs)
         hs.fail_state = 15
-        hs.__repr__()
+        repr(hs)
 
         for i in range(0, 10):
             hs.cur_block = i
@@ -51,7 +50,6 @@ class TestPlayIterator(unittest.TestCase):
 
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_play_iterator(self):
-        # import epdb; epdb.st()
         fake_loader = DictDataLoader({
             "test_play.yml": """
             - hosts: all
@@ -86,7 +84,8 @@ class TestPlayIterator(unittest.TestCase):
               always:
               - name: role always task
                 debug: msg="always task in block in role"
-            - include: foo.yml
+            - name: role include_tasks
+              include_tasks: foo.yml
             - name: role task after include
               debug: msg="after include in role"
             - block:
@@ -171,12 +170,12 @@ class TestPlayIterator(unittest.TestCase):
         self.assertIsNotNone(task)
         self.assertEqual(task.name, "role always task")
         self.assertIsNotNone(task._role)
-        # role include task
-        # (host_state, task) = itr.get_next_task_for_host(hosts[0])
-        # self.assertIsNotNone(task)
-        # self.assertEqual(task.action, 'debug')
-        # self.assertEqual(task.name, "role included task")
-        # self.assertIsNotNone(task._role)
+        # role include_tasks
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.action, 'include_tasks')
+        self.assertEqual(task.name, "role include_tasks")
+        self.assertIsNotNone(task._role)
         # role task after include
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
@@ -287,6 +286,7 @@ class TestPlayIterator(unittest.TestCase):
         self.assertNotIn(hosts[0], failed_hosts)
 
     def test_play_iterator_nested_blocks(self):
+        init_plugin_loader()
         fake_loader = DictDataLoader({
             "test_play.yml": """
             - hosts: all
@@ -428,12 +428,11 @@ class TestPlayIterator(unittest.TestCase):
         )
 
         # iterate past first task
-        _, task = itr.get_next_task_for_host(hosts[0])
-        while(task and task.action != 'debug'):
-            _, task = itr.get_next_task_for_host(hosts[0])
+        dummy, task = itr.get_next_task_for_host(hosts[0])
+        while (task and task.action != 'debug'):
+            dummy, task = itr.get_next_task_for_host(hosts[0])
 
-        if task is None:
-            raise Exception("iterated past end of play while looking for place to insert tasks")
+        self.assertIsNotNone(task, 'iterated past end of play while looking for place to insert tasks')
 
         # get the current host state and copy it so we can mutate it
         s = itr.get_host_state(hosts[0])
@@ -443,20 +442,20 @@ class TestPlayIterator(unittest.TestCase):
         res_state = itr._insert_tasks_into_state(s_copy, task_list=[])
         self.assertEqual(res_state, s_copy)
 
-        s_copy.fail_state = itr.FAILED_TASKS
+        s_copy.fail_state = FailedStates.TASKS
         res_state = itr._insert_tasks_into_state(s_copy, task_list=[MagicMock()])
         self.assertEqual(res_state, s_copy)
 
         # but if we've failed with a rescue/always block
         mock_task = MagicMock()
-        s_copy.run_state = itr.ITERATING_RESCUE
+        s_copy.run_state = IteratingStates.RESCUE
         res_state = itr._insert_tasks_into_state(s_copy, task_list=[mock_task])
         self.assertEqual(res_state, s_copy)
         self.assertIn(mock_task, res_state._blocks[res_state.cur_block].rescue)
-        itr._host_states[hosts[0].name] = res_state
+        itr.set_state_for_host(hosts[0].name, res_state)
         (next_state, next_task) = itr.get_next_task_for_host(hosts[0], peek=True)
         self.assertEqual(next_task, mock_task)
-        itr._host_states[hosts[0].name] = s
+        itr.set_state_for_host(hosts[0].name, s)
 
         # test a regular insertion
         s_copy = s.copy()

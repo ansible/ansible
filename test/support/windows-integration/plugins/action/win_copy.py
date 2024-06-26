@@ -3,9 +3,7 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import base64
 import json
@@ -18,7 +16,7 @@ import zipfile
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum
@@ -155,7 +153,7 @@ def _walk_dirs(topdir, loader, decrypt=True, base_path=None, local_follow=False,
                                 new_parents.add((parent_stat.st_dev, parent_stat.st_ino))
 
                             if (dir_stats.st_dev, dir_stats.st_ino) in new_parents:
-                                # This was a a circular symlink.  So add it as
+                                # This was a circular symlink.  So add it as
                                 # a symlink
                                 r_files['symlinks'].append({"src": os.readlink(dirpath), "dest": dest_dirpath})
                             else:
@@ -439,7 +437,7 @@ class ActionModule(ActionBase):
                 source_full = self._loader.get_real_file(source, decrypt=decrypt)
             except AnsibleFileNotFound as e:
                 result['failed'] = True
-                result['msg'] = "could not find src=%s, %s" % (source_full, to_text(e))
+                result['msg'] = "could not find src=%s, %s" % (source, to_text(e))
                 return result
 
             original_basename = os.path.basename(source)

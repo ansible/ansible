@@ -1,11 +1,9 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 
 DOCUMENTATION = r'''
@@ -24,11 +22,18 @@ options:
     type: path
     required: true
     aliases: [ path ]
+extends_documentation_fragment:
+    - action_common_attributes
+attributes:
+  check_mode:
+    support: full
+  diff_mode:
+    support: none
+  platform:
+    platforms: posix, windows
 notes:
    - This module returns an 'in memory' base64 encoded version of the file, take
      into account that this will require at least twice the RAM as the original file size.
-   - This module is also supported for Windows targets.
-   - Supports C(check_mode).
 seealso:
 - module: ansible.builtin.fetch
 author:
@@ -47,7 +52,7 @@ EXAMPLES = r'''
     msg: "{{ mounts['content'] | b64decode }}"
 
 # From the commandline, find the pid of the remote machine's sshd
-# $ ansible host -m slurp -a 'src=/var/run/sshd.pid'
+# $ ansible host -m ansible.builtin.slurp -a 'src=/var/run/sshd.pid'
 # host | SUCCESS => {
 #     "changed": false,
 #     "content": "MjE3OQo=",
@@ -78,7 +83,6 @@ source:
 
 import base64
 import errno
-import os
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native

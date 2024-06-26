@@ -1,0 +1,37 @@
+- name: Copy service file
+  template:
+    src: "{{item}}"
+    dest: "/etc/systemd/system/{{item}}"
+    owner: root
+    group: root
+  loop:
+    - dummy.service
+    - dummy.socket
+  notify: remove dummy indirect service
+
+- name: Ensure dummy indirect service is disabled
+  systemd:
+    name: "{{indirect_service}}"
+    enabled: false
+  register: dummy_disabled
+
+- assert:
+    that:
+      - dummy_disabled is not changed
+
+- name: Enable indirect service 1
+  systemd:
+    name: '{{ indirect_service }}'
+    enabled: true
+  register: systemd_enable_dummy_indirect_1
+
+- name: Enable indirect service 2
+  systemd:
+    name: '{{ indirect_service }}'
+    enabled: true
+  register: systemd_enable_dummy_indirect_2
+
+- assert:
+    that:
+      - systemd_enable_dummy_indirect_1 is changed
+      - systemd_enable_dummy_indirect_2 is not changed

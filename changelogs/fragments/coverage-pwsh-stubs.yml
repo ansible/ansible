@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-test - Use pwsh to generate correct coverage line counts for stub files to get a more accurate coverage result

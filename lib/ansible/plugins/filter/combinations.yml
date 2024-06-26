@@ -1,0 +1,26 @@
+DOCUMENTATION:
+  name: combinations
+  version_added: "historical"
+  short_description: combinations from the elements of a list
+  description:
+    - Create a list of combinations of sets from the elements of a list.
+  positional: _input, set_size
+  options:
+    _input:
+      description: Elements to combine.
+      type: list
+      required: true
+    set_size:
+      description: The size of the set for each combination.
+      type: int
+      required: true
+EXAMPLES: |
+
+  # combos_of_two => [ [ 1, 2 ], [ 1, 3 ], [ 1, 4 ], [ 1, 5 ], [ 2, 3 ], [ 2, 4 ], [ 2, 5 ], [ 3, 4 ], [ 3, 5 ], [ 4, 5 ] ]
+  combos_of_two: "{{ [1,2,3,4,5] | combinations(2) }}"
+
+
+RETURN:
+  _value:
+    description: List of combination sets resulting from the supplied elements and set size.
+    type: list
