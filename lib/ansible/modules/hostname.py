@@ -886,8 +886,6 @@ def main():
 
     if name != current_hostname:
         name_before = current_hostname
-    elif name != permanent_hostname:
-        name_before = permanent_hostname
     else:
         name_before = permanent_hostname
 
