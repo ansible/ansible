@@ -251,10 +251,8 @@ class RpmKey(object):
                 if self.is_keyid(keyid) and keyid in imported_id:
                     imported_ids.add(keyid)
 
-        keyids = set(keyids)
-        imported_cnt = len(keyids.intersection(imported_ids))
-
-        return imported_cnt == len(keyids)
+        missing_keys = set(keyids).difference(imported_ids)
+        return len(missing_keys) == 0
 
     def import_key(self, keyfile):
         if not self.module.check_mode:
