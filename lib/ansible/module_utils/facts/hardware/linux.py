@@ -773,10 +773,24 @@ class LinuxHardware(Hardware):
                 if serial:
                     d['serial'] = serial
 
-            for key, test in [('removable', '/removable'),
-                              ('support_discard', '/queue/discard_granularity'),
-                              ]:
-                d[key] = get_file_content(sysdir + test)
+            d['removable'] = get_file_content(sysdir + '/removable')
+
+            # Historically, `support_discard` simply returned the value of
+            # `/sys/block/{device}/queue/discard_granularity`. When its value
+            # is `0`, then the block device doesn't support discards;
+            # _however_, it being greater than zero doesn't necessarily mean
+            # that the block device _does_ support discards.
+            #
+            # Another indication that a block device doesn't support discards
+            # is `/sys/block/{device}/queue/discard_max_hw_bytes` being equal
+            # to `0` (with the same caveat as above). So if either of those are
+            # `0`, set `support_discard` to zero, otherwise set it to the value
+            # of `discard_granularity` for backwards compatibility.
+            d['support_discard'] = (
+                '0'
+                if get_file_content(sysdir + '/queue/discard_max_hw_bytes') == '0'
+                else get_file_content(sysdir + '/queue/discard_granularity')
+            )
 
             if diskname in devs_wwn:
                 d['wwn'] = devs_wwn[diskname]
