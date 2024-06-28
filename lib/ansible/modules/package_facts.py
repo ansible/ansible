@@ -19,7 +19,7 @@ options:
       - The V(portage) and V(pkg) options were added in version 2.8.
       - The V(apk) option was added in version 2.11.
       - The V(pkg_info)' option was added in version 2.13.
-      - Aliases were added in 2.18, to support using C(auto={{ansible_facts['pkg_mgr']}})
+      - Aliases were added in 2.18, to support using C(manager={{ansible_facts['pkg_mgr']}})
     default: ['auto']
     choices:
         auto: Depending on O(strategy), will match the first or all package managers provided, in order
@@ -552,21 +552,18 @@ def main():
 
         seen.add(pkgmgr)
         try:
-            try:
-                # manager throws exception on init (calls self.test) if not usable.
-                manager = PKG_MANAGERS[pkgmgr]()
-                if manager.is_available():
-                    found += 1
+            # manager throws exception on init (calls self.test) if not usable.
+            manager = PKG_MANAGERS[pkgmgr]()
+            if manager.is_available():
+                found += 1
+                try:
                     packages.update(manager.get_packages())
-
-            except Exception as e:
-                if pkgmgr in module.params['manager']:
-                    module.warn('Requested package manager %s was not usable by this module: %s' % (pkgmgr, to_text(e)))
-                continue
+                except Exception as e:
+                    module.warn('Failed to retrieve packages with %s: %s' % (pkgmgr, to_text(e)))
 
         except Exception as e:
             if pkgmgr in module.params['manager']:
-                module.warn('Failed to retrieve packages with %s: %s' % (pkgmgr, to_text(e)))
+                module.warn('Requested package manager %s was not usable by this module: %s' % (pkgmgr, to_text(e)))
 
     if found == 0:
         msg = ('Could not detect a supported package manager from the following list: %s, '
