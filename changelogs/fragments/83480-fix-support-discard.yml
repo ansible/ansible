@@ -1,0 +1,6 @@
+---
+bugfixes:
+  - facts - `support_discard` now returns `0` if either `discard_granularity`
+    or `discard_max_hw_bytes` is zero; otherwise it returns the value of
+    `discard_granularity`, as before
+    (https://github.com/ansible/ansible/pull/83480).
