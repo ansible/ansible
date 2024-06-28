@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf - fix an issue where two packages of the same ``evr`` but different arch failed to install (https://github.com/ansible/ansible/issues/83406)
