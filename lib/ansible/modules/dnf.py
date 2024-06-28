@@ -876,24 +876,20 @@ class DnfModule(YumDnf):
         return not_installed
 
     def _install_remote_rpms(self, filenames):
-        pkgs = self.base.add_remote_rpms(filenames)
-
-        if self.update_only:
-            self._update_only(pkgs)
-        else:
-            for pkg in pkgs:
-                try:
-                    if self._is_newer_version_installed(pkg):
-                        if self.allow_downgrade:
-                            self.base.package_install(pkg, strict=self.base.conf.strict)
-                    else:
+        try:
+            pkgs = self.base.add_remote_rpms(filenames)
+            if self.update_only:
+                self._update_only(pkgs)
+            else:
+                for pkg in pkgs:
+                    if not (self._is_newer_version_installed(pkg) and not self.allow_downgrade):
                         self.base.package_install(pkg, strict=self.base.conf.strict)
-                except Exception as e:
-                    self.module.fail_json(
-                        msg="Error occurred attempting remote rpm operation: {0}".format(to_native(e)),
-                        results=[],
-                        rc=1,
-                    )
+        except Exception as e:
+            self.module.fail_json(
+                msg="Error occurred attempting remote rpm operation: {0}".format(to_native(e)),
+                results=[],
+                rc=1,
+            )
 
     def _is_module_installed(self, module_spec):
         if self.with_modules:
