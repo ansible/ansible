@@ -241,7 +241,7 @@ notes:
 EXAMPLES = '''
 - name: Git checkout
   ansible.builtin.git:
-    repo: git@github.com:ansible/ansible.git
+    repo: 'https://github.com/ansible/ansible.git'
     dest: /tmp/checkout
     version: release-0.22
 
@@ -252,7 +252,7 @@ EXAMPLES = '''
 
 - name: Just ensuring the repo checkout exists
   ansible.builtin.git:
-    repo: git@github.com:ansible/ansible.git
+    repo: 'https://github.com/ansible/ansible.git'
     dest: /tmp/checkout
     update: no
 
@@ -265,7 +265,7 @@ EXAMPLES = '''
 
 - name: Checkout a github repo and use refspec to fetch all pull requests
   ansible.builtin.git:
-    repo: git@github.com:ansible/ansible.git
+    repo: 'https://github.com/ansible/ansible.git'
     dest: /tmp/checkout
     refspec: '+refs/pull/*:refs/heads/*'
 
@@ -277,7 +277,7 @@ EXAMPLES = '''
 
 - name: Clone a repo with separate git directory
   ansible.builtin.git:
-    repo: git@github.com:ansible/ansible.git
+    repo: 'https://github.com/ansible/ansible.git'
     dest: /tmp/checkout
     separate_git_dir: /tmp/repo
 
@@ -290,7 +290,7 @@ EXAMPLES = '''
 
 - name: Avoid hanging when http(s) password is missing
   ansible.builtin.git:
-    repo: git@github.com:ansible/ansible.git
+    repo: 'https://github.com/ansible/ansible.git'
     dest: /tmp/checkout
   environment:
     GIT_TERMINAL_PROMPT: 0 # reports "terminal prompts disabled" on missing password
