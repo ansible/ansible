@@ -301,7 +301,6 @@ notes:
     functionality, use an older version of Ansible.
 requirements:
   - python3-dnf
-  - for the autoremove option you need dnf >= 2.0.1"
 author:
   - Igor Gnatenko (@ignatenkobrain) <i.gnatenko.brain@gmail.com>
   - Cristian van Ee (@DJMuggs) <cristian at cvee.org>
@@ -402,7 +401,6 @@ import sys
 
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.urls import fetch_file
-from ansible.module_utils.compat.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
@@ -428,11 +426,7 @@ class DnfModule(YumDnf):
 
         self._ensure_dnf()
         self.pkg_mgr_name = "dnf"
-
-        try:
-            self.with_modules = dnf.base.WITH_MODULES
-        except AttributeError:
-            self.with_modules = False
+        self.with_modules = dnf.base.WITH_MODULES
 
     def _sanitize_dnf_error_msg_install(self, spec, error):
         """
@@ -657,22 +651,14 @@ class DnfModule(YumDnf):
         """Return a fully configured dnf Base object."""
         base = dnf.Base()
         self._configure_base(base, conf_file, disable_gpg_check, installroot, sslverify)
-        try:
-            # this method has been supported in dnf-4.2.17-6 or later
-            # https://bugzilla.redhat.com/show_bug.cgi?id=1788212
-            base.setup_loggers()
-        except AttributeError:
-            pass
-        try:
-            base.init_plugins(set(self.disable_plugin), set(self.enable_plugin))
-            base.pre_configure_plugins()
-        except AttributeError:
-            pass  # older versions of dnf didn't require this and don't have these methods
+
+        base.setup_loggers()
+        base.init_plugins(set(self.disable_plugin), set(self.enable_plugin))
+        base.pre_configure_plugins()
+
         self._specify_repositories(base, disablerepo, enablerepo)
-        try:
-            base.configure_plugins()
-        except AttributeError:
-            pass  # older versions of dnf didn't require this and don't have these methods
+
+        base.configure_plugins()
 
         try:
             if self.update_cache:
@@ -890,36 +876,20 @@ class DnfModule(YumDnf):
         return not_installed
 
     def _install_remote_rpms(self, filenames):
-        if int(dnf.__version__.split(".")[0]) >= 2:
-            pkgs = list(sorted(self.base.add_remote_rpms(list(filenames)), reverse=True))
-        else:
-            pkgs = []
-            try:
-                for filename in filenames:
-                    pkgs.append(self.base.add_remote_rpm(filename))
-            except IOError as e:
-                if to_text("Can not load RPM file") in to_text(e):
-                    self.module.fail_json(
-                        msg="Error occurred attempting remote rpm install of package: {0}. {1}".format(filename, to_native(e)),
-                        results=[],
-                        rc=1,
-                    )
-        if self.update_only:
-            self._update_only(pkgs)
-        else:
-            for pkg in pkgs:
-                try:
-                    if self._is_newer_version_installed(pkg):
-                        if self.allow_downgrade:
-                            self.base.package_install(pkg, strict=self.base.conf.strict)
-                    else:
+        try:
+            pkgs = self.base.add_remote_rpms(filenames)
+            if self.update_only:
+                self._update_only(pkgs)
+            else:
+                for pkg in pkgs:
+                    if not (self._is_newer_version_installed(pkg) and not self.allow_downgrade):
                         self.base.package_install(pkg, strict=self.base.conf.strict)
-                except Exception as e:
-                    self.module.fail_json(
-                        msg="Error occurred attempting remote rpm operation: {0}".format(to_native(e)),
-                        results=[],
-                        rc=1,
-                    )
+        except Exception as e:
+            self.module.fail_json(
+                msg="Error occurred attempting remote rpm operation: {0}".format(to_native(e)),
+                results=[],
+                rc=1,
+            )
 
     def _is_module_installed(self, module_spec):
         if self.with_modules:
@@ -1140,14 +1110,6 @@ class DnfModule(YumDnf):
                     except dnf.exceptions.CompsError:
                         # Group is already uninstalled.
                         pass
-                    except AttributeError:
-                        # Group either isn't installed or wasn't marked installed at install time
-                        # because of DNF bug
-                        #
-                        # This is necessary until the upstream dnf API bug is fixed where installing
-                        # a group via the dnf API doesn't actually mark the group as installed
-                        #   https://bugzilla.redhat.com/show_bug.cgi?id=1620324
-                        pass
 
                 for environment in environments:
                     try:
@@ -1281,24 +1243,6 @@ class DnfModule(YumDnf):
                 self.module.fail_json(**failure_response)
 
     def run(self):
-        """The main function."""
-
-        # Check if autoremove is called correctly
-        if self.autoremove:
-            if LooseVersion(dnf.__version__) < LooseVersion('2.0.1'):
-                self.module.fail_json(
-                    msg="Autoremove requires dnf>=2.0.1. Current dnf version is %s" % dnf.__version__,
-                    results=[],
-                )
-
-        # Check if download_dir is called correctly
-        if self.download_dir:
-            if LooseVersion(dnf.__version__) < LooseVersion('2.6.2'):
-                self.module.fail_json(
-                    msg="download_dir requires dnf>=2.6.2. Current dnf version is %s" % dnf.__version__,
-                    results=[],
-                )
-
         if self.update_cache and not self.names and not self.list:
             self.base = self._base(
                 self.conf_file, self.disable_gpg_check, self.disablerepo,
