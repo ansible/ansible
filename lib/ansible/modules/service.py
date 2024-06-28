@@ -80,7 +80,7 @@ options:
     use:
         description:
         - The service module actually uses system specific modules, normally through auto detection, this setting can force a specific module.
-        - Normally it uses the value of the C(ansible_service_mgr) fact and falls back to the old I(service) module when none matching is found.
+        - Normally it uses the value of the C(ansible_service_mgr) fact and falls back to the C(ansible.legacy.service) module when none matching is found.
         - The 'old service module' still uses autodetection and in no way does it correspond to the C(service) command.
         type: str
         default: auto
