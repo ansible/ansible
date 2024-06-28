@@ -211,7 +211,11 @@ class ShellBase(AnsiblePlugin):
             arg_path,
         ]
 
-        return f'{env_string}%s' % shlex.join(cps for cp in cmd_parts if cp and (cps := cp.strip()))
+        cleaned_up_cmd = shlex.join(
+            stripped_cmd_part for raw_cmd_part in cmd_parts
+            if raw_cmd_part and (stripped_cmd_part := raw_cmd_part.strip())
+        )
+        return ''.join((env_string, cleaned_up_cmd))
 
     def append_command(self, cmd, cmd_to_append):
         """Append an additional command if supported by the shell"""
