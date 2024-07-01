@@ -2116,4 +2116,35 @@ VERBOSE_TO_STDERR:
     - section: defaults
       key: verbose_to_stderr
   type: bool
-...
+_Z_TEST_ENTRY:
+  name: testentry
+  description: for tests
+  env:
+    - name: ANSIBLE_TEST_ENTRY
+    - name: ANSIBLE_TEST_ENTRY_D
+      deprecated:
+        why: for testing
+        version: '3.30'
+        alternatives: nothing
+  ini:
+    - section: testing
+      key: valid
+    - section: testing
+      key: deprecated
+      deprecated:
+        why: for testing
+        version: '3.30'
+        alternatives: nothing
+_Z_TEST_ENTRY_2:
+  version_added: '2.18'
+  name: testentry
+  description: for tests
+  deprecated:
+    why: for testing
+    version: '3.30'
+    alternatives: nothing
+  env:
+    - name: ANSIBLE_TEST_ENTRY2
+  ini:
+    - section: testing
+      key: valid2

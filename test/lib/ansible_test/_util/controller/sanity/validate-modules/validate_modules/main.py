@@ -1235,7 +1235,7 @@ class ModuleValidator(Validator):
                         self._validate_semantic_markup(entry.get(key))
 
         if isinstance(docs.get('deprecated'), dict):
-            for key in ('why', 'alternative'):
+            for key in ('why', 'alternative', 'alternatives'):
                 self._validate_semantic_markup(docs.get('deprecated').get(key))
 
         self._validate_semantic_markup_options(docs.get('options'))
