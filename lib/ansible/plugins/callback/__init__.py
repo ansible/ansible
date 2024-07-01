@@ -555,11 +555,32 @@ class CallbackBase(AnsiblePlugin):
             host = result._host.get_name()
             self.runner_on_skipped(host, self._get_item_label(getattr(result._result, 'results', {})))
 
-    def v2_runner_on_unreachable(self, result):
+    def v2_runner_on_unreachable(self, result: TaskResult) -> None:
+        """Get details about a task that Ansible could not perform because it could not reach a
+        targeted host, then process the details as required by the callback (output, profiling,
+        logging, notifications, etc.)
+
+        Customization note: For more information about the attributes and methods of the
+        TaskResult class, see lib/ansible/executor/task_result.py.
+
+        :param TaskResult result: An object that contains details about the task
+
+        :return: None
+        """
         host = result._host.get_name()
         self.runner_on_unreachable(host, result._result)
 
-    def v2_runner_on_async_poll(self, result):
+    def v2_runner_on_async_poll(self, result: TaskResult) -> None:
+        """Get details about a task that is running in asynchronous mode and process them as
+        required by the callback (output, profiling, logging, notifications, etc.)
+
+        Customization note: For more information about the attributes and methods of the
+        TaskResult class, see lib/ansible/executor/task_result.py.
+
+        :param TaskResult result: An object that contains details about the task
+
+        :return: None
+        """
         host = result._host.get_name()
         jid = result._result.get('ansible_job_id')
         # FIXME, get real clock
