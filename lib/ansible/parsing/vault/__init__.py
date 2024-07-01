@@ -52,7 +52,7 @@ except ImportError:
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible import constants as C
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.file import atomic_move
 from ansible.module_utils.six import binary_type
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.utils.display import Display
@@ -1116,15 +1116,7 @@ class VaultEditor:
 
     def shuffle_files(self, src, dest):
         ''' attempts to atomically move file into place'''
-
-        def fj2exc(self, msg, *kwargs):
-            raise AnsibleError(msg)
-
-        global _ANSIBLE_ARGS
-        _ANSIBLE_ARGS = {}
-        m = AnsibleModule({}, bypass_checks=True)
-        m.fail_json = fj2exc
-        m.atomic_move(src, dest, unsafe_writes=True, keep_dest_attrs=True)
+        atomic_move(src, dest, unsafe_writes=True, keep_dest_attrs=True)
 
     def _editor_shell_command(self, filename):
         env_editor = C.config.get_config_value('EDITOR')
