@@ -36,11 +36,6 @@ def _deprecated(msg, version):
         sys.stderr.write(' [DEPRECATED] %s, to be removed in %s\n' % (msg, version))
 
 
-def set_constant(name, value, export=vars()):
-    ''' sets constants and returns resolved options dict '''
-    export[name] = value
-
-
 class _DeprecatedSequenceConstant(Sequence):
     def __init__(self, value, msg, version):
         self._value = value
@@ -56,7 +51,30 @@ class _DeprecatedSequenceConstant(Sequence):
         return self._value[y]
 
 
+def __getattr__(config_constant):
+    ''' Handle dynamicall generating a 'constant' when first requested,
+        otherwise just return it from cached value.
+    '''
+
+    if config_constant not in globals():
+        try:
+            value = config.get_config_value(config_constant, variables=globals())
+        except Exception as e:
+            raise AttributeError(e) from e
+
+        globals()[config_constant] = value
+
+        if config.WARNINGS:
+            for warn in config.WARNINGS.pop():
+                _warning(warn)
+
+    return globals()[config_constant]
+
+
 # CONSTANTS ### yes, actual ones
+
+# required by others so these should always be instanciated first, order is imporant!
+__INITIALIZE = ['ANSIBLE_HOME', 'REJECT_EXTS']
 
 # The following are hard-coded action names
 _ACTION_DEBUG = add_internal_fqcns(('debug', ))
@@ -217,12 +235,12 @@ MAGIC_VARIABLE_MAPPING = dict(
     become_flags=('ansible_become_flags', ),
 )
 
-# POPULATE SETTINGS FROM CONFIG ###
+
+# INITALIZE CONFIG MANAGER
 config = ConfigManager()
 
-# Generate constants from config
-for setting in config.get_configuration_definitions():
-    set_constant(setting, config.get_config_value(setting, variables=vars()))
-
-for warn in config.WARNINGS:
-    _warning(warn)
+for c in __INITIALIZE:
+    # we always initalize these constants as others depend on them for basic config templating.
+    # TODO: create a dep system to avoid hardcoded list, previouslly relied on order in base.yml
+    #       now relies on order in hardcoded constant in this file.
+    __getattr__(c)
