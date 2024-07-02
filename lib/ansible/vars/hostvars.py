@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from functools import cached_property
 
 from ansible import constants as C
 from ansible.template import Templar, AnsibleUndefined
@@ -114,9 +115,12 @@ class HostVarsVars(Mapping):
     def __init__(self, variables, loader):
         self._vars = variables
         self._loader = loader
+
+    @cached_property
+    def _templar(self):
         # NOTE: this only has access to the host's own vars,
         # so templates that depend on vars in other scopes will not work.
-        self._templar = Templar(variables=self._vars, loader=self._loader)
+        return Templar(variables=self._vars, loader=self._loader)
 
     def __getitem__(self, var):
         return self._templar.template(self._vars[var], fail_on_undefined=False, static_vars=C.INTERNAL_STATIC_VARS)
@@ -132,3 +136,10 @@ class HostVarsVars(Mapping):
 
     def __repr__(self):
         return repr(self._templar.template(self._vars, fail_on_undefined=False, static_vars=C.INTERNAL_STATIC_VARS))
+
+    def __getstate__(self):
+        ''' override serialization here to avoid
+            pickle issues with templar and Jinja native'''
+        state = self.__dict__.copy()
+        state.pop('_templar', None)
+        return state
