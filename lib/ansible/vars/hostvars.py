@@ -134,6 +134,8 @@ class HostVarsVars(Mapping):
         return repr(self._templar.template(self._vars, fail_on_undefined=False, static_vars=C.INTERNAL_STATIC_VARS))
 
     def __getstate__(self):
+        ''' override serialization here to avoid
+            pickle issues with templar and Jinja native'''
         self._templar = None
         return self.__dict__.copy()
 
