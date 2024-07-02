@@ -386,13 +386,13 @@ class FieldAttributeBase:
         return fq_group_name, resolved_actions
 
     def _resolve_action(self, action_name, mandatory=True):
-        context = module_loader.find_plugin_with_context(action_name, ignore_deprecated=not mandatory)
+        context = module_loader.find_plugin_with_context(action_name, ignore_deprecated=(not mandatory))
         if context.resolved and not context.action_plugin:
-            prefer = action_loader.find_plugin_with_context(action_name, ignore_deprecated=not mandatory)
+            prefer = action_loader.find_plugin_with_context(action_name, ignore_deprecated=(not mandatory))
             if prefer.resolved:
                 context = prefer
         elif not context.resolved:
-            context = action_loader.find_plugin_with_context(action_name, ignore_deprecated=not mandatory)
+            context = action_loader.find_plugin_with_context(action_name, ignore_deprecated=(not mandatory))
 
         if context.resolved:
             return context.resolved_fqcn
