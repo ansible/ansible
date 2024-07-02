@@ -65,6 +65,19 @@
         that: ansible_facts.packages is defined
   when: (ansible_os_family == "openSUSE Leap") or (ansible_os_family == "Suse")
 
+- name: Same as those above, but based on pkg_mgr, tests aliases
+  block:
+    - name: Gather package facts
+      package_facts:
+        manager: '{{ ansible_facts["pkg_mgr"] }}'
+
+    - name: check for ansible_facts.packages exists
+      assert:
+        that:
+          - ansible_facts.packages is defined
+          - ansible_facts.packages | length > 1
+  when: ansible_facts['os_family'] in ["openSUSE Leap", "Suse", "RedHat", "Debian"]
+
 # Check that auto detection works also
 - name: Gather package facts
   package_facts:
