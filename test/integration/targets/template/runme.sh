@@ -56,4 +56,4 @@ do
 done
 
 # ensure we picle hostvarscorrectly with native https://github.com/ansible/ansible/issues/83503
-ANSIBLE_JINJA2_NATIVE=1 ansible -m debug -a "msg={{ groups.all | map('extract', hostvars) }}" -i localhost, localhost -v "$@"
+ANSIBLE_JINJA2_NATIVE=1 ansible -m debug -a "msg={{ groups.all | map('extract', hostvars) }}" -i testhost, all -c local -v "$@"
