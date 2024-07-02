@@ -89,7 +89,7 @@ def require_only_one(keys):
         found = None
         for k in obj.keys():
             if k in keys:
-                if k is None:
+                if found is None:
                     found = k
                 else:
                     raise Invalid('Found conflicting keys, must contain only one of {}'.format(keys))
