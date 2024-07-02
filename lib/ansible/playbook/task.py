@@ -456,13 +456,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             self._parent.set_loader(loader)
 
     def get_parent_block_name(self):
-
-        name = ''
         parent_block = self.get_first_parent_block(static=True)
-        if parent_block:
-            name = getattr(parent_block, 'name', '')
-
-        return name
+        return getattr(parent_block, 'name', '')
 
     def _get_parent_attribute(self, attr, omit=False):
         '''
