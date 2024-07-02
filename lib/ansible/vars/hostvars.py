@@ -133,15 +133,10 @@ class HostVarsVars(Mapping):
     def __repr__(self):
         return repr(self._templar.template(self._vars, fail_on_undefined=False, static_vars=C.INTERNAL_STATIC_VARS))
 
-    def serialize(self):
+    def __getstate__(self):
         self._templar = None
-        data = {
-            'vars': self._vars,
-            'loader': self._loader,
-        }
-        return data
+        return self.__dict__.copy()
 
-    def deserialize(self, data):
-        self._vars = data.get('vars')
-        self._loader = data.get('loader')
+    def __setstate__(self, data):
+        self.__dict__.update(data)
         self._templar = Templar(variables=self._vars, loader=self._loader)
