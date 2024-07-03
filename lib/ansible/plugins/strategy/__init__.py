@@ -997,7 +997,7 @@ class StrategyBase:
             if _evaluate_conditional(target_host):
                 for host in self._inventory.get_hosts(iterator._play.hosts):
                     if host.name not in self._tqm._unreachable_hosts:
-                        iterator.set_run_state_for_host(host.name, IteratingStates.COMPLETE)
+                        iterator.end_host(host.name)
                 msg = "ending batch"
             else:
                 skipped = True
@@ -1006,7 +1006,7 @@ class StrategyBase:
             if _evaluate_conditional(target_host):
                 for host in self._inventory.get_hosts(iterator._play.hosts):
                     if host.name not in self._tqm._unreachable_hosts:
-                        iterator.set_run_state_for_host(host.name, IteratingStates.COMPLETE)
+                        iterator.end_host(host.name)
                         # end_play is used in PlaybookExecutor/TQM to indicate that
                         # the whole play is supposed to be ended as opposed to just a batch
                         iterator.end_play = True
@@ -1016,8 +1016,7 @@ class StrategyBase:
                 skip_reason += ', continuing play'
         elif meta_action == 'end_host':
             if _evaluate_conditional(target_host):
-                iterator.set_run_state_for_host(target_host.name, IteratingStates.COMPLETE)
-                iterator._play._removed_hosts.append(target_host.name)
+                iterator.end_host(target_host.name)
                 msg = "ending play for %s" % target_host.name
             else:
                 skipped = True

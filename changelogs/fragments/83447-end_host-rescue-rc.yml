@@ -1,0 +1,2 @@
+bugfixes:
+  - "``end_host`` - fix incorrect return code when executing ``end_host`` in the ``rescue`` section (https://github.com/ansible/ansible/issues/83447)"
