@@ -1,2 +1,2 @@
 minor_changes:
-  - new constant 'ansible_parent_block_name' contains the 'name' of the current explicit block a task is in, it won't work with implicit/generated blocks.
+  - new constant 'ansible_parent_block_name' contains the 'name' of the current explicit block a task is in.
