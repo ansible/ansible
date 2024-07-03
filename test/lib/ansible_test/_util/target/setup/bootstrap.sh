@@ -410,6 +410,15 @@ bootstrap_docker()
 {
     # Required for newer mysql-server packages to install/upgrade on Ubuntu 16.04.
     rm -f /usr/sbin/policy-rc.d
+
+    # CentOS 7 is EoL and its official repos are down; we need to the archived ones.
+    if grep -q '^CENTOS_MANTISBT_PROJECT="CentOS-7"$' /etc/os-release
+    then
+        sed -i \
+            -e 's/mirrorlist/#mirrorlist/g' \
+            -e 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' \
+            /etc/yum.repos.d/CentOS-*
+    fi
 }
 
 bootstrap_remote()
