@@ -838,6 +838,50 @@ class ModuleValidator(Validator):
                 msg='%s: %s' % (combined_path, error_message)
             )
 
+    def _validate_option_docs(self, options, context=None):
+        if not isinstance(options, dict):
+            return
+        if context is None:
+            context = []
+
+        normalized_option_alias_names = dict()
+
+        def add_option_alias_name(name, option_name, what):
+            normalized_name = str(name).lower()
+            if normalized_name not in normalized_option_alias_names:
+                normalized_option_alias_names[normalized_name] = dict()
+            if option_name not in normalized_option_alias_names[normalized_name]:
+                normalized_option_alias_names[normalized_name][option_name] = set()
+            normalized_option_alias_names[normalized_name][option_name].add(name)
+
+        for option, data in options.items():
+            if 'suboptions' in data:
+                self._validate_option_docs(data.get('suboptions'), context + [option])
+            add_option_alias_name(option, option, 'option')
+            if 'aliases' in data and isinstance(data['aliases'], list):
+                for alias in data['aliases']:
+                    add_option_alias_name(alias, option, 'alias')
+
+        for normalized_name, options in normalized_option_alias_names.items():
+            if len(options) < 2:
+                continue
+
+            what = []
+            for option_name, names in sorted(options.items()):
+                if option_name in names:
+                    what.append("option '%s'" % option_name)
+                else:
+                    what.append("alias '%s' of option '%s'" % (sorted(names)[0], option_name))
+            msg = "Multiple options/aliases"
+            if context:
+                msg += " found in %s" % " -> ".join(context)
+            msg += " are equal up to casing: %s" % ", ".join(what)
+            self.reporter.error(
+                path=self.object_path,
+                code='option-equal-up-to-casing',
+                msg=msg,
+            )
+
     def _validate_docs(self):
         doc = None
         # We have three ways of marking deprecated/removed files.  Have to check each one
@@ -1014,6 +1058,9 @@ class ModuleValidator(Validator):
                     'DOCUMENTATION',
                     'invalid-documentation',
                 )
+
+            if doc:
+                self._validate_option_docs(doc.get('options'))
 
             self._validate_all_semantic_markup(doc, returns)
 
