@@ -219,3 +219,6 @@ ansible-playbook 82241.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
 
 ansible-playbook handlers_lockstep_82307.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'TASK \[handler2\]')" = "0" ]
+
+ansible-playbook handlers_lockstep_83019.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'TASK \[handler1\]')" = "0" ]

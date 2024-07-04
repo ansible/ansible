@@ -1,0 +1,8 @@
+- hosts: A,B
+  gather_facts: false
+  tasks:
+    - command: echo
+      notify: handler
+  handlers:
+    - name: handler
+      include_tasks: handlers_lockstep_83019-include.yml
