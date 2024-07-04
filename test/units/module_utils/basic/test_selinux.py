@@ -128,7 +128,7 @@ class TestSELinuxMU:
 
         # lgetfilecon_raw OSError (should bomb the module)
         with patch.object(file_common, 'selinux', create=True) as selinux:
-            file_common.get_path_selinux-context.side_effect = OSError(errno.ENOENT, 'NotFound')
+            file_common.get_path_selinux_context.side_effect = OSError(errno.ENOENT, 'NotFound')
             with pytest.raises(SystemExit):
                 am.selinux_context(path='/foo/bar')
 
