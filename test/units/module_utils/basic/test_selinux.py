@@ -97,17 +97,17 @@ class TestSELinuxMU:
         am = no_args_module(selinux_enabled=True, selinux_mls_enabled=True)
         with patch.object(file_common, 'selinux', create=True) as selinux:
             # matchpathcon success
-            file_common.selinux.matchpathcon.return_value = [0, 'unconfined_u:object_r:default_t:s0']
+            file_common.get_path_default_selinux_context.return_value = [0, 'unconfined_u:object_r:default_t:s0']
             assert am.selinux_default_context(path='/foo/bar') == ['unconfined_u', 'object_r', 'default_t', 's0']
 
         with patch.object(file_common, 'selinux', create=True) as selinux:
             # matchpathcon fail (return initial context value)
-            file_common.selinux.matchpathcon.return_value = [-1, '']
+            file_common.get_path_default_selinux_context.return_value = [-1, '']
             assert am.selinux_default_context(path='/foo/bar') == [None, None, None, None]
 
         with patch.object(file_common, 'selinux', create=True) as selinux:
             # matchpathcon OSError
-            file_common.selinux.matchpathcon.side_effect = OSError
+            file_common.get_path_default_selinux_context.side_effect = OSError
             assert am.selinux_default_context(path='/foo/bar') == [None, None, None, None]
 
     def test_selinux_context(self):
@@ -118,22 +118,22 @@ class TestSELinuxMU:
         am = no_args_module(selinux_enabled=True, selinux_mls_enabled=True)
         # lgetfilecon_raw passthru
         with patch.object(file_common, 'selinux', create=True) as selinux:
-            file_common.selinux.lgetfilecon_raw.return_value = [0, 'unconfined_u:object_r:default_t:s0']
+            file_common.get_path_selinux_context.return_value = [0, 'unconfined_u:object_r:default_t:s0']
             assert am.selinux_context(path='/foo/bar') == ['unconfined_u', 'object_r', 'default_t', 's0']
 
         # lgetfilecon_raw returned a failure
         with patch.object(file_common, 'selinux', create=True) as selinux:
-            file_common.selinux.lgetfilecon_raw.return_value = [-1, '']
+            file_common.get_path_selinux_context.return_value = [-1, '']
             assert am.selinux_context(path='/foo/bar') == [None, None, None, None]
 
         # lgetfilecon_raw OSError (should bomb the module)
         with patch.object(file_common, 'selinux', create=True) as selinux:
-            file_common.selinux.lgetfilecon_raw.side_effect = OSError(errno.ENOENT, 'NotFound')
+            file_common.get_path_selinux-context.side_effect = OSError(errno.ENOENT, 'NotFound')
             with pytest.raises(SystemExit):
                 am.selinux_context(path='/foo/bar')
 
         with patch.object(file_common, 'selinux', create=True) as selinux:
-            file_common.selinux.lgetfilecon_raw.side_effect = OSError()
+            file_common.get_path_selinux_context.side_effect = OSError()
             with pytest.raises(SystemExit):
                 am.selinux_context(path='/foo/bar')
 
