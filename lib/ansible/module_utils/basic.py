@@ -1531,9 +1531,13 @@ class AnsibleModule(object):
 
         backupdest = ''
         if os.path.exists(fn):
-            # backups named basename.PID.YYYY-MM-DD@HH:MM:SS~
-            ext = time.strftime("%Y-%m-%d@%H:%M:%S~", time.localtime(time.time()))
-            backupdest = '%s.%s.%s' % (fn, os.getpid(), ext)
+            # backups named default to BASENAME.PID.TIMESTAMP~
+            basename = os.path.basename(fn)
+            sname, ext = os.path.splitext(basename)
+            timestamp = time.strftime("%Y-%m-%d@%H:%M:%S", time.localtime(time.time()))
+
+            backup_name = self.backup_file_name_template.format(basename=basename, stripname=sname, extension=ext, pid=os.getpid(), timestamp=timestamp)
+            backupdest = os.path.join(os.path.dirname(fn), backup_name)
 
             try:
                 self.preserved_copy(fn, backupdest)
