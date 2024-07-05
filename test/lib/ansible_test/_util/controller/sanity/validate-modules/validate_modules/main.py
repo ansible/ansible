@@ -853,10 +853,10 @@ class ModuleValidator(Validator):
         for option, data in options.items():
             if 'suboptions' in data:
                 self._validate_option_docs(data.get('suboptions'), context + [option])
-            add_option_alias_name(option, option, 'option')
+            add_option_alias_name(option, option)
             if 'aliases' in data and isinstance(data['aliases'], list):
                 for alias in data['aliases']:
-                    add_option_alias_name(alias, option, 'alias')
+                    add_option_alias_name(alias, option)
 
         for normalized_name, options in normalized_option_alias_names.items():
             if len(options) < 2:
