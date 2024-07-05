@@ -1,0 +1,2 @@
+minor_changes:
+  - "validate-modules sanity test - reject option/aliases names that are identical up to casing but belong to different options (https://github.com/ansible/ansible/pull/83530)."
