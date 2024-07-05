@@ -21,6 +21,7 @@ from collections.abc import Sequence
 
 from ansible import constants as C
 from ansible._internal._errors import _captured, _error_utils
+from ansible.config.helpers import get_validated_backup_file_name_template
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
 from ansible.executor.module_common import modify_module, _BuiltModule
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
@@ -1004,6 +1005,10 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         module_args['_ansible_target_log_info'] = C.config.get_config_value('TARGET_LOG_INFO', variables=task_vars)
 
         module_args['_ansible_tracebacks_for'] = _traceback.traceback_for()
+        
+        # let user customize backup file names
+        module_args['_ansible_backup_file_name_template'] = get_validated_backup_file_name_template(C.config.get_config_value('BACKUP_FILE_NAME_TEMPLATE',
+                                                                                                    variables=task_vars))
 
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False,
                         ignore_unknown_opts: bool = False):

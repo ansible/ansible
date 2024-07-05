@@ -94,6 +94,7 @@ PASS_VARS: dict[str, t.Any] = {
     'tracebacks_for': ('_tracebacks_for', frozenset()),
     'verbosity': ('_verbosity', 0),
     'version': ('ansible_version', '0.0'),
+    'backup_file_name_template': ('backup_file_name_template', r'{basename}.{pid}.{timestamp}~'),
 }
 
 PASS_BOOLS = ('check_mode', 'debug', 'diff', 'keep_remote_files', 'ignore_unknown_opts', 'no_log')

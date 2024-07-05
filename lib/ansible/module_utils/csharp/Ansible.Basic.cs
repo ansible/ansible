@@ -83,6 +83,7 @@ namespace Ansible.Basic
             { "tmpdir", "tmpdir" },
             { "verbosity", "Verbosity" },
             { "version", "AnsibleVersion" },
+			{ "backup_file_name_template", null }, // here for parity, but not implemented
         };
         private List<string> passBools = new List<string>() { "check_mode", "debug", "diff", "keep_remote_files", "ignore_unknown_opts", "no_log" };
         private List<string> passInts = new List<string>() { "verbosity" };
