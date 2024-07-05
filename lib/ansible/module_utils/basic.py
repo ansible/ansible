@@ -100,8 +100,8 @@ def _get_available_hash_algorithms():
                 # Not all algorithms listed as available are actually usable.
                 # For example, md5 is not available in FIPS mode.
                 algorithm_func()
-            except Exception:
-                pass
+            except Exception as e:
+                self.debug(f"Skipping failure to get available hash algos: {e}")
             else:
                 algorithms[algorithm_name] = algorithm_func
 
@@ -602,9 +602,9 @@ class AnsibleModule(object):
         if is_selinux_enabled():
             try:
                 context = get_path_default_selinux_context(path, mode)
-            except OSError:
+            except OSError as e:
                 # unable to read context, but we don't care, fallback to initial.
-                pass
+                self.debug(f"Ignoring failure to read selinux context for {path}: {e}")
         if context is None:
             context = self.selinux_initial_context()
         return context
@@ -636,7 +636,7 @@ class AnsibleModule(object):
         return is_special_selinux_path(path, self._selinux_special_fs)
 
     def set_default_selinux_context(self, path, changed):
-        if not self.selinux_enabled():
+        if not is_selinux_enabled():
             return changed
         context = self.selinux_default_context(path)
         return self.set_context_if_different(path, context, False)
@@ -890,8 +890,8 @@ class AnsibleModule(object):
                         output['version'] = res[0].strip()
                     output['attr_flags'] = res[attr_flags_idx].replace('-', '').strip()
                     output['attributes'] = format_attributes(output['attr_flags'])
-            except Exception:
-                pass
+            except Exception as e:
+                self.debug(f"Ignoring inability to get attributes for {path}: {e}")
         return output
 
     @classmethod
@@ -1285,8 +1285,8 @@ class AnsibleModule(object):
                     if os.access(cwd, os.F_OK | os.R_OK):
                         os.chdir(cwd)
                         return cwd
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.debug(f"Ignoring failure to set cwd: {e}")
         # we won't error here, as it may *not* be a problem,
         # and we don't want to break modules unnecessarily
         return None
