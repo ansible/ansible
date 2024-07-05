@@ -846,13 +846,9 @@ class ModuleValidator(Validator):
 
         normalized_option_alias_names = dict()
 
-        def add_option_alias_name(name, option_name, what):
+        def add_option_alias_name(name, option_name):
             normalized_name = str(name).lower()
-            if normalized_name not in normalized_option_alias_names:
-                normalized_option_alias_names[normalized_name] = dict()
-            if option_name not in normalized_option_alias_names[normalized_name]:
-                normalized_option_alias_names[normalized_name][option_name] = set()
-            normalized_option_alias_names[normalized_name][option_name].add(name)
+            normalized_option_alias_names.setdefault(normalized_name, {}).setdefault(option_name, set()).add(name)
 
         for option, data in options.items():
             if 'suboptions' in data:
