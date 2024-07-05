@@ -19,7 +19,7 @@ options:
       - The V(portage) and V(pkg) options were added in version 2.8.
       - The V(apk) option was added in version 2.11.
       - The V(pkg_info)' option was added in version 2.13.
-      - Aliases were added in 2.18, to support using C(auto={{ansible_facts['pkg_mgr']}})
+      - Aliases were added in 2.18, to support using C(manager={{ansible_facts['pkg_mgr']}})
     default: ['auto']
     choices:
         auto: Depending on O(strategy), will match the first or all package managers provided, in order
@@ -253,11 +253,9 @@ ansible_facts:
 import re
 
 from ansible.module_utils.common.text.converters import to_native, to_text
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
-from ansible.module_utils.common.process import get_bin_path
-from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
-from ansible.module_utils.facts.packages import LibMgr, CLIMgr, get_all_pkg_managers
+from ansible.module_utils.facts.packages import CLIMgr, RespawningLibMgr, get_all_pkg_managers
 
 
 ALIASES = {
@@ -267,9 +265,14 @@ ALIASES = {
 }
 
 
-class RPM(LibMgr):
+class RPM(RespawningLibMgr):
 
     LIB = 'rpm'
+    CLI_BINARIES = ['rpm']
+    INTERPRETERS = [
+        '/usr/libexec/platform-python',
+        '/usr/bin/python3',
+    ]
 
     def list_installed(self):
         return self._lib.TransactionSet().dbMatch()
@@ -281,34 +284,11 @@ class RPM(LibMgr):
                     epoch=package[self._lib.RPMTAG_EPOCH],
                     arch=package[self._lib.RPMTAG_ARCH],)
 
-    def is_available(self):
-        ''' we expect the python bindings installed, but this gives warning if they are missing and we have rpm cli'''
-        we_have_lib = super(RPM, self).is_available()
 
-        try:
-            get_bin_path('rpm')
-
-            if not we_have_lib and not has_respawned():
-                # try to locate an interpreter with the necessary lib
-                interpreters = ['/usr/libexec/platform-python',
-                                '/usr/bin/python3',
-                                '/usr/bin/python2']
-                interpreter_path = probe_interpreters_for_module(interpreters, self.LIB)
-                if interpreter_path:
-                    respawn_module(interpreter_path)
-                    # end of the line for this process; this module will exit when the respawned copy completes
-
-            if not we_have_lib:
-                module.warn('Found "rpm" but %s' % (missing_required_lib(self.LIB)))
-        except ValueError:
-            pass
-
-        return we_have_lib
-
-
-class APT(LibMgr):
+class APT(RespawningLibMgr):
 
     LIB = 'apt'
+    CLI_BINARIES = ['apt', 'apt-get', 'aptitude']
 
     def __init__(self):
         self._cache = None
@@ -321,30 +301,6 @@ class APT(LibMgr):
 
         self._cache = self._lib.Cache()
         return self._cache
-
-    def is_available(self):
-        ''' we expect the python bindings installed, but if there is apt/apt-get give warning about missing bindings'''
-        we_have_lib = super(APT, self).is_available()
-        if not we_have_lib:
-            for exe in ('apt', 'apt-get', 'aptitude'):
-                try:
-                    get_bin_path(exe)
-                except ValueError:
-                    continue
-                else:
-                    if not has_respawned():
-                        # try to locate an interpreter with the necessary lib
-                        interpreters = ['/usr/bin/python3',
-                                        '/usr/bin/python2']
-                        interpreter_path = probe_interpreters_for_module(interpreters, self.LIB)
-                        if interpreter_path:
-                            respawn_module(interpreter_path)
-                            # end of the line for this process; this module will exit here when respawned copy completes
-
-                    module.warn('Found "%s" but %s' % (exe, missing_required_lib('apt')))
-                    break
-
-        return we_have_lib
 
     def list_installed(self):
         # Store the cache to avoid running pkg_cache() for each item in the comprehension, which is very slow
@@ -551,22 +507,18 @@ def main():
             continue
 
         seen.add(pkgmgr)
+
+        manager = PKG_MANAGERS[pkgmgr]()
         try:
-            try:
-                # manager throws exception on init (calls self.test) if not usable.
-                manager = PKG_MANAGERS[pkgmgr]()
-                if manager.is_available():
-                    found += 1
+            if manager.is_available(handle_exceptions=False):
+                found += 1
+                try:
                     packages.update(manager.get_packages())
-
-            except Exception as e:
-                if pkgmgr in module.params['manager']:
-                    module.warn('Requested package manager %s was not usable by this module: %s' % (pkgmgr, to_text(e)))
-                continue
-
+                except Exception as e:
+                    module.warn('Failed to retrieve packages with %s: %s' % (pkgmgr, to_text(e)))
         except Exception as e:
             if pkgmgr in module.params['manager']:
-                module.warn('Failed to retrieve packages with %s: %s' % (pkgmgr, to_text(e)))
+                module.warn('Requested package manager %s was not usable by this module: %s' % (pkgmgr, to_text(e)))
 
     if found == 0:
         msg = ('Could not detect a supported package manager from the following list: %s, '

@@ -1,0 +1,3 @@
+bugfixes:
+  - package_facts - returns the correct warning when package listing fails.
+  - package_facts - no longer fails silently when the selected package manager is unable to list packages.
