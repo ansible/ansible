@@ -4,10 +4,15 @@
 from __future__ import annotations
 
 from ansible import constants as C
+from ansible.errors import AnsibleError
+from ansible.utils.display import Display
+
+display = Display()
 
 NOPES=frozenset(['$', '@', ':', '\\', '/', ';', '%', '{', '(', '}', ')', '"', "'", '`'])
 REQUIRED_UNIQUE=frozenset(['pid', 'timestamp'])
 REQUIRED_NAME=frozenset(['basename', 'stripname'])
+
 
 def get_validated_backup_file_name_template(tmplt: str) -> str:
 
@@ -30,6 +35,6 @@ def get_validated_backup_file_name_template(tmplt: str) -> str:
 
     except AnsibleError as e:
         display.warning(f"{e} found in backup file name template, falling back to default.")
-        tmplt = C.get_configuration_definition('BECOME_FILE_NAME_TEMPLATE')['default']
+        tmplt = C.config.get_configuration_definition('BACKUP_FILE_NAME_TEMPLATE')['default']
 
     return tmplt
