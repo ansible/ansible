@@ -163,7 +163,7 @@ BACKUP_FILE_NAME_TEMPLATE:
   name: Tempalte to define backup file names
   description:
     - Defines a template that will name backup file(s) in modules using the standard backup facilities.
-    - Available variables are basename (includes extension), extension, stripname (no extension), timestamp and pid
+    - Available variables are basename (includes extension), extension, stripname (no extension), timestamp and pid (process ID)
   version_added: '2.18'
   env: [{name: ANSIBLE_BACKUP_FILE_NAME_TEMPLATE}]
   ini:
