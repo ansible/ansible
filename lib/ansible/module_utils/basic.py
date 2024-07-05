@@ -101,7 +101,7 @@ def _get_available_hash_algorithms():
                 # For example, md5 is not available in FIPS mode.
                 algorithm_func()
             except Exception as e:
-                self.debug(f"Skipping failure to get available hash algos: {e}")
+                pass
             else:
                 algorithms[algorithm_name] = algorithm_func
 
