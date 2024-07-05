@@ -169,6 +169,8 @@ BACKUP_FILE_NAME_TEMPLATE:
   ini:
   - {key: backup_file_name_template, section: defaults}
   default: '{basename}.{pid}.{timestamp}~'
+  vars:
+  - {name: ansible_backup_file_name_template}
 CACHE_PLUGIN:
   name: Persistent Cache plugin
   default: memory

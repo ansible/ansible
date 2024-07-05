@@ -1002,7 +1002,7 @@ class ActionBase(ABC):
         module_args['_ansible_target_log_info'] = C.config.get_config_value('TARGET_LOG_INFO', variables=task_vars)
 
         # let user customize backup file names
-        module_args['_ansible_backup_file_name_template'] = C.BACKUP_FILE_NAME_TEMPLATE
+        module_args['_ansible_backup_file_name_template'] = C.config.get_config_value('BACKUP_FILE_NAME_TEMPLATE', variables=task_vars)
 
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False,
                         ignore_unknown_opts: bool = False):
