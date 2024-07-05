@@ -9,9 +9,9 @@ from ansible.utils.display import Display
 
 display = Display()
 
-NOPES=frozenset(['$', '@', ':', '\\', '/', ';', '%', '{', '(', '}', ')', '"', "'", '`'])
-REQUIRED_UNIQUE=frozenset(['pid', 'timestamp'])
-REQUIRED_NAME=frozenset(['basename', 'stripname'])
+NOPES = frozenset(['$', '@', ':', '\\', '/', ';', '%', '{', '(', '}', ')', '"', "'", '`'])
+REQUIRED_UNIQUE = frozenset(['pid', 'timestamp'])
+REQUIRED_NAME = frozenset(['basename', 'stripname'])
 
 
 def get_validated_backup_file_name_template(tmplt: str) -> str:
