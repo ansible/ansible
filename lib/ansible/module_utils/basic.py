@@ -599,7 +599,7 @@ class AnsibleModule(object):
     # If selinux fails to find a default, return an array of None
     def selinux_default_context(self, path, mode=0):
         context = None
-        if self.selinux_enabled():
+        if is_selinux_enabled():
             try:
                 context = get_path_default_selinux_context(path, mode)
             except OSError:
@@ -611,7 +611,7 @@ class AnsibleModule(object):
 
     def selinux_context(self, path):
         context = None
-        if self.selinux_enabled():
+        if is_selinux_enabled():
             try:
                 context = get_path_selinux_context(path, context)
             except OSError as e:
