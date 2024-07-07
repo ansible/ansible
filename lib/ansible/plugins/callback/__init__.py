@@ -506,20 +506,24 @@ class CallbackBase(AnsiblePlugin):
         self.on_any(args, kwargs)
 
     def v2_runner_on_failed(self, result: TaskResult, ignore_errors: bool = False) -> None:
-        """Get details about a failed task and whether or not Ansible should continue
-        running tasks on the host where the failure occurred, then process the details
-        as required by the callback (output, profiling, logging, notifications, etc.)
+        """Process details of a failed task.
 
-        Note: The 'ignore_errors' directive only works when the task can run and returns
-        a value of 'failed'. It does not make Ansible ignore undefined variable errors,
-        connection failures, execution issues (for example, missing packages), or syntax errors.
+        Customization note: Review and format the contents of the
+        TaskResult object here, then output, log, or notify as required
+        by the callback plugin.
+        
+        Note: The value of 'ignore_errors' tells Ansible whether or not
+        to continue running tasks on the host where a failure occurred.
+        But the 'ignore_errors' directive only works when the task can
+        run and returns a value of 'failed'. It does not make Ansible
+        ignore undefined variable errors, connection failures, execution
+        issues (for example, missing packages), or syntax errors.
 
-        Customization note: For more information about the attributes and methods of the
-        TaskResult class, see lib/ansible/executor/task_result.py.
-
-        :param TaskResult result: An object that contains details about the task
-        :param bool ignore_errors: Whether or not Ansible should continue running tasks on the host
-        where the failure occurred
+        :param result: An object that contains details about the task
+        :type result: TaskResult
+        :param ignore_errors: Whether or not Ansible should continue \
+            running tasks on the host where the failure occurred
+        :type ignore_errors: bool        
 
         :return: None
         """
@@ -527,13 +531,14 @@ class CallbackBase(AnsiblePlugin):
         self.runner_on_failed(host, result._result, ignore_errors)
 
     def v2_runner_on_ok(self, result: TaskResult) -> None:
-        """Get details about a successful task and process them as required by the callback
-        (output, profiling, logging, notifications, etc.)
+        """Process details of a successful task.
+        
+        Customization note: Review and format the contents of the
+        TaskResult object here, then output, log, or notify as required
+        by the callback plugin.
 
-        Customization note: For more information about the attributes and methods of the
-        TaskResult class, see lib/ansible/executor/task_result.py.
-
-        :param TaskResult result: An object that contains details about the task
+        :param result: An object that contains details about the task
+        :type result: TaskResult
 
         :return: None
         """
@@ -541,13 +546,14 @@ class CallbackBase(AnsiblePlugin):
         self.runner_on_ok(host, result._result)
 
     def v2_runner_on_skipped(self, result: TaskResult) -> None:
-        """Get details about a skipped task and process them as required by the callback
-        (output, profiling, logging, notifications, etc.)
+        """Get details about a skipped task.
+        
+        Customization note: Review and format the contents of the
+        TaskResult object here, then output, log, or notify as required
+        by the callback plugin.
 
-        Customization note: For more information about the attributes and methods of the
-        TaskResult class, see lib/ansible/executor/task_result.py.
-
-        :param TaskResult result: An object that contains details about the task
+        :param result: An object that contains details about the task
+        :type result: TaskResult
 
         :return: None
         """
@@ -556,14 +562,14 @@ class CallbackBase(AnsiblePlugin):
             self.runner_on_skipped(host, self._get_item_label(getattr(result._result, 'results', {})))
 
     def v2_runner_on_unreachable(self, result: TaskResult) -> None:
-        """Get details about a task that Ansible could not perform because it could not reach a
-        targeted host, then process the details as required by the callback (output, profiling,
-        logging, notifications, etc.)
+        """Process details of a task when the target host is unreachable.
 
-        Customization note: For more information about the attributes and methods of the
-        TaskResult class, see lib/ansible/executor/task_result.py.
+        Customization note: Review and format the contents of the
+        TaskResult object here, then output, log, or notify as required
+        by the callback plugin.
 
-        :param TaskResult result: An object that contains details about the task
+        :param result: An object that contains details about the task
+        :type result: TaskResult
 
         :return: None
         """
@@ -571,13 +577,14 @@ class CallbackBase(AnsiblePlugin):
         self.runner_on_unreachable(host, result._result)
 
     def v2_runner_on_async_poll(self, result: TaskResult) -> None:
-        """Get details about a task that is running in asynchronous mode and process them as
-        required by the callback (output, profiling, logging, notifications, etc.)
+        """Process details of a task running in asynchronous mode.
+        
+        Customization note: Review and format the contents of the
+        TaskResult object here, then output, log, or notify as required
+        by the callback plugin.
 
-        Customization note: For more information about the attributes and methods of the
-        TaskResult class, see lib/ansible/executor/task_result.py.
-
-        :param TaskResult result: An object that contains details about the task
+        :param result: An object that contains details about the task
+        :type result: TaskResult
 
         :return: None
         """
