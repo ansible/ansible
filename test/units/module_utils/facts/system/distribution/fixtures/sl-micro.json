@@ -1,9 +1,5 @@
 {
-    "platform.dist": [
-        "",
-        "",
-        ""
-    ],
+    "platform.dist": [ "", "", ""],
     "distro": {
         "codename": "",
         "id": "sl-micro",
