@@ -511,7 +511,7 @@ class CallbackBase(AnsiblePlugin):
         Customization note: Review and format the contents of the
         TaskResult object here, then output, log, or notify as required
         by the callback plugin.
-        
+
         Note: The value of 'ignore_errors' tells Ansible whether or not
         to continue running tasks on the host where a failure occurred.
         But the 'ignore_errors' directive only works when the task can
@@ -523,7 +523,7 @@ class CallbackBase(AnsiblePlugin):
         :type result: TaskResult
         :param ignore_errors: Whether or not Ansible should continue \
             running tasks on the host where the failure occurred
-        :type ignore_errors: bool        
+        :type ignore_errors: bool
 
         :return: None
         """
@@ -532,7 +532,7 @@ class CallbackBase(AnsiblePlugin):
 
     def v2_runner_on_ok(self, result: TaskResult) -> None:
         """Process details of a successful task.
-        
+
         Customization note: Review and format the contents of the
         TaskResult object here, then output, log, or notify as required
         by the callback plugin.
@@ -547,7 +547,7 @@ class CallbackBase(AnsiblePlugin):
 
     def v2_runner_on_skipped(self, result: TaskResult) -> None:
         """Get details about a skipped task.
-        
+
         Customization note: Review and format the contents of the
         TaskResult object here, then output, log, or notify as required
         by the callback plugin.
@@ -578,7 +578,7 @@ class CallbackBase(AnsiblePlugin):
 
     def v2_runner_on_async_poll(self, result: TaskResult) -> None:
         """Process details of a task running in asynchronous mode.
-        
+
         Customization note: Review and format the contents of the
         TaskResult object here, then output, log, or notify as required
         by the callback plugin.
