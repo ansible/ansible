@@ -144,6 +144,8 @@ class ServiceMgrFactCollector(BaseFactCollector):
                 service_mgr_name = 'systemd'
             elif os.path.exists('/etc/init.d/'):
                 service_mgr_name = 'sysvinit'
+            elif os.path.exists('/etc/dinit.d/'):
+                service_mgr_name = 'dinit'
 
         if not service_mgr_name:
             # if we cannot detect, fallback to generic 'service'
