@@ -541,7 +541,6 @@ class PlayIterator:
         self._host_states[hostname].handler_notifications[notification] = ...
 
     def clear_notification(self, hostname: str, notification: str) -> None:
-        self._host_states[hostname].handler_notifications.remove(notification)
         try:
             self._host_states[hostname].handler_notifications.pop(notification)
         except KeyError as e:
