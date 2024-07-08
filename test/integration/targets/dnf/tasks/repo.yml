@@ -414,3 +414,23 @@
       dnf:
         name: provides_foo*
         state: absent
+
+- name: test that only evr is compared, avoiding a situation when a specific arch would be considered as a "newer" package
+  block:
+    - dnf:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - "dinginessentail-1.0-1.x86_64"
+        - "dinginessentail-1.0-1.i686"
+      register: dnf_results
+
+    - assert:
+        that:
+          - dnf_results["results"][0] is changed
+          - dnf_results["results"][1] is changed
+  always:
+    - name: Clean up
+      dnf:
+        name: dinginessentail
+        state: absent
