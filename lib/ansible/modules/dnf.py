@@ -754,7 +754,7 @@ class DnfModule(YumDnf):
             installed = sorted(self.base.sack.query().installed().filter(name=available.name).run())[-1]
         except IndexError:
             return False
-        return installed > available
+        return installed.evr_gt(available) and installed.arch == available.arch
 
     def _mark_package_install(self, pkg_spec, upgrade=False):
         """Mark the package for install."""
