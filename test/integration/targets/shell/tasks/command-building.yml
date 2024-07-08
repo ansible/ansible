@@ -28,6 +28,7 @@
         ANSIBLE_REMOTE_TMP: '{{ atd }}'
         ANSIBLE_NOCOLOR: "1"
         ANSIBLE_FORCE_COLOR: "0"
+        TEST: "foo%D"
       register: command_building
       delegate_to: localhost
 
