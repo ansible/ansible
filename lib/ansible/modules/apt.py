@@ -1155,13 +1155,12 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     if apt_cmd == APTITUDE_CMD and APTITUDE_ZERO in out:
         m.exit_json(changed=False, msg=out, stdout=out, stderr=err)
     if apt_cmd == APT_GET_CMD:
+        change = False
         upgrade_re = re.compile(r"(\d+) upgraded, (\d+) newly installed, (\d+) to remove and (\d+) not upgraded.", re.MULTILINE)
         match = re.match(upgrade_re, out)
         if match and any(map(int, match.groups()[:3])):
             change = True
-        else:
-            change = False
-        m.exit_json(changed=False, msg=out, stdout=out, stderr=err)
+        m.exit_json(changed=change, msg=out, stdout=out, stderr=err)
 
     m.exit_json(changed=True, msg=out, stdout=out, stderr=err, diff=diff)
 
