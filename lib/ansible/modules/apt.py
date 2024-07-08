@@ -381,7 +381,7 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.urls import fetch_file
 
 DPKG_OPTIONS = 'force-confdef,force-confold'
-APT_GET_ZERO = "\n0 upgraded, 0 newly installed"
+APT_GET_ZERO = "\n0 upgraded, 0 newly installed, 0 to remove"
 APTITUDE_ZERO = "\n0 packages upgraded, 0 newly installed"
 APT_LISTS_PATH = "/var/lib/apt/lists"
 APT_UPDATE_SUCCESS_STAMP_PATH = "/var/lib/apt/periodic/update-success-stamp"
@@ -1152,16 +1152,8 @@ def upgrade(m, mode="yes", force=False, default_release=None,
         diff = {}
     if rc:
         m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err), stdout=out, rc=rc)
-    if apt_cmd == APTITUDE_CMD and APTITUDE_ZERO in out:
+    if (apt_cmd == APT_GET_CMD and APT_GET_ZERO in out) or (apt_cmd == APTITUDE_CMD and APTITUDE_ZERO in out):
         m.exit_json(changed=False, msg=out, stdout=out, stderr=err)
-    if apt_cmd == APT_GET_CMD:
-        change = False
-        upgrade_re = re.compile(r"(\d+) upgraded, (\d+) newly installed, (\d+) to remove and (\d+) not upgraded.", re.MULTILINE)
-        match = re.match(upgrade_re, out)
-        if match and any(map(int, match.groups()[:3])):
-            change = True
-        m.exit_json(changed=change, msg=out, stdout=out, stderr=err)
-
     m.exit_json(changed=True, msg=out, stdout=out, stderr=err, diff=diff)
 
 
