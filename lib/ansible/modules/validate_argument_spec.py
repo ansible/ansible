@@ -16,11 +16,11 @@ version_added: "2.11"
 options:
   argument_spec:
     description:
-        - A dictionary like AnsibleModule argument_spec. See R(argument spec definition,argument_spec)
+        - A dictionary like AnsibleModule argument_spec. See R(argument spec definition,argument_spec).
     required: true
   provided_arguments:
     description:
-        - A dictionary of the arguments that will be validated according to argument_spec
+        - A dictionary of the arguments that will be validated according to argument_spec.
 author:
     - Ansible Core Team
 extends_documentation_fragment:
@@ -51,7 +51,7 @@ attributes:
 EXAMPLES = r'''
 - name: verify vars needed for this task file are present when included
   ansible.builtin.validate_argument_spec:
-        argument_spec: '{{ required_data }}'
+    argument_spec: '{{ required_data }}'
   vars:
     required_data:
       # unlike spec file, just put the options in directly
