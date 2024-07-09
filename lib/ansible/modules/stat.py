@@ -11,7 +11,7 @@ module: stat
 version_added: "1.3"
 short_description: Retrieve file or file system status
 description:
-     - Retrieves facts for a file similar to the Linux/Unix 'stat' command.
+     - Retrieves facts for a file similar to the Linux/Unix C(stat) command.
      - For Windows targets, use the M(ansible.windows.win_stat) module instead.
 options:
   path:
@@ -44,8 +44,8 @@ options:
     version_added: "2.0"
   get_mime:
     description:
-      - Use file magic and return data about the nature of the file. this uses
-        the 'file' utility found on most Linux/Unix systems.
+      - Use file magic and return data about the nature of the file. This uses
+        the C(file) utility found on most Linux/Unix systems.
       - This will add both RV(stat.mimetype) and RV(stat.charset) fields to the return, if possible.
       - In Ansible 2.3 this option changed from O(mime) to O(get_mime) and the default changed to V(true).
     type: bool
