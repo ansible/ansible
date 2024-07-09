@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf - reverted incomplete fix from 2.17.2rc1 (https://github.com/ansible/ansible/pull/83504)
