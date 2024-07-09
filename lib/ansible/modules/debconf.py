@@ -139,9 +139,9 @@ def get_password_value(module, pkg, question, vtype):
     desired_line = None
     for line in out.split("\n"):
         if line.startswith(pkg):
-            desired_line = line
             (dpkg, dquestion, dvtype, *dvalue) = line.split()
             if dquestion == question and dvtype == vtype:
+                desired_line = line
                 if len(dvalue) >= 1:
                     return dvalue[0]
                 return ''
