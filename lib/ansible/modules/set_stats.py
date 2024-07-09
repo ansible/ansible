@@ -22,7 +22,7 @@ options:
     required: true
   per_host:
     description:
-        - whether the stats are per host or for all hosts in the run.
+        - Whether the stats are per host or for all hosts in the run.
     type: bool
     default: no
   aggregate:
