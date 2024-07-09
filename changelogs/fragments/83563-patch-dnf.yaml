@@ -1,0 +1,2 @@
+bugfixes:
+- dnf - patched downgrade logic from 2.17.2.rc1 (https://github.com/ansible/ansible/pull/83563)
