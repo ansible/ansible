@@ -5,6 +5,23 @@ ansible-core 2.16 "All My Love" Release Notes
 .. contents:: Topics
 
 
+v2.16.9rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2024-07-09
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+
+Bugfixes
+--------
+
+- dnf, dnf5 - fix for installing a set of packages by specifying them using a wildcard character (https://github.com/ansible/ansible/issues/83373)
+- linear strategy now provides a properly templated task name to the v2_runner_on_started callback event.
+- templating hostvars under native jinja will not cause serialization errors anymore.
+
 v2.16.8
 =======
 
