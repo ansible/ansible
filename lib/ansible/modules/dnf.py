@@ -741,9 +741,12 @@ class DnfModule(YumDnf):
             else:
                 available = dnf.subject.Subject(pkg_spec).get_best_query(sack=self.base.sack).available()
                 installed = self.base.sack.query().installed().filter(name=available[0].name)
-                for arch in set(p.arch for p in available):
+                for arch in sorted(set(p.arch for p in installed)):  # select only from already-installed arches for this case
                     installed_pkg = sorted(installed.filter(arch=arch))[-1]
-                    available_pkg = sorted(available.filter(arch=arch))[-1]
+                    try:
+                        available_pkg = sorted(available.filter(arch=arch))[-1]
+                    except IndexError:
+                        continue  # nothing currently available for this arch; keep going
                     if installed_pkg.evr_gt(available_pkg):
                         return True
                 return False
