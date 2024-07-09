@@ -1124,3 +1124,24 @@ releases:
     - PowerShell-AddType-temp.yml
     - correct-callback-fqcn-old-style-action-invocation.yml
     release_date: '2024-06-10'
+  2.16.9rc1:
+    changes:
+      bugfixes:
+      - dnf, dnf5 - fix for installing a set of packages by specifying them using
+        a wildcard character (https://github.com/ansible/ansible/issues/83373)
+      - linear strategy now provides a properly templated task name to the v2_runner_on_started
+        callback event.
+      - templating hostvars under native jinja will not cause serialization errors
+        anymore.
+      release_summary: '| Release Date: 2024-07-09
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+    codename: All My Love
+    fragments:
+    - 2.16.9rc1_summary.yaml
+    - 83373-dnf5-wildcard.yml
+    - hostvars_fix.yml
+    - linear_started_name.yml
+    release_date: '2024-07-08'
