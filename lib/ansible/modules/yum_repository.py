@@ -23,7 +23,7 @@ options:
         repo in parallel, if possible.
       - In ansible-core 2.11, 2.12, and 2.13 the default value is V(true).
       - This option has been removed in RHEL 8. If you're using one of the
-        versions listed above, you can set this option to None to avoid passing an
+        versions listed above, you can set this option to V(null) to avoid passing an
         unknown configuration option.
       - This parameter is deprecated as it has been removed on systems supported by ansible-core
         and will be removed in ansible-core 2.22.
@@ -76,8 +76,8 @@ options:
     type: str
   description:
     description:
-      - A human-readable string describing the repository. This option corresponds to the "name" property in the repo file.
-      - This parameter is only required if O(state) is set to V(present).
+      - A human-readable string describing the repository. This option corresponds to the C(name) property in the repo file.
+      - This parameter is only required if O(state=present).
     type: str
   enabled:
     description:
@@ -96,7 +96,7 @@ options:
         space separated list. Shell globs using wildcards (for example V(*) and V(?))
         are allowed.
       - The list can also be a regular YAML array.
-      - excludepkgs alias was added in ansible-core 2.18
+      - O(excludepkgs) alias was added in ansible-core 2.18.
     type: list
     elements: str
     aliases:
@@ -137,7 +137,7 @@ options:
   module_hotfixes:
     description:
       - Disable module RPM filtering and make all RPMs from the repository
-        available. The default is V(None).
+        available. The default is V(null).
     version_added: '2.11'
     type: bool
   http_caching:
@@ -213,7 +213,7 @@ options:
       - V(read-only:future) - Commands that are likely to result in running
         other commands which will require the latest metadata. Eg.
         C(yum check-update).
-      - Note that this option does not override "yum clean expire-cache".
+      - Note that this option does not override C(yum clean expire-cache).
       - This parameter is deprecated as it has no effect with dnf as an underlying package manager
         and will be removed in ansible-core 2.22.
     choices: [never, 'read-only:past', 'read-only:present', 'read-only:future']
