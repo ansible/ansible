@@ -38,7 +38,7 @@ options:
   url_username:
     description:
       - The username for use in HTTP basic authentication.
-      - This parameter can be used without O(url_password) for sites that allow empty passwords
+      - This parameter can be used without O(url_password) for sites that allow empty passwords.
     type: str
   url_password:
     description:
@@ -66,7 +66,7 @@ options:
         authentication.
       - Requires the Python library L(gssapi,https://github.com/pythongssapi/python-gssapi) to be installed.
       - Credentials for GSSAPI can be specified with O(url_username)/O(url_password) or with the GSSAPI env var
-        C(KRB5CCNAME) that specified a custom Kerberos credential cache.
+        E(KRB5CCNAME) that specified a custom Kerberos credential cache.
       - NTLM authentication is B(not) supported even if the GSSAPI mech for NTLM has been installed.
     type: bool
     default: no
