@@ -37,19 +37,19 @@ options:
         version_added: "2.6"
     non_unique:
         description:
-            - Optionally when used with the -u option, this option allows to change the user ID to a non-unique value.
+            - Optionally when used with the C(-u) option, this option allows to change the user ID to a non-unique value.
         type: bool
         default: no
         version_added: "1.1"
     seuser:
         description:
-            - Optionally sets the seuser type (user_u) on selinux enabled systems.
+            - Optionally sets the C(seuser) type C(user_u) on SELinux enabled systems.
         type: str
         version_added: "2.1"
     group:
         description:
             - Optionally sets the user's primary group (takes a group name).
-            - On macOS, this defaults to V('staff')
+            - On macOS, this defaults to V(staff).
         type: str
     groups:
         description:
@@ -96,7 +96,7 @@ options:
             - To create an account with a locked/disabled password on OpenBSD, set this to V('*************').
             - B(OS X/macOS:) Enter the cleartext password as the value. Be sure to take relevant security precautions.
             - On macOS, the password specified in the C(password) option will always be set, regardless of whether the user account already exists or not.
-            - When the password is passed as an argument, the C(user) module will always return changed to C(true) for macOS systems.
+            - When the password is passed as an argument, the M(ansible.builtin.user) module will always return changed to C(true) for macOS systems.
               Since macOS no longer provides access to the hashed passwords directly.
         type: str
     state:
@@ -154,7 +154,7 @@ options:
     ssh_key_bits:
         description:
             - Optionally specify number of bits in SSH key to create.
-            - The default value depends on ssh-keygen.
+            - The default value depends on C(ssh-keygen).
         type: int
         version_added: "0.9"
     ssh_key_type:
@@ -205,7 +205,7 @@ options:
             - Lock the password (C(usermod -L), C(usermod -U), C(pw lock)).
             - Implementation differs by platform. This option does not always mean the user cannot login using other methods.
             - This option does not disable the user, only lock the password.
-            - This must be set to V(False) in order to unlock a currently locked password. The absence of this parameter will not unlock a password.
+            - This must be set to V(false) in order to unlock a currently locked password. The absence of this parameter will not unlock a password.
             - Currently supported on Linux, FreeBSD, DragonFlyBSD, NetBSD, OpenBSD.
         type: bool
         version_added: "2.6"
@@ -266,7 +266,7 @@ options:
         description:
             - Sets the umask of the user.
             - Currently supported on Linux. Does nothing when used with other platforms.
-            - Requires O(local) is omitted or V(False).
+            - Requires O(local) is omitted or V(false).
         type: str
         version_added: "2.12"
     password_expire_account_disable:
