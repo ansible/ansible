@@ -752,7 +752,7 @@ def get_next_version(version: Version, /, final: bool = False, pre: str | None =
         elif not pre and version.pre is not None:
             pre = f"{version.pre[0]}{version.pre[1]}"
         elif not pre:
-            pre = f"b1"  # when there is no existing pre and none specified, advance to b1
+            pre = "b1"  # when there is no existing pre and none specified, advance to b1
 
     elif version.is_postrelease:
         # The next version of a post release is the next pre-release *or* micro release component.
