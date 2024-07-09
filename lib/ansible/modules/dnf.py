@@ -741,10 +741,12 @@ class DnfModule(YumDnf):
                 available = sorted(
                     dnf.subject.Subject(pkg_name).get_best_query(sack=self.base.sack).available().run()
                 )[-1]
-            installed = sorted(self.base.sack.query().installed().filter(name=available.name).run())[-1]
+            installed = sorted(
+                self.base.sack.query().installed().filter(name=available.name, arch=available.arch).run()
+            )[-1]
         except IndexError:
             return False
-        return installed.evr_gt(available) and installed.arch == available.arch
+        return installed.evr_gt(available)
 
     def _mark_package_install(self, pkg_spec, upgrade=False):
         """Mark the package for install."""
