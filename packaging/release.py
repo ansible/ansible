@@ -751,12 +751,17 @@ def get_next_version(version: Version, /, final: bool = False, pre: str | None =
             pre = ""
         elif not pre and version.pre is not None:
             pre = f"{version.pre[0]}{version.pre[1]}"
+        elif not pre:
+            pre = "b1"  # when there is no existing pre and none specified, advance to b1
+
     elif version.is_postrelease:
         # The next version of a post release is the next pre-release *or* micro release component.
         if final:
             pre = ""
         elif not pre and version.pre is not None:
             pre = f"{version.pre[0]}{version.pre[1] + 1}"
+        elif not pre:
+            pre = "rc1"  # when there is no existing pre and none specified, advance to rc1
 
         if version.pre is None:
             micro = version.micro + 1
@@ -1042,7 +1047,7 @@ See the [full changelog]({{ changelog }}) for the changes included in this relea
 # Release Artifacts
 
 {%- for release in releases %}
-* {{ release.package_label }}: [{{ release.url|basename }}]({{ release.url }}) - {{ release.size }} bytes
+* {{ release.package_label }}: [{{ release.url|basename }}]({{ release.url }}) - &zwnj;{{ release.size }} bytes
   * {{ release.digest }} ({{ release.digest_algorithm }})
 {%- endfor %}
 """
@@ -1131,7 +1136,7 @@ command = CommandFramework(
     pre=dict(exclusive="version", help="increment version to the specified pre-release (aN, bN, rcN)"),
     final=dict(exclusive="version", action="store_true", help="increment version to the next final release"),
     commit=dict(help="commit to tag"),
-    mailto=dict(name="--no-mailto", action="store_false", help="write announcement to console instead of using a mailto: link"),
+    mailto=dict(name="--mailto", action="store_true", help="write announcement to mailto link instead of console"),
     validate=dict(name="--no-validate", action="store_false", help="disable validation of PyPI artifacts against local ones"),
     prompt=dict(name="--no-prompt", action="store_false", help="disable interactive prompt before publishing with twine"),
     allow_tag=dict(action="store_true", help="allow an existing release tag (for testing)"),
