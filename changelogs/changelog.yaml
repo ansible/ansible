@@ -736,8 +736,6 @@ releases:
       bugfixes:
       - Fix a traceback when an environment variable contains certain special characters
         (https://github.com/ansible/ansible/issues/83498)
-      - dnf - fix an issue where two packages of the same ``evr`` but different arch
-        failed to install (https://github.com/ansible/ansible/issues/83406)
       - dnf, dnf5 - fix for installing a set of packages by specifying them using
         a wildcard character (https://github.com/ansible/ansible/issues/83373)
       - linear strategy now provides a properly templated task name to the v2_runner_on_started
@@ -754,9 +752,24 @@ releases:
     fragments:
     - 2.17.2rc1_summary.yaml
     - 83373-dnf5-wildcard.yml
-    - 83406-dnf-fix-arch-cmp.yml
     - 83498-command-tb-env.yml
     - hostvars_fix.yml
     - linear_started_name.yml
     - replace_regex.yml
     release_date: '2024-07-08'
+  2.17.2rc2:
+    changes:
+      bugfixes:
+      - dnf - reverted incomplete fix from 2.17.2rc1 (https://github.com/ansible/ansible/pull/83504)
+      - package_facts - ignore warnings sent by apk on stderr (https://github.com/ansible/ansible/issues/83501).
+      release_summary: '| Release Date: 2024-07-09
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+        '
+    codename: Gallows Pole
+    fragments:
+    - 2.17.2rc2_summary.yaml
+    - dnf-revert.yaml
+    - package_facts_apk.yml
+    release_date: '2024-07-09'
