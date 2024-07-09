@@ -14,8 +14,8 @@ options:
             - Pipelining reduces the number of connection operations required to execute a module on the remote server,
               by executing many Ansible modules without actual file transfers.
             - This can result in a very significant performance improvement when enabled.
-            - However this can conflict with privilege escalation (become).
-              For example, when using sudo operations you must first disable 'requiretty' in the sudoers file for the target hosts,
+            - However this can conflict with privilege escalation (C(become)).
+              For example, when using sudo operations you must first disable C(requiretty) in the sudoers file for the target hosts,
               which is why this feature is disabled by default.
           env:
             - name: ANSIBLE_PIPELINING
