@@ -267,7 +267,7 @@ namespace Ansible.Basic
             TargetLogInfo = "";
             NoLog = (bool)argumentSpec["no_log"];
             Verbosity = 0;
-			BackupFileNameTemplate = "";
+            BackupFileNameTemplate = "";
             AppDomain.CurrentDomain.ProcessExit += CleanupFiles;
 
             List<string> legalInputs = passVars.Keys.Select(v => "_ansible_" + v).ToList();
