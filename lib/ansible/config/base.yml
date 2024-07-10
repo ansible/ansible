@@ -863,8 +863,8 @@ DEFAULT_MODULE_COMPRESSION:
   env: []
   ini:
   - {key: module_compression, section: defaults}
- vars:
-   - name: ansible_module_compression
+  vars:
+    - name: ansible_module_compression
 DEFAULT_MODULE_NAME:
   name: Default adhoc module
   default: command
