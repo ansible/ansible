@@ -612,6 +612,7 @@ def main():
     res_args = dict()
     warnings = list()
 
+try:
     if cron_file:
 
         if cron_file == '/etc/crontab':
@@ -759,6 +760,9 @@ def main():
 
     # --- should never get here
     module.exit_json(msg="Unable to execute cron task.")
+
+except Exeption as e: 
+    module.fail_json(msg="Failed to provision cron job: %s" % to_native(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

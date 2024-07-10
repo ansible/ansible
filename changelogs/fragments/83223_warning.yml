@@ -1,0 +1,2 @@
+bugfixes:
+- try except block to catch any exceptions that might occur during execution 
