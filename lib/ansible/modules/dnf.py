@@ -1197,10 +1197,8 @@ class DnfModule(YumDnf):
 
                     self.base.download_packages(self.base.transaction.install_set)
                 except dnf.exceptions.DownloadError as e:
-                    self.module.fail_json(
-                        msg="Failed to download packages: {0}".format(to_text(e)),
-                        results=[],
-                    )
+                    failure_response['msg'] = "Failed to download packages: {0}".format(to_native(e))
+                    self.module.fail_json(**failure_response)
 
                 # Validate GPG. This is NOT done in dnf.Base (it's done in the
                 # upstream CLI subclass of dnf.Base)
