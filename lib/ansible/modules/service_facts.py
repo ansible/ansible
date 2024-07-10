@@ -260,12 +260,18 @@ class SystemctlScanService(BaseService):
     def systemd_enabled(self):
         return is_systemd_managed(self.module)
 
-    def _list_from_units(self, systemctl_path, services):
+    def _list_from_units(self, systemctl_path, services, is_user=False):
+
+        if is_user:
+            systemctl_path += ' --user'
 
         # list units as systemd sees them
         rc, stdout, stderr = self.module.run_command("%s list-units --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
         if rc != 0:
-            self.module.warn("Could not list units from systemd: %s" % stderr)
+            if is_user:
+                self.module.warn("Could not list user units from systemd: %s" % stderr)
+            else:
+                self.module.warn("Could not list units from systemd: %s" % stderr)
         else:
             for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line]:
 
@@ -288,12 +294,18 @@ class SystemctlScanService(BaseService):
 
                 services[service_name] = {"name": service_name, "state": state_val, "status": status_val, "source": "systemd"}
 
-    def _list_from_unit_files(self, systemctl_path, services):
+    def _list_from_unit_files(self, systemctl_path, services, is_user=False):
+
+        if is_user:
+            systemctl_path += ' --user'
 
         # now try unit files for complete picture and final 'status'
         rc, stdout, stderr = self.module.run_command("%s list-unit-files --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
         if rc != 0:
-            self.module.warn("Could not get unit files data from systemd: %s" % stderr)
+            if is_user:
+                self.module.warn("Could not get user unit files data from systemd: %s" % stderr)
+            else:
+                self.module.warn("Could not get unit files data from systemd: %s" % stderr)
         else:
             for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line]:
                 # there is one more column (VENDOR PRESET) from `systemctl list-unit-files` for systemd >= 245
@@ -318,6 +330,8 @@ class SystemctlScanService(BaseService):
             if systemctl_path:
                 self._list_from_units(systemctl_path, services)
                 self._list_from_unit_files(systemctl_path, services)
+                self._list_from_units(systemctl_path, services, is_user=True)
+                self._list_from_unit_files(systemctl_path, services, is_user=True)
 
         return services
 

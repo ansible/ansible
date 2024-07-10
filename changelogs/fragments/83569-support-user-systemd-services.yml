@@ -1,0 +1,2 @@
+minor_changes:
+  - service_facts - add support for user systemd services (https://github.com/ansible/ansible/issues/79410).
