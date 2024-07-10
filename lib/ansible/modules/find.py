@@ -78,7 +78,7 @@ options:
         type: list
         required: true
         aliases: [ name, path ]
-        elements: str
+        elements: path
     file_type:
         description:
             - Type of file to select.
@@ -468,7 +468,7 @@ def statinfo(st):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            paths=dict(type='list', required=True, aliases=['name', 'path'], elements='str'),
+            paths=dict(type='list', required=True, aliases=['name', 'path'], elements='path'),
             patterns=dict(type='list', default=[], aliases=['pattern'], elements='str'),
             excludes=dict(type='list', aliases=['exclude'], elements='str'),
             contains=dict(type='str'),
@@ -547,7 +547,7 @@ def main():
     looked = 0
     has_warnings = False
     for npath in params['paths']:
-        npath = os.path.expanduser(os.path.expandvars(npath))
+        npath = os.path.expandvars(npath)
         try:
             if not os.path.isdir(npath):
                 raise Exception("'%s' is not a directory" % to_native(npath))
