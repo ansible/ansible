@@ -1,0 +1,2 @@
+bufixes:
+  - config, restored the ability to set module compression via a variable
