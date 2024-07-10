@@ -441,6 +441,17 @@ class ZipArchive(object):
         except (KeyError, ValueError, OverflowError):
             return None
 
+    def _valid_time_stamp(self, timestamp):
+        """ Return a valid time tuple from the given time tuple """
+        epoch_date_time = (1980, 1, 1, 0, 0, 0)
+        if len(timestamp) < 6:
+            return epoch_date_time
+        if timestamp[0] < 1980 or timestamp[1] == 0 or timestamp[2] == 0:
+            return epoch_date_time
+        if timestamp[0] > 2107:
+            return (2107, 12, 31, 23, 59, 59)
+        return timestamp
+
     def is_unarchived(self):
         err = ''
         diff = ''
@@ -572,7 +583,8 @@ class ZipArchive(object):
 
             itemized = list('.%s.......??' % ftype)
 
-            timestamp = datetime(*(file_info.date_time)).timestamp()
+            date_time = self._valid_time_stamp(file_info.date_time)
+            timestamp = datetime(*date_time).timestamp()
 
             # Compare file timestamps
             if stat.S_ISREG(st.st_mode):
