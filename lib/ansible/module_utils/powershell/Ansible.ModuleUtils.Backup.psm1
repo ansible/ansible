@@ -19,15 +19,15 @@ Function Backup-File {
         $backup_path = $null
         if (Test-Path -LiteralPath $path -PathType Leaf) {
 
-			$dirname = Split-Path -Parent $path -Resolve
+            $dirname = Split-Path -Parent $path -Resolve
 
-			# set variables for templating purposes
-			$basename = Split-Path -Path $path -Leaf -Resolve
-			$stripname = Split-Path -Path $path -LeafBase -Resolve
-			$extension = Split-Path -Path $path -Extension -Resolve
-			$timestamp = [DateTime]::Now.ToString("yyyyMMdd-HHmmss")
+            # set variables for templating purposes
+            $basename = Split-Path -Path $path -Leaf -Resolve
+            $stripname = Split-Path -Path $path -LeafBase -Resolve
+            $extension = Split-Path -Path $path -Extension -Resolve
+            $timestamp = [DateTime]::Now.ToString("yyyyMMdd-HHmmss")
 
-			# TODO: make childpath configurable via template stirng from config
+            # TODO: make childpath configurable via template stirng from config
             $backup_path = Join-Path -Path $dirname -ChildPath "$basename.$pid.$timestamp.bak"
             Try {
                 Copy-Item -LiteralPath $path -Destination $backup_path
