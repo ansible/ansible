@@ -1012,7 +1012,11 @@ def set_remote_branch(git_path, module, dest, remote, version, depth):
 
     branchref = "+refs/heads/%s:refs/heads/%s" % (version, version)
     branchref += ' +refs/heads/%s:refs/remotes/%s/%s' % (version, remote, version)
-    cmd = "%s fetch --depth=%s %s %s" % (git_path, depth, remote, branchref)
+
+    cmd = "%s fetch" % git_path
+    if depth is not None:
+        cmd += " --depth=%s" % depth
+    cmd += " %s %s" % (remote, branchref)
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg="Failed to fetch branch from remote: %s" % version, stdout=out, stderr=err, rc=rc)
@@ -1030,7 +1034,7 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
     else:
         # FIXME check for local_branch first, should have been fetched already
         if is_remote_branch(git_path, module, dest, remote, version):
-            if depth and not is_local_branch(git_path, module, dest, version):
+            if not is_local_branch(git_path, module, dest, version):
                 # git clone --depth implies --single-branch, which makes
                 # the checkout fail if the version changes
                 # fetch the remote branch, to be able to check it out next
