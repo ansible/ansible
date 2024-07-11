@@ -65,8 +65,8 @@ def build_man(output_dir: pathlib.Path, template_file: pathlib.Path) -> None:
     if not template_file.resolve().is_relative_to(SCRIPT_DIR):
         warnings.warn("Custom templates are intended for debugging purposes only. The data model may change in future releases without notice.")
 
-    import docutils.core
-    import docutils.writers.manpage
+    import docutils.core # type: ignore
+    import docutils.writers.manpage # type: ignore
 
     output_dir.mkdir(exist_ok=True, parents=True)
 
