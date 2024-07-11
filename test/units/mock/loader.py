@@ -86,6 +86,3 @@ class DictDataLoader(DataLoader):
 
     def get_basedir(self):
         return os.getcwd()
-
-    def set_vault_secrets(self, vault_secrets):
-        self._vault_secrets = vault_secrets

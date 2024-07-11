@@ -18,7 +18,7 @@ from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.parsing.quoting import unquote
 from ansible.parsing.utils.yaml import from_yaml
-from ansible.parsing.vault import VaultLib, b_HEADER, is_encrypted, is_encrypted_file, parse_vaulttext_envelope, PromptVaultSecret
+from ansible.parsing.vault import VaultLib, is_encrypted, is_encrypted_file, Vault, VaultSecret
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
 
@@ -66,16 +66,15 @@ class DataLoader:
         # TODO: replace with a ref to something that can get the password
         #       a creds/auth provider
         self._vaults = {}
-        self._vault = VaultLib()
-        self.set_vault_secrets(None)
+        self._vaultlib = VaultLib()
 
     # TODO: since we can query vault_secrets late, we could provide this to DataLoader init
-    def set_vault_secrets(self, vault_secrets: list[tuple[str, PromptVaultSecret]] | None) -> None:
-        self._vault.secrets = vault_secrets
+    def set_vault_secrets(self, vault_secrets: list[tuple[str, VaultSecret]] | None) -> None:
+        self._vaultlib.set_secrets(vault_secrets)
 
     def load(self, data: str, file_name: str = '<string>', show_content: bool = True, json_only: bool = False) -> t.Any:
         '''Backwards compat for now'''
-        return from_yaml(data, file_name, show_content, self._vault.secrets, json_only=json_only)
+        return from_yaml(data, file_name, show_content, self._vaultlib.secrets, json_only=json_only)
 
     def load_from_file(self, file_name: str, cache: str = 'all', unsafe: bool = False, json_only: bool = False) -> t.Any:
         '''
@@ -140,15 +139,12 @@ class DataLoader:
     def _decrypt_if_vault_data(self, b_vault_data: bytes, b_file_name: bytes | None = None) -> tuple[bytes, bool]:
         '''Decrypt b_vault_data if encrypted and return b_data and the show_content flag'''
 
-        if not is_encrypted(b_vault_data):
-            show_content = True
-            return b_vault_data, show_content
+        show_content = True
+        if is_encrypted(b_vault_data):
+            show_content = False
+            b_vault_data = self._vaultlib.decrypt(b_vault_data, filename=b_file_name)
 
-        b_ciphertext, b_version, cipher_name, vault_id = parse_vaulttext_envelope(b_vault_data)
-        b_data = self._vault.decrypt(b_vault_data, filename=b_file_name)
-
-        show_content = False
-        return b_data, show_content
+        return b_vault_data, show_content
 
     def _get_file_contents(self, file_name: str) -> tuple[bytes, bool]:
         '''
@@ -389,15 +385,15 @@ class DataLoader:
                     # Limit how much of the file is read since we do not know
                     # whether this is a vault file and therefore it could be very
                     # large.
-                    if is_encrypted_file(f, count=len(b_HEADER)):
+                    if is_encrypted_file(f, count=len(Vault.b_HEADER)):
                         # if the file is encrypted and no password was specified,
                         # the decrypt call would throw an error, but we check first
                         # since the decrypt function doesn't know the file name
                         data = f.read()
-                        if not self._vault.secrets:
+                        if not self._vaultlib.secrets:
                             raise AnsibleParserError("A vault password or secret must be specified to decrypt %s" % to_native(file_path))
 
-                        data = self._vault.decrypt(data, filename=real_path)
+                        data = self._vaultlib.decrypt(data, filename=real_path)
                         # Make a temp file
                         real_path = self._create_content_tempfile(data)
                         self._tempfiles.add(real_path)

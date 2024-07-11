@@ -75,6 +75,12 @@ class AnsibleError(Exception):
         elif self.orig_exc:
             message.append('. %s' % to_native(self.orig_exc))
 
+        # added for vault but should work for others too
+        if hasattr(self, 'filename') and self.filename is not None:
+            if self.filename == '-':
+                self.filename = 'STDIN'
+            message.append(' in "%s".' % self.filename)
+
         return ''.join(message)
 
     @message.setter

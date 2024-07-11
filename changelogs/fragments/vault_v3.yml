@@ -1,0 +1,9 @@
+minor_changes:
+  - Vault, new format (1.3) that allows for cipher options
+  - Vault, new cipher VaultAESv2 class that allows for options unlike existin one
+  - vault, VaultLib and other internal Vault classes have had some API changes to allow for more flexible adding of formats/ciphers
+  - ansible-vault, new command line option to select vault format (--vault-format) to use when creating/updating a vault
+  - ansible-vault, new command line option to select vault salt (--vault-salt) to use when creating/updating a vault
+
+bugfixes:
+  - vault, vault-ids will not allow for newlines anymore

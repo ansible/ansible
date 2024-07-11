@@ -223,7 +223,7 @@ class TestFileVaultSecret(unittest.TestCase):
         tmp_file.close()
 
         fake_loader = DictDataLoader({tmp_file.name: 'sdfadf'})
-        fake_loader._vault.secrets = vault_secrets
+        fake_loader.set_vault_secrets(vault_secrets)
 
         secret = vault.FileVaultSecret(loader=fake_loader, filename=tmp_file.name)
         secret.load()
@@ -495,6 +495,7 @@ class TestVaultIsEncryptedFile(unittest.TestCase):
 class TestVaultCipherAes256(unittest.TestCase):
     def setUp(self):
         self.vault_cipher = vault.VaultAES256()
+        self.options = {'key_length': 32, 'iv_length': 16, 'iterations': 10000}
 
     def test(self):
         self.assertIsInstance(self.vault_cipher, vault.VaultAES256)
@@ -503,7 +504,7 @@ class TestVaultCipherAes256(unittest.TestCase):
     def test_create_key_cryptography(self):
         b_password = b'hunter42'
         b_salt = os.urandom(32)
-        b_key_cryptography = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
+        b_key_cryptography = self.vault_cipher._create_key_cryptography(b_password, b_salt, self.options)
         self.assertIsInstance(b_key_cryptography, bytes)
 
     def test_create_key_known_cryptography(self):
@@ -511,13 +512,13 @@ class TestVaultCipherAes256(unittest.TestCase):
 
         # A fixed salt
         b_salt = b'q' * 32  # q is the most random letter.
-        b_key_1 = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
+        b_key_1 = self.vault_cipher._create_key_cryptography(b_password, b_salt, self.options)
         self.assertIsInstance(b_key_1, bytes)
 
         # verify we get the same answer
         # we could potentially run a few iterations of this and time it to see if it's roughly constant time
         #  and or that it exceeds some minimal time, but that would likely cause unreliable fails, esp in CI
-        b_key_2 = self.vault_cipher._create_key_cryptography(b_password, b_salt, key_length=32, iv_length=16)
+        b_key_2 = self.vault_cipher._create_key_cryptography(b_password, b_salt, self.options)
         self.assertIsInstance(b_key_2, bytes)
         self.assertEqual(b_key_1, b_key_2)
 
@@ -600,7 +601,7 @@ class TestVaultLib(unittest.TestCase):
         text_secret = TextVaultSecret(self.vault_password)
         self.vault_secrets = [('default', text_secret),
                               ('test_id', text_secret)]
-        self.v = vault.VaultLib(self.vault_secrets)
+        self.v = vault.VaultLib(self.vault_secrets, version='1.1')
 
     def _vault_secrets_from_password(self, vault_id, password):
         return [(vault_id, TextVaultSecret(password))]
@@ -616,7 +617,7 @@ class TestVaultLib(unittest.TestCase):
 
     def test_encrypt_vault_id(self):
         plaintext = u'Some text to encrypt in a café'
-        b_vaulttext = self.v.encrypt(plaintext, vault_id='test_id')
+        b_vaulttext = self.v.encrypt(plaintext, vault_id='test_id', version='1.2')
 
         self.assertIsInstance(b_vaulttext, bytes)
 
@@ -646,9 +647,10 @@ class TestVaultLib(unittest.TestCase):
     def test_format_vaulttext_envelope(self):
         cipher_name = "TEST"
         b_ciphertext = b"ansible"
+        self.v.version = '1.2'  # testing for header with vault-id, automatic version switch was removed
         b_vaulttext = vault.format_vaulttext_envelope(b_ciphertext,
                                                       cipher_name,
-                                                      version=self.v.b_version,
+                                                      version=self.v.version,
                                                       vault_id='default')
         b_lines = b_vaulttext.split(b'\n')
         self.assertGreater(len(b_lines), 1, msg="failed to properly add header")
@@ -659,16 +661,18 @@ class TestVaultLib(unittest.TestCase):
         b_header_parts = b_header.split(b';')
         self.assertEqual(len(b_header_parts), 4, msg="header has the wrong number of parts")
         self.assertEqual(b_header_parts[0], b'$ANSIBLE_VAULT', msg="header does not start with $ANSIBLE_VAULT")
-        self.assertEqual(b_header_parts[1], self.v.b_version, msg="header version is incorrect")
-        self.assertEqual(b_header_parts[2], b'TEST', msg="header does not end with cipher name")
+        self.assertEqual(b_header_parts[1], to_bytes(self.v.version), msg="header version is incorrect")
+        self.assertEqual(b_header_parts[2], to_bytes(cipher_name), msg="header does not end with cipher name")
 
         # And just to verify, lets parse the results and compare
         b_ciphertext2, b_version2, cipher_name2, vault_id2 = \
             vault.parse_vaulttext_envelope(b_vaulttext)
         self.assertEqual(b_ciphertext, b_ciphertext2)
-        self.assertEqual(self.v.b_version, b_version2)
+        self.assertEqual(self.v.version, to_text(b_version2))
         self.assertEqual(cipher_name, cipher_name2)
         self.assertEqual('default', vault_id2)
+
+        self.v.version = '1.1'  # revert to default
 
     def test_parse_vaulttext_envelope(self):
         b_vaulttext = b"$ANSIBLE_VAULT;9.9;TEST\nansible"
@@ -706,7 +710,7 @@ class TestVaultLib(unittest.TestCase):
         # so set secrets None explicitly
         v_none.secrets = None
         self.assertRaisesRegex(vault.AnsibleVaultError,
-                               '.*A vault password must be specified to decrypt data.*',
+                               '.*A vault secret is required to decrypt data',
                                v_none.decrypt,
                                b_vaulttext)
 
@@ -721,7 +725,7 @@ class TestVaultLib(unittest.TestCase):
         v_none = vault.VaultLib(vault_secrets_empty)
 
         self.assertRaisesRegex(vault.AnsibleVaultError,
-                               '.*Attempting to decrypt but no vault secrets found.*',
+                               '.*A vault secret is required to decrypt data',
                                v_none.decrypt,
                                b_vaulttext)
 
@@ -822,5 +826,5 @@ class TestVaultLib(unittest.TestCase):
 
     def test_cipher_not_set(self):
         plaintext = u"ansible"
-        self.v.encrypt(plaintext)
-        self.assertEqual(self.v.cipher_name, "AES256")
+        vaulted = self.v.encrypt(plaintext)
+        self.assertTrue(b"AES256" in vaulted)

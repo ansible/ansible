@@ -118,6 +118,24 @@ def maybe_unfrack_path(beacon):
     return inner
 
 
+def forbidden_characters(nope):
+    ''' ensure option does not have any characters in a list'''
+
+    if not isinstance(nope, list):
+        raise TypeError(f"Expected list but got {type(nope)}")
+
+    def inner(value):
+        for x in nope:
+            if x in value:
+                raise ValueError(f"Invalid character '{x}' found in '{value}'")
+        return value
+    return inner
+
+
+#
+# functions to return ansible intrinsic info
+#
+
 def _git_repo_info(repo_path):
     """ returns a string containing git branch, commit id and commit date """
     result = None
@@ -389,7 +407,7 @@ def add_subset_options(parser):
 
 def add_vault_options(parser):
     """Add options for loading vault files"""
-    parser.add_argument('--vault-id', default=[], dest='vault_ids', action='append', type=str,
+    parser.add_argument('--vault-id', default=[], dest='vault_ids', action='append', type=forbidden_characters(['\n', ';']),
                         help='the vault identity to use')
     base_group = parser.add_mutually_exclusive_group()
     base_group.add_argument('-J', '--ask-vault-password', '--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',

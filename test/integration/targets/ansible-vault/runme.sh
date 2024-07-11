@@ -4,7 +4,7 @@ set -euvx
 source virtualenv.sh
 
 
-MYTMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
+MYTMPDIR=$(mktemp -d -p "${OUTPUT_DIR}" 2>/dev/null || mktemp -d -t 'mytmpdirXXXX' -p "${OUTPUT_DIR}")
 trap 'rm -rf "${MYTMPDIR}"' EXIT
 
 # create a test file
@@ -34,12 +34,13 @@ echo "This is a test file for edit2" > "${TEST_FILE_EDIT2}"
 TEST_FILE_EDIT3="${MYTMPDIR}/test_file_edit3"
 echo "This is a test file for edit3" > "${TEST_FILE_EDIT3}"
 
+# why is ansible-config here?!?!
 # ansible-config view
 ansible-config view
-
 # ansible-config
 ansible-config dump --only-changed
-ansible-vault encrypt "$@" --vault-id vault-password "${TEST_FILE_EDIT3}"
+
+ansible-vault encrypt "$@" --vault-id vault-password "${TEST_FILE_EDIT3}" --vault-version '1.1'
 # EDITOR=./faux-editor.py ansible-vault edit "$@" "${TEST_FILE_EDIT3}"
 EDITOR=./faux-editor.py ansible-vault edit --vault-id vault-password -vvvvv "${TEST_FILE_EDIT3}"
 echo $?
@@ -365,7 +366,7 @@ ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" 
 [ -f "${MYTMPDIR}/enc_string_test_file" ];
 
 # test ansible-vault edit with a faux editor
-ansible-vault encrypt "$@" --vault-password-file vault-password "${TEST_FILE_EDIT}"
+ansible-vault encrypt "$@" --vault-password-file vault-password "${TEST_FILE_EDIT}" --vault-version '1.1'
 
 # edit a 1.1 format with no vault-id, should stay 1.1
 EDITOR=./faux-editor.py ansible-vault edit "$@" --vault-password-file vault-password "${TEST_FILE_EDIT}"
@@ -377,7 +378,7 @@ EDITOR=./faux-editor.py ansible-vault edit "$@" --vault-id vault_password@vault-
 cat "${TEST_FILE_EDIT}"
 head -1 "${TEST_FILE_EDIT}" | grep "${FORMAT_1_1_HEADER}"
 
-ansible-vault encrypt "$@" --vault-id vault_password@vault-password "${TEST_FILE_EDIT2}"
+ansible-vault encrypt "$@" --vault-id vault_password@vault-password "${TEST_FILE_EDIT2}" --vault-version '1.2'
 
 # verify that we aren't prompted for a new vault password on edit if we are running interactively (ie, with prompts)
 # have to use setsid nd --ask-vault-pass to force a prompt to simulate.
