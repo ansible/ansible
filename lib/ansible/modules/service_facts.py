@@ -446,9 +446,7 @@ def main():
         ),
         supports_check_mode=True,
     )
-    args = dict(
-        include_user=module.params['include_user'],
-    )
+    params = module.params
 
     locale = get_best_parsable_locale(module)
     module.run_command_environ_update = dict(LANG=locale, LC_ALL=locale)
@@ -457,7 +455,7 @@ def main():
     for svc_module in service_modules:
         svcmod = svc_module(module)
         if isinstance(svcmod, SystemctlScanService):
-            svc = svcmod.gather_services(args['include_user'])
+            svc = svcmod.gather_services(params['include_user'])
         else:
             svc = svcmod.gather_services()
         if svc:
