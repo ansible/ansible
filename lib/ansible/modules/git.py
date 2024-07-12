@@ -1031,7 +1031,7 @@ def fix_remote_tracking_branch(git_path, module, dest, remote, version, single_b
     else:
         fetch_ref = '+refs/heads/*:refs/remotes/origin/*'
 
-    cmd = [git_path, 'config', 'remote.origin.fetch', fetch_ref]
+    cmd = [git_path, 'config', 'remote.%s.fetch' % remote, fetch_ref]
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(
