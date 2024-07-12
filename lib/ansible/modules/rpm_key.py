@@ -245,7 +245,7 @@ class RpmKey(object):
             # Add imported_id to imported_ids
             imported_ids.add(imported_id)
 
-            # Also add "short" (rpm --queryformat %{version}) keyids (self.is_keyid(keyid)) to imported_ids
+            # Also add "short" (rpm --queryformat %{version}) keyids to imported_ids
             for keyid in keyids:
                 # if they are "short" id (self.is_keyid(keyid)) and substring of an imported_id
                 if self.is_keyid(keyid) and keyid in imported_id:
