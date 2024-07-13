@@ -508,9 +508,10 @@ class CallbackBase(AnsiblePlugin):
     def v2_runner_on_failed(self, result: TaskResult, ignore_errors: bool = False) -> None:
         """Process details of a failed task.
 
-        Customization note: Review and format the contents of the
-        TaskResult object here, then output, log, or notify as required
-        by the callback plugin.
+        Customization note: Ansible uses only one console stdout
+        callback at a time. However, you can override this method in a
+        separate callback to add output to stdout or forward details
+        to a log, etc.
 
         Note: The value of 'ignore_errors' tells Ansible whether or not
         to continue running tasks on the host where a failure occurred.
@@ -533,9 +534,10 @@ class CallbackBase(AnsiblePlugin):
     def v2_runner_on_ok(self, result: TaskResult) -> None:
         """Process details of a successful task.
 
-        Customization note: Review and format the contents of the
-        TaskResult object here, then output, log, or notify as required
-        by the callback plugin.
+        Customization note: Ansible uses only one console stdout
+        callback at a time. However, you can override this method in a
+        separate callback to add output to stdout or forward details
+        to a log, etc.
 
         :param result: An object that contains details about the task
         :type result: TaskResult
@@ -548,9 +550,10 @@ class CallbackBase(AnsiblePlugin):
     def v2_runner_on_skipped(self, result: TaskResult) -> None:
         """Get details about a skipped task.
 
-        Customization note: Review and format the contents of the
-        TaskResult object here, then output, log, or notify as required
-        by the callback plugin.
+        Customization note: Ansible uses only one console stdout
+        callback at a time. However, you can override this method in a
+        separate callback to add output to stdout or forward details
+        to a log, etc.
 
         :param result: An object that contains details about the task
         :type result: TaskResult
@@ -562,11 +565,12 @@ class CallbackBase(AnsiblePlugin):
             self.runner_on_skipped(host, self._get_item_label(getattr(result._result, 'results', {})))
 
     def v2_runner_on_unreachable(self, result: TaskResult) -> None:
-        """Process details of a task when the target host is unreachable.
+        """Process details of a task if a target node is unreachable.
 
-        Customization note: Review and format the contents of the
-        TaskResult object here, then output, log, or notify as required
-        by the callback plugin.
+        Customization note: Ansible uses only one console stdout
+        callback at a time. However, you can override this method in a
+        separate callback to add output to stdout or forward details
+        to a log, etc.
 
         :param result: An object that contains details about the task
         :type result: TaskResult
@@ -579,9 +583,10 @@ class CallbackBase(AnsiblePlugin):
     def v2_runner_on_async_poll(self, result: TaskResult) -> None:
         """Process details of a task running in asynchronous mode.
 
-        Customization note: Review and format the contents of the
-        TaskResult object here, then output, log, or notify as required
-        by the callback plugin.
+        Customization note: Ansible uses only one console stdout
+        callback at a time. However, you can override this method in a
+        separate callback to add output to stdout or forward details
+        to a log, etc.
 
         :param result: An object that contains details about the task
         :type result: TaskResult
