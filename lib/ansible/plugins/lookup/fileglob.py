@@ -9,18 +9,17 @@ DOCUMENTATION = """
     version_added: "1.4"
     short_description: list files matching a pattern
     description:
-        - Matches all files in a single directory, non-recursively, that match a pattern.
-          It calls Python's "glob" library.
+        - Matches all files in directory that match a pattern.
+          It calls Python's "`Path.glob <https://docs.python.org/3/library/pathlib.html#pathlib.Path.glob>`_" library.
     options:
       _terms:
         description: path(s) of files to read
         required: True
     notes:
-      - Patterns are only supported on files, not directory/paths.
       - See R(Ansible task paths,playbook_task_paths) to understand how file lookup occurs with paths.
       - Matching is against local system files on the Ansible controller.
         To iterate a list of files on a remote node, use the M(ansible.builtin.find) module.
-      - Returns a string list of paths joined by commas, or an empty list if no files match. For a 'true list' pass O(ignore:wantlist=True) to the lookup.
+      - Returns a list of string paths, or an empty list if no files match.
     seealso:
       - ref: playbook_task_paths
         description: Search paths used for relative files.
@@ -29,6 +28,24 @@ DOCUMENTATION = """
 EXAMPLES = """
 - name: Display paths of all .txt files in dir
   ansible.builtin.debug: msg={{ lookup('ansible.builtin.fileglob', '/my/path/*.txt') }}
+
+- name: Display paths of all bar.py files in all directories
+  ansible.builtin.debug: msg={{ lookup('ansible.builtin.fileglob', '*/bar.py') }}
+
+- name: Display paths of all .md files in recursively directories
+  ansible.builtin.debug: msg={{ lookup('ansible.builtin.fileglob', '**/*.md') }}
+
+- name: Display paths of .json start name with « 2 », « 3 » or « 23 »
+  ansible.builtin.debug: msg={{ lookup('ansible.builtin.fileglob', 'path/[23]-foobar.json') }}
+
+- name: Display paths of .json start name without « 2 », « 3 » or « 23 »
+  ansible.builtin.debug: msg={{ lookup('ansible.builtin.fileglob', 'path/[!23]-foobar.json') }}
+
+- name: Display paths of .txt files matches any single character in foo directory
+  ansible.builtin.debug: msg={{ lookup('ansible.builtin.fileglob', 'foo/b?r.txt') }}
+
+- name: Display paths of all .json start name with « 2 », « 3 » or « 23 » recursively in matches any single character dir
+  ansible.builtin.debug: msg={{ lookup('ansible.builtin.fileglob', 'f?o/**/[23]-*.json') }}
 
 - name: Copy each file over that matches the given pattern
   ansible.builtin.copy:
@@ -48,38 +65,38 @@ RETURN = """
     elements: path
 """
 
-import os
-import glob
+from pathlib import Path
 
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_text
 
 
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
-        ret = []
-        for term in terms:
-            term_file = os.path.basename(term)
-            found_paths = []
-            if term_file != term:
-                found_paths.append(self.find_file_in_search_path(variables, 'files', os.path.dirname(term)))
-            else:
-                # no dir, just file, so use paths and 'files' paths instead
-                if 'ansible_search_path' in variables:
-                    paths = variables['ansible_search_path']
-                else:
-                    paths = [self.get_basedir(variables)]
-                for p in paths:
-                    found_paths.append(os.path.join(p, 'files'))
-                    found_paths.append(p)
+        file_paths = []
 
-            for dwimmed_path in found_paths:
-                if dwimmed_path:
-                    globbed = glob.glob(to_bytes(os.path.join(dwimmed_path, term_file), errors='surrogate_or_strict'))
-                    term_results = [to_text(g, errors='surrogate_or_strict') for g in globbed if os.path.isfile(g)]
-                    if term_results:
-                        ret.extend(term_results)
-                        break
-        return ret
+        if "ansible_search_path" in variables:
+            paths = [Path(p) for p in variables["ansible_search_path"]]
+        else:
+            paths = [Path(self.get_basedir(variables))]
+
+        found_paths = []
+        for path in paths:
+            p = Path(path) / "files"
+            found_paths.append(p)
+            found_paths.append(p.parent)
+
+        for term in terms:
+            for path in found_paths:
+                term_results = [
+                    to_text(g.as_posix(), errors="surrogate_or_strict")
+                    for g in path.glob(term)
+                    if g.is_file()
+                ]
+                if term_results:
+                    file_paths.extend(term_results)
+                    break
+
+        return file_paths
