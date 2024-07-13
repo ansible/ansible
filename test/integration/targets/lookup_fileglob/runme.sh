@@ -17,5 +17,5 @@ done
 # test for issue 72873 fix
 ansible-playbook issue72873/test.yml "$@"
 
-# Test recursive and other match
+# Test recursive and other match
 ansible-playbook recursive/play.yml "$@"

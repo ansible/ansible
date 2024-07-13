@@ -35,16 +35,16 @@ EXAMPLES = """
 - name: Display paths of all .md files in recursively directories
   ansible.builtin.debug: msg={{ lookup('ansible.builtin.fileglob', '**/*.md') }}
 
-- name: Display paths of .json start name with « 2 », « 3 » or « 23 »
+- name: Display paths of .json start name with « 2 », « 3 » or « 23 »
   ansible.builtin.debug: msg={{ lookup('ansible.builtin.fileglob', 'path/[23]-foobar.json') }}
 
-- name: Display paths of .json start name without « 2 », « 3 » or « 23 »
+- name: Display paths of .json start name without « 2 », « 3 » or « 23 »
   ansible.builtin.debug: msg={{ lookup('ansible.builtin.fileglob', 'path/[!23]-foobar.json') }}
 
 - name: Display paths of .txt files matches any single character in foo directory
   ansible.builtin.debug: msg={{ lookup('ansible.builtin.fileglob', 'foo/b?r.txt') }}
 
-- name: Display paths of all .json start name with « 2 », « 3 » or « 23 » recursively in matches any single character dir
+- name: Display paths of all .json start name with « 2 », « 3 » or « 23 » recursively in matches any single character dir
   ansible.builtin.debug: msg={{ lookup('ansible.builtin.fileglob', 'f?o/**/[23]-*.json') }}
 
 - name: Copy each file over that matches the given pattern

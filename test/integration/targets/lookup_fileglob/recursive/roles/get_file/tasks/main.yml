@@ -1,64 +1,64 @@
 - name: "Find exact name file in root dir"
   assert:
     that:
-        - q("fileglob", "hello.py") | length == 1
+        - q("fileglob", "hello.py") | length == 1
 
 - name: "All .md file in dir"
   assert:
     that:
-        - q("fileglob", "toto/*.md") | length == 3
+        - q("fileglob", "toto/*.md") | length == 3
 
 - name: "All .md files in first level dir"
   assert:
     that:
-        - q("fileglob", "*/*.md") | length == 4
+        - q("fileglob", "*/*.md") | length == 4
 
 - name: "All .md files"
   assert:
     that:
-        - q("fileglob", "**/*.md") | length == 5
+        - q("fileglob", "**/*.md") | length == 5
 
 - name: "Find file outside « files » dir"
   assert:
     that:
-        - q("fileglob", "not_files_dir/coucou.*") | length == 3
+        - q("fileglob", "not_files_dir/coucou.*") | length == 3
 
 - name: "Find file outside « role » dir"
   assert:
     that:
-        - q("fileglob", "outside_role/*") | length == 5
+        - q("fileglob", "outside_role/*") | length == 5
 
 - name: "Find all .py file in recursive dir"
   assert:
     that:
-        - q("fileglob", "**/*.py") | length == 9
+        - q("fileglob", "**/*.py") | length == 9
 
 - name: "Find all .py with same name in recursive dir"
   assert:
     that:
-        - q("fileglob", "**/bar.py") | length == 5
+        - q("fileglob", "**/baar.py") | length == 5
 
 - name: "Find all file in recursive dir"
   assert:
     that:
-        - q("fileglob", "**/*") | length == 14
+        - q("fileglob", "**/*") | length == 14
 
-- name: "Find all .py file in dir with « 2 », « 3 » or « 23 » in endname"
+- name: "Find all .py file in dir with « 2 », « 3 » or « 23 » in endname"
   assert:
     that:
-        - q("fileglob", "foo/*[23]/*.py") | length == 3
+        - q("fileglob", "foo/*[23]/*.py") | length == 3
 
-- name: "Find all .py file in dir without « 2 », « 3 » or « 23 » in endname"
+- name: "Find all .py file in dir without « 2 », « 3 » or « 23 » in endname"
   assert:
     that:
-        - q("fileglob", "foo/*[!23]/*.py") | length == 2
+        - q("fileglob", "foo/*[!23]/*.py") | length == 2
 
 - name: "Find file with matches any single character"
   assert:
     that:
-        - q("fileglob", "outside_role/t?t?.txt") | length == 3
+        - q("fileglob", "outside_role/t?t?.txt") | length == 3
 
 - name: "Find file with matches any single character in recursive dir"
   assert:
     that:
-        - q("fileglob", "**/b?r.py") | length == 6
+        - q("fileglob", "**/b?ar.py") | length == 6
