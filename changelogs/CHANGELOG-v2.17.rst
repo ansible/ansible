@@ -4,36 +4,23 @@ ansible-core 2.17 "Gallows Pole" Release Notes
 
 .. contents:: Topics
 
-v2.17.2rc2
-==========
+v2.17.2
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2024-07-09
-| `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
-
-Bugfixes
---------
-
-- dnf - reverted incomplete fix from 2.17.2rc1 (https://github.com/ansible/ansible/pull/83504)
-- package_facts - ignore warnings sent by apk on stderr (https://github.com/ansible/ansible/issues/83501).
-
-v2.17.2rc1
-==========
-
-Release Summary
----------------
-
-| Release Date: 2024-07-08
+| Release Date: 2024-07-15
 | `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
 
 Bugfixes
 --------
 
 - Fix a traceback when an environment variable contains certain special characters (https://github.com/ansible/ansible/issues/83498)
+- dnf - reverted incomplete fix from 2.17.2rc1 (https://github.com/ansible/ansible/pull/83504)
 - dnf, dnf5 - fix for installing a set of packages by specifying them using a wildcard character (https://github.com/ansible/ansible/issues/83373)
 - linear strategy now provides a properly templated task name to the v2_runner_on_started callback event.
+- package_facts - ignore warnings sent by apk on stderr (https://github.com/ansible/ansible/issues/83501).
 - replace - Updated before/after example (https://github.com/ansible/ansible/issues/83390).
 - templating hostvars under native jinja will not cause serialization errors anymore.
 

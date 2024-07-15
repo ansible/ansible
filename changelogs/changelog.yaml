@@ -731,6 +731,17 @@ releases:
     - PowerShell-AddType-temp.yml
     - correct-callback-fqcn-old-style-action-invocation.yml
     release_date: '2024-06-10'
+  2.17.2:
+    changes:
+      release_summary: '| Release Date: 2024-07-15
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+        '
+    codename: Gallows Pole
+    fragments:
+    - 2.17.2_summary.yaml
+    release_date: '2024-07-15'
   2.17.2rc1:
     changes:
       bugfixes:
