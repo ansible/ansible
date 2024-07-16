@@ -66,7 +66,7 @@
     that:
       - result is failed
 
-- name: test HTTP HEAD request for file in check mode
+- name: test HTTP GET request for file in check mode
   get_url:
     url: "https://{{ httpbin_host }}/get"
     dest: "{{ remote_tmp_dir }}/get_url_check.txt"
@@ -74,13 +74,13 @@
   check_mode: True
   register: result
 
-- name: assert that the HEAD request was successful in check mode
+- name: assert that the GET request was successful in check mode
   assert:
     that:
     - result is changed
     - '"OK" in result.msg'
 
-- name: test HTTP HEAD for nonexistent URL in check mode
+- name: test HTTP GET for nonexistent URL in check mode
   get_url:
     url: "https://{{ httpbin_host }}/DOESNOTEXIST"
     dest: "{{ remote_tmp_dir }}/shouldnotexist.html"
@@ -89,7 +89,7 @@
   register: result
   ignore_errors: True
 
-- name: assert that HEAD request for nonexistent URL failed
+- name: assert that GET request for nonexistent URL failed
   assert:
     that:
       - result is failed
