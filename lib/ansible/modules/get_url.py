@@ -610,7 +610,7 @@ def main():
 
     # download to tmpsrc
     start = utcnow()
-    method = 'HEAD' if module.check_mode else 'GET'
+    method = 'GET'
     tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest, method,
                            unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
     result['elapsed'] = (utcnow() - start).seconds
