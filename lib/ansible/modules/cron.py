@@ -131,6 +131,7 @@ options:
     version_added: "2.1"
 requirements:
   - cron (any 'vixie cron' conformant variant, like cronie)
+  - if used for newer MacOS targets, make sure to first enable these options under "Privacy" -> "Full Disk Access" - C(ssd-keygen-wrapper), C(Terminal) and C(cron).
 author:
   - Dane Summers (@dsummersl)
   - Mike Grozak (@rhaido)
