@@ -106,7 +106,7 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
     # list_merge != append and list_merge != prepend), return y
     # (this `if` can be remove without impact on the function
     #  except performance)
-    if x == {} or (x == y and list_merge != 'append' and list_merge != 'prepend'):
+    if x == {} or (x == y and list_merge not in ('append', 'prepend')):
         return y.copy()
     if y == {}:
         return x
