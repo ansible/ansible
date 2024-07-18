@@ -1,0 +1,2 @@
+bugfixes:
+  - combine - ``combine()`` filter did not merge two identical vars when using options ``list_merge='append'`` or ``list_merge='prepend'``. fix for ``def merge_hash`` function, defined in ``lib/ansible/utils/vars.py`` which is used by ``combine()``, to now append / prepend when merging vars which are equal (https://github.com/ansible/ansible/issues/79293).
