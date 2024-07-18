@@ -60,97 +60,92 @@ def resource(request):
 
     def teardown():
         Display._Singleton__instance = None
+
     request.addfinalizer(teardown)
 
 
 class TestResource:
     def test_Display_banner_get_text_width(self, monkeypatch, resource):
-        locale.setlocale(locale.LC_ALL, '')
+        locale.setlocale(locale.LC_ALL, "")
         display = Display()
         display_mock = MagicMock()
-        monkeypatch.setattr(display, 'display', display_mock)
+        monkeypatch.setattr(display, "display", display_mock)
 
-        display.banner(u'🚀🐮', color=False, cows=False)
+        display.banner("🚀🐮", color=False, cows=False)
         args, kwargs = display_mock.call_args
         msg = args[0]
-        stars = u' %s' % (75 * u'*')
+        stars = " %s" % (75 * "*")
         assert msg.endswith(stars)
 
     def test_Display_banner_get_text_width_fallback(self, monkeypatch, resource):
-        locale.setlocale(locale.LC_ALL, 'C.UTF-8')
+        locale.setlocale(locale.LC_ALL, "C.UTF-8")
         display = Display()
         display_mock = MagicMock()
-        monkeypatch.setattr(display, 'display', display_mock)
+        monkeypatch.setattr(display, "display", display_mock)
 
-        display.banner(u'\U000110cd', color=False, cows=False)
+        display.banner("\U000110cd", color=False, cows=False)
         args, kwargs = display_mock.call_args
         msg = args[0]
-        stars = u' %s' % (78 * u'*')
+        stars = " %s" % (78 * "*")
         assert msg.endswith(stars)
-
 
     def test_Display_set_queue_parent(self, resource):
         display = Display()
-        pytest.raises(RuntimeError, display.set_queue, 'foo')
-
+        pytest.raises(RuntimeError, display.set_queue, "foo")
 
     def test_Display_set_queue_fork(self, resource):
         def test():
             display = Display()
-            display.set_queue('foo')
-            assert display._final_q == 'foo'
+            display.set_queue("foo")
+            assert display._final_q == "foo"
+
         p = multiprocessing_context.Process(target=test)
         p.start()
         p.join()
         assert p.exitcode == 0
-
 
     def test_Display_display_fork(self, resource):
         def test():
             queue = MagicMock()
             display = Display()
             display.set_queue(queue)
-            display.display('foo')
-            queue.send_display.assert_called_once_with('display', 'foo')
+            display.display("foo")
+            queue.send_display.assert_called_once_with("display", "foo")
 
         p = multiprocessing_context.Process(target=test)
         p.start()
         p.join()
         assert p.exitcode == 0
-
 
     def test_Display_display_warn_fork(self, resource):
         def test():
             queue = MagicMock()
             display = Display()
             display.set_queue(queue)
-            display.warning('foo')
-            queue.send_display.assert_called_once_with('warning', 'foo')
+            display.warning("foo")
+            queue.send_display.assert_called_once_with("warning", "foo")
 
         p = multiprocessing_context.Process(target=test)
         p.start()
         p.join()
         assert p.exitcode == 0
 
-
     def test_Display_display_lock(self, monkeypatch, resource):
         lock = MagicMock()
         display = Display()
-        monkeypatch.setattr(display, '_lock', lock)
-        display.display('foo')
+        monkeypatch.setattr(display, "_lock", lock)
+        display.display("foo")
         lock.__enter__.assert_called_once_with()
 
     def test_Display_display_lock_fork(self, monkeypatch, resource):
         lock = MagicMock()
         display = Display()
-        monkeypatch.setattr(display, '_lock', lock)
-        monkeypatch.setattr(display, '_final_q', MagicMock())
-        display.display('foo')
+        monkeypatch.setattr(display, "_lock", lock)
+        monkeypatch.setattr(display, "_final_q", MagicMock())
+        display.display("foo")
         lock.__enter__.assert_not_called()
 
-
     def test_display_with_fake_cowsay_binary(self, capsys, mocker, resource):
-
         mocker.patch("ansible.constants.ANSIBLE_COW_PATH", "./cowsay.sh")
         mock_popen = MagicMock()
         mock_popen.return_value.returncode = 1
@@ -160,13 +155,12 @@ class TestResource:
         assert not hasattr(display, "cows_available")
         assert display.b_cowsay is None
 
-
     def test_display_basic_message(self, capsys, mocker, resource):
         # Disable logging
-        mocker.patch('ansible.utils.display.logger', return_value=None)
+        mocker.patch("ansible.utils.display.logger", return_value=None)
 
         d = Display()
-        d.display(u'Some displayed message')
+        d.display("Some displayed message")
         out, err = capsys.readouterr()
-        assert out == 'Some displayed message\n'
-        assert err == ''
+        assert out == "Some displayed message\n"
+        assert err == ""
