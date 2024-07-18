@@ -87,13 +87,11 @@ options:
       - If specified, the line will be inserted after the last match of specified regular expression.
       - If the first match is required, use(firstmatch=yes).
       - A special value is available; V(EOF) for inserting the line at the end of the file.
-      - If specified regular expression has no matches, EOF will be used instead.
+      - If specified regular expression has no matches or no value is passed, V(EOF) will be used instead.
       - If O(insertbefore) is set, default value V(EOF) will be ignored.
       - If regular expressions are passed to both O(regexp) and O(insertafter), O(insertafter) is only honored if no match for O(regexp) is found.
       - May not be used with O(backrefs) or O(insertbefore).
     type: str
-    choices: [ EOF, '*regex*' ]
-    default: EOF
   insertbefore:
     description:
       - Used with O(state=present).
@@ -104,7 +102,6 @@ options:
       - If regular expressions are passed to both O(regexp) and O(insertbefore), O(insertbefore) is only honored if no match for O(regexp) is found.
       - May not be used with O(backrefs) or O(insertafter).
     type: str
-    choices: [ BOF, '*regex*' ]
     version_added: "1.1"
   create:
     description:
