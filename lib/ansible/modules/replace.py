@@ -93,10 +93,6 @@ options:
         get the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: no
-  others:
-    description:
-      - All arguments accepted by the M(ansible.builtin.file) module also work here.
-    type: str
   encoding:
     description:
       - The character encoding for reading and writing the file.
@@ -246,6 +242,7 @@ def main():
     path = params['path']
     encoding = params['encoding']
     res_args = dict(rc=0)
+    contents = None
 
     params['after'] = to_text(params['after'], errors='surrogate_or_strict', nonstring='passthru')
     params['before'] = to_text(params['before'], errors='surrogate_or_strict', nonstring='passthru')
