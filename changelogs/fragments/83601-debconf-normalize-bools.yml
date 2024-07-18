@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - debconf - fix normalization of value representation for boolean vtypes in new packages (https://github.com/ansible/ansible/issues/83594)

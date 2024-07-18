@@ -146,6 +146,32 @@
           - not debconf_multiselect_test_idem_4.changed
           - '"Invalid value provided" in debconf_multiselect_test_idem_4.msg'
 
+    - name: Boolean vtype from boolean value
+      debconf:
+        name: libnns-ldap
+        question: libnss-ldapd/clean_nsswitch
+        vtype: boolean
+        value: true
+      register: debconf_bool_test_bool_1
+
+    - name: validate results for boolean vtype from boolean value
+      assert:
+        that:
+          - debconf_bool_test_bool_1.changed
+
+    - name: Boolean vtype from string value
+      debconf:
+        name: libnns-ldap
+        question: libnss-ldapd/clean_nsswitch
+        vtype: boolean
+        value: "FALSE"
+      register: debconf_bool_test_bool_2
+
+    - name: validate results for boolean vtype from string value
+      assert:
+        that:
+          - debconf_bool_test_bool_2.changed
+
   always:
     - name: uninstall debconf-utils
       apt:
