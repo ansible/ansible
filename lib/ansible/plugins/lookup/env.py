@@ -30,22 +30,21 @@ EXAMPLES = """
   ansible.builtin.debug:
     msg: "'{{ lookup('ansible.builtin.env', 'HOME') }}' is the HOME environment variable."
 
-- name: Before 2.13, how to set default value if the variable is not defined.
-        This cannot distinguish between USER undefined and USER=''.
+- name: Before 2.13, how to set default value if the variable is not defined
   ansible.builtin.debug:
-    msg: "{{ lookup('ansible.builtin.env', 'USER')|default('nobody', True) }} is the user."
+    msg: "Hello {{ lookup('ansible.builtin.env', 'UNDEFINED_VARIABLE') | default('World', True) }}"
 
-- name: Example how to set default value if the variable is not defined, ignores USER=''
+- name: Example how to set default value if the variable is not defined
   ansible.builtin.debug:
-    msg: "{{ lookup('ansible.builtin.env', 'USER', default='nobody') }} is the user."
+    msg: "Hello {{ lookup('ansible.builtin.env', 'UNDEFINED_VARIABLE', default='World') }}"
 
-- name: Set default value to Undefined, if the variable is not defined
+- name: Fail if the variable is not defined by setting default value to 'Undefined'
   ansible.builtin.debug:
-    msg: "{{ lookup('ansible.builtin.env', 'USER', default=Undefined) }} is the user."
+    msg: "Hello {{ lookup('ansible.builtin.env', 'UNDEFINED_VARIABLE', default=Undefined) }}"
 
-- name: Set default value to undef(), if the variable is not defined
+- name: Fail if the variable is not defined by setting default value to 'undef()'
   ansible.builtin.debug:
-    msg: "{{ lookup('ansible.builtin.env', 'USER', default=undef()) }} is the user."
+    msg: "Hello {{ lookup('ansible.builtin.env', 'UNDEFINED_VARIABLE', default=undef()) }}"
 """
 
 RETURN = """
