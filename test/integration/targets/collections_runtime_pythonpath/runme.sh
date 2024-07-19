@@ -19,11 +19,11 @@ ansible \
 
 
 >&2 echo '=== Test that the module gets picked up if installed into site-packages ==='
-python -m pip install pep517
-( # Build a binary Python dist (a wheel) using PEP517:
+python -m pip install build
+( # Build a binary Python dist (a wheel) using build:
   cp -r ansible-collection-python-dist-boo "${OUTPUT_DIR}/"
   cd "${OUTPUT_DIR}/ansible-collection-python-dist-boo"
-  python -m pep517.build --binary --out-dir dist .
+  python -m build -w -o dist .
 )
 # Install a pre-built dist with pip:
 python -m pip install \
