@@ -1,0 +1,2 @@
+minor_changes:
+  - uri - minor refactor (https://github.com/ansible/ansible/pull/83642).
