@@ -109,7 +109,6 @@ options:
     description:
     - This flag indicates that filesystem links in the source tree, if they exist, should be followed.
     type: bool
-    default: yes
     version_added: '2.4'
   checksum:
     description:
@@ -516,7 +515,7 @@ def main():
             force=dict(type='bool', default=True),
             validate=dict(type='str'),
             directory_mode=dict(type='raw'),
-            remote_src=dict(type='bool'),
+            remote_src=dict(type='bool', default=False),
             local_follow=dict(type='bool'),
             checksum=dict(type='str'),
             follow=dict(type='bool', default=False),
