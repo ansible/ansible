@@ -1,2 +1,2 @@
-minor_changes:
-  - uri - minor refactor (https://github.com/ansible/ansible/pull/83642).
+bugfixes:
+  - uri - mark ``url`` as required (https://github.com/ansible/ansible/pull/83642).
