@@ -41,13 +41,13 @@ options:
         default: "present"
     mode:
         description:
-            - The octal mode for newly created files in sources.list.d.
+            - The octal mode for newly created files in C(sources.list.d).
             - Default is what system uses (probably 0644).
         type: raw
         version_added: "1.6"
     update_cache:
         description:
-            - Run the equivalent of C(apt-get update) when a change occurs.  Cache updates are run after making changes.
+            - Run the equivalent of C(apt-get update) when a change occurs. Cache updates are run after making changes.
         type: bool
         default: "yes"
         aliases: [ update-cache ]
@@ -72,9 +72,9 @@ options:
         version_added: '1.8'
     filename:
         description:
-            - Sets the name of the source list file in sources.list.d.
+            - Sets the name of the source list file in C(sources.list.d).
               Defaults to a file name based on the repository source url.
-              The .list extension will be automatically added.
+              The C(.list) extension will be automatically added.
         type: str
         version_added: '2.1'
     codename:
@@ -90,8 +90,8 @@ options:
               Without this library, the module does not work.
             - Runs C(apt-get install python-apt) for Python 2, and C(apt-get install python3-apt) for Python 3.
             - Only works with the system Python 2 or Python 3. If you are using a Python on the remote that is not
-               the system Python, set O(install_python_apt=false) and ensure that the Python apt library
-               for your Python version is installed some other way.
+              the system Python, set O(install_python_apt=false) and ensure that the Python apt library
+              for your Python version is installed some other way.
         type: bool
         default: true
 author:
