@@ -205,8 +205,6 @@ stages:
           targets:
             - name: IOS Python
               test: ios/csr1000v/
-            - name: VyOS Python
-              test: vyos/1.1.8/
   - stage: Summary
     condition: succeededOrFailed()
     dependsOn:
