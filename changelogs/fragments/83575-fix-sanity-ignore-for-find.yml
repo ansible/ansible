@@ -1,0 +1,2 @@
+minor_changes:
+  - find - change the datatype of ``elements`` to ``path`` in option ``paths`` (https://github.com/ansible/ansible/pull/83575).
