@@ -80,6 +80,7 @@ class Play(Base, Taggable, CollectionSearch):
     serial = NonInheritableFieldAttribute(isa='list', default=list, always_post_validate=True)
     strategy = NonInheritableFieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
     order = NonInheritableFieldAttribute(isa='string', always_post_validate=True)
+    continue_on_batch_failure = NonInheritableFieldAttribute(isa='bool', default=False, always_post_validate=True)
 
     # =================================================================================
 

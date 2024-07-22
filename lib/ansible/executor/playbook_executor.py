@@ -199,7 +199,7 @@ class PlaybookExecutor:
                             failed_hosts_count = len(self._tqm._failed_hosts) + len(self._tqm._unreachable_hosts) - \
                                 (previously_failed + previously_unreachable)
 
-                            if len(batch) == failed_hosts_count:
+                            if len(batch) == failed_hosts_count and not play.continue_on_batch_failure:
                                 break_play = True
                                 break
 
