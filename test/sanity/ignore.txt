@@ -183,9 +183,6 @@ test/support/network-integration/collections/ansible_collections/ansible/netcomm
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/netconf/default.py pylint:unnecessary-comprehension
 test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/cliconf/ios.py pylint:arguments-renamed
 test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/modules/ios_config.py pep8:E501
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/cliconf/vyos.py pylint:arguments-renamed
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_command.py pep8:E231
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_command.py pylint:disallowed-name
 test/support/windows-integration/plugins/action/win_copy.py pylint:used-before-assignment
 test/support/windows-integration/collections/ansible_collections/ansible/windows/plugins/module_utils/WebRequest.psm1 pslint!skip
 test/support/windows-integration/collections/ansible_collections/ansible/windows/plugins/modules/win_uri.ps1 pslint!skip
