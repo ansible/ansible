@@ -38,6 +38,9 @@ class ShellBase(AnsiblePlugin):
 
         super(ShellBase, self).__init__()
 
+        # Not used but here for backwards compatibility.
+        # ansible.posix.fish uses (but does not actually use) this value.
+        # https://github.com/ansible-collections/ansible.posix/blob/f41f08e9e3d3129e709e122540b5ae6bc19932be/plugins/shell/fish.py#L38-L39
         self.env = {}
         self.tmpdir = None
         self.executable = None
@@ -59,18 +62,6 @@ class ShellBase(AnsiblePlugin):
     def set_options(self, task_keys=None, var_options=None, direct=None):
 
         super(ShellBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
-
-        # set env if needed, deal with environment's 'dual nature' list of dicts or dict
-        # TODO: config system should already resolve this so we should be able to just iterate over dicts
-        env = self.get_option('environment')
-        if isinstance(env, string_types):
-            raise AnsibleError('The "environment" keyword takes a list of dictionaries or a dictionary, not a string')
-        if not isinstance(env, Sequence):
-            env = [env]
-        for env_dict in env:
-            if not isinstance(env_dict, Mapping):
-                raise AnsibleError('The "environment" keyword takes a list of dictionaries (or single dictionary), but got a "%s" instead' % type(env_dict))
-            self.env.update(env_dict)
 
         # We can remove the try: except in the future when we make ShellBase a proper subset of
         # *all* shells.  Right now powershell and third party shells which do not use the

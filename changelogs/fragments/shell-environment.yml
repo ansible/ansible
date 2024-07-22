@@ -1,0 +1,4 @@
+minor_changes:
+  - Removed the shell ``environment`` config entry as this is already covered by the play/task directives documentation
+    and the value itself is not used in the shell plugins. This should remove any confusion around how people set the
+    environment for a task.

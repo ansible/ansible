@@ -59,14 +59,6 @@ options:
         key: async_dir
     vars:
       - name: ansible_async_dir
-  environment:
-    type: list
-    elements: dictionary
-    default: [{}]
-    description:
-      - List of dictionaries of environment variables and their values to use when executing commands.
-    keyword:
-      - name: environment
   admin_users:
     type: list
     elements: string
