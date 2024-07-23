@@ -1,0 +1,4 @@
+bugfixes:
+- >-
+  ``ansible-galaxy role install`` - update the default timeout to download
+  archive URLs from 20 seconds to 60 (https://github.com/ansible/ansible/issues/83521).
