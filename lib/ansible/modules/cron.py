@@ -131,6 +131,9 @@ options:
     version_added: "2.1"
 requirements:
   - cron (any 'vixie cron' conformant variant, like cronie)
+notes:
+  - If you are experiencing permissions issues with cron and MacOS,
+    you should see the official MacOS documentation for further information.
 author:
   - Dane Summers (@dsummersl)
   - Mike Grozak (@rhaido)
