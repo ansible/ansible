@@ -256,7 +256,7 @@ class GalaxyRole(object):
             display.display("- downloading role from %s" % archive_url)
 
             try:
-                url_file = open_url(archive_url, validate_certs=self._validate_certs, http_agent=user_agent())
+                url_file = open_url(archive_url, validate_certs=self._validate_certs, http_agent=user_agent(), timeout=60)
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
                 data = url_file.read()
                 while data:
