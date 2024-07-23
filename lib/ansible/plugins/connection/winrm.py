@@ -732,6 +732,7 @@ class Connection(ConnectionBase):
             # only way to avoid this is to re-create the shell. This is
             # important for action plugins that might be running multiple
             # processes in the same connection.
+            display.vvvvv("Shell operation quota exceeded, re-creating shell", host=self._winrm_host)
             self.close()
             self._connect()
             return self.protocol.run_command(
