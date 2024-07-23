@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import json
 import sys
-from .constants import _PY_MIN
+from ._constants import _PY_MIN
 
 if sys.version_info < _PY_MIN:
     print(json.dumps(dict(

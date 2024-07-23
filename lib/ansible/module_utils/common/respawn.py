@@ -7,7 +7,7 @@ import os
 import subprocess
 import sys
 
-from ansible.module_utils.constants import _PY_MIN
+from ansible.module_utils._constants import _PY_MIN
 from ansible.module_utils.common.text.converters import to_bytes
 
 
