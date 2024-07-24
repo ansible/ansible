@@ -1,0 +1,23 @@
+---
+# https://github.com/ansible/ansible/issues/23155
+- name: create a repo file
+  copy:
+    dest: /etc/apt/sources.list.d/non-existing.list
+    content: deb http://ppa.launchpad.net/non-existing trusty main
+
+- name: test for logical error message
+  apt:
+    update_cache: yes
+  register: apt_result
+  ignore_errors: yes
+
+- name: verify logical error message
+  assert:
+    that:
+      - "'Failed to update apt cache' in apt_result['msg']"
+      - "'403' in apt_result['msg']"
+
+- name: Clean up
+  file:
+    name: /etc/apt/sources.list.d/non-existing.list
+    state: absent

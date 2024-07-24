@@ -1,3 +1,4 @@
+---
 - name: use Debian mirror
   set_fact:
     distro_mirror: http://ftp.debian.org/debian
@@ -31,8 +32,8 @@
 - name: verify fail uninstall hello without required apt deps in check mode
   assert:
     that:
-    - apt_result is failed
-    - '"If run normally this module can auto-install it." in apt_result.msg'
+      - apt_result is failed
+      - '"If run normally this module can auto-install it." in apt_result.msg'
 
 - name: check with dpkg
   shell: dpkg -s python-apt python3-apt
@@ -58,9 +59,9 @@
 - name: verify uninstall hello with apt and prevent updating the cache
   assert:
     that:
-    - "'changed' in apt_result"
-    - apt_result is not changed
-    - "dpkg_result.rc == 1"
+      - "'changed' in apt_result"
+      - apt_result is not changed
+      - "dpkg_result.rc == 1"
 
 - name: Test installing fnmatch package
   apt:
@@ -139,9 +140,9 @@
 - name: verify uninstallation of hello
   assert:
     that:
-    - "'changed' in apt_result"
-    - apt_result is not changed
-    - "dpkg_result.rc == 1"
+      - "'changed' in apt_result"
+      - apt_result is not changed
+      - "dpkg_result.rc == 1"
 
 # UNINSTALL AGAIN
 - name: uninstall hello with apt
@@ -151,7 +152,7 @@
 - name: verify no change on re-uninstall
   assert:
     that:
-        - "not apt_result.changed"
+      - "not apt_result.changed"
 
 # INSTALL
 - name: install hello with apt
@@ -166,16 +167,16 @@
 - name: verify installation of hello
   assert:
     that:
-        - "apt_result.changed"
-        - "dpkg_result.rc == 0"
+      - "apt_result.changed"
+      - "dpkg_result.rc == 0"
 
 - name: verify apt module outputs
   assert:
     that:
-        - "'changed' in apt_result"
-        - "'stderr' in apt_result"
-        - "'stdout' in apt_result"
-        - "'stdout_lines' in apt_result"
+      - "'changed' in apt_result"
+      - "'stderr' in apt_result"
+      - "'stdout' in apt_result"
+      - "'stdout_lines' in apt_result"
 
 # INSTALL AGAIN
 - name: install hello with apt
@@ -185,7 +186,7 @@
 - name: verify no change on re-install
   assert:
     that:
-        - "not apt_result.changed"
+      - "not apt_result.changed"
 
 # UNINSTALL AGAIN
 - name: uninstall hello with apt
@@ -205,8 +206,8 @@
 - name: verify installation of hello
   assert:
     that:
-        - "apt_result.changed"
-        - "dpkg_result.rc == 0"
+      - "apt_result.changed"
+      - "dpkg_result.rc == 0"
 
 - name: check hello version
   shell: dpkg -s hello | grep Version | awk '{print $2}'
@@ -233,8 +234,8 @@
 - name: verify installation of hello
   assert:
     that:
-        - "apt_result.changed"
-        - "dpkg_result.rc == 0"
+      - "apt_result.changed"
+      - "dpkg_result.rc == 0"
 
 - name: Try installing hello-traditional, that conflicts with hello
   apt:
@@ -268,8 +269,8 @@
 - name: verify installation of hello
   assert:
     that:
-        - "apt_initial.changed"
-        - "not apt_secondary.changed"
+      - "apt_initial.changed"
+      - "not apt_secondary.changed"
 
 - name: uninstall hello with apt
   apt: pkg=hello state=absent purge=yes
@@ -281,7 +282,7 @@
 - name: verify installation of hello
   assert:
     that:
-        - "apt_url.changed"
+      - "apt_url.changed"
 
 - name: uninstall hello with apt
   apt: pkg=hello state=absent purge=yes
@@ -293,7 +294,7 @@
 - name: verify installation of hello
   assert:
     that:
-        - "dpkg_force.changed"
+      - "dpkg_force.changed"
 
 # NEGATIVE: upgrade all packages while providing additional packages to install
 - name: provide additional packages to install while upgrading all installed packages
@@ -304,8 +305,8 @@
 - name: verify failure of upgrade packages and install
   assert:
     that:
-        - "not apt_result.changed"
-        - "apt_result.failed"
+      - "not apt_result.changed"
+      - "apt_result.failed"
 
 - name: autoclean during install
   apt: pkg=hello state=present autoclean=yes
@@ -313,64 +314,9 @@
 - name: undo previous install
   apt: pkg=hello state=absent
 
-# https://github.com/ansible/ansible/issues/23155
-- name: create a repo file
-  copy:
-    dest: /etc/apt/sources.list.d/non-existing.list
-    content: deb http://ppa.launchpad.net/non-existing trusty main
+- include_tasks: non_existing_source.yml
 
-- name: test for logical error message
-  apt:
-    update_cache: yes
-  register: apt_result
-  ignore_errors: yes
-
-- name: verify logical error message
-  assert:
-    that:
-      - "'Failed to update apt cache' in apt_result['msg']"
-      - "'403' in apt_result['msg']"
-
-- name: Clean up
-  file:
-    name: /etc/apt/sources.list.d/non-existing.list
-    state: absent
-
-# https://github.com/ansible/ansible/issues/28907
-- name: Install parent package
-  apt:
-    name: libcaca-dev
-
-- name: Install child package
-  apt:
-    name: libslang2-dev
-
-- shell: apt-mark showmanual | grep libcaca-dev
-  ignore_errors: yes
-  register: parent_output
-
-- name: Check that parent package is marked as installed manually
-  assert:
-    that:
-      - "'libcaca-dev' in parent_output.stdout"
-
-- shell: apt-mark showmanual | grep libslang2-dev
-  ignore_errors: yes
-  register: child_output
-
-- name: Check that child package is marked as installed manually
-  assert:
-    that:
-      - "'libslang2-dev' in child_output.stdout"
-
-- name: Clean up
-  apt:
-    name: "{{ pkgs }}"
-    state: absent
-  vars:
-    pkgs:
-      - libcaca-dev
-      - libslang2-dev
+- include_tasks: apt_mark_showmanual.yml
 
 # # https://github.com/ansible/ansible/issues/38995
 - name: build-dep for a package
@@ -551,8 +497,8 @@
 - name: Verify that package was not removed
   assert:
     that:
-    - package_removed is failed
-    - dpkg_result is success
+      - package_removed is failed
+      - dpkg_result is success
 
 - name: Try removing package (allow_change_held_packages=yes)
   apt:
@@ -569,9 +515,9 @@
 - name: Verify that package removal was succesfull
   assert:
     that:
-    - package_removed is success
-    - dpkg_result is failed
-    - package_removed.changed
+      - package_removed is success
+      - dpkg_result is failed
+      - package_removed.changed
 
 # Virtual package
 - name: Install a virtual package
