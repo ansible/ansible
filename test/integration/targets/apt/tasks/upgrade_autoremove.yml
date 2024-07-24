@@ -20,7 +20,12 @@
         that:
           - "'1.0.0' in foobar_version.stdout"
 
-    - name: test autoremove + upgrade (check mode)
+    - name: Remove foobar, leaving behind its dependency foo
+      apt:
+        name: foobar=1.0.0
+        state: absent
+
+    - name: Test autoremove + upgrade (check mode)
       apt:
         autoremove: true
         upgrade: true
@@ -28,7 +33,7 @@
       check_mode: true
       register: autoremove_check_mode
 
-    - name: test autoremove + upgrade
+    - name: Test autoremove + upgrade
       apt:
         autoremove: true
         upgrade: true
@@ -41,24 +46,24 @@
           - autoremove.changed
           - autoremove_check_mode.changed
 
-    - name: check foo version
-      shell: dpkg -s foobar | grep Version | awk '{print $2}'
-      register: foobar_version
+    - name: Check foo version
+      shell: dpkg -s foo | grep Version | awk '{print $2}'
+      register: foo_version
 
-    - name: check that old version upgraded correctly
+    - name: Check that old version removed correctly
       assert:
         that:
-          - "'1.0.0' not in foobar_version.stdout"
-          - "{{ foobar_version.changed }}"
+          - "'1.0.1' not in foo_version.stdout"
+          - "{{ foo_version.changed }}"
 
-    - name: test autoremove + upgrade (Idempotant)
+    - name: Test autoremove + upgrade (Idempotant)
       apt:
         autoremove: true
         upgrade: true
       diff: true
       register: second_upgrade_result
 
-    - name: check that nothing has changed (Idempotant)
+    - name: Check that nothing has changed (Idempotant)
       assert:
         that:
           - "second_upgrade_result.changed == false"
