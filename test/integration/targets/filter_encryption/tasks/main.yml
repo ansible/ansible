@@ -14,6 +14,7 @@
   assert:
     that:
       - data1_vaulted_string_with_id|unvault(data1_password) == data1_plaintext
+      - data1_vaulted_string_1_3|unvault(data1_password) == data1_plaintext
       - data1_vaulted|unvault(data1_password) == data1_plaintext
       - data2_vaulted_with_id|unvault(data2_password, vault_id=data2_vault_id) == data2_plaintext
       - data2_vaulted_string_with_id|unvault(data2_password, vault_id=data2_vault_id) == data2_plaintext

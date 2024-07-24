@@ -52,7 +52,7 @@ NEED_CRYPTO_LIBRARY = "Ansible's Vault requires the cryptography library in orde
 VALID_VERSIONS = frozenset(['1.1', '1.2', '1.3'])
 
 
-# TODO: move to ansible.errors
+# Future: move to ansible.errors
 class AnsibleVaultError(AnsibleError):
 
     def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, filename=None):
@@ -1086,7 +1086,7 @@ class VaultCipher:
             if not origin.startswith('cli:'):
                 display.warning('Using configured salt, reusing a salt across vaults is insecure')
         else:
-            # TODO: replace with call to ansible.utils.encrypt.random_salt(32)
+            # Future: replace with call to ansible.utils.encrypt.random_salt(32)
             custom_salt = os.urandom(32)
         return to_bytes(custom_salt)
 
@@ -1227,7 +1227,7 @@ class VaultAES256(VaultCipher):
         if not HAS_CRYPTOGRAPHY:
             raise AnsibleError(NEED_CRYPTO_LIBRARY + ' to decrypt in AES')
 
-        b_ciphertext, b_salt, b_crypted_hmac = [_unhexlify(x) for x in vault.vaulted.split(b"\n", 2)]
+        b_salt, b_crypted_hmac, b_ciphertext = [_unhexlify(x) for x in vault.vaulted.split(b"\n", 2)]
         b_password = secret.bytes
         b_key1, b_key2, b_iv = cls._gen_key_initctr(vault, b_password, b_salt)
 
@@ -1272,7 +1272,7 @@ class VaultAES256v2(VaultAES256):
     @classmethod
     def decrypt(cls, vault, secret):
 
-        b_ciphertext, b_salt, b_crypted_hmac = vault.vaulted.split(b"\n", 2)
+        b_salt, b_crypted_hmac, b_ciphertext = vault.vaulted.split(b"\n", 2)
         b_password = secret.bytes
         b_key1, b_key2, b_iv = cls._gen_key_initctr(vault, b_password, b_salt)
 
@@ -1289,10 +1289,10 @@ class VaultAES256v2(VaultAES256):
 ########################################
 class Vault():
 
-    # TODO: Migrate header refs from module to class
-    b_HEADER = b_HEADER
+    # Future: Migrate header refs from module to this class
+    b_vault_header = b'$ANSIBLE_VAULT'
 
-    # TODO: both of these this should be a bit more 'dynamic'
+    # both of these this should be a bit more 'dynamic', specially as we add formats
     OLD_FORMATS = ('1.1', '1.2')
     CIPHER_MAPPING = {
         u'AES256': VaultAES256,
@@ -1373,7 +1373,7 @@ class Vault():
         b_vault_id = to_bytes(self.vault_id, 'utf-8', errors='strict')
         b_cipher = to_bytes(self.cipher, 'utf-8', errors='strict')
 
-        header_parts = [self.b_HEADER, b_version, b_cipher]
+        header_parts = [self.b_vault_header, b_version, b_cipher]
 
         # 1.1 does not support vault id, rest do
         if b_version != b'1.1' and b_vault_id:
@@ -1436,7 +1436,7 @@ class Vault():
             version = to_text(b_tmpheader[1].strip())
             b_cipher = b_tmpheader[2].strip()
 
-            if b_tag != cls.b_HEADER:
+            if b_tag != cls.b_vault_header:
                 raise AnsibleVaultFormatError(f"Invalid vault tag found: {b_tag}", filename=filename)
 
             # handle newer versions

@@ -827,4 +827,4 @@ class TestVaultLib(unittest.TestCase):
     def test_cipher_not_set(self):
         plaintext = u"ansible"
         vaulted = self.v.encrypt(plaintext)
-        self.assertTrue(b"AES256" in vaulted)
+        self.assertIn(b"AES256", vaulted)

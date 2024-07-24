@@ -328,7 +328,7 @@ class TestVaultEditor(unittest.TestCase):
         with open(src_file_path, 'rb') as new_src_file:
             new_src_file_contents = new_src_file.read()
 
-        self.assertTrue(b'$ANSIBLE_VAULT;1.3;AES256v2' in new_src_file_contents)
+        self.assertIn(b'$ANSIBLE_VAULT;1.3;AES256v2', new_src_file_contents)
 
         ve.vaultlib.secrets.set_secrets(self.vault_secrets)
         src_file_plaintext = ve.vaultlib.decrypt(new_src_file_contents)
@@ -356,7 +356,7 @@ class TestVaultEditor(unittest.TestCase):
         with open(src_file_path, 'rb') as new_src_file:
             new_src_file_contents = new_src_file.read()
 
-        self.assertTrue(b'$ANSIBLE_VAULT;1.3;AES256v2;vault_secrets' in new_src_file_contents)
+        self.assertIn(b'$ANSIBLE_VAULT;1.3;AES256v2;vault_secrets', new_src_file_contents)
 
         src_file_plaintext = ve.vaultlib.decrypt(new_src_file_contents)
         self.assertEqual(src_file_plaintext, new_src_contents)
