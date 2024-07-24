@@ -72,6 +72,3 @@
         pkg: foo,foobar
         state: absent
         autoclean: true
-
-    - name: Restore ubuntu repos
-      command: mv /etc/apt/sources.list.backup /etc/apt/sources.list
