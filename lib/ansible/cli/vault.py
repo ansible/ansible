@@ -74,14 +74,15 @@ class VaultCLI(CLI):
 
         # For encrypting actions
         common_encrypt = opt_help.ArgumentParser(add_help=False)
-        common_encrypt.add_argument('--vault-salt', dest='vault_salt', action='store', type=opt_help.forbidden_characters(['\n', ';']), default=C.VAULT_ENCRYPT_SALT,
-                                    help='Static salt to use for encrypting the data. Deaults to random salt, use this at your own risk')
+        common_encrypt.add_argument('--vault-salt', dest='vault_salt', action='store', type=opt_help.forbidden_characters(['\n', ';']),
+                                    help='Static salt to use for encrypting the data. Deaults to random salt, use this at your own risk',
+                                    default=C.VAULT_ENCRYPT_SALT)
         common_encrypt.add_argument('--vault-version', dest='vault_version', action='store', type=opt_help.forbidden_characters(['\n', ';']),
                                     help='Which version of vault container to use. (default: %(default)s)',
                                     default=C.VAULT_VERSION, nargs='?', choices=VALID_VERSIONS)
         common_encrypt.add_argument('--encrypt-vault-id', default=[], dest='encrypt_vault_id',
-                                    action='store', type=opt_help.forbidden_characters(['\n', ';']),
-                                    help='the vault id used to encrypt (required if more than one vault-id is provided)')
+                                    help='the vault id used to encrypt (required if more than one vault-id is provided)',
+                                    action='store', type=opt_help.forbidden_characters(['\n', ';']))
 
         create_parser = subparsers.add_parser('create', help='Create new vault encrypted file', parents=[common, common_encrypt])
         create_parser.set_defaults(func=self.execute_create)
