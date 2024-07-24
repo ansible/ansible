@@ -1,8 +1,5 @@
 # https://github.com/ansible/ansible/issues/46314
 - block:
-    - name: Disable ubuntu repos so system packages are not upgraded and do not change testing env
-      command: mv /etc/apt/sources.list /etc/apt/sources.list.backup
-
     - name: Remove upgrades from the equation
       apt:
         upgrade: true
