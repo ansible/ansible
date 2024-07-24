@@ -385,7 +385,7 @@ class DataLoader:
                     # Limit how much of the file is read since we do not know
                     # whether this is a vault file and therefore it could be very
                     # large.
-                    if is_encrypted_file(f, count=len(Vault.b_HEADER)):
+                    if is_encrypted_file(f, count=len(Vault.b_vault_header)):
                         # if the file is encrypted and no password was specified,
                         # the decrypt call would throw an error, but we check first
                         # since the decrypt function doesn't know the file name
