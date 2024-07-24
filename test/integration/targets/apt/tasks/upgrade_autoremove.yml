@@ -1,0 +1,77 @@
+# https://github.com/ansible/ansible/issues/46314
+- block:
+    - name: Disable ubuntu repos so system packages are not upgraded and do not change testing env
+      command: mv /etc/apt/sources.list /etc/apt/sources.list.backup
+
+    - name: Remove upgrades from the equation
+      apt:
+        upgrade: true
+        state: present
+        update_cache: true
+
+    - name: Install foobar, installs foo as a dependency
+      apt:
+        name: foobar=1.0.0
+        allow_unauthenticated: true
+
+    - name: Check foobar version
+      shell: dpkg -s foobar | grep Version | awk '{print $2}'
+      register: foobar_version
+
+    - name: Ensure the correct version of foobar has been installed
+      assert:
+        that:
+          - "'1.0.0' in foobar_version.stdout"
+
+    - name: test autoremove + upgrade (check mode)
+      apt:
+        autoremove: true
+        upgrade: true
+      diff: true
+      check_mode: true
+      register: autoremove_check_mode
+
+    - name: test autoremove + upgrade
+      apt:
+        autoremove: true
+        upgrade: true
+      diff: true
+      register: autoremove
+
+    - name: Check that something is changed
+      assert:
+        that:
+          - autoremove.changed
+          - autoremove_check_mode.changed
+
+    - name: check foo version
+      shell: dpkg -s foobar | grep Version | awk '{print $2}'
+      register: foobar_version
+
+    - name: check that old version upgraded correctly
+      assert:
+        that:
+          - "'1.0.0' not in foobar_version.stdout"
+          - "{{ foobar_version.changed }}"
+
+    - name: test autoremove + upgrade (Idempotant)
+      apt:
+        autoremove: true
+        upgrade: true
+      diff: true
+      register: second_upgrade_result
+
+    - name: check that nothing has changed (Idempotant)
+      assert:
+        that:
+          - "second_upgrade_result.changed == false"
+
+  always:
+    - name: Clean up
+      apt:
+        pkg: foo,foobar
+        state: absent
+        autoclean: true
+
+    - name: Restore ubuntu repos
+      command: mv /etc/apt/sources.list.backup /etc/apt/sources.list
