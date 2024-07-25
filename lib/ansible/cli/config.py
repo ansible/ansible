@@ -506,7 +506,7 @@ class ConfigCLI(CLI):
         # prep loading
         loader = getattr(plugin_loader, '%s_loader' % ptype)
 
-        # acumulators
+        # accumulators
         output = []
         config_entries = {}
 
@@ -523,7 +523,7 @@ class ConfigCLI(CLI):
             plugin_cs = loader.all(class_only=True)
 
         for plugin in plugin_cs:
-            # in case of deprecastion they diverge
+            # in case of deprecation they diverge
             finalname = name = plugin._load_name
             if name.startswith('_'):
                 if os.path.islink(plugin._original_path):

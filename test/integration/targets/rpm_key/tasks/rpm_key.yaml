@@ -51,7 +51,7 @@
     key: /tmp/RPM-GPG-KEY-EPEL-7
   register: idempotent_test
 
-- name: check idempontence
+- name: check idempotence
   assert:
     that: "not idempotent_test.changed"
 

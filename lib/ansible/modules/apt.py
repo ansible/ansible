@@ -507,7 +507,7 @@ def package_best_match(pkgname, version_cmp, version, release, cache):
         policy.create_pin('Release', pkgname, release, 990)
     if version_cmp == "=":
         # Installing a specific version from command line overrides all pinning
-        # We don't mimmic this exactly, but instead set a priority which is higher than all APT built-in pin priorities.
+        # We don't mimic this exactly, but instead set a priority which is higher than all APT built-in pin priorities.
         policy.create_pin('Version', pkgname, version, 1001)
     pkg = cache[pkgname]
     pkgver = policy.get_candidate_ver(pkg)

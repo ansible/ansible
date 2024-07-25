@@ -352,7 +352,7 @@ class TestPlayIterator(unittest.TestCase):
         self.assertEqual(task.args, dict(msg='this is the first task'))
         # fail the host
         itr.mark_host_failed(hosts[0])
-        # get the resuce task
+        # get the rescue task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
         self.assertEqual(task.action, 'debug')

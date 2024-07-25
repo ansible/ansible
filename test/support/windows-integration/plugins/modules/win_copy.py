@@ -61,7 +61,7 @@ options:
       is different than destination.
     - If set to C(no), the file will only be transferred if the
       destination does not exist.
-    - If set to C(no), no checksuming of the content is performed which can
+    - If set to C(no), no checksumming of the content is performed which can
       help improve performance on larger files.
     type: bool
     default: yes

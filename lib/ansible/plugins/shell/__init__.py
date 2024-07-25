@@ -138,7 +138,7 @@ class ShellBase(AnsiblePlugin):
         # other users can read and access the tmp directory.
         # This is because we use system to create tmp dirs for unprivileged users who are
         # sudo'ing to a second unprivileged user.
-        # The 'system_tmpdirs' setting defines dirctories we can use for this purpose
+        # The 'system_tmpdirs' setting defines directories we can use for this purpose
         # the default are, /tmp and /var/tmp.
         # So we only allow one of those locations if system=True, using the
         # passed in tmpdir if it is valid or the first one from the setting if not.

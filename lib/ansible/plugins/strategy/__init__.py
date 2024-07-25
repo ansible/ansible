@@ -646,7 +646,7 @@ class StrategyBase:
                 for result_item in result_items:
                     if '_ansible_notify' in result_item and task_result.is_changed():
                         # only ensure that notified handlers exist, if so save the notifications for when
-                        # handlers are actually flushed so the last defined handlers are exexcuted,
+                        # handlers are actually flushed so the last defined handlers are executed,
                         # otherwise depending on the setting either error or warn
                         host_state = iterator.get_state_for_host(original_host.name)
                         for notification in result_item['_ansible_notify']:

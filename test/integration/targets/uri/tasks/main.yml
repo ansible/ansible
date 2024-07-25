@@ -232,7 +232,7 @@
   register: result
   ignore_errors: true
 
-- name: Ensure bad SSL site reidrect fails
+- name: Ensure bad SSL site redirect fails
   assert:
     that:
       - result is failed

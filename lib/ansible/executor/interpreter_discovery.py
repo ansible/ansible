@@ -41,7 +41,7 @@ class InterpreterDiscoveryRequiredError(Exception):
 def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
     # interpreter discovery is a 2-step process with the target. First, we use a simple shell-agnostic bootstrap to
     # get the system type from uname, and find any random Python that can get us the info we need. For supported
-    # target OS types, we'll dispatch a Python script that calls plaform.dist() (for older platforms, where available)
+    # target OS types, we'll dispatch a Python script that calls platform.dist() (for older platforms, where available)
     # and brings back /etc/os-release (if present). The proper Python path is looked up in a table of known
     # distros/versions with included Pythons; if nothing is found, depending on the discovery mode, either the
     # default fallback of /usr/bin/python is used (if we know it's there), or discovery fails.
