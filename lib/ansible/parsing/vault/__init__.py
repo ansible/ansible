@@ -71,7 +71,7 @@ class AnsibleVaultFormatError(AnsibleVaultError):
 
 # After backport: add type validation
 # Also move more functions to vault object
-#'is_vault/is_vaulted_filed' might be less ambigious naming
+# 'is_vault/is_vaulted_filed' might be less ambigious naming
 def is_encrypted(data):
     """ Test if this is vault encrypted data blob
 
@@ -211,7 +211,7 @@ def _unhexlify(b_data):
     try:
         return unhexlify(b_data)
     except (BinasciiError, TypeError) as exc:
-        raise ValueError('Invalid vault data forced unhexlify errors', orig_exc=exc)
+        raise ValueError('Invalid vault data forced unhexlify errors: %s' % to_text(exc))
 
 
 def parse_vaulttext(b_vaulttext):
@@ -1454,7 +1454,7 @@ class Vault():
             # start of first line is header in all versions, >= 1.3 it might span mulitple lines
             b_tag = b_tmpheader[0]
             b_version = b_tmpheader[1].strip()
-            b_cipher = b_tmpheader[2].strip().splitlines()[0] # < 1.3 ciphertext will be present, so split lines
+            b_cipher = b_tmpheader[2].strip().splitlines()[0]  # < 1.3 ciphertext will be present, so split lines
 
             # In future add hashing to verify these options were not tampered with, for now simple validation
             cls._is_valid(b_tag, 'tag')
