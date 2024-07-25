@@ -381,8 +381,8 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.urls import fetch_file
 
 DPKG_OPTIONS = 'force-confdef,force-confold'
-APT_GET_ZERO = "\n0 upgraded, 0 newly installed"
-APTITUDE_ZERO = "\n0 packages upgraded, 0 newly installed"
+APT_GET_ZERO = "\n0 upgraded, 0 newly installed, 0 to remove"
+APTITUDE_ZERO = "\n0 packages upgraded, 0 newly installed, 0 to remove"
 APT_LISTS_PATH = "/var/lib/apt/lists"
 APT_UPDATE_SUCCESS_STAMP_PATH = "/var/lib/apt/periodic/update-success-stamp"
 APT_MARK_INVALID_OP = 'Invalid operation'

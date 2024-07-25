@@ -384,6 +384,8 @@
         - { upgrade_type: safe, force_apt_get: True }
         - { upgrade_type: full, force_apt_get: True }
 
+    - include_tasks: "upgrade_autoremove.yml"
+
     - name: (Re-)Install aptitude, run same tests again
       apt:
         pkg: aptitude
@@ -401,6 +403,7 @@
         - { upgrade_type: full, force_apt_get: True }
 
     - include_tasks: "upgrade_scenarios.yml"
+    - include_tasks: "upgrade_autoremove.yml"
 
     - name: Remove aptitude if not originally present
       apt:
