@@ -647,6 +647,7 @@ class TestVaultLib(unittest.TestCase):
     def test_format_vaulttext_envelope(self):
         cipher_name = "TEST"
         b_ciphertext = b"ansible"
+        old_version = self.v.version
         self.v.version = '1.2'  # testing for header with vault-id, automatic version switch was removed
         b_vaulttext = vault.format_vaulttext_envelope(b_ciphertext,
                                                       cipher_name,
@@ -672,7 +673,7 @@ class TestVaultLib(unittest.TestCase):
         self.assertEqual(cipher_name, cipher_name2)
         self.assertEqual('default', vault_id2)
 
-        self.v.version = '1.1'  # revert to default
+        self.v.version = old_version  # revert to default
 
     def test_parse_vaulttext_envelope(self):
         b_vaulttext = b"$ANSIBLE_VAULT;9.9;TEST\nansible"
@@ -692,11 +693,14 @@ class TestVaultLib(unittest.TestCase):
 
     def test_encrypt_decrypt_aes256(self):
         self.v.cipher_name = u'AES256'
+        old_version = self.v.version
+        self.v.version = '1.1'  # above cipher is invalid for 1.3
         plaintext = u"foobar"
         b_vaulttext = self.v.encrypt(plaintext)
         b_plaintext = self.v.decrypt(b_vaulttext)
         self.assertNotEqual(b_vaulttext, b"foobar", msg="encryption failed")
         self.assertEqual(b_plaintext, b"foobar", msg="decryption failed")
+        self.v.version = old_version
 
     def test_encrypt_decrypt_aes256_none_secrets(self):
         vault_secrets = self._vault_secrets_from_password('default', 'ansible')
