@@ -1386,7 +1386,7 @@ class Vault():
             # and header is alwasys on first line
             header = b';'.join(header_parts)
             b_envelope = [header]
-            b_envelope += [h_vaulted[i:i + 80] for i in range(0, len(self.vaulted), 80)]
+            b_envelope += [h_vaulted[i:i + 80] for i in range(0, len(h_vaulted), 80)]
         else:
             # header can be multiline, include cipher as last element
             header_parts.append(hexlify(pickle.dumps(self.options)))
