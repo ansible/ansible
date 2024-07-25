@@ -1,2 +1,5 @@
 bugfixes:
-  - utils.path, updated expected exception, fixed warning and updated comments
+  - in ansible.utils.path, updated expected exception, fixed warning and updated comments
+  - moved code to use os.makedirs over ansible.utils.path.makedirs_safe
+deprecations:
+  - ansible.utils.path.makedirs_safe, the Python builtin os.makedirs now handles issues with concurrent creation itself.
