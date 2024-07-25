@@ -1129,6 +1129,7 @@ class VaultAES256(VaultCipher):
         if not HAS_CRYPTOGRAPHY:
             raise AnsibleError(NEED_CRYPTO_LIBRARY + ' with AES cipher')
 
+    @staticmethod
     def _require_crypto(f):
         def inner(self, *args, **kwargs):
             if HAS_CRYPTOGRAPHY:
