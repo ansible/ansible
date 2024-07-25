@@ -1,4 +1,4 @@
-- name: setup delegated hsot
+- name: setup delegated host
   hosts: localhost
   gather_facts: false
   tasks:

@@ -16,7 +16,7 @@
           ping:
           ignore_unreachable: True
           vars:
-            ansible_ssh_args: "-F {{playbook_dir}}/files/port_overrride_ssh.cfg"
+            ansible_ssh_args: "-F {{playbook_dir}}/files/port_override_ssh.cfg"
           register: expected
 
         - name: check all is as expected
