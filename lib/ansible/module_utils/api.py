@@ -28,7 +28,7 @@ from __future__ import annotations
 import copy
 import functools
 import itertools
-import random
+import secrets
 import sys
 import time
 
@@ -131,7 +131,7 @@ def generate_jittered_backoff(retries=10, delay_base=3, delay_threshold=60):
     :param delay_threshold: The maximum time in seconds for any delay.
     """
     for retry in range(0, retries):
-        yield random.randint(0, min(delay_threshold, delay_base * 2 ** retry))
+        yield secrets.randbelow(min(delay_threshold, delay_base * 2 ** retry))
 
 
 def retry_never(exception_or_result):
