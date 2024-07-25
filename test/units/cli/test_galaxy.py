@@ -1090,7 +1090,7 @@ def test_parse_requirements_file_that_isnt_yaml(requirements_cli, requirements_f
 - galaxy.role
 - anotherrole
 ''')], indirect=True)
-def test_parse_requirements_in_older_format_illega(requirements_cli, requirements_file):
+def test_parse_requirements_in_older_format_illegal(requirements_cli, requirements_file):
     expected = "Expecting requirements file to be a dict with the key 'collections' that contains a list of " \
                "collections to install"
 

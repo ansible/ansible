@@ -461,7 +461,7 @@ def test_build_requirement_from_name_with_prerelease(galaxy_server, monkeypatch,
     assert mock_get_versions.mock_calls[0][1] == ('namespace', 'collection')
 
 
-def test_build_requirment_from_name_with_prerelease_explicit(galaxy_server, monkeypatch, tmp_path_factory):
+def test_build_requirement_from_name_with_prerelease_explicit(galaxy_server, monkeypatch, tmp_path_factory):
     mock_get_versions = MagicMock()
     mock_get_versions.return_value = ['1.0.1', '2.0.1-beta.1', '2.0.1']
     monkeypatch.setattr(galaxy_server, 'get_collection_versions', mock_get_versions)
