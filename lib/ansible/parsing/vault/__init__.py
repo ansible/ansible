@@ -217,7 +217,7 @@ def parse_vaulttext(b_vaulttext):
     :raises: AnsibleVaultFormatError: if the vaulttext format is invalid
     '''
     try:
-        return [_unhexlify(x) for x in _unhexlify(b_vaulttext.split(b"\n", 2))]
+        return [_unhexlify(x) for x in _unhexlify(b_vaulttext).split(b"\n", 2)]
     except Exception as exc:
         raise AnsibleVaultFormatError("Invalid Vault vaulttext format", orig_exc=exc)
 
