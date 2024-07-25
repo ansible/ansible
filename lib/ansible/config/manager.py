@@ -22,8 +22,7 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.quoting import unquote
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
-from ansible.utils.path import cleanup_tmp_file, makedirs_safe, unfrackpath
-from ansible.utils import py3compat
+from ansible.utils.path import cleanup_tmp_file, unfrackpath
 
 
 Setting = namedtuple('Setting', 'name value origin type')
