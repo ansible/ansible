@@ -294,7 +294,7 @@ class GalaxyAPI:
         self._server_timeout = timeout
 
         b_cache_dir = to_bytes(C.config.get_config_value('GALAXY_CACHE_DIR'), errors='surrogate_or_strict')
-        makedirs_safe(b_cache_dir, mode=0o700)
+        os.makedirs(b_cache_dir, mode=0o700, exist_ok=True)
         self._b_cache_path = os.path.join(b_cache_dir, b'api.json')
 
         if clear_response_cache:
