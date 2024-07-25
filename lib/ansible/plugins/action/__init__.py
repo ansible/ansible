@@ -8,8 +8,8 @@ from __future__ import annotations
 import base64
 import json
 import os
-import random
 import re
+import secrets
 import shlex
 import stat
 import tempfile
@@ -1114,7 +1114,7 @@ class ActionBase(ABC):
             remote_files.append(remote_async_module_path)
 
             async_limit = self._task.async_val
-            async_jid = f'j{random.randint(0, 999999999999)}'
+            async_jid = f'j{secrets.randbelow(999999999999)}'
 
             # call the interpreter for async_wrapper directly
             # this permits use of a script for an interpreter on non-Linux platforms

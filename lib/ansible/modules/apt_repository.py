@@ -174,9 +174,9 @@ import glob
 import json
 import os
 import re
+import secrets
 import sys
 import tempfile
-import random
 import time
 
 from ansible.module_utils.basic import AnsibleModule
@@ -743,7 +743,7 @@ def main():
             if update_cache:
                 update_cache_retries = module.params.get('update_cache_retries')
                 update_cache_retry_max_delay = module.params.get('update_cache_retry_max_delay')
-                randomize = random.randint(0, 1000) / 1000.0
+                randomize = secrets.randbelow(1000) / 1000.0
 
                 cache = apt.Cache()
                 for retry in range(update_cache_retries):
