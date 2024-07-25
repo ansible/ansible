@@ -47,18 +47,11 @@ class TestUnhexlify(unittest.TestCase):
     def test_odd_length(self):
         b_data = b'123456789abcdefghijklmnopqrstuvwxyz'
 
-        self.assertRaisesRegex(vault.AnsibleVaultFormatError,
-                               '.*Vault format unhexlify error.*',
-                               vault._unhexlify,
-                               b_data)
+        self.assertRaisesRegex(ValueError, '.* Odd-length string.*', vault._unhexlify, b_data)
 
     def test_nonhex(self):
         b_data = b'6z36316566653264333665333637623064303639353237620a636366633565663263336335656532'
-
-        self.assertRaisesRegex(vault.AnsibleVaultFormatError,
-                               '.*Vault format unhexlify error.*Non-hexadecimal digit found',
-                               vault._unhexlify,
-                               b_data)
+        self.assertRaisesRegex(ValueError,'.*Non-hexadecimal digit found.*', vault._unhexlify, b_data)
 
 
 class TestParseVaulttext(unittest.TestCase):
@@ -88,7 +81,7 @@ class TestParseVaulttext(unittest.TestCase):
         b_vaulttext_envelope = to_bytes(vaulttext_envelope, errors='strict', encoding='utf-8')
         b_vaulttext, b_version, cipher_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext_envelope)
         self.assertRaisesRegex(vault.AnsibleVaultFormatError,
-                               '.*Vault format unhexlify error.*Non-hexadecimal digit found',
+                               '.*Invalid Vault vaulttext format.*Non-hexadecimal digit found',
                                vault.parse_vaulttext,
                                b_vaulttext_envelope)
 
