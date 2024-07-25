@@ -78,7 +78,7 @@ def makedirs_safe(path, mode=None):
 
     from ansible.utils.display import Display
     display = Display()
-    display.deprecated("Since we use newer python now, use exist_ok=True in os.makedirs instead", version="2.15")
+    display.deprecated("Since we use newer python now, use exist_ok=True in os.makedirs instead", version="2.21")
 
     rpath = unfrackpath(path)
     b_rpath = to_bytes(rpath)
@@ -89,7 +89,6 @@ def makedirs_safe(path, mode=None):
             else:
                 os.makedirs(b_rpath)
         except FileExistsError:
-            # from py 3.3 and above
             pass
         except OSError as e:
             if e.errno != EEXIST:
