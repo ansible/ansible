@@ -6,7 +6,7 @@ from __future__ import annotations
 import shlex
 
 from abc import abstractmethod
-from random import choice
+from secrets import choice
 from string import ascii_lowercase
 from gettext import dgettext
 
