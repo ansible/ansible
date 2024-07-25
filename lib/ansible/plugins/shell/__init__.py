@@ -18,8 +18,8 @@ from __future__ import annotations
 
 import os
 import os.path
-import random
 import re
+import secrets
 import shlex
 import time
 
@@ -82,7 +82,7 @@ class ShellBase(AnsiblePlugin):
 
     @staticmethod
     def _generate_temp_dir_name():
-        return 'ansible-tmp-%s-%s-%s' % (time.time(), os.getpid(), random.randint(0, 2**48))
+        return 'ansible-tmp-%s-%s-%s' % (time.time(), os.getpid(), secrets.randbelow(2**48))
 
     def env_prefix(self, **kwargs):
         return ' '.join(['%s=%s' % (k, self.quote(text_type(v))) for k, v in kwargs.items()])

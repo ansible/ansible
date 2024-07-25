@@ -12,7 +12,7 @@ from ansible.cli import CLI
 import datetime
 import os
 import platform
-import random
+import secrets
 import shlex
 import shutil
 import socket
@@ -140,7 +140,7 @@ class PullCLI(CLI):
 
         if options.sleep:
             try:
-                secs = random.randint(0, int(options.sleep))
+                secs = secrets.randbelow(int(options.sleep))
                 options.sleep = secs
             except ValueError:
                 raise AnsibleOptionsError("%s is not a number." % options.sleep)

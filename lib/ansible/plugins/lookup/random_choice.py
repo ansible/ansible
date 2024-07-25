@@ -31,7 +31,7 @@ RETURN = """
       - random item
     type: raw
 """
-import random
+import secrets
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_native
@@ -45,7 +45,7 @@ class LookupModule(LookupBase):
         ret = terms
         if terms:
             try:
-                ret = [random.choice(terms)]
+                ret = [secrets.choice(terms)]
             except Exception as e:
                 raise AnsibleError("Unable to choose random term: %s" % to_native(e))
 

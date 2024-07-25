@@ -365,8 +365,8 @@ import datetime
 import fnmatch
 import locale as locale_module
 import os
-import random
 import re
+import secrets
 import shutil
 import sys
 import tempfile
@@ -1387,7 +1387,7 @@ def main():
                     err = ''
                     update_cache_retries = module.params.get('update_cache_retries')
                     update_cache_retry_max_delay = module.params.get('update_cache_retry_max_delay')
-                    randomize = random.randint(0, 1000) / 1000.0
+                    randomize = secrets.randbelow(1000) / 1000.0
 
                     for retry in range(update_cache_retries):
                         try:

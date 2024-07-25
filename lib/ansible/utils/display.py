@@ -33,7 +33,7 @@ import getpass
 import io
 import logging
 import os
-import random
+import secrets
 import subprocess
 import sys
 import termios
@@ -636,7 +636,7 @@ class Display(metaclass=Singleton):
         if self.noncow:
             thecow = self.noncow
             if thecow == 'random':
-                thecow = random.choice(list(self.cows_available))
+                thecow = secrets.choice(list(self.cows_available))
             runcmd.append(b'-f')
             runcmd.append(to_bytes(thecow))
         runcmd.append(to_bytes(msg))
