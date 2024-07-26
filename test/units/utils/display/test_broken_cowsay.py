@@ -9,7 +9,7 @@ from ansible.utils.display import Display
 from unittest.mock import MagicMock
 
 
-def test_display_with_fake_cowsay_binary(capsys, mocker):
+def test_display_with_fake_cowsay_binary(capsys, mocker, display_resource):
 
     mocker.patch("ansible.constants.ANSIBLE_COW_PATH", "./cowsay.sh")
     mock_popen = MagicMock()
