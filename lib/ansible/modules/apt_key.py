@@ -188,7 +188,7 @@ def lang_env(module):
 
     if not hasattr(lang_env, 'result'):
         locale = get_best_parsable_locale(module)
-        lang_env.result = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
+        lang_env.result = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LANGUAGE=locale)
 
     return lang_env.result
 

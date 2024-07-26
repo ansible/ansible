@@ -1252,6 +1252,7 @@ def main():
         LC_ALL=locale,
         LC_MESSAGES=locale,
         LC_CTYPE=locale,
+        LANGUAGE=locale,
     )
     module.run_command_environ_update = APT_ENV_VARS
 

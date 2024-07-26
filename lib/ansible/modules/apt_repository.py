@@ -504,7 +504,7 @@ class UbuntuSourcesList(SourcesList):
 
         if self.apt_key_bin:
             locale = get_best_parsable_locale(self.module)
-            APT_ENV = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LC_CTYPE=locale)
+            APT_ENV = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LC_CTYPE=locale, LANGUAGE=locale)
             self.module.run_command_environ_update = APT_ENV
             rc, out, err = self.module.run_command([self.apt_key_bin, 'export', key_fingerprint], check_rc=True)
             found = bool(not err or 'nothing exported' not in err)
