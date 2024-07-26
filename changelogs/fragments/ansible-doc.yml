@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - ansible-doc - handle no_fail condition for role.
