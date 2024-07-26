@@ -51,7 +51,7 @@ class TestUnhexlify(unittest.TestCase):
 
     def test_nonhex(self):
         b_data = b'6z36316566653264333665333637623064303639353237620a636366633565663263336335656532'
-        self.assertRaisesRegex(ValueError,'.*Non-hexadecimal digit found.*', vault._unhexlify, b_data)
+        self.assertRaisesRegex(ValueError, '.*Non-hexadecimal digit found.*', vault._unhexlify, b_data)
 
 
 class TestParseVaulttext(unittest.TestCase):

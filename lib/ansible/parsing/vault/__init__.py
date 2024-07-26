@@ -1452,9 +1452,10 @@ class Vault():
             b_tmpheader = b_envelope.strip().split(b';')
 
             # start of first line is header in all versions, >= 1.3 it might span mulitple lines
+            # for versions < 1.2 the 'last field' will contain the cipher also so we splitlines()[0]
             b_tag = b_tmpheader[0]
             b_version = b_tmpheader[1].strip()
-            b_cipher = b_tmpheader[2].strip().splitlines()[0]  # < 1.3 ciphertext will be present, so split lines
+            b_cipher = b_tmpheader[2].strip().splitlines()[0]  # in 1.1 ciphertext will be present
 
             # In future add hashing to verify these options were not tampered with, for now simple validation
             cls._is_valid(b_tag, 'tag')
@@ -1472,8 +1473,7 @@ class Vault():
 
                 if len(b_tmpheader) > 3:
                     # 1.2 has 4 fields, 4th being vault id
-                    b_vault_id = b_tmpheader[3].strip() or default_vault_id
-                    b_cipher = b_cipher.splitlines()[0]  # remove extra stuff
+                    b_vault_id = b_tmpheader[3].strip().splitlines()[0] or default_vault_id
                 else:
                     # 1.1 only has 3 fields, no vault id
                     b_vault_id = default_vault_id
