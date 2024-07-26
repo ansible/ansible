@@ -298,7 +298,7 @@ class TestVaultEditor(unittest.TestCase):
         src_file_link_path = os.path.join(self._test_dir, 'a_link_to_dest_file')
         os.symlink(src_file_path, src_file_link_path)
 
-        ve = self._vault_editor()
+        ve = self._vault_editor(self.vault_secrets)
         ve.encrypt_file(src_file_link_path, self.vault_secret)
 
         self._assert_file_is_encrypted(ve, src_file_path, src_file_contents)
@@ -330,7 +330,7 @@ class TestVaultEditor(unittest.TestCase):
 
         self.assertIn(b'$ANSIBLE_VAULT;1.3;AES256v2', new_src_file_contents)
 
-        ve.vaultlib.secrets.set_secrets(self.vault_secrets)
+        ve.vaultlib.set_secrets(self.vault_secrets)
         src_file_plaintext = ve.vaultlib.decrypt(new_src_file_contents)
         self.assertEqual(src_file_plaintext, new_src_contents)
 
