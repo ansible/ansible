@@ -24,7 +24,7 @@ from ansible.module_utils.service import fork_process
 from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import connection_loader, init_plugin_loader
-from ansible.utils.path import unfrackpath, makedirs_safe
+from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
 from ansible.utils.jsonrpc import JsonRpcServer
 
