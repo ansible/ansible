@@ -214,10 +214,9 @@ class TestVaultEditor(unittest.TestCase):
         src_file_contents = to_bytes("some info in a file\nyup.")
         src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
 
-        ve = self._vault_editor()
+        ve = self._vault_editor(self.vault_secrets)
         ve.encrypt_file(src_file_path, self.vault_secret)
 
-        ve.vaultlib.set_secrets(self.vault_secrets)
         new_password = 'password2:electricbugaloo'
         new_vault_secret = TextVaultSecret(new_password)
         new_vault_secrets = [('default', new_vault_secret)]

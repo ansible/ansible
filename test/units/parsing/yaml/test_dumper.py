@@ -48,7 +48,7 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
         return stream
 
     def _loader(self, stream):
-        return AnsibleLoader(stream, vault_secrets=self.vault.secrets)
+        return AnsibleLoader(stream, vault_secrets=self.vault_secrets)
 
     def test_ansible_vault_encrypted_unicode(self):
         plaintext = 'This is a string we are going to encrypt.'

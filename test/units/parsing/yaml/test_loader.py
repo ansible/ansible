@@ -210,7 +210,7 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
         return stream
 
     def _loader(self, stream):
-        return AnsibleLoader(stream, vault_secrets=self.vault.secrets)
+        return AnsibleLoader(stream, vault_secrets=self.vault_secrets)
 
     def _load_yaml(self, yaml_text, password):
         stream = self._build_stream(yaml_text)
