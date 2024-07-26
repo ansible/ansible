@@ -320,7 +320,7 @@ class TestVaultEditor(unittest.TestCase):
 
         mock_sp_call.side_effect = faux_editor
 
-        ve = self._vault_editor()
+        ve = self._vault_editor(self.vault_secrets)
 
         ve.encrypt_file(src_file_path, self.vault_secret)
         ve.edit_file(src_file_path)
@@ -375,7 +375,7 @@ class TestVaultEditor(unittest.TestCase):
 
         mock_sp_call.side_effect = faux_editor
 
-        ve = self._vault_editor()
+        ve = self._vault_editor(self.vault_secrets)
 
         ve.encrypt_file(src_file_path, self.vault_secret)
 
