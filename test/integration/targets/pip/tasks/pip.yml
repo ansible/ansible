@@ -219,13 +219,13 @@
     state: absent
     name: "{{ remote_tmp_dir }}/pipenv"
 
-- name: install pip throught pip into fresh virtualenv
+- name: install pip through pip into fresh virtualenv
   pip:
     name: pip
     virtualenv: "{{ remote_tmp_dir }}/pipenv"
   register: pip_install_venv
 
-- name: make sure pip in fresh virtualenv report changed
+- name: make sure pip in fresh virtualenv reports changed
   assert:
     that:
       - "pip_install_venv is changed"
@@ -371,7 +371,7 @@
     version: "<100,!=1.0,>0.0.0"
   register: version2
 
-- name: assert no changes ocurred
+- name: assert no changes occurred
   assert:
     that: "not version2.changed"
 

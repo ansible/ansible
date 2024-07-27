@@ -22,7 +22,7 @@
         msg: "{{ lookup('ini', 'NAME', file='lookup_case_check.properties', type='properties', case_sensitive=True) }}"
       register: duplicate_case_sensitive_properties_NAME
 
-    - name: Ensure the correct case-sensitive values were retieved
+    - name: Ensure the correct case-sensitive values were retrieved
       assert:
         that:
           - duplicate_case_sensitive_name.msg == 'bob'

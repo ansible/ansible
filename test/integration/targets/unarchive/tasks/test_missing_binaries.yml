@@ -80,7 +80,7 @@
         - zip
         - tar
 
-    - name: Reinsntall zip binaries
+    - name: Reinstall zip binaries
       package:
         name:
           - zip

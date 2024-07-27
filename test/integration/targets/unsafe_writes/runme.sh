@@ -8,5 +8,5 @@ ansible-playbook basic.yml -i ../../inventory "$@"
 # test enabled fallback env var
 ANSIBLE_UNSAFE_WRITES=1 ansible-playbook basic.yml -i ../../inventory "$@"
 
-# test disnabled fallback env var
+# test disabled fallback env var
 ANSIBLE_UNSAFE_WRITES=0 ansible-playbook basic.yml -i ../../inventory "$@"

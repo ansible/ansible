@@ -82,7 +82,7 @@
         that:
           - "'Zażółć gęślą jaźń' == results.ping"
 
-    - name: Command that echos a non-ascii env var
+    - name: Command that echoes a non-ascii env var
       command: "echo $option"
       environment:
         option: Zażółć

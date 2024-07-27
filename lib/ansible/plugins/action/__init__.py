@@ -146,7 +146,7 @@ class ActionBase(ABC):
         Be cautious when directly passing ``new_module_args`` directly to a
         module invocation, as it will contain the defaults, and not only
         the args supplied from the task. If you do this, the module
-        should not define ``mututally_exclusive`` or similar.
+        should not define ``mutually_exclusive`` or similar.
 
         This code is roughly copied from the ``validate_argument_spec``
         action plugin for use by other action plugins.

@@ -12,7 +12,7 @@
     backup: yes
   register: blockinfile_test0
 
-- name: ensure we have a bcackup file
+- name: ensure we have a backup file
   assert:
     that:
       - "'backup_file' in blockinfile_test0"
@@ -38,7 +38,7 @@
       - 'blockinfile_test0.msg == "Block inserted"'
       - 'blockinfile_test0_grep.stdout == "2"'
 
-- name: check idemptotence
+- name: check idempotence
   blockinfile:
     path: "{{ remote_tmp_dir_test }}/sshd_config"
     block: |

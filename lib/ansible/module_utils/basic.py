@@ -1431,7 +1431,7 @@ class AnsibleModule(object):
             kwargs['deprecations'] = deprecations
 
         # preserve bools/none from no_log
-        # TODO: once python version on target high enough, dict comprh
+        # TODO: once python version on target high enough, dict comprehensions
         preserved = {}
         for k, v in kwargs.items():
             if v is None or isinstance(v, bool):

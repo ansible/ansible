@@ -54,7 +54,7 @@ class OpenBSDHardware(Hardware):
         hardware_facts.update(self.get_dmi_facts())
         hardware_facts.update(self.get_uptime_facts())
 
-        # storage devices notorioslly prone to hang/block so they are under a timeout
+        # storage devices notoriously prone to hang/block so they are under a timeout
         try:
             hardware_facts.update(self.get_mount_facts())
         except timeout.TimeoutError:

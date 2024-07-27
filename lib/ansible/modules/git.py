@@ -468,7 +468,7 @@ def write_ssh_wrapper(module):
 def set_git_ssh_env(key_file, ssh_opts, git_version, module):
     '''
         use environment variables to configure git's ssh execution,
-        which varies by version but this functino should handle all.
+        which varies by version but this function should handle all.
     '''
 
     # initialise to existing ssh opts and/or append user provided

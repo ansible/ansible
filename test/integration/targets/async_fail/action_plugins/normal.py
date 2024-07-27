@@ -52,7 +52,7 @@ class ActionModule(ActionBase):
 
         # Simulate a transient network failure
         if self._task.action == 'async_status' and 'finished' in result and result['finished'] != 1:
-            raise AnsibleError('Pretend to fail somewher ein executing async_status')
+            raise AnsibleError('Pretend to fail somewhere in executing async_status')
 
         if not wrap_async:
             # remove a temporary path we created

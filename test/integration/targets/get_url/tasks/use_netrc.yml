@@ -25,7 +25,7 @@
     that:
      - (response['content'] | b64decode | from_json).user == 'foo'
 
-- name: Test Bearer authorization is successfull with use_netrc=False
+- name: Test Bearer authorization is successful with use_netrc=False
   get_url:
     url: https://{{ httpbin_host }}/bearer
     use_netrc: false
@@ -40,7 +40,7 @@
     src: "{{ remote_tmp_dir }}/msg.txt"
   register: response
 
-- name: assert Test Bearer authorization is successfull with use_netrc=False
+- name: assert Test Bearer authorization is successful with use_netrc=False
   assert:
     that:
      - (response['content'] | b64decode | from_json).token == 'foobar'

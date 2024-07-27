@@ -545,7 +545,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                 if path:
                     module_loader.add_directory(path)
 
-        # dynamically add 'cannonical' modules as commands, aliases coudld be used and dynamically loaded
+        # dynamically add 'canonical' modules as commands, aliases could be used and dynamically loaded
         self.modules = self.list_modules()
         for module in self.modules:
             setattr(self, 'do_' + module, lambda arg, module=module: self.default(module + ' ' + arg))

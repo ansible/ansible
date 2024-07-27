@@ -1018,7 +1018,7 @@ DEFAULT_STDOUT_CALLBACK:
 EDITOR:
   name: editor application to use
   default: vi
-  descrioption:
+  description:
     - for the cases in which Ansible needs to return a file within an editor, this chooses the application to use.
   ini:
     - section: defaults
@@ -1781,7 +1781,7 @@ OLD_PLUGIN_CACHE_CLEARING:
 PAGER:
   name: pager application to use
   default: less
-  descrioption:
+  description:
     - for the cases in which Ansible needs to return output in a pageable fashion, this chooses the application to use.
   ini:
     - section: defaults

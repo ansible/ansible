@@ -90,7 +90,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
             # it is a collection playbook, setup default collections
             AnsibleCollectionConfig.default_collection = playbook_collection
         else:
-            # it is NOT a collection playbook, setup adjecent paths
+            # it is NOT a collection playbook, setup adjacent paths
             AnsibleCollectionConfig.playbook_paths.append(os.path.dirname(os.path.abspath(to_bytes(playbook, errors='surrogate_or_strict'))))
 
         pb._load_playbook_data(file_name=playbook, variable_manager=variable_manager, vars=self.vars.copy())
@@ -123,7 +123,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
 
     def preprocess_data(self, ds):
         '''
-        Regorganizes the data for a PlaybookInclude datastructure to line
+        Reorganizes the data for a PlaybookInclude datastructure to line
         up with what we expect the proper attributes to be
         '''
 

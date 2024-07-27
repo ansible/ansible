@@ -153,7 +153,7 @@
     that:
       - "updated_file.stat.checksum != file.stat.checksum"
 
-- name: test verifying checksumes of the modified collection
+- name: test verifying checksums of the modified collection
   command: ansible-galaxy collection verify ansible_test.verify:2.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
   register: verify
   failed_when: verify.rc == 0

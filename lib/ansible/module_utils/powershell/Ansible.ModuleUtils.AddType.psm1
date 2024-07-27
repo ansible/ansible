@@ -37,7 +37,7 @@ Function Add-CSharpType {
     .PARAMETER CompileSymbols
     [String[]] A list of symbols to be defined during compile time. These are
     added to the existing symbols, 'CORECLR', 'WINDOWS', 'UNIX' that are set
-    conditionalls in this cmdlet.
+    conditionals in this cmdlet.
 
     .NOTES
     The following features were added to control the compiling options from the

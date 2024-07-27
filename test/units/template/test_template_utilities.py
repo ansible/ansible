@@ -23,7 +23,7 @@ import unittest
 from ansible.template import AnsibleUndefined, _escape_backslashes, _count_newlines_from_end
 
 # These are internal utility functions only needed for templating.  They're
-# algorithmic so good candidates for unittesting by themselves
+# algorithmic so good candidates for unit testing by themselves
 
 
 class TestBackslashEscape(unittest.TestCase):

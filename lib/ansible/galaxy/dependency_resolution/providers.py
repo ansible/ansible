@@ -126,7 +126,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
             the current candidate list
 
           * ``parent`` specifies the candidate that provides
-            (dependend on) the requirement, or `None`
+            (depended on) the requirement, or `None`
             to indicate a root requirement.
 
         resolvelib >=0.7.0, < 0.8.0
@@ -202,7 +202,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
         remote archives), the one-and-only match is returned
 
         For a "named" requirement, Galaxy-compatible APIs are consulted
-        to find concrete candidates for this requirement. Of theres a
+        to find concrete candidates for this requirement. If there's a
         pre-installed candidate, it's prepended in front of others.
 
         resolvelib >=0.5.3, <0.6.0
@@ -437,7 +437,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
         # FIXME: differs. So how do we resolve this case? Priority?
         # FIXME: Taking into account a pinned hash? Exploding on
         # FIXME: any differences?
-        # NOTE: The underlying implmentation currently uses first found
+        # NOTE: The underlying implementation currently uses first found
         req_map = self._api_proxy.get_collection_dependencies(candidate)
 
         # NOTE: This guard expression MUST perform an early exit only

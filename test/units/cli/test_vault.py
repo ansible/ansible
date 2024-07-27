@@ -31,7 +31,7 @@ from ansible.module_utils.common.text.converters import to_text
 from ansible.utils import context_objects as co
 
 
-# TODO: make these tests assert something, likely by verifing
+# TODO: make these tests assert something, likely by verifying
 #       mock calls
 
 

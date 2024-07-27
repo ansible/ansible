@@ -61,7 +61,7 @@ class ConcreteArtifactsManager:
     """
     def __init__(self, b_working_directory, validate_certs=True, keyring=None, timeout=60, required_signature_count=None, ignore_signature_errors=None):
         # type: (bytes, bool, str, int, str, list[str]) -> None
-        """Initialize ConcreteArtifactsManager caches and costraints."""
+        """Initialize ConcreteArtifactsManager caches and constraints."""
         self._validate_certs = validate_certs  # type: bool
         self._artifact_cache = {}  # type: dict[bytes, bytes]
         self._galaxy_artifact_cache = {}  # type: dict[Candidate | Requirement, bytes]

@@ -50,7 +50,7 @@ PB_OBJECTS = ['Play', 'Role', 'Block', 'Task', 'Handler']
 PB_LOADED = {}
 SNIPPETS = ['inventory', 'lookup', 'module']
 
-# harcoded from ascii values
+# hardcoded from ascii values
 STYLE = {
     'BLINK': '\033[5m',
     'BOLD': '\033[1m',
@@ -1195,7 +1195,7 @@ class DocCLI(CLI, RoleMixin):
                     opt_leadin = "-"
                 key = "%s%s %s" % (base_indent, opt_leadin, _format(o, 'yellow'))
 
-            # description is specifically formated and can either be string or list of strings
+            # description is specifically formatted and can either be string or list of strings
             if 'description' not in opt:
                 raise AnsibleError("All (sub-)options and return values must have a 'description' field")
             text.append('')

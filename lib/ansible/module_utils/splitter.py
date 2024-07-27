@@ -81,7 +81,7 @@ def split_args(args):
     '''
 
     # the list of params parsed out of the arg string
-    # this is going to be the result value when we are donei
+    # this is going to be the result value when we are done
     params = []
 
     # here we encode the args, so we have a uniform charset to

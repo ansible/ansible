@@ -4,7 +4,7 @@
 # used by Convert-DictToSnakeCase to convert a string in camelCase
 # format to snake_case
 Function Convert-StringToSnakeCase($string) {
-    # cope with pluralized abbreaviations such as TargetGroupARNs
+    # cope with pluralized abbreviations such as TargetGroupARNs
     if ($string -cmatch "[A-Z]{3,}s") {
         $replacement_string = $string -creplace $matches[0], "_$($matches[0].ToLower())"
 

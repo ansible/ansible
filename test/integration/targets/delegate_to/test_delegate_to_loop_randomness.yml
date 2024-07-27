@@ -11,7 +11,7 @@
         ansible_python_interpreter: "{{ ansible_playbook_python }}"
       loop: "{{ range(10)|list }}"
 
-    # We expect all of the next 3 runs to succeeed
+    # We expect all of the next 3 runs to succeed
     # this is done multiple times to increase randomness
     - assert:
         that:

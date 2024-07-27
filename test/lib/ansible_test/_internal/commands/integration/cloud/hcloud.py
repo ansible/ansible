@@ -78,7 +78,7 @@ class HcloudCloudProvider(CloudProvider):
         self._write_config(config)
 
     def _create_ansible_core_ci(self) -> AnsibleCoreCI:
-        """Return a Heztner instance of AnsibleCoreCI."""
+        """Return a Hetzner instance of AnsibleCoreCI."""
         return AnsibleCoreCI(self.args, CloudResource(platform='hetzner'))
 
 

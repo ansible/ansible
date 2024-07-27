@@ -263,7 +263,7 @@ class CliconfBase(AnsiblePlugin):
                     'supports_commit_comment': <bool>,     # identify if adding comment to commit is supported of not
                     'supports_onbox_diff': <bool>,          # identify if on box diff capability is supported or not
                     'supports_generate_diff': <bool>,       # identify if diff capability is supported within plugin
-                    'supports_multiline_delimiter': <bool>, # identify if multiline demiliter is supported within config
+                    'supports_multiline_delimiter': <bool>, # identify if multiline delimiter is supported within config
                     'supports_diff_match': <bool>,          # identify if match is supported
                     'supports_diff_ignore_lines': <bool>,   # identify if ignore line in diff is supported
                     'supports_config_replace': <bool>,     # identify if running config replace with candidate config is supported

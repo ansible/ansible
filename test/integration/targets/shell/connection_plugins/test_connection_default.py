@@ -17,7 +17,7 @@ from ansible.plugins.connection import ConnectionBase
 
 
 class Connection(ConnectionBase):
-    ''' test connnection '''
+    ''' test connection '''
 
     transport = 'test_connection_default'
 

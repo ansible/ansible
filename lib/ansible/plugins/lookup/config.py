@@ -8,7 +8,7 @@ DOCUMENTATION = """
     version_added: "2.5"
     short_description: Display the 'resolved' Ansible option values.
     description:
-      - Retrieves the value of an Ansible configuration setting, resolving all sources, from defaults, ansible.cfg, envirionmnet,
+      - Retrieves the value of an Ansible configuration setting, resolving all sources, from defaults, ansible.cfg, environment,
         CLI, and variables, but not keywords.
       - The values returned assume the context of the current host or C(inventory_hostname).
       - You can use C(ansible-config list) to see the global available settings, add C(-t all) to also show plugin options.

@@ -205,7 +205,7 @@
     var: _check_mode_test2
     verbosity: 2
 
-- name: Assert that task was skipped and mesage was returned
+- name: Assert that task was skipped and message was returned
   assert:
     that:
       - _check_mode_test2 is skipped
