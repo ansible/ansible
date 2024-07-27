@@ -515,7 +515,7 @@ MTAB_ENTRIES = [
     ],
     ['fusectl', '/sys/fs/fuse/connections', 'fusectl', 'rw,relatime', '0', '0'],
     # Mount path with space in the name
-    # The space is encoded as \040 since the fields in /etc/mtab are space-delimeted
+    # The space is encoded as \040 since the fields in /etc/mtab are space-delimited
     ['/dev/sdz9', r'/mnt/foo\040bar', 'ext4', 'rw,relatime', '0', '0'],
     ['\\\\Windows\\share', '/data/', 'cifs', 'credentials=/root/.creds', '0', '0'],
 ]

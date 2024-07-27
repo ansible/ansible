@@ -41,7 +41,7 @@
       paths:
       - '{{ role_path }}/vars'
 
-- name: Install Kerberos sytem packages
+- name: Install Kerberos system packages
   package:
     name: '{{ krb5_packages }}'
     state: present

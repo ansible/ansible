@@ -259,7 +259,7 @@ class TestGetCollectorNames(unittest.TestCase):
         # and then minimal_gather_subset is added. so '!all', 'other' == '!all'
         self.assertEqual(res, set(['whatever']))
 
-    def test_invaid_gather_subset(self):
+    def test_invalid_gather_subset(self):
         valid_subsets = frozenset(['my_fact', 'something_else'])
         minimal_gather_subset = frozenset(['my_fact'])
 

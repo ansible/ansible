@@ -203,7 +203,7 @@ def main():
         worked = is_started = get_ps(module, pattern)
     else:
         if location.get('service'):
-            # standard tool that has been 'destandarized' by reimplementation in other OS/distros
+            # standard tool that has been 'destandardized' by reimplementation in other OS/distros
             cmd = '%s %s status' % (location['service'], name)
         elif script:
             # maybe script implements status (not LSB)

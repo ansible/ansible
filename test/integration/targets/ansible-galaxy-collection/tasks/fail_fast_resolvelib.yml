@@ -7,7 +7,7 @@
         dest: "{{ galaxy_dir }}/resolvelib/ns/coll"
         state: directory
 
-    - name: create galaxy.yml with a dependecy on a galaxy-sourced collection
+    - name: create galaxy.yml with a dependency on a galaxy-sourced collection
       copy:
         dest: "{{ galaxy_dir }}/resolvelib/ns/coll/galaxy.yml"
         content: |

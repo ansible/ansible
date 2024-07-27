@@ -31,7 +31,7 @@
     - name: Initialize git repository
       command: 'git init {{ scm_path }}/test_prereleases'
 
-    - name: Configure commiter for the repo
+    - name: Configure committer for the repo
       shell: git config user.email ansible-test@ansible.com && git config user.name ansible-test
       args:
         chdir: "{{ scm_path }}/test_prereleases"

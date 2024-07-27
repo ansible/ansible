@@ -6,7 +6,7 @@
       debug:
         msg: Hello
 
-    # ensure we properly test for an action name, not a task name when cheking for a meta task
+    # ensure we properly test for an action name, not a task name when checking for a meta task
     - name: "meta"
       debug:
         msg: Hello

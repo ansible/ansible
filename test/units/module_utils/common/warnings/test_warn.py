@@ -25,7 +25,7 @@ def test_warn():
     assert warnings._global_warnings == ['Warning message']
 
 
-def test_multiple_warningss(warning_messages):
+def test_multiple_warnings(warning_messages):
     for w in warning_messages:
         warn(w)
 

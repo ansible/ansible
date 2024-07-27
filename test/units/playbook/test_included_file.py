@@ -220,7 +220,7 @@ def test_process_include_simulate_free_block_role_tasks(mock_iterator,
     have the same parent but are different tasks. Previously the comparison
     for equality did not check if the tasks were the same and only checked
     that the parents were the same. This lead to some tasks being run
-    incorrectly and some tasks being silient dropped."""
+    incorrectly and some tasks being silently dropped."""
 
     fake_loader = DictDataLoader({
         'include_test.yml': "",

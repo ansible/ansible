@@ -30,7 +30,7 @@
   command: 'ls -1a {{ checkout_dir }}/submodule1'
   register: submodule1
 
-- name: SUBMODULES | Ensure submodu1 is at the appropriate commit
+- name: SUBMODULES | Ensure submodule1 is at the appropriate commit
   assert:
     that: '{{ submodule1.stdout_lines | length }} == 2'
 

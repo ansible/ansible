@@ -159,7 +159,7 @@ def main():
             loader = self._get_loader(fullname, path=path)
             if loader is not None:
                 if has_py3_loader:
-                    # loader is expected to be Optional[importlib.abc.Loader], but RestrictedModuleLoader does not inherit from importlib.abc.Loder
+                    # loader is expected to be Optional[importlib.abc.Loader], but RestrictedModuleLoader does not inherit from importlib.abc.Loader
                     return spec_from_loader(fullname, loader)  # type: ignore[arg-type]
                 raise ImportError("Failed to import '%s' due to a bug in ansible-test. Check importlib imports for typos." % fullname)
             return None
