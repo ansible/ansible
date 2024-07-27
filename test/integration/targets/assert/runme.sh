@@ -25,7 +25,7 @@ run_test() {
    sed -i -e 's/ *$//' "${OUTFILE}.${testname}.stdout"
    sed -i -e 's/ *$//' "${OUTFILE}.${testname}.stderr"
 
-   # Scrub deprication warning that shows up in Python 2.6 on CentOS 6
+   # Scrub deprecation warning that shows up in Python 2.6 on CentOS 6
    sed -i -e '/RandomPool_DeprecationWarning/d' "${OUTFILE}.${testname}.stderr"
 
    diff -u "${ORIGFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stdout" || diff_failure

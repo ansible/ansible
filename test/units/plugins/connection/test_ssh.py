@@ -497,7 +497,7 @@ class TestSSHConnectionRun(object):
         assert self.conn._send_initial_data.call_count == 1
         assert self.conn._send_initial_data.call_args[0][1] == 'this is input data'
 
-    def test_pasword_without_data(self):
+    def test_password_without_data(self):
         # simulate no data input but Popen using new pty's fails
         self.mock_popen.return_value = None
         self.mock_popen.side_effect = [OSError(), self.mock_popen_res]

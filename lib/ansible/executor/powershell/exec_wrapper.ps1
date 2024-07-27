@@ -16,7 +16,7 @@ begin {
             .SYNOPSIS
             Converts a JSON string to a Hashtable/Array in the fastest way
             possible. Unfortunately ConvertFrom-Json is still faster but outputs
-            a PSCustomObject which is combersone for module consumption.
+            a PSCustomObject which is cumbersome for module consumption.
 
             .PARAMETER InputObject
             [String] The JSON string to deserialize.

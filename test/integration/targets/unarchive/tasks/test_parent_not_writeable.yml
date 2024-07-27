@@ -4,7 +4,7 @@
   ignore_errors: True
   register: unarchive04
 
-- name: fail if the proposed destination file exists for safey
+- name: fail if the proposed destination file exists for safety
   fail:
     msg: /tmp/foo-unarchive.txt already exists, aborting
   when: unarchive04.stat.exists

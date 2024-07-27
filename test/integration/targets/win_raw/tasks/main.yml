@@ -108,7 +108,7 @@
 - name: unicode tests for psrp
   when: ansible_connection == 'psrp'
   block:
-  # Cannot test unicode passed into separate exec as PSRP doesn't run with a preset CP of 65001 which reuslts in ? for unicode chars
+  # Cannot test unicode passed into separate exec as PSRP doesn't run with a preset CP of 65001 which results in ? for unicode chars
   - name: run a raw command with unicode chars
     raw: Write-Output "! ЗАО. Руководство"
     register: raw_result2

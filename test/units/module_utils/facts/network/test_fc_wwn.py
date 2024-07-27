@@ -14,7 +14,7 @@ fcs0 Defined   00-00 8Gb PCI Express Dual Port FC Adapter (df1000f114108a03)
 fcs1 Available 04-00 8Gb PCI Express Dual Port FC Adapter (df1000f114108a03)
 """
 
-# a bit cutted output of lscfg (from Z0 to ZC)
+# slightly cut output of lscfg (from Z0 to ZC)
 LSCFG_OUTPUT = """
   fcs1             U78CB.001.WZS00ZS-P1-C9-T1  8Gb PCI Express Dual Port FC Adapter (df1000f114108a03)
 

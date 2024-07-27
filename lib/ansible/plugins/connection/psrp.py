@@ -346,7 +346,7 @@ class Connection(ConnectionBase):
     has_pipelining = True
     allow_extras = True
 
-    # Satifies mypy as this connection only ever runs with this plugin
+    # Satisfies mypy as this connection only ever runs with this plugin
     _shell: PowerShellPlugin
 
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:

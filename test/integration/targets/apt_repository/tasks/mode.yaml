@@ -123,12 +123,12 @@
 
 # a literal 600 as the mode will fail currently, in the sense that it
 # doesn't guess and consider 600 and 0600 to be the same, and will instead
-# intepret literal 600 as the decimal 600 (and thereby octal 1130).
+# interpret literal 600 as the decimal 600 (and thereby octal 1130).
 # The literal 0600 can be interpreted as octal correctly. Note that
-# a decimal 644 is octal 420. The default perm is 0644 so a mis intrpretation
+# a decimal 644 is octal 420. The default perm is 0644 so a misinterpretation
 # of 644 was previously resulting in a default file mode of 0420.
 # 'mode: 600' is likely not what a user meant but there isnt enough info
-# to determine that. Note that a string arg of '600' will be intrepeted as 0600.
+# to determine that. Note that a string arg of '600' will be interpreted as 0600.
 # See https://github.com/ansible/ansible/issues/16370
 - name: Assert mode_given_yaml_literal_600 is correct
   assert:
