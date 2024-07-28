@@ -31,3 +31,5 @@ plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: Directive 
 plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: Directive "RV(does.not.exist=true)" contains a non-existing return value "does.not.exist"
 plugins/modules/unsupported_extension.nope:0:0: invalid-extension: Official Ansible modules must have a .py extension for python modules or a .ps1 for powershell modules
 plugins/modules/unsupported_extension.nope:0:0: missing-gplv3-license: GPLv3 license header not found in the first 20 lines of the module
+plugins/modules/wrong_aliases.py:0:0: parameter-documented-aliases-differ: Argument 'bar' in argument_spec has names 'bam', 'bar', but its documentation has names 'bar'
+plugins/modules/wrong_aliases.py:0:0: parameter-documented-aliases-differ: Argument 'foo' in argument_spec has names 'foo', but its documentation has names 'bam', 'foo'

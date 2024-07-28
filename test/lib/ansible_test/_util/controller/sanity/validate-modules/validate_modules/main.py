@@ -1919,8 +1919,10 @@ class ModuleValidator(Validator):
             if len(doc_options_args) == 0:
                 # Undocumented arguments will be handled later (search for undocumented-parameter)
                 doc_options_arg = {}
+                doc_option_name = None
             else:
-                doc_options_arg = doc_options[doc_options_args[0]]
+                doc_option_name = doc_options_args[0]
+                doc_options_arg = doc_options[doc_option_name]
                 if len(doc_options_args) > 1:
                     msg = "Argument '%s' in argument_spec" % arg
                     if context:
@@ -1934,6 +1936,26 @@ class ModuleValidator(Validator):
                         code='parameter-documented-multiple-times',
                         msg=msg
                     )
+
+            all_aliases = set(aliases + [arg])
+            all_docs_aliases = set(
+                ([doc_option_name] if doc_option_name is not None else [])
+                +
+                (doc_options_arg['aliases'] if isinstance(doc_options_arg.get('aliases'), list) else [])
+            )
+            if all_docs_aliases and all_aliases != all_docs_aliases:
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " has names %s, but its documentation has names %s" % (
+                    ", ".join([("'%s'" % alias) for alias in sorted(all_aliases)]),
+                    ", ".join([("'%s'" % alias) for alias in sorted(all_docs_aliases)])
+                )
+                self.reporter.error(
+                    path=self.object_path,
+                    code='parameter-documented-aliases-differ',
+                    msg=msg
+                )
 
             try:
                 doc_default = None
