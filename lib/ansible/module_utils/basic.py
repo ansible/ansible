@@ -100,7 +100,7 @@ def _get_available_hash_algorithms():
                 # Not all algorithms listed as available are actually usable.
                 # For example, md5 is not available in FIPS mode.
                 algorithm_func()
-            except Exception:
+            except Exception as e:
                 pass
             else:
                 algorithms[algorithm_name] = algorithm_func
@@ -121,12 +121,22 @@ from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.file import (
     _PERM_BITS as PERM_BITS,
     _DEFAULT_PERM as DEFAULT_PERM,
+    DEFAULT_SELINUX_CONTEXT,
+    atomic_move,
     is_executable,
+    is_selinux_enabled,
+    is_selinux_mls_enabled,
+    is_special_selinux_path,
+    find_mount_point,
     format_attributes,
     get_flags_from_attributes,
     FILE_ATTRIBUTES,
     S_IXANY,
     S_IRWU_RWG_RWO,
+    get_path_selinux_context,
+    get_path_default_selinux_context,
+    set_selinux_context,
+    write_unsafely,
 )
 from ansible.module_utils.common.sys_info import (
     get_distribution,
@@ -572,57 +582,42 @@ class AnsibleModule(object):
 
     def selinux_mls_enabled(self):
         if self._selinux_mls_enabled is None:
-            self._selinux_mls_enabled = HAVE_SELINUX and selinux.is_selinux_mls_enabled() == 1
-
+            self._selinux_mls_enabled = is_selinux_mls_enabled()
         return self._selinux_mls_enabled
 
     def selinux_enabled(self):
         if self._selinux_enabled is None:
-            self._selinux_enabled = HAVE_SELINUX and selinux.is_selinux_enabled() == 1
-
+            self._selinux_enabled = is_selinux_enabled()
         return self._selinux_enabled
 
     # Determine whether we need a placeholder for selevel/mls
     def selinux_initial_context(self):
         if self._selinux_initial_context is None:
-            self._selinux_initial_context = [None, None, None]
-            if self.selinux_mls_enabled():
-                self._selinux_initial_context.append(None)
-
+            self._selinux_initial_context = DEFAULT_SELINUX_CONTEXT
         return self._selinux_initial_context
 
     # If selinux fails to find a default, return an array of None
     def selinux_default_context(self, path, mode=0):
-        context = self.selinux_initial_context()
-        if not self.selinux_enabled():
-            return context
-        try:
-            ret = selinux.matchpathcon(to_native(path, errors='surrogate_or_strict'), mode)
-        except OSError:
-            return context
-        if ret[0] == -1:
-            return context
-        # Limit split to 4 because the selevel, the last in the list,
-        # may contain ':' characters
-        context = ret[1].split(':', 3)
+        context = None
+        if is_selinux_enabled():
+            try:
+                context = get_path_default_selinux_context(path, mode)
+            except OSError as e:
+                # unable to read context, but we don't care, fallback to initial.
+                self.debug(f"Ignoring failure to read selinux context for {path}: {e}")
+        if context is None:
+            context = self.selinux_initial_context()
         return context
 
     def selinux_context(self, path):
-        context = self.selinux_initial_context()
-        if not self.selinux_enabled():
-            return context
-        try:
-            ret = selinux.lgetfilecon_raw(to_native(path, errors='surrogate_or_strict'))
-        except OSError as e:
-            if e.errno == errno.ENOENT:
-                self.fail_json(path=path, msg='path %s does not exist' % path)
-            else:
-                self.fail_json(path=path, msg='failed to retrieve selinux context')
-        if ret[0] == -1:
-            return context
-        # Limit split to 4 because the selevel, the last in the list,
-        # may contain ':' characters
-        context = ret[1].split(':', 3)
+        context = None
+        if is_selinux_enabled():
+            try:
+                context = get_path_selinux_context(path, context)
+            except OSError as e:
+                self.fail_json(msg=f'{e}', exception=traceback.format_exc())
+        if context is None:
+            context = self.selinux_initial_context()
         return context
 
     def user_and_group(self, path, expand=True):
@@ -635,92 +630,38 @@ class AnsibleModule(object):
         return (uid, gid)
 
     def find_mount_point(self, path):
-        '''
-            Takes a path and returns its mount point
-
-        :param path: a string type with a filesystem path
-        :returns: the path to the mount point as a text type
-        '''
-
-        b_path = os.path.realpath(to_bytes(os.path.expanduser(os.path.expandvars(path)), errors='surrogate_or_strict'))
-        while not os.path.ismount(b_path):
-            b_path = os.path.dirname(b_path)
-
-        return to_text(b_path, errors='surrogate_or_strict')
+        return find_mount_point(path)
 
     def is_special_selinux_path(self, path):
-        """
-        Returns a tuple containing (True, selinux_context) if the given path is on a
-        NFS or other 'special' fs  mount point, otherwise the return will be (False, None).
-        """
-        try:
-            f = open('/proc/mounts', 'r')
-            mount_data = f.readlines()
-            f.close()
-        except Exception:
-            return (False, None)
-
-        path_mount_point = self.find_mount_point(path)
-
-        for line in mount_data:
-            (device, mount_point, fstype, options, rest) = line.split(' ', 4)
-            if to_bytes(path_mount_point) == to_bytes(mount_point):
-                for fs in self._selinux_special_fs:
-                    if fs in fstype:
-                        special_context = self.selinux_context(path_mount_point)
-                        return (True, special_context)
-
-        return (False, None)
+        return is_special_selinux_path(path, self._selinux_special_fs)
 
     def set_default_selinux_context(self, path, changed):
-        if not self.selinux_enabled():
+        if not is_selinux_enabled():
             return changed
         context = self.selinux_default_context(path)
         return self.set_context_if_different(path, context, False)
 
     def set_context_if_different(self, path, context, changed, diff=None):
 
-        if not self.selinux_enabled():
-            return changed
-
         if self.check_file_absent_if_check_mode(path):
-            return True
-
-        cur_context = self.selinux_context(path)
-        new_context = list(cur_context)
-        # Iterate over the current context instead of the
-        # argument context, which may have selevel.
-
-        (is_special_se, sp_context) = self.is_special_selinux_path(path)
-        if is_special_se:
-            new_context = sp_context
-        else:
-            for i in range(len(cur_context)):
-                if len(context) > i:
-                    if context[i] is not None and context[i] != cur_context[i]:
-                        new_context[i] = context[i]
-                    elif context[i] is None:
-                        new_context[i] = cur_context[i]
-
-        if cur_context != new_context:
-            if diff is not None:
-                if 'before' not in diff:
-                    diff['before'] = {}
-                diff['before']['secontext'] = cur_context
-                if 'after' not in diff:
-                    diff['after'] = {}
-                diff['after']['secontext'] = new_context
-
-            try:
-                if self.check_mode:
-                    return True
-                rc = selinux.lsetfilecon(to_native(path), ':'.join(new_context))
-            except OSError as e:
-                self.fail_json(path=path, msg='invalid selinux context: %s' % to_native(e),
-                               new_context=new_context, cur_context=cur_context, input_was=context)
-            if rc != 0:
-                self.fail_json(path=path, msg='set selinux context failed')
             changed = True
+        elif is_selinux_enabled():
+            cur_context = DEFAULT_SELINUX_CONTEXT
+            new_context = context
+            try:
+                cur_context, new_context = set_selinux_context(path, context, special_fs=self._selinux_special_fs, simulate=self.check_mode)
+            except OSError as e:
+                self.fail_json(path=path, msg=f'{e}', new_context=new_context, cur_context=cur_context, input_was=context)
+
+            if cur_context != new_context:
+                changed = True
+                if diff is not None:
+                    if 'before' not in diff:
+                        diff['before'] = {}
+                    diff['before']['secontext'] = cur_context
+                    if 'after' not in diff:
+                        diff['after'] = {}
+                    diff['after']['secontext'] = new_context
         return changed
 
     def set_owner_if_different(self, path, owner, changed, diff=None, expand=True):
@@ -949,8 +890,8 @@ class AnsibleModule(object):
                         output['version'] = res[0].strip()
                     output['attr_flags'] = res[attr_flags_idx].replace('-', '').strip()
                     output['attributes'] = format_attributes(output['attr_flags'])
-            except Exception:
-                pass
+            except Exception as e:
+                self.debug(f"Ignoring inability to get attributes for {path}: {e}")
         return output
 
     @classmethod
@@ -1150,7 +1091,9 @@ class AnsibleModule(object):
             else:
                 kwargs['state'] = 'file'
             if self.selinux_enabled():
-                kwargs['secontext'] = ':'.join(self.selinux_context(path))
+                context = self.selinux_context(path)
+                if context is not None and None not in context:
+                    kwargs['secontext'] = ':'.join(context)
             kwargs['size'] = st[stat.ST_SIZE]
         return kwargs
 
@@ -1342,8 +1285,8 @@ class AnsibleModule(object):
                     if os.access(cwd, os.F_OK | os.R_OK):
                         os.chdir(cwd)
                         return cwd
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.debug(f"Ignoring failure to set cwd: {e}")
         # we won't error here, as it may *not* be a problem,
         # and we don't want to break modules unnecessarily
         return None
@@ -1547,7 +1490,9 @@ class AnsibleModule(object):
             try:
                 os.unlink(tmpfile)
             except OSError as e:
-                sys.stderr.write("could not cleanup %s: %s" % (tmpfile, to_native(e)))
+                msg = f"Could not cleanup '{tmpfile}': {e}"
+                self.warn(msg)
+                sys.stderr.write(msg)
 
     def preserved_copy(self, src, dest):
         """Copy a file with preserved ownership, permissions and context"""
@@ -1585,134 +1530,16 @@ class AnsibleModule(object):
         self.set_attributes_if_different(dest, current_attribs, True)
 
     def atomic_move(self, src, dest, unsafe_writes=False, keep_dest_attrs=True):
-        '''atomically move src to dest, copying attributes from dest, returns true on success
-        it uses os.rename to ensure this as it is an atomic operation, rest of the function is
-        to work around limitations, corner cases and ensure selinux context is saved if possible'''
-        context = None
-        dest_stat = None
-        b_src = to_bytes(src, errors='surrogate_or_strict')
-        b_dest = to_bytes(dest, errors='surrogate_or_strict')
-        if os.path.exists(b_dest) and keep_dest_attrs:
-            try:
-                dest_stat = os.stat(b_dest)
-                os.chown(b_src, dest_stat.st_uid, dest_stat.st_gid)
-                shutil.copystat(b_dest, b_src)
-            except OSError as e:
-                if e.errno != errno.EPERM:
-                    raise
-            if self.selinux_enabled():
-                context = self.selinux_context(dest)
-        else:
-            if self.selinux_enabled():
-                context = self.selinux_default_context(dest)
-
-        creating = not os.path.exists(b_dest)
-
         try:
-            # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
-            os.rename(b_src, b_dest)
-        except (IOError, OSError) as e:
-            if e.errno not in [errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY, errno.EBUSY]:
-                # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
-                # and 26 (text file busy) which happens on vagrant synced folders and other 'exotic' non posix file systems
-                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, to_native(e)), exception=traceback.format_exc())
-            else:
-                # Use bytes here.  In the shippable CI, this fails with
-                # a UnicodeError with surrogateescape'd strings for an unknown
-                # reason (doesn't happen in a local Ubuntu16.04 VM)
-                b_dest_dir = os.path.dirname(b_dest)
-                b_suffix = os.path.basename(b_dest)
-                error_msg = None
-                tmp_dest_name = None
-                try:
-                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=b'.ansible_tmp', dir=b_dest_dir, suffix=b_suffix)
-                except (OSError, IOError) as e:
-                    error_msg = 'The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), to_native(e))
-                finally:
-                    if error_msg:
-                        if unsafe_writes:
-                            self._unsafe_writes(b_src, b_dest)
-                        else:
-                            self.fail_json(msg=error_msg, exception=traceback.format_exc())
-
-                if tmp_dest_name:
-                    b_tmp_dest_name = to_bytes(tmp_dest_name, errors='surrogate_or_strict')
-
-                    try:
-                        try:
-                            # close tmp file handle before file operations to prevent text file busy errors on vboxfs synced folders (windows host)
-                            os.close(tmp_dest_fd)
-                            # leaves tmp file behind when sudo and not root
-                            try:
-                                shutil.move(b_src, b_tmp_dest_name, copy_function=shutil.copy if keep_dest_attrs else shutil.copy2)
-                            except OSError:
-                                # cleanup will happen by 'rm' of tmpdir
-                                # copy2 will preserve some metadata
-                                if keep_dest_attrs:
-                                    shutil.copy(b_src, b_tmp_dest_name)
-                                else:
-                                    shutil.copy2(b_src, b_tmp_dest_name)
-
-                            if self.selinux_enabled():
-                                self.set_context_if_different(
-                                    b_tmp_dest_name, context, False)
-                            try:
-                                tmp_stat = os.stat(b_tmp_dest_name)
-                                if keep_dest_attrs and dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
-                                    os.chown(b_tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
-                            except OSError as e:
-                                if e.errno != errno.EPERM:
-                                    raise
-                            try:
-                                os.rename(b_tmp_dest_name, b_dest)
-                            except (shutil.Error, OSError, IOError) as e:
-                                if unsafe_writes and e.errno == errno.EBUSY:
-                                    self._unsafe_writes(b_tmp_dest_name, b_dest)
-                                else:
-                                    self.fail_json(msg='Unable to make %s into to %s, failed final rename from %s: %s' %
-                                                       (src, dest, b_tmp_dest_name, to_native(e)), exception=traceback.format_exc())
-                        except (shutil.Error, OSError, IOError) as e:
-                            if unsafe_writes:
-                                self._unsafe_writes(b_src, b_dest)
-                            else:
-                                self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, to_native(e)), exception=traceback.format_exc())
-                    finally:
-                        self.cleanup(b_tmp_dest_name)
-
-        if creating:
-            # make sure the file has the correct permissions
-            # based on the current value of umask
-            umask = os.umask(0)
-            os.umask(umask)
-            os.chmod(b_dest, S_IRWU_RWG_RWO & ~umask)
-            try:
-                os.chown(b_dest, os.geteuid(), os.getegid())
-            except OSError:
-                # We're okay with trying our best here.  If the user is not
-                # root (or old Unices) they won't be able to chown.
-                pass
-
-        if self.selinux_enabled():
-            # rename might not preserve context
-            self.set_context_if_different(dest, context, False)
+            atomic_move(src, dest, unsafe_writes, keep_dest_attrs, self._selinux_special_fs)
+        except OSError as e:
+            self.fail_json(msg=f'{e}', src=src, dest=dest)
 
     def _unsafe_writes(self, src, dest):
-        # sadly there are some situations where we cannot ensure atomicity, but only if
-        # the user insists and we get the appropriate error we update the file unsafely
         try:
-            out_dest = in_src = None
-            try:
-                out_dest = open(dest, 'wb')
-                in_src = open(src, 'rb')
-                shutil.copyfileobj(in_src, out_dest)
-            finally:  # assuring closed files in 2.4 compatible way
-                if out_dest:
-                    out_dest.close()
-                if in_src:
-                    in_src.close()
-        except (shutil.Error, OSError, IOError) as e:
-            self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, to_native(e)),
-                           exception=traceback.format_exc())
+            write_unsafely(src, dest)
+        except OSError as e:
+            self.fail_json(msg=f'{e}', exception=traceback.format_exc())
 
     def _clean_args(self, args):
 

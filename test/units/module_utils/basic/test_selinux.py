@@ -13,6 +13,7 @@ import pytest
 from unittest.mock import mock_open, patch
 
 from ansible.module_utils import basic
+from ansible.module_utils.common import file as file_common
 from ansible.module_utils.common.text.converters import to_bytes
 import builtins
 
@@ -27,9 +28,15 @@ def no_args_module(selinux_enabled=None, selinux_mls_enabled=None):
     am = basic.AnsibleModule(argument_spec={})
     # just dirty-patch the wrappers on the object instance since it's short-lived
     if isinstance(selinux_enabled, bool):
-        patch.object(am, 'selinux_enabled', return_value=selinux_enabled).start()
+        patch.object(file_common, 'is_selinux_enabled', return_value=selinux_enabled).start()
+    # reset to the default
+    context = [None, None, None]
     if isinstance(selinux_mls_enabled, bool):
-        patch.object(am, 'selinux_mls_enabled', return_value=selinux_mls_enabled).start()
+        patch.object(file_common, 'is_selinux_mls_enabled', return_value=selinux_mls_enabled).start()
+        if selinux_mls_enabled:
+            context = [None, None, None, None]
+    patch.object(file_common, 'DEFAULT_SELINUX_CONTEXT', context).start()
+    patch.object(am, '_selinux_initial_context', context).start()
     return am
 
 
@@ -39,12 +46,12 @@ class TestSELinuxMU:
     def test_selinux_enabled(self):
         # test selinux unavailable
         # selinux unavailable, should return false
-        with patch.object(basic, 'HAVE_SELINUX', False):
+        with patch.object(file_common, 'HAVE_SELINUX', False):
             assert no_args_module().selinux_enabled() is False
 
             # test selinux present/not-enabled
             disabled_mod = no_args_module()
-            with patch.object(basic, 'selinux', create=True) as selinux:
+            with patch.object(file_common, 'selinux', create=True) as selinux:
                 selinux.is_selinux_enabled.return_value = 0
                 assert disabled_mod.selinux_enabled() is False
 
@@ -52,9 +59,9 @@ class TestSELinuxMU:
         assert disabled_mod.selinux_enabled() is False
 
         # and present / enabled
-        with patch.object(basic, 'HAVE_SELINUX', True):
+        with patch.object(file_common, 'HAVE_SELINUX', True):
             enabled_mod = no_args_module()
-            with patch.object(basic, 'selinux', create=True) as selinux:
+            with patch.object(file_common, 'selinux', create=True) as selinux:
                 selinux.is_selinux_enabled.return_value = 1
                 assert enabled_mod.selinux_enabled() is True
         # ensure value is cached (same answer after unpatching)
@@ -62,16 +69,16 @@ class TestSELinuxMU:
 
     def test_selinux_mls_enabled(self):
         # selinux unavailable, should return false
-        with patch.object(basic, 'HAVE_SELINUX', False):
+        with patch.object(file_common, 'HAVE_SELINUX', False):
             assert no_args_module().selinux_mls_enabled() is False
             # selinux disabled, should return false
-            with patch.object(basic, 'selinux', create=True) as selinux:
+            with patch.object(file_common, 'selinux', create=True) as selinux:
                 selinux.is_selinux_mls_enabled.return_value = 0
                 assert no_args_module(selinux_enabled=False).selinux_mls_enabled() is False
 
-        with patch.object(basic, 'HAVE_SELINUX', True):
+        with patch.object(file_common, 'HAVE_SELINUX', True):
             # selinux enabled, should pass through the value of is_selinux_mls_enabled
-            with patch.object(basic, 'selinux', create=True) as selinux:
+            with patch.object(file_common, 'selinux', create=True) as selinux:
                 selinux.is_selinux_mls_enabled.return_value = 1
                 assert no_args_module(selinux_enabled=True).selinux_mls_enabled() is True
 
@@ -84,49 +91,49 @@ class TestSELinuxMU:
 
     def test_selinux_default_context(self):
         # selinux unavailable
-        with patch.object(basic, 'HAVE_SELINUX', False):
+        with patch.object(file_common, 'HAVE_SELINUX', False):
             assert no_args_module().selinux_default_context(path='/foo/bar') == [None, None, None]
 
         am = no_args_module(selinux_enabled=True, selinux_mls_enabled=True)
-        with patch.object(basic, 'selinux', create=True) as selinux:
+        with patch.object(file_common, 'selinux', create=True) as selinux:
             # matchpathcon success
-            selinux.matchpathcon.return_value = [0, 'unconfined_u:object_r:default_t:s0']
+            file_common.get_path_default_selinux_context.return_value = [0, 'unconfined_u:object_r:default_t:s0']
             assert am.selinux_default_context(path='/foo/bar') == ['unconfined_u', 'object_r', 'default_t', 's0']
 
-        with patch.object(basic, 'selinux', create=True) as selinux:
+        with patch.object(file_common, 'selinux', create=True) as selinux:
             # matchpathcon fail (return initial context value)
-            selinux.matchpathcon.return_value = [-1, '']
+            file_common.get_path_default_selinux_context.return_value = [-1, '']
             assert am.selinux_default_context(path='/foo/bar') == [None, None, None, None]
 
-        with patch.object(basic, 'selinux', create=True) as selinux:
+        with patch.object(file_common, 'selinux', create=True) as selinux:
             # matchpathcon OSError
-            selinux.matchpathcon.side_effect = OSError
+            file_common.get_path_default_selinux_context.side_effect = OSError
             assert am.selinux_default_context(path='/foo/bar') == [None, None, None, None]
 
     def test_selinux_context(self):
         # selinux unavailable
-        with patch.object(basic, 'HAVE_SELINUX', False):
+        with patch.object(file_common, 'HAVE_SELINUX', False):
             assert no_args_module().selinux_context(path='/foo/bar') == [None, None, None]
 
         am = no_args_module(selinux_enabled=True, selinux_mls_enabled=True)
         # lgetfilecon_raw passthru
-        with patch.object(basic, 'selinux', create=True) as selinux:
-            selinux.lgetfilecon_raw.return_value = [0, 'unconfined_u:object_r:default_t:s0']
+        with patch.object(file_common, 'selinux', create=True) as selinux:
+            file_common.get_path_selinux_context.return_value = [0, 'unconfined_u:object_r:default_t:s0']
             assert am.selinux_context(path='/foo/bar') == ['unconfined_u', 'object_r', 'default_t', 's0']
 
         # lgetfilecon_raw returned a failure
-        with patch.object(basic, 'selinux', create=True) as selinux:
-            selinux.lgetfilecon_raw.return_value = [-1, '']
+        with patch.object(file_common, 'selinux', create=True) as selinux:
+            file_common.get_path_selinux_context.return_value = [-1, '']
             assert am.selinux_context(path='/foo/bar') == [None, None, None, None]
 
         # lgetfilecon_raw OSError (should bomb the module)
-        with patch.object(basic, 'selinux', create=True) as selinux:
-            selinux.lgetfilecon_raw.side_effect = OSError(errno.ENOENT, 'NotFound')
+        with patch.object(file_common, 'selinux', create=True) as selinux:
+            file_common.get_path_selinux_context.side_effect = OSError(errno.ENOENT, 'NotFound')
             with pytest.raises(SystemExit):
                 am.selinux_context(path='/foo/bar')
 
-        with patch.object(basic, 'selinux', create=True) as selinux:
-            selinux.lgetfilecon_raw.side_effect = OSError()
+        with patch.object(file_common, 'selinux', create=True) as selinux:
+            file_common.get_path_selinux_context.side_effect = OSError()
             with pytest.raises(SystemExit):
                 am.selinux_context(path='/foo/bar')
 
@@ -181,7 +188,7 @@ class TestSELinuxMU:
         am.selinux_context = lambda path: ['bar_u', 'bar_r', None, None]
         am.is_special_selinux_path = lambda path: (False, None)
 
-        with patch.object(basic, 'selinux', create=True) as selinux:
+        with patch.object(file_common, 'selinux', create=True) as selinux:
             selinux.lsetfilecon.return_value = 0
             assert am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False) is True
             selinux.lsetfilecon.assert_called_with('/path/to/file', 'foo_u:foo_r:foo_t:s0')
@@ -191,19 +198,19 @@ class TestSELinuxMU:
             assert not selinux.lsetfilecon.called
             am.check_mode = False
 
-        with patch.object(basic, 'selinux', create=True) as selinux:
+        with patch.object(file_common, 'selinux', create=True) as selinux:
             selinux.lsetfilecon.return_value = 1
             with pytest.raises(SystemExit):
                 am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], True)
 
-        with patch.object(basic, 'selinux', create=True) as selinux:
+        with patch.object(file_common, 'selinux', create=True) as selinux:
             selinux.lsetfilecon.side_effect = OSError
             with pytest.raises(SystemExit):
                 am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], True)
 
         am.is_special_selinux_path = lambda path: (True, ['sp_u', 'sp_r', 'sp_t', 's0'])
 
-        with patch.object(basic, 'selinux', create=True) as selinux:
+        with patch.object(file_common, 'selinux', create=True) as selinux:
             selinux.lsetfilecon.return_value = 0
             assert am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False) is True
             selinux.lsetfilecon.assert_called_with('/path/to/file', 'sp_u:sp_r:sp_t:s0')
