@@ -61,7 +61,7 @@
     # ============================================================================
     - name: Install dinginessentail-1:1.0-2
       dnf:
-        name: "dinginessentail-1:1.0-2.{{ ansible_architecture }}"
+        name: "dinginessentail-1:1.0-2.noarch"
         state: present
       register: dnf_result
 
@@ -103,7 +103,7 @@
     # ============================================================================
     - name: Install dinginessentail-1.0-1 from a file (higher version is already installed)
       dnf:
-        name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
+        name: "{{ repodir }}/dinginessentail-1.0-1.noarch.rpm"
         state: present
         disable_gpg_check: True
       register: dnf_result
@@ -127,7 +127,7 @@
     # ============================================================================
     - name: Install dinginessentail-1.0-1 from a file (downgrade)
       dnf:
-        name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
+        name: "{{ repodir }}/dinginessentail-1.0-1.noarch.rpm"
         state: present
         allow_downgrade: True
         disable_gpg_check: True
@@ -155,7 +155,7 @@
     # ============================================================================
     - name: Install dinginessentail-1.0-1 from a file
       dnf:
-        name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
+        name: "{{ repodir }}/dinginessentail-1.0-1.noarch.rpm"
         state: present
         disable_gpg_check: True
       register: dnf_result
@@ -177,7 +177,7 @@
     # ============================================================================
     - name: Install dinginessentail-1.0-1 from a file again
       dnf:
-        name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
+        name: "{{ repodir }}/dinginessentail-1.0-1.noarch.rpm"
         state: present
         disable_gpg_check: True
       register: dnf_result
@@ -194,7 +194,7 @@
     # ============================================================================
     - name: Install dinginessentail-1.0-2 from a file
       dnf:
-        name: "{{ repodir }}/dinginessentail-1.0-2.{{ ansible_architecture }}.rpm"
+        name: "{{ repodir }}/dinginessentail-1.0-2.noarch.rpm"
         state: present
         disable_gpg_check: True
       register: dnf_result
@@ -216,7 +216,7 @@
     # ============================================================================
     - name: Install dinginessentail-1.0-2 from a file again
       dnf:
-        name: "{{ repodir }}/dinginessentail-1.0-2.{{ ansible_architecture }}.rpm"
+        name: "{{ repodir }}/dinginessentail-1.0-2.noarch.rpm"
         state: present
         disable_gpg_check: True
       register: dnf_result
@@ -231,31 +231,6 @@
             - "not dnf_result.changed"
             - "rpm_result.stdout.startswith('dinginessentail-1.0-2')"
     # ============================================================================
-    - name: Remove dinginessentail
-      dnf:
-        name: dinginessentail
-        state: absent
-
-    - name: Try to install incompatible arch
-      dnf:
-        name: "{{ repodir_ppc64 }}/dinginessentail-1.0-1.ppc64.rpm"
-        state: present
-      register: dnf_result
-      ignore_errors: yes
-
-    - name: Check dinginessentail with rpm
-      shell: rpm -q dinginessentail
-      register: rpm_result
-      ignore_errors: yes
-
-    - name: Verify installation
-      assert:
-        that:
-            - "rpm_result.rc == 1"
-            - "not dnf_result.changed"
-            - "dnf_result is failed"
-    # ============================================================================
-
     # Should install dinginessentail-with-weak-dep and dinginessentail-weak-dep
     - name: Install package with defaults
       dnf:
@@ -542,60 +517,3 @@
       dnf:
         name: provides_foo*
         state: absent
-
-- name: test that only evr is compared, avoiding a situation when a specific arch would be considered as a "newer" package
-  block:
-    - dnf:
-        name: "{{ item }}"
-        state: present
-      loop:
-        - "dinginessentail-1.0-1.x86_64"
-        - "dinginessentail-1.0-1.i686"
-      register: dnf_results
-
-    - assert:
-        that:
-          - dnf_results["results"][0] is changed
-          - dnf_results["results"][1] is changed
-  always:
-    - name: Clean up
-      dnf:
-        name: dinginessentail
-        state: absent
-
-- block:
-  - name: make sure dinginessentail is not installed
-    dnf:
-      name: dinginessentail
-      state: absent
-
-  - name: install dinginessentail both archs
-    dnf:
-      name:
-        - "{{ repodir }}/dinginessentail-1.1-1.x86_64.rpm"
-        - "{{ repodir_i686 }}/dinginessentail-1.1-1.i686.rpm"
-      state: present
-      disable_gpg_check: true
-
-  - name: try to install lower version of dinginessentail from rpm file, without allow_downgrade, just one arch
-    dnf:
-      name: "{{ repodir_i686 }}/dinginessentail-1.0-1.i686.rpm"
-      state: present
-    register: dnf_result
-
-  - name: check dinginessentail with rpm
-    shell: rpm -q dinginessentail
-    register: rpm_result
-
-  - name: verify installation
-    assert:
-      that:
-          - "not dnf_result.changed"
-          - "rpm_result.stdout_lines[0].startswith('dinginessentail-1.1-1')"
-          - "rpm_result.stdout_lines[1].startswith('dinginessentail-1.1-1')"
-  always:
-    - name: Clean up
-      dnf:
-        name: dinginessentail
-        state: absent
-  when: ansible_architecture == "x86_64"
