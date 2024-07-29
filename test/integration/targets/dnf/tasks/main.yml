@@ -30,6 +30,7 @@
     - include_tasks: dnfinstallroot.yml
     - include_tasks: logging.yml
     - include_tasks: cacheonly.yml
+    - include_tasks: multilib.yml
   when: ansible_distribution in ['Fedora', 'RedHat']
 
 # Attempting to install a different RHEL release in a tmpdir doesn't work (rhel8 beta)
