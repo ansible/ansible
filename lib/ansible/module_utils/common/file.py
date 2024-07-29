@@ -7,12 +7,6 @@ import os
 import stat
 import re
 
-try:
-    import selinux  # pylint: disable=unused-import
-    HAVE_SELINUX = True
-except ImportError:
-    HAVE_SELINUX = False
-
 
 FILE_ATTRIBUTES = {
     'A': 'noatime',
