@@ -557,13 +557,13 @@ class VaultLib:
             raise AnsibleVaultError("Invalid vault version supplied: %s, valid ones are %s" % (version, ', '.join(VALID_VERSIONS)))
         self.version = version
         self.cipher_name = cipher
+        self.secrets = None
         self.set_secrets(secrets)
 
     @staticmethod
     def is_encrypted(vaulttext):
         return is_encrypted(vaulttext)
 
-    @secrets.setter
     def set_secrets(self, secrets):
         if not secrets:
             self.secrets = []
