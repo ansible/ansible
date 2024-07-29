@@ -79,13 +79,9 @@ class AnsibleVaultEncryptedUnicode(Sequence, AnsibleBaseYAMLObject):
         if not vaultlib:
             # this is not really helpful to users, should remove in favor of type checking.
             raise ValueError('Could not create AnsibleVaultEncryptedUnicode, invalid VaultLib object (%s) provided' % vaultlib)
+        return cls(vaultlib.encrypt(seq, secret), vaultlib)
 
-        ciphertext = vaultlib.encrypt(seq, secret)
-        avu = cls(ciphertext)
-        avu.vaultlib = vaultlib
-        return avu
-
-    def __init__(self, ciphertext):
+    def __init__(self, ciphertext, vaultlib=None):
         '''A AnsibleUnicode with a Vault attribute that can decrypt it.
 
         ciphertext is a byte string (str on PY2, bytestring on PY3).
@@ -96,29 +92,29 @@ class AnsibleVaultEncryptedUnicode(Sequence, AnsibleBaseYAMLObject):
         super(AnsibleVaultEncryptedUnicode, self).__init__()
 
         # after construction, calling code has to set the .vault attribute to a vaultlib object
-        self.vaultlib = None
+        self.vault = vaultlib
         self._ciphertext = to_bytes(ciphertext)
 
     @property
     def data(self):
         if not self.vault:
             return to_text(self._ciphertext)
-        return to_text(self.vaultlib.decrypt(self._ciphertext, obj=self))
+        return to_text(self.vault.decrypt(self._ciphertext, obj=self))
 
     @data.setter
     def data(self, value):
         self._ciphertext = to_bytes(value)
 
     def is_encrypted(self):
-        return self.vaultlib and self.vaultlib.is_encrypted(self._ciphertext)
+        return self.vault and self.vault.is_encrypted(self._ciphertext)
 
     def __eq__(self, other):
-        if self.vaultlib:
+        if self.vault:
             return other == self.data
         return False
 
     def __ne__(self, other):
-        if self.vaultlib:
+        if self.vault:
             return other != self.data
         return True
 
