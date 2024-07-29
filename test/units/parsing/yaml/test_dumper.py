@@ -34,11 +34,8 @@ from ansible.vars.manager import VarsWithSources
 
 class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
     def setUp(self):
-        self.vault_password = "hunter42"
-        vault_secret = TextVaultSecret(self.vault_password)
-        self.vault_secrets = [('vault_secret', vault_secret)]
-        self.good_vault = vault.VaultLib(self.vault_secrets)
-        self.vault = self.good_vault
+        self.vault_secrets = [('vault_secret', TextVaultSecret('hunter42'))]
+        self.vault = vault.VaultLib(secrets=self.vault_secrets)
         self.stream = self._build_stream()
         self.dumper = dumper.AnsibleDumper
 

@@ -283,7 +283,7 @@ class TestVaultEditor(unittest.TestCase):
         src_file_contents = to_bytes("some info in a file\nyup.")
         src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
 
-        ve = self._vault_editor()
+        ve = self._vault_editor(self.vault_secret)
         ve.encrypt_file(src_file_path, self.vault_secret)
 
         self._assert_file_is_encrypted(ve, src_file_path, src_file_contents)

@@ -563,6 +563,7 @@ class VaultLib:
     def is_encrypted(vaulttext):
         return is_encrypted(vaulttext)
 
+    @secrets.setter
     def set_secrets(self, secrets):
         if not secrets:
             self.secrets = []
