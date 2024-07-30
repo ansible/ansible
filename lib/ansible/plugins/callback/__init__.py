@@ -527,6 +527,7 @@ class CallbackBase(AnsiblePlugin):
         :type ignore_errors: bool
 
         :return: None
+        :rtype: None
         """
         host = result._host.get_name()
         self.runner_on_failed(host, result._result, ignore_errors)
@@ -543,6 +544,7 @@ class CallbackBase(AnsiblePlugin):
         :type result: TaskResult
 
         :return: None
+        :rtype: None
         """
         host = result._host.get_name()
         self.runner_on_ok(host, result._result)
@@ -559,6 +561,7 @@ class CallbackBase(AnsiblePlugin):
         :type result: TaskResult
 
         :return: None
+        :rtype: None
         """
         if C.DISPLAY_SKIPPED_HOSTS:
             host = result._host.get_name()
@@ -576,6 +579,7 @@ class CallbackBase(AnsiblePlugin):
         :type result: TaskResult
 
         :return: None
+        :rtype: None
         """
         host = result._host.get_name()
         self.runner_on_unreachable(host, result._result)
@@ -592,6 +596,7 @@ class CallbackBase(AnsiblePlugin):
         :type result: TaskResult
 
         :return: None
+        :rtype: None
         """
         host = result._host.get_name()
         jid = result._result.get('ansible_job_id')
