@@ -92,14 +92,8 @@ class TestSelectCollectorNames(unittest.TestCase):
         res = collector.select_collector_classes(ordered_collector_names,
                                                  all_fact_subsets)
 
-        self.assertGreater(
-            res.index(default_collectors.ServiceMgrFactCollector),
-            res.index(default_collectors.DistributionFactCollector)
-        )
-        self.assertGreater(
-            res.index(default_collectors.ServiceMgrFactCollector),
-            res.index(default_collectors.PlatformFactCollector)
-        )
+        assert res.index(default_collectors.ServiceMgrFactCollector) > res.index(default_collectors.DistributionFactCollector)
+        assert res.index(default_collectors.ServiceMgrFactCollector) > res.index(default_collectors.PlatformFactCollector)
 
     def _all_fact_subsets(self, data=None):
         all_fact_subsets = defaultdict(list)
@@ -380,9 +374,9 @@ class TestTsort(unittest.TestCase):
 
         self.assertIsInstance(res, list)
         names = [x[0] for x in res]
-        self.assertGreater(names.index('network_stuff'), names.index('network'))
-        self.assertGreater(names.index('platform'), names.index('what_platform_wants'))
-        self.assertGreater(names.index('network'), names.index('platform'))
+        assert names.index('network_stuff') > names.index('network')
+        assert names.index('platform') > names.index('what_platform_wants')
+        assert names.index('network') > names.index('platform')
 
     def test_cycles(self):
         dep_map = {'leaf1': set(),
@@ -445,9 +439,9 @@ class TestTsort(unittest.TestCase):
         self.assertIsInstance(res, list)
         names = [x[0] for x in res]
         self.assertEqual(set(names), set(dep_map.keys()))
-        self.assertLess(names.index('leaf1'), names.index('leaf2'))
+        assert names.index('leaf1') < names.index('leaf2')
         for leaf in ('leaf2', 'leaf3', 'leaf4', 'leaf5'):
-            self.assertLess(names.index('leaf1'), names.index(leaf))
+            assert names.index('leaf1') < names.index(leaf)
 
 
 class TestCollectorClassesFromGatherSubset(unittest.TestCase):
@@ -491,10 +485,7 @@ class TestCollectorClassesFromGatherSubset(unittest.TestCase):
         self.assertIn(default_collectors.PlatformFactCollector, res)
         self.assertIn(default_collectors.LinuxHardwareCollector, res)
 
-        self.assertGreater(
-            res.index(default_collectors.LinuxHardwareCollector),
-            res.index(default_collectors.PlatformFactCollector)
-        )
+        assert res.index(default_collectors.LinuxHardwareCollector) > res.index(default_collectors.PlatformFactCollector)
 
     def test_network(self):
         res = self._classes(all_collector_classes=default_collectors.collectors,
@@ -504,14 +495,8 @@ class TestCollectorClassesFromGatherSubset(unittest.TestCase):
         self.assertIn(default_collectors.PlatformFactCollector, res)
         self.assertIn(default_collectors.LinuxNetworkCollector, res)
 
-        self.assertGreater(
-            res.index(default_collectors.LinuxNetworkCollector),
-            res.index(default_collectors.PlatformFactCollector)
-        )
-        self.assertGreater(
-            res.index(default_collectors.LinuxNetworkCollector),
-            res.index(default_collectors.DistributionFactCollector)
-        )
+        assert res.index(default_collectors.LinuxNetworkCollector) > res.index(default_collectors.PlatformFactCollector)
+        assert res.index(default_collectors.LinuxNetworkCollector) > res.index(default_collectors.DistributionFactCollector)
 
     def test_env(self):
         res = self._classes(all_collector_classes=default_collectors.collectors,
