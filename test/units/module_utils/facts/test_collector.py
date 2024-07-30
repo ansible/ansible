@@ -54,7 +54,7 @@ class TestFindCollectorsForPlatform(unittest.TestCase):
 
 class TestSelectCollectorNames(unittest.TestCase):
 
-    def _assert_equal_detail(self, obj1, obj2, msg=None):
+    def _assert_equal_detail(self, obj1, obj2):
         msg = 'objects are not equal\n%s\n\n!=\n\n%s' % (pprint.pformat(obj1), pprint.pformat(obj2))
         return self.assertEqual(obj1, obj2, msg)
 
@@ -92,12 +92,14 @@ class TestSelectCollectorNames(unittest.TestCase):
         res = collector.select_collector_classes(ordered_collector_names,
                                                  all_fact_subsets)
 
-        self.assertTrue(res.index(default_collectors.ServiceMgrFactCollector) >
-                        res.index(default_collectors.DistributionFactCollector),
-                        res)
-        self.assertTrue(res.index(default_collectors.ServiceMgrFactCollector) >
-                        res.index(default_collectors.PlatformFactCollector),
-                        res)
+        self.assertGreater(
+            res.index(default_collectors.ServiceMgrFactCollector),
+            res.index(default_collectors.DistributionFactCollector)
+        )
+        self.assertGreater(
+            res.index(default_collectors.ServiceMgrFactCollector),
+            res.index(default_collectors.PlatformFactCollector)
+        )
 
     def _all_fact_subsets(self, data=None):
         all_fact_subsets = defaultdict(list)
@@ -278,7 +280,6 @@ class TestFindUnresolvedRequires(unittest.TestCase):
                             'network': [default_collectors.LinuxNetworkCollector],
                             'virtual': [default_collectors.LinuxVirtualCollector]}
         res = collector.find_unresolved_requires(names, all_fact_subsets)
-        # pprint.pprint(res)
 
         self.assertIsInstance(res, set)
         self.assertEqual(res, set(['platform', 'distribution']))
@@ -291,7 +292,6 @@ class TestFindUnresolvedRequires(unittest.TestCase):
                             'platform': [default_collectors.PlatformFactCollector],
                             'virtual': [default_collectors.LinuxVirtualCollector]}
         res = collector.find_unresolved_requires(names, all_fact_subsets)
-        # pprint.pprint(res)
 
         self.assertIsInstance(res, set)
         self.assertEqual(res, set())
@@ -305,7 +305,6 @@ class TestBuildDepData(unittest.TestCase):
                             'virtual': [default_collectors.LinuxVirtualCollector]}
         res = collector.build_dep_data(names, all_fact_subsets)
 
-        # pprint.pprint(dict(res))
         self.assertIsInstance(res, defaultdict)
         self.assertEqual(dict(res),
                          {'network': set(['platform', 'distribution']),
@@ -332,8 +331,7 @@ class TestSolveDeps(unittest.TestCase):
                             'virtual': [default_collectors.LinuxVirtualCollector],
                             'platform': [default_collectors.PlatformFactCollector],
                             'distribution': [default_collectors.DistributionFactCollector]}
-        res = collector.resolve_requires(unresolved, all_fact_subsets)
-
+        collector.resolve_requires(unresolved, all_fact_subsets)
         res = collector._solve_deps(unresolved, all_fact_subsets)
 
         self.assertIsInstance(res, set)
@@ -379,13 +377,12 @@ class TestTsort(unittest.TestCase):
                    'network_stuff': set(['network'])}
 
         res = collector.tsort(dep_map)
-        # pprint.pprint(res)
 
         self.assertIsInstance(res, list)
         names = [x[0] for x in res]
-        self.assertTrue(names.index('network_stuff') > names.index('network'))
-        self.assertTrue(names.index('platform') > names.index('what_platform_wants'))
-        self.assertTrue(names.index('network') > names.index('platform'))
+        self.assertGreater(names.index('network_stuff'), names.index('network'))
+        self.assertGreater(names.index('platform'), names.index('what_platform_wants'))
+        self.assertGreater(names.index('network'), names.index('platform'))
 
     def test_cycles(self):
         dep_map = {'leaf1': set(),
@@ -448,9 +445,9 @@ class TestTsort(unittest.TestCase):
         self.assertIsInstance(res, list)
         names = [x[0] for x in res]
         self.assertEqual(set(names), set(dep_map.keys()))
-        self.assertTrue(names.index('leaf1') < names.index('leaf2'))
+        self.assertLess(names.index('leaf1'), names.index('leaf2'))
         for leaf in ('leaf2', 'leaf3', 'leaf4', 'leaf5'):
-            self.assertTrue(names.index('leaf1') < names.index(leaf))
+            self.assertLess(names.index('leaf1'), names.index(leaf))
 
 
 class TestCollectorClassesFromGatherSubset(unittest.TestCase):
@@ -494,8 +491,10 @@ class TestCollectorClassesFromGatherSubset(unittest.TestCase):
         self.assertIn(default_collectors.PlatformFactCollector, res)
         self.assertIn(default_collectors.LinuxHardwareCollector, res)
 
-        self.assertTrue(res.index(default_collectors.LinuxHardwareCollector) >
-                        res.index(default_collectors.PlatformFactCollector))
+        self.assertGreater(
+            res.index(default_collectors.LinuxHardwareCollector),
+            res.index(default_collectors.PlatformFactCollector)
+        )
 
     def test_network(self):
         res = self._classes(all_collector_classes=default_collectors.collectors,
@@ -505,14 +504,14 @@ class TestCollectorClassesFromGatherSubset(unittest.TestCase):
         self.assertIn(default_collectors.PlatformFactCollector, res)
         self.assertIn(default_collectors.LinuxNetworkCollector, res)
 
-        self.assertTrue(res.index(default_collectors.LinuxNetworkCollector) >
-                        res.index(default_collectors.PlatformFactCollector))
-        self.assertTrue(res.index(default_collectors.LinuxNetworkCollector) >
-                        res.index(default_collectors.DistributionFactCollector))
-
-        # self.assertEqual(set(res, [default_collectors.DistributionFactCollector,
-        #                       default_collectors.PlatformFactCollector,
-        #                       default_collectors.LinuxNetworkCollector])
+        self.assertGreater(
+            res.index(default_collectors.LinuxNetworkCollector),
+            res.index(default_collectors.PlatformFactCollector)
+        )
+        self.assertGreater(
+            res.index(default_collectors.LinuxNetworkCollector),
+            res.index(default_collectors.DistributionFactCollector)
+        )
 
     def test_env(self):
         res = self._classes(all_collector_classes=default_collectors.collectors,
