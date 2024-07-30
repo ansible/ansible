@@ -1,0 +1,2 @@
+bugfixes:
+  - module_defaults - do not display action/module deprecation warnings when using an action_group that contains a deprecated plugin (https://github.com/ansible/ansible/issues/83490).
