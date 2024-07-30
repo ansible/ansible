@@ -32,8 +32,6 @@ from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.parsing.splitter import parse_kv
 
 
-ADDITIONAL_PY2_KEYWORDS = frozenset(("True", "False", "None"))
-
 _MAXSIZE = 2 ** 32
 cur_id = 0
 node_mac = ("%012x" % uuid.getnode())[:12]
@@ -265,8 +263,6 @@ a valid identifier is, this function unifies the validation so playbooks are
 portable between the two. The following changes were made:
 
     * disallow non-ascii characters (Python 3 allows for them as opposed to Python 2)
-    * True, False and None are reserved keywords (these are reserved keywords
-      on Python 3 as opposed to Python 2)
 
 :arg ident: A text string of identifier to check. Note: It is callers
     responsibility to convert ident to text if it is not already.
