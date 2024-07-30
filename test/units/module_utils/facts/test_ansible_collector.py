@@ -378,7 +378,7 @@ class TestCollectorDepsWithFilter(unittest.TestCase):
         facts_dict = fact_collector.collect(module=_mock_module,
                                             collected_facts=collected_facts)
         self.assertIn('concat_fact', facts_dict)
-        self.assertTrue('THE_NEEDED_FACT_VALUE' in facts_dict['concat_fact'])
+        self.assertIn('THE_NEEDED_FACT_VALUE', facts_dict['concat_fact'])
 
     def test_concat_collector_with_filter_on_concat(self):
         _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'],
@@ -396,8 +396,8 @@ class TestCollectorDepsWithFilter(unittest.TestCase):
         facts_dict = fact_collector.collect(module=_mock_module,
                                             collected_facts=collected_facts)
         self.assertIn('concat_fact', facts_dict)
-        self.assertTrue('THE_NEEDED_FACT_VALUE' in facts_dict['concat_fact'])
-        self.assertTrue('compound' in facts_dict['concat_fact'])
+        self.assertIn('THE_NEEDED_FACT_VALUE', facts_dict['concat_fact'])
+        self.assertIn('compound', facts_dict['concat_fact'])
 
     def _collect(self, _mock_module, collected_facts=None):
         _collectors = self._collectors(_mock_module)
@@ -437,6 +437,21 @@ class TestOnlyExceptionCollector(TestCollectedFacts):
                     all_collector_classes=None,
                     minimal_gather_subset=None):
         return [ExceptionThrowingCollector()]
+
+
+class NoneReturningCollector(collector.BaseFactCollector):
+    def collect(self, module=None, collected_facts=None):
+        return None
+
+
+class TestOnlyNoneCollector(TestCollectedFacts):
+    expected_facts = []
+    min_fact_count = 0
+
+    def _collectors(self, module,
+                    all_collector_classes=None,
+                    minimal_gather_subset=None):
+        return [NoneReturningCollector(namespace='ansible')]
 
 
 class TestMinimalCollectedFacts(TestCollectedFacts):
