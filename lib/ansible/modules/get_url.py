@@ -444,7 +444,7 @@ def extract_filename_from_headers(headers):
 
     Looks for the content-disposition header and applies a regex.
     Returns the filename if successful, else None."""
-    cont_disp_regex = 'attachment; ?filename="?([^"]+)'
+    cont_disp_regex = 'attachment|inline; ?filename="?([^"]+)'
     res = None
 
     if 'content-disposition' in headers:
