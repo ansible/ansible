@@ -167,7 +167,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
 
 class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
     def setUp(self):
-        self.vault_password = "hunter42"
+        self.vault_password = "hunterForty2"
         vault_secret = TextVaultSecret(self.vault_password)
         self.vault_secrets = [('vault_secret', vault_secret),
                               ('default', vault_secret)]
@@ -192,7 +192,7 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
             self.vault.decrypt(ciphertext)
         except Exception as e:
             self.assertIsInstance(e, errors.AnsibleError)
-            self.assertEqual(e.message, 'Decryption failed (no vault secrets were found that could decrypt).')
+            self.assertIn('Decryption failed', e.message)
 
     def _encrypt_plaintext(self, plaintext):
         # Construct a yaml repr of a vault by hand
@@ -201,12 +201,8 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
         # add yaml tag
         vaulted_var = vaulted_var_bytes.decode()
         lines = vaulted_var.splitlines()
-        lines2 = []
-        for line in lines:
-            lines2.append('        %s' % line)
-
-        vaulted_var = '\n'.join(lines2)
-        tagged_vaulted_var = u"""!vault |\n%s""" % vaulted_var
+        vaulted_var = '\n'.join([f'        {line}' for line in lines])
+        tagged_vaulted_var = f"""!vault |\n{vaulted_var}"""
         return tagged_vaulted_var
 
     def _build_stream(self, yaml_text):

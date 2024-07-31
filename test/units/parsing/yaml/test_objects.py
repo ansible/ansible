@@ -33,7 +33,6 @@ def test_tagged_ansible_mapping() -> None:
 
     value = Origin(description='test').tag(dict(a=1))
     result = AnsibleMapping(value)
-
     assert type(result) is type(value)  # pylint: disable=unidiomatic-typecheck
     assert result == value
     assert AnsibleTagHelper.tags(result) == AnsibleTagHelper.tags(value)

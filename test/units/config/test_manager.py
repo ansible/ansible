@@ -213,6 +213,13 @@ def test_ensure_type_vaulted(_vault_secrets_context: VaultTestHelper) -> None:
     assert Origin.get_tag(result) is origin
 
 
+choice_test_data = [
+    ('TEST_1', {'description': 'test_1', 'choices': ['a', 'b', 'c']}, ['a', 'b', 'c']),
+    ('TEST_2', {'description': 'test_2', 'choices': {'x': 1, 'y': 2, 'z': 3}}, ['x', 'y', 'z']),
+    ('TEST_3', {'description': 'test_3'}, None),
+]
+
+
 class TestConfigManager:
     @classmethod
     def setup_class(cls):
@@ -260,6 +267,38 @@ class TestConfigManager:
             self.manager._read_config_yaml_file(os.path.join(curdir, 'test_non_existent.yml'))
 
         assert "Missing base YAML definition file (bad install?)" in str(exec_info.value)
+
+    def test_entry_as_vault_var(self):
+        class MockVault:
+
+            def decrypt(self, value, filename=None, obj=None):
+                return value
+
+        vault_var = AnsibleVaultEncryptedUnicode(b"vault text")
+        vault_var.vault = MockVault()
+
+        actual_value, actual_origin = self.manager._loop_entries({'name': vault_var}, [{'name': 'name'}])
+        assert actual_value == "vault text"
+        assert actual_origin == "name"
+
+    @pytest.mark.parametrize("value_type", ("str", "string", None))
+    def test_ensure_type_with_vaulted_str(self, value_type):
+        class MockVault:
+            def decrypt(self, value, filename=None, obj=None):
+                return value
+
+        vault_var = AnsibleVaultEncryptedUnicode(b"vault text")
+        vault_var.vault = MockVault()
+
+        actual_value = ensure_type(vault_var, value_type)
+        assert actual_value == "vault text"
+
+    @pytest.mark.parametrize('value', choice_test_data)
+    def test_get_choices(self, value):
+        config, config_def, expected_choices = value
+        self.manager._base_defs[config] = config_def
+        choices = self.manager.get_config_choices(config)
+        assert choices == expected_choices
 
 
 @pytest.mark.parametrize(("key", "expected_value"), (

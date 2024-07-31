@@ -4,8 +4,8 @@ set -euvx
 source virtualenv.sh
 
 
-MYTMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
-trap 'chmod -R u+rwx ${MYTMPDIR}; rm -rf "${MYTMPDIR}"' EXIT
+MYTMPDIR=$(mktemp -d -p "${OUTPUT_DIR}" 2>/dev/null || mktemp -d -t 'mytmpdir' -p "${OUTPUT_DIR}")
+# no need to remove as ouput_dir itself will be in the end
 
 # create a test file
 TEST_FILE="${MYTMPDIR}/test_file"
@@ -30,17 +30,9 @@ echo "This is a test file for edit2" > "${TEST_FILE_EDIT2}"
 
 # test case for https://github.com/ansible/ansible/issues/35834
 # (being prompted for new password on vault-edit with no configured passwords)
-
 TEST_FILE_EDIT3="${MYTMPDIR}/test_file_edit3"
 echo "This is a test file for edit3" > "${TEST_FILE_EDIT3}"
-
-# ansible-config view
-ansible-config view
-
-# ansible-config
-ansible-config dump --only-changed
 ansible-vault encrypt "$@" --vault-id vault-password "${TEST_FILE_EDIT3}"
-# EDITOR=./faux-editor.py ansible-vault edit "$@" "${TEST_FILE_EDIT3}"
 EDITOR=./faux-editor.py ansible-vault edit --vault-id vault-password -vvvvv "${TEST_FILE_EDIT3}"
 echo $?
 
@@ -73,8 +65,7 @@ echo "rc was $WRONG_RC (5 is expected)"
 # to verify we didn't choose the wrong vault-id
 ansible-vault view "$@" --vault-id vault-password encrypted-vault-password
 
-FORMAT_1_1_HEADER="\$ANSIBLE_VAULT;1.1;AES256"
-FORMAT_1_2_HEADER="\$ANSIBLE_VAULT;1.2;AES256"
+FORMAT_1_1_HEADER="\$ANSIBLE_VAULT;1.1;"
 
 
 VAULT_PASSWORD_FILE=vault-password
@@ -343,9 +334,6 @@ WRONG_RC=$?
 echo "rc was $WRONG_RC (1 is expected)"
 [ $WRONG_RC -eq 1 ]
 
-
-ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" "a test string"
-
 # Test with multiple vault password files
 # https://github.com/ansible/ansible/issues/57172
 env ANSIBLE_VAULT_PASSWORD_FILE=vault-password ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --encrypt-vault-id default "a test string"
@@ -393,11 +381,13 @@ echo "The stdout log had 'New Vault password' in it and it is not supposed to. r
 
 # edit a 1.2 format with vault id, should keep vault id and 1.2 format
 EDITOR=./faux-editor.py ansible-vault edit "$@" --vault-id vault_password@vault-password "${TEST_FILE_EDIT2}"
-head -1 "${TEST_FILE_EDIT2}" | grep "${FORMAT_1_2_HEADER};vault_password"
+# shellcheck disable=SC2016
+head -1 "${TEST_FILE_EDIT2}" | grep -E '\$ANSIBLE_VAULT;1.2;.+;vault_password'
 
 # edit a 1.2 file with no vault-id, should keep vault id and 1.2 format
 EDITOR=./faux-editor.py ansible-vault edit "$@" --vault-password-file vault-password "${TEST_FILE_EDIT2}"
-head -1 "${TEST_FILE_EDIT2}" | grep "${FORMAT_1_2_HEADER};vault_password"
+# shellcheck disable=SC2016
+head -1 "${TEST_FILE_EDIT2}" | grep -E '\$ANSIBLE_VAULT;1.2;.+;vault_password'
 
 # verify an aborted edit reports an error and does not corrupt the vault file
 ORIGINAL_FILE_EDIT="${TEST_FILE_EDIT}.original"
@@ -544,11 +534,46 @@ echo "rc was $WRONG_RC (1 is expected)"
 [ $WRONG_RC -eq 1 ]
 
 # test invalid format ala https://github.com/ansible/ansible/issues/28038
-EXPECTED_ERROR='Vault format unhexlify error: Non-hexadecimal digit found'
+EXPECTED_ERROR='Non-hexadecimal digit found'
 ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vault-secret invalid_format/broken-host-vars-tasks.yml 2>&1 | grep "${EXPECTED_ERROR}"
 
-EXPECTED_ERROR='Vault format unhexlify error: Odd-length string'
+EXPECTED_ERROR='Odd-length string'
 ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vault-secret invalid_format/broken-group-vars-tasks.yml 2>&1 | grep "${EXPECTED_ERROR}"
+
+EXPECTED_ERROR='Incorrect vault header found'
+# with a file
+ansible-vault decrypt bogus_header.txt --vault-password-file vault-password 2>&1 | grep "${EXPECTED_ERROR}"
+
+# without a file
+ansible-vault decrypt < bogus_header.txt --vault-password-file vault-password 2>&1 | grep "${EXPECTED_ERROR}"
+
+EXPECTED_ERROR='no vault secrets were found'
+# branch coverage for empty default vault_id (which is probably fatal in other ways)
+# shellcheck disable=SC2016
+echo '$ANSIBLE_VAULT;1.1;AES256' | ANSIBLE_VAULT_IDENTITY='' ansible-vault decrypt --vault-password-file vault-password 2>&1 | grep "${EXPECTED_ERROR}"
+
+# make the script with no shebang executable at runtime to avoid angering shebang sanity tests
+chmod a+x script-noshebang
+
+# executable without shebang
+EXPECTED_ERROR='Problem running vault password script'
+ansible-vault decrypt encrypted-vault-password --vault-password-file script-noshebang 2>&1 | grep "${EXPECTED_ERROR}"
+EXPECTED_ERROR='Problem running vault password client script'
+ansible-vault decrypt encrypted-vault-password --vault-password-file script-noshebang-client 2>&1 | grep "${EXPECTED_ERROR}"
+
+# non-zero return from password script
+EXPECTED_ERROR='returned non-zero'
+ansible-vault decrypt encrypted-vault-password --vault-password-file script-nonzero-exit 2>&1 | grep "${EXPECTED_ERROR}"
+ansible-vault decrypt encrypted-vault-password --vault-id bla --vault-password-file script-nonzero-exit-client 2>&1 | grep "${EXPECTED_ERROR}"
+
+# double encryption
+EXPECTED_ERROR='is already encrypted'
+# shellcheck disable=SC2016
+echo '$ANSIBLE_VAULTblah' | ansible-vault encrypt_string --vault-password-file vault-password 2>&1 | grep "${EXPECTED_ERROR}"
+
+# no vault-id found
+EXPECTED_ERROR='Did not find a match for --encrypt-vault-id'
+echo poo | ansible-vault encrypt_string --encrypt-vault-id blah encrypted-vault-password --vault-password-file vault-password 2>&1 | grep "${EXPECTED_ERROR}"
 
 # Run playbook with vault file with unicode in filename (https://github.com/ansible/ansible/issues/50316)
 ansible-playbook -i ../../inventory -v "$@" --vault-password-file vault-password test_utf8_value_in_filename.yml
@@ -617,9 +642,9 @@ do
 done
 
 # encrypt files
-ANSIBLE_VAULT_ENCRYPT_SALT=salty ansible-vault encrypt salted_test1 --vault-password-file example1_password "$@"
-ANSIBLE_VAULT_ENCRYPT_SALT=salty ansible-vault encrypt salted_test2 --vault-password-file example1_password "$@"
-ansible-vault encrypt salted_test3 --vault-password-file example1_password "$@"
+ANSIBLE_VAULT_ENCRYPT_SALT=salty ansible-vault encrypt salted_test1 --vault-method aes256 --vault-password-file example1_password "$@"
+ANSIBLE_VAULT_ENCRYPT_SALT=salty ansible-vault encrypt salted_test2 --vault-method aes256 --vault-password-file example1_password "$@"
+ansible-vault encrypt salted_test3 --vault-method aes256 --vault-password-file example1_password "$@"
 
 # should be the same
 out=$(diff salted_test1 salted_test2)

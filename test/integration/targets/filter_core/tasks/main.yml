@@ -548,6 +548,7 @@
   ignore_errors: yes
   register: unsupported_hash_type
 
+<<<<<<< HEAD
 - name: Verify password_hash
   assert:
     that:
@@ -557,6 +558,12 @@
       - password_hash_2 is failed
       - "'is not in the list of supported passlib algorithms' in password_hash_2.msg"
       - "'msdcc is not in the list of supported passlib algorithms' in unsupported_hash_type.msg"
+=======
+- name: Ensure task/filter failed
+  assert:
+    that:
+      - unsupported_hash_type is failed
+>>>>>>> 07b3f86c8b (Vault loadable ciphers and fixes)
 
 - name: Verify to_uuid throws on weird namespace
   set_fact:
