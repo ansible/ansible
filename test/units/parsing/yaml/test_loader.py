@@ -167,7 +167,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
 
 class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
     def setUp(self):
-        self.vault_password = "hunter42"
+        self.vault_password = "hunterForty2"
         vault_secret = TextVaultSecret(self.vault_password)
         self.vault_secrets = [('vault_secret', vault_secret),
                               ('default', vault_secret)]
