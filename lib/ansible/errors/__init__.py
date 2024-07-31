@@ -57,7 +57,16 @@ class AnsibleError(Exception):
         self._suppress_extended_error = suppress_extended_error
         self._message = to_native(message)
         self.obj = obj
-        self.orig_exc = orig_exc
+        if orig_exc is not None:
+            self.__cause__ = orig_exc
+
+    @property
+    def orig_exc(self):
+        return self.__cause__
+
+    @orig_exc.setter
+    def orig_exc(self, value):
+        self.__cause__ = value
 
     @property
     def message(self):
@@ -381,4 +390,16 @@ class AnsibleFilterTypeError(AnsibleTemplateError, TypeError):
 
 class AnsiblePluginNotFound(AnsiblePluginError):
     ''' Indicates we did not find an Ansible plugin '''
+    pass
+
+
+class AnsibleVaultError(AnsibleError):
+    pass
+
+
+class AnsibleVaultPasswordError(AnsibleVaultError):
+    pass
+
+
+class AnsibleVaultFormatError(AnsibleVaultError):
     pass

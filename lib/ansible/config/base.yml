@@ -1171,11 +1171,32 @@ DEFAULT_VAULT_IDENTITY:
 VAULT_ENCRYPT_SALT:
   name: Vault salt to use for encryption
   default: ~
-  description: 'The salt to use for the vault encryption. If it is not provided, a random salt will be used.'
+  description:
+    - The salt to use for the vault AES256 encryption. If it is not provided, a random salt will be used.
+    - This is not recommended to as repeated use of salt/secrets is insecure, but it is here for those that
+      need reproducible outputs, mostly for testing.
+    - This does not affect other ciphers, only AES256.
   env: [{name: ANSIBLE_VAULT_ENCRYPT_SALT}]
   ini:
   - {key: vault_encrypt_salt, section: defaults}
   version_added: '2.15'
+VAULT_CIPHER:
+  name: Vault cipher to use for encryption
+  default: aesv2
+  choices:
+    'aes256': AES 256 with kdf and double hexlify byte shield
+    'aes256v2': Imporoved aes256 but with updatable and more current settings, with base64 byte shield
+    'aesv2': Cryptography's fernet API with dual keys, AES 128, CBC and sCrypt, with base64 byte shield
+  description:
+    - The cipher to use for the vault encryption. Decryption works by reading the cipher used in the vault itself
+    - We set the default considering the best security and perforamnce
+    - The included aes256 is not considered secure anymore, but it is kept for backwards compatibility
+  env: [{name: ANSIBLE_VAULT_CIPHER}]
+  cli:
+    - name: vault_cipher
+  ini:
+  - {key: vault_cipher, section: defaults}
+  version_added: '2.18'
 DEFAULT_VAULT_ENCRYPT_IDENTITY:
   name: Vault id to use for encryption
   description: 'The vault_id to use for encrypting by default. If multiple vault_ids are provided, this specifies which to use for encryption. The ``--encrypt-vault-id`` CLI option overrides the configured value.'

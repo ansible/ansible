@@ -20,31 +20,23 @@ from __future__ import annotations
 
 import os
 import tempfile
-from io import BytesIO, StringIO
-
-import pytest
-
 import unittest
+
+from io import BytesIO, StringIO
+from units.mock.vault_helper import TextVaultSecret
 from unittest.mock import patch
 
 from ansible import errors
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.parsing import vault
 from ansible.parsing.vault import VaultLib, VaultEditor, match_encrypt_secret
 
-from ansible.module_utils.common.text.converters import to_bytes, to_text
-
-from units.mock.vault_helper import TextVaultSecret
-
-v11_data = """$ANSIBLE_VAULT;1.1;AES256
-62303130653266653331306264616235333735323636616539316433666463323964623162386137
-3961616263373033353631316333623566303532663065310a393036623466376263393961326530
-64336561613965383835646464623865663966323464653236343638373165343863623638316664
-3631633031323837340a396530313963373030343933616133393566366137363761373930663833
-3739"""
+# test using rot13 to avoid needing per cipher deps
+v11_data = """$ANSIBLE_VAULT;1.1;ROT13
+c2JiCg==
+"""
 
 
-@pytest.mark.skipif(not vault.HAS_CRYPTOGRAPHY,
-                    reason="Skipping cryptography tests because cryptography is not installed")
 class TestVaultEditor(unittest.TestCase):
 
     def setUp(self):
@@ -59,9 +51,6 @@ class TestVaultEditor(unittest.TestCase):
         return match_encrypt_secret(self.vault_secrets)[1]
 
     def tearDown(self):
-        if self._test_dir:
-            pass
-            # shutil.rmtree(self._test_dir)
         self._test_dir = None
 
     def _secrets(self, password):
@@ -94,7 +83,7 @@ class TestVaultEditor(unittest.TestCase):
     def _vault_editor(self, vault_secrets=None):
         if vault_secrets is None:
             vault_secrets = self._secrets(self.vault_password)
-        return VaultEditor(VaultLib(vault_secrets))
+        return VaultEditor(VaultLib(vault_secrets, cipher_name='rot13'))
 
     @patch('ansible.parsing.vault.subprocess.call')
     def test_edit_file_helper_empty_target(self, mock_sp_call):
@@ -332,7 +321,7 @@ class TestVaultEditor(unittest.TestCase):
         with open(src_file_path, 'rb') as new_src_file:
             new_src_file_contents = new_src_file.read()
 
-        self.assertTrue(b'$ANSIBLE_VAULT;1.1;AES256' in new_src_file_contents)
+        self.assertIn(b'$ANSIBLE_VAULT;1.1;ROT13', new_src_file_contents)
 
         src_file_plaintext = ve.vault.decrypt(new_src_file_contents)
         self.assertEqual(src_file_plaintext, new_src_contents)
@@ -360,7 +349,7 @@ class TestVaultEditor(unittest.TestCase):
         with open(src_file_path, 'rb') as new_src_file:
             new_src_file_contents = new_src_file.read()
 
-        self.assertTrue(b'$ANSIBLE_VAULT;1.2;AES256;vault_secrets' in new_src_file_contents)
+        self.assertIn(b'$ANSIBLE_VAULT;1.2;ROT13;vault_secrets', new_src_file_contents)
 
         src_file_plaintext = ve.vault.decrypt(new_src_file_contents)
         self.assertEqual(src_file_plaintext, new_src_contents)

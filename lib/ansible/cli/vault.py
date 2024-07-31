@@ -74,9 +74,11 @@ class VaultCLI(CLI):
 
         # For encrypting actions, we can also specify which of multiple vault ids should be used for encrypting
         vault_id = opt_help.ArgumentParser(add_help=False)
-        vault_id.add_argument('--encrypt-vault-id', default=[], dest='encrypt_vault_id',
-                              action='store', type=str,
+        vault_id.add_argument('--encrypt-vault-id', dest='encrypt_vault_id',
+                              action='store', type=opt_help.str_sans_forbidden_characters('\n', ';'),
                               help='the vault id used to encrypt (required if more than one vault-id is provided)')
+        vault_id.add_argument('--vault-cipher', dest='vault_cipher', action='store', type=opt_help.str_sans_forbidden_characters('\n', ';'),
+                              help='the vault cipher used to encrypt, defaults to the configured cipher')
 
         create_parser = subparsers.add_parser('create', help='Create new vault encrypted file', parents=[vault_id, common])
         create_parser.set_defaults(func=self.execute_create)
@@ -120,7 +122,7 @@ class VaultCLI(CLI):
         rekey_new_group = rekey_parser.add_mutually_exclusive_group()
         rekey_new_group.add_argument('--new-vault-password-file', default=None, dest='new_vault_password_file',
                                      help="new vault password file for rekey", type=opt_help.unfrack_path())
-        rekey_new_group.add_argument('--new-vault-id', default=None, dest='new_vault_id', type=str,
+        rekey_new_group.add_argument('--new-vault-id', default=None, dest='new_vault_id', type=opt_help.str_sans_forbidden_characters('\n', ';'),
                                      help='the new vault identity to use for rekey')
         rekey_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
 
@@ -207,8 +209,6 @@ class VaultCLI(CLI):
 
         if action in ['rekey']:
             encrypt_vault_id = context.CLIARGS['encrypt_vault_id'] or C.DEFAULT_VAULT_ENCRYPT_IDENTITY
-            # print('encrypt_vault_id: %s' % encrypt_vault_id)
-            # print('default_encrypt_vault_id: %s' % default_encrypt_vault_id)
 
             # new_vault_ids should only ever be one item, from
             # load the default vault ids if we are using encrypt-vault-id

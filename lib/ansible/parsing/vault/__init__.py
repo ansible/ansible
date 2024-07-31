@@ -26,59 +26,18 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import warnings
 
-from binascii import hexlify
-from binascii import unhexlify
-from binascii import Error as BinasciiError
+from importlib import import_module
 
-HAS_CRYPTOGRAPHY = False
-CRYPTOGRAPHY_BACKEND = None
-try:
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        from cryptography.exceptions import InvalidSignature
-    from cryptography.hazmat.backends import default_backend
-    from cryptography.hazmat.primitives import hashes, padding
-    from cryptography.hazmat.primitives.hmac import HMAC
-    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-    from cryptography.hazmat.primitives.ciphers import (
-        Cipher as C_Cipher, algorithms, modes
-    )
-    CRYPTOGRAPHY_BACKEND = default_backend()
-    HAS_CRYPTOGRAPHY = True
-except ImportError:
-    pass
-
-from ansible.errors import AnsibleError, AnsibleAssertionError
+from ansible.errors import AnsibleError, AnsibleAssertionError, AnsibleVaultError, AnsibleVaultFormatError, AnsibleVaultPasswordError
 from ansible import constants as C
-from ansible.module_utils.six import binary_type
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
+from ansible.parsing.vault.ciphers import VaultCipher
 from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe, unfrackpath
 
 display = Display()
-
-
 b_HEADER = b'$ANSIBLE_VAULT'
-CIPHER_ALLOWLIST = frozenset((u'AES256',))
-CIPHER_WRITE_ALLOWLIST = frozenset((u'AES256',))
-# See also CIPHER_MAPPING at the bottom of the file which maps cipher strings
-# (used in VaultFile header) to a cipher class
-
-NEED_CRYPTO_LIBRARY = "ansible-vault requires the cryptography library in order to function"
-
-
-class AnsibleVaultError(AnsibleError):
-    pass
-
-
-class AnsibleVaultPasswordError(AnsibleVaultError):
-    pass
-
-
-class AnsibleVaultFormatError(AnsibleError):
-    pass
 
 
 def is_encrypted(data):
@@ -153,7 +112,7 @@ def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None, filena
     and then removes the header and the inserted newlines.  The string returned
     is suitable for processing by the Cipher classes.
 
-    :arg b_vaulttext: byte str containing the data from a save file
+    :arg b_vaulttext_envelope: byte str containing the data from a save file
     :kwarg default_vault_id: The vault_id name to use if the vaulttext does not provide one.
     :kwarg filename: The filename that the data came from.  This is only
         used to make better error messages in case the data cannot be
@@ -172,19 +131,18 @@ def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None, filena
         msg = "Vault envelope format error"
         if filename:
             msg += ' in %s' % (filename)
-        msg += ': %s' % exc
-        raise AnsibleVaultFormatError(msg)
+        raise AnsibleVaultFormatError(msg, filename=filename) from exc
 
 
 def format_vaulttext_envelope(b_ciphertext, cipher_name, version=None, vault_id=None):
     """ Add header and format to 80 columns
 
-        :arg b_ciphertext: the encrypted and hexlified data as a byte string
-        :arg cipher_name: unicode cipher name (for ex, u'AES256')
-        :arg version: unicode vault version (for ex, '1.2'). Optional ('1.1' is default)
-        :arg vault_id: unicode vault identifier. If provided, the version will be bumped to 1.2.
-        :returns: a byte str that should be dumped into a file.  It's
-            formatted to 80 char columns and has the header prepended
+        :arg b_ciphertext: the result from Vault cipher encrypt method, as a byte string
+        :arg cipher_name: string with the cipher name (for ex, 'AES256')
+        :arg version: string containing the vault header version (for ex, '1.2'). Optional ('1.1' is default)
+        :arg vault_id: string representing vault identifier. If provided, the version will be bumped to 1.2.
+        :returns: a byte str that should be dumped into a file.  It is the header with the appended cipher
+            formatted to 80 char columns.
     """
 
     if not cipher_name:
@@ -198,7 +156,7 @@ def format_vaulttext_envelope(b_ciphertext, cipher_name, version=None, vault_id=
 
     b_version = to_bytes(version, 'utf-8', errors='strict')
     b_vault_id = to_bytes(vault_id, 'utf-8', errors='strict')
-    b_cipher_name = to_bytes(cipher_name, 'utf-8', errors='strict')
+    b_cipher_name = to_bytes(cipher_name.upper(), 'utf-8', errors='strict')
 
     header_parts = [b_HEADER,
                     b_version,
@@ -217,39 +175,28 @@ def format_vaulttext_envelope(b_ciphertext, cipher_name, version=None, vault_id=
     return b_vaulttext
 
 
-def _unhexlify(b_data):
-    try:
-        return unhexlify(b_data)
-    except (BinasciiError, TypeError) as exc:
-        raise AnsibleVaultFormatError('Vault format unhexlify error: %s' % exc)
-
-
-def _parse_vaulttext(b_vaulttext):
-    b_vaulttext = _unhexlify(b_vaulttext)
-    b_salt, b_crypted_hmac, b_ciphertext = b_vaulttext.split(b"\n", 2)
-    b_salt = _unhexlify(b_salt)
-    b_ciphertext = _unhexlify(b_ciphertext)
-
-    return b_ciphertext, b_salt, b_crypted_hmac
-
-
-def parse_vaulttext(b_vaulttext):
-    """Parse the vaulttext
-
-    :arg b_vaulttext: byte str containing the vaulttext (ciphertext, salt, crypted_hmac)
-    :returns: A tuple of byte str of the ciphertext suitable for passing to a
-        Cipher class's decrypt() function, a byte str of the salt,
-        and a byte str of the crypted_hmac
-    :raises: AnsibleVaultFormatError: if the vaulttext format is invalid
+def load_vault_cipher(cipher_name):
+    """ Loads and returns the cipher object for a matching
+        cipher name
     """
-    # SPLIT SALT, DIGEST, AND DATA
+    if cipher_name.startswith('.'):
+        raise AnsibleVaultError("Invalid cipher name supplied, it cannot start with '.'")
+
+    cipher_module_name = cipher_name.lower()
+    cipher_class_name = f'Vault{cipher_name.upper()}'
     try:
-        return _parse_vaulttext(b_vaulttext)
-    except AnsibleVaultFormatError:
-        raise
-    except Exception as exc:
-        msg = "Vault vaulttext format error: %s" % exc
-        raise AnsibleVaultFormatError(msg)
+        m = import_module(f'ansible.parsing.vault.ciphers.{cipher_module_name}')
+    except ImportError as e:
+        raise AnsibleVaultError() from e
+
+    cipher_class = getattr(m, cipher_class_name, None)
+    if cipher_class is None:
+        raise AnsibleVaultError(f"Could not locate cipher class matching provided name '{cipher_name}'")
+
+    if VaultCipher not in cipher_class.__bases__:
+        raise AnsibleVaultError(f"Invalid vault cipher class loaded, expecte a VaultCipher but got: {type(cipher_class)}")
+
+    return cipher_class
 
 
 def verify_secret_is_not_empty(secret, msg=None):
@@ -268,7 +215,6 @@ class VaultSecret:
     '''Opaque/abstract objects for a single vault secret. ie, a password or a key.'''
 
     def __init__(self, _bytes=None):
-        # FIXME: ? that seems wrong... Unset etc?
         self._bytes = _bytes
 
     @property
@@ -295,12 +241,9 @@ class PromptVaultSecret(VaultSecret):
         else:
             self.prompt_formats = prompt_formats
 
-    @property
-    def bytes(self):
-        return self._bytes
-
     def load(self):
         self._bytes = self.ask_vault_passwords()
+        super(PromptVaultSecret, self).load()
 
     def ask_vault_passwords(self):
         b_vault_passwords = []
@@ -400,6 +343,7 @@ class FileVaultSecret(VaultSecret):
 
     def load(self):
         self._bytes = self._read_file(self.filename)
+        super(FileVaultSecret, self).load()
 
     def _read_file(self, filename):
         """
@@ -489,7 +433,6 @@ class ClientScriptVaultSecret(ScriptVaultSecret):
             msg_format = "Problem running vault password client script %s (%s)." \
                 " If this is not a script, remove the executable bit from the file."
             msg = msg_format % (self.filename, e)
-
             raise AnsibleError(msg)
 
         stdout, stderr = p.communicate()
@@ -578,9 +521,17 @@ def match_encrypt_secret(secrets, encrypt_vault_id=None):
 
 
 class VaultLib:
-    def __init__(self, secrets=None):
+    """ Wrapper API to create/open/view Ansible Vaults """
+
+    def __init__(self, secrets=None, cipher_name=None):
+        """
+        :kwarg secrets: List of tuples composed of ('vault id', VaultSecret instance)
+        :kwarg cipher_name: Name of the Vault cipher to use for encryption, must match
+                         vault cipher file name and Vault<cipher_name>.upper() class.
+                         Encrypted vaults include the cipher used in their header
+        """
         self.secrets = secrets or []
-        self.cipher_name = None
+        self.cipher_name = cipher_name
         self.b_version = b'1.2'
 
     @staticmethod
@@ -611,11 +562,11 @@ class VaultLib:
         if is_encrypted(b_plaintext):
             raise AnsibleError("input is already encrypted")
 
-        if not self.cipher_name or self.cipher_name not in CIPHER_WRITE_ALLOWLIST:
-            self.cipher_name = u"AES256"
+        if not self.cipher_name:
+            self.cipher_name = C.config.get_config_value('VAULT_CIPHER')
 
         try:
-            this_cipher = CIPHER_MAPPING[self.cipher_name]()
+            this_cipher = load_vault_cipher(self.cipher_name)
         except KeyError:
             raise AnsibleError(u"{0} cipher could not be found".format(self.cipher_name))
 
@@ -625,7 +576,10 @@ class VaultLib:
         else:
             display.vvvvv(u'Encrypting without a vault_id using vault secret %s' % to_text(secret))
 
-        b_ciphertext = this_cipher.encrypt(b_plaintext, secret, salt)
+        try:
+            b_ciphertext = this_cipher.encrypt(b_plaintext, secret, salt)
+        except (ValueError, TypeError) as e:
+            raise AnsibleVaultFormatError from e
 
         # format the data for output to the file
         b_vaulttext = format_vaulttext_envelope(b_ciphertext,
@@ -676,10 +630,7 @@ class VaultLib:
 
         # create the cipher object, note that the cipher used for decrypt can
         # be different than the cipher used for encrypt
-        if cipher_name in CIPHER_ALLOWLIST:
-            this_cipher = CIPHER_MAPPING[cipher_name]()
-        else:
-            raise AnsibleError("{0} cipher could not be found".format(cipher_name))
+        this_cipher = load_vault_cipher(cipher_name)
 
         b_plaintext = None
 
@@ -735,14 +686,12 @@ class VaultLib:
                         u'Decrypt%s successful with secret=%s and vault_id=%s' % (to_text(file_slug), to_text(vault_secret), to_text(vault_secret_id))
                     )
                     break
-            except AnsibleVaultFormatError as exc:
+            except (ValueError, TypeError) as exc:
                 exc.obj = obj
                 msg = u"There was a vault format error"
                 if filename:
                     msg += u' in %s' % (to_text(filename))
-                msg += u': %s' % to_text(exc)
-                display.warning(msg, formatted=True)
-                raise
+                raise AnsibleVaultFormatError(msg) from exc
             except AnsibleError as e:
                 display.vvvv(u'Tried to use the vault secret (%s) to decrypt (%s) but it failed. Error: %s' %
                              (to_text(vault_secret_id), to_text(filename), e))
@@ -961,12 +910,10 @@ class VaultEditor:
         # vault id here may not be the vault id actually used for decrypting
         # as when the edited file has no vault-id but is decrypted by non-default id in secrets
         # (vault_id=default, while a different vault-id decrypted)
-
-        # we want to get rid of files encrypted with the AES cipher
-        force_save = (cipher_name not in CIPHER_WRITE_ALLOWLIST)
+        display.vvvv(f'Found vault envelope in {filename} with vault-id={vault_id} using {cipher_name}')
 
         # Keep the same vault-id (and version) as in the header
-        self._edit_file_helper(filename, vault_secret_used, existing_data=plaintext, force_save=force_save, vault_id=vault_id)
+        self._edit_file_helper(filename, vault_secret_used, existing_data=plaintext, force_save=False, vault_id=vault_id)
 
     def plaintext(self, filename):
 
@@ -1136,169 +1083,3 @@ class VaultEditor:
         editor.append(filename)
 
         return editor
-
-
-########################################
-#               CIPHERS                #
-########################################
-
-class VaultAES256:
-
-    """
-    Vault implementation using AES-CTR with an HMAC-SHA256 authentication code.
-    Keys are derived using PBKDF2
-    """
-
-    # http://www.daemonology.net/blog/2009-06-11-cryptographic-right-answers.html
-
-    # Note: strings in this class should be byte strings by default.
-
-    def __init__(self):
-        if not HAS_CRYPTOGRAPHY:
-            raise AnsibleError(NEED_CRYPTO_LIBRARY)
-
-    @staticmethod
-    def _create_key_cryptography(b_password, b_salt, key_length, iv_length):
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=2 * key_length + iv_length,
-            salt=b_salt,
-            iterations=10000,
-            backend=CRYPTOGRAPHY_BACKEND)
-        b_derivedkey = kdf.derive(b_password)
-
-        return b_derivedkey
-
-    @classmethod
-    def _gen_key_initctr(cls, b_password, b_salt):
-        # 16 for AES 128, 32 for AES256
-        key_length = 32
-
-        if HAS_CRYPTOGRAPHY:
-            # AES is a 128-bit block cipher, so IVs and counter nonces are 16 bytes
-            iv_length = algorithms.AES.block_size // 8
-
-            b_derivedkey = cls._create_key_cryptography(b_password, b_salt, key_length, iv_length)
-            b_iv = b_derivedkey[(key_length * 2):(key_length * 2) + iv_length]
-        else:
-            raise AnsibleError(NEED_CRYPTO_LIBRARY + '(Detected in initctr)')
-
-        b_key1 = b_derivedkey[:key_length]
-        b_key2 = b_derivedkey[key_length:(key_length * 2)]
-
-        return b_key1, b_key2, b_iv
-
-    @staticmethod
-    def _encrypt_cryptography(b_plaintext, b_key1, b_key2, b_iv):
-        cipher = C_Cipher(algorithms.AES(b_key1), modes.CTR(b_iv), CRYPTOGRAPHY_BACKEND)
-        encryptor = cipher.encryptor()
-        padder = padding.PKCS7(algorithms.AES.block_size).padder()
-        b_ciphertext = encryptor.update(padder.update(b_plaintext) + padder.finalize())
-        b_ciphertext += encryptor.finalize()
-
-        # COMBINE SALT, DIGEST AND DATA
-        hmac = HMAC(b_key2, hashes.SHA256(), CRYPTOGRAPHY_BACKEND)
-        hmac.update(b_ciphertext)
-        b_hmac = hmac.finalize()
-
-        return to_bytes(hexlify(b_hmac), errors='surrogate_or_strict'), hexlify(b_ciphertext)
-
-    @classmethod
-    def _get_salt(cls):
-        custom_salt = C.config.get_config_value('VAULT_ENCRYPT_SALT')
-        if not custom_salt:
-            custom_salt = os.urandom(32)
-        return to_bytes(custom_salt)
-
-    @classmethod
-    def encrypt(cls, b_plaintext, secret, salt=None):
-
-        if secret is None:
-            raise AnsibleVaultError('The secret passed to encrypt() was None')
-
-        if salt is None:
-            b_salt = cls._get_salt()
-        elif not salt:
-            raise AnsibleVaultError('Empty or invalid salt passed to encrypt()')
-        else:
-            b_salt = to_bytes(salt)
-
-        b_password = secret.bytes
-        b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt)
-
-        if HAS_CRYPTOGRAPHY:
-            b_hmac, b_ciphertext = cls._encrypt_cryptography(b_plaintext, b_key1, b_key2, b_iv)
-        else:
-            raise AnsibleError(NEED_CRYPTO_LIBRARY + '(Detected in encrypt)')
-
-        b_vaulttext = b'\n'.join([hexlify(b_salt), b_hmac, b_ciphertext])
-        # Unnecessary but getting rid of it is a backwards incompatible vault
-        # format change
-        b_vaulttext = hexlify(b_vaulttext)
-        return b_vaulttext
-
-    @classmethod
-    def _decrypt_cryptography(cls, b_ciphertext, b_crypted_hmac, b_key1, b_key2, b_iv):
-        # b_key1, b_key2, b_iv = self._gen_key_initctr(b_password, b_salt)
-        # EXIT EARLY IF DIGEST DOESN'T MATCH
-        hmac = HMAC(b_key2, hashes.SHA256(), CRYPTOGRAPHY_BACKEND)
-        hmac.update(b_ciphertext)
-        try:
-            hmac.verify(_unhexlify(b_crypted_hmac))
-        except InvalidSignature as e:
-            raise AnsibleVaultError('HMAC verification failed: %s' % e)
-
-        cipher = C_Cipher(algorithms.AES(b_key1), modes.CTR(b_iv), CRYPTOGRAPHY_BACKEND)
-        decryptor = cipher.decryptor()
-        unpadder = padding.PKCS7(128).unpadder()
-        b_plaintext = unpadder.update(
-            decryptor.update(b_ciphertext) + decryptor.finalize()
-        ) + unpadder.finalize()
-
-        return b_plaintext
-
-    @staticmethod
-    def _is_equal(b_a, b_b):
-        """
-        Comparing 2 byte arrays in constant time to avoid timing attacks.
-
-        It would be nice if there were a library for this but hey.
-        """
-        if not (isinstance(b_a, binary_type) and isinstance(b_b, binary_type)):
-            raise TypeError('_is_equal can only be used to compare two byte strings')
-
-        # http://codahale.com/a-lesson-in-timing-attacks/
-        if len(b_a) != len(b_b):
-            return False
-
-        result = 0
-        for b_x, b_y in zip(b_a, b_b):
-            result |= b_x ^ b_y
-        return result == 0
-
-    @classmethod
-    def decrypt(cls, b_vaulttext, secret):
-
-        b_ciphertext, b_salt, b_crypted_hmac = parse_vaulttext(b_vaulttext)
-
-        # TODO: would be nice if a VaultSecret could be passed directly to _decrypt_*
-        #       (move _gen_key_initctr() to a AES256 VaultSecret or VaultContext impl?)
-        # though, likely needs to be python cryptography specific impl that basically
-        # creates a Cipher() with b_key1, a Mode.CTR() with b_iv, and a HMAC() with sign key b_key2
-        b_password = secret.bytes
-
-        b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt)
-
-        if HAS_CRYPTOGRAPHY:
-            b_plaintext = cls._decrypt_cryptography(b_ciphertext, b_crypted_hmac, b_key1, b_key2, b_iv)
-        else:
-            raise AnsibleError(NEED_CRYPTO_LIBRARY + '(Detected in decrypt)')
-
-        return b_plaintext
-
-
-# Keys could be made bytes later if the code that gets the data is more
-# naturally byte-oriented
-CIPHER_MAPPING = {
-    u'AES256': VaultAES256,
-}

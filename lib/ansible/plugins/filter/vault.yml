@@ -30,6 +30,10 @@ DOCUMENTATION:
         - Mostly useful when combining with the C(to_yaml) filter to output the 'inline vault' format.
       type: bool
       default: False
+    cipher:
+      description: If set, it overrides the default cipher for the provided one, the cipher name must match existing Ansible vault ciphers.
+      type: string
+      version_added: '2.18'
 
 EXAMPLES: |
   # simply encrypt my key in a vault

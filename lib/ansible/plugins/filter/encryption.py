@@ -15,7 +15,7 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def do_vault(data, secret, salt=None, vault_id='filter_default', wrap_object=False, vaultid=None):
+def do_vault(data, secret, salt=None, vault_id='filter_default', wrap_object=False, vaultid=None, cipher=None):
 
     if not isinstance(secret, (string_types, binary_type, Undefined)):
         raise AnsibleFilterTypeError("Secret passed is required to be a string, instead we got: %s" % type(secret))
@@ -32,7 +32,7 @@ def do_vault(data, secret, salt=None, vault_id='filter_default', wrap_object=Fal
 
     vault = ''
     vs = VaultSecret(to_bytes(secret))
-    vl = VaultLib()
+    vl = VaultLib(cipher_name=cipher)
     try:
         vault = vl.encrypt(to_bytes(data), vs, vault_id, salt)
     except UndefinedError:

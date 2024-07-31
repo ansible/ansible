@@ -15,15 +15,15 @@ from jinja2 import __version__ as j2_version
 
 import ansible
 from ansible import constants as C
+from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.yaml import HAS_LIBYAML, yaml_load
+from ansible.module_utils.six import string_types
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
 
 
-#
-# Special purpose OptionParsers
-#
+# #### #### Special purpose OptionParsers
 class SortingHelpFormatter(argparse.HelpFormatter):
     def add_arguments(self, actions):
         actions = sorted(actions, key=operator.attrgetter('option_strings'))
@@ -114,6 +114,23 @@ def maybe_unfrack_path(beacon):
     def inner(value):
         if value.startswith(beacon):
             return beacon + unfrackpath(value[1:])
+        return value
+    return inner
+
+
+def str_sans_forbidden_characters(*nope):
+    ''' ensure option is a string and does not have any characters from forbidden list'''
+
+    def inner(value):
+        if not is_sequence(nope):
+            raise TypeError(f"Expected list but got {type(nope)}")
+
+        if not isinstance(value, string_types):
+            raise ValueError(f"Expected a string but got a {type(value)}")
+
+        for x in nope:
+            if x in value:
+                raise ValueError(f"Invalid character '{x}' found in '{value}'")
         return value
     return inner
 
@@ -389,7 +406,7 @@ def add_subset_options(parser):
 
 def add_vault_options(parser):
     """Add options for loading vault files"""
-    parser.add_argument('--vault-id', default=[], dest='vault_ids', action='append', type=str,
+    parser.add_argument('--vault-id', default=[], dest='vault_ids', action='append', type=str_sans_forbidden_characters('\n', ';'),
                         help='the vault identity to use')
     base_group = parser.add_mutually_exclusive_group()
     base_group.add_argument('-J', '--ask-vault-password', '--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',

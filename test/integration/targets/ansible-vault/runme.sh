@@ -3,9 +3,8 @@
 set -euvx
 source virtualenv.sh
 
-
-MYTMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
-trap 'rm -rf "${MYTMPDIR}"' EXIT
+# no need to remove as ouput_dir itself will be in the end
+MYTMPDIR=$(mktemp -d -p "${OUTPUT_DIR}" 2>/dev/null || mktemp -d -t 'mytmpdir' -p "${OUTPUT_DIR}")
 
 # create a test file
 TEST_FILE="${MYTMPDIR}/test_file"
@@ -30,17 +29,9 @@ echo "This is a test file for edit2" > "${TEST_FILE_EDIT2}"
 
 # test case for https://github.com/ansible/ansible/issues/35834
 # (being prompted for new password on vault-edit with no configured passwords)
-
 TEST_FILE_EDIT3="${MYTMPDIR}/test_file_edit3"
 echo "This is a test file for edit3" > "${TEST_FILE_EDIT3}"
-
-# ansible-config view
-ansible-config view
-
-# ansible-config
-ansible-config dump --only-changed
 ansible-vault encrypt "$@" --vault-id vault-password "${TEST_FILE_EDIT3}"
-# EDITOR=./faux-editor.py ansible-vault edit "$@" "${TEST_FILE_EDIT3}"
 EDITOR=./faux-editor.py ansible-vault edit --vault-id vault-password -vvvvv "${TEST_FILE_EDIT3}"
 echo $?
 
@@ -70,8 +61,7 @@ echo "rc was $WRONG_RC (5 is expected)"
 # to verify we didnt choose the wrong vault-id
 ansible-vault view "$@" --vault-id vault-password encrypted-vault-password
 
-FORMAT_1_1_HEADER="\$ANSIBLE_VAULT;1.1;AES256"
-FORMAT_1_2_HEADER="\$ANSIBLE_VAULT;1.2;AES256"
+FORMAT_1_1_HEADER="\$ANSIBLE_VAULT;1.1;"
 
 
 VAULT_PASSWORD_FILE=vault-password
@@ -390,11 +380,14 @@ echo "The stdout log had 'New Vault password' in it and it is not supposed to. r
 
 # edit a 1.2 format with vault id, should keep vault id and 1.2 format
 EDITOR=./faux-editor.py ansible-vault edit "$@" --vault-id vault_password@vault-password "${TEST_FILE_EDIT2}"
-head -1 "${TEST_FILE_EDIT2}" | grep "${FORMAT_1_2_HEADER};vault_password"
+# shell check ignored as $ANSIBLE_VAULT not a shell var
+# shellcheck disable=SC2016
+head -1 "${TEST_FILE_EDIT2}" | grep -E '$ANSIBLE_VAULT;1.2;.+;vault_password'
 
 # edit a 1.2 file with no vault-id, should keep vault id and 1.2 format
 EDITOR=./faux-editor.py ansible-vault edit "$@" --vault-password-file vault-password "${TEST_FILE_EDIT2}"
-head -1 "${TEST_FILE_EDIT2}" | grep "${FORMAT_1_2_HEADER};vault_password"
+# shellcheck disable=SC2016
+head -1 "${TEST_FILE_EDIT2}" | grep -E '$ANSIBLE_VAULT;1.2;.+;vault_password'
 
 # encrypt with a password from a vault encrypted password file and multiple vault-ids
 # should fail because we dont know which vault id to use to encrypt with
