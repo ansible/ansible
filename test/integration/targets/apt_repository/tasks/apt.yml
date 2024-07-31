@@ -62,7 +62,10 @@
       - 'cache_before.stat.mtime != cache_after.stat.mtime'
 
 - name: 'ensure ppa key is installed (expect: pass)'
-  apt_key: id='{{test_ppa_key}}' state=present
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
 
 #
 # TEST: apt_repository: repo=<name> update_cache=no
@@ -93,7 +96,10 @@
       - 'cache_before.stat.mtime == cache_after.stat.mtime'
 
 - name: 'ensure ppa key is installed (expect: pass)'
-  apt_key: id='{{test_ppa_key}}' state=present
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
 
 #
 # TEST: apt_repository: repo=<name> update_cache=yes
@@ -124,7 +130,10 @@
       - 'cache_before.stat.mtime != cache_after.stat.mtime'
 
 - name: 'ensure ppa key is installed (expect: pass)'
-  apt_key: id='{{test_ppa_key}}' state=present
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
 
 #
 # TEST: apt_repository: repo=<spec>
@@ -136,7 +145,10 @@
   register: cache_before
 
 - name: ensure ppa key is present before adding repo that requires authentication
-  apt_key: keyserver=keyserver.ubuntu.com id='{{test_ppa_key}}' state=present
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
 
 - name: 'name=<spec> (expect: pass)'
   apt_repository: repo='{{test_ppa_spec}}' state=present
@@ -197,7 +209,10 @@
   register: cache_before
 
 - name: ensure ppa key is present before adding repo that requires authentication
-  apt_key: keyserver=keyserver.ubuntu.com id='{{test_ppa_key}}' state=present
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
 
 - name: 'name=<spec> filename=<filename> (expect: pass)'
   apt_repository: repo='{{test_ppa_spec}}' filename='{{test_ppa_filename}}' state=present
