@@ -1,0 +1,3 @@
+bugfixes:
+  - winrm - Add retry after exceeding commands per user quota that can occur in loops and action plugins running
+    multiple commands.

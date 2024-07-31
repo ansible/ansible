@@ -208,6 +208,14 @@ except ImportError as e:
     WINRM_IMPORT_ERR = e
 
 try:
+    from winrm.exceptions import WSManFaultError
+except ImportError:
+    # This was added in pywinrm 0.5.0, we just use our no-op exception for
+    # older versions which won't be able to handle this scenario.
+    class WSManFaultError(Exception):  # type: ignore[no-redef]
+        pass
+
+try:
     import xmltodict
     HAS_XMLTODICT = True
     XMLTODICT_IMPORT_ERR = None
@@ -633,7 +641,11 @@ class Connection(ConnectionBase):
         command_id = None
         try:
             stdin_push_failed = False
-            command_id = self.protocol.run_command(self.shell_id, to_bytes(command), map(to_bytes, args), console_mode_stdin=(stdin_iterator is None))
+            command_id = self._winrm_run_command(
+                to_bytes(command),
+                tuple(map(to_bytes, args)),
+                console_mode_stdin=(stdin_iterator is None),
+            )
 
             try:
                 if stdin_iterator:
@@ -696,6 +708,39 @@ class Connection(ConnectionBase):
                         raise
 
                     display.warning("Failed to cleanup running WinRM command, resources might still be in use on the target server")
+
+    def _winrm_run_command(
+        self,
+        command: bytes,
+        args: tuple[bytes, ...],
+        console_mode_stdin: bool = False,
+    ) -> str:
+        """Starts a command with handling when the WSMan quota is exceeded."""
+        try:
+            return self.protocol.run_command(
+                self.shell_id,
+                command,
+                args,
+                console_mode_stdin=console_mode_stdin,
+            )
+        except WSManFaultError as fault_error:
+            if fault_error.wmierror_code != 0x803381A6:
+                raise
+
+            # 0x803381A6 == ERROR_WSMAN_QUOTA_MAX_OPERATIONS
+            # WinRS does not decrement the operation count for commands,
+            # only way to avoid this is to re-create the shell. This is
+            # important for action plugins that might be running multiple
+            # processes in the same connection.
+            display.vvvvv("Shell operation quota exceeded, re-creating shell", host=self._winrm_host)
+            self.close()
+            self._connect()
+            return self.protocol.run_command(
+                self.shell_id,
+                command,
+                args,
+                console_mode_stdin=console_mode_stdin,
+            )
 
     def _connect(self) -> Connection:
 

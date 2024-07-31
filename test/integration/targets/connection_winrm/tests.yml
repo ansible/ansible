@@ -41,3 +41,20 @@
   - assert:
       that:
       - timeout_cmd.msg == 'The win_shell action failed to execute in the expected time frame (5) and was terminated'
+
+  - name: get WinRM quota value
+    win_shell: (Get-Item WSMan:\localhost\Service\MaxConcurrentOperationsPerUser).Value
+    changed_when: false
+    register: winrm_quota
+
+  - block:
+    - name: set WinRM quota to lower value
+      win_shell: Set-Item WSMan:\localhost\Service\MaxConcurrentOperationsPerUser 3
+
+    - name: run ping with loop to exceed quota
+      win_ping:
+      loop: '{{ range(0, 4) }}'
+
+    always:
+    - name: reset WinRM quota value
+      win_shell: Set-Item WSMan:\localhost\Service\MaxConcurrentOperationsPerUser {{ winrm_quota.stdout | trim }}
