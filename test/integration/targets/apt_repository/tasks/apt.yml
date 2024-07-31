@@ -56,7 +56,10 @@
       - 'cache_before.stat.mtime != cache_after.stat.mtime'
 
 - name: 'ensure ppa key is installed (expect: pass)'
-  apt_key: id='{{test_ppa_key}}' state=present
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
 
 #
 # TEST: apt_repository: repo=<name> update_cache=no
@@ -87,7 +90,10 @@
       - 'cache_before.stat.mtime == cache_after.stat.mtime'
 
 - name: 'ensure ppa key is installed (expect: pass)'
-  apt_key: id='{{test_ppa_key}}' state=present
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
 
 #
 # TEST: apt_repository: repo=<name> update_cache=yes
@@ -118,7 +124,10 @@
       - 'cache_before.stat.mtime != cache_after.stat.mtime'
 
 - name: 'ensure ppa key is installed (expect: pass)'
-  apt_key: id='{{test_ppa_key}}' state=present
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
 
 #
 # TEST: apt_repository: repo=<spec>
@@ -130,7 +139,10 @@
   register: cache_before
 
 - name: ensure ppa key is present before adding repo that requires authentication
-  apt_key: keyserver=keyserver.ubuntu.com id='{{test_ppa_key}}' state=present
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
 
 - name: 'name=<spec> (expect: pass)'
   apt_repository: repo='{{test_ppa_spec}}' state=present
@@ -191,7 +203,10 @@
   register: cache_before
 
 - name: ensure ppa key is present before adding repo that requires authentication
-  apt_key: keyserver=keyserver.ubuntu.com id='{{test_ppa_key}}' state=present
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
 
 - name: 'name=<spec> filename=<filename> (expect: pass)'
   apt_repository: repo='{{test_ppa_spec}}' filename='{{test_ppa_filename}}' state=present
@@ -260,13 +275,13 @@
     path: /etc/apt/sources.list.d/local-apt-repository.list
   register: stat_result
 
-- name: Assert if local apt repo file is a symlink 
+- name: Assert if local apt repo file is a symlink
   assert:
     that:
       - stat_result.stat.islnk is defined and stat_result.stat.islnk
       - stat_result.stat.lnk_source == "/usr/lib/local-apt-repository/local-apt-repository.list"
 
-- name: Try installing an invalid repo 
+- name: Try installing an invalid repo
   apt_repository:
     repo: deb http://dl.google.com/linux/chrome/deb2/ stable main
     state: present
@@ -282,7 +297,7 @@
   assert:
     that:
       - stat_result2.stat.islnk is defined and stat_result2.stat.islnk
-      - stat_result2.stat.lnk_source == "/usr/lib/local-apt-repository/local-apt-repository.list"  
+      - stat_result2.stat.lnk_source == "/usr/lib/local-apt-repository/local-apt-repository.list"
 
 - name: uninstall local-apt-repository with apt
   apt: pkg=local-apt-repository state=absent purge=yes
