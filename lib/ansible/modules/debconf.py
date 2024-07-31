@@ -132,14 +132,14 @@ from ansible.module_utils.basic import AnsibleModule
 def get_password_value(module, pkg, question, vtype):
     getsel = module.get_bin_path('debconf-get-selections', True)
     cmd = [getsel]
-    rc, out, err = module.run_command(cmd)
+    rc, out, dummy = module.run_command(cmd)
     if rc != 0:
         module.fail_json(msg="Failed to get the value '%s' from '%s'" % (question, pkg))
 
     desired_line = None
     for line in out.split("\n"):
         if line.startswith(pkg):
-            (dpkg, dquestion, dvtype, *dvalue) = line.split()
+            (dpkg, dquestion, dvtype, *dvalue) = line.split('\t')
             if dquestion == question and dvtype == vtype:
                 desired_line = line
                 if len(dvalue) >= 1:
