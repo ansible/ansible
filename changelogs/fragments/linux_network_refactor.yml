@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - linux - refactor network fact gathering code.
