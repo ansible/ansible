@@ -1,0 +1,73 @@
+---
+- name: create a user with a specific uid
+  user:
+    name: testuserone
+    uid: 8000
+    state: present
+  register: user_test0_1
+
+- name: create another user without a specific uid
+  user:
+    name: testusertwo
+    state: present
+  register: user_test0_2
+
+- name: show that the last user gets an id higher than the previous highest one
+  assert:
+    that:
+      user_test0_1.uid < user_test0_2.uid
+
+- name: create a user within max range
+  user:
+    name: testuserthree
+    uid_max: 1999
+    state: present
+  register: user_test0_3
+
+- name: assert that user with uid_max gets a lower uid
+  assert:
+    that:
+      user_test0_2.uid > user_test0_3.uid
+
+- name: proof of range limits
+  block: 
+    - name: create user 1 within min 1500 and max 1501
+      user:
+        name: testuserfour
+        uid_min: 1500
+        uid_max: 1501
+        state: present
+      register: user_test0_4
+
+    - name: create user 2 within min 1500 and max 1501
+      user:
+        name: testuserfive
+        uid_min: 1500
+        uid_max: 1501
+        state: present
+      register: user_test0_5
+
+    - name: create user 3 within min 1500 and max 1501 and show that the range applies
+      user:
+        name: testusersix
+        uid_min: 1500
+        uid_max: 1501
+        state: present
+      register: user_test0_6
+      failed_when: not user_test0_6.failed
+
+- name: show that creating a group by setting both uid_min and local is not possible
+  user:
+    name: uidminlocaluser_test_1
+    uid_min: 1000
+    local: true
+  register: uidminlocaluser_test_1
+  failed_when: not uidminlocaluser_test_1.failed
+
+- name: show that creating a group by setting both uid_max and local is not possible
+  user:
+    name: uidmaxlocaluser_test_1
+    uid_max: 2000
+    local: true
+  register: uidmaxlocaluser_test_1
+  failed_when: not uidmaxlocaluser_test_1.failed
