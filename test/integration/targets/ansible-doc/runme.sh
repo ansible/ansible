@@ -208,6 +208,12 @@ ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --no-fail-on-errors --
 output=$(ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --playbook-dir broken-docs testns.testcol 2>&1 | grep -c 'ERROR!' || true)
 test "${output}" -eq 1
 
+# ensure that role doc does not fail when --no-fail-on-errors is supplied
+ANSIBLE_LIBRARY='./nolibrary' ansible-doc --no-fail-on-errors --playbook-dir broken-docs testns.testcol.testrole -t role 1>/dev/null 2>&1
+
+# ensure that role doc does fail when --no-fail-on-errors is not supplied
+output=$(ANSIBLE_LIBRARY='./nolibrary' ansible-doc --playbook-dir broken-docs testns.testcol.testrole -t role 2>&1 | grep -c 'ERROR!' || true)
+test "${output}" -eq 1
 
 echo "testing legacy plugin listing"
 [ "$(ansible-doc -M ./library -l ansible.legacy |wc -l)"  -gt "0" ]

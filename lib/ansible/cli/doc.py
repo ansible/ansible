@@ -387,6 +387,12 @@ class RoleMixin(object):
 
         for role, collection, role_path in (roles | collroles):
             argspec = self._load_argspec(role, role_path, collection)
+            if 'error' in argspec:
+                if fail_on_errors:
+                    raise argspec['exception']
+                else:
+                    display.warning('Skipping role (%s) due to: %s' % (role, argspec['error']), True)
+                    continue
             fqcn, doc = self._build_doc(role, role_path, collection, argspec, entry_point)
             if doc:
                 result[fqcn] = doc
@@ -887,6 +893,7 @@ class DocCLI(CLI, RoleMixin):
         plugin_type = context.CLIARGS['type'].lower()
         do_json = context.CLIARGS['json_format'] or context.CLIARGS['dump']
         listing = context.CLIARGS['list_files'] or context.CLIARGS['list_dir']
+        no_fail = bool(not context.CLIARGS['no_fail_on_errors'])
 
         if context.CLIARGS['list_files']:
             content = 'files'
@@ -909,7 +916,6 @@ class DocCLI(CLI, RoleMixin):
             docs['all'] = {}
             for ptype in ptypes:
 
-                no_fail = bool(not context.CLIARGS['no_fail_on_errors'])
                 if ptype == 'role':
                     roles = self._create_role_list(fail_on_errors=no_fail)
                     docs['all'][ptype] = self._create_role_doc(roles.keys(), context.CLIARGS['entry_point'], fail_on_errors=no_fail)
@@ -935,7 +941,7 @@ class DocCLI(CLI, RoleMixin):
             if plugin_type == 'keyword':
                 docs = DocCLI._get_keywords_docs(context.CLIARGS['args'])
             elif plugin_type == 'role':
-                docs = self._create_role_doc(context.CLIARGS['args'], context.CLIARGS['entry_point'])
+                docs = self._create_role_doc(context.CLIARGS['args'], context.CLIARGS['entry_point'], fail_on_errors=no_fail)
             else:
                 # display specific plugin docs
                 docs = self._get_plugins_docs(plugin_type, context.CLIARGS['args'])
