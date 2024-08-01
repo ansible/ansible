@@ -173,8 +173,6 @@ def set_selection(module, pkg, question, vtype, value, unseen):
     if unseen:
         cmd.append('-u')
 
-    if vtype == 'boolean':
-        value = value.lower()
     data = ' '.join([pkg, question, vtype, value])
 
     return module.run_command(cmd, data=data)
@@ -209,15 +207,17 @@ def main():
         if vtype is None or value is None:
             module.fail_json(msg="when supplying a question you must supply a valid vtype and value")
 
+        # ensure we compare booleans supplied to the way debconf sees them (true/false strings)
+        if vtype == 'boolean':
+            value = to_text(value).lower()
+
         # if question doesn't exist, value cannot match
         if question not in prev:
             changed = True
         else:
             existing = prev[question]
 
-            # ensure we compare booleans supplied to the way debconf sees them (true/false strings)
             if vtype == 'boolean':
-                value = to_text(value).lower()
                 existing = to_text(prev[question]).lower()
             elif vtype == 'password':
                 existing = get_password_value(module, pkg, question, vtype)
