@@ -589,10 +589,11 @@ class FieldAttributeBase:
                 _validate_variable_keys(ds)
                 return combine_vars(self.vars, ds)
             elif isinstance(ds, list):
+                line_file = getattr(ds, 'ansible_pos', ("unknown", 0))
                 display.deprecated(
                     (
                         'Specifying a list of dictionaries for vars is deprecated in favor of '
-                        'specifying a dictionary.'
+                        'specifying a dictionary. Error occurred in the file: %s, line: %d' % (line_file[0], line_file[1])
                     ),
                     version='2.18'
                 )
