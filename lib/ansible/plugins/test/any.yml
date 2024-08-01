@@ -2,7 +2,7 @@ DOCUMENTATION:
   name: any
   author: Ansible Core
   version_added: "2.4"
-  short_description: is any conditions in a list true
+  short_description: is any condition in a list true
   description:
     - This test checks each condition in a list for truthiness.
     - Same as the C(any) Python function.
@@ -14,7 +14,7 @@ DOCUMENTATION:
       required: True
 EXAMPLES: |
   varexpression: "{{ 3 == 3 }}"
-  # are all statements true?
+  # is any statement true?
   {{ [false, booleanvar, varexpression] is any}}
 
 RETURN:
