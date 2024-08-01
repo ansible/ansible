@@ -19,6 +19,7 @@
           mode: '0775'
         - name: unreadable
           mode: '0000'
+        - name: bad
 
     - name: Create dangling symlink
       file:
@@ -39,15 +40,16 @@
 - name: check for expected results from local facts
   assert:
     that:
-        - "'ansible_facts' in setup_result"
-        - "'ansible_local' in setup_result.ansible_facts"
-        - "'ansible_env' not in setup_result.ansible_facts"
-        - "'ansible_user_id' not in setup_result.ansible_facts"
-        - "'preferences' in setup_result.ansible_facts['ansible_local']"
-        - "'general' in setup_result.ansible_facts['ansible_local']['preferences']"
-        - "'bar' in setup_result.ansible_facts['ansible_local']['preferences']['general']"
-        - "setup_result.ansible_facts['ansible_local']['preferences']['general']['bar'] == 'loaded'"
-        - setup_result['ansible_facts']['ansible_local']['goodscript']['script_ran']|bool
-        - setup_result['ansible_facts']['ansible_local']['basdscript'].startswith("Failure executing fact script")
-        - setup_result['ansible_facts']['ansible_local']['unreadable'].startswith('error loading facts')
-        - setup_result['ansible_facts']['ansible_local']['dead_symlink'].startswith('Could not stat fact')
+      - "'ansible_facts' in setup_result"
+      - "'ansible_local' in setup_result.ansible_facts"
+      - "'ansible_env' not in setup_result.ansible_facts"
+      - "'ansible_user_id' not in setup_result.ansible_facts"
+      - "'preferences' in setup_result.ansible_facts['ansible_local']"
+      - "'general' in setup_result.ansible_facts['ansible_local']['preferences']"
+      - "'bar' in setup_result.ansible_facts['ansible_local']['preferences']['general']"
+      - "setup_result.ansible_facts['ansible_local']['preferences']['general']['bar'] == 'loaded'"
+      - setup_result['ansible_facts']['ansible_local']['goodscript']['script_ran']|bool
+      - setup_result['ansible_facts']['ansible_local']['basdscript'].startswith("Failure executing fact script")
+      - setup_result['ansible_facts']['ansible_local']['unreadable'].startswith('error loading facts')
+      - setup_result['ansible_facts']['ansible_local']['dead_symlink'].startswith('Could not stat fact')
+      - setup_result['ansible_facts']['ansible_local']['bad'].startswith('error loading facts as ini')

@@ -1,17 +1,5 @@
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
 
@@ -25,7 +13,6 @@ import ansible.module_utils.compat.typing as t
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.collector import BaseFactCollector
-from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import configparser, StringIO
 
 
@@ -91,12 +78,9 @@ class LocalFactCollector(BaseFactCollector):
                 # if that fails read it with ConfigParser
                 cp = configparser.ConfigParser()
                 try:
-                    if PY3:
-                        cp.read_file(StringIO(out))
-                    else:
-                        cp.readfp(StringIO(out))
+                    cp.read_file(StringIO(out))
                 except configparser.Error:
-                    fact = "error loading facts as JSON or ini - please check content: %s" % fn
+                    fact = f"error loading facts as JSON or ini - please check content: {fn}"
                     module.warn(fact)
                 else:
                     fact = {}
@@ -104,8 +88,14 @@ class LocalFactCollector(BaseFactCollector):
                         if sect not in fact:
                             fact[sect] = {}
                         for opt in cp.options(sect):
-                            val = cp.get(sect, opt)
-                            fact[sect][opt] = val
+                            try:
+                                val = cp.get(sect, opt)
+                            except configparser.Error as ex:
+                                fact = f"error loading facts as ini - please check content: {fn} ({ex})"
+                                module.warn(fact)
+                                continue
+                            else:
+                                fact[sect][opt] = val
             except Exception as e:
                 fact = "Failed to convert (%s) to JSON: %s" % (fn, to_text(e))
                 module.warn(fact)
