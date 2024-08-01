@@ -983,6 +983,9 @@ def main():
     elif state == 'absent':
         result = ensure_absent(path)
 
+    if not module._diff:
+        result.pop('diff', None)
+
     module.exit_json(**result)
 
 

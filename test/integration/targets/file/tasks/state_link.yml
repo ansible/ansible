@@ -29,6 +29,7 @@
 - name: change soft link to relative
   file: src={{output_file|basename}} dest={{remote_tmp_dir_test}}/soft.txt state=link
   register: file2_result
+  diff: true
 
 - name: Get stat info for the link
   stat:
