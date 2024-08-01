@@ -22,7 +22,7 @@ from jinja2.runtime import Context
 import unittest
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.plugins.loader import init_plugin_loader
 from ansible.template import Templar, AnsibleContext, AnsibleEnvironment, AnsibleUndefined
 from ansible.utils.unsafe_proxy import AnsibleUnsafe, wrap_var
@@ -70,8 +70,7 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
     def test_lookup_jinja_dict_key_in_static_vars(self):
         res = self.templar.template("{'some_static_var': '{{ some_var }}'}",
                                     static_vars=['some_static_var'])
-        # self.assertEqual(res['{{ a_keyword }}'], "blip")
-        print(res)
+        assert res['some_static_var'] == "blip"
 
     def test_is_possibly_template_true(self):
         tests = [
@@ -230,8 +229,8 @@ class TestTemplarMisc(BaseTemplar, unittest.TestCase):
         self.assertEqual(templar.template("{{foo}}\n", preserve_trailing_newlines=False), "bar")
         self.assertEqual(templar.template("{{bam}}"), "bar")
         self.assertEqual(templar.template("{{num}}"), 1)
-        self.assertEqual(templar.template("{{var_true}}"), True)
-        self.assertEqual(templar.template("{{var_false}}"), False)
+        assert templar.template("{{var_true}}")
+        assert not templar.template("{{var_false}}")
         self.assertEqual(templar.template("{{var_dict}}"), dict(a="b"))
         self.assertEqual(templar.template("{{bad_dict}}"), "{a='b'")
         self.assertEqual(templar.template("{{var_list}}"), [1])
@@ -251,11 +250,8 @@ class TestTemplarMisc(BaseTemplar, unittest.TestCase):
         templar.available_variables = dict(foo="bam")
         self.assertEqual(templar.template("{{foo}}"), "bam")
         # variables must be a dict() for available_variables setter
-        # FIXME Use assertRaises() as a context manager (added in 2.7) once we do not run tests on Python 2.6 anymore.
-        try:
+        with self.assertRaisesRegex(AnsibleAssertionError, r"the type of 'variables'"):
             templar.available_variables = "foo=bam"
-        except AssertionError:
-            pass
 
     def test_templar_escape_backslashes(self):
         # Rule of thumb: If escape backslashes is True you should end up with
@@ -341,29 +337,29 @@ class TestTemplarLookup(BaseTemplar, unittest.TestCase):
         res = self.templar._lookup('list', '{{ some_unsafe_var }}', wantlist=True)
         for lookup_result in res:
             self.assertTrue(self.is_unsafe(lookup_result))
-            # self.assertIsInstance(lookup_result, AnsibleUnsafe)
+            assert isinstance(lookup_result, AnsibleUnsafe)
 
-        # Should this be an AnsibleUnsafe
+        # TODO: Should this be an AnsibleUnsafe
         # self.assertIsInstance(res, AnsibleUnsafe)
 
     def test_lookup_jinja_dict(self):
         res = self.templar._lookup('list', {'{{ a_keyword }}': '{{ some_var }}'})
         self.assertEqual(res['{{ a_keyword }}'], "blip")
+        assert isinstance(res['{{ a_keyword }}'], AnsibleUnsafe)
         # TODO: Should this be an AnsibleUnsafe
-        # self.assertIsInstance(res['{{ a_keyword }}'], AnsibleUnsafe)
         # self.assertIsInstance(res, AnsibleUnsafe)
 
     def test_lookup_jinja_dict_unsafe(self):
         res = self.templar._lookup('list', {'{{ some_unsafe_key }}': '{{ some_unsafe_var }}'})
         self.assertTrue(self.is_unsafe(res['{{ some_unsafe_key }}']))
-        # self.assertIsInstance(res['{{ some_unsafe_key }}'], AnsibleUnsafe)
+        assert isinstance(res['{{ some_unsafe_key }}'], AnsibleUnsafe)
         # TODO: Should this be an AnsibleUnsafe
         # self.assertIsInstance(res, AnsibleUnsafe)
 
     def test_lookup_jinja_dict_unsafe_value(self):
         res = self.templar._lookup('list', {'{{ a_keyword }}': '{{ some_unsafe_var }}'})
         self.assertTrue(self.is_unsafe(res['{{ a_keyword }}']))
-        # self.assertIsInstance(res['{{ a_keyword }}'], AnsibleUnsafe)
+        assert isinstance(res['{{ a_keyword }}'], AnsibleUnsafe)
         # TODO: Should this be an AnsibleUnsafe
         # self.assertIsInstance(res, AnsibleUnsafe)
 
@@ -393,14 +389,14 @@ class TestAnsibleContext(BaseTemplar, unittest.TestCase):
     def test_resolve_unsafe(self):
         context = self._context(variables={'some_unsafe_key': wrap_var('some_unsafe_string')})
         res = context.resolve('some_unsafe_key')
-        # self.assertIsInstance(res, AnsibleUnsafe)
+        assert isinstance(res, AnsibleUnsafe)
         self.assertTrue(self.is_unsafe(res),
                         'return of AnsibleContext.resolve (%s) was expected to be marked unsafe but was not' % res)
 
     def test_resolve_unsafe_list(self):
         context = self._context(variables={'some_unsafe_key': [wrap_var('some unsafe string 1')]})
         res = context.resolve('some_unsafe_key')
-        # self.assertIsInstance(res[0], AnsibleUnsafe)
+        assert isinstance(res[0], AnsibleUnsafe)
         self.assertTrue(self.is_unsafe(res),
                         'return of AnsibleContext.resolve (%s) was expected to be marked unsafe but was not' % res)
 
@@ -416,15 +412,15 @@ class TestAnsibleContext(BaseTemplar, unittest.TestCase):
         context = self._context(variables={'some_key': 'some_string'})
         res = context.resolve('some_key')
         self.assertEqual(res, 'some_string')
-        # self.assertNotIsInstance(res, AnsibleUnsafe)
+        assert not isinstance(res, AnsibleUnsafe)
         self.assertFalse(self.is_unsafe(res),
                          'return of AnsibleContext.resolve (%s) was not expected to be marked unsafe but was' % res)
 
     def test_resolve_none(self):
         context = self._context(variables={'some_key': None})
         res = context.resolve('some_key')
-        self.assertEqual(res, None)
-        # self.assertNotIsInstance(res, AnsibleUnsafe)
+        assert res is None
+        assert not isinstance(res, AnsibleUnsafe)
         self.assertFalse(self.is_unsafe(res),
                          'return of AnsibleContext.resolve (%s) was not expected to be marked unsafe but was' % res)
 
