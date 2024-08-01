@@ -16,4 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: skip broken distros
+  meta: end_host
+  when: ansible_distribution == 'Alpine'
+
 - import_tasks: tests.yml
+- import_tasks: test_create_group_min_max.yml
+  when: ansible_facts.system == 'Linux'

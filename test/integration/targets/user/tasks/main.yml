@@ -43,3 +43,5 @@
 - import_tasks: test_umask.yml
   when: ansible_facts.system == 'Linux'
 - import_tasks: test_inactive_new_account.yml
+- import_tasks: test_create_user_min_max.yml
+  when: ansible_facts.system == 'Linux'
