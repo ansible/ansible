@@ -29,19 +29,19 @@ class SystemdFactCollector(BaseFactCollector):
 
     def collect(self, module=None, collected_facts=None):
         systemctl_bin = module.get_bin_path("systemctl")
+        systemd_facts = {}
         if systemctl_bin and ServiceMgrFactCollector.is_systemd_managed(module):
-            rc, stdout, stderr = module.run_command(
+            rc, stdout, dummy = module.run_command(
                 [systemctl_bin, "--version"],
                 check_rc=False,
             )
 
-            systemd_facts = {}
-
             if rc != 0:
                 return systemd_facts
 
-            systemd_facts["systemd"] = {}
-            systemd_facts["systemd"]["features"] = str(stdout.split("\n")[1])
-            systemd_facts["systemd"]["version"] = int(stdout.split(" ")[1])
+            systemd_facts["systemd"] = {
+                "features": str(stdout.split("\n")[1]),
+                "version": int(stdout.split(" ")[1]),
+            }
 
-            return systemd_facts
+        return systemd_facts
