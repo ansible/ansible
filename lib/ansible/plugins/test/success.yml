@@ -2,9 +2,10 @@ DOCUMENTATION:
   name: success
   author: Ansible Core
   version_added: "1.9"
-  short_description: check task success or skipped
+  short_description: check task success
   aliases: [succeeded, successful]
   description:
+    - Test if task did not fail; returning the opposite of C(failed).
     - This test checks for the existence of a C(failed) key in the input dictionary and that it is V(False) if present
     - This test does not distinguish between a task that completed successfully and a task that was skipped
   options:
@@ -18,5 +19,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: Returns V(True) if the task was skipped or successfully completed, V(False) otherwise.
+    description: Returns V(True) if the task was successfully completed (including if it was skipped), V(False) otherwise.
     type: boolean
