@@ -8,7 +8,6 @@ import itertools
 import operator
 import os
 
-
 from copy import copy as shallowcopy
 from functools import cache
 
@@ -590,7 +589,6 @@ class FieldAttributeBase:
                 _validate_variable_keys(ds)
                 return combine_vars(self.vars, ds)
             elif isinstance(ds, list):
-
                 line_file = getattr(ds, 'ansible_pos', ("unknown", 0))
                 display.deprecated(
                     (
