@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - local - handle error while parsing values in ini files (https://github.com/ansible/ansible/issues/82717).
