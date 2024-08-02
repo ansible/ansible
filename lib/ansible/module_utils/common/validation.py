@@ -41,7 +41,7 @@ def count_terms(terms, parameters):
 
 def safe_eval(value, locals=None, include_exceptions=False):
     deprecate(
-        "ansible.module_utils.common.safe_eval function is no longer used.",
+        "The safe_eval function should not be used.",
         version="2.21",
     )
     # do not allow method calls to modules
@@ -434,8 +434,8 @@ def check_type_dict(value):
             except Exception:
                 try:
                     result = literal_eval(value)
-                except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
-                    ...
+                except Exception:
+                    pass
                 else:
                     if isinstance(result, dict):
                         return result
