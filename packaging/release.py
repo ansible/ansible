@@ -1321,7 +1321,7 @@ def build(allow_dirty: bool = False) -> None:
             create_reproducible_sdist(get_sdist_path(version, dist_dir), sdist_file, commit_time)
             get_wheel_path(version, dist_dir).rename(wheel_file)
         finally:
-            git("worktree", "remove", temp_dir)
+            git("worktree", "remove", "--force", temp_dir)
 
 
 @command
