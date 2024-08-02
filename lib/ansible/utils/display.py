@@ -170,14 +170,14 @@ if getattr(C, 'DEFAULT_LOG_PATH'):
 
 # map color to log levels
 color_to_log_level = {C.COLOR_ERROR: logging.ERROR,
-                      C.COLOR_WARN: logging.WARNING,
-                      C.COLOR_OK: logging.INFO,
-                      C.COLOR_SKIP: logging.WARNING,
                       C.COLOR_UNREACHABLE: logging.ERROR,
-                      C.COLOR_DEBUG: logging.DEBUG,
-                      C.COLOR_CHANGED: logging.INFO,
+                      C.COLOR_WARN: logging.WARNING,
                       C.COLOR_DEPRECATE: logging.WARNING,
-                      C.COLOR_VERBOSE: logging.INFO}
+                      C.COLOR_SKIP: logging.WARNING,
+                      C.COLOR_OK: logging.INFO,
+                      C.COLOR_CHANGED: logging.INFO,
+                      C.COLOR_VERBOSE: logging.INFO,
+                      C.COLOR_DEBUG: logging.DEBUG}
 
 b_COW_PATHS = (
     b"/usr/bin/cowsay",
@@ -457,13 +457,21 @@ class Display(metaclass=Singleton):
         if logger and (caplevel is None or self.log_verbosity > caplevel):
             msg2 = msg.lstrip('\n')
 
-            lvl = logging.INFO
-            if color:
+            if caplevel is None or caplevel > 0:
+                lvl = logging.INFO
+            elif caplevel == -1:
+                lvl = logging.ERROR
+            elif caplevel == -2:
+                lvl = logging.WARNING
+            elif caplevel == -3:
+                lvl = logging.DEBUG
+            elif color:
                 # set logger level based on color (not great)
+                # but last resort and backwards compatible
                 try:
                     lvl = color_to_log_level[color]
                 except KeyError:
-                    # this should not happen, but JIC
+                    # this should not happen if mapping is updated with new color configs, but JIC
                     raise AnsibleAssertionError('Invalid color supplied to display: %s' % color)
 
             # actually log
@@ -512,10 +520,10 @@ class Display(metaclass=Singleton):
     @_meets_debug
     @_proxy
     def debug(self, msg: str, host: str | None = None) -> None:
-        if host is None:
-            self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
-        else:
-            self.display("%6d %0.5f [%s]: %s" % (os.getpid(), time.time(), host, msg), color=C.COLOR_DEBUG)
+        prefix = "%6d %0.5f" % (os.getpid(), time.time())
+        if host is not None:
+            prefix += f" [{host}]"
+        self.display(f"{prefix}: {msg}", color=C.COLOR_DEBUG, caplevel=-3)
 
     def get_deprecation_message(
         self,
@@ -594,7 +602,7 @@ class Display(metaclass=Singleton):
             new_msg = "\n[WARNING]: \n%s" % msg
 
         if new_msg not in self._warns:
-            self.display(new_msg, color=C.COLOR_WARN, stderr=True)
+            self.display(new_msg, color=C.COLOR_WARN, stderr=True, caplevel=-2)
             self._warns[new_msg] = 1
 
     @_proxy
@@ -653,7 +661,7 @@ class Display(metaclass=Singleton):
         else:
             new_msg = u"ERROR! %s" % msg
         if new_msg not in self._errors:
-            self.display(new_msg, color=C.COLOR_ERROR, stderr=True)
+            self.display(new_msg, color=C.COLOR_ERROR, stderr=True, caplevel=-1)
             self._errors[new_msg] = 1
 
     @staticmethod
