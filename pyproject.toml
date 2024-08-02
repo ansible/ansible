@@ -37,7 +37,6 @@ dynamic = ["version", "dependencies"]
 "CI: Azure Pipelines" = "https://dev.azure.com/ansible/ansible/"
 "Code of Conduct" = "https://docs.ansible.com/ansible/latest/community/code_of_conduct.html"
 "Documentation" = "https://docs.ansible.com/ansible-core/"
-"Mailing lists" = "https://docs.ansible.com/ansible/latest/community/communication.html#mailing-list-information"
 "Source Code" = "https://github.com/ansible/ansible/"
 
 [tool.setuptools.dynamic]
