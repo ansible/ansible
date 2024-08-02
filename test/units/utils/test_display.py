@@ -54,7 +54,7 @@ def test_get_text_width_no_locale(problematic_wcswidth_chars):
     pytest.raises(EnvironmentError, get_text_width, problematic_wcswidth_chars[0])
 
 
-def test_Display_banner_get_text_width(monkeypatch):
+def test_Display_banner_get_text_width(monkeypatch, display_resource):
     locale.setlocale(locale.LC_ALL, '')
     display = Display()
     display_mock = MagicMock()
@@ -67,7 +67,7 @@ def test_Display_banner_get_text_width(monkeypatch):
     assert msg.endswith(stars)
 
 
-def test_Display_banner_get_text_width_fallback(monkeypatch):
+def test_Display_banner_get_text_width_fallback(monkeypatch, display_resource):
     locale.setlocale(locale.LC_ALL, 'C.UTF-8')
     display = Display()
     display_mock = MagicMock()
@@ -80,12 +80,12 @@ def test_Display_banner_get_text_width_fallback(monkeypatch):
     assert msg.endswith(stars)
 
 
-def test_Display_set_queue_parent():
+def test_Display_set_queue_parent(display_resource):
     display = Display()
     pytest.raises(RuntimeError, display.set_queue, 'foo')
 
 
-def test_Display_set_queue_fork():
+def test_Display_set_queue_fork(display_resource):
     def test():
         display = Display()
         display.set_queue('foo')
@@ -96,7 +96,7 @@ def test_Display_set_queue_fork():
     assert p.exitcode == 0
 
 
-def test_Display_display_fork():
+def test_Display_display_fork(display_resource):
     def test():
         queue = MagicMock()
         display = Display()
@@ -110,7 +110,7 @@ def test_Display_display_fork():
     assert p.exitcode == 0
 
 
-def test_Display_display_warn_fork():
+def test_Display_display_warn_fork(display_resource):
     def test():
         queue = MagicMock()
         display = Display()
@@ -124,7 +124,7 @@ def test_Display_display_warn_fork():
     assert p.exitcode == 0
 
 
-def test_Display_display_lock(monkeypatch):
+def test_Display_display_lock(monkeypatch, display_resource):
     lock = MagicMock()
     display = Display()
     monkeypatch.setattr(display, '_lock', lock)
@@ -132,7 +132,7 @@ def test_Display_display_lock(monkeypatch):
     lock.__enter__.assert_called_once_with()
 
 
-def test_Display_display_lock_fork(monkeypatch):
+def test_Display_display_lock_fork(monkeypatch, display_resource):
     lock = MagicMock()
     display = Display()
     monkeypatch.setattr(display, '_lock', lock)

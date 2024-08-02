@@ -8,7 +8,7 @@ from __future__ import annotations
 from ansible.utils.display import Display
 
 
-def test_display_basic_message(capsys, mocker):
+def test_display_basic_message(capsys, mocker, display_resource):
     # Disable logging
     mocker.patch('ansible.utils.display.logger', return_value=None)
 
