@@ -304,6 +304,13 @@ COLOR_HIGHLIGHT:
   env: [{name: ANSIBLE_COLOR_HIGHLIGHT}]
   ini:
   - {key: highlight, section: colors}
+COLOR_INCLUDED:
+  name: Color for 'included' task status
+  default: cyan
+  description: Defines the color to use when showing 'Included' task status.
+  env: [{name: ANSIBLE_COLOR_INCLUDED}]
+  ini:
+  - {key: included, section: colors}
 COLOR_OK:
   name: Color for 'ok' task status
   default: green
