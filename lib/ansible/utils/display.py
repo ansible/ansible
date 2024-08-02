@@ -401,6 +401,7 @@ class Display(metaclass=Singleton):
         screen_only: bool = False,
         log_only: bool = False,
         newline: bool = True,
+        caplevel: int | None = None,
     ) -> None:
         """ Display a message to the user
 
@@ -450,7 +451,7 @@ class Display(metaclass=Singleton):
             #         raise
 
         if logger and not screen_only:
-            self._log(nocolor, color)
+            self._log(nocolor, color, caplevel)
 
     def _log(self, msg: str, color: str | None = None, caplevel: int | None = None):
 
