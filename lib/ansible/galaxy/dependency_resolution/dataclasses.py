@@ -31,11 +31,16 @@ from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection import HAS_PACKAGING, PkgReq
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.module_utils.errors import UnsupportedError
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
+from ansible.utils.version import SemanticVersion
 
+try:
+    from packaging.specifiers import SpecifierSet, InvalidSpecifier
+except ImportError:
+    SpecifierSet = None  # type: ignore[misc]
 
-_ALLOW_CONCRETE_POINTER_IN_SOURCE = False  # NOTE: This is a feature flag
 _GALAXY_YAML = b'galaxy.yml'
 _MANIFEST_JSON = b'MANIFEST.json'
 _SOURCE_METADATA_FILE = b'GALAXY.yml'
@@ -307,12 +312,36 @@ class _ComputedReqKindsMixin:
 
     @classmethod
     def from_requirement_dict(cls, collection_req, art_mgr, validate_signature_options=True):
-        req_name = collection_req.get('name', None)
-        req_version = collection_req.get('version', '*')
-        req_type = collection_req.get('type')
+        result = ArgumentSpecValidator(
+            argument_spec=dict(
+                name=dict(type='str', required=True),
+                signatures=dict(type='list', elements='str'),
+                source=dict(type='raw'),
+                type=dict(type='str'),
+                version=dict(default='*', type='str')
+            )
+        ).validate(collection_req)
+
+        req_name = result.validated_parameters.get('name')
+        req_version = result.validated_parameters.get('version')
+        req_type = result.validated_parameters.get('type')
         # TODO: decide how to deprecate the old src API behavior
-        req_source = collection_req.get('source', None)
-        req_signature_sources = collection_req.get('signatures', None)
+        req_source = result.validated_parameters.get('source')
+        req_signature_sources = result.validated_parameters.get('signatures')
+        if result.error_messages:
+            error = result.errors[0]
+            if isinstance(error, UnsupportedError):
+                raise AnsibleError(
+                    "The following {collection_name!s} collection requirement entry keys are not "
+                    "valid: {unsupported_params!s}".format(
+                        collection_name=req_name,
+                        unsupported_params=', '.join(sorted(result.unsupported_parameters))
+                    )
+                )
+            raise AnsibleError(
+                f"Failed to install collection requirement entry: {error.msg}"
+            )
+
         if req_signature_sources is not None:
             if validate_signature_options and art_mgr.keyring is None:
                 raise AnsibleError(
@@ -323,14 +352,24 @@ class _ComputedReqKindsMixin:
                 req_signature_sources = [req_signature_sources]
             req_signature_sources = frozenset(req_signature_sources)
 
+        if (
+            req_version and req_type == 'subdirs'
+        ):
+            raise AnsibleError(
+                f"The {req_name} 'version' key is not applicable when 'type' is set to 'subdirs'."
+            )
+
+        if (
+            req_name is not None
+            and not AnsibleCollectionRef.is_valid_collection_name(req_name)
+            and req_source is not None
+        ):
+            raise AnsibleError(
+                f"The {req_name} 'source' key is not applicable when 'name' is not a FQCN."
+            )
+
         if req_type is None:
-            if (  # FIXME: decide on the future behavior:
-                    _ALLOW_CONCRETE_POINTER_IN_SOURCE
-                    and req_source is not None
-                    and _is_concrete_artifact_pointer(req_source)
-            ):
-                src_path = req_source
-            elif (
+            if (
                     req_name is not None
                     and AnsibleCollectionRef.is_valid_collection_name(req_name)
             ):
@@ -417,6 +456,24 @@ class _ComputedReqKindsMixin:
                 "the key 'name' if it's requested from a Galaxy-like "
                 'index server.',
             )
+
+        if req_type != 'git' and req_version != '*':
+            if not HAS_PACKAGING:
+                raise AnsibleError("Failed to import packaging, check that a supported version is installed")
+
+            try:
+                specifier = next(iter(SpecifierSet(req_version)))
+            except InvalidSpecifier:
+                specifier = None
+
+            try:
+                version = req_version if not specifier else specifier.version
+                SemanticVersion(version)
+            except ValueError:
+                raise AnsibleError(
+                    f"The {req_name} 'version' key must be a valid collection version "
+                    "(see specification at https://semver.org/)."
+                )
 
         if req_type != 'galaxy' and req_source is None:
             req_source, req_name = req_name, None
