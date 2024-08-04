@@ -132,10 +132,11 @@ class RpmKey(object):
                 if not keyfile:
                     self.module.fail_json(msg="When importing a key, a valid file must be given")
                 if fingerprint:
-                    has_fingerprint = self.getfingerprint(keyfile)
-                    if fingerprint != has_fingerprint:
+                    has_fingerprints = self.getfingerprints(keyfile)
+                    if fingerprint not in has_fingerprints:
                         self.module.fail_json(
-                            msg="The specified fingerprint, '%s', does not match the key fingerprint '%s'" % (fingerprint, has_fingerprint)
+                            msg=("The specified fingerprint, '%s', "
+                                 "does not match any key fingerprints in '%s'") % (fingerprint, has_fingerprints)
                         )
                 self.import_key(keyfile)
                 if should_cleanup_keyfile:
@@ -200,6 +201,33 @@ class RpmKey(object):
                 # "fpr :: Fingerprint (fingerprint is in field 10)"
                 #
                 return line.split(':')[9]
+
+        self.module.fail_json(msg="Unexpected gpg output")
+
+    def getfingerprints(self, keyfile):
+        stdout, stderr = self.execute_command([
+            self.gpg, '--no-tty', '--batch', '--with-colons',
+            '--fixed-list-mode', '--import', '--import-options', 'show-only',
+            '--dry-run', keyfile
+        ])
+
+        fingerprints = []
+
+        for line in stdout.splitlines():
+            line = line.strip()
+            if line.startswith('fpr:'):
+                # As mentioned here,
+                #
+                # https://git.gnupg.org/cgi-bin/gitweb.cgi?p=gnupg.git;a=blob_plain;f=doc/DETAILS
+                #
+                # The description of the `fpr` field says
+                #
+                # "fpr :: Fingerprint (fingerprint is in field 10)"
+                #
+                fingerprints.append(line.split(':')[9])
+
+        if fingerprints:
+            return fingerprints
 
         self.module.fail_json(msg="Unexpected gpg output")
 
