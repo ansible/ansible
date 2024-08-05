@@ -1685,8 +1685,12 @@ class AnsibleModule(object):
             umask = os.umask(0)
             os.umask(umask)
             os.chmod(b_dest, S_IRWU_RWG_RWO & ~umask)
+            dest_dir_stat = os.stat(os.path.dirname(b_dest))
             try:
-                os.chown(b_dest, os.geteuid(), os.getegid())
+                if dest_dir_stat.st_mode & stat.S_ISGID:
+                    os.chown(b_dest, os.geteuid(), dest_dir_stat.st_gid)
+                else:
+                    os.chown(b_dest, os.geteuid(), os.getegid())
             except OSError:
                 # We're okay with trying our best here.  If the user is not
                 # root (or old Unices) they won't be able to chown.
