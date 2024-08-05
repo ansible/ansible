@@ -1,2 +1,2 @@
 # The test-constraints sanity test verifies this file, but changes must be made manually to keep it in up-to-date.
-coverage == 7.5.3 ; python_version >= '3.8' and python_version <= '3.13'
+coverage == 7.6.1 ; python_version >= '3.8' and python_version <= '3.13'
