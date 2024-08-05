@@ -27,9 +27,9 @@ from ansible.module_utils.compat.version import LooseVersion, StrictVersion
 from ansible import errors
 from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.parsing.vault import is_encrypted_file
 from ansible.utils.display import Display
 from ansible.utils.version import SemanticVersion
-from ansible.utils.parsing.vault import is_encrypted_file
 
 try:
     from packaging.version import Version as PEP440Version
