@@ -103,7 +103,7 @@ def is_encrypted(data):
     return False
 
 
-def is_encrypted_file(file_obj, start_pos=0, count=-1):
+def is_encrypted_file(file_obj, start_pos=0, count=len(b_HEADER)):
     """Test if the contents of a file obj are a vault encrypted data blob.
 
     :arg file_obj: A file object that will be read from.

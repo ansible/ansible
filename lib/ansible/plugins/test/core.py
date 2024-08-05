@@ -29,7 +29,7 @@ from ansible.module_utils.common.text.converters import to_native, to_text, to_b
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.utils.display import Display
 from ansible.utils.version import SemanticVersion
-from ansible.utils.pars.vault import is_encrypted_file, b_HEADER as vault_header
+from ansible.utils.pars.vault import is_encrypted_file
 
 try:
     from packaging.version import Version as PEP440Version
@@ -151,7 +151,7 @@ def vaulted_file(value):
     """
     try:
         with open(to_bytes(value), 'rb') as f:
-            return is_encrypted_file(f, count=len(vault_header))
+            return is_encrypted_file(f))
     except (OSError, IOError) as e:
         raise errors.AnsibleFilterError(f"Cannot test if the file {value} is a vault", orig_exc=e)
 
