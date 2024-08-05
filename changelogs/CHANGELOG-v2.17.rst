@@ -4,6 +4,29 @@ ansible-core 2.17 "Gallows Pole" Release Notes
 
 .. contents:: Topics
 
+v2.17.3rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2024-08-05
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Improve the error message shown when an unknown ``--remote`` or ``--docker`` option is given.
+- ansible-test - Removed the ``vyos/1.1.8`` network remote as it is no longer functional.
+
+Bugfixes
+--------
+
+- Warning now includes filename and line number of variable when specifying a list of dictionaries for vars (https://github.com/ansible/ansible/issues/82528).
+- config, restored the ability to set module compression via a variable
+- debconf - fix normalization of value representation for boolean vtypes in new packages (https://github.com/ansible/ansible/issues/83594)
+- linear strategy: fix handlers included via ``include_tasks`` handler to be executed in lockstep (https://github.com/ansible/ansible/issues/83019)
+
 v2.17.2
 =======
 
