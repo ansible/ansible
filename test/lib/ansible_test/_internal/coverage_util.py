@@ -69,7 +69,7 @@ class CoverageVersion:
 
 COVERAGE_VERSIONS = (
     # IMPORTANT: Keep this in sync with the ansible-test.txt requirements file.
-    CoverageVersion('7.5.3', 7, (3, 8), (3, 13)),
+    CoverageVersion('7.6.1', 7, (3, 8), (3, 13)),
 )
 """
 This tuple specifies the coverage version to use for Python version ranges.
