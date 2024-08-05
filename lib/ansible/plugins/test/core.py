@@ -25,7 +25,7 @@ from collections.abc import MutableMapping, MutableSequence
 from ansible.module_utils.compat.version import LooseVersion, StrictVersion
 
 from ansible import errors
-from ansible.module_utils.common.text.converters import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.utils.display import Display
 from ansible.utils.version import SemanticVersion
@@ -152,7 +152,7 @@ def vaulted_file(value):
     try:
         with open(to_bytes(value), 'rb') as f:
             return is_encrypted_file(f, count=len(vault_header))
-    except (OSError, IOError) as e
+    except (OSError, IOError) as e:
         raise errors.AnsibleFilterError(f"Cannot test if the file {value} is a vault", orig_exc=e)
 
 
