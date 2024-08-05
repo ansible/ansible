@@ -777,6 +777,30 @@ releases:
     fragments:
     - 2.16.1_summary.yaml
     release_date: '2023-12-04'
+  2.16.10rc1:
+    changes:
+      bugfixes:
+      - config, restored the ability to set module compression via a variable
+      - 'linear strategy: fix handlers included via ``include_tasks`` handler to be
+        executed in lockstep (https://github.com/ansible/ansible/issues/83019)'
+      minor_changes:
+      - ansible-test - Improve the error message shown when an unknown ``--remote``
+        or ``--docker`` option is given.
+      - ansible-test - Removed the ``vyos/1.1.8`` network remote as it is no longer
+        functional.
+      release_summary: '| Release Date: 2024-08-05
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+    codename: All My Love
+    fragments:
+    - 2.16.10rc1_summary.yaml
+    - 83019-linear-handlers-lockstep-fix.yml
+    - ansible-test-error-message-improvement.yml
+    - ansible-test-vyos.yml
+    - mc_fix.yml
+    release_date: '2024-08-05'
   2.16.1rc1:
     changes:
       breaking_changes:
