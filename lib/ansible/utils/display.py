@@ -168,16 +168,16 @@ if getattr(C, 'DEFAULT_LOG_PATH'):
     else:
         print(f"[WARNING]: log file at '{path}' is not writeable and we cannot create it, aborting\n", file=sys.stderr)
 
-# map color to log levels
-color_to_log_level = {C.COLOR_ERROR: logging.ERROR,
-                      C.COLOR_UNREACHABLE: logging.ERROR,
-                      C.COLOR_WARN: logging.WARNING,
-                      C.COLOR_DEPRECATE: logging.WARNING,
-                      C.COLOR_SKIP: logging.WARNING,
+# map color to log levels, in order of priority (low to high)
+color_to_log_level = {C.COLOR_DEBUG: logging.DEBUG,
+                      C.COLOR_VERBOSE: logging.INFO,
                       C.COLOR_OK: logging.INFO,
                       C.COLOR_CHANGED: logging.INFO,
-                      C.COLOR_VERBOSE: logging.INFO,
-                      C.COLOR_DEBUG: logging.DEBUG}
+                      C.COLOR_SKIP: logging.WARNING,
+                      C.COLOR_DEPRECATE: logging.WARNING,
+                      C.COLOR_WARN: logging.WARNING,
+                      C.COLOR_UNREACHABLE: logging.ERROR,
+                      C.COLOR_ERROR: logging.ERROR}
 
 b_COW_PATHS = (
     b"/usr/bin/cowsay",
