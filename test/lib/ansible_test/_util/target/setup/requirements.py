@@ -66,6 +66,8 @@ def bootstrap(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
     """Bootstrap pip and related packages in an empty virtual environment."""
     pip_version = options['pip_version']
     packages = options['packages']
+    setuptools = options['setuptools']
+    wheel = options['wheel']
 
     url = 'https://ci-files.testing.ansible.com/ansible-test/get-pip-%s.py' % pip_version
     cache_path = os.path.expanduser('~/.ansible/test/cache/get_pip_%s.py' % pip_version.replace(".", "_"))
@@ -100,6 +102,12 @@ https://github.com/ansible/ansible/issues/77304
 
     options = common_pip_options()
     options.extend(packages)
+
+    if not setuptools:
+        options.append('--no-setuptools')
+
+    if not wheel:
+        options.append('--no-wheel')
 
     command = [sys.executable, pip] + options
 
