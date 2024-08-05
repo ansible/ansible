@@ -95,7 +95,7 @@ def clean_repository(complete_file_list: list[str]) -> t.Generator[str, None, No
 def build(source_dir: str, tmp_dir: str) -> tuple[pathlib.Path, pathlib.Path]:
     """Create a sdist and wheel."""
     create = subprocess.run(
-        [sys.executable, '-m', 'build', '--no-isolation', '--outdir', tmp_dir],
+        [sys.executable, '-m', 'build', '--outdir', tmp_dir],
         stdin=subprocess.DEVNULL,
         capture_output=True,
         text=True,
