@@ -5,6 +5,28 @@ ansible-core 2.16 "All My Love" Release Notes
 .. contents:: Topics
 
 
+v2.16.10rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2024-08-05
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Improve the error message shown when an unknown ``--remote`` or ``--docker`` option is given.
+- ansible-test - Removed the ``vyos/1.1.8`` network remote as it is no longer functional.
+
+Bugfixes
+--------
+
+- config, restored the ability to set module compression via a variable
+- linear strategy: fix handlers included via ``include_tasks`` handler to be executed in lockstep (https://github.com/ansible/ansible/issues/83019)
+
 v2.16.9
 =======
 
