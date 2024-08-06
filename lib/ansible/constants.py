@@ -176,10 +176,10 @@ INTERNAL_STATIC_VARS = frozenset(
     ]
 )
 LOCALHOST = ('127.0.0.1', 'localhost', '::1')
-MODULE_REQUIRE_ARGS = tuple(add_internal_fqcns(('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
-                                                'ansible.windows.win_shell', 'raw', 'script')))
-MODULE_NO_JSON = tuple(add_internal_fqcns(('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
-                                           'ansible.windows.win_shell', 'raw')))
+WIN_MOVED = ['ansible.windows.win_command', 'ansible.windows.win_shell']
+MODULE_REQUIRE_ARGS_SIMPLE = ['command', 'raw', 'script', 'shell', 'win_command', 'win_shell']
+MODULE_REQUIRE_ARGS = tuple(add_internal_fqcns(MODULE_REQUIRE_ARGS_SIMPLE) + WIN_MOVED)
+MODULE_NO_JSON = tuple(add_internal_fqcns(('command', 'win_command', 'shell', 'win_shell', 'raw')) + WIN_MOVED)
 RESTRICTED_RESULT_KEYS = ('ansible_rsync_path', 'ansible_playbook_python', 'ansible_facts')
 SYNTHETIC_COLLECTIONS = ('ansible.builtin', 'ansible.legacy')
 TREE_DIR = None
