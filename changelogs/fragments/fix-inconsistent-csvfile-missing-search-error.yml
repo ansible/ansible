@@ -1,0 +1,2 @@
+bugfixes:
+  - csvfile lookup - give an error when no search term is provided using modern config syntax (https://github.com/ansible/ansible/issues/83689).
