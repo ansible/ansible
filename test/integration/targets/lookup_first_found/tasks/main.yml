@@ -147,3 +147,7 @@
           - ishouldnotbefound.yml
         paths:
           - "{{role_path}}/vars"
+
+- name: Test relative paths in roles
+  include_role:
+    role: "{{ role_path }}/roles/a"

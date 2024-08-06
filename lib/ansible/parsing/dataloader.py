@@ -318,11 +318,10 @@ class DataLoader:
                 if (is_role or self._is_role(path)) and b_pb_base_dir.endswith(b'/tasks'):
                     search.append(os.path.join(os.path.dirname(b_pb_base_dir), b_dirname, b_source))
                     search.append(os.path.join(b_pb_base_dir, b_source))
-                else:
-                    # don't add dirname if user already is using it in source
-                    if b_source.split(b'/')[0] != dirname:
-                        search.append(os.path.join(b_upath, b_dirname, b_source))
-                    search.append(os.path.join(b_upath, b_source))
+                # don't add dirname if user already is using it in source
+                if b_source.split(b'/')[0] != dirname:
+                    search.append(os.path.join(b_upath, b_dirname, b_source))
+                search.append(os.path.join(b_upath, b_source))
 
             # always append basedir as last resort
             # don't add dirname if user already is using it in source
