@@ -28,6 +28,7 @@ else:
 import collections.abc as c
 import codecs
 import ctypes.util
+import errno
 import fcntl
 import getpass
 import io
@@ -401,6 +402,7 @@ class Display(metaclass=Singleton):
         screen_only: bool = False,
         log_only: bool = False,
         newline: bool = True,
+        flush: bool = False,
     ) -> None:
         """ Display a message to the user
 
@@ -436,18 +438,17 @@ class Display(metaclass=Singleton):
             with self._lock:
                 fileobj.write(msg2)
 
-            # With locks, and the fact that we aren't printing from forks
-            # just write, and let the system flush. Everything should come out peachy
-            # I've left this code for historical purposes, or in case we need to add this
-            # back at a later date. For now ``TaskQueueManager.cleanup`` will perform a
-            # final flush at shutdown.
-            # try:
-            #     fileobj.flush()
-            # except IOError as e:
-            #     # Ignore EPIPE in case fileobj has been prematurely closed, eg.
-            #     # when piping to "head -n1"
-            #     if e.errno != errno.EPIPE:
-            #         raise
+                # With locks, and the fact that we aren't printing from forks
+                # just write, and let the system flush by default. Everything should come out peachy.
+                # ``TaskQueueManager.cleanup`` will perform a final flush at shutdown.
+                if flush:
+                    try:
+                        fileobj.flush()
+                    except IOError as e:
+                        # Ignore EPIPE in case fileobj has been prematurely closed, eg.
+                        # when piping to "head -n1"
+                        if e.errno != errno.EPIPE:
+                            raise
 
         if logger and not screen_only:
             self._log(nocolor, color)
@@ -763,7 +764,7 @@ class Display(metaclass=Singleton):
         #         # can't catch in the results_thread_main daemon thread
         #         raise AnsiblePromptInterrupt('user interrupt')
 
-        self.display(msg)
+        self.display(msg, flush=True)
         result = b''
         with self._lock:
             original_stdin_settings = termios.tcgetattr(self._stdin_fd)

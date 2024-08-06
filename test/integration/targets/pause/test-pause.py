@@ -312,3 +312,26 @@ pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abor
 pause_test.send('\r')
 pause_test.expect(pexpect.EOF)
 pause_test.close()
+
+# Test the prompt is flushed before cleanup with unbuffered output
+pause_test = pexpect.spawn("bash", env=os.environ, timeout=2)
+pause_test.logfile = log_buffer
+pause_test.sendline('ansible localhost -m pause -a \'prompt="Type the first letter of the alphabet", echo=false\' | cat -u')
+pause_test.expect(r'\[pause\]')
+pause_test.expect(r'"Type the first letter of the alphabet", \(output is hidden\):')
+pause_test.sendline(r'a')
+for expected in [
+    r'localhost | SUCCESS => {',
+    r'    "changed": false,',
+    r'    "delta": 0,',
+    r'    "echo": false,',
+    r'    "rc": 0,',
+    r'    "start": "[^"]*",',
+    r'    "stderr": "[^"]*",',
+    r'    "stdout": "Paused for [^ ]* minutes",',
+    r'    "stop": "[^"]*",',
+    r'    "user_input": "a"',
+    r'}',
+]:
+    pause_test.expect(expected)
+pause_test.close()
