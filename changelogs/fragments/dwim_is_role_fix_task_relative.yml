@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix using the current task's directory for looking up relative paths within roles (https://github.com/ansible/ansible/issues/82695).

@@ -152,3 +152,7 @@
   assert:
     that:
       - q('first_found', ['/nonexistant'], skip=True) == []
+
+- name: Test relative paths in roles
+  include_role:
+    role: "{{ role_path }}/roles/a"
