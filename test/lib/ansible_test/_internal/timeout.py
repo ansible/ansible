@@ -118,7 +118,7 @@ def configure_test_timeout(args: TestConfig) -> None:
 
         raise TimeoutExpiredError(f'Tests aborted after exceeding the {timeout.duration} minute time limit.')
 
-    def timeout_waiter(timeout_seconds: int) -> None:
+    def timeout_waiter(timeout_seconds: float) -> None:
         """Background thread which will kill the current process if the timeout elapses."""
         time.sleep(timeout_seconds)
         os.kill(os.getpid(), signal.SIGUSR1)

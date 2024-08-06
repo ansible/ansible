@@ -313,8 +313,8 @@ class Display(metaclass=Singleton):
 
         codecs.register_error('_replacing_warning_handler', self._replacing_warning_handler)
         try:
-            sys.stdout.reconfigure(errors='_replacing_warning_handler')
-            sys.stderr.reconfigure(errors='_replacing_warning_handler')
+            sys.stdout.reconfigure(errors='_replacing_warning_handler')  # type: ignore[union-attr]
+            sys.stderr.reconfigure(errors='_replacing_warning_handler')  # type: ignore[union-attr]
         except Exception as ex:
             self.warning(f"failed to reconfigure stdout/stderr with custom encoding error handler: {ex}")
 
