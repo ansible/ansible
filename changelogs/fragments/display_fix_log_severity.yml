@@ -1,0 +1,4 @@
+bugfixes:
+  - display now does a better job of mapping warnings/errors to the proper log severity when using ansible.log. We still use color as a fallback mapping (now prioritiezed by severity) but mostly rely on it beind directly set by warnning/errors calls.
+minor_changes:
+  - ansible.log now also shows log severity field

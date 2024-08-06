@@ -157,7 +157,7 @@ if getattr(C, 'DEFAULT_LOG_PATH'):
         if not os.path.isdir(path):
             # NOTE: level is kept at INFO to avoid security disclosures caused by certain libraries when using DEBUG
             logging.basicConfig(filename=path, level=logging.INFO,  # DO NOT set to logging.DEBUG
-                                format='%(asctime)s p=%(process)d u=%(user)s n=%(name)s | %(message)s')
+                                format='%(asctime)s p=%(process)d u=%(user)s n=%(name)s %(levelname)s| %(message)s')
 
             logger = logging.getLogger('ansible')
             for handler in logging.root.handlers:
@@ -168,16 +168,16 @@ if getattr(C, 'DEFAULT_LOG_PATH'):
     else:
         print(f"[WARNING]: log file at '{path}' is not writeable and we cannot create it, aborting\n", file=sys.stderr)
 
-# map color to log levels
-color_to_log_level = {C.COLOR_ERROR: logging.ERROR,
-                      C.COLOR_WARN: logging.WARNING,
+# map color to log levels, in order of priority (low to high)
+color_to_log_level = {C.COLOR_DEBUG: logging.DEBUG,
+                      C.COLOR_VERBOSE: logging.INFO,
                       C.COLOR_OK: logging.INFO,
-                      C.COLOR_SKIP: logging.WARNING,
-                      C.COLOR_UNREACHABLE: logging.ERROR,
-                      C.COLOR_DEBUG: logging.DEBUG,
                       C.COLOR_CHANGED: logging.INFO,
+                      C.COLOR_SKIP: logging.WARNING,
                       C.COLOR_DEPRECATE: logging.WARNING,
-                      C.COLOR_VERBOSE: logging.INFO}
+                      C.COLOR_WARN: logging.WARNING,
+                      C.COLOR_UNREACHABLE: logging.ERROR,
+                      C.COLOR_ERROR: logging.ERROR}
 
 b_COW_PATHS = (
     b"/usr/bin/cowsay",
@@ -401,6 +401,7 @@ class Display(metaclass=Singleton):
         screen_only: bool = False,
         log_only: bool = False,
         newline: bool = True,
+        caplevel: int | None = None,
     ) -> None:
         """ Display a message to the user
 
@@ -450,20 +451,28 @@ class Display(metaclass=Singleton):
             #         raise
 
         if logger and not screen_only:
-            self._log(nocolor, color)
+            self._log(nocolor, color, caplevel)
 
     def _log(self, msg: str, color: str | None = None, caplevel: int | None = None):
 
         if logger and (caplevel is None or self.log_verbosity > caplevel):
             msg2 = msg.lstrip('\n')
 
-            lvl = logging.INFO
-            if color:
+            if caplevel is None or caplevel > 0:
+                lvl = logging.INFO
+            elif caplevel == -1:
+                lvl = logging.ERROR
+            elif caplevel == -2:
+                lvl = logging.WARNING
+            elif caplevel == -3:
+                lvl = logging.DEBUG
+            elif color:
                 # set logger level based on color (not great)
+                # but last resort and backwards compatible
                 try:
                     lvl = color_to_log_level[color]
                 except KeyError:
-                    # this should not happen, but JIC
+                    # this should not happen if mapping is updated with new color configs, but JIC
                     raise AnsibleAssertionError('Invalid color supplied to display: %s' % color)
 
             # actually log
@@ -512,10 +521,10 @@ class Display(metaclass=Singleton):
     @_meets_debug
     @_proxy
     def debug(self, msg: str, host: str | None = None) -> None:
-        if host is None:
-            self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
-        else:
-            self.display("%6d %0.5f [%s]: %s" % (os.getpid(), time.time(), host, msg), color=C.COLOR_DEBUG)
+        prefix = "%6d %0.5f" % (os.getpid(), time.time())
+        if host is not None:
+            prefix += f" [{host}]"
+        self.display(f"{prefix}: {msg}", color=C.COLOR_DEBUG, caplevel=-3)
 
     def get_deprecation_message(
         self,
@@ -594,7 +603,7 @@ class Display(metaclass=Singleton):
             new_msg = "\n[WARNING]: \n%s" % msg
 
         if new_msg not in self._warns:
-            self.display(new_msg, color=C.COLOR_WARN, stderr=True)
+            self.display(new_msg, color=C.COLOR_WARN, stderr=True, caplevel=-2)
             self._warns[new_msg] = 1
 
     @_proxy
@@ -653,7 +662,7 @@ class Display(metaclass=Singleton):
         else:
             new_msg = u"ERROR! %s" % msg
         if new_msg not in self._errors:
-            self.display(new_msg, color=C.COLOR_ERROR, stderr=True)
+            self.display(new_msg, color=C.COLOR_ERROR, stderr=True, caplevel=-1)
             self._errors[new_msg] = 1
 
     @staticmethod
