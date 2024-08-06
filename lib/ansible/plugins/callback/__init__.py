@@ -506,24 +506,19 @@ class CallbackBase(AnsiblePlugin):
         self.on_any(args, kwargs)
 
     def v2_runner_on_failed(self, result: TaskResult, ignore_errors: bool = False) -> None:
-        """Process details of a failed task.
+        """Process results of a failed task.
 
-        Customization note: Ansible uses only one console stdout
-        callback at a time. However, you can override this method in a
-        separate callback to add output to stdout or forward details
-        to a log, etc.
-
-        Note: The value of 'ignore_errors' tells Ansible whether or not
-        to continue running tasks on the host where a failure occurred.
+        Note: The value of 'ignore_errors' tells Ansible whether to
+        continue running tasks on the host where this task failed.
         But the 'ignore_errors' directive only works when the task can
         run and returns a value of 'failed'. It does not make Ansible
         ignore undefined variable errors, connection failures, execution
         issues (for example, missing packages), or syntax errors.
 
-        :param result: An object that contains details about the task
+        :param result: The parameters of the task and its results.
         :type result: TaskResult
-        :param ignore_errors: Whether or not Ansible should continue \
-            running tasks on the host where the failure occurred
+        :param ignore_errors: Whether Ansible should continue \
+            running tasks on the host where the task failed.
         :type ignore_errors: bool
 
         :return: None
@@ -533,14 +528,9 @@ class CallbackBase(AnsiblePlugin):
         self.runner_on_failed(host, result._result, ignore_errors)
 
     def v2_runner_on_ok(self, result: TaskResult) -> None:
-        """Process details of a successful task.
+        """Process results of a successful task.
 
-        Customization note: Ansible uses only one console stdout
-        callback at a time. However, you can override this method in a
-        separate callback to add output to stdout or forward details
-        to a log, etc.
-
-        :param result: An object that contains details about the task
+        :param result: The parameters of the task and its results.
         :type result: TaskResult
 
         :return: None
@@ -550,14 +540,9 @@ class CallbackBase(AnsiblePlugin):
         self.runner_on_ok(host, result._result)
 
     def v2_runner_on_skipped(self, result: TaskResult) -> None:
-        """Get details about a skipped task.
+        """Process results of a skipped task.
 
-        Customization note: Ansible uses only one console stdout
-        callback at a time. However, you can override this method in a
-        separate callback to add output to stdout or forward details
-        to a log, etc.
-
-        :param result: An object that contains details about the task
+        :param result: The parameters of the task and its results.
         :type result: TaskResult
 
         :return: None
@@ -568,14 +553,9 @@ class CallbackBase(AnsiblePlugin):
             self.runner_on_skipped(host, self._get_item_label(getattr(result._result, 'results', {})))
 
     def v2_runner_on_unreachable(self, result: TaskResult) -> None:
-        """Process details of a task if a target node is unreachable.
+        """Process results of a task if a target node is unreachable.
 
-        Customization note: Ansible uses only one console stdout
-        callback at a time. However, you can override this method in a
-        separate callback to add output to stdout or forward details
-        to a log, etc.
-
-        :param result: An object that contains details about the task
+        :param result: The parameters of the task and its results.
         :type result: TaskResult
 
         :return: None
@@ -585,14 +565,12 @@ class CallbackBase(AnsiblePlugin):
         self.runner_on_unreachable(host, result._result)
 
     def v2_runner_on_async_poll(self, result: TaskResult) -> None:
-        """Process details of a task running in asynchronous mode.
+        """Get details about an unfinished task running in async mode.
 
-        Customization note: Ansible uses only one console stdout
-        callback at a time. However, you can override this method in a
-        separate callback to add output to stdout or forward details
-        to a log, etc.
+        Note: The value of the `poll` keyword in the task determines
+        the interval at which polling occurs and this method is run.
 
-        :param result: An object that contains details about the task
+        :param result: The parameters of the task and its status.
         :type result: TaskResult
 
         :return: None
@@ -604,7 +582,15 @@ class CallbackBase(AnsiblePlugin):
         clock = 0
         self.runner_on_async_poll(host, result._result, jid, clock)
 
-    def v2_runner_on_async_ok(self, result):
+    def v2_runner_on_async_ok(self, result: TaskResult) -> None:
+        """Process results of a successful task that ran in async mode.
+
+        :param result: The parameters of the task and its results.
+        :type result: TaskResult
+
+        :return: None
+        :rtype: None
+        """
         host = result._host.get_name()
         jid = result._result.get('ansible_job_id')
         self.runner_on_async_ok(host, result._result, jid)
