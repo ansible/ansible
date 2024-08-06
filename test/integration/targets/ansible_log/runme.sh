@@ -14,9 +14,9 @@ ANSIBLE_LOG_PATH=${ALOG} ansible-playbook logit.yml
 # ensure log file is created
 [ -f "${ALOG}" ]
 # Ensure tasks and log levels appear
-grep -q '[normal task]' "${ALOG}"
-grep -q 'INFO| TASK [force warning]' "${ALOG}"
-grep -q 'WARNING| [WARNING]: conditional statements' "${ALOG}"
+grep -q '\[normal task\]' "${ALOG}"
+grep -q 'INFO| TASK \[force warning\]' "${ALOG}"
+grep -q 'WARNING| \[WARNING\]: conditional statements' "${ALOG}"
 rm "${ALOG}"
 
 # inline grep should fail if EXEC was present
