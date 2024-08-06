@@ -1,0 +1,1 @@
+- include_tasks: subdir/main.yml
