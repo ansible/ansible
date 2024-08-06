@@ -16,8 +16,8 @@ ANSIBLE_LOG_PATH=${ALOG} ansible-playbook logit.yml
 # has ping task as content
 grep -q 'ping' "${ALOG}"
 # Ensure log levels appear
-grep -q 'INFO| TASK [force warning]' ${ALOG}
-grep -q 'WARNING| [WARNING]: conditional statements' ${ALOG}
+grep -q 'INFO| TASK [force warning]' "${ALOG}"
+grep -q 'WARNING| [WARNING]: conditional statements' "${ALOG}"
 rm "${ALOG}"
 
 # inline grep should fail if EXEC was present
