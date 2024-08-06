@@ -31,7 +31,6 @@ from ansible.utils.sentinel import Sentinel
 # modules formated for user msg
 FREEFORM_ACTIONS = set(C.MODULE_REQUIRE_ARGS_SIMPLE)
 RAW_PARAM_MODULES = FREEFORM_ACTIONS.union(set([
-    'include',
     'include_vars',
     'include_tasks',
     'include_role',
