@@ -1,6 +1,6 @@
 # edit "sanity.validate-modules.in" and generate with: hacking/update-sanity-requirements.py --test validate-modules
 antsibull-docs-parser==1.0.0
-Jinja2==3.1.3
+Jinja2==3.1.4
 MarkupSafe==2.1.5
-PyYAML==6.0.1
-voluptuous==0.14.2
+PyYAML==6.0.2
+voluptuous==0.15.2
