@@ -827,11 +827,11 @@ class SanitySingleVersion(SanityTest, metaclass=abc.ABCMeta):
         return SanityIgnoreProcessor(args, self, None)
 
 
-class SanityScript(SanityTest):
+class SanityScript(SanityTest, metaclass=abc.ABCMeta):
     """Base class for sanity test scripts."""
 
     @classmethod
-    def create(cls, path: str) -> SanityTest:
+    def create(cls, path: str) -> SanityScript:
         name = os.path.splitext(os.path.basename(path))[0]
         config_path = os.path.splitext(path)[0] + '.json'
 
@@ -839,6 +839,8 @@ class SanityScript(SanityTest):
             config = read_json_file(config_path)
         else:
             config = None
+
+        instance: SanityScript
 
         if config.get('multi_version'):
             instance = SanityScriptMultipleVersion(name=name, path=path, config=config)
@@ -978,12 +980,18 @@ class SanityScript(SanityTest):
 
         return targets
 
-    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
+    def test_script(self, args: SanityConfig, targets: SanityTargets, virtualenv_python: PythonConfig, python: PythonConfig) -> TestResult:
         """Run the sanity test and return the result."""
-        cmd = [python.path, self.path]
+        cmd = [virtualenv_python.path, self.path]
 
         env = ansible_environment(args, color=False)
-        env.update(PYTHONUTF8='1')  # force all code-smell sanity tests to run with Python UTF-8 Mode enabled
+
+        env.update(
+            PYTHONUTF8='1',  # force all code-smell sanity tests to run with Python UTF-8 Mode enabled
+            ANSIBLE_TEST_TARGET_PYTHON_VERSION=python.version,
+            ANSIBLE_TEST_CONTROLLER_PYTHON_VERSIONS=','.join(CONTROLLER_PYTHON_VERSIONS),
+            ANSIBLE_TEST_REMOTE_ONLY_PYTHON_VERSIONS=','.join(REMOTE_ONLY_PYTHON_VERSIONS),
+        )
 
         if self.min_max_python_only:
             min_python, max_python = self.supported_python_versions
@@ -1015,7 +1023,7 @@ class SanityScript(SanityTest):
                 display.info(data, verbosity=4)
 
         try:
-            stdout, stderr = intercept_python(args, python, cmd, data=data, env=env, capture=True)
+            stdout, stderr = intercept_python(args, virtualenv_python, cmd, data=data, env=env, capture=True)
             status = 0
         except SubprocessError as ex:
             stdout = ex.stdout
@@ -1055,15 +1063,9 @@ class SanityScript(SanityTest):
 
         return SanitySuccess(self.name)
 
+    @abc.abstractmethod
     def conditionally_load_processor(self, args: SanityConfig, python_version: str) -> SanityIgnoreProcessor:
         """Load the ignore processor for this sanity test."""
-        if isinstance(self, SanitySingleVersion):
-            return SanityIgnoreProcessor(args, self, None)
-
-        if isinstance(self, SanityMultipleVersion):
-            return SanityIgnoreProcessor(args, self, python_version)
-
-        raise NotImplementedError()
 
 
 class SanityVersionNeutral(SanityTest, metaclass=abc.ABCMeta):
@@ -1127,6 +1129,14 @@ class SanityMultipleVersion(SanityTest, metaclass=abc.ABCMeta):
 class SanityScriptSingleVersion(SanityScript, SanitySingleVersion):
     """External sanity test script which should run on a single python version."""
 
+    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
+        """Run the sanity test and return the result."""
+        return super().test_script(args, targets, python, python)
+
+    def conditionally_load_processor(self, args: SanityConfig, python_version: str) -> SanityIgnoreProcessor:
+        """Load the ignore processor for this sanity test."""
+        return SanityIgnoreProcessor(args, self, None)
+
 
 class SanityScriptMultipleVersion(SanityScript, SanityMultipleVersion):
     """External sanity test script which should run on multiple python versions."""
@@ -1153,7 +1163,11 @@ class SanityScriptMultipleVersion(SanityScript, SanityMultipleVersion):
         if args.prime_venvs:
             return SanitySkipped(self.name, python.version)
 
-        return super().test(args, targets, virtualenv_python)
+        return super().test_script(args, targets, virtualenv_python, python)
+
+    def conditionally_load_processor(self, args: SanityConfig, python_version: str) -> SanityIgnoreProcessor:
+        """Load the ignore processor for this sanity test."""
+        return SanityIgnoreProcessor(args, self, python_version)
 
 
 @cache
