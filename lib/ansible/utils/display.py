@@ -401,6 +401,7 @@ class Display(metaclass=Singleton):
         screen_only: bool = False,
         log_only: bool = False,
         newline: bool = True,
+        nowrap: bool = False,
     ) -> None:
         """ Display a message to the user
 
@@ -414,11 +415,17 @@ class Display(metaclass=Singleton):
 
         if not log_only:
 
-            has_newline = msg.endswith(u'\n')
-            if has_newline:
-                msg2 = msg[:-1]
+            istty = stderr and sys.__stderr__.isatty() or not stderr and sys.__stdout__.isatty()
+
+            if istty and not nowrap:
+                wrapped = textwrap.wrap(msg, self.columns, drop_whitespace=False)
+                msg2 = "\n".join(wrapped) + "\n"
             else:
                 msg2 = msg
+
+            has_newline = msg.endswith(u'\n')
+            if has_newline:
+                msg2 = msg2[:-1]
 
             if color:
                 msg2 = stringc(msg2, color)
@@ -567,6 +574,7 @@ class Display(metaclass=Singleton):
         removed: bool = False,
         date: str | None = None,
         collection_name: str | None = None,
+        wrap_text: bool = C.NOTTY_WRAP,
     ) -> None:
         if not removed and not C.DEPRECATION_WARNINGS:
             return
@@ -576,26 +584,16 @@ class Display(metaclass=Singleton):
         if removed:
             raise AnsibleError(message_text)
 
-        wrapped = textwrap.wrap(message_text, self.columns, drop_whitespace=False)
-        message_text = "\n".join(wrapped) + "\n"
-
         if message_text not in self._deprecations:
-            self.display(message_text.strip(), color=C.COLOR_DEPRECATE, stderr=True)
             self._deprecations[message_text] = 1
 
     @_proxy
-    def warning(self, msg: str, formatted: bool = False) -> None:
+    def warning(self, msg: str, formatted: bool = (not C.NOTTY_WRAP)) -> None:
 
-        if not formatted:
-            new_msg = "[WARNING]: %s" % msg
-            wrapped = textwrap.wrap(new_msg, self.columns)
-            new_msg = "\n".join(wrapped) + "\n"
-        else:
+        if msg not in self._warns:
+            self._warns[msg] = 1
             new_msg = "\n[WARNING]: \n%s" % msg
-
-        if new_msg not in self._warns:
-            self.display(new_msg, color=C.COLOR_WARN, stderr=True)
-            self._warns[new_msg] = 1
+            self.display(new_msg, color=C.COLOR_WARN, stderr=True, nowrap=(not formatted))
 
     @_proxy
     def system_warning(self, msg: str) -> None:
@@ -624,7 +622,7 @@ class Display(metaclass=Singleton):
         if star_len <= 3:
             star_len = 3
         stars = u"*" * star_len
-        self.display(u"\n%s %s" % (msg, stars), color=color)
+        self.display(u"\n%s %s" % (msg, stars), color=color, nowrap=True)
 
     @_proxy
     def banner_cowsay(self, msg: str, color: str | None = None) -> None:
@@ -642,10 +640,10 @@ class Display(metaclass=Singleton):
         runcmd.append(to_bytes(msg))
         cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
-        self.display(u"%s\n" % to_text(out), color=color)
+        self.display(u"%s\n" % to_text(out), color=color, nowrap=True)
 
     @_proxy
-    def error(self, msg: str, wrap_text: bool = True) -> None:
+    def error(self, msg: str, wrap_text: bool = C.NOTTY_WRAP) -> None:
         if wrap_text:
             new_msg = u"\n[ERROR]: %s" % msg
             wrapped = textwrap.wrap(new_msg, self.columns)
