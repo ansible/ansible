@@ -157,7 +157,7 @@ if getattr(C, 'DEFAULT_LOG_PATH'):
         if not os.path.isdir(path):
             # NOTE: level is kept at INFO to avoid security disclosures caused by certain libraries when using DEBUG
             logging.basicConfig(filename=path, level=logging.INFO,  # DO NOT set to logging.DEBUG
-                                format='%(asctime)s p=%(process)d u=%(user)s n=%(name)s | %(message)s')
+                                format='%(asctime)s p=%(process)d u=%(user)s n=%(name)s %(levelname)s| %(message)s')
 
             logger = logging.getLogger('ansible')
             for handler in logging.root.handlers:
