@@ -112,6 +112,8 @@ class PipBootstrap(PipCommand):
 
     pip_version: str
     packages: list[str]
+    setuptools: bool
+    wheel: bool
 
 
 # Entry Points
@@ -177,6 +179,8 @@ def collect_bootstrap(python: PythonConfig) -> list[PipCommand]:
     bootstrap = PipBootstrap(
         pip_version=pip_version,
         packages=packages,
+        setuptools=False,
+        wheel=False,
     )
 
     return [bootstrap]
@@ -217,17 +221,6 @@ def collect_requirements(
         # most infrastructure packages can be removed from sanity test virtual environments after they've been created
         # removing them reduces the size of environments cached in containers
         uninstall_packages = list(get_venv_packages(python))
-
-        if not minimize:
-            # installed packages may have run-time dependencies on setuptools
-            uninstall_packages.remove('setuptools')
-
-        # hack to allow the package-data sanity test to keep wheel in the venv
-        install_commands = [command for command in commands if isinstance(command, PipInstall)]
-        install_wheel = any(install.has_package('wheel') for install in install_commands)
-
-        if install_wheel:
-            uninstall_packages.remove('wheel')
 
         commands.extend(collect_uninstall(packages=uninstall_packages))
 
@@ -412,9 +405,7 @@ def get_venv_packages(python: PythonConfig) -> dict[str, str]:
     #       See: https://github.com/ansible/base-test-container/blob/main/files/installer.py
 
     default_packages = dict(
-        pip='24.0',
-        setuptools='70.0.0',
-        wheel='0.43.0',
+        pip='24.2',
     )
 
     override_packages: dict[str, dict[str, str]] = {
