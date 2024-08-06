@@ -1,0 +1,2 @@
+bugfixes:
+  - the raw arguments error now just displays the short names of modules instead of every possible variation
