@@ -209,9 +209,7 @@ def command_sanity(args: SanityConfig) -> None:
                 result.reason = f'Skipping sanity test "{test.name}" on Python {version} because it is unsupported.' \
                                 f' Supported Python versions: {", ".join(test.supported_python_versions)}'
             else:
-                if isinstance(test, SanityCodeSmellTest):
-                    settings = test.load_processor(args)
-                elif isinstance(test, SanityMultipleVersion):
+                if isinstance(test, SanityMultipleVersion):
                     settings = test.load_processor(args, version)
                 elif isinstance(test, SanitySingleVersion):
                     settings = test.load_processor(args)
@@ -327,7 +325,7 @@ def collect_code_smell_tests() -> tuple[SanityTest, ...]:
         skip_tests = read_lines_without_comments(os.path.join(ansible_code_smell_root, 'skip.txt'), remove_blank_lines=True, optional=True)
         paths.extend(path for path in glob.glob(os.path.join(ansible_code_smell_root, '*.py')) if os.path.basename(path) not in skip_tests)
 
-    tests = tuple(SanityCodeSmellTest(p) for p in paths)
+    tests = tuple(SanityScript.create(p) for p in paths)
 
     return tests
 
@@ -829,21 +827,31 @@ class SanitySingleVersion(SanityTest, metaclass=abc.ABCMeta):
         return SanityIgnoreProcessor(args, self, None)
 
 
-class SanityCodeSmellTest(SanitySingleVersion):
-    """Sanity test script."""
+class SanityScript(SanityTest):
+    """Base class for sanity test scripts."""
 
-    def __init__(self, path) -> None:
+    @classmethod
+    def create(cls, path: str) -> SanityTest:
         name = os.path.splitext(os.path.basename(path))[0]
         config_path = os.path.splitext(path)[0] + '.json'
 
+        if os.path.exists(config_path):
+            config = read_json_file(config_path)
+        else:
+            config = None
+
+        if config.get('multi_version'):
+            instance = SanityScriptMultipleVersion(name=name, path=path, config=config)
+        else:
+            instance = SanityScriptSingleVersion(name=name, path=path, config=config)
+
+        return instance
+
+    def __init__(self, name: str, path: str, config: dict[str, t.Any] | None) -> None:
         super().__init__(name=name)
 
         self.path = path
-        self.config_path = config_path if os.path.exists(config_path) else None
-        self.config = None
-
-        if self.config_path:
-            self.config = read_json_file(self.config_path)
+        self.config = config
 
         if self.config:
             self.enabled = not self.config.get('disabled')
@@ -854,6 +862,8 @@ class SanityCodeSmellTest(SanitySingleVersion):
             self.files: list[str] = self.config.get('files')
             self.text: t.Optional[bool] = self.config.get('text')
             self.ignore_self: bool = self.config.get('ignore_self')
+            self.controller_only: bool = self.config.get('controller_only')
+            self.min_max_python_only: bool = self.config.get('min_max_python_only')
             self.minimum_python_version: t.Optional[str] = self.config.get('minimum_python_version')
             self.maximum_python_version: t.Optional[str] = self.config.get('maximum_python_version')
 
@@ -869,6 +879,8 @@ class SanityCodeSmellTest(SanitySingleVersion):
             self.files = []
             self.text = None
             self.ignore_self = False
+            self.controller_only = False
+            self.min_max_python_only = False
             self.minimum_python_version = None
             self.maximum_python_version = None
 
@@ -925,11 +937,17 @@ class SanityCodeSmellTest(SanitySingleVersion):
         """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
         versions = super().supported_python_versions
 
+        if self.controller_only:
+            versions = tuple(version for version in versions if version in CONTROLLER_PYTHON_VERSIONS)
+
         if self.minimum_python_version:
             versions = tuple(version for version in versions if str_to_version(version) >= str_to_version(self.minimum_python_version))
 
         if self.maximum_python_version:
             versions = tuple(version for version in versions if str_to_version(version) <= str_to_version(self.maximum_python_version))
+
+        if self.min_max_python_only:
+            versions = versions[0], versions[-1]
 
         return versions
 
@@ -967,10 +985,16 @@ class SanityCodeSmellTest(SanitySingleVersion):
         env = ansible_environment(args, color=False)
         env.update(PYTHONUTF8='1')  # force all code-smell sanity tests to run with Python UTF-8 Mode enabled
 
+        if self.min_max_python_only:
+            min_python, max_python = self.supported_python_versions
+
+            env.update(ANSIBLE_TEST_MIN_PYTHON=min_python)
+            env.update(ANSIBLE_TEST_MAX_PYTHON=max_python)
+
         pattern = None
         data = None
 
-        settings = self.load_processor(args)
+        settings = self.conditionally_load_processor(args, python.version)
 
         paths = [target.path for target in targets.include]
 
@@ -1031,9 +1055,15 @@ class SanityCodeSmellTest(SanitySingleVersion):
 
         return SanitySuccess(self.name)
 
-    def load_processor(self, args: SanityConfig) -> SanityIgnoreProcessor:
+    def conditionally_load_processor(self, args: SanityConfig, python_version: str) -> SanityIgnoreProcessor:
         """Load the ignore processor for this sanity test."""
-        return SanityIgnoreProcessor(args, self, None)
+        if isinstance(self, SanitySingleVersion):
+            return SanityIgnoreProcessor(args, self, None)
+
+        if isinstance(self, SanityMultipleVersion):
+            return SanityIgnoreProcessor(args, self, python_version)
+
+        raise NotImplementedError()
 
 
 class SanityVersionNeutral(SanityTest, metaclass=abc.ABCMeta):
@@ -1092,6 +1122,38 @@ class SanityMultipleVersion(SanityTest, metaclass=abc.ABCMeta):
             targets = self.filter_remote_targets(targets)
 
         return targets
+
+
+class SanityScriptSingleVersion(SanityScript, SanitySingleVersion):
+    """External sanity test script which should run on a single python version."""
+
+
+class SanityScriptMultipleVersion(SanityScript, SanityMultipleVersion):
+    """External sanity test script which should run on multiple python versions."""
+
+    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
+        """Run the sanity test and return the result."""
+        multi_version = self.config['multi_version']
+
+        if multi_version == 'controller':
+            virtualenv_python_config = args.controller_python
+        elif multi_version == 'target':
+            virtualenv_python_config = python
+        else:
+            raise NotImplementedError(f'{multi_version=}')
+
+        virtualenv_python = create_sanity_virtualenv(args, virtualenv_python_config, self.name)
+
+        if not virtualenv_python:
+            result = SanitySkipped(self.name, python.version)
+            result.reason = f'Skipping sanity test "{self.name}" due to missing virtual environment support on Python {virtualenv_python_config.version}.'
+
+            return result
+
+        if args.prime_venvs:
+            return SanitySkipped(self.name, python.version)
+
+        return super().test(args, targets, virtualenv_python)
 
 
 @cache
