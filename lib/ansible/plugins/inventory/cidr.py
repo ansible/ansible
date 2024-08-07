@@ -52,13 +52,10 @@ class InventoryModule(BaseInventoryPlugin):
 
         super(InventoryModule, self).parse(inventory, loader, path)
 
-        # not really a path at this point
-        host_list = path
+        # not really a path at this point, also remove token
+        host_list = path.lstrip(self._TOKEN)
 
         for h in host_list.split(','):
-            if h == self._TOKEN:
-                # skip marker
-                continue
 
             h = h.strip()
             if h:
