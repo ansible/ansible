@@ -832,6 +832,7 @@ class SanityScript(SanityTest, metaclass=abc.ABCMeta):
 
     @classmethod
     def create(cls, path: str) -> SanityScript:
+        """Create and return a SanityScript instance from the given path."""
         name = os.path.splitext(os.path.basename(path))[0]
         config_path = os.path.splitext(path)[0] + '.json'
 
