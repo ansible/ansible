@@ -28,7 +28,7 @@ EXAMPLES = '''
 import os
 import ipaddress
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleParserError
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.plugins.inventory import BaseInventoryPlugin
 
@@ -42,14 +42,16 @@ class InventoryModule(BaseInventoryPlugin):
         valid = False
         b_path = to_bytes(path, errors='surrogate_or_strict')
         if not os.path.exists(b_path) and ',' in path and path.startswith('@CIDR,'):
-            # not a path, but a hostlist with CIDR!
             valid = True
         return valid
 
-    def parse(self, inventory, loader, host_list, cache=True):
+    def parse(self, inventory, loader, path, cache=True):
         ''' parses the inventory string'''
 
-        super(InventoryModule, self).parse(inventory, loader, host_list)
+        super(InventoryModule, self).parse(inventory, loader, path)
+
+        # not really a path at this point
+        host_list = path
 
         for h in host_list.split(','):
             if h == '@CIDR':
@@ -61,7 +63,7 @@ class InventoryModule(BaseInventoryPlugin):
                 try:
                     hostnames = ipaddress.ip_network(h, False)
                 except ValueError as e:
-                    raise AnsibleError(f"Unable to parse address from '{h}'") from e
+                    raise AnsibleParserError(f"Unable to parse address from '{h}'") from e
 
                 for ip in hostnames.hosts():
                     host = ip.exploded
