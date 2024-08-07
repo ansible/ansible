@@ -3,7 +3,7 @@
       file:
         path: "{{ remote_tmp_dir }}/test_setgid"
         state: directory
-        mode: '6750'
+        mode: '2750'
         recurse: yes
         owner: '{{ remote_unprivileged_user }}'
         group: '{{ remote_unprivileged_user_group }}'
