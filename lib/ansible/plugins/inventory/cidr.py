@@ -10,8 +10,8 @@ DOCUMENTATION = '''
     description:
         - Parses a host list string as a comma separated values of CIDR notations to generate an IP range of hosts
     notes:
-        - To ensure addresses are parsed as CIDR, make sure this plugin is before
-          host_list and advance_host_list in enabled inventory plugins.
+        - To ensure addresses are parsed as CIDR, make sure this plugin is enabled before
+          host_list and advance_host_list and other 'less discerning' host list inventory plugins.
         - This is not meant to handle big ranges, specially with IPV6. Generating
           the range is quick but adding all those hosts to inventory can take a
           long time.
@@ -19,10 +19,10 @@ DOCUMENTATION = '''
 
 EXAMPLES = '''
     # simple range
-    # ansible -i '@CIDR, 192.168.0.1/24,' -m ping
+    # ansible -i '@cidr: 192.168.0.1/24,' -m ping
 
     # still supports w/o ranges also
-    # ansible-playbook -i '@CIDR, 192.168.0.1, 192.168.0.23,' myplay.yml
+    # ansible-playbook -i '@cidr: 192.168.0.1, 192.168.0.23,' myplay.yml
 '''
 
 import os
@@ -41,7 +41,7 @@ class InventoryModule(BaseInventoryPlugin):
 
         valid = False
         b_path = to_bytes(path, errors='surrogate_or_strict')
-        if not os.path.exists(b_path) and ',' in path and path.startswith('@CIDR,'):
+        if not os.path.exists(b_path) and ',' in path and path.startswith('@cidr:'):
             valid = True
         return valid
 
