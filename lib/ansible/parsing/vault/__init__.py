@@ -110,8 +110,10 @@ def is_encrypted_file(file_obj, start_pos=0, count=len(b_HEADER)):
     :kwarg start_pos: A byte offset in the file to start reading the header
         from.  Defaults to 0, the beginning of the file.
     :kwarg count: Read up to this number of bytes from the file to determine
-        if it looks like encrypted vault data.  The default is -1, read to the
-        end of file.
+        if it looks like encrypted vault data. The default is the size of the
+        the vault header, which is what is needed most times.
+        For some IO classes, or files that don't begin with the vault itself,
+        set to -1 to read to the end of file.
     :returns: True if the file looks like a vault file. Otherwise, False.
     """
     # read the header and reset the file stream to where it started
