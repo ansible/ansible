@@ -65,6 +65,7 @@ class InventoryModule(BaseInventoryPlugin):
                 except ValueError as e:
                     raise AnsibleParserError(f"Unable to parse address from '{h}'") from e
 
+                self.display.debug(f"CIDR: adding {hostnames.num_addresses} hosts from {h}")
                 for ip in hostnames.hosts():
                     host = ip.exploded
                     self.inventory.add_host(host, group='ungrouped')
