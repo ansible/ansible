@@ -1,4 +1,4 @@
-# edit "sanity.mypy.in" and generate with: hacking/update-sanity-requirements.py --test mypy
+# edit "mypy.requirements.in" and generate with: hacking/update-sanity-requirements.py --test mypy
 cffi==1.17.0
 cryptography==43.0.0
 Jinja2==3.1.4

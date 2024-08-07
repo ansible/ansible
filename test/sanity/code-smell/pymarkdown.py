@@ -55,7 +55,7 @@ def parse_to_list_of_dict(pattern: re.Pattern, value: str) -> list[dict[str, t.A
             unmatched.append(line)
 
     if unmatched:
-        raise Exception('Pattern {pattern!r} did not match values:\n' + '\n'.join(unmatched))
+        raise Exception(f'Pattern {pattern!r} did not match values:\n' + '\n'.join(unmatched))
 
     return matched
 
