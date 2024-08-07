@@ -62,5 +62,4 @@ class InventoryModule(BaseInventoryPlugin):
 
                 for ip in hostnames.hosts():
                     host = ip.exploded
-                    if host not in self.inventory.hosts:
-                        self.inventory.add_host(host, group='ungrouped')
+                    self.inventory.add_host(host, group='ungrouped')
