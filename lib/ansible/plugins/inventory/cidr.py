@@ -16,10 +16,10 @@ DOCUMENTATION = '''
 
 EXAMPLES = '''
     # simple range
-    ansible -i '@CIDR, 192.168.0.1/24,' -m ping
+    # ansible -i '@CIDR, 192.168.0.1/24,' -m ping
 
     # still supports w/o ranges also
-    ansible-playbook -i '@CIDR, 192.168.0.1, 192.168.0.23,' myplay.yml
+    # ansible-playbook -i '@CIDR, 192.168.0.1, 192.168.0.23,' myplay.yml
 '''
 
 import os
@@ -34,11 +34,12 @@ class InventoryModule(BaseInventoryPlugin):
 
     NAME = 'cidr'
 
-    def verify_file(self, host_list):
+    def verify_file(self, path):
 
         valid = False
-        b_path = to_bytes(host_list, errors='surrogate_or_strict')
-        if not os.path.exists(b_path) and ',' in host_list and host_list.startswith('@CIDR,'):
+        b_path = to_bytes(path, errors='surrogate_or_strict')
+        if not os.path.exists(b_path) and ',' in path and path.startswith('@CIDR,'):
+            # not a path, but a hostlist with CIDR!
             valid = True
         return valid
 
