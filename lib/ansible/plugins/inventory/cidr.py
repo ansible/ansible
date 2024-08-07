@@ -12,6 +12,9 @@ DOCUMENTATION = '''
     notes:
         - To ensure addresses are parsed as CIDR, make sure this plugin is before
           host_list and advance_host_list in enabled inventory plugins.
+        - This is not meant to handle big ranges, specially with IPV6. Generating
+          the range is quick but adding all those hosts to inventory can take a
+          long time.
 '''
 
 EXAMPLES = '''
