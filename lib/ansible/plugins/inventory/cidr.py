@@ -37,11 +37,13 @@ class InventoryModule(BaseInventoryPlugin):
 
     NAME = 'cidr'
 
+    _TOKEN = '@cidr:'
+
     def verify_file(self, path):
 
         valid = False
         b_path = to_bytes(path, errors='surrogate_or_strict')
-        if not os.path.exists(b_path) and ',' in path and path.startswith('@cidr:'):
+        if not os.path.exists(b_path) and ',' in path and path.startswith(self._TOKEN):
             valid = True
         return valid
 
@@ -54,7 +56,7 @@ class InventoryModule(BaseInventoryPlugin):
         host_list = path
 
         for h in host_list.split(','):
-            if h == '@CIDR':
+            if h == self._TOKEN:
                 # skip marker
                 continue
 
