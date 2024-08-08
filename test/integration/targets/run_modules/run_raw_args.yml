@@ -1,0 +1,17 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    output_dir: '{{ lookup("env", "OUTPUT_DIR") }}'
+  tasks:
+    - name: set tempfile
+      tempfile:
+        path: '{{output_dir}}'
+        prefix: 'ansible-test'
+        state: file
+      register: mktemp
+
+    - name: ensure 'command' can use raw args
+      command: dd if=/dev/zero of="{{mktemp.path}}" bs=1K count=1
+
+    - name: ensure fqcn 'command' can use raw args
+      ansible.legacy.command: dd if=/dev/zero of="{{mktemp.path}}" bs=1K count=1
