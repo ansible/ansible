@@ -767,9 +767,8 @@ class DnfModule(YumDnf):
                     try:
                         self.base.upgrade(pkg_spec)
                     except dnf.exceptions.PackagesNotInstalledError:
-                        ...
-                if not self.update_only:
-                    self.base.install(pkg_spec, strict=self.base.conf.strict)
+                        pass
+                self.base.install(pkg_spec, strict=self.base.conf.strict)
             elif self._is_newer_version_installed(pkg_spec):
                 if self.allow_downgrade:
                     self.base.install(pkg_spec, strict=self.base.conf.strict)
