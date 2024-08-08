@@ -40,7 +40,7 @@ from ansible.module_utils.facts import timeout
 
 
 def _timeout_handler(signum, frame):
-        raise TimeoutError(f"Timeout reached in:{frame}")
+    raise TimeoutError(f"Timeout reached in:{frame}")
 
 
 def get_partition_uuid(partname):
