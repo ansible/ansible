@@ -29,8 +29,9 @@ from ansible.utils.sentinel import Sentinel
 
 
 # modules formated for user msg
-FREEFORM_ACTIONS = set(C.MODULE_REQUIRE_ARGS_SIMPLE)
-RAW_PARAM_MODULES = FREEFORM_ACTIONS.union(set([
+FREEFORM_ACTIONS_SIMPLE = set(C.MODULE_REQUIRE_ARGS_SIMPLE)
+FREEFORM_ACTIONS = frozenset(add_internal_fqcns(FREEFORM_ACTIONS_SIMPLE))
+RAW_PARAM_MODULES = FREEFORM_ACTIONS_SIMPLE.union(set([
     'include_vars',
     'include_tasks',
     'include_role',
