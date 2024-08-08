@@ -1,0 +1,19 @@
+DOCUMENTATION:
+  name: vaulted_file
+  author: Ansible Core
+  version_added: "2.18"
+  short_description: Is this file an encrypted vault
+  description:
+    - Verifies if the input path is an Ansible vault file.
+  options:
+    _input:
+      description: The path to the possible vault.
+      type: path
+      required: True
+EXAMPLES: |
+    thisisfalse: '{{ "/etc/hosts" is vaulted_file}}'
+    thisistrue: '{{ "/path/to/vaulted/file" is vaulted_file}}'
+RETURN:
+  _value:
+    description: Returns V(True) if the path is a valid ansible vault, V(False) otherwise.
+    type: boolean
