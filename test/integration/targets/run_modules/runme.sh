@@ -12,3 +12,6 @@ ansible -m command -a "dd if=/dev/zero of=\"${TMPFILE}\" bs=1K count=1" localhos
 
 # ensure fqcn 'command' can use 'raw args'
 ansible -m ansible.legacy.command -a "dd if=/dev/zero of=\"${TMPFILE}\" bs=1K count=1" localhost
+
+# same in playbook
+ansible-playbook run_raw_args.yml "$@"
