@@ -6,7 +6,7 @@
 
 - name: using modern syntax but missing keyword
   set_fact:
-    this_will_error: "{{ lookup('csvfile', file=people.csv, delimiter=' ', col=1) }}"
+    this_will_error: "{{ lookup('csvfile', file='people.csv', delimiter=' ', col=1) }}"
   ignore_errors: yes
   register: modern_no_keyword
 
