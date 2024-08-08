@@ -1,0 +1,5 @@
+bugfixes:
+  - vault.is_encrypted_file is now optimized to be called in runtime and not for being called in tests
+  - vault_encrypted test documentation, name and examples have been fixed, other parts were clarified
+minor_changes:
+  - vaulted_file test filter added, to test if the provided path is an 'Ansible vaulted' file
