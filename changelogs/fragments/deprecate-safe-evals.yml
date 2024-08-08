@@ -1,0 +1,2 @@
+deprecated_features:
+  - Deprecate ``ansible.module_utils.basic.AnsibleModule.safe_eval`` and ``ansible.module_utils.common.safe_eval`` as they are no longer used.
