@@ -21,6 +21,9 @@ EXAMPLES = """
 # all installed inventory plugins.
 """
 
+import os
+import re
+
 from ansible.errors import AnsibleParserError
 from ansible.plugins.inventory import BaseInventoryPlugin
 from ansible.plugins.loader import inventory_loader
@@ -29,15 +32,28 @@ from ansible.plugins.loader import inventory_loader
 class InventoryModule(BaseInventoryPlugin):
 
     NAME = 'auto'
+    TOKEN = re.compile('@(\w+):.+')
 
     def verify_file(self, path):
-        if not path.endswith('.yml') and not path.endswith('.yaml'):
-            return False
+        if os.path.exists(path):
+            if not path.endswith('.yml') and not path.endswith('.yaml'):
+                return False
+        elif ',' in path:
+            return True
+
         return super(InventoryModule, self).verify_file(path)
 
     def parse(self, inventory, loader, path, cache=True):
-        config_data = loader.load_from_file(path, cache='none')
 
+        if os.path.exists(path):
+            config_data = loader.load_from_file(path, cache='none')
+        else:
+            found = self.TOKEN.match(path)
+            if found:
+                config_data = {'plugin': found.group(1)}
+            else:
+                # fallback to host_list
+                config_data = {'plugin': 'host_list'}
         try:
             plugin_name = config_data.get('plugin', None)
         except AttributeError:
