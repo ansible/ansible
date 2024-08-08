@@ -11,7 +11,7 @@
       register: mktemp
 
     - name: ensure 'command' can use raw args
-      command: "dd if=/dev/zero of="{{mktemp.path}}" bs=1K count=1"
+      command: dd if=/dev/zero of="{{mktemp.path}}" bs=1K count=1
 
     - name: ensure fqcn 'command' can use raw args
-      ansible.legacy.command: "dd if=/dev/zero of="{{mktemp.path}}" bs=1K count=1"
+      ansible.legacy.command: dd if=/dev/zero of="{{mktemp.path}}" bs=1K count=1
