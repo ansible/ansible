@@ -618,17 +618,19 @@ class LinuxHardware(Hardware):
                 signal.alarm(maxtime)
                 try:
                     size, uuid = self.get_mount_info(mount, device, uuids)
-                    if size:
-                        results[mount]['info'].update(size)
-                    results[mount]['info']['uuid'] = uuid or 'N/A'
                 except TimeoutError as e:
+                    results[mount]['info']['note'] = 'Could not get extra information due to timeout'
                     self.module.log(f"Timeout while gathering mount {mount} data: {e}")
                     self.module.warn(f"Timeout exceeded when getting mount info for {mount}")
-                    results[mount]['info']['note'] = 'Could not get extra information due to timeout'
                 finally:
+                    signal.alarm(0)
                     signal.signal(signal.SIGALRM, old_handler)
+
+                if size:
+                    results[mount]['info'].update(size)
+                results[mount]['info']['uuid'] = uuid or 'N/A'
             else:
-                # use pool
+                # use multiproc pool, handle results below
                 results[mount]['extra'] = pool.apply_async(self.get_mount_info, (mount, device, uuids))
 
         if pool is None:
