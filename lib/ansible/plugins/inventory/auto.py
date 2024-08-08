@@ -32,7 +32,7 @@ from ansible.plugins.loader import inventory_loader
 class InventoryModule(BaseInventoryPlugin):
 
     NAME = 'auto'
-    TOKEN = re.compile('@(\w+):.+')
+    TOKEN = re.compile(r'@(\w+):.+')
 
     def verify_file(self, path):
         if os.path.exists(path):
