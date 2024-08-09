@@ -196,3 +196,91 @@
           - ansible_failed_result.msg == expected
       vars:
         expected: "bad formatting string: d"
+
+# Tests for lookup()/plugin() jinja invocation:
+# Many of these tests check edge case behaviors that are only possible when invoking query/lookup sequence through jinja.
+# While they aren't particularly intuitive, these tests ensure playbooks that could be relying on these behaviors don't
+# break in future
+- name: Test that sequence can be invoked using query/lookup with keyword args only
+  ping:
+    data: '{{ item }}'
+  loop: '{{ query("ansible.builtin.sequence", count=5, start=10) }}'
+  register: results1
+
+- name: Assert that sequence can be invoked using query/lookup with keyword args only
+  assert:
+    that:
+      - 'results1["results"][0]["ping"] == "10"'
+      - 'results1["results"][1]["ping"] == "11"'
+      - 'results1["results"][2]["ping"] == "12"'
+      - 'results1["results"][3]["ping"] == "13"'
+      - 'results1["results"][4]["ping"] == "14"'
+
+- name: Test that multiple positional args produces concatenated sequence
+  ping:
+    data: '{{ item }}'
+  loop: '{{ query("ansible.builtin.sequence", "count=5 start=1", "count=3 start=10 stride=2") }}'
+  register: results2
+
+- name: Assert that multiple positional args produces concatenated sequence
+  assert:
+    that:
+      - 'results2["results"][0]["ping"] == "1"'
+      - 'results2["results"][1]["ping"] == "2"'
+      - 'results2["results"][2]["ping"] == "3"'
+      - 'results2["results"][3]["ping"] == "4"'
+      - 'results2["results"][4]["ping"] == "5"'
+      - 'results2["results"][5]["ping"] == "10"'
+      - 'results2["results"][6]["ping"] == "12"'
+      - 'results2["results"][7]["ping"] == "14"'
+
+- name: Test that keyword arguments are applied to all positional expressions
+  ping:
+    data: '{{ item }}'
+  loop: '{{ query("ansible.builtin.sequence", "count=5 start=0", "count=5 start=20", stride=2) }}'
+  register: results3
+
+- name: Assert that keyword arguments are applied to all positional expressions
+  assert:
+    that:
+      - 'results3["results"][0]["ping"] == "0"'
+      - 'results3["results"][1]["ping"] == "2"'
+      - 'results3["results"][2]["ping"] == "4"'
+      - 'results3["results"][3]["ping"] == "6"'
+      - 'results3["results"][4]["ping"] == "8"'
+      - 'results3["results"][5]["ping"] == "20"'
+      - 'results3["results"][6]["ping"] == "22"'
+      - 'results3["results"][7]["ping"] == "24"'
+      - 'results3["results"][8]["ping"] == "26"'
+      - 'results3["results"][9]["ping"] == "28"'
+
+- name: Test that keyword arguments do not overwrite parameters present in positional expressions
+  ping:
+    data: '{{ item }}'
+  loop: '{{ query("ansible.builtin.sequence", "count=5 start=0", "count=5", start=20) }}'
+  register: results4
+
+- name: Assert that keyword arguments do not overwrite parameters present in positional expressions
+  assert:
+    that:
+      - 'results4["results"][0]["ping"] == "0"'
+      - 'results4["results"][1]["ping"] == "1"'
+      - 'results4["results"][2]["ping"] == "2"'
+      - 'results4["results"][3]["ping"] == "3"'
+      - 'results4["results"][4]["ping"] == "4"'
+      - 'results4["results"][5]["ping"] == "20"'
+      - 'results4["results"][6]["ping"] == "21"'
+      - 'results4["results"][7]["ping"] == "22"'
+      - 'results4["results"][8]["ping"] == "23"'
+      - 'results4["results"][9]["ping"] == "24"'
+
+- name: Test that call with no arguments produces an empty list
+  ping:
+    data: '{{ item }}'
+  loop: '{{ query("ansible.builtin.sequence") }}'
+  register: results5
+
+- name: Assert that call with no arguments produces an empty list
+  assert:
+    that:
+      - 'results5["results"] == []'
