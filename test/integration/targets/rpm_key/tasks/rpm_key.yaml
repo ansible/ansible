@@ -187,6 +187,33 @@
       - result is success
       - result is not changed
 
+- name: Issue 83493 - Verify key fingerprints. This should fail due to multiple key signatures
+  rpm_key:
+    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/linux_signing_key.pub
+    fingerprint: 1B09 0CE4 7562 66D7 1203 13F6 3BAC 309A 6EB4 25D5
+  register: result
+  ignore_errors: true
+
+- name: Issue 83493 - Assert Verify fingerprints of keys, insufficent fingerprints
+  assert:
+    that:
+       - result is not success
+       - result is not changed
+
+- name: Issue 83493 - Add KEY_83493 GPG keys to system
+  rpm_key:
+    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/linux_signing_key.pub
+    fingerprint:
+      - 1B09 0CE4 7562 66D7 1203 13F6 3BAC 309A 6EB4 25D5
+      - BF18 AC28 7617 8908 D6E7 1267 D36C B86C B86B 3716
+  register: result
+
+- name: Issue Issue 83493 - Assert Verify fingerprints of keys, valid fingerprints
+  assert:
+    that:
+      - result is success
+      - result is changed
+
 #
 # Cleanup
 #

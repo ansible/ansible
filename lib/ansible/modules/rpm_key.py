@@ -38,9 +38,10 @@ options:
       default: 'yes'
     fingerprint:
       description:
-        - The long-form fingerprint of the key being imported.
-        - This will be used to verify the specified key.
-      type: str
+        - The long-form fingerprints of the keys being imported.
+        - This will be used to verify the specified keys have been imported.
+      type: list
+      elements: str
       version_added: 2.9
 extends_documentation_fragment:
     - action_common_attributes
@@ -105,35 +106,37 @@ class RpmKey(object):
         state = module.params['state']
         key = module.params['key']
         fingerprint = module.params['fingerprint']
+
         if fingerprint:
-            fingerprint = fingerprint.replace(' ', '').upper()
+            fingerprint = [fprnt.replace(' ', '').upper() for fprnt in fingerprint]
 
         self.gpg = self.module.get_bin_path('gpg')
         if not self.gpg:
             self.gpg = self.module.get_bin_path('gpg2', required=True)
 
+        # Download the keyfile if a URL
         if '://' in key:
             keyfile = self.fetch_key(key)
-            keyid = self.getkeyid(keyfile)
+            keyids = self.getkeyids(keyfile)
             should_cleanup_keyfile = True
         elif self.is_keyid(key):
-            keyid = key
+            keyids = [key]
         elif os.path.isfile(key):
             keyfile = key
-            keyid = self.getkeyid(keyfile)
+            keyids = self.getkeyids(keyfile)
         else:
             self.module.fail_json(msg="Not a valid key %s" % key)
-        keyid = self.normalize_keyid(keyid)
+        keyids = self.normalize_keyids(keyids)
 
         if state == 'present':
-            if self.is_key_imported(keyid):
+            if self.is_key_imported(keyids):
                 module.exit_json(changed=False)
             else:
                 if not keyfile:
                     self.module.fail_json(msg="When importing a key, a valid file must be given")
                 if fingerprint:
                     has_fingerprint = self.getfingerprint(keyfile)
-                    if fingerprint != has_fingerprint:
+                    if set(fingerprint) != set(has_fingerprint):
                         self.module.fail_json(
                             msg="The specified fingerprint, '%s', does not match the key fingerprint '%s'" % (fingerprint, has_fingerprint)
                         )
@@ -142,8 +145,8 @@ class RpmKey(object):
                     self.module.cleanup(keyfile)
                 module.exit_json(changed=True)
         else:
-            if self.is_key_imported(keyid):
-                self.drop_key(keyid)
+            if self.is_key_imported(keyids):
+                self.drop_key(keyids)
                 module.exit_json(changed=True)
             else:
                 module.exit_json(changed=False)
@@ -164,30 +167,42 @@ class RpmKey(object):
         tmpfile.close()
         return tmpname
 
+    def normalize_keyids(self, keyids):
+        normalized_keyids = []
+        for keyid in keyids:
+            normalized_keyids.append(self.normalize_keyid(keyid))
+
+        return normalized_keyids
+
     def normalize_keyid(self, keyid):
         """Ensure a keyid doesn't have a leading 0x, has leading or trailing whitespace, and make sure is uppercase"""
         ret = keyid.strip().upper()
-        if ret.startswith('0x'):
+        if ret.startswith("0x"):
             return ret[2:]
-        elif ret.startswith('0X'):
+        elif ret.startswith("0X"):
             return ret[2:]
         else:
             return ret
 
-    def getkeyid(self, keyfile):
+    def getkeyids(self, keyfile):
         stdout, stderr = self.execute_command([self.gpg, '--no-tty', '--batch', '--with-colons', '--fixed-list-mode', keyfile])
+        keyids = []
         for line in stdout.splitlines():
             line = line.strip()
             if line.startswith('pub:'):
-                return line.split(':')[4]
+                keyids.append(line.split(':')[4])
 
-        self.module.fail_json(msg="Unexpected gpg output")
+        if keyids == []:
+            self.module.fail_json(msg="Unexpected gpg output")
+
+        return keyids
 
     def getfingerprint(self, keyfile):
         stdout, stderr = self.execute_command([
             self.gpg, '--no-tty', '--batch', '--with-colons',
             '--fixed-list-mode', '--with-fingerprint', keyfile
         ])
+        fingerprints = []
         for line in stdout.splitlines():
             line = line.strip()
             if line.startswith('fpr:'):
@@ -199,9 +214,12 @@ class RpmKey(object):
                 #
                 # "fpr :: Fingerprint (fingerprint is in field 10)"
                 #
-                return line.split(':')[9]
+                fingerprints.append(line.split(':')[9])
 
-        self.module.fail_json(msg="Unexpected gpg output")
+        if fingerprints == []:
+            self.module.fail_json(msg="Unexpected gpg output")
+
+        return fingerprints
 
     def is_keyid(self, keystr):
         """Verifies if a key, as provided by the user is a keyid"""
@@ -213,25 +231,37 @@ class RpmKey(object):
             self.module.fail_json(msg=stderr)
         return stdout, stderr
 
-    def is_key_imported(self, keyid):
+    def is_key_imported(self, keyids):
         cmd = self.rpm + ' -q  gpg-pubkey'
         rc, stdout, stderr = self.module.run_command(cmd)
         if rc != 0:  # No key is installed on system
             return False
         cmd += ' --qf "%{description}" | ' + self.gpg + ' --no-tty --batch --with-colons --fixed-list-mode -'
         stdout, stderr = self.execute_command(cmd)
+
+        imported_ids = set()
         for line in stdout.splitlines():
-            if keyid in line.split(':')[4]:
-                return True
-        return False
+            imported_id = line.split(":")[4]
+            # Add imported_id to imported_ids
+            imported_ids.add(imported_id)
+
+            # Also add "short" (rpm --queryformat %{version}) keyids to imported_ids
+            for keyid in keyids:
+                # if they are "short" id (self.is_keyid(keyid)) and substring of an imported_id
+                if self.is_keyid(keyid) and keyid in imported_id:
+                    imported_ids.add(keyid)
+
+        missing_keys = set(keyids).difference(imported_ids)
+        return len(missing_keys) == 0
 
     def import_key(self, keyfile):
         if not self.module.check_mode:
             self.execute_command([self.rpm, '--import', keyfile])
 
-    def drop_key(self, keyid):
+    def drop_key(self, keyids):
         if not self.module.check_mode:
-            self.execute_command([self.rpm, '--erase', '--allmatches', "gpg-pubkey-%s" % keyid[-8:].lower()])
+            for keyid in keyids:
+                self.execute_command([self.rpm, '--erase', '--allmatches', "gpg-pubkey-%s" % keyid[-8:].lower()])
 
 
 def main():
@@ -239,7 +269,7 @@ def main():
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['absent', 'present']),
             key=dict(type='str', required=True, no_log=False),
-            fingerprint=dict(type='str'),
+            fingerprint=dict(type='list', elements='str'),
             validate_certs=dict(type='bool', default=True),
         ),
         supports_check_mode=True,
