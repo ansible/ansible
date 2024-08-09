@@ -233,13 +233,13 @@ class TestWinRMKerbAuth(object):
     @pytest.mark.parametrize('options, expected', [
         [{},
          (["kinit", "user@domain"],)],
-        [{ 'ansible_winrm_kinit_cmd': 'kinit2'},
+        [{'ansible_winrm_kinit_cmd': 'kinit2'},
          (["kinit2", "user@domain"],)],
         [{'ansible_winrm_kerberos_delegation': True},
          (["kinit", "-f", "user@domain"],)],
-        [{ 'ansible_winrm_kinit_args': '-f -p'},
+        [{'ansible_winrm_kinit_args': '-f -p'},
          (["kinit", "-f", "-p", "user@domain"],)],
-        [{ 'ansible_winrm_kerberos_delegation': True, 'ansible_winrm_kinit_args': '-p'},
+        [{'ansible_winrm_kerberos_delegation': True, 'ansible_winrm_kinit_args': '-p'},
          (["kinit", "-p", "user@domain"],)]
     ])
     def test_kinit_success_subprocess(self, monkeypatch, options, expected):
@@ -270,13 +270,13 @@ class TestWinRMKerbAuth(object):
     @pytest.mark.parametrize('options, expected', [
         [{},
          ("kinit", ["user@domain"],)],
-        [{ 'ansible_winrm_kinit_cmd': 'kinit2'},
+        [{'ansible_winrm_kinit_cmd': 'kinit2'},
          ("kinit2", ["user@domain"],)],
         [{'ansible_winrm_kerberos_delegation': True},
          ("kinit", ["-f", "user@domain"],)],
-        [{ 'ansible_winrm_kinit_args': '-f -p'},
+        [{'ansible_winrm_kinit_args': '-f -p'},
          ("kinit", ["-f", "-p", "user@domain"],)],
-        [{ 'ansible_winrm_kerberos_delegation': True, 'ansible_winrm_kinit_args': '-p'},
+        [{'ansible_winrm_kerberos_delegation': True, 'ansible_winrm_kinit_args': '-p'},
          ("kinit", ["-p", "user@domain"],)]
     ])
     def test_kinit_success_pexpect(self, monkeypatch, options, expected):
@@ -318,7 +318,7 @@ class TestWinRMKerbAuth(object):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('winrm', pc, new_stdin)
-        options = { "ansible_winrm_kinit_cmd": "/fake/kinit"}
+        options = {"ansible_winrm_kinit_cmd": "/fake/kinit"}
         conn.set_options(var_options=options)
         conn._build_winrm_kwargs()
 
@@ -341,7 +341,7 @@ class TestWinRMKerbAuth(object):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('winrm', pc, new_stdin)
-        options = { "ansible_winrm_kinit_cmd": "/fake/kinit"}
+        options = {"ansible_winrm_kinit_cmd": "/fake/kinit"}
         conn.set_options(var_options=options)
         conn._build_winrm_kwargs()
 
