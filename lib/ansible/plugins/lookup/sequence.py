@@ -210,6 +210,9 @@ class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
         results = []
 
+        if (not terms) and kwargs:
+            terms = ['']
+
         for term in terms:
             try:
                 # set defaults/global
