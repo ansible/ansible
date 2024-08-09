@@ -311,7 +311,7 @@ COLOR_INCLUDED:
   env: [{name: ANSIBLE_COLOR_INCLUDED}]
   ini:
   - {key: included, section: colors}
-  version_added: '2.17'
+  version_added: '2.18'
 COLOR_OK:
   name: Color for 'ok' task status
   default: green
