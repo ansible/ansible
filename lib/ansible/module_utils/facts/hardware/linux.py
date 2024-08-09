@@ -585,9 +585,8 @@ class LinuxHardware(Hardware):
         pool = None
         try:
             pool = ThreadPool(processes=min(len(mtab_entries), cpu_count()))
-        except Exception as e:
-            self.module.warn(f"Cannot use multiprocessing: {e}")
-            # cannot use multiproc
+        except (IOError, OSError) as e:
+            self.module.warn(f"Cannot use multiprocessing, falling back on serial execution: {e}")
 
         maxtime = timeout.GATHER_TIMEOUT or timeout.DEFAULT_GATHER_TIMEOUT
         for fields in mtab_entries:
@@ -634,12 +633,12 @@ class LinuxHardware(Hardware):
                 results[mount]['extra'] = pool.apply_async(self.get_mount_info, (mount, device, uuids))
 
         if pool is None:
+            # serial processing, just assing results
             mounts.append(results[mount]['info'])
         else:
-            pool.close()  # done with new workers, start gc
+            pool.close()  # done with spawing new workers, start gc
 
-            # wait for workers and get results
-            while results:
+            while results:  # wait for workers and get results
                 for mount in list(results):
                     done = False
                     res = results[mount]['extra']
