@@ -8,5 +8,3 @@ requests-ntlm >= 1.1.0 # message encryption support
 requests-credssp >= 0.1.0 # message encryption support
 mock >= 2.0.0 # needed for features backported from Python 3.6 unittest.mock (assert_called, assert_called_once...)
 pytest-mock >= 1.4.0 # needed for mock_use_standalone_module pytest option
-cffi == 1.17.0rc1 ; python_version >= '3.13' # temporary hack to support Python 3.13
-pyyaml == 6.0.2rc1 ; python_version >= '3.13' # temporary hack to support Python 3.13

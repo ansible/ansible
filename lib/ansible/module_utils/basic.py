@@ -1202,6 +1202,7 @@ class AnsibleModule(object):
                     setattr(self, PASS_VARS[k][0], PASS_VARS[k][1])
 
     def safe_eval(self, value, locals=None, include_exceptions=False):
+        # deprecated: description='no longer used in the codebase' core_version='2.21'
         return safe_eval(value, locals, include_exceptions)
 
     def _load_params(self):

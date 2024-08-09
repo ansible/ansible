@@ -28,11 +28,10 @@ from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.sentinel import Sentinel
 
 
-# For filtering out modules correctly below
-FREEFORM_ACTIONS = frozenset(C.MODULE_REQUIRE_ARGS)
-
-RAW_PARAM_MODULES = FREEFORM_ACTIONS.union(add_internal_fqcns((
-    'include',
+# modules formated for user msg
+FREEFORM_ACTIONS_SIMPLE = set(C.MODULE_REQUIRE_ARGS_SIMPLE)
+FREEFORM_ACTIONS = frozenset(add_internal_fqcns(FREEFORM_ACTIONS_SIMPLE))
+RAW_PARAM_MODULES = FREEFORM_ACTIONS_SIMPLE.union(set([
     'include_vars',
     'include_tasks',
     'include_role',
@@ -42,8 +41,9 @@ RAW_PARAM_MODULES = FREEFORM_ACTIONS.union(add_internal_fqcns((
     'group_by',
     'set_fact',
     'meta',
-)))
-
+]))
+# For filtering out modules correctly below, use all permutations
+RAW_PARAM_MODULES_MATCH = add_internal_fqcns(RAW_PARAM_MODULES) + C.WIN_MOVED
 BUILTIN_TASKS = frozenset(add_internal_fqcns((
     'meta',
     'include_tasks',
@@ -352,7 +352,7 @@ class ModuleArgsParser:
             else:
                 raise AnsibleParserError("no module/action detected in task.",
                                          obj=self._task_ds)
-        elif args.get('_raw_params', '') != '' and action not in RAW_PARAM_MODULES:
+        elif args.get('_raw_params', '') != '' and action not in RAW_PARAM_MODULES_MATCH:
             templar = Templar(loader=None)
             raw_params = args.pop('_raw_params')
             if templar.is_template(raw_params):

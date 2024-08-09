@@ -369,6 +369,7 @@ ANSIBLE_DIR = ANSIBLE_LIB_DIR / "ansible"
 ANSIBLE_BIN_DIR = CHECKOUT_DIR / "bin"
 ANSIBLE_RELEASE_FILE = ANSIBLE_DIR / "release.py"
 ANSIBLE_REQUIREMENTS_FILE = CHECKOUT_DIR / "requirements.txt"
+ANSIBLE_PYPROJECT_TOML_FILE = CHECKOUT_DIR / "pyproject.toml"
 
 DIST_DIR = CHECKOUT_DIR / "dist"
 VENV_DIR = DIST_DIR / ".venv" / "release"
@@ -708,6 +709,35 @@ twine
     return env
 
 
+def get_pypi_project(repository: str, project: str, version: Version | None = None) -> dict[str, t.Any]:
+    """Return the project JSON from PyPI for the specified repository, project and version (optional)."""
+    endpoint = PYPI_ENDPOINTS[repository]
+
+    if version:
+        url = f"{endpoint}/{project}/{version}/json"
+    else:
+        url = f"{endpoint}/{project}/json"
+
+    opener = urllib.request.build_opener()
+    response: http.client.HTTPResponse
+
+    try:
+        with opener.open(url) as response:
+            data = json.load(response)
+    except urllib.error.HTTPError as ex:
+        if version:
+            target = f'{project!r} version {version}'
+        else:
+            target = f'{project!r}'
+
+        if ex.status == http.HTTPStatus.NOT_FOUND:
+            raise ApplicationError(f"Could not find {target} on PyPI.") from None
+
+        raise RuntimeError(f"Failed to get {target} from PyPI.") from ex
+
+    return data
+
+
 def get_ansible_version(version: str | None = None, /, commit: str | None = None, mode: VersionMode = VersionMode.DEFAULT) -> Version:
     """Parse and return the current ansible-core version, the provided version or the version from the provided commit."""
     if version and commit:
@@ -802,6 +832,38 @@ def set_ansible_version(current_version: Version, requested_version: Version) ->
     ANSIBLE_RELEASE_FILE.write_text(updated)
 
 
+def get_latest_setuptools_version() -> Version:
+    """Return the latest setuptools version found on PyPI."""
+    data = get_pypi_project('pypi', 'setuptools')
+    version = Version(data['info']['version'])
+
+    return version
+
+
+def set_setuptools_upper_bound(requested_version: Version) -> None:
+    """Set the upper bound on setuptools in pyproject.toml."""
+    current = ANSIBLE_PYPROJECT_TOML_FILE.read_text()
+    pattern = re.compile(r'^(?P<begin>requires = \["setuptools >= )(?P<lower>[^,]+)(?P<middle>, <= )(?P<upper>[^"]+)(?P<end>".*)$', re.MULTILINE)
+    match = pattern.search(current)
+
+    if not match:
+        raise ApplicationError(f"Unable to find the 'requires' entry in: {ANSIBLE_PYPROJECT_TOML_FILE.relative_to(CHECKOUT_DIR)}")
+
+    current_version = Version(match.group('upper'))
+
+    if requested_version == current_version:
+        return
+
+    display.show(f"Updating setuptools upper bound from {current_version} to {requested_version} ...")
+
+    updated = pattern.sub(fr'\g<begin>\g<lower>\g<middle>{requested_version}\g<end>', current)
+
+    if current == updated:
+        raise RuntimeError("Failed to set the setuptools upper bound.")
+
+    ANSIBLE_PYPROJECT_TOML_FILE.write_text(updated)
+
+
 def create_reproducible_sdist(original_path: pathlib.Path, output_path: pathlib.Path, mtime: int) -> None:
     """Read the specified sdist and write out a new copy with uniform file metadata at the specified location."""
     with tarfile.open(original_path) as original_archive:
@@ -879,21 +941,7 @@ def calculate_digest(path: pathlib.Path) -> str:
 @functools.cache
 def get_release_artifact_details(repository: str, version: Version, validate: bool) -> list[ReleaseArtifact]:
     """Return information about the release artifacts hosted on PyPI."""
-    endpoint = PYPI_ENDPOINTS[repository]
-    url = f"{endpoint}/ansible-core/{version}/json"
-
-    opener = urllib.request.build_opener()
-    response: http.client.HTTPResponse
-
-    try:
-        with opener.open(url) as response:
-            data = json.load(response)
-    except urllib.error.HTTPError as ex:
-        if ex.status == http.HTTPStatus.NOT_FOUND:
-            raise ApplicationError(f"Version {version} not found on PyPI.") from None
-
-        raise RuntimeError(f"Failed to get {version} from PyPI: {ex}") from ex
-
+    data = get_pypi_project(repository, 'ansible-core', version)
     artifacts = [describe_release_artifact(version, item, validate) for item in data["urls"]]
 
     expected_artifact_types = {"bdist_wheel", "sdist"}
@@ -1139,6 +1187,7 @@ command = CommandFramework(
     mailto=dict(name="--mailto", action="store_true", help="write announcement to mailto link instead of console"),
     validate=dict(name="--no-validate", action="store_false", help="disable validation of PyPI artifacts against local ones"),
     prompt=dict(name="--no-prompt", action="store_false", help="disable interactive prompt before publishing with twine"),
+    setuptools=dict(name='--no-setuptools', action="store_false", help="disable updating setuptools upper bound"),
     allow_tag=dict(action="store_true", help="allow an existing release tag (for testing)"),
     allow_stale=dict(action="store_true", help="allow a stale checkout (for testing)"),
     allow_dirty=dict(action="store_true", help="allow untracked files and files with changes (for testing)"),
@@ -1199,6 +1248,7 @@ def prepare(final: bool = False, pre: str | None = None, version: str | None = N
     """Prepare a release."""
     command.run(
         update_version,
+        update_setuptools,
         check_state,
         generate_summary,
         generate_changelog,
@@ -1217,6 +1267,16 @@ def update_version(final: bool = False, pre: str | None = None, version: str | N
         requested_version = get_next_version(current_version, final=final, pre=pre)
 
     set_ansible_version(current_version, requested_version)
+
+
+@command
+def update_setuptools(setuptools: bool) -> None:
+    """Update the setuptools upper bound in pyproject.toml."""
+    if not setuptools:
+        return
+
+    requested_version = get_latest_setuptools_version()
+    set_setuptools_upper_bound(requested_version)
 
 
 @command
