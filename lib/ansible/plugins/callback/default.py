@@ -293,7 +293,7 @@ class CallbackModule(CallbackBase):
         label = self._get_item_label(included_file._vars)
         if label:
             msg += " => (item=%s)" % label
-        self._display.display(msg, color=C.COLOR_SKIP)
+        self._display.display(msg, color=C.COLOR_INCLUDED)
 
     def v2_playbook_on_stats(self, stats):
         self._display.banner("PLAY RECAP")

@@ -172,6 +172,7 @@ if getattr(C, 'DEFAULT_LOG_PATH'):
 color_to_log_level = {C.COLOR_DEBUG: logging.DEBUG,
                       C.COLOR_VERBOSE: logging.INFO,
                       C.COLOR_OK: logging.INFO,
+                      C.COLOR_INCLUDED: logging.INFO,
                       C.COLOR_CHANGED: logging.INFO,
                       C.COLOR_SKIP: logging.WARNING,
                       C.COLOR_DEPRECATE: logging.WARNING,
