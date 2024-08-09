@@ -1,0 +1,4 @@
+bugfixes:
+  - COLOR_SKIP will not alter "included" events color display anymore.
+minor_changes:
+  - Introducing COLOR_INCLUDED parameter. This can set a specific color for "included" events.
