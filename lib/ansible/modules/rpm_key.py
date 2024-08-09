@@ -22,6 +22,7 @@ options:
       description:
         - Key that will be modified. Can be a url, a file on the managed node, or a keyid if the key
           already exists in the database.
+        - Since version 2.18 you can also pass the key as a string.
       type: str
       required: true
     state:
@@ -84,7 +85,7 @@ import tempfile
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.common.text.converters import to_native
+from ansible.module_utils.common.text.converters import to_native, to_bytes
 
 
 def is_pubkey(string):
@@ -114,6 +115,10 @@ class RpmKey(object):
 
         if '://' in key:
             keyfile = self.fetch_key(key)
+            keyid = self.getkeyid(keyfile)
+            should_cleanup_keyfile = True
+        elif is_pubkey(key):
+            keyfile = self.keyfile(to_bytes(key))
             keyid = self.getkeyid(keyfile)
             should_cleanup_keyfile = True
         elif self.is_keyid(key):
@@ -148,6 +153,15 @@ class RpmKey(object):
             else:
                 module.exit_json(changed=False)
 
+    def keyfile(self, key):
+        tmpfd, tmpname = tempfile.mkstemp(dir=self.module.tmpdir)
+        self.module.add_cleanup_file(tmpname)
+        tmpfile = os.fdopen(tmpfd, "w+b")
+        tmpfile.write(key)
+        tmpfile.close()
+
+        return tmpname
+
     def fetch_key(self, url):
         """Downloads a key from url, returns a valid path to a gpg key"""
         rsp, info = fetch_url(self.module, url)
@@ -157,12 +171,8 @@ class RpmKey(object):
         key = rsp.read()
         if not is_pubkey(key):
             self.module.fail_json(msg="Not a public key: %s" % url)
-        tmpfd, tmpname = tempfile.mkstemp()
-        self.module.add_cleanup_file(tmpname)
-        tmpfile = os.fdopen(tmpfd, "w+b")
-        tmpfile.write(key)
-        tmpfile.close()
-        return tmpname
+        keyfile = self.keyfile(key)
+        return keyfile
 
     def normalize_keyid(self, keyid):
         """Ensure a keyid doesn't have a leading 0x, has leading or trailing whitespace, and make sure is uppercase"""
