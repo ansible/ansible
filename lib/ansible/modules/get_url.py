@@ -446,7 +446,10 @@ def extract_filename_from_headers(headers):
     """
     msg = email.message.Message()
     msg['content-disposition'] = headers.get('content-disposition', '')
-    return msg.get_param('filename', header='content-disposition')
+    if filename := msg.get_param('filename', header='content-disposition'):
+        # Avoid directory traversal
+        filename = os.path.basename(filename)
+    return filename
 
 
 def is_url(checksum):
