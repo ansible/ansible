@@ -55,7 +55,7 @@ class AnsiblePlugin(ABC):
 
     # allow extra passthrough parameters
     allow_extras: bool = False
-    extras_prefix: str | None = None
+    _extras_prefix: str | None = None
 
     def __init__(self):
         self._options = {}
@@ -63,9 +63,9 @@ class AnsiblePlugin(ABC):
 
     @property
     def extras_prefix(self):
-        if not self.extras_prefix:
-            self.extras_prefix = self._load_name.split('.')[-1]
-        return self.extras_prefix
+        if not self._extras_prefix:
+            self._extras_prefix = self._load_name.split('.')[-1]
+        return self._extras_prefix
 
     def matches_name(self, possible_names):
         possible_fqcns = set()
