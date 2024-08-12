@@ -5,7 +5,7 @@ DOCUMENTATION:
   short_description: did the task fail
   aliases: [failure]
   description:
-    - Tests if task finished in failure, opposite of C(succeeded).
+    - Tests if task finished in failure, opposite of P(ansible.builtin.succeeded#test).
     - This test checks for the existence of a C(failed) key in the input dictionary and that it is V(True) if present.
     - Tasks that get skipped or not executed due to other failures (syntax, templating, unreachable host, etc) do not return a 'failed' status.
   options:
