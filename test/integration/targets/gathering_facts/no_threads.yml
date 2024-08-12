@@ -1,0 +1,18 @@
+- hosts: localhost
+  tasks:
+  - set_fact:
+      normal_devices: "{{ ansible_facts['devices'].keys() }}"
+
+  - name: facts already gathered normally, but now we do mounts again w/o multithreading
+    gather_facts:
+      gather_subset: mounts
+    register: no_multi
+    environment:
+      PYTHONPATH: "${PWD}/lib"
+
+  - set_fact:
+      single_devices: "{{no_multi['ansible_facts']['ansible_devices'].keys()}}"
+
+  - assert:
+      that:
+        - normal_devices == single_devices
