@@ -747,7 +747,7 @@ if ($read -gt 0) {
             connection_timeout=self.get_option('connection_timeout'),
             encryption=self.get_option('message_encryption'),
             proxy=self.get_option('proxy'),
-            no_proxy=self.get_option('ignore_proxy'),
+            no_proxy=boolean(self.get_option('ignore_proxy')),
             max_envelope_size=self.get_option('max_envelope_size'),
             operation_timeout=self.get_option('operation_timeout'),
             read_timeout=self.get_option('read_timeout'),

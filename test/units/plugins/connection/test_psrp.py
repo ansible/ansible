@@ -91,7 +91,7 @@ class TestConnectionPSRP(object):
             {'ansible_port': '5985'},
             {
                 '_psrp_port': 5985,
-                '_psrp_conn_kwargs': { 'ssl': False },
+                '_psrp_conn_kwargs': {'ssl': False},
             },
         ),
         # ssl=True when port defined to not 5985
@@ -99,7 +99,7 @@ class TestConnectionPSRP(object):
             {'ansible_port': 1234},
             {
                 '_psrp_port': 1234,
-                '_psrp_conn_kwargs': { 'ssl': True },
+                '_psrp_conn_kwargs': {'ssl': True},
             },
         ),
         # port 5986 when ssl=True
@@ -107,7 +107,7 @@ class TestConnectionPSRP(object):
             {'ansible_psrp_protocol': 'https'},
             {
                 '_psrp_port': 5986,
-                '_psrp_conn_kwargs': { 'ssl': True },
+                '_psrp_conn_kwargs': {'ssl': True},
             },
         ),
         # port 5985 when ssl=False
@@ -115,7 +115,7 @@ class TestConnectionPSRP(object):
             {'ansible_psrp_protocol': 'http'},
             {
                 '_psrp_port': 5985,
-                '_psrp_conn_kwargs': { 'ssl': False },
+                '_psrp_conn_kwargs': {'ssl': False},
             },
         ),
         # psrp extras
@@ -156,15 +156,36 @@ class TestConnectionPSRP(object):
         (
             {'ansible_psrp_cert_validation': 'ignore'},
             {
-                '_psrp_conn_kwargs': { 'cert_validation': False },
+                '_psrp_conn_kwargs': {'cert_validation': False},
             },
         ),
         # cert validation path
         (
             {'ansible_psrp_cert_trust_path': '/path/cert.pem'},
             {
-                '_psrp_conn_kwargs': { 'cert_validation': '/path/cert.pem' },
+                '_psrp_conn_kwargs': {'cert_validation': '/path/cert.pem'},
             },
+        ),
+        # ignore proxy boolean value
+        (
+            {'ansible_psrp_ignore_proxy': 'true'},
+            {
+                '_psrp_conn_kwargs': {'no_proxy': True},
+            }
+        ),
+        # ignore proxy false-ish value
+        (
+            {'ansible_psrp_ignore_proxy': 'n'},
+            {
+                '_psrp_conn_kwargs': {'no_proxy': False},
+            }
+        ),
+        # ignore proxy true-ish value
+        (
+            {'ansible_psrp_ignore_proxy': 'y'},
+            {
+                '_psrp_conn_kwargs': {'no_proxy': True},
+            }
         ),
     )
 
