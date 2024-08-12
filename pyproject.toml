@@ -10,7 +10,6 @@ authors = [
 ]
 description = "Radically simple IT automation"
 readme = "README.md"
-license = {text = "GPLv3+"}
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
