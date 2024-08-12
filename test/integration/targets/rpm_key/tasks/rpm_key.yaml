@@ -161,7 +161,7 @@
     that:
        - result is success
        - result is not changed
-       - "'does not match the key fingerprint' in result.msg"
+       - "'does not match any key fingerprints' in result.msg"
 
 - name: Issue 20325 - Verify fingerprint of key, valid fingerprint
   rpm_key:
@@ -186,6 +186,67 @@
     that:
       - result is success
       - result is not changed
+
+# Reset to test subkey validation
+- name: remove all keys from key ring
+  shell: "rpm -q  gpg-pubkey | xargs rpm -e"
+
+- name: Verify fingerprint of subkey, valid fingerprint
+  rpm_key:
+    key: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/RPM-GPG-KEY.dag
+    fingerprint: 19B7 913E 6284 8E3F 4D78 D6B4 ECD9 1AB2 2EB6 8D86
+  register: result
+
+- name: Assert Verify fingerprint of key, valid fingerprint
+  assert:
+    that:
+      - result is success
+      - result is changed
+
+- name: Verify fingerprint of subkey, valid fingerprint - Idempotent check
+  rpm_key:
+    key: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/RPM-GPG-KEY.dag
+    fingerprint: 19B7 913E 6284 8E3F 4D78 D6B4 ECD9 1AB2 2EB6 8D86
+  register: result
+
+- name: Assert Verify fingerprint of subkey, valid fingerprint - Idempotent check
+  assert:
+    that:
+      - result is success
+      - result is not changed
+
+# Reset to test multi-key validation
+- name: remove all keys from key ring
+  shell: "rpm -q  gpg-pubkey | xargs rpm -e"
+
+- name: Verify fingerprint of primary and subkey, valid fingerprint
+  rpm_key:
+    key: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/RPM-GPG-KEY.dag
+    fingerprint:
+      - 19B7 913E 6284 8E3F 4D78 D6B4 ECD9 1AB2 2EB6 8D86
+      - EBC6 E12C 62B1 C734 026B 2122 A20E 5214 6B8D 79E6
+  register: result
+
+- name: Assert Verify fingerprint of primary and subkey, valid fingerprint
+  assert:
+    that:
+      - result is success
+      - result is changed
+
+- name: Verify fingerprint of primary and subkey, valid fingerprint - Idempotent check
+  rpm_key:
+    key: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/RPM-GPG-KEY.dag
+    fingerprint:
+      - 19B7 913E 6284 8E3F 4D78 D6B4 ECD9 1AB2 2EB6 8D86
+      - EBC6 E12C 62B1 C734 026B 2122 A20E 5214 6B8D 79E6
+  register: result
+
+- name: Assert Verify fingerprint of primary and subkey, valid fingerprint - Idempotent check
+  assert:
+    that:
+      - result is success
+      - result is not changed
+
 
 #
 # Cleanup
