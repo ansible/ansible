@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - rpm_key - allow validation of gpg key with a subkey fingerprint
+  - rpm_key - enable gpg validation that requires presence of multiple fingerprints
