@@ -24,6 +24,7 @@ def collect_sdist_files(complete_file_list: list[str]) -> list[str]:
         '.cherry_picker.toml',
         '.git*',
         '.mailmap',
+        'bin/*',
         'changelogs/README.md',
         'changelogs/config.yaml',
         'changelogs/fragments/*',
@@ -37,13 +38,13 @@ def collect_sdist_files(complete_file_list: list[str]) -> list[str]:
         'SOURCES.txt',
         'dependency_links.txt',
         'entry_points.txt',
-        'not-zip-safe',
         'requires.txt',
         'top_level.txt',
     )
 
     sdist_files.append('PKG-INFO')
-    sdist_files.extend(f'lib/ansible_core.egg-info/{name}' for name in egg_info)
+    sdist_files.append('setup.cfg')
+    sdist_files.extend(f'ansible_core.egg-info/{name}' for name in egg_info)
 
     return sdist_files
 
@@ -51,8 +52,12 @@ def collect_sdist_files(complete_file_list: list[str]) -> list[str]:
 def collect_wheel_files(complete_file_list: list[str]) -> list[str]:
     """Return a list of files which should be present in the wheel."""
     wheel_files = []
+    license_files = []
 
     for path in complete_file_list:
+        if path.startswith('licenses/'):
+            license_files.append(os.path.relpath(path, 'licenses'))
+
         if path.startswith('lib/ansible/'):
             prefix = 'lib'
         elif path.startswith('test/lib/ansible_test/'):
@@ -62,16 +67,15 @@ def collect_wheel_files(complete_file_list: list[str]) -> list[str]:
 
         wheel_files.append(os.path.relpath(path, prefix))
 
-    dist_info = (
+    dist_info = [
         'COPYING',
         'METADATA',
         'RECORD',
         'WHEEL',
         'entry_points.txt',
         'top_level.txt',
-    )
+    ] + license_files
 
-    wheel_files.append(f'ansible_core-{__version__}.data/scripts/ansible-test')
     wheel_files.extend(f'ansible_core-{__version__}.dist-info/{name}' for name in dist_info)
 
     return wheel_files
