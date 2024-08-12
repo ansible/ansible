@@ -300,6 +300,7 @@ class ActionBase(ABC):
                                                                             async_timeout=self._task.async_val,
                                                                             environment=final_environment,
                                                                             remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
+                                                                            pipelining=self._is_pipelining_enabled('new'),
                                                                             **become_kwargs)
                 break
             except InterpreterDiscoveryRequiredError as idre:
