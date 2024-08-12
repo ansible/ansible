@@ -29,9 +29,15 @@
       with_dict: "{{ symlinks }}"
       delegate_to: localhost
 
+    - name: Create group for remote unprivileged user
+      group:
+        name: '{{ remote_unprivileged_user_group }}'
+      register: group
+
     - name: Create remote unprivileged remote user
       user:
         name: '{{ remote_unprivileged_user }}'
+        group: '{{ remote_unprivileged_user_group }}'
       register: user
 
     - name: Check sudoers dir
@@ -78,6 +84,8 @@
     - import_tasks: selinux.yml
       when: ansible_os_family == 'RedHat' and ansible_selinux.get('mode') == 'enforcing'
 
+    - import_tasks: setgid.yml
+
     - import_tasks: no_log.yml
       delegate_to: localhost
 
@@ -121,6 +129,11 @@
         state: absent
         remove: yes
         force: yes
+
+    - name: Remove group for remote unprivileged user
+      group:
+        name: '{{ remote_unprivileged_user_group }}'
+        state: absent
 
     - name: Remove sudoers.d file
       file:
