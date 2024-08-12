@@ -1,5 +1,4 @@
 include COPYING
-include bin/*
 include changelogs/CHANGELOG*.rst
 include changelogs/changelog.yaml
 include licenses/*.txt
