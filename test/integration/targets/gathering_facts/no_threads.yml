@@ -17,5 +17,5 @@
     - assert:
         that:
           - normal_devices == single_devices
-    when 
+    when:
       - ansible_facts['os_family'] not in ['FreeBSD', 'Darwin']
