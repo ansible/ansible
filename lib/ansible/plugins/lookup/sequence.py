@@ -217,7 +217,8 @@ class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
         results = []
 
-        if (not terms) and kwargs:
+        if kwargs and not terms:
+            # All of the necessary arguments can be provided as keywords, but we still need something to loop over
             terms = ['']
 
         for term in terms:
