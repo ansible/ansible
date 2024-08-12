@@ -1027,7 +1027,7 @@ def create_github_release_notes(upstream: Remote, repository: str, version: Vers
     variables = dict(
         version=version,
         releases=get_release_artifact_details(repository, version, validate),
-        changelog=f"https://github.com/{upstream.user}/{upstream.repo}/blob/v{version}/changelogs/CHANGELOG-v{version.major}.{version.minor}.rst",
+        changelog=f"https://github.com/{upstream.user}/{upstream.repo}/blob/v{version}/changelogs/CHANGELOG-v{version.major}.{version.minor}.md",
     )
 
     release_notes = template.render(**variables).strip()
@@ -1148,7 +1148,7 @@ This release is a maintenance release containing numerous bugfixes.
 {% endif %}
 The full changelog can be found here:
 
-https://github.com/{{ upstream.user }}/{{ upstream.repo }}/blob/v{{ version }}/changelogs/CHANGELOG-v{{ info.short }}.rst
+https://github.com/{{ upstream.user }}/{{ upstream.repo }}/blob/v{{ version }}/changelogs/CHANGELOG-v{{ info.short }}.md
 
 
 Schedule for future releases

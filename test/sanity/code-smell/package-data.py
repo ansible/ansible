@@ -207,9 +207,13 @@ def check_build(complete_file_list: list[str], use_upper_setuptools_version: boo
             # Make sure a changelog exists for this version when testing from devel.
             # When testing from a stable branch the changelog will already exist.
             major_minor_version = '.'.join(__version__.split('.')[:2])
-            changelog_path = f'changelogs/CHANGELOG-v{major_minor_version}.rst'
-            pathlib.Path(clean_repo_dir, changelog_path).touch()
-            complete_file_list.append(changelog_path)
+            changelog_paths = [
+                f'changelogs/CHANGELOG-v{major_minor_version}.rst',
+                f'changelogs/CHANGELOG-v{major_minor_version}.md',
+            ]
+            for changelog_path in changelog_paths:
+                pathlib.Path(clean_repo_dir, changelog_path).touch()
+                complete_file_list.append(changelog_path)
 
         expected_sdist_files = collect_sdist_files(complete_file_list)
         expected_wheel_files = collect_wheel_files(complete_file_list)
