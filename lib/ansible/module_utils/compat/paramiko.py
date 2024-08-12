@@ -11,10 +11,10 @@ PARAMIKO_IMPORT_ERR = None
 
 try:
     with warnings.catch_warnings():
-        # Blowfish is deprecated in cryptography, but still used by paramiko versions older than 2.9.5.
+        # Blowfish has been moved, but the deprecated import is used by paramiko versions older than 2.9.5.
         # See: https://github.com/paramiko/paramiko/pull/2039
         warnings.filterwarnings('ignore', message='Blowfish has been ', category=UserWarning)
-        # TripleDES is deprecated in cryptography, but still used by paramiko versions older than 3.3.2 and 3.4.1.
+        # TripleDES has been moved, but the deprecated import is used by paramiko versions older than 3.3.2 and 3.4.1.
         # See: https://github.com/paramiko/paramiko/pull/2421
         warnings.filterwarnings('ignore', message='TripleDES has been ', category=UserWarning)
         import paramiko  # pylint: disable=unused-import
