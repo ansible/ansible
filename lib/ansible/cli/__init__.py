@@ -167,19 +167,7 @@ class CLI(ABC):
         else:
             display.v(u"No config file found; using defaults")
 
-        # warn about deprecated config options
-        for deprecated in C.config.DEPRECATED:
-            name = deprecated[0]
-            why = deprecated[1]['why']
-            if 'alternatives' in deprecated[1]:
-                alt = ', use %s instead' % deprecated[1]['alternatives']
-            else:
-                alt = ''
-            ver = deprecated[1].get('version')
-            date = deprecated[1].get('date')
-            collection_name = deprecated[1].get('collection_name')
-            display.deprecated("%s option, %s%s" % (name, why, alt),
-                               version=ver, date=date, collection_name=collection_name)
+        C.handle_config_noise(display)
 
     @staticmethod
     def split_vault_id(vault_id):
