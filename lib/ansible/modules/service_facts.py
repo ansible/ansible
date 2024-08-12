@@ -454,7 +454,7 @@ class FreeBSDScanService(BaseService):
         services = []
         rc, stdout, stderr = self.module.run_command("%s -e" % (self.service))
         if rc == 0:
-            for line in stdout.lines():
+            for line in stdout.splitlines():
                 if line.startswith('/'):
                     services.append(os.path.basename(line))
         elif stderr:
