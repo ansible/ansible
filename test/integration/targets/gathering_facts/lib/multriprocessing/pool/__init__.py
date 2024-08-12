@@ -3,5 +3,5 @@ from __future__ import annotations
 
 class ThreadPool:
 
-    def init(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         raise PermissionError("To test single proc ansible")
