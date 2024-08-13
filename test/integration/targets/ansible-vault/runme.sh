@@ -552,21 +552,22 @@ sudo chmod 000 "${MYTMPDIR}/unreadable"
 ansible-vault encrypt_string content
 ansible-vault encrypt_string content --encrypt-vault-id id3
 
-set +e
-
 # Try to use a missing vault password file
-ansible-vault encrypt_string content --encrypt-vault-id id1 2>&1 | tee out.txt
-test $? -ne 0
-grep out.txt -e '[WARNING]: Error getting vault password file (id1)'
-grep out.txt -e "ERROR! Did not find a match for --encrypt-vault-id=id2 in the known vault-ids ['id3']"
+if ansible-vault encrypt_string content --encrypt-vault-id id1 > out.txt 2>&1; then
+  echo "command did not fail"
+  exit 1
+fi
+grep out.txt -e '\[WARNING\]: Error getting vault password file (id1)'
+grep out.txt -e "ERROR! Did not find a match for --encrypt-vault-id=id1 in the known vault-ids \['id3'\]"
 
 # Try to use an inaccessible vault password file
-ansible-vault encrypt_string content --encrypt-vault-id id2 2>&1 | tee out.txt
-test $? -ne 0
-grep out.txt -e "[WARNING]: Error in vault password file loading (id2)"
-grep out.txt -e "ERROR! Did not find a match for --encrypt-vault-id=id2 in the known vault-ids ['id3']"
+if ansible-vault encrypt_string content --encrypt-vault-id id2 > out.txt 2>&1; then
+  echo "command did not fail"
+  exit 1
+fi
+grep out.txt -e "\[WARNING\]: Error in vault password file loading (id2)"
+grep out.txt -e "ERROR! Did not find a match for --encrypt-vault-id=id2 in the known vault-ids \['id3'\]"
 
-set -e
 unset ANSIBLE_VAULT_IDENTITY_LIST
 
 # 'real script'
