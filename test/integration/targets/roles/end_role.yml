@@ -1,0 +1,35 @@
+- hosts: localhost
+  gather_facts: false
+  pre_tasks:
+    - set_fact:
+        play_checkpoint: 1
+  roles:
+    - end_role_inside
+  tasks:
+    - set_fact:
+        play_checkpoint: "{{ play_checkpoint|int + 1 }}"
+
+    - import_role:
+        name: end_role_inside
+        allow_duplicates: true
+
+    - set_fact:
+        play_checkpoint: "{{ play_checkpoint|int + 1 }}"
+
+    - include_role:
+        name: end_role_inside
+        allow_duplicates: false
+
+    - set_fact:
+        play_checkpoint: "{{ play_checkpoint|int + 1 }}"
+  post_tasks:
+    - assert:
+        that:
+          - role_executed|int == 2
+          - after_end_role is undefined
+          - play_checkpoint|int == 4
+          - role_handler_ran is defined
+
+    - name: when running this playbook check this appears on stdout to ensure the above assert wasn't skipped
+      debug:
+        msg: CHECKPOINT

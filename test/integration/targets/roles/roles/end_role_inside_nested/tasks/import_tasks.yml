@@ -1,0 +1,5 @@
+- meta: end_role
+  when: end_role_cond
+
+- set_fact:
+    after_end_role: true
