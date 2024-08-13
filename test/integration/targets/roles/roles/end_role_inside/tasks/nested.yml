@@ -1,0 +1,22 @@
+- set_fact:
+    end_role_cond: "{{ inventory_hostname == 'host1' }}"
+
+- include_role:
+    name: end_role_inside_nested
+
+- debug:
+    msg: CHECKPOINT
+
+- assert:
+    that:
+      - after_end_role is undefined
+  when: inventory_hostname == "host1"
+
+- assert:
+    that:
+      - after_end_role
+  when: inventory_hostname == "host2"
+
+- name: when running this playbook check this appears on stdout to ensure the above assert wasn't skipped
+  debug:
+    msg: CHECKPOINT
