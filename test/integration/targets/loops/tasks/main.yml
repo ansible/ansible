@@ -405,3 +405,20 @@
 - assert:
     that:
       - foo[0] == 'foo1.0'
+
+# https://github.com/ansible/ansible/issues/83619
+- command: "echo {{ item }}"
+  register: r
+  loop:
+    - changed
+    - skipped
+  loop_control:
+    label: "{{ r.stdout }}"
+  when:
+    - item == "changed"
+  ignore_errors: true
+
+- name: test that the second iteration result was stored, since it was skipped no stdout should be present there
+  assert:
+    that:
+      - "r['results'][1]['msg'] is contains(\"no attribute 'stdout'\")"
