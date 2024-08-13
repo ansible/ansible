@@ -1,0 +1,4 @@
+minor_changes:
+- >-
+  ``register`` - Support projections (data manipulation) on registered data, as well as registering multiple variables on a single task
+  (https://github.com/ansible/ansible/pull/72553)

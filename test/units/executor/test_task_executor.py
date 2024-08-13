@@ -189,7 +189,7 @@ class TestTaskExecutor(unittest.TestCase):
             variable_manager=MagicMock(),
         )
 
-        def _execute(variables):
+        def _execute(variables, from_loop=False):
             return dict(item=variables.get('item'))
 
         te._execute = MagicMock(side_effect=_execute)
@@ -326,7 +326,8 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.retries = 0
         mock_task.delay = -1
         mock_task.delegate_to = None
-        mock_task.register = 'foo'
+        mock_task.register = {'foo': '.'}
+        mock_task.default_register = None
         mock_task.until = None
         mock_task.changed_when = None
         mock_task.failed_when = None

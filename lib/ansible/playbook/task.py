@@ -17,8 +17,11 @@
 
 from __future__ import annotations
 
+import re
+
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
+from ansible.module_utils.common.collections import Mapping
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.six import string_types
 from ansible.parsing.mod_args import ModuleArgsParser
@@ -37,10 +40,13 @@ from ansible.playbook.taggable import Taggable
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
+from ansible.utils.vars import isidentifier
 
 __all__ = ['Task']
 
 display = Display()
+
+_ANSIBLE_RESULT_RE = re.compile(r'\bansible_result\b')
 
 
 class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatable):
@@ -95,6 +101,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             self._parent = task_include
         else:
             self._parent = block
+
+        self.default_register = None
 
         super(Task, self).__init__()
 
@@ -152,6 +160,27 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         new_ds['loop'] = v
         # display.deprecated("with_ type loops are being phased out, use the 'loop' keyword instead",
         #                    version="2.10", collection_name='ansible.builtin')
+
+    def _validate_register(self, attr, name, value):
+        if value and not isinstance(value, Mapping):
+            self.default_register = value
+            value = {value: 'ansible_result'}
+        setattr(self, name, value)
+
+        items = value.items() if value else []
+        for register, projection in items:
+            if not isidentifier(register) or register in ('ansible_loop_result', 'ansible_result'):
+                raise AnsibleError("Invalid variable name in 'register' specified: '%s'" % register)
+
+            # If no default register, but using projection syntax with a full result
+            # set the default register to the first occurance
+            if projection == 'ansible_result' and self.default_register is None:
+                self.default_register = register
+
+            if not _ANSIBLE_RESULT_RE.search(projection):
+                raise AnsibleError(
+                    'register projection must be a raw jinja2 statement, containing "ansible_result"'
+                )
 
     def preprocess_data(self, ds):
         '''
@@ -357,6 +386,26 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         '''
         return value
 
+    def project(self, templar, result):
+        """Handle register projections and return a dict of variable name, and value"""
+        ret = {}
+        projections = list(self.register.items()) if self.register else []
+        for register, projection in projections:
+            if not isidentifier(register):
+                raise AnsibleError("Invalid variable name in 'register' specified: '%s'" % register)
+
+            if projection == 'ansible_result':
+                ret[register] = result
+                continue
+
+            template = f'{{{{ {projection} }}}}'
+
+            new_vars = templar.available_variables.copy()
+            new_vars['ansible_result'] = result
+            with templar.set_temporary_context(available_variables=new_vars):
+                ret[register] = templar.template(template)
+        return ret
+
     def get_vars(self):
         all_vars = dict()
         if self._parent:
@@ -393,6 +442,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         new_me.implicit = self.implicit
         new_me.resolved_action = self.resolved_action
         new_me._uuid = self._uuid
+        new_me.default_register = self.default_register
 
         return new_me
 
@@ -409,6 +459,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
 
             data['implicit'] = self.implicit
             data['resolved_action'] = self.resolved_action
+            data['default_register'] = self.default_register
 
         return data
 
@@ -440,6 +491,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
 
         self.implicit = data.get('implicit', False)
         self.resolved_action = data.get('resolved_action')
+        self.default_register = data.get('default_register')
 
         super(Task, self).deserialize(data)
 
