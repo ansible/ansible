@@ -436,16 +436,18 @@ class FreeBSDScanService(BaseService):
                 p = re.compile(r'^\s?%s is running as pid (\d+).' % service)
                 service_info['pid'] = p.match(stdout[0])[0]
             elif rc == 1:
-                if 'is not running' in stdout.splitlines()[0]:
+                if stdout and 'is not running' in stdout.splitlines()[0]:
                     service_info['status'] = 'stopped'
-                elif 'unknown directive' in stderr.splitlines()[0]:
-                    service_info['status'] = 'does not support status query'
-        elif stderr:
-            self.module.warn("Failed to get info for %s: %s" % (service, stderr))
-        elif stdout:
-            self.module.warn("Failed to get info for %s: %s" % (service, stdout))
+                elif stderr and 'unknown directive' in stderr.splitlines()[0]:
+                    service_info['status'] = 'unknown'
+                    self.module.warn('Status query not supported for %s' % service)
+                else:
+                    service_info['status'] = 'unknown'
+                    out = stderr if stderr else stdout
+                    self.module.warn('Could not retrieve status for %s: %s' % (service, out))
         else:
-            self.module.warn("Failed to get info for %s, no system message: rc=%s" % (service, rc))
+            out = stderr if stderr else stdout
+            self.module.warn("Failed to get info for %s, no system message (rc=%s): %s" % (service, rc, out))
 
         return service_info
 
