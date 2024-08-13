@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix an issue where registered variable was not available for templating in ``loop_control.label`` on skipped looped tasks (https://github.com/ansible/ansible/issues/83619)
