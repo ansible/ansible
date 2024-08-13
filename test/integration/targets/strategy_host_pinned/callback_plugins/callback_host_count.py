@@ -26,6 +26,10 @@ class CallbackModule(CallbackBase):
         if self._executing_hosts_counter > num_forks:
             # Exception is caught and turned into just a warning in TQM,
             # so raise BaseException to fail the test
+            # To prevent seeing false positives in case the exception handling
+            # in TQM is changed and BaseException is swallowed, print something
+            # and ensure the test fails in runme.sh in such a case.
+            self._display.display("host_pinned_test_failed")
             raise BaseException(
                 "host_pinned test failed, number of hosts executing: "
                 f"{self._executing_hosts_counter}, expected: {num_forks}"
