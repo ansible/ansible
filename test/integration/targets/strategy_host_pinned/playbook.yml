@@ -1,0 +1,46 @@
+# README - even the name of the tasks matter in this test, see callback_plugins/callback_host_count.py
+- hosts: all
+  gather_facts: false
+  strategy: host_pinned
+  pre_tasks:
+    # by executing in pre_tasks we ensure that "start" is the first task in the play,
+    # not an implicit "meta: flush_handlers" after pre_tasks
+    - name: start
+      debug:
+        msg: start
+
+    - ping:
+
+    - meta: noop
+  post_tasks:
+    # notifying a handler in post_tasks ensures the handler is the last task in the play,
+    # not an implicit "meta: flush_handlers" after post_tasks
+    - debug:
+      changed_when: true
+      notify: end
+  handlers:
+    - name: end
+      debug:
+        msg: end
+
+- hosts: localhost0,localhost1,localhost2
+  gather_facts: false
+  strategy: host_pinned
+  pre_tasks:
+    - name: start
+      debug:
+        msg: start
+
+    - command: sleep 3
+      when: inventory_hostname == "localhost0"
+
+    - meta: noop
+    - meta: noop
+  post_tasks:
+    - debug:
+      changed_when: true
+      notify: end
+  handlers:
+    - name: end
+      debug:
+        msg: end
