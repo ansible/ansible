@@ -95,6 +95,7 @@ class StrategyModule(StrategyBase):
 
             # try and find an unblocked host with a task to run
             host_results = []
+            meta_task_dummy_results_count = 0
             while True:
                 host = hosts_left[last_host]
                 display.debug("next free host: %s" % host)
@@ -181,6 +182,9 @@ class StrategyModule(StrategyBase):
                                 continue
 
                         if task.action in C._ACTION_META:
+                            if self._host_pinned:
+                                meta_task_dummy_results_count += 1
+                                workers_free -= 1
                             self._execute_meta(task, play_context, iterator, target_host=host)
                             self._blocked_hosts[host_name] = False
                         else:
@@ -220,7 +224,7 @@ class StrategyModule(StrategyBase):
             host_results.extend(results)
 
             # each result is counted as a worker being free again
-            workers_free += len(results)
+            workers_free += len(results) + meta_task_dummy_results_count
 
             self.update_active_connections(results)
 

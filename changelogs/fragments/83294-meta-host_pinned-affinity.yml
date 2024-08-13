@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix for ``meta`` tasks breaking host/fork affinity with ``host_pinned`` strategy (https://github.com/ansible/ansible/issues/83294)
