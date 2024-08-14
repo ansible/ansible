@@ -1,6 +1,6 @@
 [windows]
 {% for host in vars.groups.windows %}
-{{ host }}  ansible_host={{ hostvars[host]['ansible_host'] }} ansible_port={{ hostvars[host]['ansible_port'] }} ansible_user={{ hostvars[host]['ansible_user'] }} ansible_password={{ hostvars[host]['ansible_password'] }}
+{{ host }}  ansible_host={{ hostvars[host]['ansible_host'] }}{% if hostvars[host]['ansible_connection'] != 'ssh' %} ansible_port={{ hostvars[host]['ansible_port'] }}{% endif %} ansible_user={{ hostvars[host]['ansible_user'] }} ansible_password={{ hostvars[host]['ansible_password'] | default(hostvars[host]['ansible_test_connection_password']) }}
 {% endfor %}
 
 [windows:vars]
