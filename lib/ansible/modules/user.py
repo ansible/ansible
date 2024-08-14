@@ -3286,7 +3286,7 @@ def main():
             if user.ssh_passphrase is None and user.ssh_key_rounds is not None:
                 warning_msg = 'Option \'ssh_key_rounds\' of module \'ansible.builtin.user\' is useless'\
                     ' without \'ssh_passphrase\' specified. See module documentation.'
-                result['warnings'].append(warning_msg)
+                module.warn(warning_msg)
 
         (rc, out, err) = user.set_password_expire()
         if rc is None:
