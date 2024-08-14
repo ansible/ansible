@@ -246,12 +246,15 @@ def get_cli_path(path: str) -> str:
     raise RuntimeError(path)
 
 
+# noinspection PyUnusedLocal
 @mutex
 def get_ansible_python_path(args: CommonConfig) -> str:
     """
     Return a directory usable for PYTHONPATH, containing only the ansible package.
     If a temporary directory is required, it will be cached for the lifetime of the process and cleaned up at exit.
     """
+    del args  # not currently used
+
     try:
         return get_ansible_python_path.python_path  # type: ignore[attr-defined]
     except AttributeError:
