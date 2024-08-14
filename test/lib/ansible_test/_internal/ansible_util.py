@@ -11,10 +11,6 @@ from .constants import (
     SOFT_RLIMIT_NOFILE,
 )
 
-from .io import (
-    write_text_file,
-)
-
 from .util import (
     common_environment,
     ApplicationError,
@@ -25,7 +21,6 @@ from .util import (
     ANSIBLE_SOURCE_ROOT,
     ANSIBLE_TEST_TOOLS_ROOT,
     MODE_FILE_EXECUTE,
-    get_ansible_version,
     raw_command,
     verified_chmod,
 )
@@ -251,12 +246,15 @@ def get_cli_path(path: str) -> str:
     raise RuntimeError(path)
 
 
+# noinspection PyUnusedLocal
 @mutex
 def get_ansible_python_path(args: CommonConfig) -> str:
     """
     Return a directory usable for PYTHONPATH, containing only the ansible package.
     If a temporary directory is required, it will be cached for the lifetime of the process and cleaned up at exit.
     """
+    del args  # not currently used
+
     try:
         return get_ansible_python_path.python_path  # type: ignore[attr-defined]
     except AttributeError:
@@ -273,36 +271,9 @@ def get_ansible_python_path(args: CommonConfig) -> str:
 
         os.symlink(ANSIBLE_LIB_ROOT, os.path.join(python_path, 'ansible'))
 
-    if not args.explain:
-        generate_egg_info(python_path)
-
     get_ansible_python_path.python_path = python_path  # type: ignore[attr-defined]
 
     return python_path
-
-
-def generate_egg_info(path: str) -> None:
-    """Generate an egg-info in the specified base directory."""
-    # minimal PKG-INFO stub following the format defined in PEP 241
-    # required for older setuptools versions to avoid a traceback when importing pkg_resources from packages like cryptography
-    # newer setuptools versions are happy with an empty directory
-    # including a stub here means we don't need to locate the existing file or run any tools to generate it when running from source
-    pkg_info = '''
-Metadata-Version: 1.0
-Name: ansible
-Version: %s
-Platform: UNKNOWN
-Summary: Radically simple IT automation
-Author-email: info@ansible.com
-License: GPLv3+
-''' % get_ansible_version()
-
-    pkg_info_path = os.path.join(path, 'ansible_core.egg-info', 'PKG-INFO')
-
-    if os.path.exists(pkg_info_path):
-        return
-
-    write_text_file(pkg_info_path, pkg_info.lstrip(), create_directories=True)
 
 
 class CollectionDetail:

@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - An ``ansible_core.egg-info`` directory is no longer generated when running tests.
