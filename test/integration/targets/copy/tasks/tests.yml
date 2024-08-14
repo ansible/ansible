@@ -2451,7 +2451,8 @@
 
 - name: Record the output directory
   set_fact:
-    remote_file: foo.txt
+    remote_file: "{{ remote_tmp_dir }}/foo.txt"
+    ansible_remote_tmp: "{{ remote_tmp_dir }}"
 
 - name: Create a dest file
   shell: "echo Test content > {{ remote_file }}"
