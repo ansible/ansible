@@ -1598,6 +1598,7 @@ class AnsibleModule(object):
                 dest_stat = os.stat(b_dest)
                 os.chown(b_src, dest_stat.st_uid, dest_stat.st_gid)
                 shutil.copystat(b_dest, b_src)
+                os.utime(b_src, times=(time.time(), time.time()))
             except OSError as e:
                 if e.errno != errno.EPERM:
                     raise
