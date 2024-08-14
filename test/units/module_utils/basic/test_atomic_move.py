@@ -48,6 +48,7 @@ def atomic_mocks(mocker, monkeypatch):
         'copyfileobj': mocker.patch('shutil.copyfileobj'),
         'move': mocker.patch('shutil.move'),
         'mkstemp': mocker.patch('tempfile.mkstemp'),
+        'utime': mocker.patch('os.utime'),
     }
 
     mocks['getlogin'].return_value = 'root'
