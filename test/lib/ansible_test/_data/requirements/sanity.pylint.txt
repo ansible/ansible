@@ -6,4 +6,4 @@ mccabe==0.7.0
 platformdirs==4.2.2
 pylint==3.2.6
 PyYAML==6.0.2
-tomlkit==0.13.0
+tomlkit==0.13.2
