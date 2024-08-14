@@ -56,6 +56,7 @@ from .util import (
     InternalError,
     HostConnectionError,
     ANSIBLE_TEST_TARGET_ROOT,
+    WINDOWS_CONNECTION_VARIABLES,
 )
 
 from .util_common import (
@@ -1367,23 +1368,18 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
         connection = core_ci.connection
 
         variables: dict[str, t.Optional[t.Union[str, int]]] = dict(
-            ansible_connection='winrm',
-            ansible_pipelining='yes',
-            ansible_winrm_server_cert_validation='ignore',
             ansible_host=connection.hostname,
-            ansible_port=connection.port,
+            # ansible_port is intentionally not set using connection.port -- connection-specific variables can set this instead
             ansible_user=connection.username,
-            ansible_password=connection.password,
-            ansible_ssh_private_key_file=core_ci.ssh_key.key,
+            ansible_ssh_private_key_file=core_ci.ssh_key.key,  # required for scenarios which change the connection plugin to SSH
+            ansible_test_connection_password=connection.password,  # required for scenarios which change the connection plugin to require a password
         )
 
-        # HACK: force 2016 to use NTLM + HTTP message encryption
-        if self.config.version == '2016':
-            variables.update(
-                ansible_winrm_transport='ntlm',
-                ansible_winrm_scheme='http',
-                ansible_port='5985',
-            )
+        variables.update(ansible_connection=self.config.connection.split('+')[0])
+        variables.update(WINDOWS_CONNECTION_VARIABLES[self.config.connection])
+
+        if variables.pop('use_password'):
+            variables.update(ansible_password=connection.password)
 
         return variables
 

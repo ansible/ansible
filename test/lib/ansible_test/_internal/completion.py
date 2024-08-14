@@ -246,6 +246,8 @@ class PosixRemoteCompletionConfig(RemoteCompletionConfig, PythonCompletionConfig
 class WindowsRemoteCompletionConfig(RemoteCompletionConfig):
     """Configuration for remote Windows platforms."""
 
+    connection: str = ''
+
 
 TCompletionConfig = t.TypeVar('TCompletionConfig', bound=CompletionConfig)
 

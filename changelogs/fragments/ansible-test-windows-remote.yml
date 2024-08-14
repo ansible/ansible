@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Connection options can be set for ansible-test managed remote Windows instances.

@@ -399,9 +399,19 @@ class WindowsConfig(HostConfig, metaclass=abc.ABCMeta):
 class WindowsRemoteConfig(RemoteConfig, WindowsConfig):
     """Configuration for a remote Windows host."""
 
+    connection: t.Optional[str] = None
+
     def get_defaults(self, context: HostContext) -> WindowsRemoteCompletionConfig:
         """Return the default settings."""
         return filter_completion(windows_completion()).get(self.name) or windows_completion().get(self.platform)
+
+    def apply_defaults(self, context: HostContext, defaults: CompletionConfig) -> None:
+        """Apply default settings."""
+        assert isinstance(defaults, WindowsRemoteCompletionConfig)
+
+        super().apply_defaults(context, defaults)
+
+        self.connection = self.connection or defaults.connection
 
 
 @dataclasses.dataclass
