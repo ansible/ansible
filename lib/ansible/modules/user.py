@@ -3189,7 +3189,6 @@ def main():
     result = {}
     result['name'] = user.name
     result['state'] = user.state
-    result['warnings'] = []
     if user.state == 'absent':
         if user.user_exists():
             if module.check_mode:
