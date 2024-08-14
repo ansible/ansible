@@ -434,7 +434,12 @@ class FreeBSDScanService(BaseService):
             if rc == 0:
                 service_info['status'] = 'running'
                 p = re.compile(r'^\s?%s is running as pid (\d+).' % service)
-                service_info['pid'] = p.match(stdout[0])[0]
+                matches = p.match(stdout[0])
+                if matches:
+                    # does not always get pid output
+                    service_info['pid'] = matches[0]
+                else:
+                    service_info['pid'] = 'N/A'
             elif rc == 1:
                 if stdout and 'is not running' in stdout.splitlines()[0]:
                     service_info['status'] = 'stopped'
