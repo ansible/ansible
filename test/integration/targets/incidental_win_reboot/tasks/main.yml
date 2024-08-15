@@ -44,6 +44,9 @@
   register: removed_shutdown_privilege
 
 - block:
+  - name: reset connection to ensure privilege change takes effect
+    meta: reset_connection
+
   - name: try and reboot without required privilege
     win_reboot:
     register: fail_privilege
@@ -57,6 +60,9 @@
       name: SeRemoteShutdownPrivilege
       users: '{{ removed_shutdown_privilege.removed }}'
       action: add
+
+  - name: reset connection after adding privileges back in
+    meta: reset_connection
 
 - name: Use invalid parameter
   reboot:
