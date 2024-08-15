@@ -126,3 +126,16 @@
         path: /tmp/empty.txt
         state: absent
       delegate_to: localhost
+
+  - name: Test PSRP HTTP connection
+    win_ping:
+    vars:
+      ansible_port: 5985
+      ansible_psrp_protocol: http
+
+  - name: Test PSRP HTTPS connection
+    win_ping:
+    vars:
+      ansible_port: 5986
+      ansible_psrp_protocol: https
+      ansible_psrp_cert_validation: ignore
