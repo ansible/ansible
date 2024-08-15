@@ -38,10 +38,13 @@ ansible -i ../../inventory.winrm localhost \
     -e "test_shell_type=powershell" \
     "$@"
 
-# ensure the default shell is set to PowerShell
+# ensure the default shell is set to PowerShell - use an explicit shell
+# var as a previous task set the default shell to cmd and we don't want to
+# inherit the ansible-test defaults in inventory.winrm.
 ansible -i ../../inventory.winrm windows \
     -m win_regedit \
     -a "path=HKLM:\\\\SOFTWARE\\\\OpenSSH name=DefaultShell data=C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe" \
+    -e "ansible_shell_type=cmd" \
     "$@"
 
 ansible -i "${OUTPUT_DIR}/test_connection.inventory" windows \
