@@ -138,12 +138,24 @@ class LinuxHardware(Hardware):
         if None not in (memstats.get('swaptotal'), memstats.get('swapfree')):
             memstats['swap:used'] = memstats['swaptotal'] - memstats['swapfree']
 
-        if os.path.isdir('/sys/devices/system/edac/mc'):
-            memstats['real:physical'] = 0
+        memstats['real:physical'] = 0
+        if os.path.isdir('/sys/devices/system/edac/mc/mc0'):
             for file in glob.glob('/sys/devices/system/edac/mc/*/dimm*/size'):
                 dimm_size_mb = get_file_content(file)
                 if dimm_size_mb is not None:
                     memstats['real:physical'] += int(dimm_size_mb)
+        else:
+            dmi_bin = self.module.get_bin_path('dmidecode')
+            if dmi_bin is not None:
+                (rc, out, err) = self.module.run_command('%s -t memory' % dmi_bin)
+                if rc == 0:
+                    dimm_size_list = re.findall(r'^\s+Size: (.*)$', out, re.MULTILINE)
+                    for size in dimm_size_list:
+                        if size.endswith("GB"):
+                            memstats['real:physical'] += int(size.split()[0]) * 1024
+                        else:
+                            physical_memory_mb += int(size)
+
 
         memory_facts['memory_mb'] = {
             'real': {
