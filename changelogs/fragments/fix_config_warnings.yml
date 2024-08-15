@@ -1,0 +1,2 @@
+bugfixes:
+  - Fixed configuration load warnings, they are a set but were accessed as a list
