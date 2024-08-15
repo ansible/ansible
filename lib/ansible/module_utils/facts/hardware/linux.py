@@ -151,10 +151,10 @@ class LinuxHardware(Hardware):
                 if rc == 0:
                     dimm_size_list = re.findall(r'^\s+Size: (\d+( GB)?)$', out, re.MULTILINE)
                     for size in dimm_size_list:
-                        if size.endswith("GB"):
-                            memstats['real:physical'] += int(size.split()[0]) * 1024
+                        if size[0].endswith("GB"):
+                            memstats['real:physical'] += int(size[0].split()[0]) * 1024
                         else:
-                            memstats['real:physical'] += int(size)
+                            memstats['real:physical'] += int(size[0])
 
 
         memory_facts['memory_mb'] = {
