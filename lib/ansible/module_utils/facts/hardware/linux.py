@@ -149,7 +149,7 @@ class LinuxHardware(Hardware):
             if dmi_bin is not None:
                 (rc, out, err) = self.module.run_command('%s -t memory' % dmi_bin)
                 if rc == 0:
-                    dimm_size_list = re.findall(r'^\s+Size: (.*)$', out, re.MULTILINE)
+                    dimm_size_list = re.findall(r'^\s+Size: (\d+( GB)?)$', out, re.MULTILINE)
                     for size in dimm_size_list:
                         if size.endswith("GB"):
                             memstats['real:physical'] += int(size.split()[0]) * 1024
