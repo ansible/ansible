@@ -206,9 +206,23 @@ options:
             - Implementation differs by platform. This option does not always mean the user cannot login using other methods.
             - This option does not disable the user, only lock the password.
             - This must be set to V(false) in order to unlock a currently locked password. The absence of this parameter will not unlock a password.
-            - Currently supported on Linux, FreeBSD, DragonFlyBSD, NetBSD, OpenBSD.
+            - Currently supported on Linux, FreeBSD, DragonFlyBSD, NetBSD, OpenBSD.    
         type: bool
         version_added: "2.6"
+        notes:
+          - name: create user
+            - user:
+                - name: test123
+                - comment: test user
+                - uid: 1100
+                - group: users
+                - shell: /bin/bash
+                - password_lock: on_create
+                - update_password: on_create
+                - state: present
+            - Linux: 
+                  password: '!'
+                  update_password: on_create
     local:
         description:
             - Forces the use of "local" command alternatives on platforms that implement it.
