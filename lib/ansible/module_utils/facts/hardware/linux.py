@@ -156,7 +156,6 @@ class LinuxHardware(Hardware):
                         else:
                             memstats['real:physical'] += int(size[0])
 
-
         memory_facts['memory_mb'] = {
             'real': {
                 'physical': memstats.get('real:physical'),
