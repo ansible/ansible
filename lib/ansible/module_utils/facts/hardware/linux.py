@@ -154,7 +154,7 @@ class LinuxHardware(Hardware):
                         if size.endswith("GB"):
                             memstats['real:physical'] += int(size.split()[0]) * 1024
                         else:
-                            physical_memory_mb += int(size)
+                            memstats['real:physical'] += int(size)
 
 
         memory_facts['memory_mb'] = {
