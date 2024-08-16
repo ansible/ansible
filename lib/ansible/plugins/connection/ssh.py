@@ -408,6 +408,26 @@ b_NOT_SSH_ERRORS = (b'Traceback (most recent call last):',  # Python-2.6 when th
 SSHPASS_AVAILABLE = None
 SSH_DEBUG = re.compile(r'^debug\d+: .*')
 
+# Same as above but embedded in PowerShell's CLIXML output.
+SSH_DEBUG_INLINE = re.compile(rb'debug\d+: .*\r\n$')
+
+# Displayed without the debug prefix above on establishment of a new
+# connection.
+# https://github.com/openssh/openssh-portable/blob/a13856374b894397a7682b32257ed0bf67cfede9/sshconnect2.c#L480
+SSH_AUTH_MSG = re.compile(r'^Authenticated to .* (.*) using ".*"\.$')
+
+# Displayed with -vvv or higher on establishment of a new connection.
+# The (%s) comes from channel_format_status. The message starts with
+# "debug%d: channel x: status: The following connection are open:\n"
+# And each subsequence line has two spaces, a hash, a channel number,
+# and the details
+# https://github.com/openssh/openssh-portable/blob/a13856374b894397a7682b32257ed0bf67cfede9/channels.c#L1049-L1089
+SSH_CHANNEL_STATUS_MSG = re.compile(r'^debug\d: .*: The following connections are open:$')
+
+# Displayed when the host was added to the known_hosts file.
+# https://github.com/openssh/openssh-portable/blob/a13856374b894397a7682b32257ed0bf67cfede9/sshconnect.c#L1257-L1258
+SSH_HOST_ADDED_WARNING_MSG = re.compile(r"^Warning: Permanently added '.*' \(.*\) to the list of known hosts\.$")
+
 
 class AnsibleControlPersistBrokenPipeError(AnsibleError):
     ''' ControlPersist broken pipe '''
@@ -906,6 +926,96 @@ class Connection(ConnectionBase):
 
         return b''.join(output), remainder
 
+    def _filter_win_stderr_output(self, stderr: bytes) -> bytes:
+        """Filters stderr output for Windows.
+
+        Filters the raw stderr output from Windows commands to remove any SSH
+        debug entries and deserialize the CLIXML that PowerShell writes to
+        stderr.
+
+        :arg stderr: The stderr data to filter.
+        :returns: The filtered stderr output.
+        """
+        output: list[bytes] = []
+
+        is_start = True
+        clixml_next_line = False
+        displaying_channel_status = False
+        previous = b""
+
+        for line in stderr.splitlines(True):
+            check_version_banner = is_start
+            is_start = False
+
+            display_line = to_text(line).rstrip('\r\n')
+            # display.v("Examining windows stderr line [start=%s, clixml=%s, status=%s]: '%s'" %
+            #     (check_version_banner, clixml_next_line, displaying_channel_status, display_line))
+
+            if check_version_banner and line.startswith(b'OpenSSH_'):
+                # skip the OpenSSH version banner at the start of the output.
+                continue
+
+            if displaying_channel_status:
+                if line.startswith(b'  #'):
+                    continue
+
+                displaying_channel_status = False
+                # the line should be blank but still check just in case.
+                if line == b"\r\n":
+                    continue
+
+            if SSH_CHANNEL_STATUS_MSG.match(display_line):
+                # this is a multilined message with subsequent lines
+                # prefixed with '  #\d', we ignore those lines until we
+                # don't see that prefix.
+                displaying_channel_status = True
+                continue
+
+            if SSH_DEBUG.match(display_line):
+                # skip lines from ssh debug output to avoid false matches
+                continue
+
+            if SSH_AUTH_MSG.match(display_line):
+                # skip the Authenticated to x message displayed on -vv
+                continue
+
+            if SSH_HOST_ADDED_WARNING_MSG.match(display_line):
+                # skip host added warning
+                continue
+
+            if line == b"#< CLIXML\r\n":
+                # The next (non-SSH debug) line will be the CLIXML message.
+                clixml_next_line = True
+                continue
+
+            # now we know it's not an SSH message, prepend the CLIXML start if
+            # it was present.
+            if previous:
+                line = previous + line
+                previous = b""
+
+            if clixml_next_line and line.startswith(b"<Objs Version="):
+                # While we had the CLIXML header, something can still write
+                # directly to stderr bypassing the CLIXML output so we check
+                # if the line is the CLIXML message before trying to parse.
+                # Otherwise treat the line like normal stderr output.
+                # The line may also be incomplete and contain an SSH_DEBUG
+                # message which we need to handle.
+                if debug_match := SSH_DEBUG_INLINE.search(line):
+                    line = line[:debug_match.start()]
+                    if not line.endswith(b"</Objs>"):
+                        previous = line
+                        continue
+
+                clixml_next_line = False
+                line = _parse_clixml(line, stream="Error")
+                output.append(line)
+
+            else:
+                output.append(line)
+
+        return b''.join(output)
+
     def _bare_run(self, cmd: list[bytes], in_data: bytes | None, sudoable: bool = True, checkrc: bool = True) -> tuple[int, bytes, bytes]:
         '''
         Starts the command and communicates with it until it ends.
@@ -1334,9 +1444,10 @@ class Connection(ConnectionBase):
         cmd = self._build_command(ssh_executable, 'ssh', *args)
         (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable)
 
-        # When running on Windows, stderr may contain CLIXML encoded output
-        if getattr(self._shell, "_IS_WINDOWS", False) and stderr.startswith(b"#< CLIXML"):
-            stderr = _parse_clixml(stderr)
+        if getattr(self._shell, "_IS_WINDOWS", False) and stderr:
+            # Unlike POSIX, we filter out the SSH debug message and
+            # handle the CLIXML output from PowerShell on stderr.
+            stderr = self._filter_win_stderr_output(stderr)
 
         return (returncode, stdout, stderr)
 

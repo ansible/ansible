@@ -34,6 +34,110 @@ from ansible.plugins.connection import ssh
 from ansible.plugins.loader import connection_loader, become_loader
 
 
+WINDOWS_STDERR = {
+    # raw with [Console]::Error.WriteLine('stderr')
+    'raw_stderr': (
+        'stderr 1\r\nstderr 2\n',
+        'stderr 1\r\nstderr 2\n',
+    ),
+    # This is from script: test.ps1 where the script
+    # write to stderr with [Console]::Error.WriteLine('')
+    # bypassing PowerShell's error to CLIXML stderr.
+    'script_raw_stderr': (
+        '#< CLIXML\r\nstderr\r\n<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04" />',
+        'stderr\r\n',
+    ),
+    # Same as above but also includes a Write-Error call.
+    'script_raw_stderr_with_error': (
+        (
+            '#< CLIXML\r\nstderr\r\n'
+            '<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04"><S S="Error">error_x000D__x000A_</S></Objs>'
+        ),
+        'stderr\r\nerror\r\n',
+    ),
+    # Multiline channel status ssh message (-vvv+)
+    'ssh_channel_status': (
+        (
+            'debug3: channel 2: status: The following connections are open:\r\n'
+            '  #1 mux-control (t16 [mux-control] nr0 i3/0 o1/16 e[closed]/0 fd 5/5/-1 sock 5 cc -1 io 0x03/0x00)\r\n'
+            '  #2 client-session (t4 [session] r0 i3/0 o3/0 e[write]/0 fd -1/-1/8 sock -1 cc -1 io 0x00/0x00)\r\n'
+            ''
+            'stderr\r\n'
+            'debug3: channel 2: status: The following connections are open:\r\n'
+            '  #1 mux-control (t16 [mux-control] nr0 i3/0 o3/0 e[closed]/0 fd 5/5/-1 sock 5 cc -1 io 0x00/0x00)\r\n'
+            ''
+        ),
+        'stderr\r\n',
+    ),
+    # Same as above but no blank line after the end of the channel status
+    'ssh_channel_status_no_blank_newline': (
+        (
+            'debug3: channel 2: status: The following connections are open:\r\n'
+            '  #1 mux-control (t16 [mux-control] nr0 i3/0 o1/16 e[closed]/0 fd 5/5/-1 sock 5 cc -1 io 0x03/0x00)\r\n'
+            '  #2 client-session (t4 [session] r0 i3/0 o3/0 e[write]/0 fd -1/-1/8 sock -1 cc -1 io 0x00/0x00)\r\n'
+            'stderr\r\n'
+            'debug3: channel 2: status: The following connections are open:\r\n'
+            '  #1 mux-control (t16 [mux-control] nr0 i3/0 o3/0 e[closed]/0 fd 5/5/-1 sock 5 cc -1 io 0x00/0x00)\r\n'
+            'debug2: channel 1: obuf empty\r\n'
+        ),
+        'stderr\r\n',
+    ),
+    # Always present if -vv+ and new connection setup
+    'ssh_authentication_message': (
+        (
+            'Authenticated to server.com ([::1]:22) using "publickey".\r\n'
+            'stderr\r\n'
+        ),
+        'stderr\r\n',
+    ),
+    # Always present
+    'ssh_version_banner': (
+        'OpenSSH_9.6p1, OpenSSL 3.2.1 30 Jan 2024\r\ndebug2: foo\r\nstderr\r\nOpenSSH_Other',
+        'stderr\r\nOpenSSH_Other',
+    ),
+    'ssh_host_warning': (
+        (
+            'Warning: Permanently added ''computer.com'' (ED25519) to the list of known hosts.\r\n'
+            'stderr\r\n'
+        ),
+        'stderr\r\n',
+    ),
+    # Only occurs when not pipelining (ANSIBLE_KEEP_REMOTE_FILES=1)
+    'nested_clixml': (
+        (
+            '#< CLIXML\r\n#< CLIXML\r\n'
+            '<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04"><S S="Error">1_x000D__x000A_</S></Objs>'
+            '<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04"><S S="Error">2_x000D__x000A_</S></Objs>'
+        ),
+        '1\r\n\r\n2\r\n',
+    ),
+    # Rare error, happened when doing out, stdout, host out, error, stderr,
+    # and host err all in a raw command that starts the new connection. The
+    # SSH debug messages are interleaved with the CLIXML.
+    'interleaved_clixml': (
+        (
+            '#< CLIXML\r\n'
+            'stderr\r\n'
+            '<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/debug2: channel 2: written 256 to efd 8\r\n'
+            'debug2: channel 2: rcvd ext data 842\r\n'
+            '2004/04"><S S="Error">error_x000D__x000A_</S></Objs>debug2: channel 2: written 842 to efd 8\r\n'
+        ),
+        'stderr\r\nerror\r\n',
+    ),
+    # Same as above but continuation line doesn't have a debug message as well.
+    'interleaved_clixml_no_remainder': (
+        (
+            '#< CLIXML\r\n'
+            'stderr\r\n'
+            '<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/debug2: channel 2: written 256 to efd 8\r\n'
+            'debug2: channel 2: rcvd ext data 842\r\n'
+            '2004/04"><S S="Error">error_x000D__x000A_</S></Objs>\r\n'
+        ),
+        'stderr\r\nerror\r\n',
+    ),
+}
+
+
 class TestConnectionBaseClass(unittest.TestCase):
 
     def test_plugins_connection_ssh_module(self):
@@ -674,3 +778,9 @@ class TestSSHConnectionRetries(object):
         assert b_stdout == b"my_stdout\nsecond_line"
         assert b_stderr == b"my_stderr"
         assert self.mock_popen.call_count == 2
+
+    @pytest.mark.parametrize('stderr, expected', WINDOWS_STDERR.values(), ids=WINDOWS_STDERR.keys())
+    def test_filter_windows_stderr(self, stderr, expected):
+        actual = self.conn._filter_win_stderr_output(stderr.encode()).decode()
+
+        assert actual == expected

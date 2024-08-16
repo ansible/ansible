@@ -5,6 +5,47 @@
   gather_facts: no
 
   tasks:
+  - name: run raw with stdout and stderr
+    raw: |
+      [CmdletBinding()]
+      param()
+
+      'output 🎵'
+      [Console]::Out.WriteLine('stdout 🎵')
+      $host.UI.WriteLine('host out 🎵')
+
+      Write-Error -Message 'error 🎵'
+      [Console]::Error.WriteLine('stderr 🎵')
+      $host.UI.WriteErrorLine('host err 🎵')
+    register: raw_out
+
+  - name: assert run raw with stdout and stderr
+    assert:
+      that:
+      - raw_out.rc == 0
+      - raw_out.stdout_lines | length == 3
+      - raw_out.stdout_lines[0] == 'output 🎵'
+      - raw_out.stdout_lines[1] == 'stdout 🎵'
+      - raw_out.stdout_lines[2] == 'host out 🎵'
+      - raw_out.stderr_lines | length == 6
+      - raw_out.stderr_lines[0] == 'stderr 🎵'
+      - raw_out.stderr_lines[1] == 'error 🎵'
+      - "raw_out.stderr_lines[2] == '    + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException'"
+      - "raw_out.stderr_lines[3] == '    + FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException'"
+      - raw_out.stderr_lines[4] == ' '
+      - raw_out.stderr_lines[5] == 'host err 🎵'
+
+  - name: run script with stdout and stderr
+    script: test_out.ps1
+    register: script_out
+
+  - name: assert run script with stdout and stderr
+    assert:
+      that:
+      - script_out.rc == 0
+      - script_out.stdout == "stdout 🎵\r\n\r\n"
+      - script_out.stderr == "stderr 🎵\r\n"
+
   - name: test out become with Windows SSH
     win_whoami:
     register: win_ssh_become
