@@ -97,7 +97,7 @@ WINDOWS_STDERR = {
     ),
     'ssh_host_warning': (
         (
-            'Warning: Permanently added ''computer.com'' (ED25519) to the list of known hosts.\r\n'
+            "Warning: Permanently added 'computer.com' (ED25519) to the list of known hosts.\r\n"
             'stderr\r\n'
         ),
         'stderr\r\n',
