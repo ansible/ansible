@@ -17,7 +17,7 @@ DOCUMENTATION:
       required: true
     salt:
       description:
-        - Encryption salt, will be random if not provided.
+        - Encryption salt for the ciphers that support it (only AES256), if not provided it will be randomly generated.
         - While providing one makes the resulting encrypted string reproducible, it can lower the security of the vault.
       type: string
     vault_id:

@@ -3,44 +3,37 @@
 
 from __future__ import annotations
 
+import functools
+import typing as t
+
 from abc import abstractmethod
 
+from ansible.errors import AnsibleVaultPasswordError
 
-class VaultCipher:
-    """
-        Base class all ciphers must implement
+if t.TYPE_CHECKING:  # pragma: nocover
+    from ansible.parsing.vault import VaultSecret
 
-        We don't mind duplication in the cipher classes, so limiting this to
-        encrypt/decrypt as we want ciphers to be as self contained as possible
-    """
+
+VaultSecretError = AnsibleVaultPasswordError
+
+
+class VaultCipherBase:
+    """Base class all ciphers must implement."""
+
+    # Do not add shared code here unless absolutely necessary.
+    # Each cipher implementation is intended to be as standalone as possible to ease backporting.
+
+    @classmethod
+    def lru_cache(cls, maxsize: int = 128) -> t.Callable:
+        """Passthru impl of lru_cache, exposed to derived types for future extensibility (e.g., auto-sync of new worker-sourced entries to controller)."""
+        return functools.lru_cache(maxsize=maxsize)
 
     @classmethod
     @abstractmethod
-    def encrypt(cls, b_plaintext, secret, salt=None, options=None):
-        """
-        :arg plaintext: A byte string to encrypt
-        :arg secret: A populated VaultSecret object
-        :arg salt: DEPRECATED Optional salt to use in encryption, for backwards compat
-                  In most ciphers this will not be used
-        :arg options: encryption options dict/data class
-
-        :returns: A ciphered byte string that includes the encrypted data and
-                  other needed items for decryption
-
-        :raises: AnsibleVaultError do to missing requirements or other issues
-        """
-        pass
+    def encrypt(cls, plaintext: bytes, secret: VaultSecret, options: dict[str, t.Any]) -> str:
+        """Encrypt the given plaintext using the provided secret and options and return the resulting vaulttext."""
 
     @classmethod
     @abstractmethod
-    def decrypt(cls, b_vaulttext, secret):
-        """
-        :arg b_vaulttext: A ciphered byte string that includes the encrypted
-                data and other needed items for decryption
-        :arg secret: A populated VaultSecret object
-
-        :returns: decrypted byte string
-
-        :raises: AnsibleVaultError do to missing requirements or other issues
-        """
-        pass
+    def decrypt(cls, vaulttext: str, secret: VaultSecret) -> bytes:
+        """Decrypt the given vaulttext using the provided secret and return the resulting plaintext."""

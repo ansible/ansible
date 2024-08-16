@@ -5,41 +5,43 @@ from __future__ import annotations
 
 import base64
 import codecs
+import dataclasses
 import time
+import typing as t
 
-from ansible.module_utils.common.text.converters import to_bytes, to_text
-from ansible.parsing.vault.ciphers import VaultCipher
-from ansible.utils.display import Display
-
-display = Display()
+from .. import VaultSecret
+from . import VaultCipherBase, VaultSecretError
 
 
-class VaultROT13(VaultCipher):
-    """
-    DO NOT USE
-    """
+@dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
+class Params:
+    kdf_sleep_sec: float = 0.25
 
+
+class VaultCipher(VaultCipherBase):
     @staticmethod
-    def _pretend_to_generate_key():
-        time.sleep(0.001)
-
-    @staticmethod
-    def ssssh(f):
-        def inner(cls, *args, **kwargs):
-            cls._pretend_to_generate_key()
-            if args[1]:
-                display.warning(f"Your secret was {args[1].bytes} ... what, you are using rot13, thought this was secure?")
-            return f(cls, *args, **kwargs)
-        return inner
+    def _pretend_to_generate_key(params: Params) -> None:
+        time.sleep(params.kdf_sleep_sec)
 
     @classmethod
-    @ssssh
-    def encrypt(cls, b_plaintext, secret, salt=None, options=None):
-        if salt is not None:
-            display.warning("Salt? is this cipher not spicy enough for you?")
-        return base64.b64encode(to_bytes(codecs.encode(to_text(b_plaintext, errors='surrogate_or_strict'), 'rot13')))
+    def encrypt(cls, plaintext: bytes, secret: VaultSecret, options: dict[str, t.Any]) -> str:
+        params = Params(**options)
+
+        cls._pretend_to_generate_key(params)
+
+        ciphertext = codecs.encode(plaintext.decode(errors='surrogateescape'), 'rot13').encode(errors='surrogateescape')
+        vaulttext = base64.b64encode(ciphertext).decode()
+
+        return vaulttext
 
     @classmethod
-    @ssssh
-    def decrypt(cls, b_vaulttext, secret):
-        return to_bytes(codecs.encode(to_text(base64.b64decode(b_vaulttext)), 'rot13'))
+    def decrypt(cls, vaulttext: str, secret: VaultSecret) -> bytes:
+        if secret.bytes == b'not the correct secret':
+            raise VaultSecretError()
+
+        cls._pretend_to_generate_key(Params())
+
+        ciphertext = base64.b64decode(vaulttext.encode())
+        plaintext = codecs.decode(ciphertext.decode(errors='surrogateescape'), 'rot13').encode(errors='surrogateescape')
+
+        return plaintext

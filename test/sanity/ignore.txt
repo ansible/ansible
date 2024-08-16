@@ -60,9 +60,6 @@ lib/ansible/parsing/yaml/objects.py pylint:arguments-renamed
 lib/ansible/parsing/vault/ciphers/aes256.py import-3.11!skip  # ciphers are not loaded normally and loader function deals with import errors
 lib/ansible/parsing/vault/ciphers/aes256.py import-3.12!skip
 lib/ansible/parsing/vault/ciphers/aes256.py import-3.13!skip
-lib/ansible/parsing/vault/ciphers/aes256v2.py import-3.11!skip
-lib/ansible/parsing/vault/ciphers/aes256v2.py import-3.12!skip
-lib/ansible/parsing/vault/ciphers/aes256v2.py import-3.13!skip
 lib/ansible/parsing/vault/ciphers/aesv2.py import-3.11!skip
 lib/ansible/parsing/vault/ciphers/aesv2.py import-3.12!skip
 lib/ansible/parsing/vault/ciphers/aesv2.py import-3.13!skip

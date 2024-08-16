@@ -1185,7 +1185,6 @@ VAULT_CIPHER:
   default: aesv2
   choices:
     'aes256': AES 256 with kdf and double hexlify byte shield
-    'aes256v2': Imporoved aes256 but with updatable and more current settings, with base64 byte shield
     'aesv2': Cryptography's fernet API with dual keys, AES 128, CBC and sCrypt, with base64 byte shield
   description:
     - The cipher to use for the vault encryption. Decryption works by reading the cipher used in the vault itself

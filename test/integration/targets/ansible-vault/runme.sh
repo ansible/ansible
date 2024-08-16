@@ -380,14 +380,13 @@ echo "The stdout log had 'New Vault password' in it and it is not supposed to. r
 
 # edit a 1.2 format with vault id, should keep vault id and 1.2 format
 EDITOR=./faux-editor.py ansible-vault edit "$@" --vault-id vault_password@vault-password "${TEST_FILE_EDIT2}"
-# shell check ignored as $ANSIBLE_VAULT not a shell var
 # shellcheck disable=SC2016
-head -1 "${TEST_FILE_EDIT2}" | grep -E '$ANSIBLE_VAULT;1.2;.+;vault_password'
+head -1 "${TEST_FILE_EDIT2}" | grep -E '\$ANSIBLE_VAULT;1.2;.+;vault_password'
 
 # edit a 1.2 file with no vault-id, should keep vault id and 1.2 format
 EDITOR=./faux-editor.py ansible-vault edit "$@" --vault-password-file vault-password "${TEST_FILE_EDIT2}"
 # shellcheck disable=SC2016
-head -1 "${TEST_FILE_EDIT2}" | grep -E '$ANSIBLE_VAULT;1.2;.+;vault_password'
+head -1 "${TEST_FILE_EDIT2}" | grep -E '\$ANSIBLE_VAULT;1.2;.+;vault_password'
 
 # encrypt with a password from a vault encrypted password file and multiple vault-ids
 # should fail because we dont know which vault id to use to encrypt with
@@ -522,10 +521,10 @@ echo "rc was $WRONG_RC (1 is expected)"
 [ $WRONG_RC -eq 1 ]
 
 # test invalid format ala https://github.com/ansible/ansible/issues/28038
-EXPECTED_ERROR='Vault format unhexlify error: Non-hexadecimal digit found'
+EXPECTED_ERROR='Non-hexadecimal digit found'
 ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vault-secret invalid_format/broken-host-vars-tasks.yml 2>&1 | grep "${EXPECTED_ERROR}"
 
-EXPECTED_ERROR='Vault format unhexlify error: Odd-length string'
+EXPECTED_ERROR='Odd-length string'
 ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vault-secret invalid_format/broken-group-vars-tasks.yml 2>&1 | grep "${EXPECTED_ERROR}"
 
 # Run playbook with vault file with unicode in filename (https://github.com/ansible/ansible/issues/50316)
@@ -595,9 +594,9 @@ do
 done
 
 # encrypt files
-ANSIBLE_VAULT_ENCRYPT_SALT=salty ansible-vault encrypt salted_test1 --vault-password-file example1_password "$@"
-ANSIBLE_VAULT_ENCRYPT_SALT=salty ansible-vault encrypt salted_test2 --vault-password-file example1_password "$@"
-ansible-vault encrypt salted_test3 --vault-password-file example1_password "$@"
+ANSIBLE_VAULT_ENCRYPT_SALT=salty ansible-vault encrypt salted_test1 --vault-cipher aes256 --vault-password-file example1_password "$@"
+ANSIBLE_VAULT_ENCRYPT_SALT=salty ansible-vault encrypt salted_test2 --vault-cipher aes256 --vault-password-file example1_password "$@"
+ansible-vault encrypt salted_test3 --vault-cipher aes256 --vault-password-file example1_password "$@"
 
 # should be the same
 out=$(diff salted_test1 salted_test2)

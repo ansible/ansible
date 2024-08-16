@@ -457,9 +457,6 @@ class TestVaultLib(unittest.TestCase):
                               ('test_id', text_secret)]
         self.v = vault.VaultLib(self.vault_secrets, cipher_name='ROT13')
 
-    def _vault_secrets_from_password(self, vault_id, password):
-        return [(vault_id, TextVaultSecret(password))]
-
     def test_encrypt(self):
         plaintext = u'Some text to encrypt in a café'
         b_vaulttext = self.v.encrypt(plaintext)
