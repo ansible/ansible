@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import sys
+from typing import NoReturn
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
@@ -1446,14 +1447,14 @@ class AnsibleModule(object):
 
         print('\n%s' % self.jsonify(kwargs))
 
-    def exit_json(self, **kwargs):
+    def exit_json(self, **kwargs) -> NoReturn:
         ''' return from the module, without error '''
 
         self.do_cleanup_files()
         self._return_formatted(kwargs)
         sys.exit(0)
 
-    def fail_json(self, msg, **kwargs):
+    def fail_json(self, msg, **kwargs) -> NoReturn:
         ''' return from the module, with an error message '''
 
         kwargs['failed'] = True
