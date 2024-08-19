@@ -1557,7 +1557,7 @@ class AnsibleModule(object):
         #   Similar to shutil.copy(), but metadata is copied as well - in fact,
         #   this is just shutil.copy() followed by copystat(). This is similar
         #   to the Unix command cp -p.
-        #
+
         # shutil.copystat(src, dst)
         #   Copy the permission bits, last access time, last modification time,
         #   and flags from src to dst. The file contents, owner, and group are
@@ -1646,14 +1646,14 @@ class AnsibleModule(object):
                             os.close(tmp_dest_fd)
                             # leaves tmp file behind when sudo and not root
                             try:
-                                shutil.move(b_src, b_tmp_dest_name, copy_function=shutil.copy2 if keep_dest_attrs else shutil.copy)
+                                shutil.move(b_src, b_tmp_dest_name, copy_function=shutil.copy if keep_dest_attrs else shutil.copy2)
                             except OSError:
                                 # cleanup will happen by 'rm' of tmpdir
                                 # copy2 will preserve some metadata
                                 if keep_dest_attrs:
-                                    shutil.copy2(b_src, b_tmp_dest_name)
-                                else:
                                     shutil.copy(b_src, b_tmp_dest_name)
+                                else:
+                                    shutil.copy2(b_src, b_tmp_dest_name)
 
                             if self.selinux_enabled():
                                 self.set_context_if_different(
