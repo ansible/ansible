@@ -2,6 +2,7 @@ bugfixes:
   - Set new default Vault cipher to take the place of the, now deemed week, AES256 cipher.
   - Added extra validation for certain Vault parameters.
   - Vault's salt configuration had it's documentation updated to clarify scope and usage.
+  - When writing vault output to stdout and it is a tty, ensure we line break to avoid message overlap.
 minor_changes:
   - Created a configuration to select the Vault cipher to use for encryption.
     The old AES256 cipher can still be chosen, for backwards compatibility.
