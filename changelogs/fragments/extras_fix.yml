@@ -1,0 +1,4 @@
+bugfixes:
+  - connection plugins using the 'extras' option feature would need variables to match the plugin's loaded name,
+    sometimes requiring fqcn, which is not the same as the documented/declared/expected variables.
+    Now we fall back to the 'basename' of the fqcn, but plugin authors can still set the expected value directly.
