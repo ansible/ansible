@@ -35,6 +35,8 @@ from units.mock.loader import DictDataLoader
 from units.mock.vault_helper import TextVaultSecret
 from units.parsing.vault.ciphers.rot13 import patch_rot13_import
 
+from ansible.parsing.vault import AnsibleVaultFormatError
+
 
 class TestParseVaulttext(unittest.TestCase):
     def test(self):
@@ -104,7 +106,6 @@ class TestFileVaultSecret(unittest.TestCase):
     def test(self):
         secret = vault.FileVaultSecret()
         self.assertIsNone(secret._bytes)
-        self.assertIsNone(secret._text)
 
     def test_repr_empty(self):
         secret = vault.FileVaultSecret()
@@ -180,7 +181,6 @@ class TestScriptVaultSecret(unittest.TestCase):
     def test(self):
         secret = vault.ScriptVaultSecret()
         self.assertIsNone(secret._bytes)
-        self.assertIsNone(secret._text)
 
     def _mock_popen(self, mock_popen, return_code=0, stdout=b'', stderr=b''):
         def communicate():
@@ -557,6 +557,21 @@ class TestVaultLib(unittest.TestCase):
 @pytest.mark.usefixtures(patch_rot13_import.__name__)
 def test_encrypt_vault_id_with_invalid_character(vault_id: str) -> None:
     vault_lib = vault.VaultLib([('default', TextVaultSecret('password'))], method_name='ROT13')
+
+    with pytest.raises(ValueError) as error:
+        vault_lib.encrypt('', vault_id=vault_id)
+
+    assert str(error.value).startswith('Invalid character')
+
+    def test_bogus_options(self):
+        with pytest.raises(AnsibleVaultFormatError):
+            self.v.encrypt("whatever", salt="bogus, should fail")
+
+
+@pytest.mark.parametrize('vault_id', ('new\nline', 'semi;colon'))
+@pytest.mark.usefixtures(patch_rot13_import.__name__)
+def test_encrypt_vault_id_with_invalid_character(vault_id: str) -> None:
+    vault_lib = vault.VaultLib([('default', TextVaultSecret('password'))], cipher_name='ROT13')
 
     with pytest.raises(ValueError) as error:
         vault_lib.encrypt('', vault_id=vault_id)

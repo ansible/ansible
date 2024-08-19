@@ -330,9 +330,6 @@ WRONG_RC=$?
 echo "rc was $WRONG_RC (1 is expected)"
 [ $WRONG_RC -eq 1 ]
 
-
-ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" "a test string"
-
 # Test with multiple vault password files
 # https://github.com/ansible/ansible/issues/57172
 env ANSIBLE_VAULT_PASSWORD_FILE=vault-password ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --encrypt-vault-id default "a test string"
@@ -526,6 +523,32 @@ ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vaul
 
 EXPECTED_ERROR='Odd-length string'
 ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vault-secret invalid_format/broken-group-vars-tasks.yml 2>&1 | grep "${EXPECTED_ERROR}"
+
+EXPECTED_ERROR='Vault envelope format error'
+# with a file
+ansible-vault decrypt bogus_header.txt --vault-password-file vault-password 2>&1 | grep "${EXPECTED_ERROR}"
+
+# without a file
+ansible-vault decrypt < bogus_header.txt --vault-password-file vault-password 2>&1 | grep "${EXPECTED_ERROR}"
+
+# executable without shebang
+EXPECTED_ERROR='Problem running vault password script'
+ansible-vault decrypt encrypted-vault-password --vault-password-file script-noshebang 2>&1 | grep "${EXPECTED_ERROR}"
+EXPECTED_ERROR='Problem running vault password client script'
+ansible-vault decrypt encrypted-vault-password --vault-password-file script-noshebang-client 2>&1 | grep "${EXPECTED_ERROR}"
+
+# non-zero return from password script
+EXPECTED_ERROR='returned non-zero'
+ansible-vault decrypt encrypted-vault-password --vault-password-file script-nonzero-exit 2>&1 | grep "${EXPECTED_ERROR}"
+ansible-vault decrypt encrypted-vault-password --vault-id bla --vault-password-file script-nonzero-exit-client 2>&1 | grep "${EXPECTED_ERROR}"
+
+# double encryption
+EXPECTED_ERROR='is already encrypted'
+echo '$ANSIBLE_VAULTblah' | ansible-vault encrypt_string --vault-password-file vault-password 2>&1 | grep "${EXPECTED_ERROR}"
+
+# no vault-id found
+EXPECTED_ERROR='Did not find a match for --encrypt-vault-id'
+echo poo | ansible-vault encrypt_string --encrypt-vault-id blah encrypted-vault-password --vault-password-file vault-password 2>&1 | grep "${EXPECTED_ERROR}"
 
 # Run playbook with vault file with unicode in filename (https://github.com/ansible/ansible/issues/50316)
 ansible-playbook -i ../../inventory -v "$@" --vault-password-file vault-password test_utf8_value_in_filename.yml

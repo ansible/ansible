@@ -18,7 +18,7 @@ from cryptography.hazmat.primitives.hmac import HMAC
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 from ansible import constants
-from ansible.module_utils.common.text.converters import to_bytes
+from ansible.utils.display import Display
 
 from .. import VaultSecret
 from . import VaultMethodBase, VaultSecretError
@@ -62,10 +62,12 @@ class VaultMethod(VaultMethodBase):
 
     @classmethod
     def encrypt(cls, plaintext: bytes, secret: VaultSecret, options: dict[str, t.Any]) -> str:
+        Display().warning("Encryption with the AES256 cipher should only be used for backwards compatibility with older versions of Ansible.")
+
         params = Params(**options)
 
         if params.salt:
-            salt = to_bytes(params.salt, errors='surrogateescape')
+            salt = params.salt.encode(errors='surrogateescape')
         else:
             salt = os.urandom(32)
 

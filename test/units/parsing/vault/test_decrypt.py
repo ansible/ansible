@@ -8,11 +8,15 @@ from ansible.parsing.vault import methods, VaultLib, VaultSecret, parse_vaulttex
 
 from . import decrypt_test_data
 
+from .ciphers.rot13 import patch_rot13_import
+
 
 def get_method_names() -> list[str]:
     with importlib.resources.as_file(importlib.resources.files(methods)) as path:
         # this is roughly pkgutil.iter_modules, but ...
-        return [modname.with_suffix("").name for modname in path.glob("*.py") if not modname.name.startswith("__")]
+        cipher_names = [modname.with_suffix("").name for modname in path.glob("*.py") if not modname.name.startswith("__")]
+        cipher_names.append("rot13")
+        return cipher_names
 
 
 def get_decrypt_test_scenarios(method_names: list[str]) -> list[tuple[str, str]]:
@@ -27,6 +31,7 @@ def get_decrypt_test_scenarios(method_names: list[str]) -> list[tuple[str, str]]
     return params
 
 
+@pytest.mark.usefixtures(patch_rot13_import.__name__)
 @pytest.mark.parametrize("method_name, scenario", get_decrypt_test_scenarios(get_method_names()))
 def test_fixed_decrypt(method_name: str, scenario: str) -> None:
     with importlib.resources.as_file(importlib.resources.files(decrypt_test_data).joinpath(method_name)) as path:

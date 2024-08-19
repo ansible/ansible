@@ -4,10 +4,13 @@ import typing as t
 
 import pytest
 
-from ansible.parsing.vault import VaultSecret, load_vault_method
+from ansible.parsing.vault import VaultSecret, load_vault_method, AnsibleVaultError
 from ansible.parsing.vault.methods import VaultSecretError
 
 from ..test_decrypt import get_method_names
+
+
+pytestmark = pytest.mark.usefixtures(patch_rot13_import.__name__)
 
 
 @pytest.mark.parametrize("method_name", get_method_names())
@@ -62,3 +65,10 @@ def test_incorrect_password(method_name: str) -> None:
 
     with pytest.raises(VaultSecretError):
         method.decrypt(ciphertext, VaultSecret(b'not the correct secret'))
+
+
+def test_bogus_cipher():
+    with pytest.raises(AnsibleVaultError) as error:
+        load_vault_cipher('bogus')
+
+    assert "Invalid cipher" in error.value.message

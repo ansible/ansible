@@ -1187,9 +1187,7 @@ VAULT_METHOD:
     'aes256': AES 256 with PBKDF2HMAC key derivation and double hexlify byte shield
     'v2': Using cryptography's fernet API with dual keys, AES 128, CBC and sCrypt key derivation, with base64 byte shield
   description:
-    - The method to use for the vault encryption. Decryption works by reading the method used in the vault itself
-    - We set the default considering the best security and perforamnce
-    - The included aes256 is not considered secure anymore, but it is kept for backwards compatibility
+    - Vault method to use for encryption.
   env: [{name: ANSIBLE_VAULT_METHOD}]
   cli:
     - name: vault_method

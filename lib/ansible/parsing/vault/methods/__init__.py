@@ -3,16 +3,11 @@
 
 from __future__ import annotations
 
+import abc
 import functools
 import typing as t
 
-from abc import abstractmethod
-
-from ansible.errors import AnsibleVaultPasswordError
-
-if t.TYPE_CHECKING:  # pragma: nocover
-    from ansible.parsing.vault import VaultSecret
-
+from .. import AnsibleVaultPasswordError, VaultSecret
 
 VaultSecretError = AnsibleVaultPasswordError
 
@@ -29,11 +24,11 @@ class VaultMethodBase:
         return functools.lru_cache(maxsize=maxsize)
 
     @classmethod
-    @abstractmethod
+    @abc.abstractmethod
     def encrypt(cls, plaintext: bytes, secret: VaultSecret, options: dict[str, t.Any]) -> str:
         """Encrypt the given plaintext using the provided secret and options and return the resulting vaulttext."""
 
     @classmethod
-    @abstractmethod
+    @abc.abstractmethod
     def decrypt(cls, vaulttext: str, secret: VaultSecret) -> bytes:
         """Decrypt the given vaulttext using the provided secret and return the resulting plaintext."""

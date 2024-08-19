@@ -77,8 +77,8 @@ class VaultCLI(CLI):
         vault_id.add_argument('--encrypt-vault-id', dest='encrypt_vault_id',
                               action='store', type=str,
                               help='the vault id used to encrypt (required if more than one vault-id is provided)')
-        vault_id.add_argument('--vault-method', dest='vault_method', action='store',
-                              help='the vault cipher used to encrypt, defaults to the configured cipher')
+        vault_id.add_argument('--vault-method', action='store',
+                              help='the vault method used to encrypt, defaults to the configured method')
 
         create_parser = subparsers.add_parser('create', help='Create new vault encrypted file', parents=[vault_id, common])
         create_parser.set_defaults(func=self.execute_create)
