@@ -9,8 +9,25 @@ import dataclasses
 import time
 import typing as t
 
-from .. import VaultSecret
-from . import VaultCipherBase, VaultSecretError
+import pytest
+import pytest_mock
+
+from ansible.parsing.vault import VaultSecret
+from ansible.parsing.vault.ciphers import VaultSecretError, VaultCipherBase
+
+
+@pytest.fixture
+def patch_rot13_import(mocker: pytest_mock.MockerFixture) -> None:
+    """Stuff a reference to this test module into runtime sys.modules to make it accessible to tests."""
+    import sys
+
+    from ansible.parsing.vault import ciphers
+
+    patched_name = '.'.join((ciphers.__name__, __name__.rsplit('.', 1)[-1]))
+
+    mocker.patch.dict(sys.modules, values={patched_name: sys.modules[__name__]})
+
+    yield
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)

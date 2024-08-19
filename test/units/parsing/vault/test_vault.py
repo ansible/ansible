@@ -23,6 +23,7 @@ import io
 import os
 import tempfile
 
+import pytest
 import unittest
 from unittest.mock import patch, MagicMock
 
@@ -32,6 +33,7 @@ from ansible.parsing import vault
 
 from units.mock.loader import DictDataLoader
 from units.mock.vault_helper import TextVaultSecret
+from units.parsing.vault.ciphers.rot13 import patch_rot13_import
 
 
 class TestParseVaulttext(unittest.TestCase):
@@ -449,6 +451,7 @@ class TestMatchSecrets(unittest.TestCase):
                          [a for a, b in expected])
 
 
+@pytest.mark.usefixtures(patch_rot13_import.__name__)
 class TestVaultLib(unittest.TestCase):
     def setUp(self):
         self.vault_password = "test-vault-password"
@@ -551,8 +554,9 @@ class TestVaultLib(unittest.TestCase):
 
 
 @pytest.mark.parametrize('vault_id', ('new\nline', 'semi;colon'))
+@pytest.mark.usefixtures(patch_rot13_import.__name__)
 def test_encrypt_vault_id_with_invalid_character(vault_id: str) -> None:
-    vault_lib = vault.VaultLib([('default', TextVaultSecret('password'))], cipher_name='AES256')
+    vault_lib = vault.VaultLib([('default', TextVaultSecret('password'))], cipher_name='ROT13')
 
     with pytest.raises(ValueError) as error:
         vault_lib.encrypt('', vault_id=vault_id)

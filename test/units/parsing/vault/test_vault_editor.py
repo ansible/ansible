@@ -22,8 +22,11 @@ import os
 import tempfile
 import unittest
 
+import pytest
+
 from io import BytesIO, StringIO
 from units.mock.vault_helper import TextVaultSecret
+from units.parsing.vault.ciphers.rot13 import patch_rot13_import
 from unittest.mock import patch
 
 from ansible import errors
@@ -37,6 +40,7 @@ c2JiCg==
 """
 
 
+@pytest.mark.usefixtures(patch_rot13_import.__name__)
 class TestVaultEditor(unittest.TestCase):
 
     def setUp(self):
