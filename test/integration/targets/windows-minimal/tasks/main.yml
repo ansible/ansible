@@ -65,3 +65,23 @@
       - win_ping_crash_result is not changed
       - 'win_ping_crash_result.msg == "Unhandled exception while executing module: boom"'
       - '"throw \"boom\"" in win_ping_crash_result.exception'
+
+- name: verify that shortname _raw_params works
+  win_shell: echo "name=foo"
+  register: win_shell_short_res
+  failed_when: win_shell_short_res.stdout | trim != 'name=foo'
+
+- name: verify that legacy _raw_params works
+  ansible.legacy.win_shell: echo "name=foo"
+  register: win_shell_legacy_res
+  failed_when: win_shell_legacy_res.stdout | trim != 'name=foo'
+
+- name: verify that builtin _raw_params works
+  ansible.builtin.win_shell: echo "name=foo"
+  register: win_shell_builtin_res
+  failed_when: win_shell_builtin_res.stdout | trim != 'name=foo'
+
+- name: verify that collection _raw_params works
+  ansible.windows.win_shell: echo "name=foo"
+  register: win_shell_collection_res
+  failed_when: win_shell_collection_res.stdout | trim != 'name=foo'
