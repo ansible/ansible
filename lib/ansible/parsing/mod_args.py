@@ -29,9 +29,7 @@ from ansible.utils.sentinel import Sentinel
 
 
 # modules formated for user msg
-FREEFORM_ACTIONS_SIMPLE = set(C.MODULE_REQUIRE_ARGS_SIMPLE)
-FREEFORM_ACTIONS = frozenset(add_internal_fqcns(FREEFORM_ACTIONS_SIMPLE))
-RAW_PARAM_MODULES = FREEFORM_ACTIONS_SIMPLE.union(set([
+_BUILTIN_RAW_PARAM_MODULES_SIMPLE = set([
     'include_vars',
     'include_tasks',
     'include_role',
@@ -41,9 +39,12 @@ RAW_PARAM_MODULES = FREEFORM_ACTIONS_SIMPLE.union(set([
     'group_by',
     'set_fact',
     'meta',
-]))
+])
+FREEFORM_ACTIONS_SIMPLE = set(C.MODULE_REQUIRE_ARGS_SIMPLE)
+FREEFORM_ACTIONS = frozenset(C.MODULE_REQUIRE_ARGS)
+RAW_PARAM_MODULES_SIMPLE = _BUILTIN_RAW_PARAM_MODULES_SIMPLE.union(FREEFORM_ACTIONS_SIMPLE)
 # For filtering out modules correctly below, use all permutations
-RAW_PARAM_MODULES_MATCH = add_internal_fqcns(RAW_PARAM_MODULES) + C.WIN_MOVED
+RAW_PARAM_MODULES = frozenset(add_internal_fqcns(RAW_PARAM_MODULES_SIMPLE)).union(FREEFORM_ACTIONS)
 BUILTIN_TASKS = frozenset(add_internal_fqcns((
     'meta',
     'include_tasks',
@@ -352,14 +353,14 @@ class ModuleArgsParser:
             else:
                 raise AnsibleParserError("no module/action detected in task.",
                                          obj=self._task_ds)
-        elif args.get('_raw_params', '') != '' and action not in RAW_PARAM_MODULES_MATCH:
+        elif args.get('_raw_params', '') != '' and action not in RAW_PARAM_MODULES:
             templar = Templar(loader=None)
             raw_params = args.pop('_raw_params')
             if templar.is_template(raw_params):
                 args['_variable_params'] = raw_params
             else:
                 raise AnsibleParserError("this task '%s' has extra params, which is only allowed in the following modules: %s" % (action,
-                                                                                                                                  ", ".join(RAW_PARAM_MODULES)),
+                                                                                                                                  ", ".join(RAW_PARAM_MODULES_SIMPLE)),
                                          obj=self._task_ds)
 
         return (action, args, delegate_to)
