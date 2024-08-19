@@ -24,6 +24,7 @@ def collect_sdist_files(complete_file_list: list[str]) -> list[str]:
         '.cherry_picker.toml',
         '.git*',
         '.mailmap',
+        '.sonarcloud.properties',
         'bin/*',
         'changelogs/README.md',
         'changelogs/config.yaml',
