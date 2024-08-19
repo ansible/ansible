@@ -466,7 +466,7 @@ class ActionModule(ActionBase):
                 source = self._find_needle('files', source)
             except AnsibleError as e:
                 result['exception'] = traceback.format_exc()
-                raise _AnsibleActionFail(result=result) from e
+                raise AnsibleActionFail(result=result) from e
 
             if trailing_slash != source.endswith(os.path.sep):
                 if source[-1] == os.path.sep:
@@ -520,7 +520,7 @@ class ActionModule(ActionBase):
 
             if module_return.get('failed'):
                 result.update(module_return)
-                raise _AnsibleActionFail(result=result)
+                raise AnsibleActionFail(result=result)
 
             paths = os.path.split(source_rel)
             dir_path = ''
