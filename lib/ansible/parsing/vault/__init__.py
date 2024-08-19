@@ -1,19 +1,5 @@
-# (c) 2014, James Tanner <tanner.jc@gmail.com>
-# (c) 2016, Adrian Likins <alikins@redhat.com>
-# (c) 2016 Toshio Kuratomi <tkuratomi@ansible.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) The Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
 
@@ -352,7 +338,7 @@ class FileVaultSecret(VaultSecret):
         retrieve password from STDOUT
         """
 
-        # TODO: replace with use of self.loader
+        # TODO: to replace with use of loader, need to make dataloader function w/o secrets (circular dep)
         try:
             with open(filename, "rb") as f:
                 vault_pass = f.read().strip()
@@ -723,7 +709,7 @@ class VaultEditor:
         # TODO: it may be more useful to just make VaultSecrets and index of VaultLib objects...
         self.vault = vault or VaultLib()
 
-    # TODO: mv shred file stuff to it's own class
+    # TODO: move to globally available 'shred/wipe' function
     def _shred_file_custom(self, tmp_path):
         """"Destroy a file, when shred (core-utils) is not available
 
@@ -877,6 +863,7 @@ class VaultEditor:
             raise AnsibleError("%s for %s" % (to_native(e), to_native(filename)))
         self.write_data(plaintext, output_file or filename, shred=False)
 
+    # TODO: unused, deprecate
     def create_file(self, filename, secret, vault_id=None):
         """ create a new encrypted file """
 
@@ -885,8 +872,6 @@ class VaultEditor:
             display.warning(u"%s does not exist, creating..." % to_text(dirname))
             makedirs_safe(dirname)
 
-        # FIXME: If we can raise an error here, we can probably just make it
-        # behave like edit instead.
         if os.path.isfile(filename):
             raise AnsibleError("%s exists, please use 'edit' instead" % filename)
 
@@ -990,8 +975,8 @@ class VaultEditor:
 
         return data
 
+    # TODO: add docstrings for arg types since this code is picky about that
     def write_data(self, data, thefile, shred=True, mode=0o600):
-        # TODO: add docstrings for arg types since this code is picky about that
         """Write the data bytes to given path
 
         This is used to write a byte string to a file or stdout. It is used for
@@ -1069,6 +1054,7 @@ class VaultEditor:
             finally:
                 os.umask(current_umask)
 
+    # TODO: switch to use atomic_move, will also handle ACLs/selinux
     def shuffle_files(self, src, dest):
         prev = None
         # overwrite dest with src
@@ -1080,7 +1066,6 @@ class VaultEditor:
 
         # reset permissions if needed
         if prev is not None:
-            # TODO: selinux, ACLs, xattr?
             os.chmod(dest, prev.st_mode)
             os.chown(dest, prev.st_uid, prev.st_gid)
 
