@@ -21,6 +21,7 @@ import glob
 import json
 import os
 import re
+import signal
 import sys
 import time
 
@@ -36,6 +37,10 @@ from ansible.module_utils.six import iteritems
 
 # import this as a module to ensure we get the same module instance
 from ansible.module_utils.facts import timeout
+
+
+def _timeout_handler(signum, frame):
+    raise TimeoutError(f"Timeout reached in:{frame}")
 
 
 def get_partition_uuid(partname):
@@ -577,7 +582,12 @@ class LinuxHardware(Hardware):
 
         # start threads to query each mount
         results = {}
-        pool = ThreadPool(processes=min(len(mtab_entries), cpu_count()))
+        pool = None
+        try:
+            pool = ThreadPool(processes=min(len(mtab_entries), cpu_count()))
+        except (IOError, OSError) as e:
+            self.module.warn(f"Cannot use multiprocessing, falling back on serial execution: {e}")
+
         maxtime = timeout.GATHER_TIMEOUT or timeout.DEFAULT_GATHER_TIMEOUT
         for fields in mtab_entries:
             # Transform octal escape sequences
@@ -601,47 +611,67 @@ class LinuxHardware(Hardware):
                 if not self.MTAB_BIND_MOUNT_RE.match(options):
                     mount_info['options'] += ",bind"
 
-            results[mount] = {'info': mount_info,
-                              'extra': pool.apply_async(self.get_mount_info, (mount, device, uuids)),
-                              'timelimit': time.time() + maxtime}
-
-        pool.close()  # done with new workers, start gc
-
-        # wait for workers and get results
-        while results:
-            for mount in list(results):
-                done = False
-                res = results[mount]['extra']
+            results[mount] = {'info': mount_info, 'timelimit': time.time() + maxtime}
+            if pool is None:
+                old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
+                signal.alarm(maxtime)
                 try:
-                    if res.ready():
+                    size, uuid = self.get_mount_info(mount, device, uuids)
+                except TimeoutError as e:
+                    results[mount]['info']['note'] = 'Could not get extra information due to timeout'
+                    self.module.log(f"Timeout while gathering mount {mount} data: {e}")
+                    self.module.warn(f"Timeout exceeded when getting mount info for {mount}")
+                finally:
+                    signal.alarm(0)
+                    signal.signal(signal.SIGALRM, old_handler)
+
+                if size:
+                    results[mount]['info'].update(size)
+                results[mount]['info']['uuid'] = uuid or 'N/A'
+            else:
+                # use multiproc pool, handle results below
+                results[mount]['extra'] = pool.apply_async(self.get_mount_info, (mount, device, uuids))
+
+        if pool is None:
+            # serial processing, just assing results
+            mounts.append(results[mount]['info'])
+        else:
+            pool.close()  # done with spawing new workers, start gc
+
+            while results:  # wait for workers and get results
+                for mount in list(results):
+                    done = False
+                    res = results[mount]['extra']
+                    try:
+                        if res.ready():
+                            done = True
+                            if res.successful():
+                                mount_size, uuid = res.get()
+                                if mount_size:
+                                    results[mount]['info'].update(mount_size)
+                                results[mount]['info']['uuid'] = uuid or 'N/A'
+                            else:
+                                # failed, try to find out why, if 'res.successful' we know there are no exceptions
+                                results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
+
+                        elif time.time() > results[mount]['timelimit']:
+                            done = True
+                            self.module.warn("Timeout exceeded when getting mount info for %s" % mount)
+                            results[mount]['info']['note'] = 'Could not get extra information due to timeout'
+                    except Exception as e:
+                        import traceback
                         done = True
-                        if res.successful():
-                            mount_size, uuid = res.get()
-                            if mount_size:
-                                results[mount]['info'].update(mount_size)
-                            results[mount]['info']['uuid'] = uuid or 'N/A'
-                        else:
-                            # failed, try to find out why, if 'res.successful' we know there are no exceptions
-                            results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
+                        results[mount]['info'] = 'N/A'
+                        self.module.warn("Error prevented getting extra info for mount %s: [%s] %s." % (mount, type(e), to_text(e)))
+                        self.module.debug(traceback.format_exc())
 
-                    elif time.time() > results[mount]['timelimit']:
-                        done = True
-                        self.module.warn("Timeout exceeded when getting mount info for %s" % mount)
-                        results[mount]['info']['note'] = 'Could not get extra information due to timeout'
-                except Exception as e:
-                    import traceback
-                    done = True
-                    results[mount]['info'] = 'N/A'
-                    self.module.warn("Error prevented getting extra info for mount %s: [%s] %s." % (mount, type(e), to_text(e)))
-                    self.module.debug(traceback.format_exc())
+                    if done:
+                        # move results outside and make loop only handle pending
+                        mounts.append(results[mount]['info'])
+                        del results[mount]
 
-                if done:
-                    # move results outside and make loop only handle pending
-                    mounts.append(results[mount]['info'])
-                    del results[mount]
-
-            # avoid cpu churn, sleep between retrying for loop with remaining mounts
-            time.sleep(0.1)
+                # avoid cpu churn, sleep between retrying for loop with remaining mounts
+                time.sleep(0.1)
 
         return {'mounts': mounts}
 
