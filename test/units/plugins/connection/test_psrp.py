@@ -218,12 +218,13 @@ class TestConnectionPSRP(object):
         pc = PlayContext()
         new_stdin = StringIO()
 
-        conn = connection_loader.get('psrp', pc, new_stdin)
-        conn.set_options(var_options={'_extras': {'ansible_psrp_mock_test3': True}})
+        for conn_name in ('psrp', 'ansible.legacy.psrp'):
+            conn = connection_loader.get(conn_name, pc, new_stdin)
+            conn.set_options(var_options={'_extras': {'ansible_psrp_mock_test3': True}})
 
-        mock_display = MagicMock()
-        monkeypatch.setattr(Display, "warning", mock_display)
-        conn._build_kwargs()
+            mock_display = MagicMock()
+            monkeypatch.setattr(Display, "warning", mock_display)
+            conn._build_kwargs()
 
-        assert mock_display.call_args[0][0] == \
-            'ansible_psrp_mock_test3 is unsupported by the current psrp version installed'
+            assert mock_display.call_args[0][0] == \
+                'ansible_psrp_mock_test3 is unsupported by the current psrp version installed'
