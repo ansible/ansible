@@ -138,6 +138,10 @@ def format_vaulttext_envelope(b_ciphertext, cipher_name, version=None, vault_id=
 
     # If we specify a vault_id, use format version 1.2. For no vault_id, stick to 1.1
     if vault_id and vault_id != u'default':
+        for char in vault_id:
+            if char in ('\n', ';'):
+                raise ValueError(f"Invalid character {char!r} in vault_id {vault_id!r}.")
+
         version = '1.2'
 
     b_version = to_bytes(version, 'utf-8', errors='strict')

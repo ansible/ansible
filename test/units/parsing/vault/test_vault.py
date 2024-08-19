@@ -548,3 +548,13 @@ class TestVaultLib(unittest.TestCase):
         plaintext = u"ansible"
         self.v.encrypt(plaintext)
         self.assertEqual(self.v.cipher_name, "ROT13")
+
+
+@pytest.mark.parametrize('vault_id', ('new\nline', 'semi;colon'))
+def test_encrypt_vault_id_with_invalid_character(vault_id: str) -> None:
+    vault_lib = vault.VaultLib([('default', TextVaultSecret('password'))], cipher_name='AES256')
+
+    with pytest.raises(ValueError) as error:
+        vault_lib.encrypt('', vault_id=vault_id)
+
+    assert str(error.value).startswith('Invalid character')
