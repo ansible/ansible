@@ -359,8 +359,8 @@ class ModuleArgsParser:
             if templar.is_template(raw_params):
                 args['_variable_params'] = raw_params
             else:
-                raise AnsibleParserError("this task '%s' has extra params, which is only allowed in the following modules: %s" % (action,
-                                                                                                                                  ", ".join(RAW_PARAM_MODULES_SIMPLE)),
-                                         obj=self._task_ds)
+                raise AnsibleParserError(
+                    "this task '%s' has extra params, which is only allowed in the following modules: %s" % (action, ", ".join(RAW_PARAM_MODULES_SIMPLE)),
+                    obj=self._task_ds)
 
         return (action, args, delegate_to)
