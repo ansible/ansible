@@ -1646,22 +1646,24 @@ class AnsibleModule(object):
                             os.close(tmp_dest_fd)
                             # leaves tmp file behind when sudo and not root
                             try:
-                                shutil.move(b_src, b_tmp_dest_name, copy_function=shutil.copy if keep_dest_attrs else shutil.copy2)
+                                shutil.move(b_src, b_tmp_dest_name, copy_function=shutil.copy2 if keep_dest_attrs else shutil.copy)
                             except OSError:
                                 # cleanup will happen by 'rm' of tmpdir
                                 # copy2 will preserve some metadata
                                 if keep_dest_attrs:
-                                    shutil.copy(b_src, b_tmp_dest_name)
-                                else:
                                     shutil.copy2(b_src, b_tmp_dest_name)
+                                else:
+                                    shutil.copy(b_src, b_tmp_dest_name)
 
                             if self.selinux_enabled():
                                 self.set_context_if_different(
                                     b_tmp_dest_name, context, False)
                             try:
                                 tmp_stat = os.stat(b_tmp_dest_name)
-                                if keep_dest_attrs and dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
-                                    os.chown(b_tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
+                                if keep_dest_attrs:
+                                    if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
+                                        os.chown(b_tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
+                                    os.utime(b_tmp_dest_name, time.time())
                             except OSError as e:
                                 if e.errno != errno.EPERM:
                                     raise
