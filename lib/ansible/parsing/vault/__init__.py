@@ -1022,6 +1022,10 @@ class VaultEditor:
             # of the vaulted object could be anything/binary/etc
             output = getattr(sys.stdout, 'buffer', sys.stdout)
             output.write(b_file_data)
+
+            # Avoid having messages merge with data in terminal
+            if sys.stdout.isatty() and not b_file_data.endswith(b'\n'):
+                output.write(b'\n')
         else:
             if not os.access(os.path.dirname(thefile), os.W_OK):
                 raise AnsibleError("Destination '%s' not writable" % (os.path.dirname(thefile)))
