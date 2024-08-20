@@ -576,7 +576,7 @@ class VaultLib:
 
         # format the data for output to the file
         b_vaulttext = format_vaulttext_envelope(b_ciphertext,
-                                                self.method_name,
+                                                method_name,
                                                 vault_id=vault_id)
         return b_vaulttext
 
