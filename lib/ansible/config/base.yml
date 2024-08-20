@@ -1172,29 +1172,29 @@ VAULT_ENCRYPT_SALT:
   name: Vault salt to use for encryption
   default: ~
   description:
-    - The salt to use for the vault AES256 encryption. If it is not provided, a random salt will be used.
+    - The salt to use for the vault AES256 encryption method. If it is not provided, a random salt will be used.
     - This is not recommended to as repeated use of salt/secrets is insecure, but it is here for those that
       need reproducible outputs, mostly for testing.
-    - This does not affect other ciphers, only AES256.
+    - This does not affect other methods, only AES256.
   env: [{name: ANSIBLE_VAULT_ENCRYPT_SALT}]
   ini:
   - {key: vault_encrypt_salt, section: defaults}
   version_added: '2.15'
-VAULT_CIPHER:
-  name: Vault cipher to use for encryption
-  default: aesv2
+VAULT_METHOD:
+  name: Vault method to use for encryption
+  default: v2
   choices:
-    'aes256': AES 256 with kdf and double hexlify byte shield
-    'aesv2': Cryptography's fernet API with dual keys, AES 128, CBC and sCrypt, with base64 byte shield
+    'aes256': AES 256 with PBKDF2HMAC key derivation and double hexlify byte shield
+    'v2': Using cryptography's fernet API with dual keys, AES 128, CBC and sCrypt key derivation, with base64 byte shield
   description:
-    - The cipher to use for the vault encryption. Decryption works by reading the cipher used in the vault itself
+    - The method to use for the vault encryption. Decryption works by reading the method used in the vault itself
     - We set the default considering the best security and perforamnce
     - The included aes256 is not considered secure anymore, but it is kept for backwards compatibility
-  env: [{name: ANSIBLE_VAULT_CIPHER}]
+  env: [{name: ANSIBLE_VAULT_METHOD}]
   cli:
-    - name: vault_cipher
+    - name: vault_method
   ini:
-  - {key: vault_cipher, section: defaults}
+  - {key: vault_method, section: defaults}
   version_added: '2.18'
 DEFAULT_VAULT_ENCRYPT_IDENTITY:
   name: Vault id to use for encryption

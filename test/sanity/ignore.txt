@@ -57,12 +57,12 @@ lib/ansible/module_utils/six/__init__.py pylint:unidiomatic-typecheck
 lib/ansible/module_utils/six/__init__.py replace-urlopen
 lib/ansible/module_utils/urls.py replace-urlopen
 lib/ansible/parsing/yaml/objects.py pylint:arguments-renamed
-lib/ansible/parsing/vault/ciphers/aes256.py import-3.11!skip  # ciphers are not loaded normally and loader function deals with import errors
-lib/ansible/parsing/vault/ciphers/aes256.py import-3.12!skip
-lib/ansible/parsing/vault/ciphers/aes256.py import-3.13!skip
-lib/ansible/parsing/vault/ciphers/aesv2.py import-3.11!skip
-lib/ansible/parsing/vault/ciphers/aesv2.py import-3.12!skip
-lib/ansible/parsing/vault/ciphers/aesv2.py import-3.13!skip
+lib/ansible/parsing/vault/methods/aes256.py import-3.11!skip  # ciphers are not loaded normally and loader function deals with import errors
+lib/ansible/parsing/vault/methods/aes256.py import-3.12!skip
+lib/ansible/parsing/vault/methods/aes256.py import-3.13!skip
+lib/ansible/parsing/vault/methods/v2.py import-3.11!skip
+lib/ansible/parsing/vault/methods/v2.py import-3.12!skip
+lib/ansible/parsing/vault/methods/v2.py import-3.13!skip
 lib/ansible/playbook/collectionsearch.py required-and-default-attributes  # https://github.com/ansible/ansible/issues/61460
 lib/ansible/playbook/role/include.py pylint:arguments-renamed
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin

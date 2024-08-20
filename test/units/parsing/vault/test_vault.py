@@ -46,7 +46,7 @@ class TestParseVaulttext(unittest.TestCase):
 3138'''
 
         b_vaulttext_envelope = to_bytes(vaulttext_envelope, errors='strict', encoding='utf-8')
-        b_vaulttext, b_version, cipher_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext_envelope)
+        b_vaulttext, b_version, _name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext_envelope)
 
 
 class TestVaultSecret(unittest.TestCase):
@@ -458,7 +458,7 @@ class TestVaultLib(unittest.TestCase):
         text_secret = TextVaultSecret(self.vault_password)
         self.vault_secrets = [('default', text_secret),
                               ('test_id', text_secret)]
-        self.v = vault.VaultLib(self.vault_secrets, cipher_name='ROT13')
+        self.v = vault.VaultLib(self.vault_secrets, method_name='ROT13')
 
     def test_encrypt(self):
         plaintext = u'Some text to encrypt in a café'
@@ -499,10 +499,10 @@ class TestVaultLib(unittest.TestCase):
                                plaintext)
 
     def test_format_vaulttext_envelope(self):
-        cipher_name = "TEST"
+        method_name = "TEST"
         b_ciphertext = b"ansible"
         b_vaulttext = vault.format_vaulttext_envelope(b_ciphertext,
-                                                      cipher_name,
+                                                      method_name,
                                                       version=self.v.b_version,
                                                       vault_id='default')
         b_lines = b_vaulttext.split(b'\n')
@@ -517,27 +517,27 @@ class TestVaultLib(unittest.TestCase):
         self.assertEqual(b_header_parts[2], b'TEST', msg="header does not end with cipher name")
 
         # And just to verify, lets parse the results and compare
-        b_ciphertext2, b_version2, cipher_name2, vault_id2 = \
+        b_ciphertext2, b_version2, method_name2, vault_id2 = \
             vault.parse_vaulttext_envelope(b_vaulttext)
         self.assertEqual(b_ciphertext, b_ciphertext2)
         self.assertEqual(self.v.b_version, b_version2)
-        self.assertEqual(cipher_name, cipher_name2)
+        self.assertEqual(method_name, method_name2)
         self.assertEqual('default', vault_id2)
 
     def test_parse_vaulttext_envelope(self):
         b_vaulttext = b"$ANSIBLE_VAULT;9.9;TEST\nansible"
-        b_ciphertext, b_version, cipher_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext)
+        b_ciphertext, b_version, method_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext)
         b_lines = b_ciphertext.split(b'\n')
         self.assertEqual(b_lines[0], b"ansible", msg="Payload was not properly split from the header")
-        self.assertEqual(cipher_name, u'TEST', msg="cipher name was not properly set")
+        self.assertEqual(method_name, u'TEST', msg="cipher name was not properly set")
         self.assertEqual(b_version, b"9.9", msg="version was not properly set")
 
     def test_parse_vaulttext_envelope_crlf(self):
         b_vaulttext = b"$ANSIBLE_VAULT;9.9;TEST\r\nansible"
-        b_ciphertext, b_version, cipher_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext)
+        b_ciphertext, b_version, method_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext)
         b_lines = b_ciphertext.split(b'\n')
         self.assertEqual(b_lines[0], b"ansible", msg="Payload was not properly split from the header")
-        self.assertEqual(cipher_name, u'TEST', msg="cipher name was not properly set")
+        self.assertEqual(method_name, u'TEST', msg="cipher name was not properly set")
         self.assertEqual(b_version, b"9.9", msg="version was not properly set")
 
     def test_decrypt_decrypted(self):
@@ -550,13 +550,13 @@ class TestVaultLib(unittest.TestCase):
     def test_cipher_not_set(self):
         plaintext = u"ansible"
         self.v.encrypt(plaintext)
-        self.assertEqual(self.v.cipher_name, "ROT13")
+        self.assertEqual(self.v.method_name, "ROT13")
 
 
 @pytest.mark.parametrize('vault_id', ('new\nline', 'semi;colon'))
 @pytest.mark.usefixtures(patch_rot13_import.__name__)
 def test_encrypt_vault_id_with_invalid_character(vault_id: str) -> None:
-    vault_lib = vault.VaultLib([('default', TextVaultSecret('password'))], cipher_name='ROT13')
+    vault_lib = vault.VaultLib([('default', TextVaultSecret('password'))], method_name='ROT13')
 
     with pytest.raises(ValueError) as error:
         vault_lib.encrypt('', vault_id=vault_id)

@@ -13,7 +13,7 @@ import pytest
 import pytest_mock
 
 from ansible.parsing.vault import VaultSecret
-from ansible.parsing.vault.ciphers import VaultSecretError, VaultCipherBase
+from ansible.parsing.vault.ciphers import VaultSecretError, VaultMethodBase
 
 
 @pytest.fixture
@@ -35,7 +35,7 @@ class Params:
     kdf_sleep_sec: float = 0.25
 
 
-class VaultCipher(VaultCipherBase):
+class VaultMethod(VaultMethodBase):
     @staticmethod
     def _pretend_to_generate_key(params: Params) -> None:
         time.sleep(params.kdf_sleep_sec)

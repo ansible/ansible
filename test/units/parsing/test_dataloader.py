@@ -196,7 +196,7 @@ class TestDataLoaderWithVault(unittest.TestCase):
         self._loader = DataLoader()
         vault_secrets = [('default', TextVaultSecret('ansible'))]
         self._loader.set_vault_secrets(vault_secrets)
-        self._loader._vault.cipher_name = 'rot13'
+        self._loader._vault.method_name = 'rot13'
         self.test_vault_data_path = os.path.join(os.path.dirname(__file__), 'fixtures', 'vault.yml')
 
     def tearDown(self):

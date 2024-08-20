@@ -17,11 +17,11 @@ if t.TYPE_CHECKING:  # pragma: nocover
 VaultSecretError = AnsibleVaultPasswordError
 
 
-class VaultCipherBase:
-    """Base class all ciphers must implement."""
+class VaultMethodBase:
+    """Base class all vault methods must implement."""
 
     # Do not add shared code here unless absolutely necessary.
-    # Each cipher implementation is intended to be as standalone as possible to ease backporting.
+    # Each implementation is intended to be as standalone as possible to ease backporting.
 
     @classmethod
     def lru_cache(cls, maxsize: int = 128) -> t.Callable:

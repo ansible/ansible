@@ -87,7 +87,7 @@ class TestVaultEditor(unittest.TestCase):
     def _vault_editor(self, vault_secrets=None):
         if vault_secrets is None:
             vault_secrets = self._secrets(self.vault_password)
-        return VaultEditor(VaultLib(vault_secrets, cipher_name='rot13'))
+        return VaultEditor(VaultLib(vault_secrets, method_name='rot13'))
 
     @patch('ansible.parsing.vault.subprocess.call')
     def test_edit_file_helper_empty_target(self, mock_sp_call):

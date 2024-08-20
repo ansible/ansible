@@ -21,7 +21,7 @@ from ansible import constants
 from ansible.module_utils.common.text.converters import to_bytes
 
 from .. import VaultSecret
-from . import VaultCipherBase, VaultSecretError
+from . import VaultMethodBase, VaultSecretError
 
 CRYPTOGRAPHY_BACKEND = default_backend()
 
@@ -33,11 +33,11 @@ class Params:
     salt: str = constants.config.get_config_value('VAULT_ENCRYPT_SALT')
 
 
-class VaultCipher(VaultCipherBase):
+class VaultMethod(VaultMethodBase):
     """Vault implementation using AES-CTR with an HMAC-SHA256 authentication code. Keys are derived using PBKDF2."""
 
     @classmethod
-    @VaultCipherBase.lru_cache()
+    @VaultMethodBase.lru_cache()
     def _generate_keys_and_iv(cls, secret: bytes, salt: bytes) -> tuple[bytes, bytes, bytes]:
 
         # AES is a 128-bit block cipher, so we used a 32 byte key and 16 byte IVs and counter nonces

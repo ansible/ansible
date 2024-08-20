@@ -17,7 +17,7 @@ DOCUMENTATION:
       required: true
     salt:
       description:
-        - Encryption salt for the ciphers that support it (only AES256), if not provided it will be randomly generated.
+        - Encryption salt for the methods that support it (only AES256), if not provided it will be randomly generated.
         - While providing one makes the resulting encrypted string reproducible, it can lower the security of the vault.
       type: string
     vault_id:
@@ -30,8 +30,8 @@ DOCUMENTATION:
         - Mostly useful when combining with the C(to_yaml) filter to output the 'inline vault' format.
       type: bool
       default: False
-    cipher:
-      description: If set, it overrides the default cipher for the provided one, the cipher name must match existing Ansible vault ciphers.
+    method:
+      description: If set, it overrides the default method for the provided one, the method name must match existing Ansible vault methods.
       type: string
       version_added: '2.18'
 
