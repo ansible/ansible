@@ -9,7 +9,7 @@
         - 3
         - 4
       loop_control:
-        until: item >= 2
+        break_when: item >= 2
       register: untiltest
 
     - assert:

@@ -29,7 +29,7 @@ class LoopControl(FieldAttributeBase):
     pause = NonInheritableFieldAttribute(isa='float', default=0, always_post_validate=True)
     extended = NonInheritableFieldAttribute(isa='bool', always_post_validate=True)
     extended_allitems = NonInheritableFieldAttribute(isa='bool', default=True, always_post_validate=True)
-    until = NonInheritableFieldAttribute(isa='list', default=list)
+    break_when = NonInheritableFieldAttribute(isa='list', default=list)
 
     def __init__(self):
         super(LoopControl, self).__init__()
@@ -39,7 +39,7 @@ class LoopControl(FieldAttributeBase):
         t = LoopControl()
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
-    def _post_validate_until(self, attr, value, templar):
+    def _post_validate_break_when(self, attr, value, templar):
         '''
         until is evaluated after the execution of the loop is complete,
         and should not be templated during the regular post_validate step.
