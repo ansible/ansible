@@ -1,0 +1,2 @@
+bugfixes:
+  - "runtime-metadata sanity test - do not crash on deprecations if ``galaxy.yml`` contains an empty ``version`` field (https://github.com/ansible/ansible/pull/83831)."
