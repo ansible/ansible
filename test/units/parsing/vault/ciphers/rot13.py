@@ -22,10 +22,14 @@ def patch_rot13_import(mocker: pytest_mock.MockerFixture) -> None:
     import sys
 
     from ansible.parsing.vault import methods
+    from ansible import constants as C
 
+    # insert rot13 encryption method
     patched_name = '.'.join((methods.__name__, __name__.rsplit('.', 1)[-1]))
-
     mocker.patch.dict(sys.modules, values={patched_name: sys.modules[__name__]})
+
+    # add rot13 as config option, to pass validation
+    C.config._base_defs['VAULT_METHOD']['choices'].update({'rot13': 'test vault method'})
 
     yield
 

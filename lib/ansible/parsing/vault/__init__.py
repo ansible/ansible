@@ -552,7 +552,10 @@ class VaultLib:
         if is_encrypted(b_plaintext):
             raise AnsibleError("input is already encrypted")
 
-        method_name = C.config.get_config_value('VAULT_METHOD', direct={'VAULT_METHOD': self.method_name})
+        direct = {}
+        if self.method_name:
+            direct.update({'VAULT_METHOD': self.method_name.lower()})
+        method_name = C.config.get_config_value('VAULT_METHOD', direct=direct)
         try:
             this_method = load_vault_method(method_name)
         except KeyError:
