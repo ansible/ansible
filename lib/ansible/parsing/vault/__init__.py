@@ -553,13 +553,12 @@ class VaultLib:
         if is_encrypted(b_plaintext):
             raise AnsibleError("input is already encrypted")
 
-        if not self.cipher_name:
-            self.cipher_name = C.config.get_config_value('VAULT_CIPHER')
+        cipher_name = C.config.get_config_value('VAULT_CIPHER', direct={'VAULT_CIPHER': self.cipher_name})
 
         try:
-            this_cipher = load_vault_cipher(self.cipher_name)
+            this_cipher = load_vault_cipher(cipher_name)
         except KeyError:
-            raise AnsibleError(u"{0} cipher could not be found".format(self.cipher_name))
+            raise AnsibleError(u"{0} cipher could not be found".format(cipher_name))
 
         # encrypt data
         if vault_id:
