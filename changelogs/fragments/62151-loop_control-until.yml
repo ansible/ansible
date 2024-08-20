@@ -1,0 +1,2 @@
+minor_changes:
+  - loop_control - add a break_when option to to break out of a task loop early based on Jinja2 expressions (https://github.com/ansible/ansible/issues/83442).
