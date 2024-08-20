@@ -554,7 +554,7 @@ class UbuntuSourcesList(SourcesList):
                 keyfile = ''
                 if not self.module.check_mode:
                     if self.apt_key_bin:
-                        command = [self.apt_key_bin, 'adv', '--recv-keys', '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80',
+                        command = [self.apt_key_bin, 'adv', '--recv-keys', '--no-tty', '--keyserver', 'hkps://keyserver.ubuntu.com:443',
                                    info['signing_key_fingerprint']]
                     else:
                         # use first available key dir, in order of preference
@@ -565,7 +565,7 @@ class UbuntuSourcesList(SourcesList):
                             self.module.fail_json("Unable to find any existing apt gpgp repo directories, tried the following: %s" % ', '.join(APT_KEY_DIRS))
 
                         keyfile = '%s/%s-%s-%s.gpg' % (keydir, os.path.basename(source).replace(' ', '-'), ppa_owner, ppa_name)
-                        command = [self.gpg_bin, '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80', '--export', info['signing_key_fingerprint']]
+                        command = [self.gpg_bin, '--no-tty', '--keyserver', 'hkps://keyserver.ubuntu.com:443', '--export', info['signing_key_fingerprint']]
 
                     rc, stdout, stderr = self.module.run_command(command, check_rc=True, encoding=None)
                     if keyfile:
