@@ -187,8 +187,6 @@ from ansible.module_utils.common.respawn import has_respawned, probe_interpreter
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.urls import fetch_file, fetch_url
 
-from ansible.module_utils.common.locale import get_best_parsable_locale
-
 try:
     import apt
     import apt_pkg
@@ -529,7 +527,6 @@ class UbuntuSourcesList(SourcesList):
         # TODO: report file that would have been added if not check_mode
         if not self.module.check_mode:
             # use first available key dir, in order of preference
-
 
             keyserver_url = "https://keyserver.ubuntu.com/pks/lookup?{}".format(
                 urlencode({"op": "get", "search": "0x" + info['signing_key_fingerprint']})
