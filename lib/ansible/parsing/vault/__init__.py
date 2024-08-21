@@ -529,7 +529,11 @@ class VaultLib:
         if is_encrypted(b_plaintext):
             raise AnsibleError("input is already encrypted")
 
-        this_method = load_vault_method(self.method_name)
+        try:
+            this_method = load_vault_method(self.method_name)
+        except AnsibleOptionsError as e:
+            # config is responsible for checking for valid method names
+            raise AnsibleVaultError('Unable to encrypt vault with unsupported method') from e
 
         # encrypt data
         if vault_id:
