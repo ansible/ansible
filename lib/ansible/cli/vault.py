@@ -131,10 +131,10 @@ class VaultCLI(CLI):
 
         display.verbosity = options.verbosity
 
-        # if options.vault_ids:
-        #     for vault_id in options.vault_ids:
-        #         if u';' in vault_id:
-        #             raise AnsibleOptionsError("'%s' is not a valid vault id. The character ';' is not allowed in vault ids" % vault_id)
+        if options.vault_ids:
+            for vault_id in options.vault_ids:
+                if u';' in vault_id:
+                    raise AnsibleOptionsError("'%s' is not a valid vault id. The character ';' is not allowed in vault ids" % vault_id)
 
         if getattr(options, 'output_file', None) and len(options.args) > 1:
             raise AnsibleOptionsError("At most one input file may be used with the --output option")
