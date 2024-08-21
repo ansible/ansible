@@ -531,6 +531,10 @@ ansible-vault decrypt bogus_header.txt --vault-password-file vault-password 2>&1
 # without a file
 ansible-vault decrypt < bogus_header.txt --vault-password-file vault-password 2>&1 | grep "${EXPECTED_ERROR}"
 
+EXPECTED_ERROR='no vault secrets were found'
+# branch coverage for empty default vault_id (which is probably fatal in other ways)
+echo '$ANSIBLE_VAULT;1.1;AES256' | ANSIBLE_VAULT_IDENTITY='' ansible-vault decrypt --vault-password-file vault-password 2>&1 | grep "${EXPECTED_ERROR}"
+
 # executable without shebang
 EXPECTED_ERROR='Problem running vault password script'
 ansible-vault decrypt encrypted-vault-password --vault-password-file script-noshebang 2>&1 | grep "${EXPECTED_ERROR}"
@@ -593,7 +597,7 @@ ansible-playbook symlink.yml "$@" --vault-password-file symlink/get-password-sym
 
 ### NEGATIVE TESTS
 
-ER='Attempting to decrypt'
+ER='vault password must be specified'
 #### no secrets
 # 'real script'
 ansible-playbook realpath.yml "$@" 2>&1 |grep "${ER}"
@@ -617,9 +621,9 @@ do
 done
 
 # encrypt files
-ANSIBLE_VAULT_ENCRYPT_SALT=salty ansible-vault encrypt salted_test1 --vault-cipher aes256 --vault-password-file example1_password "$@"
-ANSIBLE_VAULT_ENCRYPT_SALT=salty ansible-vault encrypt salted_test2 --vault-cipher aes256 --vault-password-file example1_password "$@"
-ansible-vault encrypt salted_test3 --vault-cipher aes256 --vault-password-file example1_password "$@"
+ANSIBLE_VAULT_ENCRYPT_SALT=salty ansible-vault encrypt salted_test1 --vault-method aes256 --vault-password-file example1_password "$@"
+ANSIBLE_VAULT_ENCRYPT_SALT=salty ansible-vault encrypt salted_test2 --vault-method aes256 --vault-password-file example1_password "$@"
+ansible-vault encrypt salted_test3 --vault-method aes256 --vault-password-file example1_password "$@"
 
 # should be the same
 out=$(diff salted_test1 salted_test2)

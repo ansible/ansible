@@ -1184,8 +1184,8 @@ VAULT_METHOD:
   name: Vault method to use for encryption
   default: v2
   choices:
-    'aes256': AES 256 with PBKDF2HMAC key derivation and double hexlify byte shield
-    'v2': Using cryptography's fernet API with dual keys, AES 128, CBC and sCrypt key derivation, with base64 byte shield
+    'aes256': AES 256 with PBKDF2HMAC key derivation with double hexlify byte shield
+    'v2': Fernet with dual keys and Scrypt key derivation with a base64 byte shield
   description:
     - Vault method to use for encryption.
   env: [{name: ANSIBLE_VAULT_METHOD}]

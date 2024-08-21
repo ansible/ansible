@@ -10,14 +10,14 @@ import time
 import typing as t
 
 import pytest
-
+import pytest_mock
 
 from ansible.parsing.vault import VaultSecret
 from ansible.parsing.vault.methods import VaultSecretError, VaultMethodBase
 
 
 @pytest.fixture
-def patch_rot13_import() -> None:
+def patch_rot13_import(mocker: pytest_mock.MockerFixture) -> None:
     """Stuff a reference to this test module into runtime sys.modules to make it accessible to tests."""
     import sys
 
@@ -27,11 +27,11 @@ def patch_rot13_import() -> None:
     # insert rot13 encryption method
     patched_name = '.'.join((methods.__name__, __name__.rsplit('.', 1)[-1]))
 
+    # patch/revert manually- patch.dict restores original state, fatally trashing stored module references loaded since patch
     sys.modules[patched_name] = sys.modules[__name__]
 
-
     # add rot13 as config option, to pass validation
-    C.config._base_defs['VAULT_METHOD']['choices'].update({'rot13': 'test vault method'})
+    mocker.patch.dict(C.config._base_defs['VAULT_METHOD']['choices'], rot13='test vault method')
 
     try:
         yield

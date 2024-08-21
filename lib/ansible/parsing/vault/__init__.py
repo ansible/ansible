@@ -16,14 +16,14 @@ import sys
 import tempfile
 import typing as t
 
-from ansible.errors import AnsibleError, AnsibleAssertionError
+from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible import constants as C
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe, unfrackpath
 
 if t.TYPE_CHECKING:  # pragma: nocover
-    from ansible.parsing.vault.ciphers import VaultMethodBase
+    from ansible.parsing.vault.methods import VaultMethodBase
 
 display = Display()
 b_HEADER = b'$ANSIBLE_VAULT'
@@ -112,7 +112,7 @@ def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None, filena
     When data is saved, it has a header prepended and is formatted into 80
     character lines.  This method extracts the information from the header
     and then removes the header and the inserted newlines.  The string returned
-    is suitable for processing by the Cipher classes.
+    is suitable for processing by vault methods.
 
     :arg b_vaulttext_envelope: byte str containing the data from a save file
     :kwarg default_vault_id: The vault_id name to use if the vaulttext does not provide one.
@@ -143,7 +143,7 @@ def format_vaulttext_envelope(b_ciphertext, method_name, version=None, vault_id=
         :arg method_name: string with the method name (for ex, 'AES256', 'v2')
         :arg version: string containing the vault header version (for ex, '1.2'). Optional ('1.1' is default)
         :arg vault_id: string representing vault identifier. If provided, the version will be bumped to 1.2.
-        :returns: a byte str that should be dumped into a file.  It is the header with the appended ciphered text
+        :returns: a byte str that should be dumped into a file.  It is the header with the appended ciphertext
             formatted to 80 char columns.
     """
     version = version or '1.1'
@@ -177,16 +177,14 @@ def format_vaulttext_envelope(b_ciphertext, method_name, version=None, vault_id=
     return b_vaulttext
 
 
-def load_vault_cipher(cipher_name: str) -> type[VaultMethodBase]:
-    """Loads and returns the cipher class for a matching cipher name."""
-    cipher_module_name = cipher_name.lower()
+def load_vault_method(method_name: str | None) -> type[VaultMethodBase]:
+    """Loads and returns the method class for a matching method name."""
+    config_key = 'VAULT_METHOD'
+    direct = {config_key: method_name.lower()} if method_name else {}
+    method_name = C.config.get_config_value(config_key, direct=direct)
+    vault_module = importlib.import_module('.'.join((__name__, 'methods', method_name)))
 
-    try:
-        cipher_module = importlib.import_module('.'.join((__name__, 'ciphers', cipher_module_name)))
-    except ImportError as ex:
-        raise AnsibleVaultError(f"Invalid cipher {cipher_module_name!r}.") from ex
-
-    return cipher_module.VaultCipher
+    return vault_module.VaultMethod
 
 
 def verify_secret_is_not_empty(secret, msg=None):
@@ -428,18 +426,10 @@ class ClientScriptVaultSecret(ScriptVaultSecret):
                                (self.filename, popen.returncode, self._vault_id, stderr))
 
     def _build_command(self):
-        command = [self.filename]
-        if self._vault_id:
-            command.extend(['--vault-id', self._vault_id])
-
-        return command
+        return [self.filename, '--vault-id', self._vault_id]
 
     def __repr__(self):
-        if self.filename:
-            return "%s(filename='%s', vault_id='%s')" % \
-                (self.__class__.__name__, self.filename, self._vault_id)
-        return "%s()" % (self.__class__.__name__)
-
+        return f"{self.__class__.__name__}(filename={self.filename!r}, vault_id={self._vault_id!r})"
 
 def match_secrets(secrets, target_vault_ids):
     '''Find all VaultSecret objects that are mapped to any of the target_vault_ids in secrets'''
@@ -505,7 +495,7 @@ class VaultLib:
         :kwarg secrets: List of tuples composed of ('vault id', VaultSecret instance)
         :kwarg method_name: Name of the Vault method to use for encryption, must match
                          vault method file name and VaultMethod class.
-                         Encrypted vaults include the cipher used in their header
+                         Encrypted vaults include the method used in their header
         """
         self.secrets = secrets or []
         self.method_name = method_name
@@ -538,14 +528,7 @@ class VaultLib:
         if is_encrypted(b_plaintext):
             raise AnsibleError("input is already encrypted")
 
-        direct = {}
-        if self.method_name:
-            direct.update({'VAULT_METHOD': self.method_name.lower()})
-        method_name = C.config.get_config_value('VAULT_METHOD', direct=direct)
-        try:
-            this_method = load_vault_method(method_name)
-        except KeyError:
-            raise AnsibleError(u"{0} cipher could not be found".format(method_name))
+        this_method = load_vault_method(self.method_name)
 
         # encrypt data
         if vault_id:
@@ -566,7 +549,7 @@ class VaultLib:
 
         # format the data for output to the file
         b_vaulttext = format_vaulttext_envelope(b_ciphertext,
-                                                method_name,
+                                                this_method.__module__.rpartition('.')[-1],
                                                 vault_id=vault_id)
         return b_vaulttext
 
@@ -597,7 +580,7 @@ class VaultLib:
         """
         b_vaulttext = to_bytes(vaulttext, errors='strict', encoding='utf-8')
 
-        if self.secrets is None:
+        if not self.secrets:
             msg = "A vault password must be specified to decrypt data"
             if filename:
                 msg += " in file %s" % to_native(filename)
@@ -611,9 +594,12 @@ class VaultLib:
 
         b_vaulttext, dummy, method_name, vault_id = parse_vaulttext_envelope(b_vaulttext, filename=filename)
 
-        # create the cipher object, note that the cipher used for decrypt can
-        # be different than the cipher used for encrypt
-        this_method = load_vault_method(method_name)
+        # create the method object used to decrypt, which can differ from the method used to encrypt
+        try:
+            this_method = load_vault_method(method_name)
+        except AnsibleOptionsError:
+            # config is responsible for checking for valid method names, but config has no effect on decryption
+            raise AnsibleVaultFormatError(f'Unable to decrypt vault encrypted with unsupported method {method_name!r}.') from None
 
         if not self.secrets:
             raise AnsibleVaultError('Attempting to decrypt but no vault secrets found')
@@ -721,10 +707,6 @@ class VaultEditor:
                     for dummy in range(0, file_len // chunk_len):
                         fh.write(data)
                     fh.write(data[:file_len % chunk_len])
-
-                    # FIXME remove this assert once we have unittests to check its accuracy
-                    if fh.tell() != file_len:
-                        raise AnsibleAssertionError()
 
                     os.fsync(fh)
 
@@ -923,7 +905,7 @@ class VaultEditor:
 
         # Need a new VaultLib because the new vault data can be a different
         # vault lib format or method(for ex, when we migrate 1.0 style vault data to
-        # 1.1 style data we change the version and the cipher). This is where a VaultContext might help
+        # 1.1 style data we change the version and the method). This is where a VaultContext might help
 
         # the new vault will only be used for encrypting, so it doesn't need the vault secrets
         # (we will pass one in directly to encrypt)

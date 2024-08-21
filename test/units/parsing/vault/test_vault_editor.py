@@ -26,7 +26,7 @@ import pytest
 
 from io import BytesIO, StringIO
 from units.mock.vault_helper import TextVaultSecret
-from units.parsing.vault.ciphers.rot13 import patch_rot13_import
+from units.parsing.vault.methods.rot13 import patch_rot13_import
 from unittest.mock import patch
 
 from ansible import errors
@@ -34,7 +34,7 @@ from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.parsing import vault
 from ansible.parsing.vault import VaultLib, VaultEditor, match_encrypt_secret
 
-# test using rot13 to avoid needing per cipher deps
+# test using rot13 to avoid needing per module deps
 v11_data = """$ANSIBLE_VAULT;1.1;ROT13
 c2JiCg==
 """

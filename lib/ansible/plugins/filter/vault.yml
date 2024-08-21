@@ -30,8 +30,8 @@ DOCUMENTATION:
         - Mostly useful when combining with the C(to_yaml) filter to output the 'inline vault' format.
       type: bool
       default: False
-    method:
-      description: If set, it overrides the default method for the provided one, the method name must match existing Ansible vault methods.
+    method_name:
+      description: If set, overrides the default vault method for the provided one, the method name must match an existing Ansible vault method.
       type: string
       version_added: '2.18'
 

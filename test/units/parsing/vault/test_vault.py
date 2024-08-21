@@ -28,14 +28,15 @@ import unittest
 from unittest.mock import patch, MagicMock
 
 from ansible import errors
+from ansible.errors import AnsibleOptionsError
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.parsing import vault
 
 from units.mock.loader import DictDataLoader
 from units.mock.vault_helper import TextVaultSecret
-from units.parsing.vault.ciphers.rot13 import patch_rot13_import
+from units.parsing.vault.methods.rot13 import patch_rot13_import
 
-from ansible.parsing.vault import AnsibleVaultFormatError
+from ansible.parsing.vault import AnsibleVaultFormatError, AnsibleVaultError
 
 
 class TestParseVaulttext(unittest.TestCase):
@@ -498,6 +499,14 @@ class TestVaultLib(unittest.TestCase):
                                v.encrypt,
                                plaintext)
 
+    def test_decrypt_no_secrets(self):
+        vl = vault.VaultLib([])
+
+        with pytest.raises(AnsibleVaultError) as err:
+            vl.decrypt(b'$ANSIBLE_VAULT;1.1;V2', filename=None)
+
+        assert "password must be specified" in err.value.message
+
     def test_format_vaulttext_envelope(self):
         method_name = "TEST"
         b_ciphertext = b"ansible"
@@ -514,7 +523,7 @@ class TestVaultLib(unittest.TestCase):
         self.assertEqual(len(b_header_parts), 4, msg="header has the wrong number of parts")
         self.assertEqual(b_header_parts[0], b'$ANSIBLE_VAULT', msg="header does not start with $ANSIBLE_VAULT")
         self.assertEqual(b_header_parts[1], self.v.b_version, msg="header version is incorrect")
-        self.assertEqual(b_header_parts[2], b'TEST', msg="header does not end with cipher name")
+        self.assertEqual(b_header_parts[2], b'TEST', msg="header does not end with method name")
 
         # And just to verify, lets parse the results and compare
         b_ciphertext2, b_version2, method_name2, vault_id2 = \
@@ -529,7 +538,7 @@ class TestVaultLib(unittest.TestCase):
         b_ciphertext, b_version, method_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext)
         b_lines = b_ciphertext.split(b'\n')
         self.assertEqual(b_lines[0], b"ansible", msg="Payload was not properly split from the header")
-        self.assertEqual(method_name, u'TEST', msg="cipher name was not properly set")
+        self.assertEqual(method_name, u'TEST', msg="method name was not properly set")
         self.assertEqual(b_version, b"9.9", msg="version was not properly set")
 
     def test_parse_vaulttext_envelope_crlf(self):
@@ -537,7 +546,7 @@ class TestVaultLib(unittest.TestCase):
         b_ciphertext, b_version, method_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext)
         b_lines = b_ciphertext.split(b'\n')
         self.assertEqual(b_lines[0], b"ansible", msg="Payload was not properly split from the header")
-        self.assertEqual(method_name, u'TEST', msg="cipher name was not properly set")
+        self.assertEqual(method_name, u'TEST', msg="method name was not properly set")
         self.assertEqual(b_version, b"9.9", msg="version was not properly set")
 
     def test_decrypt_decrypted(self):
@@ -547,31 +556,34 @@ class TestVaultLib(unittest.TestCase):
         b_plaintext = b"ansible"
         self.assertRaises(errors.AnsibleError, self.v.decrypt, b_plaintext)
 
-    def test_cipher_not_set(self):
+    def test_method_not_set(self):
         plaintext = u"ansible"
         self.v.encrypt(plaintext)
         self.assertEqual(self.v.method_name, "ROT13")
-
-
-@pytest.mark.parametrize('vault_id', ('new\nline', 'semi;colon'))
-@pytest.mark.usefixtures(patch_rot13_import.__name__)
-def test_encrypt_vault_id_with_invalid_character(vault_id: str) -> None:
-    vault_lib = vault.VaultLib([('default', TextVaultSecret('password'))], method_name='ROT13')
-
-    with pytest.raises(ValueError) as error:
-        vault_lib.encrypt('', vault_id=vault_id)
-
-    assert str(error.value).startswith('Invalid character')
 
     def test_bogus_options(self):
         with pytest.raises(AnsibleVaultFormatError):
             self.v.encrypt("whatever", salt="bogus, should fail")
 
+    def test_bogus_method_encrypt(self):
+        vl = vault.VaultLib(self.vault_secrets, method_name="bogus")
+
+        with pytest.raises(AnsibleOptionsError) as err:
+            vl.encrypt(b'blah')
+
+        assert 'Invalid value "bogus"' in err.value.message
+
+    def test_bogus_method_decrypt(self):
+        with pytest.raises(AnsibleVaultFormatError) as err:
+            self.v.decrypt(b'$ANSIBLE_VAULT;1.1;BOGUS\n')
+
+        assert "encrypted with unsupported method" in err.value.message
+
 
 @pytest.mark.parametrize('vault_id', ('new\nline', 'semi;colon'))
 @pytest.mark.usefixtures(patch_rot13_import.__name__)
 def test_encrypt_vault_id_with_invalid_character(vault_id: str) -> None:
-    vault_lib = vault.VaultLib([('default', TextVaultSecret('password'))], cipher_name='ROT13')
+    vault_lib = vault.VaultLib([('default', TextVaultSecret('password'))], 'ROT13')
 
     with pytest.raises(ValueError) as error:
         vault_lib.encrypt('', vault_id=vault_id)
