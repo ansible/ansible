@@ -657,7 +657,7 @@ class VaultLib:
                 )
                 break
             except (ValueError, TypeError) as exc:
-                msg = f"There was a vault format error"
+                msg = "There was a vault format error"
                 if filename:
                     msg += u' in %s' % (to_text(filename))
                 raise AnsibleVaultFormatError(msg, obj=obj) from exc
@@ -882,7 +882,7 @@ class VaultEditor:
             plaintext = self.vault.decrypt(vaulttext, filename=filename)
             return plaintext
         except AnsibleError as e:
-            raise AnsibleVaultError("Decrypting %s failed" % (o_native(filename))) from e
+            raise AnsibleVaultError("Decrypting %s failed" % (to_native(filename))) from e
 
     # FIXME/TODO: make this use VaultSecret
     def rekey_file(self, filename, new_vault_secret, new_vault_id=None):
