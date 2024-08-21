@@ -580,12 +580,12 @@ def main():
                             (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                             if rc != 0:
                                 module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
-        # check for chroot
-        elif is_chroot(module) or os.environ.get('SYSTEMD_OFFLINE') == '1':
-            module.warn("Target is a chroot or systemd is offline. This can lead to false positives or prevent the init system tools from working.")
-        else:
-            # this should not happen?
-            module.fail_json(msg="Service is in unknown state", status=result['status'])
+                # check for chroot
+                elif is_chroot(module) or os.environ.get('SYSTEMD_OFFLINE') == '1':
+                    module.warn("Target is a chroot or systemd is offline. This can lead to false positives or prevent the init system tools from working.")
+                else:
+                    # this should not happen?
+                    module.fail_json(msg="Service is in unknown state", status=result['status'])
 
     module.exit_json(**result)
 
