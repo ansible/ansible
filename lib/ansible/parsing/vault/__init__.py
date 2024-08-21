@@ -431,6 +431,7 @@ class ClientScriptVaultSecret(ScriptVaultSecret):
     def __repr__(self):
         return f"{self.__class__.__name__}(filename={self.filename!r}, vault_id={self._vault_id!r})"
 
+
 def match_secrets(secrets, target_vault_ids):
     '''Find all VaultSecret objects that are mapped to any of the target_vault_ids in secrets'''
     if not secrets:

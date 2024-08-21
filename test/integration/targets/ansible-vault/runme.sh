@@ -533,7 +533,11 @@ ansible-vault decrypt < bogus_header.txt --vault-password-file vault-password 2>
 
 EXPECTED_ERROR='no vault secrets were found'
 # branch coverage for empty default vault_id (which is probably fatal in other ways)
+# shellcheck disable=SC2016
 echo '$ANSIBLE_VAULT;1.1;AES256' | ANSIBLE_VAULT_IDENTITY='' ansible-vault decrypt --vault-password-file vault-password 2>&1 | grep "${EXPECTED_ERROR}"
+
+# make the script with no shebang executable at runtime to avoid angering shebang sanity tests
+chmod a+x script-noshebang
 
 # executable without shebang
 EXPECTED_ERROR='Problem running vault password script'
@@ -548,6 +552,7 @@ ansible-vault decrypt encrypted-vault-password --vault-id bla --vault-password-f
 
 # double encryption
 EXPECTED_ERROR='is already encrypted'
+# shellcheck disable=SC2016
 echo '$ANSIBLE_VAULTblah' | ansible-vault encrypt_string --vault-password-file vault-password 2>&1 | grep "${EXPECTED_ERROR}"
 
 # no vault-id found

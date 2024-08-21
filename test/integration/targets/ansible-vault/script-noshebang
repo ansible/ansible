@@ -1,1 +1,1 @@
-# a mostly empty executable file without a shebang
+# a mostly empty file without a shebang (made executable at runtime by the test)
