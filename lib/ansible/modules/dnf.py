@@ -441,22 +441,6 @@ class DnfModule(YumDnf):
 
         return error
 
-    def _sanitize_dnf_error_msg_remove(self, spec, error):
-        """
-        For unhandled dnf.exceptions.Error scenarios, there are certain error
-        messages we want to ignore in a removal scenario as known benign
-        failures. Do that here.
-        """
-        if (
-            'no package matched' in to_native(error) or
-            'No match for argument:' in to_native(error)
-        ):
-            return (False, "{0} is not installed".format(spec))
-
-        # Return value is tuple of:
-        #   ("Is this actually a failure?", "Error Message")
-        return (True, error)
-
     def _package_dict(self, package):
         """Return a dictionary of information for the package."""
         # NOTE: This no longer contains the 'dnfstate' field because it is
@@ -810,16 +794,13 @@ class DnfModule(YumDnf):
                 "results": []
             }
         except dnf.exceptions.Error as e:
-            if to_text("already installed") in to_text(e):
-                return {'failed': False, 'msg': '', 'failure': ''}
-            else:
-                return {
-                    'failed': True,
-                    'msg': "Unknown Error occurred for package {0}.".format(pkg_spec),
-                    'failure': " ".join((pkg_spec, to_native(e))),
-                    'rc': 1,
-                    "results": []
-                }
+            return {
+                'failed': True,
+                'msg': "Unknown Error occurred for package {0}.".format(pkg_spec),
+                'failure': " ".join((pkg_spec, to_native(e))),
+                'rc': 1,
+                "results": []
+            }
 
         return {'failed': False, 'msg': msg, 'failure': '', 'rc': 0}
 
@@ -1125,25 +1106,11 @@ class DnfModule(YumDnf):
                         # Environment is already uninstalled.
                         pass
 
-                installed = self.base.sack.query().installed()
                 for pkg_spec in pkg_specs:
-                    # short-circuit installed check for wildcard matching
-                    if '*' in pkg_spec:
-                        try:
-                            self.base.remove(pkg_spec)
-                        except dnf.exceptions.MarkingError as e:
-                            is_failure, handled_remove_error = self._sanitize_dnf_error_msg_remove(pkg_spec, to_native(e))
-                            if is_failure:
-                                failure_response['failures'].append('{0} - {1}'.format(pkg_spec, to_native(e)))
-                            else:
-                                response['results'].append(handled_remove_error)
-                        continue
-
-                    installed_pkg = dnf.subject.Subject(pkg_spec).get_best_query(
-                        sack=self.base.sack).installed().run()
-
-                    for pkg in installed_pkg:
-                        self.base.remove(str(pkg))
+                    try:
+                        self.base.remove(pkg_spec)
+                    except dnf.exceptions.MarkingError as e:
+                        response['results'].append(f"{e.value}: {pkg_spec}")
 
                 # Like the dnf CLI we want to allow recursive removal of dependent
                 # packages
@@ -1239,13 +1206,8 @@ class DnfModule(YumDnf):
             failure_response['msg'] = "Depsolve Error occurred: {0}".format(to_native(e))
             self.module.fail_json(**failure_response)
         except dnf.exceptions.Error as e:
-            if to_text("already installed") in to_text(e):
-                response['changed'] = False
-                response['results'].append("Package already installed: {0}".format(to_native(e)))
-                self.module.exit_json(**response)
-            else:
-                failure_response['msg'] = "Unknown Error occurred: {0}".format(to_native(e))
-                self.module.fail_json(**failure_response)
+            failure_response['msg'] = "Unknown Error occurred: {0}".format(to_native(e))
+            self.module.fail_json(**failure_response)
 
     def run(self):
         if self.update_cache and not self.names and not self.list:
