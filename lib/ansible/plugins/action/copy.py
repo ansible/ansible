@@ -28,7 +28,7 @@ import traceback
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleActionFail, _AnsibleActionDone
 from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
-from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum
@@ -209,7 +209,7 @@ class ActionModule(ActionBase):
         # This is not automatic.
         # NOTE: do not add to this. This should be made a generic function for action plugins.
         # This should also use the same argspec as the module instead of keeping it in sync.
-        if 'invocation' not in result and self._task.verbosity:
+        if 'invocation' not in result and self._display.verbosity:
             if self._task.no_log:
                 result['invocation'] = "CENSORED: no_log is set"
             else:
