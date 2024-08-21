@@ -17,7 +17,7 @@ from . import VaultMethodBase, VaultSecretError
 
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
 class NoParams:
-    """This VaultCipher takes no options, this class will make any passed in into an error."""
+    """No options accepted. Any options provided will result in an error."""
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
@@ -38,7 +38,8 @@ class VaultMethod(VaultMethodBase):
         if len(secret) < 10:
             raise VaultSecretError(f"The vault secret must be at least 10 bytes (received {len(secret)}).")
 
-        derived_key = hashlib.scrypt(secret, salt=params.salt.encode(), n=params.n, r=params.r, p=params.p, dklen=params.length)
+        salt = base64.b64decode(params.salt.encode())
+        derived_key = hashlib.scrypt(secret, salt=salt, n=params.n, r=params.r, p=params.p, dklen=params.length)
 
         return base64.urlsafe_b64encode(derived_key)
 
@@ -53,7 +54,9 @@ class VaultMethod(VaultMethodBase):
         data_encryption_key = Fernet.generate_key()
         data_encryption_cipher = Fernet(data_encryption_key)
 
-        encrypted_data_encryption_key = key_encryption_cipher.encrypt(data_encryption_key)
+        decoded_data_encryption_key = base64.urlsafe_b64decode(data_encryption_key)
+
+        encrypted_data_encryption_key = key_encryption_cipher.encrypt(decoded_data_encryption_key)
         encrypted_plaintext = data_encryption_cipher.encrypt(plaintext)
 
         payload = dict(
@@ -72,10 +75,11 @@ class VaultMethod(VaultMethodBase):
         key_encryption_cipher = Fernet(key_encryption_key)
 
         try:
-            data_encryption_key = key_encryption_cipher.decrypt(payload['key'])
+            decoded_data_encryption_key = key_encryption_cipher.decrypt(payload['key'].encode())
         except InvalidToken as ex:
             raise VaultSecretError() from ex
 
+        data_encryption_key = base64.urlsafe_b64encode(decoded_data_encryption_key)
         data_encryption_cipher = Fernet(data_encryption_key)
 
         return data_encryption_cipher.decrypt(payload['ciphertext'])
