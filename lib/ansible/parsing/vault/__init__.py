@@ -657,12 +657,12 @@ class VaultLib:
                 )
                 break
             except (ValueError, TypeError) as exc:
-                msg = f"There was a vault format error: {exc}"
+                msg = f"There was a vault format error"
                 if filename:
                     msg += u' in %s' % (to_text(filename))
                 raise AnsibleVaultFormatError(msg, obj=obj) from exc
             except AnsibleError as e:
-                display.vvvv(u'Tried to use the vault secret (%s) to decrypt (%s) but it failed. Error: %s' %
+                display.vvvv(u'Tried to use the vault secret (%s) to decrypt (%s) but it failed: %s' %
                              (to_text(vault_secret_id), to_text(filename), e))
                 continue
         else:
@@ -770,7 +770,7 @@ class VaultEditor:
         except Exception as e:
             # if an error happens, destroy the decrypted file
             self._shred_file(tmp_path)
-            raise AnsibleError('Unable to execute the command "%s": %s' % (' '.join(cmd), to_native(e)))
+            raise AnsibleError('Unable to execute the command "%s"' % (' '.join(cmd))) from e
 
         b_tmpdata = self.read_data(tmp_path)
 
@@ -827,7 +827,7 @@ class VaultEditor:
         try:
             plaintext = self.vault.decrypt(ciphertext, filename=filename)
         except AnsibleError as e:
-            raise AnsibleError("%s for %s" % (to_native(e), to_native(filename)))
+            raise AnsibleError("Decrypting %s faileds" % (to_native(filename))) from e
         self.write_data(plaintext, output_file or filename, shred=False)
 
     def create_file(self, filename, secret, vault_id=None):
@@ -882,7 +882,7 @@ class VaultEditor:
             plaintext = self.vault.decrypt(vaulttext, filename=filename)
             return plaintext
         except AnsibleError as e:
-            raise AnsibleVaultError("%s for %s" % (to_native(e), to_native(filename)))
+            raise AnsibleVaultError("Decrypting %s failed" % (o_native(filename))) from e
 
     # FIXME/TODO: make this use VaultSecret
     def rekey_file(self, filename, new_vault_secret, new_vault_id=None):
