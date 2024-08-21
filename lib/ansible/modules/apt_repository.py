@@ -564,14 +564,16 @@ class UbuntuSourcesList(SourcesList):
                         keyfile = '%s/%s-%s-%s.gpg' % (keydir, os.path.basename(source).replace(' ', '-'), ppa_owner, ppa_name)
 
                         try:
-                            _, keyring_path = tempfile.mkstemp()
+                            fd, keyring_path = tempfile.mkstemp()
                         except (OSError, IOError) as e:
-                           self.module.fail_json(msg="Unable to create temporary keyring file: %s" % e)
+                            self.module.fail_json(msg="Unable to create temporary keyring file: %s" % e)
                         # Import the GPG key into a temporary keyring before its exported into its own file.
-                        command = [self.gpg_bin, '--no-tty', '--no-default-keyring', '--keyring', keyring_path, '--keyserver', 'hkps://keyserver.ubuntu.com:443', '--recv-keys', info['signing_key_fingerprint']]
+                        command = [self.gpg_bin, '--no-tty', '--no-default-keyring', '--keyring', keyring_path,
+                                   '--keyserver', 'hkps://keyserver.ubuntu.com:443', '--recv-keys', info['signing_key_fingerprint']]
                         self.module.run_command(command, check_rc=True, encoding=None)
 
-                        command = [self.gpg_bin, '--no-default-keyring', '--keyring', keyring_path, '--output', keyfile, '--export', info['signing_key_fingerprint']]
+                        command = [self.gpg_bin, '--no-default-keyring', '--keyring', keyring_path, '--output', keyfile,
+                                   '--export', info['signing_key_fingerprint']]
                     else:
                         command = [self.apt_key_bin, 'adv', '--recv-keys', '--no-tty', '--keyserver', 'hkps://keyserver.ubuntu.com:443',
                                    info['signing_key_fingerprint']]
