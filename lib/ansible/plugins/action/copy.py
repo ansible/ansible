@@ -406,11 +406,10 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for file transfer operations '''
-
-        result = super(ActionModule, self).run(tmp, task_vars)
-
         if task_vars is None:
             task_vars = {}
+
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         source = self._task.args.get('src', None)
         content = self._task.args.get('content', None)
