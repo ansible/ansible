@@ -524,7 +524,7 @@ ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vaul
 EXPECTED_ERROR='Odd-length string'
 ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vault-secret invalid_format/broken-group-vars-tasks.yml 2>&1 | grep "${EXPECTED_ERROR}"
 
-EXPECTED_ERROR='Vault envelope format error'
+EXPECTED_ERROR='Vault envelope format is invalid'
 # with a file
 ansible-vault decrypt bogus_header.txt --vault-password-file vault-password 2>&1 | grep "${EXPECTED_ERROR}"
 

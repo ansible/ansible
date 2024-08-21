@@ -28,6 +28,8 @@ if t.TYPE_CHECKING:  # pragma: nocover
 display = Display()
 b_HEADER = b'$ANSIBLE_VAULT'
 
+_VAULT_METHOD_CONFIG_KEY: t.Final[str] = 'VAULT_METHOD'
+
 
 class AnsibleVaultError(AnsibleError):
     pass
@@ -177,11 +179,26 @@ def format_vaulttext_envelope(b_ciphertext, method_name, version=None, vault_id=
     return b_vaulttext
 
 
+def get_default_vault_method() -> str:
+    """Return the default (configured) vault method name."""
+    return C.config.get_config_value(_VAULT_METHOD_CONFIG_KEY)
+
+
+def describe_vault_methods() -> dict[str, str]:
+    """Return a dictionary describing the available vault methods and their descriptions."""
+    return C.config.get_configuration_definition(_VAULT_METHOD_CONFIG_KEY)['choices']
+
+
 def load_vault_method(method_name: str | None) -> type[VaultMethodBase]:
     """Loads and returns the method class for a matching method name."""
-    config_key = 'VAULT_METHOD'
-    direct = {config_key: method_name.lower()} if method_name else {}
-    method_name = C.config.get_config_value(config_key, direct=direct)
+    if method_name is None:
+        method_name = get_default_vault_method()
+    else:
+        vault_methods = describe_vault_methods()
+
+        if method_name not in vault_methods:
+            raise AnsibleVaultError(f'Unsupported vault method {method_name!r}. Supported vault methods: {", ".join(vault_methods.keys())}')
+
     vault_module = importlib.import_module('.'.join((__name__, 'methods', method_name)))
 
     return vault_module.VaultMethod
@@ -491,22 +508,22 @@ def match_encrypt_secret(secrets, encrypt_vault_id=None):
 class VaultLib:
     """ Wrapper API to create/open/view Ansible Vaults """
 
-    def __init__(self, secrets=None, method_name=None):
-        """
-        :kwarg secrets: List of tuples composed of ('vault id', VaultSecret instance)
-        :kwarg method_name: Name of the Vault method to use for encryption, must match
-                         vault method file name and VaultMethod class.
-                         Encrypted vaults include the method used in their header
-        """
-        self.secrets = secrets or []
-        self.method_name = method_name
+    def __init__(self, secrets: list[tuple[str, VaultSecret]] | None = None) -> None:
+        self.secrets: list[tuple[str, VaultSecret]] = secrets or []
         self.b_version = b'1.2'
 
     @staticmethod
     def is_encrypted(vaulttext):
         return is_encrypted(vaulttext)
 
-    def encrypt(self, plaintext: str | bytes, secret: VaultSecret | None = None, vault_id: str | None = None, salt: bytes | None = None) -> bytes:
+    def encrypt(
+        self,
+        plaintext: str | bytes,
+        secret: VaultSecret | None = None,
+        vault_id: str | None = None,
+        salt: bytes | None = None,
+        method_name: str | None = None,
+    ) -> bytes:
         """Vault encrypt a piece of data.
 
         :arg plaintext: a text or byte string to encrypt.
@@ -529,11 +546,7 @@ class VaultLib:
         if is_encrypted(b_plaintext):
             raise AnsibleError("input is already encrypted")
 
-        try:
-            this_method = load_vault_method(self.method_name)
-        except AnsibleOptionsError as e:
-            # config is responsible for checking for valid method names
-            raise AnsibleVaultError('Unable to encrypt vault with unsupported method') from e
+        this_method = load_vault_method(method_name)
 
         # encrypt data
         if vault_id:
@@ -600,11 +613,7 @@ class VaultLib:
         b_vaulttext, dummy, method_name, vault_id = parse_vaulttext_envelope(b_vaulttext, filename=filename)
 
         # create the method object used to decrypt, which can differ from the method used to encrypt
-        try:
-            this_method = load_vault_method(method_name)
-        except AnsibleOptionsError:
-            # config is responsible for checking for valid method names, but config has no effect on decryption
-            raise AnsibleVaultFormatError(f'Unable to decrypt vault encrypted with unsupported method {method_name!r}.') from None
+        this_method = load_vault_method(method_name.lower())
 
         if not self.secrets:
             raise AnsibleVaultError('Attempting to decrypt but no vault secrets found')
@@ -676,9 +685,10 @@ class VaultLib:
 
 class VaultEditor:
 
-    def __init__(self, vault=None):
+    def __init__(self, vault=None, encrypt_method_name: str | None = None):
         # TODO: it may be more useful to just make VaultSecrets and index of VaultLib objects...
         self.vault = vault or VaultLib()
+        self.encrypt_method_name = encrypt_method_name
 
     # TODO: move to globally available 'shred/wipe' function
     def _shred_file_custom(self, tmp_path):
@@ -780,7 +790,7 @@ class VaultEditor:
             # encrypt new data and write out to tmp
             # An existing vaultfile will always be UTF-8,
             # so decode to unicode here
-            b_ciphertext = self.vault.encrypt(b_tmpdata, secret, vault_id=vault_id)
+            b_ciphertext = self.vault.encrypt(b_tmpdata, secret, vault_id=vault_id, method_name=self.encrypt_method_name)
             self.write_data(b_ciphertext, tmp_path)
 
             # shuffle tmp file into place
@@ -800,7 +810,7 @@ class VaultEditor:
 
     def encrypt_bytes(self, b_plaintext, secret, vault_id=None):
 
-        b_ciphertext = self.vault.encrypt(b_plaintext, secret, vault_id=vault_id)
+        b_ciphertext = self.vault.encrypt(b_plaintext, secret, vault_id=vault_id, method_name=self.encrypt_method_name)
 
         return b_ciphertext
 
@@ -814,7 +824,7 @@ class VaultEditor:
 
         b_plaintext = self.read_data(filename)
         # FIXME: eliminate to_bytes calls
-        b_ciphertext = to_bytes(self.vault.encrypt(b_plaintext, secret, vault_id=vault_id))
+        b_ciphertext = to_bytes(self.vault.encrypt(b_plaintext, secret, vault_id=vault_id, method_name=self.encrypt_method_name))
         self.write_data(b_ciphertext, output_file or filename)
 
     def decrypt_file(self, filename, output_file=None):
@@ -914,7 +924,7 @@ class VaultEditor:
         # the new vault will only be used for encrypting, so it doesn't need the vault secrets
         # (we will pass one in directly to encrypt)
         new_vault = VaultLib(secrets={})
-        b_new_vaulttext = new_vault.encrypt(plaintext, new_vault_secret, vault_id=new_vault_id)
+        b_new_vaulttext = new_vault.encrypt(plaintext, new_vault_secret, vault_id=new_vault_id, method_name=self.encrypt_method_name)
 
         self.write_data(b_new_vaulttext, filename)
 

@@ -32,9 +32,9 @@ def do_vault(data, secret, salt=None, vault_id='filter_default', wrap_object=Fal
 
     vault = ''
     vs = VaultSecret(to_bytes(secret))
-    vl = VaultLib(method_name=method_name)
+    vl = VaultLib()
     try:
-        vault = vl.encrypt(to_bytes(data), vs, vault_id, salt)
+        vault = vl.encrypt(to_bytes(data), vs, vault_id, salt, method_name=method_name)
     except UndefinedError:
         raise
     except Exception as e:

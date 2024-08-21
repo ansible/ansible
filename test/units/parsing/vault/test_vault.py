@@ -459,11 +459,11 @@ class TestVaultLib(unittest.TestCase):
         text_secret = TextVaultSecret(self.vault_password)
         self.vault_secrets = [('default', text_secret),
                               ('test_id', text_secret)]
-        self.v = vault.VaultLib(self.vault_secrets, method_name='ROT13')
+        self.v = vault.VaultLib(self.vault_secrets)
 
     def test_encrypt(self):
         plaintext = u'Some text to encrypt in a café'
-        b_vaulttext = self.v.encrypt(plaintext)
+        b_vaulttext = self.v.encrypt(plaintext, method_name='rot13')
 
         self.assertIsInstance(b_vaulttext, bytes)
 
@@ -472,7 +472,7 @@ class TestVaultLib(unittest.TestCase):
 
     def test_encrypt_vault_id(self):
         plaintext = u'Some text to encrypt in a café'
-        b_vaulttext = self.v.encrypt(plaintext, vault_id='test_id')
+        b_vaulttext = self.v.encrypt(plaintext, vault_id='test_id', method_name='rot13')
 
         self.assertIsInstance(b_vaulttext, bytes)
 
@@ -482,7 +482,7 @@ class TestVaultLib(unittest.TestCase):
     def test_encrypt_bytes(self):
 
         plaintext = to_bytes(u'Some text to encrypt in a café')
-        b_vaulttext = self.v.encrypt(plaintext)
+        b_vaulttext = self.v.encrypt(plaintext, method_name='rot13')
 
         self.assertIsInstance(b_vaulttext, bytes)
 
@@ -564,34 +564,34 @@ class TestVaultLib(unittest.TestCase):
 
     def test_method_not_set(self):
         plaintext = u"ansible"
-        self.v.encrypt(plaintext)
-        self.assertEqual(self.v.method_name, "ROT13")
+        vaulttext = self.v.encrypt(plaintext, method_name='rot13')
+        assert b'ROT13' in vaulttext
 
     def test_bogus_options(self):
         with pytest.raises(AnsibleVaultFormatError):
-            self.v.encrypt("whatever", salt="bogus, should fail")
+            self.v.encrypt("whatever", salt=b"bogus, should fail", method_name='rot13')
 
     def test_bogus_method_encrypt(self):
-        vl = vault.VaultLib(self.vault_secrets, method_name="bogus")
+        vl = vault.VaultLib(self.vault_secrets)
 
         with pytest.raises(AnsibleVaultError) as err:
-            vl.encrypt(b'blah')
+            vl.encrypt(b'blah', method_name="bogus")
 
-        assert 'Invalid value "bogus"' in err.value.message
+        assert "Unsupported vault method 'bogus'. Supported vault methods:" in err.value.message
 
     def test_bogus_method_decrypt(self):
-        with pytest.raises(AnsibleVaultFormatError) as err:
+        with pytest.raises(AnsibleVaultError) as err:
             self.v.decrypt(b'$ANSIBLE_VAULT;1.1;BOGUS\n')
 
-        assert "encrypted with unsupported method" in err.value.message
+        assert "Unsupported vault method 'bogus'. Supported vault methods:" in err.value.message
 
 
 @pytest.mark.parametrize('vault_id', ('new\nline', 'semi;colon'))
 @pytest.mark.usefixtures(patch_rot13_import.__name__)
 def test_encrypt_vault_id_with_invalid_character(vault_id: str) -> None:
-    vault_lib = vault.VaultLib([('default', TextVaultSecret('password'))], 'ROT13')
+    vault_lib = vault.VaultLib([('default', TextVaultSecret('password'))])
 
     with pytest.raises(ValueError) as error:
-        vault_lib.encrypt('', vault_id=vault_id)
+        vault_lib.encrypt('', vault_id=vault_id, method_name='rot13')
 
     assert str(error.value).startswith('Invalid character')

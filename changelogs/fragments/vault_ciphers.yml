@@ -6,6 +6,6 @@ bugfixes:
 minor_changes:
   - Created a configuration to select the Vault method to use for encryption.
     The old AES256 method can still be chosen, for backwards compatibility.
-  - The ``vault`` filter plugin was updated to have a method option.
+  - The ``vault`` filter plugin now accepts an optional ``method_name`` to specify the encryption method.
   - Internal vault API were changed to streamline vault method updates in the future.
   - Encapsulated ciphertext handling into the ciphers, mitigating the need for future changes to the API.
