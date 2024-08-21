@@ -18,7 +18,7 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils.common.text.converters import to_text, to_bytes
 from ansible.parsing.dataloader import DataLoader
-from ansible.parsing.vault import VaultEditor, VaultLib, match_encrypt_secret, describe_vault_methods
+from ansible.parsing.vault import VaultEditor, VaultLib, match_encrypt_secret
 from ansible.utils.display import Display
 
 display = Display()
@@ -77,7 +77,7 @@ class VaultCLI(CLI):
         vault_id.add_argument('--encrypt-vault-id', dest='encrypt_vault_id',
                               action='store', type=str,
                               help='the vault id used to encrypt (required if more than one vault-id is provided)')
-        vault_id.add_argument('--vault-method', action='store', choices=list(describe_vault_methods()),
+        vault_id.add_argument('--vault-method', action='store', dest='vault_method', choices=C.config.get_config_choices('VAULT_METHOD'),
                               help='the vault method used to encrypt, defaults to the configured method')
 
         create_parser = subparsers.add_parser('create', help='Create new vault encrypted file', parents=[vault_id, common])
@@ -242,7 +242,7 @@ class VaultCLI(CLI):
 
         # FIXME: do we need to create VaultEditor here? its not reused
         vault = VaultLib(vault_secrets)
-        self.editor = VaultEditor(vault, encrypt_method_name=context.CLIARGS.get('vault_method'))
+        self.editor = VaultEditor(vault)
 
         context.CLIARGS['func']()
 

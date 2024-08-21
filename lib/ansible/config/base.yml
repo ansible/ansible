@@ -1189,6 +1189,8 @@ VAULT_METHOD:
   description:
     - Vault method to use for encryption.
   env: [{name: ANSIBLE_VAULT_METHOD}]
+  cli:
+    - name: vault_method
   ini:
   - {key: vault_method, section: defaults}
   version_added: '2.18'

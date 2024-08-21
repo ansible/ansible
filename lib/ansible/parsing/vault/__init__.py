@@ -191,16 +191,13 @@ def describe_vault_methods() -> dict[str, str]:
 
 def load_vault_method(method_name: str | None) -> type[VaultMethodBase]:
     """Loads and returns the method class for a matching method name."""
-    if method_name is None:
-        method_name = get_default_vault_method()
-    else:
-        vault_methods = describe_vault_methods()
 
-        if method_name not in vault_methods:
-            raise AnsibleVaultError(f'Unsupported vault method {method_name!r}. Supported vault methods: {", ".join(vault_methods.keys())}')
+    try:
+        method_name = C.config.get_config_value('VAULT_METHOD', direct={'VAULT_METHOD': method_name})
+    except AnsibleOptionsError as e:
+        raise AnsibleVaultError(f'Unsupported vault method {method_name!r}') from e
 
     vault_module = importlib.import_module('.'.join((__name__, 'methods', method_name)))
-
     return vault_module.VaultMethod
 
 
@@ -685,10 +682,9 @@ class VaultLib:
 
 class VaultEditor:
 
-    def __init__(self, vault=None, encrypt_method_name: str | None = None):
+    def __init__(self, vault=None):
         # TODO: it may be more useful to just make VaultSecrets and index of VaultLib objects...
         self.vault = vault or VaultLib()
-        self.encrypt_method_name = encrypt_method_name
 
     # TODO: move to globally available 'shred/wipe' function
     def _shred_file_custom(self, tmp_path):
@@ -790,7 +786,7 @@ class VaultEditor:
             # encrypt new data and write out to tmp
             # An existing vaultfile will always be UTF-8,
             # so decode to unicode here
-            b_ciphertext = self.vault.encrypt(b_tmpdata, secret, vault_id=vault_id, method_name=self.encrypt_method_name)
+            b_ciphertext = self.vault.encrypt(b_tmpdata, secret, vault_id=vault_id)
             self.write_data(b_ciphertext, tmp_path)
 
             # shuffle tmp file into place
@@ -810,7 +806,7 @@ class VaultEditor:
 
     def encrypt_bytes(self, b_plaintext, secret, vault_id=None):
 
-        b_ciphertext = self.vault.encrypt(b_plaintext, secret, vault_id=vault_id, method_name=self.encrypt_method_name)
+        b_ciphertext = self.vault.encrypt(b_plaintext, secret, vault_id=vault_id)
 
         return b_ciphertext
 
@@ -824,7 +820,7 @@ class VaultEditor:
 
         b_plaintext = self.read_data(filename)
         # FIXME: eliminate to_bytes calls
-        b_ciphertext = to_bytes(self.vault.encrypt(b_plaintext, secret, vault_id=vault_id, method_name=self.encrypt_method_name))
+        b_ciphertext = to_bytes(self.vault.encrypt(b_plaintext, secret, vault_id=vault_id))
         self.write_data(b_ciphertext, output_file or filename)
 
     def decrypt_file(self, filename, output_file=None):
@@ -924,7 +920,7 @@ class VaultEditor:
         # the new vault will only be used for encrypting, so it doesn't need the vault secrets
         # (we will pass one in directly to encrypt)
         new_vault = VaultLib(secrets={})
-        b_new_vaulttext = new_vault.encrypt(plaintext, new_vault_secret, vault_id=new_vault_id, method_name=self.encrypt_method_name)
+        b_new_vaulttext = new_vault.encrypt(plaintext, new_vault_secret, vault_id=new_vault_id)
 
         self.write_data(b_new_vaulttext, filename)
 

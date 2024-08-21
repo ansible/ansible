@@ -5,6 +5,7 @@ from __future__ import annotations
 from jinja2.runtime import Undefined
 from jinja2.exceptions import UndefinedError
 
+from ansible import constants as C
 from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.common.text.converters import to_native, to_bytes
 from ansible.module_utils.six import string_types, binary_type
@@ -23,6 +24,11 @@ def do_vault(data, secret, salt=None, vault_id='filter_default', wrap_object=Fal
     if not isinstance(data, (string_types, binary_type, Undefined)):
         raise AnsibleFilterTypeError("Can only vault strings, instead we got: %s" % type(data))
 
+    if method_name is not None:
+        choices = C.config.get_config_choices('VAULT_METHOD')
+        if method_name not in choices:
+            raise AnsibleFilterTypeError("Invalid vault encryption method '{method_name}', valid choices are: %s" % ', '.join(choices))
+
     if vaultid is not None:
         display.deprecated("Use of undocumented 'vaultid', use 'vault_id' instead", version='2.20')
         if vault_id == 'filter_default':
@@ -38,7 +44,7 @@ def do_vault(data, secret, salt=None, vault_id='filter_default', wrap_object=Fal
     except UndefinedError:
         raise
     except Exception as e:
-        raise AnsibleFilterError("Unable to encrypt: %s" % to_native(e), orig_exc=e)
+        raise AnsibleFilterError("Vault filter is unable to encrypt") from e
 
     if wrap_object:
         vault = AnsibleVaultEncryptedUnicode(vault)

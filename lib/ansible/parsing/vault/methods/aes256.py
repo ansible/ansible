@@ -62,7 +62,7 @@ class VaultMethod(VaultMethodBase):
 
     @classmethod
     def encrypt(cls, plaintext: bytes, secret: VaultSecret, options: dict[str, t.Any]) -> str:
-        Display().warning("Encryption with the AES256 cipher should only be used for backwards compatibility with older versions of Ansible.")
+        Display().warning("Encryption with the AES256 method should only be used for backwards compatibility with older versions of Ansible.")
 
         params = Params(**options)
 

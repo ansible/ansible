@@ -576,13 +576,13 @@ class TestVaultLib(unittest.TestCase):
         with pytest.raises(AnsibleVaultError) as err:
             vl.encrypt(b'blah', method_name="bogus")
 
-        assert "Unsupported vault method 'bogus'. Supported vault methods:" in err.value.message
+        assert "Unsupported vault method" in err.value.message
 
     def test_bogus_method_decrypt(self):
         with pytest.raises(AnsibleVaultError) as err:
             self.v.decrypt(b'$ANSIBLE_VAULT;1.1;BOGUS\n')
 
-        assert "Unsupported vault method 'bogus'. Supported vault methods:" in err.value.message
+        assert "Unsupported vault method" in err.value.message
 
 
 @pytest.mark.parametrize('vault_id', ('new\nline', 'semi;colon'))

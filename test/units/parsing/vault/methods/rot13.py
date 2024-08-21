@@ -32,6 +32,7 @@ def patch_rot13_import(mocker: pytest_mock.MockerFixture) -> None:
 
     # add rot13 as config option, to pass validation
     mocker.patch.dict(C.config._base_defs['VAULT_METHOD']['choices'], rot13='test vault method')
+    C.config._base_defs['VAULT_METHOD']['default'] = 'rot13'
 
     try:
         yield
