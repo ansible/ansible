@@ -568,7 +568,7 @@ class TestVaultLib(unittest.TestCase):
     def test_bogus_method_encrypt(self):
         vl = vault.VaultLib(self.vault_secrets, method_name="bogus")
 
-        with pytest.raises(AnsibleOptionsError) as err:
+        with pytest.raises(AnsibleVaultError) as err:
             vl.encrypt(b'blah')
 
         assert 'Invalid value "bogus"' in err.value.message
