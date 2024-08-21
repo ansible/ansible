@@ -557,7 +557,7 @@ def main():
             if module.params['state'] != 'present':
                 # default to desired state
                 result['state'] = module.params['state']
-    
+
                 # What is current service state?
                 if 'ActiveState' in result['status']:
                     action = None
@@ -573,7 +573,7 @@ def main():
                         else:
                             action = module.params['state'][:-2]  # remove 'ed' from restarted/reloaded
                         result['state'] = 'started'
-    
+
                     if action:
                         result['changed'] = True
                         if not module.check_mode:
