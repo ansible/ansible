@@ -29,9 +29,10 @@ options:
             - V(started)/V(stopped) are idempotent actions that will not run commands unless necessary.
               V(restarted) will always bounce the unit.
               V(reloaded) will always reload and if the service is not running at the moment of the reload, it is started.
+              V(present) will ensure the service exists. Task fails if unit is absent.
             - If set, requires O(name).
         type: str
-        choices: [ reloaded, restarted, started, stopped ]
+        choices: [ reloaded, restarted, started, stopped, present ]
     enabled:
         description:
             - Whether the unit should start on boot. At least one of O(state) and O(enabled) are required.
@@ -103,8 +104,13 @@ requirements:
 EXAMPLES = '''
 - name: Make sure a service unit is running
   ansible.builtin.systemd_service:
-    state: started
     name: httpd
+    state: started
+
+- name: Make sure a service unit is present
+  ansible.builtin.systemd_service:
+    name: httpd
+    state: present
 
 - name: Stop service cron on debian, if running
   ansible.builtin.systemd_service:
@@ -113,9 +119,9 @@ EXAMPLES = '''
 
 - name: Restart service cron on centos, in all cases, also issue daemon-reload to pick up config changes
   ansible.builtin.systemd_service:
+    name: crond
     state: restarted
     daemon_reload: true
-    name: crond
 
 - name: Reload service httpd, in all cases
   ansible.builtin.systemd_service:
@@ -344,7 +350,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', aliases=['service', 'unit']),
-            state=dict(type='str', choices=['reloaded', 'restarted', 'started', 'stopped']),
+            state=dict(type='str', choices=['reloaded', 'restarted', 'started', 'stopped', 'present']),
             enabled=dict(type='bool'),
             force=dict(type='bool'),
             masked=dict(type='bool'),
@@ -548,37 +554,38 @@ def main():
         if module.params['state'] is not None:
             fail_if_missing(module, found, unit, msg="host")
 
-            # default to desired state
-            result['state'] = module.params['state']
-
-            # What is current service state?
-            if 'ActiveState' in result['status']:
-                action = None
-                if module.params['state'] == 'started':
-                    if not is_running_service(result['status']):
-                        action = 'start'
-                elif module.params['state'] == 'stopped':
-                    if is_running_service(result['status']) or is_deactivating_service(result['status']):
-                        action = 'stop'
-                else:
-                    if not is_running_service(result['status']):
-                        action = 'start'
+            if module.params['state'] != 'present':
+                # default to desired state
+                result['state'] = module.params['state']
+    
+                # What is current service state?
+                if 'ActiveState' in result['status']:
+                    action = None
+                    if module.params['state'] == 'started':
+                        if not is_running_service(result['status']):
+                            action = 'start'
+                    elif module.params['state'] == 'stopped':
+                        if is_running_service(result['status']) or is_deactivating_service(result['status']):
+                            action = 'stop'
                     else:
-                        action = module.params['state'][:-2]  # remove 'ed' from restarted/reloaded
-                    result['state'] = 'started'
-
-                if action:
-                    result['changed'] = True
-                    if not module.check_mode:
-                        (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
-                        if rc != 0:
-                            module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
-            # check for chroot
-            elif is_chroot(module) or os.environ.get('SYSTEMD_OFFLINE') == '1':
-                module.warn("Target is a chroot or systemd is offline. This can lead to false positives or prevent the init system tools from working.")
-            else:
-                # this should not happen?
-                module.fail_json(msg="Service is in unknown state", status=result['status'])
+                        if not is_running_service(result['status']):
+                            action = 'start'
+                        else:
+                            action = module.params['state'][:-2]  # remove 'ed' from restarted/reloaded
+                        result['state'] = 'started'
+    
+                    if action:
+                        result['changed'] = True
+                        if not module.check_mode:
+                            (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
+                            if rc != 0:
+                                module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
+        # check for chroot
+        elif is_chroot(module) or os.environ.get('SYSTEMD_OFFLINE') == '1':
+            module.warn("Target is a chroot or systemd is offline. This can lead to false positives or prevent the init system tools from working.")
+        else:
+            # this should not happen?
+            module.fail_json(msg="Service is in unknown state", status=result['status'])
 
     module.exit_json(**result)
 
