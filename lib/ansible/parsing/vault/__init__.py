@@ -130,7 +130,7 @@ def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None, filena
     try:
         return _parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id)
     except Exception as exc:
-        msg = "Vault envelope format error"
+        msg = "Vault envelope format is invalid"
         if filename:
             msg += ' in %s' % (filename)
         raise AnsibleVaultFormatError(msg) from exc

@@ -549,6 +549,12 @@ class TestVaultLib(unittest.TestCase):
         self.assertEqual(method_name, u'TEST', msg="method name was not properly set")
         self.assertEqual(b_version, b"9.9", msg="version was not properly set")
 
+    def test_parse_vaulttext_envelope_bad(self):
+        b_vaulttext = b"$ANSIBLE_VAULT;this is not valid\n ansible secerts'"
+        with pytest.raises(AnsibleVaultFormatError) as err:
+            ignore = vault.parse_vaulttext_envelope(b_vaulttext)
+        assert " envelope format " in err.value.message
+
     def test_decrypt_decrypted(self):
         plaintext = u"ansible"
         self.assertRaises(errors.AnsibleError, self.v.decrypt, plaintext)
