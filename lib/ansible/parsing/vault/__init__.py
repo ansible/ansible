@@ -653,7 +653,7 @@ class VaultLib:
                 )
                 break
             except (ValueError, TypeError) as exc:
-                msg = u"There was a vault format error"
+                msg = f"There was a vault format error: {exc}"
                 if filename:
                     msg += u' in %s' % (to_text(filename))
                 raise AnsibleVaultFormatError(msg, obj=obj) from exc
