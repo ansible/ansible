@@ -131,10 +131,10 @@ class VaultCLI(CLI):
 
         display.verbosity = options.verbosity
 
-        if options.vault_ids:
-            for vault_id in options.vault_ids:
-                if u';' in vault_id:
-                    raise AnsibleOptionsError("'%s' is not a valid vault id. The character ';' is not allowed in vault ids" % vault_id)
+        # if options.vault_ids:
+        #     for vault_id in options.vault_ids:
+        #         if u';' in vault_id:
+        #             raise AnsibleOptionsError("'%s' is not a valid vault id. The character ';' is not allowed in vault ids" % vault_id)
 
         if getattr(options, 'output_file', None) and len(options.args) > 1:
             raise AnsibleOptionsError("At most one input file may be used with the --output option")
@@ -179,12 +179,8 @@ class VaultCLI(CLI):
 
         if action in ['encrypt', 'encrypt_string', 'create']:
 
-            encrypt_vault_id = None
-            # no --encrypt-vault-id context.CLIARGS['encrypt_vault_id'] for 'edit'
-            if action not in ['edit']:
-                encrypt_vault_id = context.CLIARGS['encrypt_vault_id'] or C.DEFAULT_VAULT_ENCRYPT_IDENTITY
+            encrypt_vault_id = context.CLIARGS['encrypt_vault_id'] or C.DEFAULT_VAULT_ENCRYPT_IDENTITY
 
-            vault_secrets = None
             vault_secrets = \
                 self.setup_vault_secrets(loader,
                                          vault_ids=vault_ids,
