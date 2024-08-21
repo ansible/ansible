@@ -5,7 +5,7 @@ source virtualenv.sh
 
 
 MYTMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
-trap 'rm -rf "${MYTMPDIR}"' EXIT
+trap 'chmod -R u+rwx ${MYTMPDIR}; rm -rf "${MYTMPDIR}"' EXIT
 
 # create a test file
 TEST_FILE="${MYTMPDIR}/test_file"
