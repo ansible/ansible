@@ -28,7 +28,6 @@ import unittest
 from unittest.mock import patch, MagicMock
 
 from ansible import errors
-from ansible.errors import AnsibleOptionsError
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.parsing import vault
 
