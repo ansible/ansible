@@ -533,26 +533,44 @@ class TestVaultLib(unittest.TestCase):
         self.assertEqual('default', vault_id2)
 
     def test_parse_vaulttext_envelope(self):
-        b_vaulttext = b"$ANSIBLE_VAULT;9.9;TEST\nansible"
+        b_vaulttext = b"$ANSIBLE_VAULT;1.1;TEST\nansible"
         b_ciphertext, b_version, method_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext)
         b_lines = b_ciphertext.split(b'\n')
         self.assertEqual(b_lines[0], b"ansible", msg="Payload was not properly split from the header")
         self.assertEqual(method_name, u'TEST', msg="method name was not properly set")
-        self.assertEqual(b_version, b"9.9", msg="version was not properly set")
+        self.assertEqual(b_version, b"1.1", msg="version was not properly set")
 
     def test_parse_vaulttext_envelope_crlf(self):
-        b_vaulttext = b"$ANSIBLE_VAULT;9.9;TEST\r\nansible"
+        b_vaulttext = b"$ANSIBLE_VAULT;1.1;TEST\r\nansible"
         b_ciphertext, b_version, method_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext)
         b_lines = b_ciphertext.split(b'\n')
         self.assertEqual(b_lines[0], b"ansible", msg="Payload was not properly split from the header")
         self.assertEqual(method_name, u'TEST', msg="method name was not properly set")
-        self.assertEqual(b_version, b"9.9", msg="version was not properly set")
+        self.assertEqual(b_version, b"1.1", msg="version was not properly set")
 
-    def test_parse_vaulttext_envelope_bad(self):
-        b_vaulttext = b"$ANSIBLE_VAULT;this is not valid\n ansible secerts'"
+    def test_parse_vaulttext_envelope_bad_version(self):
+        b_vaulttext = b"$ANSIBLE_VAULT;9.0;TEST\r\nThis is not valid'"
         with pytest.raises(AnsibleVaultFormatError) as err:
             ignore = vault.parse_vaulttext_envelope(b_vaulttext)
-        assert " envelope format " in err.value.message
+        assert "Unsupported vault version" in err.value.message
+
+    def test_parse_vaulttext_envelope_bad(self):
+        b_vaulttext = b"$ANSIBLE_VAULT;this is not valid\n at all"
+        with pytest.raises(AnsibleVaultFormatError) as err:
+            ignore = vault.parse_vaulttext_envelope(b_vaulttext)
+        assert "Incorrect vault header" in err.value.message
+
+    def test_parse_vaulttext_envelope_bad_match(self):
+        b_vaulttext = b"$ANSIBLE_VAULT;1.1;TEST;TESTID\r\nThis is not a valid\n ansible vault'"
+        with pytest.raises(AnsibleVaultFormatError) as err:
+            ignore = vault.parse_vaulttext_envelope(b_vaulttext)
+        assert "Vault header size mismatch" in err.value.message
+
+    def test_parse_vaulttext_envelope_bad_format(self):
+        b_vaulttext = [b"$ANSIBLE_VAULT;1.1;TEST;TESTID\r\nThis is not a valid\n ansible vault'"]
+        with pytest.raises(AnsibleVaultFormatError) as err:
+            ignore = vault.parse_vaulttext_envelope(b_vaulttext)
+        assert "Vault envelope format is invalid" in err.value.message
 
     def test_decrypt_decrypted(self):
         plaintext = u"ansible"

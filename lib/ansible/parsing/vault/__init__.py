@@ -27,6 +27,7 @@ if t.TYPE_CHECKING:  # pragma: nocover
 
 display = Display()
 b_HEADER = b'$ANSIBLE_VAULT'
+SUPPORTED_ENVELOPE_VERSIONS = {b'1.1': 3, b'1.2': 4}
 
 _VAULT_METHOD_CONFIG_KEY: t.Final[str] = 'VAULT_METHOD'
 
@@ -89,25 +90,6 @@ def is_encrypted_file(file_obj, start_pos=0, count=len(b_HEADER)):
         file_obj.seek(current_position)
 
 
-def _parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None):
-
-    b_tmpdata = b_vaulttext_envelope.splitlines()
-    b_tmpheader = b_tmpdata[0].strip().split(b';')
-
-    b_version = b_tmpheader[1].strip()
-    method_name = to_text(b_tmpheader[2].strip())
-    vault_id = default_vault_id
-
-    # Only attempt to find vault_id if the vault file is version 1.2 or newer
-    # if self.b_version == b'1.2':
-    if len(b_tmpheader) >= 4:
-        vault_id = to_text(b_tmpheader[3].strip())
-
-    b_ciphertext = b''.join(b_tmpdata[1:])
-
-    return b_ciphertext, b_version, method_name, vault_id
-
-
 def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None, filename=None):
     """Parse the vaulttext envelope
 
@@ -127,15 +109,37 @@ def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None, filena
     :raises: AnsibleVaultFormatError: if the vaulttext_envelope format is invalid
     """
     # used by decrypt
-    default_vault_id = default_vault_id or C.DEFAULT_VAULT_IDENTITY
+    vault_id = default_vault_id or C.DEFAULT_VAULT_IDENTITY
 
     try:
-        return _parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id)
+        b_tmpdata = b_vaulttext_envelope.splitlines()
+        b_tmpheader = b_tmpdata[0].strip().split(b';')
     except Exception as exc:
-        msg = "Vault envelope format is invalid"
+        msg = "Vault envelope format is invalid, cannot load any details"
         if filename:
             msg += ' in %s' % (filename)
         raise AnsibleVaultFormatError(msg) from exc
+
+    header_size = len(b_tmpheader)
+    if header_size < 3:
+        raise AnsibleVaultFormatError("Incorrect vault header found, invalid vault")
+
+    b_version = b_tmpheader[1].strip()
+    if b_version not in SUPPORTED_ENVELOPE_VERSIONS:
+        raise AnsibleVaultFormatError("Unsupported vault version found {b_version!r}, supported versions are: %s" % b','.join(SUPPORTED_ENVELOPE_VERSIONS.keys()))
+
+    method_name = to_text(b_tmpheader[2].strip())
+
+    if header_size != SUPPORTED_ENVELOPE_VERSIONS[b_version]:
+        raise AnsibleVaultFormatError("Vault header size mismatch, vault has been tampered with")
+
+    # Only attempt to find vault_id if the vault file is version 1.2 or newer
+    if header_size >= 4:
+        vault_id = to_text(b_tmpheader[3].strip())
+
+    b_ciphertext = b''.join(b_tmpdata[1:])
+
+    return b_ciphertext, b_version, method_name, vault_id
 
 
 def format_vaulttext_envelope(b_ciphertext, method_name, version=None, vault_id=None):
