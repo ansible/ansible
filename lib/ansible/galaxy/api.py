@@ -719,7 +719,7 @@ class GalaxyAPI:
 
         display.display("Waiting until Galaxy import task %s has completed" % full_url)
         start = time.time()
-        wait = float(os.environ.get("ANSIBLE_GALAXY_SLEEP_SECONDS_POLLING", '2.0'))
+        wait = C.GALAXY_COLLECTION_IMPORT_POLL_INTERVAL
 
         while timeout == 0 or (time.time() - start) < timeout:
             try:

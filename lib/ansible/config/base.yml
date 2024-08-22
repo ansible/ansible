@@ -1528,6 +1528,14 @@ GALAXY_REQUIRED_VALID_SIGNATURE_COUNT:
   - The number of signatures that must be successful during GPG signature verification while installing or verifying collections.
   - This should be a positive integer or all to indicate all signatures must successfully validate the collection.
   - Prepend + to the value to fail if no valid signatures are found for the collection.
+GALAXY_COLLECTION_IMPORT_POLL_INTERVAL:
+  description:
+    - The initial interval in seconds for polling the import status of a collection, using exponential backoff with a factor of 1.5.
+    - The maximum total backoff is capped at 30 seconds.
+  type: float
+  default: "2.0"
+  env:
+    - name: ANSIBLE_GALAXY_SLEEP_SECONDS_POLLING
 HOST_KEY_CHECKING:
   # NOTE: constant not in use by ssh/paramiko plugins anymore, but they do support the same configuration sources
   # TODO: check non ssh connection plugins for use/migration
