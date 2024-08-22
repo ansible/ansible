@@ -72,3 +72,12 @@
     always:
     - name: reset WinRM quota value
       win_shell: Set-Item WSMan:\localhost\Service\MaxConcurrentOperationsPerUser {{ winrm_quota.stdout | trim }}
+
+  - name: emit raw CLIXML on stderr with special chars
+    raw: $host.UI.WriteErrorLine("Test 🎵 _x005F_ _x005Z_.")
+    register: stderr_clixml
+
+  - name: assert emit raw CLIXML on stderr with special chars
+    assert:
+      that:
+      - stderr_clixml.stderr_lines == ['Test 🎵 _x005F_ _x005Z_.']
