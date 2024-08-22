@@ -1530,13 +1530,21 @@ GALAXY_REQUIRED_VALID_SIGNATURE_COUNT:
   - Prepend + to the value to fail if no valid signatures are found for the collection.
 GALAXY_COLLECTION_IMPORT_POLL_INTERVAL:
   description:
-    - The initial interval in seconds for polling the import status of a collection, using exponential backoff with a factor of 1.5.
-    - The maximum total backoff is capped at 30 seconds.
+    - The initial interval in seconds for polling the import status of a collection.
+    - This interval increases exponentially based on the :ref:`galaxy_collection_import_poll_factor`, with a maximum delay of 30 seconds.
   type: float
   default: "2.0"
   env:
-    - name: ANSIBLE_GALAXY_SLEEP_SECONDS_POLLING
+    - name: ANSIBLE_GALAXY_COLLECTION_IMPORT_POLL_INTERVAL
   version_added: '2.18'
+GALAXY_COLLECTION_IMPORT_POLL_FACTOR:
+  description:
+    - The multiplier used to increase the :ref:`galaxy_collection_import_poll_interval` when checking the collection import status.
+  type: float
+  default: "1.5"
+  env:
+    - name: ANSIBLE_GALAXY_COLLECTION_IMPORT_POLL_FACTOR
+  version_added: "2.18"
 HOST_KEY_CHECKING:
   # NOTE: constant not in use by ssh/paramiko plugins anymore, but they do support the same configuration sources
   # TODO: check non ssh connection plugins for use/migration
