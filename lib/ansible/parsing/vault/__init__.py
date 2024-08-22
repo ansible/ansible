@@ -126,7 +126,8 @@ def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None, filena
 
     b_version = b_tmpheader[1].strip()
     if b_version not in SUPPORTED_ENVELOPE_VERSIONS:
-        raise AnsibleVaultFormatError("Unsupported vault version found {b_version!r}, supported versions are: %s" % b','.join(SUPPORTED_ENVELOPE_VERSIONS.keys()))
+        msg = "Unsupported vault version found {b_version!r}, supported versions are: %s" % b','.join(SUPPORTED_ENVELOPE_VERSIONS.keys())
+        raise AnsibleVaultFormatError(msg)
 
     method_name = to_text(b_tmpheader[2].strip())
 
