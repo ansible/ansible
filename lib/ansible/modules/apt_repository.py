@@ -488,7 +488,7 @@ class UbuntuSourcesList(SourcesList):
             self.module.fail_json(msg="failed to fetch PPA information, error was: %s" % info['msg'])
         return json.loads(to_native(response.read()))
 
-    def _expand_ppa(self, path):
+    def _expand_ppa(self, path, legacy=False):
         ppa = path.split(':')[1]
         ppa_owner = ppa.split('/')[0]
         try:
@@ -496,8 +496,11 @@ class UbuntuSourcesList(SourcesList):
         except IndexError:
             ppa_name = 'ppa'
 
-        keypath = self._get_ppa_keyfile("ubuntu-%s-main" % self.codename, ppa_owner, ppa_name)
-        line = 'deb [signed-by=%s] %s/%s/%s/ubuntu %s main' % (keypath, self.PPA_URI, ppa_owner, ppa_name, self.codename)
+        if legacy:
+            line = 'deb %s/%s/%s/ubuntu %s main' % (self.PPA_URI, ppa_owner, ppa_name, self.codename)
+        else:
+            keypath = self._get_ppa_keyfile("ubuntu-%s-main" % self.codename, ppa_owner, ppa_name)
+            line = 'deb [signed-by=%s] %s/%s/%s/ubuntu %s main' % (keypath, self.PPA_URI, ppa_owner, ppa_name, self.codename)
         return line, ppa_owner, ppa_name
 
     def _existing_gpg_filepath(self, key_fingerprint):
@@ -553,8 +556,9 @@ class UbuntuSourcesList(SourcesList):
     def add_source(self, line, comment='', file=None):
         if line.startswith('ppa:'):
             source, ppa_owner, ppa_name = self._expand_ppa(line)
+            legacy_source = self._expand_ppa(line, legacy=True)[0]
 
-            if source in self.repos_urls:
+            if source in self.repos_urls or legacy_source in self.repos_urls:
                 # repository already exists
                 return
 
@@ -582,6 +586,9 @@ class UbuntuSourcesList(SourcesList):
     def remove_source(self, line):
         if line.startswith('ppa:'):
             source = self._expand_ppa(line)[0]
+            # Remove both explicit signed-by and "legancy" repos without the signed-by value set
+            legacy_source = self._expand_ppa(line, legacy=True)[0]
+            self._remove_valid_source(legacy_source)
         else:
             source = self._parse(line, raise_if_invalid_or_disabled=True)[2]
         self._remove_valid_source(source)
@@ -600,6 +607,8 @@ class UbuntuSourcesList(SourcesList):
 
                 if source_line.startswith('ppa:'):
                     source, ppa_owner, ppa_name = self._expand_ppa(source_line)
+                    _repositories.append(source)
+                    source = self._expand_ppa(source_line, legacy=True)
                     _repositories.append(source)
                 else:
                     _repositories.append(source_line)
