@@ -1336,7 +1336,7 @@ class Connection(ConnectionBase):
 
         # When running on Windows, stderr may contain CLIXML encoded output
         if getattr(self._shell, "_IS_WINDOWS", False) and stderr.startswith(b"#< CLIXML"):
-            stderr = _parse_clixml(stderr)
+            raise Exception("test see if this gets hit in CI")
 
         return (returncode, stdout, stderr)
 
