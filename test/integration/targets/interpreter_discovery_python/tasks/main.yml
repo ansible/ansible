@@ -140,9 +140,9 @@
 
   - name: debian assertions
     assert:
+      # versioned interpreter gets discovered, ensure it's at least py >= 3
       that:
-      # Debian 10 and newer
-      - auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python3' and distro_version is version('10', '>=') or distro_version is version('10', '<')
+        - auto_out.ansible_facts.discovered_interpreter_python|regex_search('^/usr/bin/python3')
     when: distro == 'debian'
 
   - name: fedora assertions
