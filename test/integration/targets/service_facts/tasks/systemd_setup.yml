@@ -3,6 +3,7 @@
     src: ansible_test_service.py
     dest: /usr/sbin/ansible_test_service
     mode: '755'
+  notify: 'clean up service_facts'
 
 - name: rewrite shebang in the test daemon script
   lineinfile:
