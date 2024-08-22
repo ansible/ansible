@@ -608,7 +608,7 @@ class UbuntuSourcesList(SourcesList):
                 if source_line.startswith('ppa:'):
                     source, ppa_owner, ppa_name = self._expand_ppa(source_line)
                     _repositories.append(source)
-                    source = self._expand_ppa(source_line, legacy=True)
+                    source = self._expand_ppa(source_line, legacy=True)[0]
                     _repositories.append(source)
                 else:
                     _repositories.append(source_line)
