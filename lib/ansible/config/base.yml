@@ -1536,6 +1536,7 @@ GALAXY_COLLECTION_IMPORT_POLL_INTERVAL:
   default: "2.0"
   env:
     - name: ANSIBLE_GALAXY_SLEEP_SECONDS_POLLING
+  version_added: '2.18'
 HOST_KEY_CHECKING:
   # NOTE: constant not in use by ssh/paramiko plugins anymore, but they do support the same configuration sources
   # TODO: check non ssh connection plugins for use/migration
