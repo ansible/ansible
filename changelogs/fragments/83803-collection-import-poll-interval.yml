@@ -1,4 +1,4 @@
 minor_changes:
 - >-
-  ``ansible-galaxy collection import`` - add a configuration option for the initial poll interval
+  ``ansible-galaxy collection publish`` - add a configuration option for the initial poll interval
   used when checking the import status of a collection, since the default is relatively slow.
