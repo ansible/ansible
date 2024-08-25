@@ -41,6 +41,7 @@ def test_failing_options(method_name: str) -> None:
                                                                "864363330336331326136346639323566383263396562313562366635303838626336616161393436386563"
                                                                "33340a3961646464313366376533653537613162316563353333316430363266626535"),
     ('v2', b'input', b'toosmall', {}, VaultSecretError),
+    ('v2b', b'input', b'toosmall', {}, VaultSecretError),
 ))
 def test_encrypt_options(method_name: str, data: bytes, secret: bytes, options: dict[str, t.Any], expected_output: str | type[Exception]) -> None:
     method = load_vault_method(method_name)

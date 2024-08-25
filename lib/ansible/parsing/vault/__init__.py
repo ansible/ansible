@@ -668,7 +668,7 @@ class VaultLib:
                 )
                 break
             except (ValueError, TypeError) as exc:
-                msg = f"There was a vault format error: {exc}"
+                msg = "There was an issue with the vault"
                 if filename:
                     msg += u' in %s' % (to_text(filename))
                 raise AnsibleVaultFormatError(msg, obj=obj) from exc
@@ -838,7 +838,7 @@ class VaultEditor:
         try:
             plaintext = self.vault.decrypt(ciphertext, filename=filename)
         except AnsibleError as e:
-            raise AnsibleError("Decrypting %s faileds" % (to_native(filename))) from e
+            raise AnsibleError("Decrypting %s failed" % (to_native(filename))) from e
         self.write_data(plaintext, output_file or filename, shred=False)
 
     def create_file(self, filename, secret, vault_id=None):

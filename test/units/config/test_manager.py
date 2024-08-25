@@ -161,7 +161,6 @@ class TestConfigManager:
         actual_value = ensure_type(vault_var, value_type)
         assert actual_value == "vault text"
 
-
     @pytest.mark.parametrize('value', choice_test_data)
     def test_get_choices(self, value):
         config, config_def, expected_choices = value
