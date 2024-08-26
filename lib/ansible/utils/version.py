@@ -190,6 +190,7 @@ class SemanticVersion(Version):
             raise ValueError("invalid semantic version '%s'" % vstring)
 
         (major, minor, patch, prerelease, buildmetadata) = match.group(1, 2, 3, 4, 5)
+        self.vstring = vstring
         self.major = int(major)
         self.minor = int(minor)
         self.patch = int(patch)
