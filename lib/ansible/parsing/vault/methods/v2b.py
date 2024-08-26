@@ -63,7 +63,7 @@ class VaultMethod(VaultMethodBase):
         digest = base64.b64encode(hmac.digest(data_encryption_key, encrypted_text, hashlib.sha512))
 
         payload = dict(
-			salt=salt,
+            salt=salt,
             digest=digest.decode(),
             ciphertext=encrypted_text.decode(),
         )
