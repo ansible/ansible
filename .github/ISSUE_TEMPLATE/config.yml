@@ -15,7 +15,7 @@ contact_links:
 - name: 📝 Ansible Code of Conduct
   url: https://docs.ansible.com/ansible/latest/community/code_of_conduct.html?utm_medium=github&utm_source=issue_template_chooser
   about: ❤ Be nice to other members of the community. ☮ Behave.
-- name: 💬 Talks to the community
+- name: 💬 Talk to the community
   url: https://docs.ansible.com/ansible/latest/community/communication.html?utm_medium=github&utm_source=issue_template_chooser#mailing-list-information
   about: Please ask and answer usage questions here
 - name: ⚡ Working groups
