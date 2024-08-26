@@ -79,11 +79,11 @@ class VaultMethod(VaultMethodBase):
         digest = base64.b64decode(payload['digest'].encode())
         verify = hmac.digest(data_encryption_key, payload['ciphertext'].encode(), hashlib.sha512)
         if not secrets.compare_digest(digest, verify):
-            raise ValueError("Invalid digest detected")
+            raise VaultSecretError("not the correct secret")
 
         data_encryption_cipher = Fernet(data_encryption_key)
 
         try:
             return data_encryption_cipher.decrypt(payload['ciphertext'].encode())
         except InvalidToken as e:
-            raise VaultSecretError("Failed decryption, invalid secret") from e
+            raise VaultSecretError("not the correct secret") from e
