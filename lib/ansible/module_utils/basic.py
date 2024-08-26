@@ -1557,7 +1557,7 @@ class AnsibleModule(object):
         #   Similar to shutil.copy(), but metadata is copied as well - in fact,
         #   this is just shutil.copy() followed by copystat(). This is similar
         #   to the Unix command cp -p.
-        #
+
         # shutil.copystat(src, dst)
         #   Copy the permission bits, last access time, last modification time,
         #   and flags from src to dst. The file contents, owner, and group are
@@ -1660,8 +1660,10 @@ class AnsibleModule(object):
                                     b_tmp_dest_name, context, False)
                             try:
                                 tmp_stat = os.stat(b_tmp_dest_name)
-                                if keep_dest_attrs and dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
-                                    os.chown(b_tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
+                                if keep_dest_attrs:
+                                    if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
+                                        os.chown(b_tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
+                                    os.utime(b_tmp_dest_name, times=(time.time(), time.time()))
                             except OSError as e:
                                 if e.errno != errno.EPERM:
                                     raise
