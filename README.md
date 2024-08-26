@@ -40,21 +40,32 @@ features and fixes, directly. Although it is reasonably stable, you are more lik
 breaking changes when running the `devel` branch. We recommend getting involved
 in the Ansible community if you want to run the `devel` branch.
 
-## Get Involved
+## Communication
+
+Join the Ansible forum to ask questions, get help, and interact with the
+community.
+
+* [Get Help](https://forum.ansible.com/c/help/6): Find help or share your Ansible knowledge to help others.
+  Use tags to filter and subscribe to posts, such as the following:
+  * Posts tagged with [ansible](https://forum.ansible.com/tag/ansible)
+  * Posts tagged with [ansible-core](https://forum.ansible.com/tag/ansible-core)
+  * Posts tagged with [playbook](https://forum.ansible.com/tag/playbook)
+* [Social Spaces](https://forum.ansible.com/c/chat/4): Meet and interact with fellow enthusiasts.
+* [News & Announcements](https://forum.ansible.com/c/news/5): Track project-wide announcements including social events.
+* [Bullhorn newsletter](https://docs.ansible.com/ansible/devel/community/communication.html#the-bullhorn): Get release announcements and important changes.
+
+For more ways to get in touch, see [Communicating with the Ansible community](https://docs.ansible.com/ansible/devel/community/communication.html).
+
+## Contribute to Ansible
 
 * Read [Community Information](https://docs.ansible.com/ansible/latest/community) for all
   kinds of ways to contribute to and interact with the project,
-  including mailing list information and how to submit bug reports and
-  code to Ansible.
-* Join a [Working Group](https://docs.ansible.com/ansible/devel/community/communication.html#working-groups),
-  an organized community devoted to a specific technology domain or platform.
+  including how to submit bug reports and code to Ansible.
 * Submit a proposed code update through a pull request to the `devel` branch.
 * Talk to us before making larger changes
   to avoid duplicate efforts. This not only helps everyone
   know what is going on, but it also helps save time and effort if we decide
   some changes are needed.
-* For a list of email lists, IRC channels and Working Groups, see the
-  [Communication page](https://docs.ansible.com/ansible/devel/community/communication.html)
 
 ## Coding Guidelines
 
