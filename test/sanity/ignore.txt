@@ -63,6 +63,9 @@ lib/ansible/parsing/vault/methods/aes256.py import-3.13!skip
 lib/ansible/parsing/vault/methods/v2.py import-3.11!skip
 lib/ansible/parsing/vault/methods/v2.py import-3.12!skip
 lib/ansible/parsing/vault/methods/v2.py import-3.13!skip
+lib/ansible/parsing/vault/methods/v2b.py import-3.11!skip
+lib/ansible/parsing/vault/methods/v2b.py import-3.12!skip
+lib/ansible/parsing/vault/methods/v2b.py import-3.13!skip
 lib/ansible/playbook/collectionsearch.py required-and-default-attributes  # https://github.com/ansible/ansible/issues/61460
 lib/ansible/playbook/role/include.py pylint:arguments-renamed
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
