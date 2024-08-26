@@ -169,7 +169,11 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                             parent_include = parent_include._parent
                             continue
                         try:
-                            parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
+                            if isinstance(parent_include, IncludeRole):
+                                task_path = os.path.join(parent_include._role_path, 'tasks')
+                            else:
+                                task_path = parent_include.args.get('_raw_params')
+                            parent_include_dir = os.path.dirname(templar.template(task_path))
                         except AnsibleUndefinedVariable as e:
                             if not parent_include.statically_loaded:
                                 raise AnsibleParserError(
