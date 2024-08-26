@@ -719,7 +719,7 @@ class GalaxyAPI:
 
         display.display("Waiting until Galaxy import task %s has completed" % full_url)
         start = time.time()
-        wait = 2
+        wait = C.GALAXY_COLLECTION_IMPORT_POLL_INTERVAL
 
         while timeout == 0 or (time.time() - start) < timeout:
             try:
@@ -743,7 +743,7 @@ class GalaxyAPI:
             time.sleep(wait)
 
             # poor man's exponential backoff algo so we don't flood the Galaxy API, cap at 30 seconds.
-            wait = min(30, wait * 1.5)
+            wait = min(30, wait * C.GALAXY_COLLECTION_IMPORT_POLL_FACTOR)
         if state == 'waiting':
             raise AnsibleError("Timeout while waiting for the Galaxy import process to finish, check progress at '%s'"
                                % to_native(full_url))
