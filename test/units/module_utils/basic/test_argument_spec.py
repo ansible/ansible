@@ -71,14 +71,14 @@ VALID_SPECS = (
 
 INVALID_SPECS = (
     # Type is int; unable to convert this string
-    ({'arg': {'type': 'int'}}, {'arg': "wolf"}, "is of type {0} and we were unable to convert to int: {0} cannot be converted to an int".format(type('bad'))),
+    ({'arg': {'type': 'int'}}, {'arg': "wolf"}, f"is of type {type('wolf')} and we were unable to convert to int:"),
     # Type is list elements is int; unable to convert this string
-    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [1, "bad"]}, "is of type {0} and we were unable to convert to int: {0} cannot be converted to "
-                                                                        "an int".format(type('int'))),
+    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [1, "bad"]},
+     "is of type {0} and we were unable to convert to int:".format(type('int'))),
     # Type is int; unable to convert float
-    ({'arg': {'type': 'int'}}, {'arg': 42.1}, "'float'> cannot be converted to an int"),
+    ({'arg': {'type': 'int'}}, {'arg': 42.1}, "'float'> and we were unable to convert to int:"),
     # Type is list, elements is int; unable to convert float
-    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [42.1, 32, 2]}, "'float'> cannot be converted to an int"),
+    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [42.1, 32, 2]}, "'float'> and we were unable to convert to int:"),
     # type is a callable that fails to convert
     ({'arg': {'type': MOCK_VALIDATOR_FAIL}}, {'arg': "bad"}, "bad conversion"),
     # type is a list, elements is callable that fails to convert
