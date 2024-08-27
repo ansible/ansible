@@ -58,6 +58,7 @@ For more ways to get in touch, see [Communicating with the Ansible community](ht
 
 ## Contribute to Ansible
 
+* Check out the [Contributor's Guide](./.github/CONTRIBUTING.md).
 * Read [Community Information](https://docs.ansible.com/ansible/latest/community) for all
   kinds of ways to contribute to and interact with the project,
   including how to submit bug reports and code to Ansible.
