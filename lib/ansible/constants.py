@@ -50,14 +50,16 @@ def handle_config_noise(display=None):
         d = _deprecated
 
     while config.WARNINGS:
-        warn = config.WARNINGS.pop(0)
+        warn = config.WARNINGS.pop()
         w(warn)
 
     while config.DEPRECATED:
         # tuple with name and options
         dep = config.DEPRECATED.pop(0)
         msg = config.get_deprecated_msg_from_config(dep[1])
-        d(msg, version=dep[1]['version'])
+        # use tabs only for ansible-doc?
+        msg = msg.replace("\t", "")
+        d(f"{dep[0]} option. {msg}", version=dep[1]['version'])
 
 
 def set_constant(name, value, export=vars()):
