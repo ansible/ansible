@@ -684,5 +684,5 @@ class ConfigManager(object):
                 removal = f"Will be removed in: Ansible {dep_docs['removed_in']}\n\t"
 
         # TODO: choose to deprecate either singular or plural
-        alt = dep_docs.get('alternatives', dep_docs.get('alternative', ''))
+        alt = dep_docs.get('alternatives', dep_docs.get('alternative', 'none'))
         return f"Reason: {dep_docs['why']}\n\t{removal}Alternatives: {alt}"
