@@ -1,0 +1,3 @@
+bugfixes:
+- module respawn - Address an issue with Python 2 where a respawned module
+  could not parse module args (https://github.com/ansible/ansible/issues/83812)
