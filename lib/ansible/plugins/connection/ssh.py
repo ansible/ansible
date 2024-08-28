@@ -1306,14 +1306,6 @@ class Connection(ConnectionBase):
             # prompt that will not occur
             sudoable = False
 
-            # Make sure our first command is to set the console encoding to
-            # utf-8, this must be done via chcp to get utf-8 (65001)
-            # union-attr ignores rely on internal powershell shell plugin details,
-            # this should be fixed at a future point in time.
-            cmd_parts = ["chcp.com", "65001", self._shell._SHELL_REDIRECT_ALLNULL, self._shell._SHELL_AND]  # type: ignore[union-attr]
-            cmd_parts.extend(self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False))  # type: ignore[union-attr]
-            cmd = ' '.join(cmd_parts)
-
         # we can only use tty when we are not pipelining the modules. piping
         # data into /usr/bin/python inside a tty automatically invokes the
         # python interactive-mode but the modules are not compatible with the
