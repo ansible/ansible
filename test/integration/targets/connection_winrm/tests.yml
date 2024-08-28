@@ -41,3 +41,17 @@
   - assert:
       that:
       - timeout_cmd.msg == 'The win_shell action failed to execute in the expected time frame (5) and was terminated'
+
+  - name: Test WinRM HTTP connection
+    win_ping:
+    vars:
+      ansible_port: 5985
+      ansible_winrm_scheme: http
+      ansible_winrm_transport: ntlm  # Verifies message encryption over HTTP
+
+  - name: Test WinRM HTTPS connection
+    win_ping:
+    vars:
+      ansible_port: 5986
+      ansible_winrm_scheme: https
+      ansible_winrm_server_cert_validation: ignore
