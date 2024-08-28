@@ -4,6 +4,12 @@
   ignore_errors: yes
   register: no_keyword
 
+- name: using modern syntax but missing keyword
+  set_fact:
+    this_will_error: "{{ lookup('csvfile', file='people.csv', delimiter=' ', col=1) }}"
+  ignore_errors: yes
+  register: modern_no_keyword
+
 - name: extra arg in k=v syntax (deprecated)
   set_fact:
     this_will_error: "{{ lookup('csvfile', 'foo file=people.csv delimiter=, col=1 thisarg=doesnotexist') }}"
@@ -27,6 +33,9 @@
       - no_keyword is failed
       - >
         "Search key is required but was not found" in no_keyword.msg
+      - modern_no_keyword is failed
+      - >
+        "Search key is required but was not found" in modern_no_keyword.msg
       - invalid_arg is failed
       - invalid_arg2 is failed
       - >
