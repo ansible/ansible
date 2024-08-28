@@ -55,3 +55,12 @@
       ansible_port: 5986
       ansible_winrm_scheme: https
       ansible_winrm_server_cert_validation: ignore
+
+  - name: emit raw CLIXML on stderr with special chars
+    raw: $host.UI.WriteErrorLine("Test 🎵 _x005F_ _x005Z_.")
+    register: stderr_clixml
+
+  - name: assert emit raw CLIXML on stderr with special chars
+    assert:
+      that:
+      - stderr_clixml.stderr_lines == ['Test 🎵 _x005F_ _x005Z_.']
