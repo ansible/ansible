@@ -6,7 +6,9 @@ declare -a args
 IFS='/:' read -ra args <<< "$1"
 
 version="${args[1]}"
-group="${args[2]}"
+connection="${args[2]}"
+connection_setting="${args[3]}"
+group="${args[4]}"
 
 target="shippable/windows/group${group}/"
 
@@ -31,11 +33,7 @@ if [ -s /tmp/windows.txt ] || [ "${CHANGED:+$CHANGED}" == "" ]; then
     echo "Detected changes requiring integration tests specific to Windows:"
     cat /tmp/windows.txt
 
-    echo "Running Windows integration tests for multiple versions concurrently."
-
-    platforms=(
-        --windows "${version}"
-    )
+    echo "Running Windows integration tests for the version ${version}."
 else
     echo "No changes requiring integration tests specific to Windows were detected."
     echo "Running Windows integration tests for a single version only: ${single_version}"
@@ -44,17 +42,13 @@ else
         echo "Skipping this job since it is for: ${version}"
         exit 0
     fi
-
-    platforms=(
-        --windows "${version}"
-    )
 fi
 
-for version in "${python_versions[@]}"; do
+for py_version in "${python_versions[@]}"; do
     changed_all_target="all"
     changed_all_mode="default"
 
-    if [ "${version}" == "${python_default}" ]; then
+    if [ "${py_version}" == "${python_default}" ]; then
         # smoketest tests
         if [ "${CHANGED}" ]; then
             # with change detection enabled run tests for anything changed
@@ -80,7 +74,7 @@ for version in "${python_versions[@]}"; do
     fi
 
     # terminate remote instances on the final python version tested
-    if [ "${version}" = "${python_versions[-1]}" ]; then
+    if [ "${py_version}" = "${python_versions[-1]}" ]; then
         terminate="always"
     else
         terminate="never"
@@ -88,7 +82,8 @@ for version in "${python_versions[@]}"; do
 
     # shellcheck disable=SC2086
     ansible-test windows-integration --color -v --retry-on-error "${ci}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
-        "${platforms[@]}" --changed-all-target "${changed_all_target}" --changed-all-mode "${changed_all_mode}" \
-        --docker default --python "${version}" \
-        --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}"
+        --changed-all-target "${changed_all_target}" --changed-all-mode "${changed_all_mode}" \
+        --controller "docker:default,python=${py_version}" \
+        --target "remote:windows/${version},connection=${connection}+${connection_setting},provider=${provider}" \
+        --remote-terminate "${terminate}" --remote-stage "${stage}"
 done

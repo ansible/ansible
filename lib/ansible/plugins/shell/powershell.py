@@ -100,6 +100,8 @@ class ShellModule(ShellBase):
     # Family of shells this has.  Must match the filename without extension
     SHELL_FAMILY = 'powershell'
 
+    # We try catch as some connection plugins don't have a console (PSRP).
+    _CONSOLE_ENCODING = "try { [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding } catch {}"
     _SHELL_REDIRECT_ALLNULL = '> $null'
     _SHELL_AND = ';'
 
@@ -157,13 +159,14 @@ class ShellModule(ShellBase):
         if not basefile:
             basefile = self.__class__._generate_temp_dir_name()
         basefile = self._escape(self._unquote(basefile))
-        basetmpdir = tmpdir if tmpdir else self.get_option('remote_tmp')
+        basetmpdir = self._escape(tmpdir if tmpdir else self.get_option('remote_tmp'))
 
-        script = '''
-        $tmp_path = [System.Environment]::ExpandEnvironmentVariables('%s')
-        $tmp = New-Item -Type Directory -Path $tmp_path -Name '%s'
+        script = f'''
+        {self._CONSOLE_ENCODING}
+        $tmp_path = [System.Environment]::ExpandEnvironmentVariables('{basetmpdir}')
+        $tmp = New-Item -Type Directory -Path $tmp_path -Name '{basefile}'
         Write-Output -InputObject $tmp.FullName
-        ''' % (basetmpdir, basefile)
+        '''
         return self._encode_script(script.strip())
 
     def expand_user(self, user_home_path, username=''):
@@ -177,7 +180,7 @@ class ShellModule(ShellBase):
             script = "Write-Output ((Get-Location).Path + '%s')" % self._escape(user_home_path[1:])
         else:
             script = "Write-Output '%s'" % self._escape(user_home_path)
-        return self._encode_script(script)
+        return self._encode_script(f"{self._CONSOLE_ENCODING}; {script}")
 
     def exists(self, path):
         path = self._escape(self._unquote(path))

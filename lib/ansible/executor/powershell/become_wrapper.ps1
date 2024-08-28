@@ -116,12 +116,11 @@ Write-AnsibleLog "INFO - parsed become input, user: '$username', type: '$logon_t
 # set to Stop and cannot be changed. Also need to split the payload from the wrapper to prevent potentially
 # sensitive content from being logged by the scriptblock logger.
 $bootstrap_wrapper = {
-    &chcp.com 65001 > $null
-    $exec_wrapper_str = [System.Console]::In.ReadToEnd()
-    $split_parts = $exec_wrapper_str.Split(@("`0`0`0`0"), 2, [StringSplitOptions]::RemoveEmptyEntries)
+    [Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding
+    $ew = [System.Console]::In.ReadToEnd()
+    $split_parts = $ew.Split(@("`0`0`0`0"), 2, [StringSplitOptions]::RemoveEmptyEntries)
     Set-Variable -Name json_raw -Value $split_parts[1]
-    $exec_wrapper = [ScriptBlock]::Create($split_parts[0])
-    &$exec_wrapper
+    &([ScriptBlock]::Create($split_parts[0]))
 }
 $exec_command = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($bootstrap_wrapper.ToString()))
 $lp_command_line = "powershell.exe -NonInteractive -NoProfile -ExecutionPolicy Bypass -EncodedCommand $exec_command"
