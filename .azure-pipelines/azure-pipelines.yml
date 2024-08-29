@@ -68,11 +68,16 @@ stages:
           nameFormat: Server {0}
           testFormat: windows/{0}/1
           targets:
-            - test: 2016/winrm/http
-            - test: 2019/winrm/https
-            - test: 2022/winrm/https
-            - test: 2022/psrp/http
-            - test: 2022/ssh/key
+            - name: 2016 WinRM HTTP
+              test: 2016/winrm/http
+            - name: 2019 WinRM HTTPS
+              test: 2019/winrm/https
+            - name: 2022 WinRM HTTPS
+              test: 2022/winrm/https
+            - name: 2022 PSRP HTTP
+              test: 2022/psrp/http
+            - name: 2022 SSH Key
+              test: 2022/ssh/key
   - stage: Remote
     dependsOn: []
     jobs:
@@ -183,11 +188,16 @@ stages:
           nameFormat: Server {0}
           testFormat: i/windows/{0}
           targets:
-            - test: 2016/winrm/http
-            - test: 2019/winrm/https
-            - test: 2022/winrm/https
-            - test: 2022/psrp/http
-            - test: 2022/ssh/key
+            - name: 2016 WinRM HTTP
+              test: 2016/winrm/http
+            - name: 2019 WinRM HTTPS
+              test: 2019/winrm/https
+            - name: 2022 WinRM HTTPS
+              test: 2022/winrm/https
+            - name: 2022 PSRP HTTP
+              test: 2022/psrp/http
+            - name: 2022 SSH Key
+              test: 2022/ssh/key
   - stage: Incidental
     dependsOn: []
     jobs:
