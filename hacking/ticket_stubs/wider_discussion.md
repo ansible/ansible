@@ -8,11 +8,10 @@ Reasons for this include:
 * INSERT REASONS!
 
 Because this project is very active, we're unlikely to see comments made on closed tickets and we lock them after some time.
-Can you please post on ansible-development list so we can talk about this idea with the wider group?
+Can you please post Ansible Forum so we can talk about this idea with the wider group?
 
-* <https://groups.google.com/forum/#!forum/ansible-devel>
+* [Ansible Core on the Ansible Forum](https://forum.ansible.com/tag/ansible-core)
 * Matrix: [#devel:ansible.im](https://matrix.to/#/#devel:ansible.im)
-* #ansible-devel on [irc.libera.chat](https://libera.chat/)
 
 For other alternatives, check this page for a more complete list of communication channels and their purposes:
 
