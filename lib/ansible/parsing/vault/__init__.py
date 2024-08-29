@@ -668,10 +668,11 @@ class VaultLib:
                 )
                 break
             except (ValueError, TypeError) as exc:
-                msg = "There was an issue with the vault"
+                msg = f"There was an issue with the vault: {exc}"
                 if filename:
                     msg += u' in %s' % (to_text(filename))
-                raise AnsibleVaultFormatError(msg, obj=obj) from exc
+                # Note: not doing from exc/orig_exc, but adding exc text as AnsibleError wont display when it has obj
+                raise AnsibleVaultFormatError(msg, obj=obj)
             except AnsibleError as e:
                 display.vvvv(u'Tried to use the vault secret (%s) to decrypt (%s) but it failed: %s' %
                              (to_text(vault_secret_id), to_text(filename), e))
