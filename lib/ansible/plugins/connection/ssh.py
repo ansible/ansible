@@ -1264,6 +1264,10 @@ class Connection(ConnectionBase):
 
             # Check the return code and rollover to next method if failed
             if returncode == 0:
+                # cannot control umask for file, but directory should be safe enough, setting perms for possible subsequent copies
+                (rc, out, err) = self.exec_command(f'chmod 0600 "{out_path}"', sudoable=False)
+                if not rc == 0:
+                    display.warning("Unable to set remote permissions for transfered '{out_path}': {err}")
                 return (returncode, stdout, stderr)
             else:
                 # If not in smart mode, the data will be printed by the raise below
