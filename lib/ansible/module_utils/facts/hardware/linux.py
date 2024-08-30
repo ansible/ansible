@@ -21,19 +21,15 @@ import glob
 import json
 import os
 import re
-import signal
 import sys
 import time
 
-from multiprocessing import cpu_count
-from multiprocessing.pool import ThreadPool
-
+from ansible.module_utils._internal._concurrent import _futures
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.common.text.formatters import bytes_to_human
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.utils import get_file_content, get_file_lines, get_mount_size
-from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import iteritems
 
 
@@ -53,70 +49,6 @@ def get_partition_uuid(partname):
             return uuid
 
     return None
-
-
-def _timeout_handler(signum, frame):
-    raise TimeoutError(f"Timeout reached in: {frame}")
-
-
-class _DummyRes():
-    ''' A real result, just not an async one'''
-
-    def __init__(self, func, args):
-        maxtime = timeout.GATHER_TIMEOUT or timeout.DEFAULT_GATHER_TIMEOUT
-        try:
-            old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
-            signal.alarm(maxtime)
-            self._result = func(*args)
-            signal.alarm(0)
-            signal.signal(signal.SIGALRM, old_handler)
-            self._success = True
-        except TimeoutError as e:
-            self._success = False
-            self._result = f'Exceeded maximum time "{maxtime}". {e!r}'
-        except Exception as e:
-            self._success = False
-            self._result = e
-
-    def get(self):
-        return self._result
-
-    def ready(self):
-        return True
-
-    def successful(self):
-        return self._success
-
-
-class _DummyPool():
-    ''' Not a real pool '''
-
-    def __init__(self, processes=None, initializer=None, initargs=()):
-        pass
-
-    def apply_async(self, func, *args):
-        return _DummyRes(func, *args)
-
-    def close(self):
-        pass
-
-
-def _get_thread_pool(size, warn=None):
-    """ INTERNAL ONLY Get a threadpool, fallback to dummy thread pool and allow env var for testing """
-    try:
-        allow_threads = not boolean(os.environ.get('_ANSIBLE_FACTS_DUMMY_POOL', False))
-    except TypeError as e:
-        allow_threads = True
-        if warn is not None:
-            warn(f"Non boolean value for _ANSIBLE_FACTS_DUMMY_POOL passed: {e!r}")
-
-    if allow_threads:
-        try:
-            return ThreadPool(processes=size)
-        except (IOError, OSError) as e:
-            if warn is not None:
-                warn(f"Cannot use multiprocessing, falling back on serial execution: {e!r}")
-    return _DummyPool()
 
 
 class LinuxHardware(Hardware):
@@ -644,7 +576,7 @@ class LinuxHardware(Hardware):
 
         # start threads to query each mount
         results = {}
-        pool = _get_thread_pool(size=min(len(mtab_entries), cpu_count()), warn=self.module.warn)
+        executor = _futures.DaemonThreadPoolExecutor()
         maxtime = timeout.GATHER_TIMEOUT or timeout.DEFAULT_GATHER_TIMEOUT
         for fields in mtab_entries:
             # Transform octal escape sequences
@@ -668,29 +600,29 @@ class LinuxHardware(Hardware):
                 if not self.MTAB_BIND_MOUNT_RE.match(options):
                     mount_info['options'] += ",bind"
 
-            results[mount] = {'info': mount_info, 'timelimit': time.time() + maxtime}
-            results[mount]['extra'] = pool.apply_async(self.get_mount_info, (mount, device, uuids))
+            results[mount] = {'info': mount_info, 'timelimit': time.monotonic() + maxtime}
+            results[mount]['extra'] = executor.submit(self.get_mount_info, mount, device, uuids)
 
         # done with spawning new workers, start gc
-        pool.close()
+        executor.shutdown()
 
         while results:  # wait for workers and get results
             for mount in list(results):
                 done = False
                 res = results[mount]['extra']
                 try:
-                    if res.ready():
+                    if res.done():
                         done = True
-                        if res.successful():
-                            mount_size, uuid = res.get()
+                        if res.exception() is None:
+                            mount_size, uuid = res.result()
                             if mount_size:
                                 results[mount]['info'].update(mount_size)
                             results[mount]['info']['uuid'] = uuid or 'N/A'
                         else:
                             # failed, try to find out why, if 'res.successful' we know there are no exceptions
-                            results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
+                            results[mount]['info']['note'] = f'Could not get extra information: {res.exception()}'
 
-                    elif time.time() > results[mount]['timelimit']:
+                    elif time.monotonic() > results[mount]['timelimit']:
                         done = True
                         self.module.warn("Timeout exceeded when getting mount info for %s" % mount)
                         results[mount]['info']['note'] = 'Could not get extra information due to timeout'
