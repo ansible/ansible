@@ -37,6 +37,7 @@ from ansible.playbook.taggable import Taggable
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
+from ansible.utils.vars import isidentifier
 
 __all__ = ['Task']
 
@@ -273,6 +274,10 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     def _validate_failed_when(self, attr, name, value):
         if not isinstance(value, list):
             setattr(self, name, [value])
+
+    def _validate_register(self, attr, name, value):
+        if value is not None and not isidentifier(value):
+            raise AnsibleParserError(f"Invalid variable name in 'register' specified: '{value}'")
 
     def post_validate(self, templar):
         '''

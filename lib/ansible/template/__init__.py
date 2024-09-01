@@ -469,7 +469,7 @@ class JinjaPluginIntercept(MutableMapping):
         if self._pluginloader.type == 'filter':
             # filter need wrapping
             if key in C.STRING_TYPE_FILTERS:
-                # avoid litera_eval when you WANT strings
+                # avoid literal_eval when you WANT strings
                 func = _wrap_native_text(func)
             else:
                 # conditionally unroll iterators/generators to avoid having to use `|list` after every filter

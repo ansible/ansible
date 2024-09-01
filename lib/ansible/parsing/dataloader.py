@@ -18,7 +18,7 @@ from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.parsing.quoting import unquote
 from ansible.parsing.utils.yaml import from_yaml
-from ansible.parsing.vault import VaultLib, b_HEADER, is_encrypted, is_encrypted_file, parse_vaulttext_envelope, PromptVaultSecret
+from ansible.parsing.vault import VaultLib, is_encrypted, is_encrypted_file, parse_vaulttext_envelope, PromptVaultSecret
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
 
@@ -329,11 +329,10 @@ class DataLoader:
                 if (is_role or self._is_role(path)) and b_pb_base_dir.endswith(b'/tasks'):
                     search.append(os.path.join(os.path.dirname(b_pb_base_dir), b_dirname, b_source))
                     search.append(os.path.join(b_pb_base_dir, b_source))
-                else:
-                    # don't add dirname if user already is using it in source
-                    if b_source.split(b'/')[0] != dirname:
-                        search.append(os.path.join(b_upath, b_dirname, b_source))
-                    search.append(os.path.join(b_upath, b_source))
+                # don't add dirname if user already is using it in source
+                if b_source.split(b'/')[0] != dirname:
+                    search.append(os.path.join(b_upath, b_dirname, b_source))
+                search.append(os.path.join(b_upath, b_source))
 
             # always append basedir as last resort
             # don't add dirname if user already is using it in source
@@ -389,7 +388,7 @@ class DataLoader:
                     # Limit how much of the file is read since we do not know
                     # whether this is a vault file and therefore it could be very
                     # large.
-                    if is_encrypted_file(f, count=len(b_HEADER)):
+                    if is_encrypted_file(f):
                         # if the file is encrypted and no password was specified,
                         # the decrypt call would throw an error, but we check first
                         # since the decrypt function doesn't know the file name

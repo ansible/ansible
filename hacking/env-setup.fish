@@ -64,25 +64,11 @@ if not set -q PYTHON_BIN
     end
 end
 
-# Generate egg_info so that pkg_resources works
-function gen_egg_info
-    # Check if ansible*.egg-info directory exists and remove if found
-    if test -d $PREFIX_PYTHONPATH/ansible*.egg-info
-        rm -rf $PREFIX_PYTHONPATH/ansible*.egg-info
-    end
-    # Execute setup.py egg_info using the chosen Python interpreter
-    eval $PYTHON_BIN setup.py egg_info
-end
-
 pushd $ANSIBLE_HOME
 if test -n "$QUIET"
-    # Run gen_egg_info in the background and redirect output to /dev/null
-    gen_egg_info &> /dev/null
     # Remove any .pyc files found
     find . -type f -name "*.pyc" -exec rm -f '{}' ';' &> /dev/null
 else
-    # Run gen_egg_info
-    gen_egg_info
     # Remove any .pyc files found
     find . -type f -name "*.pyc" -exec rm -f '{}' ';'
     # Display setup details

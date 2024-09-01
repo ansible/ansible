@@ -304,6 +304,14 @@ COLOR_HIGHLIGHT:
   env: [{name: ANSIBLE_COLOR_HIGHLIGHT}]
   ini:
   - {key: highlight, section: colors}
+COLOR_INCLUDED:
+  name: Color for 'included' task status
+  default: cyan
+  description: Defines the color to use when showing 'Included' task status.
+  env: [{name: ANSIBLE_COLOR_INCLUDED}]
+  ini:
+  - {key: included, section: colors}
+  version_added: '2.18'
 COLOR_OK:
   name: Color for 'ok' task status
   default: green
@@ -818,7 +826,9 @@ DEFAULT_LOCAL_TMP:
 DEFAULT_LOG_PATH:
   name: Ansible log file path
   default: ~
-  description: File to which Ansible will log on the controller. When empty logging is disabled.
+  description:
+  - File to which Ansible will log on the controller.
+  - When not set the logging is disabled.
   env: [{name: ANSIBLE_LOG_PATH}]
   ini:
   - {key: log_path, section: defaults}
@@ -863,8 +873,8 @@ DEFAULT_MODULE_COMPRESSION:
   env: []
   ini:
   - {key: module_compression, section: defaults}
-# vars:
-#   - name: ansible_module_compression
+  vars:
+    - name: ansible_module_compression
 DEFAULT_MODULE_NAME:
   name: Default adhoc module
   default: command
@@ -1016,7 +1026,7 @@ DEFAULT_STDOUT_CALLBACK:
 EDITOR:
   name: editor application to use
   default: vi
-  descrioption:
+  description:
     - for the cases in which Ansible needs to return a file within an editor, this chooses the application to use.
   ini:
     - section: defaults
@@ -1518,6 +1528,23 @@ GALAXY_REQUIRED_VALID_SIGNATURE_COUNT:
   - The number of signatures that must be successful during GPG signature verification while installing or verifying collections.
   - This should be a positive integer or all to indicate all signatures must successfully validate the collection.
   - Prepend + to the value to fail if no valid signatures are found for the collection.
+GALAXY_COLLECTION_IMPORT_POLL_INTERVAL:
+  description:
+    - The initial interval in seconds for polling the import status of a collection.
+    - This interval increases exponentially based on the :ref:`galaxy_collection_import_poll_factor`, with a maximum delay of 30 seconds.
+  type: float
+  default: 2.0
+  env:
+    - name: ANSIBLE_GALAXY_COLLECTION_IMPORT_POLL_INTERVAL
+  version_added: '2.18'
+GALAXY_COLLECTION_IMPORT_POLL_FACTOR:
+  description:
+    - The multiplier used to increase the :ref:`galaxy_collection_import_poll_interval` when checking the collection import status.
+  type: float
+  default: 1.5
+  env:
+    - name: ANSIBLE_GALAXY_COLLECTION_IMPORT_POLL_FACTOR
+  version_added: "2.18"
 HOST_KEY_CHECKING:
   # NOTE: constant not in use by ssh/paramiko plugins anymore, but they do support the same configuration sources
   # TODO: check non ssh connection plugins for use/migration
@@ -1779,7 +1806,7 @@ OLD_PLUGIN_CACHE_CLEARING:
 PAGER:
   name: pager application to use
   default: less
-  descrioption:
+  description:
     - for the cases in which Ansible needs to return output in a pageable fashion, this chooses the application to use.
   ini:
     - section: defaults
@@ -2116,4 +2143,35 @@ VERBOSE_TO_STDERR:
     - section: defaults
       key: verbose_to_stderr
   type: bool
-...
+_Z_TEST_ENTRY:
+  name: testentry
+  description: for tests
+  env:
+    - name: ANSIBLE_TEST_ENTRY
+    - name: ANSIBLE_TEST_ENTRY_D
+      deprecated:
+        why: for testing
+        version: '3.30'
+        alternatives: nothing
+  ini:
+    - section: testing
+      key: valid
+    - section: testing
+      key: deprecated
+      deprecated:
+        why: for testing
+        version: '3.30'
+        alternatives: nothing
+_Z_TEST_ENTRY_2:
+  version_added: '2.18'
+  name: testentry
+  description: for tests
+  deprecated:
+    why: for testing
+    version: '3.30'
+    alternatives: nothing
+  env:
+    - name: ANSIBLE_TEST_ENTRY2
+  ini:
+    - section: testing
+      key: valid2

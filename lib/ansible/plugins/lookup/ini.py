@@ -49,6 +49,12 @@ DOCUMENTATION = """
         default: False
         aliases: ['allow_none']
         version_added: '2.12'
+      interpolation:
+        description:
+          Allows for interpolation of values, see https://docs.python.org/3/library/configparser.html#configparser.BasicInterpolation
+        type: bool
+        default: True
+        version_added: '2.18'
     seealso:
       - ref: playbook_task_paths
         description: Search paths used for relative files.
@@ -140,7 +146,10 @@ class LookupModule(LookupBase):
         self.set_options(var_options=variables, direct=kwargs)
         paramvals = self.get_options()
 
-        self.cp = configparser.ConfigParser(allow_no_value=paramvals.get('allow_no_value', paramvals.get('allow_none')))
+        self.cp = configparser.ConfigParser(
+            allow_no_value=paramvals.get('allow_no_value', paramvals.get('allow_none')),
+            interpolation=configparser.BasicInterpolation() if paramvals.get('interpolation') else None,
+        )
         if paramvals['case_sensitive']:
             self.cp.optionxform = to_native
 

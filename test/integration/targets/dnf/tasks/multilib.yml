@@ -1,0 +1,70 @@
+- name: create conf file that forces x86_64 arch
+  copy:
+    content: |
+      [main]
+      arch=x86_64
+      ignorearch=true
+    dest: "{{ remote_tmp_dir }}/dnf-multilib.conf"
+
+- name: setting arch works differently in dnf5
+  copy:
+    content: |
+      x86_64
+    dest: /etc/dnf/vars/arch
+  when: dnf5|default(false)
+
+- block:
+    - name: test that only evr is compared, avoiding a situation when a specific arch would be considered as a "newer" package
+      dnf:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - "multilib-dinginessentail-1.0-1.x86_64"
+        - "multilib-dinginessentail-1.0-1.i686"
+      register: dnf_results
+
+    - assert:
+        that:
+          - dnf_results["results"][0] is changed
+          - dnf_results["results"][1] is changed
+
+    - name: make sure multilib-dinginessentail is not installed
+      dnf:
+        name: multilib-dinginessentail
+        state: absent
+
+    - name: install multilib-dinginessentail both archs
+      dnf:
+        name:
+          - "{{ repodir }}/multilib-dinginessentail-1.1-1.x86_64.rpm"
+          - "{{ repodir }}/multilib-dinginessentail-1.1-1.i686.rpm"
+        state: present
+        disable_gpg_check: true
+
+    - name: try to install lower version of multilib-dinginessentail from rpm file, without allow_downgrade, just one arch
+      dnf:
+        name: "{{ repodir }}/multilib-dinginessentail-1.0-1.i686.rpm"
+        state: present
+      register: dnf_result
+
+    - name: check multilib-dinginessentail with rpm
+      shell: rpm -q multilib-dinginessentail
+      register: rpm_result
+
+    - name: verify installation
+      assert:
+        that:
+            - "not dnf_result.changed"
+            - "rpm_result.stdout_lines[0].startswith('multilib-dinginessentail-1.1-1')"
+            - "rpm_result.stdout_lines[1].startswith('multilib-dinginessentail-1.1-1')"
+  always:
+    - name: Clean up
+      dnf:
+        name: multilib-dinginessentail
+        state: absent
+    - file:
+        name: /etc/dnf/vars/arch
+        state: absent
+  module_defaults:
+    dnf:
+      conf_file: "{{ remote_tmp_dir }}/dnf-multilib.conf"

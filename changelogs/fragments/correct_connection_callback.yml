@@ -1,0 +1,2 @@
+bugfixes:
+  - Callbacks now correctly get the resolved connection plugin name as the connection used.

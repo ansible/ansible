@@ -28,3 +28,19 @@ def test_logger():
     from ansible.utils.display import logger
 
     assert logger.root.level != logging.DEBUG
+
+
+def test_empty_logger():
+    # clear loaded modules to have unadultered test.
+    for loaded in list(sys.modules.keys()):
+        if 'ansible' in loaded:
+            del sys.modules[loaded]
+
+    # force logger to exist via config
+    from ansible import constants as C
+    C.DEFAULT_LOG_PATH = ''
+
+    # initialize logger
+    from ansible.utils.display import logger
+
+    assert logger is None

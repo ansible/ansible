@@ -1,0 +1,2 @@
+bugfixes:
+  - fixed the issue of creating user directory using tilde(~) always reported "changed".(https://github.com/ansible/ansible/issues/82490)

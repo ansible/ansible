@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 import keyword
-import random
+import secrets
 import uuid
 
 from collections.abc import MutableMapping, MutableSequence
@@ -37,7 +37,7 @@ ADDITIONAL_PY2_KEYWORDS = frozenset(("True", "False", "None"))
 _MAXSIZE = 2 ** 32
 cur_id = 0
 node_mac = ("%012x" % uuid.getnode())[:12]
-random_int = ("%08x" % random.randint(0, _MAXSIZE))[:8]
+random_int = ("%08x" % secrets.randbelow(_MAXSIZE))[:8]
 
 
 def get_unique_id():

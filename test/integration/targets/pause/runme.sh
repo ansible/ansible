@@ -2,7 +2,9 @@
 
 set -eux
 
-ANSIBLE_ROLES_PATH=../ ansible-playbook setup.yml
+source virtualenv.sh
+
+pip install pexpect==4.9.0
 
 # Test pause module when no tty and non-interactive with no seconds parameter.
 # This is to prevent playbooks from hanging in cron and Tower jobs.
@@ -23,7 +25,7 @@ if sleep 0 | ansible localhost -m pause -a 'seconds=1' 2>&1 | grep '\[WARNING\]:
     echo "Incorrectly issued warning when run in the background"
     exit 1
 else
-    echo "Succesfully ran in the background with no warning"
+    echo "Successfully ran in the background with no warning"
 fi
 
 # Test redirecting stdout

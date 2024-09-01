@@ -1,0 +1,12 @@
+minor_changes:
+  - ansible-test - Replace Fedora 39 container and remote with Fedora 40.
+  - ansible-test - Replace Alpine 3.19 container and remote with Alpine 3.20.
+  - ansible-test - Replace Ubuntu 20.04 container with Ubuntu 24.04 container.
+  - ansible-test - Add Ubuntu 24.04 remote.
+  - ansible-test - Replace RHEL 9.3 remote with RHEL 9.4.
+  - ansible-test - Replace FreeBSD 14.0 remote with FreeBSD 14.1.
+known_issues:
+  - ansible-test - When using the Fedora 40 container with Podman on a Ubuntu 24.04 host,
+    the ``unix-chkpwd`` AppArmor profile must be disabled on the host to allow SSH connections to the container.
+  - ansible-test - When using ansible-test containers with Podman on a Ubuntu 24.04 host,
+    ansible-test must be run as a non-root user to avoid permission issues caused by AppArmor.

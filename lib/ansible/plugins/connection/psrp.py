@@ -346,7 +346,7 @@ class Connection(ConnectionBase):
     has_pipelining = True
     allow_extras = True
 
-    # Satifies mypy as this connection only ever runs with this plugin
+    # Satisfies mypy as this connection only ever runs with this plugin
     _shell: PowerShellPlugin
 
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
@@ -632,39 +632,41 @@ end {
         buffer_size = max_b64_size - (max_b64_size % 1024)
 
         # setup the file stream with read only mode
-        setup_script = '''$ErrorActionPreference = "Stop"
-$path = '%s'
+        setup_script = '''param([string]$Path)
+$ErrorActionPreference = "Stop"
 
-if (Test-Path -Path $path -PathType Leaf) {
+if (Test-Path -LiteralPath $path -PathType Leaf) {
     $fs = New-Object -TypeName System.IO.FileStream -ArgumentList @(
         $path,
         [System.IO.FileMode]::Open,
         [System.IO.FileAccess]::Read,
         [System.IO.FileShare]::Read
     )
-    $buffer_size = %d
 } elseif (Test-Path -Path $path -PathType Container) {
     Write-Output -InputObject "[DIR]"
 } else {
     Write-Error -Message "$path does not exist"
     $host.SetShouldExit(1)
-}''' % (self._shell._escape(in_path), buffer_size)
+}'''
 
         # read the file stream at the offset and return the b64 string
-        read_script = '''$ErrorActionPreference = "Stop"
-$fs.Seek(%d, [System.IO.SeekOrigin]::Begin) > $null
-$buffer = New-Object -TypeName byte[] -ArgumentList $buffer_size
-$bytes_read = $fs.Read($buffer, 0, $buffer_size)
+        read_script = '''param([int64]$Offset, [int]$BufferSize)
+$ErrorActionPreference = "Stop"
+$fs.Seek($Offset, [System.IO.SeekOrigin]::Begin) > $null
+$buffer = New-Object -TypeName byte[] -ArgumentList $BufferSize
+$read = $fs.Read($buffer, 0, $buffer.Length)
 
-if ($bytes_read -gt 0) {
-    $bytes = $buffer[0..($bytes_read - 1)]
-    Write-Output -InputObject ([System.Convert]::ToBase64String($bytes))
+if ($read -gt 0) {
+    [System.Convert]::ToBase64String($buffer, 0, $read)
 }'''
 
         # need to run the setup script outside of the local scope so the
         # file stream stays active between fetch operations
-        rc, stdout, stderr = self._exec_psrp_script(setup_script,
-                                                    use_local_scope=False)
+        rc, stdout, stderr = self._exec_psrp_script(
+            setup_script,
+            use_local_scope=False,
+            arguments=[in_path],
+        )
         if rc != 0:
             raise AnsibleError("failed to setup file stream for fetch '%s': %s"
                                % (out_path, to_native(stderr)))
@@ -679,7 +681,10 @@ if ($bytes_read -gt 0) {
             while True:
                 display.vvvvv("PSRP FETCH %s to %s (offset=%d" %
                               (in_path, out_path, offset), host=self._psrp_host)
-                rc, stdout, stderr = self._exec_psrp_script(read_script % offset)
+                rc, stdout, stderr = self._exec_psrp_script(
+                    read_script,
+                    arguments=[offset, buffer_size],
+                )
                 if rc != 0:
                     raise AnsibleError("failed to transfer file to '%s': %s"
                                        % (out_path, to_native(stderr)))
@@ -813,7 +818,7 @@ if ($bytes_read -gt 0) {
         script: str,
         input_data: bytes | str | t.Iterable | None = None,
         use_local_scope: bool = True,
-        arguments: t.Iterable[str] | None = None,
+        arguments: t.Iterable[t.Any] | None = None,
     ) -> tuple[int, bytes, bytes]:
         # Check if there's a command on the current pipeline that still needs to be closed.
         if self._last_pipeline:

@@ -114,13 +114,13 @@ class TestGalaxy(unittest.TestCase):
 
     def test_init(self):
         galaxy_cli = GalaxyCLI(args=self.default_args)
-        self.assertTrue(isinstance(galaxy_cli, GalaxyCLI))
+        assert isinstance(galaxy_cli, GalaxyCLI)
 
     def test_display_min(self):
         gc = GalaxyCLI(args=self.default_args)
         role_info = {'name': 'some_role_name'}
         display_result = gc._display_role_info(role_info)
-        self.assertTrue(display_result.find('some_role_name') > -1)
+        assert display_result.find('some_role_name') > -1
 
     def test_display_galaxy_info(self):
         gc = GalaxyCLI(args=self.default_args)
@@ -139,7 +139,7 @@ class TestGalaxy(unittest.TestCase):
             # testing
             self.assertIsInstance(gc.galaxy, ansible.galaxy.Galaxy)
             self.assertEqual(mock_run.call_count, 1)
-            self.assertTrue(isinstance(gc.api, ansible.galaxy.api.GalaxyAPI))
+            assert isinstance(gc.api, ansible.galaxy.api.GalaxyAPI)
 
     def test_execute_remove(self):
         # installing role
@@ -200,32 +200,32 @@ class TestGalaxy(unittest.TestCase):
         ''' testing the options parser when the action 'import' is given '''
         gc = GalaxyCLI(args=["ansible-galaxy", "import", "foo", "bar"])
         gc.parse()
-        self.assertEqual(context.CLIARGS['wait'], True)
-        self.assertEqual(context.CLIARGS['reference'], None)
-        self.assertEqual(context.CLIARGS['check_status'], False)
-        self.assertEqual(context.CLIARGS['verbosity'], 0)
+        assert context.CLIARGS['wait']
+        assert context.CLIARGS['reference'] is None
+        assert not context.CLIARGS['check_status']
+        assert context.CLIARGS['verbosity'] == 0
 
     def test_parse_info(self):
         ''' testing the options parser when the action 'info' is given '''
         gc = GalaxyCLI(args=["ansible-galaxy", "info", "foo", "bar"])
         gc.parse()
-        self.assertEqual(context.CLIARGS['offline'], False)
+        assert not context.CLIARGS['offline']
 
     def test_parse_init(self):
         ''' testing the options parser when the action 'init' is given '''
         gc = GalaxyCLI(args=["ansible-galaxy", "init", "foo"])
         gc.parse()
-        self.assertEqual(context.CLIARGS['offline'], False)
-        self.assertEqual(context.CLIARGS['force'], False)
+        assert not context.CLIARGS['offline']
+        assert not context.CLIARGS['force']
 
     def test_parse_install(self):
         ''' testing the options parser when the action 'install' is given '''
         gc = GalaxyCLI(args=["ansible-galaxy", "install"])
         gc.parse()
-        self.assertEqual(context.CLIARGS['ignore_errors'], False)
-        self.assertEqual(context.CLIARGS['no_deps'], False)
-        self.assertEqual(context.CLIARGS['requirements'], None)
-        self.assertEqual(context.CLIARGS['force'], False)
+        assert not context.CLIARGS['ignore_errors']
+        assert not context.CLIARGS['no_deps']
+        assert context.CLIARGS['requirements'] is None
+        assert not context.CLIARGS['force']
 
     def test_parse_list(self):
         ''' testing the options parser when the action 'list' is given '''
@@ -243,17 +243,17 @@ class TestGalaxy(unittest.TestCase):
         ''' testing the options parswer when the action 'search' is given '''
         gc = GalaxyCLI(args=["ansible-galaxy", "search"])
         gc.parse()
-        self.assertEqual(context.CLIARGS['platforms'], None)
-        self.assertEqual(context.CLIARGS['galaxy_tags'], None)
-        self.assertEqual(context.CLIARGS['author'], None)
+        assert context.CLIARGS['platforms'] is None
+        assert context.CLIARGS['galaxy_tags'] is None
+        assert context.CLIARGS['author'] is None
 
     def test_parse_setup(self):
         ''' testing the options parser when the action 'setup' is given '''
         gc = GalaxyCLI(args=["ansible-galaxy", "setup", "source", "github_user", "github_repo", "secret"])
         gc.parse()
-        self.assertEqual(context.CLIARGS['verbosity'], 0)
-        self.assertEqual(context.CLIARGS['remove_id'], None)
-        self.assertEqual(context.CLIARGS['setup_list'], False)
+        assert context.CLIARGS['verbosity'] == 0
+        assert context.CLIARGS['remove_id'] is None
+        assert not context.CLIARGS['setup_list']
 
 
 class ValidRoleTests(object):
@@ -1090,7 +1090,7 @@ def test_parse_requirements_file_that_isnt_yaml(requirements_cli, requirements_f
 - galaxy.role
 - anotherrole
 ''')], indirect=True)
-def test_parse_requirements_in_older_format_illega(requirements_cli, requirements_file):
+def test_parse_requirements_in_older_format_illegal(requirements_cli, requirements_file):
     expected = "Expecting requirements file to be a dict with the key 'collections' that contains a list of " \
                "collections to install"
 

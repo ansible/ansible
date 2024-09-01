@@ -2448,3 +2448,87 @@
       loop:
         - '{{ src }}'
         - '{{ src }}_dest'
+
+- name: Verify atime and mtime update on content change (same partition)
+  vars:
+    remote_file: "{{ remote_tmp_dir }}/foo.txt"
+    ansible_remote_tmp: "{{ remote_tmp_dir }}"
+  block:
+    - name: Create a dest file
+      shell: "echo Test content > {{ remote_file }}"
+      register: create_dest_result
+
+    - name: Check the stat results of the file before copying
+      stat:
+        path: "{{ remote_file }}"
+      register: stat_results_before_copy
+
+    - name: Overwrite the file using the content system
+      copy:
+        content: "modified"
+        dest: "{{ remote_file }}"
+        decrypt: no
+      register: copy_result
+
+    - name: Check the stat results of the file after copying
+      stat:
+        path: "{{ remote_file }}"
+      register: stat_results_after_copy
+
+    - name: Assert that the file has changed
+      assert:
+         that:
+           - "create_dest_result is changed"
+           - "copy_result is changed"
+           - "'content' not in copy_result"
+           - "stat_results_before_copy.stat.atime < stat_results_after_copy.stat.atime"
+           - "stat_results_before_copy.stat.mtime < stat_results_after_copy.stat.mtime"
+  always:
+    - name: clean up dest file
+      file:
+        path: '{{ item }}'
+        state: absent
+      loop:
+        - '{{ remote_file }}'
+
+- name: Verify atime and mtime update on content change (diff partition)
+  vars:
+    remote_file: "/var/tmp/foo.txt"
+    ansible_remote_tmp: "/tmp"
+  block:
+    - name: Create a dest file
+      shell: "echo Test content > {{ remote_file }}"
+      register: create_dest_result
+
+    - name: Check the stat results of the file before copying
+      stat:
+        path: "{{ remote_file }}"
+      register: stat_results_before_copy
+
+    - name: Overwrite the file using the content system
+      copy:
+        content: "modified"
+        dest: "{{ remote_file }}"
+        decrypt: no
+      register: copy_result
+
+    - name: Check the stat results of the file after copying
+      stat:
+        path: "{{ remote_file }}"
+      register: stat_results_after_copy
+
+    - name: Assert that the file has changed
+      assert:
+         that:
+           - "create_dest_result is changed"
+           - "copy_result is changed"
+           - "'content' not in copy_result"
+           - "stat_results_before_copy.stat.atime < stat_results_after_copy.stat.atime"
+           - "stat_results_before_copy.stat.mtime < stat_results_after_copy.stat.mtime"
+  always:
+    - name: clean up dest file
+      file:
+        path: '{{ item }}'
+        state: absent
+      loop:
+        - '{{ remote_file }}'

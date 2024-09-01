@@ -1,0 +1,3 @@
+minor_changes:
+    - Add ``uid_min``, ``uid_max`` to the user plugin to overwrite the defaults provided by the ``/etc/login.defs`` file (https://github.com/ansible/ansible/pull/81770).
+    - Add ``gid_min``, ``gid_max`` to the group plugin to overwrite the defaults provided by the ``/etc/login.defs`` file (https://github.com/ansible/ansible/pull/81770).

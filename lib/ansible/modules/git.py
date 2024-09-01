@@ -241,57 +241,57 @@ notes:
 EXAMPLES = '''
 - name: Git checkout
   ansible.builtin.git:
-    repo: 'https://foosball.example.org/path/to/repo.git'
-    dest: /srv/checkout
+    repo: 'https://github.com/ansible/ansible.git'
+    dest: /tmp/checkout
     version: release-0.22
 
 - name: Read-write git checkout from github
   ansible.builtin.git:
-    repo: git@github.com:mylogin/hello.git
-    dest: /home/mylogin/hello
+    repo: git@github.com:ansible/ansible.git
+    dest: /tmp/checkout
 
 - name: Just ensuring the repo checkout exists
   ansible.builtin.git:
-    repo: 'https://foosball.example.org/path/to/repo.git'
-    dest: /srv/checkout
+    repo: 'https://github.com/ansible/ansible.git'
+    dest: /tmp/checkout
     update: no
 
 - name: Just get information about the repository whether or not it has already been cloned locally
   ansible.builtin.git:
-    repo: 'https://foosball.example.org/path/to/repo.git'
-    dest: /srv/checkout
+    repo: git@github.com:ansible/ansible.git
+    dest: /tmp/checkout
     clone: no
     update: no
 
 - name: Checkout a github repo and use refspec to fetch all pull requests
   ansible.builtin.git:
-    repo: https://github.com/ansible/ansible-examples.git
-    dest: /src/ansible-examples
+    repo: 'https://github.com/ansible/ansible.git'
+    dest: /tmp/checkout
     refspec: '+refs/pull/*:refs/heads/*'
 
 - name: Create git archive from repo
   ansible.builtin.git:
-    repo: https://github.com/ansible/ansible-examples.git
-    dest: /src/ansible-examples
-    archive: /tmp/ansible-examples.zip
+    repo: git@github.com:ansible/ansible.git
+    dest: /tmp/checkout
+    archive: /tmp/ansible.zip
 
 - name: Clone a repo with separate git directory
   ansible.builtin.git:
-    repo: https://github.com/ansible/ansible-examples.git
-    dest: /src/ansible-examples
-    separate_git_dir: /src/ansible-examples.git
+    repo: 'https://github.com/ansible/ansible.git'
+    dest: /tmp/checkout
+    separate_git_dir: /tmp/repo
 
 - name: Example clone of a single branch
   ansible.builtin.git:
-    repo: https://github.com/ansible/ansible-examples.git
-    dest: /src/ansible-examples
+    repo: git@github.com:ansible/ansible.git
+    dest: /tmp/checkout
     single_branch: yes
     version: master
 
 - name: Avoid hanging when http(s) password is missing
   ansible.builtin.git:
-    repo: https://github.com/ansible/could-be-a-private-repo
-    dest: /src/from-private-repo
+    repo: 'https://github.com/ansible/ansible.git'
+    dest: /tmp/checkout
   environment:
     GIT_TERMINAL_PROMPT: 0 # reports "terminal prompts disabled" on missing password
     # or GIT_ASKPASS: /bin/true # for git before version 2.3.0, reports "Authentication failed" on missing password
@@ -468,7 +468,7 @@ def write_ssh_wrapper(module):
 def set_git_ssh_env(key_file, ssh_opts, git_version, module):
     '''
         use environment variables to configure git's ssh execution,
-        which varies by version but this functino should handle all.
+        which varies by version but this function should handle all.
     '''
 
     # initialise to existing ssh opts and/or append user provided

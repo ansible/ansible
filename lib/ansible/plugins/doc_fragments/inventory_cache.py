@@ -35,7 +35,7 @@ options:
         key: cache_plugin
   cache_timeout:
     description:
-      - Cache duration in seconds
+      - Cache duration in seconds.
     default: 3600
     type: int
     env:
@@ -60,7 +60,7 @@ options:
         key: cache_connection
   cache_prefix:
     description:
-      - Prefix to use for cache plugin files/tables
+      - Prefix to use for cache plugin files/tables.
     default: ansible_inventory_
     env:
       - name: ANSIBLE_CACHE_PLUGIN_PREFIX

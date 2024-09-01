@@ -19,7 +19,6 @@
     expires: 2529881062
   register: user_test_local_expires1
   tags:
-    - timezone
     - user_test_local_mode
 
 - name: Set user expiration again to ensure no change is made
@@ -30,7 +29,6 @@
     expires: 2529881062
   register: user_test_local_expires2
   tags:
-    - timezone
     - user_test_local_mode
 
 - name: Ensure that account with expiration was created and did not change on subsequent run
@@ -57,56 +55,6 @@
       tags:
         - user_test_local_mode
   when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
-
-- name: Change timezone
-  timezone:
-    name: America/Denver
-  register: original_timezone
-  tags:
-    - timezone
-    - user_test_local_mode
-
-- name: Change system timezone to make sure expiration comparison works properly
-  block:
-    - name: Create user with expiration again to ensure no change is made in a new timezone
-      user:
-        name: local_ansibulluser
-        state: present
-        local: yes
-        expires: 2529881062
-      register: user_test_local_different_tz
-      tags:
-        - timezone
-        - user_test_local_mode
-
-    - name: Ensure that no change was reported
-      assert:
-        that:
-          - user_test_local_different_tz is not changed
-      tags:
-        - timezone
-        - user_test_local_mode
-
-  always:
-    - name: Restore original timezone - {{ original_timezone.diff.before.name }}
-      timezone:
-        name: "{{ original_timezone.diff.before.name }}"
-      when: original_timezone.diff.before.name != "n/a"
-      tags:
-        - timezone
-        - user_test_local_mode
-
-    - name: Restore original timezone when n/a
-      file:
-        path: /etc/sysconfig/clock
-        state: absent
-      when:
-        - original_timezone.diff.before.name == "n/a"
-        - "'/etc/sysconfig/clock' in original_timezone.msg"
-      tags:
-        - timezone
-        - user_test_local_mode
-
 
 - name: Unexpire user
   user:

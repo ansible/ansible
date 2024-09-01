@@ -54,7 +54,7 @@
         throttle: 12
       throttle: 15
     - block:
-      - name: "Teat 5 (max throttle: 3)"
+      - name: "Test 5 (max throttle: 3)"
         script: "test_throttle.py {{throttledir}} {{inventory_hostname}} 3"
         vars:
           test_id: 5

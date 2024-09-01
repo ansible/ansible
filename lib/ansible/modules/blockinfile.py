@@ -50,12 +50,10 @@ options:
     description:
     - If specified and no begin/ending O(marker) lines are found, the block will be inserted after the last match of specified regular expression.
     - A special value is available; V(EOF) for inserting the block at the end of the file.
-    - If specified regular expression has no matches, V(EOF) will be used instead.
+    - If specified regular expression has no matches or no value is passed, V(EOF) will be used instead.
     - The presence of the multiline flag (?m) in the regular expression controls whether the match is done line by line or with multiple lines.
       This behaviour was added in ansible-core 2.14.
     type: str
-    choices: [ EOF, '*regex*' ]
-    default: EOF
   insertbefore:
     description:
     - If specified and no begin/ending O(marker) lines are found, the block will be inserted before the last match of specified regular expression.
@@ -64,7 +62,6 @@ options:
     - The presence of the multiline flag (?m) in the regular expression controls whether the match is done line by line or with multiple lines.
       This behaviour was added in ansible-core 2.14.
     type: str
-    choices: [ BOF, '*regex*' ]
   create:
     description:
     - Create a new file if it does not exist.

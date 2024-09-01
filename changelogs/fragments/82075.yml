@@ -1,0 +1,2 @@
+bugfixes:
+  - addressed issue of trailing text been ignored, non-ASCII characters are parsed, enhance white space handling and fixed overly permissive issue of human_to_bytes filter(https://github.com/ansible/ansible/issues/82075)

@@ -516,7 +516,7 @@ class DarwinStrategy(BaseStrategy):
     However, macOS also has LocalHostName and ComputerName settings.
     LocalHostName controls the Bonjour/ZeroConf name, used by services
     like AirDrop. This class implements a method, _scrub_hostname(), that mimics
-    the transformations macOS makes on hostnames when enterened in the Sharing
+    the transformations macOS makes on hostnames when entered in the Sharing
     preference pane. It replaces spaces with dashes and removes all special
     characters.
 
@@ -886,8 +886,6 @@ def main():
 
     if name != current_hostname:
         name_before = current_hostname
-    elif name != permanent_hostname:
-        name_before = permanent_hostname
     else:
         name_before = permanent_hostname
 

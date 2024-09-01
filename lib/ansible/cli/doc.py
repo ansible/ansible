@@ -50,7 +50,7 @@ PB_OBJECTS = ['Play', 'Role', 'Block', 'Task', 'Handler']
 PB_LOADED = {}
 SNIPPETS = ['inventory', 'lookup', 'module']
 
-# harcoded from ascii values
+# hardcoded from ascii values
 STYLE = {
     'BLINK': '\033[5m',
     'BOLD': '\033[1m',
@@ -387,6 +387,12 @@ class RoleMixin(object):
 
         for role, collection, role_path in (roles | collroles):
             argspec = self._load_argspec(role, role_path, collection)
+            if 'error' in argspec:
+                if fail_on_errors:
+                    raise argspec['exception']
+                else:
+                    display.warning('Skipping role (%s) due to: %s' % (role, argspec['error']), True)
+                    continue
             fqcn, doc = self._build_doc(role, role_path, collection, argspec, entry_point)
             if doc:
                 result[fqcn] = doc
@@ -887,6 +893,7 @@ class DocCLI(CLI, RoleMixin):
         plugin_type = context.CLIARGS['type'].lower()
         do_json = context.CLIARGS['json_format'] or context.CLIARGS['dump']
         listing = context.CLIARGS['list_files'] or context.CLIARGS['list_dir']
+        no_fail = bool(not context.CLIARGS['no_fail_on_errors'])
 
         if context.CLIARGS['list_files']:
             content = 'files'
@@ -909,7 +916,6 @@ class DocCLI(CLI, RoleMixin):
             docs['all'] = {}
             for ptype in ptypes:
 
-                no_fail = bool(not context.CLIARGS['no_fail_on_errors'])
                 if ptype == 'role':
                     roles = self._create_role_list(fail_on_errors=no_fail)
                     docs['all'][ptype] = self._create_role_doc(roles.keys(), context.CLIARGS['entry_point'], fail_on_errors=no_fail)
@@ -935,7 +941,7 @@ class DocCLI(CLI, RoleMixin):
             if plugin_type == 'keyword':
                 docs = DocCLI._get_keywords_docs(context.CLIARGS['args'])
             elif plugin_type == 'role':
-                docs = self._create_role_doc(context.CLIARGS['args'], context.CLIARGS['entry_point'])
+                docs = self._create_role_doc(context.CLIARGS['args'], context.CLIARGS['entry_point'], fail_on_errors=no_fail)
             else:
                 # display specific plugin docs
                 docs = self._get_plugins_docs(plugin_type, context.CLIARGS['args'])
@@ -1089,7 +1095,7 @@ class DocCLI(CLI, RoleMixin):
             text = DocCLI.get_man_text(doc, collection_name, plugin_type)
         except Exception as e:
             display.vvv(traceback.format_exc())
-            raise AnsibleError("Unable to retrieve documentation from '%s' due to: %s" % (plugin, to_native(e)), orig_exc=e)
+            raise AnsibleError("Unable to retrieve documentation from '%s'" % (plugin), orig_exc=e)
 
         return text
 
@@ -1195,7 +1201,7 @@ class DocCLI(CLI, RoleMixin):
                     opt_leadin = "-"
                 key = "%s%s %s" % (base_indent, opt_leadin, _format(o, 'yellow'))
 
-            # description is specifically formated and can either be string or list of strings
+            # description is specifically formatted and can either be string or list of strings
             if 'description' not in opt:
                 raise AnsibleError("All (sub-)options and return values must have a 'description' field")
             text.append('')
@@ -1387,16 +1393,15 @@ class DocCLI(CLI, RoleMixin):
         if doc.get('deprecated', False):
             text.append(_format("DEPRECATED: ", 'bold', 'DEP'))
             if isinstance(doc['deprecated'], dict):
-                if 'removed_at_date' in doc['deprecated']:
-                    text.append(
-                        "\tReason: %(why)s\n\tWill be removed in a release after %(removed_at_date)s\n\tAlternatives: %(alternative)s" % doc.pop('deprecated')
-                    )
-                else:
-                    if 'version' in doc['deprecated'] and 'removed_in' not in doc['deprecated']:
-                        doc['deprecated']['removed_in'] = doc['deprecated']['version']
-                    text.append("\tReason: %(why)s\n\tWill be removed in: Ansible %(removed_in)s\n\tAlternatives: %(alternative)s" % doc.pop('deprecated'))
+                if 'removed_at_date' not in doc['deprecated'] and 'version' in doc['deprecated'] and 'removed_in' not in doc['deprecated']:
+                    doc['deprecated']['removed_in'] = doc['deprecated']['version']
+                try:
+                    text.append('\t' + C.config.get_deprecated_msg_from_config(doc['deprecated'], True))
+                except KeyError as e:
+                    raise AnsibleError("Invalid deprecation documentation structure", orig_exc=e)
             else:
-                text.append("%s" % doc.pop('deprecated'))
+                text.append("%s" % doc['deprecated'])
+            del doc['deprecated']
 
         if doc.pop('has_action', False):
             text.append("")

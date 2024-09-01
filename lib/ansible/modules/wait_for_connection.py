@@ -14,7 +14,8 @@ description:
 - Waits for a total of O(timeout) seconds.
 - Retries the transport connection after a timeout of O(connect_timeout).
 - Tests the transport connection every O(sleep) seconds.
-- This module makes use of internal ansible transport (and configuration) and the ping/win_ping module to guarantee correct end-to-end functioning.
+- This module makes use of internal ansible transport (and configuration) and the M(ansible.builtin.ping)/M(ansible.windows.win_ping)
+  modules to guarantee correct end-to-end functioning.
 - This module is also supported for Windows targets.
 version_added: '2.3'
 options:

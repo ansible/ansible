@@ -5,6 +5,7 @@ import contextlib
 import fnmatch
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -23,6 +24,7 @@ def collect_sdist_files(complete_file_list: list[str]) -> list[str]:
         '.cherry_picker.toml',
         '.git*',
         '.mailmap',
+        'bin/*',
         'changelogs/README.md',
         'changelogs/config.yaml',
         'changelogs/fragments/*',
@@ -36,13 +38,13 @@ def collect_sdist_files(complete_file_list: list[str]) -> list[str]:
         'SOURCES.txt',
         'dependency_links.txt',
         'entry_points.txt',
-        'not-zip-safe',
         'requires.txt',
         'top_level.txt',
     )
 
     sdist_files.append('PKG-INFO')
-    sdist_files.extend(f'lib/ansible_core.egg-info/{name}' for name in egg_info)
+    sdist_files.append('setup.cfg')
+    sdist_files.extend(f'ansible_core.egg-info/{name}' for name in egg_info)
 
     return sdist_files
 
@@ -50,8 +52,12 @@ def collect_sdist_files(complete_file_list: list[str]) -> list[str]:
 def collect_wheel_files(complete_file_list: list[str]) -> list[str]:
     """Return a list of files which should be present in the wheel."""
     wheel_files = []
+    license_files = []
 
     for path in complete_file_list:
+        if path.startswith('licenses/'):
+            license_files.append(os.path.relpath(path, 'licenses'))
+
         if path.startswith('lib/ansible/'):
             prefix = 'lib'
         elif path.startswith('test/lib/ansible_test/'):
@@ -61,16 +67,15 @@ def collect_wheel_files(complete_file_list: list[str]) -> list[str]:
 
         wheel_files.append(os.path.relpath(path, prefix))
 
-    dist_info = (
+    dist_info = [
         'COPYING',
         'METADATA',
         'RECORD',
         'WHEEL',
         'entry_points.txt',
         'top_level.txt',
-    )
+    ] + license_files
 
-    wheel_files.append(f'ansible_core-{__version__}.data/scripts/ansible-test')
     wheel_files.extend(f'ansible_core-{__version__}.dist-info/{name}' for name in dist_info)
 
     return wheel_files
@@ -94,12 +99,11 @@ def clean_repository(complete_file_list: list[str]) -> t.Generator[str, None, No
 
 def build(source_dir: str, tmp_dir: str) -> tuple[pathlib.Path, pathlib.Path]:
     """Create a sdist and wheel."""
-    create = subprocess.run(
-        [sys.executable, '-m', 'build', '--no-isolation', '--outdir', tmp_dir],
+    create = subprocess.run(  # pylint: disable=subprocess-run-check
+        [sys.executable, '-m', 'build', '--outdir', tmp_dir],
         stdin=subprocess.DEVNULL,
         capture_output=True,
         text=True,
-        check=False,
         cwd=source_dir,
     )
 
@@ -152,11 +156,57 @@ def main() -> None:
     """Main program entry point."""
     complete_file_list = sys.argv[1:] or sys.stdin.read().splitlines()
 
-    errors = []
+    python_version = '.'.join(map(str, sys.version_info[:2]))
+    python_min = os.environ['ANSIBLE_TEST_MIN_PYTHON']
+    python_max = os.environ['ANSIBLE_TEST_MAX_PYTHON']
+
+    if python_version == python_min:
+        use_upper_setuptools_version = False
+    elif python_version == python_max:
+        use_upper_setuptools_version = True
+    else:
+        raise RuntimeError(f'Python version {python_version} is neither the minimum {python_min} or the maximum {python_max}.')
+
+    errors = check_build(complete_file_list, use_upper_setuptools_version)
+
+    for error in errors:
+        print(error)
+
+
+def set_setuptools_version(repo_dir: str, use_upper_version: bool) -> str:
+    pyproject_toml = pathlib.Path(repo_dir) / 'pyproject.toml'
+
+    current = pyproject_toml.read_text()
+    pattern = re.compile(r'^(?P<begin>requires = \["setuptools >= )(?P<lower>[^,]+)(?P<middle>, <= )(?P<upper>[^"]+)(?P<end>".*)$', re.MULTILINE)
+    match = pattern.search(current)
+
+    if not match:
+        raise RuntimeError(f"Unable to find the 'requires' entry in: {pyproject_toml}")
+
+    lower_version = match.group('lower')
+    upper_version = match.group('upper')
+
+    requested_version = upper_version if use_upper_version else lower_version
+
+    updated = pattern.sub(fr'\g<begin>{requested_version}\g<middle>{requested_version}\g<end>', current)
+
+    if current == updated:
+        raise RuntimeError("Failed to set the setuptools version.")
+
+    pyproject_toml.write_text(updated)
+
+    return requested_version
+
+
+def check_build(complete_file_list: list[str], use_upper_setuptools_version: bool) -> list[str]:
+    errors: list[str] = []
+    complete_file_list = list(complete_file_list)  # avoid mutation of input
 
     # Limit visible files to those reported by ansible-test.
     # This avoids including files which are not committed to git.
     with clean_repository(complete_file_list) as clean_repo_dir:
+        setuptools_version = set_setuptools_version(clean_repo_dir, use_upper_setuptools_version)
+
         if __version__.endswith('.dev0'):
             # Make sure a changelog exists for this version when testing from devel.
             # When testing from a stable branch the changelog will already exist.
@@ -177,8 +227,9 @@ def main() -> None:
             errors.extend(check_files('sdist', expected_sdist_files, actual_sdist_files))
             errors.extend(check_files('wheel', expected_wheel_files, actual_wheel_files))
 
-    for error in errors:
-        print(error)
+    errors = [f'{msg} ({setuptools_version})' for msg in errors]
+
+    return errors
 
 
 if __name__ == '__main__':

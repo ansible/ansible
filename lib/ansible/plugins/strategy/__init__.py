@@ -54,7 +54,7 @@ from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.utils.sentinel import Sentinel
-from ansible.utils.vars import combine_vars, isidentifier
+from ansible.utils.vars import combine_vars
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
 display = Display()
@@ -646,7 +646,7 @@ class StrategyBase:
                 for result_item in result_items:
                     if '_ansible_notify' in result_item and task_result.is_changed():
                         # only ensure that notified handlers exist, if so save the notifications for when
-                        # handlers are actually flushed so the last defined handlers are exexcuted,
+                        # handlers are actually flushed so the last defined handlers are executed,
                         # otherwise depending on the setting either error or warn
                         host_state = iterator.get_state_for_host(original_host.name)
                         for notification in result_item['_ansible_notify']:
@@ -766,10 +766,6 @@ class StrategyBase:
 
             # register final results
             if original_task.register:
-
-                if not isidentifier(original_task.register):
-                    raise AnsibleError("Invalid variable name in 'register' specified: '%s'" % original_task.register)
-
                 host_list = self.get_task_hosts(iterator, original_host, original_task)
 
                 clean_copy = strip_internal_keys(module_response_deepcopy(task_result._result))
@@ -997,7 +993,7 @@ class StrategyBase:
             if _evaluate_conditional(target_host):
                 for host in self._inventory.get_hosts(iterator._play.hosts):
                     if host.name not in self._tqm._unreachable_hosts:
-                        iterator.set_run_state_for_host(host.name, IteratingStates.COMPLETE)
+                        iterator.end_host(host.name)
                 msg = "ending batch"
             else:
                 skipped = True
@@ -1006,7 +1002,7 @@ class StrategyBase:
             if _evaluate_conditional(target_host):
                 for host in self._inventory.get_hosts(iterator._play.hosts):
                     if host.name not in self._tqm._unreachable_hosts:
-                        iterator.set_run_state_for_host(host.name, IteratingStates.COMPLETE)
+                        iterator.end_host(host.name)
                         # end_play is used in PlaybookExecutor/TQM to indicate that
                         # the whole play is supposed to be ended as opposed to just a batch
                         iterator.end_play = True
@@ -1016,8 +1012,7 @@ class StrategyBase:
                 skip_reason += ', continuing play'
         elif meta_action == 'end_host':
             if _evaluate_conditional(target_host):
-                iterator.set_run_state_for_host(target_host.name, IteratingStates.COMPLETE)
-                iterator._play._removed_hosts.append(target_host.name)
+                iterator.end_host(target_host.name)
                 msg = "ending play for %s" % target_host.name
             else:
                 skipped = True
@@ -1025,13 +1020,23 @@ class StrategyBase:
                 # TODO: Nix msg here? Left for historical reasons, but skip_reason exists now.
                 msg = "end_host conditional evaluated to false, continuing execution for %s" % target_host.name
         elif meta_action == 'role_complete':
-            # Allow users to use this in a play as reported in https://github.com/ansible/ansible/issues/22286?
-            # How would this work with allow_duplicates??
             if task.implicit:
                 role_obj = self._get_cached_role(task, iterator._play)
                 if target_host.name in role_obj._had_task_run:
                     role_obj._completed[target_host.name] = True
                     msg = 'role_complete for %s' % target_host.name
+        elif meta_action == 'end_role':
+            if _evaluate_conditional(target_host):
+                while True:
+                    state, task = iterator.get_next_task_for_host(target_host, peek=True)
+                    if task.action in C._ACTION_META and task.args.get("_raw_params") == "role_complete":
+                        break
+                    iterator.set_state_for_host(target_host.name, state)
+                    display.debug("'%s' skipped because role has been ended via 'end_role'" % task)
+                msg = 'ending role %s for %s' % (task._role.get_name(), target_host.name)
+            else:
+                skipped = True
+                skip_reason += 'continuing role %s for %s' % (task._role.get_name(), target_host.name)
         elif meta_action == 'reset_connection':
             all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task,
                                                        _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)

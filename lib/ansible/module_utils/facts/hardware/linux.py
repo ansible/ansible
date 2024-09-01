@@ -21,6 +21,7 @@ import glob
 import json
 import os
 import re
+import signal
 import sys
 import time
 
@@ -36,6 +37,10 @@ from ansible.module_utils.six import iteritems
 
 # import this as a module to ensure we get the same module instance
 from ansible.module_utils.facts import timeout
+
+
+def _timeout_handler(signum, frame):
+    raise TimeoutError(f"Timeout reached in:{frame}")
 
 
 def get_partition_uuid(partname):
@@ -577,7 +582,12 @@ class LinuxHardware(Hardware):
 
         # start threads to query each mount
         results = {}
-        pool = ThreadPool(processes=min(len(mtab_entries), cpu_count()))
+        pool = None
+        try:
+            pool = ThreadPool(processes=min(len(mtab_entries), cpu_count()))
+        except (IOError, OSError) as e:
+            self.module.warn(f"Cannot use multiprocessing, falling back on serial execution: {e}")
+
         maxtime = timeout.GATHER_TIMEOUT or timeout.DEFAULT_GATHER_TIMEOUT
         for fields in mtab_entries:
             # Transform octal escape sequences
@@ -601,47 +611,67 @@ class LinuxHardware(Hardware):
                 if not self.MTAB_BIND_MOUNT_RE.match(options):
                     mount_info['options'] += ",bind"
 
-            results[mount] = {'info': mount_info,
-                              'extra': pool.apply_async(self.get_mount_info, (mount, device, uuids)),
-                              'timelimit': time.time() + maxtime}
-
-        pool.close()  # done with new workers, start gc
-
-        # wait for workers and get results
-        while results:
-            for mount in list(results):
-                done = False
-                res = results[mount]['extra']
+            results[mount] = {'info': mount_info, 'timelimit': time.time() + maxtime}
+            if pool is None:
+                old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
+                signal.alarm(maxtime)
                 try:
-                    if res.ready():
+                    size, uuid = self.get_mount_info(mount, device, uuids)
+                except TimeoutError as e:
+                    results[mount]['info']['note'] = 'Could not get extra information due to timeout'
+                    self.module.log(f"Timeout while gathering mount {mount} data: {e}")
+                    self.module.warn(f"Timeout exceeded when getting mount info for {mount}")
+                finally:
+                    signal.alarm(0)
+                    signal.signal(signal.SIGALRM, old_handler)
+
+                if size:
+                    results[mount]['info'].update(size)
+                results[mount]['info']['uuid'] = uuid or 'N/A'
+            else:
+                # use multiproc pool, handle results below
+                results[mount]['extra'] = pool.apply_async(self.get_mount_info, (mount, device, uuids))
+
+        if pool is None:
+            # serial processing, just assing results
+            mounts.append(results[mount]['info'])
+        else:
+            pool.close()  # done with spawing new workers, start gc
+
+            while results:  # wait for workers and get results
+                for mount in list(results):
+                    done = False
+                    res = results[mount]['extra']
+                    try:
+                        if res.ready():
+                            done = True
+                            if res.successful():
+                                mount_size, uuid = res.get()
+                                if mount_size:
+                                    results[mount]['info'].update(mount_size)
+                                results[mount]['info']['uuid'] = uuid or 'N/A'
+                            else:
+                                # failed, try to find out why, if 'res.successful' we know there are no exceptions
+                                results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
+
+                        elif time.time() > results[mount]['timelimit']:
+                            done = True
+                            self.module.warn("Timeout exceeded when getting mount info for %s" % mount)
+                            results[mount]['info']['note'] = 'Could not get extra information due to timeout'
+                    except Exception as e:
+                        import traceback
                         done = True
-                        if res.successful():
-                            mount_size, uuid = res.get()
-                            if mount_size:
-                                results[mount]['info'].update(mount_size)
-                            results[mount]['info']['uuid'] = uuid or 'N/A'
-                        else:
-                            # failed, try to find out why, if 'res.successful' we know there are no exceptions
-                            results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
+                        results[mount]['info'] = 'N/A'
+                        self.module.warn("Error prevented getting extra info for mount %s: [%s] %s." % (mount, type(e), to_text(e)))
+                        self.module.debug(traceback.format_exc())
 
-                    elif time.time() > results[mount]['timelimit']:
-                        done = True
-                        self.module.warn("Timeout exceeded when getting mount info for %s" % mount)
-                        results[mount]['info']['note'] = 'Could not get extra information due to timeout'
-                except Exception as e:
-                    import traceback
-                    done = True
-                    results[mount]['info'] = 'N/A'
-                    self.module.warn("Error prevented getting extra info for mount %s: [%s] %s." % (mount, type(e), to_text(e)))
-                    self.module.debug(traceback.format_exc())
+                    if done:
+                        # move results outside and make loop only handle pending
+                        mounts.append(results[mount]['info'])
+                        del results[mount]
 
-                if done:
-                    # move results outside and make loop only handle pending
-                    mounts.append(results[mount]['info'])
-                    del results[mount]
-
-            # avoid cpu churn, sleep between retrying for loop with remaining mounts
-            time.sleep(0.1)
+                # avoid cpu churn, sleep between retrying for loop with remaining mounts
+                time.sleep(0.1)
 
         return {'mounts': mounts}
 
@@ -773,10 +803,24 @@ class LinuxHardware(Hardware):
                 if serial:
                     d['serial'] = serial
 
-            for key, test in [('removable', '/removable'),
-                              ('support_discard', '/queue/discard_granularity'),
-                              ]:
-                d[key] = get_file_content(sysdir + test)
+            d['removable'] = get_file_content(sysdir + '/removable')
+
+            # Historically, `support_discard` simply returned the value of
+            # `/sys/block/{device}/queue/discard_granularity`. When its value
+            # is `0`, then the block device doesn't support discards;
+            # _however_, it being greater than zero doesn't necessarily mean
+            # that the block device _does_ support discards.
+            #
+            # Another indication that a block device doesn't support discards
+            # is `/sys/block/{device}/queue/discard_max_hw_bytes` being equal
+            # to `0` (with the same caveat as above). So if either of those are
+            # `0`, set `support_discard` to zero, otherwise set it to the value
+            # of `discard_granularity` for backwards compatibility.
+            d['support_discard'] = (
+                '0'
+                if get_file_content(sysdir + '/queue/discard_max_hw_bytes') == '0'
+                else get_file_content(sysdir + '/queue/discard_granularity')
+            )
 
             if diskname in devs_wwn:
                 d['wwn'] = devs_wwn[diskname]
@@ -794,12 +838,12 @@ class LinuxHardware(Hardware):
                         part['links'][link_type] = link_values.get(partname, [])
 
                     part['start'] = get_file_content(part_sysdir + "/start", 0)
-                    part['sectors'] = get_file_content(part_sysdir + "/size", 0)
-
                     part['sectorsize'] = get_file_content(part_sysdir + "/queue/logical_block_size")
                     if not part['sectorsize']:
                         part['sectorsize'] = get_file_content(part_sysdir + "/queue/hw_sector_size", 512)
-                    part['size'] = bytes_to_human((float(part['sectors']) * 512.0))
+                    # sysfs sectorcount assumes 512 blocksize. Convert using the correct sectorsize
+                    part['sectors'] = int(get_file_content(part_sysdir + "/size", 0)) * 512 // int(part['sectorsize'])
+                    part['size'] = bytes_to_human(float(part['sectors']) * float(part['sectorsize']))
                     part['uuid'] = get_partition_uuid(partname)
                     self.get_holders(part, part_sysdir)
 
@@ -813,13 +857,14 @@ class LinuxHardware(Hardware):
                 if m:
                     d['scheduler_mode'] = m.group(2)
 
-            d['sectors'] = get_file_content(sysdir + "/size")
-            if not d['sectors']:
-                d['sectors'] = 0
             d['sectorsize'] = get_file_content(sysdir + "/queue/logical_block_size")
             if not d['sectorsize']:
                 d['sectorsize'] = get_file_content(sysdir + "/queue/hw_sector_size", 512)
-            d['size'] = bytes_to_human(float(d['sectors']) * 512.0)
+            # sysfs sectorcount assumes 512 blocksize. Convert using the correct sectorsize
+            d['sectors'] = int(get_file_content(sysdir + "/size")) * 512 // int(d['sectorsize'])
+            if not d['sectors']:
+                d['sectors'] = 0
+            d['size'] = bytes_to_human(float(d['sectors']) * float(d['sectorsize']))
 
             d['host'] = ""
 

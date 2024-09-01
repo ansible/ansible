@@ -1,0 +1,2 @@
+bugfixes:
+  - distro package - update the distro package version from 1.8.0 to 1.9.0  (https://github.com/ansible/ansible/issues/82935)

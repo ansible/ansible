@@ -79,10 +79,11 @@ options:
     paths:
         description:
             - List of paths of directories to search. All paths must be fully qualified.
+            - From ansible-core 2.18 and onwards, the data type has changed from C(str) to C(path).
         type: list
         required: true
         aliases: [ name, path ]
-        elements: str
+        elements: path
     file_type:
         description:
             - Type of file to select.
@@ -153,6 +154,14 @@ options:
             - When doing a O(contains) search, determine the encoding of the files to be searched.
         type: str
         version_added: "2.17"
+    limit:
+        description:
+            - Limit the maximum number of matching paths returned. After finding this many, the find action will stop looking.
+            - Matches are made from the top, down (i.e. shallowest directory first).
+            - If not set, or set to v(null), it will do unlimited matches.
+            - Default is unlimited matches.
+        type: int
+        version_added: "2.18"
 extends_documentation_fragment: [action_common_attributes, checksum_common]
 attributes:
     check_mode:
@@ -226,6 +235,16 @@ EXAMPLES = r'''
       - '^_[0-9]{2,4}_.*.log$'
       - '^[a-z]{1,5}_.*log$'
 
+- name: Find file containing "wally" without necessarily reading all files
+  ansible.builtin.find:
+    paths: /var/log
+    file_type: file
+    contains: wally
+    read_whole_file: true
+    patterns: "^.*\\.log$"
+    use_regex: true
+    recurse: true
+    limit: 1
 '''
 
 RETURN = r'''
@@ -449,7 +468,7 @@ def statinfo(st):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            paths=dict(type='list', required=True, aliases=['name', 'path'], elements='str'),
+            paths=dict(type='list', required=True, aliases=['name', 'path'], elements='path'),
             patterns=dict(type='list', default=[], aliases=['pattern'], elements='str'),
             excludes=dict(type='list', aliases=['exclude'], elements='str'),
             contains=dict(type='str'),
@@ -469,7 +488,8 @@ def main():
             depth=dict(type='int'),
             mode=dict(type='raw'),
             exact_mode=dict(type='bool', default=True),
-            encoding=dict(type='str')
+            encoding=dict(type='str'),
+            limit=dict(type='int')
         ),
         supports_check_mode=True,
     )
@@ -522,17 +542,20 @@ def main():
         else:
             module.fail_json(size=params['size'], msg="failed to process size")
 
+    if params['limit'] is not None and params['limit'] <= 0:
+        module.fail_json(msg="limit cannot be %d (use None for unlimited)" % params['limit'])
+
     now = time.time()
     msg = 'All paths examined'
     looked = 0
     has_warnings = False
     for npath in params['paths']:
-        npath = os.path.expanduser(os.path.expandvars(npath))
         try:
             if not os.path.isdir(npath):
                 raise Exception("'%s' is not a directory" % to_native(npath))
 
-            for root, dirs, files in os.walk(npath, onerror=handle_walk_errors, followlinks=params['follow']):
+            # Setting `topdown=True` to explicitly guarantee matches are made from the shallowest directory first
+            for root, dirs, files in os.walk(npath, onerror=handle_walk_errors, followlinks=params['follow'], topdown=True):
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
                     fsname = os.path.normpath(os.path.join(root, fsobj))
@@ -598,7 +621,12 @@ def main():
                             r.update(statinfo(st))
                             filelist.append(r)
 
-                if not params['recurse']:
+                    if len(filelist) == params["limit"]:
+                        # Breaks out of directory files loop only
+                        msg = "Limit of matches reached"
+                        break
+
+                if not params['recurse'] or len(filelist) == params["limit"]:
                     break
         except Exception as e:
             skipped[npath] = to_text(e)
