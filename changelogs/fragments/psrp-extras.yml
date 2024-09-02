@@ -1,0 +1,3 @@
+minor_changes:
+  - psrp - Remove connection plugin extras vars lookup. This should have no affect on existing users as all options
+    have been documented.
