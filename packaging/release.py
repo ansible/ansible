@@ -1243,7 +1243,7 @@ def check_state(allow_stale: bool = False) -> None:
 
 # noinspection PyUnusedLocal
 @command
-def prepare(final: bool = False, pre: str | None = None, version: str | None = None) -> None:
+def prepare(final: bool = False, pre: str | None = None, version: str | None = None, setuptools: bool | None = None) -> None:
     """Prepare a release."""
     command.run(
         update_version,
