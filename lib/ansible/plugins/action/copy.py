@@ -310,11 +310,13 @@ class ActionModule(ActionBase):
             self._remove_tempfile_if_content_defined(content, content_tempfile)
             self._loader.cleanup_tmp_file(source_full)
 
-            # File source permissions are attempted to be preserved via sftp/scp or local
-            # but they might fail and/or use other connections or transfer methods
-            # So we ensure that the remote is readable by remote user (could be moved to copy module)
+            # FIXME: I don't think this is needed when PIPELINING=0 because the source is created
+            # world readable.  Access to the directory itself is controlled via fixup_perms2() as
+            # part of executing the module. Check that umask with scp/sftp/piped doesn't cause
+            # a problem before acting on this idea. (This idea would save a round-trip)
+            # fix file permissions when the copy is done as a different user
             if remote_path:
-                self._fixup_perms2((self._connection._shell.tmpdir, remote_path), execute=False)
+                self._fixup_perms2((self._connection._shell.tmpdir, remote_path))
 
             if raw:
                 # Continue to next iteration if raw is defined.
