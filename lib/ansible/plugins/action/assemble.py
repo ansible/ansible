@@ -146,7 +146,7 @@ class ActionModule(ActionBase):
                 xfered = self._transfer_file(path, remote_path)
 
                 # fix file permissions when the copy is done as a different user
-                self._fixup_perms2((self._connection._shell.tmpdir, remote_path))
+                self._fixup_perms2((self._connection._shell.tmpdir, remote_path), execute=False)
 
                 new_module_args.update(dict(src=xfered,))
 
