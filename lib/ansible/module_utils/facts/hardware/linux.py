@@ -32,7 +32,6 @@ from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.utils import get_file_content, get_file_lines, get_mount_size
 from ansible.module_utils.six import iteritems
 
-
 # import this as a module to ensure we get the same module instance
 from ansible.module_utils.facts import timeout
 
