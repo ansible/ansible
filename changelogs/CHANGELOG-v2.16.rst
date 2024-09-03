@@ -5,6 +5,33 @@ ansible-core 2.16 "All My Love" Release Notes
 .. contents:: Topics
 
 
+v2.16.11rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2024-09-03
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+
+Bugfixes
+--------
+
+- Fix ``SemanticVersion.parse()`` to store the version string so that ``__repr__`` reports it instead of ``None`` (https://github.com/ansible/ansible/pull/83831).
+- Fix an issue where registered variable was not available for templating in ``loop_control.label`` on skipped looped tasks (https://github.com/ansible/ansible/issues/83619)
+- Fix for ``meta`` tasks breaking host/fork affinity with ``host_pinned`` strategy (https://github.com/ansible/ansible/issues/83294)
+- Fix using the current task's directory for looking up relative paths within roles (https://github.com/ansible/ansible/issues/82695).
+- atomic_move - fix using the setgid bit on the parent directory when creating files (https://github.com/ansible/ansible/issues/46742, https://github.com/ansible/ansible/issues/67177).
+- connection plugins using the 'extras' option feature would need variables to match the plugin's loaded name, sometimes requiring fqcn, which is not the same as the documented/declared/expected variables. Now we fall back to the 'basename' of the fqcn, but plugin authors can still set the expected value directly.
+- csvfile lookup - give an error when no search term is provided using modern config syntax (https://github.com/ansible/ansible/issues/83689).
+- include_tasks - Display location when attempting to load a task list where ``include_*`` did not specify any value - https://github.com/ansible/ansible/issues/83874
+- module respawn - Address an issue with Python 2 where a respawned module could not parse module args (https://github.com/ansible/ansible/issues/83812)
+- powershell - Improve CLIXML decoding to decode all control characters and unicode characters that are encoded as surrogate pairs.
+- psrp - Fix bug when attempting to fetch a file path that contains special glob characters like ``[]``
+- runtime-metadata sanity test - do not crash on deprecations if ``galaxy.yml`` contains an empty ``version`` field (https://github.com/ansible/ansible/pull/83831).
+- ssh - Fix bug when attempting to fetch a file path with characters that should be quoted when using the ``piped`` transfer method
+
 v2.16.10
 ========
 
