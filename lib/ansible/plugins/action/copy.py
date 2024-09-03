@@ -316,7 +316,7 @@ class ActionModule(ActionBase):
             # a problem before acting on this idea. (This idea would save a round-trip)
             # fix file permissions when the copy is done as a different user
             if remote_path:
-                self._fixup_perms2((self._connection._shell.tmpdir, remote_path))
+                self._fixup_perms2((self._connection._shell.tmpdir, remote_path), execute=False)
 
             if raw:
                 # Continue to next iteration if raw is defined.
