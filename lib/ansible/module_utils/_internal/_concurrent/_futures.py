@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-import concurrent.futures as _cf
+import concurrent.futures
 import types
 
 from . import _daemon_threading
 
 
-class DaemonThreadPoolExecutor(_cf.ThreadPoolExecutor):
+class DaemonThreadPoolExecutor(concurrent.futures.ThreadPoolExecutor):
     """ThreadPoolExecutor subclass that creates non-joinable daemon threads for non-blocking pool and process shutdown with abandoned threads."""
 
-    atc = _cf.ThreadPoolExecutor._adjust_thread_count
+    atc = concurrent.futures.ThreadPoolExecutor._adjust_thread_count
 
     # clone the base class `_adjust_thread_count` method with a copy of its globals dict
     _adjust_thread_count = types.FunctionType(atc.__code__, atc.__globals__.copy(), name=atc.__name__, argdefs=atc.__defaults__, closure=atc.__closure__)
