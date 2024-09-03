@@ -76,7 +76,7 @@ class TaskInclude(Task):
         if not task.args.get('_raw_params'):
             task.args['_raw_params'] = task.args.pop('file', None)
             if not task.args['_raw_params']:
-                raise AnsibleParserError('No file specified for %s' % task.action)
+                raise AnsibleParserError('No file specified for %s' % task.action, obj=data)
 
         apply_attrs = task.args.get('apply', {})
         if apply_attrs and task.action not in C._ACTION_INCLUDE_TASKS:
