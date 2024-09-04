@@ -22,7 +22,6 @@ import unittest
 from units.mock.loader import DictDataLoader
 from unittest.mock import patch
 
-from ansible.template import Templar
 from ansible.playbook.task import Task
 from ansible.plugins.loader import init_plugin_loader
 from ansible.parsing.yaml import objects
@@ -46,9 +45,7 @@ kv_bad_args_ds = {'apk': 'sdfs sf sdf 37'}
 class TestTask(unittest.TestCase):
 
     def setUp(self):
-        self._task_base = {'name': 'test', 'action': 'noop'}
-        self._loader = DictDataLoader({})
-        self._T = templar = Templar(loader=self._loader, variables={})
+        self._task_base = {'name': 'test', 'action': 'debug'}
 
     def tearDown(self):
         pass
@@ -113,21 +110,22 @@ class TestTask(unittest.TestCase):
             ('1.2', 1.2),
             ('1', 1),
         ]
-        o = Task()
         for delay, expected in good_params:
-            with self.subTest(delay=delay, expected=expected):
-                p = {'delay': delay}.update(self._task_base)
-                t = o.load(p)
-                self.AssertEqual(t.get_validated_value('delay', t.delay, delay, self._T), expected)
-
+            with self.subTest(f'type "{type(delay)}" was not cast to float', delay=delay, expected=expected):
+                p = dict(delay=delay)
+                p.update(self._task_base)
+                t = Task().load_data(p)
+                self.assertEqual(t.get_validated_value('delay', t.fattributes.get('delay'), delay, None), expected)
         bad_params = [
             ('E', ValueError),
         ]
         for delay, expected in bad_params:
-            with self.subTest(delay=delay, expected=expected):
-                p = {'delay': delay}.update(self._task_base)
-                t = o.load(p)
-                self.AssertRaises(t.get_validated_value('delay', t.delay, delay, self._T), expected)
+            with self.subTest(f'type "{type(delay)} was cast to float w/o error', delay=delay, expected=expected):
+                p = dict(delay=delay)
+                p.update(self._task_base)
+                t = Task().load_data(p)
+                with self.assertRaises(expected):
+                    dummy = t.get_validated_value('delay', t.fattributes.get('delay'), delay, None)
 
     def test_task_auto_name_with_role(self):
         pass
