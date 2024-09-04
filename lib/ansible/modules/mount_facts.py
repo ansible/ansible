@@ -110,26 +110,29 @@ EXAMPLES = """
 RETURN = """
 ansible_facts:
     description:
-      - An ansible_facts dictionary containing the key C(extended_mounts), and value matching the default structure of C(ansible_facts[mount_facts]).
-    returned: always
+      - An ansible_facts dictionary containing a dictionary of C(extended_mounts).
+      - Each key in C(extended_mounts) is a mount point, and the value contains mount information (similar to C(ansible_facts["mounts"])).
+        Each value also contains the key C(ansible_context), with details about the source and line(s) corresponding to the parsed mount point.
+    returned: on success
     type: dict
     sample:
       extended_mounts:
         /mnt/mount:
-          source: /proc/mounts
-          info:
-            block_available: 3242510
-            block_size: 4096
-            block_total: 3789825
-            block_used: 547315
-            device: hostname:/srv/sshfs
-            fstype: fuse.sshfs
-            inode_available: 1875503
-            inode_total: 1966080
-            mount: /mnt/mount
-            options: "rw,nosuid,nodev,relatime,user_id=0,group_id=0"
-            size_available: 13281320960
-            size_total: 15523123200
+          ansible_context:
+            source: /proc/mounts
+            source_data: "hostname:/srv/sshfs on /mnt/mount type fuse.sshfs (rw,nosuid,nodev,relatime,user_id=0,group_id=0)"
+          block_available: 3242510
+          block_size: 4096
+          block_total: 3789825
+          block_used: 547315
+          device: hostname:/srv/sshfs
+          fstype: fuse.sshfs
+          inode_available: 1875503
+          inode_total: 1966080
+          mount: /mnt/mount
+          options: "rw,nosuid,nodev,relatime,user_id=0,group_id=0"
+          size_available: 13281320960
+          size_total: 15523123200
           uuid: N/A
 """
 
@@ -138,12 +141,12 @@ from ansible.module_utils.facts import timeout as _timeout
 from ansible.module_utils.facts.hardware.linux import LinuxHardware as _LinuxHardware, _replace_octal_escapes
 from ansible.module_utils.facts.utils import get_mount_size as _get_mount_size, get_file_content as _get_file_content
 
-from fnmatch import fnmatch as _fnmatch
-from collections.abc import Callable as _Callable
+from collections.abc import Callable as _Callable, Generator as _Generator
 from contextlib import suppress as _suppress
 from fnmatch import fnmatch as _fnmatch
 from functools import wraps as _wraps
 
+import datetime as _datetime
 import re as _re
 import subprocess as _subprocess
 
@@ -187,7 +190,7 @@ def _run_mount_bin(module: _AnsibleModule, mount_bin: str) -> str:  # type: igno
         module.fail_json(msg=f"Failed to execute {mount_bin}: {str(e)}")
 
 
-def _list_mounts_from_mount_stdout(stdout) -> list[dict[str, str]]:
+def _gen_mounts_from_stdout(stdout: str) -> _Generator[tuple[str, str, dict[str, str]]]:
     """List mount dictionaries from mount stdout."""
     lines = stdout.splitlines()
     if any(_LINUX_MOUNT_RE.match(line) for line in lines):
@@ -195,137 +198,150 @@ def _list_mounts_from_mount_stdout(stdout) -> list[dict[str, str]]:
     elif any(_BSD_MOUNT_RE.match(line) for line in lines):
         pattern = _BSD_MOUNT_RE
     elif any(_AIX_MOUNT_RE.match(line) for line in lines):
-        # AIX has a couple header lines for some reason
         pattern = _AIX_MOUNT_RE
     else:
-        return []
+        lines = []
 
-    results: list[dict[str, str]] = []
     for line in lines:
         if not (match := pattern.match(line)):
+            # AIX has a couple header lines for some reason
+            # MacOS "map" lines are skipped (e.g. "map auto_home on /System/Volumes/Data/home (autofs, automounted, nobrowse)")
             continue
 
+        mount = match.groupdict()["mount"]
         if pattern is _LINUX_MOUNT_RE:
-            results.append(match.groupdict())
-        elif pattern == _BSD_MOUNT_RE:
+            mount_info = match.groupdict()
+        elif pattern is _BSD_MOUNT_RE:
             # the group containing fstype is comma separated, and may include whitespace
-            fields = match.groupdict()
+            mount_info = match.groupdict()
             parts = _re.split(r"\s*,\s*", match.group("fstype"), 1)
             if len(parts) == 1:
-                fields["fstype"] = parts[0]
+                mount_info["fstype"] = parts[0]
             else:
-                fields.update({"fstype": parts[0], "options": parts[1]})
-            results.append(fields)
-        elif pattern == _AIX_MOUNT_RE:
-            fields = match.groupdict()
-            device = fields.pop("mounted")
-            node = fields.pop("node")
-            if node:
-                device = f"{node}:{device}"
-            fields["device"] = device
-            results.append(fields)
+                mount_info.update({"fstype": parts[0], "options": parts[1]})
+        elif pattern is _AIX_MOUNT_RE:
+            mount_info = match.groupdict()
+            device = mount_info.pop("mounted")
+            node = mount_info.pop("node")
+            if device and node:
+                device = f"{node}:{device or ''}"
+            mount_info["device"] = device
 
-    return results
+        yield mount, line, mount_info
 
 
-def _list_fstab_entries(lines: list[str]) -> list[dict[str, str]]:
-    """List dictionaries from https://man7.org/linux/man-pages/man5/fstab.5.html."""
-    entries: list[dict[str, str]] = []
+def _gen_fstab_entries(lines: list[str]) -> _Generator[tuple[str, str, dict[str, str | int]]]:
+    """Yield tuples from /etc/fstab https://man7.org/linux/man-pages/man5/fstab.5.html.
+
+    Each tuple contains the mount point, line of origin, and the dictionary of the parsed line.
+    """
     for line in lines:
         if not (line := line.strip()) or line.startswith("#"):
             continue
         fields = [_replace_octal_escapes(field) for field in line.split()]
-        entries.append({
+        mount_info = {
             "device": fields[0],
             "mount": fields[1],
             "fstype": fields[2],
             "options": fields[3],
-        })
+        }
         with _suppress(IndexError):
             # the last two fields are optional
-            entries[-1]["dump"] = fields[4]
-            entries[-1]["passno"] = fields[5]
-    return entries
+            mount_info["dump"] = int(fields[4])
+            mount_info["passno"] = int(fields[5])
+        yield fields[1], line, mount_info
 
 
-def _list_vfstab_entries(lines: list[str]) -> list[dict[str, str]]:
-    """List dictionaries from /etc/vfstab https://docs.oracle.com/cd/E36784_01/html/E36882/vfstab-4.html."""
-    return [
-        {
+def _gen_vfstab_entries(lines: list[str]) -> _Generator[tuple[str, str, dict[str, str | int]]]:
+    """Yield tuples from /etc/vfstab https://docs.oracle.com/cd/E36784_01/html/E36882/vfstab-4.html.
+
+    Each tuple contains the mount point, line of origin, and the dictionary of the parsed line.
+    """
+    for line in lines:
+        if not line.strip() or line.strip().startswith("#"):
+            continue
+        fields = line.split()
+        passno: str | int = fields[4]
+        with _suppress(ValueError):
+            passno = int(passno)
+        mount_info: dict[str, str | int] = {
             "device": fields[0],
             "device_to_fsck": fields[1],
             "mount": fields[2],
             "fstype": fields[3],
-            "passno": fields[4],
+            "passno": passno,
             "mount_at_boot": fields[5],
             "options": fields[6],
         }
-        for line in lines
-        if line.strip() and not line.strip().startswith("#")
-        for fields in [line.split()]
-    ]
+        yield fields[2], line, mount_info
 
 
-def _list_aix_filesystem_entries(lines: list[str]) -> list[dict[str, str | dict[str, str]]]:
-    """List dictionaries from /etc/filesystems https://www.ibm.com/docs/hu/aix/7.2?topic=files-filesystems-file."""
-    # AIX comments start with *
-    lines = [line for line in lines if not line.startswith("*")]
+def _gen_aix_filesystems_entries(lines: list[str]) -> _Generator[tuple[str, str, dict[str, str]]]:
+    """Yield tuples from /etc/filesystems https://www.ibm.com/docs/hu/aix/7.2?topic=files-filesystems-file.
 
-    results: list[dict[str, str | dict[str, str]]] = []
-    for stanza in _re.split(r"\n\s*\n", "\n".join(lines)):
-        stanza_lines = stanza.splitlines()
-        header = stanza_lines.pop(0).strip()
-        if any("=" not in line for line in stanza_lines):
-            # Expected for Linux, return an empty list since this doesn't appear to be AIX /etc/filesystems
-            results = []
-            break
+    Each tuple contains the mount point, lines of origin, and the dictionary of the parsed lines.
+    """
+    stanzas = []
+    for line in lines:
+        if line.startswith("*") or not line.strip().rstrip():
+            continue
+        if line.rstrip().endswith(":"):
+            stanzas.append([line])
+        else:
+            if "=" not in line:
+                # Expected for Linux, return an empty list since this doesn't appear to be AIX /etc/filesystems
+                stanzas = []
+                break
+            stanzas[-1].append(line)
 
-        mount_attrs: dict[str, str] = {
-            mount_attr.strip().rstrip(): mount_attr_value.strip().rstrip()
-            for line in stanza_lines
-            for mount_attr, mount_attr_value in [line.split("=", 1)]
-        }
+    for stanza in stanzas:
+        original = "\n".join(stanza)
+        mount = stanza.pop(0)[:-1]  # snip trailing :
+        mount_info = {}
+        for line in stanza:
+            attr, value = line.split("=", 1)
+            mount_info[attr.strip().rstrip()] = value.strip().rstrip()
 
         device = ""
-        if "nodename" in mount_attrs:
-            device = mount_attrs["nodename"]
-        if "dev" in mount_attrs:
+        if (nodename := mount_info.get("nodename")):
+            device = nodename
+        if (dev := mount_info.get("dev")):
             if device:
                 device += ":"
-            device += mount_attrs["dev"]
+            device += dev
 
-        results.append({
-            "mount": header[:-1],  # snip trailing :
-            "fstype": mount_attrs.get("vfs") or "unknown",
-            "device": device or "unknown",
-            # return attrs as a value since it contains "mount" with a different value (automatic|true|false|removable|readonly)
-            "attributes": mount_attrs,
-        })
-    return results
+        mount_info["device"] = device or "unknown"
+        mount_info["fstype"] = mount_info.get("vfs") or "unknown"
+
+        # mount_info may contain the AIX /etc/filesystems attribute "mount", not to be confused with the mount point
+        yield mount, original, mount_info
 
 
-def _list_mnttab_entries(lines: list[str]) -> list[dict[str, str]]:
-    """List dictionaries from /etc/mnttab columns https://docs.oracle.com/cd/E36784_01/html/E36882/mnttab-4.html."""
+def _gen_mnttab_entries(lines: list[str]) -> _Generator[tuple[str, str, dict[str, str | int]]]:
+    """Yield tuples from /etc/mnttab columns https://docs.oracle.com/cd/E36784_01/html/E36882/mnttab-4.html.
+
+    Each tuple contains the mount point, line of origin, and the dictionary of the parsed line.
+    """
     if not any(len(fields[4]) == 10 for line in lines for fields in [line.split()]):
-        # best effort to distinguish between mnttab timestamp and mtab dump fields
-        # if none of these look like a UNIX timestamp, assume it's the latter
-        # TODO: check any are a valid datetime.date.fromtimestamp for good measure, or is there a better approach?
-        return []
-    return [
-        {
+        raise ValueError
+    for line in lines:
+        fields = line.split()
+        _datetime.date.fromtimestamp(int(fields[4]))
+        mount_info: dict[str, str | int] = {
             "device": fields[0],
             "mount": fields[1],
             "fstype": fields[2],
             "options": fields[3],
-            "time": fields[4],
+            "time": int(fields[4]),
         }
-        for line in lines
-        for fields in [line.split()]
-    ]
+        yield fields[1], line, mount_info
 
 
-def _get_mounts_by_source(module: _AnsibleModule):
-    """Enumerate the requested sources and return a dictionary containing the parsed sources."""
+def _gen_mounts_by_source(module: _AnsibleModule):
+    """Enumerate the requested sources and yield mount information from each.
+
+    Each tuple contains the source, mount point, source line(s), and the resulting dictionary from the parsed line(s).
+    """
     sources: list[str] = []
     use_mount_bin_explicit = False
     for source in module.params["sources"]:
@@ -345,61 +361,58 @@ def _get_mounts_by_source(module: _AnsibleModule):
     if len(set(sources)) < len(sources):
         module.warn(f"mount_facts option 'sources' contains duplicate entries, repeat sources will be ignored: {sources}")
 
-    collected = {}
+    use_mount_bin_implicit = set(sources).intersection(_DYNAMIC_SOURCES) and module.params["mount_binary"]
+    seen = set()
     for file in sources:
-        if file in collected:
+        if file in seen:
             continue
+        seen.add(file)
+
         if not (lines := _get_file_content(file, "").splitlines()):
             continue
 
-        for list_mount_func in [_list_vfstab_entries, _list_mnttab_entries, _list_fstab_entries, _list_aix_filesystem_entries]:
-            try:
-                mounts = list_mount_func(lines)
-            except IndexError:
-                continue
-            if mounts:
-                collected[file] = mounts
+        for gen_mounts in [_gen_vfstab_entries, _gen_mnttab_entries, _gen_fstab_entries, _gen_aix_filesystems_entries]:
+            with _suppress(IndexError, ValueError):
+                for _mnt, _line, _info in gen_mounts(lines):
+                    yield (file, _mnt, _line, _info)
+
+                if file in _DYNAMIC_SOURCES:
+                    use_mount_bin_implicit = False
                 break
-        else:
-            module.debug(f"mount_facts source {file} exists, but contains an unsupported format.")
 
     mount_binary = module.params["mount_binary"]
-    use_mount_bin_implicit = set(sources).intersection(_DYNAMIC_SOURCES) and not any(collected.get(src, []) for src in _DYNAMIC_SOURCES) and mount_binary
     if use_mount_bin_explicit or use_mount_bin_implicit:
         stdout = _run_mount_bin(module, mount_binary)
-        mounts = _list_mounts_from_mount_stdout(stdout)
-        if mounts:
-            collected[mount_binary] = mounts
-
-    return collected
+        for mount, line, mount_info in _gen_mounts_from_stdout(stdout):
+            yield mount_binary, mount, line, mount_info
 
 
-def _get_mount_facts(module: _AnsibleModule, uuids: dict, udevadm_uuid: _Callable) -> dict[str, dict[str, str | dict[str, str]]]:
+def _get_mount_facts(module: _AnsibleModule, uuids: dict, udevadm_uuid: _Callable):
     """List and filter mounts, returning a dictionary containing mount points as the keys (last listed wins)."""
     seconds = module.params["timeout"]
     on_timeout = module.params["on_timeout"]
 
+    # merge sources based on the mount point (last source wins)
     facts = {}
-    for source, mounts in _get_mounts_by_source(module).items():
-        for fields in mounts:
-            device = fields["device"]
-            fstype = fields["fstype"]
+    for source, mount, origin, fields in _gen_mounts_by_source(module):
+        device = fields["device"]
+        fstype = fields["fstype"]
 
-            if not any(_fnmatch(device, pattern) for pattern in module.params["devices"]):
-                continue
-            if not any(_fnmatch(fstype, pattern) for pattern in module.params["fstypes"]):
-                continue
+        if not any(_fnmatch(device, pattern) for pattern in module.params["devices"]):
+            continue
+        if not any(_fnmatch(fstype, pattern) for pattern in module.params["fstypes"]):
+            continue
 
-            mount = fields["mount"]
+        timed_func = _timeout.timeout(seconds, f"Timed out getting mount size for mount {mount} (type {fstype})")(_get_mount_size)
+        if mount_size := _handle_timeout(module)(timed_func)(mount):
+            fields.update(mount_size)
 
-            timed_func = _timeout.timeout(seconds, f"Timed out getting mount size for mount {mount} (type {fstype})")(_get_mount_size)
-            if mount_size := _handle_timeout(module)(timed_func)(mount):
-                fields.update(mount_size)
+        timed_func = _timeout.timeout(seconds, f"Timed out getting uuid for mount {mount} (type {fstype})")(udevadm_uuid)
+        uuid = uuids.get(device, _handle_timeout(module)(timed_func)(device))
 
-            timed_func = _timeout.timeout(seconds, f"Timed out getting uuid for mount {mount} (type {fstype})")(udevadm_uuid)
-            uuid = uuids.get(device, _handle_timeout(module)(timed_func)(device))
+        fields.update({"ansible_context": {"source": source, "source_data": origin}, "uuid": uuid or "N/A"})
+        facts[mount] = fields
 
-            facts[mount] = {"info": fields, "uuid": uuid or "N/A", "source": source}
     return facts
 
 

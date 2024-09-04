@@ -119,6 +119,7 @@
           # mount: /opt/nfs_mnt failed with 74
           command: "mount -t nfs localhost:{{ nfs_source }} {{ nfs_mount }}"
           when: ansible_os_family == 'Darwin'
+          timeout: 4  # 2 isn't cutting it
 
     - name: Test gathering NFS mount facts
       mount_facts:
@@ -131,7 +132,7 @@
     - assert:
         that:
           - nfs_mount in extended_mounts
-          - 'extended_mounts[nfs_mount]["info"]["device"] == ("localhost:" ~ nfs_source)'
+          - extended_mounts[nfs_mount]["device"] == ("localhost:" ~ nfs_source)
 
   always:
     - command: "umount {{ nfs_mount }}"

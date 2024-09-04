@@ -93,23 +93,24 @@ def test_duplicate_source(monkeypatch, _set_file_content):
     expected_warning = "mount_facts option 'sources' contains duplicate entries, repeat sources will be ignored:"
 
     module = _get_mock_module({"sources": user_sources})
-    _mount_facts._get_mounts_by_source(module)
+    list(_mount_facts._gen_mounts_by_source(module))
     assert mock_warn.called
     assert len(mock_warn.call_args_list) == 1
     assert mock_warn.call_args_list[0].args == (f"{expected_warning} {resolved_sources}",)
 
 
-@pytest.mark.parametrize("function, data, result", [
-    ("_list_fstab_entries", _rhel9_4.fstab, _rhel9_4.fstab_parsed),
-    ("_list_fstab_entries", _rhel9_4.mtab, _rhel9_4.mtab_parsed),
-    ("_list_fstab_entries", _freebsd14_1.fstab, _freebsd14_1.fstab_parsed),
-    ("_list_vfstab_entries", _solaris11_2.vfstab, _solaris11_2.vfstab_parsed),
-    ("_list_mnttab_entries", _solaris11_2.mnttab, _solaris11_2.mnttab_parsed),
-    ("_list_aix_filesystem_entries", _aix7_2.filesystems, _aix7_2.filesystems_parsed),
+@pytest.mark.parametrize("function, data, expected_result_data", [
+    ("_gen_fstab_entries", _rhel9_4.fstab, _rhel9_4.fstab_parsed),
+    ("_gen_fstab_entries", _rhel9_4.mtab, _rhel9_4.mtab_parsed),
+    ("_gen_fstab_entries", _freebsd14_1.fstab, _freebsd14_1.fstab_parsed),
+    ("_gen_vfstab_entries", _solaris11_2.vfstab, _solaris11_2.vfstab_parsed),
+    ("_gen_mnttab_entries", _solaris11_2.mnttab, _solaris11_2.mnttab_parsed),
+    ("_gen_aix_filesystems_entries", _aix7_2.filesystems, _aix7_2.filesystems_parsed),
 ])
-def test_list_mounts(function, data, result):
+def test_list_mounts(function, data, expected_result_data):
     function = getattr(_mount_facts, function)
-    assert function(data.splitlines()) == result
+    result = list(function(data.splitlines()))
+    assert result == [(_mnt, _line, _info) for _src, _mnt, _line, _info in expected_result_data]
 
 
 def test_etc_filesystems_linux(_set_file_content):
@@ -118,17 +119,18 @@ def test_etc_filesystems_linux(_set_file_content):
     )
     _set_file_content({"/etc/filesystems": not_aix_data})
     module = _get_mock_module({"sources": ["/etc/filesystems"]})
-    assert _mount_facts._get_mounts_by_source(module) == {}
+    assert list(_mount_facts._gen_mounts_by_source(module)) == []
 
 
-@pytest.mark.parametrize("mount_stdout, result", [
+@pytest.mark.parametrize("mount_stdout, expected_result_data", [
     (_rhel9_4.mount, _rhel9_4.mount_parsed),
     (_freebsd14_1.mount, _freebsd14_1.mount_parsed),
     (_openbsd6_4.mount, _openbsd6_4.mount_parsed),
     (_aix7_2.mount, _aix7_2.mount_parsed),
 ])
-def test_parse_mount_bin_stdout(mount_stdout, result):
-    assert result == _mount_facts._list_mounts_from_mount_stdout(mount_stdout)
+def test_parse_mount_bin_stdout(mount_stdout, expected_result_data):
+    expected_result = [(_mnt, _line, _info) for _src, _mnt, _line, _info in expected_result_data]
+    assert list(_mount_facts._gen_mounts_from_stdout(mount_stdout)) == expected_result
 
 
 def test_parse_mount_bin_stdout_unknown(monkeypatch, _set_file_content):
@@ -148,28 +150,27 @@ _solaris_mock_fs = {"/etc/mnttab": _solaris11_2.mnttab, "/etc/vfstab": _solaris1
 
 
 @pytest.mark.parametrize("sources, file_data, mount_data, results", [
-    (["static"], _rhel_mock_fs, _rhel9_4.mount, {"/etc/fstab": _rhel9_4.fstab_parsed}),
-    (["/etc/fstab"], _rhel_mock_fs, _rhel9_4.mount, {"/etc/fstab": _rhel9_4.fstab_parsed}),
-    (["dynamic"], _rhel_mock_fs, _rhel9_4.mount, {"/etc/mtab": _rhel9_4.mtab_parsed}),
-    (["/etc/mtab"], _rhel_mock_fs, _rhel9_4.mount, {"/etc/mtab": _rhel9_4.mtab_parsed}),
-    (["all"], _rhel_mock_fs, _rhel9_4.mount, {"/etc/fstab": _rhel9_4.fstab_parsed, "/etc/mtab": _rhel9_4.mtab_parsed}),
-    (["mount"], _rhel_mock_fs, _rhel9_4.mount, {"mount": _rhel9_4.mount_parsed}),
-    (["all"], _freebsd_mock_fs, _freebsd14_1.mount, {"/etc/fstab": _freebsd14_1.fstab_parsed, "mount": _freebsd14_1.mount_parsed}),
-    (["static"], _freebsd_mock_fs, _freebsd14_1.mount, {"/etc/fstab": _freebsd14_1.fstab_parsed}),
-    (["dynamic"], _freebsd_mock_fs, _freebsd14_1.mount, {"mount": _freebsd14_1.mount_parsed}),
-    (["mount"], _freebsd_mock_fs, _freebsd14_1.mount, {"mount": _freebsd14_1.mount_parsed}),
-    (["all"], _aix_mock_fs, _aix7_2.mount, {"/etc/filesystems": _aix7_2.filesystems_parsed, "mount": _aix7_2.mount_parsed}),
-    (["all"], _openbsd_mock_fs, _openbsd6_4.mount, {"/etc/fstab": _openbsd6_4.fstab_parsed, "mount": _openbsd6_4.mount_parsed}),
-    (["all"], _solaris_mock_fs, "", {"/etc/mnttab": _solaris11_2.mnttab_parsed, "/etc/vfstab": _solaris11_2.vfstab_parsed}),
+    (["static"], _rhel_mock_fs, _rhel9_4.mount, _rhel9_4.fstab_parsed),
+    (["/etc/fstab"], _rhel_mock_fs, _rhel9_4.mount, _rhel9_4.fstab_parsed),
+    (["dynamic"], _rhel_mock_fs, _rhel9_4.mount, _rhel9_4.mtab_parsed),
+    (["/etc/mtab"], _rhel_mock_fs, _rhel9_4.mount, _rhel9_4.mtab_parsed),
+    (["all"], _rhel_mock_fs, _rhel9_4.mount, _rhel9_4.fstab_parsed + _rhel9_4.mtab_parsed),
+    (["mount"], _rhel_mock_fs, _rhel9_4.mount, _rhel9_4.mount_parsed),
+    (["all"], _freebsd_mock_fs, _freebsd14_1.mount, _freebsd14_1.fstab_parsed + _freebsd14_1.mount_parsed),
+    (["static"], _freebsd_mock_fs, _freebsd14_1.mount, _freebsd14_1.fstab_parsed),
+    (["dynamic"], _freebsd_mock_fs, _freebsd14_1.mount, _freebsd14_1.mount_parsed),
+    (["mount"], _freebsd_mock_fs, _freebsd14_1.mount, _freebsd14_1.mount_parsed),
+    (["all"], _aix_mock_fs, _aix7_2.mount, _aix7_2.filesystems_parsed + _aix7_2.mount_parsed),
+    (["all"], _openbsd_mock_fs, _openbsd6_4.mount, _openbsd6_4.fstab_parsed + _openbsd6_4.mount_parsed),
+    (["all"], _solaris_mock_fs, "", _solaris11_2.vfstab_parsed + _solaris11_2.mnttab_parsed),
 ])
-def test_get_mounts_by_sources(monkeypatch, _set_file_content, sources, file_data, mount_data, results):
+def test_gen_mounts_by_sources(monkeypatch, _set_file_content, sources, file_data, mount_data, results):
     _set_file_content(file_data)
     mock_run_mount = _mock_callable(return_value=mount_data)
     monkeypatch.setattr(_mount_facts, "_run_mount_bin", mock_run_mount)
     module = _get_mock_module({"sources": sources})
-    actual_results = _mount_facts._get_mounts_by_source(module)
-    assert set(actual_results) == set(results)
-    assert actual_results == results
+
+    assert list(_mount_facts._gen_mounts_by_source(module)) == results
 
 
 @pytest.mark.parametrize("on_timeout, should_warn, should_raise", [
@@ -177,7 +178,7 @@ def test_get_mounts_by_sources(monkeypatch, _set_file_content, sources, file_dat
     ("warn", True, False),
     ("ignore", False, False),
 ])
-def test_list_mounts_mount_timeout(monkeypatch, _set_file_content, on_timeout, should_warn, should_raise):
+def test_gen_mounts_by_source_timeout(monkeypatch, _set_file_content, on_timeout, should_warn, should_raise):
     _set_file_content({})
     monkeypatch.setattr(_AnsibleModule, "fail_json", _fail_json)
     mock_warn = MagicMock()
@@ -191,20 +192,25 @@ def test_list_mounts_mount_timeout(monkeypatch, _set_file_content, on_timeout, s
     module = _get_mock_module(params)
     if should_raise:
         with pytest.raises(_AnsibleFailJson, match="Command '[^']*mount' timed out after 0 seconds"):
-            _mount_facts._get_mounts_by_source(module)
+            list(_mount_facts._gen_mounts_by_source(module))
     else:
-        assert _mount_facts._get_mounts_by_source(module) == {}
+        assert list(_mount_facts._gen_mounts_by_source(module)) == []
     assert mock_warn.called == should_warn
 
 
-def test_get_mounts_facts_filtering(monkeypatch, _set_file_content):
+@pytest.mark.parametrize("filter_name, filter_value, source, mount_info", [
+    ("devices", "proc", _rhel9_4.mtab_parsed[0][2], _rhel9_4.mtab_parsed[0][-1]),
+    ("fstypes", "proc", _rhel9_4.mtab_parsed[0][2], _rhel9_4.mtab_parsed[0][-1]),
+])
+def test_get_mounts_facts_filtering(monkeypatch, _set_file_content, filter_name, filter_value, source, mount_info):
     _set_file_content({"/etc/mtab": _rhel9_4.mtab})
-    result = {"info": _rhel9_4.mtab_parsed[-1], "uuid": "N/A", "source": "/etc/mtab"}
-    module = _get_mock_module({"devices": [result["info"]["device"]]})
     monkeypatch.setattr(_mount_facts, "_get_mount_size", _mock_callable(return_value=None))
-    assert _mount_facts._get_mount_facts(module, _UUIDS, _mock_callable()) == {result["info"]["mount"]: result}
-    module = _get_mock_module({"fstypes": [result["info"]["fstype"]]})
-    assert _mount_facts._get_mount_facts(module, _UUIDS, _mock_callable()) == {result["info"]["mount"]: result}
+    module = _get_mock_module({filter_name: [filter_value]})
+    results = _mount_facts._get_mount_facts(module, _UUIDS, _mock_callable())
+    expected_context = {"source": "/etc/mtab", "source_data": source}
+    assert len(results) == 1
+    assert list(results.values())[0]["ansible_context"] == expected_context
+    assert list(results.values())[0] == dict(ansible_context=expected_context, uuid="N/A", **mount_info)
 
 
 def test_get_mounts_size(monkeypatch, _set_file_content):
@@ -220,20 +226,15 @@ def test_get_mounts_size(monkeypatch, _set_file_content):
             "size_total": 15523123200,
         }
 
-    expected_result = {
-        info["mount"]: {
-            "uuid": "N/A",
-            "info": dict(**mock_get_mount_size(), **info),
-            "source": "/etc/mtab",
-        }
-        for info in _rhel9_4.mtab_parsed
-    }
-
     _set_file_content({"/etc/mtab": _rhel9_4.mtab})
     monkeypatch.setattr(_mount_facts, "_get_mount_size", mock_get_mount_size)
     module = _get_mock_module({})
     result = _mount_facts._get_mount_facts(module, _UUIDS, _mock_callable())
-    assert result == expected_result
+    assert len(result) == len(_rhel9_4.mtab_parsed)
+    assert result == {
+        _mnt: dict(ansible_context={"source": _src, "source_data": _line}, uuid="N/A", **_info, **mock_get_mount_size())
+        for _src, _mnt, _line, _info in _rhel9_4.mtab_parsed
+    }
 
 
 @pytest.mark.parametrize("on_timeout, should_warn, should_raise, slow_function", [
@@ -277,7 +278,7 @@ def test_get_mount_facts_timeout(monkeypatch, _set_file_content, on_timeout, sho
         results = _mount_facts._get_mount_facts(module, _UUIDS, mock_udevadm_uuid)
         assert len(results) == len(_rhel9_4.mtab_parsed)
         assert results == {
-            info["mount"]: {"info": info, "uuid": "N/A", "source": "/etc/mtab"}
-            for info in _rhel9_4.mtab_parsed
+            _mnt: dict(ansible_context={"source": _src, "source_data": _line}, uuid="N/A", **_info)
+            for _src, _mnt, _line, _info in _rhel9_4.mtab_parsed
         }
     assert mock_warn.called == should_warn
