@@ -19,7 +19,7 @@ DOCUMENTATION = """
         description: Flag to control whether or not no matches found return a warning
         type: boolean
         default: False
-        version_added: "2.14"
+        version_added: "2.18"
     notes:
       - Patterns are only supported on files, not directory/paths.
       - See R(Ansible task paths,playbook_task_paths) to understand how file lookup occurs with paths.
