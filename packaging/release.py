@@ -1324,6 +1324,7 @@ def create_release_pr(allow_stale: bool = False) -> None:
         add=(
             CHANGELOGS_DIR,
             ANSIBLE_RELEASE_FILE,
+            ANSIBLE_PYPROJECT_TOML_FILE,
         ),
         allow_stale=allow_stale,
     )
