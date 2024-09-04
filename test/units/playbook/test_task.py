@@ -18,7 +18,11 @@
 from __future__ import annotations
 
 import unittest
+
+from units.mock.loader import DictDataLoader
 from unittest.mock import patch
+
+from ansible.template import Templar
 from ansible.playbook.task import Task
 from ansible.plugins.loader import init_plugin_loader
 from ansible.parsing.yaml import objects
@@ -42,7 +46,9 @@ kv_bad_args_ds = {'apk': 'sdfs sf sdf 37'}
 class TestTask(unittest.TestCase):
 
     def setUp(self):
-        pass
+        self._task_base = {'name': 'test', 'action': 'noop'}
+        self._loader = DictDataLoader({})
+        self._T = templar = Templar(loader=self._loader, variables={})
 
     def tearDown(self):
         pass
@@ -94,6 +100,34 @@ class TestTask(unittest.TestCase):
         assert 'name' not in kv_command_task
         Task.load(kv_command_task)
         # self.assertEqual(t.name, 'shell echo hi')
+
+    def test_delay(self):
+        good_params = [
+            (0, 0),
+            (0.1, 0.1),
+            ('0.3', 0.3),
+            ('0.03', 0.03),
+            ('12', 12),
+            (12, 12),
+            (1.2, 1.2),
+            ('1.2', 1.2),
+            ('1', 1),
+        ]
+        o = Task()
+        for delay, expected in good_params:
+            with self.subTest(delay=delay, expected=expected):
+                p = {'delay': delay}.update(self._task_base)
+                t = o.load(p)
+                self.AssertEqual(t.get_validated_value('delay', t.delay, delay, self._T), expected)
+
+        bad_params = [
+            ('E', ValueError),
+        ]
+        for delay, expected in bad_params:
+            with self.subTest(delay=delay, expected=expected):
+                p = {'delay': delay}.update(self._task_base)
+                t = o.load(p)
+                self.AssertRaises(t.get_validated_value('delay', t.delay, delay, self._T), expected)
 
     def test_task_auto_name_with_role(self):
         pass
