@@ -1,30 +1,15 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
+# Copyright: (c) Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
 import unittest
 
 from unittest.mock import patch
 
+from ansible import errors
+from ansible.parsing.yaml import objects
 from ansible.playbook.task import Task
 from ansible.plugins.loader import init_plugin_loader
-from ansible.parsing.yaml import objects
-from ansible import errors
 
 
 basic_command_task = dict(
@@ -115,6 +100,7 @@ class TestTask(unittest.TestCase):
                 p.update(self._task_base)
                 t = Task().load_data(p)
                 self.assertEqual(t.get_validated_value('delay', t.fattributes.get('delay'), delay, None), expected)
+
         bad_params = [
             ('E', ValueError),
             ('1.E', ValueError),
