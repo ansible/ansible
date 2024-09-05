@@ -402,6 +402,19 @@ class TaskExecutor:
                     self._final_q.send_callback('v2_runner_item_on_ok', tr)
 
             results.append(res)
+
+            # break loop if break_when conditions are met
+            if self._task.loop_control and self._task.loop_control.break_when:
+                cond = Conditional(loader=self._loader)
+                cond.when = self._task.loop_control.get_validated_value(
+                    'break_when', self._task.loop_control.fattributes.get('break_when'), self._task.loop_control.break_when, templar
+                )
+                if cond.evaluate_conditional(templar, task_vars):
+                    # delete loop vars before exiting loop
+                    del task_vars[loop_var]
+                    break
+
+            # done with loop var, remove for next iteration
             del task_vars[loop_var]
 
             # clear 'connection related' plugin variables for next iteration

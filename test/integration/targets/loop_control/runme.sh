@@ -10,3 +10,5 @@ bar_label'
 [ "$(ansible-playbook label.yml "$@" |grep 'item='|sed -e 's/^.*(item=looped_var \(.*\)).*$/\1/')" == "${MATCH}" ]
 
 ansible-playbook extended.yml "$@"
+
+ansible-playbook break_when.yml "$@"
