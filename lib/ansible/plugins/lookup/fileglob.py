@@ -15,10 +15,14 @@ DOCUMENTATION = """
       _terms:
         description: path(s) of files to read
         required: True
-      ignore_missing:
-        description: Flag to control whether or not no matches found return a warning
-        type: boolean
-        default: False
+      on_missing_dir:
+        description: Flag to control behaviour when the directory supplied to match files does not exist.
+        type: str
+        default: warn
+        choices:
+            fail: Will make no matching an Error
+            warn: Just warn that we could not match files, return empty list
+            ignore: Just return empty list, no fuss.
         version_added: "2.18"
     notes:
       - Patterns are only supported on files, not directory/paths.
@@ -56,6 +60,7 @@ RETURN = """
 import os
 import glob
 
+from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 
@@ -70,8 +75,11 @@ class LookupModule(LookupBase):
         for term in terms:
             term_file = os.path.basename(term)
             found_paths = []
+            ignore_missing = self.get_option('on_missing_dir') in ('ignore', 'fail')
             if term_file != term:
-                found_paths.append(self.find_file_in_search_path(variables, 'files', os.path.dirname(term), ignore_missing=self.get_option('ignore_missing')))
+                found_paths.append(self.find_file_in_search_path(variables, 'files', os.path.dirname(term), ignore_missing=ignore_missing))
+                if not found_paths and self.get_option('on_missing_dir') == 'fail':
+                    raise AnsibleError(f"Failed to find requested path: {term}")
             else:
                 # no dir, just file, so use paths and 'files' paths instead
                 if 'ansible_search_path' in variables:
