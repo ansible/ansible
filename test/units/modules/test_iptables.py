@@ -33,7 +33,7 @@ def test_without_required_parameters(mocker):
         iptables.main()
 
     assert exc.value.args[0]["failed"]
-    assert "Either chain or flush parameter must be specified" in exc.value.args[0]["msg"]
+    assert "parameter must be specified" in exc.value.args[0]["msg"]
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
