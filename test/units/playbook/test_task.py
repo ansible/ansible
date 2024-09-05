@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import unittest
 
-from units.mock.loader import DictDataLoader
 from unittest.mock import patch
 
 from ansible.playbook.task import Task
@@ -65,7 +64,7 @@ class TestTask(unittest.TestCase):
     def test_load_task_simple(self):
         t = Task.load(basic_command_task)
         assert t is not None
-        self.assertEqual(t.name, basic_command_task['name'])
+        self.assertEqual(t.get_name(), basic_command_task['name'])
         self.assertEqual(t.action, 'command')
         self.assertEqual(t.args, dict(_raw_params='echo hi'))
 
@@ -94,9 +93,9 @@ class TestTask(unittest.TestCase):
         self.assertEqual(cm.exception.message.count('The error appears to be in'), 1)
 
     def test_task_auto_name(self):
-        assert 'name' not in kv_command_task
-        Task.load(kv_command_task)
-        # self.assertEqual(t.name, 'shell echo hi')
+        self.assertNotIn('name', kv_command_task)
+        t = Task.load(kv_command_task)
+        self.assertEqual(t.get_name(), 'command')
 
     def test_delay(self):
         good_params = [
@@ -118,6 +117,8 @@ class TestTask(unittest.TestCase):
                 self.assertEqual(t.get_validated_value('delay', t.fattributes.get('delay'), delay, None), expected)
         bad_params = [
             ('E', ValueError),
+            ('1.E', ValueError),
+            ('E.1', ValueError),
         ]
         for delay, expected in bad_params:
             with self.subTest(f'type "{type(delay)} was cast to float w/o error', delay=delay, expected=expected):
