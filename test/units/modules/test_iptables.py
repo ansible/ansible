@@ -39,7 +39,7 @@ def test_without_required_parameters(mocker):
         if reason in exc.value.args[0]["msg"]:
             found = True
             break
-    assert Found is True
+    assert found is True
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
