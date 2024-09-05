@@ -41,7 +41,7 @@ class LoopControl(FieldAttributeBase):
 
     def _post_validate_break_when(self, attr, value, templar):
         '''
-        until is evaluated after the execution of the loop is complete,
+        break_when is evaluated after the execution of the loop is complete,
         and should not be templated during the regular post_validate step.
         '''
         return value
