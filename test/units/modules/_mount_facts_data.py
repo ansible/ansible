@@ -32,13 +32,20 @@ class _AIXData:
     mount_parsed: list[dict[str, str]]
 
 
+_mount = "mount"
+_fstab = "/etc/fstab"
+_mtab = "/etc/mtab"
+_mnttab = "/etc/mnttab"
+_vfstab = "/etc/vfstab"
+_filesystems = "/etc/filesystems"
+
 _freebsd_fstab = """# Custom /etc/fstab for FreeBSD VM images
 /dev/gpt/rootfs / ufs rw,acls 1 1
 /dev/gpt/efiesp    /boot/efi       msdosfs     rw      2       2"""
 
 _freebsd_fstab_parsed = [
     (
-        "/etc/fstab",
+        _fstab,
         "/",
         "/dev/gpt/rootfs / ufs rw,acls 1 1",
         {
@@ -51,7 +58,7 @@ _freebsd_fstab_parsed = [
         },
     ),
     (
-        "/etc/fstab",
+        _fstab,
         "/boot/efi",
         "/dev/gpt/efiesp    /boot/efi       msdosfs     rw      2       2",
         {
@@ -71,7 +78,7 @@ devfs on /dev (devfs)
 
 _freebsd_mount_parsed = [
     (
-        "mount",
+        _mount,
         "/",
         "/dev/gpt/rootfs on / (ufs, local, soft-updates, acls)",
         {
@@ -82,7 +89,7 @@ _freebsd_mount_parsed = [
         },
     ),
     (
-        "mount",
+        _mount,
         "/dev",
         "devfs on /dev (devfs)",
         {
@@ -92,7 +99,7 @@ _freebsd_mount_parsed = [
         },
     ),
     (
-        "mount",
+        _mount,
         "/boot/efi",
         "/dev/gpt/efiesp on /boot/efi (msdosfs, local)",
         {
@@ -114,7 +121,7 @@ UUID=7B77-95E7  /boot/efi   vfat    defaults,uid=0,gid=0,umask=077,shortname=win
 
 _rhel_fstab_parsed = [
     (
-        "/etc/fstab",
+        _fstab,
         "/",
         "UUID=6b8b920d-f334-426e-a440-1207d0d8725b   /   xfs defaults    0   0",
         {
@@ -127,7 +134,7 @@ _rhel_fstab_parsed = [
         },
     ),
     (
-        "/etc/fstab",
+        _fstab,
         "/boot",
         "UUID=3ecd4b07-f49a-410c-b7fc-6d1e7bb98ab9   /boot   xfs defaults    0   0",
         {
@@ -140,7 +147,7 @@ _rhel_fstab_parsed = [
         },
     ),
     (
-        "/etc/fstab",
+        _fstab,
         "/boot/efi",
         "UUID=7B77-95E7  /boot/efi   vfat    defaults,uid=0,gid=0,umask=077,shortname=winnt  0   2",
         {
@@ -160,7 +167,7 @@ devtmpfs /dev devtmpfs rw,seclabel,nosuid,size=4096k,nr_inodes=445689,mode=755,i
 
 _rhel_mtab_parsed = [
     (
-        "/etc/mtab",
+        _mtab,
         "/proc",
         "proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0",
         {
@@ -173,7 +180,7 @@ _rhel_mtab_parsed = [
         },
     ),
     (
-        "/etc/mtab",
+        _mtab,
         "/sys",
         "sysfs /sys sysfs rw,seclabel,nosuid,nodev,noexec,relatime 0 0",
         {
@@ -186,7 +193,7 @@ _rhel_mtab_parsed = [
         },
     ),
     (
-        "/etc/mtab",
+        _mtab,
         "/dev",
         "devtmpfs /dev devtmpfs rw,seclabel,nosuid,size=4096k,nr_inodes=445689,mode=755,inode64 0 0",
         {
@@ -206,7 +213,7 @@ devtmpfs on /dev type devtmpfs (rw,nosuid,seclabel,size=4096k,nr_inodes=445689,m
 
 _rhel_mount_parsed = [
     (
-        "mount",
+        _mount,
         "/proc",
         "proc on /proc type proc (rw,nosuid,nodev,noexec,relatime)",
         {
@@ -217,7 +224,7 @@ _rhel_mount_parsed = [
         },
     ),
     (
-        "mount",
+        _mount,
         "/sys",
         "sysfs on /sys type sysfs (rw,nosuid,nodev,noexec,relatime,seclabel)",
         {
@@ -228,7 +235,7 @@ _rhel_mount_parsed = [
         },
     ),
     (
-        "mount",
+        _mount,
         "/dev",
         "devtmpfs on /dev type devtmpfs (rw,nosuid,seclabel,size=4096k,nr_inodes=445689,mode=755,inode64)",
         {
@@ -273,7 +280,7 @@ default:
 
 _aix_filesystems_parsed = [
     (
-        "/etc/filesystems",
+        _filesystems,
         "default",
         'default:\n         vol        = "OS"\n         mount      = false\n         check      = false',
         {
@@ -286,7 +293,7 @@ _aix_filesystems_parsed = [
         },
     ),
     (
-        "/etc/filesystems",
+        _filesystems,
         "/",
         (
             '/:'
@@ -308,7 +315,7 @@ _aix_filesystems_parsed = [
         },
     ),
     (
-        "/etc/filesystems",
+        _filesystems,
         "/home",
         (
             '/home:'
@@ -329,7 +336,7 @@ _aix_filesystems_parsed = [
         },
     ),
     (
-        "/etc/filesystems",
+        _filesystems,
         "/home/joe/1",
         '/home/joe/1:\n         dev        = /home/joe/1\n         nodename   = vance\n         vfs        = nfs',
         {
@@ -351,7 +358,7 @@ sue    /home/local/src  /usr/code    nfs   Dec 17 08:06   ro, log  =/dev/hd8"""
 
 _aix_mount_parsed = [
     (
-        "mount",
+        _mount,
         "/",
         "       /dev/hd0         /            jfs   Dec 17 08:04   rw, log  =/dev/hd8",
         {
@@ -363,7 +370,7 @@ _aix_mount_parsed = [
         },
     ),
     (
-        "mount",
+        _mount,
         "/usr",
         "       /dev/hd2         /usr         jfs   Dec 17 08:06   rw, log  =/dev/hd8",
         {
@@ -375,7 +382,7 @@ _aix_mount_parsed = [
         },
     ),
     (
-        "mount",
+        _mount,
         "/usr/code",
         "sue    /home/local/src  /usr/code    nfs   Dec 17 08:06   ro, log  =/dev/hd8",
         {
@@ -396,7 +403,7 @@ _openbsd_fstab = """726d525601651a64.b none swap sw
 
 _openbsd_fstab_parsed = [
     (
-        "/etc/fstab",
+        _fstab,
         "none",
         "726d525601651a64.b none swap sw",
         {
@@ -407,7 +414,7 @@ _openbsd_fstab_parsed = [
         },
     ),
     (
-        "/etc/fstab",
+        _fstab,
         "/",
         "726d525601651a64.a / ffs rw 1 1",
         {
@@ -420,7 +427,7 @@ _openbsd_fstab_parsed = [
         },
     ),
     (
-        "/etc/fstab",
+        _fstab,
         "/home",
         "726d525601651a64.k /home ffs rw,nodev,nosuid 1 2",
         {
@@ -437,11 +444,11 @@ _openbsd_fstab_parsed = [
 # Note: matches Linux mount format, like NetBSD
 _openbsd_mount = """/dev/sd0a on / type ffs (local)
 /dev/sd0k on /home type ffs (local, nodev, nosuid)
-/dev/sd0e on /tmp type ffs (local, nodev, nosuid)"""
+/dev/sd0e on /foo type ffs (local, nodev, nosuid)"""
 
 _openbsd_mount_parsed = [
     (
-        "mount",
+        _mount,
         "/",
         "/dev/sd0a on / type ffs (local)",
         {
@@ -452,7 +459,7 @@ _openbsd_mount_parsed = [
         },
     ),
     (
-        "mount",
+        _mount,
         "/home",
         "/dev/sd0k on /home type ffs (local, nodev, nosuid)",
         {
@@ -463,12 +470,12 @@ _openbsd_mount_parsed = [
         },
     ),
     (
-        "mount",
-        "/tmp",
-        "/dev/sd0e on /tmp type ffs (local, nodev, nosuid)",
+        _mount,
+        "/foo",
+        "/dev/sd0e on /foo type ffs (local, nodev, nosuid)",
         {
             "device": "/dev/sd0e",
-            "mount": "/tmp",
+            "mount": "/foo",
             "fstype": "ffs",
             "options": "local, nodev, nosuid",
         },
@@ -486,7 +493,7 @@ mailsvr:/var/mail - /var/mail nfs - yes intr,bg"""
 
 _solaris_vfstab_parsed = [
     (
-        "/etc/vfstab",
+        _vfstab,
         "/export/local",
         "/dev/dsk/c2t10d0s0 /dev/rdsk/c2t10d0s0 /export/local ufs 3 yes logging",
         {
@@ -500,7 +507,7 @@ _solaris_vfstab_parsed = [
         },
     ),
     (
-        "/etc/vfstab",
+        _vfstab,
         "/usr/local",
         "example1:/usr/local - /usr/local nfs - yes ro",
         {
@@ -514,7 +521,7 @@ _solaris_vfstab_parsed = [
         },
     ),
     (
-        "/etc/vfstab",
+        _vfstab,
         "/var/mail",
         "mailsvr:/var/mail - /var/mail nfs - yes intr,bg",
         {
@@ -535,7 +542,7 @@ example.ansible.com:/export/nfs    /mnt/nfs    nfs xattr,dev=8e40010   172405535
 
 _solaris_mnttab_parsed = [
     (
-        "/etc/mnttab",
+        _mnttab,
         "/",
         "rpool/ROOT/solaris  /   zfs dev=4490002 0",
         {
@@ -547,7 +554,7 @@ _solaris_mnttab_parsed = [
         },
     ),
     (
-        "/etc/mnttab",
+        _mnttab,
         "/net",
         "-hosts /net autofs ignore,indirect,nosuid,soft,nobrowse,dev=4000002 1724055352",
         {
@@ -559,7 +566,7 @@ _solaris_mnttab_parsed = [
         },
     ),
     (
-        "/etc/mnttab",
+        _mnttab,
         "/mnt/nfs",
         "example.ansible.com:/export/nfs    /mnt/nfs    nfs xattr,dev=8e40010   1724055352",
         {

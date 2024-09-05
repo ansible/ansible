@@ -159,7 +159,7 @@ _LINUX_MOUNT_RE = _re.compile(r"^(?P<device>\S+) on (?P<mount>\S+) type (?P<fsty
 # Pattern for other BSD including FreeBSD, DragonFlyBSD, and MacOS
 _BSD_MOUNT_RE = _re.compile(r"^(?P<device>\S+) on (?P<mount>\S+) \((?P<fstype>.+)\)$")
 # Pattern for AIX, example in https://www.ibm.com/docs/en/aix/7.2?topic=m-mount-command
-_AIX_MOUNT_RE = _re.compile(r"^(?P<node>\S+)?\s+(?P<mounted>\S+)\s+(?P<mount>\S+)\s+(?P<fstype>\S+)\s+(?P<time>\S+\s+\d+\s+\d+:\d+)\s+(?P<options>.*)$")
+_AIX_MOUNT_RE = _re.compile(r"^(?P<node>\S*)\s+(?P<mounted>\S+)\s+(?P<mount>\S+)\s+(?P<fstype>\S+)\s+(?P<time>\S+\s+\d+\s+\d+:\d+)\s+(?P<options>.*)$")
 
 
 def _handle_timeout(module, default=None):
@@ -190,19 +190,24 @@ def _run_mount_bin(module: _AnsibleModule, mount_bin: str) -> str:  # type: igno
         module.fail_json(msg=f"Failed to execute {mount_bin}: {str(e)}")
 
 
-def _gen_mounts_from_stdout(stdout: str) -> _Generator[tuple[str, str, dict[str, str]]]:
-    """List mount dictionaries from mount stdout."""
+def _get_stdout_pattern(stdout: str):
+    """Determine if any of the lines match one of the supported regular expressions and return it or None."""
     lines = stdout.splitlines()
     if any(_LINUX_MOUNT_RE.match(line) for line in lines):
-        pattern = _LINUX_MOUNT_RE
+        return _LINUX_MOUNT_RE
     elif any(_BSD_MOUNT_RE.match(line) for line in lines):
-        pattern = _BSD_MOUNT_RE
+        return _BSD_MOUNT_RE
     elif any(_AIX_MOUNT_RE.match(line) for line in lines):
-        pattern = _AIX_MOUNT_RE
-    else:
-        lines = []
+        return _AIX_MOUNT_RE
 
-    for line in lines:
+
+def _gen_mounts_from_stdout(stdout: str) -> _Generator[tuple[str, str, dict[str, str]]]:
+    """List mount dictionaries from mount stdout."""
+    pattern = _get_stdout_pattern(stdout)
+    if pattern is None:
+        stdout = ""
+
+    for line in stdout.splitlines():
         if not (match := pattern.match(line)):
             # AIX has a couple header lines for some reason
             # MacOS "map" lines are skipped (e.g. "map auto_home on /System/Volumes/Data/home (autofs, automounted, nobrowse)")
@@ -214,7 +219,7 @@ def _gen_mounts_from_stdout(stdout: str) -> _Generator[tuple[str, str, dict[str,
         elif pattern is _BSD_MOUNT_RE:
             # the group containing fstype is comma separated, and may include whitespace
             mount_info = match.groupdict()
-            parts = _re.split(r"\s*,\s*", match.group("fstype"), 1)
+            parts = [part.strip() for part in mount_info["fstype"].split(',', 1)]
             if len(parts) == 1:
                 mount_info["fstype"] = parts[0]
             else:
@@ -224,7 +229,7 @@ def _gen_mounts_from_stdout(stdout: str) -> _Generator[tuple[str, str, dict[str,
             device = mount_info.pop("mounted")
             node = mount_info.pop("node")
             if device and node:
-                device = f"{node}:{device or ''}"
+                device = f"{node}:{device}"
             mount_info["device"] = device
 
         yield mount, line, mount_info

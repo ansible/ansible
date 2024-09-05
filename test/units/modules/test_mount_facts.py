@@ -108,8 +108,8 @@ def test_duplicate_source(monkeypatch, _set_file_content):
     ("_gen_aix_filesystems_entries", _aix7_2.filesystems, _aix7_2.filesystems_parsed),
 ])
 def test_list_mounts(function, data, expected_result_data):
-    function = getattr(_mount_facts, function)
-    result = list(function(data.splitlines()))
+    func = getattr(_mount_facts, function)
+    result = list(func(data.splitlines()))
     assert result == [(_mnt, _line, _info) for _src, _mnt, _line, _info in expected_result_data]
 
 
