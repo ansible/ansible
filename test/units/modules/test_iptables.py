@@ -2,8 +2,9 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
-from units.modules.utils import AnsibleExitJson, AnsibleFailJson, set_module_args, fail_json, exit_json
 import pytest
+
+from units.modules.utils import AnsibleExitJson, AnsibleFailJson, exit_json, fail_json, set_module_args
 
 from ansible.modules import iptables
 
