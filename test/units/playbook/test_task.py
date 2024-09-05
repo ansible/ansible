@@ -92,7 +92,7 @@ class TestTask(unittest.TestCase):
             (12, 12),
             (1.2, 1.2),
             ('1.2', 1.2),
-            ('1', 1),
+            ('1.0', 1),
         ]
         for delay, expected in good_params:
             with self.subTest(f'type "{type(delay)}" was not cast to float', delay=delay, expected=expected):
