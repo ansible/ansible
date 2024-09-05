@@ -1,0 +1,17 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - debug: var=item
+      changed_when: false
+      loop:
+        - 1
+        - 2
+        - 3
+        - 4
+      loop_control:
+        break_when: item >= 2
+      register: untiltest
+
+    - assert:
+        that:
+            - untiltest['results']|length == 2
