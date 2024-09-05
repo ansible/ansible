@@ -33,7 +33,13 @@ def test_without_required_parameters(mocker):
         iptables.main()
 
     assert exc.value.args[0]["failed"]
-    assert "Failed to find required executable" in exc.value.args[0]["msg"]
+    found = False
+    for reason in ("Failed to find required executable", "parameter must be specified"):
+        # can fail either cause iptables is not present or it is and missing required params
+        if reason in exc.value.args[0]["msg"]:
+            found = True
+            break
+    assert Found is True
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
