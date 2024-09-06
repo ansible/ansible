@@ -18,7 +18,7 @@ and do not wish to install them from your operating system package manager, you
 can install them from pip
 
 ```shell
-easy_install pip  # if pip is not already available
+python -Im ensurepip  # if pip is not already available
 pip install -r requirements.txt
 ```
 
