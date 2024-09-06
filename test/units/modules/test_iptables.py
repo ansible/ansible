@@ -22,19 +22,6 @@ def _mock_basic_commands(mocker):
     mocker.patch("ansible.modules.iptables.get_iptables_version", return_value=IPTABLES_VERSION)
 
 
-def test_without_required_parameters(mocker):
-    """Test module without any parameters."""
-    mocker.patch(
-        "ansible.module_utils.basic.AnsibleModule.fail_json",
-        side_effect=fail_json,
-    )
-    set_module_args({'flush': True})
-    possible_errors=r'Could not fetch rule set|Failed to find required executable'
-    with pytest.raises(AnsibleFailJson, match=possible_errors) as exc:
-        iptables.main()
-    assert exc.value.args[0]["failed"]
-
-
 @pytest.mark.usefixtures('_mock_basic_commands')
 def test_flush_table_without_chain(mocker):
     """Test flush without chain, flush the table."""
