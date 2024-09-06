@@ -29,17 +29,10 @@ def test_without_required_parameters(mocker):
         side_effect=fail_json,
     )
     set_module_args({})
-    with pytest.raises(AnsibleFailJson) as exc:
+    possible_errors = r'.*(Failed to find required executable|parameter must be specified).*'
+    with pytest.raises(AnsibleFailJson, match=possible_errors) as exc:
         iptables.main()
-
     assert exc.value.args[0]["failed"]
-    found = False
-    for reason in ("Failed to find required executable", "parameter must be specified"):
-        # can fail either cause iptables is not present or it is and missing required params
-        if reason in exc.value.args[0]["msg"]:
-            found = True
-            break
-    assert found is True
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
