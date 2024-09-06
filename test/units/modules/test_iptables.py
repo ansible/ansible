@@ -28,8 +28,8 @@ def test_without_required_parameters(mocker):
         "ansible.module_utils.basic.AnsibleModule.fail_json",
         side_effect=fail_json,
     )
-    set_module_args({})
-    possible_errors = r'.*(Failed to find required executable|parameter must be specified).*'
+    set_module_args({'flush': True})
+    possible_errors=r'Could not fetch rule set|Failed to find required executable'
     with pytest.raises(AnsibleFailJson, match=possible_errors) as exc:
         iptables.main()
     assert exc.value.args[0]["failed"]
