@@ -672,7 +672,7 @@ build
 twine
 """
 
-    requirements_file = CHECKOUT_DIR / "test/sanity/code-smell/package-data.requirements.txt"
+    requirements_file = CHECKOUT_DIR / "test/lib/ansible_test/_data/requirements/sanity.changelog.txt"
     requirements_content = requirements_file.read_text()
     requirements_content += ansible_requirements
     requirements_content += release_requirements
