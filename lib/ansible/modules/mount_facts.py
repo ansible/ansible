@@ -159,7 +159,7 @@ _LINUX_MOUNT_RE = _re.compile(r"^(?P<device>\S+) on (?P<mount>\S+) type (?P<fsty
 # Pattern for other BSD including FreeBSD, DragonFlyBSD, and MacOS
 _BSD_MOUNT_RE = _re.compile(r"^(?P<device>\S+) on (?P<mount>\S+) \((?P<fstype>.+)\)$")
 # Pattern for AIX, example in https://www.ibm.com/docs/en/aix/7.2?topic=m-mount-command
-_AIX_MOUNT_RE = _re.compile(r"^(?P<node>\S+)?\s+(?P<mounted>\S+)\s+(?P<mount>\S+)\s+(?P<fstype>\S+)\s+(?P<time>\S+\s+\d+\s+\d+:\d+)\s+(?P<options>.*)$")
+_AIX_MOUNT_RE = _re.compile(r"^(?P<node>\S*)\s+(?P<mounted>\S+)\s+(?P<mount>\S+)\s+(?P<fstype>\S+)\s+(?P<time>\S+\s+\d+\s+\d+:\d+)\s+(?P<options>.*)$")
 
 
 def _handle_timeout(module, default=None):
@@ -224,7 +224,7 @@ def _gen_mounts_from_stdout(stdout: str) -> _Generator[tuple[str, str, dict[str,
             device = mount_info.pop("mounted")
             node = mount_info.pop("node")
             if device and node:
-                device = f"{node}:{device or ''}"
+                device = f"{node}:{device}"
             mount_info["device"] = device
 
         yield mount, line, mount_info
@@ -390,7 +390,6 @@ def _gen_mounts_by_source(module: _AnsibleModule):
 def _get_mount_facts(module: _AnsibleModule, uuids: dict, udevadm_uuid: _Callable):
     """List and filter mounts, returning a dictionary containing mount points as the keys (last listed wins)."""
     seconds = module.params["timeout"]
-    on_timeout = module.params["on_timeout"]
 
     # merge sources based on the mount point (last source wins)
     facts = {}
