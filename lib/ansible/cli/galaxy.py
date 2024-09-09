@@ -257,7 +257,7 @@ class GalaxyCLI(CLI):
         collections_path = opt_help.ArgumentParser(add_help=False)
         collections_path.add_argument('-p', '--collections-path', dest='collections_path', type=opt_help.unfrack_path(pathsep=True),
                                       action=opt_help.PrependListAction,
-                                      help="One or more directories to search for collections (or install to) in addition "
+                                      help="One or more directories to search for collections in addition "
                                       "to the default COLLECTIONS_PATHS. Separate multiple paths "
                                       "with '{0}'.".format(os.path.pathsep))
 
@@ -472,22 +472,28 @@ class GalaxyCLI(CLI):
             ignore_errors_help = 'Ignore errors and continue with the next specified role.'
 
         if self._implicit_role:
-            # installing both roles and collections
+            # might install both roles and collections
             description_text = (
                 'Install roles and collections from file(s), URL(s) or Ansible '
                 'Galaxy to the first entry in the config COLLECTIONS_PATH for collections '
-                'and first entry in the config ROLES_PATH for roles.'
+                'and first entry in the config ROLES_PATH for roles. '
+                'The first entry in the config ROLES_PATH can be overridden by --roles-path '
+                'or -p. This will result in only roles being installed.'
+                'Only role requirements can be passed as positional arguments.'
             )
+            prog = 'ansible-galaxy install '
         else:
+            prog = parser._prog_prefix
             description_text = (
                 'Install {0}(s) from file(s), URL(s) or Ansible '
                 'Galaxy to the first entry in the config {1}S_PATH '
-                'unless overridden by --{0}s-path'.format(galaxy_type, galaxy_type.upper())
+                'unless overridden by --{0}s-path.'.format(galaxy_type, galaxy_type.upper())
             )
         install_parser = parser.add_parser('install', parents=parents,
                                            help='Install {0}(s) from file(s), URL(s) or Ansible '
                                                 'Galaxy'.format(galaxy_type),
-                                           description=description_text)
+                                           description=description_text,
+                                           prog=prog,)
         install_parser.set_defaults(func=self.execute_install)
 
         install_parser.add_argument('args', metavar='{0}_name'.format(galaxy_type), nargs='*', **args_kwargs)
