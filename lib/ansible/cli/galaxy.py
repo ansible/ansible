@@ -469,6 +469,10 @@ class GalaxyCLI(CLI):
                                  'collection. This will not ignore dependency conflict errors.'
         else:
             args_kwargs['help'] = 'Role name, URL or tar file'
+            if self._implicit_role:
+                args_kwargs['help'] += '. This is mutually exclusive with --requirements-file.'
+            else:
+                args_kwargs['help'] += '. This is mutually exclusive with --role-file.'
             ignore_errors_help = 'Ignore errors and continue with the next specified role.'
 
         if self._implicit_role:
@@ -479,7 +483,6 @@ class GalaxyCLI(CLI):
                 'and first entry in the config ROLES_PATH for roles. '
                 'The first entry in the config ROLES_PATH can be overridden by --roles-path '
                 'or -p. This will result in only roles being installed.'
-                'Only role requirements can be passed as positional arguments.'
             )
             prog = 'ansible-galaxy install '
         else:
@@ -546,8 +549,12 @@ class GalaxyCLI(CLI):
                                              'This does not apply to collections in remote Git repositories or URLs to remote tarballs.'
                                         )
         else:
-            install_parser.add_argument('-r', '--role-file', dest='requirements',
-                                        help='A file containing a list of roles to be installed.')
+            if self._implicit_role:
+                install_parser.add_argument('-r', '--requirements-file', '--role-file', dest='requirements',
+                                            help='A file containing a list of collections and roles to be installed.')
+            else:
+                install_parser.add_argument('-r', '--role-file', dest='requirements',
+                                            help='A file containing a list of roles to be installed.')
 
             r_re = re.compile(r'^(?<!-)-[a-zA-Z]*r[a-zA-Z]*')  # -r, -fr
             contains_r = bool([a for a in self._raw_args if r_re.match(a)])
