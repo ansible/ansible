@@ -1,6 +1,1 @@
 build  # required to build sdist
-jinja2
-pyyaml
-resolvelib < 1.1.0
-rstcheck < 6  # newer versions have too many dependencies
-antsibull-changelog
