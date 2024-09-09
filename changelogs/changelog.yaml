@@ -812,6 +812,17 @@ releases:
     - ansible-test-vyos.yml
     - mc_fix.yml
     release_date: '2024-08-05'
+  2.16.11:
+    changes:
+      release_summary: '| Release Date: 2024-09-09
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+    codename: All My Love
+    fragments:
+    - 2.16.11_summary.yaml
+    release_date: '2024-09-09'
   2.16.11rc1:
     changes:
       bugfixes:
