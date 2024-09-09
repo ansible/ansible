@@ -9,6 +9,16 @@ import locale
 import os
 import sys
 
+
+# as the SSH_ASKPASS script can only be invoked as a singular command
+# python -m doesn't work here, so assume that if we are executing
+# and there is only a single item in argv plus the executable, and the
+# env var is set we are in SSH_ASKPASS mode
+if 1 <= len(sys.argv) <= 2 and os.path.basename(sys.argv[0]) == "ansible" and os.getenv('_ANSIBLE_SSH_ASKPASS_SHM'):
+    from ansible.cli import _ssh_askpass
+    _ssh_askpass.main()
+
+
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
 if sys.version_info < (3, 11):
