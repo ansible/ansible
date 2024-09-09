@@ -44,6 +44,8 @@ class AnsibleConstructor(SafeConstructor):
         value = self.construct_mapping(node)
         data.update(value)
         data.ansible_pos = self._node_position_info(node)
+        if hasattr(value, 'merge_behavior'):
+            data.merge_behavior = value.merge_behavior
 
     def construct_mapping(self, node, deep=False):
         # Most of this is from yaml.constructor.SafeConstructor.  We replicate
@@ -115,8 +117,11 @@ class AnsibleConstructor(SafeConstructor):
     def construct_yaml_seq(self, node):
         data = AnsibleSequence()
         yield data
-        data.extend(self.construct_sequence(node))
+        value = self.construct_sequence(node)
+        data.extend(value)
         data.ansible_pos = self._node_position_info(node)
+        if hasattr(value, 'merge_behavior'):
+            data.merge_behavior = value.merge_behavior
 
     def construct_yaml_unsafe(self, node):
         try:
@@ -176,3 +181,13 @@ AnsibleConstructor.add_constructor(
 AnsibleConstructor.add_constructor(
     u'!vault-encrypted',
     AnsibleConstructor.construct_vault_encrypted_unicode)  # type: ignore[type-var]
+
+def merge_constructor(loader, node):
+    node = loader.construct_yaml_map(node)
+    data = next(node)
+    for _ in node:
+        pass
+    data.merge_behavior = 'merge'
+    return data
+
+AnsibleConstructor.add_constructor('!merge', merge_constructor)

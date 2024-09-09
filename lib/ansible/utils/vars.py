@@ -86,8 +86,7 @@ def combine_vars(a, b, merge=None):
 
     # HASH_BEHAVIOUR == 'replace'
     _validate_mutable_mappings(a, b)
-    result = a | b
-    return result
+    return merge_hash(a, b, recursive=False)
 
 
 def merge_hash(x, y, recursive=True, list_merge='replace'):
@@ -114,13 +113,6 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
     # we don't want to modify x, so we create a copy of it
     x = x.copy()
 
-    # to speed things up: use dict.update if possible
-    # (this `if` can be remove without impact on the function
-    #  except performance)
-    if not recursive and list_merge == 'replace':
-        x.update(y)
-        return x
-
     # insert each element of y in x, overriding the one in x
     # (as y has higher priority)
     # we copy elements from y to x instead of x to y because
@@ -142,7 +134,11 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
         # depending on the `recursive` argument
         # and move on to the next element of y
         if isinstance(x_value, MutableMapping) and isinstance(y_value, MutableMapping):
-            if recursive:
+            if hasattr(y_value, 'merge_behavior'):
+                recursive_cur = y_value.merge_behavior
+            else:
+                recursive_cur = recursive
+            if recursive_cur:
                 x[key] = merge_hash(x_value, y_value, recursive, list_merge)
             else:
                 x[key] = y_value

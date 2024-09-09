@@ -50,6 +50,15 @@ class AnsibleBaseYAMLObject(object):
         self._line_number = line
         self._column_number = col
 
+    def copy(self):
+        copy = self.__class__(self)
+        copy._data_source = self._data_source
+        copy._line_number = self._line_number
+        copy._column_number = self._column_number
+        if hasattr(self, 'merge_behavior'):
+            copy.merge_behavior = self.merge_behavior
+        return copy
+
     ansible_pos = property(_get_ansible_position, _set_ansible_position)
 
 

@@ -41,6 +41,8 @@ from ansible.utils.vars import isidentifier
 
 __all__ = ['Task']
 
+from ansible.utils.vars import merge_hash
+
 display = Display()
 
 
@@ -365,9 +367,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     def get_vars(self):
         all_vars = dict()
         if self._parent:
-            all_vars |= self._parent.get_vars()
+            all_vars = self._parent.get_vars()
 
-        all_vars |= self.vars
+        all_vars = merge_hash(all_vars, self.vars)
 
         if 'tags' in all_vars:
             del all_vars['tags']

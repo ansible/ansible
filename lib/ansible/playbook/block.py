@@ -29,6 +29,7 @@ from ansible.playbook.notifiable import Notifiable
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible.utils.sentinel import Sentinel
+from ansible.utils.vars import merge_hash
 
 
 class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatable):
@@ -77,11 +78,9 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         all_vars = {}
 
         if self._parent:
-            all_vars |= self._parent.get_vars()
+            all_vars = self._parent.get_vars()
 
-        all_vars |= self.vars.copy()
-
-        return all_vars
+        return merge_hash(all_vars, self.vars)
 
     @staticmethod
     def load(data, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
