@@ -482,7 +482,7 @@ class GalaxyCLI(CLI):
                 'Galaxy to the first entry in the config COLLECTIONS_PATH for collections '
                 'and first entry in the config ROLES_PATH for roles. '
                 'The first entry in the config ROLES_PATH can be overridden by --roles-path '
-                'or -p. This will result in only roles being installed.'
+                'or -p, but this will result in only roles being installed.'
             )
             prog = 'ansible-galaxy install '
         else:
