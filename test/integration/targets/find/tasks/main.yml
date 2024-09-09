@@ -504,6 +504,6 @@
         that:
           - homedir_search is success
           - homedir_search.matched == 1
-          - '"{{ homedir }}/wharevs.txt" in astest_list'
+          - 'homedir ~ "/wharevs.txt" in astest_list'
       vars:
         homedir: "{{ test_user.home }}"
