@@ -6,8 +6,12 @@
 
 from __future__ import annotations
 
+import os
+import sys
+
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
+from ansible.cli import _ssh_askpass
 from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
@@ -19,6 +23,13 @@ from ansible.parsing.utils.yaml import from_yaml
 from ansible.playbook import Playbook
 from ansible.playbook.play import Play
 from ansible.utils.display import Display
+
+# as the SSH_ASKPASS script can only be invoked as a singular command
+# python -m doesn't work here, so assume that if we are executing
+# and there is only a single item in argv plus the executable, and the
+# env var is set we are in SSH_ASKPASS mode
+if sys.argv[2:] == [] and os.getenv('_ANSIBLE_SSH_ASKPASS_SHM'):
+    _ssh_askpass.main()
 
 display = Display()
 
