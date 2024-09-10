@@ -263,7 +263,7 @@ class SystemctlScanService(BaseService):
     def _list_from_units(self, systemctl_path, services):
 
         # list units as systemd sees them
-        rc, stdout, stderr = self.module.run_command("%s list-units --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
+        rc, stdout, stderr = self.module.run_command("%s list-units --no-pager --type service --all --plain" % systemctl_path, use_unsafe_shell=True)
         if rc != 0:
             self.module.warn("Could not list units from systemd: %s" % stderr)
         else:
@@ -272,16 +272,18 @@ class SystemctlScanService(BaseService):
                 state_val = "stopped"
                 status_val = "unknown"
                 fields = line.split()
+
+                # systemd sometimes gives misleading status
+                # check all fields for bad states
                 for bad in self.BAD_STATES:
-                    if bad in fields:  # dot is 0
+                    # except description
+                    if bad in fields[:-1]:
                         status_val = bad
-                        fields = fields[1:]
                         break
                 else:
                     # active/inactive
                     status_val = fields[2]
 
-                # array is normalize so predictable now
                 service_name = fields[0]
                 if fields[3] == "running":
                     state_val = "running"
