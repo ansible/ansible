@@ -30,7 +30,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.parsing.splitter import parse_kv
-
+from ansible.parsing.yaml.objects import AnsibleSequence
 
 ADDITIONAL_PY2_KEYWORDS = frozenset(("True", "False", "None"))
 
@@ -148,21 +148,29 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
         # "merge" them depending on the `list_merge` argument
         # and move on to the next element of y
         if isinstance(x_value, MutableSequence) and isinstance(y_value, MutableSequence):
-            if list_merge == 'replace':
+            if hasattr(y_value, 'merge_behavior'):
+                list_merge_cur = y_value.merge_behavior
+                if not isinstance(x_value, AnsibleSequence):
+                    x_value = AnsibleSequence(x_value)
+                if y_value.ansible_pos in x_value.sources:
+                    continue
+            else:
+                list_merge_cur = list_merge
+            if list_merge_cur == 'replace':
                 # replace x value by y's one as it has higher priority
                 x[key] = y_value
-            elif list_merge == 'append':
+            elif list_merge_cur == 'append':
                 x[key] = x_value + y_value
-            elif list_merge == 'prepend':
+            elif list_merge_cur == 'prepend':
                 x[key] = y_value + x_value
-            elif list_merge == 'append_rp':
+            elif list_merge_cur == 'append_rp':
                 # append all elements from y_value (high prio) to x_value (low prio)
                 # and remove x_value elements that are also in y_value
                 # we don't remove elements from x_value nor y_value that were already in double
                 # (we assume that there is a reason if there where such double elements)
                 # _rp stands for "remove present"
-                x[key] = [z for z in x_value if z not in y_value] + y_value
-            elif list_merge == 'prepend_rp':
+                x[key] = AnsibleSequence([z for z in x_value if z not in y_value]) + y_value
+            elif list_merge_cur == 'prepend_rp':
                 # same as 'append_rp' but y_value elements are prepend
                 x[key] = y_value + [z for z in x_value if z not in y_value]
             # else 'keep'

@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 from yaml.constructor import SafeConstructor, ConstructorError
-from yaml.nodes import MappingNode
+from yaml.nodes import MappingNode, SequenceNode
 
 from ansible import constants as C
 from ansible.module_utils.common.text.converters import to_bytes, to_native
@@ -182,12 +182,26 @@ AnsibleConstructor.add_constructor(
     u'!vault-encrypted',
     AnsibleConstructor.construct_vault_encrypted_unicode)  # type: ignore[type-var]
 
-def merge_constructor(loader, node):
-    node = loader.construct_yaml_map(node)
-    data = next(node)
-    for _ in node:
-        pass
-    data.merge_behavior = 'merge'
-    return data
+def merge_constructor(behavior):
+    def f(loader, node):
+        if isinstance(node, MappingNode):
+            node = loader.construct_yaml_map(node)
+            data = next(node)
+            for _ in node:
+                pass
+            data.merge_behavior = behavior
+            return data
+        elif isinstance(node, SequenceNode):
+            node = loader.construct_yaml_seq(node)
+            data = next(node)
+            for _ in node:
+                pass
+            data.merge_behavior = behavior
+            return data
+        else:
+            raise ConstructorError("Invalid node type for merge")
+    return f
 
-AnsibleConstructor.add_constructor('!merge', merge_constructor)
+AnsibleConstructor.add_constructor('!merge', merge_constructor('merge'))
+AnsibleConstructor.add_constructor('!append', merge_constructor('append'))
+AnsibleConstructor.add_constructor('!prepend', merge_constructor('prepend'))

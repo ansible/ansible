@@ -74,7 +74,32 @@ class AnsibleUnicode(AnsibleBaseYAMLObject, text_type):
 
 class AnsibleSequence(AnsibleBaseYAMLObject, list):
     ''' sub class for lists '''
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._sources = set()
+
+    def __add__(self, other):
+        added = self.__class__(super().__add__(other))
+        if isinstance(other, AnsibleSequence):
+            added.sources = self.sources | other.sources
+        else:
+            added.sources = self.sources.copy()
+        return added
+
+    def copy(self):
+        copy = self.__class__(super().copy())
+        copy._sources = self._sources
+        return copy
+
+    @property
+    def sources(self):
+        if self.ansible_pos[0] is not None:
+            return {self.ansible_pos} | self._sources
+        return self._sources
+
+    @sources.setter
+    def sources(self, value):
+        self._sources = value
 
 
 class AnsibleVaultEncryptedUnicode(Sequence, AnsibleBaseYAMLObject):
