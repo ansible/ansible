@@ -15,12 +15,12 @@ description:
 options:
   devices:
     description: A list of fnmatch patterns to filter mounts by the special device or remote file system.
-    default: []
+    default: ~
     type: list
     elements: str
   fstypes:
     description: A list of fnmatch patterns to filter mounts by the type of the file system.
-    default: []
+    default: ~
     type: list
     elements: str
   sources:
@@ -37,7 +37,7 @@ options:
       - The value of O(mount_binary) can be configured as a source, which will cause it to always execute.
         Depending on the other sources configured, this could be inefficient/redundant.
         For example, if V(/proc/mounts) and V(mount) are listed as O(sources), Linux hosts will retrieve the same mounts twice.
-    default: []
+    default: ~
     type: list
     elements: str
   mount_binary:
@@ -444,10 +444,10 @@ def get_mount_facts(module: AnsibleModule, uuids: dict, udevadm_uuid: Callable):
 def get_argument_spec():
     """Helper returning the argument spec."""
     return dict(
-        sources=dict(type="list", elements="str", default=[]),
+        sources=dict(type="list", elements="str", default=None),
         mount_binary=dict(default="mount", type="raw"),
-        devices=dict(type="list", elements="str", default=[]),
-        fstypes=dict(type="list", elements="str", default=[]),
+        devices=dict(type="list", elements="str", default=None),
+        fstypes=dict(type="list", elements="str", default=None),
         timeout=dict(type="float"),
         on_timeout=dict(choices=["error", "warn", "ignore"], default="error"),
     )
