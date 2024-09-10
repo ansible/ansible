@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from ansible.module_utils.basic import AnsibleModule as _AnsibleModule
-from ansible.modules import mount_facts as _mount_facts
+from ansible.modules import mount_facts
 from units.modules.utils import (
     AnsibleExitJson as _AnsibleExitJson,
     AnsibleFailJson as _AnsibleFailJson,
@@ -23,7 +23,7 @@ _UUIDS = {}
 def _get_mock_module(invocation):
     _set_module_args(invocation)
     module = _AnsibleModule(
-        argument_spec=_mount_facts._get_argument_spec(),
+        argument_spec=mount_facts.get_argument_spec(),
         supports_check_mode=True,
     )
     return module
@@ -43,24 +43,24 @@ def _set_file_content(monkeypatch):
             if filename in data:
                 return data[filename]
             return default
-        monkeypatch.setattr(_mount_facts, "_get_file_content", mock_get_file_content)
+        monkeypatch.setattr(mount_facts, "get_file_content", mock_get_file_content)
     return _set_file_content
 
 
 def test_invocation(monkeypatch, _set_file_content):
     _set_file_content({})
     _set_module_args({})
-    monkeypatch.setattr(_mount_facts, "_run_mount_bin", _mock_callable(return_value=""))
+    monkeypatch.setattr(mount_facts, "run_mount_bin", _mock_callable(return_value=""))
     monkeypatch.setattr(_AnsibleModule, "exit_json", _exit_json)
     with pytest.raises(_AnsibleExitJson, match="{'ansible_facts': {'extended_mounts': {}}}"):
-        _mount_facts.main()
+        mount_facts.main()
 
 
 def test_invalid_timeout(monkeypatch):
     _set_module_args({"timeout": 0})
     monkeypatch.setattr(_AnsibleModule, "fail_json", _fail_json)
     with pytest.raises(_AnsibleFailJson, match="argument 'timeout' must be a positive integer or null"):
-        _mount_facts.main()
+        mount_facts.main()
 
 
 @pytest.mark.parametrize("invalid_binary, error", [
@@ -73,14 +73,14 @@ def test_invalid_mount_binary(monkeypatch, _set_file_content, invalid_binary, er
     _set_module_args({"mount_binary": invalid_binary})
     monkeypatch.setattr(_AnsibleModule, "fail_json", _fail_json)
     with pytest.raises(_AnsibleFailJson, match=error):
-        _mount_facts.main()
+        mount_facts.main()
 
 
 def test_invalid_source(monkeypatch):
     _set_module_args({"sources": [""]})
     monkeypatch.setattr(_AnsibleModule, "fail_json", _fail_json)
     with pytest.raises(_AnsibleFailJson, match="sources contains an empty string"):
-        _mount_facts.main()
+        mount_facts.main()
 
 
 def test_duplicate_source(monkeypatch, _set_file_content):
@@ -93,22 +93,22 @@ def test_duplicate_source(monkeypatch, _set_file_content):
     expected_warning = "mount_facts option 'sources' contains duplicate entries, repeat sources will be ignored:"
 
     module = _get_mock_module({"sources": user_sources})
-    list(_mount_facts._gen_mounts_by_source(module))
+    list(mount_facts.gen_mounts_by_source(module))
     assert mock_warn.called
     assert len(mock_warn.call_args_list) == 1
     assert mock_warn.call_args_list[0].args == (f"{expected_warning} {resolved_sources}",)
 
 
 @pytest.mark.parametrize("function, data, expected_result_data", [
-    ("_gen_fstab_entries", _rhel9_4.fstab, _rhel9_4.fstab_parsed),
-    ("_gen_fstab_entries", _rhel9_4.mtab, _rhel9_4.mtab_parsed),
-    ("_gen_fstab_entries", _freebsd14_1.fstab, _freebsd14_1.fstab_parsed),
-    ("_gen_vfstab_entries", _solaris11_2.vfstab, _solaris11_2.vfstab_parsed),
-    ("_gen_mnttab_entries", _solaris11_2.mnttab, _solaris11_2.mnttab_parsed),
-    ("_gen_aix_filesystems_entries", _aix7_2.filesystems, _aix7_2.filesystems_parsed),
+    ("gen_fstab_entries", _rhel9_4.fstab, _rhel9_4.fstab_parsed),
+    ("gen_fstab_entries", _rhel9_4.mtab, _rhel9_4.mtab_parsed),
+    ("gen_fstab_entries", _freebsd14_1.fstab, _freebsd14_1.fstab_parsed),
+    ("gen_vfstab_entries", _solaris11_2.vfstab, _solaris11_2.vfstab_parsed),
+    ("gen_mnttab_entries", _solaris11_2.mnttab, _solaris11_2.mnttab_parsed),
+    ("gen_aix_filesystems_entries", _aix7_2.filesystems, _aix7_2.filesystems_parsed),
 ])
 def test_list_mounts(function, data, expected_result_data):
-    function = getattr(_mount_facts, function)
+    function = getattr(mount_facts, function)
     result = list(function(data.splitlines()))
     assert result == [(_mnt, _line, _info) for _src, _mnt, _line, _info in expected_result_data]
 
@@ -119,7 +119,7 @@ def test_etc_filesystems_linux(_set_file_content):
     )
     _set_file_content({"/etc/filesystems": not_aix_data})
     module = _get_mock_module({"sources": ["/etc/filesystems"]})
-    assert list(_mount_facts._gen_mounts_by_source(module)) == []
+    assert list(mount_facts.gen_mounts_by_source(module)) == []
 
 
 @pytest.mark.parametrize("mount_stdout, expected_result_data", [
@@ -130,16 +130,16 @@ def test_etc_filesystems_linux(_set_file_content):
 ])
 def test_parse_mount_bin_stdout(mount_stdout, expected_result_data):
     expected_result = [(_mnt, _line, _info) for _src, _mnt, _line, _info in expected_result_data]
-    assert list(_mount_facts._gen_mounts_from_stdout(mount_stdout)) == expected_result
+    assert list(mount_facts.gen_mounts_from_stdout(mount_stdout)) == expected_result
 
 
 def test_parse_mount_bin_stdout_unknown(monkeypatch, _set_file_content):
     _set_file_content({})
     _set_module_args({})
-    monkeypatch.setattr(_mount_facts, "_run_mount_bin", _mock_callable(return_value="nonsense"))
+    monkeypatch.setattr(mount_facts, "run_mount_bin", _mock_callable(return_value="nonsense"))
     monkeypatch.setattr(_AnsibleModule, "exit_json", _exit_json)
     with pytest.raises(_AnsibleExitJson, match="{'ansible_facts': {'extended_mounts': {}}}"):
-        _mount_facts.main()
+        mount_facts.main()
 
 
 _rhel_mock_fs = {"/etc/fstab": _rhel9_4.fstab, "/etc/mtab": _rhel9_4.mtab}
@@ -167,10 +167,10 @@ _solaris_mock_fs = {"/etc/mnttab": _solaris11_2.mnttab, "/etc/vfstab": _solaris1
 def test_gen_mounts_by_sources(monkeypatch, _set_file_content, sources, file_data, mount_data, results):
     _set_file_content(file_data)
     mock_run_mount = _mock_callable(return_value=mount_data)
-    monkeypatch.setattr(_mount_facts, "_run_mount_bin", mock_run_mount)
+    monkeypatch.setattr(mount_facts, "run_mount_bin", mock_run_mount)
     module = _get_mock_module({"sources": sources})
 
-    assert list(_mount_facts._gen_mounts_by_source(module)) == results
+    assert list(mount_facts.gen_mounts_by_source(module)) == results
 
 
 @pytest.mark.parametrize("on_timeout, should_warn, should_raise", [
@@ -192,9 +192,9 @@ def test_gen_mounts_by_source_timeout(monkeypatch, _set_file_content, on_timeout
     module = _get_mock_module(params)
     if should_raise:
         with pytest.raises(_AnsibleFailJson, match="Command '[^']*mount' timed out after 0.0 seconds"):
-            list(_mount_facts._gen_mounts_by_source(module))
+            list(mount_facts.gen_mounts_by_source(module))
     else:
-        assert list(_mount_facts._gen_mounts_by_source(module)) == []
+        assert list(mount_facts.gen_mounts_by_source(module)) == []
     assert mock_warn.called == should_warn
 
 
@@ -204,9 +204,9 @@ def test_gen_mounts_by_source_timeout(monkeypatch, _set_file_content, on_timeout
 ])
 def test_get_mounts_facts_filtering(monkeypatch, _set_file_content, filter_name, filter_value, source, mount_info):
     _set_file_content({"/etc/mtab": _rhel9_4.mtab})
-    monkeypatch.setattr(_mount_facts, "_get_mount_size", _mock_callable(return_value=None))
+    monkeypatch.setattr(mount_facts, "get_mount_size", _mock_callable(return_value=None))
     module = _get_mock_module({filter_name: [filter_value]})
-    results = _mount_facts._get_mount_facts(module, _UUIDS, _mock_callable())
+    results = mount_facts.get_mount_facts(module, _UUIDS, _mock_callable())
     expected_context = {"source": "/etc/mtab", "source_data": source}
     assert len(results) == 1
     assert list(results.values())[0]["ansible_context"] == expected_context
@@ -227,9 +227,9 @@ def test_get_mounts_size(monkeypatch, _set_file_content):
         }
 
     _set_file_content({"/etc/mtab": _rhel9_4.mtab})
-    monkeypatch.setattr(_mount_facts, "_get_mount_size", mock_get_mount_size)
+    monkeypatch.setattr(mount_facts, "get_mount_size", mock_get_mount_size)
     module = _get_mock_module({})
-    result = _mount_facts._get_mount_facts(module, _UUIDS, _mock_callable())
+    result = mount_facts.get_mount_facts(module, _UUIDS, _mock_callable())
     assert len(result) == len(_rhel9_4.mtab_parsed)
     assert result == {
         _mnt: dict(ansible_context={"source": _src, "source_data": _line}, uuid="N/A", **_info, **mock_get_mount_size())
@@ -238,10 +238,10 @@ def test_get_mounts_size(monkeypatch, _set_file_content):
 
 
 @pytest.mark.parametrize("on_timeout, should_warn, should_raise, slow_function", [
-    (None, False, True, "_get_mount_size"),
-    ("error", False, True, "_get_mount_size"),
-    ("warn", True, False, "_get_mount_size"),
-    ("ignore", False, False, "_get_mount_size"),
+    (None, False, True, "get_mount_size"),
+    ("error", False, True, "get_mount_size"),
+    ("warn", True, False, "get_mount_size"),
+    ("ignore", False, False, "get_mount_size"),
     ("error", False, True, "_udevadm_uuid"),
     ("warn", True, False, "_udevadm_uuid"),
     ("ignore", False, False, "_udevadm_uuid"),
@@ -262,20 +262,20 @@ def test_get_mount_facts_timeout(monkeypatch, _set_file_content, on_timeout, sho
         time.sleep(1.1)
         raise Exception("Timeout failed")
 
-    if slow_function == "_get_mount_size":
-        monkeypatch.setattr(_mount_facts, "_get_mount_size", mock_slow_function)
+    if slow_function == "get_mount_size":
+        monkeypatch.setattr(mount_facts, "get_mount_size", mock_slow_function)
         match = "Timed out getting mount size .*"
         mock_udevadm_uuid = _mock_callable()
     else:
-        monkeypatch.setattr(_mount_facts, "_get_mount_size", _mock_callable())
+        monkeypatch.setattr(mount_facts, "get_mount_size", _mock_callable())
         match = "Timed out getting uuid for mount .+ \\(type .+\\) after 1.0 seconds"
         mock_udevadm_uuid = mock_slow_function
 
     if should_raise:
         with pytest.raises(_AnsibleFailJson, match=match):
-            _mount_facts._get_mount_facts(module, _UUIDS, mock_udevadm_uuid)
+            mount_facts.get_mount_facts(module, _UUIDS, mock_udevadm_uuid)
     else:
-        results = _mount_facts._get_mount_facts(module, _UUIDS, mock_udevadm_uuid)
+        results = mount_facts.get_mount_facts(module, _UUIDS, mock_udevadm_uuid)
         assert len(results) == len(_rhel9_4.mtab_parsed)
         assert results == {
             _mnt: dict(ansible_context={"source": _src, "source_data": _line}, uuid="N/A", **_info)
