@@ -190,22 +190,28 @@ def _run_mount_bin(module: _AnsibleModule, mount_bin: str) -> str:  # type: igno
         module.fail_json(msg=f"Failed to execute {mount_bin}: {str(e)}")
 
 
-def _gen_mounts_from_stdout(stdout: str) -> _Generator[tuple[str, str, dict[str, str]]]:
-    """List mount dictionaries from mount stdout."""
+def _get_mount_pattern(stdout: str):
     lines = stdout.splitlines()
+    pattern = None
     if any(_LINUX_MOUNT_RE.match(line) for line in lines):
         pattern = _LINUX_MOUNT_RE
     elif any(_BSD_MOUNT_RE.match(line) for line in lines):
         pattern = _BSD_MOUNT_RE
     elif any(_AIX_MOUNT_RE.match(line) for line in lines):
         pattern = _AIX_MOUNT_RE
-    else:
-        lines = []
+    return pattern
 
-    for line in lines:
+
+def _gen_mounts_from_stdout(stdout: str) -> _Generator[tuple[str, str, dict[str, str]]]:
+    """List mount dictionaries from mount stdout."""
+    if not (pattern := _get_mount_pattern(stdout)):
+        stdout = ""
+
+    for line in stdout.splitlines():
         if not (match := pattern.match(line)):
             # AIX has a couple header lines for some reason
             # MacOS "map" lines are skipped (e.g. "map auto_home on /System/Volumes/Data/home (autofs, automounted, nobrowse)")
+            # TODO: include MacOS lines
             continue
 
         mount = match.groupdict()["mount"]
@@ -276,11 +282,8 @@ def _gen_vfstab_entries(lines: list[str]) -> _Generator[tuple[str, str, dict[str
         yield fields[2], line, mount_info
 
 
-def _gen_aix_filesystems_entries(lines: list[str]) -> _Generator[tuple[str, str, dict[str, str]]]:
-    """Yield tuples from /etc/filesystems https://www.ibm.com/docs/hu/aix/7.2?topic=files-filesystems-file.
-
-    Each tuple contains the mount point, lines of origin, and the dictionary of the parsed lines.
-    """
+def _list_aix_filesystems_stanzas(lines: list[str]) -> list[list[str]]:
+    """Parse stanzas from /etc/filesystems according to https://www.ibm.com/docs/hu/aix/7.2?topic=files-filesystems-file."""
     stanzas = []
     for line in lines:
         if line.startswith("*") or not line.strip().rstrip():
@@ -293,8 +296,15 @@ def _gen_aix_filesystems_entries(lines: list[str]) -> _Generator[tuple[str, str,
                 stanzas = []
                 break
             stanzas[-1].append(line)
+    return stanzas
 
-    for stanza in stanzas:
+
+def _gen_aix_filesystems_entries(lines: list[str]) -> _Generator[tuple[str, str, dict[str, str]]]:
+    """Yield tuples from /etc/filesystems https://www.ibm.com/docs/hu/aix/7.2?topic=files-filesystems-file.
+
+    Each tuple contains the mount point, lines of origin, and the dictionary of the parsed lines.
+    """
+    for stanza in _list_aix_filesystems_stanzas(lines):
         original = "\n".join(stanza)
         mount = stanza.pop(0)[:-1]  # snip trailing :
         mount_info = {}
@@ -337,31 +347,15 @@ def _gen_mnttab_entries(lines: list[str]) -> _Generator[tuple[str, str, dict[str
         yield fields[1], line, mount_info
 
 
-def _gen_mounts_by_source(module: _AnsibleModule):
-    """Enumerate the requested sources and yield mount information from each.
+def _gen_mounts_by_file(sources: list[str]):
+    """Yield parsed mount entries from the first successful generator for each source.
 
-    Each tuple contains the source, mount point, source line(s), and the resulting dictionary from the parsed line(s).
+    Generators are tried in the following order to minimize false positives:
+    - /etc/vfstab: 7 columns
+    - /etc/mnttab: 5 columns (mnttab[4] must contain UNIX timestamp)
+    - /etc/fstab: 4-6 columns (fstab[4] is optional and historically 0-9, but can be any int)
+    - /etc/filesystems: multi-line, not column-based, and specific to AIX
     """
-    sources: list[str] = []
-    use_mount_bin_explicit = False
-    for source in module.params["sources"]:
-        if not source:
-            module.fail_json(msg="sources contains an empty string")
-
-        if source in {"static", "all"}:
-            sources.extend(_STATIC_SOURCES)
-        if source in {"dynamic", "all"}:
-            sources.extend(_DYNAMIC_SOURCES)
-
-        if source == module.params["mount_binary"]:
-            use_mount_bin_explicit = True
-        elif source not in {"static", "dynamic", "all"}:
-            sources.append(source)
-
-    if len(set(sources)) < len(sources):
-        module.warn(f"mount_facts option 'sources' contains duplicate entries, repeat sources will be ignored: {sources}")
-
-    use_mount_bin_implicit = set(sources).intersection(_DYNAMIC_SOURCES) and module.params["mount_binary"]
     seen = set()
     for file in sources:
         if file in seen:
@@ -373,18 +367,45 @@ def _gen_mounts_by_source(module: _AnsibleModule):
 
         for gen_mounts in [_gen_vfstab_entries, _gen_mnttab_entries, _gen_fstab_entries, _gen_aix_filesystems_entries]:
             with _suppress(IndexError, ValueError):
-                for _mnt, _line, _info in gen_mounts(lines):
-                    yield (file, _mnt, _line, _info)
-
-                if file in _DYNAMIC_SOURCES:
-                    use_mount_bin_implicit = False
+                yield from [(file, _mnt, _line, _info) for _mnt, _line, _info in gen_mounts(lines)]
                 break
 
-    mount_binary = module.params["mount_binary"]
-    if use_mount_bin_explicit or use_mount_bin_implicit:
+
+def _get_file_sources(module: _AnsibleModule) -> list[str]:
+    """Return a list of filenames from the requested sources."""
+    sources: list[str] = []
+    for source in module.params["sources"]:
+        if not source:
+            module.fail_json(msg="sources contains an empty string")
+
+        if source in {"static", "all"}:
+            sources.extend(_STATIC_SOURCES)
+        if source in {"dynamic", "all"}:
+            sources.extend(_DYNAMIC_SOURCES)
+
+        elif source not in {"static", "dynamic", "all", module.params["mount_binary"]}:
+            sources.append(source)
+    return sources
+
+
+def _gen_mounts_by_source(module: _AnsibleModule):
+    """Iterate over the sources and yield tuples containing the source, mount point, source line(s), and the parsed result."""
+    sources = _get_file_sources(module)
+
+    if len(set(sources)) < len(sources):
+        module.warn(f"mount_facts option 'sources' contains duplicate entries, repeat sources will be ignored: {sources}")
+
+    collected = set()
+    for mount_tuple in _gen_mounts_by_file(sources):
+        collected.add(mount_tuple[0])
+        yield mount_tuple
+
+    if (mount_binary := module.params["mount_binary"]) and (mount_binary in module.params["sources"] or (
+        set(sources).intersection(_DYNAMIC_SOURCES)
+        and not collected.intersection(_DYNAMIC_SOURCES)
+    )):
         stdout = _run_mount_bin(module, mount_binary)
-        for mount, line, mount_info in _gen_mounts_from_stdout(stdout):
-            yield mount_binary, mount, line, mount_info
+        yield from [(mount_binary, *mount_info) for mount_info in _gen_mounts_from_stdout(stdout)]
 
 
 def _get_mount_facts(module: _AnsibleModule, uuids: dict, udevadm_uuid: _Callable):
