@@ -191,7 +191,7 @@ def test_gen_mounts_by_source_timeout(monkeypatch, _set_file_content, on_timeout
 
     module = _get_mock_module(params)
     if should_raise:
-        with pytest.raises(_AnsibleFailJson, match="Command '[^']*mount' timed out after 0 seconds"):
+        with pytest.raises(_AnsibleFailJson, match="Command '[^']*mount' timed out after 0.0 seconds"):
             list(_mount_facts._gen_mounts_by_source(module))
     else:
         assert list(_mount_facts._gen_mounts_by_source(module)) == []
@@ -268,7 +268,7 @@ def test_get_mount_facts_timeout(monkeypatch, _set_file_content, on_timeout, sho
         mock_udevadm_uuid = _mock_callable()
     else:
         monkeypatch.setattr(_mount_facts, "_get_mount_size", _mock_callable())
-        match = "Timed out getting uuid for mount .+ \\(type .+\\) after 1 seconds"
+        match = "Timed out getting uuid for mount .+ \\(type .+\\) after 1.0 seconds"
         mock_udevadm_uuid = mock_slow_function
 
     if should_raise:

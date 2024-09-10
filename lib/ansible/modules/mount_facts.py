@@ -15,24 +15,29 @@ description:
 options:
   devices:
     description: A list of fnmatch patterns to filter mounts by the special device or remote file system.
-    default:
-      - "*"
+    default: []
     type: list
     elements: str
   fstypes:
     description: A list of fnmatch patterns to filter mounts by the type of the file system.
-    default:
-      - "*"
+    default: []
     type: list
     elements: str
   sources:
-    default:
-      - all
     description:
-      - A list of files to use when collecting mount information, or the special values V(all), V(static), and V(dynamic).
-      - V(dynamic) contains V(/etc/mtab), V(/proc/mounts), V(/etc/mnttab), and if none are found, falls back to O(mount_binary).
+      - A list of sources used to determine the mounts. Missing file sources (or empty files) are skipped.
+      - By default, mounts are retrieved from all of the standard locations, which have the predefined aliases V(all)/V(static)/V(dynamic).
+      - V(all) contains V(static) and V(dynamic).
       - V(static) contains V(/etc/fstab), V(/etc/vfstab), and V(/etc/filesystems).
-      - Note that V(/etc/filesystems) is AIX-specific and the Linux file by this name will be ignored.
+        Note that V(/etc/filesystems) is specific to AIX. The Linux file by this name has a different format/purpose and is ignored.
+      - V(dynamic) contains V(/etc/mtab), V(/proc/mounts), and V(/etc/mnttab).
+      - If any of the files in V(dynamic) are configured as sources and none found, the module will fall back to using the O(mount_binary).
+        This allows platforms like BSD or AIX, which don't have an equivalent to V(/proc/mounts), to collect the current mounts by default.
+        See the O(mount_binary) option to disable to fall back or configure a different executable.
+      - The value of O(mount_binary) can be configured as a source, which will cause it to always execute.
+        Depending on the other sources configured, this could be ineffient/redundant.
+        For example, if V(/proc/mounts) and V(mount) are listed as O(sources), Linux hosts will retrieve the same mounts twice.
+    default: []
     type: list
     elements: str
   mount_binary:
@@ -48,7 +53,7 @@ options:
       - Configure in conjunction with O(on_timeout) to try to skip unresponsive mounts.
       - This timeout also applies to the O(mount_binary) command to list mounts.
       - If the module is configured to run during the play's fact gathering stage, set a timeout using module_defaults to prevent a hang (see example).
-    type: int
+    type: float
   on_timeout:
     description:
       - The action to take when listing mounts or mount information exceeds O(timeout).
@@ -374,7 +379,7 @@ def _gen_mounts_by_file(sources: list[str]):
 def _get_file_sources(module: _AnsibleModule) -> list[str]:
     """Return a list of filenames from the requested sources."""
     sources: list[str] = []
-    for source in module.params["sources"]:
+    for source in module.params["sources"] or ["all"]:
         if not source:
             module.fail_json(msg="sources contains an empty string")
 
@@ -400,10 +405,10 @@ def _gen_mounts_by_source(module: _AnsibleModule):
         collected.add(mount_tuple[0])
         yield mount_tuple
 
-    if (mount_binary := module.params["mount_binary"]) and (mount_binary in module.params["sources"] or (
-        set(sources).intersection(_DYNAMIC_SOURCES)
-        and not collected.intersection(_DYNAMIC_SOURCES)
-    )):
+    mount_binary = module.params["mount_binary"]
+    explicit_mount_source = mount_binary and mount_binary in (module.params["sources"] or [])
+    implicit_mount_source = mount_binary and set(sources).intersection(_DYNAMIC_SOURCES) and not collected.intersection(_DYNAMIC_SOURCES)
+    if explicit_mount_source or implicit_mount_source:
         stdout = _run_mount_bin(module, mount_binary)
         yield from [(mount_binary, *mount_info) for mount_info in _gen_mounts_from_stdout(stdout)]
 
@@ -418,9 +423,9 @@ def _get_mount_facts(module: _AnsibleModule, uuids: dict, udevadm_uuid: _Callabl
         device = fields["device"]
         fstype = fields["fstype"]
 
-        if not any(_fnmatch(device, pattern) for pattern in module.params["devices"]):
+        if not any(_fnmatch(device, pattern) for pattern in module.params["devices"] or ["*"]):
             continue
-        if not any(_fnmatch(fstype, pattern) for pattern in module.params["fstypes"]):
+        if not any(_fnmatch(fstype, pattern) for pattern in module.params["fstypes"] or ["*"]):
             continue
 
         timed_func = _timeout.timeout(seconds, f"Timed out getting mount size for mount {mount} (type {fstype})")(_get_mount_size)
@@ -439,11 +444,11 @@ def _get_mount_facts(module: _AnsibleModule, uuids: dict, udevadm_uuid: _Callabl
 def _get_argument_spec():
     """Helper returning the argument spec."""
     return dict(
-        sources=dict(type="list", elements="str", default=["all"]),
+        sources=dict(type="list", elements="str", default=[]),
         mount_binary=dict(default="mount", type="raw"),
-        devices=dict(type="list", elements="str", default=["*"]),
-        fstypes=dict(type="list", elements="str", default=["*"]),
-        timeout=dict(type="int"),
+        devices=dict(type="list", elements="str", default=[]),
+        fstypes=dict(type="list", elements="str", default=[]),
+        timeout=dict(type="float"),
         on_timeout=dict(choices=["error", "warn", "ignore"], default="error"),
     )
 
