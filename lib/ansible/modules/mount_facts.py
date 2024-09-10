@@ -33,9 +33,9 @@ options:
       - V(dynamic) contains V(/etc/mtab), V(/proc/mounts), and V(/etc/mnttab).
       - If any of the files in V(dynamic) are configured as sources and none found, the module will fall back to using the O(mount_binary).
         This allows platforms like BSD or AIX, which don't have an equivalent to V(/proc/mounts), to collect the current mounts by default.
-        See the O(mount_binary) option to disable to fall back or configure a different executable.
+        See the O(mount_binary) option to disable the fall back or configure a different executable.
       - The value of O(mount_binary) can be configured as a source, which will cause it to always execute.
-        Depending on the other sources configured, this could be ineffient/redundant.
+        Depending on the other sources configured, this could be inefficient/redundant.
         For example, if V(/proc/mounts) and V(mount) are listed as O(sources), Linux hosts will retrieve the same mounts twice.
     default: []
     type: list
