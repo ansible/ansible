@@ -63,9 +63,9 @@ options:
   force:
     description:
     - >
-      Force the creation of the symlinks in two cases: the source file does
+      Force the creation of the links in two cases: if the link type is symbolic and the source file does
       not exist (but will appear later); the destination exists and is a file (so, we need to unlink the
-      O(path) file and create a symlink to the O(src) file in place of it).
+      O(path) file and create a link to the O(src) file in place of it).
     type: bool
     default: no
   follow:
