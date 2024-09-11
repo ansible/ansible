@@ -28,7 +28,7 @@ classifiers = [
     "Topic :: System :: Systems Administration",
     "Topic :: Utilities",
 ]
-dynamic = ["version", "dependencies"]
+dynamic = ["version", "dependencies", "license"]
 
 [project.urls]
 "Homepage" = "https://ansible.com/"
