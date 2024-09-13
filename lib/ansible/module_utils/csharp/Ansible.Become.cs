@@ -333,13 +333,12 @@ namespace Ansible.Become
                 // Grant access to the current Windows Station and Desktop to the become user
                 GrantAccessToWindowStationAndDesktop(account);
 
-                // Try and impersonate a SYSTEM token, we need a SYSTEM token to either become a well known service
-                // account or have administrative rights on the become access token.
-                // If we ultimately are becoming the SYSTEM account we want the token with the most privileges available.
-                // https://github.com/ansible/ansible/issues/71453
-                bool mostPrivileges = becomeSid == "S-1-5-18";
+                // Try and impersonate a SYSTEM token. We need the SeTcbPrivilege for
+                //  - LogonUser for a service SID
+                //  - S4U logon
+                //  - Token elevation
                 systemToken = GetPrimaryTokenForUser(new SecurityIdentifier("S-1-5-18"),
-                    new List<string>() { "SeTcbPrivilege" }, mostPrivileges);
+                    new List<string>() { "SeTcbPrivilege" });
                 if (systemToken != null)
                 {
                     try
@@ -357,11 +356,9 @@ namespace Ansible.Become
 
             try
             {
-                if (becomeSid == "S-1-5-18")
-                    userTokens.Add(systemToken);
                 // Cannot use String.IsEmptyOrNull() as an empty string is an account that doesn't have a pass.
                 // We only use S4U if no password was defined or it was null
-                else if (!SERVICE_SIDS.Contains(becomeSid) && password == null && logonType != LogonType.NewCredentials)
+                if (!SERVICE_SIDS.Contains(becomeSid) && password == null && logonType != LogonType.NewCredentials)
                 {
                     // If no password was specified, try and duplicate an existing token for that user or use S4U to
                     // generate one without network credentials
@@ -384,6 +381,11 @@ namespace Ansible.Become
                     string domain = null;
                     switch (becomeSid)
                     {
+                        case "S-1-5-18":
+                            logonType = LogonType.Service;
+                            domain = "NT AUTHORITY";
+                            username = "SYSTEM";
+                            break;
                         case "S-1-5-19":
                             logonType = LogonType.Service;
                             domain = "NT AUTHORITY";
@@ -426,7 +428,7 @@ namespace Ansible.Become
         }
 
         private static SafeNativeHandle GetPrimaryTokenForUser(SecurityIdentifier sid,
-            List<string> requiredPrivileges = null, bool mostPrivileges = false)
+            List<string> requiredPrivileges = null)
         {
             // According to CreateProcessWithTokenW we require a token with
             //  TOKEN_QUERY, TOKEN_DUPLICATE and TOKEN_ASSIGN_PRIMARY
@@ -435,9 +437,6 @@ namespace Ansible.Become
                 TokenAccessLevels.Duplicate |
                 TokenAccessLevels.AssignPrimary |
                 TokenAccessLevels.Impersonate;
-
-            SafeNativeHandle userToken = null;
-            int privilegeCount = 0;
 
             foreach (SafeNativeHandle hToken in TokenUtil.EnumerateUserTokens(sid, dwAccess))
             {
@@ -448,10 +447,6 @@ namespace Ansible.Become
                     continue;
 
                 List<string> actualPrivileges = TokenUtil.GetTokenPrivileges(hToken).Select(x => x.Name).ToList();
-
-                // If the token has less or the same number of privileges than the current token, skip it.
-                if (mostPrivileges && privilegeCount >= actualPrivileges.Count)
-                    continue;
 
                 // Check that the required privileges are on the token
                 if (requiredPrivileges != null)
@@ -464,22 +459,16 @@ namespace Ansible.Become
                 // Duplicate the token to convert it to a primary token with the access level required.
                 try
                 {
-                    userToken = TokenUtil.DuplicateToken(hToken, TokenAccessLevels.MaximumAllowed,
+                    return TokenUtil.DuplicateToken(hToken, TokenAccessLevels.MaximumAllowed,
                         SecurityImpersonationLevel.Anonymous, TokenType.Primary);
-                    privilegeCount = actualPrivileges.Count;
                 }
                 catch (Process.Win32Exception)
                 {
                     continue;
                 }
-
-                // If we don't care about getting the token with the most privileges, escape the loop as we already
-                // have a token.
-                if (!mostPrivileges)
-                    break;
             }
 
-            return userToken;
+            return null;
         }
 
         private static SafeNativeHandle GetS4UTokenForUser(SecurityIdentifier sid, LogonType logonType)
