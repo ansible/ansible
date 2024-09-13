@@ -368,7 +368,7 @@ def list_aix_filesystems_stanzas(lines: list[str]) -> list[list[str]]:
     """Parse stanzas from /etc/filesystems according to https://www.ibm.com/docs/hu/aix/7.2?topic=files-filesystems-file."""
     stanzas = []
     for line in lines:
-        if line.startswith("*") or not line.strip().rstrip():
+        if line.startswith("*") or not line.strip():
             continue
         if line.rstrip().endswith(":"):
             stanzas.append([line])
@@ -392,7 +392,7 @@ def gen_aix_filesystems_entries(lines: list[str]) -> t.Iterable[MountInfo]:
         mount_info = {}
         for line in stanza:
             attr, value = line.split("=", 1)
-            mount_info[attr.strip().rstrip()] = value.strip().rstrip()
+            mount_info[attr.strip()] = value.strip()
 
         device = ""
         if (nodename := mount_info.get("nodename")):
