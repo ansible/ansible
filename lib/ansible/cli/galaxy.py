@@ -545,8 +545,12 @@ class GalaxyCLI(CLI):
                                              'This does not apply to collections in remote Git repositories or URLs to remote tarballs.'
                                         )
         else:
-            install_parser.add_argument('-r', '--role-file', dest='requirements',
-                                        help='A file containing a list of roles to be installed.')
+            if self._implicit_role:
+                install_parser.add_argument('-r', '--role-file', dest='requirements',
+                                            help='A file containing a list of collections and roles to be installed.')
+            else:
+                install_parser.add_argument('-r', '--role-file', dest='requirements',
+                                            help='A file containing a list of roles to be installed.')
 
             r_re = re.compile(r'^(?<!-)-[a-zA-Z]*r[a-zA-Z]*')  # -r, -fr
             contains_r = bool([a for a in self._raw_args if r_re.match(a)])
