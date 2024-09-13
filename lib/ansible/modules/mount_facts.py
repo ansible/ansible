@@ -143,15 +143,16 @@ ansible_facts:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.facts import timeout as _timeout
-from ansible.module_utils.facts.hardware.linux import LinuxHardware, _replace_octal_escapes
 from ansible.module_utils.facts.utils import get_mount_size, get_file_content
 
-from collections.abc import Callable, Generator
+from collections.abc import Generator
 from contextlib import suppress
 from fnmatch import fnmatch
-from functools import wraps
 
+import codecs
 import datetime
+import functools
+import os
 import re
 import subprocess
 
@@ -167,10 +168,78 @@ BSD_MOUNT_RE = re.compile(r"^(?P<device>\S+) on (?P<mount>\S+) \((?P<fstype>.+)\
 AIX_MOUNT_RE = re.compile(r"^(?P<node>\S*)\s+(?P<mounted>\S+)\s+(?P<mount>\S+)\s+(?P<fstype>\S+)\s+(?P<time>\S+\s+\d+\s+\d+:\d+)\s+(?P<options>.*)$")
 
 
+def replace_octal_escapes(value: str) -> str:
+    return re.sub(r"(\\[0-7]{3})", lambda m: codecs.decode(m.group(0), "unicode_escape"), value)
+
+
+@functools.lru_cache(maxsize=None)
+def get_device_by_uuid(module: AnsibleModule, uuid : str) -> str | None:
+    """Get device information by UUID."""
+    blkid_output = None
+    if (blkid_binary := module.get_bin_path("blkid")):
+        cmd = [blkid_binary, "--uuid", uuid]
+        with suppress(subprocess.CalledProcessError):
+            blkid_output = handle_timeout(module)(subprocess.check_output)(cmd, text=True, timeout=module.params["timeout"])
+    return blkid_output
+
+
+@functools.lru_cache(maxsize=None)
+def list_uuids_linux() -> tuple[str | None, list[str]]:
+    """List UUIDs from the system."""
+    with suppress(OSError):
+        return os.listdir("/dev/disk/by-uuid")
+    return []
+
+
+@functools.lru_cache(maxsize=None)
+def run_lsblk(module : AnsibleModule) -> list[list[str]]:
+    """Return device, UUID pairs from lsblk."""
+    lsblk_output = ""
+    if (lsblk_binary := module.get_bin_path("lsblk")):
+        cmd = [lsblk_binary, "--list", "--noheadings", "--paths", "--output", "NAME,UUID", "--exclude", "2"]
+        lsblk_output = subprocess.check_output(cmd, text=True, timeout=module.params["timeout"])
+    return [line.split() for line in lsblk_output.splitlines() if len(line.split()) == 2]
+
+
+@functools.lru_cache(maxsize=None)
+def get_udevadm_device_uuid(module : AnsibleModule, device : str) -> str | None:
+    """Fallback to get the device's UUID for lsblk <= 2.23 which doesn't have the --paths option."""
+    udevadm_output = ""
+    if (udevadm_binary := module.get_bin_path("udevadm")):
+        cmd = [udevadm_binary, "info", "--query", "property", "--name", device]
+        udevadm_output = subprocess.check_output(cmd, text=True, timeout=module.params["timeout"])
+    uuid = None
+    for line in udevadm_output.splitlines():
+        # a snippet of the output of the udevadm command below will be:
+        # ...
+        # ID_FS_TYPE=ext4
+        # ID_FS_USAGE=filesystem
+        # ID_FS_UUID=57b1a3e7-9019-4747-9809-7ec52bba9179
+        # ...
+        if line.startswith("ID_FS_UUID="):
+            uuid = line.split("=", 1)[1]
+            break
+    return uuid
+
+
+def get_partition_uuid(module: AnsibleModule, partname : str) -> str | None:
+    """Get the UUID of a partition by its name."""
+    # TODO: NetBSD and FreeBSD can have UUIDs in /etc/fstab,
+    # but none of these methods work (mount always displays the label though)
+    for uuid in list_uuids_linux():
+        dev = os.path.realpath(os.path.join("/dev/disk/by-uuid", uuid))  # type: ignore[arg-type]
+        if partname == dev:
+            return uuid
+    for dev, uuid in handle_timeout(module, default=[])(run_lsblk)(module):
+        if partname == dev:
+            return uuid
+    return handle_timeout(module)(get_udevadm_device_uuid)(module, partname)
+
+
 def handle_timeout(module, default=None):
     """Decorator to catch timeout exceptions and handle failing, warning, and ignoring the timeout."""
     def decorator(func):
-        @wraps(func)
+        @functools.wraps(func)
         def wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
@@ -249,7 +318,7 @@ def gen_fstab_entries(lines: list[str]) -> Generator[tuple[str, str, dict[str, s
     for line in lines:
         if not (line := line.strip()) or line.startswith("#"):
             continue
-        fields = [_replace_octal_escapes(field) for field in line.split()]
+        fields = [replace_octal_escapes(field) for field in line.split()]
         mount_info = {
             "device": fields[0],
             "mount": fields[1],
@@ -413,7 +482,7 @@ def gen_mounts_by_source(module: AnsibleModule):
         yield from [(mount_binary, *mount_info) for mount_info in gen_mounts_from_stdout(stdout)]
 
 
-def get_mount_facts(module: AnsibleModule, uuids: dict, udevadm_uuid: Callable):
+def get_mount_facts(module: AnsibleModule):
     """List and filter mounts, returning a dictionary containing mount points as the keys (last listed wins)."""
     seconds = module.params["timeout"]
 
@@ -422,6 +491,13 @@ def get_mount_facts(module: AnsibleModule, uuids: dict, udevadm_uuid: Callable):
     for source, mount, origin, fields in gen_mounts_by_source(module):
         device = fields["device"]
         fstype = fields["fstype"]
+
+        # Convert UUIDs in Linux /etc/fstab to device paths
+        # TODO need similar for OpenBSD which lists UUIDS (without the UUID= prefix) in /etc/fstab, needs another approach though.
+        uuid = None
+        if device.startswith("UUID="):
+            uuid = device.split("=", 1)[1]
+            device = get_device_by_uuid(module, uuid) or device
 
         if not any(fnmatch(device, pattern) for pattern in module.params["devices"] or ["*"]):
             continue
@@ -432,8 +508,9 @@ def get_mount_facts(module: AnsibleModule, uuids: dict, udevadm_uuid: Callable):
         if mount_size := handle_timeout(module)(timed_func)(mount):
             fields.update(mount_size)
 
-        timed_func = _timeout.timeout(seconds, f"Timed out getting uuid for mount {mount} (type {fstype})")(udevadm_uuid)
-        uuid = uuids.get(device, handle_timeout(module)(timed_func)(device))
+        if uuid is None:
+            with suppress(subprocess.CalledProcessError):
+                uuid = get_partition_uuid(module, device)
 
         fields.update({"ansible_context": {"source": source, "source_data": origin}, "uuid": uuid or "N/A"})
         facts[mount] = fields
@@ -463,8 +540,7 @@ def main():
     if (mount_binary := module.params["mount_binary"]) is not None and not isinstance(mount_binary, str):
         module.fail_json(msg=f"argument 'mount_binary' must be a string or null, not {mount_binary}")
 
-    hardware = LinuxHardware(module)
-    mounts = get_mount_facts(module, hardware._lsblk_uuid(), hardware._udevadm_uuid)
+    mounts = get_mount_facts(module)
     module.exit_json(ansible_facts={"extended_mounts": mounts})
 
 
