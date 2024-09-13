@@ -145,8 +145,8 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.facts import timeout as _timeout
 from ansible.module_utils.facts.utils import get_mount_size, get_file_content
 
-from collections.abc import Generator
 from contextlib import suppress
+from dataclasses import astuple, dataclass
 from fnmatch import fnmatch
 
 import codecs
@@ -155,6 +155,7 @@ import functools
 import os
 import re
 import subprocess
+import typing as t
 
 STATIC_SOURCES = ["/etc/fstab", "/etc/vfstab", "/etc/filesystems"]
 DYNAMIC_SOURCES = ["/etc/mtab", "/proc/mounts", "/etc/mnttab"]
@@ -166,6 +167,13 @@ LINUX_MOUNT_RE = re.compile(r"^(?P<device>\S+) on (?P<mount>\S+) type (?P<fstype
 BSD_MOUNT_RE = re.compile(r"^(?P<device>\S+) on (?P<mount>\S+) \((?P<fstype>.+)\)$")
 # Pattern for AIX, example in https://www.ibm.com/docs/en/aix/7.2?topic=m-mount-command
 AIX_MOUNT_RE = re.compile(r"^(?P<node>\S*)\s+(?P<mounted>\S+)\s+(?P<mount>\S+)\s+(?P<fstype>\S+)\s+(?P<time>\S+\s+\d+\s+\d+:\d+)\s+(?P<options>.*)$")
+
+
+@dataclass
+class MountInfo:
+    mount_point: str
+    line: str
+    fields: dict[str, str | int]
 
 
 def replace_octal_escapes(value: str) -> str:
@@ -184,7 +192,7 @@ def get_device_by_uuid(module: AnsibleModule, uuid : str) -> str | None:
 
 
 @functools.lru_cache(maxsize=None)
-def list_uuids_linux() -> tuple[str | None, list[str]]:
+def list_uuids_linux() -> list[str]:
     """List UUIDs from the system."""
     with suppress(OSError):
         return os.listdir("/dev/disk/by-uuid")
@@ -276,7 +284,7 @@ def get_mount_pattern(stdout: str):
     return pattern
 
 
-def gen_mounts_from_stdout(stdout: str) -> Generator[tuple[str, str, dict[str, str]]]:
+def gen_mounts_from_stdout(stdout: str) -> t.Iterable[MountInfo]:
     """List mount dictionaries from mount stdout."""
     if not (pattern := get_mount_pattern(stdout)):
         stdout = ""
@@ -307,10 +315,10 @@ def gen_mounts_from_stdout(stdout: str) -> Generator[tuple[str, str, dict[str, s
                 device = f"{node}:{device}"
             mount_info["device"] = device
 
-        yield mount, line, mount_info
+        yield MountInfo(mount, line, mount_info)
 
 
-def gen_fstab_entries(lines: list[str]) -> Generator[tuple[str, str, dict[str, str | int]]]:
+def gen_fstab_entries(lines: list[str]) -> t.Iterable[MountInfo]:
     """Yield tuples from /etc/fstab https://man7.org/linux/man-pages/man5/fstab.5.html.
 
     Each tuple contains the mount point, line of origin, and the dictionary of the parsed line.
@@ -319,7 +327,7 @@ def gen_fstab_entries(lines: list[str]) -> Generator[tuple[str, str, dict[str, s
         if not (line := line.strip()) or line.startswith("#"):
             continue
         fields = [replace_octal_escapes(field) for field in line.split()]
-        mount_info = {
+        mount_info: dict[str, str | int] = {
             "device": fields[0],
             "mount": fields[1],
             "fstype": fields[2],
@@ -329,10 +337,10 @@ def gen_fstab_entries(lines: list[str]) -> Generator[tuple[str, str, dict[str, s
             # the last two fields are optional
             mount_info["dump"] = int(fields[4])
             mount_info["passno"] = int(fields[5])
-        yield fields[1], line, mount_info
+        yield MountInfo(fields[1], line, mount_info)
 
 
-def gen_vfstab_entries(lines: list[str]) -> Generator[tuple[str, str, dict[str, str | int]]]:
+def gen_vfstab_entries(lines: list[str]) -> t.Iterable[MountInfo]:
     """Yield tuples from /etc/vfstab https://docs.oracle.com/cd/E36784_01/html/E36882/vfstab-4.html.
 
     Each tuple contains the mount point, line of origin, and the dictionary of the parsed line.
@@ -353,7 +361,7 @@ def gen_vfstab_entries(lines: list[str]) -> Generator[tuple[str, str, dict[str, 
             "mount_at_boot": fields[5],
             "options": fields[6],
         }
-        yield fields[2], line, mount_info
+        yield MountInfo(fields[2], line, mount_info)
 
 
 def list_aix_filesystems_stanzas(lines: list[str]) -> list[list[str]]:
@@ -373,7 +381,7 @@ def list_aix_filesystems_stanzas(lines: list[str]) -> list[list[str]]:
     return stanzas
 
 
-def gen_aix_filesystems_entries(lines: list[str]) -> Generator[tuple[str, str, dict[str, str]]]:
+def gen_aix_filesystems_entries(lines: list[str]) -> t.Iterable[MountInfo]:
     """Yield tuples from /etc/filesystems https://www.ibm.com/docs/hu/aix/7.2?topic=files-filesystems-file.
 
     Each tuple contains the mount point, lines of origin, and the dictionary of the parsed lines.
@@ -398,10 +406,12 @@ def gen_aix_filesystems_entries(lines: list[str]) -> Generator[tuple[str, str, d
         mount_info["fstype"] = mount_info.get("vfs") or "unknown"
 
         # mount_info may contain the AIX /etc/filesystems attribute "mount", not to be confused with the mount point
-        yield mount, original, mount_info
+        # arg-type: Argument 3 to "MountInfo" has incompatible type "dict[str, str]"; expected "dict[str, str | int]
+        # why is this a problem here and not gen_mounts_from_stdout?
+        yield MountInfo(mount, original, mount_info)  # type: ignore[arg-type]
 
 
-def gen_mnttab_entries(lines: list[str]) -> Generator[tuple[str, str, dict[str, str | int]]]:
+def gen_mnttab_entries(lines: list[str]) -> t.Iterable[MountInfo]:
     """Yield tuples from /etc/mnttab columns https://docs.oracle.com/cd/E36784_01/html/E36882/mnttab-4.html.
 
     Each tuple contains the mount point, line of origin, and the dictionary of the parsed line.
@@ -418,7 +428,7 @@ def gen_mnttab_entries(lines: list[str]) -> Generator[tuple[str, str, dict[str, 
             "options": fields[3],
             "time": int(fields[4]),
         }
-        yield fields[1], line, mount_info
+        yield MountInfo(fields[1], line, mount_info)
 
 
 def gen_mounts_by_file(sources: list[str]):
@@ -441,7 +451,7 @@ def gen_mounts_by_file(sources: list[str]):
 
         for gen_mounts in [gen_vfstab_entries, gen_mnttab_entries, gen_fstab_entries, gen_aix_filesystems_entries]:
             with suppress(IndexError, ValueError):
-                yield from [(file, _mnt, _line, _info) for _mnt, _line, _info in gen_mounts(lines)]
+                yield from [(file, *astuple(mount_info)) for mount_info in gen_mounts(lines)]
                 break
 
 
@@ -479,7 +489,7 @@ def gen_mounts_by_source(module: AnsibleModule):
     implicit_mount_source = mount_binary and set(sources).intersection(DYNAMIC_SOURCES) and not collected.intersection(DYNAMIC_SOURCES)
     if explicit_mount_source or implicit_mount_source:
         stdout = run_mount_bin(module, mount_binary)
-        yield from [(mount_binary, *mount_info) for mount_info in gen_mounts_from_stdout(stdout)]
+        yield from [(mount_binary, *astuple(mount_info)) for mount_info in gen_mounts_from_stdout(stdout)]
 
 
 def get_mount_facts(module: AnsibleModule):
