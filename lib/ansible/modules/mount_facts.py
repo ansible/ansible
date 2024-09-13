@@ -241,7 +241,7 @@ def get_partition_uuid(module: AnsibleModule, partname : str) -> str | None:
     # TODO: NetBSD and FreeBSD can have UUIDs in /etc/fstab,
     # but none of these methods work (mount always displays the label though)
     for uuid in list_uuids_linux():
-        dev = os.path.realpath(os.path.join("/dev/disk/by-uuid", uuid))  # type: ignore[arg-type]
+        dev = os.path.realpath(os.path.join("/dev/disk/by-uuid", uuid))
         if partname == dev:
             return uuid
     for dev, uuid in handle_timeout(module, default=[])(run_lsblk)(module):
