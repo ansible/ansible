@@ -468,11 +468,7 @@ class GalaxyCLI(CLI):
             ignore_errors_help = 'Ignore errors during installation and continue with the next specified ' \
                                  'collection. This will not ignore dependency conflict errors.'
         else:
-            args_kwargs['help'] = 'Role name, URL or tar file'
-            if self._implicit_role:
-                args_kwargs['help'] += '. This is mutually exclusive with --requirements-file.'
-            else:
-                args_kwargs['help'] += '. This is mutually exclusive with --role-file.'
+            args_kwargs['help'] = 'Role name, URL or tar file. This is mutually exclusive with -r.'
             ignore_errors_help = 'Ignore errors and continue with the next specified role.'
 
         if self._implicit_role:
@@ -549,12 +545,8 @@ class GalaxyCLI(CLI):
                                              'This does not apply to collections in remote Git repositories or URLs to remote tarballs.'
                                         )
         else:
-            if self._implicit_role:
-                install_parser.add_argument('-r', '--requirements-file', '--role-file', dest='requirements',
-                                            help='A file containing a list of collections and roles to be installed.')
-            else:
-                install_parser.add_argument('-r', '--role-file', dest='requirements',
-                                            help='A file containing a list of roles to be installed.')
+            install_parser.add_argument('-r', '--role-file', dest='requirements',
+                                        help='A file containing a list of roles to be installed.')
 
             r_re = re.compile(r'^(?<!-)-[a-zA-Z]*r[a-zA-Z]*')  # -r, -fr
             contains_r = bool([a for a in self._raw_args if r_re.match(a)])
