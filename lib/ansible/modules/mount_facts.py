@@ -122,8 +122,7 @@ ansible_facts:
     type: dict
     sample:
       extended_mounts:
-        /mnt/mount:
-          ansible_context:
+        - ansible_context:
             source: /proc/mounts
             source_data: "hostname:/srv/sshfs on /mnt/mount type fuse.sshfs (rw,nosuid,nodev,relatime,user_id=0,group_id=0)"
           block_available: 3242510
@@ -497,7 +496,7 @@ def get_mount_facts(module: AnsibleModule):
     seconds = module.params["timeout"]
 
     # merge sources based on the mount point (last source wins)
-    facts = {}
+    devices_by_source: dict[tuple, list[dict[str, str | int | dict[str, str]]]] = {}
     for source, mount, origin, fields in gen_mounts_by_source(module):
         device = fields["device"]
         fstype = fields["fstype"]
@@ -523,7 +522,17 @@ def get_mount_facts(module: AnsibleModule):
                 uuid = get_partition_uuid(module, device)
 
         fields.update({"ansible_context": {"source": source, "source_data": origin}, "uuid": uuid or "N/A"})
-        facts[mount] = fields
+        devices_by_source.setdefault((source, mount), []).append(fields)
+
+    # deduplicate mount points by source
+    facts: list[dict[str, str | int | dict[str, str]]] = []
+    seen: dict[str, str] = {}
+    for source, mount in reversed(devices_by_source):
+        if mount in seen and source != seen[mount]:
+            continue
+        seen[mount] = source
+        # extend at the beginning rather than the end, to preserve source order
+        facts[:0] = devices_by_source[(source, mount)]
 
     return facts
 
