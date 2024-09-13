@@ -175,6 +175,13 @@ class MountInfo:
     fields: dict[str, str | int]
 
 
+@dataclass
+class MountInfoOptions:
+    mount_point: str
+    line: str
+    fields: dict[str, str | dict[str, str]]
+
+
 def replace_octal_escapes(value: str) -> str:
     return re.sub(r"(\\[0-7]{3})", lambda m: codecs.decode(m.group(0), "unicode_escape"), value)
 
@@ -380,7 +387,7 @@ def list_aix_filesystems_stanzas(lines: list[str]) -> list[list[str]]:
     return stanzas
 
 
-def gen_aix_filesystems_entries(lines: list[str]) -> t.Iterable[MountInfo]:
+def gen_aix_filesystems_entries(lines: list[str]) -> t.Iterable[MountInfoOptions]:
     """Yield tuples from /etc/filesystems https://www.ibm.com/docs/hu/aix/7.2?topic=files-filesystems-file.
 
     Each tuple contains the mount point, lines of origin, and the dictionary of the parsed lines.
@@ -388,7 +395,7 @@ def gen_aix_filesystems_entries(lines: list[str]) -> t.Iterable[MountInfo]:
     for stanza in list_aix_filesystems_stanzas(lines):
         original = "\n".join(stanza)
         mount = stanza.pop(0)[:-1]  # snip trailing :
-        mount_info = {}
+        mount_info: dict[str, str] = {}
         for line in stanza:
             attr, value = line.split("=", 1)
             mount_info[attr.strip()] = value.strip()
@@ -401,13 +408,14 @@ def gen_aix_filesystems_entries(lines: list[str]) -> t.Iterable[MountInfo]:
                 device += ":"
             device += dev
 
-        mount_info["device"] = device or "unknown"
-        mount_info["fstype"] = mount_info.get("vfs") or "unknown"
-
-        # mount_info may contain the AIX /etc/filesystems attribute "mount", not to be confused with the mount point
-        # arg-type: Argument 3 to "MountInfo" has incompatible type "dict[str, str]"; expected "dict[str, str | int]
-        # why is this a problem here and not gen_mounts_from_stdout?
-        yield MountInfo(mount, original, mount_info)  # type: ignore[arg-type]
+        normalized_fields: dict[str, str | dict[str, str]] = {
+            "mount": mount,
+            "device": device or "unknown",
+            "fstype": mount_info.get("vfs") or "unknown",
+            # avoid clobbering the mount point with the AIX mount option "mount"
+            "attributes": mount_info,
+        }
+        yield MountInfoOptions(mount, original, normalized_fields)
 
 
 def gen_mnttab_entries(lines: list[str]) -> t.Iterable[MountInfo]:
@@ -450,7 +458,12 @@ def gen_mounts_by_file(sources: list[str]):
 
         for gen_mounts in [gen_vfstab_entries, gen_mnttab_entries, gen_fstab_entries, gen_aix_filesystems_entries]:
             with suppress(IndexError, ValueError):
-                yield from [(file, *astuple(mount_info)) for mount_info in gen_mounts(lines)]
+                # mypy type broken before Python 3.11, only works if either
+                # * the list of functions excludes gen_aix_filesystems_entries
+                # * the list of functions only contains gen_aix_filesystems_entries
+                yield from [
+                    (file, mount_info.mount_point, mount_info.line, mount_info.fields) for mount_info in gen_mounts(lines)  # type: ignore[attr-defined]
+                ]
                 break
 
 
