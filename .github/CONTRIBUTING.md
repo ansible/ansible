@@ -4,11 +4,14 @@ Hi! Nice to see you here!
 
 ## QUESTIONS ?
 
-Please see the [Community Guide](https://docs.ansible.com/ansible/latest/community/index.html) for information on
-how to ask questions on the [mailing lists](https://docs.ansible.com/ansible/latest/community/communication.html#mailing-list-information) and IRC.
+If you have questions about anything related to Ansible, get in touch with us!
+See [Communicating with the Ansible community](https://docs.ansible.com/ansible/devel/community/communication.html) to find out how.
 
-The GitHub issue tracker is not the best place for questions for various reasons,
-but both IRC and the mailing list are very helpful places for those things, as the community page explains best.
+The [Community Guide](https://docs.ansible.com/ansible/devel/community/index.html) also explains how to contribute
+and interact with the project, including how to submit bug reports and code to Ansible.
+
+Please note that the GitHub issue tracker is not the best place to ask questions for several reasons.
+You'll get more helpful, and quicker, responses in the forum.
 
 ## CONTRIBUTING ?
 
@@ -17,11 +20,11 @@ By contributing to this project you agree to the [Developer Certificate of Origi
 The Ansible project is licensed under the [GPL-3.0](COPYING) or later. Some portions of the code fall under other licenses as noted in individual files.
 
 The Ansible project accepts contributions through GitHub pull requests.
-Please review the [Community Guide](https://docs.ansible.com/ansible/latest/community/index.html) for more information on contributing to Ansible.
+Please review the [Community Guide](https://docs.ansible.com/ansible/devel/community/index.html) for more information on contributing to Ansible.
 
 ## BUG TO REPORT ?
 
-First and foremost, also check the [Community Guide](https://docs.ansible.com/ansible/latest/community/index.html).
+First and foremost, also check the [Community Guide](https://docs.ansible.com/ansible/devel/community/index.html).
 
 You can report bugs or make enhancement requests at
 the [Ansible GitHub issue page](http://github.com/ansible/ansible/issues/new/choose) by filling out the issue template that will be presented.
