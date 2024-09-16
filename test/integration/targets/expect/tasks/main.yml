@@ -34,7 +34,7 @@
 
 - name: test expect
   expect:
-    command: "{{ansible_python_interpreter}} {{test_command_file}}"
+    command: /bin/sh -c "{{ansible_python_interpreter}} {{test_command_file}} --latin1 | {{ ansible_python_interpreter }} -m base64 -e - }}"
     responses:
       foo: bar
   register: expect_result
@@ -43,7 +43,7 @@
   assert:
     that:
     - "expect_result.changed == true"
-    - "expect_result.stdout_lines|last == 'foobar'"
+    - "expect_result.stdout|regex_replace('^foo', '')|b64decode|trim|split('\n')|last == 'bar'"
 
 - name: test creates option
   expect:
@@ -144,7 +144,7 @@
 - name: assert echo works
   assert:
     that:
-    - "echo_result.stdout_lines|length == 7"
+    - "echo_result.stdout_lines|length == 2"
     - "echo_result.stdout_lines[-2] == 'foobar'"
     - "echo_result.stdout_lines[-1] == 'bar'"
 
@@ -169,7 +169,7 @@
 - name: assert list response works
   assert:
     that:
-    - "list_result.stdout_lines|length == 7"
+    - "list_result.stdout_lines|length == 2"
     - "list_result.stdout_lines[-2] == 'foobar'"
     - "list_result.stdout_lines[-1] == 'foobaz'"
 
