@@ -131,9 +131,8 @@
 
     - assert:
         that:
-          - nfs_mount in (extended_mounts | map(attribute='mount'))
-          - nfs_mount == extended_mounts[-1]['mount']
-          - extended_mounts[-1]['device'] == ("localhost:" ~ nfs_source)
+          - nfs_mount in mount_points
+          - mount_points[nfs_mount]["device"] == ("localhost:" ~ nfs_source)
 
   always:
     - command: "umount {{ nfs_mount }}"
@@ -150,6 +149,7 @@
       mount_facts:
         sources:
           - dynamic
+        include_aggregate_mounts: true
       register: dynamic
 
     - name: Collect dynamic mounts without file sources
@@ -160,19 +160,23 @@
 
     - name: Test static mounts are found
       assert:
-        that: static.ansible_facts.extended_mounts | length > 0
+        that:
+          - static.ansible_facts.mount_points.keys() | length > 0
+          - static.ansible_facts.aggregate_mounts | length == 0
       when: ansible_os_family != "Darwin"  # No /etc/fstab
 
     - name: Test dynamic mounts are found
       assert:
         that:
-          - dynamic.ansible_facts.extended_mounts | length > 0
-          - dynamic_mount.ansible_facts.extended_mounts | length > 0
+          - dynamic.ansible_facts.mount_points.keys() | length > 0
+          - dynamic.ansible_facts.aggregate_mounts | length > 0
+          - dynamic_mount.ansible_facts.mount_points.keys() | length > 0
+          - dynamic_mount.ansible_facts.aggregate_mounts | length == 0
 
     - name: Test any devices have a UUID (Linux)
       assert:
         that:
-          - static.ansible_facts.extended_mounts | map(attribute='uuid') | unique | length > 1
-          - dynamic.ansible_facts.extended_mounts | map(attribute='uuid') | unique | length > 1
-          - dynamic_mount.ansible_facts.extended_mounts | map(attribute='uuid') | unique | length > 1
+          - static.ansible_facts["mount_points"].values() | list | map(attribute='uuid') | unique | length > 1
+          - dynamic.ansible_facts["aggregate_mounts"] | map(attribute='uuid') | unique | length > 1
+          - dynamic_mount.ansible_facts["mount_points"].values() | list | map(attribute='uuid') | unique | length > 1
       when: ansible_os_family not in ("Darwin", "FreeBSD")

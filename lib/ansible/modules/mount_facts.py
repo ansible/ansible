@@ -26,14 +26,15 @@ options:
   sources:
     description:
       - A list of sources used to determine the mounts. Missing file sources (or empty files) are skipped.
+      - The C(mount_points) return value contains the first definition found for a mount point.
+      - Additional mounts to the same mount point are available from  C(aggregate_mounts) (if enabled).
       - By default, mounts are retrieved from all of the standard locations, which have the predefined aliases V(all)/V(static)/V(dynamic).
-      - V(all) contains V(static) and V(dynamic).
-      - V(static) contains V(/etc/fstab), V(/etc/vfstab), and V(/etc/filesystems).
-        Note that V(/etc/filesystems) is specific to AIX. The Linux file by this name has a different format/purpose and is ignored.
-      - V(dynamic) contains V(/etc/mtab), V(/proc/mounts), and V(/etc/mnttab).
-      - If any of the files in V(dynamic) are configured as sources and none found, the module will fall back to using the O(mount_binary).
+      - V(all) contains V(dynamic) and V(static).
+      - V(dynamic) contains V(/etc/mtab), V(/proc/mounts), V(/etc/mnttab), and the value of O(mount_binary) if it is not None.
         This allows platforms like BSD or AIX, which don't have an equivalent to V(/proc/mounts), to collect the current mounts by default.
         See the O(mount_binary) option to disable the fall back or configure a different executable.
+      - V(static) contains V(/etc/fstab), V(/etc/vfstab), and V(/etc/filesystems).
+        Note that V(/etc/filesystems) is specific to AIX. The Linux file by this name has a different format/purpose and is ignored.
       - The value of O(mount_binary) can be configured as a source, which will cause it to always execute.
         Depending on the other sources configured, this could be inefficient/redundant.
         For example, if V(/proc/mounts) and V(mount) are listed as O(sources), Linux hosts will retrieve the same mounts twice.
@@ -63,6 +64,12 @@ options:
       - error
       - warn
       - ignore
+  include_aggregate_mounts:
+    description:
+      - Whether or not the module should return the C(aggregate_mounts) list in C(ansible_facts).
+      - When this is V(null), a warning will be emitted multiple mounts for the same mount point are found.
+    default: ~
+    type: bool
 extends_documentation_fragment:
   - action_common_attributes
 attributes:
@@ -115,29 +122,73 @@ EXAMPLES = """
 RETURN = """
 ansible_facts:
     description:
-      - An ansible_facts dictionary containing a dictionary of C(extended_mounts).
-      - Each key in C(extended_mounts) is a mount point, and the value contains mount information (similar to C(ansible_facts["mounts"])).
+      - An ansible_facts dictionary containing a dictionary of C(mount_points) and list of C(aggregate_mounts) when enabled.
+      - Each key in C(mount_points) is a mount point, and the value contains mount information (similar to C(ansible_facts["mounts"])).
         Each value also contains the key C(ansible_context), with details about the source and line(s) corresponding to the parsed mount point.
+      - When C(aggregate_mounts) are included, the containing dictionaries are the same format as the C(mount_point) values.
     returned: on success
     type: dict
     sample:
-      extended_mounts:
+      mount_points:
+        /proc/sys/fs/binfmt_misc:
+          ansible_context:
+            source: /proc/mounts
+            source_data: "systemd-1 /proc/sys/fs/binfmt_misc autofs rw,relatime,fd=33,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=33850 0 0"
+          block_available: 0
+          block_size: 4096
+          block_total: 0
+          block_used: 0
+          device: "systemd-1"
+          dump: 0
+          fstype: "autofs"
+          inode_available: 0
+          inode_total: 0
+          inode_used: 0
+          mount: "/proc/sys/fs/binfmt_misc"
+          options: "rw,relatime,fd=33,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=33850"
+          passno: 0
+          size_available: 0
+          size_total: 0
+          uuid: null
+      aggregate_mounts:
         - ansible_context:
             source: /proc/mounts
-            source_data: "hostname:/srv/sshfs on /mnt/mount type fuse.sshfs (rw,nosuid,nodev,relatime,user_id=0,group_id=0)"
-          block_available: 3242510
+            source_data: "systemd-1 /proc/sys/fs/binfmt_misc autofs rw,relatime,fd=33,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=33850 0 0"
+          block_available: 0
           block_size: 4096
-          block_total: 3789825
-          block_used: 547315
-          device: hostname:/srv/sshfs
-          fstype: fuse.sshfs
-          inode_available: 1875503
-          inode_total: 1966080
-          mount: /mnt/mount
-          options: "rw,nosuid,nodev,relatime,user_id=0,group_id=0"
-          size_available: 13281320960
-          size_total: 15523123200
-          uuid: N/A
+          block_total: 0
+          block_used: 0
+          device: "systemd-1"
+          dump: 0
+          fstype: "autofs"
+          inode_available: 0
+          inode_total: 0
+          inode_used: 0
+          mount: "/proc/sys/fs/binfmt_misc"
+          options: "rw,relatime,fd=33,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=33850"
+          passno: 0
+          size_available: 0
+          size_total: 0
+          uuid: "N/A"
+        - ansible_context:
+            source: /proc/mounts
+            source_data: "binfmt_misc /proc/sys/fs/binfmt_misc binfmt_misc rw,nosuid,nodev,noexec,relatime 0 0"
+          block_available: 0
+          block_size: 4096
+          block_total: 0
+          block_used: 0
+          device: binfmt_misc
+          dump: 0
+          fstype: binfmt_misc
+          inode_available: 0
+          inode_total: 0
+          inode_used: 0
+          mount: "/proc/sys/fs/binfmt_misc"
+          options: "rw,nosuid,nodev,noexec,relatime"
+          passno: 0
+          size_available: 0
+          size_total: 0
+          uuid: null
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -467,49 +518,60 @@ def gen_mounts_by_file(sources: list[str]):
                 break
 
 
-def get_file_sources(module: AnsibleModule) -> list[str]:
+def get_sources(module: AnsibleModule) -> list[str]:
     """Return a list of filenames from the requested sources."""
     sources: list[str] = []
     for source in module.params["sources"] or ["all"]:
         if not source:
             module.fail_json(msg="sources contains an empty string")
 
-        if source in {"static", "all"}:
-            sources.extend(STATIC_SOURCES)
         if source in {"dynamic", "all"}:
             sources.extend(DYNAMIC_SOURCES)
+            if module.params["mount_binary"] is not None:
+                sources.append(module.params["mount_binary"])
+        if source in {"static", "all"}:
+            sources.extend(STATIC_SOURCES)
 
-        elif source not in {"static", "dynamic", "all", module.params["mount_binary"]}:
+        elif source not in {"static", "dynamic", "all"}:
             sources.append(source)
     return sources
 
 
 def gen_mounts_by_source(module: AnsibleModule):
     """Iterate over the sources and yield tuples containing the source, mount point, source line(s), and the parsed result."""
-    sources = get_file_sources(module)
+    sources = get_sources(module)
 
     if len(set(sources)) < len(sources):
         module.warn(f"mount_facts option 'sources' contains duplicate entries, repeat sources will be ignored: {sources}")
 
-    collected = set()
-    for mount_tuple in gen_mounts_by_file(sources):
-        collected.add(mount_tuple[0])
-        yield mount_tuple
-
     mount_binary = module.params["mount_binary"]
-    explicit_mount_source = mount_binary and mount_binary in (module.params["sources"] or [])
-    implicit_mount_source = mount_binary and set(sources).intersection(DYNAMIC_SOURCES) and not collected.intersection(DYNAMIC_SOURCES)
-    if explicit_mount_source or implicit_mount_source:
-        stdout = run_mount_bin(module, mount_binary)
-        yield from [(mount_binary, *astuple(mount_info)) for mount_info in gen_mounts_from_stdout(stdout)]
+    for source in sources:
+        if source == mount_binary:
+            stdout = run_mount_bin(module, mount_binary)
+            yield from [(mount_binary, *astuple(mount_info)) for mount_info in gen_mounts_from_stdout(stdout)]
+            continue
+
+        seen = set()
+        for mount in gen_mounts_by_file([source]):
+            mount_point = mount[1]
+
+            if module.params["include_aggregate_mounts"] is None:
+                if mount_point not in seen:
+                    seen.add(mount_point)
+                else:
+                    # Warn about duplicate mounts within the same source since there may be multiple devices mounted.
+                    module.warn(f"Ignoring repeat mounts for {mount_point}. "
+                                "You can disable this warning by configuring the 'include_aggregate_mounts' option as True or False.")
+            yield mount
 
 
 def get_mount_facts(module: AnsibleModule):
     """List and filter mounts, returning a dictionary containing mount points as the keys (last listed wins)."""
     seconds = module.params["timeout"]
 
-    # merge sources based on the mount point (last source wins)
-    devices_by_source: dict[tuple, list[dict[str, str | int | dict[str, str]]]] = {}
+    # merge sources based on the mount point (first definition + source wins)
+    mount_points: dict[str, list[dict[str, str | int | dict[str, str]]]] = {}
+    aggregate_mounts: list[dict[str, str | int | dict[str, str]]] = []
     for source, mount, origin, fields in gen_mounts_by_source(module):
         device = fields["device"]
         fstype = fields["fstype"]
@@ -534,20 +596,12 @@ def get_mount_facts(module: AnsibleModule):
             with suppress(subprocess.CalledProcessError):
                 uuid = get_partition_uuid(module, device)
 
-        fields.update({"ansible_context": {"source": source, "source_data": origin}, "uuid": uuid or "N/A"})
-        devices_by_source.setdefault((source, mount), []).append(fields)
+        fields.update({"ansible_context": {"source": source, "source_data": origin}, "uuid": uuid})
+        if mount not in mount_points:
+            mount_points[mount] = fields
+        aggregate_mounts.append(fields)
 
-    # deduplicate mount points by source
-    facts: list[dict[str, str | int | dict[str, str]]] = []
-    seen: dict[str, str] = {}
-    for source, mount in reversed(devices_by_source):
-        if mount in seen and source != seen[mount]:
-            continue
-        seen[mount] = source
-        # extend at the beginning rather than the end, to preserve source order
-        facts[:0] = devices_by_source[(source, mount)]
-
-    return facts
+    return mount_points, aggregate_mounts
 
 
 def get_argument_spec():
@@ -559,6 +613,7 @@ def get_argument_spec():
         fstypes=dict(type="list", elements="str", default=None),
         timeout=dict(type="float"),
         on_timeout=dict(choices=["error", "warn", "ignore"], default="error"),
+        include_aggregate_mounts=dict(default=None, type="bool"),
     )
 
 
@@ -572,8 +627,10 @@ def main():
     if (mount_binary := module.params["mount_binary"]) is not None and not isinstance(mount_binary, str):
         module.fail_json(msg=f"argument 'mount_binary' must be a string or null, not {mount_binary}")
 
-    mounts = get_mount_facts(module)
-    module.exit_json(ansible_facts={"extended_mounts": mounts})
+    mounts, aggregate_mounts = get_mount_facts(module)
+    if not module.params["include_aggregate_mounts"]:
+        aggregate_mounts = []
+    module.exit_json(ansible_facts={"mount_points": mounts, "aggregate_mounts": aggregate_mounts})
 
 
 if __name__ == "__main__":
