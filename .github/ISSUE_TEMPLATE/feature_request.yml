@@ -21,8 +21,7 @@ body:
 
       If unsure, consider filing a [new proposal] instead outlining your
       use-cases, the research and implementation considerations. Then,
-      start a discussion on one of the public [IRC meetings] we have just
-      for this.
+      start a discussion in the [Ansible forum][forum].
 
 
       <details>
@@ -44,21 +43,22 @@ body:
       Also test if the devel branch does not already implement this.
 
 
-      **Tip:** If you are seeking community support, please consider
-      [starting a mailing list thread or chatting in IRC][ML||IRC].
+      **Tip:** If you are seeking community support, please see
+      [Communicating with the Ansible community][communication] to
+      get in touch and ask questions.
 
 
 
       [contribute to collections]:
       https://docs.ansible.com/ansible-core/devel/community/contributing_maintained_collections.html?utm_medium=github&utm_source=issue_form--feature_request.yml
 
-      [IRC meetings]:
-        https://docs.ansible.com/ansible-core/devel/community/communication.html?utm_medium=github&utm_source=issue_form--feature_request.yml#irc-meetings
+      [communication]:
+      https://docs.ansible.com/ansible/devel/community/communication.html
 
       [issue search]: ../search?q=is%3Aissue&type=issues
 
-      [ML||IRC]:
-      https://docs.ansible.com/ansible-core/devel/community/communication.html?utm_medium=github&utm_source=issue_form--feature_request.yml#mailing-list-information
+      [forum help]:
+      https://forum.ansible.com/c/help/6
 
       [new proposal]: ../../proposals/issues/new
 
@@ -185,7 +185,7 @@ body:
     description: |
       Read the [Ansible Code of Conduct][CoC] first.
 
-      [CoC]: https://docs.ansible.com/ansible/latest/community/code_of_conduct.html?utm_medium=github&utm_source=issue_form--feature_request.yml
+      [CoC]: https://docs.ansible.com/ansible/devel/community/code_of_conduct.html?utm_medium=github&utm_source=issue_form--feature_request.yml
     options:
     - label: I agree to follow the Ansible Code of Conduct
       required: true
