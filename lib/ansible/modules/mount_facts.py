@@ -560,7 +560,7 @@ def gen_mounts_by_source(module: AnsibleModule):
                     seen.add(mount_point)
                 else:
                     # Warn about duplicate mounts within the same source since there may be multiple devices mounted.
-                    module.warn(f'mount_facts: ignoring repeat mounts for {mount_point}. "
+                    module.warn(f"mount_facts: ignoring repeat mounts for {mount_point}. "
                                 "You can disable this warning by configuring the 'include_aggregate_mounts' option as True or False.")
             yield mount
 
