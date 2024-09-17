@@ -1232,7 +1232,7 @@ class ActionBase(ABC):
                     )
 
             data['_ansible_parsed'] = True
-        except ValueError:
+        except ValueError as e:
             # not valid json, lets try to capture error
             data = dict(failed=True, _ansible_parsed=False)
             data['module_stdout'] = res.get('stdout', u'')
@@ -1246,7 +1246,7 @@ class ActionBase(ABC):
                 data['exception'] = data['module_stdout']
 
             # The default
-            data['msg'] = "MODULE FAILURE"
+            data['msg'] = f"MODULE FAILURE: {e}"
 
             # try to figure out if we are missing interpreter
             if self._used_interpreter is not None:
