@@ -27,7 +27,7 @@ options:
     description:
       - A list of sources used to determine the mounts. Missing file sources (or empty files) are skipped.
       - The C(mount_points) return value contains the first definition found for a mount point.
-      - Additional mounts to the same mount point are available from  C(aggregate_mounts) (if enabled).
+      - Additional mounts to the same mount point are available from C(aggregate_mounts) (if enabled).
       - By default, mounts are retrieved from all of the standard locations, which have the predefined aliases V(all)/V(static)/V(dynamic).
       - V(all) contains V(dynamic) and V(static).
       - V(dynamic) contains V(/etc/mtab), V(/proc/mounts), V(/etc/mnttab), and the value of O(mount_binary) if it is not None.
@@ -50,14 +50,14 @@ options:
     default: mount
   timeout:
     description:
-      - This is the maximum number of seconds to query for each mount. When this is V(null), wait indefinitely.
-      - Configure in conjunction with O(on_timeout) to try to skip unresponsive mounts.
+      - This is the maximum number of seconds to wait for each mount to complete. When this is V(null), wait indefinitely.
+      - Configure in conjunction with O(on_timeout) to skip unresponsive mounts.
       - This timeout also applies to the O(mount_binary) command to list mounts.
       - If the module is configured to run during the play's fact gathering stage, set a timeout using module_defaults to prevent a hang (see example).
     type: float
   on_timeout:
     description:
-      - The action to take when listing mounts or mount information exceeds O(timeout).
+      - The action to take when gathering mount information exceeds O(timeout).
     type: str
     default: error
     choices:
@@ -67,7 +67,7 @@ options:
   include_aggregate_mounts:
     description:
       - Whether or not the module should return the C(aggregate_mounts) list in C(ansible_facts).
-      - When this is V(null), a warning will be emitted multiple mounts for the same mount point are found.
+      - When this is V(null), a warning will be emitted if multiple mounts for the same mount point are found.
     default: ~
     type: bool
 extends_documentation_fragment:
@@ -560,7 +560,7 @@ def gen_mounts_by_source(module: AnsibleModule):
                     seen.add(mount_point)
                 else:
                     # Warn about duplicate mounts within the same source since there may be multiple devices mounted.
-                    module.warn(f"Ignoring repeat mounts for {mount_point}. "
+                    module.warn(f'mount_facts: ignoring repeat mounts for {mount_point}. "
                                 "You can disable this warning by configuring the 'include_aggregate_mounts' option as True or False.")
             yield mount
 
@@ -623,7 +623,7 @@ def main():
         supports_check_mode=True,
     )
     if (seconds := module.params["timeout"]) is not None and seconds <= 0:
-        module.fail_json(msg="argument 'timeout' must be a positive integer or null, not {seconds}")
+        module.fail_json(msg="argument 'timeout' must be a positive number or null, not {seconds}")
     if (mount_binary := module.params["mount_binary"]) is not None and not isinstance(mount_binary, str):
         module.fail_json(msg=f"argument 'mount_binary' must be a string or null, not {mount_binary}")
 
