@@ -59,7 +59,7 @@ def test_invocation(monkeypatch, set_file_content):
 def test_invalid_timeout(monkeypatch):
     set_module_args({"timeout": 0})
     monkeypatch.setattr(AnsibleModule, "fail_json", fail_json)
-    with pytest.raises(AnsibleFailJson, match="argument 'timeout' must be a positive integer or null"):
+    with pytest.raises(AnsibleFailJson, match="argument 'timeout' must be a positive number or null"):
         mount_facts.main()
 
 
@@ -153,16 +153,16 @@ solaris_mock_fs = {"/etc/mnttab": solaris11_2.mnttab, "/etc/vfstab": solaris11_2
 @pytest.mark.parametrize("sources, file_data, mount_data, results", [
     (["static"], rhel_mock_fs, rhel9_4.mount, rhel9_4.fstab_parsed),
     (["/etc/fstab"], rhel_mock_fs, rhel9_4.mount, rhel9_4.fstab_parsed),
-    (["dynamic"], rhel_mock_fs, rhel9_4.mount, rhel9_4.mtab_parsed + rhel9_4.mount_parsed),
+    (["dynamic"], rhel_mock_fs, rhel9_4.mount, rhel9_4.mtab_parsed),
     (["/etc/mtab"], rhel_mock_fs, rhel9_4.mount, rhel9_4.mtab_parsed),
-    (["all"], rhel_mock_fs, rhel9_4.mount, rhel9_4.mtab_parsed + rhel9_4.mount_parsed + rhel9_4.fstab_parsed),
+    (["all"], rhel_mock_fs, rhel9_4.mount, rhel9_4.mtab_parsed + rhel9_4.fstab_parsed),
     (["mount"], rhel_mock_fs, rhel9_4.mount, rhel9_4.mount_parsed),
-    (["all"], freebsd_mock_fs, freebsd14_1.mount, freebsd14_1.mount_parsed + freebsd14_1.fstab_parsed),
+    (["all"], freebsd_mock_fs, freebsd14_1.mount, freebsd14_1.fstab_parsed + freebsd14_1.mount_parsed),
     (["static"], freebsd_mock_fs, freebsd14_1.mount, freebsd14_1.fstab_parsed),
     (["dynamic"], freebsd_mock_fs, freebsd14_1.mount, freebsd14_1.mount_parsed),
     (["mount"], freebsd_mock_fs, freebsd14_1.mount, freebsd14_1.mount_parsed),
-    (["all"], aix_mock_fs, aix7_2.mount, aix7_2.mount_parsed + aix7_2.filesystems_parsed),
-    (["all"], openbsd_mock_fs, openbsd6_4.mount, openbsd6_4.mount_parsed + openbsd6_4.fstab_parsed),
+    (["all"], aix_mock_fs, aix7_2.mount, aix7_2.filesystems_parsed + aix7_2.mount_parsed),
+    (["all"], openbsd_mock_fs, openbsd6_4.mount, openbsd6_4.fstab_parsed + openbsd6_4.mount_parsed),
     (["all"], solaris_mock_fs, "", solaris11_2.mnttab_parsed + solaris11_2.vfstab_parsed),
 ])
 def test_gen_mounts_by_sources(monkeypatch, set_file_content, sources, file_data, mount_data, results):
@@ -203,12 +203,10 @@ def test_get_mount_facts(monkeypatch, set_file_content):
     set_file_content({"/etc/mtab": rhel9_4.mtab, "/etc/fstab": rhel9_4.fstab})
     monkeypatch.setattr(mount_facts, "get_mount_size", mock_callable(return_value=None))
     monkeypatch.setattr(mount_facts, "get_partition_uuid", mock_callable(return_value=None))
-    module = get_mock_module({"include_aggregate_mounts": True, "sources": ["/etc/mtab", "/etc/fstab"]})
+    module = get_mock_module({})
     assert len(rhel9_4.fstab_parsed) == 3
     assert len(rhel9_4.mtab_parsed) == 4
-    mount_points, aggregate_mounts = mount_facts.get_mount_facts(module)
-    assert len(mount_points) == 5
-    assert len(aggregate_mounts) == 7
+    assert len(mount_facts.get_mount_facts(module)) == 7
 
 
 @pytest.mark.parametrize("filter_name, filter_value, source, mount_info", [
@@ -219,14 +217,15 @@ def test_get_mounts_facts_filtering(monkeypatch, set_file_content, filter_name, 
     set_file_content({"/etc/mtab": rhel9_4.mtab})
     monkeypatch.setattr(mount_facts, "get_mount_size", mock_callable(return_value=None))
     monkeypatch.setattr(mount_facts, "get_partition_uuid", mock_callable(return_value=None))
-    module = get_mock_module({filter_name: [filter_value], "sources": ["/etc/mtab"]})
-    mount_points, aggregate_mounts = mount_facts.get_mount_facts(module)
+    module = get_mock_module({filter_name: [filter_value]})
+    results = mount_facts.get_mount_facts(module)
     expected_context = {"source": "/etc/mtab", "source_data": source}
-    assert len(mount_points) == 1
-    assert list(mount_points.values())[0] == dict(ansible_context=expected_context, uuid=None, **mount_info)
+    assert len(results) == 1
+    assert results[0]["ansible_context"] == expected_context
+    assert results[0] == dict(ansible_context=expected_context, uuid=None, **mount_info)
 
 
-def test_get_mount_size(monkeypatch, set_file_content):
+def test_get_mounts_size(monkeypatch, set_file_content):
     def mock_get_mount_size(*args, **kwargs):
         return {
             "block_available": 3242510,
@@ -242,17 +241,11 @@ def test_get_mount_size(monkeypatch, set_file_content):
     set_file_content({"/etc/mtab": rhel9_4.mtab})
     monkeypatch.setattr(mount_facts, "get_mount_size", mock_get_mount_size)
     monkeypatch.setattr(mount_facts, "get_partition_uuid", mock_callable(return_value=None))
-    module = get_mock_module({"sources": ["/etc/mtab"]})
+    module = get_mock_module({})
     result = mount_facts.get_mount_facts(module)
-    facts = {}
-    aggregate = []
-    for _src, _mnt, _line, _info in rhel9_4.mtab_parsed:
-        mnt_info = dict(ansible_context={"source": _src, "source_data": _line}, uuid=None, **_info, **mock_get_mount_size())
-        aggregate.append(mnt_info)
-        if _mnt in facts:
-            continue
-        facts[_mnt] = mnt_info
-    assert result == (facts, aggregate)
+    assert len(result) == len(rhel9_4.mtab_parsed)
+    expected_results = setup_parsed_sources_with_context(rhel9_4.mtab_parsed)
+    assert result == [dict(**result, **mock_get_mount_size()) for result in expected_results]
 
 
 @pytest.mark.parametrize("on_timeout, should_warn, should_raise", [
@@ -268,9 +261,7 @@ def test_get_mount_size_timeout(monkeypatch, set_file_content, on_timeout, shoul
     monkeypatch.setattr(AnsibleModule, "warn", mock_warn)
     monkeypatch.setattr(mount_facts, "get_partition_uuid", mock_callable(return_value=None))
 
-    # get_mount_facts return aggregate mounts either way,
-    # but configure include_aggregate_mounts to suppress the warning
-    params = {"timeout": 0.1, "sources": ["/etc/mtab"], "mount_binary": "mount", "include_aggregate_mounts": False}
+    params = {"timeout": 0.1, "sources": ["dynamic"], "mount_binary": "mount"}
     if on_timeout:
         params["on_timeout"] = on_timeout
 
@@ -290,15 +281,8 @@ def test_get_mount_size_timeout(monkeypatch, set_file_content, on_timeout, shoul
             mount_facts.get_mount_facts(module)
     else:
         results = mount_facts.get_mount_facts(module)
-        facts = {}
-        aggregate = []
-        for _src, _mnt, _line, _info in rhel9_4.mtab_parsed:
-            mnt_info = dict(ansible_context={"source": _src, "source_data": _line}, uuid=None, **_info)
-            aggregate.append(mnt_info)
-            if _mnt in facts:
-                continue
-            facts[_mnt] = mnt_info
-        assert results == (facts, aggregate)
+        assert len(results) == len(rhel9_4.mtab_parsed)
+        assert results == setup_parsed_sources_with_context(rhel9_4.mtab_parsed)
     assert mock_warn.called == should_warn
 
 
@@ -359,3 +343,52 @@ def test_get_partition_uuid(monkeypatch):
     # Test list_uuids_linux (preferred)
     setup_list_uuids_linux_preferred(monkeypatch)
     assert mount_facts.get_partition_uuid(module, "/dev/mapper/luks-2f2610e3-56b3-4131-ae3e-caf9aa535b73") == "d37b5483-304d-471d-913e-4bb77856d90f"
+
+
+def setup_parsed_sources_with_context(parsed_sources):
+    mounts = []
+    for source, mount, line, info in parsed_sources:
+        mount_point_result = dict(ansible_context={"source": source, "source_data": line}, uuid=None, **info)
+        mounts.append(mount_point_result)
+    return mounts
+
+
+def test_handle_deduplication(monkeypatch):
+    unformatted_mounts = [
+        {"mount": "/mnt/mount1", "device": "foo", "ansible_context": {"source": "/proc/mounts"}},
+        {"mount": "/mnt/mount2", "ansible_context": {"source": "/proc/mounts"}},
+        {"mount": "/mnt/mount1", "device": "qux", "ansible_context": {"source": "/etc/fstab"}},
+    ]
+
+    mock_warn = MagicMock()
+    monkeypatch.setattr(AnsibleModule, "warn", mock_warn)
+
+    module = get_mock_module({})
+    mount_points, aggregate_mounts = mount_facts.handle_deduplication(module, unformatted_mounts)
+    assert len(mount_points.keys()) == 2
+    assert mount_points["/mnt/mount1"]["device"] == "foo"
+    assert aggregate_mounts == []
+    assert not mock_warn.called
+
+
+@pytest.mark.parametrize("include_aggregate_mounts, warn_expected", [
+    (None, True),
+    (False, False),
+    (True, False),
+])
+def test_handle_deduplication_warning(monkeypatch, include_aggregate_mounts, warn_expected):
+    unformatted_mounts = [
+        {"mount": "/mnt/mount1", "device": "foo", "ansible_context": {"source": "/proc/mounts"}},
+        {"mount": "/mnt/mount1", "device": "bar", "ansible_context": {"source": "/proc/mounts"}},
+        {"mount": "/mnt/mount2", "ansible_context": {"source": "/proc/mounts"}},
+        {"mount": "/mnt/mount1", "device": "qux", "ansible_context": {"source": "/etc/fstab"}},
+    ]
+
+    mock_warn = MagicMock()
+    monkeypatch.setattr(AnsibleModule, "warn", mock_warn)
+
+    module = get_mock_module({"include_aggregate_mounts": include_aggregate_mounts})
+    mount_points, aggregate_mounts = mount_facts.handle_deduplication(module, unformatted_mounts)
+
+    assert aggregate_mounts == [] if not include_aggregate_mounts else unformatted_mounts
+    assert mock_warn.called == warn_expected

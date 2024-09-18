@@ -25,7 +25,7 @@ options:
     elements: str
   sources:
     description:
-      - A list of sources used to determine the mounts. Missing file sources (or empty files) are skipped.
+      - A list of sources used to determine the mounts. Missing file sources (or empty files) are skipped. Repeat sources, including symlinks, are skipped.
       - The C(mount_points) return value contains the first definition found for a mount point.
       - Additional mounts to the same mount point are available from C(aggregate_mounts) (if enabled).
       - By default, mounts are retrieved from all of the standard locations, which have the predefined aliases V(all)/V(static)/V(dynamic).
@@ -43,7 +43,7 @@ options:
     elements: str
   mount_binary:
     description:
-      - The O(mount_binary) is used if O(sources) contain the same value, or if O(sources) contains a dynamic
+      - The O(mount_binary) is used if O(sources) contain the value "mount", or if O(sources) contains a dynamic
         source, and none were found (as can be expected on BSD or AIX hosts).
       - Set to V(null) to stop after no dynamic file source is found instead.
     type: raw
@@ -115,7 +115,7 @@ EXAMPLES = """
 - name: Get mounts from the mount binary
   mount_facts:
     sources:
-      - /sbin/mount
+      - mount
     mount_binary: /sbin/mount
 """
 
@@ -169,7 +169,7 @@ ansible_facts:
           passno: 0
           size_available: 0
           size_total: 0
-          uuid: "N/A"
+          uuid: null
         - ansible_context:
             source: /proc/mounts
             source_data: "binfmt_misc /proc/sys/fs/binfmt_misc binfmt_misc rw,nosuid,nodev,noexec,relatime 0 0"
@@ -489,8 +489,8 @@ def gen_mnttab_entries(lines: list[str]) -> t.Iterable[MountInfo]:
         yield MountInfo(fields[1], line, mount_info)
 
 
-def gen_mounts_by_file(sources: list[str]):
-    """Yield parsed mount entries from the first successful generator for each source.
+def gen_mounts_by_file(file: str) -> t.Iterable[MountInfo | MountInfoOptions]:
+    """Yield parsed mount entries from the first successful generator.
 
     Generators are tried in the following order to minimize false positives:
     - /etc/vfstab: 7 columns
@@ -498,23 +498,14 @@ def gen_mounts_by_file(sources: list[str]):
     - /etc/fstab: 4-6 columns (fstab[4] is optional and historically 0-9, but can be any int)
     - /etc/filesystems: multi-line, not column-based, and specific to AIX
     """
-    seen = set()
-    for file in sources:
-        if file in seen:
-            continue
-        seen.add(file)
-
-        if not (lines := get_file_content(file, "").splitlines()):
-            continue
-
+    if (lines := get_file_content(file, "").splitlines()):
         for gen_mounts in [gen_vfstab_entries, gen_mnttab_entries, gen_fstab_entries, gen_aix_filesystems_entries]:
             with suppress(IndexError, ValueError):
-                # mypy type broken before Python 3.11, only works if either
+                # mpypy error: misc: Incompatible types in "yield from" (actual type "object", expected type "Union[MountInfo, MountInfoOptions]
+                # only works if either
                 # * the list of functions excludes gen_aix_filesystems_entries
                 # * the list of functions only contains gen_aix_filesystems_entries
-                yield from [
-                    (file, mount_info.mount_point, mount_info.line, mount_info.fields) for mount_info in gen_mounts(lines)  # type: ignore[attr-defined]
-                ]
+                yield from list(gen_mounts(lines))  # type: ignore[misc]
                 break
 
 
@@ -527,8 +518,6 @@ def get_sources(module: AnsibleModule) -> list[str]:
 
         if source in {"dynamic", "all"}:
             sources.extend(DYNAMIC_SOURCES)
-            if module.params["mount_binary"] is not None:
-                sources.append(module.params["mount_binary"])
         if source in {"static", "all"}:
             sources.extend(STATIC_SOURCES)
 
@@ -544,34 +533,35 @@ def gen_mounts_by_source(module: AnsibleModule):
     if len(set(sources)) < len(sources):
         module.warn(f"mount_facts option 'sources' contains duplicate entries, repeat sources will be ignored: {sources}")
 
-    mount_binary = module.params["mount_binary"]
+    mount_fallback = module.params["mount_binary"] and set(sources).intersection(DYNAMIC_SOURCES)
+
+    seen = set()
     for source in sources:
-        if source == mount_binary:
-            stdout = run_mount_bin(module, mount_binary)
-            yield from [(mount_binary, *astuple(mount_info)) for mount_info in gen_mounts_from_stdout(stdout)]
+        if source in seen:
             continue
+        seen.add(source)
 
-        seen = set()
-        for mount in gen_mounts_by_file([source]):
-            mount_point = mount[1]
+        if source == "mount":
+            stdout = run_mount_bin(module, module.params["mount_binary"])
+            results = [(source, *astuple(mount_info)) for mount_info in gen_mounts_from_stdout(stdout)]
+        else:
+            seen.add(os.path.realpath(source))
+            results = [(source, *astuple(mount_info)) for mount_info in gen_mounts_by_file(source)]
 
-            if module.params["include_aggregate_mounts"] is None:
-                if mount_point not in seen:
-                    seen.add(mount_point)
-                else:
-                    # Warn about duplicate mounts within the same source since there may be multiple devices mounted.
-                    module.warn(f"mount_facts: ignoring repeat mounts for {mount_point}. "
-                                "You can disable this warning by configuring the 'include_aggregate_mounts' option as True or False.")
-            yield mount
+        if results and source in ("mount", *DYNAMIC_SOURCES):
+            mount_fallback = False
+
+        yield from results
+
+    if mount_fallback:
+        stdout = run_mount_bin(module, module.params["mount_binary"])
+        yield from [("mount", *astuple(mount_info)) for mount_info in gen_mounts_from_stdout(stdout)]
 
 
 def get_mount_facts(module: AnsibleModule):
-    """List and filter mounts, returning a dictionary containing mount points as the keys (last listed wins)."""
+    """List and filter mounts, returning all mounts for each unique source."""
     seconds = module.params["timeout"]
-
-    # merge sources based on the mount point (first definition + source wins)
-    mount_points: dict[str, list[dict[str, str | int | dict[str, str]]]] = {}
-    aggregate_mounts: list[dict[str, str | int | dict[str, str]]] = []
+    mounts = []
     for source, mount, origin, fields in gen_mounts_by_source(module):
         device = fields["device"]
         fstype = fields["fstype"]
@@ -597,9 +587,33 @@ def get_mount_facts(module: AnsibleModule):
                 uuid = get_partition_uuid(module, device)
 
         fields.update({"ansible_context": {"source": source, "source_data": origin}, "uuid": uuid})
-        if mount not in mount_points:
-            mount_points[mount] = fields
-        aggregate_mounts.append(fields)
+        mounts.append(fields)
+
+    return mounts
+
+
+def handle_deduplication(module, mounts):
+    """Return the unique mount points from the complete list of mounts, and handle the optional aggregate results."""
+    mount_points = {}
+    mounts_by_source = {}
+    for mount in mounts:
+        mount_point = mount["mount"]
+        source = mount["ansible_context"]["source"]
+        if mount_point not in mount_points:
+            mount_points[mount_point] = mount
+        mounts_by_source.setdefault(source, []).append(mount_point)
+
+    duplicates_by_src = {src: mnts for src, mnts in mounts_by_source.items() if len(set(mnts)) != len(mnts)}
+    if duplicates_by_src and module.params["include_aggregate_mounts"] is None:
+        duplicates_by_src = {src: mnts for src, mnts in mounts_by_source.items() if len(set(mnts)) != len(mnts)}
+        duplicates_str = ", ".join([f"{src} ({duplicates})" for src, duplicates in duplicates_by_src.items()])
+        module.warn(f"mount_facts: ignoring repeat mounts in the following sources: {duplicates_str}. "
+                    "You can disable this warning by configuring the 'include_aggregate_mounts' option as True or False.")
+
+    if module.params["include_aggregate_mounts"]:
+        aggregate_mounts = mounts
+    else:
+        aggregate_mounts = []
 
     return mount_points, aggregate_mounts
 
@@ -623,14 +637,14 @@ def main():
         supports_check_mode=True,
     )
     if (seconds := module.params["timeout"]) is not None and seconds <= 0:
-        module.fail_json(msg="argument 'timeout' must be a positive number or null, not {seconds}")
+        module.fail_json(msg=f"argument 'timeout' must be a positive number or null, not {seconds}")
     if (mount_binary := module.params["mount_binary"]) is not None and not isinstance(mount_binary, str):
         module.fail_json(msg=f"argument 'mount_binary' must be a string or null, not {mount_binary}")
 
-    mounts, aggregate_mounts = get_mount_facts(module)
-    if not module.params["include_aggregate_mounts"]:
-        aggregate_mounts = []
-    module.exit_json(ansible_facts={"mount_points": mounts, "aggregate_mounts": aggregate_mounts})
+    mounts = get_mount_facts(module)
+    mount_points, aggregate_mounts = handle_deduplication(module, mounts)
+
+    module.exit_json(ansible_facts={"mount_points": mount_points, "aggregate_mounts": aggregate_mounts})
 
 
 if __name__ == "__main__":
