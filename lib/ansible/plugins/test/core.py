@@ -40,6 +40,13 @@ except ImportError:
 display = Display()
 
 
+def timedout(result):
+    ''' Test if task result yields a time out'''
+    if not isinstance(result, MutableMapping):
+        raise errors.AnsibleFilterError("The 'timedout' test expects a dictionary")
+    return result.get('timedout', False) and result['timedout'].get('period', False)
+
+
 def failed(result):
     ''' Test if task result yields failed '''
     if not isinstance(result, MutableMapping):
@@ -263,6 +270,7 @@ class TestModule(object):
             'successful': success,
             'reachable': reachable,
             'unreachable': unreachable,
+            'timedout': timedout,
 
             # changed testing
             'changed': changed,
