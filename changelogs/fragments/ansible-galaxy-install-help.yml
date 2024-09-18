@@ -1,0 +1,5 @@
+bugfixes:
+- >-
+  Add descriptions for ``ansible-galaxy install --help` and ``ansible-galaxy role|collection install --help``.
+- >-
+  ``ansible-galaxy install --help`` - Fix the usage text and document that the requirements file passed to ``-r`` can include collections and roles.
