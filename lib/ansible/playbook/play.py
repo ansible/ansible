@@ -306,18 +306,21 @@ class Play(Base, Taggable, CollectionSearch):
 
             b = Block(play=self)
             b.block = self.pre_tasks or [noop_task]
-            b.always = [flush_block]
+            if self.pre_tasks:
+                b.always = [flush_block]
             block_list.append(b)
 
             tasks = self._compile_roles() + self.tasks
             b = Block(play=self)
             b.block = tasks or [noop_task]
-            b.always = [flush_block]
+            if tasks:
+                b.always = [flush_block]
             block_list.append(b)
 
             b = Block(play=self)
             b.block = self.post_tasks or [noop_task]
-            b.always = [flush_block]
+            if self.post_tasks:
+                b.always = [flush_block]
             block_list.append(b)
 
             return block_list
