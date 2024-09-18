@@ -192,7 +192,6 @@ options:
     version_added: "2.12"
 requirements:
    - python-apt (python 2)
-   - python3-apt (python 3)
    - aptitude (before 2.4)
 author: "Matthew Williams (@mgwilliams)"
 extends_documentation_fragment: action_common_attributes
