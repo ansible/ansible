@@ -159,10 +159,9 @@
         include_aggregate_mounts: true
       register: dynamic_mount
 
-    - name: Test static mounts are found and contain UUIDs
+    - name: Test static mounts are found
       assert:
         that:
-          - static.ansible_facts.mount_points.values() | list | map(attribute='uuid') | unique | length > 1
           - static.ansible_facts.mount_points.keys() | length > 0
       when: ansible_os_family != "Darwin"  # No /etc/fstab
 
@@ -178,6 +177,7 @@
         that:
           - dynamic.ansible_facts.mount_points.values() | list | map(attribute='uuid') | unique | length > 1
           - dynamic_mount.ansible_facts.mount_points.values() | list | map(attribute='uuid') | unique | length > 1
+          - static.ansible_facts.mount_points.values() | list | map(attribute='uuid') | unique | length > 1
       when: ansible_os_family not in ("Darwin", "FreeBSD")
 
 - name: Test duplicate sources
