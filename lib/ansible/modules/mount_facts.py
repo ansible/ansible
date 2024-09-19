@@ -537,14 +537,15 @@ def gen_mounts_by_source(module: AnsibleModule):
 
     seen = set()
     for source in sources:
-        if (real_source := os.path.realpath(source)) in seen:
+        if source in seen or (real_source := os.path.realpath(source)) in seen:
             continue
-        seen.add(real_source)
 
         if source == "mount":
+            seen.add(source)
             stdout = run_mount_bin(module, module.params["mount_binary"])
             results = [(source, *astuple(mount_info)) for mount_info in gen_mounts_from_stdout(stdout)]
         else:
+            seen.add(real_source)
             results = [(source, *astuple(mount_info)) for mount_info in gen_mounts_by_file(source)]
 
         if results and source in ("mount", *DYNAMIC_SOURCES):
