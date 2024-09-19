@@ -279,7 +279,7 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
     def at_most_one_dict(value):
         if isinstance(value, Sequence):
             if sum(1 for v in value if isinstance(v, Mapping)) > 1:
-                raise Invalid('List mut contain at most one dictionary')
+                raise Invalid('List must contain at most one dictionary')
         return value
 
     metadata_dict = Schema({
