@@ -282,19 +282,20 @@ class Play(Base, Taggable, CollectionSearch):
         roles (which are themselves compiled recursively) and/or the list of
         tasks specified in the play.
         '''
-
         # create a block containing a single flush handlers meta
         # task, so we can be sure to run handlers at certain points
         # of the playbook execution
-        flush_block = Block.load(
-            data={'meta': 'flush_handlers'},
-            play=self,
-            variable_manager=self._variable_manager,
-            loader=self._loader
-        )
+        flush_block = Block(play=self)
 
-        for task in flush_block.block:
-            task.implicit = True
+        t = Task()
+        t.action = 'meta'
+        t.resolved_action = 'ansible.builtin.meta'
+        t.args['_raw_params'] = 'flush_handlers'
+        t.implicit = True
+        t.set_loader(self._loader)
+        t.tags = self.tags
+        if t.evaluate_tags(self.only_tags, self.skip_tags, all_vars=self.vars):
+            flush_block.block = [t]
 
         block_list = []
         if self.force_handlers:
