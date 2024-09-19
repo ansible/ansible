@@ -1,0 +1,2 @@
+minor_changes:
+  - Add a new mount_facts module to support gathering information about mounts that are excluded by default fact gathering.
