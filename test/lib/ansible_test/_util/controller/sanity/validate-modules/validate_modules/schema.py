@@ -219,7 +219,7 @@ seealso_schema = Schema(
 
 
 argument_spec_types = ['bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw',
-                       'sid', 'str']
+                       'sid', 'str', 'str_strict', 'list_strict', 'dict_strict', 'bool_strict', 'int_strict', 'float_strict']
 
 
 argument_spec_modifiers = {
@@ -307,6 +307,7 @@ def argument_spec_schema(for_collection):
         any_string_types: {
             'type': Any(is_callable, *argument_spec_types),
             'elements': Any(*argument_spec_types),
+            'strict': bool,
             'default': object,
             'fallback': Any(
                 (is_callable, list_string_types),

@@ -490,6 +490,81 @@
         other_alias: bar
   register: alias_warning_listdict
 
+- argspec:
+    str_strict: 'one'
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    str_strict: 1
+    required: value
+    required_one_of_one: value
+  ignore_errors: true
+  register: str_strict_fail
+
+- argspec:
+    list_strict:
+      - one
+      - two
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    list_strict: one,two
+    required: value
+    required_one_of_one: value
+  ignore_errors: true
+  register: list_strict_fail
+
+- argspec:
+    dict_strict:
+      one: two
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    dict_strict: '{"one": "two"}'
+    required: value
+    required_one_of_one: value
+  ignore_errors: true
+  register: dict_strict_fail
+
+- argspec:
+    bool_strict: true
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    bool_strict: 'true'
+    required: value
+    required_one_of_one: value
+  ignore_errors: true
+  register: bool_strict_fail
+
+- argspec:
+    int_strict: 1
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    int_strict: '1'
+    required: value
+    required_one_of_one: value
+  ignore_errors: true
+  register: int_strict_fail
+
+- argspec:
+    float_strict: 1.1
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    float_strict: 1
+    required: value
+    required_one_of_one: value
+  ignore_errors: true
+  register: float_strict_fail
+
 - assert:
     that:
       - argspec_required_fail is failed
@@ -657,3 +732,10 @@
 
       - "'Both option apply_defaults.bar and its alias apply_defaults.bar_alias2 are set.' in alias_warning_dict.warnings"
       - "'Both option required_one_of[0].other and its alias required_one_of[0].other_alias are set.' in alias_warning_listdict.warnings"
+
+      - str_strict_fail is failed
+      - list_strict_fail is failed
+      - dict_strict_fail is failed
+      - bool_strict_fail is failed
+      - int_strict_fail is failed
+      - float_strict_fail is failed

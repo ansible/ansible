@@ -1,0 +1,2 @@
+minor_changes:
+- argument spec - Add strict type checkers that will not coerce for str, list, dict, bool, int, and float.
