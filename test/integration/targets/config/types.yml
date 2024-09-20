@@ -12,7 +12,6 @@
             notvalid: '{{ lookup("config", "notvalid", plugin_type="lookup", plugin_name="types") }}'
             totallynotvalid: '{{ lookup("config", "totallynotvalid", plugin_type="lookup", plugin_name="types") }}'
             str_mustunquote: '{{ lookup("config", "str_mustunquote", plugin_type="lookup", plugin_name="types") }}'
-
         - assert:
             that:
             - 'valid|type_debug == "list"'

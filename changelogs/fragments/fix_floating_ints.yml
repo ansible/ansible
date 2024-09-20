@@ -1,0 +1,2 @@
+bugfixes:
+  - Avoid truncating floats when casting into int, as it can lead to truncation and unexpected results. 0.99999 will be 0, not 1.

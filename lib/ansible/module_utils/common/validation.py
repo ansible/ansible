@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import decimal
 import json
 import os
 import re
@@ -17,7 +18,6 @@ from ansible.module_utils.common.warnings import deprecate
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import (
     binary_type,
-    integer_types,
     string_types,
     text_type,
 )
@@ -506,16 +506,15 @@ def check_type_int(value):
 
     :return: int of given value
     """
-    if isinstance(value, integer_types):
-        return value
-
-    if isinstance(value, string_types):
+    if not isinstance(value, int):
         try:
-            return int(value)
-        except ValueError:
-            pass
-
-    raise TypeError('%s cannot be converted to an int' % type(value))
+            if (decimal_value := decimal.Decimal(value)) != (int_value := int(decimal_value)):
+                raise ValueError("Significant decimal part found")
+            else:
+                value = int_value
+        except (decimal.DecimalException, TypeError, ValueError) as e:
+            raise TypeError(f'"{value!r}" cannot be converted to an int') from e
+    return value
 
 
 def check_type_float(value):
@@ -527,16 +526,12 @@ def check_type_float(value):
 
     :returns: float of given value.
     """
-    if isinstance(value, float):
-        return value
-
-    if isinstance(value, (binary_type, text_type, int)):
+    if not isinstance(value, float):
         try:
-            return float(value)
-        except ValueError:
-            pass
-
-    raise TypeError('%s cannot be converted to a float' % type(value))
+            value = float(value)
+        except (TypeError, ValueError) as e:
+            raise TypeError(f'{type(value)} cannot be converted to a float')
+    return value
 
 
 def check_type_path(value,):
