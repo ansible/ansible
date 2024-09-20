@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import atexit
+import decimal
 import configparser
 import os
 import os.path
@@ -101,10 +102,18 @@ def ensure_type(value, value_type, origin=None, origin_ftype=None):
             value = boolean(value, strict=False)
 
         elif value_type in ('integer', 'int'):
-            value = int(value)
+            if not isinstance(value, int):
+                try:
+                    if (decimal_value := decimal.Decimal(value)) == (int_part := int(decimal_value)):
+                        value = int_part
+                    else:
+                        errmsg = 'int'
+                except decimal.DecimalException as e:
+                    raise ValueError from e
 
         elif value_type == 'float':
-            value = float(value)
+            if not isinstance(value, float):
+                value = float(value)
 
         elif value_type == 'list':
             if isinstance(value, string_types):
@@ -173,7 +182,7 @@ def ensure_type(value, value_type, origin=None, origin_ftype=None):
                 value = unquote(value)
 
         if errmsg:
-            raise ValueError('Invalid type provided for "%s": %s' % (errmsg, to_native(value)))
+            raise ValueError(f'Invalid type provided for "{errmsg}": {value!r}')
 
     return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
 
