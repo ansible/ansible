@@ -560,7 +560,7 @@ class FieldAttributeBase:
                 setattr(self, name, value)
             except (TypeError, ValueError) as e:
                 value = getattr(self, name)
-                raise AnsibleParserError("the field '{name}' has an invalid value ({value!r}), and could not be converted to {attribute.isa}.",
+                raise AnsibleParserError(f"the field '{name}' has an invalid value ({value!r}), and could not be converted to {attribute.isa}.",
                                          obj=self.get_ds(), orig_exc=e)
             except (AnsibleUndefinedVariable, UndefinedError) as e:
                 if templar._fail_on_undefined_errors and name != 'name':
