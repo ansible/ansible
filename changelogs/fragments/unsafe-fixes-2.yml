@@ -1,0 +1,3 @@
+bugfixes:
+- unsafe data - Address an incompatibility with ``AnsibleUnsafeText`` and ``AnsibleUnsafeBytes`` when pickling with ``protocol=0``
+- unsafe data - Address an incompatibility when iterating or getting a single index from ``AnsibleUnsafeBytes``

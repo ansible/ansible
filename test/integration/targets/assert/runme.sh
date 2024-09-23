@@ -45,7 +45,7 @@ cleanup() {
    fi
 }
 
-BASEFILE=assert_quiet.out
+BASEFILE=assert.out
 
 ORIGFILE="${BASEFILE}"
 OUTFILE="${BASEFILE}.new"
@@ -69,3 +69,4 @@ export ANSIBLE_NOCOLOR=1
 export ANSIBLE_RETRY_FILES_ENABLED=0
 
 run_test quiet
+run_test nested_tmpl

@@ -14,4 +14,4 @@
   - assert:
       that:
         - '"location" in result'
-        - 'result["location"] == "{{ expected_location}}"'
+        - 'result["location"] == expected_location'
