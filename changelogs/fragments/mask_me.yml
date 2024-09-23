@@ -1,3 +1,0 @@
----
-bugfixes:
-  - systemd_service - handle mask operation failure (https://github.com/ansible/ansible/issues/81649).

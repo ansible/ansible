@@ -1,2 +1,0 @@
-bugfixes:
-  - module_utils atomic_move (used by most file based modules), now correctly handles permission copy and setting mtime correctly across all paths

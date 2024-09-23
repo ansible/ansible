@@ -1,3 +1,0 @@
-bugfixes:
-  - powershell - Improve CLIXML decoding to decode all control characters and
-    unicode characters that are encoded as surrogate pairs.

@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Removed the ``vyos/1.1.8`` network remote as it is no longer functional.

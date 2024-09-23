@@ -1,3 +1,0 @@
----
-removed_features:
-  - play_context - remove deprecated PlayContext.verbosity property (https://github.com/ansible/ansible/issues/82945).

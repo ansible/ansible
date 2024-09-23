@@ -1,2 +1,0 @@
-minor_changes:
-- distribution.py - Added SL-Micro in Suse OS Family. (https://github.com/ansible/ansible/pull/83541)

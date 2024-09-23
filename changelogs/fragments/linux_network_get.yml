@@ -1,3 +1,0 @@
----
-bugfixes:
-  - linux - remove extraneous get_bin_path API call.
