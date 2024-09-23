@@ -1,3 +1,0 @@
----
-bugfixes:
-- git - check if git version is available or not before using it for comparison (https://github.com/ansible/ansible/issues/72321).

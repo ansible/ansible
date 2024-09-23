@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix handlers not being executed in lockstep using the linear strategy in some cases (https://github.com/ansible/ansible/issues/82307)

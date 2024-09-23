@@ -1,4 +1,0 @@
-bugfixes:
-  - >-
-    include_tasks - Display location when attempting to load a task list where ``include_*`` did not specify any value -
-    https://github.com/ansible/ansible/issues/83874

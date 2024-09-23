@@ -1,2 +1,0 @@
-bugfixes:
-- Add a version ceiling constraint for pypsrp to avoid potential breaking changes in the 1.0.0 release.

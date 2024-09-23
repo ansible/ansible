@@ -1,2 +1,0 @@
-bugfixes:
-  - templating hostvars under native jinja will not cause serialization errors anymore.

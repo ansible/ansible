@@ -1,3 +1,0 @@
----
-bugfixes:
-  - Set LANGUAGE environment variable is set to a non-English locale (https://github.com/ansible/ansible/issues/83608).

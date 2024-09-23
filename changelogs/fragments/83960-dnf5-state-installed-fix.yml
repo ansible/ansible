@@ -1,2 +1,0 @@
-bugfixes:
-  - "dnf5 - re-introduce the ``state: installed`` alias to ``state: present`` (https://github.com/ansible/ansible/issues/83960)"

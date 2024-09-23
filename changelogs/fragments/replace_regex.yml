@@ -1,3 +1,0 @@
----
-bugfixes:
-  - replace - Updated before/after example (https://github.com/ansible/ansible/issues/83390).

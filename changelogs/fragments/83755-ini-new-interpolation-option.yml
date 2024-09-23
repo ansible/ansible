@@ -1,2 +1,0 @@
-minor_changes:
-  - ini lookup - add new ``interpolation`` option (https://github.com/ansible/ansible/issues/83755)

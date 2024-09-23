@@ -1,3 +1,0 @@
----
-bugfixes:
-  - service - fix order of CLI arguments on FreeBSD (https://github.com/ansible/ansible/pull/81377).

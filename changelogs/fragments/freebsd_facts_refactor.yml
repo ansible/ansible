@@ -1,3 +1,0 @@
----
-bugfixes:
-  - freebsd - refactor dmidecode fact gathering code for simplicity.

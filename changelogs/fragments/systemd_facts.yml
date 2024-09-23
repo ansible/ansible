@@ -1,3 +1,0 @@
----
-bugfixes:
-   - systemd facts - handle AttributeError raised while gathering facts on non-systemd hosts.

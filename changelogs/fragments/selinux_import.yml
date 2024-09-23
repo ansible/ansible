@@ -1,3 +1,0 @@
----
-minor_changes:
-  - remove extraneous selinux import (https://github.com/ansible/ansible/issues/83657).

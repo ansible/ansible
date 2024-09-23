@@ -1,2 +1,0 @@
-bugfixes:
-  - service_facts will now detect failed services more accurately across systemd implementations.

@@ -1,3 +1,0 @@
-bugfixes:
-  - psrp - Fix bug when attempting to fetch a file path that contains special glob characters like ``[]``
-  - ssh - Fix bug when attempting to fetch a file path with characters that should be quoted when using the ``piped`` transfer method

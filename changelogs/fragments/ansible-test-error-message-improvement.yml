@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Improve the error message shown when an unknown ``--remote`` or ``--docker`` option is given.

@@ -1,3 +1,0 @@
----
-bugfixes:
-  - uri - deprecate 'yes' and 'no' value for 'follow_redirects' parameter.

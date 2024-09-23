@@ -1,2 +1,0 @@
-bugfixes:
-  - copy - mtime/atime not updated. Fix now update mtime/atime(https://github.com/ansible/ansible/issues/83013)

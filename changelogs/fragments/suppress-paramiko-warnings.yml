@@ -1,2 +1,0 @@
-minor_changes:
-  - Suppress cryptography deprecation warnings for Blowfish and TripleDES when the ``paramiko`` Python module is installed.

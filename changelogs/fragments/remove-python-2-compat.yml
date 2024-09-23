@@ -1,3 +1,0 @@
-minor_changes:
-  - unarchive - Remove Python 2.7 compatibility imports.
-  - ansible-test - Remove Python 2.7 compatibility imports.

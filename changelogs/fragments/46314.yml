@@ -1,3 +1,0 @@
----
-bugfixes:
-  - apt - report changed=True when some packages are being removed (https://github.com/ansible/ansible/issues/46314).

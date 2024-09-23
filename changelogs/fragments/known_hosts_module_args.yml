@@ -1,2 +1,0 @@
-bugfixes:
-  - known_hosts - the returned module invocation now accurately reflects the module arguments.

@@ -1,3 +1,0 @@
----
-bugfixes:
-  - display - warn user about empty log filepath (https://github.com/ansible/ansible/issues/79959).

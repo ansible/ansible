@@ -1,3 +1,0 @@
----
-bugfixes:
-  - package_facts - apk fix when cache is empty (https://github.com/ansible/ansible/issues/83126).
