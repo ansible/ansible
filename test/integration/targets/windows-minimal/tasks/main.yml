@@ -65,3 +65,55 @@
       - win_ping_crash_result is not changed
       - 'win_ping_crash_result.msg == "Unhandled exception while executing module: boom"'
       - '"throw \"boom\"" in win_ping_crash_result.exception'
+
+- name: verify that shortname _raw_params works
+  win_shell: echo "name=foo"
+  register: win_shell_short_res
+  failed_when: win_shell_short_res.stdout | trim != 'name=foo'
+
+- name: verify that legacy _raw_params works
+  ansible.legacy.win_shell: echo "name=foo"
+  register: win_shell_legacy_res
+  failed_when: win_shell_legacy_res.stdout | trim != 'name=foo'
+
+- name: verify that builtin _raw_params works
+  ansible.builtin.win_shell: echo "name=foo"
+  register: win_shell_builtin_res
+  failed_when: win_shell_builtin_res.stdout | trim != 'name=foo'
+
+- name: verify that collection _raw_params works
+  ansible.windows.win_shell: echo "name=foo"
+  register: win_shell_collection_res
+  failed_when: win_shell_collection_res.stdout | trim != 'name=foo'
+
+- name: set ping data fact
+  set_fact:
+    # FUTURE: Fix psrp so it can handle non-ASCII chars in a non-pipeline scenario
+    ping_data: '{{ (ansible_connection == "psrp") | ternary("test", "汉语") }}'
+
+- name: run module with pipelining disabled
+  ansible.builtin.command:
+    cmd: >-
+      ansible windows
+      -m ansible.windows.win_ping
+      -a 'data={{ ping_data }}'
+      -i {{ '-i '.join(ansible_inventory_sources) }}
+      {{ '' if not ansible_verbosity else '-' ~ ('v' * ansible_verbosity) }}
+      -e ansible_remote_tmp='{{ remote_tmp_dir | regex_replace('\\', '\\\\') }}'
+  register: pipeline_disabled_res
+  delegate_to: localhost
+  environment:
+    ANSIBLE_KEEP_REMOTE_FILES: 'true'
+    ANSIBLE_NOCOLOR: 'true'
+    ANSIBLE_FORCE_COLOR: 'false'
+
+- name: view temp files
+  ansible.windows.win_shell: (Get-Item '{{ remote_tmp_dir }}\ansible-tmp-*\*').Name
+  register: pipeline_disabled_files
+
+- name: assert run module with pipelining disabled
+  assert:
+    that:
+    - >-
+      pipeline_disabled_res.stdout is search('\"ping\": \"' ~ ping_data ~ '\"')
+    - pipeline_disabled_files.stdout_lines == ["AnsiballZ_win_ping.ps1"]

@@ -27,6 +27,8 @@ options:
             - By default it will be true if more than one fact module is used.
             - For low cost/delay fact modules parallelism overhead might end up meaning the whole process takes longer.
               Test your specific case to see if it is a speed improvement or not.
+            - The C(ansible_facts_parallel) variable can be used to set this option,
+              overriding the default, but not the direct assignment of the option in the task.
         type: bool
 attributes:
     action:
@@ -49,8 +51,8 @@ attributes:
 notes:
     - This is mostly a wrapper around other fact gathering modules.
     - Options passed into this action must be supported by all the underlying fact modules configured.
-    - If using C(gather_timeout) and parallel execution, it will limit the total execution time of
-      modules that do not accept C(gather_timeout) themselves.
+    - If using O(ignore:gather_timeout) and parallel execution, it will limit the total execution time of
+      modules that do not accept O(ignore:gather_timeout) themselves.
     - Facts returned by each module will be merged, conflicts will favor 'last merged'.
       Order is not guaranteed, when doing parallel gathering on multiple modules.
 author:

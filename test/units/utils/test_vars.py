@@ -29,12 +29,6 @@ from ansible.vars.manager import VarsWithSources
 
 
 class TestVariableUtils(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     combine_vars_merge_data = (
         dict(
             a=dict(a=1),

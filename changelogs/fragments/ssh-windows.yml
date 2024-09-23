@@ -1,0 +1,13 @@
+breaking_changes:
+- >-
+  Stopped wrapping all commands sent over SSH on a Windows target with a
+  ``powershell.exe`` executable. This results in one less process being started
+  on each command for Windows to improve efficiency, simplify the code, and
+  make ``raw`` an actual raw command run with the default shell configured on
+  the Windows sshd settings. This should have no affect on most tasks except
+  for ``raw`` which now is not guaranteed to always be running in a PowerShell
+  shell and from having the console output codepage set to UTF-8. To avoid this
+  issue either swap to using ``ansible.windows.win_command``,
+  ``ansible.windows.win_shell``, ``ansible.windows.win_powershell`` or manually
+  wrap the raw command with the shell commands needed to set the output console
+  encoding.

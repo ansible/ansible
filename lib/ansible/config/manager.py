@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import atexit
+import decimal
 import configparser
 import os
 import os.path
@@ -15,7 +16,7 @@ from collections import namedtuple
 from collections.abc import Mapping, Sequence
 from jinja2.nativetypes import NativeEnvironment
 
-from ansible.errors import AnsibleOptionsError, AnsibleError
+from ansible.errors import AnsibleOptionsError, AnsibleError, AnsibleRequiredOptionError
 from ansible.module_utils.common.text.converters import to_text, to_bytes, to_native
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.six import string_types
@@ -28,6 +29,26 @@ from ansible.utils.path import cleanup_tmp_file, makedirs_safe, unfrackpath
 Setting = namedtuple('Setting', 'name value origin type')
 
 INTERNAL_DEFS = {'lookup': ('_terms',)}
+
+GALAXY_SERVER_DEF = [
+    ('url', True, 'str'),
+    ('username', False, 'str'),
+    ('password', False, 'str'),
+    ('token', False, 'str'),
+    ('auth_url', False, 'str'),
+    ('api_version', False, 'int'),
+    ('validate_certs', False, 'bool'),
+    ('client_id', False, 'str'),
+    ('timeout', False, 'int'),
+]
+
+# config definition fields
+GALAXY_SERVER_ADDITIONAL = {
+    'api_version': {'default': None, 'choices': [2, 3]},
+    'validate_certs': {'cli': [{'name': 'validate_certs'}]},
+    'timeout': {'cli': [{'name': 'timeout'}]},
+    'token': {'default': None},
+}
 
 
 def _get_entry(plugin_type, plugin_name, config):
@@ -81,10 +102,18 @@ def ensure_type(value, value_type, origin=None, origin_ftype=None):
             value = boolean(value, strict=False)
 
         elif value_type in ('integer', 'int'):
-            value = int(value)
+            if not isinstance(value, int):
+                try:
+                    if (decimal_value := decimal.Decimal(value)) == (int_part := int(decimal_value)):
+                        value = int_part
+                    else:
+                        errmsg = 'int'
+                except decimal.DecimalException as e:
+                    raise ValueError from e
 
         elif value_type == 'float':
-            value = float(value)
+            if not isinstance(value, float):
+                value = float(value)
 
         elif value_type == 'list':
             if isinstance(value, string_types):
@@ -153,7 +182,7 @@ def ensure_type(value, value_type, origin=None, origin_ftype=None):
                 value = unquote(value)
 
         if errmsg:
-            raise ValueError('Invalid type provided for "%s": %s' % (errmsg, to_native(value)))
+            raise ValueError(f'Invalid type provided for "{errmsg}": {value!r}')
 
     return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
 
@@ -302,6 +331,42 @@ class ConfigManager(object):
         # ensure we always have config def entry
         self._base_defs['CONFIG_FILE'] = {'default': None, 'type': 'path'}
 
+    def load_galaxy_server_defs(self, server_list):
+
+        def server_config_def(section, key, required, option_type):
+            config_def = {
+                'description': 'The %s of the %s Galaxy server' % (key, section),
+                'ini': [
+                    {
+                        'section': 'galaxy_server.%s' % section,
+                        'key': key,
+                    }
+                ],
+                'env': [
+                    {'name': 'ANSIBLE_GALAXY_SERVER_%s_%s' % (section.upper(), key.upper())},
+                ],
+                'required': required,
+                'type': option_type,
+            }
+            if key in GALAXY_SERVER_ADDITIONAL:
+                config_def.update(GALAXY_SERVER_ADDITIONAL[key])
+                # ensure we always have a default timeout
+                if key == 'timeout' and 'default' not in config_def:
+                    config_def['default'] = self.get_config_value('GALAXY_SERVER_TIMEOUT')
+
+            return config_def
+
+        if server_list:
+            for server_key in server_list:
+                if not server_key:
+                    # To filter out empty strings or non truthy values as an empty server list env var is equal to [''].
+                    continue
+
+                # Config definitions are looked up dynamically based on the C.GALAXY_SERVER_LIST entry. We look up the
+                # section [galaxy_server.<server>] for the values url, username, password, and token.
+                defs = dict((k, server_config_def(server_key, k, req, value_type)) for k, req, value_type in GALAXY_SERVER_DEF)
+                self.initialize_plugin_configuration_definitions('galaxy_server', server_key, defs)
+
     def template_default(self, value, variables):
         if isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')) and variables is not None:
             # template default values if possible
@@ -357,7 +422,7 @@ class ConfigManager(object):
     def get_plugin_options(self, plugin_type, name, keys=None, variables=None, direct=None):
 
         options = {}
-        defs = self.get_configuration_definitions(plugin_type, name)
+        defs = self.get_configuration_definitions(plugin_type=plugin_type, name=name)
         for option in defs:
             options[option] = self.get_config_value(option, plugin_type=plugin_type, plugin_name=name, keys=keys, variables=variables, direct=direct)
 
@@ -366,7 +431,7 @@ class ConfigManager(object):
     def get_plugin_vars(self, plugin_type, name):
 
         pvars = []
-        for pdef in self.get_configuration_definitions(plugin_type, name).values():
+        for pdef in self.get_configuration_definitions(plugin_type=plugin_type, name=name).values():
             if 'vars' in pdef and pdef['vars']:
                 for var_entry in pdef['vars']:
                     pvars.append(var_entry['name'])
@@ -375,7 +440,7 @@ class ConfigManager(object):
     def get_plugin_options_from_var(self, plugin_type, name, variable):
 
         options = []
-        for option_name, pdef in self.get_configuration_definitions(plugin_type, name).items():
+        for option_name, pdef in self.get_configuration_definitions(plugin_type=plugin_type, name=name).items():
             if 'vars' in pdef and pdef['vars']:
                 for var_entry in pdef['vars']:
                     if variable == var_entry['name']:
@@ -417,7 +482,6 @@ class ConfigManager(object):
             for cdef in list(ret.keys()):
                 if cdef.startswith('_'):
                     del ret[cdef]
-
         return ret
 
     def _loop_entries(self, container, entry_list):
@@ -472,7 +536,7 @@ class ConfigManager(object):
         origin = None
         origin_ftype = None
 
-        defs = self.get_configuration_definitions(plugin_type, plugin_name)
+        defs = self.get_configuration_definitions(plugin_type=plugin_type, name=plugin_name)
         if config in defs:
 
             aliases = defs[config].get('aliases', [])
@@ -562,8 +626,8 @@ class ConfigManager(object):
             if value is None:
                 if defs[config].get('required', False):
                     if not plugin_type or config not in INTERNAL_DEFS.get(plugin_type, {}):
-                        raise AnsibleError("No setting was provided for required configuration %s" %
-                                           to_native(_get_entry(plugin_type, plugin_name, config)))
+                        raise AnsibleRequiredOptionError("No setting was provided for required configuration %s" %
+                                                         to_native(_get_entry(plugin_type, plugin_name, config)))
                 else:
                     origin = 'default'
                     value = self.template_default(defs[config].get('default'), variables)
@@ -617,3 +681,17 @@ class ConfigManager(object):
             self._plugins[plugin_type] = {}
 
         self._plugins[plugin_type][name] = defs
+
+    @staticmethod
+    def get_deprecated_msg_from_config(dep_docs, include_removal=False):
+
+        removal = ''
+        if include_removal:
+            if 'removed_at_date' in dep_docs:
+                removal = f"Will be removed in a release after {dep_docs['removed_at_date']}\n\t"
+            else:
+                removal = f"Will be removed in: Ansible {dep_docs['removed_in']}\n\t"
+
+        # TODO: choose to deprecate either singular or plural
+        alt = dep_docs.get('alternatives', dep_docs.get('alternative', 'none'))
+        return f"Reason: {dep_docs['why']}\n\t{removal}Alternatives: {alt}"

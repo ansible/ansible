@@ -1,0 +1,2 @@
+minor_changes:
+  - dnf5 - implement ``enable_plugin`` and ``disable_plugin`` options

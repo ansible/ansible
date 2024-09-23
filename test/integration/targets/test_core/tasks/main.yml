@@ -361,3 +361,25 @@
     that:
       - vaulted_value is vault_encrypted
       - inventory_hostname is not vault_encrypted
+
+- name: Check vaulted_file test
+  assert:
+    that:
+      - "'files/notvault' is not vaulted_file"
+      - "'files/vault1' is vaulted_file"
+      - "'files/vault2' is vaulted_file"
+
+
+- name: test timeout test
+  tags:
+  - timeout
+  block:
+  - command: sleep 5
+    timeout: 3
+    register: timed
+    ignore_errors: true
+
+  - assert:
+      that:
+        - timed is timedout
+        - timed['timedout'].get('period', 0) == 3

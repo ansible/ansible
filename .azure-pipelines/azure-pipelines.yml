@@ -31,7 +31,7 @@ variables:
   - name: fetchDepth
     value: 500
   - name: defaultContainer
-    value: quay.io/ansible/azure-pipelines-test-container:4.0.1
+    value: quay.io/ansible/azure-pipelines-test-container:6.0.0
 
 pool: Standard
 
@@ -59,6 +59,7 @@ stages:
             - test: '3.10'
             - test: 3.11
             - test: 3.12
+            - test: 3.13
   - stage: Windows
     dependsOn: []
     jobs:
@@ -67,9 +68,16 @@ stages:
           nameFormat: Server {0}
           testFormat: windows/{0}/1
           targets:
-            - test: 2016
-            - test: 2019
-            - test: 2022
+            - name: 2016 WinRM HTTP
+              test: 2016/winrm/http
+            - name: 2019 WinRM HTTPS
+              test: 2019/winrm/https
+            - name: 2022 WinRM HTTPS
+              test: 2022/winrm/https
+            - name: 2022 PSRP HTTP
+              test: 2022/psrp/http
+            - name: 2022 SSH Key
+              test: 2022/ssh/key
   - stage: Remote
     dependsOn: []
     jobs:
@@ -78,14 +86,14 @@ stages:
           targets:
             - name: macOS 14.3
               test: macos/14.3
-            - name: RHEL 9.3 py39
-              test: rhel/9.3@3.9
-            - name: RHEL 9.3 py311
-              test: rhel/9.3@3.11
+            - name: RHEL 9.4 py39
+              test: rhel/9.4@3.9
+            - name: RHEL 9.4 py312
+              test: rhel/9.4@3.12
             - name: FreeBSD 13.3
               test: freebsd/13.3
-            - name: FreeBSD 14.0
-              test: freebsd/14.0
+            - name: FreeBSD 14.1
+              test: freebsd/14.1
           groups:
             - 1
             - 2
@@ -94,12 +102,12 @@ stages:
           targets:
             - name: macOS 14.3
               test: macos/14.3
-            - name: RHEL 9.3
-              test: rhel/9.3
+            - name: RHEL 9.4
+              test: rhel/9.4
             - name: FreeBSD 13.3
               test: freebsd/13.3
-            - name: FreeBSD 14.0
-              test: freebsd/14.0
+            - name: FreeBSD 14.1
+              test: freebsd/14.1
           groups:
             - 3
             - 4
@@ -107,44 +115,44 @@ stages:
       - template: templates/matrix.yml  # context/controller (ansible-test container management)
         parameters:
           targets:
-            - name: Alpine 3.19
-              test: alpine/3.19
-            - name: Fedora 39
-              test: fedora/39
-            - name: RHEL 9.3
-              test: rhel/9.3
-            - name: Ubuntu 22.04
-              test: ubuntu/22.04
+            - name: Alpine 3.20
+              test: alpine/3.20
+            - name: Fedora 40
+              test: fedora/40
+            - name: RHEL 9.4
+              test: rhel/9.4
+            - name: Ubuntu 24.04
+              test: ubuntu/24.04
           groups:
             - 6
   - stage: Docker
     dependsOn: []
     jobs:
-      - template: templates/matrix.yml
+      - template: templates/matrix.yml  # context/target
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Alpine 3.19
-              test: alpine319
-            - name: Fedora 39
-              test: fedora39
-            - name: Ubuntu 20.04
-              test: ubuntu2004
+            - name: Alpine 3.20
+              test: alpine320
+            - name: Fedora 40
+              test: fedora40
             - name: Ubuntu 22.04
               test: ubuntu2204
+            - name: Ubuntu 24.04
+              test: ubuntu2404
           groups:
             - 1
             - 2
-      - template: templates/matrix.yml
+      - template: templates/matrix.yml  # context/controller
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Alpine 3.19
-              test: alpine319
-            - name: Fedora 39
-              test: fedora39
-            - name: Ubuntu 22.04
-              test: ubuntu2204
+            - name: Alpine 3.20
+              test: alpine320
+            - name: Fedora 40
+              test: fedora40
+            - name: Ubuntu 24.04
+              test: ubuntu2404
           groups:
             - 3
             - 4
@@ -157,9 +165,9 @@ stages:
           nameFormat: Python {0}
           testFormat: galaxy/{0}/1
           targets:
-            - test: '3.10'
             - test: 3.11
             - test: 3.12
+            - test: 3.13
   - stage: Generic
     dependsOn: []
     jobs:
@@ -168,9 +176,9 @@ stages:
           nameFormat: Python {0}
           testFormat: generic/{0}/1
           targets:
-            - test: '3.10'
             - test: 3.11
             - test: 3.12
+            - test: 3.13
   - stage: Incidental_Windows
     displayName: Incidental Windows
     dependsOn: []
@@ -180,9 +188,16 @@ stages:
           nameFormat: Server {0}
           testFormat: i/windows/{0}
           targets:
-            - test: 2016
-            - test: 2019
-            - test: 2022
+            - name: 2016 WinRM HTTP
+              test: 2016/winrm/http
+            - name: 2019 WinRM HTTPS
+              test: 2019/winrm/https
+            - name: 2022 WinRM HTTPS
+              test: 2022/winrm/https
+            - name: 2022 PSRP HTTP
+              test: 2022/psrp/http
+            - name: 2022 SSH Key
+              test: 2022/ssh/key
   - stage: Incidental
     dependsOn: []
     jobs:
@@ -192,8 +207,6 @@ stages:
           targets:
             - name: IOS Python
               test: ios/csr1000v/
-            - name: VyOS Python
-              test: vyos/1.1.8/
   - stage: Summary
     condition: succeededOrFailed()
     dependsOn:

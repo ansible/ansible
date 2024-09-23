@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix a traceback when an environment variable contains certain special characters (https://github.com/ansible/ansible/issues/83498)

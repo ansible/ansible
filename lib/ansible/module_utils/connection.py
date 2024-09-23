@@ -29,8 +29,8 @@
 from __future__ import annotations
 
 import os
-import hashlib
 import json
+import pickle
 import socket
 import struct
 import traceback
@@ -40,30 +40,14 @@ from functools import partial
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.six.moves import cPickle
 
 
-def write_to_file_descriptor(fd, obj):
-    """Handles making sure all data is properly written to file descriptor fd.
+def write_to_stream(stream, obj):
+    """Write a length+newline-prefixed pickled object to a stream."""
+    src = pickle.dumps(obj)
 
-    In particular, that data is encoded in a character stream-friendly way and
-    that all data gets written before returning.
-    """
-    # Need to force a protocol that is compatible with both py2 and py3.
-    # That would be protocol=2 or less.
-    # Also need to force a protocol that excludes certain control chars as
-    # stdin in this case is a pty and control chars will cause problems.
-    # that means only protocol=0 will work.
-    src = cPickle.dumps(obj, protocol=0)
-
-    # raw \r characters will not survive pty round-trip
-    # They should be rehydrated on the receiving end
-    src = src.replace(b'\r', br'\r')
-    data_hash = to_bytes(hashlib.sha1(src).hexdigest())
-
-    os.write(fd, b'%d\n' % len(src))
-    os.write(fd, src)
-    os.write(fd, b'%s\n' % data_hash)
+    stream.write(b'%d\n' % len(src))
+    stream.write(src)
 
 
 def send_data(s, data):
@@ -146,7 +130,7 @@ class Connection(object):
             data = json.dumps(req, cls=AnsibleJSONEncoder, vault_to_text=True)
         except TypeError as exc:
             raise ConnectionError(
-                "Failed to encode some variables as JSON for communication with ansible-connection. "
+                "Failed to encode some variables as JSON for communication with the persistent connection helper. "
                 "The original exception was: %s" % to_text(exc)
             )
 
@@ -176,7 +160,7 @@ class Connection(object):
         if response['id'] != reqid:
             raise ConnectionError('invalid json-rpc id received')
         if "result_type" in response:
-            response["result"] = cPickle.loads(to_bytes(response["result"]))
+            response["result"] = pickle.loads(to_bytes(response["result"], errors="surrogateescape"))
 
         return response
 

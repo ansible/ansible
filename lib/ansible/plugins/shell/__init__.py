@@ -18,8 +18,8 @@ from __future__ import annotations
 
 import os
 import os.path
-import random
 import re
+import secrets
 import shlex
 import time
 
@@ -38,6 +38,9 @@ class ShellBase(AnsiblePlugin):
 
         super(ShellBase, self).__init__()
 
+        # Not used but here for backwards compatibility.
+        # ansible.posix.fish uses (but does not actually use) this value.
+        # https://github.com/ansible-collections/ansible.posix/blob/f41f08e9e3d3129e709e122540b5ae6bc19932be/plugins/shell/fish.py#L38-L39
         self.env = {}
         self.tmpdir = None
         self.executable = None
@@ -60,18 +63,6 @@ class ShellBase(AnsiblePlugin):
 
         super(ShellBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
-        # set env if needed, deal with environment's 'dual nature' list of dicts or dict
-        # TODO: config system should already resolve this so we should be able to just iterate over dicts
-        env = self.get_option('environment')
-        if isinstance(env, string_types):
-            raise AnsibleError('The "environment" keyword takes a list of dictionaries or a dictionary, not a string')
-        if not isinstance(env, Sequence):
-            env = [env]
-        for env_dict in env:
-            if not isinstance(env_dict, Mapping):
-                raise AnsibleError('The "environment" keyword takes a list of dictionaries (or single dictionary), but got a "%s" instead' % type(env_dict))
-            self.env.update(env_dict)
-
         # We can remove the try: except in the future when we make ShellBase a proper subset of
         # *all* shells.  Right now powershell and third party shells which do not use the
         # shell_common documentation fragment (and so do not have system_tmpdirs) will fail
@@ -82,10 +73,10 @@ class ShellBase(AnsiblePlugin):
 
     @staticmethod
     def _generate_temp_dir_name():
-        return 'ansible-tmp-%s-%s-%s' % (time.time(), os.getpid(), random.randint(0, 2**48))
+        return 'ansible-tmp-%s-%s-%s' % (time.time(), os.getpid(), secrets.randbelow(2**48))
 
     def env_prefix(self, **kwargs):
-        return ' '.join(['%s=%s' % (k, shlex.quote(text_type(v))) for k, v in kwargs.items()])
+        return ' '.join(['%s=%s' % (k, self.quote(text_type(v))) for k, v in kwargs.items()])
 
     def join_path(self, *args):
         return os.path.join(*args)
@@ -101,41 +92,33 @@ class ShellBase(AnsiblePlugin):
     def chmod(self, paths, mode):
         cmd = ['chmod', mode]
         cmd.extend(paths)
-        cmd = [shlex.quote(c) for c in cmd]
-
-        return ' '.join(cmd)
+        return self.join(cmd)
 
     def chown(self, paths, user):
         cmd = ['chown', user]
         cmd.extend(paths)
-        cmd = [shlex.quote(c) for c in cmd]
-
-        return ' '.join(cmd)
+        return self.join(cmd)
 
     def chgrp(self, paths, group):
         cmd = ['chgrp', group]
         cmd.extend(paths)
-        cmd = [shlex.quote(c) for c in cmd]
-
-        return ' '.join(cmd)
+        return self.join(cmd)
 
     def set_user_facl(self, paths, user, mode):
         """Only sets acls for users as that's really all we need"""
         cmd = ['setfacl', '-m', 'u:%s:%s' % (user, mode)]
         cmd.extend(paths)
-        cmd = [shlex.quote(c) for c in cmd]
-
-        return ' '.join(cmd)
+        return self.join(cmd)
 
     def remove(self, path, recurse=False):
-        path = shlex.quote(path)
+        path = self.quote(path)
         cmd = 'rm -f '
         if recurse:
             cmd += '-r '
         return cmd + "%s %s" % (path, self._SHELL_REDIRECT_ALLNULL)
 
     def exists(self, path):
-        cmd = ['test', '-e', shlex.quote(path)]
+        cmd = ['test', '-e', self.quote(path)]
         return ' '.join(cmd)
 
     def mkdtemp(self, basefile=None, system=False, mode=0o700, tmpdir=None):
@@ -146,7 +129,7 @@ class ShellBase(AnsiblePlugin):
         # other users can read and access the tmp directory.
         # This is because we use system to create tmp dirs for unprivileged users who are
         # sudo'ing to a second unprivileged user.
-        # The 'system_tmpdirs' setting defines dirctories we can use for this purpose
+        # The 'system_tmpdirs' setting defines directories we can use for this purpose
         # the default are, /tmp and /var/tmp.
         # So we only allow one of those locations if system=True, using the
         # passed in tmpdir if it is valid or the first one from the setting if not.
@@ -194,8 +177,7 @@ class ShellBase(AnsiblePlugin):
         # Check that the user_path to expand is safe
         if user_home_path != '~':
             if not _USER_HOME_PATH_RE.match(user_home_path):
-                # shlex.quote will make the shell return the string verbatim
-                user_home_path = shlex.quote(user_home_path)
+                user_home_path = self.quote(user_home_path)
         elif username:
             # if present the user name is appended to resolve "that user's home"
             user_home_path += username
@@ -207,20 +189,24 @@ class ShellBase(AnsiblePlugin):
         return 'echo %spwd%s' % (self._SHELL_SUB_LEFT, self._SHELL_SUB_RIGHT)
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None):
-        # don't quote the cmd if it's an empty string, because this will break pipelining mode
-        if cmd.strip() != '':
-            cmd = shlex.quote(cmd)
+        env_string = env_string.strip()
+        if env_string:
+            env_string += ' '
 
-        cmd_parts = []
-        if shebang:
-            shebang = shebang.replace("#!", "").strip()
-        else:
-            shebang = ""
-        cmd_parts.extend([env_string.strip(), shebang, cmd])
-        if arg_path is not None:
-            cmd_parts.append(arg_path)
-        new_cmd = " ".join(cmd_parts)
-        return new_cmd
+        if shebang is None:
+            shebang = ''
+
+        cmd_parts = [
+            shebang.removeprefix('#!').strip(),
+            cmd.strip(),
+            arg_path,
+        ]
+
+        cleaned_up_cmd = self.join(
+            stripped_cmd_part for raw_cmd_part in cmd_parts
+            if raw_cmd_part and (stripped_cmd_part := raw_cmd_part.strip())
+        )
+        return ''.join((env_string, cleaned_up_cmd))
 
     def append_command(self, cmd, cmd_to_append):
         """Append an additional command if supported by the shell"""
@@ -237,3 +223,7 @@ class ShellBase(AnsiblePlugin):
     def quote(self, cmd):
         """Returns a shell-escaped string that can be safely used as one token in a shell command line"""
         return shlex.quote(cmd)
+
+    def join(self, cmd_parts):
+        """Returns a shell-escaped string from a list that can be safely used in a shell command line"""
+        return shlex.join(cmd_parts)

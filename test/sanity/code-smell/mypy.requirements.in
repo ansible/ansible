@@ -1,0 +1,11 @@
+mypy
+cryptography  # type stubs not published separately
+jinja2  # type stubs not published separately
+packaging  # type stubs not published separately
+tomli  # type stubs not published separately, required for toml inventory plugin
+types-backports
+types-paramiko
+types-pyyaml
+types-requests
+types-setuptools  # required for the pkg_resources import in the pip module
+types-toml

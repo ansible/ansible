@@ -106,7 +106,7 @@ class ServiceMgrFactCollector(BaseFactCollector):
             proc_1 = proc_1.strip()
 
         if proc_1 is not None and (proc_1 == 'init' or proc_1.endswith('sh')):
-            # many systems return init, so this cannot be trusted, if it ends in 'sh' it probalby is a shell in a container
+            # many systems return init, so this cannot be trusted, if it ends in 'sh' it probably is a shell in a container
             proc_1 = None
 
         # if not init/None it should be an identifiable or custom init, so we are done!
@@ -144,6 +144,8 @@ class ServiceMgrFactCollector(BaseFactCollector):
                 service_mgr_name = 'systemd'
             elif os.path.exists('/etc/init.d/'):
                 service_mgr_name = 'sysvinit'
+            elif os.path.exists('/etc/dinit.d/'):
+                service_mgr_name = 'dinit'
 
         if not service_mgr_name:
             # if we cannot detect, fallback to generic 'service'

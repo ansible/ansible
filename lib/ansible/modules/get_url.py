@@ -13,7 +13,7 @@ short_description: Downloads files from HTTP, HTTPS, or FTP to node
 description:
      - Downloads files from HTTP, HTTPS, or FTP to the remote server. The remote
        server I(must) have direct access to the remote resource.
-     - By default, if an environment variable C(<protocol>_proxy) is set on
+     - By default, if an environment variable E(<protocol>_proxy) is set on
        the target host, requests will be sent through that proxy. This
        behaviour can be overridden by setting a variable for this task
        (see R(setting the environment,playbooks_environment)),
@@ -27,23 +27,23 @@ version_added: '0.6'
 options:
   ciphers:
     description:
-      - SSL/TLS Ciphers to use for the request
-      - 'When a list is provided, all ciphers are joined in order with V(:)'
+      - SSL/TLS Ciphers to use for the request.
+      - 'When a list is provided, all ciphers are joined in order with C(:).'
       - See the L(OpenSSL Cipher List Format,https://www.openssl.org/docs/manmaster/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT)
         for more details.
-      - The available ciphers is dependent on the Python and OpenSSL/LibreSSL versions
+      - The available ciphers is dependent on the Python and OpenSSL/LibreSSL versions.
     type: list
     elements: str
     version_added: '2.14'
   decompress:
     description:
-      - Whether to attempt to decompress gzip content-encoded responses
+      - Whether to attempt to decompress gzip content-encoded responses.
     type: bool
     default: true
     version_added: '2.14'
   url:
     description:
-      - HTTP, HTTPS, or FTP URL in the form (http|https|ftp)://[user[:pass]]@host.domain[:port]/path
+      - HTTP, HTTPS, or FTP URL in the form C((http|https|ftp)://[user[:pass]]@host.domain[:port]/path).
     type: str
     required: true
   dest:
@@ -60,9 +60,9 @@ options:
   tmp_dest:
     description:
       - Absolute path of where temporary file is downloaded to.
-      - When run on Ansible 2.5 or greater, path defaults to ansible's remote_tmp setting
+      - When run on Ansible 2.5 or greater, path defaults to ansible's C(remote_tmp) setting.
       - When run on Ansible prior to 2.5, it defaults to E(TMPDIR), E(TEMP) or E(TMP) env variables or a platform specific value.
-      - U(https://docs.python.org/3/library/tempfile.html#tempfile.tempdir)
+      - U(https://docs.python.org/3/library/tempfile.html#tempfile.tempdir).
     type: path
     version_added: '2.1'
   force:
@@ -87,18 +87,20 @@ options:
       - 'If a checksum is passed to this parameter, the digest of the
         destination file will be calculated after it is downloaded to ensure
         its integrity and verify that the transfer completed successfully.
-        Format: <algorithm>:<checksum|url>, e.g. checksum="sha256:D98291AC[...]B6DC7B97",
-        checksum="sha256:http://example.com/path/sha256sum.txt"'
+        Format: <algorithm>:<checksum|url>, for example C(checksum="sha256:D98291AC[...]B6DC7B97",
+        C(checksum="sha256:http://example.com/path/sha256sum.txt").'
       - If you worry about portability, only the sha1 algorithm is available
         on all platforms and python versions.
-      - The Python ``hashlib`` module is responsible for providing the available algorithms.
+      - The Python C(hashlib) module is responsible for providing the available algorithms.
         The choices vary based on Python version and OpenSSL version.
-      - On systems running in FIPS compliant mode, the ``md5`` algorithm may be unavailable.
+      - On systems running in FIPS compliant mode, the C(md5) algorithm may be unavailable.
       - Additionally, if a checksum is passed to this parameter, and the file exist under
         the O(dest) location, the C(destination_checksum) would be calculated, and if
         checksum equals C(destination_checksum), the file download would be skipped
-        (unless O(force) is V(true)). If the checksum does not equal C(destination_checksum),
+        (unless O(force=true)). If the checksum does not equal C(destination_checksum),
         the destination file is deleted.
+      - If the checksum URL requires username and password, O(url_username) and O(url_password) are used
+        to download the checksum file.
     type: str
     default: ''
     version_added: "2.0"
@@ -185,16 +187,16 @@ options:
         authentication.
       - Requires the Python library L(gssapi,https://github.com/pythongssapi/python-gssapi) to be installed.
       - Credentials for GSSAPI can be specified with O(url_username)/O(url_password) or with the GSSAPI env var
-        C(KRB5CCNAME) that specified a custom Kerberos credential cache.
+        E(KRB5CCNAME) that specified a custom Kerberos credential cache.
       - NTLM authentication is I(not) supported even if the GSSAPI mech for NTLM has been installed.
     type: bool
     default: no
     version_added: '2.11'
   use_netrc:
     description:
-      - Determining whether to use credentials from ``~/.netrc`` file
-      - By default .netrc is used with Basic authentication headers
-      - When set to False, .netrc credentials are ignored
+      - Determining whether to use credentials from C(~/.netrc) file.
+      - By default C(.netrc) is used with Basic authentication headers.
+      - When V(false), C(.netrc) credentials are ignored.
     type: bool
     default: true
     version_added: '2.14'
@@ -661,6 +663,16 @@ def main():
                              result['checksum_src'] != result['checksum_dest'])
         module.exit_json(msg=info.get('msg', ''), **result)
 
+    # If a checksum was provided, ensure that the temporary file matches this checksum
+    # before moving it to the destination.
+    if checksum != '':
+        tmpsrc_checksum = module.digest_from_file(tmpsrc, algorithm)
+
+        if checksum != tmpsrc_checksum:
+            os.remove(tmpsrc)
+            module.fail_json(msg=f"The checksum for {tmpsrc} did not match {checksum}; it was {tmpsrc_checksum}.", **result)
+
+    # Copy temporary file to destination if necessary
     backup_file = None
     if result['checksum_src'] != result['checksum_dest']:
         try:
@@ -678,13 +690,6 @@ def main():
         result['changed'] = False
         if os.path.exists(tmpsrc):
             os.remove(tmpsrc)
-
-    if checksum != '':
-        destination_checksum = module.digest_from_file(dest, algorithm)
-
-        if checksum != destination_checksum:
-            os.remove(dest)
-            module.fail_json(msg="The checksum for %s did not match %s; it was %s." % (dest, checksum, destination_checksum), **result)
 
     # allow file attribute changes
     file_args = module.load_file_common_arguments(module.params, path=dest)

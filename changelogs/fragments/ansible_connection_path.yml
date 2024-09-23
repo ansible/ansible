@@ -1,0 +1,8 @@
+bugfixes:
+  - persistent connection plugins - The correct Ansible persistent connection helper is now always used.
+    Previously, the wrong script could be used, depending on the value of the ``PATH`` environment variable.
+    As a result, users were sometimes required to set ``ANSIBLE_CONNECTION_PATH`` to use the correct script.
+deprecated_features:
+  - persistent connection plugins - The ``ANSIBLE_CONNECTION_PATH`` config option no longer has any effect, and will be removed in a future release.
+breaking_changes:
+  - persistent connection plugins - The ``ANSIBLE_CONNECTION_PATH`` config option no longer has any effect.

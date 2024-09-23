@@ -25,7 +25,7 @@
     that:
       - "getmac_result.rc == 0"
       - "getmac_result.stdout"
-      - "not getmac_result.stderr"
+      - (ansible_connection == 'ssh') | ternary(getmac_result.stderr is defined, not getmac_result.stderr)
       - "getmac_result is not failed"
       - "getmac_result is changed"
 
@@ -39,7 +39,7 @@
       - "ipconfig_result.rc == 0"
       - "ipconfig_result.stdout"
       - "'Physical Address' in ipconfig_result.stdout"
-      - "not ipconfig_result.stderr"
+      - (ansible_connection == 'ssh') | ternary(ipconfig_result.stderr is defined, not ipconfig_result.stderr)
       - "ipconfig_result is not failed"
       - "ipconfig_result is changed"
 
@@ -80,7 +80,7 @@
     that:
       - "sleep_command.rc == 0"
       - "not sleep_command.stdout"
-      - "not sleep_command.stderr"
+      - (ansible_connection == 'ssh') | ternary(sleep_command.stderr is defined, not sleep_command.stderr)
       - "sleep_command is not failed"
       - "sleep_command is changed"
 
@@ -93,11 +93,14 @@
     that:
       - "raw_result.stdout_lines[0] == 'wwe=raw'"
 
+# ssh cannot pre-set the codepage so we need to do it in the command.
 - name: unicode tests for winrm
   when: ansible_connection != 'psrp'  # Write-Host does not work over PSRP
   block:
   - name: run a raw command with unicode chars and quoted args (from https://github.com/ansible/ansible-modules-core/issues/1929)
-    raw: Write-Host --% icacls D:\somedir\ /grant "! ЗАО. Руководство":F
+    raw: |
+      {{ (ansible_connection == 'ssh') | ternary("[Console]::OutputEncoding = [System.Text.Encoding]::UTF8", "") }}
+      Write-Host --% icacls D:\somedir\ /grant "! ЗАО. Руководство":F
     register: raw_result2
 
   - name: make sure raw passes command as-is and doesn't split/rejoin args
@@ -108,7 +111,7 @@
 - name: unicode tests for psrp
   when: ansible_connection == 'psrp'
   block:
-  # Cannot test unicode passed into separate exec as PSRP doesn't run with a preset CP of 65001 which reuslts in ? for unicode chars
+  # Cannot test unicode passed into separate exec as PSRP doesn't run with a preset CP of 65001 which results in ? for unicode chars
   - name: run a raw command with unicode chars
     raw: Write-Output "! ЗАО. Руководство"
     register: raw_result2

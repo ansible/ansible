@@ -1,7 +1,7 @@
 Hi!
 
 This has been merged in, and will also be included in the next major release.
-For more info on our process see https://docs.ansible.com/ansible/devel/reference_appendices/release_and_maintenance.html#ansible-core-workflow
+For more info on our process see <https://docs.ansible.com/ansible/devel/reference_appendices/release_and_maintenance.html#ansible-core-workflow>
 
 If you or anyone else has any further questions, please let us know by stopping by one of the mailing lists or chat channels, as appropriate.
 
@@ -10,6 +10,6 @@ The mailing list and irc are great ways to ask questions, or post if you don't t
 
 See  this page for a complete and up to date list of communication channels and their purposes:
 
-* https://docs.ansible.com/ansible/latest/community/communication.html
+* <https://docs.ansible.com/ansible/latest/community/communication.html>
 
 Thank you!

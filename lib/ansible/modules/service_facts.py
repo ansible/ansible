@@ -45,6 +45,19 @@ EXAMPLES = r'''
 - name: Print service facts
   ansible.builtin.debug:
     var: ansible_facts.services
+
+- name: show names of existing systemd services, sometimes systemd knows about services that were never installed
+  debug: msg={{ existing_systemd_services | map(attribute='name') }}
+  vars:
+     known_systemd_services: "{{ ansible_facts['services'].values() | selectattr('source', 'equalto', 'systemd') }}"
+     existing_systemd_services: "{{ known_systemd_services | rejectattr('status', 'equalto', 'not-found') }}"
+
+- name: restart systemd service if it exists
+  service:
+    state: restarted
+    name: ntpd.service
+  when: ansible_facts['services']['ntpd.service']['status'] | default('not-found') != 'not-found'
+
 '''
 
 RETURN = r'''
@@ -250,7 +263,7 @@ class SystemctlScanService(BaseService):
     def _list_from_units(self, systemctl_path, services):
 
         # list units as systemd sees them
-        rc, stdout, stderr = self.module.run_command("%s list-units --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
+        rc, stdout, stderr = self.module.run_command("%s list-units --no-pager --type service --all --plain" % systemctl_path, use_unsafe_shell=True)
         if rc != 0:
             self.module.warn("Could not list units from systemd: %s" % stderr)
         else:
@@ -259,16 +272,18 @@ class SystemctlScanService(BaseService):
                 state_val = "stopped"
                 status_val = "unknown"
                 fields = line.split()
+
+                # systemd sometimes gives misleading status
+                # check all fields for bad states
                 for bad in self.BAD_STATES:
-                    if bad in fields:  # dot is 0
+                    # except description
+                    if bad in fields[:-1]:
                         status_val = bad
-                        fields = fields[1:]
                         break
                 else:
                     # active/inactive
                     status_val = fields[2]
 
-                # array is normalize so predictable now
                 service_name = fields[0]
                 if fields[3] == "running":
                     state_val = "running"
@@ -364,7 +379,7 @@ class OpenBSDScanService(BaseService):
                 if variable == '' or '=' not in variable:
                     continue
                 else:
-                    k, v = variable.replace(undy, '', 1).split('=')
+                    k, v = variable.replace(undy, '', 1).split('=', 1)
                     info[k] = v
         return info
 

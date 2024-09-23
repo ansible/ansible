@@ -1,0 +1,25 @@
+- name: Copy service file for mask operation
+  template:
+    src: mask_me.service
+    dest: /etc/systemd/system/mask_me.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: remove unit file
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: true
+
+- name: Try to mask already masked service
+  systemd:
+    name: mask_me.service
+    masked: true
+  register: mask_test_1
+  ignore_errors: true
+
+- name: Test mask service test
+  assert:
+    that:
+      - mask_test_1 is not changed
+      - "'Failed to mask' in mask_test_1.msg"

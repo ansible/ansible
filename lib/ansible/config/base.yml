@@ -1,6 +1,14 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
+_ANSIBLE_CONNECTION_PATH:
+  env:
+  - name: _ANSIBLE_CONNECTION_PATH
+  name: Overrides the location of the Ansible persistent connection helper script.
+  description:
+    - For internal use only.
+  type: path
+  version_added: "2.18"
 ANSIBLE_HOME:
   name: The Ansible home path
   description:
@@ -25,6 +33,9 @@ ANSIBLE_CONNECTION_PATH:
   - {key: ansible_connection_path, section: persistent_connection}
   yaml: {key: persistent_connection.ansible_connection_path}
   version_added: "2.8"
+  deprecated:
+    why: This setting has no effect.
+    version: "2.22"
 ANSIBLE_COW_SELECTION:
   name: Cowsay filter selection
   default: default
@@ -293,6 +304,14 @@ COLOR_HIGHLIGHT:
   env: [{name: ANSIBLE_COLOR_HIGHLIGHT}]
   ini:
   - {key: highlight, section: colors}
+COLOR_INCLUDED:
+  name: Color for 'included' task status
+  default: cyan
+  description: Defines the color to use when showing 'Included' task status.
+  env: [{name: ANSIBLE_COLOR_INCLUDED}]
+  ini:
+  - {key: included, section: colors}
+  version_added: '2.18'
 COLOR_OK:
   name: Color for 'ok' task status
   default: green
@@ -328,6 +347,54 @@ COLOR_WARN:
   env: [{name: ANSIBLE_COLOR_WARN}]
   ini:
   - {key: warn, section: colors}
+COLOR_DOC_MODULE:
+  name: Color for module name in the ansible-doc output
+  default: yellow
+  description: Defines the color to use when emitting a module name in the ansible-doc output.
+  env: [{name: ANSIBLE_COLOR_DOC_MODULE}]
+  ini:
+  - {key: doc_module, section: colors}
+  version_added: '2.18'
+COLOR_DOC_REFERENCE:
+  name: Color for cross-reference in the ansible-doc output
+  default: magenta
+  description: Defines the color to use when emitting cross-reference in the ansible-doc output.
+  env: [{name: ANSIBLE_COLOR_DOC_REFERENCE}]
+  ini:
+  - {key: doc_reference, section: colors}
+  version_added: '2.18'
+COLOR_DOC_LINK:
+  name: Color for Link in ansible-doc output
+  default: cyan
+  description: Defines the color to use when emitting a link in the ansible-doc output.
+  env: [{name: ANSIBLE_COLOR_DOC_LINK}]
+  ini:
+  - {key: doc_link, section: colors}
+  version_added: '2.18'
+COLOR_DOC_DEPRECATED:
+  name: Color for deprecated value in ansible-doc output
+  default: magenta
+  description: Defines the color to use when emitting a deprecated value in the ansible-doc output.
+  env: [{name: ANSIBLE_COLOR_DOC_DEPRECATED}]
+  ini:
+  - {key: doc_deprecated, section: colors}
+  version_added: '2.18'
+COLOR_DOC_CONSTANT:
+  name: Color for constant in ansible-doc output
+  default: dark gray
+  description: Defines the color to use when emitting a constant in the ansible-doc output.
+  env: [{name: ANSIBLE_COLOR_DOC_CONSTANT}]
+  ini:
+  - {key: doc_constant, section: colors}
+  version_added: '2.18'
+COLOR_DOC_PLUGIN:
+  name: Color for the plugin in ansible-doc output
+  default: yellow
+  description: Defines the color to use when emitting a plugin name in the ansible-doc output.
+  env: [{name: ANSIBLE_COLOR_DOC_PLUGIN}]
+  ini:
+  - {key: doc_plugin, section: colors}
+  version_added: '2.18'
 CONNECTION_PASSWORD_FILE:
   name: Connection password file
   default: ~
@@ -759,7 +826,9 @@ DEFAULT_LOCAL_TMP:
 DEFAULT_LOG_PATH:
   name: Ansible log file path
   default: ~
-  description: File to which Ansible will log on the controller. When empty logging is disabled.
+  description:
+  - File to which Ansible will log on the controller.
+  - When not set the logging is disabled.
   env: [{name: ANSIBLE_LOG_PATH}]
   ini:
   - {key: log_path, section: defaults}
@@ -804,8 +873,8 @@ DEFAULT_MODULE_COMPRESSION:
   env: []
   ini:
   - {key: module_compression, section: defaults}
-# vars:
-#   - name: ansible_module_compression
+  vars:
+    - name: ansible_module_compression
 DEFAULT_MODULE_NAME:
   name: Default adhoc module
   default: command
@@ -897,7 +966,7 @@ DEFAULT_PRIVATE_ROLE_VARS:
     - This was introduced as a way to reset role variables to default values if a role is used more than once
       in a playbook.
     - Starting in version '2.17' M(ansible.builtin.include_roles) and M(ansible.builtin.import_roles) can
-      indivudually override this via the C(public) parameter.
+      individually override this via the C(public) parameter.
     - Included roles only make their variables public at execution, unlike imported roles which happen at playbook compile time.
   env: [{name: ANSIBLE_PRIVATE_ROLE_VARS}]
   ini:
@@ -957,7 +1026,7 @@ DEFAULT_STDOUT_CALLBACK:
 EDITOR:
   name: editor application to use
   default: vi
-  descrioption:
+  description:
     - for the cases in which Ansible needs to return a file within an editor, this chooses the application to use.
   ini:
     - section: defaults
@@ -1459,6 +1528,23 @@ GALAXY_REQUIRED_VALID_SIGNATURE_COUNT:
   - The number of signatures that must be successful during GPG signature verification while installing or verifying collections.
   - This should be a positive integer or all to indicate all signatures must successfully validate the collection.
   - Prepend + to the value to fail if no valid signatures are found for the collection.
+GALAXY_COLLECTION_IMPORT_POLL_INTERVAL:
+  description:
+    - The initial interval in seconds for polling the import status of a collection.
+    - This interval increases exponentially based on the :ref:`galaxy_collection_import_poll_factor`, with a maximum delay of 30 seconds.
+  type: float
+  default: 2.0
+  env:
+    - name: ANSIBLE_GALAXY_COLLECTION_IMPORT_POLL_INTERVAL
+  version_added: '2.18'
+GALAXY_COLLECTION_IMPORT_POLL_FACTOR:
+  description:
+    - The multiplier used to increase the :ref:`galaxy_collection_import_poll_interval` when checking the collection import status.
+  type: float
+  default: 1.5
+  env:
+    - name: ANSIBLE_GALAXY_COLLECTION_IMPORT_POLL_FACTOR
+  version_added: "2.18"
 HOST_KEY_CHECKING:
   # NOTE: constant not in use by ssh/paramiko plugins anymore, but they do support the same configuration sources
   # TODO: check non ssh connection plugins for use/migration
@@ -1511,6 +1597,7 @@ _INTERPRETER_PYTHON_DISTRO_MAP:
 INTERPRETER_PYTHON_FALLBACK:
   name: Ordered list of Python interpreters to check for in discovery
   default:
+  - python3.13
   - python3.12
   - python3.11
   - python3.10
@@ -1681,7 +1768,7 @@ INJECT_FACTS_AS_VARS:
   default: True
   description:
     - Facts are available inside the `ansible_facts` variable, this setting also pushes them as their own vars in the main namespace.
-    - Unlike inside the `ansible_facts` dictionary, these will have an `ansible_` prefix.
+    - Unlike inside the `ansible_facts` dictionary where the prefix `ansible_` is removed from fact names, these will have the exact names that are returned by the module.
   env: [{name: ANSIBLE_INJECT_FACT_VARS}]
   ini:
   - {key: inject_facts_as_vars, section: defaults}
@@ -1719,7 +1806,7 @@ OLD_PLUGIN_CACHE_CLEARING:
 PAGER:
   name: pager application to use
   default: less
-  descrioption:
+  description:
     - for the cases in which Ansible needs to return output in a pageable fashion, this chooses the application to use.
   ini:
     - section: defaults
@@ -1921,7 +2008,11 @@ TASK_TIMEOUT:
   name: Task Timeout
   default: 0
   description:
-    - Set the maximum time (in seconds) that a task can run for.
+    - Set the maximum time (in seconds) for a task action to execute in.
+    - Timeout runs independently from templating or looping.
+      It applies per each attempt of executing the task's action and remains unchanged by the total time spent on a task.
+    - When the action execution exceeds the timeout, Ansible interrupts the process.
+      This is registered as a failure due to outside circumstances, not a task failure, to receive appropriate response and recovery process.
     - If set to 0 (the default) there is no timeout.
   env: [{name: ANSIBLE_TASK_TIMEOUT}]
   ini:
@@ -2052,4 +2143,35 @@ VERBOSE_TO_STDERR:
     - section: defaults
       key: verbose_to_stderr
   type: bool
-...
+_Z_TEST_ENTRY:
+  name: testentry
+  description: for tests
+  env:
+    - name: ANSIBLE_TEST_ENTRY
+    - name: ANSIBLE_TEST_ENTRY_D
+      deprecated:
+        why: for testing
+        version: '3.30'
+        alternatives: nothing
+  ini:
+    - section: testing
+      key: valid
+    - section: testing
+      key: deprecated
+      deprecated:
+        why: for testing
+        version: '3.30'
+        alternatives: nothing
+_Z_TEST_ENTRY_2:
+  version_added: '2.18'
+  name: testentry
+  description: for tests
+  deprecated:
+    why: for testing
+    version: '3.30'
+    alternatives: nothing
+  env:
+    - name: ANSIBLE_TEST_ENTRY2
+  ini:
+    - section: testing
+      key: valid2

@@ -130,7 +130,7 @@ EXAMPLES = r'''# fmt: code
         mandatory_options = arg_parser.add_mutually_exclusive_group()
         mandatory_options.add_argument('--list', action='store', nargs="*", help="Get inventory JSON from our API")
         mandatory_options.add_argument('--host', action='store',
-                                       help="Get variables for specific host, not used but kept for compatability")
+                                       help="Get variables for specific host, not used but kept for compatibility")
 
         try:
             config = load_config()

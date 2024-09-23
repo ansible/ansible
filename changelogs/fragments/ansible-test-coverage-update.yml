@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Update ``coverage`` to version 7.6.1.

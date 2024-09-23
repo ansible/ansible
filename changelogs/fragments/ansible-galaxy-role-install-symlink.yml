@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy role install - fix symlinks (https://github.com/ansible/ansible/issues/82702, https://github.com/ansible/ansible/issues/81965).

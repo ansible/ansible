@@ -295,8 +295,6 @@ class LinuxNetwork(Network):
                         if not address == '::1':
                             ips['all_ipv6_addresses'].append(address)
 
-            ip_path = self.module.get_bin_path("ip")
-
             args = [ip_path, 'addr', 'show', 'primary', 'dev', device]
             rc, primary_data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
             if rc == 0:

@@ -1,0 +1,2 @@
+minor_changes:
+  - "ansible-doc - show examples in role entrypoint argument specs (https://github.com/ansible/ansible/pull/82671)."

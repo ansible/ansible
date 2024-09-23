@@ -1,4 +1,4 @@
-windows/2016 provider=aws arch=x86_64
-windows/2019 provider=aws arch=x86_64
-windows/2022 provider=aws arch=x86_64
-windows provider=aws arch=x86_64
+windows/2016 provider=aws arch=x86_64 connection=winrm+http
+windows/2019 provider=aws arch=x86_64 connection=winrm+https
+windows/2022 provider=aws arch=x86_64 connection=winrm+https
+windows provider=aws arch=x86_64 connection=winrm+https

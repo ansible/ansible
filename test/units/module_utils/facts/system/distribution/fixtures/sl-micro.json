@@ -1,0 +1,23 @@
+{
+    "platform.dist": [ "", "", ""],
+    "distro": {
+        "codename": "",
+        "id": "sl-micro",
+        "name": "SUSE Linux Micro",
+        "version": "6.0",
+        "version_best": "6.0",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/os-release": "NAME=\"SL-Micro\"\nVERSION=\"6.0\"\nID=sl-micro\nID_LIKE=\"suse\"\nVERSION_ID=\"6.0\"\nPRETTY_NAME=\"SUSE Linux Micro 6.0\"\nANSI_COLOR=\"0;32\"\nCPE_NAME=\"cpe:/o:suse:sl-micro:6.0\"\nHOME_URL=\"https://www.suse.com/products/micro/\"\nDOCUMENTATION_URL=\"https://documentation.suse.com/sl-micro/6.0/\"\nLOGO=\"distributor-logo\"\n"
+    },
+    "name": "SUSE Linux Micro 6.0",
+    "result": {
+        "distribution_release": "NA",
+        "distribution": "SL-Micro",
+        "distribution_major_version": "6",
+        "os_family": "Suse",
+        "distribution_version": "6.0"
+    }
+}

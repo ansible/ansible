@@ -31,7 +31,7 @@ options:
     enabled:
         type: bool
         description:
-            - Whether the service should start on boot. B(At least one of state and enabled are required.)
+            - Whether the service should start on boot. At least one of O(state) and O(enabled) are required.
     sleep:
         default: 1
         description:
@@ -42,7 +42,7 @@ options:
         description:
             - A substring to look for as would be found in the output of the I(ps) command as a stand-in for a status result.
             - If the string is found, the service will be assumed to be running.
-            - "This option is mainly for use with init scripts that don't support the 'status' option."
+            - "This option is mainly for use with init scripts that don't support the C(status) option."
         type: str
     runlevels:
         description:
@@ -74,7 +74,7 @@ attributes:
         platforms: posix
 notes:
     - One option other than name is required.
-    - The service names might vary by specific OS/distribution
+    - The service names might vary by specific OS/distribution.
 requirements:
     - That the service managed has a corresponding init script.
 '''
@@ -203,7 +203,7 @@ def main():
         worked = is_started = get_ps(module, pattern)
     else:
         if location.get('service'):
-            # standard tool that has been 'destandarized' by reimplementation in other OS/distros
+            # standard tool that has been 'destandardized' by reimplementation in other OS/distros
             cmd = '%s %s status' % (location['service'], name)
         elif script:
             # maybe script implements status (not LSB)

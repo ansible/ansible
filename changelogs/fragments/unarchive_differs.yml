@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - unarchive - trigger change when size and content differ when other
+                properties are unchanged (https://github.com/ansible/ansible/pull/83454).

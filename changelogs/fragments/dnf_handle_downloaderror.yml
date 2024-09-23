@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf - Ensure that we are handling DownloadError properly in the dnf module

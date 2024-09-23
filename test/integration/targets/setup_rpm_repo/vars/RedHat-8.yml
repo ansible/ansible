@@ -1,5 +1,0 @@
-rpm_repo_packages:
-  - rpm-build
-  - createrepo_c
-  - createrepo
-  - python3-rpmfluff

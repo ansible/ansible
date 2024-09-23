@@ -221,7 +221,7 @@ class AzurePipelinesChanges:
             self.diff = []
 
     def get_successful_merge_run_commits(self) -> set[str]:
-        """Return a set of recent successsful merge commits from Azure Pipelines."""
+        """Return a set of recent successful merge commits from Azure Pipelines."""
         parameters = dict(
             maxBuildsPerDefinition=100,  # max 5000
             queryOrder='queueTimeDescending',  # assumes under normal circumstances that later queued jobs are for later commits

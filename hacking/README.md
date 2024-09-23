@@ -5,7 +5,7 @@ env-setup
 ---------
 
 The 'env-setup' script modifies your environment to allow you to run
-ansible from a git checkout using python >= 3.10.
+ansible from a git checkout using python >= 3.11.
 
 First, set up your environment to run from the checkout:
 
@@ -18,7 +18,7 @@ and do not wish to install them from your operating system package manager, you
 can install them from pip
 
 ```shell
-easy_install pip  # if pip is not already available
+python -Im ensurepip  # if pip is not already available
 pip install -r requirements.txt
 ```
 

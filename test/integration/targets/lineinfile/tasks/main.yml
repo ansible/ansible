@@ -875,7 +875,7 @@
     path:  "{{ remote_tmp_dir }}/testempty.txt"
   register: oneline_insbefore_file
 
-- name: Assert that insertebefore worked properly with a one line file
+- name: Assert that insertbefore worked properly with a one line file
   assert:
     that:
       - oneline_insbefore_test1 is changed

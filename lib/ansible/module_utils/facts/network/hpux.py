@@ -20,7 +20,7 @@ from ansible.module_utils.facts.network.base import Network, NetworkCollector
 
 class HPUXNetwork(Network):
     """
-    HP-UX-specifig subclass of Network. Defines networking facts:
+    HP-UX-specific subclass of Network. Defines networking facts:
     - default_interface
     - interfaces (a list of interface names)
     - interface_<name> dictionary of ipv4 address information.
@@ -29,7 +29,10 @@ class HPUXNetwork(Network):
 
     def populate(self, collected_facts=None):
         network_facts = {}
-        netstat_path = self.module.get_bin_path('netstat')
+        netstat_path = self.module.get_bin_path(
+            'netstat',
+            opt_dirs=['/usr/bin']
+        )
 
         if netstat_path is None:
             return network_facts
@@ -46,7 +49,14 @@ class HPUXNetwork(Network):
 
     def get_default_interfaces(self):
         default_interfaces = {}
-        rc, out, err = self.module.run_command("/usr/bin/netstat -nr")
+        netstat_path = self.module.get_bin_path(
+            'netstat',
+            opt_dirs=['/usr/bin']
+        )
+
+        if netstat_path is None:
+            return default_interfaces
+        rc, out, err = self.module.run_command("%s -nr" % netstat_path)
         lines = out.splitlines()
         for line in lines:
             words = line.split()
@@ -59,7 +69,14 @@ class HPUXNetwork(Network):
 
     def get_interfaces_info(self):
         interfaces = {}
-        rc, out, err = self.module.run_command("/usr/bin/netstat -niw")
+        netstat_path = self.module.get_bin_path(
+            'netstat',
+            opt_dirs=['/usr/bin']
+        )
+
+        if netstat_path is None:
+            return interfaces
+        rc, out, err = self.module.run_command("%s -niw" % netstat_path)
         lines = out.splitlines()
         for line in lines:
             words = line.split()

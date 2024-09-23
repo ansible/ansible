@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import decimal
 import itertools
 import operator
 import os
@@ -386,13 +387,13 @@ class FieldAttributeBase:
         return fq_group_name, resolved_actions
 
     def _resolve_action(self, action_name, mandatory=True):
-        context = module_loader.find_plugin_with_context(action_name)
+        context = module_loader.find_plugin_with_context(action_name, ignore_deprecated=(not mandatory))
         if context.resolved and not context.action_plugin:
-            prefer = action_loader.find_plugin_with_context(action_name)
+            prefer = action_loader.find_plugin_with_context(action_name, ignore_deprecated=(not mandatory))
             if prefer.resolved:
                 context = prefer
         elif not context.resolved:
-            context = action_loader.find_plugin_with_context(action_name)
+            context = action_loader.find_plugin_with_context(action_name, ignore_deprecated=(not mandatory))
 
         if context.resolved:
             return context.resolved_fqcn
@@ -440,7 +441,13 @@ class FieldAttributeBase:
         if attribute.isa == 'string':
             value = to_text(value)
         elif attribute.isa == 'int':
-            value = int(value)
+            if not isinstance(value, int):
+                try:
+                    if (decimal_value := decimal.Decimal(value)) != (int_value := int(decimal_value)):
+                        raise decimal.DecimalException(f'Floating-point value {value!r} would be truncated.')
+                    value = int_value
+                except decimal.DecimalException as e:
+                    raise ValueError from e
         elif attribute.isa == 'float':
             value = float(value)
         elif attribute.isa == 'bool':

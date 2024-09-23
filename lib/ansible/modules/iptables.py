@@ -39,7 +39,7 @@ options:
     description:
       - This option specifies the packet matching table on which the command should operate.
       - If the kernel is configured with automatic module loading, an attempt will be made
-         to load the appropriate module for that table if it is not already there.
+        to load the appropriate module for that table if it is not already there.
     type: str
     choices: [ filter, nat, mangle, raw, security ]
     default: filter
@@ -135,7 +135,7 @@ options:
         a specific property.
       - The set of matches makes up the condition under which a target is invoked.
       - Matches are evaluated first to last if specified as an array and work in short-circuit
-        fashion, i.e. if one extension yields false, the evaluation will stop.
+        fashion, in other words if one extension yields false, the evaluation will stop.
     type: list
     elements: str
     default: []
@@ -153,7 +153,7 @@ options:
   gateway:
     description:
       - This specifies the IP address of the host to send the cloned packets.
-      - This option is only valid when O(jump) is set to V(TEE).
+      - This option is only valid when O(jump=TEE).
     type: str
     version_added: "2.8"
   log_prefix:
@@ -165,7 +165,7 @@ options:
     description:
       - Logging level according to the syslogd-defined priorities.
       - The value can be strings or numbers from 1-8.
-      - This parameter is only applicable if O(jump) is set to V(LOG).
+      - This parameter is only applicable if O(jump=LOG).
     type: str
     version_added: "2.8"
     choices: [ '0', '1', '2', '3', '4', '5', '6', '7', 'emerg', 'alert', 'crit', 'error', 'warning', 'notice', 'info', 'debug' ]
@@ -242,13 +242,13 @@ options:
     type: str
   to_destination:
     description:
-      - This specifies a destination address to use with C(DNAT).
+      - This specifies a destination address to use with O(ctstate=DNAT).
       - Without this, the destination address is never altered.
     type: str
     version_added: "2.1"
   to_source:
     description:
-      - This specifies a source address to use with C(SNAT).
+      - This specifies a source address to use with O(ctstate=SNAT).
       - Without this, the source address is never altered.
     type: str
     version_added: "2.2"
@@ -342,14 +342,14 @@ options:
   reject_with:
     description:
       - 'Specifies the error packet type to return while rejecting. It implies
-        "jump: REJECT".'
+        C(jump=REJECT).'
     type: str
     version_added: "2.1"
   icmp_type:
     description:
       - This allows specification of the ICMP type, which can be a numeric
         ICMP type, type/code pair, or one of the ICMP type names shown by the
-        command 'iptables -p icmp -h'
+        command C(iptables -p icmp -h).
     type: str
     version_added: "2.2"
   flush:
@@ -387,10 +387,10 @@ options:
     version_added: "2.13"
   numeric:
     description:
-      - This parameter controls the running of the list -action of iptables, which is used internally by the module
-      - Does not affect the actual functionality. Use this if iptables hang when creating a chain or altering policy
-      - If V(true), then iptables skips the DNS-lookup of the IP addresses in a chain when it uses the list -action
-      - Listing is used internally for example when setting a policy or creating a chain
+      - This parameter controls the running of the list -action of iptables, which is used internally by the module.
+      - Does not affect the actual functionality. Use this if iptables hang when creating a chain or altering policy.
+      - If V(true), then iptables skips the DNS-lookup of the IP addresses in a chain when it uses the list -action.
+      - Listing is used internally for example when setting a policy or creating a chain.
     type: bool
     default: false
     version_added: "2.15"
@@ -848,6 +848,7 @@ def main():
         required_if=[
             ['jump', 'TEE', ['gateway']],
             ['jump', 'tee', ['gateway']],
+            ['flush', False, ['chain']],
         ]
     )
     args = dict(
@@ -864,10 +865,6 @@ def main():
 
     ip_version = module.params['ip_version']
     iptables_path = module.get_bin_path(BINS[ip_version], True)
-
-    # Check if chain option is required
-    if args['flush'] is False and args['chain'] is None:
-        module.fail_json(msg="Either chain or flush parameter must be specified.")
 
     if module.params.get('log_prefix', None) or module.params.get('log_level', None):
         if module.params['jump'] is None:

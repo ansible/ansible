@@ -5,7 +5,7 @@ ENTRY POINT: *alternate* - testns.testcol.testrole short description for alterna
           Longer description for testns.testcol.testrole alternate
           entry point.
 
-Options (= inicates it is required):
+Options (= indicates it is required):
 
 = altopt1   altopt1 description
           type: int
@@ -18,3 +18,7 @@ ATTRIBUTES:
           support: full
 
 AUTHOR: Ansible Core (@ansible)
+
+EXAMPLES:
+This is an example.
+It has two lines.

@@ -76,3 +76,6 @@ done
 # test refresh
 ansible-playbook -i inventory_refresh.yml refresh.yml "$@"
 ansible-playbook -i inventory_refresh.yml refresh_preserve_dynamic.yml "$@"
+
+# test rc when end_host in the rescue section
+ANSIBLE_FORCE_HANDLERS=0 ansible-playbook test_end_host_rescue_rc.yml

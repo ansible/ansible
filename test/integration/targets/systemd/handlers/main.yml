@@ -15,3 +15,8 @@
   file:
     path: /etc/systemd/system/baz.service
     state: absent
+
+- name: remove mask unit file
+  file:
+    path: /etc/systemd/system/mask_me.service
+    state: absent

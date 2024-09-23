@@ -28,11 +28,8 @@ from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.sentinel import Sentinel
 
 
-# For filtering out modules correctly below
-FREEFORM_ACTIONS = frozenset(C.MODULE_REQUIRE_ARGS)
-
-RAW_PARAM_MODULES = FREEFORM_ACTIONS.union(add_internal_fqcns((
-    'include',
+# modules formated for user msg
+_BUILTIN_RAW_PARAM_MODULES_SIMPLE = set([
     'include_vars',
     'include_tasks',
     'include_role',
@@ -42,8 +39,12 @@ RAW_PARAM_MODULES = FREEFORM_ACTIONS.union(add_internal_fqcns((
     'group_by',
     'set_fact',
     'meta',
-)))
-
+])
+FREEFORM_ACTIONS_SIMPLE = set(C.MODULE_REQUIRE_ARGS_SIMPLE)
+FREEFORM_ACTIONS = frozenset(C.MODULE_REQUIRE_ARGS)
+RAW_PARAM_MODULES_SIMPLE = _BUILTIN_RAW_PARAM_MODULES_SIMPLE.union(FREEFORM_ACTIONS_SIMPLE)
+# For filtering out modules correctly below, use all permutations
+RAW_PARAM_MODULES = frozenset(add_internal_fqcns(RAW_PARAM_MODULES_SIMPLE)).union(FREEFORM_ACTIONS)
 BUILTIN_TASKS = frozenset(add_internal_fqcns((
     'meta',
     'include_tasks',
@@ -51,6 +52,17 @@ BUILTIN_TASKS = frozenset(add_internal_fqcns((
     'import_tasks',
     'import_role'
 )))
+
+
+def _get_action_context(action_or_module, collection_list):
+    module_context = module_loader.find_plugin_with_context(action_or_module, collection_list=collection_list)
+    if module_context and module_context.resolved and module_context.action_plugin:
+        action_or_module = module_context.action_plugin
+
+    context = action_loader.find_plugin_with_context(action_or_module, collection_list=collection_list)
+    if not context or not context.resolved:
+        context = module_context
+    return context
 
 
 class ModuleArgsParser:
@@ -291,6 +303,11 @@ class ModuleArgsParser:
             delegate_to = 'localhost'
             action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
 
+        if action is not None and not skip_action_validation:
+            context = _get_action_context(action, self._collection_list)
+            if context is not None and context.resolved:
+                self.resolved_action = context.resolved_fqcn
+
         # module: <stuff> is the more new-style invocation
 
         # filter out task attributes so we're only querying unrecognized keys as actions/modules
@@ -306,9 +323,7 @@ class ModuleArgsParser:
                 is_action_candidate = True
             else:
                 try:
-                    context = action_loader.find_plugin_with_context(item, collection_list=self._collection_list)
-                    if not context.resolved:
-                        context = module_loader.find_plugin_with_context(item, collection_list=self._collection_list)
+                    context = _get_action_context(item, self._collection_list)
                 except AnsibleError as e:
                     if e.obj is None:
                         e.obj = self._task_ds
@@ -344,8 +359,8 @@ class ModuleArgsParser:
             if templar.is_template(raw_params):
                 args['_variable_params'] = raw_params
             else:
-                raise AnsibleParserError("this task '%s' has extra params, which is only allowed in the following modules: %s" % (action,
-                                                                                                                                  ", ".join(RAW_PARAM_MODULES)),
-                                         obj=self._task_ds)
+                raise AnsibleParserError(
+                    "this task '%s' has extra params, which is only allowed in the following modules: %s" % (action, ", ".join(RAW_PARAM_MODULES_SIMPLE)),
+                    obj=self._task_ds)
 
         return (action, args, delegate_to)

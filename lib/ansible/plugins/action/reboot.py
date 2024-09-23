@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-import random
+import secrets
 import time
 
 from datetime import datetime, timedelta, timezone
@@ -304,7 +304,7 @@ class ActionModule(ActionBase):
                     except AnsibleConnectionFailure:
                         pass
                 # Use exponential backoff with a max timeout, plus a little bit of randomness
-                random_int = random.randint(0, 1000) / 1000
+                random_int = secrets.randbelow(1000) / 1000
                 fail_sleep = 2 ** fail_count + random_int
                 if fail_sleep > max_fail_sleep:
 

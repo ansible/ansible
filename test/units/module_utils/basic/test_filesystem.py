@@ -62,13 +62,13 @@ class TestOtherFilesystem(ModuleTestCase):
             argument_spec=dict(),
         )
 
-        self.assertEqual(am.set_owner_if_different('/path/to/file', None, True), True)
-        self.assertEqual(am.set_owner_if_different('/path/to/file', None, False), False)
+        assert am.set_owner_if_different('/path/to/file', None, True)
+        assert not am.set_owner_if_different('/path/to/file', None, False)
 
         am.user_and_group = MagicMock(return_value=(500, 500))
 
         with patch('os.lchown', return_value=None) as m:
-            self.assertEqual(am.set_owner_if_different('/path/to/file', 0, False), True)
+            assert am.set_owner_if_different('/path/to/file', 0, False)
             m.assert_called_with(b'/path/to/file', 0, -1)
 
             def _mock_getpwnam(*args, **kwargs):
@@ -78,7 +78,7 @@ class TestOtherFilesystem(ModuleTestCase):
 
             m.reset_mock()
             with patch('pwd.getpwnam', side_effect=_mock_getpwnam):
-                self.assertEqual(am.set_owner_if_different('/path/to/file', 'root', False), True)
+                assert am.set_owner_if_different('/path/to/file', 'root', False)
                 m.assert_called_with(b'/path/to/file', 0, -1)
 
             with patch('pwd.getpwnam', side_effect=KeyError):
@@ -86,8 +86,8 @@ class TestOtherFilesystem(ModuleTestCase):
 
             m.reset_mock()
             am.check_mode = True
-            self.assertEqual(am.set_owner_if_different('/path/to/file', 0, False), True)
-            self.assertEqual(m.called, False)
+            assert am.set_owner_if_different('/path/to/file', 0, False)
+            assert not m.called
             am.check_mode = False
 
         with patch('os.lchown', side_effect=OSError) as m:
@@ -101,13 +101,13 @@ class TestOtherFilesystem(ModuleTestCase):
             argument_spec=dict(),
         )
 
-        self.assertEqual(am.set_group_if_different('/path/to/file', None, True), True)
-        self.assertEqual(am.set_group_if_different('/path/to/file', None, False), False)
+        assert am.set_group_if_different('/path/to/file', None, True)
+        assert not am.set_group_if_different('/path/to/file', None, False)
 
         am.user_and_group = MagicMock(return_value=(500, 500))
 
         with patch('os.lchown', return_value=None) as m:
-            self.assertEqual(am.set_group_if_different('/path/to/file', 0, False), True)
+            assert am.set_group_if_different('/path/to/file', 0, False)
             m.assert_called_with(b'/path/to/file', -1, 0)
 
             def _mock_getgrnam(*args, **kwargs):
@@ -117,7 +117,7 @@ class TestOtherFilesystem(ModuleTestCase):
 
             m.reset_mock()
             with patch('grp.getgrnam', side_effect=_mock_getgrnam):
-                self.assertEqual(am.set_group_if_different('/path/to/file', 'root', False), True)
+                assert am.set_group_if_different('/path/to/file', 'root', False)
                 m.assert_called_with(b'/path/to/file', -1, 0)
 
             with patch('grp.getgrnam', side_effect=KeyError):
@@ -125,8 +125,8 @@ class TestOtherFilesystem(ModuleTestCase):
 
             m.reset_mock()
             am.check_mode = True
-            self.assertEqual(am.set_group_if_different('/path/to/file', 0, False), True)
-            self.assertEqual(m.called, False)
+            assert am.set_group_if_different('/path/to/file', 0, False)
+            assert not m.called
             am.check_mode = False
 
         with patch('os.lchown', side_effect=OSError) as m:
@@ -155,5 +155,5 @@ class TestOtherFilesystem(ModuleTestCase):
             'attributes': None,
         }
 
-        self.assertEqual(am.set_directory_attributes_if_different(file_args, True), True)
-        self.assertEqual(am.set_directory_attributes_if_different(file_args, False), False)
+        assert am.set_directory_attributes_if_different(file_args, True)
+        assert not am.set_directory_attributes_if_different(file_args, False)

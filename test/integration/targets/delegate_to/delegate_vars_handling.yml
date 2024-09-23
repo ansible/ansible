@@ -1,0 +1,58 @@
+- name: setup delegated host
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - add_host:
+        name: delegatetome
+        ansible_host: 127.0.0.4
+
+- name: ensure we dont use orig host vars if delegated one does not define them
+  hosts: testhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: force current host to use winrm
+      set_fact:
+        ansible_connection: winrm
+
+    - name: this should fail (missing winrm or unreachable)
+      ping:
+      ignore_errors: true
+      ignore_unreachable: true
+      register: orig
+
+    - name: ensure prev failed
+      assert:
+        that:
+            - orig is failed or orig is unreachable
+
+    - name: this will only fail if we take orig host ansible_connection instead of defaults
+      ping:
+      delegate_to: delegatetome
+
+
+- name: ensure plugin specific vars are properly used
+  hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: set unusable ssh args
+      set_fact:
+         ansible_host: 127.0.0.1
+         ansible_connection: ssh
+         ansible_ssh_common_args: 'MEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE'
+         ansible_connection_timeout: 5
+
+    - name: fail to ping with bad args
+      ping:
+      register: bad_args_ping
+      ignore_unreachable: true
+
+    - debug: var=bad_args_ping
+    - name: ensure prev failed
+      assert:
+        that:
+            - bad_args_ping is failed or bad_args_ping is unreachable
+
+    - name: this should work by ignoring the bad ags for orig host
+      ping:
+      delegate_to: delegatetome

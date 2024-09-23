@@ -63,9 +63,9 @@ options:
   force:
     description:
     - >
-      Force the creation of the symlinks in two cases: the source file does
+      Force the creation of the links in two cases: if the link type is symbolic and the source file does
       not exist (but will appear later); the destination exists and is a file (so, we need to unlink the
-      O(path) file and create a symlink to the O(src) file in place of it).
+      O(path) file and create a link to the O(src) file in place of it).
     type: bool
     default: no
   follow:
@@ -73,7 +73,7 @@ options:
     - This flag indicates that filesystem links, if they exist, should be followed.
     - O(follow=yes) and O(state=link) can modify O(src) when combined with parameters such as O(mode).
     - Previous to Ansible 2.5, this was V(false) by default.
-    - While creating a symlink with a non-existent destination, set O(follow) to V(false) to avoid a warning message related to permission issues.
+    - While creating a symlink with a non-existent destination, set O(follow=false) to avoid a warning message related to permission issues.
       The warning message is added to notify the user that we can not set permissions to the non-existent destination.
     type: bool
     default: yes
@@ -877,6 +877,8 @@ def ensure_hardlink(path, src, follow, force, timestamps):
                                                   'path': path})
         else:
             try:
+                if follow and os.path.islink(b_src):
+                    b_src = os.readlink(b_src)
                 os.link(b_src, b_path)
             except OSError as e:
                 raise AnsibleModuleError(results={'msg': 'Error while linking: %s'

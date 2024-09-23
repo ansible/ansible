@@ -34,7 +34,7 @@ options:
         choices: [ reloaded, restarted, started, stopped ]
     enabled:
         description:
-            - Whether the unit should start on boot. B(At least one of state and enabled are required.)
+            - Whether the unit should start on boot. At least one of O(state) and O(enabled) are required.
             - If set, requires O(name).
         type: bool
     force:
@@ -49,8 +49,8 @@ options:
         type: bool
     daemon_reload:
         description:
-            - Run daemon-reload before doing any other operations, to make sure systemd has read any changes.
-            - When set to V(true), runs daemon-reload even if the module does not start or stop anything.
+            - Run C(daemon-reload) before doing any other operations, to make sure systemd has read any changes.
+            - When set to V(true), runs C(daemon-reload) even if the module does not start or stop anything.
         type: bool
         default: no
         aliases: [ daemon-reload ]
@@ -63,9 +63,9 @@ options:
         version_added: "2.8"
     scope:
         description:
-            - Run systemctl within a given service manager scope, either as the default system scope V(system),
+            - Run C(systemctl) within a given service manager scope, either as the default system scope V(system),
               the current user's scope V(user), or the scope of all users V(global).
-            - "For systemd to work with 'user', the executing user must have its own instance of dbus started and accessible (systemd requirement)."
+            - "For systemd to work with V(user), the executing user must have its own instance of dbus started and accessible (systemd requirement)."
             - "The user dbus process is normally started during normal login, but not during the run of Ansible tasks.
               Otherwise you will probably get a 'Failed to connect to bus: no such file or directory' error."
             - The user must have access, normally given via setting the C(XDG_RUNTIME_DIR) variable, see the example below.
@@ -95,7 +95,7 @@ notes:
     - Globs are not supported in name, in other words, C(postgres*.service).
     - The service names might vary by specific OS/distribution.
     - The order of execution when having multiple properties is to first enable/disable, then mask/unmask and then deal with the service state.
-      It has been reported that systemctl can behave differently depending on the order of operations if you do the same manually.
+      It has been reported that C(systemctl) can behave differently depending on the order of operations if you do the same manually.
 requirements:
     - A system managed by systemd.
 '''
@@ -495,6 +495,8 @@ def main():
                     if rc != 0:
                         # some versions of system CAN mask/unmask non existing services, we only fail on missing if they don't
                         fail_if_missing(module, found, unit, msg='host')
+                        # here if service was not missing, but failed for other reasons
+                        module.fail_json(msg=f"Failed to {action} the service ({unit}): {err.strip()}")
 
         # Enable/disable service startup at boot if requested
         if module.params['enabled'] is not None:
