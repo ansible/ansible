@@ -1,3 +1,0 @@
----
-removed_features:
-  - utils/listify - remove deprecated 'loader' argument from listify_lookup_plugin_terms API (https://github.com/ansible/ansible/issues/82949).

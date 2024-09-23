@@ -1,3 +1,0 @@
----
-bugfixes:
-  - setup/gather_facts will skip missing ``sysctl`` instead of being a fatal error (https://github.com/ansible/ansible/pull/81297).

@@ -1,3 +1,0 @@
----
-minor_changes:
-  - isidentifier - remove unwanted Python 2 specific code.

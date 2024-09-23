@@ -1,2 +1,0 @@
-bugfixes:
-  - setup module (fact gathering), added fallbcak code path to handle mount fact gathering in linux when threading is not available

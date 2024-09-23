@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-test action-plugin-docs - Fix to check for sidecar documentation for action plugins

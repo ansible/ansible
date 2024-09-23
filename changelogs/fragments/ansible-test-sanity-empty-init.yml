@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - The ``empty-init`` sanity test no longer applies to ``module_utils`` packages.
