@@ -1,0 +1,2 @@
+minor_changes:
+  - ini inventory plugin - The plugin now has a 'strict_extension' option that restricts the valid inventory sources to those that have a `.ini` extension, on by default, set to `False` for backwards compatibility.
