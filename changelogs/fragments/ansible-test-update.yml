@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Update ``pylint`` sanity test to use version 3.3.1.
