@@ -482,7 +482,7 @@ class GalaxyCLI(CLI):
             )
             prog = 'ansible-galaxy install'
         else:
-            prog = parser._prog_prefix
+            prog = f"{parser._prog_prefix} install"
             description_text = (
                 'Install {0}(s) from file(s), URL(s) or Ansible '
                 'Galaxy to the first entry in the config {1}S_PATH '
