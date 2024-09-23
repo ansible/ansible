@@ -1,0 +1,4 @@
+bugfixes:
+  - ansible-test - The ``pylint`` sanity test now includes the controller/target context of files when grouping them.
+    This allows the ``--py-version`` option to be passed to ``pylint`` to indicate the minimum supported Python version
+    for each test context, preventing ``pylint`` from defaulting to the Python version used to invoke the test.
