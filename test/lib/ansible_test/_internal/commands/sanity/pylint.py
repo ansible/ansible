@@ -43,7 +43,6 @@ from ...util import (
 
 from ...util_common import (
     run_command,
-    process_scoped_temporary_file,
 )
 
 from ...ansible_util import (
@@ -87,7 +86,7 @@ class PylintTest(SanitySingleVersion):
         return [target for target in targets if os.path.splitext(target.path)[1] == '.py' or is_subdir(target.path, 'bin')]
 
     def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
-        min_python_version_db_path = self.create_min_python_db(args, targets.targets)
+        target_paths = set(target.path for target in self.filter_remote_targets(list(targets.targets)))
 
         plugin_dir = os.path.join(SANITY_ROOT, 'pylint', 'plugins')
         plugin_names = sorted(p[0] for p in [
@@ -115,7 +114,13 @@ class PylintTest(SanitySingleVersion):
         def add_context(available_paths: set[str], context_name: str, context_filter: c.Callable[[str], bool]) -> None:
             """Add the specified context to the context list, consuming available paths that match the given context filter."""
             filtered_paths = set(p for p in available_paths if context_filter(p))
-            contexts.append((context_name, sorted(filtered_paths)))
+
+            if selected_paths := sorted(path for path in filtered_paths if path in target_paths):
+                contexts.append((context_name, True, selected_paths))
+
+            if selected_paths := sorted(path for path in filtered_paths if path not in target_paths):
+                contexts.append((context_name, False, selected_paths))
+
             available_paths -= filtered_paths
 
         def filter_path(path_filter: str = None) -> c.Callable[[str], bool]:
@@ -166,12 +171,12 @@ class PylintTest(SanitySingleVersion):
 
         test_start = datetime.datetime.now(tz=datetime.timezone.utc)
 
-        for context, context_paths in sorted(contexts):
+        for context, is_target, context_paths in sorted(contexts):
             if not context_paths:
                 continue
 
             context_start = datetime.datetime.now(tz=datetime.timezone.utc)
-            messages += self.pylint(args, context, context_paths, plugin_dir, plugin_names, python, collection_detail, min_python_version_db_path)
+            messages += self.pylint(args, context, is_target, context_paths, plugin_dir, plugin_names, python, collection_detail)
             context_end = datetime.datetime.now(tz=datetime.timezone.utc)
 
             context_times.append('%s: %d (%s)' % (context, len(context_paths), context_end - context_start))
@@ -202,32 +207,16 @@ class PylintTest(SanitySingleVersion):
 
         return SanitySuccess(self.name)
 
-    def create_min_python_db(self, args: SanityConfig, targets: t.Iterable[TestTarget]) -> str:
-        """Create a database of target file paths and their minimum required Python version, returning the path to the database."""
-        target_paths = set(target.path for target in self.filter_remote_targets(list(targets)))
-        controller_min_version = CONTROLLER_PYTHON_VERSIONS[0]
-        target_min_version = REMOTE_ONLY_PYTHON_VERSIONS[0]
-        min_python_versions = {
-            os.path.abspath(target.path): target_min_version if target.path in target_paths else controller_min_version for target in targets
-        }
-
-        min_python_version_db_path = process_scoped_temporary_file(args)
-
-        with open(min_python_version_db_path, 'w') as database_file:
-            json.dump(min_python_versions, database_file)
-
-        return min_python_version_db_path
-
     @staticmethod
     def pylint(
         args: SanityConfig,
         context: str,
+        is_target: bool,
         paths: list[str],
         plugin_dir: str,
         plugin_names: list[str],
         python: PythonConfig,
         collection_detail: CollectionDetail,
-        min_python_version_db_path: str,
     ) -> list[dict[str, str]]:
         """Run pylint using the config specified by the context on the specified paths."""
         rcfile = os.path.join(SANITY_ROOT, 'pylint', 'config', context.split('/')[0] + '.cfg')
@@ -249,6 +238,13 @@ class PylintTest(SanitySingleVersion):
         disable_plugins = set(i.strip() for i in config.get('disable-plugins', '').split(',') if i)
         load_plugins = set(plugin_names + ['pylint.extensions.mccabe']) - disable_plugins
 
+        if is_target:
+            context_label = 'target'
+            min_python_version = REMOTE_ONLY_PYTHON_VERSIONS[0]
+        else:
+            context_label = 'controller'
+            min_python_version = CONTROLLER_PYTHON_VERSIONS[0]
+
         cmd = [
             python.path,
             '-m', 'pylint',
@@ -259,7 +255,7 @@ class PylintTest(SanitySingleVersion):
             '--rcfile', rcfile,
             '--output-format', 'json',
             '--load-plugins', ','.join(sorted(load_plugins)),
-            '--min-python-version-db', min_python_version_db_path,
+            '--py-version', min_python_version,
         ] + paths  # fmt: skip
 
         if data_context().content.collection:
@@ -286,7 +282,7 @@ class PylintTest(SanitySingleVersion):
         env.update(PYLINTHOME=pylint_home)
 
         if paths:
-            display.info('Checking %d file(s) in context "%s" with config: %s' % (len(paths), context, rcfile), verbosity=1)
+            display.info(f'Checking {len(paths)} file(s) in context {context!r} ({context_label}) with config: {rcfile}', verbosity=1)
 
             try:
                 stdout, stderr = run_command(args, cmd, env=env, capture=True)
