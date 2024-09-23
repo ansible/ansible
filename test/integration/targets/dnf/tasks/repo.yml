@@ -2,7 +2,7 @@
     - name: Install dinginessentail-1.0-1
       dnf:
         name: dinginessentail-1.0-1
-        state: present
+        state: installed
       register: dnf_result
 
     - name: Check dinginessentail with rpm
