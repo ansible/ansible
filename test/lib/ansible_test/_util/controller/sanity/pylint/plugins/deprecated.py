@@ -5,8 +5,6 @@
 from __future__ import annotations
 
 import datetime
-import functools
-import json
 import re
 import shlex
 import typing as t
@@ -326,15 +324,6 @@ class AnsibleDeprecatedCommentChecker(BaseTokenChecker):
                   {'minversion': (2, 6)}),
     }
 
-    options = (
-        ('min-python-version-db', {
-            'default': None,
-            'type': 'string',
-            'metavar': '<path>',
-            'help': 'The path to the DB mapping paths to minimum Python versions.',
-        }),
-    )
-
     def process_tokens(self, tokens: list[TokenInfo]) -> None:
         for token in tokens:
             if token.type == COMMENT:
@@ -365,15 +354,8 @@ class AnsibleDeprecatedCommentChecker(BaseTokenChecker):
             )
         return data
 
-    @functools.cached_property
-    def _min_python_version_db(self) -> dict[str, str]:
-        """A dictionary of absolute file paths and their minimum required Python version."""
-        with open(self.linter.config.min_python_version_db) as db_file:
-            return json.load(db_file)
-
     def _process_python_version(self, token: TokenInfo, data: dict[str, str]) -> None:
-        current_file = self.linter.current_file
-        check_version = self._min_python_version_db[current_file]
+        check_version = '.'.join(map(str, self.linter.config.py_version))
 
         try:
             if LooseVersion(data['python_version']) < LooseVersion(check_version):
