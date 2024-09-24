@@ -9,3 +9,24 @@ plugin_routing:
       tombstone:
         removal_version: 1.0.0
         warning_text: Is no longer there.
+action_groups:
+  foo:
+    - metadata: {}
+    - metadata: {}
+  bar: foo
+  baz:
+    bam: bar
+  bam:
+    - foo
+    - foo.bar
+    - foo.bar.bam
+  foobar:
+    - metadata:
+        extend_group:
+          - foo
+          - bar.baz
+          - foo.bar.baz
+        extra: indeed
+  foobarbam:
+    - metadata:
+        extend_group: 23
