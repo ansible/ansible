@@ -272,9 +272,7 @@ def test_get_mount_size_timeout(monkeypatch, set_file_content, on_timeout, shoul
         raise Exception("Timeout failed")
 
     monkeypatch.setattr(mount_facts, "get_mount_size", mock_slow_function)
-    # FIXME
-    # match = "Timed out getting mount size .*"
-    match = "Timer expired after 0.1 seconds"
+    match = "Timed out getting mount size .*"
 
     if should_raise:
         with pytest.raises(AnsibleFailJson, match=match):
