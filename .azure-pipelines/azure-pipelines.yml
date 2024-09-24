@@ -79,8 +79,6 @@ stages:
       - template: templates/matrix.yml  # context/target
         parameters:
           targets:
-            - name: macOS 12.0
-              test: macos/12.0
             - name: RHEL 7.9
               test: rhel/7.9
             - name: RHEL 8.6 py36
@@ -89,22 +87,16 @@ stages:
               test: rhel/8.6@3.9
             - name: RHEL 9.0
               test: rhel/9.0
-            - name: FreeBSD 13.2
-              test: freebsd/13.2
           groups:
             - 1
             - 2
       - template: templates/matrix.yml  # context/controller
         parameters:
           targets:
-            - name: macOS 12.0
-              test: macos/12.0
             - name: RHEL 8.6
               test: rhel/8.6
             - name: RHEL 9.0
               test: rhel/9.0
-            - name: FreeBSD 13.2
-              test: freebsd/13.2
           groups:
             - 3
             - 4
@@ -112,10 +104,6 @@ stages:
       - template: templates/matrix.yml  # context/controller (ansible-test container management)
         parameters:
           targets:
-            - name: Alpine 3.16
-              test: alpine/3.16
-            - name: Fedora 36
-              test: fedora/36
             - name: RHEL 8.6
               test: rhel/8.6
             - name: RHEL 9.0
@@ -133,12 +121,6 @@ stages:
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: CentOS 7
-              test: centos7
-            - name: Fedora 36
-              test: fedora36
-            - name: openSUSE 15
-              test: opensuse15
             - name: Ubuntu 20.04
               test: ubuntu2004
             - name: Ubuntu 22.04
@@ -150,8 +132,6 @@ stages:
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Fedora 36
-              test: fedora36
             - name: Ubuntu 22.04
               test: ubuntu2204
           groups:
