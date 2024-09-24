@@ -451,7 +451,15 @@ class Dnf5Module(YumDnf):
 
     def fail_on_non_existing_plugins(self, base):
         # https://github.com/rpm-software-management/dnf5/issues/1460
-        plugin_names = [p.get_name() for p in base.get_plugins_info()]
+        try:
+            plugin_names = [p.get_name() for p in base.get_plugins_info()]
+        except AttributeError:
+            # plugins functionality requires python3-libdnf5 5.2.0.0+
+            # silently ignore here, the module will fail later when
+            # base.enable_disable_plugins is attempted to be used if
+            # user specifies enable_plugin/disable_plugin
+            return
+
         msg = []
         if enable_unmatched := set(self.enable_plugin).difference(plugin_names):
             msg.append(
