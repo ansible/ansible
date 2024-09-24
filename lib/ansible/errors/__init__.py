@@ -66,14 +66,18 @@ class AnsibleError(Exception):
         from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 
         message = [self._message]
+
+        # Add from previous exceptions
+        if self.orig_exc:
+            message.append('. %s' % to_native(self.orig_exc))
+
+        # Add from yaml to give specific file/line no
         if isinstance(self.obj, AnsibleBaseYAMLObject):
             extended_error = self._get_extended_error()
             if extended_error and not self._suppress_extended_error:
                 message.append(
                     '\n\n%s' % to_native(extended_error)
                 )
-        elif self.orig_exc:
-            message.append('. %s' % to_native(self.orig_exc))
 
         return ''.join(message)
 
