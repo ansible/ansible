@@ -21,6 +21,7 @@ import re
 import traceback
 
 from collections.abc import Sequence
+from warnings import warn as _emit_warning
 
 from ansible.errors.yaml_strings import (
     YAML_COMMON_DICT_ERROR,
@@ -33,6 +34,10 @@ from ansible.errors.yaml_strings import (
     YAML_AND_SHORTHAND_ERROR,
 )
 from ansible.module_utils.common.text.converters import to_native, to_text
+
+
+_UNDERLYING_EXC_SENTINEL = Exception()
+"""A sentinel object for use as a default for arguments in callables."""
 
 
 class AnsibleError(Exception):
@@ -50,14 +55,42 @@ class AnsibleError(Exception):
     which should be returned by the DataLoader() class.
     '''
 
-    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None):
+    def __init__(
+        self,
+        message="",
+        obj=None,
+        show_content=True,
+        suppress_extended_error=False,
+        orig_exc=_UNDERLYING_EXC_SENTINEL,
+    ):
         super(AnsibleError, self).__init__(message)
 
         self._show_content = show_content
         self._suppress_extended_error = suppress_extended_error
         self._message = to_native(message)
         self.obj = obj
-        self.orig_exc = orig_exc
+        if orig_exc is not _UNDERLYING_EXC_SENTINEL:
+            _emit_warning(
+                'Passing the underlying error through the `orig_exc` argument '
+                'is deprecated. Instead, use native Python 3 exception cause '
+                'chaining syntax: `raise ... from ...`',
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            self.__cause__ = orig_exc
+
+    @property
+    def orig_exc(self):
+        """The underlying exception object.
+
+        If the exception cause is undefined, it's set to :py:data:`None`.
+        """
+        return self.__cause__
+
+    @orig_exc.setter
+    def orig_exc(self, underlying_exception):
+        """Set the underlying exception as cause of the current one."""
+        self.__cause__ = underlying_exception
 
     @property
     def message(self):
@@ -72,8 +105,8 @@ class AnsibleError(Exception):
                 message.append(
                     '\n\n%s' % to_native(extended_error)
                 )
-        elif self.orig_exc:
-            message.append('. %s' % to_native(self.orig_exc))
+        elif self.__cause__:
+            message.append('. %s' % to_native(self.__cause__))
 
         return ''.join(message)
 
@@ -290,7 +323,16 @@ class AnsibleUndefinedVariable(AnsibleTemplateError):
 class AnsibleFileNotFound(AnsibleRuntimeError):
     ''' a file missing failure '''
 
-    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, paths=None, file_name=None):
+    def __init__(
+        self,
+        message="",
+        obj=None,
+        show_content=True,
+        suppress_extended_error=False,
+        orig_exc=_UNDERLYING_EXC_SENTINEL,
+        paths=None,
+        file_name=None,
+    ):
 
         self.file_name = file_name
         self.paths = paths
@@ -320,7 +362,15 @@ class AnsibleFileNotFound(AnsibleRuntimeError):
 class AnsibleAction(AnsibleRuntimeError):
     ''' Base Exception for Action plugin flow control '''
 
-    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, result=None):
+    def __init__(
+        self,
+        message="",
+        obj=None,
+        show_content=True,
+        suppress_extended_error=False,
+        orig_exc=_UNDERLYING_EXC_SENTINEL,
+        result=None,
+    ):
 
         super(AnsibleAction, self).__init__(message=message, obj=obj, show_content=show_content,
                                             suppress_extended_error=suppress_extended_error, orig_exc=orig_exc)
@@ -333,7 +383,15 @@ class AnsibleAction(AnsibleRuntimeError):
 class AnsibleActionSkip(AnsibleAction):
     ''' an action runtime skip'''
 
-    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, result=None):
+    def __init__(
+        self,
+        message="",
+        obj=None,
+        show_content=True,
+        suppress_extended_error=False,
+        orig_exc=_UNDERLYING_EXC_SENTINEL,
+        result=None,
+    ):
         super(AnsibleActionSkip, self).__init__(message=message, obj=obj, show_content=show_content,
                                                 suppress_extended_error=suppress_extended_error, orig_exc=orig_exc, result=result)
         self.result.update({'skipped': True, 'msg': message})
@@ -341,7 +399,15 @@ class AnsibleActionSkip(AnsibleAction):
 
 class AnsibleActionFail(AnsibleAction):
     ''' an action runtime failure'''
-    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, result=None):
+    def __init__(
+        self,
+        message="",
+        obj=None,
+        show_content=True,
+        suppress_extended_error=False,
+        orig_exc=_UNDERLYING_EXC_SENTINEL,
+        result=None,
+    ):
         super(AnsibleActionFail, self).__init__(message=message, obj=obj, show_content=show_content,
                                                 suppress_extended_error=suppress_extended_error, orig_exc=orig_exc, result=result)
         self.result.update({'failed': True, 'msg': message, 'exception': traceback.format_exc()})

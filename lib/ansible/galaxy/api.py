@@ -103,7 +103,7 @@ def g_connect(versions):
                         data = self._call_galaxy(n_url, method='GET', error_context_msg=error_context_msg, cache=True)
                     except GalaxyError as new_err:
                         if new_err.http_code == 404:
-                            raise err
+                            raise err from new_err
                         raise
 
                 if 'available_versions' not in data:
@@ -406,20 +406,23 @@ class GalaxyAPI:
             display.vvvv("Calling Galaxy at %s" % url)
             resp = open_url(to_native(url), data=args, validate_certs=self.validate_certs, headers=headers,
                             method=method, timeout=self._server_timeout, http_agent=user_agent(), follow_redirects='safe')
-        except HTTPError as e:
-            raise GalaxyError(e, error_context_msg)
-        except Exception as e:
+        except HTTPError as underlying_http_error:
+            raise GalaxyError(
+                underlying_http_error,
+                error_context_msg,
+            ) from underlying_http_error
+        except Exception as underlying_error:
             raise AnsibleError(
-                "Unknown error when attempting to call Galaxy at '%s': %s" % (url, to_native(e)),
-                orig_exc=e
-            )
+                "Unknown error when attempting to call Galaxy at '%s': %s"
+                % (url, to_native(underlying_error)),
+            ) from underlying_error
 
         resp_data = to_text(resp.read(), errors='surrogate_or_strict')
         try:
             data = json.loads(resp_data)
-        except ValueError:
+        except ValueError as json_value_error:
             raise AnsibleError("Failed to parse Galaxy response from '%s' as JSON:\n%s"
-                               % (resp.url, to_native(resp_data)))
+                               % (resp.url, to_native(resp_data))) from json_value_error
 
         if cache and self._cache:
             path_cache = self._cache[cache_id][cache_key]
@@ -469,10 +472,16 @@ class GalaxyAPI:
 
         try:
             resp = open_url(url, data=args, validate_certs=self.validate_certs, method="POST", http_agent=user_agent(), timeout=self._server_timeout)
-        except HTTPError as e:
-            raise GalaxyError(e, 'Attempting to authenticate to galaxy')
-        except Exception as e:
-            raise AnsibleError('Unable to authenticate to galaxy: %s' % to_native(e), orig_exc=e)
+        except HTTPError as underlying_http_error:
+            raise GalaxyError(
+                underlying_http_error,
+                'Attempting to authenticate to galaxy',
+            ) from underlying_http_error
+        except Exception as underlying_error:
+            raise AnsibleError(
+                'Unable to authenticate to galaxy: %s'
+                % to_native(underlying_error),
+            ) from underlying_error
 
         data = json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
         return data
@@ -524,8 +533,11 @@ class GalaxyAPI:
             role_name = parts[-1]
             if notify:
                 display.display("- downloading role '%s', owned by %s" % (role_name, user_name))
-        except Exception:
-            raise AnsibleError("Invalid role name (%s). Specify role as format: username.rolename" % role_name)
+        except Exception as underlying_error:
+            raise AnsibleError(
+                "Invalid role name (%s). Specify role as format: username.rolename"
+                % role_name,
+            ) from underlying_error
 
         url = _urljoin(self.api_server, self.available_api_versions['v1'], "roles",
                        "?owner__username=%s&name=%s" % (user_name, role_name))
@@ -585,8 +597,11 @@ class GalaxyAPI:
                 results += data['results']
                 done = (data.get('next_link', None) is None)
             return results
-        except Exception as error:
-            raise AnsibleError("Failed to download the %s list: %s" % (what, to_native(error)))
+        except Exception as underlying_error:
+            raise AnsibleError(
+                "Failed to download the %s list: %s"
+                % (what, to_native(underlying_error)),
+            ) from underlying_error
 
     @g_connect(['v1'])
     def search_roles(self, search, **kwargs):
