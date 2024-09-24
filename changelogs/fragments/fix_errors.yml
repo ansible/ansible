@@ -1,0 +1,2 @@
+bugfixes:
+  - Errors now preserve stacked error messages even when YAML is involved.
