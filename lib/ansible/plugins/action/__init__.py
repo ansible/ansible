@@ -1226,15 +1226,13 @@ class ActionBase(ABC):
                 try:
                     _validate_utf8_json(data)
                 except UnicodeEncodeError:
-                    # When removing this, also remove the loop and latin-1 from ansible.module_utils.common.text.converters.jsonify
-                    display.deprecated(
+                    raise ValueError(
                         f'Module "{self._task.resolved_action or self._task.action}" returned non UTF-8 data in '
-                        'the JSON response. This will become an error in the future',
-                        version='2.18',
+                        'the JSON response.',
                     )
 
             data['_ansible_parsed'] = True
-        except ValueError:
+        except ValueError as e:
             # not valid json, lets try to capture error
             data = dict(failed=True, _ansible_parsed=False)
             data['module_stdout'] = res.get('stdout', u'')
@@ -1248,7 +1246,7 @@ class ActionBase(ABC):
                 data['exception'] = data['module_stdout']
 
             # The default
-            data['msg'] = "MODULE FAILURE"
+            data['msg'] = f"MODULE FAILURE: {e}"
 
             # try to figure out if we are missing interpreter
             if self._used_interpreter is not None:

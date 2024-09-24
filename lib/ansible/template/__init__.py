@@ -706,16 +706,13 @@ class Templar:
             setattr(obj, key, original[key])
 
     def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None,
-                 convert_data=True, static_vars=None, cache=None, disable_lookups=False):
+                 convert_data=True, static_vars=None, disable_lookups=False):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
         before being sent through the template engine.
         '''
         static_vars = [] if static_vars is None else static_vars
-
-        if cache is not None:
-            display.deprecated("The `cache` option to `Templar.template` is no longer functional, and will be removed in a future release.", version='2.18')
 
         # Don't template unsafe variables, just return them.
         if hasattr(variable, '__UNSAFE__'):
@@ -883,11 +880,9 @@ class Templar:
             return [] if wantlist else None
 
         if not is_sequence(ran):
-            display.deprecated(
+            raise AnsibleLookupError(
                 f'The lookup plugin \'{name}\' was expected to return a list, got \'{type(ran)}\' instead. '
                 f'The lookup plugin \'{name}\' needs to be changed to return a list. '
-                'This will be an error in Ansible 2.18',
-                version='2.18'
             )
 
         if ran and allow_unsafe is False:
