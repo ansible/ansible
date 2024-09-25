@@ -1049,6 +1049,8 @@ class Connection(ConnectionBase):
                         self._terminate_process(p)
                         raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
 
+                    display.vvv(u'SSH: Timeout ({}s) waiting for output'.format(timeout), host=self.host)
+
                 # Read whatever output is available on stdout and stderr, and stop
                 # listening to the pipe if it's been closed.
 
@@ -1117,23 +1119,23 @@ class Connection(ConnectionBase):
 
                 if states[state] == 'awaiting_escalation':
                     if self._flags['become_success']:
-                        display.vvv(u'Escalation succeeded')
+                        display.vvv(u'Escalation succeeded', host=self.host)
                         self._flags['become_success'] = False
                         state += 1
                     elif self._flags['become_error']:
-                        display.vvv(u'Escalation failed')
+                        display.vvv(u'Escalation failed', host=self.host)
                         self._terminate_process(p)
                         self._flags['become_error'] = False
                         raise AnsibleError('Incorrect %s password' % self.become.name)
                     elif self._flags['become_nopasswd_error']:
-                        display.vvv(u'Escalation requires password')
+                        display.vvv(u'Escalation requires password', host=self.host)
                         self._terminate_process(p)
                         self._flags['become_nopasswd_error'] = False
                         raise AnsibleError('Missing %s password' % self.become.name)
                     elif self._flags['become_prompt']:
                         # This shouldn't happen, because we should see the "Sorry,
                         # try again" message first.
-                        display.vvv(u'Escalation prompt repeated')
+                        display.vvv(u'Escalation prompt repeated', host=self.host)
                         self._terminate_process(p)
                         self._flags['become_prompt'] = False
                         raise AnsibleError('Incorrect %s password' % self.become.name)
@@ -1372,18 +1374,18 @@ class Connection(ConnectionBase):
         # only run the reset if the ControlPath already exists or if it isn't configured and ControlPersist is set
         # 'check' will determine this.
         cmd = self._build_command(self.get_option('ssh_executable'), 'ssh', '-O', 'check', self.host)
-        display.vvv(u'sending connection check: %s' % to_text(cmd))
+        display.vvv(u'sending connection check: %s' % to_text(cmd), host=self.host)
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
         status_code = p.wait()
         if status_code != 0:
-            display.vvv(u"No connection to reset: %s" % to_text(stderr))
+            display.vvv(u"No connection to reset: %s" % to_text(stderr), host=self.host)
         else:
             run_reset = True
 
         if run_reset:
             cmd = self._build_command(self.get_option('ssh_executable'), 'ssh', '-O', 'stop', self.host)
-            display.vvv(u'sending connection stop: %s' % to_text(cmd))
+            display.vvv(u'sending connection stop: %s' % to_text(cmd), host=self.host)
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()
             status_code = p.wait()
