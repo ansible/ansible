@@ -69,15 +69,10 @@ class ActionModule(ActionBase):
                             task_vars=task_vars,
                         )
                         if facts.get("failed", False):
-                            result.update(
-                                {
-                                    "failed": True,
-                                    "stderr": facts.get("module_stderr", "").strip(),
-                                    "stdout": facts.get("module_stdout", "").strip(),
-                                    "msg": "Failed to fetch ansible_pkg_mgr to determine the package action backend."
-                                }
+                            raise AnsibleActionFail(
+                                f"Failed to fetch ansible_pkg_mgr to determine the package action backend: {facts.get('msg')}",
+                                result=facts,
                             )
-                            return result
                         pmgr = 'ansible_pkg_mgr'
 
                     try:
