@@ -33,6 +33,10 @@ def _file_exists(path, allow_empty=False):
     if not os.path.exists(path):
         return False
 
+    # skip if the path is directory
+    if not os.path.isfile(path):
+        return False
+
     # if just the path needs to exists (ie, it can be empty) we are done
     if allow_empty:
         return True
