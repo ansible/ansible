@@ -1,0 +1,2 @@
+bugfixes:
+  - freed pipes allocated in ssh reset().
