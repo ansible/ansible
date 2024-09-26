@@ -639,7 +639,7 @@ def main():
     body = module.params['body']
     body_format = module.params['body_format'].lower()
     method = module.params['method'].upper()
-    dest = module.params['dest']
+    dest = os.path.abspath(module.params['dest'])
     return_content = module.params['return_content']
     creates = module.params['creates']
     removes = module.params['removes']
