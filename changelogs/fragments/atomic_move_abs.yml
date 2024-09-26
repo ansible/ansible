@@ -1,0 +1,4 @@
+minor_changes:
+  - atomic_move AnsibleModule method now documents and warns about requring abspath paths, in the future this will become a hard error.
+bugfixes:
+  - apt_repository, assemble, blockinfile, copy, get_url, known_hosts, lineinfile, replace and uri now properly pass in abspaths to atomic_move.
