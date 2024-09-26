@@ -30,10 +30,6 @@ def get_uname(module, flags=('-v')):
 
 def _file_exists(path, allow_empty=False):
     # not finding the file, exit early
-    if not os.path.exists(path):
-        return False
-
-    # skip if the path is directory
     if not os.path.isfile(path):
         return False
 
