@@ -1598,6 +1598,12 @@ class AnsibleModule(object):
         dest_stat = None
         b_src = to_bytes(src, errors='surrogate_or_strict')
         b_dest = to_bytes(dest, errors='surrogate_or_strict')
+
+        if not os.path.isabs(src):
+            self.module.warn('The source path for atomic_move is not an absolute path, this might not work and will be enforced in the future')
+        if not os.path.isabs(dest):
+            self.module.warn('The desitination path for atomic_move is not an absolute path, this might not work and will be enforced in the future')
+
         if os.path.exists(b_dest) and keep_dest_attrs:
             try:
                 dest_stat = os.stat(b_dest)
