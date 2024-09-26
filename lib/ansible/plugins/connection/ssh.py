@@ -1049,7 +1049,7 @@ class Connection(ConnectionBase):
                         self._terminate_process(p)
                         raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
 
-                    display.vvv(u'SSH: Timeout ({}s) waiting for output'.format(timeout), host=self.host)
+                    display.vvvvv(f'SSH: Timeout ({timeout}s) waiting for the output', host=self.host)
 
                 # Read whatever output is available on stdout and stderr, and stop
                 # listening to the pipe if it's been closed.
