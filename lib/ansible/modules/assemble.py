@@ -218,7 +218,7 @@ def main():
     path_hash = None
     dest_hash = None
     src = module.params['src']
-    dest = module.params['dest']
+    dest = os.path.abspath(module.params['dest'])
     backup = module.params['backup']
     delimiter = module.params['delimiter']
     regexp = module.params['regexp']

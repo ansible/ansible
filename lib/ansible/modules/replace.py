@@ -238,7 +238,7 @@ def main():
     )
 
     params = module.params
-    path = params['path']
+    path = os.path.abspath(params['path'])
     encoding = params['encoding']
     res_args = dict(rc=0)
     contents = None

@@ -122,7 +122,7 @@ def enforce_state(module, params):
     results = dict(changed=False)
     host = params["name"].lower()
     key = params.get("key", None)
-    path = params.get("path")
+    path = os.path.abspath(params.get("path"))
     hash_host = params.get("hash_host")
     state = params.get("state")
     # Find the ssh-keygen binary

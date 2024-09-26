@@ -252,10 +252,12 @@ class SourcesList(object):
                     yield file, n, enabled, source, comment
 
     def _expand_path(self, filename):
-        if '/' in filename:
-            return filename
-        else:
-            return os.path.abspath(os.path.join(self._apt_cfg_dir('Dir::Etc::sourceparts'), filename))
+        if not os.path.isabs(filename):
+            if '/' in filename:
+                filename = os.path.abspath(filename)
+            else:
+                filename = os.path.abspath(os.path.join(self._apt_cfg_dir('Dir::Etc::sourceparts'), filename))
+        return filename
 
     def _suggest_filename(self, line):
         def _cleanup_filename(s):
