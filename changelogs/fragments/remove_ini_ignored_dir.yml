@@ -1,0 +1,2 @@
+minor_changes:
+  - INVENTORY_IGNORE_EXTS config, removed ``ini`` from the default list, inventory scripts using a corresponding .ini configuration are rare now and inventory.ini files are more common. Those that need to ignore the ini files for inventory scripts can still add it to configuration.
