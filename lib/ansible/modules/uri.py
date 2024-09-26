@@ -654,9 +654,6 @@ def main():
     ciphers = module.params['ciphers']
     use_netrc = module.params['use_netrc']
 
-    if dest:
-        dest = os.path.abspath(dest)
-
     if not re.match('^[A-Z]+$', method):
         module.fail_json(msg="Parameter 'method' needs to be a single word in uppercase, like GET or POST.")
 
@@ -694,6 +691,9 @@ def main():
         # of uri executions.
         if not os.path.exists(removes):
             module.exit_json(stdout="skipped, since '%s' does not exist" % removes, changed=False)
+
+    if dest is not None:
+        dest = os.path.abspath(dest)
 
     # Make the request
     start = utcnow()
