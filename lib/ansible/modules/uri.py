@@ -639,7 +639,7 @@ def main():
     body = module.params['body']
     body_format = module.params['body_format'].lower()
     method = module.params['method'].upper()
-    dest = os.path.abspath(module.params['dest'])
+    dest = module.params['dest']
     return_content = module.params['return_content']
     creates = module.params['creates']
     removes = module.params['removes']
@@ -651,6 +651,9 @@ def main():
     decompress = module.params['decompress']
     ciphers = module.params['ciphers']
     use_netrc = module.params['use_netrc']
+
+    if dest:
+        dest = os.path.abspath(dest)
 
     if not re.match('^[A-Z]+$', method):
         module.fail_json(msg="Parameter 'method' needs to be a single word in uppercase, like GET or POST.")
