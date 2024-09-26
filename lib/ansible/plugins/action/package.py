@@ -68,6 +68,11 @@ class ActionModule(ActionBase):
                             module_args=dict(filter='ansible_pkg_mgr', gather_subset='!all'),
                             task_vars=task_vars,
                         )
+                        if facts.get("failed", False):
+                            raise AnsibleActionFail(
+                                f"Failed to fetch ansible_pkg_mgr to determine the package action backend: {facts.get('msg')}",
+                                result=facts,
+                            )
                         pmgr = 'ansible_pkg_mgr'
 
                     try:
@@ -103,9 +108,5 @@ class ActionModule(ActionBase):
 
         except AnsibleAction as e:
             result.update(e.result)
-        finally:
-            if not self._task.async_val:
-                # remove a temporary path we created
-                self._remove_tmp_path(self._connection._shell.tmpdir)
 
         return result
