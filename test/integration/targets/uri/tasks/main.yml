@@ -105,7 +105,7 @@
     return_content: yes
     url: http://localhost:{{ http_port }}/chunked
   register: r
-  ignore_erros: true
+  ignore_errors: true
 
 - name: Check if IncompleteRead raises error
   assert:
