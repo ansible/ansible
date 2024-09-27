@@ -440,6 +440,7 @@ url:
   sample: https://www.ansible.com/
 '''
 
+import http
 import json
 import os
 import re
