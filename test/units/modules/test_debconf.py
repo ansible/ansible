@@ -28,6 +28,16 @@ password_testdata = [
         "",
         id="invalid_password",
     ),
+    pytest.param(
+        (
+            "ddclient2	ddclient/password	password",
+            "ddclient2",
+            "ddclient/password1",
+            "password",
+        ),
+        None,
+        id="invalid_password_none",
+    ),
 ]
 
 
