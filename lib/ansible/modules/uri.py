@@ -732,6 +732,8 @@ def main():
             # there was no content, but the error read()
             # may have been stored in the info as 'body'
             content = info.pop('body', b'')
+        except http.client.HTTPException as http_err:
+            module.fail_json(msg=f"HTTP Error while fetching {url}: {to_native(http_err)}")
     elif r:
         content = r
     else:
