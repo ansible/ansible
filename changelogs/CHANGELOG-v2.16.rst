@@ -5,6 +5,23 @@ ansible-core 2.16 "All My Love" Release Notes
 .. contents:: Topics
 
 
+v2.16.12rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2024-09-30
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+
+Bugfixes
+--------
+
+- Add descriptions for ``ansible-galaxy install --help` and ``ansible-galaxy role|collection install --help``.
+- ``ansible-galaxy install --help`` - Fix the usage text and document that the requirements file passed to ``-r`` can include collections and roles.
+- dnf5 - re-introduce the ``state: installed`` alias to ``state: present`` (https://github.com/ansible/ansible/issues/83960)
+
 v2.16.11
 ========
 
