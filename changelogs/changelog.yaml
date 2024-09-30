@@ -875,6 +875,26 @@ releases:
     - fix-inconsistent-csvfile-missing-search-error.yml
     - powershell-clixml.yml
     release_date: '2024-09-03'
+  2.16.12rc1:
+    changes:
+      bugfixes:
+      - Add descriptions for ``ansible-galaxy install --help` and ``ansible-galaxy
+        role|collection install --help``.
+      - '``ansible-galaxy install --help`` - Fix the usage text and document that
+        the requirements file passed to ``-r`` can include collections and roles.'
+      - 'dnf5 - re-introduce the ``state: installed`` alias to ``state: present``
+        (https://github.com/ansible/ansible/issues/83960)'
+      release_summary: '| Release Date: 2024-09-30
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+    codename: All My Love
+    fragments:
+    - 2.16.12rc1_summary.yaml
+    - 83960-dnf5-state-installed-fix.yml
+    - ansible-galaxy-install-help.yml
+    release_date: '2024-09-30'
   2.16.1rc1:
     changes:
       breaking_changes:
