@@ -885,3 +885,33 @@ releases:
     - fix-inconsistent-csvfile-missing-search-error.yml
     - powershell-clixml.yml
     release_date: '2024-09-03'
+  2.17.5rc1:
+    changes:
+      bugfixes:
+      - Add descriptions for ``ansible-galaxy install --help` and ``ansible-galaxy
+        role|collection install --help``.
+      - Errors now preserve stacked error messages even when YAML is involved.
+      - '``ansible-galaxy install --help`` - Fix the usage text and document that
+        the requirements file passed to ``-r`` can include collections and roles.'
+      - copy - mtime/atime not updated. Fix now update mtime/atime(https://github.com/ansible/ansible/issues/83013)
+      - delay keyword is now a float, matching the underlying 'time' API and user
+        expectations.
+      - 'dnf5 - re-introduce the ``state: installed`` alias to ``state: present``
+        (https://github.com/ansible/ansible/issues/83960)'
+      - module_utils atomic_move (used by most file based modules), now correctly
+        handles permission copy and setting mtime correctly across all paths
+      release_summary: '| Release Date: 2024-09-30
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+        '
+    codename: Gallows Pole
+    fragments:
+    - 2.17.5rc1_summary.yaml
+    - 83235-copy-module-update-mtime.yml
+    - 83960-dnf5-state-installed-fix.yml
+    - ansible-galaxy-install-help.yml
+    - atomic_update_perms_time.yml
+    - delay_type.yml
+    - fix_errors.yml
+    release_date: '2024-09-30'
