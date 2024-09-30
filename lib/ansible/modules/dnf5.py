@@ -638,7 +638,7 @@ class Dnf5Module(YumDnf):
         results = []
         if self.names == ["*"] and self.state == "latest":
             goal.add_rpm_upgrade(settings)
-        elif self.state in {"install", "present", "latest"}:
+        elif self.state in {"installed", "present", "latest"}:
             upgrade = self.state == "latest"
             for spec in self.names:
                 if is_newer_version_installed(base, spec):
@@ -671,7 +671,7 @@ class Dnf5Module(YumDnf):
         if transaction.get_problems():
             failures = []
             for log_event in transaction.get_resolve_logs():
-                if log_event.get_problem() == libdnf5.base.GoalProblem_NOT_FOUND and self.state in {"install", "present", "latest"}:
+                if log_event.get_problem() == libdnf5.base.GoalProblem_NOT_FOUND and self.state in {"installed", "present", "latest"}:
                     # NOTE dnf module compat
                     failures.append("No package {} available.".format(log_event.get_spec()))
                 else:
