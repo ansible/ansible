@@ -1,0 +1,2 @@
+bugfixes:
+  - delay keyword is now a float, matching the underlying 'time' API and user expectations.
