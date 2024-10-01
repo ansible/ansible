@@ -137,12 +137,21 @@ def get_password_value(module, pkg, question, vtype):
         module.fail_json(msg=f"Failed to get the value '{question}' from '{pkg}': {err}")
 
     for line in out.split("\n"):
-        if line.startswith(pkg):
-            (dpkg, dquestion, dvtype, *dvalue) = line.split('\t')
-            if dquestion == question and dvtype == vtype:
-                if len(dvalue) >= 1:
-                    return dvalue[0]
-                return ''
+        if not line.startswith(pkg):
+            continue
+
+        # line is a collection of tab separated values
+        fields = line.split('\t')
+        if len(fields) <= 3:
+            # No password found, return a blank password
+            return ''
+        try:
+            if fields[1] == question and fields[2] == vtype:
+                # If correct question and question type found, return password value
+                return fields[3]
+        except IndexError:
+            # Fail safe
+            return ''
 
 
 def get_selections(module, pkg):
