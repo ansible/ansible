@@ -460,7 +460,7 @@ class PlayIterator:
                         # saved in `handler_notifications` and handlers are notified directly
                         # to prevent duplicate handler runs, so check whether any handler
                         # is notified
-                        and not any(bool(h.notified_hosts) for h in self.handlers)
+                        and all(not h.notified_hosts for h in self.handlers)
                     )
                 ):
                     continue
