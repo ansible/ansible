@@ -653,6 +653,7 @@ class StrategyBase:
                             if nb.name == target_name:
                                 nb_copy = nb.copy()
                                 nb_copy.parent = original_task
+                                nb_copy.vars.update(original_task.vars)
                                 iterator.add_tasks(original_host, [nb_copy])
                                 iterator.all_tasks[iterator.cur_task:iterator.cur_task] = nb_copy.get_tasks()
                                 break
