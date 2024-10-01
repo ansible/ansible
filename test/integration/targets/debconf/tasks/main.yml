@@ -1,21 +1,7 @@
 # Test code for the debconf module.
-# (c) 2017, James Tanner <tanner.jc@gmail.com>
-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
+# Copyright: (c) 2017, James Tanner <tanner.jc@gmail.com>
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ##
 ## debconf query
 ##
@@ -23,16 +9,16 @@
 - block:
     - name: query the tzdata package
       debconf:
-          name: tzdata
+        name: tzdata
       register: debconf_test0
 
     - name: validate results for test 0
       assert:
-          that:
-              - 'debconf_test0.changed is defined'
-              - 'debconf_test0.current is defined'
-              - '"tzdata/Zones/Etc" in debconf_test0.current'
-              - 'debconf_test0.current["tzdata/Zones/Etc"] == "UTC"'
+        that:
+          - 'debconf_test0.changed is defined'
+          - 'debconf_test0.current is defined'
+          - '"tzdata/Zones/Etc" in debconf_test0.current'
+          - 'debconf_test0.current["tzdata/Zones/Etc"] == "UTC"'
 
     - name: install debconf-utils
       apt:
@@ -46,12 +32,13 @@
         question: ddclient/password
         value: "MySecretValue"
         vtype: password
+      no_log: false
       register: debconf_test1
 
     - name: validate results for test 1
       assert:
-          that:
-              - debconf_test1.changed
+        that:
+          - debconf_test1.changed
 
     - name: Change password again
       debconf:
@@ -59,13 +46,69 @@
         question: ddclient/password
         value: "MySecretValue"
         vtype: password
-      no_log: yes
+      no_log: false
       register: debconf_test2
 
     - name: validate results for test 1
       assert:
-          that:
-              - not debconf_test2.changed
+        that:
+          - not debconf_test2.changed
+
+    - name: Check if empty password is set
+      debconf:
+        name: ddclient2
+        question: ddclient/password
+        value: ""
+        vtype: password
+      no_log: false
+      register: debconf_test1
+
+    - name: validate if password is set to empty value
+      assert:
+        that:
+          - debconf_test1.changed
+
+    - name: Change empty password again (idempotency)
+      debconf:
+        name: ddclient2
+        question: ddclient/password
+        value: "MySecretValue"
+        vtype: password
+      no_log: false
+      register: debconf_test2
+
+    - name: validate if the empty password is changed to the given value
+      assert:
+        that:
+          - debconf_test2.changed
+
+    - name: Set different question for same package name
+      debconf:
+        name: ddclient2
+        question: ddclient/password1
+        value: "Sample"
+        vtype: password
+      no_log: false
+      register: debconf_test1
+
+    - name: validate if different question for same package name is set
+      assert:
+        that:
+          - debconf_test1.changed
+
+    - name: Set different question for same package name again (idempotency)
+      debconf:
+        name: ddclient2
+        question: ddclient/password1
+        value: "Sample"
+        vtype: password
+      no_log: false
+      register: debconf_test2
+
+    - name: validate if different question for same package name is set (idempotency)
+      assert:
+        that:
+          - not debconf_test2.changed
 
     - name: Multiselect value
       debconf:
