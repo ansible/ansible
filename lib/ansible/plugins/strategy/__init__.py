@@ -651,9 +651,11 @@ class StrategyBase:
                         target_name = original_task.args.get('name')
                         for nb in original_task.play.named_blocks:
                             if nb.name == target_name:
+                                # make a copy of the block, update required fields
                                 nb_copy = nb.copy()
                                 nb_copy.parent = original_task
                                 nb_copy.vars.update(original_task.vars)
+                                # update the iterator with the copied block and break out of the loop
                                 iterator.add_tasks(original_host, [nb_copy])
                                 iterator.all_tasks[iterator.cur_task:iterator.cur_task] = nb_copy.get_tasks()
                                 break

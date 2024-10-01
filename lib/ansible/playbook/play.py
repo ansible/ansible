@@ -188,7 +188,7 @@ class Play(Base, Taggable, CollectionSearch):
                     raise AnsibleParserError("The block name '%s' is used by multiple blocks within the named_blocks section. Block names here must be unique." % (nb.name,), obj=nb._ds)
                 # save the name to check later
                 found_names.append(nb.name)
-                
+
             return named_blocks
         except AssertionError as e:
             raise AnsibleParserError("A malformed block was encountered while loading named blocks: %s" % to_native(e), obj=self._ds, orig_exc=e)

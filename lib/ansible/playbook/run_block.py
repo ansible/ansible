@@ -17,9 +17,7 @@
 
 from __future__ import annotations
 
-from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.task import Task
-from ansible.module_utils.six import string_types
 
 
 class RunBlock(Task):
