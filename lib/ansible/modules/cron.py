@@ -328,7 +328,7 @@ class CronTab(object):
             os.unlink(path)
 
             if rc != 0:
-                self.module.fail_json(msg=err)
+                self.module.fail_json(msg=f"Failed to install new cronfile: {path}", stderr=err, stdout=out, rc=rc)
 
         # set SELinux permissions
         if self.module.selinux_enabled() and self.cron_file:
