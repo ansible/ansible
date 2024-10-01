@@ -73,6 +73,7 @@ class Play(Base, Taggable, CollectionSearch):
     pre_tasks = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
     post_tasks = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
     tasks = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
+    named_blocks = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
 
     # Flag/Setting Attributes
     force_handlers = NonInheritableFieldAttribute(isa='bool', default=context.cliargs_deferred_get('force_handlers'), always_post_validate=True)
@@ -168,6 +169,29 @@ class Play(Base, Taggable, CollectionSearch):
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
         except AssertionError as e:
             raise AnsibleParserError("A malformed block was encountered while loading tasks: %s" % to_native(e), obj=self._ds, orig_exc=e)
+
+    def _load_named_blocks(self, attr, ds):
+        '''
+        Loads a list of blocks from a list which may be mixed tasks/blocks.
+        Bare tasks outside of a block are given an implicit block.
+        '''
+        try:
+            named_blocks = load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader, allow_bare_tasks=False)
+            # named blocks have additional restrictions on them compared ot other blocks,
+            # so check for those here and raise appropriate errors if needed
+            found_names = []
+            for nb in named_blocks:
+                # named blocks must have a name...
+                if nb.name == '':
+                    raise AnsibleParserError("Blocks within the named_blocks section must have the 'name' field set.", obj=nb._ds)
+                elif nb.name in found_names:
+                    raise AnsibleParserError("The block name '%s' is used by multiple blocks within the named_blocks section. Block names here must be unique." % (nb.name,), obj=nb._ds)
+                # save the name to check later
+                found_names.append(nb.name)
+                
+            return named_blocks
+        except AssertionError as e:
+            raise AnsibleParserError("A malformed block was encountered while loading named blocks: %s" % to_native(e), obj=self._ds, orig_exc=e)
 
     def _load_pre_tasks(self, attr, ds):
         '''

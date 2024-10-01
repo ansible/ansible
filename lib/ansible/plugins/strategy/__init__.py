@@ -46,6 +46,7 @@ from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
+from ansible.playbook.run_block import RunBlock
 from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import loader as plugin_loader
@@ -644,6 +645,20 @@ class StrategyBase:
                     result_items = [task_result._result]
 
                 for result_item in result_items:
+                    if isinstance(original_task, RunBlock):
+                        # If this is a RunBlock task, we try and find the matching named block and
+                        # add that block to the iterator tasks for the given host
+                        target_name = original_task.args.get('name')
+                        for nb in original_task.play.named_blocks:
+                            if nb.name == target_name:
+                                nb_copy = nb.copy()
+                                nb_copy.parent = original_task
+                                iterator.add_tasks(original_host, [nb_copy])
+                                iterator.all_tasks[iterator.cur_task:iterator.cur_task] = nb_copy.get_tasks()
+                                break
+                        else:
+                            raise AnsibleError("The named block '%s' was not found." % target_name)
+
                     if '_ansible_notify' in result_item and task_result.is_changed():
                         # only ensure that notified handlers exist, if so save the notifications for when
                         # handlers are actually flushed so the last defined handlers are executed,
@@ -756,7 +771,7 @@ class StrategyBase:
                     if self._diff or getattr(original_task, 'diff', False):
                         self._tqm.send_callback('v2_on_file_diff', task_result)
 
-                if not isinstance(original_task, TaskInclude):
+                if not isinstance(original_task, (TaskInclude, RunBlock)):
                     self._tqm._stats.increment('ok', original_host.name)
                     if 'changed' in task_result._result and task_result._result['changed']:
                         self._tqm._stats.increment('changed', original_host.name)

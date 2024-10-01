@@ -50,7 +50,8 @@ BUILTIN_TASKS = frozenset(add_internal_fqcns((
     'include_tasks',
     'include_role',
     'import_tasks',
-    'import_role'
+    'import_role',
+    'run_block',
 )))
 
 
