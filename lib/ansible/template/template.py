@@ -24,20 +24,24 @@ __all__ = ['AnsibleJ2Template']
 
 class AnsibleJ2Template(NativeTemplate):
     '''
-    A helper class, which prevents Jinja2 from running AnsibleJ2Vars through dict().
-    Without this, {% include %} and similar will create new contexts unlike the special
-    one created in Templar.template. This ensures they are all alike, except for
-    potential locals.
+    A helper class to prevent Jinja2 from processing AnsibleJ2Vars through dict().
+    
+    The default behavior of {% include %} and similar functions creates new contexts,
+    which are different from the special context created in Templar.template. This class ensures 
+    that all contexts are similar, except for specific local variables.
+
+    Attributes:
+        name: Name of the template.
+        blocks: Blocks defined in the template.
+        environment: The Jinja2 environment where the template is rendered.
     '''
 
     def new_context(self, vars=None, shared=False, locals=None):
-        if vars is None:
-            vars = dict(self.globals or ())
+    # Initialize vars with an empty dictionary or a copy of self.globals
+    vars = dict(self.globals or ()) if vars is None else vars.copy()
 
-        if isinstance(vars, dict):
-            vars = vars.copy()
-            if locals is not None:
-                vars.update(locals)
-        else:
-            vars = vars.add_locals(locals)
-        return self.environment.context_class(self.environment, vars, self.name, self.blocks)
+    # Adding variables locals, if exists
+    if locals:
+        vars.update(locals)
+
+    return self.environment.context_class(self.environment, vars, self.name, self.blocks)
