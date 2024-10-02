@@ -126,13 +126,13 @@ from ansible.galaxy.dependency_resolution.dataclasses import (
 from ansible.galaxy.dependency_resolution.versioning import meets_requirements
 from ansible.plugins.loader import get_all_plugin_loaders
 from ansible.module_utils.common.file import S_IRWU_RG_RO, S_IRWXU_RXG_RXO, S_IXANY
+from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.yaml import yaml_dump
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash, secure_hash_s
-from ansible.utils.sentinel import Sentinel
 
 
 display = Display()

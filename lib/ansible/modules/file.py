@@ -239,7 +239,7 @@ from grp import getgrnam, getgrgid
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_bytes, to_native
-from ansible.utils.sentinel import Sentinel
+from ansible.module_utils.common.sentinel import Sentinel
 
 # There will only be a single AnsibleModule object per module
 module = None

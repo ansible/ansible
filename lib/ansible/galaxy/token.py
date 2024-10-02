@@ -30,14 +30,13 @@ from urllib.error import HTTPError
 from ansible import constants as C
 from ansible.galaxy.api import GalaxyError
 from ansible.galaxy.user_agent import user_agent
+from ansible.module_utils.common.sentinel import Sentinel as NoTokenSentinel
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
-from ansible.utils.sentinel import Sentinel as NoTokenSentinel
 
 display = Display()
-
 
 
 class KeycloakToken(object):
