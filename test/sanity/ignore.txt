@@ -13,7 +13,6 @@ lib/ansible/modules/command.py validate-modules:doc-default-does-not-match-spec 
 lib/ansible/modules/command.py validate-modules:doc-missing-type
 lib/ansible/modules/command.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/command.py validate-modules:undocumented-parameter
-lib/ansible/modules/copy.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/copy.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/copy.py validate-modules:undocumented-parameter
 lib/ansible/modules/dnf.py validate-modules:parameter-invalid
