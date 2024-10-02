@@ -264,3 +264,21 @@ def isidentifier(ident):
         return False
 
     return True
+
+
+def get_loop_item_vars(result, task):
+    item_vars = {}
+    if task.loop or task.loop_with:
+        loop_var = result.get('ansible_loop_var', 'item')
+        index_var = result.get('ansible_index_var')
+        if loop_var in result:
+            item_vars[loop_var] = result[loop_var]
+            item_vars['ansible_loop_var'] = loop_var
+        if index_var and index_var in result:
+            item_vars[index_var] = result[index_var]
+            item_vars['ansible_index_var'] = index_var
+        if '_ansible_item_label' in result:
+            item_vars['_ansible_item_label'] = result['_ansible_item_label']
+        if 'ansible_loop' in result:
+            item_vars['ansible_loop'] = result['ansible_loop']
+    return item_vars
