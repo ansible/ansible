@@ -24,6 +24,7 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.quoting import unquote
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.path import cleanup_tmp_file, makedirs_safe, unfrackpath
+from ansible.utils.sentinel import Sentinel
 
 
 Setting = namedtuple('Setting', 'name value origin type')
@@ -232,15 +233,13 @@ def find_ini_config_file(warnings=None):
         # Note: In this case, warnings does nothing
         warnings = set()
 
-    # A value that can never be a valid path so that we can tell if ANSIBLE_CONFIG was set later
-    # We can't use None because we could set path to None.
-    SENTINEL = object
-
     potential_paths = []
 
+    # A value that can never be a valid path so that we can tell if ANSIBLE_CONFIG was set later
+    # We can't use None because we could set path to None.
     # Environment setting
-    path_from_env = os.getenv("ANSIBLE_CONFIG", SENTINEL)
-    if path_from_env is not SENTINEL:
+    path_from_env = os.getenv("ANSIBLE_CONFIG", Sentinel)
+    if path_from_env is not Sentinel:
         path_from_env = unfrackpath(path_from_env, follow=False)
         if os.path.isdir(to_bytes(path_from_env)):
             path_from_env = os.path.join(path_from_env, "ansible.cfg")
