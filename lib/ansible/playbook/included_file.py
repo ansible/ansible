@@ -79,8 +79,7 @@ class IncludedFile:
                     include_results = [res._result]
 
                 for include_result in include_results:
-                    # if the task result was skipped or failed, continue
-                    if 'skipped' in include_result and include_result['skipped'] or 'failed' in include_result and include_result['failed']:
+                    if include_result.get('skipped', False) or include_result.get('failed'):
                         continue
 
                     cache_key = (iterator._play, original_host, original_task)
