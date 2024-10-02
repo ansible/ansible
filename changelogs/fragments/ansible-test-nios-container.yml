@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Update ``nios-test-container`` to version 6.0.0.
