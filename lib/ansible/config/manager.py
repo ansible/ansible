@@ -17,6 +17,7 @@ from collections.abc import Mapping, Sequence
 from jinja2.nativetypes import NativeEnvironment
 
 from ansible.errors import AnsibleOptionsError, AnsibleError, AnsibleRequiredOptionError
+from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_text, to_bytes, to_native
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.six import string_types
@@ -232,15 +233,13 @@ def find_ini_config_file(warnings=None):
         # Note: In this case, warnings does nothing
         warnings = set()
 
-    # A value that can never be a valid path so that we can tell if ANSIBLE_CONFIG was set later
-    # We can't use None because we could set path to None.
-    SENTINEL = object
-
     potential_paths = []
 
+    # A value that can never be a valid path so that we can tell if ANSIBLE_CONFIG was set later
+    # We can't use None because we could set path to None.
     # Environment setting
-    path_from_env = os.getenv("ANSIBLE_CONFIG", SENTINEL)
-    if path_from_env is not SENTINEL:
+    path_from_env = os.getenv("ANSIBLE_CONFIG", Sentinel)
+    if path_from_env is not Sentinel:
         path_from_env = unfrackpath(path_from_env, follow=False)
         if os.path.isdir(to_bytes(path_from_env)):
             path_from_env = os.path.join(path_from_env, "ansible.cfg")

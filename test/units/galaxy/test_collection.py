@@ -22,13 +22,13 @@ from ansible.cli.galaxy import GalaxyCLI
 from ansible.config import manager
 from ansible.errors import AnsibleError
 from ansible.galaxy import api, collection, token
+from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.file import S_IRWU_RG_RO
 import builtins
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash_s
-from ansible.utils.sentinel import Sentinel
 
 
 @pytest.fixture(autouse='function')

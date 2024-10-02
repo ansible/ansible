@@ -20,12 +20,12 @@ from __future__ import annotations
 import ansible.constants as C
 from ansible.errors import AnsibleParserError, AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import string_types
+from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.plugins.loader import module_loader, action_loader
 from ansible.template import Templar
 from ansible.utils.fqcn import add_internal_fqcns
-from ansible.utils.sentinel import Sentinel
 
 
 # modules formated for user msg

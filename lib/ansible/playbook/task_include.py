@@ -19,10 +19,10 @@ from __future__ import annotations
 
 import ansible.constants as C
 from ansible.errors import AnsibleParserError
+from ansible.module_utils.common.sentinel import Sentinel
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 from ansible.utils.display import Display
-from ansible.utils.sentinel import Sentinel
 
 __all__ = ['TaskInclude']
 
