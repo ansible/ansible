@@ -33,10 +33,10 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native, to_
 from ansible.module_utils.api import retry_with_delays_and_condition
 from ansible.module_utils.api import generate_jittered_backoff
 from ansible.module_utils.common.process import get_bin_path
+from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
-from ansible.utils.sentinel import Sentinel
 
 import yaml
 

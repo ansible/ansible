@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-from ansible.utils.sentinel import Sentinel
+from ansible.module_utils.common.sentinel import Sentinel
 
 _CONTAINERS = frozenset(('list', 'dict', 'set'))
 

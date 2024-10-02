@@ -7,9 +7,9 @@ from __future__ import annotations
 import pytest
 
 from ansible.errors import AnsibleParserError
+from ansible.module_utils.common.sentinel import Sentinel
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.plugins.loader import init_plugin_loader
-from ansible.utils.sentinel import Sentinel
 
 
 class TestModArgsDwim:

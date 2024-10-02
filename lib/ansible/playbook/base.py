@@ -19,13 +19,13 @@ from ansible import context
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.attribute import Attribute, FieldAttribute, ConnectionFieldAttribute, NonInheritableFieldAttribute
 from ansible.plugins.loader import module_loader, action_loader
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, AnsibleCollectionRef
 from ansible.utils.display import Display
-from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
 
 display = Display()
