@@ -1,2 +1,0 @@
-bugfixes:
-  - fixed task result handling that was bypassing normal processing, now timeout/connection/action exceptions still run though normal result post processing.
