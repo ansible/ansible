@@ -48,7 +48,7 @@ def timeout(seconds=None, error_message="Timer expired"):
                 return res.get(timeout_value)
             except multiprocessing.TimeoutError:
                 # This is an ansible.module_utils.common.facts.timeout.TimeoutError
-                raise TimeoutError('Timer expired after %s seconds' % timeout_value)
+                raise TimeoutError(f'{error_message} after {timeout_value} seconds')
             finally:
                 pool.terminate()
 
