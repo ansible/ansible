@@ -1,9 +1,10 @@
  1 __init__
-93 v2_on_any
+95 v2_on_any
  1 v2_on_file_diff
  4 v2_playbook_on_handler_task_start
  3 v2_playbook_on_include
  1 v2_playbook_on_no_hosts_matched
+ 2 v2_playbook_on_no_hosts_remaining
  3 v2_playbook_on_notify
  3 v2_playbook_on_play_start
  1 v2_playbook_on_start

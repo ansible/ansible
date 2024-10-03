@@ -926,6 +926,8 @@ class StrategyBase:
         meta_action = task.args.get('_raw_params')
 
         def _evaluate_conditional(h):
+            if not task.when:
+                return True
             all_vars = self._variable_manager.get_vars(play=iterator._play, host=h, task=task,
                                                        _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
             templar = Templar(loader=self._loader, variables=all_vars)

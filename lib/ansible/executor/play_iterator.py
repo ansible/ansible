@@ -447,6 +447,24 @@ class PlayIterator:
 
             # if something above set the task, break out of the loop now
             if task:
+                # skip implicit flush_handlers if there are no handlers notified
+                if (
+                    task.implicit
+                    and task.action in C._ACTION_META
+                    and task.args.get('_raw_params', None) == 'flush_handlers'
+                    and (
+                        # the state store in the `state` variable could be a nested state,
+                        # notifications are always stored in the top level state, get it here
+                        not self.get_state_for_host(host.name).handler_notifications
+                        # in case handlers notifying other handlers, the notifications are not
+                        # saved in `handler_notifications` and handlers are notified directly
+                        # to prevent duplicate handler runs, so check whether any handler
+                        # is notified
+                        and all(not h.notified_hosts for h in self.handlers)
+                    )
+                ):
+                    continue
+
                 break
 
         return (state, task)
