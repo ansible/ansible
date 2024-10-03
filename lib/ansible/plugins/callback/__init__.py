@@ -573,7 +573,7 @@ class CallbackBase(AnsiblePlugin):
         :param result: The parameters of the task and its status.
         :type result: TaskResult
 
-        :return: None
+        :rtype: None
         :rtype: None
         """
         host = result._host.get_name()
