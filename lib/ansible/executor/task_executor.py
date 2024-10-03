@@ -130,29 +130,32 @@ class TaskExecutor:
                     item_results = self._run_loop(items)
 
                     # create the overall result item
-                    res = dict(results=item_results)
+                    res = dict(results=item_results, skipped=True)
 
                     # loop through the item results and set the global changed/failed/skipped result flags based on any item.
-                    res['skipped'] = True
                     for item in item_results:
-                        if 'changed' in item and item['changed'] and not res.get('changed'):
-                            res['changed'] = True
-                        if res['skipped'] and ('skipped' not in item or ('skipped' in item and not item['skipped'])):
+
+                        # skipped is only true if all items skipped
+                        if res['skipped'] and not item.get('skipped', False):
                             res['skipped'] = False
-                        if 'failed' in item and item['failed']:
+
+                        # changed if any items is changd
+                        if not res.get('changed') and item.get('changed', False):
+                            res['changed'] = True
+
+                        # failed if any item fails (sans ignore_errors)
+                        if not res.get('failed', False) and item.get('failed', False):
                             item_ignore = item.pop('_ansible_ignore_errors')
-                            if not res.get('failed'):
+                            if not item_ignore:
                                 res['failed'] = True
                                 res['msg'] = 'One or more items failed'
-                                self._task.ignore_errors = item_ignore
-                            elif self._task.ignore_errors and not item_ignore:
-                                self._task.ignore_errors = item_ignore
-                        if 'unreachable' in item and item['unreachable']:
+
+                        # unreachable if any item is unreachable (sans ignore)
+                        if not res.get('unreachable', False) and item.get('unreachable', False):
                             item_ignore_unreachable = item.pop('_ansible_ignore_unreachable')
-                            if not res.get('unreachable'):
-                                self._task.ignore_unreachable = item_ignore_unreachable
-                            elif self._task.ignore_unreachable and not item_ignore_unreachable:
-                                self._task.ignore_unreachable = item_ignore_unreachable
+                            if not item_ignore_unreachable:
+                                # only set if not already and no ignores in place
+                                res['unreachable'] = True
 
                         # ensure to accumulate these
                         for array in ['warnings', 'deprecations']:
