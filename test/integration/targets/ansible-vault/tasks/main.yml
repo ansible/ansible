@@ -1,0 +1,22 @@
+- name: Create test user
+  user:
+    name: unpriv1
+    create_home: yes
+    password: password1
+  become: yes
+
+- name: Create unreadable directory
+  file:
+    name: not_writable
+    state: directory
+    mode: 'ugo-w'
+
+- shell: ansible-vault encrypt --vault-password-file vault-password not_writable/testfile
+  become: yes
+  become_user: unpriv1
+  register: r
+
+- debug:
+    msg: "{{ r }}"
+
+as
