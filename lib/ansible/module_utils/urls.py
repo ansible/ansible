@@ -340,13 +340,16 @@ def extract_pem_certs(data):
 
 
 def get_response_filename(response):
-    url = response.geturl()
-    path = urlparse(url)[2]
-    filename = os.path.basename(path.rstrip('/')) or None
-    if filename:
-        filename = unquote(filename)
+    if filename := response.headers.get_param('filename', header='content-disposition'):
+        filename = os.path.basename(filename)
+    else:
+        url = response.geturl()
+        path = urlparse(url)[2]
+        filename = os.path.basename(path.rstrip('/')) or None
+        if filename:
+            filename = unquote(filename)
 
-    return response.headers.get_param('filename', header='content-disposition') or filename
+    return filename
 
 
 def parse_content_type(response):
