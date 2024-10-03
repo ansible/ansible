@@ -1,0 +1,3 @@
+minor_changes:
+  - ansible-test - Update ``pylint`` sanity test to use version 3.3.1.
+  - ansible-test - Default to Python 3.13 in the ``base`` and ``default`` containers.
