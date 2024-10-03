@@ -367,6 +367,7 @@ url:
     sample: https://www.ansible.com/
 '''
 
+import email.message
 import os
 import re
 import shutil
@@ -439,23 +440,16 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
 
 
 def extract_filename_from_headers(headers):
+    """Extracts a filename from the given dict of HTTP headers.
+
+    Returns the filename if successful, else None.
     """
-    Extracts a filename from the given dict of HTTP headers.
-
-    Looks for the content-disposition header and applies a regex.
-    Returns the filename if successful, else None."""
-    cont_disp_regex = 'attachment; ?filename="?([^"]+)'
-    res = None
-
-    if 'content-disposition' in headers:
-        cont_disp = headers['content-disposition']
-        match = re.match(cont_disp_regex, cont_disp)
-        if match:
-            res = match.group(1)
-            # Try preventing any funny business.
-            res = os.path.basename(res)
-
-    return res
+    msg = email.message.Message()
+    msg['content-disposition'] = headers.get('content-disposition', '')
+    if filename := msg.get_param('filename', header='content-disposition'):
+        # Avoid directory traversal
+        filename = os.path.basename(filename)
+    return filename
 
 
 def is_url(checksum):

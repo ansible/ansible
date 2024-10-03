@@ -719,3 +719,23 @@
       - result is not changed
       - '"did not match" in result.msg'
       - stat_result_checksum_verify.stat.exists
+
+- name: Test downloading to dir with content-disposition attachment
+  get_url:
+    url: 'https://{{ httpbin_host }}/response-headers?Content-Disposition=attachment%3B%20filename%3D%22filename.json%22'
+    dest: "{{ remote_tmp_dir }}"
+  register: get_dir_filename
+
+- assert:
+    that:
+      - get_dir_filename.dest == remote_tmp_dir ~ "/filename.json"
+
+- name: Test downloading to dir with content-disposition inline
+  get_url:
+    url: 'https://{{ httpbin_host }}/response-headers?Content-Disposition=inline%3B%20filename%3D%22filename.json%22'
+    dest: "{{ remote_tmp_dir }}"
+  register: get_dir_filename
+
+- assert:
+    that:
+      - get_dir_filename.dest == remote_tmp_dir ~ "/filename.json"
