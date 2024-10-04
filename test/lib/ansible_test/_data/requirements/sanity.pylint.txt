@@ -1,5 +1,5 @@
 # edit "sanity.pylint.in" and generate with: hacking/update-sanity-requirements.py --test pylint
-astroid==3.3.4
+astroid==3.3.5
 dill==0.3.9
 isort==5.13.2
 mccabe==0.7.0
