@@ -135,41 +135,30 @@ class TaskExecutor:
                     # loop through the item results and set the global changed/failed/skipped result flags based on any item.
                     for item in item_results:
 
-                        # skipped is only true if all items skipped
+                        # skip if all items skip
                         if res['skipped'] and not item.get('skipped', False):
                             res['skipped'] = False
 
-                        # changed if any items is changd
-                        if not res.get('changed') and item.get('changed', False):
-                            res['changed'] = True
-
-                        # failed if any item fails (sans ignore_errors)
-                        if not res.get('failed', False) and item.get('failed', False):
-                            item_ignore = item.pop('_ansible_ignore_errors')
-                            if not item_ignore:
-                                res['failed'] = True
-                            res['msg'] = 'One or more items failed'
-
-                        # unreachable if any item is unreachable (sans ignore)
-                        if not res.get('unreachable', False) and item.get('unreachable', False):
-                            item_ignore_unreachable = item.pop('_ansible_ignore_unreachable')
-                            if not item_ignore_unreachable:
-                                # only set if not already and no ignores in place
-                                res['unreachable'] = True
+                        # set task state if any item matches this state
+                        for state in ('changed', 'unreachable', 'failed'):
+                            if not res.get(state) and item.get(state, False):
+                                res[state] = True
 
                         # ensure to accumulate these
-                        for array in ['warnings', 'deprecations']:
-                            if array in item and item[array]:
-                                if array not in res:
-                                    res[array] = []
-                                if not isinstance(item[array], list):
-                                    item[array] = [item[array]]
-                                res[array] = res[array] + item[array]
-                                del item[array]
+                        for say in ('warnings', 'deprecations'):
+                            if say in item and item[say]:
+                                if say not in res:
+                                    res[say] = []
+                                if not isinstance(item[say], list):
+                                    item[say] = [item[say]]
+                                res[say] = res[say] + item[say]
+                                del item[say]
 
                     if res['skipped']:
                         res['msg'] = 'All items skipped'
-                    elif not res.get('failed', False) and not res.get('msg', False):
+                    elif res.get('failed', False):
+                        res['msg'] = 'One or more items failed'
+                    else res.get('msg', False):
                         res['msg'] = 'All items completed'
                 else:
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
@@ -371,8 +360,6 @@ class TaskExecutor:
                 res['ansible_loop'] = task_vars['ansible_loop']
 
             res['_ansible_item_result'] = True
-            res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
-            res['_ansible_ignore_unreachable'] = task_fields.get('ignore_unreachable')
 
             # gets templated here unlike rest of loop_control fields, depends on loop_var above
             try:
