@@ -522,7 +522,7 @@ def main():
                 found += 1
                 for k in packages_found.keys():
                     if k in packages:
-                        packages[k].append(packages_found[k])
+                        packages[k].extend(packages_found[k])
                     else:
                         packages[k] = packages_found[k]
             else:
