@@ -1090,8 +1090,10 @@ class StrategyBase:
         else:
             result['changed'] = False
 
-        if not task.implicit:
-            header = skip_reason if skipped else msg
+        header = skip_reason if skipped else msg
+        if task.implicit:
+            display.debug(f"META: {header}")
+        else:
             display.vv(f"META: {header}")
 
         res = TaskResult(target_host, task, result)

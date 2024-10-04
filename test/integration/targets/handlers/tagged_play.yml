@@ -1,0 +1,10 @@
+- hosts: localhost
+  gather_facts: false
+  tags: the_whole_play
+  tasks:
+    - command: echo
+      notify: h
+  handlers:
+    - name: h
+      debug:
+        msg: handler_ran
