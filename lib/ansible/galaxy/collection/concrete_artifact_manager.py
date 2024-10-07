@@ -10,6 +10,7 @@ import os
 import tarfile
 import subprocess
 import typing as t
+import yaml
 
 from contextlib import contextmanager
 from hashlib import sha256
@@ -24,6 +25,7 @@ if t.TYPE_CHECKING:
     )
     from ansible.galaxy.token import GalaxyToken
 
+from ansible import context
 from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.galaxy.api import should_retry_error
@@ -38,7 +40,7 @@ from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
 
-import yaml
+import ansible.constants as C
 
 
 display = Display()
@@ -425,10 +427,13 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
 
     # Perform a shallow clone if simply cloning HEAD
     if version == 'HEAD':
-        git_clone_cmd = git_executable, 'clone', '--depth=1', git_url, to_text(b_checkout_path)
+        git_clone_cmd = [git_executable, 'clone', '--depth=1', git_url, to_text(b_checkout_path)]
     else:
-        git_clone_cmd = git_executable, 'clone', git_url, to_text(b_checkout_path)
+        git_clone_cmd = [git_executable, 'clone', git_url, to_text(b_checkout_path)]
     # FIXME: '--branch', version
+
+    if context.CLIARGS['ignore_certs'] or C.GALAXY_IGNORE_CERTS:
+        git_clone_cmd.extend(['-c', 'http.sslVerify=false'])
 
     try:
         subprocess.check_call(git_clone_cmd)
