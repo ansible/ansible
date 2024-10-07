@@ -8,7 +8,7 @@ import hashlib
 import tempfile
 
 from ansible.module_utils.common.text.converters import to_bytes
-from ansible.utils import hashing
+from ansible.module_utils.common import hashing
 
 import pytest
 

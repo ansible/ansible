@@ -22,13 +22,13 @@ from ansible.cli.galaxy import GalaxyCLI
 from ansible.config import manager
 from ansible.errors import AnsibleError
 from ansible.galaxy import api, collection, token
+from ansible.module_utils.common.hashing import generate_secure_checksum
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.file import S_IRWU_RG_RO
 import builtins
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
-from ansible.utils.hashing import generate_secure_checksum
 
 
 @pytest.fixture(autouse=True)
@@ -1147,24 +1147,6 @@ def test_verify_file_hash_mismatching_hash(manifest_info):
     assert len(error_queue) == 1
     assert error_queue[0].installed == digest
     assert error_queue[0].expected == different_digest
-
-
-def test_consume_file(manifest):
-
-    manifest_file, checksum = manifest
-    assert checksum == collection._consume_file(manifest_file)
-
-
-def test_consume_file_and_write_contents(manifest, manifest_info):
-
-    manifest_file, checksum = manifest
-
-    write_to = BytesIO()
-    actual_hash = collection._consume_file(manifest_file, write_to)
-
-    write_to.seek(0)
-    assert to_bytes(json.dumps(manifest_info)) == write_to.read()
-    assert actual_hash == checksum
 
 
 def test_get_tar_file_member(tmp_tarfile):

@@ -16,12 +16,12 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
+from ansible.module_utils.common.hashing import generate_secure_checksum
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.six import text_type
 from ansible.vars.fact_cache import FactCache
 from ansible.template import Templar
 from ansible.utils.display import Display
-from ansible.utils.hashing import generate_secure_checksum
 from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
