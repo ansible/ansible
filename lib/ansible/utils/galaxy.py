@@ -64,7 +64,7 @@ def scm_archive_resource(src, scm='git', name=None, version='HEAD', keep_scm_met
     clone_cmd = [scm_path, 'clone']
 
     # Add specific options for ignoring certificates if requested
-    ignore_certs = context.CLIARGS['ignore_certs']
+    ignore_certs = context.CLIARGS['ignore_certs'] or C.GALAXY_IGNORE_CERTS
 
     if ignore_certs:
         if scm == 'git':
