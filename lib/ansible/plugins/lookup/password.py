@@ -129,7 +129,6 @@ _raw:
 import os
 import string
 import time
-import hashlib
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
@@ -137,6 +136,7 @@ from ansible.module_utils.six import string_types
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.encrypt import BaseHash, do_encrypt, random_password, random_salt
+from ansible.utils.hashing import generate_secure_checksum
 from ansible.utils.path import makedirs_safe
 
 
@@ -267,7 +267,7 @@ def _get_lock(b_path):
     """Get the lock for writing password file."""
     first_process = False
     b_pathdir = os.path.dirname(b_path)
-    lockfile_name = to_bytes("%s.ansible_lockfile" % hashlib.sha1(b_path).hexdigest())
+    lockfile_name = to_bytes(f"{generate_secure_checksum(b_path)[:40]}.ansible_lockfile")
     lockfile = os.path.join(b_pathdir, lockfile_name)
     if not os.path.exists(lockfile) and b_path != to_bytes('/dev/null'):
         try:

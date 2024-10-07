@@ -28,7 +28,7 @@ from ansible.module_utils.common.file import S_IRWU_RG_RO
 import builtins
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
-from ansible.utils.hashing import secure_hash_s
+from ansible.utils.hashing import generate_secure_checksum
 
 
 @pytest.fixture(autouse=True)
@@ -835,10 +835,11 @@ def test_build_with_symlink_inside_collection(collection_input):
         assert linked_file.linkname == '../README.md'
 
         linked_file_obj = actual.extractfile(linked_file.name)
-        actual_file = secure_hash_s(linked_file_obj.read())
+        actual_file = generate_secure_checksum(linked_file_obj.read())
         linked_file_obj.close()
 
-        assert actual_file == '08f24200b9fbe18903e7a50930c9d0df0b8d7da3'  # shasum test/units/cli/test_data/collection_skeleton/README.md
+        # shasum test/units/cli/test_data/collection_skeleton/README.md
+        assert actual_file == 'f6844219b194843a618cd1a3a0ac20b2686d5fe684c19f9ddb5036a22b5afab2'
 
 
 def test_publish_no_wait(galaxy_server, collection_artifact, monkeypatch):
