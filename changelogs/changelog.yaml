@@ -875,6 +875,17 @@ releases:
     - fix-inconsistent-csvfile-missing-search-error.yml
     - powershell-clixml.yml
     release_date: '2024-09-03'
+  2.16.12:
+    changes:
+      release_summary: '| Release Date: 2024-10-07
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+    codename: All My Love
+    fragments:
+    - 2.16.12_summary.yaml
+    release_date: '2024-10-07'
   2.16.12rc1:
     changes:
       bugfixes:
