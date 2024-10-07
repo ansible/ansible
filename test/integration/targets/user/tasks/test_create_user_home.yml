@@ -178,12 +178,13 @@
         dest: '{{tempdir.path}}/skel/should_not_change_own'
         state: link
 
-    - name: "Create user home directory with /dev/null as skeleton"
+    - name: "Create user home directory with skeleton"
       user:
         name: withskeleton
         state: present
         skeleton: "{{tempdir.path}}/skel"
         createhome: yes
+        home: /home/missing/withskeleton
       register: create_user_with_skeleton_symlink
 
     - name: Check flag
