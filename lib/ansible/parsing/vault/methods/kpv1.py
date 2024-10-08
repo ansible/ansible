@@ -5,13 +5,12 @@ from __future__ import annotations
 
 import base64
 import dataclasses
-import hashlib
 import json
 import typing as t
 
-from cryptography.hazmat.primitives.asymmetric import padding as P
-from cryptography.hazmat.primitives import hashes as H
-from cryptography.hazmat.primitives.serialization import load_pem_public_key, load_pem_private_key
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.serialization import load_pem_public_key, load_pem_private_key, load_ssh_public_key, load_ssh_private_key
 
 from .. import VaultSecret
 from . import VaultMethodBase, VaultSecretError
@@ -25,10 +24,11 @@ class NoParams:
 class VaultMethod(VaultMethodBase):
     ''' Both public and private keys must RSA in PEM format and not protected by passhprase
 
-    # generate RSA keys in pem format (only private), no passphrase
+    # generate RSA, private one in PEM format, use empty passphrase on prompt,
+    # public key will be openssh format
     ssh-keygen -m PEM -t rsa -b 4096  -f ~/.ssh/vault.pem
 
-    # regen public since ssh-keygen still creates ssh format for it
+    # optionally regen public key in PEM since ssh-keygen only creates it in ssh format
     openssl rsa -pubout -in ~/.ssh/vault.pem > ~/.ssh/vault.pem.pub
 
     # encrypt file with public
@@ -38,22 +38,45 @@ class VaultMethod(VaultMethodBase):
     ansible-vault decrypt data.txt --vault-id ~/.ssh/vault.pem -vvv
     '''
 
-    padding = P.OAEP(mgf=P.MGF1(algorithm=H.SHA256()), algorithm=H.SHA256(), label=None)
+    padding = padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
 
     @classmethod
     def encrypt(cls, plaintext: bytes, secret: VaultSecret, options: dict[str, t.Any]) -> str:
 
         NoParams(**options)
 
-        public_key = load_pem_public_key(secret.bytes)
-        encrypted_text = public_key.encrypt(plaintext, cls.padding)
+        b_key = secret.bytes
+        try:
+            public_key = load_ssh_public_key(b_key)
+        except ValueError as e:
+            try:
+                public_key = load_pem_public_key(secret.bytes)
+            except ValueError as e2:
+                raise ValueError(f"Could not load vault secret public key, as ssh: {e!r}.\n Nor as pem: {e2!r}")
+
+        print('hi')
+        if hasattr(public_key, 'encrypt'):
+            encrypted_text = public_key.encrypt(plaintext, cls.padding)
+        else:
+            raise ValueError(f"Cannot use key of type '{type(public_key)}' to encrypt")
 
         return base64.b64encode(encrypted_text)
 
     @classmethod
     def decrypt(cls, vaulttext: str, secret: VaultSecret) -> bytes:
 
-        private_key = load_pem_private_key(secret.bytes, password=None)
-        cipher_text = base64.b64decode(vaulttext)
+        b_key = secret.bytes
+        try:
+            private_key = load_pem_private_key(b_key, password=None)
+        except ValueError as e:
+            try:
+                private_key = load_ssh_private_key(b_key, password=None)
+            except ValueError as e2:
+                raise ValueError(f"Could not load vault secret private key, as pem: {e!r}.\n Nor as ssh: {e2!r}")
+
+        if hasattr(private_key, 'decrypt'):
+            cipher_text = base64.b64decode(vaulttext)
+        else:
+            raise ValueError(f"Cannot use key of type '{type(public_key)}' to decrypt")
 
         return private_key.decrypt(cipher_text, cls.padding)
