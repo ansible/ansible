@@ -29,8 +29,6 @@ from . linux_data import LSBLK_OUTPUT, LSBLK_OUTPUT_2, LSBLK_UUIDS, MTAB, MTAB_E
 with open(os.path.join(os.path.dirname(__file__), '../fixtures/findmount_output.txt')) as f:
     FINDMNT_OUTPUT = f.read()
 
-GET_MOUNT_SIZE = {}
-
 
 def mock_get_mount_size(mountpoint):
     return STATVFS_INFO.get(mountpoint, {})

@@ -39,16 +39,14 @@ class FakeAnsibleVaultEncryptedUnicode(Sequence):
 TEST_STRINGS = u'he', u'Україна', u'Česká republika'
 TEST_STRINGS = TEST_STRINGS + tuple(s.encode('utf-8') for s in TEST_STRINGS) + (FakeAnsibleVaultEncryptedUnicode(u'foo'),)
 
-TEST_ITEMS_NON_SEQUENCES = (
+TEST_ITEMS_NON_SEQUENCES: tuple = (
     {}, object(), frozenset(),
     4, 0.,
 ) + TEST_STRINGS
 
-TEST_ITEMS_SEQUENCES = (
+TEST_ITEMS_SEQUENCES: tuple = (
     [], (),
     SeqStub(),
-)
-TEST_ITEMS_SEQUENCES = TEST_ITEMS_SEQUENCES + (
     # Iterable effectively containing nested random data:
     TEST_ITEMS_NON_SEQUENCES,
 )

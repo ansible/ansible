@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import typing as t
 
 import pytest
 
@@ -69,7 +70,7 @@ VALID_SPECS = (
     ({'arg': {'type': 'int'}}, {'arg': 1, 'invalid': True, '_ansible_ignore_unknown_opts': True}, 1),
 )
 
-INVALID_SPECS = (
+INVALID_SPECS: tuple[tuple[dict[str, t.Any], dict[str, t.Any], str], ...] = (
     # Type is int; unable to convert this string
     ({'arg': {'type': 'int'}}, {'arg': "wolf"}, f"is of type {type('wolf')} and we were unable to convert to int:"),
     # Type is list elements is int; unable to convert this string
@@ -495,7 +496,7 @@ class TestComplexOptions:
     )
 
     # (Parameters, failure message)
-    FAILING_PARAMS_LIST = (
+    FAILING_PARAMS_LIST: tuple[tuple[dict[str, list[dict[str, t.Any]]], str], ...] = (
         # Missing required option
         ({'foobar': [{}]}, 'missing required arguments: foo found in foobar'),
         # Invalid option
@@ -518,7 +519,7 @@ class TestComplexOptions:
     )
 
     # (Parameters, failure message)
-    FAILING_PARAMS_DICT = (
+    FAILING_PARAMS_DICT: tuple[tuple[dict[str, dict[str, t.Any]], str], ...] = (
         # Missing required option
         ({'foobar': {}}, 'missing required arguments: foo found in foobar'),
         # Invalid option
