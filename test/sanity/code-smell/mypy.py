@@ -36,6 +36,8 @@ def main() -> None:
         MyPyContext('ansible-core', ['lib/ansible/'], controller_python_versions),
         MyPyContext('modules', ['lib/ansible/modules/', 'lib/ansible/module_utils/'], remote_only_python_versions),
         MyPyContext('packaging', ['packaging/'], controller_python_versions),
+        MyPyContext('modules', ['test/units/modules/', 'test/units/module_utils/'], remote_only_python_versions),
+        MyPyContext('ansible-core', ['test/units/'], controller_python_versions),
     )
 
     unfiltered_messages: list[SanityMessage] = []

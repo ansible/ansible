@@ -387,8 +387,11 @@ class TestWritePasswordFile(unittest.TestCase):
     def setUp(self):
         self.makedirs_safe = password.makedirs_safe
         self.os_chmod = password.os.chmod
-        password.makedirs_safe = lambda path, mode: None
-        password.os.chmod = lambda path, mode: None
+        password.makedirs_safe = self.noop
+        password.os.chmod = self.noop
+
+    def noop(self, *args, **kwargs):
+        pass
 
     def tearDown(self):
         password.makedirs_safe = self.makedirs_safe
@@ -410,11 +413,14 @@ class BaseTestLookupModule(unittest.TestCase):
         self.password_lookup._loader = self.fake_loader
         self.os_path_exists = password.os.path.exists
         self.os_open = password.os.open
-        password.os.open = lambda path, flag: None
+        password.os.open = self.noop
         self.os_close = password.os.close
-        password.os.close = lambda fd: None
+        password.os.close = self.noop
         self.makedirs_safe = password.makedirs_safe
-        password.makedirs_safe = lambda path, mode: None
+        password.makedirs_safe = self.noop
+
+    def noop(self, *args, **kwargs):
+        pass
 
     def tearDown(self):
         password.os.path.exists = self.os_path_exists
