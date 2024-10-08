@@ -137,7 +137,8 @@
 
 - name: Create user home directory with /dev/null as skeleton, https://github.com/ansible/ansible/issues/75063
   # create_homedir is mostly used by linux, rest of OSs take care of it themselves via -k option (which fails this task)
-  when: ansible_system == 'Linux'  
+  # OS X actuall breaks since it does not implement getpwnam()
+  when: ansible_system == 'Linux'
   block:
     - name: "Create user home directory with /dev/null as skeleton"
       user:
@@ -152,3 +153,69 @@
         name: withskeleton
         state: absent
         remove: yes
+
+- name: Create user home directory with skel that contains symlinks
+  tags: symlink_home
+  when: ansible_system == 'Linux'
+  become: True
+  vars:
+    flag: '{{tempdir.path}}/root_flag.conf'
+  block:
+    - name: make tempdir for skel
+      tempfile: state=directory
+      register: tempdir
+
+    - name: create flag file
+      file: path={{flag}} owner=root state=touch
+
+    - name: copy skell to target
+      copy:
+        dest: '{{tempdir.path}}/skel'
+        src: files/skel
+      register: skel
+
+    - name: create the bad symlink
+      file:
+        src: '{{flag}}'
+        dest: '{{tempdir.path}}/skel/should_not_change_own'
+        state: link
+
+    - name: "Create user home directory with skeleton"
+      user:
+        name: withskeleton
+        state: present
+        skeleton: "{{tempdir.path}}/skel"
+        createhome: yes
+        home: /home/missing/withskeleton
+      register: create_user_with_skeleton_symlink
+
+    - name: Check flag
+      stat: path={{flag}}
+      register: test_flag
+
+    - name: ensure we didn't change owner for flag
+      assert:
+        that:
+          - test_flag.stat.uid != create_user_with_skeleton_symlink.uid
+
+  always:
+    - name: "Remove test user"
+      user:
+        name: withskeleton
+        state: absent
+        remove: yes
+
+    - name: get files to delete
+      find: path="{{tempdir.path}}"
+      register: remove
+      when:
+        - tempdir is defined
+        - tempdir is success
+
+    - name: "Remove temp files"
+      file:
+        path: '{{item}}'
+        state: absent
+      loop: "{{remove.files|default([])}}"
+      when:
+        - remove is success
