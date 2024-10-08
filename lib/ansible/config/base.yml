@@ -1187,6 +1187,7 @@ VAULT_METHOD:
     'aes256': AES 256 with PBKDF2HMAC key derivation with double hexlify byte shield
     'v2': Using cryptography's fernet API with dual keys, AES 128, CBC and sCrypt key derivation, with base64 byte shield
     'v2b': Using cryptography's fernet API with dual keys, AES 128, CBC and sCrypt key derivation, with base64 byte shield
+    'kpv1': Using RSA key pairs in PEM format. You encrypt with the public key and Ansible uses the private key to decrypt at runtime.
   description:
     - Vault method to use for encryption.
   env: [{name: ANSIBLE_VAULT_METHOD}]
