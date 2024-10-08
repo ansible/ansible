@@ -927,7 +927,7 @@ class VaultEditor:
         dirname = os.path.dirname(filename)
         if dirname and not os.path.exists(dirname):
             display.warning(u"%s does not exist, creating..." % to_text(dirname))
-            makedirs_safe(dirname)
+            os.makedirs(dirname, exist_ok=True)
 
         # FIXME: If we can raise an error here, we can probably just make it
         # behave like edit instead.

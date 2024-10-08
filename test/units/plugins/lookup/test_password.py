@@ -385,13 +385,13 @@ class TestFormatContent(unittest.TestCase):
 
 class TestWritePasswordFile(unittest.TestCase):
     def setUp(self):
-        self.makedirs_safe = password.makedirs_safe
+        self.makedirs_safe = password.os.makedirs
         self.os_chmod = password.os.chmod
-        password.makedirs_safe = lambda path, mode: None
+        password.os.makedirs = lambda path, mode: None
         password.os.chmod = lambda path, mode: None
 
     def tearDown(self):
-        password.makedirs_safe = self.makedirs_safe
+        password.os.makedirs = self.makedirs_safe
         password.os.chmod = self.os_chmod
 
     def test_content_written(self):
@@ -415,12 +415,15 @@ class BaseTestLookupModule(unittest.TestCase):
         password.os.close = lambda fd: None
         self.makedirs_safe = password.makedirs_safe
         password.makedirs_safe = lambda path, mode: None
+        self.os_remove = password.os.remove
+        password.os.remove = lambda path: None
 
     def tearDown(self):
         password.os.path.exists = self.os_path_exists
         password.os.open = self.os_open
         password.os.close = self.os_close
         password.makedirs_safe = self.makedirs_safe
+        password.os.remove = self.os_remove
 
 
 class TestLookupModuleWithoutPasslib(BaseTestLookupModule):

@@ -24,12 +24,13 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 
 
-__all__ = ['unfrackpath', 'makedirs_safe']
+__all__ = ['unfrackpath', 'makedirs_safe', 'basedir']
 
 
 def unfrackpath(path, follow=True, basedir=None):
     '''
-    Returns a path that is free of symlinks (if follow=True), environment variables, relative path traversals and symbols (~)
+    Returns an absolute path after resolving environment variables, relative path traversals and symbols (~)
+    and possibly symlinks, depending on options
 
     :arg path: A byte or text string representing a path to be canonicalized
     :arg follow: A boolean to indicate of symlinks should be resolved or not
@@ -46,8 +47,8 @@ def unfrackpath(path, follow=True, basedir=None):
         '$HOME/../../var/mail' becomes '/var/spool/mail'
     '''
 
+    # if basedir is not supplied cwd is used instead
     b_basedir = to_bytes(basedir, errors='surrogate_or_strict', nonstring='passthru')
-
     if b_basedir is None:
         b_basedir = to_bytes(os.getcwd(), errors='surrogate_or_strict')
     elif os.path.isfile(b_basedir):
@@ -66,18 +67,18 @@ def unfrackpath(path, follow=True, basedir=None):
 
 def makedirs_safe(path, mode=None):
     '''
-    A *potentially insecure* way to ensure the existence of a directory chain. The "safe" in this function's name
-    refers only to its ability to ignore `EEXIST` in the case of multiple callers operating on the same part of
-    the directory chain. This function is not safe to use under world-writable locations when the first level of the
-    path to be created contains a predictable component. Always create a randomly-named element first if there is any
-    chance the parent directory might be world-writable (eg, /tmp) to prevent symlink hijacking and potential
-    disclosure or modification of sensitive file contents.
+    Safely ignore concurrency errors when creating a dir and it's parents.
+    NOT SAFE security wise, that requires checking all parents and permissions.
 
     :arg path: A byte or text string representing a directory chain to be created
     :kwarg mode: If given, the mode to set the directory to
     :raises AnsibleError: If the directory cannot be created and does not already exist.
     :raises UnicodeDecodeError: if the path is not decodable in the utf-8 encoding.
     '''
+
+    from ansible.utils.display import Display
+    display = Display()
+    display.deprecated("Since we use newer python now, use exist_ok=True in os.makedirs instead", version="2.21")
 
     rpath = unfrackpath(path)
     b_rpath = to_bytes(rpath)
@@ -87,13 +88,22 @@ def makedirs_safe(path, mode=None):
                 os.makedirs(b_rpath, mode)
             else:
                 os.makedirs(b_rpath)
+        except FileExistsError:
+            pass
         except OSError as e:
             if e.errno != EEXIST:
                 raise AnsibleError("Unable to create local directories(%s): %s" % (to_native(rpath), to_native(e)))
 
 
 def basedir(source):
-    """ returns directory for inventory or playbook """
+    """
+    returns abs path to deepest directory in given path,
+    unlike other basdedir/dirname functions that might return the 2nd if
+    path given already points to a directory.
+
+    :arg source: Input path to derive basedir from
+    :returns: An absolute path to a directory
+    """
     source = to_bytes(source, errors='surrogate_or_strict')
     dname = None
     if os.path.isdir(source):
@@ -131,7 +141,7 @@ def cleanup_tmp_file(path, warn=False):
                     # Importing here to avoid circular import
                     from ansible.utils.display import Display
                     display = Display()
-                    display.display(u'Unable to remove temporary file {0}'.format(to_text(e)))
+                    display.warning(u'Unable to remove temporary file {0}'.format(to_text(e)))
     except Exception:
         pass
 
@@ -139,8 +149,10 @@ def cleanup_tmp_file(path, warn=False):
 def is_subpath(child, parent, real=False):
     """
     Compares paths to check if one is contained in the other
+
     :arg: child: Path to test
     :arg parent; Path to test against
+    :returns: Boolean reflecting the path relationship
      """
     test = False
 

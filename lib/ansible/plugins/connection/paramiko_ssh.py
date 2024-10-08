@@ -251,7 +251,6 @@ from ansible.errors import (
 from ansible.module_utils.compat.paramiko import PARAMIKO_IMPORT_ERR, paramiko
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.display import Display
-from ansible.utils.path import makedirs_safe
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 
 display = Display()
@@ -605,7 +604,7 @@ class Connection(ConnectionBase):
             return
 
         path = os.path.expanduser("~/.ssh")
-        makedirs_safe(path)
+        os.makedirs(path, exist_ok=True)
 
         with open(filename, 'w') as f:
 
@@ -650,7 +649,7 @@ class Connection(ConnectionBase):
             # that are starting up.)
             lockfile = self.keyfile.replace("known_hosts", ".known_hosts.lock")
             dirname = os.path.dirname(self.keyfile)
-            makedirs_safe(dirname)
+            os.makedirs(dirname, exist_ok=True)
 
             KEY_LOCK = open(lockfile, 'w')
             fcntl.lockf(KEY_LOCK, fcntl.LOCK_EX)
