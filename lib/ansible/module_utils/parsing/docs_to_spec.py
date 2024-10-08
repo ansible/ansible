@@ -43,7 +43,7 @@ def restriction_to_spec(r):
             name = 'required_if'
             rest = [r['if'], r['equals'], r['required']]
     else:
-        for ding in ('exclusive', 'toghether', 'one_of'):
+        for ding in ('exclusive', 'together', 'one_of'):
             if ding in r:
 
                 if isinstance(r[ding], string_types):
@@ -142,9 +142,9 @@ restrictions:
    - description: You cannot use 'c' and 'x' at the same time
      exclusive: c, x
 
-    # required_toghether
-   - description: 'a' and 'b' required toghether
-     toghether: a, b
+    # required_together
+   - description: 'a' and 'b' required together
+     together: a, b
 
     # required_one_of
    - description: at least one of a or b is required
