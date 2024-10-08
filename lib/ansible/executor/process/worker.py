@@ -22,16 +22,25 @@ import os
 import sys
 import textwrap
 import traceback
+import types
+import typing as t
 from multiprocessing.queues import Queue
 
 from ansible import context
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.executor.task_executor import TaskExecutor
+from ansible.executor.task_queue_manager import FinalQueue
+from ansible.inventory.host import Host
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.text.converters import to_text
+from ansible.parsing.dataloader import DataLoader
+from ansible.playbook.task import Task
+from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import init_plugin_loader
+from ansible.utils.context_objects import CLIArgs
 from ansible.utils.display import Display
 from ansible.utils.multiprocessing import context as multiprocessing_context
+from ansible.vars.manager import VariableManager
 
 from jinja2.exceptions import TemplateNotFound
 
@@ -62,7 +71,19 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
     for reading later.
     """
 
-    def __init__(self, final_q, task_vars, host, task, play_context, loader, variable_manager, shared_loader_obj, worker_id, cliargs):
+    def __init__(
+            self,
+            final_q: FinalQueue,
+            task_vars: dict,
+            host: Host,
+            task: Task,
+            play_context: PlayContext,
+            loader: DataLoader,
+            variable_manager: VariableManager,
+            shared_loader_obj: types.SimpleNamespace,
+            worker_id: int,
+            cliargs: CLIArgs
+    ) -> None:
 
         super(WorkerProcess, self).__init__()
         # takes a task queue manager as the sole param:
@@ -84,7 +105,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
 
         self._cliargs = cliargs
 
-    def start(self):
+    def start(self) -> None:
         """
         multiprocessing.Process replaces the worker's stdin with a new file
         but we wish to preserve it if it is connected to a terminal.
@@ -97,7 +118,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         with display._lock:
             super(WorkerProcess, self).start()
 
-    def _hard_exit(self, e):
+    def _hard_exit(self, e: str) -> t.NoReturn:
         """
         There is no safe exception to return to higher level code that does not
         risk an innocent try/except finding itself executing in the wrong
@@ -115,7 +136,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
 
         os._exit(1)
 
-    def _detach(self):
+    def _detach(self) -> None:
         '''
         The intent here is to detach the child process from the inherited stdio fds,
         including /dev/tty. Children should use Display instead of direct interactions
@@ -144,7 +165,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
             display.error(f'Could not detach from stdio: {e}')
             os._exit(1)
 
-    def run(self):
+    def run(self) -> None:
         """
         Wrap _run() to ensure no possibility an errant exception can cause
         control to return to the StrategyBase task loop, or any other code
@@ -162,7 +183,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         except BaseException:
             self._hard_exit(traceback.format_exc())
 
-    def _run(self):
+    def _run(self) -> None:
         """
         Called when the process is started.  Pushes the result onto the
         results queue. We also remove the host from the blocked hosts list, to
@@ -210,7 +231,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
             self._host.groups = []
 
             for name, stdio in (('stdout', sys.stdout), ('stderr', sys.stderr)):
-                if data := stdio.getvalue():
+                if data := stdio.getvalue():  # type: ignore[union-attr]
                     display.warning(
                         (
                             f'WorkerProcess for [{self._host}/{self._task}] errantly sent data directly to {name}:\n'
@@ -281,7 +302,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         # with open('worker_%06d.stats' % os.getpid(), 'w') as f:
         #     f.write(s.getvalue())
 
-    def _clean_up(self):
+    def _clean_up(self) -> None:
         # NOTE: see note in init about forks
         # ensure we cleanup all temp files for this worker
         self._loader.cleanup_all_tmp_files()
