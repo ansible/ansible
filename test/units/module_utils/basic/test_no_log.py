@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import typing as t
 import unittest
 
 from ansible.module_utils.basic import remove_values
@@ -12,7 +13,7 @@ from ansible.module_utils.common.parameters import _return_datastructure_name
 
 
 class TestReturnValues(unittest.TestCase):
-    dataset = (
+    dataset: tuple[tuple[t.Any, frozenset[str]], ...] = (
         ('string', frozenset(['string'])),
         ('', frozenset()),
         (1, frozenset(['1'])),

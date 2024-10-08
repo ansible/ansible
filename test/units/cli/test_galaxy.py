@@ -45,7 +45,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 
 
-@pytest.fixture(autouse='function')
+@pytest.fixture(autouse=True)
 def reset_cli_args():
     co.GlobalCLIArgs._Singleton__instance = None
     yield
