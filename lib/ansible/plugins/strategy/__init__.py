@@ -1102,13 +1102,7 @@ class StrategyBase:
         return [res]
 
     def _get_cached_role(self, task, play):
-        role_path = task._role.get_role_path()
-        role_cache = play.role_cache[role_path]
-        try:
-            idx = role_cache.index(task._role)
-            return role_cache[idx]
-        except ValueError:
-            raise AnsibleError(f'Cannot locate {task._role.get_name()} in role cache')
+        return play._get_cached_role(task._role)
 
     def get_hosts_left(self, iterator):
         ''' returns list of available hosts for this iterator by filtering out unreachables '''
