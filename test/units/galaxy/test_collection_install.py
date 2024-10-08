@@ -51,7 +51,7 @@ def call_galaxy_cli(args):
         co.GlobalCLIArgs._Singleton__instance = orig
 
 
-@pytest.fixture(autouse='function')
+@pytest.fixture(autouse=True)
 def reset_cli_args():
     co.GlobalCLIArgs._Singleton__instance = None
     yield
@@ -956,9 +956,7 @@ def test_install_collection_with_no_dependency(collection_artifact, monkeypatch)
         (["good_signature", "good_signature"], '2', [], True),
     ]
 )
-def test_verify_file_signatures(signatures, required_successful_count, ignore_errors, expected_success):
-    # type: (List[bool], int, bool, bool) -> None
-
+def test_verify_file_signatures(signatures: list[str], required_successful_count: str, ignore_errors: list[str], expected_success: bool) -> None:
     def gpg_error_generator(results):
         for result in results:
             if isinstance(result, collection.gpg.GpgBaseError):

@@ -23,7 +23,7 @@ from ansible.errors import AnsibleParserError
 
 import pytest
 
-SPLIT_DATA = (
+SPLIT_DATA: tuple[tuple[str | None, list[str], dict[str, str]], ...] = (
     (None,
         [],
         {}),

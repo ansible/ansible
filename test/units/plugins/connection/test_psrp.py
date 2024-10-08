@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import pytest
 import sys
+import typing as t
 
 from io import StringIO
 from unittest.mock import MagicMock
@@ -46,7 +47,7 @@ def psrp_connection():
 
 class TestConnectionPSRP(object):
 
-    OPTIONS_DATA = (
+    OPTIONS_DATA: tuple[tuple[dict[str, t.Any], dict[str, t.Any]], ...] = (
         # default options
         (
             {},

@@ -11,7 +11,7 @@ import ansible.plugins.filter.mathstuff as ms
 from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
 
 
-UNIQUE_DATA = [
+UNIQUE_DATA: list[tuple[list, list]] = [
     ([], []),
     ([1, 3, 4, 2], [1, 3, 4, 2]),
     ([1, 3, 2, 4, 2, 3], [1, 3, 2, 4]),
@@ -19,7 +19,7 @@ UNIQUE_DATA = [
     ([1, 1, 4, 2, 1, 4, 3, 2], [1, 4, 2, 3]),
 ]
 
-TWO_SETS_DATA = [
+TWO_SETS_DATA: list[tuple[list, list, tuple]] = [
     ([], [], ([], [], [])),
     ([1, 2], [1, 2], ([1, 2], [], [])),
     ([1, 2], [3, 4], ([], [1, 2], [1, 2, 3, 4])),

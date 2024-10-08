@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import os
+import typing as t
 
 import pytest
 
@@ -22,7 +23,7 @@ pytest.importorskip("winrm")
 
 class TestConnectionWinRM(object):
 
-    OPTIONS_DATA = (
+    OPTIONS_DATA: tuple[tuple[dict[str, t.Any], dict[str, t.Any], dict[str, t.Any], bool], ...] = (
         # default options
         (
             {'_extras': {}},
