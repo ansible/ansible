@@ -440,7 +440,7 @@ class PlayIterator:
                     else:
                         state.cur_handlers_task += 1
                         if task.is_host_notified(host):
-                            break
+                            return state, task
 
             elif state.run_state == IteratingStates.COMPLETE:
                 return (state, None)
@@ -463,9 +463,15 @@ class PlayIterator:
                         and all(not h.notified_hosts for h in self.handlers)
                     )
                 ):
-                    continue
-
-                break
+                    display.debug("No handler notifications for %s, skipping." % host.name)
+                elif (
+                    (role := task._role)
+                    and role._metadata.allow_duplicates is False
+                    and host.name in self._play._get_cached_role(role)._completed
+                ):
+                    display.debug("'%s' skipped because role has already run" % task)
+                else:
+                    break
 
         return (state, task)
 

@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from ansible import constants as C
 from ansible import context
-from ansible.errors import AnsibleParserError, AnsibleAssertionError
+from ansible.errors import AnsibleParserError, AnsibleAssertionError, AnsibleError
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.six import binary_type, string_types, text_type
@@ -99,6 +99,15 @@ class Play(Base, Taggable, CollectionSearch):
 
     def __repr__(self):
         return self.get_name()
+
+    def _get_cached_role(self, role):
+        role_path = role.get_role_path()
+        role_cache = self.role_cache[role_path]
+        try:
+            idx = role_cache.index(role)
+            return role_cache[idx]
+        except ValueError:
+            raise AnsibleError(f'Cannot locate {role.get_name()} in role cache')
 
     def _validate_hosts(self, attribute, name, value):
         # Only validate 'hosts' if a value was passed in to original data set.
