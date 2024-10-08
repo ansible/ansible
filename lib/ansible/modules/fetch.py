@@ -89,6 +89,7 @@ notes:
   C(fail_when) or C(ignore_errors) to get this ability. They may
   also explicitly set O(fail_on_missing) to V(false) to get the
   non-failing behaviour.
+- Ansible 2.19 and onwards, SHA256 is used to calculate checksum.
 seealso:
 - module: ansible.builtin.copy
 - module: ansible.builtin.slurp

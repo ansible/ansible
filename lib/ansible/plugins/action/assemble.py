@@ -29,7 +29,7 @@ from ansible.errors import AnsibleError, AnsibleAction, _AnsibleActionDone, Ansi
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
-from ansible.utils.hashing import checksum_s
+from ansible.utils.hashing import secure_hash_s
 
 
 class ActionModule(ActionBase):
@@ -122,7 +122,7 @@ class ActionModule(ActionBase):
             # Does all work assembling the file
             path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden, decrypt)
 
-            path_checksum = checksum_s(path)
+            path_checksum = secure_hash_s(path, hash_func=hashlib.sha256)
             dest = self._remote_expand_user(dest)
             dest_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=follow)
 

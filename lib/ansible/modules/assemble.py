@@ -243,7 +243,7 @@ def main():
         module.fail_json(msg="validate must contain %%s: %s" % validate)
 
     path = assemble_from_fragments(src, delimiter, compiled_regexp, ignore_hidden, module.tmpdir)
-    path_hash = module.sha1(path)
+    path_hash = module.sha256(path)
     result['checksum'] = path_hash
 
     # Backwards compat.  This won't return data if FIPS mode is active
@@ -254,7 +254,7 @@ def main():
     result['md5sum'] = pathmd5
 
     if os.path.exists(dest):
-        dest_hash = module.sha1(dest)
+        dest_hash = module.sha256(dest)
 
     if path_hash != dest_hash:
         if validate:

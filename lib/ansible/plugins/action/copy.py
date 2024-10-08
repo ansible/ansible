@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import os.path
@@ -31,7 +32,7 @@ from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
-from ansible.utils.hashing import checksum
+from ansible.utils.hashing import secure_hash
 
 
 # Supplement the FILE_COMMON_ARGUMENTS with arguments that are specific to file
@@ -278,7 +279,7 @@ class ActionModule(ActionBase):
             return None
 
         # Generate a hash of the local file.
-        local_checksum = checksum(source_full)
+        local_checksum = secure_hash(source_full, hash_func=hashlib.sha256)
 
         if local_checksum != dest_status['checksum']:
             # The checksums don't match and we will change or error out.

@@ -16,15 +16,16 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-import os
 import base64
+import hashlib
+import os
 from ansible.errors import AnsibleConnectionFailure, AnsibleError, AnsibleActionFail, AnsibleActionSkip
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
-from ansible.utils.hashing import checksum, checksum_s, md5, secure_hash
+from ansible.utils.hashing import md5, secure_hash, secure_hash_s
 from ansible.utils.path import makedirs_safe, is_subpath
 
 display = Display()
@@ -127,7 +128,7 @@ class ActionModule(ActionBase):
                     if slurpres['encoding'] == 'base64':
                         remote_data = base64.b64decode(slurpres['content'])
                     if remote_data is not None:
-                        remote_checksum = checksum_s(remote_data)
+                        remote_checksum = secure_hash_s(remote_data, hash_func=hashlib.sha256)
 
             # calculate the destination name
             if os.path.sep not in self._connection._shell.join_path('a', ''):
@@ -167,7 +168,7 @@ class ActionModule(ActionBase):
             dest = os.path.normpath(dest)
 
             # calculate checksum for the local file
-            local_checksum = checksum(dest)
+            local_checksum = secure_hash(dest, hash_func=hashlib.sha256)
 
             if remote_checksum != local_checksum:
                 # create the containing directories, if needed
@@ -183,7 +184,7 @@ class ActionModule(ActionBase):
                         f.close()
                     except (IOError, OSError) as e:
                         raise AnsibleActionFail("Failed to fetch the file: %s" % e)
-                new_checksum = secure_hash(dest)
+                new_checksum = secure_hash(dest, hash_func=hashlib.sha256)
                 # For backwards compatibility. We'll return None on FIPS enabled systems
                 try:
                     new_md5 = md5(dest)
