@@ -1,5 +1,5 @@
-# Copyright: 2023, Ansible Project
-# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause )
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
 
@@ -7,10 +7,15 @@ from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.six import string_types
 
+"""
+Utilities to create module/plugin specs from their documentation.
+"""
+
 ARGS_DOCS_KEYS = ("aliases", "choices", "default", "elements", "no_log", "required", "type")
 
 
-def option_to_spec(option, deprecate=None):
+def option_to_spec(option, deprecate=None) -> dict:
+    """ convert from doc option entry to spec arg definition """
 
     # use known common keys to copy data
     spec = {name: option[name] for name in ARGS_DOCS_KEYS if name in option}
@@ -31,8 +36,9 @@ def option_to_spec(option, deprecate=None):
     return spec
 
 
-def restriction_to_spec(r):
-    ''' use documentation to create parameter restrictions for args_spec '''
+def restriction_to_spec(r) -> dict:
+    """ read documented restriction and create spec restriction """
+
     name = None
     rest = None  # normally a list except for 'required_by'
     if 'required' in r:
@@ -67,26 +73,26 @@ def restriction_to_spec(r):
 
 
 def add_options_from_doc(argspec, options, deprecate=None):
-    ''' Add option doc entries into argspec '''
+    """ Add option doc entries into argspec """
     for n, o in sorted(options.items()):
         argspec[n] = option_to_spec(o, deprecate)
 
 
 def get_options_from_doc(options, deprecate=None):
-    ''' Add option doc entries into argspec '''
+    """ Add option doc entries into argspec """
     argspec = {}
     add_options_from_doc(argspec, options, deprecate)
     return argspec
 
 
 def add_restrictions_from_doc(restrict_args, restrictions):
-    ''' add restriction doc entries into argspec '''
+    """ add restriction doc entries into argspec """
     for r in restrictions:
         restrict_args.append(restriction_to_spec(r))
 
 
 def get_restrictions_from_doc(restrictions):
-    ''' add restriction doc entries into argspec '''
+    """ add restriction doc entries into argspec """
     reargs = {}
     add_restrictions_from_doc(reargs, restrictions)
     return reargs
@@ -103,7 +109,7 @@ def validate_spec_from_plugin(plugin):
     pass
 
 
-e1 = '''
+e1 = """
 # example usage:
 
         #prep
@@ -122,12 +128,12 @@ e1 = '''
         no_log_values = valided._no_log_values
         aliases = validated._aliases
 
-'''
+"""
 
 # TODO: attributes = {}
 # add_attributes(attributes, doc['ATTRIBUTES'])
 
-e2 = '''
+e2 = """
 # example of DOCUMENTATION with requirements:
 options:
      ...jkk
@@ -160,4 +166,4 @@ restrictions:
    - required: x
      description: x is required if b or c are set
      by: [b,c]
-'''
+"""
