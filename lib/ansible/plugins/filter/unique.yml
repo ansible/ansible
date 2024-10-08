@@ -10,6 +10,10 @@ DOCUMENTATION:
       description: A list.
       type: list
       required: true
+    case_sensitive:
+      description: Whether to consider case when comparing elements.
+      default: false
+      type: bool
   seealso:
     - plugin_type: filter
       plugin: ansible.builtin.difference
@@ -24,6 +28,14 @@ EXAMPLES: |
   # list1: [1, 2, 5, 1, 3, 4, 10]
   {{ list1 | unique }}
   # => [1, 2, 5, 3, 4, 10]
+  
+  # return case sensitive unique elements
+  {{ ['a', 'A', 'a'] | unique('case_sensitive=true') }}
+  # => ['a', 'A']
+  
+  # return case insensitive unique elements
+  {{ ['b', 'B', 'b'] | unique() }}
+  # => ['b']
 RETURN:
   _value:
     description: A list with unique elements, also known as a set.
