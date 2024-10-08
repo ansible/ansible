@@ -28,7 +28,7 @@ def call_galaxy_cli(args):
         co.GlobalCLIArgs._Singleton__instance = orig
 
 
-@pytest.fixture(autouse='function')
+@pytest.fixture(autouse=True)
 def reset_cli_args():
     co.GlobalCLIArgs._Singleton__instance = None
     yield

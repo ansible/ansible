@@ -29,7 +29,7 @@ from ansible.utils import context_objects as co
 from ansible.utils.display import Display
 
 
-@pytest.fixture(autouse='function')
+@pytest.fixture(autouse=True)
 def reset_cli_args():
     co.GlobalCLIArgs._Singleton__instance = None
     # Required to initialise the GalaxyAPI object

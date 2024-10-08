@@ -200,7 +200,7 @@ class TestCollectedFacts(unittest.TestCase):
                       'env']
     not_expected_facts = ['facter', 'ohai']
 
-    collected_facts = {}
+    collected_facts: dict[str, str] = {}
 
     def _mock_module(self, gather_subset=None):
         return mock_module(gather_subset=self.gather_subset)

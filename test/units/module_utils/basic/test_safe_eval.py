@@ -5,11 +5,14 @@
 from __future__ import annotations
 
 from itertools import chain
+
+import typing as t
+
 import pytest
 
 
 # Strings that should be converted into a typed value
-VALID_STRINGS = (
+VALID_STRINGS: tuple[tuple[str, t.Any], ...] = (
     ("'a'", 'a'),
     ("'1'", '1'),
     ("1", 1),

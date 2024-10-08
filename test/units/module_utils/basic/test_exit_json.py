@@ -7,12 +7,13 @@ from __future__ import annotations
 import json
 import sys
 import datetime
+import typing as t
 
 import pytest
 
 from ansible.module_utils.common import warnings
 
-EMPTY_INVOCATION = {u'module_args': {}}
+EMPTY_INVOCATION: dict[str, dict[str, t.Any]] = {u'module_args': {}}
 DATETIME = datetime.datetime.strptime('2020-07-13 12:50:00', '%Y-%m-%d %H:%M:%S')
 
 
@@ -20,7 +21,7 @@ class TestAnsibleModuleExitJson:
     """
     Test that various means of calling exitJson and FailJson return the messages they've been given
     """
-    DATA = (
+    DATA: tuple[tuple[dict[str, t.Any]], ...] = (
         ({}, {'invocation': EMPTY_INVOCATION}),
         ({'msg': 'message'}, {'msg': 'message', 'invocation': EMPTY_INVOCATION}),
         ({'msg': 'success', 'changed': True},
