@@ -6,7 +6,6 @@ import itertools
 import json
 import os
 import datetime
-import configparser
 import typing as t
 
 from . import (
@@ -227,17 +226,6 @@ class PylintTest(SanitySingleVersion):
             else:
                 rcfile = os.path.join(SANITY_ROOT, 'pylint', 'config', 'default.cfg')
 
-        parser = configparser.ConfigParser()
-        parser.read(rcfile)
-
-        if parser.has_section('ansible-test'):
-            config = dict(parser.items('ansible-test'))
-        else:
-            config = {}
-
-        disable_plugins = set(i.strip() for i in config.get('disable-plugins', '').split(',') if i)
-        load_plugins = set(plugin_names + ['pylint.extensions.mccabe']) - disable_plugins
-
         if is_target:
             context_label = 'target'
             min_python_version = REMOTE_ONLY_PYTHON_VERSIONS[0]
@@ -245,24 +233,33 @@ class PylintTest(SanitySingleVersion):
             context_label = 'controller'
             min_python_version = CONTROLLER_PYTHON_VERSIONS[0]
 
-        cmd = [
-            python.path,
-            '-m', 'pylint',
-            '--jobs', '0',
-            '--reports', 'n',
-            '--max-line-length', '160',
-            '--max-complexity', '20',
-            '--rcfile', rcfile,
-            '--output-format', 'json',
-            '--load-plugins', ','.join(sorted(load_plugins)),
-            '--py-version', min_python_version,
-        ] + paths  # fmt: skip
+        load_plugins = set(plugin_names)
+        plugin_options: dict[str, str] = {}
 
+        # plugin: deprecated (ansible-test)
         if data_context().content.collection:
-            cmd.extend(['--collection-name', data_context().content.collection.full_name])
+            plugin_options.update({'--collection-name': data_context().content.collection.full_name})
 
             if collection_detail and collection_detail.version:
-                cmd.extend(['--collection-version', collection_detail.version])
+                plugin_options.update({'--collection-version': collection_detail.version})
+
+        # plugin: pylint.extensions.mccabe
+        if args.enable_optional_errors:
+            load_plugins.add('pylint.extensions.mccabe')
+            plugin_options.update({'--max-complexity': '20'})
+
+        options = {
+            '--py-version': min_python_version,
+            '--load-plugins': ','.join(sorted(load_plugins)),
+            '--rcfile': rcfile,
+            '--jobs': '0',
+            '--reports': 'n',
+            '--output-format': 'json',
+        }
+
+        cmd = [python.path, '-m', 'pylint']
+        cmd.extend(itertools.chain.from_iterable((options | plugin_options).items()))
+        cmd.extend(paths)
 
         append_python_path = [plugin_dir]
 
