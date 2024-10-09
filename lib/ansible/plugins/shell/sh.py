@@ -3,7 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 name: sh
 short_description: "POSIX shell (/bin/sh)"
 version_added: historical
@@ -11,7 +11,7 @@ description:
   - This shell plugin is the one you want to use on most Unix systems, it is the most compatible and widely installed shell.
 extends_documentation_fragment:
   - shell_common
-'''
+"""
 
 from ansible.plugins.shell import ShellBase
 

@@ -207,7 +207,7 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
         self.assertTrue(self.is_unsafe(res), 'returned value from template.template (%s) is not marked unsafe' % res)
 
     def test_weird(self):
-        data = u'''1 2 #}huh{# %}ddfg{% }}dfdfg{{  {%what%} {{#foo#}} {%{bar}%} {#%blip%#} {{asdfsd%} 3 4 {{foo}} 5 6 7'''
+        data = u"""1 2 #}huh{# %}ddfg{% }}dfdfg{{  {%what%} {{#foo#}} {%{bar}%} {#%blip%#} {{asdfsd%} 3 4 {{foo}} 5 6 7"""
         self.assertRaisesRegex(AnsibleError,
                                'template error while templating string',
                                self.templar.template,

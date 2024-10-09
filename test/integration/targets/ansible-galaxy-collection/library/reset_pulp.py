@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: reset_pulp
 short_description: Resets pulp back to the initial state
@@ -48,9 +48,9 @@ options:
     elements: str
 author:
 - Jordan Borean (@jborean93)
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: reset pulp content
   reset_pulp:
     pulp_api: http://galaxy:24817
@@ -61,11 +61,11 @@ EXAMPLES = '''
     namespaces:
     - namespace1
     - namespace2
-'''
+"""
 
-RETURN = '''
+RETURN = """
 #
-'''
+"""
 
 import json
 

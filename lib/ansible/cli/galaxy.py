@@ -177,11 +177,11 @@ class RoleDistributionServer:
 
 
 class GalaxyCLI(CLI):
-    '''Command to manage Ansible roles and collections.
+    """Command to manage Ansible roles and collections.
 
        None of the CLI tools are designed to run concurrently with themselves.
        Use an external scheduler and/or locking to ensure there are no clashing operations.
-    '''
+    """
 
     name = 'ansible-galaxy'
 
@@ -212,7 +212,7 @@ class GalaxyCLI(CLI):
         super(GalaxyCLI, self).__init__(args)
 
     def init_parser(self):
-        ''' create an options parser for bin/ansible '''
+        """ create an options parser for bin/ansible """
 
         super(GalaxyCLI, self).init_parser(
             desc="Perform various Role and Collection related operations.",
@@ -1721,7 +1721,7 @@ class GalaxyCLI(CLI):
         publish_collection(collection_path, self.api, wait, timeout)
 
     def execute_search(self):
-        ''' searches for roles on the Ansible Galaxy server'''
+        """ searches for roles on the Ansible Galaxy server"""
         page_size = 1000
         search = None
 

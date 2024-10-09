@@ -116,7 +116,7 @@ except ImportError:
 
 
 class CLI(ABC):
-    ''' code behind bin/ansible* programs '''
+    """ code behind bin/ansible* programs """
 
     PAGER = C.config.get_config_value('PAGER')
 
@@ -317,7 +317,7 @@ class CLI(ABC):
 
     @staticmethod
     def ask_passwords():
-        ''' prompt for connection and become passwords if needed '''
+        """ prompt for connection and become passwords if needed """
 
         op = context.CLIARGS
         sshpass = None
@@ -347,7 +347,7 @@ class CLI(ABC):
         return (sshpass, becomepass)
 
     def validate_conflicts(self, op, runas_opts=False, fork_opts=False):
-        ''' check for conflicting options '''
+        """ check for conflicting options """
 
         if fork_opts:
             if op.forks < 1:
@@ -459,7 +459,7 @@ class CLI(ABC):
 
     @staticmethod
     def version_info(gitinfo=False):
-        ''' return full ansible version info '''
+        """ return full ansible version info """
         if gitinfo:
             # expensive call, user with care
             ansible_version_string = opt_help.version()
@@ -485,7 +485,7 @@ class CLI(ABC):
 
     @staticmethod
     def pager(text):
-        ''' find reasonable way to display text '''
+        """ find reasonable way to display text """
         # this is a much simpler form of what is in pydoc.py
         if not sys.stdout.isatty():
             display.display(text, screen_only=True)
@@ -504,7 +504,7 @@ class CLI(ABC):
 
     @staticmethod
     def pager_pipe(text):
-        ''' pipe text through a pager '''
+        """ pipe text through a pager """
         if 'less' in CLI.PAGER:
             os.environ['LESS'] = CLI.LESS_OPTS
         try:

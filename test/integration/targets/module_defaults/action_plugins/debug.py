@@ -24,7 +24,7 @@ from ansible.plugins.action import ActionBase
 
 
 class ActionModule(ActionBase):
-    ''' Print statements during execution '''
+    """ Print statements during execution """
 
     TRANSFERS_FILES = False
     _VALID_ARGS = frozenset(('msg', 'var', 'verbosity'))

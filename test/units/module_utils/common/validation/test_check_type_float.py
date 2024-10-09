@@ -13,7 +13,7 @@ from ansible.module_utils.common.validation import check_type_float
 def test_check_type_float():
     test_cases = (
         ('1.5', 1.5),
-        ('''1.5''', 1.5),
+        ("""1.5""", 1.5),
         (u'1.5', 1.5),
         (1002, 1002.0),
         (1.0, 1.0),

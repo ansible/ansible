@@ -71,7 +71,7 @@ class TestDataLoader(unittest.TestCase):
     @patch.object(DataLoader, '_get_file_contents')
     def test_tab_error(self, mock_def, mock_get_error_lines):
         mock_def.return_value = (u"""---\nhosts: localhost\nvars:\n  foo: bar\n\tblip: baz""", True)
-        mock_get_error_lines.return_value = ('''\tblip: baz''', '''..foo: bar''')
+        mock_get_error_lines.return_value = ("""\tblip: baz""", """..foo: bar""")
         with self.assertRaises(AnsibleParserError) as cm:
             self._loader.load_from_file('dummy_yaml_text.txt')
         self.assertIn(yaml_strings.YAML_COMMON_LEADING_TAB_ERROR, str(cm.exception))

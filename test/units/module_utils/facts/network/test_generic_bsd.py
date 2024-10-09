@@ -17,7 +17,7 @@ def mock_get_bin_path(command):
     return cmds.get(command, None)
 
 
-NETBSD_IFCONFIG_A_OUT_7_1 = r'''
+NETBSD_IFCONFIG_A_OUT_7_1 = r"""
 lo0: flags=8049<UP,LOOPBACK,RUNNING,MULTICAST> mtu 33624
         inet 127.0.0.1 netmask 0xff000000
         inet6 ::1 prefixlen 128
@@ -33,9 +33,9 @@ re0: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
         status: active
         inet 192.168.122.205 netmask 0xffffff00 broadcast 192.168.122.255
         inet6 fe80::5054:ff:fe63:55af%re0 prefixlen 64 scopeid 0x2
-'''
+"""
 
-NETBSD_IFCONFIG_A_OUT_POST_7_1 = r'''
+NETBSD_IFCONFIG_A_OUT_POST_7_1 = r"""
 lo0: flags=0x8049<UP,LOOPBACK,RUNNING,MULTICAST> mtu 33624
         inet 127.0.0.1/8 flags 0x0
         inet6 ::1/128 flags 0x20<NODAD>
@@ -51,7 +51,7 @@ re0: flags=0x8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
         status: active
         inet 192.168.122.205/24 broadcast 192.168.122.255 flags 0x0
         inet6 fe80::5054:ff:fe63:55af%re0/64 flags 0x0 scopeid 0x2
-'''
+"""
 
 NETBSD_EXPECTED = {'all_ipv4_addresses': ['192.168.122.205'],
                    'all_ipv6_addresses': ['fe80::5054:ff:fe63:55af%re0'],

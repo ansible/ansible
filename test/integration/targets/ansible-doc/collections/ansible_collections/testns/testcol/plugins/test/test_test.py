@@ -6,7 +6,7 @@ def yolo(value):
 
 
 class TestModule(object):
-    ''' Ansible core jinja2 tests '''
+    """ Ansible core jinja2 tests """
 
     def tests(self):
         return {

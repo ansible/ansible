@@ -127,7 +127,7 @@ class Play(Base, Taggable, CollectionSearch):
                 raise AnsibleParserError("Hosts list must be a sequence or string. Please check your playbook.")
 
     def get_name(self):
-        ''' return the name of the Play '''
+        """ return the name of the Play """
         if self.name:
             return self.name
 
@@ -146,9 +146,9 @@ class Play(Base, Taggable, CollectionSearch):
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def preprocess_data(self, ds):
-        '''
+        """
         Adjusts play datastructure to cleanup old/legacy items
-        '''
+        """
 
         if not isinstance(ds, dict):
             raise AnsibleAssertionError('while preprocessing data (%s), ds should be a dict but was a %s' % (ds, type(ds)))
@@ -169,40 +169,40 @@ class Play(Base, Taggable, CollectionSearch):
         return super(Play, self).preprocess_data(ds)
 
     def _load_tasks(self, attr, ds):
-        '''
+        """
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
-        '''
+        """
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
         except AssertionError as e:
             raise AnsibleParserError("A malformed block was encountered while loading tasks: %s" % to_native(e), obj=self._ds, orig_exc=e)
 
     def _load_pre_tasks(self, attr, ds):
-        '''
+        """
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
-        '''
+        """
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
         except AssertionError as e:
             raise AnsibleParserError("A malformed block was encountered while loading pre_tasks", obj=self._ds, orig_exc=e)
 
     def _load_post_tasks(self, attr, ds):
-        '''
+        """
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
-        '''
+        """
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
         except AssertionError as e:
             raise AnsibleParserError("A malformed block was encountered while loading post_tasks", obj=self._ds, orig_exc=e)
 
     def _load_handlers(self, attr, ds):
-        '''
+        """
         Loads a list of blocks from a list which may be mixed handlers/blocks.
         Bare handlers outside of a block are given an implicit block.
-        '''
+        """
         try:
             return self._extend_value(
                 self.handlers,
@@ -213,10 +213,10 @@ class Play(Base, Taggable, CollectionSearch):
             raise AnsibleParserError("A malformed block was encountered while loading handlers", obj=self._ds, orig_exc=e)
 
     def _load_roles(self, attr, ds):
-        '''
+        """
         Loads and returns a list of RoleInclude objects from the datastructure
         list of role definitions and creates the Role from those objects
-        '''
+        """
 
         if ds is None:
             ds = []
@@ -249,13 +249,13 @@ class Play(Base, Taggable, CollectionSearch):
         return vars_prompts
 
     def _compile_roles(self):
-        '''
+        """
         Handles the role compilation step, returning a flat list of tasks
         with the lowest level dependencies first. For example, if a role R
         has a dependency D1, which also has a dependency D2, the tasks from
         D2 are merged first, followed by D1, and lastly by the tasks from
         the parent role R last. This is done for all roles in the Play.
-        '''
+        """
 
         block_list = []
 
@@ -270,10 +270,10 @@ class Play(Base, Taggable, CollectionSearch):
         return block_list
 
     def compile_roles_handlers(self):
-        '''
+        """
         Handles the role handler compilation step, returning a flat list of Handlers
         This is done for all roles in the Play.
-        '''
+        """
 
         block_list = []
 
@@ -286,11 +286,11 @@ class Play(Base, Taggable, CollectionSearch):
         return block_list
 
     def compile(self):
-        '''
+        """
         Compiles and returns the task list for this play, compiled from the
         roles (which are themselves compiled recursively) and/or the list of
         tasks specified in the play.
-        '''
+        """
         # create a block containing a single flush handlers meta
         # task, so we can be sure to run handlers at certain points
         # of the playbook execution

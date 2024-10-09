@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: add_host
 short_description: Add a host (and alternatively a group) to the ansible-playbook in-memory inventory
@@ -69,9 +69,9 @@ seealso:
 author:
 - Ansible Core Team
 - Seth Vidal (@skvidal)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Add host to group 'just_created' with variable foo=42
   ansible.builtin.add_host:
     name: '{{ ip_from_ec2 }}'
@@ -111,4 +111,4 @@ EXAMPLES = r'''
     name: '{{ item }}'
     groups: done
   loop: "{{ ansible_play_hosts }}"
-'''
+"""

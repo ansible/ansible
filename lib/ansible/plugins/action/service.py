@@ -35,7 +35,7 @@ class ActionModule(ActionBase):
     BUILTIN_SVC_MGR_MODULES = set(['openwrt_init', 'service', 'systemd', 'sysvinit'])
 
     def run(self, tmp=None, task_vars=None):
-        ''' handler for package operations '''
+        """ handler for package operations """
 
         self._supports_check_mode = True
         self._supports_async = True

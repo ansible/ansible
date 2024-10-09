@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: copy
 version_added: historical
@@ -154,9 +154,9 @@ attributes:
   vault:
     support: full
     version_added: '2.2'
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Copy file with owner and permissions
   ansible.builtin.copy:
     src: /srv/myfiles/foo.conf
@@ -219,9 +219,9 @@ EXAMPLES = r'''
     src: /etc/foo.conf
     dest: /path/to/link  # link to /path/to/file
     follow: no
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 dest:
     description: Destination file/path.
     returned: success
@@ -282,7 +282,7 @@ state:
     returned: success
     type: str
     sample: file
-'''
+"""
 
 import errno
 import filecmp
@@ -305,9 +305,9 @@ class AnsibleModuleError(Exception):
 
 
 def split_pre_existing_dir(dirname):
-    '''
+    """
     Return the first pre-existing directory and a list of the new directories that will be created.
-    '''
+    """
     head, tail = os.path.split(dirname)
     b_head = to_bytes(head, errors='surrogate_or_strict')
     if head == '':
@@ -323,9 +323,9 @@ def split_pre_existing_dir(dirname):
 
 
 def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list, module, directory_args, changed):
-    '''
+    """
     Walk the new directories list and make sure that permissions are as we would expect
-    '''
+    """
 
     if new_directory_list:
         working_dir = os.path.join(pre_existing_dir, new_directory_list.pop(0))

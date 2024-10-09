@@ -23,7 +23,7 @@ from .. base import BaseFactsTest
 
 from ansible.module_utils.facts.other.facter import FacterFactCollector
 
-facter_json_output = '''
+facter_json_output = """
 {
   "operatingsystemmajrelease": "25",
   "hardwareisa": "x86_64",
@@ -177,7 +177,7 @@ facter_json_output = '''
   "uptime_hours": 432,
   "kernelversion": "4.9.14"
 }
-'''
+"""
 
 
 class TestFacterCollector(BaseFactsTest):

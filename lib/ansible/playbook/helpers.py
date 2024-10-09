@@ -29,11 +29,11 @@ display = Display()
 
 
 def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
-    '''
+    """
     Given a list of mixed task/block data (parsed from YAML),
     return a list of Block() objects, where implicit blocks
     are created for each bare Task.
-    '''
+    """
 
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.block import Block
@@ -80,10 +80,10 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
 
 
 def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
-    '''
+    """
     Given a list of task datastructures (parsed from YAML),
     return a list of Task() or TaskInclude() objects.
-    '''
+    """
 
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.block import Block

@@ -76,7 +76,7 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         def ping_module_test(connect_timeout):
-            ''' Test ping module, if available '''
+            """ Test ping module, if available """
             display.vvv("wait_for_connection: attempting ping module test")
             # re-run interpreter discovery if we ran it in the first iteration
             if self._discovered_interpreter_key:

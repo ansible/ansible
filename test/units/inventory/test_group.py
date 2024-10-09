@@ -142,10 +142,10 @@ class TestGroup(unittest.TestCase):
         )
 
     def test_ancestors_recursive_loop_safe(self):
-        '''
+        """
         The get_ancestors method may be referenced before circular parenting
         checks, so the method is expected to be stable even with loops
-        '''
+        """
         A = Group('A')
         B = Group('B')
         A.parent_groups.append(B)

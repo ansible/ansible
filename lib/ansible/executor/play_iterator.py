@@ -563,9 +563,9 @@ class PlayIterator:
             self._clear_state_errors(state.always_child_state)
 
     def get_active_state(self, state):
-        '''
+        """
         Finds the active state, recursively if necessary when there are child states.
-        '''
+        """
         if state.run_state == IteratingStates.TASKS and state.tasks_child_state is not None:
             return self.get_active_state(state.tasks_child_state)
         elif state.run_state == IteratingStates.RESCUE and state.rescue_child_state is not None:
@@ -575,10 +575,10 @@ class PlayIterator:
         return state
 
     def is_any_block_rescuing(self, state):
-        '''
+        """
         Given the current HostState state, determines if the current block, or any child blocks,
         are in rescue mode.
-        '''
+        """
         if state.run_state == IteratingStates.TASKS and state.get_current_block().rescue:
             return True
         if state.tasks_child_state is not None:

@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 author: Ansible Core Team (@ansible)
 module: import_playbook
@@ -42,9 +42,9 @@ seealso:
 - module: ansible.builtin.include_tasks
 - ref: playbooks_reuse
   description: More information related to including and importing playbooks, roles and tasks.
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - hosts: localhost
   tasks:
     - ansible.builtin.debug:
@@ -69,8 +69,8 @@ EXAMPLES = r'''
 
     - name: This fails because I'm inside a play already
       ansible.builtin.import_playbook: stuff.yaml
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 # This module does not return anything except plays to execute.
-'''
+"""

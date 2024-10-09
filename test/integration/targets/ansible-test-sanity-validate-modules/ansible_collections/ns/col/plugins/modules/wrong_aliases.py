@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: wrong_aliases
 short_description: Aliases that are attached to the wrong option in documentation
 description: Aliases that are attached to the wrong option in documentation.
@@ -18,10 +18,10 @@ options:
   bar:
     description: Bar.
     type: str
-'''
+"""
 
-EXAMPLES = '''#'''
-RETURN = ''''''
+EXAMPLES = """#"""
+RETURN = """"""
 
 from ansible.module_utils.basic import AnsibleModule
 

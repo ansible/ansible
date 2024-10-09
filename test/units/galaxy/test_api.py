@@ -40,7 +40,7 @@ def reset_cli_args():
 
 @pytest.fixture()
 def collection_artifact(tmp_path_factory):
-    ''' Creates a collection artifact tarball that is ready to be published '''
+    """ Creates a collection artifact tarball that is ready to be published """
     output_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Output'))
 
     tar_path = os.path.join(output_dir, 'namespace-collection-v1.0.0.tar.gz')

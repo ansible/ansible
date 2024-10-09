@@ -45,17 +45,17 @@ def to_safe_group_name(name):
 
 
 def detect_range(line=None):
-    '''
+    """
     A helper function that checks a given host line to see if it contains
     a range pattern described in the docstring above.
 
     Returns True if the given line contains a pattern, else False.
-    '''
+    """
     return '[' in line
 
 
 def expand_hostname_range(line=None):
-    '''
+    """
     A helper function that expands a given line that contains a pattern
     specified in top docstring, and returns a list that consists of the
     expanded version.
@@ -65,7 +65,7 @@ def expand_hostname_range(line=None):
     string splitting.
 
     References: https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html#hosts-and-groups
-    '''
+    """
     all_hosts = []
     if line:
         # A hostname such as db[1:6]-node is considered to consists
@@ -166,7 +166,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self._vars = {}
 
     def parse(self, inventory, loader, path, cache=True):
-        ''' Populates inventory from the given data. Raises an error on any parse failure
+        """ Populates inventory from the given data. Raises an error on any parse failure
             :arg inventory: a copy of the previously accumulated inventory data,
                  to be updated with any new data this plugin provides.
                  The inventory can be empty if no other source/plugin ran successfully.
@@ -177,7 +177,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
                  but it can also be a raw string for this plugin to consume
             :arg cache: a boolean that indicates if the plugin should use the cache or not
                  you can ignore if this plugin does not implement caching.
-        '''
+        """
 
         self.loader = loader
         self.inventory = inventory
@@ -185,12 +185,12 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self._vars = load_extra_vars(loader)
 
     def verify_file(self, path):
-        ''' Verify if file is usable by this plugin, base does minimal accessibility check
+        """ Verify if file is usable by this plugin, base does minimal accessibility check
             :arg path: a string that was passed as an inventory source,
                  it normally is a path to a config file, but this is not a requirement,
                  it can also be parsed itself as the inventory data to process.
                  So only call this base class if you expect it to be a file.
-        '''
+        """
 
         valid = False
         b_path = to_bytes(path, errors='surrogate_or_strict')
@@ -210,9 +210,9 @@ class BaseInventoryPlugin(AnsiblePlugin):
                 self.inventory.set_variable(host, k, variables[k])
 
     def _read_config_data(self, path):
-        ''' validate config and set options as appropriate
+        """ validate config and set options as appropriate
             :arg path: path to common yaml format config file for this plugin
-        '''
+        """
 
         config = {}
         try:
@@ -244,20 +244,20 @@ class BaseInventoryPlugin(AnsiblePlugin):
         return config
 
     def _consume_options(self, data):
-        ''' update existing options from alternate configuration sources not normally used by Ansible.
+        """ update existing options from alternate configuration sources not normally used by Ansible.
             Many API libraries already have existing configuration sources, this allows plugin author to leverage them.
             :arg data: key/value pairs that correspond to configuration options for this plugin
-        '''
+        """
 
         for k in self._options:
             if k in data:
                 self._options[k] = data.pop(k)
 
     def _expand_hostpattern(self, hostpattern):
-        '''
+        """
         Takes a single host pattern and returns a list of hostnames and an
         optional port number that applies to all of them.
-        '''
+        """
         # Can the given hostpattern be parsed as a host with an optional port
         # specification?
 
@@ -307,7 +307,7 @@ class Cacheable(object):
         return "{0}_{1}".format(self.NAME, self._get_cache_prefix(path))
 
     def _get_cache_prefix(self, path):
-        ''' create predictable unique prefix for plugin/inventory '''
+        """ create predictable unique prefix for plugin/inventory """
 
         m = hashlib.sha1()
         m.update(to_bytes(self.NAME, errors='surrogate_or_strict'))
@@ -332,7 +332,7 @@ class Cacheable(object):
 class Constructable(object):
 
     def _compose(self, template, variables, disable_lookups=True):
-        ''' helper method for plugins to compose variables for Ansible based on jinja2 expression and inventory vars'''
+        """ helper method for plugins to compose variables for Ansible based on jinja2 expression and inventory vars"""
         t = self.templar
 
         try:
@@ -349,7 +349,7 @@ class Constructable(object):
                           disable_lookups=disable_lookups)
 
     def _set_composite_vars(self, compose, variables, host, strict=False):
-        ''' loops over compose entries to create vars for hosts '''
+        """ loops over compose entries to create vars for hosts """
         if compose and isinstance(compose, dict):
             for varname in compose:
                 try:
@@ -361,7 +361,7 @@ class Constructable(object):
                 self.inventory.set_variable(host, varname, composite)
 
     def _add_host_to_composed_groups(self, groups, variables, host, strict=False, fetch_hostvars=True):
-        ''' helper to create complex groups for plugins based on jinja2 conditionals, hosts that meet the conditional are added to group'''
+        """ helper to create complex groups for plugins based on jinja2 conditionals, hosts that meet the conditional are added to group"""
         # process each 'group entry'
         if groups and isinstance(groups, dict):
             if fetch_hostvars:
@@ -384,7 +384,7 @@ class Constructable(object):
                     self.inventory.add_child(group_name, host)
 
     def _add_host_to_keyed_groups(self, keys, variables, host, strict=False, fetch_hostvars=True):
-        ''' helper to create groups for plugins based on variable values and add the corresponding hosts to it'''
+        """ helper to create groups for plugins based on variable values and add the corresponding hosts to it"""
         if keys and isinstance(keys, list):
             for keyed in keys:
                 if keyed and isinstance(keyed, dict):

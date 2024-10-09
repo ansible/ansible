@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: constructed
     version_added: "2.4"
     short_description: Uses Jinja2 to construct vars and groups based on existing inventory.
@@ -33,9 +33,9 @@ DOCUMENTATION = '''
             version_added: '2.11'
     extends_documentation_fragment:
       - constructed
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
     # inventory.config file in YAML format
     plugin: ansible.builtin.constructed
     strict: False
@@ -77,7 +77,7 @@ EXAMPLES = r'''
         # this creates a common parent group for all ec2 availability zones
         - key: placement.availability_zone
           parent_group: all_ec2_zones
-'''
+"""
 
 import os
 
@@ -114,11 +114,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         return valid
 
     def get_all_host_vars(self, host, loader, sources):
-        ''' requires host object '''
+        """ requires host object """
         return combine_vars(self.host_groupvars(host, loader, sources), self.host_vars(host, loader, sources))
 
     def host_groupvars(self, host, loader, sources):
-        ''' requires host object '''
+        """ requires host object """
         gvars = get_group_vars(host.get_groups())
 
         if self.get_option('use_vars_plugins'):
@@ -127,7 +127,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         return gvars
 
     def host_vars(self, host, loader, sources):
-        ''' requires host object '''
+        """ requires host object """
         hvars = host.get_vars()
 
         if self.get_option('use_vars_plugins'):
@@ -136,7 +136,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         return hvars
 
     def parse(self, inventory, loader, path, cache=False):
-        ''' parses the inventory file '''
+        """ parses the inventory file """
 
         super(InventoryModule, self).parse(inventory, loader, path, cache=cache)
 

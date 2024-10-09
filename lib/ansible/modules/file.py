@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: file
 version_added: historical
@@ -123,9 +123,9 @@ attributes:
 author:
 - Ansible Core Team
 - Michael DeHaan
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Change file ownership, group and permissions
   ansible.builtin.file:
     path: /etc/foo.conf
@@ -214,8 +214,8 @@ EXAMPLES = r'''
     path: /etc/foo
     state: absent
 
-'''
-RETURN = r'''
+"""
+RETURN = r"""
 dest:
     description: Destination file/path, equal to the value passed to O(path).
     returned: O(state=touch), O(state=hard), O(state=link)
@@ -226,7 +226,7 @@ path:
     returned: O(state=absent), O(state=directory), O(state=file)
     type: str
     sample: /path/to/file.txt
-'''
+"""
 
 import errno
 import os
@@ -296,7 +296,7 @@ def additional_parameter_handling(module):
 
 
 def get_state(path):
-    ''' Find out current state '''
+    """ Find out current state """
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
     try:

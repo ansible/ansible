@@ -24,14 +24,14 @@ display = Display()
 
 
 class AdHocCLI(CLI):
-    ''' is an extra-simple tool/framework/API for doing 'remote things'.
+    """ is an extra-simple tool/framework/API for doing 'remote things'.
         this command allows you to define and run a single task 'playbook' against a set of hosts
-    '''
+    """
 
     name = 'ansible'
 
     def init_parser(self):
-        ''' create an options parser for bin/ansible '''
+        """ create an options parser for bin/ansible """
         super(AdHocCLI, self).init_parser(usage='%prog <host-pattern> [options]',
                                           desc="Define and run a single task 'playbook' against a set of hosts",
                                           epilog="Some actions do not make sense in Ad-Hoc (include, meta, etc)")
@@ -60,7 +60,7 @@ class AdHocCLI(CLI):
         self.parser.add_argument('args', metavar='pattern', help='host pattern')
 
     def post_process_args(self, options):
-        '''Post process and validate options for bin/ansible '''
+        """Post process and validate options for bin/ansible """
 
         options = super(AdHocCLI, self).post_process_args(options)
 
@@ -98,7 +98,7 @@ class AdHocCLI(CLI):
             tasks=[mytask])
 
     def run(self):
-        ''' create and execute the single task playbook '''
+        """ create and execute the single task playbook """
 
         super(AdHocCLI, self).run()
 

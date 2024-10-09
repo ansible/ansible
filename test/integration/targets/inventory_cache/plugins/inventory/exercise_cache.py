@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     inventory: exercise_cache
     short_description: run tests against the specified cache plugin
     description:
@@ -23,7 +23,7 @@ DOCUMENTATION = '''
         env: []
         cli: []
         default: 0  # never expire
-'''
+"""
 
 from ansible.errors import AnsibleError
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable

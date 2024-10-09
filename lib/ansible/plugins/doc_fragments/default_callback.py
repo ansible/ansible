@@ -7,7 +7,7 @@ from __future__ import annotations
 
 class ModuleDocFragment(object):
 
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
     options:
       display_skipped_hosts:
         name: Show skipped hosts
@@ -89,4 +89,4 @@ class ModuleDocFragment(object):
           - key: show_task_path_on_failure
             section: defaults
         version_added: '2.11'
-'''
+"""

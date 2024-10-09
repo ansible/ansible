@@ -6,7 +6,7 @@ def do_flag(myval):
 
 
 class FilterModule(object):
-    ''' Ansible core jinja2 filters '''
+    """ Ansible core jinja2 filters """
 
     def filters(self):
         return {

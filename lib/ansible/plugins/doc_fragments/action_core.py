@@ -8,7 +8,7 @@ from __future__ import annotations
 class ModuleDocFragment(object):
 
     # requires action_common
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
 attributes:
     async:
       support: none
@@ -33,10 +33,10 @@ attributes:
     tags:
       description: Allows for the 'tags' keyword to control the selection of this action for execution
       support: full
-'''
+"""
 
     # also requires core above
-    IMPORT = r'''
+    IMPORT = r"""
 attributes:
     action:
       details: While this action executes locally on the controller it is not governed by an action plugin
@@ -59,9 +59,9 @@ attributes:
       support: none
     until:
       support: none
-'''
+"""
     # also requires core above
-    INCLUDE = r'''
+    INCLUDE = r"""
 attributes:
     action:
       details: While this action executes locally on the controller it is not governed by an action plugin
@@ -76,4 +76,4 @@ attributes:
     tags:
       details: Tags are interpreted by this action but are not automatically inherited by the include tasks, see C(apply)
       support: partial
-'''
+"""

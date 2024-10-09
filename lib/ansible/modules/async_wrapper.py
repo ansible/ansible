@@ -75,13 +75,13 @@ def daemonize_self():
 # NB: this function copied from module_utils/json_utils.py. Ensure any changes are propagated there.
 # FUTURE: AnsibleModule-ify this module so it's Ansiballz-compatible and can use the module_utils copy of this function.
 def _filter_non_json_lines(data):
-    '''
+    """
     Used to filter unrelated output around module JSON output, like messages from
     tcagetattr, or where dropbear spews MOTD on every single command (which is nuts).
 
     Filters leading lines before first line-starting occurrence of '{', and filter all
     trailing lines after matching close character (working from the bottom of output).
-    '''
+    """
     warnings = []
 
     # Filter initial junk

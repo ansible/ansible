@@ -292,7 +292,7 @@ def _find_adjacent(path, plugin, extensions):
 
 
 def find_plugin_docfile(plugin, plugin_type, loader):
-    '''  if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding 'sidecar' file for docs '''
+    """  if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding 'sidecar' file for docs """
 
     context = loader.find_plugin_with_context(plugin, ignore_deprecated=False, check_aliases=True)
     if (not context or not context.resolved) and plugin_type in ('filter', 'test'):

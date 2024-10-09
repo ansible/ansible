@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: apt_repository
 short_description: Add and remove APT repositories
@@ -101,9 +101,9 @@ requirements:
    - python-apt (python 2)
    - python3-apt (python 3)
    - apt-key or gpg
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Add specified repository into sources list
   ansible.builtin.apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
@@ -145,9 +145,9 @@ EXAMPLES = '''
       ansible.builtin.apt_repository:
         repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/myrepo.asc] https://download.example.com/linux/ubuntu {{ ansible_distribution_release }} stable"
         state: present
-'''
+"""
 
-RETURN = '''
+RETURN = """
 repo:
   description: A source string for the repository
   returned: always
@@ -167,7 +167,7 @@ sources_removed:
   type: list
   sample: ["/etc/apt/sources.list.d/artifacts_elastic_co_packages_6_x_apt.list"]
   version_added: "2.15"
-'''
+"""
 
 import copy
 import glob
@@ -245,7 +245,7 @@ class SourcesList(object):
             self.load(file)
 
     def __iter__(self):
-        '''Simple iterator to go over all sources. Empty, non-source, and other not valid lines will be skipped.'''
+        """Simple iterator to go over all sources. Empty, non-source, and other not valid lines will be skipped."""
         for file, sources in self.files.items():
             for n, valid, enabled, source, comment in sources:
                 if valid:
@@ -315,9 +315,9 @@ class SourcesList(object):
 
     @staticmethod
     def _apt_cfg_file(filespec):
-        '''
+        """
         Wrapper for `apt_pkg` module for running with Python 2.5
-        '''
+        """
         try:
             result = apt_pkg.config.find_file(filespec)
         except AttributeError:
@@ -326,9 +326,9 @@ class SourcesList(object):
 
     @staticmethod
     def _apt_cfg_dir(dirspec):
-        '''
+        """
         Wrapper for `apt_pkg` module for running with Python 2.5
-        '''
+        """
         try:
             result = apt_pkg.config.find_dir(dirspec)
         except AttributeError:
@@ -413,10 +413,10 @@ class SourcesList(object):
         return new
 
     def modify(self, file, n, enabled=None, source=None, comment=None):
-        '''
+        """
         This function to be used with iterator, so we don't care of invalid sources.
         If source, enabled, or comment is None, original value from line ``n`` will be preserved.
-        '''
+        """
         valid, enabled_old, source_old, comment_old = self.files[file][n][1:]
         self.files[file][n] = (n, valid, self._choice(enabled, enabled_old), self._choice(source, source_old), self._choice(comment, comment_old))
 
@@ -616,7 +616,7 @@ class UbuntuSourcesList(SourcesList):
 
 
 def revert_sources_list(sources_before, sources_after, sourceslist_before):
-    '''Revert the sourcelist files to their previous state.'''
+    """Revert the sourcelist files to their previous state."""
 
     # First remove any new files that were created:
     for filename in set(sources_after.keys()).difference(sources_before.keys()):

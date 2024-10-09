@@ -168,7 +168,7 @@ display = Display()
 
 
 class InventoryModule(BaseInventoryPlugin):
-    ''' Host inventory parser for ansible using external inventory scripts. '''
+    """ Host inventory parser for ansible using external inventory scripts. """
 
     NAME = 'script'
 
@@ -179,7 +179,7 @@ class InventoryModule(BaseInventoryPlugin):
         self._hosts = set()
 
     def verify_file(self, path):
-        ''' Verify if file is usable by this plugin, base does minimal accessibility check '''
+        """ Verify if file is usable by this plugin, base does minimal accessibility check """
 
         valid = super(InventoryModule, self).verify_file(path)
 

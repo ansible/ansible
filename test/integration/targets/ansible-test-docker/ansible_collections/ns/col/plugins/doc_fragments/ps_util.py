@@ -8,7 +8,7 @@ from __future__ import annotations
 
 class ModuleDocFragment:
 
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
 options:
   option1:
     description:
@@ -17,4 +17,4 @@ options:
     aliases:
     - alias1
     type: str
-'''
+"""

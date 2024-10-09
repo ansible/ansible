@@ -25,7 +25,7 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 
 
 class OhaiFactCollector(BaseFactCollector):
-    '''This is a subclass of Facts for including information gathered from Ohai.'''
+    """This is a subclass of Facts for including information gathered from Ohai."""
     name = 'ohai'
     _fact_ids = set()  # type: t.Set[str]
 

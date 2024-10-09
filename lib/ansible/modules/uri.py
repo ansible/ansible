@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: uri
 short_description: Interacts with webservices
@@ -250,9 +250,9 @@ seealso:
 - module: ansible.windows.win_uri
 author:
 - Romeo Theriault (@romeotheriault)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Check that you can connect (GET) to a page and it returns a status 200
   ansible.builtin.uri:
     url: http://www.example.com
@@ -387,9 +387,9 @@ EXAMPLES = r'''
   uri:
     url: https://example.org
     ciphers: '@SECLEVEL=2:ECDH+AESGCM:ECDH+CHACHA20:ECDH+AES:DHE+AES:!aNULL:!eNULL:!aDSS:!SHA1:!AESCCM'
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 # The return information includes all the HTTP headers in lower-case.
 content:
   description: The response body content.
@@ -438,7 +438,7 @@ url:
   returned: always
   type: str
   sample: https://www.ansible.com/
-'''
+"""
 
 import json
 import os
@@ -527,7 +527,7 @@ def absolute_location(url, location):
 
 
 def kv_list(data):
-    ''' Convert data into a list of key-value tuples '''
+    """ Convert data into a list of key-value tuples """
     if data is None:
         return None
 
@@ -541,7 +541,7 @@ def kv_list(data):
 
 
 def form_urlencoded(body):
-    ''' Convert data into a form-urlencoded string '''
+    """ Convert data into a form-urlencoded string """
     if isinstance(body, string_types):
         return body
 

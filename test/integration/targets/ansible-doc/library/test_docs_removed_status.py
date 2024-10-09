@@ -6,7 +6,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['removed'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: test_docs_removed_status
 short_description: Test module
@@ -14,13 +14,13 @@ description:
     - Test module
 author:
     - Ansible Core Team
-'''
+"""
 
-EXAMPLES = '''
-'''
+EXAMPLES = """
+"""
 
-RETURN = '''
-'''
+RETURN = """
+"""
 
 
 from ansible.module_utils.basic import AnsibleModule

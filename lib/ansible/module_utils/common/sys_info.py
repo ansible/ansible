@@ -14,7 +14,7 @@ __all__ = ('get_distribution', 'get_distribution_version', 'get_platform_subclas
 
 
 def get_distribution():
-    '''
+    """
     Return the name of the distribution the module is running on.
 
     :rtype: NativeString or None
@@ -23,7 +23,7 @@ def get_distribution():
     This function attempts to determine what distribution the code is running
     on and return a string representing that value. If the platform is Linux
     and the distribution cannot be determined, it returns ``OtherLinux``.
-    '''
+    """
     distribution = distro.id().capitalize()
 
     if platform.system() == 'Linux':
@@ -38,14 +38,14 @@ def get_distribution():
 
 
 def get_distribution_version():
-    '''
+    """
     Get the version of the distribution the code is running on
 
     :rtype: NativeString or None
     :returns: A string representation of the version of the distribution. If it
     cannot determine the version, it returns an empty string. If this is not run on
     a Linux machine it returns None.
-    '''
+    """
     version = None
 
     needs_best_version = frozenset((
@@ -79,12 +79,12 @@ def get_distribution_version():
 
 
 def get_distribution_codename():
-    '''
+    """
     Return the code name for this Linux Distribution
 
     :rtype: NativeString or None
     :returns: A string representation of the distribution's codename or None if not a Linux distro
-    '''
+    """
     codename = None
     if platform.system() == 'Linux':
         # Until this gets merged and we update our bundled copy of distro:
@@ -109,7 +109,7 @@ def get_distribution_codename():
 
 
 def get_platform_subclass(cls):
-    '''
+    """
     Finds a subclass implementing desired functionality on the platform the code is running on
 
     :arg cls: Class to find an appropriate subclass for
@@ -135,7 +135,7 @@ def get_platform_subclass(cls):
             def __new__(cls, *args, **kwargs):
                 new_cls = get_platform_subclass(User)
                 return super(cls, new_cls).__new__(new_cls)
-    '''
+    """
     this_platform = platform.system()
     distribution = get_distribution()
 

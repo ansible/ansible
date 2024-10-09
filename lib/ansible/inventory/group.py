@@ -59,7 +59,7 @@ class InventoryObjectType(Enum):
 
 
 class Group:
-    ''' a group of ansible hosts '''
+    """ a group of ansible hosts """
     base_type = InventoryObjectType.GROUP
 
     # __slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', '_hosts_cache' ]
@@ -120,7 +120,7 @@ class Group:
             self.parent_groups.append(g)
 
     def _walk_relationship(self, rel, include_self=False, preserve_ordering=False):
-        '''
+        """
         Given `rel` that is an iterable property of Group,
         consitituting a directed acyclic graph among all groups,
         Returns a set of all groups in full tree
@@ -132,7 +132,7 @@ class Group:
         | /     are directed upward
         F
         Called on F, returns set of (A, B, C, D, E)
-        '''
+        """
         seen = set([])
         unprocessed = set(getattr(self, rel))
         if include_self:

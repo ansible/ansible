@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: subversion
 short_description: Deploys a subversion repository
@@ -106,9 +106,9 @@ notes:
 
 requirements:
     - subversion (the command line tool with C(svn) entrypoint)
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Checkout subversion repository to specified folder
   ansible.builtin.subversion:
     repo: svn+ssh://an.example.org/path/to/repo
@@ -126,9 +126,9 @@ EXAMPLES = '''
     dest: /src/checkout
     checkout: no
     update: no
-'''
+"""
 
-RETURN = r'''#'''
+RETURN = r"""#"""
 
 import os
 import re
@@ -161,7 +161,7 @@ class Subversion(object):
         return LooseVersion(version) >= LooseVersion('1.10.0')
 
     def _exec(self, args, check_rc=True):
-        '''Execute a subversion command, and return output. If check_rc is False, returns the return code instead of the output.'''
+        """Execute a subversion command, and return output. If check_rc is False, returns the return code instead of the output."""
         bits = [
             self.svn_path,
             '--non-interactive',
@@ -189,12 +189,12 @@ class Subversion(object):
             return rc
 
     def is_svn_repo(self):
-        '''Checks if path is a SVN Repo.'''
+        """Checks if path is a SVN Repo."""
         rc = self._exec(["info", self.dest], check_rc=False)
         return rc == 0
 
     def checkout(self, force=False):
-        '''Creates new svn working directory if it does not already exist.'''
+        """Creates new svn working directory if it does not already exist."""
         cmd = ["checkout"]
         if force:
             cmd.append("--force")
@@ -202,7 +202,7 @@ class Subversion(object):
         self._exec(cmd)
 
     def export(self, force=False):
-        '''Export svn repo to directory'''
+        """Export svn repo to directory"""
         cmd = ["export"]
         if force:
             cmd.append("--force")
@@ -211,7 +211,7 @@ class Subversion(object):
         self._exec(cmd)
 
     def switch(self):
-        '''Change working directory's repo.'''
+        """Change working directory's repo."""
         # switch to ensure we are pointing at correct repo.
         # it also updates!
         output = self._exec(["switch", "--revision", self.revision, self.repo, self.dest])
@@ -221,7 +221,7 @@ class Subversion(object):
         return False
 
     def update(self):
-        '''Update existing svn working directory.'''
+        """Update existing svn working directory."""
         output = self._exec(["update", "-r", self.revision, self.dest])
 
         for line in output:
@@ -230,7 +230,7 @@ class Subversion(object):
         return False
 
     def revert(self):
-        '''Revert svn working directory.'''
+        """Revert svn working directory."""
         output = self._exec(["revert", "-R", self.dest])
         for line in output:
             if re.search(r'^Reverted ', line) is None:
@@ -238,7 +238,7 @@ class Subversion(object):
         return False
 
     def get_revision(self):
-        '''Revision and URL of subversion working directory.'''
+        """Revision and URL of subversion working directory."""
         text = '\n'.join(self._exec(["info", self.dest]))
         rev = re.search(self.REVISION_RE, text, re.MULTILINE)
         if rev:
@@ -255,7 +255,7 @@ class Subversion(object):
         return rev, url
 
     def get_remote_revision(self):
-        '''Revision and URL of subversion working directory.'''
+        """Revision and URL of subversion working directory."""
         text = '\n'.join(self._exec(["info", self.repo]))
         rev = re.search(self.REVISION_RE, text, re.MULTILINE)
         if rev:
@@ -265,7 +265,7 @@ class Subversion(object):
         return rev
 
     def has_local_mods(self):
-        '''True if revisioned files have been added or modified. Unrevisioned files are ignored.'''
+        """True if revisioned files have been added or modified. Unrevisioned files are ignored."""
         lines = self._exec(["status", "--quiet", "--ignore-externals", self.dest])
         # The --quiet option will return only modified files.
         # Match only revisioned files, i.e. ignore status '?'.

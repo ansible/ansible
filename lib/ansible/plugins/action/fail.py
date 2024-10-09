@@ -21,7 +21,7 @@ from ansible.plugins.action import ActionBase
 
 
 class ActionModule(ActionBase):
-    ''' Fail with custom message '''
+    """ Fail with custom message """
 
     TRANSFERS_FILES = False
     _VALID_ARGS = frozenset(('msg',))

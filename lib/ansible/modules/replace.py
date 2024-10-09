@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: replace
 author: Evan Kaufman (@EvanK)
@@ -106,9 +106,9 @@ notes:
     See U(https://github.com/ansible/ansible/issues/31354) for details.
   - Option O(ignore:follow) has been removed in Ansible 2.5, because this module modifies the contents of the file
     so O(ignore:follow=no) does not make sense.
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Replace old hostname with new hostname (requires Ansible >= 2.4)
   ansible.builtin.replace:
     path: /etc/hosts
@@ -175,9 +175,9 @@ EXAMPLES = r'''
     path: /etc/ssh/sshd_config
     regexp: '^(?P<dctv>ListenAddress[ ]+)(?P<host>[^\n]+)$'
     replace: '#\g<dctv>\g<host>\n\g<dctv>0.0.0.0'
-'''
+"""
 
-RETURN = r'''#'''
+RETURN = r"""#"""
 
 import os
 import re

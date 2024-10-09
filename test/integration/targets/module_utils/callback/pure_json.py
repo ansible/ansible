@@ -3,11 +3,11 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: pure_json
     type: stdout
     short_description: only outputs the module results as json
-'''
+"""
 
 import json
 

@@ -6,7 +6,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: module1
 short_description: module1 Test module
@@ -14,13 +14,13 @@ description:
     - module1 Test module
 author:
     - Ansible Core Team
-'''
+"""
 
-EXAMPLES = '''
-'''
+EXAMPLES = """
+"""
 
-RETURN = '''
-'''
+RETURN = """
+"""
 
 
 from ansible.module_utils.basic import AnsibleModule

@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: hostname
 author:
@@ -52,9 +52,9 @@ attributes:
         support: full
     platform:
         platforms: posix
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Set a hostname
   ansible.builtin.hostname:
     name: web01
@@ -63,7 +63,7 @@ EXAMPLES = '''
   ansible.builtin.hostname:
     name: web01
     use: systemd
-'''
+"""
 
 import os
 import platform

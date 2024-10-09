@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: option_name_casing
 short_description: Option names equal up to casing
 description: Option names equal up to casing.
@@ -28,10 +28,10 @@ options:
     aliases:
       - baR
     type: str
-'''
+"""
 
-EXAMPLES = '''#'''
-RETURN = ''''''
+EXAMPLES = """#"""
+RETURN = """"""
 
 from ansible.module_utils.basic import AnsibleModule
 

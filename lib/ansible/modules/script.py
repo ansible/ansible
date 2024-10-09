@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: script
 version_added: "0.9"
@@ -80,9 +80,9 @@ attributes:
         support: none
     vault:
         support: full
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Run a script with arguments (free form)
   ansible.builtin.script: /some/local/script.sh --some-argument 1234
 
@@ -112,4 +112,4 @@ EXAMPLES = r'''
 
 - name: Run a Powershell script on a Windows host
   script: subdirectories/under/path/with/your/playbook/script.ps1
-'''
+"""

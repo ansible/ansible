@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: slurp
 version_added: historical
@@ -39,9 +39,9 @@ seealso:
 author:
     - Ansible Core Team
     - Michael DeHaan (@mpdehaan)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Find out what the remote machine's mounts are
   ansible.builtin.slurp:
     src: /proc/mounts
@@ -61,9 +61,9 @@ EXAMPLES = r'''
 # }
 # $ echo MjE3OQo= | base64 -d
 # 2179
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 content:
     description: Encoded file content
     returned: success
@@ -79,7 +79,7 @@ source:
     returned: success
     type: str
     sample: "/var/run/sshd.pid"
-'''
+"""
 
 import base64
 import errno

@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: apt
 short_description: Manages apt-packages
@@ -217,9 +217,9 @@ notes:
    - If the interpreter can't import C(python-apt)/C(python3-apt) the module will check for it in system-owned interpreters as well.
      If the dependency can't be found, the module will attempt to install it.
      If the dependency is found or installed, the module will be respawned under the correct interpreter.
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Install apache httpd (state=present is optional)
   ansible.builtin.apt:
     name: apache2
@@ -327,9 +327,9 @@ EXAMPLES = '''
 - name: Run the equivalent of "apt-get clean" as a separate step
   ansible.builtin.apt:
     clean: yes
-'''
+"""
 
-RETURN = '''
+RETURN = """
 cache_updated:
     description: if the cache was updated or not
     returned: success, in some cases
@@ -355,7 +355,7 @@ stderr:
     returned: success, when needed
     type: str
     sample: "AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to ..."
-'''  # NOQA
+"""  # NOQA
 
 # added to stave off future warnings about apt api
 import warnings
@@ -1184,7 +1184,7 @@ def get_updated_cache_time():
 
 # https://github.com/ansible/ansible-modules-core/issues/2951
 def get_cache(module):
-    '''Attempt to get the cache object and update till it works'''
+    """Attempt to get the cache object and update till it works"""
     cache = None
     try:
         cache = apt.Cache()

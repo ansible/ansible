@@ -10,7 +10,7 @@ from __future__ import annotations
 
 
 def get_all_subclasses(cls):
-    '''
+    """
     Recursively search and find all subclasses of a given class
 
     :arg cls: A python class
@@ -21,7 +21,7 @@ def get_all_subclasses(cls):
     of a class exist.  However, `__subclasses__` only goes one level deep.  This function searches
     each child class's `__subclasses__` method to find all of the descendent classes.  It then
     returns an iterable of the descendent classes.
-    '''
+    """
     # Retrieve direct subclasses
     subclasses = set(cls.__subclasses__())
     to_visit = list(subclasses)

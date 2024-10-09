@@ -24,7 +24,7 @@ from ansible.module_utils.parsing.convert_bool import boolean
 
 
 class ActionModule(ActionBase):
-    ''' Fail with custom message '''
+    """ Fail with custom message """
 
     _requires_connection = False
 

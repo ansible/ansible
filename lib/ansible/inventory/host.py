@@ -28,7 +28,7 @@ __all__ = ['Host']
 
 
 class Host:
-    ''' a single ansible host '''
+    """ a single ansible host """
     base_type = InventoryObjectType.HOST
 
     # __slots__ = [ 'name', 'vars', 'groups' ]

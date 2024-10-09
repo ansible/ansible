@@ -26,7 +26,7 @@ from ansible.errors import AnsibleConnectionFailure
 
 
 class TerminalBase(ABC):
-    '''
+    """
     A base class for implementing cli connections
 
     .. note:: Unlike most of Ansible, nearly all strings in
@@ -36,7 +36,7 @@ class TerminalBase(ABC):
         :func:`~ansible.module_utils.common.text.converters.to_bytes` and
         :func:`~ansible.module_utils.common.text.converters.to_text` to avoid unexpected
         problems.
-    '''
+    """
 
     #: compiled bytes regular expressions as stdout
     terminal_stdout_re = []  # type: list[re.Pattern]
@@ -64,11 +64,11 @@ class TerminalBase(ABC):
         self._connection = connection
 
     def _exec_cli_command(self, cmd, check_rc=True):
-        '''
+        """
         Executes the CLI command on the remote device and returns the output
 
         :arg cmd: Byte string command to be executed
-        '''
+        """
         return self._connection.exec_command(cmd)
 
     def _get_prompt(self):

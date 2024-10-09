@@ -57,7 +57,7 @@ def get_all_plugin_loaders():
 
 
 def add_all_plugin_dirs(path):
-    ''' add any existing plugin dirs in the path provided '''
+    """ add any existing plugin dirs in the path provided """
     b_path = os.path.expanduser(to_bytes(path, errors='surrogate_or_strict'))
     if os.path.isdir(b_path):
         for name, obj in get_all_plugin_loaders():
@@ -198,12 +198,12 @@ class PluginLoadContext(object):
 
 
 class PluginLoader:
-    '''
+    """
     PluginLoader loads plugins from the configured plugin directories.
 
     It searches for plugins by iterating through the combined list of play basedirs, configured
     paths, and the python path.  The first match is used.
-    '''
+    """
 
     def __init__(self, class_name, package, config, subdir, aliases=None, required_base_class=None):
         aliases = {} if aliases is None else aliases
@@ -266,9 +266,9 @@ class PluginLoader:
             self._searched_paths = set()
 
     def __setstate__(self, data):
-        '''
+        """
         Deserializer.
-        '''
+        """
 
         class_name = data.get('class_name')
         package = data.get('package')
@@ -285,9 +285,9 @@ class PluginLoader:
         self._searched_paths = data.get('_searched_paths', set())
 
     def __getstate__(self):
-        '''
+        """
         Serializer.
-        '''
+        """
 
         return dict(
             class_name=self.class_name,
@@ -303,7 +303,7 @@ class PluginLoader:
         )
 
     def format_paths(self, paths):
-        ''' Returns a string suitable for printing of the search path '''
+        """ Returns a string suitable for printing of the search path """
 
         # Uses a list to get the order right
         ret = []
@@ -325,7 +325,7 @@ class PluginLoader:
         return results
 
     def _get_package_paths(self, subdirs=True):
-        ''' Gets the path of a Python package '''
+        """ Gets the path of a Python package """
 
         if not self.package:
             return []
@@ -340,7 +340,7 @@ class PluginLoader:
         return [self.package_path]
 
     def _get_paths_with_context(self, subdirs=True):
-        ''' Return a list of PluginPathContext objects to search for plugins in '''
+        """ Return a list of PluginPathContext objects to search for plugins in """
 
         # FIXME: This is potentially buggy if subdirs is sometimes True and sometimes False.
         # In current usage, everything calls this with subdirs=True except for module_utils_loader and ansible-doc
@@ -393,13 +393,13 @@ class PluginLoader:
         return ret
 
     def _get_paths(self, subdirs=True):
-        ''' Return a list of paths to search for plugins in '''
+        """ Return a list of paths to search for plugins in """
 
         paths_with_context = self._get_paths_with_context(subdirs=subdirs)
         return [path_with_context.path for path_with_context in paths_with_context]
 
     def _load_config_defs(self, name, module, path):
-        ''' Reads plugin docs to find configuration setting definitions, to push to config manager for later use '''
+        """ Reads plugin docs to find configuration setting definitions, to push to config manager for later use """
 
         # plugins w/o class name don't support config
         if self.class_name:
@@ -422,7 +422,7 @@ class PluginLoader:
                         display.debug('Loaded config def from plugin (%s/%s)' % (type_name, name))
 
     def add_directory(self, directory, with_subdir=False):
-        ''' Adds an additional directory to the search path '''
+        """ Adds an additional directory to the search path """
 
         directory = os.path.realpath(directory)
 
@@ -576,7 +576,7 @@ class PluginLoader:
             'found fuzzy extension match for {0} in {1}'.format(full_name, acr.collection), action_plugin)
 
     def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False, collection_list=None):
-        ''' Find a plugin named name '''
+        """ Find a plugin named name """
         result = self.find_plugin_with_context(name, mod_type, ignore_deprecated, check_aliases, collection_list)
         if result.resolved and result.plugin_resolved_path:
             return result.plugin_resolved_path
@@ -584,7 +584,7 @@ class PluginLoader:
         return None
 
     def find_plugin_with_context(self, name, mod_type='', ignore_deprecated=False, check_aliases=False, collection_list=None):
-        ''' Find a plugin named name, returning contextual info about the load, recursively resolving redirection '''
+        """ Find a plugin named name, returning contextual info about the load, recursively resolving redirection """
         plugin_load_context = PluginLoadContext()
         plugin_load_context.original_name = name
         while True:
@@ -794,7 +794,7 @@ class PluginLoader:
         return plugin_load_context.nope('{0} is not eligible for last-chance resolution'.format(name))
 
     def has_plugin(self, name, collection_list=None):
-        ''' Checks if a plugin named name exists '''
+        """ Checks if a plugin named name exists """
 
         try:
             return self.find_plugin(name, collection_list=collection_list) is not None
@@ -860,7 +860,7 @@ class PluginLoader:
         return self.get_with_context(name, *args, **kwargs).object
 
     def get_with_context(self, name, *args, **kwargs):
-        ''' instantiates a plugin of the given name using arguments '''
+        """ instantiates a plugin of the given name using arguments """
 
         found_in_cache = True
         class_only = kwargs.pop('class_only', False)
@@ -938,7 +938,7 @@ class PluginLoader:
         return get_with_context_result(obj, plugin_load_context)
 
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
-        ''' formats data to display debug info for plugin loading, also avoids processing unless really needed '''
+        """ formats data to display debug info for plugin loading, also avoids processing unless really needed """
         if C.DEFAULT_DEBUG:
             msg = 'Loading %s \'%s\' from %s' % (class_name, os.path.basename(name), path)
 
@@ -951,7 +951,7 @@ class PluginLoader:
             display.debug(msg)
 
     def all(self, *args, **kwargs):
-        '''
+        """
         Iterate through all plugins of this type, in configured paths (no collections)
 
         A plugin loader is initialized with a specific type.  This function is an iterator returning
@@ -972,7 +972,7 @@ class PluginLoader:
             want to manage their own deduplication of the plugins.
         :*args: Any extra arguments are passed to each plugin when it is instantiated.
         :**kwargs: Any extra keyword arguments are passed to each plugin when it is instantiated.
-        '''
+        """
         # TODO: Change the signature of this method to:
         # def all(return_type='instance', args=None, kwargs=None):
         #     if args is None: args = []

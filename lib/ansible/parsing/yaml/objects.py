@@ -26,11 +26,11 @@ from ansible.module_utils.common.text.converters import to_bytes, to_text, to_na
 
 
 class AnsibleBaseYAMLObject(object):
-    '''
+    """
     the base class used to sub-class python built-in objects
     so that we can add attributes to them during yaml parsing
 
-    '''
+    """
     _data_source = None
     _line_number = 0
     _column_number = 0
@@ -54,22 +54,22 @@ class AnsibleBaseYAMLObject(object):
 
 
 class AnsibleMapping(AnsibleBaseYAMLObject, dict):
-    ''' sub class for dictionaries '''
+    """ sub class for dictionaries """
     pass
 
 
 class AnsibleUnicode(AnsibleBaseYAMLObject, text_type):
-    ''' sub class for unicode objects '''
+    """ sub class for unicode objects """
     pass
 
 
 class AnsibleSequence(AnsibleBaseYAMLObject, list):
-    ''' sub class for lists '''
+    """ sub class for lists """
     pass
 
 
 class AnsibleVaultEncryptedUnicode(Sequence, AnsibleBaseYAMLObject):
-    '''Unicode like object that is not evaluated (decrypted) until it needs to be'''
+    """Unicode like object that is not evaluated (decrypted) until it needs to be"""
     __UNSAFE__ = True
     __ENCRYPTED__ = True
     yaml_tag = u'!vault'
@@ -85,13 +85,13 @@ class AnsibleVaultEncryptedUnicode(Sequence, AnsibleBaseYAMLObject):
         return avu
 
     def __init__(self, ciphertext):
-        '''A AnsibleUnicode with a Vault attribute that can decrypt it.
+        """A AnsibleUnicode with a Vault attribute that can decrypt it.
 
         ciphertext is a byte string (str on PY2, bytestring on PY3).
 
         The .data attribute is a property that returns the decrypted plaintext
         of the ciphertext as a PY2 unicode or PY3 string object.
-        '''
+        """
         super(AnsibleVaultEncryptedUnicode, self).__init__()
 
         # after construction, calling code has to set the .vault attribute to a vaultlib object

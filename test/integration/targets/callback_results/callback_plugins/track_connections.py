@@ -3,13 +3,13 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: track_connections
     short_description: Track connection plugins used for hosts
     description:
         - Track connection plugins used for hosts
     type: aggregate
-'''
+"""
 
 import json
 from collections import defaultdict

@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: junit
     type: aggregate
     short_description: write playbook output to a JUnit file.
@@ -80,7 +80,7 @@ DOCUMENTATION = '''
           - name: JUNIT_TEST_CASE_PREFIX
     requirements:
       - enable in configuration
-'''
+"""
 
 import os
 import time

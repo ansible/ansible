@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: yum_repository
 author: Jiri Tyr (@jtyr)
@@ -385,9 +385,9 @@ notes:
     on disk until you run C(yum clean all). Use a notification handler for this.
   - "The O(ignore:params) parameter was removed in Ansible 2.5 due to circumventing Ansible's parameter
     handling"
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Add repository
   ansible.builtin.yum_repository:
     name: epel
@@ -427,9 +427,9 @@ EXAMPLES = '''
     name: epel
     file: external_repos
     state: absent
-'''
+"""
 
-RETURN = '''
+RETURN = """
 repo:
     description: repository name
     returned: success
@@ -440,7 +440,7 @@ state:
     returned: success
     type: str
     sample: "present"
-'''
+"""
 
 import configparser
 import os

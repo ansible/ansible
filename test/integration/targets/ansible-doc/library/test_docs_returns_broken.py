@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: test_docs_returns_broken
 short_description: Test module
@@ -10,18 +10,18 @@ description:
     - Test module
 author:
     - Ansible Core Team
-'''
+"""
 
-EXAMPLES = '''
-'''
+EXAMPLES = """
+"""
 
-RETURN = '''
+RETURN = """
 test:
     description: A test return value.
    type: str
 
 broken_key: [
-'''
+"""
 
 
 from ansible.module_utils.basic import AnsibleModule

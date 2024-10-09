@@ -44,7 +44,7 @@ class TestErrors(unittest.TestCase):
 
     @patch.object(AnsibleError, '_get_error_lines_from_file')
     def test_error_with_kv(self, mock_method):
-        ''' This tests a task with both YAML and k=v syntax
+        """ This tests a task with both YAML and k=v syntax
 
         - lineinfile: line=foo path=bar
             line: foo
@@ -52,7 +52,7 @@ class TestErrors(unittest.TestCase):
         An accurate error message and position indicator are expected.
 
         _get_error_lines_from_file() returns (target_line, prev_line)
-        '''
+        """
 
         self.obj.ansible_pos = ('foo.yml', 2, 1)
 

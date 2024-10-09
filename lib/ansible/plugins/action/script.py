@@ -35,7 +35,7 @@ class ActionModule(ActionBase):
     windows_absolute_path_detection = re.compile(r'^(?:[a-zA-Z]\:)?(\\|\/)')
 
     def run(self, tmp=None, task_vars=None):
-        ''' handler for file transfer operations '''
+        """ handler for file transfer operations """
         if task_vars is None:
             task_vars = dict()
 

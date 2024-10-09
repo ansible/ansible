@@ -28,7 +28,7 @@ __all__ = ['unfrackpath', 'makedirs_safe']
 
 
 def unfrackpath(path, follow=True, basedir=None):
-    '''
+    """
     Returns a path that is free of symlinks (if follow=True), environment variables, relative path traversals and symbols (~)
 
     :arg path: A byte or text string representing a path to be canonicalized
@@ -44,7 +44,7 @@ def unfrackpath(path, follow=True, basedir=None):
 
     example::
         '$HOME/../../var/mail' becomes '/var/spool/mail'
-    '''
+    """
 
     b_basedir = to_bytes(basedir, errors='surrogate_or_strict', nonstring='passthru')
 
@@ -65,7 +65,7 @@ def unfrackpath(path, follow=True, basedir=None):
 
 
 def makedirs_safe(path, mode=None):
-    '''
+    """
     A *potentially insecure* way to ensure the existence of a directory chain. The "safe" in this function's name
     refers only to its ability to ignore `EEXIST` in the case of multiple callers operating on the same part of
     the directory chain. This function is not safe to use under world-writable locations when the first level of the
@@ -77,7 +77,7 @@ def makedirs_safe(path, mode=None):
     :kwarg mode: If given, the mode to set the directory to
     :raises AnsibleError: If the directory cannot be created and does not already exist.
     :raises UnicodeDecodeError: if the path is not decodable in the utf-8 encoding.
-    '''
+    """
 
     rpath = unfrackpath(path)
     b_rpath = to_bytes(rpath)

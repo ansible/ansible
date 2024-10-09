@@ -17,7 +17,7 @@
 #############################################
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: host_group_vars
     version_added: "2.4"
     short_description: In charge of loading group_vars and host_vars
@@ -50,7 +50,7 @@ DOCUMENTATION = '''
         elements: string
     extends_documentation_fragment:
       - vars_plugin_staging
-'''
+"""
 
 import os
 from ansible.errors import AnsibleParserError
@@ -79,7 +79,7 @@ class VarsModule(BaseVarsPlugin):
         return data
 
     def get_vars(self, loader, path, entities, cache=True):
-        ''' parses the inventory file '''
+        """ parses the inventory file """
 
         if not isinstance(entities, list):
             entities = [entities]

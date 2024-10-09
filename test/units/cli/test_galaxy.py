@@ -55,7 +55,7 @@ def reset_cli_args():
 class TestGalaxy(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        '''creating prerequisites for installing a role; setUpClass occurs ONCE whereas setUp occurs with every method tested.'''
+        """creating prerequisites for installing a role; setUpClass occurs ONCE whereas setUp occurs with every method tested."""
         # class data for easy viewing: role_dir, role_tar, role_name, role_req, role_path
 
         cls.temp_dir = tempfile.mkdtemp(prefix='ansible-test_galaxy-')
@@ -84,14 +84,14 @@ class TestGalaxy(unittest.TestCase):
 
     @classmethod
     def makeTar(cls, output_file, source_dir):
-        ''' used for making a tarfile from a role directory '''
+        """ used for making a tarfile from a role directory """
         # adding directory into a tar file
         with tarfile.open(output_file, "w:gz") as tar:
             tar.add(source_dir, arcname=os.path.basename(source_dir))
 
     @classmethod
     def tearDownClass(cls):
-        '''After tests are finished removes things created in setUpClass'''
+        """After tests are finished removes things created in setUpClass"""
         # deleting the temp role directory
         shutil.rmtree(cls.role_dir, ignore_errors=True)
         with contextlib.suppress(FileNotFoundError):
@@ -131,7 +131,7 @@ class TestGalaxy(unittest.TestCase):
         self.assertNotEqual(display_result.find('\n\tgalaxy_info:'), -1, 'Expected galaxy_info to be indented once')
 
     def test_run(self):
-        ''' verifies that the GalaxyCLI object's api is created and that execute() is called. '''
+        """ verifies that the GalaxyCLI object's api is created and that execute() is called. """
         gc = GalaxyCLI(args=["ansible-galaxy", "install", "--ignore-errors", "imaginary_role"])
         gc.parse()
         with patch.object(ansible.cli.CLI, "run", return_value=None) as mock_run:
@@ -161,7 +161,7 @@ class TestGalaxy(unittest.TestCase):
         self.assertTrue(removed_role)
 
     def test_exit_without_ignore_without_flag(self):
-        ''' tests that GalaxyCLI exits with the error specified if the --ignore-errors flag is not used '''
+        """ tests that GalaxyCLI exits with the error specified if the --ignore-errors flag is not used """
         gc = GalaxyCLI(args=["ansible-galaxy", "install", "--server=None", "fake_role_name"])
         with patch.object(ansible.utils.display.Display, "display", return_value=None) as mocked_display:
             # testing that error expected is raised
@@ -171,7 +171,7 @@ class TestGalaxy(unittest.TestCase):
             assert "fake_role_name was NOT installed successfully" in mocked_display.mock_calls[1].args[0]
 
     def test_exit_without_ignore_with_flag(self):
-        ''' tests that GalaxyCLI exits without the error specified if the --ignore-errors flag is used  '''
+        """ tests that GalaxyCLI exits without the error specified if the --ignore-errors flag is used  """
         # testing with --ignore-errors flag
         gc = GalaxyCLI(args=["ansible-galaxy", "install", "--server=None", "fake_role_name", "--ignore-errors"])
         with patch.object(ansible.utils.display.Display, "display", return_value=None) as mocked_display:
@@ -181,23 +181,23 @@ class TestGalaxy(unittest.TestCase):
             assert "fake_role_name was NOT installed successfully" in mocked_display.mock_calls[1].args[0]
 
     def test_parse_no_action(self):
-        ''' testing the options parser when no action is given '''
+        """ testing the options parser when no action is given """
         gc = GalaxyCLI(args=["ansible-galaxy", ""])
         self.assertRaises(SystemExit, gc.parse)
 
     def test_parse_invalid_action(self):
-        ''' testing the options parser when an invalid action is given '''
+        """ testing the options parser when an invalid action is given """
         gc = GalaxyCLI(args=["ansible-galaxy", "NOT_ACTION"])
         self.assertRaises(SystemExit, gc.parse)
 
     def test_parse_delete(self):
-        ''' testing the options parser when the action 'delete' is given '''
+        """ testing the options parser when the action 'delete' is given """
         gc = GalaxyCLI(args=["ansible-galaxy", "delete", "foo", "bar"])
         gc.parse()
         self.assertEqual(context.CLIARGS['verbosity'], 0)
 
     def test_parse_import(self):
-        ''' testing the options parser when the action 'import' is given '''
+        """ testing the options parser when the action 'import' is given """
         gc = GalaxyCLI(args=["ansible-galaxy", "import", "foo", "bar"])
         gc.parse()
         assert context.CLIARGS['wait']
@@ -206,20 +206,20 @@ class TestGalaxy(unittest.TestCase):
         assert context.CLIARGS['verbosity'] == 0
 
     def test_parse_info(self):
-        ''' testing the options parser when the action 'info' is given '''
+        """ testing the options parser when the action 'info' is given """
         gc = GalaxyCLI(args=["ansible-galaxy", "info", "foo", "bar"])
         gc.parse()
         assert not context.CLIARGS['offline']
 
     def test_parse_init(self):
-        ''' testing the options parser when the action 'init' is given '''
+        """ testing the options parser when the action 'init' is given """
         gc = GalaxyCLI(args=["ansible-galaxy", "init", "foo"])
         gc.parse()
         assert not context.CLIARGS['offline']
         assert not context.CLIARGS['force']
 
     def test_parse_install(self):
-        ''' testing the options parser when the action 'install' is given '''
+        """ testing the options parser when the action 'install' is given """
         gc = GalaxyCLI(args=["ansible-galaxy", "install"])
         gc.parse()
         assert not context.CLIARGS['ignore_errors']
@@ -228,19 +228,19 @@ class TestGalaxy(unittest.TestCase):
         assert not context.CLIARGS['force']
 
     def test_parse_list(self):
-        ''' testing the options parser when the action 'list' is given '''
+        """ testing the options parser when the action 'list' is given """
         gc = GalaxyCLI(args=["ansible-galaxy", "list"])
         gc.parse()
         self.assertEqual(context.CLIARGS['verbosity'], 0)
 
     def test_parse_remove(self):
-        ''' testing the options parser when the action 'remove' is given '''
+        """ testing the options parser when the action 'remove' is given """
         gc = GalaxyCLI(args=["ansible-galaxy", "remove", "foo"])
         gc.parse()
         self.assertEqual(context.CLIARGS['verbosity'], 0)
 
     def test_parse_search(self):
-        ''' testing the options parswer when the action 'search' is given '''
+        """ testing the options parswer when the action 'search' is given """
         gc = GalaxyCLI(args=["ansible-galaxy", "search"])
         gc.parse()
         assert context.CLIARGS['platforms'] is None
@@ -248,7 +248,7 @@ class TestGalaxy(unittest.TestCase):
         assert context.CLIARGS['author'] is None
 
     def test_parse_setup(self):
-        ''' testing the options parser when the action 'setup' is given '''
+        """ testing the options parser when the action 'setup' is given """
         gc = GalaxyCLI(args=["ansible-galaxy", "setup", "source", "github_user", "github_repo", "secret"])
         gc.parse()
         assert context.CLIARGS['verbosity'] == 0
@@ -568,7 +568,7 @@ def test_collection_skeleton(collection_skeleton):
 
 @pytest.fixture()
 def collection_artifact(collection_skeleton, tmp_path_factory):
-    ''' Creates a collection artifact tarball that is ready to be published and installed '''
+    """ Creates a collection artifact tarball that is ready to be published and installed """
     output_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Output'))
 
     # Create a file with +x in the collection so we can test the permissions
@@ -792,12 +792,12 @@ def test_collection_install_with_requirements_file(collection_install):
 
     requirements_file = os.path.join(output_dir, 'requirements.yml')
     with open(requirements_file, 'wb') as req_obj:
-        req_obj.write(b'''---
+        req_obj.write(b"""---
 collections:
 - namespace.coll
 - name: namespace2.coll
   version: '>2.0.1'
-''')
+""")
 
     galaxy_args = ['ansible-galaxy', 'collection', 'install', '--requirements-file', requirements_file,
                    '--collections-path', output_dir]
@@ -1085,11 +1085,11 @@ def test_parse_requirements_file_that_isnt_yaml(requirements_cli, requirements_f
         requirements_cli._parse_requirements_file(requirements_file)
 
 
-@pytest.mark.parametrize('requirements_file', [('''
+@pytest.mark.parametrize('requirements_file', [("""
 # Older role based requirements.yml
 - galaxy.role
 - anotherrole
-''')], indirect=True)
+""")], indirect=True)
 def test_parse_requirements_in_older_format_illegal(requirements_cli, requirements_file):
     expected = "Expecting requirements file to be a dict with the key 'collections' that contains a list of " \
                "collections to install"
@@ -1098,10 +1098,10 @@ def test_parse_requirements_in_older_format_illegal(requirements_cli, requiremen
         requirements_cli._parse_requirements_file(requirements_file, allow_old_format=False)
 
 
-@pytest.mark.parametrize('requirements_file', ['''
+@pytest.mark.parametrize('requirements_file', ["""
 collections:
 - version: 1.0.0
-'''], indirect=True)
+"""], indirect=True)
 def test_parse_requirements_without_mandatory_name_key(requirements_cli, requirements_file):
     # Used to be "Collections requirement entry should contain the key name."
     # Should we check that either source or name is provided before using the dep resolver?
@@ -1114,15 +1114,15 @@ def test_parse_requirements_without_mandatory_name_key(requirements_cli, require
         requirements_cli._parse_requirements_file(requirements_file)
 
 
-@pytest.mark.parametrize('requirements_file', [('''
+@pytest.mark.parametrize('requirements_file', [("""
 collections:
 - namespace.collection1
 - namespace.collection2
-'''), ('''
+"""), ("""
 collections:
 - name: namespace.collection1
 - name: namespace.collection2
-''')], indirect=True)
+""")], indirect=True)
 def test_parse_requirements(requirements_cli, requirements_file):
     expected = {
         'roles': [],
@@ -1134,12 +1134,12 @@ def test_parse_requirements(requirements_cli, requirements_file):
     assert actual == expected
 
 
-@pytest.mark.parametrize('requirements_file', ['''
+@pytest.mark.parametrize('requirements_file', ["""
 collections:
 - name: namespace.collection1
   version: ">=1.0.0,<=2.0.0"
   source: https://galaxy-dev.ansible.com
-- namespace.collection2'''], indirect=True)
+- namespace.collection2"""], indirect=True)
 def test_parse_requirements_with_extra_info(requirements_cli, requirements_file):
     actual = requirements_cli._parse_requirements_file(requirements_file)
     actual['collections'] = [('%s.%s' % (r.namespace, r.name), r.ver, r.src, r.type,) for r in actual.get('collections', [])]
@@ -1153,7 +1153,7 @@ def test_parse_requirements_with_extra_info(requirements_cli, requirements_file)
     assert actual['collections'][1] == ('namespace.collection2', '*', None, 'galaxy')
 
 
-@pytest.mark.parametrize('requirements_file', ['''
+@pytest.mark.parametrize('requirements_file', ["""
 roles:
 - username.role_name
 - src: username2.role_name2
@@ -1162,7 +1162,7 @@ roles:
 
 collections:
 - namespace.collection2
-'''], indirect=True)
+"""], indirect=True)
 def test_parse_requirements_with_roles_and_collections(requirements_cli, requirements_file):
     actual = requirements_cli._parse_requirements_file(requirements_file)
     actual['collections'] = [('%s.%s' % (r.namespace, r.name), r.ver, r.src, r.type,) for r in actual.get('collections', [])]
@@ -1177,14 +1177,14 @@ def test_parse_requirements_with_roles_and_collections(requirements_cli, require
     assert actual['collections'][0] == ('namespace.collection2', '*', None, 'galaxy')
 
 
-@pytest.mark.parametrize('requirements_file', ['''
+@pytest.mark.parametrize('requirements_file', ["""
 collections:
 - name: namespace.collection
 - name: namespace2.collection2
   source: https://galaxy-dev.ansible.com/
 - name: namespace3.collection3
   source: server
-'''], indirect=True)
+"""], indirect=True)
 def test_parse_requirements_with_collection_source(requirements_cli, requirements_file):
     galaxy_api = GalaxyAPI(requirements_cli.api, 'server', 'https://config-server')
     requirements_cli.api_servers.append(galaxy_api)
@@ -1205,10 +1205,10 @@ def test_parse_requirements_with_collection_source(requirements_cli, requirement
     assert actual['collections'][2][2].api_server == 'https://config-server'
 
 
-@pytest.mark.parametrize('requirements_file', ['''
+@pytest.mark.parametrize('requirements_file', ["""
 - username.included_role
 - src: https://github.com/user/repo
-'''], indirect=True)
+"""], indirect=True)
 def test_parse_requirements_roles_with_include(requirements_cli, requirements_file):
     reqs = [
         'ansible.role',
@@ -1228,10 +1228,10 @@ def test_parse_requirements_roles_with_include(requirements_cli, requirements_fi
     assert actual['roles'][2].src == 'https://github.com/user/repo'
 
 
-@pytest.mark.parametrize('requirements_file', ['''
+@pytest.mark.parametrize('requirements_file', ["""
 - username.role
 - include: missing.yml
-'''], indirect=True)
+"""], indirect=True)
 def test_parse_requirements_roles_with_include_missing(requirements_cli, requirements_file):
     expected = "Failed to find include requirements file 'missing.yml' in '%s'" % to_native(requirements_file)
 
@@ -1239,12 +1239,12 @@ def test_parse_requirements_roles_with_include_missing(requirements_cli, require
         requirements_cli._parse_requirements_file(requirements_file)
 
 
-@pytest.mark.parametrize('requirements_file', ['''
+@pytest.mark.parametrize('requirements_file', ["""
 collections:
 - namespace.name
 roles:
 - namespace.name
-'''], indirect=True)
+"""], indirect=True)
 def test_install_implicit_role_with_collections(requirements_file, monkeypatch):
     mock_collection_install = MagicMock()
     monkeypatch.setattr(GalaxyCLI, '_execute_install_collection', mock_collection_install)
@@ -1269,12 +1269,12 @@ def test_install_implicit_role_with_collections(requirements_file, monkeypatch):
     assert not any(list('contains collections which will be ignored' in mock_call[1][0] for mock_call in mock_display.mock_calls))
 
 
-@pytest.mark.parametrize('requirements_file', ['''
+@pytest.mark.parametrize('requirements_file', ["""
 collections:
 - namespace.name
 roles:
 - namespace.name
-'''], indirect=True)
+"""], indirect=True)
 def test_install_explicit_role_with_collections(requirements_file, monkeypatch):
     mock_collection_install = MagicMock()
     monkeypatch.setattr(GalaxyCLI, '_execute_install_collection', mock_collection_install)
@@ -1296,12 +1296,12 @@ def test_install_explicit_role_with_collections(requirements_file, monkeypatch):
     assert any(list('contains collections which will be ignored' in mock_call[1][0] for mock_call in mock_display.mock_calls))
 
 
-@pytest.mark.parametrize('requirements_file', ['''
+@pytest.mark.parametrize('requirements_file', ["""
 collections:
 - namespace.name
 roles:
 - namespace.name
-'''], indirect=True)
+"""], indirect=True)
 def test_install_role_with_collections_and_path(requirements_file, monkeypatch):
     mock_collection_install = MagicMock()
     monkeypatch.setattr(GalaxyCLI, '_execute_install_collection', mock_collection_install)
@@ -1323,12 +1323,12 @@ def test_install_role_with_collections_and_path(requirements_file, monkeypatch):
     assert any(list('contains collections which will be ignored' in mock_call[1][0] for mock_call in mock_display.mock_calls))
 
 
-@pytest.mark.parametrize('requirements_file', ['''
+@pytest.mark.parametrize('requirements_file', ["""
 collections:
 - namespace.name
 roles:
 - namespace.name
-'''], indirect=True)
+"""], indirect=True)
 def test_install_collection_with_roles(requirements_file, monkeypatch):
     mock_collection_install = MagicMock()
     monkeypatch.setattr(GalaxyCLI, '_execute_install_collection', mock_collection_install)

@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: wait_for
 short_description: Waits for a condition before continuing
@@ -120,9 +120,9 @@ author:
     - Jeroen Hoekx (@jhoekx)
     - John Jarvis (@jarv)
     - Andrii Radyk (@AnderEnder)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Sleep for 300 seconds and continue with play
   ansible.builtin.wait_for:
     timeout: 300
@@ -198,9 +198,9 @@ EXAMPLES = r'''
     delay: 10
   vars:
     ansible_connection: local
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 elapsed:
   description: The number of seconds that elapsed while waiting
   returned: always
@@ -220,7 +220,7 @@ match_groupdict:
     {
       'group': 'match'
     }
-'''
+"""
 
 import binascii
 import contextlib

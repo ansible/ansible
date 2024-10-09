@@ -311,10 +311,10 @@ class LinuxHardware(Hardware):
         return cpu_facts
 
     def get_dmi_facts(self):
-        ''' learn dmi facts from system
+        """ learn dmi facts from system
 
         Try /sys first for dmi related facts.
-        If that is not available, fall back to dmidecode executable '''
+        If that is not available, fall back to dmidecode executable """
 
         dmi_facts = {}
 
@@ -423,13 +423,13 @@ class LinuxHardware(Hardware):
             'NA'
         )
         sysinfo_re = re.compile(
-            r'''
+            r"""
                 ^
                     (?:Manufacturer:\s+(?P<system_vendor>.+))|
                     (?:Type:\s+(?P<product_name>.+))|
                     (?:Sequence\ Code:\s+0+(?P<product_serial>.+))
                 $
-            ''',
+            """,
             re.VERBOSE | re.MULTILINE
         )
         data = get_file_content('/proc/sysinfo')

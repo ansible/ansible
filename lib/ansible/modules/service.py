@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: service
 version_added: "0.1"
@@ -114,9 +114,9 @@ seealso:
 author:
     - Ansible Core Team
     - Michael DeHaan
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Start service httpd, if not started
   ansible.builtin.service:
     name: httpd
@@ -153,9 +153,9 @@ EXAMPLES = r'''
     name: network
     state: restarted
     args: eth0
-'''
+"""
 
-RETURN = r'''#'''
+RETURN = r"""#"""
 
 import glob
 import json

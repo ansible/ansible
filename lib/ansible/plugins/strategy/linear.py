@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: linear
     short_description: Executes tasks in a linear fashion
     description:
@@ -27,7 +27,7 @@ DOCUMENTATION = '''
     notes:
      - This was the default Ansible behaviour before 'strategy plugins' were introduced in 2.0.
     author: Ansible Core Team
-'''
+"""
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError, AnsibleParserError
@@ -45,11 +45,11 @@ display = Display()
 class StrategyModule(StrategyBase):
 
     def _get_next_task_lockstep(self, hosts, iterator):
-        '''
+        """
         Returns a list of (host, task) tuples, where the task may
         be a noop task to keep the iterator in lock step across
         all hosts.
-        '''
+        """
         state_task_per_host = {}
         for host in hosts:
             state, task = iterator.get_next_task_for_host(host, peek=True)
@@ -90,11 +90,11 @@ class StrategyModule(StrategyBase):
         return host_tasks
 
     def run(self, iterator, play_context):
-        '''
+        """
         The linear strategy is simple - get the next task and queue
         it for all hosts, then wait for the queue to drain before
         moving on to the next task
-        '''
+        """
 
         # iterate over each task, while there is one left to run
         result = self._tqm.RUN_OK

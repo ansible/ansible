@@ -10,10 +10,10 @@ import sys
 
 
 def test_logger():
-    '''
+    """
     Avoid CVE-2019-14846 as 3rd party libs will disclose secrets when
     logging is set to DEBUG
-    '''
+    """
 
     # clear loaded modules to have unadultered test.
     for loaded in list(sys.modules.keys()):

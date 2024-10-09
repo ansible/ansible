@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: free
     short_description: Executes tasks without waiting for all hosts
     description:
@@ -27,7 +27,7 @@ DOCUMENTATION = '''
           won't hold up the rest of the hosts and tasks.
     version_added: "2.0"
     author: Ansible Core Team
-'''
+"""
 
 import time
 
@@ -54,7 +54,7 @@ class StrategyModule(StrategyBase):
         self._host_pinned = False
 
     def run(self, iterator, play_context):
-        '''
+        """
         The "free" strategy is a bit more complex, in that it allows tasks to
         be sent to hosts as quickly as they can be processed. This means that
         some hosts may finish very quickly if run tasks result in little or no
@@ -65,7 +65,7 @@ class StrategyModule(StrategyBase):
         and starting the search from there as opposed to the top of the hosts
         list again, which would end up favoring hosts near the beginning of the
         list.
-        '''
+        """
 
         # the last host to be given a task
         last_host = 0

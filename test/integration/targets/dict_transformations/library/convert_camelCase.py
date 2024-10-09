@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: convert_camelCase
 short_description: test converting data to camelCase
@@ -20,7 +20,7 @@ options:
     description: Whether to capitalize the first character
     default: False
     type: bool
-'''
+"""
 
 
 from ansible.module_utils.basic import AnsibleModule

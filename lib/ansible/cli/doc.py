@@ -409,7 +409,7 @@ def _doclink(url):
 
 def _format(string, *args):
 
-    ''' add ascii formatting or delimiters '''
+    """ add ascii formatting or delimiters """
 
     for style in args:
 
@@ -433,10 +433,10 @@ def _format(string, *args):
 
 
 class DocCLI(CLI, RoleMixin):
-    ''' displays information on modules installed in Ansible libraries.
+    """ displays information on modules installed in Ansible libraries.
         It displays a terse listing of plugins and their short descriptions,
         provides a printout of their DOCUMENTATION strings,
-        and it can create a short "snippet" which can be pasted into a playbook.  '''
+        and it can create a short "snippet" which can be pasted into a playbook.  """
 
     name = 'ansible-doc'
 
@@ -850,14 +850,14 @@ class DocCLI(CLI, RoleMixin):
         return plugin_docs
 
     def _get_roles_path(self):
-        '''
+        """
          Add any 'roles' subdir in playbook dir to the roles search path.
          And as a last resort, add the playbook dir itself. Order being:
            - 'roles' subdir of playbook dir
            - DEFAULT_ROLES_PATH (default in cliargs)
            - playbook dir (basedir)
          NOTE: This matches logic in RoleDefinition._load_role_path() method.
-        '''
+        """
         roles_path = context.CLIARGS['roles_path']
         if context.CLIARGS['basedir'] is not None:
             subdir = os.path.join(context.CLIARGS['basedir'], "roles")
@@ -868,7 +868,7 @@ class DocCLI(CLI, RoleMixin):
 
     @staticmethod
     def _prep_loader(plugin_type):
-        ''' return a plugint type specific loader '''
+        """ return a plugint type specific loader """
         loader = getattr(plugin_loader, '%s_loader' % plugin_type)
 
         # add to plugin paths from command line
@@ -1058,7 +1058,7 @@ class DocCLI(CLI, RoleMixin):
 
     @staticmethod
     def format_snippet(plugin, plugin_type, doc):
-        ''' return heavily commented plugin use to insert into play '''
+        """ return heavily commented plugin use to insert into play """
         if plugin_type == 'inventory' and doc.get('options', {}).get('plugin'):
             # these do not take a yaml config that we can write a snippet for
             raise ValueError('The {0} inventory plugin does not take YAML type config source'
@@ -1140,7 +1140,7 @@ class DocCLI(CLI, RoleMixin):
 
     @staticmethod
     def print_paths(finder):
-        ''' Returns a string suitable for printing of the search path '''
+        """ Returns a string suitable for printing of the search path """
 
         # Uses a list to get the order right
         ret = []
@@ -1280,7 +1280,7 @@ class DocCLI(CLI, RoleMixin):
                 DocCLI.add_fields(text, subdata, limit, opt_indent + '  ', return_values, opt_indent)
 
     def get_role_man_text(self, role, role_json):
-        '''Generate text for the supplied role suitable for display.
+        """Generate text for the supplied role suitable for display.
 
         This is similar to get_man_text(), but roles are different enough that we have
         a separate method for formatting their display.
@@ -1289,7 +1289,7 @@ class DocCLI(CLI, RoleMixin):
         :param role_json: The JSON for the given role as returned from _create_role_doc().
 
         :returns: A array of text suitable for displaying to screen.
-        '''
+        """
         text = []
         opt_indent = "          "
         pad = display.columns * 0.20

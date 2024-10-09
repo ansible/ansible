@@ -17,14 +17,14 @@
 #############################################
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     vars: v1_vars_plugin
     version_added: "2.10"
     short_description: load host and group vars
     description:
       - Third-party vars plugin to test loading host and group vars without enabling and without a plugin-specific stage option
     options:
-'''
+"""
 
 from ansible.plugins.vars import BaseVarsPlugin
 

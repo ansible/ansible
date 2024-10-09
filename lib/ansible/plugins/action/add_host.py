@@ -31,7 +31,7 @@ display = Display()
 
 
 class ActionModule(ActionBase):
-    ''' Create inventory hosts and groups in the memory inventory'''
+    """ Create inventory hosts and groups in the memory inventory"""
 
     # We need to be able to modify the inventory
     BYPASS_HOST_LOOP = True

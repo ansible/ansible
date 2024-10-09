@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_ping
 version_added: "1.7"
@@ -32,9 +32,9 @@ seealso:
 - module: ping
 author:
 - Chris Church (@cchurch)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 # Test connectivity to a windows host
 # ansible winserver -m win_ping
 
@@ -44,12 +44,12 @@ EXAMPLES = r'''
 - name: Induce an exception to see what happens
   win_ping:
     data: crash
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 ping:
     description: Value provided with the data parameter.
     returned: success
     type: str
     sample: pong
-'''
+"""

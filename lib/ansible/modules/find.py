@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: find
 author: Brian Coca (@bcoca)
@@ -174,10 +174,10 @@ attributes:
         platforms: posix
 seealso:
 - module: ansible.windows.win_find
-'''
+"""
 
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Recursively find /tmp files older than 2 days
   ansible.builtin.find:
     paths: /tmp
@@ -246,9 +246,9 @@ EXAMPLES = r'''
     use_regex: true
     recurse: true
     limit: 1
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 files:
     description: All matches found with the specified criteria (see stat module for full output of each dictionary)
     returned: success
@@ -279,7 +279,7 @@ skipped_paths:
     type: dict
     sample: {"/laskdfj": "'/laskdfj' is not a directory"}
     version_added: '2.12'
-'''
+"""
 
 import errno
 import fnmatch
@@ -302,7 +302,7 @@ class _Object:
 
 
 def pfilter(f, patterns=None, excludes=None, use_regex=False):
-    '''filter using glob patterns'''
+    """filter using glob patterns"""
     if not patterns and not excludes:
         return True
 
@@ -341,7 +341,7 @@ def pfilter(f, patterns=None, excludes=None, use_regex=False):
 
 
 def agefilter(st, now, age, timestamp):
-    '''filter files older than age'''
+    """filter files older than age"""
     if age is None:
         return True
     elif age >= 0 and now - getattr(st, "st_%s" % timestamp) >= abs(age):
@@ -352,7 +352,7 @@ def agefilter(st, now, age, timestamp):
 
 
 def sizefilter(st, size):
-    '''filter files greater than size'''
+    """filter files greater than size"""
     if size is None:
         return True
     elif size >= 0 and st.st_size >= abs(size):

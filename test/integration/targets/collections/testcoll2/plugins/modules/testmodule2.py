@@ -5,7 +5,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: testmodule2
 short_description: Test module
@@ -13,13 +13,13 @@ description:
     - Test module
 author:
     - Ansible Core Team
-'''
+"""
 
-EXAMPLES = '''
-'''
+EXAMPLES = """
+"""
 
-RETURN = '''
-'''
+RETURN = """
+"""
 
 import json
 

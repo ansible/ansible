@@ -8,7 +8,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_command
 short_description: Executes a command on a remote Windows node
@@ -68,9 +68,9 @@ seealso:
 - module: win_shell
 author:
     - Matt Davis (@nitzmahone)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Save the result of 'whoami' in 'whoami_out'
   win_command: whoami
   register: whoami_out
@@ -85,9 +85,9 @@ EXAMPLES = r'''
   win_command: powershell.exe -
   args:
     stdin: Write-Host test
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 msg:
     description: changed
     returned: always
@@ -133,4 +133,4 @@ stdout_lines:
     returned: always
     type: list
     sample: [u'Clustering node rabbit@slave1 with rabbit@master ...']
-'''
+"""

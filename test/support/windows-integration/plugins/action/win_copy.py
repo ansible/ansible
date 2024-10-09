@@ -217,7 +217,7 @@ class ActionModule(ActionBase):
     WIN_PATH_SEPARATOR = "\\"
 
     def _create_content_tempfile(self, content):
-        ''' Create a tempfile containing defined content '''
+        """ Create a tempfile containing defined content """
         fd, content_tempfile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
         f = os.fdopen(fd, 'wb')
         content = to_bytes(content)
@@ -328,7 +328,7 @@ class ActionModule(ActionBase):
         return module_return
 
     def run(self, tmp=None, task_vars=None):
-        ''' handler for file transfer operations '''
+        """ handler for file transfer operations """
         if task_vars is None:
             task_vars = dict()
 

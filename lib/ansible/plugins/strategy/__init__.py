@@ -222,10 +222,10 @@ def debug_closure(func):
 
 class StrategyBase:
 
-    '''
+    """
     This is the base class for strategy plugins, which contains some common
     code useful to all strategies like running handlers, cleanup actions, etc.
-    '''
+    """
 
     # by default, strategies should support throttling but we allow individual
     # strategies to disable this and either forego supporting it or managing
@@ -340,15 +340,15 @@ class StrategyBase:
         return [host for host in self._hosts_cache if host in self._tqm._failed_hosts]
 
     def add_tqm_variables(self, vars, play):
-        '''
+        """
         Base class method to add extra variables/information to the list of task
         vars sent through the executor engine regarding the task queue manager state.
-        '''
+        """
         vars['ansible_current_hosts'] = self.get_hosts_remaining(play)
         vars['ansible_failed_hosts'] = self.get_failed_hosts(play)
 
     def _queue_task(self, host, task, task_vars, play_context):
-        ''' handles queueing the task up to be sent to a worker '''
+        """ handles queueing the task up to be sent to a worker """
 
         display.debug("entering _queue_task() for %s/%s" % (host.name, task.action))
 
@@ -559,10 +559,10 @@ class StrategyBase:
 
     @debug_closure
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
-        '''
+        """
         Reads results off the final queue and takes appropriate action
         based on the result (executing callbacks, updating state, etc.).
-        '''
+        """
         ret_results = []
         cur_pass = 0
         while True:
@@ -797,10 +797,10 @@ class StrategyBase:
         return ret_results
 
     def _wait_on_pending_results(self, iterator):
-        '''
+        """
         Wait for the shared counter to drop to zero, using a short sleep
         between checks to ensure we don't spin lock
-        '''
+        """
 
         ret_results = []
 
@@ -820,9 +820,9 @@ class StrategyBase:
         return ret_results
 
     def _copy_included_file(self, included_file):
-        '''
+        """
         A proven safe and performant way to create a copy of an included file
-        '''
+        """
         ti_copy = included_file._task.copy(exclude_parent=True)
         ti_copy._parent = included_file._task._parent
 
@@ -833,13 +833,13 @@ class StrategyBase:
         return ti_copy
 
     def _load_included_file(self, included_file, iterator, is_handler=False, handle_stats_and_callbacks=True):
-        '''
+        """
         Loads an included YAML file of tasks, applying the optional set of variables.
 
         Raises AnsibleError exception in case of a failure during including a file,
         in such case the caller is responsible for marking the host(s) as failed
         using PlayIterator.mark_host_failed().
-        '''
+        """
         if handle_stats_and_callbacks:
             display.deprecated(
                 "Reporting play recap stats and running callbacks functionality for "
@@ -1105,7 +1105,7 @@ class StrategyBase:
         return play._get_cached_role(task._role)
 
     def get_hosts_left(self, iterator):
-        ''' returns list of available hosts for this iterator by filtering out unreachables '''
+        """ returns list of available hosts for this iterator by filtering out unreachables """
 
         hosts_left = []
         for host in self._hosts_cache:
@@ -1117,7 +1117,7 @@ class StrategyBase:
         return hosts_left
 
     def update_active_connections(self, results):
-        ''' updates the current active persistent connections '''
+        """ updates the current active persistent connections """
         for r in results:
             if 'args' in r._task_fields:
                 socket_path = r._task_fields['args'].get('_ansible_socket')

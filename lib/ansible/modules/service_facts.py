@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: service_facts
 short_description: Return service state information as fact data
@@ -36,9 +36,9 @@ notes:
   - AIX SRC was added in version 2.11.
 author:
   - Adam Miller (@maxamillion)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Populate service facts
   ansible.builtin.service_facts:
 
@@ -58,9 +58,9 @@ EXAMPLES = r'''
     name: ntpd.service
   when: ansible_facts['services']['ntpd.service']['status'] | default('not-found') != 'not-found'
 
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 ansible_facts:
   description: Facts to add to ansible_facts about the services on the system
   returned: always
@@ -99,7 +99,7 @@ ansible_facts:
           returned: always
           type: str
           sample: arp-ethers.service
-'''
+"""
 
 
 import os

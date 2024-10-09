@@ -3,19 +3,19 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: _module3
 short_description: Another test module
 description: This is a test module that has not been deprecated.
 author:
   - Ansible Core Team
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - minimal:
-'''
+"""
 
-RETURN = ''''''
+RETURN = """"""
 
 from ansible.module_utils.basic import AnsibleModule
 

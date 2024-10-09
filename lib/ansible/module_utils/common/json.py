@@ -42,9 +42,9 @@ def json_dump(structure):
 
 
 class AnsibleJSONEncoder(json.JSONEncoder):
-    '''
+    """
     Simple encoder class to deal with JSON encoding of Ansible internal types
-    '''
+    """
 
     def __init__(self, preprocess_unsafe=False, vault_to_text=False, **kwargs):
         self._preprocess_unsafe = preprocess_unsafe

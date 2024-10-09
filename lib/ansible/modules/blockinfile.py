@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: blockinfile
 short_description: Insert/update/remove a text block surrounded by marker lines
@@ -125,9 +125,9 @@ attributes:
       platforms: posix
     vault:
       support: none
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 # Before Ansible 2.3, option 'dest' or 'name' was used instead of 'path'
 - name: Insert/Update "Match User" configuration block in /etc/ssh/sshd_config prepending and appending a new line
   ansible.builtin.blockinfile:
@@ -187,7 +187,7 @@ EXAMPLES = r'''
     insertafter: '(?m)SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
     marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK -->"
 
-'''
+"""
 
 import re
 import os

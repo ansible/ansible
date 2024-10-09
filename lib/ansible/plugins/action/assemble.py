@@ -37,7 +37,7 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = True
 
     def _assemble_from_fragments(self, src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, decrypt=True):
-        ''' assemble a file from a directory of fragments '''
+        """ assemble a file from a directory of fragments """
 
         tmpfd, temp_path = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
         tmp = os.fdopen(tmpfd, 'wb')

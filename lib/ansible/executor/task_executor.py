@@ -61,10 +61,10 @@ def task_timeout(signum, frame):
 
 
 def remove_omit(task_args, omit_token):
-    '''
+    """
     Remove args with a value equal to the ``omit_token`` recursively
     to align with now having suboptions in the argument_spec
-    '''
+    """
 
     if not isinstance(task_args, dict):
         return task_args
@@ -85,12 +85,12 @@ def remove_omit(task_args, omit_token):
 
 class TaskExecutor:
 
-    '''
+    """
     This is the main worker class for the executor pipeline, which
     handles loading an action plugin to actually dispatch the task to
     a given host. This class roughly corresponds to the old Runner()
     class.
-    '''
+    """
 
     def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, final_q, variable_manager):
         self._host = host
@@ -108,12 +108,12 @@ class TaskExecutor:
         self._task.squash()
 
     def run(self):
-        '''
+        """
         The main executor entrypoint, where we determine if the specified
         task requires looping and either runs the task with self._run_loop()
         or self._execute(). After that, the returned results are parsed and
         returned as a dict.
-        '''
+        """
 
         display.debug("in run() - task %s" % self._task._uuid)
 
@@ -218,10 +218,10 @@ class TaskExecutor:
                 display.debug(u"error closing connection: %s" % to_text(e))
 
     def _get_loop_items(self):
-        '''
+        """
         Loads a lookup plugin to handle the with_* portion of a task (if specified),
         and returns the items result.
-        '''
+        """
 
         # get search path for this task to pass to lookup plugins
         self._job_vars['ansible_search_path'] = self._task.get_search_path()
@@ -266,11 +266,11 @@ class TaskExecutor:
         return items
 
     def _run_loop(self, items):
-        '''
+        """
         Runs the task with the loop items specified and collates the result
         into an array named 'results' which is inserted into the final result
         along with the item for which the loop ran.
-        '''
+        """
         task_vars = self._job_vars
         templar = Templar(loader=self._loader, variables=task_vars)
 
@@ -452,11 +452,11 @@ class TaskExecutor:
             variables.update(delegated_vars)
 
     def _execute(self, variables=None):
-        '''
+        """
         The primary workhorse of the executor system, this runs the task
         on the specified host (which may be the delegated_to host) and handles
         the retry/until and block rescue/always execution
-        '''
+        """
 
         if variables is None:
             variables = self._job_vars
@@ -858,9 +858,9 @@ class TaskExecutor:
         return result
 
     def _poll_async_result(self, result, templar, task_vars=None):
-        '''
+        """
         Polls for the specified JID to be complete
-        '''
+        """
 
         if task_vars is None:
             task_vars = self._job_vars
@@ -976,10 +976,10 @@ class TaskExecutor:
         return become
 
     def _get_connection(self, cvars, templar, current_connection):
-        '''
+        """
         Reads the connection property for the host, and returns the
         correct connection object from the list of connection plugins
-        '''
+        """
 
         self._play_context.connection = current_connection
 
@@ -1134,15 +1134,15 @@ class TaskExecutor:
         return varnames
 
     def _get_action_handler(self, templar):
-        '''
+        """
         Returns the correct action plugin to handle the requestion task action
-        '''
+        """
         return self._get_action_handler_with_module_context(templar)[0]
 
     def _get_action_handler_with_module_context(self, templar):
-        '''
+        """
         Returns the correct action plugin to handle the requestion task action and the module context
-        '''
+        """
         module_collection, separator, module_name = self._task.action.rpartition(".")
         module_prefix = module_name.split('_')[0]
         if module_collection:
@@ -1216,9 +1216,9 @@ CLI_STUB_NAME = 'ansible_connection_cli_stub.py'
 
 
 def start_connection(play_context, options, task_uuid):
-    '''
+    """
     Starts the persistent connection
-    '''
+    """
 
     env = os.environ.copy()
     env.update({

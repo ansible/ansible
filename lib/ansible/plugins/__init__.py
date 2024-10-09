@@ -102,13 +102,13 @@ class AnsiblePlugin(ABC):
         C.handle_config_noise(display)
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
-        '''
+        """
         Sets the _options attribute with the configuration/keyword information for this plugin
 
         :arg task_keys: Dict with playbook keywords that affect this option
         :arg var_options: Dict with either 'connection variables'
         :arg direct: Dict with 'direct assignment'
-        '''
+        """
         self._options = C.config.get_plugin_options(self.plugin_type, self._load_name, keys=task_keys, variables=var_options, direct=direct)
 
         # allow extras/wildcards from vars that are not directly consumed in configuration

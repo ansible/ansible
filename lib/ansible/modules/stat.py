@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: stat
 version_added: "1.3"
@@ -72,9 +72,9 @@ seealso:
 - module: ansible.builtin.file
 - module: ansible.windows.win_stat
 author: Bruce Pennypacker (@bpennypacker)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 # Obtain the stats of /etc/foo.conf, and check that the file still belongs
 # to 'root'. Fail otherwise.
 - name: Get stats of a file
@@ -137,9 +137,9 @@ EXAMPLES = r'''
   ansible.builtin.stat:
     path: /path/to/something
     checksum_algorithm: sha256
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 stat:
     description: Dictionary containing all the stat data, some platforms might add additional fields.
     returned: success
@@ -366,7 +366,7 @@ stat:
             type: str
             sample: "381700746"
             version_added: 2.3
-'''
+"""
 
 import errno
 import grp

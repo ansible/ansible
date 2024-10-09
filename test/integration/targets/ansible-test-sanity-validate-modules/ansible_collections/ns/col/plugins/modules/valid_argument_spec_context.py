@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: valid_argument_spec_context
 short_description: Valid argument spec context schema test module
 description: Valid argument spec context schema test module
@@ -13,10 +13,10 @@ options:
   foo:
     description: foo
     type: str
-'''
+"""
 
-EXAMPLES = '''#'''
-RETURN = ''''''
+EXAMPLES = """#"""
+RETURN = """"""
 
 from ansible.module_utils.basic import AnsibleModule
 

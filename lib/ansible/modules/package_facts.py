@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: package_facts
 short_description: Package information as facts
 description:
@@ -67,9 +67,9 @@ attributes:
         support: full
     platform:
         platforms: posix
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Gather the package facts
   ansible.builtin.package_facts:
     manager: auto
@@ -83,9 +83,9 @@ EXAMPLES = '''
     msg: "{{ ansible_facts.packages['foobar'] | length }} versions of foobar are installed!"
   when: "'foobar' in ansible_facts.packages"
 
-'''
+"""
 
-RETURN = '''
+RETURN = """
 ansible_facts:
   description: Facts to add to ansible_facts.
   returned: always
@@ -248,7 +248,7 @@ ansible_facts:
             ],
           }
         }
-'''
+"""
 
 import re
 

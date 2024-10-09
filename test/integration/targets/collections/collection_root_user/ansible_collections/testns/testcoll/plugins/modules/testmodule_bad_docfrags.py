@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 module: testmodule
 description: for testing
 extends_documentation_fragment:
@@ -13,7 +13,7 @@ extends_documentation_fragment:
   - testns.boguscoll.frag
   - testns.testcoll.bogusfrag
   - testns.testcoll.frag.bogusvar
-'''
+"""
 
 
 def main():

@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 author: Allen Sanabria (@linuxdynasty)
 module: include_vars
@@ -112,9 +112,9 @@ seealso:
 - module: ansible.builtin.set_fact
 - ref: playbooks_delegation
   description: More information related to task delegation.
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Include vars of stuff.yaml into the 'stuff' variable (2.2).
   ansible.builtin.include_vars:
     file: stuff.yaml
@@ -179,9 +179,9 @@ EXAMPLES = r'''
       - 'yaml'
       - 'yml'
       - 'json'
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 ansible_facts:
   description: Variables that were included and their values
   returned: success
@@ -193,4 +193,4 @@ ansible_included_var_files:
   type: list
   sample: [ /path/to/file.json, /path/to/file.yaml ]
   version_added: '2.4'
-'''
+"""

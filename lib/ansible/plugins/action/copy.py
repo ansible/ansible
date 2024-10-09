@@ -389,7 +389,7 @@ class ActionModule(ActionBase):
         return result
 
     def _create_content_tempfile(self, content):
-        ''' Create a tempfile containing defined content '''
+        """ Create a tempfile containing defined content """
         fd, content_tempfile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP, prefix='.')
         f = os.fdopen(fd, 'wb')
         content = to_bytes(content)
@@ -407,7 +407,7 @@ class ActionModule(ActionBase):
             os.remove(content_tempfile)
 
     def run(self, tmp=None, task_vars=None):
-        ''' handler for file transfer operations '''
+        """ handler for file transfer operations """
         if task_vars is None:
             task_vars = dict()
 

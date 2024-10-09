@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: assert
 short_description: Asserts given expressions are true
@@ -70,9 +70,9 @@ seealso:
 author:
     - Ansible Core Team
     - Michael DeHaan
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: A single condition can be supplied as string instead of list
   ansible.builtin.assert:
     that: "ansible_os_family != 'RedHat'"
@@ -106,4 +106,4 @@ EXAMPLES = r'''
       - my_param <= 100
       - my_param >= 0
     quiet: true
-'''
+"""

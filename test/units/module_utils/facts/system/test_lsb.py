@@ -24,25 +24,25 @@ from .. base import BaseFactsTest
 from ansible.module_utils.facts.system.lsb import LSBFactCollector
 
 
-lsb_release_a_fedora_output = '''
+lsb_release_a_fedora_output = """
 LSB Version:	:core-4.1-amd64:core-4.1-noarch:cxx-4.1-amd64:cxx-4.1-noarch:desktop-4.1-amd64:desktop-4.1-noarch:languages-4.1-amd64:languages-4.1-noarch:printing-4.1-amd64:printing-4.1-noarch
 Distributor ID:	Fedora
 Description:	Fedora release 25 (Twenty Five)
 Release:	25
 Codename:	TwentyFive
-'''  # noqa
+"""  # noqa
 
 # FIXME: a
-etc_lsb_release_ubuntu14 = '''DISTRIB_ID=Ubuntu
+etc_lsb_release_ubuntu14 = """DISTRIB_ID=Ubuntu
 DISTRIB_RELEASE=14.04
 DISTRIB_CODENAME=trusty
 DISTRIB_DESCRIPTION="Ubuntu 14.04.3 LTS"
-'''
-etc_lsb_release_no_decimal = '''DISTRIB_ID=AwesomeOS
+"""
+etc_lsb_release_no_decimal = """DISTRIB_ID=AwesomeOS
 DISTRIB_RELEASE=11
 DISTRIB_CODENAME=stonehenge
 DISTRIB_DESCRIPTION="AwesomeÖS 11"
-'''
+"""
 
 
 class TestLSBFacts(BaseFactsTest):

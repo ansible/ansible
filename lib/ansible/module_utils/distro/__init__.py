@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-'''
+"""
 Compat distro library.
-'''
+"""
 from __future__ import annotations
 
 # The following makes it easier for us to script updates of the bundled code

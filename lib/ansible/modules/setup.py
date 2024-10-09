@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: setup
 version_added: historical
@@ -110,7 +110,7 @@ notes:
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"
-'''
+"""
 
 EXAMPLES = r"""
 # Display facts from all hosts and store them indexed by `hostname` at `/tmp/facts`.

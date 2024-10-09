@@ -35,7 +35,7 @@ display = Display()
 
 
 class ConsoleCLI(CLI, cmd.Cmd):
-    '''
+    """
        A REPL that allows for running ad-hoc tasks against a chosen inventory
        from a nice shell with built-in tab completion (based on dominis'
        ``ansible-shell``).
@@ -62,7 +62,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
        - ``help [command/module]``: display documentation for
          the command or module
        - ``exit``: exit ``ansible-console``
-    '''
+    """
 
     name = 'ansible-console'
     modules = []  # type: list[str] | None
@@ -579,7 +579,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.cmdloop()
 
     def __getattr__(self, name):
-        ''' handle not found to populate dynamically a module function if module matching name exists '''
+        """ handle not found to populate dynamically a module function if module matching name exists """
         attr = None
 
         if name.startswith('do_'):

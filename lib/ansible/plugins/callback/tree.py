@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: tree
     type: notification
     requirements:
@@ -25,7 +25,7 @@ DOCUMENTATION = '''
     description:
         - "This callback is used by the Ansible (adhoc) command line option C(-t|--tree)."
         - This produces a JSON dump of events in a directory, a file for each host, the directory used MUST be passed as a command line option.
-'''
+"""
 
 import os
 
@@ -36,9 +36,9 @@ from ansible.utils.path import makedirs_safe, unfrackpath
 
 
 class CallbackModule(CallbackBase):
-    '''
+    """
     This callback puts results into a host specific file in a directory in json format.
-    '''
+    """
 
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'aggregate'
@@ -46,7 +46,7 @@ class CallbackModule(CallbackBase):
     CALLBACK_NEEDS_ENABLED = True
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
-        ''' override to set self.tree '''
+        """ override to set self.tree """
 
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
@@ -57,7 +57,7 @@ class CallbackModule(CallbackBase):
             self.tree = self.get_option('directory')
 
     def write_tree_file(self, hostname, buf):
-        ''' write something into treedir/hostname '''
+        """ write something into treedir/hostname """
 
         buf = to_bytes(buf)
         try:

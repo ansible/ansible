@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: assemble
 short_description: Assemble configuration files from fragments
@@ -102,9 +102,9 @@ extends_documentation_fragment:
     - action_common_attributes.files
     - decrypt
     - files
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Assemble from fragments from a directory
   ansible.builtin.assemble:
     src: /etc/someapp/fragments
@@ -121,9 +121,9 @@ EXAMPLES = r'''
     src: /etc/ssh/conf.d/
     dest: /etc/ssh/sshd_config
     validate: /usr/sbin/sshd -t -f %s
-'''
+"""
 
-RETURN = r'''#'''
+RETURN = r"""#"""
 
 import codecs
 import os
@@ -136,7 +136,7 @@ from ansible.module_utils.common.text.converters import to_native
 
 
 def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, tmpdir=None):
-    ''' assemble a file from a directory of fragments '''
+    """ assemble a file from a directory of fragments """
     tmpfd, temp_path = tempfile.mkstemp(dir=tmpdir)
     tmp = os.fdopen(tmpfd, 'wb')
     delimit_me = False

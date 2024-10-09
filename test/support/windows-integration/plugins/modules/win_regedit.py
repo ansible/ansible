@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'core'}
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_regedit
 version_added: '2.0'
@@ -99,9 +99,9 @@ author:
 - Adam Keech (@smadam813)
 - Josh Ludwig (@joshludwig)
 - Jordan Borean (@jborean93)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Create registry path MyCompany
   win_regedit:
     path: HKCU:\Software\MyCompany
@@ -194,9 +194,9 @@ EXAMPLES = r'''
     type: str
     state: present
     hive: C:\Users\Default\NTUSER.dat
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 data_changed:
     description: Whether this invocation changed the data in the registry value.
     returned: success
@@ -207,4 +207,4 @@ data_type_changed:
     returned: success
     type: bool
     sample: true
-'''
+"""

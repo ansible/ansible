@@ -27,7 +27,7 @@ display = Display()
 
 
 def get_reserved_names(include_private=True):
-    ''' this function returns the list of reserved names associated with play objects'''
+    """ this function returns the list of reserved names associated with play objects"""
 
     public = set()
     private = set()
@@ -62,7 +62,7 @@ def get_reserved_names(include_private=True):
 
 
 def warn_if_reserved(myvars, additional=None):
-    ''' this function warns if any variable passed conflicts with internally reserved names '''
+    """ this function warns if any variable passed conflicts with internally reserved names """
 
     if additional is None:
         reserved = _RESERVED_NAMES

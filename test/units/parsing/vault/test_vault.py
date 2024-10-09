@@ -63,12 +63,12 @@ class TestUnhexlify(unittest.TestCase):
 
 class TestParseVaulttext(unittest.TestCase):
     def test(self):
-        vaulttext_envelope = u'''$ANSIBLE_VAULT;1.1;AES256
+        vaulttext_envelope = u"""$ANSIBLE_VAULT;1.1;AES256
 33363965326261303234626463623963633531343539616138316433353830356566396130353436
 3562643163366231316662386565383735653432386435610a306664636137376132643732393835
 63383038383730306639353234326630666539346233376330303938323639306661313032396437
 6233623062366136310a633866373936313238333730653739323461656662303864663666653563
-3138'''
+3138"""
 
         b_vaulttext_envelope = to_bytes(vaulttext_envelope, errors='strict', encoding='utf-8')
         b_vaulttext, b_version, cipher_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext_envelope)
@@ -78,12 +78,12 @@ class TestParseVaulttext(unittest.TestCase):
         self.assertIsInstance(res[2], bytes)
 
     def test_non_hex(self):
-        vaulttext_envelope = u'''$ANSIBLE_VAULT;1.1;AES256
+        vaulttext_envelope = u"""$ANSIBLE_VAULT;1.1;AES256
 3336396J326261303234626463623963633531343539616138316433353830356566396130353436
 3562643163366231316662386565383735653432386435610a306664636137376132643732393835
 63383038383730306639353234326630666539346233376330303938323639306661313032396437
 6233623062366136310a633866373936313238333730653739323461656662303864663666653563
-3138'''
+3138"""
 
         b_vaulttext_envelope = to_bytes(vaulttext_envelope, errors='strict', encoding='utf-8')
         b_vaulttext, b_version, cipher_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext_envelope)
@@ -210,13 +210,13 @@ class TestFileVaultSecret(unittest.TestCase):
         password = 'some password'
         # 'some password' encrypted with 'test-ansible-password'
 
-        password_file_content = '''$ANSIBLE_VAULT;1.1;AES256
+        password_file_content = """$ANSIBLE_VAULT;1.1;AES256
 61393863643638653437313566313632306462383837303132346434616433313438353634613762
 3334363431623364386164616163326537366333353663650a663634306232363432626162353665
 39623061353266373631636331643761306665343731376633623439313138396330346237653930
 6432643864346136640a653364386634666461306231353765636662316335613235383565306437
 3737
-'''
+"""
 
         tmp_file = tempfile.NamedTemporaryFile(delete=False)
         tmp_file.write(to_bytes(password_file_content))
@@ -758,12 +758,12 @@ class TestVaultLib(unittest.TestCase):
     def test_encrypt_decrypt_aes256_existing_vault(self):
         self.v.cipher_name = u'AES256'
         b_orig_plaintext = b"Setec Astronomy"
-        vaulttext = u'''$ANSIBLE_VAULT;1.1;AES256
+        vaulttext = u"""$ANSIBLE_VAULT;1.1;AES256
 33363965326261303234626463623963633531343539616138316433353830356566396130353436
 3562643163366231316662386565383735653432386435610a306664636137376132643732393835
 63383038383730306639353234326630666539346233376330303938323639306661313032396437
 6233623062366136310a633866373936313238333730653739323461656662303864663666653563
-3138'''
+3138"""
 
         b_plaintext = self.v.decrypt(vaulttext)
         self.assertEqual(b_plaintext, b_plaintext, msg="decryption failed")
@@ -774,12 +774,12 @@ class TestVaultLib(unittest.TestCase):
 
     def test_decrypt_and_get_vault_id(self):
         b_expected_plaintext = to_bytes('foo bar\n')
-        vaulttext = '''$ANSIBLE_VAULT;1.2;AES256;ansible_devel
+        vaulttext = """$ANSIBLE_VAULT;1.2;AES256;ansible_devel
 65616435333934613466373335363332373764363365633035303466643439313864663837393234
 3330656363343637313962633731333237313636633534630a386264363438363362326132363239
 39363166646664346264383934393935653933316263333838386362633534326664646166663736
 6462303664383765650a356637643633366663643566353036303162386237336233393065393164
-6264'''
+6264"""
 
         vault_secrets = self._vault_secrets_from_password('ansible_devel', 'ansible')
         v = vault.VaultLib(vault_secrets)
@@ -794,12 +794,12 @@ class TestVaultLib(unittest.TestCase):
 
     def test_decrypt_non_default_1_2(self):
         b_expected_plaintext = to_bytes('foo bar\n')
-        vaulttext = '''$ANSIBLE_VAULT;1.2;AES256;ansible_devel
+        vaulttext = """$ANSIBLE_VAULT;1.2;AES256;ansible_devel
 65616435333934613466373335363332373764363365633035303466643439313864663837393234
 3330656363343637313962633731333237313636633534630a386264363438363362326132363239
 39363166646664346264383934393935653933316263333838386362633534326664646166663736
 6462303664383765650a356637643633366663643566353036303162386237336233393065393164
-6264'''
+6264"""
 
         vault_secrets = self._vault_secrets_from_password('default', 'ansible')
         v = vault.VaultLib(vault_secrets)

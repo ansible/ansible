@@ -7,7 +7,7 @@ from ansible.module_utils.common.text.converters import to_native
 
 
 def get_best_parsable_locale(module, preferences=None, raise_on_locale=False):
-    '''
+    """
         Attempts to return the best possible locale for parsing output in English
         useful for scraping output with i18n tools. When this raises an exception
         and the caller wants to continue, it should use the 'C' locale.
@@ -17,7 +17,7 @@ def get_best_parsable_locale(module, preferences=None, raise_on_locale=False):
         :param raise_on_locale: boolean that determines if we raise exception or not
                                 due to locale CLI issues
         :returns: The first matched preferred locale or 'C' which is the default
-    '''
+    """
 
     found = 'C'  # default posix, its ascii but always there
     try:

@@ -33,7 +33,7 @@ display = Display()
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
-        ''' handler for fetch operations '''
+        """ handler for fetch operations """
         if task_vars is None:
             task_vars = dict()
 

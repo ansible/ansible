@@ -373,12 +373,12 @@ class VarTestMaker(object):
         self.write_playbook()
 
     def run(self):
-        '''
+        """
         if self.dynamic_inventory:
             cmd = 'ansible-playbook -c local -i inventory/hosts site.yml'
         else:
             cmd = 'ansible-playbook -c local -i inventory site.yml'
-        '''
+        """
         cmd = 'ansible-playbook -c local -i inventory site.yml'
         if 'extra_vars' in self.features:
             cmd += ' --extra-vars="findme=extra_vars"'

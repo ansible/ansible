@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: dnf
 version_added: 1.9
@@ -306,9 +306,9 @@ author:
   - Cristian van Ee (@DJMuggs) <cristian at cvee.org>
   - Berend De Schouwer (@berenddeschouwer)
   - Adam Miller (@maxamillion) <admiller@redhat.com>
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Install the latest version of Apache
   ansible.builtin.dnf:
     name: httpd
@@ -394,7 +394,7 @@ EXAMPLES = '''
   ansible.builtin.dnf:
     name: '@postgresql/client'
     state: present
-'''
+"""
 
 import os
 import sys

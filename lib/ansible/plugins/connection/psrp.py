@@ -473,7 +473,7 @@ class Connection(ConnectionBase):
         out_path = self._shell._unquote(out_path)
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._psrp_host)
 
-        copy_script = '''begin {
+        copy_script = """begin {
     $ErrorActionPreference = "Stop"
     $WarningPreference = "Continue"
     $path = $MyInvocation.UnboundArguments[0]
@@ -567,7 +567,7 @@ end {
     $hash = [System.BitConverter]::ToString($algo.Hash).Replace('-', '').ToLowerInvariant()
     Write-Output -InputObject "{`"sha1`":`"$hash`"}"
 }
-'''
+"""
 
         # Get the buffer size of each fragment to send, subtract 82 for the fragment, message, and other header info
         # fields that PSRP adds. Adjust to size of the base64 encoded bytes length.
@@ -630,7 +630,7 @@ end {
         buffer_size = max_b64_size - (max_b64_size % 1024)
 
         # setup the file stream with read only mode
-        setup_script = '''param([string]$Path)
+        setup_script = """param([string]$Path)
 $ErrorActionPreference = "Stop"
 
 if (Test-Path -LiteralPath $path -PathType Leaf) {
@@ -645,10 +645,10 @@ if (Test-Path -LiteralPath $path -PathType Leaf) {
 } else {
     Write-Error -Message "$path does not exist"
     $host.SetShouldExit(1)
-}'''
+}"""
 
         # read the file stream at the offset and return the b64 string
-        read_script = '''param([int64]$Offset, [int]$BufferSize)
+        read_script = """param([int64]$Offset, [int]$BufferSize)
 $ErrorActionPreference = "Stop"
 $fs.Seek($Offset, [System.IO.SeekOrigin]::Begin) > $null
 $buffer = New-Object -TypeName byte[] -ArgumentList $BufferSize
@@ -656,7 +656,7 @@ $read = $fs.Read($buffer, 0, $buffer.Length)
 
 if ($read -gt 0) {
     [System.Convert]::ToBase64String($buffer, 0, $read)
-}'''
+}"""
 
         # need to run the setup script outside of the local scope so the
         # file stream stays active between fetch operations
