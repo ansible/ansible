@@ -278,6 +278,12 @@ class BaseInventoryPlugin(AnsiblePlugin):
 
         return (hostnames, port)
 
+    def _set_group_vars(self, group_name, gvars):
+
+        gobj = self.inventory.groups.get(group_name)
+        for gvar in gvars:
+            gobj.set_variable(gvar, gvars[gvar])
+
 
 class BaseFileInventoryPlugin(BaseInventoryPlugin):
     """ Parses a File based Inventory Source"""
@@ -389,6 +395,11 @@ class Constructable(object):
             for keyed in keys:
                 if keyed and isinstance(keyed, dict):
 
+                    group_vars = keyed.get('vars', {})
+                    if group_vars:
+                        # allow using group vars for templating
+                        variables = combine_vars(variables, group_vars)
+
                     if fetch_hostvars:
                         variables = combine_vars(variables, self.inventory.get_host(host).get_vars())
                     try:
@@ -397,6 +408,7 @@ class Constructable(object):
                         if strict:
                             raise AnsibleParserError("Could not generate group for host %s from %s entry: %s" % (host, keyed.get('key'), to_native(e)))
                         continue
+
                     default_value_name = keyed.get('default_value', None)
                     trailing_separator = keyed.get('trailing_separator')
                     if trailing_separator is not None and default_value_name is not None:
@@ -447,11 +459,12 @@ class Constructable(object):
                             result_gname = self.inventory.add_group(gname)
                             self.inventory.add_host(host, result_gname)
 
+                            self._set_group_vars(result_gname, group_vars)
+
                             if raw_parent_name:
                                 parent_name = self._sanitize_group_name(raw_parent_name)
                                 self.inventory.add_group(parent_name)
                                 self.inventory.add_child(parent_name, result_gname)
-
                     else:
                         # exclude case of empty list and dictionary, because these are valid constructions
                         # simply no groups need to be constructed, but are still falsy
