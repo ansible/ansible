@@ -1586,13 +1586,30 @@ class AnsibleModule(object):
         self.set_attributes_if_different(dest, current_attribs, True)
 
     def atomic_move(self, src, dest, unsafe_writes=False, keep_dest_attrs=True):
-        '''atomically move src to dest, copying attributes from dest, returns true on success
-        it uses os.rename to ensure this as it is an atomic operation, rest of the function is
-        to work around limitations, corner cases and ensure selinux context is saved if possible'''
+        '''atomically move src to dest, optionally preserving attributes, permissions and SELinux
+        context from dest while handling the different limitations and corner cases possible.
+        Use this method to ensure other processes always get a consistent view of the file data,
+        either the original or new file content and not 'mid-write' content. This bypasses the need
+        for locks which are 'advisory' in POSIX and not guaranteed to be implemented by other programs.
+
+        :param src: Full path to the source file/data we want to move
+        :param dest: Full path to the destination of the move
+        :param unsafe_writes: optional boolean that allows to fallback to 'unsafely' writing directly into the destination file
+                              this is 'non-atomic' and may cause other processes accessing the file to get inconsistent data
+        :param keep_dest_attrs: optional boolean that controls permission/ownership/metadata preservation for the final result
+
+        :returns: True on success, calls exit_json on failure
+        '''
         context = None
         dest_stat = None
         b_src = to_bytes(src, errors='surrogate_or_strict')
         b_dest = to_bytes(dest, errors='surrogate_or_strict')
+
+        if not os.path.isabs(src):
+            self.warn('The source path for atomic_move is not an absolute path, this might not work and will be enforced in the future')
+        if not os.path.isabs(dest):
+            self.warn('The destination path for atomic_move is not an absolute path, this might not work and will be enforced in the future')
+
         if os.path.exists(b_dest) and keep_dest_attrs:
             try:
                 dest_stat = os.stat(b_dest)

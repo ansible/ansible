@@ -690,6 +690,9 @@ def main():
         if not os.path.exists(removes):
             module.exit_json(stdout="skipped, since '%s' does not exist" % removes, changed=False)
 
+    if dest is not None:
+        dest = os.path.abspath(dest)
+
     # Make the request
     start = utcnow()
     r, info = uri(module, url, dest, body, body_format, method,

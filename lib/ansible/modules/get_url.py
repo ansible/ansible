@@ -492,7 +492,7 @@ def main():
     )
 
     url = module.params['url']
-    dest = module.params['dest']
+    dest = os.path.abspath(module.params['dest'])
     backup = module.params['backup']
     force = module.params['force']
     checksum = module.params['checksum']
