@@ -210,7 +210,7 @@
       that:
           - fail_to_read_wrong_encoding_file.msg == 'Not all paths examined, check warnings for details'
           - >-
-              fail_to_read_wrong_encoding_file.skipped_paths[remote_tmp_dir_test] == 
+              fail_to_read_wrong_encoding_file.skipped_paths[remote_tmp_dir_test] ==
               ("Failed to read the file %s/hello_world.gbk due to an encoding error. current encoding: utf-8" % (remote_tmp_dir_test))
 
 - name: read a gbk file by gbk
@@ -239,7 +239,7 @@
 
 - assert:
       that:
-          - fail_to_search_file_by_non_exists_encoding.skipped_paths[remote_tmp_dir_test] == "unknown encoding: idontexist"
+          - 'fail_to_search_file_by_non_exists_encoding.skipped_paths[remote_tmp_dir_test] == "unknown encoding: idontexist"'
 
 - block:
     - set_fact:
@@ -479,3 +479,31 @@
 
 - name: Run mode tests
   import_tasks: mode.yml
+
+- name: User block
+  become: true
+  become_user: "{{ test_user_name }}"
+  block:
+    - name: Create file in home dir
+      copy:
+        content: ""
+        dest: ~/wharevs.txt
+        mode: '0644'
+
+    - name: Find file in home dir with ~/
+      find:
+        paths: ~/
+        patterns: 'whar*'
+      register: homedir_search
+
+    - set_fact:
+        astest_list: "{{ homedir_search.files | map(attribute='path') }}"
+
+    - name: Check if found
+      assert:
+        that:
+          - homedir_search is success
+          - homedir_search.matched == 1
+          - '"{{ homedir }}/wharevs.txt" in astest_list'
+      vars:
+        homedir: "{{ test_user.home }}"

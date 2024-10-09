@@ -38,4 +38,5 @@ ANSIBLE_FACTS_MODULES='ansible.legacy.slow' ansible -m gather_facts localhost --
 
 # test parallelism
 ANSIBLE_FACTS_MODULES='dummy1,dummy2,dummy3' ansible -m gather_facts localhost --playbook-dir ./ -a 'gather_timeout=30 parallel=true' "$@" 2>&1
+
 rm "${OUTPUT_DIR}/canary.txt"

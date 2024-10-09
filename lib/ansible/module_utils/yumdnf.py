@@ -18,6 +18,7 @@ yumdnf_argument_spec = dict(
         allow_downgrade=dict(type='bool', default=False),
         allowerasing=dict(default=False, type="bool"),
         autoremove=dict(type='bool', default=False),
+        best=dict(type="bool"),
         bugfix=dict(required=False, type='bool', default=False),
         cacheonly=dict(type='bool', default=False),
         conf_file=dict(type='str'),
@@ -38,7 +39,7 @@ yumdnf_argument_spec = dict(
         install_weak_deps=dict(type='bool', default=True),
         list=dict(type='str'),
         name=dict(type='list', elements='str', aliases=['pkg'], default=[]),
-        nobest=dict(default=False, type="bool"),
+        nobest=dict(type="bool"),
         releasever=dict(default=None),
         security=dict(type='bool', default=False),
         skip_broken=dict(type='bool', default=False),
@@ -51,7 +52,7 @@ yumdnf_argument_spec = dict(
         lock_timeout=dict(type='int', default=30),
     ),
     required_one_of=[['name', 'list', 'update_cache']],
-    mutually_exclusive=[['name', 'list']],
+    mutually_exclusive=[['name', 'list'], ['best', 'nobest']],
     supports_check_mode=True,
 )
 
@@ -70,6 +71,7 @@ class YumDnf(metaclass=ABCMeta):
         self.allow_downgrade = self.module.params['allow_downgrade']
         self.allowerasing = self.module.params['allowerasing']
         self.autoremove = self.module.params['autoremove']
+        self.best = self.module.params['best']
         self.bugfix = self.module.params['bugfix']
         self.cacheonly = self.module.params['cacheonly']
         self.conf_file = self.module.params['conf_file']

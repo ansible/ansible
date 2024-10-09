@@ -1,2 +1,0 @@
-bugfixes:
-  - Stopped misleadingly advertising ``async`` mode support in the ``reboot`` module (https://github.com/ansible/ansible/issues/71517).

@@ -1,0 +1,32 @@
+extra_key: true
+plugin_routing:
+  modules:
+    deprecated_module:
+      deprecation:
+        removal_version: 2.0.0
+        warning_text: Will no longer be there.
+    tombstoned_module:
+      tombstone:
+        removal_version: 1.0.0
+        warning_text: Is no longer there.
+action_groups:
+  foo:
+    - metadata: {}
+    - metadata: {}
+  bar: foo
+  baz:
+    bam: bar
+  bam:
+    - foo
+    - foo.bar
+    - foo.bar.bam
+  foobar:
+    - metadata:
+        extend_group:
+          - foo
+          - bar.baz
+          - foo.bar.baz
+        extra: indeed
+  foobarbam:
+    - metadata:
+        extend_group: 23

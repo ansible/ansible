@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import typing as t
 
 import pytest
 
@@ -69,16 +70,16 @@ VALID_SPECS = (
     ({'arg': {'type': 'int'}}, {'arg': 1, 'invalid': True, '_ansible_ignore_unknown_opts': True}, 1),
 )
 
-INVALID_SPECS = (
+INVALID_SPECS: tuple[tuple[dict[str, t.Any], dict[str, t.Any], str], ...] = (
     # Type is int; unable to convert this string
-    ({'arg': {'type': 'int'}}, {'arg': "wolf"}, "is of type {0} and we were unable to convert to int: {0} cannot be converted to an int".format(type('bad'))),
+    ({'arg': {'type': 'int'}}, {'arg': "wolf"}, f"is of type {type('wolf')} and we were unable to convert to int:"),
     # Type is list elements is int; unable to convert this string
-    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [1, "bad"]}, "is of type {0} and we were unable to convert to int: {0} cannot be converted to "
-                                                                        "an int".format(type('int'))),
+    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [1, "bad"]},
+     "is of type {0} and we were unable to convert to int:".format(type('int'))),
     # Type is int; unable to convert float
-    ({'arg': {'type': 'int'}}, {'arg': 42.1}, "'float'> cannot be converted to an int"),
+    ({'arg': {'type': 'int'}}, {'arg': 42.1}, "'float'> and we were unable to convert to int:"),
     # Type is list, elements is int; unable to convert float
-    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [42.1, 32, 2]}, "'float'> cannot be converted to an int"),
+    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [42.1, 32, 2]}, "'float'> and we were unable to convert to int:"),
     # type is a callable that fails to convert
     ({'arg': {'type': MOCK_VALIDATOR_FAIL}}, {'arg': "bad"}, "bad conversion"),
     # type is a list, elements is callable that fails to convert
@@ -495,7 +496,7 @@ class TestComplexOptions:
     )
 
     # (Parameters, failure message)
-    FAILING_PARAMS_LIST = (
+    FAILING_PARAMS_LIST: tuple[tuple[dict[str, list[dict[str, t.Any]]], str], ...] = (
         # Missing required option
         ({'foobar': [{}]}, 'missing required arguments: foo found in foobar'),
         # Invalid option
@@ -518,7 +519,7 @@ class TestComplexOptions:
     )
 
     # (Parameters, failure message)
-    FAILING_PARAMS_DICT = (
+    FAILING_PARAMS_DICT: tuple[tuple[dict[str, dict[str, t.Any]], str], ...] = (
         # Missing required option
         ({'foobar': {}}, 'missing required arguments: foo found in foobar'),
         # Invalid option

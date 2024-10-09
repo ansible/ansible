@@ -11,7 +11,7 @@ ENTRY POINT: *main* - test_role1 from roles subdir
           fat case left use. Match round scale now style far times.
           Your me past an much.
 
-Options (= inicates it is required):
+Options (= indicates it is required):
 
 = myopt1    First option.
           type: str
@@ -24,5 +24,13 @@ Options (= inicates it is required):
           choices: [choice1, choice2]
           default: null
           type: str
+
+ATTRIBUTES:
+
+          `diff_mode:`
+          description: Will return details on what has changed (or possibly needs changing in
+            check_mode), when in diff mode
+          details: Not all modules used support this
+          support: partial
 
 AUTHOR: John Doe (@john), Jane Doe (@jane)

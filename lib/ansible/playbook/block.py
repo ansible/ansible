@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import ansible.constants as C
 from ansible.errors import AnsibleParserError
+from ansible.module_utils.common.sentinel import Sentinel
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
@@ -28,7 +29,6 @@ from ansible.playbook.helpers import load_list_of_tasks
 from ansible.playbook.notifiable import Notifiable
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
-from ansible.utils.sentinel import Sentinel
 
 
 class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatable):

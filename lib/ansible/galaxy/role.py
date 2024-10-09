@@ -256,7 +256,7 @@ class GalaxyRole(object):
             display.display("- downloading role from %s" % archive_url)
 
             try:
-                url_file = open_url(archive_url, validate_certs=self._validate_certs, http_agent=user_agent())
+                url_file = open_url(archive_url, validate_certs=self._validate_certs, http_agent=user_agent(), timeout=60)
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
                 data = url_file.read()
                 while data:
@@ -297,7 +297,7 @@ class GalaxyRole(object):
                     # are no versions in the list, we'll grab the head
                     # of the master branch
                     if len(role_versions) > 0:
-                        loose_versions = [LooseVersion(a.get('name', None)) for a in role_versions]
+                        loose_versions = [v for a in role_versions if (v := LooseVersion()) and v.parse(a.get('name') or '') is None]
                         try:
                             loose_versions.sort()
                         except TypeError:
@@ -386,6 +386,8 @@ class GalaxyRole(object):
                         else:
                             os.makedirs(self.path)
 
+                        resolved_archive = unfrackpath(archive_parent_dir, follow=False)
+
                         # We strip off any higher-level directories for all of the files
                         # contained within the tar file here. The default is 'github_repo-target'.
                         # Gerrit instances, on the other hand, does not have a parent directory at all.
@@ -400,33 +402,29 @@ class GalaxyRole(object):
                                 if not (attr_value := getattr(member, attr, None)):
                                     continue
 
-                                if attr_value.startswith(os.sep) and not is_subpath(attr_value, archive_parent_dir):
-                                    err = f"Invalid {attr} for tarfile member: path {attr_value} is not a subpath of the role {archive_parent_dir}"
-                                    raise AnsibleError(err)
-
                                 if attr == 'linkname':
                                     # Symlinks are relative to the link
-                                    relative_to_archive_dir = os.path.dirname(getattr(member, 'name', ''))
-                                    archive_dir_path = os.path.join(archive_parent_dir, relative_to_archive_dir, attr_value)
+                                    relative_to = os.path.dirname(getattr(member, 'name', ''))
                                 else:
                                     # Normalize paths that start with the archive dir
                                     attr_value = attr_value.replace(archive_parent_dir, "", 1)
                                     attr_value = os.path.join(*attr_value.split(os.sep))  # remove leading os.sep
-                                    archive_dir_path = os.path.join(archive_parent_dir, attr_value)
+                                    relative_to = ''
 
-                                resolved_archive = unfrackpath(archive_parent_dir)
-                                resolved_path = unfrackpath(archive_dir_path)
-                                if not is_subpath(resolved_path, resolved_archive):
-                                    err = f"Invalid {attr} for tarfile member: path {resolved_path} is not a subpath of the role {resolved_archive}"
+                                full_path = os.path.join(resolved_archive, relative_to, attr_value)
+                                if not is_subpath(full_path, resolved_archive, real=True):
+                                    err = f"Invalid {attr} for tarfile member: path {full_path} is not a subpath of the role {resolved_archive}"
                                     raise AnsibleError(err)
 
-                                relative_path = os.path.join(*resolved_path.replace(resolved_archive, "", 1).split(os.sep)) or '.'
+                                relative_path_dir = os.path.join(resolved_archive, relative_to)
+                                relative_path = os.path.join(*full_path.replace(relative_path_dir, "", 1).split(os.sep))
                                 setattr(member, attr, relative_path)
 
                             if _check_working_data_filter():
                                 # deprecated: description='extract fallback without filter' python_version='3.11'
                                 role_tar_file.extract(member, to_native(self.path), filter='data')  # type: ignore[call-arg]
                             else:
+                                # Remove along with manual path filter once Python 3.12 is minimum supported version
                                 role_tar_file.extract(member, to_native(self.path))
 
                         # write out the install info file for later use

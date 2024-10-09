@@ -77,3 +77,28 @@
     that:
       - "'RealName: ansibulluser' in user_test2.stdout_lines "
       - "'PrimaryGroupID: 20' in user_test2.stdout_lines "
+
+#https://github.com/ansible/ansible/issues/82490
+- name: Create a new user with custom shell to test ~ expansion
+  user:
+    name: randomuserthomas
+    shell: ~/custom_shell
+  register: user_create_result
+
+- name: Create a new user with custom shell to test ~ expansion second time should show ok not changed
+  user:
+    name: randomuserthomas
+    shell: ~/custom_shell
+  register: user_creation_result
+
+- name: Assert that the user with a tilde in the shell path is created
+  assert:
+    that:
+      - user_creation_result is not changed
+      - user_create_result is changed
+
+- name: remove the randomuserthomas user to clean up
+  user:
+    name: randomuserthomas
+    state: absent
+    force: true

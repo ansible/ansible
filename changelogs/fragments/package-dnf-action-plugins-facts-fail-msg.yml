@@ -1,0 +1,2 @@
+bugfixes:
+  - "``package``/``dnf`` action plugins - provide the reason behind the failure to gather the ``ansible_pkg_mgr`` fact to identify the package backend"

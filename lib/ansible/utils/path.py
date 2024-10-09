@@ -33,6 +33,9 @@ def unfrackpath(path, follow=True, basedir=None):
 
     :arg path: A byte or text string representing a path to be canonicalized
     :arg follow: A boolean to indicate of symlinks should be resolved or not
+    :arg basedir: A byte string, text string, PathLike object, or `None`
+        representing where a relative path should be resolved from.
+        `None` will be substituted for the current working directory.
     :raises UnicodeDecodeError: If the canonicalized version of the path
         contains non-utf8 byte sequences.
     :rtype: A text string (unicode on pyyhon2, str on python3).

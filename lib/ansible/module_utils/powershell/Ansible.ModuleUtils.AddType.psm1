@@ -37,7 +37,7 @@ Function Add-CSharpType {
     .PARAMETER CompileSymbols
     [String[]] A list of symbols to be defined during compile time. These are
     added to the existing symbols, 'CORECLR', 'WINDOWS', 'UNIX' that are set
-    conditionalls in this cmdlet.
+    conditionals in this cmdlet.
 
     .NOTES
     The following features were added to control the compiling options from the
@@ -75,7 +75,7 @@ Function Add-CSharpType {
         [Switch]$IgnoreWarnings,
         [Switch]$PassThru,
         [Parameter(Mandatory = $true, ParameterSetName = "Module")][Object]$AnsibleModule,
-        [Parameter(ParameterSetName = "Manual")][String]$TempPath = $env:TMP,
+        [Parameter(ParameterSetName = "Manual")][String]$TempPath,
         [Parameter(ParameterSetName = "Manual")][Switch]$IncludeDebugInfo,
         [String[]]$CompileSymbols = @()
     )
@@ -280,9 +280,11 @@ Function Add-CSharpType {
             $include_debug = $AnsibleModule.Verbosity -ge 3
         }
         else {
-            $temp_path = $TempPath
+            $temp_path = [System.IO.Path]::GetTempPath()
             $include_debug = $IncludeDebugInfo.IsPresent
         }
+        $temp_path = Join-Path -Path $temp_path -ChildPath ([Guid]::NewGuid().Guid)
+
         $compiler_options = [System.Collections.ArrayList]@("/optimize")
         if ($defined_symbols.Count -gt 0) {
             $compiler_options.Add("/define:" + ([String]::Join(";", $defined_symbols.ToArray()))) > $null
@@ -304,8 +306,12 @@ Function Add-CSharpType {
         )
 
         # create a code snippet for each reference and check if we need
-        # to reference any extra assemblies
-        $ignore_warnings = [System.Collections.ArrayList]@()
+        # to reference any extra assemblies.
+        # CS1610 is a warning when csc.exe failed to delete temporary files.
+        # We use our own temp dir deletion mechanism so this doesn't become a
+        # fatal error.
+        # https://github.com/ansible-collections/ansible.windows/issues/598
+        $ignore_warnings = [System.Collections.ArrayList]@('1610')
         $compile_units = [System.Collections.Generic.List`1[System.CodeDom.CodeSnippetCompileUnit]]@()
         foreach ($reference in $References) {
             # scan through code and add any assemblies that match
@@ -373,7 +379,26 @@ Function Add-CSharpType {
                 }
             }
 
-            $compile = $provider.CompileAssemblyFromDom($compile_parameters, $compile_units)
+            $null = New-Item -Path $temp_path -ItemType Directory -Force
+            try {
+                $compile = $provider.CompileAssemblyFromDom($compile_parameters, $compile_units)
+            }
+            finally {
+                # Try to delete the temp path, if this fails and we are running
+                # with a module object write a warning instead of failing.
+                try {
+                    [System.IO.Directory]::Delete($temp_path, $true)
+                }
+                catch {
+                    $msg = "Failed to cleanup temporary directory '$temp_path' used for compiling C# code."
+                    if ($AnsibleModule) {
+                        $AnsibleModule.Warn("$msg Files may still be present after the task is complete. Error: $_")
+                    }
+                    else {
+                        throw "$msg Error: $_"
+                    }
+                }
+            }
         }
         finally {
             foreach ($kvp in $originalEnv.GetEnumerator()) {

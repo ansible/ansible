@@ -85,26 +85,26 @@ def generate_ansible_template_vars(path, fullpath=None, dest_path=None):
         template_uid = os.stat(b_path).st_uid
 
     temp_vars = {
-        'template_host': to_text(os.uname()[1]),
-        'template_path': path,
+        'template_host': to_unsafe_text(os.uname()[1]),
+        'template_path': to_unsafe_text(path),
         'template_mtime': datetime.datetime.fromtimestamp(os.path.getmtime(b_path)),
-        'template_uid': to_text(template_uid),
+        'template_uid': to_unsafe_text(template_uid),
         'template_run_date': datetime.datetime.now(),
-        'template_destpath': to_native(dest_path) if dest_path else None,
+        'template_destpath': wrap_var(to_native(dest_path)) if dest_path else None,
     }
 
     if fullpath is None:
-        temp_vars['template_fullpath'] = os.path.abspath(path)
+        temp_vars['template_fullpath'] = wrap_var(os.path.abspath(path))
     else:
-        temp_vars['template_fullpath'] = fullpath
+        temp_vars['template_fullpath'] = wrap_var(fullpath)
 
     managed_default = C.DEFAULT_MANAGED_STR
     managed_str = managed_default.format(
-        host=temp_vars['template_host'],
-        uid=temp_vars['template_uid'],
-        file=temp_vars['template_path'].replace('%', '%%'),
+        host="{{ template_host }}",
+        uid="{{ template_uid }}",
+        file="{{ template_path }}"
     )
-    temp_vars['ansible_managed'] = to_unsafe_text(time.strftime(to_native(managed_str), time.localtime(os.path.getmtime(b_path))))
+    temp_vars['ansible_managed'] = time.strftime(to_native(managed_str), time.localtime(os.path.getmtime(b_path)))
 
     return temp_vars
 
@@ -469,7 +469,7 @@ class JinjaPluginIntercept(MutableMapping):
         if self._pluginloader.type == 'filter':
             # filter need wrapping
             if key in C.STRING_TYPE_FILTERS:
-                # avoid litera_eval when you WANT strings
+                # avoid literal_eval when you WANT strings
                 func = _wrap_native_text(func)
             else:
                 # conditionally unroll iterators/generators to avoid having to use `|list` after every filter

@@ -50,15 +50,22 @@ def get_plugin_class(obj):
 
 class AnsiblePlugin(ABC):
 
-    # allow extra passthrough parameters
-    allow_extras = False
-
     # Set by plugin loader
     _load_name: str
+
+    # allow extra passthrough parameters
+    allow_extras: bool = False
+    _extras_prefix: str | None = None
 
     def __init__(self):
         self._options = {}
         self._defs = None
+
+    @property
+    def extras_prefix(self):
+        if not self._extras_prefix:
+            self._extras_prefix = self._load_name.split('.')[-1]
+        return self._extras_prefix
 
     def matches_name(self, possible_names):
         possible_fqcns = set()
@@ -92,6 +99,7 @@ class AnsiblePlugin(ABC):
 
     def set_option(self, option, value):
         self._options[option] = C.config.get_config_value(option, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={option: value})
+        C.handle_config_noise(display)
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         '''
@@ -108,6 +116,7 @@ class AnsiblePlugin(ABC):
         if self.allow_extras and var_options and '_extras' in var_options:
             # these are largely unvalidated passthroughs, either plugin or underlying API will validate
             self._options['_extras'] = var_options['_extras']
+        C.handle_config_noise(display)
 
     def has_option(self, option):
         if not self._options:

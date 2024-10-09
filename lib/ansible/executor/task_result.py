@@ -139,7 +139,7 @@ class TaskResult:
         elif self._result:
             result._result = module_response_deepcopy(self._result)
 
-            # actualy remove
+            # actually remove
             for remove_key in ignore:
                 if remove_key in result._result:
                     del result._result[remove_key]

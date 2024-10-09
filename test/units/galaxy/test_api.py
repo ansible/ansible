@@ -22,13 +22,14 @@ from ansible.errors import AnsibleError
 from ansible.galaxy import api as galaxy_api
 from ansible.galaxy.api import CollectionVersionMetadata, GalaxyAPI, GalaxyError
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken
+from ansible.module_utils.common.file import S_IRWU_RG_RO
 from ansible.module_utils.common.text.converters import to_native, to_text
 import urllib.error
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
 
 
-@pytest.fixture(autouse='function')
+@pytest.fixture(autouse=True)
 def reset_cli_args():
     co.GlobalCLIArgs._Singleton__instance = None
     # Required to initialise the GalaxyAPI object
@@ -47,7 +48,7 @@ def collection_artifact(tmp_path_factory):
         b_io = BytesIO(b"\x00\x01\x02\x03")
         tar_info = tarfile.TarInfo('test')
         tar_info.size = 4
-        tar_info.mode = 0o0644
+        tar_info.mode = S_IRWU_RG_RO
         tfile.addfile(tarinfo=tar_info, fileobj=b_io)
 
     yield tar_path
@@ -65,7 +66,7 @@ def get_test_galaxy_api(url, version, token_ins=None, token_value=None, no_cache
     token_value = token_value or "my token"
     token_ins = token_ins or GalaxyToken(token_value)
     api = GalaxyAPI(None, "test", url, no_cache=no_cache)
-    # Warning, this doesn't test g_connect() because _availabe_api_versions is set here.  That means
+    # Warning, this doesn't test g_connect() because _available_api_versions is set here.  That means
     # that urls for v2 servers have to append '/api/' themselves in the input data.
     api._available_api_versions = {version: '%s' % version}
     api.token = token_ins

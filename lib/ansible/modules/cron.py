@@ -18,19 +18,19 @@ description:
   - Use this module to manage crontab and environment variables entries. This module allows
     you to create environment variables and named crontab entries, update, or delete them.
   - 'When crontab jobs are managed: the module includes one line with the description of the
-    crontab entry C("#Ansible: <name>") corresponding to the "name" passed to the module,
-    which is used by future ansible/module calls to find/check the state. The "name"
-    parameter should be unique, and changing the "name" value will result in a new cron
+    crontab entry C("#Ansible: <name>") corresponding to the O(name) passed to the module,
+    which is used by future ansible/module calls to find/check the state. The O(name)
+    parameter should be unique, and changing the O(name) value will result in a new cron
     task being created (or a different one being removed).'
   - When environment variables are managed, no comment line is added, but, when the module
-    needs to find/check the state, it uses the "name" parameter to find the environment
+    needs to find/check the state, it uses the O(name) parameter to find the environment
     variable definition line.
-  - When using symbols such as %, they must be properly escaped.
+  - When using symbols such as C(%), they must be properly escaped.
 version_added: "0.9"
 options:
   name:
     description:
-      - Description of a crontab entry or, if env is set, the name of environment variable.
+      - Description of a crontab entry or, if O(env) is set, the name of environment variable.
       - This parameter is always required as of ansible-core 2.12.
     type: str
     required: yes
@@ -41,7 +41,7 @@ options:
     type: str
   job:
     description:
-      - The command to execute or, if env is set, the value of environment variable.
+      - The command to execute or, if O(env) is set, the value of environment variable.
       - The command should not contain line breaks.
       - Required if O(state=present).
     type: str
@@ -58,10 +58,10 @@ options:
         The assumption is that this file is exclusively managed by the module,
         do not use if the file contains multiple entries, NEVER use for /etc/crontab.
       - If this is a relative path, it is interpreted with respect to C(/etc/cron.d).
-      - Many linux distros expect (and some require) the filename portion to consist solely
+      - Many Linux distros expect (and some require) the filename portion to consist solely
         of upper- and lower-case letters, digits, underscores, and hyphens.
-      - Using this parameter requires you to specify the O(user) as well, unless O(state) is not V(present).
-      - Either this parameter or O(name) is required
+      - Using this parameter requires you to specify the O(user) as well, unless O(state=absent).
+      - Either this parameter or O(name) is required.
     type: path
   backup:
     description:
@@ -131,6 +131,9 @@ options:
     version_added: "2.1"
 requirements:
   - cron (any 'vixie cron' conformant variant, like cronie)
+notes:
+  - If you are experiencing permissions issues with cron and MacOS,
+    you should see the official MacOS documentation for further information.
 author:
   - Dane Summers (@dsummersl)
   - Mike Grozak (@rhaido)
@@ -214,6 +217,7 @@ import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.file import S_IRWU_RWG_RWO
 from ansible.module_utils.common.text.converters import to_bytes, to_native
 from ansible.module_utils.six.moves import shlex_quote
 
@@ -307,7 +311,7 @@ class CronTab(object):
             fileh = open(self.b_cron_file, 'wb')
         else:
             filed, path = tempfile.mkstemp(prefix='crontab')
-            os.chmod(path, int('0644', 8))
+            os.chmod(path, S_IRWU_RWG_RWO)
             fileh = os.fdopen(filed, 'wb')
 
         fileh.write(to_bytes(self.render()))
@@ -324,7 +328,7 @@ class CronTab(object):
             os.unlink(path)
 
             if rc != 0:
-                self.module.fail_json(msg=err)
+                self.module.fail_json(msg=f"Failed to install new cronfile: {path}", stderr=err, stdout=out, rc=rc)
 
         # set SELinux permissions
         if self.module.selinux_enabled() and self.cron_file:

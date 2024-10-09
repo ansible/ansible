@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import os
+import typing as t
 
 import pytest
 
@@ -22,7 +23,7 @@ pytest.importorskip("winrm")
 
 class TestConnectionWinRM(object):
 
-    OPTIONS_DATA = (
+    OPTIONS_DATA: tuple[tuple[dict[str, t.Any], dict[str, t.Any], dict[str, t.Any], bool], ...] = (
         # default options
         (
             {'_extras': {}},
@@ -199,8 +200,6 @@ class TestConnectionWinRM(object):
         ),
     )
 
-    # pylint bug: https://github.com/PyCQA/pylint/issues/511
-    # pylint: disable=undefined-variable
     @pytest.mark.parametrize('options, direct, expected, kerb',
                              ((o, d, e, k) for o, d, e, k in OPTIONS_DATA))
     def test_set_options(self, options, direct, expected, kerb):
@@ -469,7 +468,7 @@ class TestWinRMKerbAuth(object):
 
         mock_proto = MagicMock()
         mock_proto.run_command.return_value = "command_id"
-        mock_proto.get_command_output.side_effect = requests_exc.Timeout("msg")
+        mock_proto.send_message.side_effect = requests_exc.Timeout("msg")
 
         conn._connected = True
         conn._winrm_host = 'hostname'

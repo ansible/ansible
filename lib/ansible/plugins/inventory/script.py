@@ -29,6 +29,8 @@ DOCUMENTATION = '''
         - The plugin does not cache results because external inventory scripts are responsible for their own caching.
         - To write your own inventory script see (R(Developing dynamic inventory,developing_inventory) from the documentation site.
         - To find the scripts that used to be part of the code release, go to U(https://github.com/ansible-community/contrib-scripts/).
+        - Since 2.19 using a directory as an inventory source will no longer ignore .ini files by default,
+          but you can still update the configuration to do so.
 '''
 
 EXAMPLES = r'''# fmt: code
@@ -130,7 +132,7 @@ EXAMPLES = r'''# fmt: code
         mandatory_options = arg_parser.add_mutually_exclusive_group()
         mandatory_options.add_argument('--list', action='store', nargs="*", help="Get inventory JSON from our API")
         mandatory_options.add_argument('--host', action='store',
-                                       help="Get variables for specific host, not used but kept for compatability")
+                                       help="Get variables for specific host, not used but kept for compatibility")
 
         try:
             config = load_config()

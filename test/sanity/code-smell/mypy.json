@@ -1,0 +1,15 @@
+{
+    "prefixes": [
+        "lib/ansible/",
+        "test/lib/ansible_test/_internal/",
+        "packaging/",
+        "test/units",
+        "test/lib/ansible_test/_util/target/sanity/import/"
+    ],
+    "extensions": [
+        ".py"
+    ],
+    "multi_version": "controller",
+    "error_code": "ansible-test",
+    "output": "path-line-column-code-message"
+}

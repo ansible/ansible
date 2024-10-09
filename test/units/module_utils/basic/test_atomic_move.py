@@ -14,6 +14,7 @@ from itertools import product
 import pytest
 
 from ansible.module_utils import basic
+from ansible.module_utils.common.file import S_IRWU_RG_RO
 
 
 @pytest.fixture
@@ -31,6 +32,7 @@ def atomic_am(am, mocker):
 def atomic_mocks(mocker, monkeypatch):
     environ = dict()
     mocks = {
+        'copystat': mocker.patch('shutil.copystat'),
         'chmod': mocker.patch('os.chmod'),
         'chown': mocker.patch('os.chown'),
         'close': mocker.patch('os.close'),
@@ -46,6 +48,7 @@ def atomic_mocks(mocker, monkeypatch):
         'copyfileobj': mocker.patch('shutil.copyfileobj'),
         'move': mocker.patch('shutil.move'),
         'mkstemp': mocker.patch('tempfile.mkstemp'),
+        'utime': mocker.patch('os.utime'),
     }
 
     mocks['getlogin'].return_value = 'root'
@@ -63,7 +66,7 @@ def atomic_mocks(mocker, monkeypatch):
 @pytest.fixture
 def fake_stat(mocker):
     stat1 = mocker.MagicMock()
-    stat1.st_mode = 0o0644
+    stat1.st_mode = S_IRWU_RG_RO
     stat1.st_uid = 0
     stat1.st_gid = 0
     stat1.st_flags = 0
@@ -101,7 +104,7 @@ def test_existing_file(atomic_am, atomic_mocks, fake_stat, mocker, selinux):
     atomic_am.atomic_move('/path/to/src', '/path/to/dest')
 
     atomic_mocks['rename'].assert_called_with(b'/path/to/src', b'/path/to/dest')
-    assert atomic_mocks['chmod'].call_args_list == [mocker.call(b'/path/to/src', basic.DEFAULT_PERM & ~18)]
+    assert atomic_mocks['copystat'].call_args_list == [mocker.call(b'/path/to/dest', b'/path/to/src')]
 
     if selinux:
         assert atomic_am.set_context_if_different.call_args_list == [mocker.call('/path/to/dest', mock_context, False)]
@@ -124,7 +127,8 @@ def test_no_tty_fallback(atomic_am, atomic_mocks, fake_stat, mocker):
     atomic_am.atomic_move('/path/to/src', '/path/to/dest')
 
     atomic_mocks['rename'].assert_called_with(b'/path/to/src', b'/path/to/dest')
-    assert atomic_mocks['chmod'].call_args_list == [mocker.call(b'/path/to/src', basic.DEFAULT_PERM & ~18)]
+    assert atomic_mocks['copystat'].call_args_list == [mocker.call(b'/path/to/dest', b'/path/to/src')]
+    assert atomic_mocks['chmod'].call_args_list == []
 
     assert atomic_am.set_context_if_different.call_args_list == [mocker.call('/path/to/dest', mock_context, False)]
     assert atomic_am.selinux_context.call_args_list == [mocker.call('/path/to/dest')]
@@ -133,19 +137,19 @@ def test_no_tty_fallback(atomic_am, atomic_mocks, fake_stat, mocker):
 @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
 def test_existing_file_stat_failure(atomic_am, atomic_mocks, mocker):
     """Failure to stat an existing file in order to copy permissions propogates the error (unless EPERM)"""
-    atomic_mocks['stat'].side_effect = OSError()
+    atomic_mocks['copystat'].side_effect = FileNotFoundError('testing os copystat with non EPERM error')
     atomic_mocks['path_exists'].return_value = True
 
-    with pytest.raises(OSError):
+    with pytest.raises(FileNotFoundError, match='testing os copystat with non EPERM error'):
         atomic_am.atomic_move('/path/to/src', '/path/to/dest')
 
 
 @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
 def test_existing_file_stat_perms_failure(atomic_am, atomic_mocks, mocker):
     """Failure to stat an existing file to copy the permissions due to permissions passes fine"""
-    # and now have os.stat return EPERM, which should not fail
+    # and now have os.copystat return EPERM, which should not fail
     mock_context = atomic_am.selinux_context.return_value
-    atomic_mocks['stat'].side_effect = OSError(errno.EPERM, 'testing os stat with EPERM')
+    atomic_mocks['copystat'].side_effect = OSError(errno.EPERM, 'testing os copystat with EPERM')
     atomic_mocks['path_exists'].return_value = True
     atomic_am.selinux_enabled.return_value = True
 
@@ -154,7 +158,7 @@ def test_existing_file_stat_perms_failure(atomic_am, atomic_mocks, mocker):
     atomic_mocks['rename'].assert_called_with(b'/path/to/src', b'/path/to/dest')
     # FIXME: Should atomic_move() set a default permission value when it cannot retrieve the
     # existing file's permissions?  (Right now it's up to the calling code.
-    # assert atomic_mocks['chmod'].call_args_list == [mocker.call(b'/path/to/src', basic.DEFAULT_PERM & ~18)]
+    assert atomic_mocks['copystat'].call_args_list == [mocker.call(b'/path/to/dest', b'/path/to/src')]
     assert atomic_am.set_context_if_different.call_args_list == [mocker.call('/path/to/dest', mock_context, False)]
     assert atomic_am.selinux_context.call_args_list == [mocker.call('/path/to/dest')]
 
@@ -202,8 +206,6 @@ def test_rename_perms_fail_temp_succeeds(atomic_am, atomic_mocks, fake_stat, moc
     mock_context = atomic_am.selinux_default_context.return_value
     atomic_mocks['path_exists'].return_value = False
     atomic_mocks['rename'].side_effect = [OSError(errno.EPERM, 'failing with EPERM'), None]
-    atomic_mocks['stat'].return_value = fake_stat
-    atomic_mocks['stat'].side_effect = None
     atomic_mocks['mkstemp'].return_value = (None, '/path/to/tempfile')
     atomic_mocks['mkstemp'].side_effect = None
     atomic_am.selinux_enabled.return_value = selinux

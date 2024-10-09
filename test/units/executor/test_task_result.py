@@ -150,7 +150,7 @@ class TestTaskResult(unittest.TestCase):
         mock_host = MagicMock()
         mock_task = MagicMock()
 
-        # no_log should not remove presrved keys
+        # no_log should not remove preserved keys
         tr = TaskResult(
             mock_host,
             mock_task,

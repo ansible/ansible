@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from ansible import constants as C
 from ansible import context
-from ansible.errors import AnsibleParserError, AnsibleAssertionError
+from ansible.errors import AnsibleParserError, AnsibleAssertionError, AnsibleError
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.six import binary_type, string_types, text_type
@@ -28,7 +28,7 @@ from ansible.playbook.base import Base
 from ansible.playbook.block import Block
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
-from ansible.playbook.role import Role, hash_params
+from ansible.playbook.role import Role
 from ansible.playbook.task import Task
 from ansible.playbook.taggable import Taggable
 from ansible.vars.manager import preprocess_vars
@@ -57,11 +57,9 @@ class Play(Base, Taggable, CollectionSearch):
 
     # Facts
     gather_facts = NonInheritableFieldAttribute(isa='bool', default=None, always_post_validate=True)
-
-    # defaults to be deprecated, should be 'None' in future
-    gather_subset = NonInheritableFieldAttribute(isa='list', default=(lambda: C.DEFAULT_GATHER_SUBSET), listof=string_types, always_post_validate=True)
-    gather_timeout = NonInheritableFieldAttribute(isa='int', default=C.DEFAULT_GATHER_TIMEOUT, always_post_validate=True)
-    fact_path = NonInheritableFieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
+    gather_subset = NonInheritableFieldAttribute(isa='list', default=None, listof=string_types, always_post_validate=True)
+    gather_timeout = NonInheritableFieldAttribute(isa='int', default=None, always_post_validate=True)
+    fact_path = NonInheritableFieldAttribute(isa='string', default=None)
 
     # Variable Attributes
     vars_files = NonInheritableFieldAttribute(isa='list', default=list, priority=99)
@@ -102,21 +100,14 @@ class Play(Base, Taggable, CollectionSearch):
     def __repr__(self):
         return self.get_name()
 
-    @property
-    def ROLE_CACHE(self):
-        """Backwards compat for custom strategies using ``play.ROLE_CACHE``
-        """
-        display.deprecated(
-            'Play.ROLE_CACHE is deprecated in favor of Play.role_cache, or StrategyBase._get_cached_role',
-            version='2.18',
-        )
-        cache = {}
-        for path, roles in self.role_cache.items():
-            for role in roles:
-                name = role.get_name()
-                hashed_params = hash_params(role._get_hash_dict())
-                cache.setdefault(name, {})[hashed_params] = role
-        return cache
+    def _get_cached_role(self, role):
+        role_path = role.get_role_path()
+        role_cache = self.role_cache[role_path]
+        try:
+            idx = role_cache.index(role)
+            return role_cache[idx]
+        except ValueError:
+            raise AnsibleError(f'Cannot locate {role.get_name()} in role cache')
 
     def _validate_hosts(self, attribute, name, value):
         # Only validate 'hosts' if a value was passed in to original data set.
@@ -300,19 +291,30 @@ class Play(Base, Taggable, CollectionSearch):
         roles (which are themselves compiled recursively) and/or the list of
         tasks specified in the play.
         '''
-
         # create a block containing a single flush handlers meta
         # task, so we can be sure to run handlers at certain points
         # of the playbook execution
-        flush_block = Block.load(
-            data={'meta': 'flush_handlers'},
-            play=self,
-            variable_manager=self._variable_manager,
-            loader=self._loader
-        )
+        flush_block = Block(play=self)
 
-        for task in flush_block.block:
-            task.implicit = True
+        t = Task()
+        t.action = 'meta'
+        t.resolved_action = 'ansible.builtin.meta'
+        t.args['_raw_params'] = 'flush_handlers'
+        t.implicit = True
+        t.set_loader(self._loader)
+
+        if self.tags:
+            # Avoid calling flush_handlers in case the whole play is skipped on tags,
+            # this could be performance improvement since calling flush_handlers on
+            # large inventories could be expensive even if no hosts are notified
+            # since we call flush_handlers per host.
+            # Block.filter_tagged_tasks ignores evaluating tags on implicit meta
+            # tasks so we need to explicitly call Task.evaluate_tags here.
+            t.tags = self.tags
+            if t.evaluate_tags(self.only_tags, self.skip_tags, all_vars=self.vars):
+                flush_block.block = [t]
+        else:
+            flush_block.block = [t]
 
         block_list = []
         if self.force_handlers:

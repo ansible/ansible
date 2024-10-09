@@ -2,7 +2,7 @@
     - name: Install dinginessentail-1.0-1
       dnf:
         name: dinginessentail-1.0-1
-        state: present
+        state: installed
       register: dnf_result
 
     - name: Check dinginessentail with rpm
@@ -61,7 +61,7 @@
     # ============================================================================
     - name: Install dinginessentail-1:1.0-2
       dnf:
-        name: "dinginessentail-1:1.0-2.{{ ansible_architecture }}"
+        name: "dinginessentail-1:1.0-2.noarch"
         state: present
       register: dnf_result
 
@@ -103,7 +103,7 @@
     # ============================================================================
     - name: Install dinginessentail-1.0-1 from a file (higher version is already installed)
       dnf:
-        name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
+        name: "{{ repodir }}/dinginessentail-1.0-1.noarch.rpm"
         state: present
         disable_gpg_check: True
       register: dnf_result
@@ -127,7 +127,7 @@
     # ============================================================================
     - name: Install dinginessentail-1.0-1 from a file (downgrade)
       dnf:
-        name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
+        name: "{{ repodir }}/dinginessentail-1.0-1.noarch.rpm"
         state: present
         allow_downgrade: True
         disable_gpg_check: True
@@ -155,7 +155,7 @@
     # ============================================================================
     - name: Install dinginessentail-1.0-1 from a file
       dnf:
-        name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
+        name: "{{ repodir }}/dinginessentail-1.0-1.noarch.rpm"
         state: present
         disable_gpg_check: True
       register: dnf_result
@@ -177,7 +177,7 @@
     # ============================================================================
     - name: Install dinginessentail-1.0-1 from a file again
       dnf:
-        name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
+        name: "{{ repodir }}/dinginessentail-1.0-1.noarch.rpm"
         state: present
         disable_gpg_check: True
       register: dnf_result
@@ -194,7 +194,7 @@
     # ============================================================================
     - name: Install dinginessentail-1.0-2 from a file
       dnf:
-        name: "{{ repodir }}/dinginessentail-1.0-2.{{ ansible_architecture }}.rpm"
+        name: "{{ repodir }}/dinginessentail-1.0-2.noarch.rpm"
         state: present
         disable_gpg_check: True
       register: dnf_result
@@ -216,7 +216,7 @@
     # ============================================================================
     - name: Install dinginessentail-1.0-2 from a file again
       dnf:
-        name: "{{ repodir }}/dinginessentail-1.0-2.{{ ansible_architecture }}.rpm"
+        name: "{{ repodir }}/dinginessentail-1.0-2.noarch.rpm"
         state: present
         disable_gpg_check: True
       register: dnf_result
@@ -231,31 +231,6 @@
             - "not dnf_result.changed"
             - "rpm_result.stdout.startswith('dinginessentail-1.0-2')"
     # ============================================================================
-    - name: Remove dinginessentail
-      dnf:
-        name: dinginessentail
-        state: absent
-
-    - name: Try to install incompatible arch
-      dnf:
-        name: "{{ repodir_ppc64 }}/dinginessentail-1.0-1.ppc64.rpm"
-        state: present
-      register: dnf_result
-      ignore_errors: yes
-
-    - name: Check dinginessentail with rpm
-      shell: rpm -q dinginessentail
-      register: rpm_result
-      ignore_errors: yes
-
-    - name: Verify installation
-      assert:
-        that:
-            - "rpm_result.rc == 1"
-            - "not dnf_result.changed"
-            - "dnf_result is failed"
-    # ============================================================================
-
     # Should install dinginessentail-with-weak-dep and dinginessentail-weak-dep
     - name: Install package with defaults
       dnf:
@@ -434,4 +409,111 @@
     - name: Clean up
       dnf:
         name: dinginessentail
+        state: absent
+
+- name: >
+    test that when a package providing a file is installed then installing by specifying the file doesn't result in
+    installing a different package providing the same file
+  block:
+    - dnf:
+        name: provides_foo_b
+        state: "{{ item }}"
+      loop:
+        - absent
+        - present
+
+    - dnf:
+        name: /foo.gif
+        state: present
+      register: dnf_result
+
+    - command: rpm -q package_foo_a
+      ignore_errors: true
+      register: rpm_result
+
+    - assert:
+        that:
+          - dnf_result is not changed
+          - rpm_result.rc == 1
+  always:
+    - name: Clean up
+      dnf:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - provides_foo_b
+
+- name: ensure that a package named "$str-$number-$str" is parsed correctly
+  block:
+    - dnf:
+        name: number-11-name-11.0
+        state: "{{ item }}"
+      loop:
+        - absent
+        - present
+
+    - dnf:
+        name: number-11-name
+        state: present
+      register: dnf_result
+
+    - assert:
+        that:
+          - dnf_result is not changed
+
+    - dnf:
+        name: number-11-name
+        state: latest
+        update_only: true
+      register: dnf_result
+
+    - assert:
+        that:
+          - dnf_result is changed
+  always:
+    - name: Clean up
+      dnf:
+        name: number-11-name
+        state: absent
+
+- name: test that epochs are handled the same way as via DNF on the command line
+  block:
+    - dnf:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - "epochone-1.0-1.noarch"
+        - "epochone-1.1-1.noarch"
+      register: dnf_results
+
+    - assert:
+        that:
+          - dnf_results["results"][0] is changed
+          - dnf_results["results"][1] is changed
+  always:
+    - name: Clean up
+      dnf:
+        name: epochone
+        state: absent
+
+# https://github.com/ansible/ansible/issues/83373
+- name: test installing a set of packages by specifying them using a wildcard character
+  block:
+    - dnf:
+        name: provides_foo_a
+        state: present
+
+    - dnf:
+        name: provides_foo*
+        state: present
+      register: dnf_results
+
+    - assert:
+        that:
+          - dnf_results is changed
+          - "'Installed: provides_foo_b' in dnf_results['results'][0]"
+  always:
+    - name: Clean up
+      dnf:
+        name: provides_foo*
         state: absent

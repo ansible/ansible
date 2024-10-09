@@ -241,7 +241,6 @@ uid:
 
 import binascii
 import codecs
-import datetime
 import fnmatch
 import grp
 import os
@@ -260,15 +259,8 @@ from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.urls import fetch_file
 
-try:  # python 3.3+
-    from shlex import quote  # type: ignore[attr-defined]
-except ImportError:  # older python
-    from pipes import quote
-
-try:  # python 3.2+
-    from zipfile import BadZipFile  # type: ignore[attr-defined]
-except ImportError:  # older python
-    from zipfile import BadZipfile as BadZipFile
+from shlex import quote
+from zipfile import BadZipFile
 
 # String from tar that shows the tar contents are different from the
 # filesystem
@@ -283,6 +275,8 @@ ZIP_FILE_MODE_RE = re.compile(r'([r-][w-][SsTtx-]){3}')
 INVALID_OWNER_RE = re.compile(r': Invalid owner')
 INVALID_GROUP_RE = re.compile(r': Invalid group')
 SYMLINK_DIFF_RE = re.compile(r': Symlink differs$')
+CONTENT_DIFF_RE = re.compile(r': Contents differ$')
+SIZE_DIFF_RE = re.compile(r': Size differs$')
 
 
 def crc32(path, buffer_size):
@@ -410,6 +404,27 @@ class ZipArchive(object):
 
             archive.close()
         return self._files_in_archive
+
+    def _valid_time_stamp(self, timestamp_str):
+        """ Return a valid time object from the given time string """
+        DT_RE = re.compile(r'^(\d{4})(\d{2})(\d{2})\.(\d{2})(\d{2})(\d{2})$')
+        match = DT_RE.match(timestamp_str)
+        epoch_date_time = (1980, 1, 1, 0, 0, 0, 0, 0, 0)
+        if match:
+            try:
+                if int(match.groups()[0]) < 1980:
+                    date_time = epoch_date_time
+                elif int(match.groups()[0]) > 2107:
+                    date_time = (2107, 12, 31, 23, 59, 59, 0, 0, 0)
+                else:
+                    date_time = (int(m) for m in match.groups() + (0, 0, 0))
+            except ValueError:
+                date_time = epoch_date_time
+        else:
+            # Assume epoch date
+            date_time = epoch_date_time
+
+        return time.mktime(time.struct_time(date_time))
 
     def is_unarchived(self):
         # BSD unzip doesn't support zipinfo listings with timestamp.
@@ -609,8 +624,7 @@ class ZipArchive(object):
             # Note: this timestamp calculation has a rounding error
             # somewhere... unzip and this timestamp can be one second off
             # When that happens, we report a change and re-unzip the file
-            dt_object = datetime.datetime(*(time.strptime(pcs[6], '%Y%m%d.%H%M%S')[0:6]))
-            timestamp = time.mktime(dt_object.timetuple())
+            timestamp = self._valid_time_stamp(pcs[6])
 
             # Compare file timestamps
             if stat.S_ISREG(st.st_mode):
@@ -879,16 +893,15 @@ class TgzArchive(object):
                 out += line + '\n'
             if not self.file_args['mode'] and MODE_DIFF_RE.search(line):
                 out += line + '\n'
-            if MOD_TIME_DIFF_RE.search(line):
-                out += line + '\n'
-            if MISSING_FILE_RE.search(line):
-                out += line + '\n'
-            if INVALID_OWNER_RE.search(line):
-                out += line + '\n'
-            if INVALID_GROUP_RE.search(line):
-                out += line + '\n'
-            if SYMLINK_DIFF_RE.search(line):
-                out += line + '\n'
+            differ_regexes = [
+                MOD_TIME_DIFF_RE, MISSING_FILE_RE, INVALID_OWNER_RE,
+                INVALID_GROUP_RE, SYMLINK_DIFF_RE, CONTENT_DIFF_RE,
+                SIZE_DIFF_RE
+            ]
+            for regex in differ_regexes:
+                if regex.search(line):
+                    out += line + '\n'
+
         if out:
             unarchived = False
         return dict(unarchived=unarchived, rc=rc, out=out, err=err, cmd=cmd)
@@ -978,7 +991,8 @@ class TarZstdArchive(TgzArchive):
 class ZipZArchive(ZipArchive):
     def __init__(self, src, b_dest, file_args, module):
         super(ZipZArchive, self).__init__(src, b_dest, file_args, module)
-        self.zipinfoflag = '-Z'
+        # NOTE: adds 'l', which is default on most linux but not all implementations
+        self.zipinfoflag = '-Zl'
         self.binaries = (
             ('unzip', 'cmd_path'),
             ('unzip', 'zipinfo_cmd_path'),

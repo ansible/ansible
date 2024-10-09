@@ -39,7 +39,7 @@
       environment:
         PATH: "{{ ENV_PATH }}"
       vars:
-        ENV_PATH: "{{ lookup('env', 'PATH') | regex_replace(re, '') }}"
+        ENV_PATH: "{{ ansible_env['PATH']| regex_replace(re, '') }}"
         re: "[^A-Za-z](\/usr\/bin:?)"
 
     - name: Ensure tasks worked as expected
@@ -80,7 +80,7 @@
         - zip
         - tar
 
-    - name: Reinsntall zip binaries
+    - name: Reinstall zip binaries
       package:
         name:
           - zip

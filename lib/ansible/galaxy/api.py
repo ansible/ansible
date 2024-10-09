@@ -62,8 +62,7 @@ def should_retry_error(exception):
         if isinstance(orig_exc, URLError):
             orig_exc = orig_exc.reason
 
-        # Handle common URL related errors such as TimeoutError, and BadStatusLine
-        # Note: socket.timeout is only required for Py3.9
+        # Handle common URL related errors
         if isinstance(orig_exc, (TimeoutError, BadStatusLine, IncompleteRead)):
             return True
 
@@ -132,6 +131,15 @@ def g_connect(versions):
                 raise AnsibleError("Galaxy action %s requires API versions '%s' but only '%s' are available on %s %s"
                                    % (method.__name__, ", ".join(versions), ", ".join(available_versions),
                                       self.name, self.api_server))
+
+            # Warn only when we know we are talking to a collections API
+            if common_versions == {'v2'}:
+                display.deprecated(
+                    'The v2 Ansible Galaxy API is deprecated and no longer supported. '
+                    'Ensure that you have configured the ansible-galaxy CLI to utilize an '
+                    'updated and supported version of Ansible Galaxy.',
+                    version='2.20'
+                )
 
             return method(self, *args, **kwargs)
         return wrapped
@@ -711,7 +719,7 @@ class GalaxyAPI:
 
         display.display("Waiting until Galaxy import task %s has completed" % full_url)
         start = time.time()
-        wait = 2
+        wait = C.GALAXY_COLLECTION_IMPORT_POLL_INTERVAL
 
         while timeout == 0 or (time.time() - start) < timeout:
             try:
@@ -735,7 +743,7 @@ class GalaxyAPI:
             time.sleep(wait)
 
             # poor man's exponential backoff algo so we don't flood the Galaxy API, cap at 30 seconds.
-            wait = min(30, wait * 1.5)
+            wait = min(30, wait * C.GALAXY_COLLECTION_IMPORT_POLL_FACTOR)
         if state == 'waiting':
             raise AnsibleError("Timeout while waiting for the Galaxy import process to finish, check progress at '%s'"
                                % to_native(full_url))

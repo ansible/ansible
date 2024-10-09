@@ -84,6 +84,22 @@ def date(error_code=None):
     return Any(isodate, error_code=error_code)
 
 
+def require_only_one(keys):
+    def f(obj):
+        found = None
+        for k in obj.keys():
+            if k in keys:
+                if found is None:
+                    found = k
+                else:
+                    raise Invalid('Found conflicting keys, must contain only one of {}'.format(keys))
+        if found is None:
+            raise Invalid('Must contain one of {}'.format(keys))
+
+        return obj
+    return f
+
+
 # Roles can also be referenced by semantic markup
 _VALID_PLUGIN_TYPES = set(DOCUMENTABLE_PLUGINS + ('role', ))
 
@@ -568,7 +584,9 @@ def list_dict_option_schema(for_collection, plugin_type):
                     {
                         # This definition makes sure everything has the correct types/values
                         'why': doc_string,
-                        'alternatives': doc_string,
+                        # TODO: phase out either plural or singular, 'alt' is exclusive group
+                        Exclusive('alternative', 'alt'): doc_string,
+                        Exclusive('alternatives', 'alt'): doc_string,
                         # vod stands for 'version or date'; this is the name of the exclusive group
                         Exclusive('removed_at_date', 'vod'): date(),
                         Exclusive('version', 'vod'): version(for_collection),
@@ -577,7 +595,7 @@ def list_dict_option_schema(for_collection, plugin_type):
                     {
                         # This definition makes sure that everything we require is there
                         Required('why'): Any(*string_types),
-                        'alternatives': Any(*string_types),
+                        Required(Any('alternatives', 'alternative')): Any(*string_types),
                         Required(Any('removed_at_date', 'version')): Any(*string_types),
                         Required('collection_name'): Any(*string_types),
                     },
@@ -761,12 +779,15 @@ def return_schema(for_collection, plugin_type='module'):
 
 
 def deprecation_schema(for_collection):
+
     main_fields = {
         Required('why'): doc_string,
-        Required('alternative'): doc_string,
-        Required('removed_from_collection'): collection_name,
-        'removed': Any(True),
+        'alternative': doc_string,
+        'alternatives': doc_string,
     }
+
+    if for_collection:
+        main_fields.update({Required('removed_from_collection'): collection_name, 'removed': Any(True)})
 
     date_schema = {
         Required('removed_at_date'): date(),
@@ -791,6 +812,7 @@ def deprecation_schema(for_collection):
     if for_collection:
         result = All(
             result,
+            require_only_one(['alternative', 'alternatives']),
             partial(check_removal_version,
                     version_field='removed_in',
                     collection_name_field='removed_from_collection',

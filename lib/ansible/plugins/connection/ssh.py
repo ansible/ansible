@@ -305,12 +305,13 @@ DOCUMENTATION = '''
           - name: ansible_sftp_batch_mode
             version_added: '2.7'
       ssh_transfer_method:
-        description:
-            - "Preferred method to use when transferring files over ssh"
-            - Setting to 'smart' (default) will try them in order, until one succeeds or they all fail
-            - For OpenSSH >=9.0 you must add an additional option to enable scp (scp_extra_args="-O")
-            - Using 'piped' creates an ssh pipe with C(dd) on either side to copy the data
-        choices: ['sftp', 'scp', 'piped', 'smart']
+        description: Preferred method to use when transferring files over ssh
+        choices:
+              sftp: This is the most reliable way to copy things with SSH.
+              scp: Deprecated in OpenSSH. For OpenSSH >=9.0 you must add an additional option to enable scp C(scp_extra_args="-O").
+              piped: Creates an SSH pipe with C(dd) on either side to copy the data.
+              smart: Tries each method in order (sftp > scp > piped), until one succeeds or they all fail.
+        default: smart
         type: string
         env: [{name: ANSIBLE_SSH_TRANSFER_METHOD}]
         ini:
@@ -318,24 +319,6 @@ DOCUMENTATION = '''
         vars:
             - name: ansible_ssh_transfer_method
               version_added: '2.12'
-      scp_if_ssh:
-        deprecated:
-              why: In favor of the O(ssh_transfer_method) option.
-              version: "2.17"
-              alternatives: O(ssh_transfer_method)
-        default: smart
-        description:
-          - "Preferred method to use when transferring files over SSH."
-          - When set to V(smart), Ansible will try them until one succeeds or they all fail.
-          - If set to V(True), it will force 'scp', if V(False) it will use 'sftp'.
-          - For OpenSSH >=9.0 you must add an additional option to enable scp (C(scp_extra_args="-O"))
-          - This setting will overridden by O(ssh_transfer_method) if set.
-        env: [{name: ANSIBLE_SCP_IF_SSH}]
-        ini:
-        - {key: scp_if_ssh, section: ssh_connection}
-        vars:
-          - name: ansible_scp_if_ssh
-            version_added: '2.7'
       use_tty:
         version_added: '2.5'
         default: true
@@ -403,10 +386,8 @@ from ansible.errors import (
     AnsibleError,
     AnsibleFileNotFound,
 )
-from ansible.errors import AnsibleOptionsError
 from ansible.module_utils.six import PY3, text_type, binary_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.module_utils.parsing.convert_bool import BOOLEANS, boolean
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.plugins.shell.powershell import _parse_clixml
 from ansible.utils.display import Display
@@ -1068,6 +1049,8 @@ class Connection(ConnectionBase):
                         self._terminate_process(p)
                         raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
 
+                    display.vvvvv(f'SSH: Timeout ({timeout}s) waiting for the output', host=self.host)
+
                 # Read whatever output is available on stdout and stderr, and stop
                 # listening to the pipe if it's been closed.
 
@@ -1136,23 +1119,23 @@ class Connection(ConnectionBase):
 
                 if states[state] == 'awaiting_escalation':
                     if self._flags['become_success']:
-                        display.vvv(u'Escalation succeeded')
+                        display.vvv(u'Escalation succeeded', host=self.host)
                         self._flags['become_success'] = False
                         state += 1
                     elif self._flags['become_error']:
-                        display.vvv(u'Escalation failed')
+                        display.vvv(u'Escalation failed', host=self.host)
                         self._terminate_process(p)
                         self._flags['become_error'] = False
                         raise AnsibleError('Incorrect %s password' % self.become.name)
                     elif self._flags['become_nopasswd_error']:
-                        display.vvv(u'Escalation requires password')
+                        display.vvv(u'Escalation requires password', host=self.host)
                         self._terminate_process(p)
                         self._flags['become_nopasswd_error'] = False
                         raise AnsibleError('Missing %s password' % self.become.name)
                     elif self._flags['become_prompt']:
                         # This shouldn't happen, because we should see the "Sorry,
                         # try again" message first.
-                        display.vvv(u'Escalation prompt repeated')
+                        display.vvv(u'Escalation prompt repeated', host=self.host)
                         self._terminate_process(p)
                         self._flags['become_prompt'] = False
                         raise AnsibleError('Incorrect %s password' % self.become.name)
@@ -1241,31 +1224,13 @@ class Connection(ConnectionBase):
         # Transfer methods to try
         methods = []
 
-        # Use the transfer_method option if set, otherwise use scp_if_ssh
+        # Use the transfer_method option if set
         ssh_transfer_method = self.get_option('ssh_transfer_method')
-        scp_if_ssh = self.get_option('scp_if_ssh')
-        if ssh_transfer_method is None and scp_if_ssh == 'smart':
-            ssh_transfer_method = 'smart'
 
-        if ssh_transfer_method is not None:
-            if ssh_transfer_method == 'smart':
-                methods = smart_methods
-            else:
-                methods = [ssh_transfer_method]
+        if ssh_transfer_method == 'smart':
+            methods = smart_methods
         else:
-            # since this can be a non-bool now, we need to handle it correctly
-            if not isinstance(scp_if_ssh, bool):
-                scp_if_ssh = scp_if_ssh.lower()
-                if scp_if_ssh in BOOLEANS:
-                    scp_if_ssh = boolean(scp_if_ssh, strict=False)
-                elif scp_if_ssh != 'smart':
-                    raise AnsibleOptionsError('scp_if_ssh needs to be one of [smart|True|False]')
-            if scp_if_ssh == 'smart':
-                methods = smart_methods
-            elif scp_if_ssh is True:
-                methods = ['scp']
-            else:
-                methods = ['sftp']
+            methods = [ssh_transfer_method]
 
         for method in methods:
             returncode = stdout = stderr = None
@@ -1287,7 +1252,7 @@ class Connection(ConnectionBase):
                 if sftp_action == 'get':
                     # we pass sudoable=False to disable pty allocation, which
                     # would end up mixing stdout/stderr and screwing with newlines
-                    (returncode, stdout, stderr) = self.exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE), sudoable=False)
+                    (returncode, stdout, stderr) = self.exec_command('dd if=%s bs=%s' % (self._shell.quote(in_path), BUFSIZE), sudoable=False)
                     with open(to_bytes(out_path, errors='surrogate_or_strict'), 'wb+') as out_file:
                         out_file.write(stdout)
                 else:
@@ -1342,14 +1307,6 @@ class Connection(ConnectionBase):
             # need to disable sudoable so the bare_run is not waiting for a
             # prompt that will not occur
             sudoable = False
-
-            # Make sure our first command is to set the console encoding to
-            # utf-8, this must be done via chcp to get utf-8 (65001)
-            # union-attr ignores rely on internal powershell shell plugin details,
-            # this should be fixed at a future point in time.
-            cmd_parts = ["chcp.com", "65001", self._shell._SHELL_REDIRECT_ALLNULL, self._shell._SHELL_AND]  # type: ignore[union-attr]
-            cmd_parts.extend(self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False))  # type: ignore[union-attr]
-            cmd = ' '.join(cmd_parts)
 
         # we can only use tty when we are not pipelining the modules. piping
         # data into /usr/bin/python inside a tty automatically invokes the
@@ -1417,18 +1374,18 @@ class Connection(ConnectionBase):
         # only run the reset if the ControlPath already exists or if it isn't configured and ControlPersist is set
         # 'check' will determine this.
         cmd = self._build_command(self.get_option('ssh_executable'), 'ssh', '-O', 'check', self.host)
-        display.vvv(u'sending connection check: %s' % to_text(cmd))
+        display.vvv(u'sending connection check: %s' % to_text(cmd), host=self.host)
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
         status_code = p.wait()
         if status_code != 0:
-            display.vvv(u"No connection to reset: %s" % to_text(stderr))
+            display.vvv(u"No connection to reset: %s" % to_text(stderr), host=self.host)
         else:
             run_reset = True
 
         if run_reset:
             cmd = self._build_command(self.get_option('ssh_executable'), 'ssh', '-O', 'stop', self.host)
-            display.vvv(u'sending connection stop: %s' % to_text(cmd))
+            display.vvv(u'sending connection stop: %s' % to_text(cmd), host=self.host)
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()
             status_code = p.wait()

@@ -32,15 +32,8 @@
       - raw_out.stdout_lines[4] == "winrm"
       - raw_out.stdout_lines[5] == "string - \U0001F4A9"
 
-  # Become only works on Server 2008 when running with basic auth, skip this host for now as it is too complicated to
-  # override the auth protocol in the tests.
-  - name: check if we running on Server 2008
-    win_shell: '[System.Environment]::OSVersion.Version -ge [Version]"6.1"'
-    register: os_version
-
   - name: test out become with psrp
     win_whoami:
-    when: os_version|bool
     register: whoami_out
     become: yes
     become_method: runas
@@ -50,7 +43,6 @@
     assert:
       that:
       - whoami_out.account.sid == "S-1-5-18"
-    when: os_version|bool
 
   - name: test out async with psrp
     win_shell: Start-Sleep -Seconds 2; Write-Output abc
@@ -134,3 +126,16 @@
         path: /tmp/empty.txt
         state: absent
       delegate_to: localhost
+
+  - name: Test PSRP HTTP connection
+    win_ping:
+    vars:
+      ansible_port: 5985
+      ansible_psrp_protocol: http
+
+  - name: Test PSRP HTTPS connection
+    win_ping:
+    vars:
+      ansible_port: 5986
+      ansible_psrp_protocol: https
+      ansible_psrp_cert_validation: ignore

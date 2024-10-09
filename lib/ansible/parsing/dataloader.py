@@ -18,7 +18,7 @@ from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.parsing.quoting import unquote
 from ansible.parsing.utils.yaml import from_yaml
-from ansible.parsing.vault import VaultLib, b_HEADER, is_encrypted, is_encrypted_file, parse_vaulttext_envelope, PromptVaultSecret
+from ansible.parsing.vault import VaultLib, is_encrypted, is_encrypted_file, parse_vaulttext_envelope, PromptVaultSecret
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
 
@@ -77,30 +77,43 @@ class DataLoader:
         '''Backwards compat for now'''
         return from_yaml(data, file_name, show_content, self._vault.secrets, json_only=json_only)
 
-    def load_from_file(self, file_name: str, cache: bool = True, unsafe: bool = False, json_only: bool = False) -> t.Any:
-        ''' Loads data from a file, which can contain either JSON or YAML.  '''
+    def load_from_file(self, file_name: str, cache: str = 'all', unsafe: bool = False, json_only: bool = False) -> t.Any:
+        '''
+        Loads data from a file, which can contain either JSON or YAML.
 
+        :param file_name: The name of the file to load data from.
+        :param cache: Options for caching: none|all|vaulted
+        :param unsafe: If True, returns the parsed data as-is without deep copying.
+        :param json_only: If True, only loads JSON data from the file.
+        :return: The loaded data, optionally deep-copied for safety.
+        '''
+
+        # Resolve the file name
         file_name = self.path_dwim(file_name)
+
+        # Log the file being loaded
         display.debug("Loading data from %s" % file_name)
 
-        # if the file has already been read in and cached, we'll
-        # return those results to avoid more file/vault operations
-        if cache and file_name in self._FILE_CACHE:
+        # Check if the file has been cached and use the cached data if available
+        if cache != 'none' and file_name in self._FILE_CACHE:
             parsed_data = self._FILE_CACHE[file_name]
         else:
-            # read the file contents and load the data structure from them
+            # Read the file contents and load the data structure from them
             (b_file_data, show_content) = self._get_file_contents(file_name)
 
             file_data = to_text(b_file_data, errors='surrogate_or_strict')
             parsed_data = self.load(data=file_data, file_name=file_name, show_content=show_content, json_only=json_only)
 
-            # cache the file contents for next time
-            self._FILE_CACHE[file_name] = parsed_data
+            # Cache the file contents for next time based on the cache option
+            if cache == 'all':
+                self._FILE_CACHE[file_name] = parsed_data
+            elif cache == 'vaulted' and not show_content:
+                self._FILE_CACHE[file_name] = parsed_data
 
+        # Return the parsed data, optionally deep-copied for safety
         if unsafe:
             return parsed_data
         else:
-            # return a deep copy here, so the cache is not affected
             return copy.deepcopy(parsed_data)
 
     def path_exists(self, path: str) -> bool:
@@ -316,11 +329,10 @@ class DataLoader:
                 if (is_role or self._is_role(path)) and b_pb_base_dir.endswith(b'/tasks'):
                     search.append(os.path.join(os.path.dirname(b_pb_base_dir), b_dirname, b_source))
                     search.append(os.path.join(b_pb_base_dir, b_source))
-                else:
-                    # don't add dirname if user already is using it in source
-                    if b_source.split(b'/')[0] != dirname:
-                        search.append(os.path.join(b_upath, b_dirname, b_source))
-                    search.append(os.path.join(b_upath, b_source))
+                # don't add dirname if user already is using it in source
+                if b_source.split(b'/')[0] != dirname:
+                    search.append(os.path.join(b_upath, b_dirname, b_source))
+                search.append(os.path.join(b_upath, b_source))
 
             # always append basedir as last resort
             # don't add dirname if user already is using it in source
@@ -376,7 +388,7 @@ class DataLoader:
                     # Limit how much of the file is read since we do not know
                     # whether this is a vault file and therefore it could be very
                     # large.
-                    if is_encrypted_file(f, count=len(b_HEADER)):
+                    if is_encrypted_file(f):
                         # if the file is encrypted and no password was specified,
                         # the decrypt call would throw an error, but we check first
                         # since the decrypt function doesn't know the file name

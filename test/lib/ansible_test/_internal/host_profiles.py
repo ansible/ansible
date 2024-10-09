@@ -56,6 +56,7 @@ from .util import (
     InternalError,
     HostConnectionError,
     ANSIBLE_TEST_TARGET_ROOT,
+    WINDOWS_CONNECTION_VARIABLES,
 )
 
 from .util_common import (
@@ -958,7 +959,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         """Perform out-of-band setup before delegation."""
         bootstrapper = BootstrapDocker(
             controller=self.controller,
-            python_versions=[self.python.version],
+            python_interpreters={self.python.version: self.python.path},
             ssh_key=SshKey(self.args),
         )
 
@@ -1214,8 +1215,9 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
     def configure(self) -> None:
         """Perform in-band configuration. Executed before delegation for the controller and after delegation for targets."""
         # a target uses a single python version, but a controller may include additional versions for targets running on the controller
-        python_versions = [self.python.version] + [target.python.version for target in self.targets if isinstance(target, ControllerConfig)]
-        python_versions = sorted_versions(list(set(python_versions)))
+        python_interpreters = {self.python.version: self.python.path}
+        python_interpreters.update({target.python.version: target.python.path for target in self.targets if isinstance(target, ControllerConfig)})
+        python_interpreters = {version: python_interpreters[version] for version in sorted_versions(list(python_interpreters.keys()))}
 
         core_ci = self.wait_for_instance()
         pwd = self.wait_until_ready()
@@ -1226,7 +1228,7 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
             controller=self.controller,
             platform=self.config.platform,
             platform_version=self.config.version,
-            python_versions=python_versions,
+            python_interpreters=python_interpreters,
             ssh_key=core_ci.ssh_key,
         )
 
@@ -1366,23 +1368,18 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
         connection = core_ci.connection
 
         variables: dict[str, t.Optional[t.Union[str, int]]] = dict(
-            ansible_connection='winrm',
-            ansible_pipelining='yes',
-            ansible_winrm_server_cert_validation='ignore',
             ansible_host=connection.hostname,
-            ansible_port=connection.port,
+            # ansible_port is intentionally not set using connection.port -- connection-specific variables can set this instead
             ansible_user=connection.username,
-            ansible_password=connection.password,
-            ansible_ssh_private_key_file=core_ci.ssh_key.key,
+            ansible_ssh_private_key_file=core_ci.ssh_key.key,  # required for scenarios which change the connection plugin to SSH
+            ansible_test_connection_password=connection.password,  # required for scenarios which change the connection plugin to require a password
         )
 
-        # HACK: force 2016 to use NTLM + HTTP message encryption
-        if self.config.version == '2016':
-            variables.update(
-                ansible_winrm_transport='ntlm',
-                ansible_winrm_scheme='http',
-                ansible_port='5985',
-            )
+        variables.update(ansible_connection=self.config.connection.split('+')[0])
+        variables.update(WINDOWS_CONNECTION_VARIABLES[self.config.connection])
+
+        if variables.pop('use_password'):
+            variables.update(ansible_password=connection.password)
 
         return variables
 

@@ -8,6 +8,7 @@ from __future__ import annotations
 import errno
 import fnmatch
 import functools
+import glob
 import inspect
 import json
 import os
@@ -124,13 +125,14 @@ from ansible.galaxy.dependency_resolution.dataclasses import (
 )
 from ansible.galaxy.dependency_resolution.versioning import meets_requirements
 from ansible.plugins.loader import get_all_plugin_loaders
+from ansible.module_utils.common.file import S_IRWU_RG_RO, S_IRWXU_RXG_RXO, S_IXANY
+from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.yaml import yaml_dump
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash, secure_hash_s
-from ansible.utils.sentinel import Sentinel
 
 
 display = Display()
@@ -333,11 +335,18 @@ def verify_local_collection(local_collection, remote_collection, artifacts_manag
                 os.path.join(b_collection_path, to_bytes(name, errors='surrogate_or_strict'))
             )
 
+    b_ignore_patterns = [
+        b'*.pyc',
+    ]
+
     # Find any paths not in the FILES.json
     for root, dirs, files in os.walk(b_collection_path):
         for name in files:
             full_path = os.path.join(root, name)
             path = to_text(full_path[len(b_collection_path) + 1::], errors='surrogate_or_strict')
+            if any(fnmatch.fnmatch(full_path, b_pattern) for b_pattern in b_ignore_patterns):
+                display.v("Ignoring verification for %s" % full_path)
+                continue
 
             if full_path not in collection_files:
                 modified_content.append(
@@ -1310,7 +1319,7 @@ def _build_collection_tar(
                 tar_info = tarfile.TarInfo(name)
                 tar_info.size = len(b)
                 tar_info.mtime = int(time.time())
-                tar_info.mode = 0o0644
+                tar_info.mode = S_IRWU_RG_RO
                 tar_file.addfile(tarinfo=tar_info, fileobj=b_io)
 
             for file_info in file_manifest['files']:  # type: ignore[union-attr]
@@ -1324,7 +1333,7 @@ def _build_collection_tar(
                 def reset_stat(tarinfo):
                     if tarinfo.type != tarfile.SYMTYPE:
                         existing_is_exec = tarinfo.mode & stat.S_IXUSR
-                        tarinfo.mode = 0o0755 if existing_is_exec or tarinfo.isdir() else 0o0644
+                        tarinfo.mode = S_IRWXU_RXG_RXO if existing_is_exec or tarinfo.isdir() else S_IRWU_RG_RO
                     tarinfo.uid = tarinfo.gid = 0
                     tarinfo.uname = tarinfo.gname = ''
 
@@ -1366,7 +1375,7 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
 
     This should follow the same pattern as _build_collection_tar.
     """
-    os.makedirs(b_collection_output, mode=0o0755)
+    os.makedirs(b_collection_output, mode=S_IRWXU_RXG_RXO)
 
     files_manifest_json = to_bytes(json.dumps(file_manifest, indent=True), errors='surrogate_or_strict')
     collection_manifest['file_manifest_file']['chksum_sha256'] = secure_hash_s(files_manifest_json, hash_func=sha256)
@@ -1378,7 +1387,7 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
         with open(b_path, 'wb') as file_obj, BytesIO(b) as b_io:
             shutil.copyfileobj(b_io, file_obj)
 
-        os.chmod(b_path, 0o0644)
+        os.chmod(b_path, S_IRWU_RG_RO)
 
     base_directories = []
     for file_info in sorted(file_manifest['files'], key=lambda x: x['name']):
@@ -1389,11 +1398,11 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
         dest_file = os.path.join(b_collection_output, to_bytes(file_info['name'], errors='surrogate_or_strict'))
 
         existing_is_exec = os.stat(src_file, follow_symlinks=False).st_mode & stat.S_IXUSR
-        mode = 0o0755 if existing_is_exec else 0o0644
+        mode = S_IRWXU_RXG_RXO if existing_is_exec else S_IRWU_RG_RO
 
         # ensure symlinks to dirs are not translated to empty dirs
         if os.path.isdir(src_file) and not os.path.islink(src_file):
-            mode = 0o0755
+            mode = S_IRWXU_RXG_RXO
             base_directories.append(src_file)
             os.mkdir(dest_file, mode)
         else:
@@ -1517,6 +1526,7 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
             artifacts_manager.required_successful_signature_count,
             artifacts_manager.ignore_signature_errors,
         )
+        remove_source_metadata(collection, b_collection_path)
         if (collection.is_online_index_pointer and isinstance(collection.src, GalaxyAPI)):
             write_source_metadata(
                 collection,
@@ -1542,15 +1552,31 @@ def write_source_metadata(collection, b_collection_path, artifacts_manager):
         shutil.rmtree(b_info_dir)
 
     try:
-        os.mkdir(b_info_dir, mode=0o0755)
+        os.mkdir(b_info_dir, mode=S_IRWXU_RXG_RXO)
         with open(b_info_dest, mode='w+b') as fd:
             fd.write(b_yaml_source_data)
-        os.chmod(b_info_dest, 0o0644)
+        os.chmod(b_info_dest, S_IRWU_RG_RO)
     except Exception:
         # Ensure we don't leave the dir behind in case of a failure.
         if os.path.isdir(b_info_dir):
             shutil.rmtree(b_info_dir)
         raise
+
+
+def remove_source_metadata(collection, b_collection_path):
+    pattern = f"{collection.namespace}.{collection.name}-*.info"
+    info_path = os.path.join(
+        b_collection_path,
+        b'../../',
+        to_bytes(pattern, errors='surrogate_or_strict')
+    )
+    if (outdated_info := glob.glob(info_path)):
+        display.vvvv(f"Removing {pattern} metadata from previous installations")
+    for info_dir in outdated_info:
+        try:
+            shutil.rmtree(info_dir)
+        except Exception:
+            pass
 
 
 def verify_artifact_manifest(manifest_file, signatures, keyring, required_signature_count, ignore_signature_errors):
@@ -1576,13 +1602,6 @@ def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatur
     """
     try:
         with tarfile.open(b_coll_targz_path, mode='r') as collection_tar:
-            # Remove this once py3.11 is our controller minimum
-            # Workaround for https://bugs.python.org/issue47231
-            # See _extract_tar_dir
-            collection_tar._ansible_normalized_cache = {
-                m.name.removesuffix(os.path.sep): m for m in collection_tar.getmembers()
-            }  # deprecated: description='TarFile member index' core_version='2.18' python_version='3.11'
-
             # Verify the signature on the MANIFEST.json before extracting anything else
             _extract_tar_file(collection_tar, MANIFEST_FILENAME, b_collection_path, b_temp_path)
 
@@ -1663,10 +1682,10 @@ def install_src(collection, b_collection_path, b_collection_output_path, artifac
 
 def _extract_tar_dir(tar, dirname, b_dest):
     """ Extracts a directory from a collection tar. """
-    dirname = to_native(dirname, errors='surrogate_or_strict').removesuffix(os.path.sep)
+    dirname = to_native(dirname, errors='surrogate_or_strict')
 
     try:
-        tar_member = tar._ansible_normalized_cache[dirname]
+        tar_member = tar.getmember(dirname)
     except KeyError:
         raise AnsibleError("Unable to extract '%s' from collection" % dirname)
 
@@ -1674,7 +1693,7 @@ def _extract_tar_dir(tar, dirname, b_dest):
 
     b_parent_path = os.path.dirname(b_dir_path)
     try:
-        os.makedirs(b_parent_path, mode=0o0755)
+        os.makedirs(b_parent_path, mode=S_IRWXU_RXG_RXO)
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
@@ -1689,7 +1708,7 @@ def _extract_tar_dir(tar, dirname, b_dest):
 
     else:
         if not os.path.isdir(b_dir_path):
-            os.mkdir(b_dir_path, 0o0755)
+            os.mkdir(b_dir_path, S_IRWXU_RXG_RXO)
 
 
 def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
@@ -1715,7 +1734,7 @@ def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
         if not os.path.exists(b_parent_dir):
             # Seems like Galaxy does not validate if all file entries have a corresponding dir ftype entry. This check
             # makes sure we create the parent directory even if it wasn't set in the metadata.
-            os.makedirs(b_parent_dir, mode=0o0755)
+            os.makedirs(b_parent_dir, mode=S_IRWXU_RXG_RXO)
 
         if tar_member.type == tarfile.SYMTYPE:
             b_link_path = to_bytes(tar_member.linkname, errors='surrogate_or_strict')
@@ -1730,9 +1749,9 @@ def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
 
             # Default to rw-r--r-- and only add execute if the tar file has execute.
             tar_member = tar.getmember(to_native(filename, errors='surrogate_or_strict'))
-            new_mode = 0o644
+            new_mode = S_IRWU_RG_RO
             if stat.S_IMODE(tar_member.mode) & stat.S_IXUSR:
-                new_mode |= 0o0111
+                new_mode |= S_IXANY
 
             os.chmod(b_dest_filepath, new_mode)
 
@@ -1888,7 +1907,7 @@ def _resolve_depenency_map(
 
         for req in dep_exc.criterion.iter_requirement():
             error_msg_lines.append(
-                '* {req.fqcn!s}:{req.ver!s}'.format(req=req)
+                f'* {req.fqcn!s}:{req.ver!s}'
             )
         error_msg_lines.append(pre_release_hint)
 

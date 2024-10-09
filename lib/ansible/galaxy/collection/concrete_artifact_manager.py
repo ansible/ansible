@@ -10,6 +10,7 @@ import os
 import tarfile
 import subprocess
 import typing as t
+import yaml
 
 from contextlib import contextmanager
 from hashlib import sha256
@@ -24,6 +25,7 @@ if t.TYPE_CHECKING:
     )
     from ansible.galaxy.token import GalaxyToken
 
+from ansible import context
 from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.galaxy.api import should_retry_error
@@ -33,12 +35,12 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native, to_
 from ansible.module_utils.api import retry_with_delays_and_condition
 from ansible.module_utils.api import generate_jittered_backoff
 from ansible.module_utils.common.process import get_bin_path
+from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
-from ansible.utils.sentinel import Sentinel
 
-import yaml
+import ansible.constants as C
 
 
 display = Display()
@@ -61,7 +63,7 @@ class ConcreteArtifactsManager:
     """
     def __init__(self, b_working_directory, validate_certs=True, keyring=None, timeout=60, required_signature_count=None, ignore_signature_errors=None):
         # type: (bytes, bool, str, int, str, list[str]) -> None
-        """Initialize ConcreteArtifactsManager caches and costraints."""
+        """Initialize ConcreteArtifactsManager caches and constraints."""
         self._validate_certs = validate_certs  # type: bool
         self._artifact_cache = {}  # type: dict[bytes, bytes]
         self._galaxy_artifact_cache = {}  # type: dict[Candidate | Requirement, bytes]
@@ -413,7 +415,7 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
     b_checkout_path = mkdtemp(
         dir=b_path,
         prefix=to_bytes(name, errors='surrogate_or_strict'),
-    )  # type: bytes
+    )
 
     try:
         git_executable = get_bin_path('git')
@@ -425,10 +427,13 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
 
     # Perform a shallow clone if simply cloning HEAD
     if version == 'HEAD':
-        git_clone_cmd = git_executable, 'clone', '--depth=1', git_url, to_text(b_checkout_path)
+        git_clone_cmd = [git_executable, 'clone', '--depth=1', git_url, to_text(b_checkout_path)]
     else:
-        git_clone_cmd = git_executable, 'clone', git_url, to_text(b_checkout_path)
+        git_clone_cmd = [git_executable, 'clone', git_url, to_text(b_checkout_path)]
     # FIXME: '--branch', version
+
+    if context.CLIARGS['ignore_certs'] or C.GALAXY_IGNORE_CERTS:
+        git_clone_cmd.extend(['-c', 'http.sslVerify=false'])
 
     try:
         subprocess.check_call(git_clone_cmd)

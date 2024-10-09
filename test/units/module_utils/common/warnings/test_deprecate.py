@@ -30,25 +30,25 @@ def reset(monkeypatch):
 
 
 def test_deprecate_message_only(reset):
-    deprecate('Deprecation message')
+    deprecate('Deprecation message')  # pylint: disable=ansible-deprecated-no-version
     assert warnings._global_deprecations == [
         {'msg': 'Deprecation message', 'version': None, 'collection_name': None}]
 
 
 def test_deprecate_with_collection(reset):
-    deprecate(msg='Deprecation message', collection_name='ansible.builtin')
+    deprecate(msg='Deprecation message', collection_name='ansible.builtin')  # pylint: disable=ansible-deprecated-no-version
     assert warnings._global_deprecations == [
         {'msg': 'Deprecation message', 'version': None, 'collection_name': 'ansible.builtin'}]
 
 
 def test_deprecate_with_version(reset):
-    deprecate(msg='Deprecation message', version='2.14')
+    deprecate(msg='Deprecation message', version='2.14')  # pylint: disable=ansible-deprecated-version
     assert warnings._global_deprecations == [
         {'msg': 'Deprecation message', 'version': '2.14', 'collection_name': None}]
 
 
 def test_deprecate_with_version_and_collection(reset):
-    deprecate(msg='Deprecation message', version='2.14', collection_name='ansible.builtin')
+    deprecate(msg='Deprecation message', version='2.14', collection_name='ansible.builtin')  # pylint: disable=ansible-deprecated-version
     assert warnings._global_deprecations == [
         {'msg': 'Deprecation message', 'version': '2.14', 'collection_name': 'ansible.builtin'}]
 
@@ -96,4 +96,4 @@ def test_get_deprecation_messages(deprecation_messages, reset):
 )
 def test_deprecate_failure(test_case):
     with pytest.raises(TypeError, match='deprecate requires a string not a %s' % type(test_case)):
-        deprecate(test_case)
+        deprecate(test_case)  # pylint: disable=ansible-deprecated-no-version

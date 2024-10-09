@@ -241,13 +241,18 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn.host = "some_host"
 
         conn.set_option('reconnection_retries', 9)
-        conn.set_option('ssh_transfer_method', None)  # unless set to None scp_if_ssh is ignored
+        conn.set_option('ssh_transfer_method', None)  # default is smart
 
-        # Test with SCP_IF_SSH set to smart
         # Test when SFTP works
-        conn.set_option('scp_if_ssh', 'smart')
         expected_in_data = b' '.join((b'put', to_bytes(shlex.quote('/path/to/in/file')), to_bytes(shlex.quote('/path/to/dest/file')))) + b'\n'
         conn.put_file('/path/to/in/file', '/path/to/dest/file')
+        conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
+
+        # Test filenames with unicode
+        expected_in_data = b' '.join((b'put',
+                                      to_bytes(shlex.quote('/path/to/in/file/with/unicode-fö〩')),
+                                      to_bytes(shlex.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
+        conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
         conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         # Test when SFTP doesn't work but SCP does
@@ -256,31 +261,20 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
         conn._bare_run.side_effect = None
 
-        # test with SCP_IF_SSH enabled
-        conn.set_option('scp_if_ssh', True)
-        conn.put_file('/path/to/in/file', '/path/to/dest/file')
-        conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
-
-        conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
-        conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
-
-        # test with SCPP_IF_SSH disabled
-        conn.set_option('scp_if_ssh', False)
-        expected_in_data = b' '.join((b'put', to_bytes(shlex.quote('/path/to/in/file')), to_bytes(shlex.quote('/path/to/dest/file')))) + b'\n'
-        conn.put_file('/path/to/in/file', '/path/to/dest/file')
-        conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
-
-        expected_in_data = b' '.join((b'put',
-                                      to_bytes(shlex.quote('/path/to/in/file/with/unicode-fö〩')),
-                                      to_bytes(shlex.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
-        conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
-        conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
-
-        # test that a non-zero rc raises an error
+        # Test that a non-zero rc raises an error
+        conn.set_option('ssh_transfer_method', 'sftp')
         conn._bare_run.return_value = (1, 'stdout', 'some errors')
         self.assertRaises(AnsibleError, conn.put_file, '/path/to/bad/file', '/remote/path/to/file')
 
-        # test that a not-found path raises an error
+        # Test that rc=255 raises an error
+        conn._bare_run.return_value = (255, 'stdout', 'some errors')
+        self.assertRaises(AnsibleConnectionFailure, conn.put_file, '/path/to/bad/file', '/remote/path/to/file')
+
+        # Test that rc=256 raises an error
+        conn._bare_run.return_value = (256, 'stdout', 'some errors')
+        self.assertRaises(AnsibleError, conn.put_file, '/path/to/bad/file', '/remote/path/to/file')
+
+        # Test that a not-found path raises an error
         mock_ospe.return_value = False
         conn._bare_run.return_value = (0, 'stdout', '')
         self.assertRaises(AnsibleFileNotFound, conn.put_file, '/path/to/bad/file', '/remote/path/to/file')
@@ -299,11 +293,9 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn.host = "some_host"
 
         conn.set_option('reconnection_retries', 9)
-        conn.set_option('ssh_transfer_method', None)  # unless set to None scp_if_ssh is ignored
+        conn.set_option('ssh_transfer_method', None)  # default is smart
 
-        # Test with SCP_IF_SSH set to smart
         # Test when SFTP works
-        conn.set_option('scp_if_ssh', 'smart')
         expected_in_data = b' '.join((b'get', to_bytes(shlex.quote('/path/to/in/file')), to_bytes(shlex.quote('/path/to/dest/file')))) + b'\n'
         conn.set_options({})
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
@@ -313,31 +305,27 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._bare_run.side_effect = [(1, 'stdout', 'some errors'), (0, '', '')]
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
         conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
-
-        # test with SCP_IF_SSH enabled
         conn._bare_run.side_effect = None
-        conn.set_option('ssh_transfer_method', None)  # unless set to None scp_if_ssh is ignored
-        conn.set_option('scp_if_ssh', 'True')
-        conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
-        conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
 
-        conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
-        conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
-
-        # test with SCP_IF_SSH disabled
-        conn.set_option('scp_if_ssh', False)
-        expected_in_data = b' '.join((b'get', to_bytes(shlex.quote('/path/to/in/file')), to_bytes(shlex.quote('/path/to/dest/file')))) + b'\n'
-        conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
-        conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
-
+        # Test when filename is unicode
         expected_in_data = b' '.join((b'get',
                                       to_bytes(shlex.quote('/path/to/in/file/with/unicode-fö〩')),
                                       to_bytes(shlex.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
         conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
         conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
+        conn._bare_run.side_effect = None
 
-        # test that a non-zero rc raises an error
+        # Test that a non-zero rc raises an error
+        conn.set_option('ssh_transfer_method', 'sftp')
         conn._bare_run.return_value = (1, 'stdout', 'some errors')
+        self.assertRaises(AnsibleError, conn.fetch_file, '/path/to/bad/file', '/remote/path/to/file')
+
+        # Test that rc=255 raises an error
+        conn._bare_run.return_value = (255, 'stdout', 'some errors')
+        self.assertRaises(AnsibleConnectionFailure, conn.fetch_file, '/path/to/bad/file', '/remote/path/to/file')
+
+        # Test that rc=256 raises an error
+        conn._bare_run.return_value = (256, 'stdout', 'some errors')
         self.assertRaises(AnsibleError, conn.fetch_file, '/path/to/bad/file', '/remote/path/to/file')
 
 
@@ -509,7 +497,7 @@ class TestSSHConnectionRun(object):
         assert self.conn._send_initial_data.call_count == 1
         assert self.conn._send_initial_data.call_args[0][1] == 'this is input data'
 
-    def test_pasword_without_data(self):
+    def test_password_without_data(self):
         # simulate no data input but Popen using new pty's fails
         self.mock_popen.return_value = None
         self.mock_popen.side_effect = [OSError(), self.mock_popen_res]

@@ -29,3 +29,55 @@
       that:
       - winrm_copy_empty is changed
       - winrm_copy_empty_actual.stat.size == 0
+
+  # Ensures the connection plugin can handle a timeout
+  # without raising another error.
+  - name: run command with timeout
+    win_shell: Start-Sleep -Seconds 10
+    timeout: 5
+    register: timeout_cmd
+    ignore_errors: true
+
+  - assert:
+      that:
+      - timeout_cmd.msg == 'The win_shell action failed to execute in the expected time frame (5) and was terminated'
+
+  - name: Test WinRM HTTP connection
+    win_ping:
+    vars:
+      ansible_port: 5985
+      ansible_winrm_scheme: http
+      ansible_winrm_transport: ntlm  # Verifies message encryption over HTTP
+
+  - name: Test WinRM HTTPS connection
+    win_ping:
+    vars:
+      ansible_port: 5986
+      ansible_winrm_scheme: https
+      ansible_winrm_server_cert_validation: ignore
+
+  - name: get WinRM quota value
+    win_shell: (Get-Item WSMan:\localhost\Service\MaxConcurrentOperationsPerUser).Value
+    changed_when: false
+    register: winrm_quota
+
+  - block:
+    - name: set WinRM quota to lower value
+      win_shell: Set-Item WSMan:\localhost\Service\MaxConcurrentOperationsPerUser 3
+
+    - name: run ping with loop to exceed quota
+      win_ping:
+      loop: '{{ range(0, 4) }}'
+
+    always:
+    - name: reset WinRM quota value
+      win_shell: Set-Item WSMan:\localhost\Service\MaxConcurrentOperationsPerUser {{ winrm_quota.stdout | trim }}
+
+  - name: emit raw CLIXML on stderr with special chars
+    raw: $host.UI.WriteErrorLine("Test 🎵 _x005F_ _x005Z_.")
+    register: stderr_clixml
+
+  - name: assert emit raw CLIXML on stderr with special chars
+    assert:
+      that:
+      - stderr_clixml.stderr_lines == ['Test 🎵 _x005F_ _x005Z_.']

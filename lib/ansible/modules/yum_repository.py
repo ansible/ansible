@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-
 DOCUMENTATION = '''
 ---
 module: yum_repository
@@ -23,9 +22,11 @@ options:
       - If set to V(true) Yum will download packages and metadata from this
         repo in parallel, if possible.
       - In ansible-core 2.11, 2.12, and 2.13 the default value is V(true).
-      - This option has been deprecated in RHEL 8. If you're using one of the
-        versions listed above, you can set this option to None to avoid passing an
+      - This option has been removed in RHEL 8. If you're using one of the
+        versions listed above, you can set this option to V(null) to avoid passing an
         unknown configuration option.
+      - This parameter is deprecated as it has been removed on systems supported by ansible-core
+        and will be removed in ansible-core 2.22.
     type: bool
   bandwidth:
     description:
@@ -50,6 +51,13 @@ options:
       - Relative cost of accessing this repository. Useful for weighing one
         repo's packages as greater/less than any other.
     type: str
+  countme:
+    description:
+      - Whether a special flag should be added to a randomly chosen metalink/mirrorlist query each week.
+        This allows the repository owner to estimate the number of systems consuming it.
+    default: ~
+    type: bool
+    version_added: '2.18'
   deltarpm_metadata_percentage:
     description:
       - When the relative size of deltarpm metadata vs pkgs is larger than
@@ -57,6 +65,8 @@ options:
         can give values over V(100), so V(200) means that the metadata is
         required to be half the size of the packages. Use V(0) to turn off
         this check, and always download metadata.
+      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
+        and will be removed in ansible-core 2.22.
     type: str
   deltarpm_percentage:
     description:
@@ -66,8 +76,8 @@ options:
     type: str
   description:
     description:
-      - A human-readable string describing the repository. This option corresponds to the "name" property in the repo file.
-      - This parameter is only required if O(state) is set to V(present).
+      - A human-readable string describing the repository. This option corresponds to the C(name) property in the repo file.
+      - This parameter is only required if O(state=present).
     type: str
   enabled:
     description:
@@ -86,8 +96,11 @@ options:
         space separated list. Shell globs using wildcards (for example V(*) and V(?))
         are allowed.
       - The list can also be a regular YAML array.
+      - O(excludepkgs) alias was added in ansible-core 2.18.
     type: list
     elements: str
+    aliases:
+      - excludepkgs
   failovermethod:
     choices: [roundrobin, priority]
     description:
@@ -105,6 +118,8 @@ options:
   gpgcakey:
     description:
       - A URL pointing to the ASCII-armored CA key file for the repository.
+      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
+        and will be removed in ansible-core 2.22.
     type: str
   gpgcheck:
     description:
@@ -122,7 +137,7 @@ options:
   module_hotfixes:
     description:
       - Disable module RPM filtering and make all RPMs from the repository
-        available. The default is V(None).
+        available. The default is V(null).
     version_added: '2.11'
     type: bool
   http_caching:
@@ -133,6 +148,8 @@ options:
       - V(packages) means that only RPM package downloads should be cached (but
          not repository metadata downloads).
       - V(none) means that no HTTP downloads should be cached.
+      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
+        and will be removed in ansible-core 2.22.
     choices: [all, packages, none]
     type: str
   include:
@@ -163,12 +180,15 @@ options:
       - This tells yum whether or not HTTP/1.1 keepalive should be used with
         this repository. This can improve transfer speeds by using one
         connection when downloading multiple files from a repository.
+      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
+        and will be removed in ansible-core 2.22.
     type: bool
   keepcache:
     description:
       - Either V(1) or V(0). Determines whether or not yum keeps the cache of
         headers and packages after successful installation.
-      - This parameter is deprecated and will be removed in version 2.20.
+      - This parameter is deprecated as it is only valid in the main configuration
+        and will be removed in ansible-core 2.20.
     choices: ['0', '1']
     type: str
   metadata_expire:
@@ -193,7 +213,9 @@ options:
       - V(read-only:future) - Commands that are likely to result in running
         other commands which will require the latest metadata. Eg.
         C(yum check-update).
-      - Note that this option does not override "yum clean expire-cache".
+      - Note that this option does not override C(yum clean expire-cache).
+      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
+        and will be removed in ansible-core 2.22.
     choices: [never, 'read-only:past', 'read-only:present', 'read-only:future']
     type: str
   metalink:
@@ -215,6 +237,8 @@ options:
       - Time (in seconds) after which the mirrorlist locally cached will
         expire.
       - Default value is 6 hours.
+      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
+        and will be removed in ansible-core 2.22.
     type: str
   name:
     description:
@@ -236,6 +260,8 @@ options:
   protect:
     description:
       - Protect packages from updates from other repositories.
+      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
+        and will be removed in ansible-core 2.22.
     type: bool
   proxy:
     description:
@@ -284,6 +310,8 @@ options:
         O(skip_if_unavailable) to be V(true). This is most useful for non-root
         processes which use yum on repos that have client cert files which are
         readable only by root.
+      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
+        and will be removed in ansible-core 2.22.
     type: bool
   sslcacert:
     description:
@@ -329,6 +357,8 @@ options:
       - When a repository id is displayed, append these yum variables to the
         string if they are used in the O(baseurl)/etc. Variables are appended
         in the order listed (and found).
+      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
+        and will be removed in ansible-core 2.22.
     type: str
   username:
     description:
@@ -412,158 +442,86 @@ state:
     sample: "present"
 '''
 
+import configparser
 import os
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six.moves import configparser
+from ansible.module_utils.basic import AnsibleModule, FILE_COMMON_ARGUMENTS
 from ansible.module_utils.common.text.converters import to_native
 
 
-class YumRepo(object):
-    # Class global variables
-    module = None
-    params = None
-    section = None
-    repofile = configparser.RawConfigParser()
-
-    # List of parameters which will be allowed in the repo file output
-    allowed_params = [
-        'async',
-        'bandwidth',
-        'baseurl',
-        'cost',
-        'deltarpm_metadata_percentage',
-        'deltarpm_percentage',
-        'enabled',
-        'enablegroups',
-        'exclude',
-        'failovermethod',
-        'gpgcakey',
-        'gpgcheck',
-        'gpgkey',
-        'module_hotfixes',
-        'http_caching',
-        'include',
-        'includepkgs',
-        'ip_resolve',
-        'keepalive',
-        'keepcache',
-        'metadata_expire',
-        'metadata_expire_filter',
-        'metalink',
-        'mirrorlist',
-        'mirrorlist_expire',
-        'name',
-        'password',
-        'priority',
-        'protect',
-        'proxy',
-        'proxy_password',
-        'proxy_username',
-        'repo_gpgcheck',
-        'retries',
-        's3_enabled',
-        'skip_if_unavailable',
-        'sslcacert',
-        'ssl_check_cert_permissions',
-        'sslclientcert',
-        'sslclientkey',
-        'sslverify',
-        'throttle',
-        'timeout',
-        'ui_repoid_vars',
-        'username']
-
-    # List of parameters which can be a list
-    list_params = ['exclude', 'includepkgs']
-
-    def __init__(self, module):
-        # To be able to use fail_json
+class YumRepo:
+    def __init__(self, module, params, repoid, dest):
         self.module = module
-        # Shortcut for the params
-        self.params = self.module.params
-        # Section is always the repoid
-        self.section = self.params['repoid']
-
-        # Check if repo directory exists
-        repos_dir = self.params['reposdir']
-        if not os.path.isdir(repos_dir):
-            self.module.fail_json(
-                msg="Repo directory '%s' does not exist." % repos_dir)
-
-        # Set dest; also used to set dest parameter for the FS attributes
-        self.params['dest'] = os.path.join(
-            repos_dir, "%s.repo" % self.params['file'])
-
-        # Read the repo file if it exists
-        if os.path.isfile(self.params['dest']):
-            self.repofile.read(self.params['dest'])
+        self.params = params
+        self.section = repoid
+        self.repofile = configparser.RawConfigParser()
+        self.dest = dest
+        if os.path.isfile(dest):
+            self.repofile.read(dest)
 
     def add(self):
-        # Remove already existing repo and create a new one
-        if self.repofile.has_section(self.section):
-            self.repofile.remove_section(self.section)
-
-        # Add section
+        self.remove()
         self.repofile.add_section(self.section)
 
-        # Baseurl/mirrorlist is not required because for removal we need only
-        # the repo name. This is why we check if the baseurl/mirrorlist is
-        # defined.
-        req_params = (self.params['baseurl'], self.params['metalink'], self.params['mirrorlist'])
-        if req_params == (None, None, None):
-            self.module.fail_json(
-                msg="Parameter 'baseurl', 'metalink' or 'mirrorlist' is required for "
-                    "adding a new repo.")
-
-        # Set options
         for key, value in sorted(self.params.items()):
-            if key in self.list_params and isinstance(value, list):
-                # Join items into one string for specific parameters
-                value = ' '.join(value)
-            elif isinstance(value, bool):
-                # Convert boolean value to integer
-                value = int(value)
-
-            # Set the value only if it was defined (default is None)
-            if value is not None and key in self.allowed_params:
-                if key == 'keepcache':
-                    self.module.deprecate(
-                        "'keepcache' parameter is deprecated.",
-                        version='2.20'
-                    )
-                self.repofile.set(self.section, key, value)
+            if value is None:
+                continue
+            if key == 'keepcache':
+                self.module.deprecate(
+                    "'keepcache' parameter is deprecated as it is only valid in "
+                    "the main configuration.",
+                    version='2.20'
+                )
+            elif key == 'async':
+                self.module.deprecate(
+                    "'async' parameter is deprecated as it has been removed on systems supported by ansible-core",
+                    version='2.22',
+                )
+            elif key in {
+                "deltarpm_metadata_percentage",
+                "gpgcakey",
+                "http_caching",
+                "keepalive",
+                "metadata_expire_filter",
+                "mirrorlist_expire",
+                "protect",
+                "ssl_check_cert_permissions",
+                "ui_repoid_vars",
+            }:
+                self.module.deprecate(
+                    f"'{key}' parameter is deprecated as it has no effect with dnf "
+                    "as an underlying package manager.",
+                    version='2.22'
+                )
+            if isinstance(value, bool):
+                value = str(int(value))
+            self.repofile.set(self.section, key, value)
 
     def save(self):
-        if len(self.repofile.sections()):
-            # Write data into the file
+        if self.repofile.sections():
             try:
-                with open(self.params['dest'], 'w') as fd:
+                with open(self.dest, 'w') as fd:
                     self.repofile.write(fd)
             except IOError as e:
                 self.module.fail_json(
-                    msg="Problems handling file %s." % self.params['dest'],
-                    details=to_native(e))
+                    msg=f"Problems handling file {self.dest}.",
+                    details=to_native(e),
+                )
         else:
-            # Remove the file if there are not repos
             try:
-                os.remove(self.params['dest'])
+                os.remove(self.dest)
             except OSError as e:
                 self.module.fail_json(
-                    msg=(
-                        "Cannot remove empty repo file %s." %
-                        self.params['dest']),
-                    details=to_native(e))
+                    msg=f"Cannot remove empty repo file {self.dest}.",
+                    details=to_native(e),
+                )
 
     def remove(self):
-        # Remove section if exists
-        if self.repofile.has_section(self.section):
-            self.repofile.remove_section(self.section)
+        self.repofile.remove_section(self.section)
 
     def dump(self):
         repo_string = ""
 
-        # Compose the repo file
         for section in sorted(self.repofile.sections()):
             repo_string += "[%s]\n" % section
 
@@ -576,17 +534,17 @@ class YumRepo(object):
 
 
 def main():
-    # Module settings
     argument_spec = dict(
         bandwidth=dict(),
         baseurl=dict(type='list', elements='str'),
         cost=dict(),
+        countme=dict(type='bool'),
         deltarpm_metadata_percentage=dict(),
         deltarpm_percentage=dict(),
         description=dict(),
         enabled=dict(type='bool'),
         enablegroups=dict(type='bool'),
-        exclude=dict(type='list', elements='str'),
+        exclude=dict(type='list', elements='str', aliases=['excludepkgs']),
         failovermethod=dict(choices=['roundrobin', 'priority']),
         file=dict(),
         gpgcakey=dict(no_log=False),
@@ -633,78 +591,77 @@ def main():
         username=dict(),
     )
 
+    # async is a Python keyword
     argument_spec['async'] = dict(type='bool')
 
     module = AnsibleModule(
+        required_if=[
+            ["state", "present", ["baseurl", "mirrorlist", "metalink"], True],
+            ["state", "present", ["description"]],
+        ],
         argument_spec=argument_spec,
         add_file_common_args=True,
         supports_check_mode=True,
     )
 
-    name = module.params['name']
-    state = module.params['state']
+    # make copy of params as we need to split them into yum repo only and file params
+    yum_repo_params = module.params.copy()
+    for alias in module.aliases:
+        yum_repo_params.pop(alias, None)
 
-    # Check if required parameters are present
-    if state == 'present':
-        if (
-                module.params['baseurl'] is None and
-                module.params['metalink'] is None and
-                module.params['mirrorlist'] is None):
-            module.fail_json(
-                msg="Parameter 'baseurl', 'metalink' or 'mirrorlist' is required.")
-        if module.params['description'] is None:
-            module.fail_json(
-                msg="Parameter 'description' is required.")
+    file_common_params = {}
+    for param in FILE_COMMON_ARGUMENTS:
+        file_common_params[param] = yum_repo_params.pop(param)
 
-    # Rename "name" and "description" to ensure correct key sorting
-    module.params['repoid'] = module.params['name']
-    module.params['name'] = module.params['description']
-    del module.params['description']
+    state = yum_repo_params.pop("state")
+    name = yum_repo_params['name']
+    yum_repo_params['name'] = yum_repo_params.pop('description')
 
-    # Change list type to string for baseurl and gpgkey
-    for list_param in ['baseurl', 'gpgkey']:
-        if (
-                list_param in module.params and
-                module.params[list_param] is not None):
-            module.params[list_param] = "\n".join(module.params[list_param])
+    for list_param in ('baseurl', 'gpgkey'):
+        v = yum_repo_params[list_param]
+        if v is not None:
+            yum_repo_params[list_param] = '\n'.join(v)
 
-    # Define repo file name if it doesn't exist
-    if module.params['file'] is None:
-        module.params['file'] = module.params['repoid']
+    for list_param in ('exclude', 'includepkgs'):
+        v = yum_repo_params[list_param]
+        if v is not None:
+            yum_repo_params[list_param] = ' '.join(v)
 
-    # Instantiate the YumRepo object
-    yumrepo = YumRepo(module)
+    repos_dir = yum_repo_params.pop("reposdir")
+    if not os.path.isdir(repos_dir):
+        module.fail_json(
+            msg="Repo directory '%s' does not exist." % repos_dir
+        )
 
-    # Get repo status before change
+    if (file := yum_repo_params.pop("file")) is None:
+        file = name
+    file_common_params["dest"] = os.path.join(repos_dir, f"{file}.repo")
+
+    yumrepo = YumRepo(module, yum_repo_params, name, file_common_params["dest"])
+
     diff = {
-        'before_header': yumrepo.params['dest'],
+        'before_header': file_common_params["dest"],
         'before': yumrepo.dump(),
-        'after_header': yumrepo.params['dest'],
+        'after_header': file_common_params["dest"],
         'after': ''
     }
 
-    # Perform action depending on the state
     if state == 'present':
         yumrepo.add()
     elif state == 'absent':
         yumrepo.remove()
 
-    # Get repo status after change
     diff['after'] = yumrepo.dump()
 
-    # Compare repo states
     changed = diff['before'] != diff['after']
 
-    # Save the file only if not in check mode and if there was a change
     if not module.check_mode and changed:
         yumrepo.save()
 
-    # Change file attributes if needed
-    if os.path.isfile(module.params['dest']):
-        file_args = module.load_file_common_arguments(module.params)
+    if os.path.isfile(file_common_params["dest"]):
+        file_args = module.load_file_common_arguments(file_common_params)
         changed = module.set_fs_attributes_if_different(file_args, changed)
 
-    # Print status of the change
     module.exit_json(changed=changed, repo=name, state=state, diff=diff)
 
 

@@ -347,7 +347,7 @@ def _list_no_log_values(argument_spec, params):
                             sub_param = check_type_dict(sub_param)
 
                         if not isinstance(sub_param, Mapping):
-                            raise TypeError("Value '{1}' in the sub parameter field '{0}' must by a {2}, "
+                            raise TypeError("Value '{1}' in the sub parameter field '{0}' must be a {2}, "
                                             "not '{1.__class__.__name__}'".format(arg_name, sub_param, wanted_type))
 
                         no_log_values.update(_list_no_log_values(sub_argument_spec, sub_param))
@@ -365,12 +365,10 @@ def _return_datastructure_name(obj):
         return
     elif isinstance(obj, Mapping):
         for element in obj.items():
-            for subelement in _return_datastructure_name(element[1]):
-                yield subelement
+            yield from _return_datastructure_name(element[1])
     elif is_iterable(obj):
         for element in obj:
-            for subelement in _return_datastructure_name(element):
-                yield subelement
+            yield from _return_datastructure_name(element)
     elif obj is None or isinstance(obj, bool):
         # This must come before int because bools are also ints
         return
@@ -665,7 +663,7 @@ def _validate_argument_values(argument_spec, parameters, options_context=None, e
                     diff_list = [item for item in parameters[param] if item not in choices]
                     if diff_list:
                         choices_str = ", ".join([to_native(c) for c in choices])
-                        diff_str = ", ".join(diff_list)
+                        diff_str = ", ".join([to_native(c) for c in diff_list])
                         msg = "value of %s must be one or more of: %s. Got no match for: %s" % (param, choices_str, diff_str)
                         if options_context:
                             msg = "{0} found in {1}".format(msg, " -> ".join(options_context))

@@ -38,3 +38,16 @@
 
   when:
     - ansible_distribution in ('Ubuntu', 'Debian')
+
+  always:
+    - name: Check if the target is managed by ansible-test
+      stat:
+        path: /etc/ansible-test.bootstrap
+      register: marker
+
+    - name: Ensure the EXTERNALLY-MANAGED marker is not present on the target
+      command: |
+        {{ ansible_python_interpreter | quote }}
+        -c
+        'import sysconfig; import pathlib; (pathlib.Path(sysconfig.get_path("stdlib")) / "EXTERNALLY-MANAGED").unlink(missing_ok=True);'
+      when: marker.stat.exists

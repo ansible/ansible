@@ -9,7 +9,7 @@ import sys
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
-_PY_MIN = (3, 7)
+_PY_MIN = (3, 8)
 
 if sys.version_info < _PY_MIN:
     print(json.dumps(dict(
@@ -120,12 +120,13 @@ from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.file import (
     _PERM_BITS as PERM_BITS,
-    _EXEC_PERM_BITS as EXEC_PERM_BITS,
     _DEFAULT_PERM as DEFAULT_PERM,
     is_executable,
     format_attributes,
     get_flags_from_attributes,
     FILE_ATTRIBUTES,
+    S_IXANY,
+    S_IRWU_RWG_RWO,
 )
 from ansible.module_utils.common.sys_info import (
     get_distribution,
@@ -457,7 +458,7 @@ class AnsibleModule(object):
         self._selinux_mls_enabled = None
         self._selinux_initial_context = None
 
-        # finally, make sure we're in a sane working dir
+        # finally, make sure we're in a logical working dir
         self._set_cwd()
 
     @property
@@ -1021,7 +1022,7 @@ class AnsibleModule(object):
         if prev_mode is None:
             prev_mode = stat.S_IMODE(path_stat.st_mode)
         is_directory = stat.S_ISDIR(path_stat.st_mode)
-        has_x_permissions = (prev_mode & EXEC_PERM_BITS) > 0
+        has_x_permissions = (prev_mode & S_IXANY) > 0
         apply_X_permission = is_directory or has_x_permissions
 
         # Get the umask, if the 'user' part is empty, the effect is as if (a) were
@@ -1201,6 +1202,7 @@ class AnsibleModule(object):
                     setattr(self, PASS_VARS[k][0], PASS_VARS[k][1])
 
     def safe_eval(self, value, locals=None, include_exceptions=False):
+        # deprecated: description='no longer used in the codebase' core_version='2.21'
         return safe_eval(value, locals, include_exceptions)
 
     def _load_params(self):
@@ -1352,9 +1354,10 @@ class AnsibleModule(object):
         Find system executable in PATH.
 
         :param arg: The executable to find.
-        :param required: if executable is not found and required is ``True``, fail_json
+        :param required: if the executable is not found and required is ``True``, fail_json
         :param opt_dirs: optional list of directories to search in addition to ``PATH``
-        :returns: if found return full path; otherwise return None
+        :returns: if found return full path; otherwise return original arg, unless 'warning' then return None
+        :raises: Sysexit: if arg is not found and required=True (via fail_json)
         '''
 
         bin_path = None
@@ -1363,8 +1366,6 @@ class AnsibleModule(object):
         except ValueError as e:
             if required:
                 self.fail_json(msg=to_text(e))
-            else:
-                return bin_path
 
         return bin_path
 
@@ -1431,7 +1432,7 @@ class AnsibleModule(object):
             kwargs['deprecations'] = deprecations
 
         # preserve bools/none from no_log
-        # TODO: once python version on target high enough, dict comprh
+        # TODO: once python version on target high enough, dict comprehensions
         preserved = {}
         for k, v in kwargs.items():
             if v is None or isinstance(v, bool):
@@ -1556,7 +1557,7 @@ class AnsibleModule(object):
         #   Similar to shutil.copy(), but metadata is copied as well - in fact,
         #   this is just shutil.copy() followed by copystat(). This is similar
         #   to the Unix command cp -p.
-        #
+
         # shutil.copystat(src, dst)
         #   Copy the permission bits, last access time, last modification time,
         #   and flags from src to dst. The file contents, owner, and group are
@@ -1584,7 +1585,7 @@ class AnsibleModule(object):
         current_attribs = current_attribs.get('attr_flags', '')
         self.set_attributes_if_different(dest, current_attribs, True)
 
-    def atomic_move(self, src, dest, unsafe_writes=False):
+    def atomic_move(self, src, dest, unsafe_writes=False, keep_dest_attrs=True):
         '''atomically move src to dest, copying attributes from dest, returns true on success
         it uses os.rename to ensure this as it is an atomic operation, rest of the function is
         to work around limitations, corner cases and ensure selinux context is saved if possible'''
@@ -1592,24 +1593,12 @@ class AnsibleModule(object):
         dest_stat = None
         b_src = to_bytes(src, errors='surrogate_or_strict')
         b_dest = to_bytes(dest, errors='surrogate_or_strict')
-        if os.path.exists(b_dest):
+        if os.path.exists(b_dest) and keep_dest_attrs:
             try:
                 dest_stat = os.stat(b_dest)
-
-                # copy mode and ownership
-                os.chmod(b_src, dest_stat.st_mode & PERM_BITS)
                 os.chown(b_src, dest_stat.st_uid, dest_stat.st_gid)
-
-                # try to copy flags if possible
-                if hasattr(os, 'chflags') and hasattr(dest_stat, 'st_flags'):
-                    try:
-                        os.chflags(b_src, dest_stat.st_flags)
-                    except OSError as e:
-                        for err in 'EOPNOTSUPP', 'ENOTSUP':
-                            if hasattr(errno, err) and e.errno == getattr(errno, err):
-                                break
-                        else:
-                            raise
+                shutil.copystat(b_dest, b_src)
+                os.utime(b_src, times=(time.time(), time.time()))
             except OSError as e:
                 if e.errno != errno.EPERM:
                     raise
@@ -1657,19 +1646,24 @@ class AnsibleModule(object):
                             os.close(tmp_dest_fd)
                             # leaves tmp file behind when sudo and not root
                             try:
-                                shutil.move(b_src, b_tmp_dest_name)
+                                shutil.move(b_src, b_tmp_dest_name, copy_function=shutil.copy if keep_dest_attrs else shutil.copy2)
                             except OSError:
                                 # cleanup will happen by 'rm' of tmpdir
                                 # copy2 will preserve some metadata
-                                shutil.copy2(b_src, b_tmp_dest_name)
+                                if keep_dest_attrs:
+                                    shutil.copy(b_src, b_tmp_dest_name)
+                                else:
+                                    shutil.copy2(b_src, b_tmp_dest_name)
 
                             if self.selinux_enabled():
                                 self.set_context_if_different(
                                     b_tmp_dest_name, context, False)
                             try:
                                 tmp_stat = os.stat(b_tmp_dest_name)
-                                if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
-                                    os.chown(b_tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
+                                if keep_dest_attrs:
+                                    if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
+                                        os.chown(b_tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
+                                    os.utime(b_tmp_dest_name, times=(time.time(), time.time()))
                             except OSError as e:
                                 if e.errno != errno.EPERM:
                                     raise
@@ -1694,9 +1688,13 @@ class AnsibleModule(object):
             # based on the current value of umask
             umask = os.umask(0)
             os.umask(umask)
-            os.chmod(b_dest, DEFAULT_PERM & ~umask)
+            os.chmod(b_dest, S_IRWU_RWG_RWO & ~umask)
+            dest_dir_stat = os.stat(os.path.dirname(b_dest))
             try:
-                os.chown(b_dest, os.geteuid(), os.getegid())
+                if dest_dir_stat.st_mode & stat.S_ISGID:
+                    os.chown(b_dest, os.geteuid(), dest_dir_stat.st_gid)
+                else:
+                    os.chown(b_dest, os.geteuid(), os.getegid())
             except OSError:
                 # We're okay with trying our best here.  If the user is not
                 # root (or old Unices) they won't be able to chown.
@@ -2063,7 +2061,7 @@ class AnsibleModule(object):
                 # not as exact as above, but should be good enough for most platforms that fail the previous call
                 buffer_size = select.PIPE_BUF
             except Exception:
-                buffer_size = 9000  # use sane default JIC
+                buffer_size = 9000  # use logical default JIC
 
         return buffer_size
 

@@ -164,9 +164,11 @@ class TestTaskExecutor(unittest.TestCase):
 
         def _copy(exclude_parent=False, exclude_tasks=False):
             new_item = MagicMock()
+            new_item.loop_control = MagicMock(break_when=[])
             return new_item
 
         mock_task = MagicMock()
+        mock_task.loop_control = MagicMock(break_when=[])
         mock_task.copy.side_effect = _copy
 
         mock_play_context = MagicMock()

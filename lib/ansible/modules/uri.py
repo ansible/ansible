@@ -22,19 +22,19 @@ options:
       - 'When a list is provided, all ciphers are joined in order with V(:)'
       - See the L(OpenSSL Cipher List Format,https://www.openssl.org/docs/manmaster/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT)
         for more details.
-      - The available ciphers is dependent on the Python and OpenSSL/LibreSSL versions
+      - The available ciphers is dependent on the Python and OpenSSL/LibreSSL versions.
     type: list
     elements: str
     version_added: '2.14'
   decompress:
     description:
-      - Whether to attempt to decompress gzip content-encoded responses
+      - Whether to attempt to decompress gzip content-encoded responses.
     type: bool
     default: true
     version_added: '2.14'
   url:
     description:
-      - HTTP or HTTPS URL in the form (http|https)://host.domain[:port]/path
+      - HTTP or HTTPS URL in the form (http|https)://host.domain[:port]/path.
     type: str
     required: true
   dest:
@@ -58,17 +58,17 @@ options:
         to V(json) it will take an already formatted JSON string or convert a data structure
         into JSON.
       - If O(body_format) is set to V(form-urlencoded) it will convert a dictionary
-        or list of tuples into an 'application/x-www-form-urlencoded' string. (Added in v2.7)
+        or list of tuples into an C(application/x-www-form-urlencoded) string. (Added in v2.7)
       - If O(body_format) is set to V(form-multipart) it will convert a dictionary
-        into 'multipart/form-multipart' body. (Added in v2.10)
+        into C(multipart/form-multipart) body. (Added in v2.10)
     type: raw
   body_format:
     description:
       - The serialization format of the body. When set to V(json), V(form-multipart), or V(form-urlencoded), encodes
-        the body argument, if needed, and automatically sets the Content-Type header accordingly.
+        the body argument, if needed, and automatically sets the C(Content-Type) header accordingly.
       - As of v2.3 it is possible to override the C(Content-Type) header, when
         set to V(json) or V(form-urlencoded) via the O(headers) option.
-      - The 'Content-Type' header cannot be overridden when using V(form-multipart)
+      - The C(Content-Type) header cannot be overridden when using V(form-multipart).
       - V(form-urlencoded) was added in v2.7.
       - V(form-multipart) was added in v2.10.
     type: str
@@ -86,7 +86,7 @@ options:
     description:
       - Whether or not to return the body of the response as a "content" key in
         the dictionary result no matter it succeeded or failed.
-      - Independently of this option, if the reported Content-type is "application/json", then the JSON is
+      - Independently of this option, if the reported C(Content-Type) is C(application/json), then the JSON is
         always loaded into a key called RV(ignore:json) in the dictionary results.
     type: bool
     default: no
@@ -107,15 +107,16 @@ options:
     default: no
   follow_redirects:
     description:
-      - Whether or not the URI module should follow redirects. V(all) will follow all redirects.
-        V(safe) will follow only "safe" redirects, where "safe" means that the client is only
-        doing a GET or HEAD on the URI to which it is being redirected. V(none) will not follow
-        any redirects. Note that V(true) and V(false) choices are accepted for backwards compatibility,
-        where V(true) is the equivalent of V(all) and V(false) is the equivalent of V(safe). V(true) and V(false)
-        are deprecated and will be removed in some future version of Ansible.
+      - Whether or not the URI module should follow redirects.
     type: str
-    choices: ['all', 'no', 'none', 'safe', 'urllib2', 'yes']
     default: safe
+    choices:
+      all: Will follow all redirects.
+      none: Will not follow any redirects.
+      safe: Only redirects doing GET or HEAD requests will be followed.
+      urllib2: Defer to urllib2 behavior (As of writing this follows HTTP redirects).
+      'no': (DEPRECATED, removed in 2.22) alias of V(none).
+      'yes': (DEPRECATED, removed in 2.22) alias of V(all).
   creates:
     description:
       - A filename, when it already exists, this step will not be run.
@@ -154,7 +155,7 @@ options:
   client_cert:
     description:
       - PEM formatted certificate chain file to be used for SSL client authentication.
-      - This file can also include the key as well, and if the key is included, O(client_key) is not required
+      - This file can also include the key as well, and if the key is included, O(client_key) is not required.
     type: path
     version_added: '2.4'
   client_key:
@@ -165,7 +166,7 @@ options:
     version_added: '2.4'
   ca_path:
     description:
-      - PEM formatted file that contains a CA certificate to be used for validation
+      - PEM formatted file that contains a CA certificate to be used for validation.
     type: path
     version_added: '2.11'
   src:
@@ -194,7 +195,7 @@ options:
     default: true
   unix_socket:
     description:
-    - Path to Unix domain socket to use for connection
+    - Path to Unix domain socket to use for connection.
     type: path
     version_added: '2.8'
   http_agent:
@@ -224,9 +225,9 @@ options:
     version_added: '2.11'
   use_netrc:
     description:
-      - Determining whether to use credentials from ``~/.netrc`` file
-      - By default .netrc is used with Basic authentication headers
-      - When set to False, .netrc credentials are ignored
+      - Determining whether to use credentials from C(~/.netrc) file.
+      - By default C(.netrc) is used with Basic authentication headers.
+      - When V(false), C(.netrc) credentials are ignored.
     type: bool
     default: true
     version_added: '2.14'
@@ -579,6 +580,12 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
     if dest is not None and os.path.isfile(dest):
         # if destination file already exist, only download if file newer
         kwargs['last_mod_time'] = utcfromtimestamp(os.path.getmtime(dest))
+
+    if module.params.get('follow_redirects') in ('no', 'yes'):
+        module.deprecate(
+            "Using 'yes' or 'no' for 'follow_redirects' parameter is deprecated.",
+            version='2.22'
+        )
 
     resp, info = fetch_url(module, url, data=data, headers=headers,
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],

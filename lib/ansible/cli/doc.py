@@ -50,7 +50,7 @@ PB_OBJECTS = ['Play', 'Role', 'Block', 'Task', 'Handler']
 PB_LOADED = {}
 SNIPPETS = ['inventory', 'lookup', 'module']
 
-# harcoded from ascii values
+# hardcoded from ascii values
 STYLE = {
     'BLINK': '\033[5m',
     'BOLD': '\033[1m',
@@ -71,8 +71,14 @@ NOCOLOR = {
     'PLUGIN': r'[%s]',
 }
 
-# TODO: make configurable
-ref_style = {'MODULE': 'yellow', 'REF': 'magenta', 'LINK': 'cyan', 'DEP': 'magenta', 'CONSTANT': 'dark gray', 'PLUGIN': 'yellow'}
+ref_style = {
+    'MODULE': C.COLOR_DOC_MODULE,
+    'REF': C.COLOR_DOC_REFERENCE,
+    'LINK': C.COLOR_DOC_LINK,
+    'DEP': C.COLOR_DOC_DEPRECATED,
+    'CONSTANT': C.COLOR_DOC_CONSTANT,
+    'PLUGIN': C.COLOR_DOC_PLUGIN,
+}
 
 
 def jdump(text):
@@ -381,6 +387,12 @@ class RoleMixin(object):
 
         for role, collection, role_path in (roles | collroles):
             argspec = self._load_argspec(role, role_path, collection)
+            if 'error' in argspec:
+                if fail_on_errors:
+                    raise argspec['exception']
+                else:
+                    display.warning('Skipping role (%s) due to: %s' % (role, argspec['error']), True)
+                    continue
             fqcn, doc = self._build_doc(role, role_path, collection, argspec, entry_point)
             if doc:
                 result[fqcn] = doc
@@ -881,6 +893,7 @@ class DocCLI(CLI, RoleMixin):
         plugin_type = context.CLIARGS['type'].lower()
         do_json = context.CLIARGS['json_format'] or context.CLIARGS['dump']
         listing = context.CLIARGS['list_files'] or context.CLIARGS['list_dir']
+        no_fail = bool(not context.CLIARGS['no_fail_on_errors'])
 
         if context.CLIARGS['list_files']:
             content = 'files'
@@ -903,7 +916,6 @@ class DocCLI(CLI, RoleMixin):
             docs['all'] = {}
             for ptype in ptypes:
 
-                no_fail = bool(not context.CLIARGS['no_fail_on_errors'])
                 if ptype == 'role':
                     roles = self._create_role_list(fail_on_errors=no_fail)
                     docs['all'][ptype] = self._create_role_doc(roles.keys(), context.CLIARGS['entry_point'], fail_on_errors=no_fail)
@@ -929,7 +941,7 @@ class DocCLI(CLI, RoleMixin):
             if plugin_type == 'keyword':
                 docs = DocCLI._get_keywords_docs(context.CLIARGS['args'])
             elif plugin_type == 'role':
-                docs = self._create_role_doc(context.CLIARGS['args'], context.CLIARGS['entry_point'])
+                docs = self._create_role_doc(context.CLIARGS['args'], context.CLIARGS['entry_point'], fail_on_errors=no_fail)
             else:
                 # display specific plugin docs
                 docs = self._get_plugins_docs(plugin_type, context.CLIARGS['args'])
@@ -1083,7 +1095,7 @@ class DocCLI(CLI, RoleMixin):
             text = DocCLI.get_man_text(doc, collection_name, plugin_type)
         except Exception as e:
             display.vvv(traceback.format_exc())
-            raise AnsibleError("Unable to retrieve documentation from '%s' due to: %s" % (plugin, to_native(e)), orig_exc=e)
+            raise AnsibleError("Unable to retrieve documentation from '%s'" % (plugin), orig_exc=e)
 
         return text
 
@@ -1189,7 +1201,7 @@ class DocCLI(CLI, RoleMixin):
                     opt_leadin = "-"
                 key = "%s%s %s" % (base_indent, opt_leadin, _format(o, 'yellow'))
 
-            # description is specifically formated and can either be string or list of strings
+            # description is specifically formatted and can either be string or list of strings
             if 'description' not in opt:
                 raise AnsibleError("All (sub-)options and return values must have a 'description' field")
             text.append('')
@@ -1296,15 +1308,34 @@ class DocCLI(CLI, RoleMixin):
 
             if doc.get('description'):
                 if isinstance(doc['description'], list):
-                    desc = " ".join(doc['description'])
+                    descs = doc['description']
                 else:
-                    desc = doc['description']
-                text.append("%s" % DocCLI.warp_fill(DocCLI.tty_ify(desc), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                    descs = [doc['description']]
+                for desc in descs:
+                    text.append("%s" % DocCLI.warp_fill(DocCLI.tty_ify(desc), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
                 text.append('')
 
             if doc.get('options'):
-                text.append(_format("Options", 'bold') + " (%s inicates it is required):" % ("=" if C.ANSIBLE_NOCOLOR else 'red'))
+                text.append(_format("Options", 'bold') + " (%s indicates it is required):" % ("=" if C.ANSIBLE_NOCOLOR else 'red'))
                 DocCLI.add_fields(text, doc.pop('options'), limit, opt_indent)
+
+            if doc.get('attributes', False):
+                display.deprecated(
+                    f'The role {role}\'s argument spec {entry_point} contains the key "attributes", '
+                    'which will not be displayed by ansible-doc in the future. '
+                    'This was unintentionally allowed when plugin attributes were added, '
+                    'but the feature does not map well to role argument specs.',
+                    version='2.20',
+                    collection_name='ansible.builtin',
+                )
+                text.append("")
+                text.append(_format("ATTRIBUTES:", 'bold'))
+                for k in doc['attributes'].keys():
+                    text.append('')
+                    text.append(DocCLI.warp_fill(DocCLI.tty_ify(_format('%s:' % k, 'UNDERLINE')), limit - 6, initial_indent=opt_indent,
+                                                 subsequent_indent=opt_indent))
+                    text.append(DocCLI._indent_lines(DocCLI._dump_yaml(doc['attributes'][k]), opt_indent))
+                del doc['attributes']
 
             # generic elements we will handle identically
             for k in ('author',):
@@ -1319,6 +1350,17 @@ class DocCLI(CLI, RoleMixin):
                 else:
                     # use empty indent since this affects the start of the yaml doc, not it's keys
                     text.append(DocCLI._indent_lines(DocCLI._dump_yaml({k.upper(): doc[k]}), ''))
+
+            if doc.get('examples', False):
+                text.append('')
+                text.append(_format("EXAMPLES:", 'bold'))
+                if isinstance(doc['examples'], string_types):
+                    text.append(doc.pop('examples').strip())
+                else:
+                    try:
+                        text.append(yaml_dump(doc.pop('examples'), indent=2, default_flow_style=False))
+                    except Exception as e:
+                        raise AnsibleParserError("Unable to parse examples section", orig_exc=e)
 
         return text
 
@@ -1337,12 +1379,13 @@ class DocCLI(CLI, RoleMixin):
         text.append("> %s %s (%s)" % (plugin_type.upper(), _format(doc.pop('plugin_name'), 'bold'), doc.pop('filename')))
 
         if isinstance(doc['description'], list):
-            desc = " ".join(doc.pop('description'))
+            descs = doc.pop('description')
         else:
-            desc = doc.pop('description')
+            descs = [doc.pop('description')]
 
         text.append('')
-        text.append(DocCLI.warp_fill(DocCLI.tty_ify(desc), limit, initial_indent=base_indent, subsequent_indent=base_indent))
+        for desc in descs:
+            text.append(DocCLI.warp_fill(DocCLI.tty_ify(desc), limit, initial_indent=base_indent, subsequent_indent=base_indent))
 
         if display.verbosity > 0:
             doc['added_in'] = DocCLI._format_version_added(doc.pop('version_added', 'historical'), doc.pop('version_added_collection', 'ansible-core'))
@@ -1350,16 +1393,15 @@ class DocCLI(CLI, RoleMixin):
         if doc.get('deprecated', False):
             text.append(_format("DEPRECATED: ", 'bold', 'DEP'))
             if isinstance(doc['deprecated'], dict):
-                if 'removed_at_date' in doc['deprecated']:
-                    text.append(
-                        "\tReason: %(why)s\n\tWill be removed in a release after %(removed_at_date)s\n\tAlternatives: %(alternative)s" % doc.pop('deprecated')
-                    )
-                else:
-                    if 'version' in doc['deprecated'] and 'removed_in' not in doc['deprecated']:
-                        doc['deprecated']['removed_in'] = doc['deprecated']['version']
-                    text.append("\tReason: %(why)s\n\tWill be removed in: Ansible %(removed_in)s\n\tAlternatives: %(alternative)s" % doc.pop('deprecated'))
+                if 'removed_at_date' not in doc['deprecated'] and 'version' in doc['deprecated'] and 'removed_in' not in doc['deprecated']:
+                    doc['deprecated']['removed_in'] = doc['deprecated']['version']
+                try:
+                    text.append('\t' + C.config.get_deprecated_msg_from_config(doc['deprecated'], True))
+                except KeyError as e:
+                    raise AnsibleError("Invalid deprecation documentation structure", orig_exc=e)
             else:
-                text.append("%s" % doc.pop('deprecated'))
+                text.append("%s" % doc['deprecated'])
+            del doc['deprecated']
 
         if doc.pop('has_action', False):
             text.append("")
@@ -1367,7 +1409,7 @@ class DocCLI(CLI, RoleMixin):
 
         if doc.get('options', False):
             text.append("")
-            text.append(_format("OPTIONS", 'bold') + " (%s inicates it is required):" % ("=" if C.ANSIBLE_NOCOLOR else 'red'))
+            text.append(_format("OPTIONS", 'bold') + " (%s indicates it is required):" % ("=" if C.ANSIBLE_NOCOLOR else 'red'))
             DocCLI.add_fields(text, doc.pop('options'), limit, opt_indent, man=(display.verbosity == 0))
 
         if doc.get('attributes', False):

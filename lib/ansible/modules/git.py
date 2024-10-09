@@ -42,19 +42,19 @@ options:
         default: "HEAD"
     accept_hostkey:
         description:
-            - Will ensure or not that "-o StrictHostKeyChecking=no" is present as an ssh option.
+            - Will ensure or not that C(-o StrictHostKeyChecking=no) is present as an ssh option.
             - Be aware that this disables a protection against MITM attacks.
-            - Those using OpenSSH >= 7.5 might want to set O(ssh_opts) to V(StrictHostKeyChecking=accept-new)
+            - Those using OpenSSH >= 7.5 might want to use O(accept_newhostkey) or set O(ssh_opts) to V(StrictHostKeyChecking=accept-new)
               instead, it does not remove the MITM issue but it does restrict it to the first attempt.
         type: bool
         default: 'no'
         version_added: "1.5"
     accept_newhostkey:
         description:
-            - As of OpenSSH 7.5, "-o StrictHostKeyChecking=accept-new" can be
+            - As of OpenSSH 7.5, C(-o StrictHostKeyChecking=accept-new) can be
               used which is safer and will only accepts host keys which are
-              not present or are the same. if V(true), ensure that
-              "-o StrictHostKeyChecking=accept-new" is present as an ssh option.
+              not present or are the same. If V(true), ensure that
+              C(-o StrictHostKeyChecking=accept-new) is present as an ssh option.
         type: bool
         default: 'no'
         version_added: "2.12"
@@ -65,21 +65,21 @@ options:
             - For older versions it appends E(GIT_SSH_OPTS) (specific to this module) to the
               variables above or via a wrapper script.
             - Other options can add to this list, like O(key_file) and O(accept_hostkey).
-            - An example value could be "-o StrictHostKeyChecking=no" (although this particular
+            - An example value could be C(-o StrictHostKeyChecking=no) (although this particular
               option is better set by O(accept_hostkey)).
-            - The module ensures that 'BatchMode=yes' is always present to avoid prompts.
+            - The module ensures that C(BatchMode=yes) is always present to avoid prompts.
         type: str
         version_added: "1.5"
 
     key_file:
         description:
             - Specify an optional private key file path, on the target host, to use for the checkout.
-            - This ensures 'IdentitiesOnly=yes' is present in O(ssh_opts).
+            - This ensures C(IdentitiesOnly=yes) is present in O(ssh_opts).
         type: path
         version_added: "1.5"
     reference:
         description:
-            - Reference repository (see "git clone --reference ...").
+            - Reference repository (see C(git clone --reference ...)).
         type: str
         version_added: "1.4"
     remote:
@@ -165,7 +165,7 @@ options:
     track_submodules:
         description:
             - If V(true), submodules will track the latest commit on their
-              master branch (or other branch specified in .gitmodules).  If
+              master branch (or other branch specified in C(.gitmodules)).  If
               V(false), submodules will be kept at the revision specified by the
               main project. This is equivalent to specifying the C(--remote) flag
               to git submodule update.
@@ -207,15 +207,18 @@ options:
         type: path
         version_added: "2.7"
 
-    gpg_whitelist:
+    gpg_allowlist:
         description:
            - A list of trusted GPG fingerprints to compare to the fingerprint of the
              GPG-signed commit.
            - Only used when O(verify_commit=yes).
            - Use of this feature requires Git 2.6+ due to its reliance on git's C(--raw) flag to C(verify-commit) and C(verify-tag).
+           - Alias O(gpg_allowlist) is added in version 2.17.
+           - Alias O(gpg_whitelist) is deprecated and will be removed in version 2.21.
         type: list
         elements: str
         default: []
+        aliases: [ gpg_whitelist ]
         version_added: "2.9"
 
 requirements:
@@ -232,63 +235,63 @@ notes:
       SSH will prompt user to authorize the first contact with a remote host.  To avoid this prompt,
       one solution is to use the option accept_hostkey. Another solution is to
       add the remote host public key in C(/etc/ssh/ssh_known_hosts) before calling
-      the git module, with the following command: ssh-keyscan -H remote_host.com >> /etc/ssh/ssh_known_hosts."
+      the git module, with the following command: C(ssh-keyscan -H remote_host.com >> /etc/ssh/ssh_known_hosts)."
 '''
 
 EXAMPLES = '''
 - name: Git checkout
   ansible.builtin.git:
-    repo: 'https://foosball.example.org/path/to/repo.git'
-    dest: /srv/checkout
+    repo: 'https://github.com/ansible/ansible.git'
+    dest: /tmp/checkout
     version: release-0.22
 
 - name: Read-write git checkout from github
   ansible.builtin.git:
-    repo: git@github.com:mylogin/hello.git
-    dest: /home/mylogin/hello
+    repo: git@github.com:ansible/ansible.git
+    dest: /tmp/checkout
 
 - name: Just ensuring the repo checkout exists
   ansible.builtin.git:
-    repo: 'https://foosball.example.org/path/to/repo.git'
-    dest: /srv/checkout
+    repo: 'https://github.com/ansible/ansible.git'
+    dest: /tmp/checkout
     update: no
 
 - name: Just get information about the repository whether or not it has already been cloned locally
   ansible.builtin.git:
-    repo: 'https://foosball.example.org/path/to/repo.git'
-    dest: /srv/checkout
+    repo: git@github.com:ansible/ansible.git
+    dest: /tmp/checkout
     clone: no
     update: no
 
 - name: Checkout a github repo and use refspec to fetch all pull requests
   ansible.builtin.git:
-    repo: https://github.com/ansible/ansible-examples.git
-    dest: /src/ansible-examples
+    repo: 'https://github.com/ansible/ansible.git'
+    dest: /tmp/checkout
     refspec: '+refs/pull/*:refs/heads/*'
 
 - name: Create git archive from repo
   ansible.builtin.git:
-    repo: https://github.com/ansible/ansible-examples.git
-    dest: /src/ansible-examples
-    archive: /tmp/ansible-examples.zip
+    repo: git@github.com:ansible/ansible.git
+    dest: /tmp/checkout
+    archive: /tmp/ansible.zip
 
 - name: Clone a repo with separate git directory
   ansible.builtin.git:
-    repo: https://github.com/ansible/ansible-examples.git
-    dest: /src/ansible-examples
-    separate_git_dir: /src/ansible-examples.git
+    repo: 'https://github.com/ansible/ansible.git'
+    dest: /tmp/checkout
+    separate_git_dir: /tmp/repo
 
 - name: Example clone of a single branch
   ansible.builtin.git:
-    repo: https://github.com/ansible/ansible-examples.git
-    dest: /src/ansible-examples
+    repo: git@github.com:ansible/ansible.git
+    dest: /tmp/checkout
     single_branch: yes
     version: master
 
 - name: Avoid hanging when http(s) password is missing
   ansible.builtin.git:
-    repo: https://github.com/ansible/could-be-a-private-repo
-    dest: /src/from-private-repo
+    repo: 'https://github.com/ansible/ansible.git'
+    dest: /tmp/checkout
   environment:
     GIT_TERMINAL_PROMPT: 0 # reports "terminal prompts disabled" on missing password
     # or GIT_ASKPASS: /bin/true # for git before version 2.3.0, reports "Authentication failed" on missing password
@@ -465,7 +468,7 @@ def write_ssh_wrapper(module):
 def set_git_ssh_env(key_file, ssh_opts, git_version, module):
     '''
         use environment variables to configure git's ssh execution,
-        which varies by version but this functino should handle all.
+        which varies by version but this function should handle all.
     '''
 
     # initialise to existing ssh opts and/or append user provided
@@ -497,7 +500,7 @@ def set_git_ssh_env(key_file, ssh_opts, git_version, module):
     # older than 2.3 does not know how to use git_ssh_command,
     # so we force it into get_ssh var
     # https://github.com/gitster/git/commit/09d60d785c68c8fa65094ecbe46fbc2a38d0fc1f
-    if git_version < LooseVersion('2.3.0'):
+    if git_version is not None and git_version < LooseVersion('2.3.0'):
         # for use in wrapper
         os.environ["GIT_SSH_OPTS"] = ssh_opts
 
@@ -567,7 +570,7 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
 
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
-          reference, refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch):
+          reference, refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_allowlist, single_branch):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
@@ -634,7 +637,7 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         module.run_command(cmd, check_rc=True, cwd=dest)
 
     if verify_commit:
-        verify_commit_sign(git_path, module, dest, version, gpg_whitelist)
+        verify_commit_sign(git_path, module, dest, version, gpg_allowlist)
 
 
 def has_local_mods(module, git_path, dest, bare):
@@ -910,7 +913,7 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, g
             refspecs = ['+refs/heads/*:refs/heads/*', '+refs/tags/*:refs/tags/*']
         else:
             # ensure all tags are fetched
-            if git_version_used >= LooseVersion('1.9'):
+            if git_version_used is not None and git_version_used >= LooseVersion('1.9'):
                 fetch_cmd.append('--tags')
             else:
                 # old git versions have a bug in --tags that prevents updating existing tags
@@ -1015,7 +1018,7 @@ def set_remote_branch(git_path, module, dest, remote, version, depth):
         module.fail_json(msg="Failed to fetch branch from remote: %s" % version, stdout=out, stderr=err, rc=rc)
 
 
-def switch_version(git_path, module, dest, remote, version, verify_commit, depth, gpg_whitelist):
+def switch_version(git_path, module, dest, remote, version, verify_commit, depth, gpg_allowlist):
     cmd = ''
     if version == 'HEAD':
         branch = get_head_branch(git_path, module, dest, remote)
@@ -1051,26 +1054,26 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
                              stdout=out1, stderr=err1, rc=rc, cmd=cmd)
 
     if verify_commit:
-        verify_commit_sign(git_path, module, dest, version, gpg_whitelist)
+        verify_commit_sign(git_path, module, dest, version, gpg_allowlist)
 
     return (rc, out1, err1)
 
 
-def verify_commit_sign(git_path, module, dest, version, gpg_whitelist):
+def verify_commit_sign(git_path, module, dest, version, gpg_allowlist):
     if version in get_annotated_tags(git_path, module, dest):
         git_sub = "verify-tag"
     else:
         git_sub = "verify-commit"
     cmd = "%s %s %s" % (git_path, git_sub, version)
-    if gpg_whitelist:
+    if gpg_allowlist:
         cmd += " --raw"
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg='Failed to verify GPG signature of commit/tag "%s"' % version, stdout=out, stderr=err, rc=rc)
-    if gpg_whitelist:
+    if gpg_allowlist:
         fingerprint = get_gpg_fingerprint(err)
-        if fingerprint not in gpg_whitelist:
-            module.fail_json(msg='The gpg_whitelist does not include the public key "%s" for this commit' % fingerprint, stdout=out, stderr=err, rc=rc)
+        if fingerprint not in gpg_allowlist:
+            module.fail_json(msg='The gpg_allowlist does not include the public key "%s" for this commit' % fingerprint, stdout=out, stderr=err, rc=rc)
     return (rc, out, err)
 
 
@@ -1183,7 +1186,16 @@ def main():
             clone=dict(default='yes', type='bool'),
             update=dict(default='yes', type='bool'),
             verify_commit=dict(default='no', type='bool'),
-            gpg_whitelist=dict(default=[], type='list', elements='str'),
+            gpg_allowlist=dict(
+                default=[], type='list', aliases=['gpg_whitelist'], elements='str',
+                deprecated_aliases=[
+                    dict(
+                        name='gpg_whitelist',
+                        version='2.21',
+                        collection_name='ansible.builtin',
+                    )
+                ],
+            ),
             accept_hostkey=dict(default='no', type='bool'),
             accept_newhostkey=dict(default='no', type='bool'),
             key_file=dict(default=None, type='path', required=False),
@@ -1214,7 +1226,7 @@ def main():
     allow_clone = module.params['clone']
     bare = module.params['bare']
     verify_commit = module.params['verify_commit']
-    gpg_whitelist = module.params['gpg_whitelist']
+    gpg_allowlist = module.params['gpg_allowlist']
     reference = module.params['reference']
     single_branch = module.params['single_branch']
     git_path = module.params['executable'] or module.get_bin_path('git', True)
@@ -1296,7 +1308,7 @@ def main():
     # GIT_SSH=<path> as an environment variable, might create sh wrapper script for older versions.
     set_git_ssh_env(key_file, ssh_opts, git_version_used, module)
 
-    if depth is not None and git_version_used < LooseVersion('1.9.1'):
+    if depth is not None and git_version_used is not None and git_version_used < LooseVersion('1.9.1'):
         module.warn("git version is too old to fully support the depth argument. Falling back to full checkouts.")
         depth = None
 
@@ -1321,7 +1333,7 @@ def main():
             module.exit_json(**result)
         # there's no git config, so clone
         clone(git_path, module, repo, dest, remote, depth, version, bare, reference,
-              refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch)
+              refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_allowlist, single_branch)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
@@ -1376,7 +1388,7 @@ def main():
     # switch to version specified regardless of whether
     # we got new revisions from the repository
     if not bare:
-        switch_version(git_path, module, dest, remote, version, verify_commit, depth, gpg_whitelist)
+        switch_version(git_path, module, dest, remote, version, verify_commit, depth, gpg_allowlist)
 
     # Deal with submodules
     submodules_updated = False

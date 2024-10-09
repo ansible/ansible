@@ -93,7 +93,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         self.set_options()
 
         try:
-            data = self.loader.load_from_file(path, cache=False)
+            data = self.loader.load_from_file(path, cache='none')
         except Exception as e:
             raise AnsibleParserError(e)
 
@@ -105,7 +105,7 @@ class InventoryModule(BaseFileInventoryPlugin):
             raise AnsibleParserError('Plugin configuration YAML file, not YAML inventory')
 
         # We expect top level keys to correspond to groups, iterate over them
-        # to get host, vars and subgroups (which we iterate over recursivelly)
+        # to get host, vars and subgroups (which we iterate over recursively)
         if isinstance(data, MutableMapping):
             for group_name in data:
                 self._parse_group(group_name, data[group_name])

@@ -1,19 +1,21 @@
 > MODULE testns.testcol.randommodule (./collections/ansible_collections/testns/testcol/plugins/modules/randommodule.py)
 
-  A random module. See `foo=bar' (of role foo.bar.baz, main
-  entrypoint) for how this is used in the [[foo.bar.baz]]'s `main'
-  entrypoint. See the docsite
-  <https://docs.ansible.com/ansible-core/devel/> for more information
-  on ansible-core. This module is not related to the
-  [ansible.builtin.copy] module.  -------------  You might also be
-  interested in ansible_python_interpreter. Sometimes you have [broken
-  markup] that will result in error messages.
+  A random module.
+  See `foo=bar' (of role foo.bar.baz, main entrypoint) for how this is
+  used in the [[foo.bar.baz]]'s `main' entrypoint.
+  See the docsite <https://docs.ansible.com/ansible-core/devel/> for
+  more information on ansible-core.
+  This module is not related to the [ansible.builtin.copy] module.
+  -------------  You might also be interested in
+  ansible_python_interpreter.
+  Sometimes you have [broken markup] that will result in error
+  messages.
 DEPRECATED: 
 	Reason: Test deprecation
 	Will be removed in: Ansible 3.0.0
 	Alternatives: Use some other module
 
-OPTIONS (= inicates it is required):
+OPTIONS (= indicates it is required):
 
 - sub     Suboptions. Contains `sub.subtest', which can be set to `123'.
            You can use `TEST_ENV' to set this.

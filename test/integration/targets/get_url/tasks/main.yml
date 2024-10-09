@@ -667,10 +667,75 @@
       environment:
         KRB5_CONFIG: '{{ krb5_config }}'
         KRB5CCNAME: FILE:{{ remote_tmp_dir }}/krb5.cc
+        OPENSSL_CONF: '{{ krb5_openssl_conf }}'
   when: krb5_config is defined
 
 - name: Test ciphers
   import_tasks: ciphers.yml
+  when: false  # skipped until we have a way to disable TLS 1.3 on the client or server, since cipher suite selection won't break TLS 1.3
 
 - name: Test use_netrc=False
   import_tasks: use_netrc.yml
+
+# https://github.com/ansible/ansible/pull/64092
+# Calling get_url with bad checksum should not delete the target file
+- name: Define test files for checksum verification
+  set_fact:
+    checksum_verify_dstfile: "{{ remote_tmp_dir }}/checksum-verify-test.txt"
+
+- name: Download file
+  get_url:
+    url: https://{{ httpbin_host }}/get
+    dest: "{{ checksum_verify_dstfile}}"
+  register: result
+
+- stat:
+    path: "{{ checksum_verify_dstfile }}"
+  register: stat_result_checksum_verify
+
+- name: Assert success
+  assert:
+    that:
+      - result is changed
+      - '"OK" in result.msg'
+      - stat_result_checksum_verify.stat.exists
+
+- name: Download file again, with wrong checksum
+  get_url:
+    url: https://{{ httpbin_host }}/get
+    dest: "{{ checksum_verify_dstfile}}"
+    checksum: "sha256:18b2a70b53c350ad49e4eafb69560bf77ba2ef4f3c93376b65f18b753c912809"
+  register: result
+  failed_when:
+    - result is successful
+
+- stat:
+    path: "{{ checksum_verify_dstfile }}"
+  register: stat_result_checksum_verify
+
+- name: Assert destination file was not removed
+  assert:
+    that:
+      - result is not changed
+      - '"did not match" in result.msg'
+      - stat_result_checksum_verify.stat.exists
+
+- name: Test downloading to dir with content-disposition attachment
+  get_url:
+    url: 'https://{{ httpbin_host }}/response-headers?Content-Disposition=attachment%3B%20filename%3D%22filename.json%22'
+    dest: "{{ remote_tmp_dir }}"
+  register: get_dir_filename
+
+- assert:
+    that:
+      - get_dir_filename.dest == remote_tmp_dir ~ "/filename.json"
+
+- name: Test downloading to dir with content-disposition inline
+  get_url:
+    url: 'https://{{ httpbin_host }}/response-headers?Content-Disposition=inline%3B%20filename%3D%22filename.json%22'
+    dest: "{{ remote_tmp_dir }}"
+  register: get_dir_filename
+
+- assert:
+    that:
+      - get_dir_filename.dest == remote_tmp_dir ~ "/filename.json"

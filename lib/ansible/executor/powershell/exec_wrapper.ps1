@@ -16,7 +16,7 @@ begin {
             .SYNOPSIS
             Converts a JSON string to a Hashtable/Array in the fastest way
             possible. Unfortunately ConvertFrom-Json is still faster but outputs
-            a PSCustomObject which is combersone for module consumption.
+            a PSCustomObject which is cumbersome for module consumption.
 
             .PARAMETER InputObject
             [String] The JSON string to deserialize.
@@ -178,6 +178,7 @@ $($ErrorRecord.InvocationInfo.PositionMessage)
 
     Write-AnsibleLog "INFO - converting json raw to a payload" "exec_wrapper"
     $payload = ConvertFrom-AnsibleJson -InputObject $json_raw
+    $payload.module_args._ansible_exec_wrapper_warnings = [System.Collections.Generic.List[string]]@()
 
     # TODO: handle binary modules
     # TODO: handle persistence

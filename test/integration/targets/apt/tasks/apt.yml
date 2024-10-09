@@ -319,16 +319,16 @@
     dest: /etc/apt/sources.list.d/non-existing.list
     content: deb http://ppa.launchpad.net/non-existing trusty main
 
-- name: test for sane error message
+- name: test for logical error message
   apt:
     update_cache: yes
   register: apt_result
   ignore_errors: yes
 
-- name: verify sane error message
+- name: verify logical error message
   assert:
     that:
-      - "'Failed to fetch' in apt_result['msg']"
+      - "'Failed to update apt cache' in apt_result['msg']"
       - "'403' in apt_result['msg']"
 
 - name: Clean up
@@ -594,3 +594,26 @@
       - elpa-yaml-mode
     state: absent
     purge: yes
+
+# https://github.com/ansible/ansible/issues/82611
+- name: clean apt cache
+  apt:
+    clean: true
+
+- name: check for /var/cache/apt/pkgcache.bin
+  stat:
+    path: /var/cache/apt/pkgcache.bin
+  register: pkgcache_bin
+
+- name: check for /var/cache/apt/srcpkgcache.bin
+  stat:
+    path: /var/cache/apt/srcpkgcache.bin
+  register: srcpkgcache_bin
+
+- name: verify apt cache files are cleaned
+  assert:
+    that:
+      - not pkgcache_bin.stat.exists
+      - not srcpkgcache_bin.stat.exists
+    fail_msg: "apt cache files still exist."
+    success_msg: "apt cache files are cleaned."

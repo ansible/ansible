@@ -8,28 +8,28 @@ DOCUMENTATION = '''
 author: 'Ansible Core Team (@ansible)'
 short_description: 'Add and remove deb822 formatted repositories'
 description:
-- 'Add and remove deb822 formatted repositories in Debian based distributions'
+- 'Add and remove deb822 formatted repositories in Debian based distributions.'
 module: deb822_repository
 notes:
-- This module will not automatically update caches, call the apt module based
+- This module will not automatically update caches, call the M(ansible.builtin.apt) module based
   on the changed state.
 options:
     allow_downgrade_to_insecure:
         description:
         - Allow downgrading a package that was previously authenticated but
-          is no longer authenticated
+          is no longer authenticated.
         type: bool
     allow_insecure:
         description:
-        - Allow insecure repositories
+        - Allow insecure repositories.
         type: bool
     allow_weak:
         description:
-        - Allow repositories signed with a key using a weak digest algorithm
+        - Allow repositories signed with a key using a weak digest algorithm.
         type: bool
     architectures:
         description:
-        - 'Architectures to search within repository'
+        - Architectures to search within repository.
         type: list
         elements: str
     by_hash:
@@ -51,7 +51,7 @@ options:
     components:
         description:
         - Components specify different sections of one distribution version
-          present in a Suite.
+          present in a C(Suite).
         type: list
         elements: str
     date_max_future:
@@ -64,8 +64,8 @@ options:
         type: bool
     inrelease_path:
         description:
-        - Determines the path to the InRelease file, relative to the normal
-          position of an InRelease file.
+        - Determines the path to the C(InRelease) file, relative to the normal
+          position of an C(InRelease) file.
         type: str
     languages:
         description:
@@ -81,8 +81,8 @@ options:
         type: str
     pdiffs:
         description:
-        - Controls if APT should try to use PDiffs to update old indexes
-          instead of downloading the new indexes entirely
+        - Controls if APT should try to use C(PDiffs) to update old indexes
+          instead of downloading the new indexes entirely.
         type: bool
     signed_by:
         description:
@@ -97,21 +97,20 @@ options:
           Suite can specify an exact path in relation to the URI(s) provided,
           in which case the Components: must be omitted and suite must end
           with a slash (C(/)). Alternatively, it may take the form of a
-          distribution version (e.g. a version codename like disco or artful).
+          distribution version (for example a version codename like C(disco) or C(artful)).
           If the suite does not specify a path, at least one component must
           be present.
         type: list
         elements: str
     targets:
         description:
-        - Defines which download targets apt will try to acquire from this
-          source.
+        - Defines which download targets apt will try to acquire from this source.
         type: list
         elements: str
     trusted:
         description:
         - Decides if a source is considered trusted or if warnings should be
-          raised before e.g. packages are installed from this source.
+          raised before, for example packages are installed from this source.
         type: bool
     types:
         choices:
@@ -123,7 +122,7 @@ options:
         elements: str
         description:
         - Which types of packages to look for from a given source; either
-          binary V(deb) or source code V(deb-src)
+          binary V(deb) or source code V(deb-src).
     uris:
         description:
         - The URIs must specify the base of the Debian distribution archive,
@@ -132,7 +131,7 @@ options:
         elements: str
     mode:
         description:
-        - The octal mode for newly created files in sources.list.d.
+        - The octal mode for newly created files in C(sources.list.d).
         type: raw
         default: '0644'
     state:
@@ -236,6 +235,7 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.common.file import S_IRWXU_RXG_RXO, S_IRWU_RG_RO
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.six import raise_from  # type: ignore[attr-defined]
@@ -259,7 +259,7 @@ def ensure_keyrings_dir(module):
     changed = False
     if not os.path.isdir(KEYRINGS_DIR):
         if not module.check_mode:
-            os.mkdir(KEYRINGS_DIR, 0o755)
+            os.mkdir(KEYRINGS_DIR, S_IRWXU_RXG_RXO)
         changed |= True
 
     changed |= module.set_fs_attributes_if_different(
@@ -353,7 +353,7 @@ def write_signed_by_key(module, v, slug):
             module.atomic_move(tmpfile, filename)
         changed |= True
 
-    changed |= module.set_mode_if_different(filename, 0o0644, False)
+    changed |= module.set_mode_if_different(filename, S_IRWU_RG_RO, False)
 
     return changed, filename, None
 

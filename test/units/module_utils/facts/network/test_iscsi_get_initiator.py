@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from ansible.module_utils.facts.network import iscsi
-from unittest.mock import Mock
+import pytest
 
 
 # AIX # lsattr -E -l iscsi0
@@ -36,18 +36,34 @@ SLP Scope list for iSLPD   :
 """
 
 
-def test_get_iscsi_info(mocker):
-    module = Mock()
+@pytest.mark.parametrize(
+    ("test_input", "expected"),
+    [
+        pytest.param(
+            {
+                "platform": "aix6",
+                "iscsi_path": "/usr/sbin/lsattr",
+                "return_command": LSATTR_OUTPUT
+            },
+            {"iscsi_iqn": "iqn.localhost.hostid.7f000002"},
+            id="aix",
+        ),
+        pytest.param(
+            {
+                "platform": "hp-ux",
+                "iscsi_path": "/opt/iscsi/bin/iscsiutil",
+                "return_command": ISCSIUTIL_OUTPUT
+            },
+            {"iscsi_iqn": " iqn.2001-04.com.hp.stor:svcio"},
+            id="hpux",
+        )
+    ]
+)
+def test_get_iscsi_info(mocker, test_input, expected):
+    module = mocker.MagicMock()
     inst = iscsi.IscsiInitiatorNetworkCollector()
 
-    mocker.patch('sys.platform', 'aix6')
-    mocker.patch('ansible.module_utils.facts.network.iscsi.get_bin_path', return_value='/usr/sbin/lsattr')
-    mocker.patch.object(module, 'run_command', return_value=(0, LSATTR_OUTPUT, ''))
-    aix_iscsi_expected = {"iscsi_iqn": "iqn.localhost.hostid.7f000002"}
-    assert aix_iscsi_expected == inst.collect(module=module)
-
-    mocker.patch('sys.platform', 'hp-ux')
-    mocker.patch('ansible.module_utils.facts.network.iscsi.get_bin_path', return_value='/opt/iscsi/bin/iscsiutil')
-    mocker.patch.object(module, 'run_command', return_value=(0, ISCSIUTIL_OUTPUT, ''))
-    hpux_iscsi_expected = {"iscsi_iqn": " iqn.2001-04.com.hp.stor:svcio"}
-    assert hpux_iscsi_expected == inst.collect(module=module)
+    mocker.patch('sys.platform', test_input['platform'])
+    mocker.patch.object(module, 'get_bin_path', return_value=test_input['iscsi_path'])
+    mocker.patch.object(module, 'run_command', return_value=(0, test_input['return_command'], ''))
+    assert expected == inst.collect(module=module)

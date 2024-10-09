@@ -58,8 +58,8 @@ options:
     contains:
         description:
             - A regular expression or pattern which should be matched against the file content.
-            - If O(read_whole_file) is V(false) it matches against the beginning of the line (uses
-              V(re.match(\))). If O(read_whole_file) is V(true), it searches anywhere for that pattern
+            - If O(read_whole_file=false) it matches against the beginning of the line (uses
+              V(re.match(\))). If O(read_whole_file=true), it searches anywhere for that pattern
               (uses V(re.search(\))).
             - Works only when O(file_type) is V(file).
         type: str
@@ -75,14 +75,15 @@ options:
     paths:
         description:
             - List of paths of directories to search. All paths must be fully qualified.
+            - From ansible-core 2.18 and onwards, the data type has changed from C(str) to C(path).
         type: list
         required: true
         aliases: [ name, path ]
-        elements: str
+        elements: path
     file_type:
         description:
             - Type of file to select.
-            - The 'link' and 'any' choices were added in Ansible 2.3.
+            - The V(link) and V(any) choices were added in Ansible 2.3.
         type: str
         choices: [ any, directory, file, link ]
         default: file
@@ -116,7 +117,7 @@ options:
               restricted to modes that can be applied using the python
               C(os.chmod) function.
             - The mode can be provided as an octal such as V("0644") or
-              as symbolic such as V(u=rw,g=r,o=r)
+              as symbolic such as V(u=rw,g=r,o=r).
         type: raw
         version_added: '2.16'
     exact_mode:
@@ -145,15 +146,23 @@ options:
     depth:
         description:
             - Set the maximum number of levels to descend into.
-            - Setting recurse to V(false) will override this value, which is effectively depth 1.
+            - Setting O(recurse=false) will override this value, which is effectively depth 1.
             - Default is unlimited depth.
         type: int
         version_added: "2.6"
     encoding:
         description:
-            - When doing a C(contains) search, determine the encoding of the files to be searched.
+            - When doing a O(contains) search, determine the encoding of the files to be searched.
         type: str
         version_added: "2.17"
+    limit:
+        description:
+            - Limit the maximum number of matching paths returned. After finding this many, the find action will stop looking.
+            - Matches are made from the top, down (i.e. shallowest directory first).
+            - If not set, or set to v(null), it will do unlimited matches.
+            - Default is unlimited matches.
+        type: int
+        version_added: "2.18"
 extends_documentation_fragment: action_common_attributes
 attributes:
     check_mode:
@@ -227,6 +236,16 @@ EXAMPLES = r'''
       - '^_[0-9]{2,4}_.*.log$'
       - '^[a-z]{1,5}_.*log$'
 
+- name: Find file containing "wally" without necessarily reading all files
+  ansible.builtin.find:
+    paths: /var/log
+    file_type: file
+    contains: wally
+    read_whole_file: true
+    patterns: "^.*\\.log$"
+    use_regex: true
+    recurse: true
+    limit: 1
 '''
 
 RETURN = r'''
@@ -450,7 +469,7 @@ def statinfo(st):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            paths=dict(type='list', required=True, aliases=['name', 'path'], elements='str'),
+            paths=dict(type='list', required=True, aliases=['name', 'path'], elements='path'),
             patterns=dict(type='list', default=[], aliases=['pattern'], elements='str'),
             excludes=dict(type='list', aliases=['exclude'], elements='str'),
             contains=dict(type='str'),
@@ -467,7 +486,8 @@ def main():
             depth=dict(type='int'),
             mode=dict(type='raw'),
             exact_mode=dict(type='bool', default=True),
-            encoding=dict(type='str')
+            encoding=dict(type='str'),
+            limit=dict(type='int')
         ),
         supports_check_mode=True,
     )
@@ -520,17 +540,20 @@ def main():
         else:
             module.fail_json(size=params['size'], msg="failed to process size")
 
+    if params['limit'] is not None and params['limit'] <= 0:
+        module.fail_json(msg="limit cannot be %d (use None for unlimited)" % params['limit'])
+
     now = time.time()
     msg = 'All paths examined'
     looked = 0
     has_warnings = False
     for npath in params['paths']:
-        npath = os.path.expanduser(os.path.expandvars(npath))
         try:
             if not os.path.isdir(npath):
                 raise Exception("'%s' is not a directory" % to_native(npath))
 
-            for root, dirs, files in os.walk(npath, onerror=handle_walk_errors, followlinks=params['follow']):
+            # Setting `topdown=True` to explicitly guarantee matches are made from the shallowest directory first
+            for root, dirs, files in os.walk(npath, onerror=handle_walk_errors, followlinks=params['follow'], topdown=True):
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
                     fsname = os.path.normpath(os.path.join(root, fsobj))
@@ -596,7 +619,12 @@ def main():
                             r.update(statinfo(st))
                             filelist.append(r)
 
-                if not params['recurse']:
+                    if len(filelist) == params["limit"]:
+                        # Breaks out of directory files loop only
+                        msg = "Limit of matches reached"
+                        break
+
+                if not params['recurse'] or len(filelist) == params["limit"]:
                     break
         except Exception as e:
             skipped[npath] = to_text(e)

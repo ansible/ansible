@@ -19,9 +19,15 @@ description:
 options:
   use_backend:
     description:
-      - By default, this module will select the backend based on the C(ansible_pkg_mgr) fact.
+      - Backend module to use.
     default: "auto"
-    choices: [ auto, yum, yum4, dnf4, dnf5 ]
+    choices:
+        auto: Automatically select the backend based on the C(ansible_facts.pkg_mgr) fact.
+        yum: Alias for V(auto) (see Notes)
+        dnf: M(ansible.builtin.dnf)
+        yum4: Alias for V(dnf)
+        dnf4: Alias for V(dnf)
+        dnf5: M(ansible.builtin.dnf5)
     type: str
     version_added: 2.15
   name:
@@ -49,14 +55,14 @@ options:
   state:
     description:
       - Whether to install (V(present), V(latest)), or remove (V(absent)) a package.
-      - Default is V(None), however in effect the default action is V(present) unless the O(autoremove) option is
-        enabled for this module, then V(absent) is inferred.
+      - Default is V(None), however in effect the default action is V(present) unless the O(autoremove=true),
+        then V(absent) is inferred.
     choices: ['absent', 'present', 'installed', 'removed', 'latest']
     type: str
 
   enablerepo:
     description:
-      - I(Repoid) of repositories to enable for the install/update operation.
+      - C(Repoid) of repositories to enable for the install/update operation.
         These repos will not persist beyond the transaction.
         When specifying multiple repos, separate them with a ",".
     type: list
@@ -65,9 +71,9 @@ options:
 
   disablerepo:
     description:
-      - I(Repoid) of repositories to disable for the install/update operation.
+      - C(Repoid) of repositories to disable for the install/update operation.
         These repos will not persist beyond the transaction.
-        When specifying multiple repos, separate them with a ",".
+        When specifying multiple repos, separate them with a C(,).
     type: list
     elements: str
     default: []
@@ -80,7 +86,7 @@ options:
   disable_gpg_check:
     description:
       - Whether to disable the GPG checking of signatures of packages being
-        installed. Has an effect only if O(state) is V(present) or V(latest).
+        installed. Has an effect only if O(state=present) or O(state=latest).
       - This setting affects packages installed from a repository as well as
         "local" packages installed from the filesystem or a URL.
     type: bool
@@ -105,13 +111,13 @@ options:
     description:
       - If V(true), removes all "leaf" packages from the system that were originally
         installed as dependencies of user-installed packages but which are no longer
-        required by any such package. Should be used alone or when O(state) is V(absent)
+        required by any such package. Should be used alone or when O(state=absent).
     type: bool
     default: "no"
     version_added: "2.4"
   exclude:
     description:
-      - Package name(s) to exclude when state=present, or latest. This can be a
+      - Package name(s) to exclude when O(state=present), or latest. This can be a
         list or a comma separated string.
     version_added: "2.7"
     type: list
@@ -120,14 +126,14 @@ options:
   skip_broken:
     description:
       - Skip all unavailable packages or packages with broken dependencies
-        without raising an error. Equivalent to passing the --skip-broken option.
+        without raising an error. Equivalent to passing the C(--skip-broken) option.
     type: bool
     default: "no"
     version_added: "2.7"
   update_cache:
     description:
       - Force dnf to check if cache is out of date and redownload if needed.
-        Has an effect only if O(state) is V(present) or V(latest).
+        Has an effect only if O(state=present) or O(state=latest).
     type: bool
     default: "no"
     aliases: [ expire-cache ]
@@ -135,7 +141,7 @@ options:
   update_only:
     description:
       - When using latest, only update installed packages. Do not install packages.
-      - Has an effect only if O(state) is V(latest)
+      - Has an effect only if O(state=present) or O(state=latest).
     default: "no"
     type: bool
     version_added: "2.7"
@@ -155,7 +161,7 @@ options:
     version_added: "2.7"
   enable_plugin:
     description:
-      - I(Plugin) name to enable for the install/update operation.
+      - C(Plugin) name to enable for the install/update operation.
         The enabled plugin will not persist beyond the transaction.
     version_added: "2.7"
     type: list
@@ -163,7 +169,7 @@ options:
     default: []
   disable_plugin:
     description:
-      - I(Plugin) name to disable for the install/update operation.
+      - C(Plugin) name to disable for the install/update operation.
         The disabled plugins will not persist beyond the transaction.
     version_added: "2.7"
     type: list
@@ -173,13 +179,14 @@ options:
     description:
       - Disable the excludes defined in DNF config files.
       - If set to V(all), disables all excludes.
-      - If set to V(main), disable excludes defined in [main] in dnf.conf.
+      - If set to V(main), disable excludes defined in C([main]) in C(dnf.conf).
       - If set to V(repoid), disable excludes defined for given repo id.
     version_added: "2.7"
     type: str
   validate_certs:
     description:
-      - This only applies if using a https url as the source of the rpm. e.g. for localinstall. If set to V(false), the SSL certificates will not be validated.
+      - This only applies if using a https url as the source of the rpm. For example, for localinstall.
+        If set to V(false), the SSL certificates will not be validated.
       - This should only set to V(false) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
     type: bool
     default: "yes"
@@ -195,7 +202,7 @@ options:
     description:
       - Specify if the named package and version is allowed to downgrade
         a maybe already installed higher version of that package.
-        Note that setting allow_downgrade=True can make this module
+        Note that setting O(allow_downgrade=true) can make this module
         behave in a non-idempotent way. The task could end up with a set
         of packages that does not match the complete list of specified
         packages to install (because dependencies between the downgraded
@@ -238,18 +245,26 @@ options:
     version_added: "2.8"
   allowerasing:
     description:
-      - If V(true) it allows  erasing  of  installed  packages to resolve dependencies.
+      - If V(true) it allows erasing of installed packages to resolve dependencies.
     required: false
     type: bool
     default: "no"
     version_added: "2.10"
   nobest:
     description:
-      - Set best option to False, so that transactions are not limited to best candidates only.
+      - This is the opposite of the O(best) option kept for backwards compatibility.
+      - Since ansible-core 2.17 the default value is set by the operating system distribution.
     required: false
     type: bool
-    default: "no"
     version_added: "2.11"
+  best:
+    description:
+      - When set to V(true), either use a package with the highest version available or fail.
+      - When set to V(false), if the latest version cannot be installed go with the lower version.
+      - Default is set by the operating system distribution.
+    required: false
+    type: bool
+    version_added: "2.17"
   cacheonly:
     description:
       - Tells dnf to run entirely from system cache; does not download or update metadata.
@@ -274,15 +289,18 @@ attributes:
     platform:
         platforms: rhel
 notes:
-  - When used with a C(loop:) each package will be processed individually, it is much more efficient to pass the list directly to the I(name) option.
+  - When used with a C(loop:) each package will be processed individually, it is much more efficient to pass the list directly to the O(name) option.
   - Group removal doesn't work if the group was installed with Ansible because
     upstream dnf's API doesn't properly mark groups as installed, therefore upon
     removal the module is unable to detect that the group is installed
-    (https://bugzilla.redhat.com/show_bug.cgi?id=1620324)
+    U(https://bugzilla.redhat.com/show_bug.cgi?id=1620324).
+  - While O(use_backend=yum) and the ability to call the action plugin as
+    M(ansible.builtin.yum) are provided for syntax compatibility, the YUM
+    backend was removed in ansible-core 2.17 because the required libraries are
+    not available for any supported version of Python. If you rely on this
+    functionality, use an older version of Ansible.
 requirements:
-  - "python >= 2.6"
-  - python-dnf
-  - for the autoremove option you need dnf >= 2.0.1"
+  - python3-dnf
 author:
   - Igor Gnatenko (@ignatenkobrain) <i.gnatenko.brain@gmail.com>
   - Cristian van Ee (@DJMuggs) <cristian at cvee.org>
@@ -379,12 +397,10 @@ EXAMPLES = '''
 '''
 
 import os
-import re
 import sys
 
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.urls import fetch_file
-from ansible.module_utils.compat.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
@@ -410,11 +426,7 @@ class DnfModule(YumDnf):
 
         self._ensure_dnf()
         self.pkg_mgr_name = "dnf"
-
-        try:
-            self.with_modules = dnf.base.WITH_MODULES
-        except AttributeError:
-            self.with_modules = False
+        self.with_modules = dnf.base.WITH_MODULES
 
     def _sanitize_dnf_error_msg_install(self, spec, error):
         """
@@ -428,22 +440,6 @@ class DnfModule(YumDnf):
             return "No package {0} available.".format(spec)
 
         return error
-
-    def _sanitize_dnf_error_msg_remove(self, spec, error):
-        """
-        For unhandled dnf.exceptions.Error scenarios, there are certain error
-        messages we want to ignore in a removal scenario as known benign
-        failures. Do that here.
-        """
-        if (
-            'no package matched' in to_native(error) or
-            'No match for argument:' in to_native(error)
-        ):
-            return (False, "{0} is not installed".format(spec))
-
-        # Return value is tuple of:
-        #   ("Is this actually a failure?", "Error Message")
-        return (True, error)
 
     def _package_dict(self, package):
         """Return a dictionary of information for the package."""
@@ -471,94 +467,6 @@ class DnfModule(YumDnf):
 
         return result
 
-    def _split_package_arch(self, packagename):
-        # This list was auto generated on a Fedora 28 system with the following one-liner
-        #   printf '[ '; for arch in $(ls /usr/lib/rpm/platform); do  printf '"%s", ' ${arch%-linux}; done; printf ']\n'
-        redhat_rpm_arches = [
-            "aarch64", "alphaev56", "alphaev5", "alphaev67", "alphaev6", "alpha",
-            "alphapca56", "amd64", "armv3l", "armv4b", "armv4l", "armv5tejl", "armv5tel",
-            "armv5tl", "armv6hl", "armv6l", "armv7hl", "armv7hnl", "armv7l", "athlon",
-            "geode", "i386", "i486", "i586", "i686", "ia32e", "ia64", "m68k", "mips64el",
-            "mips64", "mips64r6el", "mips64r6", "mipsel", "mips", "mipsr6el", "mipsr6",
-            "noarch", "pentium3", "pentium4", "ppc32dy4", "ppc64iseries", "ppc64le", "ppc64",
-            "ppc64p7", "ppc64pseries", "ppc8260", "ppc8560", "ppciseries", "ppc", "ppcpseries",
-            "riscv64", "s390", "s390x", "sh3", "sh4a", "sh4", "sh", "sparc64", "sparc64v",
-            "sparc", "sparcv8", "sparcv9", "sparcv9v", "x86_64"
-        ]
-
-        name, delimiter, arch = packagename.rpartition('.')
-        if name and arch and arch in redhat_rpm_arches:
-            return name, arch
-        return packagename, None
-
-    def _packagename_dict(self, packagename):
-        """
-        Return a dictionary of information for a package name string or None
-        if the package name doesn't contain at least all NVR elements
-        """
-
-        if packagename[-4:] == '.rpm':
-            packagename = packagename[:-4]
-
-        rpm_nevr_re = re.compile(r'(\S+)-(?:(\d*):)?(.*)-(~?\w+[\w.+]*)')
-        try:
-            arch = None
-            nevr, arch = self._split_package_arch(packagename)
-            if arch:
-                packagename = nevr
-            rpm_nevr_match = rpm_nevr_re.match(packagename)
-            if rpm_nevr_match:
-                name, epoch, version, release = rpm_nevr_re.match(packagename).groups()
-                if not version or not version.split('.')[0].isdigit():
-                    return None
-            else:
-                return None
-        except AttributeError as e:
-            self.module.fail_json(
-                msg='Error attempting to parse package: %s, %s' % (packagename, to_native(e)),
-                rc=1,
-                results=[]
-            )
-
-        if not epoch:
-            epoch = "0"
-
-        if ':' in name:
-            epoch_name = name.split(":")
-
-            epoch = epoch_name[0]
-            name = ''.join(epoch_name[1:])
-
-        result = {
-            'name': name,
-            'epoch': epoch,
-            'release': release,
-            'version': version,
-        }
-
-        return result
-
-    # Original implementation from yum.rpmUtils.miscutils (GPLv2+)
-    #   http://yum.baseurl.org/gitweb?p=yum.git;a=blob;f=rpmUtils/miscutils.py
-    def _compare_evr(self, e1, v1, r1, e2, v2, r2):
-        # return 1: a is newer than b
-        # 0: a and b are the same version
-        # -1: b is newer than a
-        if e1 is None:
-            e1 = '0'
-        else:
-            e1 = str(e1)
-        v1 = str(v1)
-        r1 = str(r1)
-        if e2 is None:
-            e2 = '0'
-        else:
-            e2 = str(e2)
-        v2 = str(v2)
-        r2 = str(r2)
-        rc = dnf.rpm.rpm.labelCompare((e1, v1, r1), (e2, v2, r2))
-        return rc
-
     def _ensure_dnf(self):
         locale = get_best_parsable_locale(self.module)
         os.environ['LC_ALL'] = os.environ['LC_MESSAGES'] = locale
@@ -567,7 +475,6 @@ class DnfModule(YumDnf):
         global dnf
         try:
             import dnf
-            import dnf.cli
             import dnf.const
             import dnf.exceptions
             import dnf.package
@@ -582,7 +489,6 @@ class DnfModule(YumDnf):
 
         system_interpreters = ['/usr/libexec/platform-python',
                                '/usr/bin/python3',
-                               '/usr/bin/python2',
                                '/usr/bin/python']
 
         if not has_respawned():
@@ -597,7 +503,7 @@ class DnfModule(YumDnf):
         # done all we can do, something is just broken (auto-install isn't useful anymore with respawn, so it was removed)
         self.module.fail_json(
             msg="Could not import the dnf python module using {0} ({1}). "
-                "Please install `python3-dnf` or `python2-dnf` package or ensure you have specified the "
+                "Please install `python3-dnf` package or ensure you have specified the "
                 "correct ansible_python_interpreter. (attempted {2})"
                 .format(sys.executable, sys.version.replace('\n', ''), system_interpreters),
             results=[]
@@ -674,13 +580,20 @@ class DnfModule(YumDnf):
             # setting this to an empty string instead of None appears to mimic the DNF CLI behavior
             conf.substitutions['releasever'] = ''
 
+        # Honor installroot for dnf directories
+        # This will also perform variable substitutions in the paths
+        for opt in ('cachedir', 'logdir', 'persistdir'):
+            conf.prepend_installroot(opt)
+
         # Set skip_broken (in dnf this is strict=0)
         if self.skip_broken:
             conf.strict = 0
 
-        # Set best
-        if self.nobest:
-            conf.best = 0
+        # best and nobest are mutually exclusive
+        if self.nobest is not None:
+            conf.best = not self.nobest
+        elif self.best is not None:
+            conf.best = self.best
 
         if self.download_only:
             conf.downloadonly = True
@@ -722,22 +635,14 @@ class DnfModule(YumDnf):
         """Return a fully configured dnf Base object."""
         base = dnf.Base()
         self._configure_base(base, conf_file, disable_gpg_check, installroot, sslverify)
-        try:
-            # this method has been supported in dnf-4.2.17-6 or later
-            # https://bugzilla.redhat.com/show_bug.cgi?id=1788212
-            base.setup_loggers()
-        except AttributeError:
-            pass
-        try:
-            base.init_plugins(set(self.disable_plugin), set(self.enable_plugin))
-            base.pre_configure_plugins()
-        except AttributeError:
-            pass  # older versions of dnf didn't require this and don't have these methods
+
+        base.setup_loggers()
+        base.init_plugins(set(self.disable_plugin), set(self.enable_plugin))
+        base.pre_configure_plugins()
+
         self._specify_repositories(base, disablerepo, enablerepo)
-        try:
-            base.configure_plugins()
-        except AttributeError:
-            pass  # older versions of dnf didn't require this and don't have these methods
+
+        base.configure_plugins()
 
         try:
             if self.update_cache:
@@ -803,42 +708,33 @@ class DnfModule(YumDnf):
         self.module.exit_json(msg="", results=results)
 
     def _is_installed(self, pkg):
-        installed = self.base.sack.query().installed()
-
-        package_spec = {}
-        name, arch = self._split_package_arch(pkg)
-        if arch:
-            package_spec['arch'] = arch
-
-        package_details = self._packagename_dict(pkg)
-        if package_details:
-            package_details['epoch'] = int(package_details['epoch'])
-            package_spec.update(package_details)
-        else:
-            package_spec['name'] = name
-
-        return bool(installed.filter(**package_spec))
-
-    def _is_newer_version_installed(self, pkg_name):
-        candidate_pkg = self._packagename_dict(pkg_name)
-        if not candidate_pkg:
-            # The user didn't provide a versioned rpm, so version checking is
-            # not required
-            return False
-
-        installed = self.base.sack.query().installed()
-        installed_pkg = installed.filter(name=candidate_pkg['name']).run()
-        if installed_pkg:
-            installed_pkg = installed_pkg[0]
-
-            # this looks weird but one is a dict and the other is a dnf.Package
-            evr_cmp = self._compare_evr(
-                installed_pkg.epoch, installed_pkg.version, installed_pkg.release,
-                candidate_pkg['epoch'], candidate_pkg['version'], candidate_pkg['release'],
+        installed_query = dnf.subject.Subject(pkg).get_best_query(sack=self.base.sack).installed()
+        if dnf.util.is_glob_pattern(pkg):
+            available_query = dnf.subject.Subject(pkg).get_best_query(sack=self.base.sack).available()
+            return not (
+                {p.name for p in available_query} - {p.name for p in installed_query}
             )
-
-            return evr_cmp == 1
         else:
+            return bool(installed_query)
+
+    def _is_newer_version_installed(self, pkg_spec):
+        try:
+            if isinstance(pkg_spec, dnf.package.Package):
+                installed = sorted(self.base.sack.query().installed().filter(name=pkg_spec.name, arch=pkg_spec.arch))[-1]
+                return installed.evr_gt(pkg_spec)
+            else:
+                available = dnf.subject.Subject(pkg_spec).get_best_query(sack=self.base.sack).available()
+                installed = self.base.sack.query().installed().filter(name=available[0].name)
+                for arch in sorted(set(p.arch for p in installed)):  # select only from already-installed arches for this case
+                    installed_pkg = sorted(installed.filter(arch=arch))[-1]
+                    try:
+                        available_pkg = sorted(available.filter(arch=arch))[-1]
+                    except IndexError:
+                        continue  # nothing currently available for this arch; keep going
+                    if installed_pkg.evr_gt(available_pkg):
+                        return True
+                return False
+        except IndexError:
             return False
 
     def _mark_package_install(self, pkg_spec, upgrade=False):
@@ -898,29 +794,15 @@ class DnfModule(YumDnf):
                 "results": []
             }
         except dnf.exceptions.Error as e:
-            if to_text("already installed") in to_text(e):
-                return {'failed': False, 'msg': '', 'failure': ''}
-            else:
-                return {
-                    'failed': True,
-                    'msg': "Unknown Error occurred for package {0}.".format(pkg_spec),
-                    'failure': " ".join((pkg_spec, to_native(e))),
-                    'rc': 1,
-                    "results": []
-                }
+            return {
+                'failed': True,
+                'msg': "Unknown Error occurred for package {0}.".format(pkg_spec),
+                'failure': " ".join((pkg_spec, to_native(e))),
+                'rc': 1,
+                "results": []
+            }
 
         return {'failed': False, 'msg': msg, 'failure': '', 'rc': 0}
-
-    def _whatprovides(self, filepath):
-        self.base.read_all_repos()
-        available = self.base.sack.query().available()
-        # Search in file
-        files_filter = available.filter(file=filepath)
-        # And Search in provides
-        pkg_spec = files_filter.union(available.filter(provides=filepath)).run()
-
-        if pkg_spec:
-            return pkg_spec[0].name
 
     def _parse_spec_group_file(self):
         pkg_specs, grp_specs, module_specs, filenames = [], [], [], []
@@ -933,11 +815,13 @@ class DnfModule(YumDnf):
             elif name.endswith(".rpm"):
                 filenames.append(name)
             elif name.startswith('/'):
-                # like "dnf install /usr/bin/vi"
-                pkg_spec = self._whatprovides(name)
-                if pkg_spec:
-                    pkg_specs.append(pkg_spec)
-                    continue
+                # dnf install /usr/bin/vi
+                installed = self.base.sack.query().filter(provides=name, file=name).installed().run()
+                if installed:
+                    pkg_specs.append(installed[0].name)  # should be only one?
+                elif not self.update_only:
+                    # not installed, pass the filename for dnf to process
+                    pkg_specs.append(name)
             elif name.startswith("@") or ('/' in name):
                 if not already_loaded_comps:
                     self.base.read_comps()
@@ -980,36 +864,20 @@ class DnfModule(YumDnf):
         return not_installed
 
     def _install_remote_rpms(self, filenames):
-        if int(dnf.__version__.split(".")[0]) >= 2:
-            pkgs = list(sorted(self.base.add_remote_rpms(list(filenames)), reverse=True))
-        else:
-            pkgs = []
-            try:
-                for filename in filenames:
-                    pkgs.append(self.base.add_remote_rpm(filename))
-            except IOError as e:
-                if to_text("Can not load RPM file") in to_text(e):
-                    self.module.fail_json(
-                        msg="Error occurred attempting remote rpm install of package: {0}. {1}".format(filename, to_native(e)),
-                        results=[],
-                        rc=1,
-                    )
-        if self.update_only:
-            self._update_only(pkgs)
-        else:
-            for pkg in pkgs:
-                try:
-                    if self._is_newer_version_installed(self._package_dict(pkg)['nevra']):
-                        if self.allow_downgrade:
-                            self.base.package_install(pkg, strict=self.base.conf.strict)
-                    else:
+        try:
+            pkgs = self.base.add_remote_rpms(filenames)
+            if self.update_only:
+                self._update_only(pkgs)
+            else:
+                for pkg in pkgs:
+                    if not (self._is_newer_version_installed(pkg) and not self.allow_downgrade):
                         self.base.package_install(pkg, strict=self.base.conf.strict)
-                except Exception as e:
-                    self.module.fail_json(
-                        msg="Error occurred attempting remote rpm operation: {0}".format(to_native(e)),
-                        results=[],
-                        rc=1,
-                    )
+        except Exception as e:
+            self.module.fail_json(
+                msg="Error occurred attempting remote rpm operation: {0}".format(to_native(e)),
+                results=[],
+                rc=1,
+            )
 
     def _is_module_installed(self, module_spec):
         if self.with_modules:
@@ -1026,7 +894,7 @@ class DnfModule(YumDnf):
                 else:
                     return True         # No stream provided, but module found
 
-        return False  # seems like a sane default
+        return False  # seems like a logical default
 
     def ensure(self):
 
@@ -1195,13 +1063,6 @@ class DnfModule(YumDnf):
                         response['results'].append("Packages providing %s not installed due to update_only specified" % spec)
                 else:
                     for pkg_spec in pkg_specs:
-                        # Previously we forced base.conf.best=True here.
-                        # However in 2.11+ there is a self.nobest option, so defer to that.
-                        # Note, however, that just because nobest isn't set, doesn't mean that
-                        # base.conf.best is actually true. We only force it false in
-                        # _configure_base(), we never set it to true, and it can default to false.
-                        # Thus, we still need to explicitly set it here.
-                        self.base.conf.best = not self.nobest
                         install_result = self._mark_package_install(pkg_spec, upgrade=True)
                         if install_result['failed']:
                             if install_result['msg']:
@@ -1237,14 +1098,6 @@ class DnfModule(YumDnf):
                     except dnf.exceptions.CompsError:
                         # Group is already uninstalled.
                         pass
-                    except AttributeError:
-                        # Group either isn't installed or wasn't marked installed at install time
-                        # because of DNF bug
-                        #
-                        # This is necessary until the upstream dnf API bug is fixed where installing
-                        # a group via the dnf API doesn't actually mark the group as installed
-                        #   https://bugzilla.redhat.com/show_bug.cgi?id=1620324
-                        pass
 
                 for environment in environments:
                     try:
@@ -1253,25 +1106,11 @@ class DnfModule(YumDnf):
                         # Environment is already uninstalled.
                         pass
 
-                installed = self.base.sack.query().installed()
                 for pkg_spec in pkg_specs:
-                    # short-circuit installed check for wildcard matching
-                    if '*' in pkg_spec:
-                        try:
-                            self.base.remove(pkg_spec)
-                        except dnf.exceptions.MarkingError as e:
-                            is_failure, handled_remove_error = self._sanitize_dnf_error_msg_remove(pkg_spec, to_native(e))
-                            if is_failure:
-                                failure_response['failures'].append('{0} - {1}'.format(pkg_spec, to_native(e)))
-                            else:
-                                response['results'].append(handled_remove_error)
-                        continue
-
-                    installed_pkg = dnf.subject.Subject(pkg_spec).get_best_query(
-                        sack=self.base.sack).installed().run()
-
-                    for pkg in installed_pkg:
-                        self.base.remove(str(pkg))
+                    try:
+                        self.base.remove(pkg_spec)
+                    except dnf.exceptions.MarkingError as e:
+                        response['results'].append(f"{e.value}: {pkg_spec}")
 
                 # Like the dnf CLI we want to allow recursive removal of dependent
                 # packages
@@ -1325,10 +1164,8 @@ class DnfModule(YumDnf):
 
                     self.base.download_packages(self.base.transaction.install_set)
                 except dnf.exceptions.DownloadError as e:
-                    self.module.fail_json(
-                        msg="Failed to download packages: {0}".format(to_text(e)),
-                        results=[],
-                    )
+                    failure_response['msg'] = "Failed to download packages: {0}".format(to_native(e))
+                    self.module.fail_json(**failure_response)
 
                 # Validate GPG. This is NOT done in dnf.Base (it's done in the
                 # upstream CLI subclass of dnf.Base)
@@ -1369,33 +1206,10 @@ class DnfModule(YumDnf):
             failure_response['msg'] = "Depsolve Error occurred: {0}".format(to_native(e))
             self.module.fail_json(**failure_response)
         except dnf.exceptions.Error as e:
-            if to_text("already installed") in to_text(e):
-                response['changed'] = False
-                response['results'].append("Package already installed: {0}".format(to_native(e)))
-                self.module.exit_json(**response)
-            else:
-                failure_response['msg'] = "Unknown Error occurred: {0}".format(to_native(e))
-                self.module.fail_json(**failure_response)
+            failure_response['msg'] = "Unknown Error occurred: {0}".format(to_native(e))
+            self.module.fail_json(**failure_response)
 
     def run(self):
-        """The main function."""
-
-        # Check if autoremove is called correctly
-        if self.autoremove:
-            if LooseVersion(dnf.__version__) < LooseVersion('2.0.1'):
-                self.module.fail_json(
-                    msg="Autoremove requires dnf>=2.0.1. Current dnf version is %s" % dnf.__version__,
-                    results=[],
-                )
-
-        # Check if download_dir is called correctly
-        if self.download_dir:
-            if LooseVersion(dnf.__version__) < LooseVersion('2.6.2'):
-                self.module.fail_json(
-                    msg="download_dir requires dnf>=2.6.2. Current dnf version is %s" % dnf.__version__,
-                    results=[],
-                )
-
         if self.update_cache and not self.names and not self.list:
             self.base = self._base(
                 self.conf_file, self.disable_gpg_check, self.disablerepo,
@@ -1435,8 +1249,10 @@ class DnfModule(YumDnf):
 
             if self.with_modules:
                 self.module_base = dnf.module.module_base.ModuleBase(self.base)
-
-            self.ensure()
+            try:
+                self.ensure()
+            finally:
+                self.base.close()
 
 
 def main():
@@ -1451,7 +1267,7 @@ def main():
     #   list=repos
     #   list=pkgspec
 
-    yumdnf_argument_spec['argument_spec']['use_backend'] = dict(default='auto', choices=['auto', 'yum', 'yum4', 'dnf4', 'dnf5'])
+    yumdnf_argument_spec['argument_spec']['use_backend'] = dict(default='auto', choices=['auto', 'dnf', 'yum', 'yum4', 'dnf4', 'dnf5'])
 
     module = AnsibleModule(
         **yumdnf_argument_spec

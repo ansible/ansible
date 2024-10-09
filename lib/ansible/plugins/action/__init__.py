@@ -8,8 +8,8 @@ from __future__ import annotations
 import base64
 import json
 import os
-import random
 import re
+import secrets
 import shlex
 import stat
 import tempfile
@@ -118,8 +118,6 @@ class ActionBase(ABC):
             raise AnsibleActionFail('This action (%s) does not support async.' % self._task.action)
         elif self._task.check_mode and not self._supports_check_mode:
             raise AnsibleActionSkip('This action (%s) does not support check mode.' % self._task.action)
-        elif self._task.async_val and self._task.check_mode:
-            raise AnsibleActionFail('"check mode" and "async" cannot be used on same task.')
 
         # Error if invalid argument is passed
         if self._VALID_ARGS:
@@ -148,7 +146,7 @@ class ActionBase(ABC):
         Be cautious when directly passing ``new_module_args`` directly to a
         module invocation, as it will contain the defaults, and not only
         the args supplied from the task. If you do this, the module
-        should not define ``mututally_exclusive`` or similar.
+        should not define ``mutually_exclusive`` or similar.
 
         This code is roughly copied from the ``validate_argument_spec``
         action plugin for use by other action plugins.
@@ -1116,7 +1114,7 @@ class ActionBase(ABC):
             remote_files.append(remote_async_module_path)
 
             async_limit = self._task.async_val
-            async_jid = f'j{random.randint(0, 999999999999)}'
+            async_jid = f'j{secrets.randbelow(999999999999)}'
 
             # call the interpreter for async_wrapper directly
             # this permits use of a script for an interpreter on non-Linux platforms

@@ -450,12 +450,12 @@ class TestVaultIsEncryptedFile(unittest.TestCase):
         data = u"$ANSIBLE_VAULT;9.9;TEST\n%s" % u"ァ ア ィ イ ゥ ウ ェ エ ォ オ カ ガ キ ギ ク グ ケ "
         b_data = to_bytes(data)
         b_data_fo = io.BytesIO(b_data)
-        self.assertFalse(vault.is_encrypted_file(b_data_fo))
+        self.assertFalse(vault.is_encrypted_file(b_data_fo, count=-1))
 
     def test_text_file_handle_invalid(self):
         data = u"$ANSIBLE_VAULT;9.9;TEST\n%s" % u"ァ ア ィ イ ゥ ウ ェ エ ォ オ カ ガ キ ギ ク グ ケ "
         data_fo = io.StringIO(data)
-        self.assertFalse(vault.is_encrypted_file(data_fo))
+        self.assertFalse(vault.is_encrypted_file(data_fo, count=-1))
 
     def test_file_already_read_from_finds_header(self):
         b_data = b"$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify(b"ansible\ntesting\nfile pos")

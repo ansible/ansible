@@ -22,27 +22,13 @@ import errno
 import io
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
 import tempfile
-
-try:
-    import typing as t
-except ImportError:
-    t = None
-
-try:
-    from shlex import quote as cmd_quote
-except ImportError:
-    # noinspection PyProtectedMember
-    from pipes import quote as cmd_quote
-
-try:
-    from urllib.request import urlopen
-except ImportError:
-    # noinspection PyCompatibility,PyUnresolvedReferences
-    from urllib2 import urlopen  # pylint: disable=ansible-bad-import-from
+import typing as t
+import urllib.request
 
 ENCODING = 'utf-8'
 
@@ -80,6 +66,8 @@ def bootstrap(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
     """Bootstrap pip and related packages in an empty virtual environment."""
     pip_version = options['pip_version']
     packages = options['packages']
+    setuptools = options['setuptools']
+    wheel = options['wheel']
 
     url = 'https://ci-files.testing.ansible.com/ansible-test/get-pip-%s.py' % pip_version
     cache_path = os.path.expanduser('~/.ansible/test/cache/get_pip_%s.py' % pip_version.replace(".", "_"))
@@ -114,6 +102,12 @@ https://github.com/ansible/ansible/issues/77304
 
     options = common_pip_options()
     options.extend(packages)
+
+    if not setuptools:
+        options.append('--no-setuptools')
+
+    if not wheel:
+        options.append('--no-wheel')
 
     command = [sys.executable, pip] + options
 
@@ -280,7 +274,7 @@ def devnull():  # type: () -> t.IO[bytes]
 def download_file(url, path):  # type: (str, str) -> None
     """Download the given URL to the specified file path."""
     with open(to_bytes(path), 'wb') as saved_file:
-        with contextlib.closing(urlopen(url)) as download:
+        with contextlib.closing(urllib.request.urlopen(url)) as download:
             shutil.copyfileobj(download, saved_file)
 
 
@@ -291,7 +285,7 @@ class ApplicationError(Exception):
 class SubprocessError(ApplicationError):
     """A command returned a non-zero status."""
     def __init__(self, cmd, status, stdout, stderr):  # type: (t.List[str], int, str, str) -> None
-        message = 'A command failed with status %d: %s' % (status, ' '.join(cmd_quote(c) for c in cmd))
+        message = 'A command failed with status %d: %s' % (status, shlex.join(cmd))
 
         if stderr:
             message += '\n>>> Standard Error\n%s' % stderr.strip()
@@ -313,7 +307,7 @@ def log(message, verbosity=0):  # type: (str, int) -> None
 
 def execute_command(cmd, cwd=None, capture=False, env=None):  # type: (t.List[str], t.Optional[str], bool, t.Optional[t.Dict[str, str]]) -> None
     """Execute the specified command."""
-    log('Execute command: %s' % ' '.join(cmd_quote(c) for c in cmd), verbosity=1)
+    log('Execute command: %s' % shlex.join(cmd), verbosity=1)
 
     cmd_bytes = [to_bytes(c) for c in cmd]
 
@@ -369,17 +363,17 @@ def open_binary_file(path, mode='rb'):  # type: (str, str) -> t.IO[bytes]
     return io.open(to_bytes(path), mode)  # pylint: disable=consider-using-with,unspecified-encoding
 
 
-def to_optional_bytes(value, errors='strict'):  # type: (t.Optional[t.AnyStr], str) -> t.Optional[bytes]
+def to_optional_bytes(value, errors='strict'):  # type: (t.Optional[str | bytes], str) -> t.Optional[bytes]
     """Return the given value as bytes encoded using UTF-8 if not already bytes, or None if the value is None."""
     return None if value is None else to_bytes(value, errors)
 
 
-def to_optional_text(value, errors='strict'):  # type: (t.Optional[t.AnyStr], str) -> t.Optional[t.Text]
+def to_optional_text(value, errors='strict'):  # type: (t.Optional[str | bytes], str) -> t.Optional[t.Text]
     """Return the given value as text decoded using UTF-8 if not already text, or None if the value is None."""
     return None if value is None else to_text(value, errors)
 
 
-def to_bytes(value, errors='strict'):  # type: (t.AnyStr, str) -> bytes
+def to_bytes(value, errors='strict'):  # type: (str | bytes, str) -> bytes
     """Return the given value as bytes encoded using UTF-8 if not already bytes."""
     if isinstance(value, bytes):
         return value
@@ -390,7 +384,7 @@ def to_bytes(value, errors='strict'):  # type: (t.AnyStr, str) -> bytes
     raise Exception('value is not bytes or text: %s' % type(value))
 
 
-def to_text(value, errors='strict'):  # type: (t.AnyStr, str) -> t.Text
+def to_text(value, errors='strict'):  # type: (str | bytes, str) -> t.Text
     """Return the given value as text decoded using UTF-8 if not already text."""
     if isinstance(value, bytes):
         return value.decode(ENCODING, errors)

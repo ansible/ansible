@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
+from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.six import string_types
 from ansible.parsing.mod_args import ModuleArgsParser
@@ -36,7 +37,8 @@ from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
-from ansible.utils.sentinel import Sentinel
+
+from ansible.utils.vars import isidentifier
 
 __all__ = ['Task']
 
@@ -71,7 +73,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
 
     async_val = NonInheritableFieldAttribute(isa='int', default=0, alias='async')
     changed_when = NonInheritableFieldAttribute(isa='list', default=list)
-    delay = NonInheritableFieldAttribute(isa='int', default=5)
+    delay = NonInheritableFieldAttribute(isa='float', default=5)
     failed_when = NonInheritableFieldAttribute(isa='list', default=list)
     loop = NonInheritableFieldAttribute(isa='list')
     loop_control = NonInheritableFieldAttribute(isa='class', class_type=LoopControl, default=LoopControl)
@@ -208,6 +210,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             # But if it wasn't, we can add the yaml object now to get more detail
             raise AnsibleParserError(to_native(e), obj=ds, orig_exc=e)
         else:
+            # Set the resolved action plugin (or if it does not exist, module) for callbacks.
             self.resolved_action = args_parser.resolved_action
 
         # the command/shell/script modules used to support the `cmd` arg,
@@ -272,6 +275,10 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     def _validate_failed_when(self, attr, name, value):
         if not isinstance(value, list):
             setattr(self, name, [value])
+
+    def _validate_register(self, attr, name, value):
+        if value is not None and not isidentifier(value):
+            raise AnsibleParserError(f"Invalid variable name in 'register' specified: '{value}'")
 
     def post_validate(self, templar):
         '''

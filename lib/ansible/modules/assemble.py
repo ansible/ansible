@@ -61,14 +61,14 @@ options:
     type: str
   ignore_hidden:
     description:
-    - A boolean that controls if files that start with a '.' will be included or not.
+    - A boolean that controls if files that start with a C(.) will be included or not.
     type: bool
     default: no
     version_added: '2.0'
   validate:
     description:
     - The validation command to run before copying into place.
-    - The path to the file to validate is passed in via '%s' which must be present as in the sshd example below.
+    - The path to the file to validate is passed in by C(%s) which must be present as in the sshd example below.
     - The command is passed securely so shell features like expansion and pipes won't work.
     type: str
     version_added: '2.0'
@@ -205,6 +205,11 @@ def main():
             regexp=dict(type='str'),
             ignore_hidden=dict(type='bool', default=False),
             validate=dict(type='str'),
+
+            # Options that are for the action plugin, but ignored by the module itself.
+            # We have them here so that the tests pass without ignores, which
+            # reduces the likelihood of further bugs added.
+            decrypt=dict(type='bool', default=True),
         ),
         add_file_common_args=True,
     )

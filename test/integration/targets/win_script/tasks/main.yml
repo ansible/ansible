@@ -38,7 +38,7 @@
       - "test_script_result.rc == 0"
       - "test_script_result.stdout"
       - "'Woohoo' in test_script_result.stdout"
-      - "not test_script_result.stderr"
+      - (ansible_connection == 'ssh') | ternary(test_script_result.stderr is defined, not test_script_result.stderr)
       - "test_script_result is not failed"
       - "test_script_result is changed"
 
@@ -54,7 +54,7 @@
       - "test_script_with_args_result.stdout_lines[0] == '/this'"
       - "test_script_with_args_result.stdout_lines[1] == '/that'"
       - "test_script_with_args_result.stdout_lines[2] == '/Ӧther'"
-      - "not test_script_with_args_result.stderr"
+      - (ansible_connection == 'ssh') | ternary(test_script_with_args_result.stderr is defined, not test_script_with_args_result.stderr)
       - "test_script_with_args_result is not failed"
       - "test_script_with_args_result is changed"
 
@@ -71,7 +71,7 @@
   assert:
     that:
     - test_script_with_large_args_result.rc == 0
-    - not test_script_with_large_args_result.stderr
+    - (ansible_connection == 'ssh') | ternary(test_script_with_large_args_result.stderr is defined, not test_script_with_large_args_result.stderr)
     - test_script_with_large_args_result is not failed
     - test_script_with_large_args_result is changed
 
@@ -99,7 +99,7 @@
       - "test_script_with_splatting_result.stdout_lines[0] == 'this'"
       - "test_script_with_splatting_result.stdout_lines[1] == test_win_script_value"
       - "test_script_with_splatting_result.stdout_lines[2] == 'other'"
-      - "not test_script_with_splatting_result.stderr"
+      - (ansible_connection == 'ssh') | ternary(test_script_with_splatting_result.stderr is defined, not test_script_with_splatting_result.stderr)
       - "test_script_with_splatting_result is not failed"
       - "test_script_with_splatting_result is changed"
 
@@ -115,7 +115,7 @@
       - "test_script_with_splatting2_result.stdout_lines[0] == 'THIS'"
       - "test_script_with_splatting2_result.stdout_lines[1] == 'THAT'"
       - "test_script_with_splatting2_result.stdout_lines[2] == 'OTHER'"
-      - "not test_script_with_splatting2_result.stderr"
+      - (ansible_connection == 'ssh') | ternary(test_script_with_splatting2_result.stderr is defined, not test_script_with_splatting2_result.stderr)
       - "test_script_with_splatting2_result is not failed"
       - "test_script_with_splatting2_result is changed"
 
@@ -148,7 +148,7 @@
     that:
       - "test_script_creates_file_result.rc == 0"
       - "not test_script_creates_file_result.stdout"
-      - "not test_script_creates_file_result.stderr"
+      - (ansible_connection == 'ssh') | ternary(test_script_creates_file_result.stderr is defined, not test_script_creates_file_result.stderr)
       - "test_script_creates_file_result is not failed"
       - "test_script_creates_file_result is changed"
 
@@ -176,7 +176,7 @@
     that:
       - "test_script_removes_file_result.rc == 0"
       - "not test_script_removes_file_result.stdout"
-      - "not test_script_removes_file_result.stderr"
+      - (ansible_connection == 'ssh') | ternary(test_script_removes_file_result.stderr is defined, not test_script_removes_file_result.stderr)
       - "test_script_removes_file_result is not failed"
       - "test_script_removes_file_result is changed"
 
@@ -205,7 +205,7 @@
         - "test_batch_result.rc == 0"
         - "test_batch_result.stdout"
         - "'batch' in test_batch_result.stdout"
-        - "not test_batch_result.stderr"
+        - (ansible_connection == 'ssh') | ternary(test_batch_result.stderr is defined, not test_batch_result.stderr)
         - "test_batch_result is not failed"
         - "test_batch_result is changed"
 
@@ -219,7 +219,7 @@
         - "test_cmd_result.rc == 0"
         - "test_cmd_result.stdout"
         - "'cmd extension' in test_cmd_result.stdout"
-        - "not test_cmd_result.stderr"
+        - (ansible_connection == 'ssh') | ternary(test_cmd_result.stderr is defined, not test_cmd_result.stderr)
         - "test_cmd_result is not failed"
         - "test_cmd_result is changed"
 

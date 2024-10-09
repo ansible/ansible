@@ -42,7 +42,7 @@ options:
   in_place:
     description:
       - If the directory exists, then the working copy will be checked-out over-the-top using
-        svn checkout --force; if force is specified then existing files with different content are reverted.
+        C(svn checkout --force); if force is specified then existing files with different content are reverted.
     type: bool
     default: "no"
     version_added: "2.6"

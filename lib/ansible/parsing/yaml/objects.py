@@ -122,7 +122,7 @@ class AnsibleVaultEncryptedUnicode(Sequence, AnsibleBaseYAMLObject):
         return True
 
     def __reversed__(self):
-        # This gets inerhited from ``collections.Sequence`` which returns a generator
+        # This gets inherited from ``collections.Sequence`` which returns a generator
         # make this act more like the string implementation
         return to_text(self[::-1], errors='surrogate_or_strict')
 

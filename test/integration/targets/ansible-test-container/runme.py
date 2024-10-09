@@ -11,6 +11,7 @@ import functools
 import json
 import os
 import pathlib
+import platform
 import pwd
 import re
 import secrets
@@ -23,7 +24,8 @@ import time
 import typing as t
 
 UNPRIVILEGED_USER_NAME = 'ansible-test'
-CGROUP_SYSTEMD = pathlib.Path('/sys/fs/cgroup/systemd')
+CGROUP_ROOT = pathlib.Path('/sys/fs/cgroup')
+CGROUP_SYSTEMD = CGROUP_ROOT / 'systemd'
 LOG_PATH = pathlib.Path('/tmp/results')
 
 # The value of /proc/*/loginuid when it is not set.
@@ -167,7 +169,6 @@ def get_test_scenarios() -> list[TestScenario]:
         for engine in available_engines:
             # TODO: figure out how to get tests passing using docker without disabling selinux
             disable_selinux = os_release.id == 'fedora' and engine == 'docker' and cgroup != 'none'
-            expose_cgroup_v1 = cgroup == 'v1-only' and get_docker_info(engine).cgroup_version != 1
             debug_systemd = cgroup != 'none'
 
             # The sleep+pkill used to support the cgroup probe causes problems with the centos6 container.
@@ -180,8 +181,12 @@ def get_test_scenarios() -> list[TestScenario]:
             # See: https://access.redhat.com/solutions/6816771
             enable_sha1 = os_release.id == 'rhel' and os_release.version_id.startswith('9.') and container_name == 'centos6'
 
-            if cgroup != 'none' and get_docker_info(engine).cgroup_version == 1 and not have_cgroup_systemd():
-                expose_cgroup_v1 = True  # the host uses cgroup v1 but there is no systemd cgroup and the container requires cgroup support
+            # Starting with Fedora 40, use of /usr/sbin/unix-chkpwd fails under Ubuntu 24.04 due to AppArmor.
+            # This prevents SSH logins from completing due to unix-chkpwd failing to look up the user with getpwnam.
+            # Disabling the 'unix-chkpwd' profile works around the issue, but does not solve the underlying problem.
+            disable_apparmor_profile_unix_chkpwd = engine == 'podman' and os_release.id == 'ubuntu' and container_name == 'fedora40'
+
+            cgroup_version = get_docker_info(engine).cgroup_version
 
             user_scenarios = [
                 # TODO: test rootless docker
@@ -189,17 +194,34 @@ def get_test_scenarios() -> list[TestScenario]:
             ]
 
             if engine == 'podman':
-                user_scenarios.append(UserScenario(ssh=ROOT_USER))
+                if os_release.id not in ('ubuntu',):
+                    # rootfull podman is not supported by all systems
+                    user_scenarios.append(UserScenario(ssh=ROOT_USER))
 
                 # TODO: test podman remote on Alpine and Ubuntu hosts
                 # TODO: combine remote with ssh using different unprivileged users
                 if os_release.id not in ('alpine', 'ubuntu'):
                     user_scenarios.append(UserScenario(remote=unprivileged_user))
 
-                if LOGINUID_MISMATCH:
+                if LOGINUID_MISMATCH and os_release.id not in ('ubuntu',):
+                    # rootfull podman is not supported by all systems
                     user_scenarios.append(UserScenario())
 
             for user_scenario in user_scenarios:
+                expose_cgroup_version: int | None = None  # by default the host is assumed to provide sufficient cgroup support for the container and scenario
+
+                if cgroup == 'v1-only' and cgroup_version != 1:
+                    expose_cgroup_version = 1  # the container requires cgroup v1 support and the host does not use cgroup v1
+                elif cgroup != 'none' and not have_systemd():
+                    # the container requires cgroup support and the host does not use systemd
+                    if cgroup_version == 1:
+                        expose_cgroup_version = 1  # cgroup v1 mount required
+                    elif cgroup_version == 2 and engine == 'podman' and user_scenario.actual != ROOT_USER:
+                        # Running a systemd container on a non-systemd host with cgroup v2 fails for rootless podman.
+                        # It may be possible to support this scenario, but the necessary configuration to do so is unknown.
+                        display.warning(f'Skipping testing of {container_name!r} with rootless podman because the host uses cgroup v2 without systemd.')
+                        continue
+
                 scenarios.append(
                     TestScenario(
                         user_scenario=user_scenario,
@@ -207,10 +229,11 @@ def get_test_scenarios() -> list[TestScenario]:
                         container_name=container_name,
                         image=image,
                         disable_selinux=disable_selinux,
-                        expose_cgroup_v1=expose_cgroup_v1,
+                        expose_cgroup_version=expose_cgroup_version,
                         enable_sha1=enable_sha1,
                         debug_systemd=debug_systemd,
                         probe_cgroups=probe_cgroups,
+                        disable_apparmor_profile_unix_chkpwd=disable_apparmor_profile_unix_chkpwd,
                     )
                 )
 
@@ -292,7 +315,7 @@ def run_test(scenario: TestScenario) -> TestResult:
 
     message = ''
 
-    if scenario.expose_cgroup_v1:
+    if scenario.expose_cgroup_version == 1:
         prepare_cgroup_systemd(scenario.user_scenario.actual.name, scenario.engine)
 
     try:
@@ -305,19 +328,43 @@ def run_test(scenario: TestScenario) -> TestResult:
         if scenario.enable_sha1:
             run_command('update-crypto-policies', '--set', 'DEFAULT:SHA1')
 
+        if scenario.disable_apparmor_profile_unix_chkpwd:
+            os.symlink('/etc/apparmor.d/unix-chkpwd', '/etc/apparmor.d/disable/unix-chkpwd')
+            run_command('apparmor_parser', '-R', '/etc/apparmor.d/unix-chkpwd')
+
         for test_command in test_commands:
-            retry_command(lambda: run_command(*test_command))
+            def run_test_command() -> SubprocessResult:
+                if os_release.id == 'alpine' and scenario.user_scenario.actual.name != 'root':
+                    # Make sure rootless networking works on Alpine.
+                    # NOTE: The path used below differs slightly from the referenced issue.
+                    # See: https://gitlab.alpinelinux.org/alpine/aports/-/issues/16137
+                    actual_pwnam = scenario.user_scenario.actual.pwnam
+                    root_path = pathlib.Path(f'/tmp/storage-run-{actual_pwnam.pw_uid}')
+                    run_path = root_path / 'containers/networks/rootless-netns/run'
+                    run_path.mkdir(mode=0o755, parents=True, exist_ok=True)
+
+                    while run_path.is_relative_to(root_path):
+                        os.chown(run_path, actual_pwnam.pw_uid, actual_pwnam.pw_gid)
+                        run_path = run_path.parent
+
+                return run_command(*test_command)
+
+            retry_command(run_test_command)
     except SubprocessError as ex:
         message = str(ex)
         display.error(f'{scenario} {message}')
     finally:
+        if scenario.disable_apparmor_profile_unix_chkpwd:
+            os.unlink('/etc/apparmor.d/disable/unix-chkpwd')
+            run_command('apparmor_parser', '/etc/apparmor.d/unix-chkpwd')
+
         if scenario.enable_sha1:
             run_command('update-crypto-policies', '--set', 'DEFAULT')
 
         if scenario.disable_selinux:
             run_command('setenforce', 'enforcing')
 
-        if scenario.expose_cgroup_v1:
+        if scenario.expose_cgroup_version == 1:
             dirs = remove_cgroup_systemd()
         else:
             dirs = list_group_systemd()
@@ -408,9 +455,9 @@ def cleanup_podman() -> tuple[str, ...]:
     return tuple(sorted(set(cleanup)))
 
 
-def have_cgroup_systemd() -> bool:
-    """Return True if the container host has a systemd cgroup."""
-    return pathlib.Path(CGROUP_SYSTEMD).is_dir()
+def have_systemd() -> bool:
+    """Return True if the host uses systemd."""
+    return pathlib.Path('/run/systemd/system').is_dir()
 
 
 def prepare_cgroup_systemd(username: str, engine: str) -> None:
@@ -566,10 +613,11 @@ class TestScenario:
     container_name: str
     image: str
     disable_selinux: bool
-    expose_cgroup_v1: bool
+    expose_cgroup_version: int | None
     enable_sha1: bool
     debug_systemd: bool
     probe_cgroups: bool
+    disable_apparmor_profile_unix_chkpwd: bool
 
     @property
     def tags(self) -> tuple[str, ...]:
@@ -584,11 +632,14 @@ class TestScenario:
         if self.disable_selinux:
             tags.append('selinux: permissive')
 
-        if self.expose_cgroup_v1:
-            tags.append('cgroup: v1')
+        if self.expose_cgroup_version is not None:
+            tags.append(f'cgroup: {self.expose_cgroup_version}')
 
         if self.enable_sha1:
             tags.append('sha1: enabled')
+
+        if self.disable_apparmor_profile_unix_chkpwd:
+            tags.append('apparmor(unix-chkpwd): disabled')
 
         return tuple(tags)
 
@@ -964,9 +1015,11 @@ class DnfBootstrapper(Bootstrapper):
             # In Fedora 39, the current version of containerd, 1.6.23, prevents Docker from working.
             # The previously tested version, 1.6.19, did not have this issue.
             # See: https://bugzilla.redhat.com/show_bug.cgi?id=2237396
+            arch = platform.machine()
+
             run_command(
                 'dnf', 'install', '-y',
-                'https://kojipkgs.fedoraproject.org/packages/containerd/1.6.19/2.fc39/x86_64/containerd-1.6.19-2.fc39.x86_64.rpm'
+                f'https://kojipkgs.fedoraproject.org/packages/containerd/1.6.19/2.fc39/{arch}/containerd-1.6.19-2.fc39.{arch}.rpm'
             )
 
         if os_release.id == 'rhel':
@@ -1015,7 +1068,7 @@ class AptBootstrapper(Bootstrapper):
     @classmethod
     def install_podman(cls) -> bool:
         """Return True if podman will be installed."""
-        return not (os_release.id == 'ubuntu' and os_release.version_id == '20.04')
+        return not (os_release.id == 'ubuntu' and os_release.version_id in {'20.04', '22.04'})
 
     @classmethod
     def install_docker(cls) -> bool:
@@ -1069,17 +1122,22 @@ class ApkBootstrapper(Bootstrapper):
     def run(cls) -> None:
         """Run the bootstrapper."""
         # The `openssl` package is used to generate hashed passwords.
-        # crun added as podman won't install it as dep if runc is present
-        # but we don't want runc as it fails
-        # The edge `crun` package installed below requires ip6tables, and in
-        # edge, the `iptables` package includes `ip6tables`, but in 3.18 they
-        # are separate. Remove `ip6tables` once we update to 3.19.
-        packages = ['docker', 'podman', 'openssl', 'crun', 'ip6tables']
+        # The `crun` package must be explicitly installed since podman won't install it as dep if `runc` is present.
+        packages = ['docker', 'podman', 'openssl', 'crun']
+
+        if os_release.version_id.startswith('3.18.'):
+            # The 3.19 `crun` package installed below requires `ip6tables`, but depends on the `iptables` package.
+            # In 3.19, the `iptables` package includes `ip6tables`, but in 3.18 they are separate packages.
+            # Remove once 3.18 is no longer tested.
+            packages.append('ip6tables')
 
         run_command('apk', 'add', *packages)
-        # 3.18 only contains crun 1.8.4, to get 1.9.2 to resolve the run/shm issue, install crun from edge
-        # Remove once we update to 3.19
-        run_command('apk', 'upgrade', '-U', '--repository=http://dl-cdn.alpinelinux.org/alpine/edge/community', 'crun')
+
+        if os_release.version_id.startswith('3.18.'):
+            # 3.18 only contains `crun` 1.8.4, to get a newer version that resolves the run/shm issue, install `crun` from 3.19.
+            # Remove once 3.18 is no longer tested.
+            run_command('apk', 'upgrade', '-U', '--repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/community', 'crun')
+
         run_command('service', 'docker', 'start')
         run_command('modprobe', 'tun')
 

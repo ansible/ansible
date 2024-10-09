@@ -3,7 +3,7 @@
 - set_fact:
     test_ppa_name: 'ppa:git-core/ppa'
     test_ppa_filename: 'git-core'
-    test_ppa_spec: 'deb http://ppa.launchpad.net/git-core/ppa/ubuntu {{ansible_distribution_release}} main'
+    test_ppa_spec: 'deb https://ppa.launchpadcontent.net/git-core/ppa/ubuntu {{ansible_distribution_release}} main'
     test_ppa_key: 'E1DF1F24' # http://keyserver.ubuntu.com:11371/pks/lookup?search=0xD06AAF4C11DAB86DF421421EFE6B20ECA7AD98A1&op=index
 
 - name: show python version
@@ -56,7 +56,10 @@
       - 'cache_before.stat.mtime != cache_after.stat.mtime'
 
 - name: 'ensure ppa key is installed (expect: pass)'
-  apt_key: id='{{test_ppa_key}}' state=present
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
 
 #
 # TEST: apt_repository: repo=<name> update_cache=no
@@ -87,7 +90,10 @@
       - 'cache_before.stat.mtime == cache_after.stat.mtime'
 
 - name: 'ensure ppa key is installed (expect: pass)'
-  apt_key: id='{{test_ppa_key}}' state=present
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
 
 #
 # TEST: apt_repository: repo=<name> update_cache=yes
@@ -118,7 +124,10 @@
       - 'cache_before.stat.mtime != cache_after.stat.mtime'
 
 - name: 'ensure ppa key is installed (expect: pass)'
-  apt_key: id='{{test_ppa_key}}' state=present
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
 
 #
 # TEST: apt_repository: repo=<spec>
@@ -130,7 +139,10 @@
   register: cache_before
 
 - name: ensure ppa key is present before adding repo that requires authentication
-  apt_key: keyserver=keyserver.ubuntu.com id='{{test_ppa_key}}' state=present
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
 
 - name: 'name=<spec> (expect: pass)'
   apt_repository: repo='{{test_ppa_spec}}' state=present
@@ -191,7 +203,10 @@
   register: cache_before
 
 - name: ensure ppa key is present before adding repo that requires authentication
-  apt_key: keyserver=keyserver.ubuntu.com id='{{test_ppa_key}}' state=present
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
 
 - name: 'name=<spec> filename=<filename> (expect: pass)'
   apt_repository: repo='{{test_ppa_spec}}' filename='{{test_ppa_filename}}' state=present
@@ -260,13 +275,13 @@
     path: /etc/apt/sources.list.d/local-apt-repository.list
   register: stat_result
 
-- name: Assert if local apt repo file is a symlink 
+- name: Assert if local apt repo file is a symlink
   assert:
     that:
       - stat_result.stat.islnk is defined and stat_result.stat.islnk
       - stat_result.stat.lnk_source == "/usr/lib/local-apt-repository/local-apt-repository.list"
 
-- name: Try installing an invalid repo 
+- name: Try installing an invalid repo
   apt_repository:
     repo: deb http://dl.google.com/linux/chrome/deb2/ stable main
     state: present
@@ -282,11 +297,52 @@
   assert:
     that:
       - stat_result2.stat.islnk is defined and stat_result2.stat.islnk
-      - stat_result2.stat.lnk_source == "/usr/lib/local-apt-repository/local-apt-repository.list"  
+      - stat_result2.stat.lnk_source == "/usr/lib/local-apt-repository/local-apt-repository.list"
 
 - name: uninstall local-apt-repository with apt
   apt: pkg=local-apt-repository state=absent purge=yes
 
+#
+# TEST: PPA HTTPS URL
+#
+- name: Add PPA using HTTPS URL
+  apt_repository:
+    repo: 'ppa:deadsnakes'
+    filename: 'deadsnakes'
+    state: present
+  register: result
+
+- name: Check if PPA using HTTPS URL is added
+  assert:
+    that:
+      - 'result.changed'
+      - 'result.state == "present"'
+      - 'result.repo == "ppa:deadsnakes"'
+
+- name: 'examine source file'
+  stat:
+    path: '/etc/apt/sources.list.d/deadsnakes.list'
+  register: source_file
+
+- name: 'assert source file exists'
+  assert:
+    that:
+      - 'source_file.stat.exists == True'
+
+- name: Check if the PPA URL
+  shell: "grep 'https://ppa.launchpadcontent.net' /etc/apt/sources.list.d/deadsnakes.list"
+  register: r
+
+- name: Test if PPA URL points to https URL
+  assert:
+    that:
+      - r.changed
+      - "'https://ppa.launchpadcontent.net' in r.stdout"
+
+- name: Remove PPA file
+  file:
+    path: '/etc/apt/sources.list.d/deadsnakes.list'
+    state: absent
 #
 # TEARDOWN
 #

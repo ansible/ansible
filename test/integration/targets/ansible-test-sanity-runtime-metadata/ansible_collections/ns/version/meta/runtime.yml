@@ -1,0 +1,20 @@
+plugin_routing:
+  modules:
+    deprecated_module:
+      deprecation:
+        removal_version: 3.0.0
+        warning_text: Will no longer be there.
+    tombstoned_module:
+      tombstone:
+        removal_version: 2.0.0
+        warning_text: Is no longer there.
+    deprecated_module_wrong_version:
+      deprecation:
+        removal_version: 2.0.0
+        warning_text: Will no longer be there.
+    tombstoned_module_wrong_version:
+      tombstone:
+        removal_version: 3.0.0
+        warning_text: Is no longer there.
+action_groups:
+  - foo

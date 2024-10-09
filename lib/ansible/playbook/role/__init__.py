@@ -24,6 +24,7 @@ from types import MappingProxyType
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
+from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.six import binary_type, text_type
 from ansible.playbook.attribute import FieldAttribute
@@ -37,7 +38,6 @@ from ansible.playbook.taggable import Taggable
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.path import is_subpath
-from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars
 
 __all__ = ['Role', 'hash_params']
@@ -107,7 +107,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         self.static = static
 
         # includes (static=false) default to private, while imports (static=true) default to public
-        # but both can be overriden by global config if set
+        # but both can be overridden by global config if set
         if public is None:
             global_private, origin = C.config.get_config_value_and_origin('DEFAULT_PRIVATE_ROLE_VARS')
             if origin == 'default':
@@ -508,7 +508,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         # get exported variables from meta/dependencies
         seen = []
         for dep in self.get_all_dependencies():
-            # Avoid reruning dupe deps since they can have vars from previous invocations and they accumulate in deps
+            # Avoid rerunning dupe deps since they can have vars from previous invocations and they accumulate in deps
             # TODO: re-examine dep loading to see if we are somehow improperly adding the same dep too many times
             if dep not in seen:
                 # only take 'exportable' vars from deps
@@ -584,7 +584,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         at least one task was run
         '''
 
-        return host.name in self._completed and not self._metadata.allow_duplicates
+        return host.name in self._completed
 
     def compile(self, play, dep_chain=None):
         '''

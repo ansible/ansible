@@ -75,6 +75,8 @@ def to_json(a, *args, **kw):
 
 def to_nice_json(a, indent=4, sort_keys=True, *args, **kw):
     '''Make verbose, human-readable JSON'''
+    # TODO separators can be potentially exposed to the user as well
+    kw.pop('separators', None)
     return to_json(a, indent=indent, sort_keys=sort_keys, separators=(',', ': '), *args, **kw)
 
 
@@ -592,7 +594,7 @@ def commonpath(paths):
     :rtype: str
     """
     if not is_sequence(paths):
-        raise AnsibleFilterTypeError("|path_join expects sequence, got %s instead." % type(paths))
+        raise AnsibleFilterTypeError("|commonpath expects sequence, got %s instead." % type(paths))
 
     return os.path.commonpath(paths)
 

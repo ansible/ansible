@@ -31,11 +31,11 @@ from ansible.module_utils.common.text.converters import to_text
 from ansible.utils import context_objects as co
 
 
-# TODO: make these tests assert something, likely by verifing
+# TODO: make these tests assert something, likely by verifying
 #       mock calls
 
 
-@pytest.fixture(autouse='function')
+@pytest.fixture(autouse=True)
 def reset_cli_args():
     co.GlobalCLIArgs._Singleton__instance = None
     yield

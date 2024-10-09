@@ -6,33 +6,26 @@
       login foo
       password bar
 
-- name: Test Bearer authorization is failed with netrc
+- name: Test with netrc forced Basic auth
   get_url:
-    url: https://{{ httpbin_host }}/bearer
+    url: https://{{ httpbin_host }}/basic-auth/foo/bar
     headers:
       Authorization: Bearer foobar
     dest: "{{ remote_tmp_dir }}/msg.txt"
-  ignore_errors: yes
   environment:
     NETRC: "{{ remote_tmp_dir }}/netrc"
 
 - name: Read msg.txt file
   ansible.builtin.slurp:
     src: "{{ remote_tmp_dir }}/msg.txt"
-  register: response_failed
+  register: response
 
-- name: Parse token from msg.txt
-  set_fact:
-    token: "{{ (response_failed['content'] | b64decode | from_json).token }}"
-
-- name: assert Test Bearer authorization is failed with netrc
+- name: assert Test with netrc forced Basic auth
   assert:
     that:
-    - "token.find('v=' ~ 'Zm9vOmJhcg') == -1"
-    fail_msg: "Was expecting 'foo:bar' in base64, but received: {{ response_failed['content'] | b64decode | from_json }}"
-    success_msg: "Expected Basic authentication even Bearer headers were sent"
+     - (response['content'] | b64decode | from_json).user == 'foo'
 
-- name: Test Bearer authorization is successfull with use_netrc=False
+- name: Test Bearer authorization is successful with use_netrc=False
   get_url:
     url: https://{{ httpbin_host }}/bearer
     use_netrc: false
@@ -47,16 +40,10 @@
     src: "{{ remote_tmp_dir }}/msg.txt"
   register: response
 
-- name: Parse token from msg.txt
-  set_fact:
-    token: "{{ (response['content'] | b64decode | from_json).token }}"
-
-- name: assert Test Bearer authorization is successfull with use_netrc=False
+- name: assert Test Bearer authorization is successful with use_netrc=False
   assert:
     that:
-    - "token.find('v=' ~ 'foobar') == -1"
-    fail_msg: "Was expecting Bearer token 'foobar', but received: {{ response['content'] | b64decode | from_json }}"
-    success_msg: "Bearer authentication successfull without netrc"
+     - (response['content'] | b64decode | from_json).token == 'foobar'
 
 - name: Clean up
   file:

@@ -35,8 +35,8 @@ options:
             commands unless necessary.
           - V(restarted) will always bounce the service.
           - V(reloaded) will always reload.
-          - B(At least one of state and enabled are required.)
-          - Note that reloaded will start the service if it is not already started,
+          - At least one of O(state) and O(enabled) are required.
+          - Note that V(reloaded) will start the service if it is not already started,
             even if your chosen init system wouldn't normally.
         type: str
         choices: [ reloaded, restarted, started, stopped ]
@@ -52,7 +52,7 @@ options:
     pattern:
         description:
         - If the service does not respond to the status command, name a
-          substring to look for as would be found in the output of the I(ps)
+          substring to look for as would be found in the output of the C(ps)
           command as a stand-in for a status result.
         - If the string is found, the service will be assumed to be started.
         - While using remote hosts with systemd this setting will be ignored.
@@ -61,7 +61,7 @@ options:
     enabled:
         description:
         - Whether the service should start on boot.
-        - B(At least one of state and enabled are required.)
+        - At least one of O(state) and O(enabled) are required.
         type: bool
     runlevel:
         description:
@@ -80,7 +80,7 @@ options:
     use:
         description:
         - The service module actually uses system specific modules, normally through auto detection, this setting can force a specific module.
-        - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
+        - Normally it uses the value of the C(ansible_service_mgr) fact and falls back to the C(ansible.legacy.service) module when none matching is found.
         - The 'old service module' still uses autodetection and in no way does it correspond to the C(service) command.
         type: str
         default: auto
@@ -1012,7 +1012,7 @@ class FreeBsdService(Service):
         self.sysrc_cmd = self.module.get_bin_path('sysrc')
 
     def get_service_status(self):
-        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'onestatus', self.arguments))
+        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.arguments, self.name, 'onestatus'))
         if self.name == "pf":
             self.running = "Enabled" in stdout
         else:
@@ -1032,7 +1032,7 @@ class FreeBsdService(Service):
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'rcvar', self.arguments))
+        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.arguments, self.name, 'rcvar'))
         try:
             rcvars = shlex.split(stdout, comments=True)
         except Exception:
@@ -1097,7 +1097,7 @@ class FreeBsdService(Service):
         if self.action == "reload":
             self.action = "onereload"
 
-        ret = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, self.action, self.arguments))
+        ret = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.arguments, self.name, self.action))
 
         if self.sleep:
             time.sleep(self.sleep)

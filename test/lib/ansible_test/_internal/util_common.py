@@ -269,7 +269,10 @@ def named_temporary_file(args: CommonConfig, prefix: str, suffix: str, directory
             tempfile_fd.write(to_bytes(content))
             tempfile_fd.flush()
 
-            yield tempfile_fd.name
+            try:
+                yield tempfile_fd.name
+            finally:
+                pass
 
 
 def write_json_test_results(
@@ -300,6 +303,7 @@ def get_injector_path() -> str:
     injector_names = sorted(list(ANSIBLE_BIN_SYMLINK_MAP) + [
         'importer.py',
         'pytest',
+        'ansible_connection_cli_stub.py',
     ])
 
     scripts = (

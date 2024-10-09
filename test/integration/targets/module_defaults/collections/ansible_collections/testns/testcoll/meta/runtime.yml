@@ -2,7 +2,7 @@ plugin_routing:
   action:
     # Backwards compat for modules-redirected-as-actions:
     # By default, each module_defaults entry is resolved as an action plugin,
-    # and if it does not exist, it is resolved a a module.
+    # and if it does not exist, it is resolved a module.
     # All modules that redirect to the same action will resolve to the same action.
     module_uses_action_defaults:
       redirect: testns.testcoll.eos
@@ -44,12 +44,19 @@ plugin_routing:
     ios_facts:
       action_plugin: testns.testcoll.redirected_action
 
+    old_ping:
+      deprecation:
+        removal_date: 2020-12-31
+        warning_text: old_ping will be removed in a future release of this collection. Use ping instead.
+        redirect: ping
+
 action_groups:
   testgroup:
     # Test metadata 'extend_group' feature does not get stuck in a recursive loop
     - metadata:
         extend_group: othergroup
     - metadata
+    - old_ping
     - ping
     - testns.testcoll.echo1
     - testns.testcoll.echo2

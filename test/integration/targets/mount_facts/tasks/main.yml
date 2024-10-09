@@ -1,0 +1,193 @@
+- name: Setup a NFS mount and test getting extended mount facts
+  become: yes
+  become_user: root
+  vars:
+    os_nfs_root:
+      Darwin: /opt  # TODO: can remote_tmp_dir (in /private) work?
+    nfs_root: "{{ os_nfs_root[ansible_os_family] | default(remote_tmp_dir) }}"
+    nfs_source: "{{ [nfs_root, 'nfs_src'] | path_join }}"
+    nfs_mount: "{{ [nfs_root, 'nfs_mnt'] | path_join }}"
+  block:
+    - name: Setup - install NFS server and client packages (Debian)
+      package:
+        state: present
+        name:
+          - nfs-kernel-server
+          - nfs-common
+      when: ansible_os_family == 'Debian'
+
+    - name: Setup - install NFS server package (RedHat)
+      package:
+        name: nfs-utils
+        state: present
+      when: ansible_os_family == 'RedHat'
+
+    - name: Setup - install NFS server package (Alpine)
+      command: apk add nfs-utils
+      when: ansible_os_family == 'Alpine'
+
+    - name: Setup - create export directory on server
+      file:
+        path: "{{ nfs_source }}"
+        state: directory
+        mode: '0755'
+
+    - name: Setup - configure NFS exports (Linux)
+      copy:
+        dest: /etc/exports
+        content: |
+          {{ nfs_source }} 127.0.0.1(rw,no_root_squash)
+      when: ansible_os_family not in ('FreeBSD', 'Darwin')
+
+    - name: Setup - configure NFS exports (FreeBSD)
+      copy:
+        dest: /etc/exports
+        content: |
+          {{ nfs_source }} -alldirs -maproot=root localhost
+          V4: /
+      when: ansible_os_family == 'FreeBSD'
+
+    - name: Setup - configure NFS exports (Darwin)
+      copy:
+        dest: /etc/exports
+        content: |
+          {{ nfs_source }} -alldirs -maproot=root localhost
+      when: ansible_os_family == 'Darwin'
+
+    # https://docs.freebsd.org/en/books/handbook/network-servers/#network-nfs
+    - name: Setup - configure NFS server (FreeBSD)
+      lineinfile:
+        line: "{{ item.option }}={{ item.value }}"
+        regexp: "^{{ item.option }}=.+$"
+        path: /etc/rc.conf
+      loop:
+        - option: rpcbind_enable
+          value: "YES"
+        - option: nfs_server_enable
+          value: "YES"
+        - option: nfsv4_server_enable
+          value: "YES"
+      when: ansible_os_family == 'FreeBSD'
+
+    - name: Setup - restart nfs-server (Linux)
+      service:
+        name: nfs-server
+        state: restarted
+      when: ansible_os_family == 'Debian' or ansible_os_family == 'RedHat'
+
+    - name: Setup - restart nfsd (Darwin)
+      command: nfsd restart  # log show --predicate 'process == "nfsd"' --info --last 5m
+      when: ansible_os_family == 'Darwin'
+
+    - name: Setup - start mountd and nfsd (FreeBSD)
+      shell: "service {{ item }} onestart || service {{ item }} onerestart"
+      loop:
+        - mountd
+        - nfsd
+      when: ansible_os_family == 'FreeBSD'
+      ignore_errors: true
+
+    # https://wiki.alpinelinux.org/wiki/Setting_up_an_NFS_server
+    - name: Setup - start nfs (Alpine)
+      command: rc-service nfs start
+      when: ansible_os_family == 'Alpine'
+
+    - name: Setup - reload NFS exports (Alpine)
+      command: exportfs -ra
+      when: ansible_os_family == 'Alpine'
+
+    - name: Setup - create mount point for the NFS client
+      file:
+        path: "{{ nfs_mount }}"
+        state: directory
+        mode: '0755'
+
+    - name: Setup - mount the NFS source with a timeout to prevent a hang
+      timeout: 2
+      block:
+        - name: Setup - mount the NFS source (Linux)
+          command: "mount -t nfs localhost:{{ nfs_source }} {{ nfs_mount}}"
+          when: ansible_os_family not in ('FreeBSD', 'Darwin')
+
+        - name: Setup - mount the NFS source (FreeBSD)
+          command: "mount -t nfs -o nfsv4 localhost:{{ nfs_source }} {{ nfs_mount }}"
+          when: ansible_os_family == 'FreeBSD'
+
+        - name: Setup - mount the NFS source (Darwin)
+          # TODO this syntax is deprecated, but adding '-o vers=4' to use nfsv4 fails with:
+          # mount_nfs: can't mount /opt/nfs from localhost onto /opt/nfs_mnt: RPC prog. not avail
+          # mount: /opt/nfs_mnt failed with 74
+          command: "mount -t nfs localhost:{{ nfs_source }} {{ nfs_mount }}"
+          when: ansible_os_family == 'Darwin'
+          timeout: 4  # 2 isn't cutting it
+
+    - name: Test gathering NFS mount facts
+      mount_facts:
+        mount_binary: "mount"
+        devices: "[!/]*"
+        fstypes:
+          - nfs
+          - nfs4
+
+    - assert:
+        that:
+          - nfs_mount in mount_points
+          - aggregate_mounts == []
+          - mount_points[nfs_mount]["device"] == ("localhost:" ~ nfs_source)
+
+  always:
+    - command: "umount {{ nfs_mount }}"
+
+- name: Test collecting static and dynamic sources
+  block:
+    - name: Collect all static mounts
+      mount_facts:
+        sources:
+          - static
+      register: static
+
+    - name: Collect all dynamic mounts
+      mount_facts:
+        sources:
+          - dynamic
+      register: dynamic
+
+    - name: Collect dynamic mounts without file sources
+      mount_facts:
+        sources:
+          - mount
+        include_aggregate_mounts: true
+      register: dynamic_mount
+
+    - name: Test static mounts are found
+      assert:
+        that:
+          - static.ansible_facts.mount_points.keys() | length > 0
+      when: ansible_os_family != "Darwin"  # No /etc/fstab
+
+    - name: Test dynamic mounts are found
+      assert:
+        that:
+          - dynamic.ansible_facts.mount_points.keys() | length > 0
+          - dynamic_mount.ansible_facts.mount_points.keys() | length > 0
+          - dynamic_mount.ansible_facts.aggregate_mounts | length > 0
+
+    - name: Test any devices have a UUID (Linux)
+      assert:
+        that:
+          - dynamic.ansible_facts.mount_points.values() | list | map(attribute='uuid') | unique | length > 1
+          - dynamic_mount.ansible_facts.mount_points.values() | list | map(attribute='uuid') | unique | length > 1
+          - static.ansible_facts.mount_points.values() | list | map(attribute='uuid') | unique | length > 1
+      when: ansible_os_family not in ("Darwin", "FreeBSD")
+
+- name: Test duplicate sources
+  mount_facts:
+    sources:
+      - mount
+      - mount
+    include_aggregate_mounts: true
+  register: mount_repeated
+
+- assert:
+    that:
+      - (mount_repeated.ansible_facts.aggregate_mounts | length) == (dynamic_mount.ansible_facts.aggregate_mounts | length)

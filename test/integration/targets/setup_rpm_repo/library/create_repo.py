@@ -4,69 +4,87 @@ from __future__ import annotations
 
 import tempfile
 
-from collections import namedtuple
+from dataclasses import dataclass
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 
 HAS_RPMFLUFF = True
-can_use_rpm_weak_deps = None
+
 try:
-    from rpmfluff import SimpleRpmBuild
-    from rpmfluff import YumRepoBuild
+    from rpmfluff.make import make_gif
+    from rpmfluff.sourcefile import GeneratedSourceFile
+    from rpmfluff.rpmbuild import SimpleRpmBuild
+    from rpmfluff.yumrepobuild import YumRepoBuild
 except ImportError:
-    try:
-        from rpmfluff.rpmbuild import SimpleRpmBuild
-        from rpmfluff.yumrepobuild import YumRepoBuild
-    except ImportError:
-        HAS_RPMFLUFF = False
-
-can_use_rpm_weak_deps = None
-if HAS_RPMFLUFF:
-    try:
-        from rpmfluff import can_use_rpm_weak_deps
-    except ImportError:
-        try:
-            from rpmfluff.utils import can_use_rpm_weak_deps
-        except ImportError:
-            pass
+    HAS_RPMFLUFF = False
 
 
-RPM = namedtuple('RPM', ['name', 'version', 'release', 'epoch', 'recommends', 'arch'])
+@dataclass
+class RPM:
+    name: str
+    version: str
+    release: str = '1'
+    epoch: int = 0
+    arch: list[str] | None = None
+    recommends: list[str] | None = None
+    requires: list[str] | None = None
+    file: str | None = None
 
 
 SPECS = [
-    RPM('dinginessentail', '1.0', '1', None, None, None),
-    RPM('dinginessentail', '1.0', '2', '1', None, None),
-    RPM('dinginessentail', '1.1', '1', '1', None, None),
-    RPM('dinginessentail-olive', '1.0', '1', None, None, None),
-    RPM('dinginessentail-olive', '1.1', '1', None, None, None),
-    RPM('landsidescalping', '1.0', '1', None, None, None),
-    RPM('landsidescalping', '1.1', '1', None, None, None),
-    RPM('dinginessentail-with-weak-dep', '1.0', '1', None, ['dinginessentail-weak-dep'], None),
-    RPM('dinginessentail-weak-dep', '1.0', '1', None, None, None),
-    RPM('noarchfake', '1.0', '1', None, None, 'noarch'),
+    RPM(name='dinginessentail', version='1.0'),
+    RPM(name='dinginessentail', version='1.0', release='2', epoch=1),
+    RPM(name='dinginessentail', version='1.1', epoch=1),
+    RPM(name='dinginessentail-olive', version='1.0'),
+    RPM(name='dinginessentail-olive', version='1.1'),
+    RPM(name='multilib-dinginessentail', version='1.0', arch=['i686', 'x86_64']),
+    RPM(name='multilib-dinginessentail', version='1.1', arch=['i686', 'x86_64']),
+    RPM(name='landsidescalping', version='1.0',),
+    RPM(name='landsidescalping', version='1.1',),
+    RPM(name='dinginessentail-with-weak-dep', version='1.0', recommends=['dinginessentail-weak-dep']),
+    RPM(name='dinginessentail-weak-dep', version='1.0',),
+    RPM(name='noarchfake', version='1.0'),
+    RPM(name='provides_foo_a', version='1.0', file='foo.gif'),
+    RPM(name='provides_foo_b', version='1.0', file='foo.gif'),
+    RPM(name='number-11-name', version='11.0',),
+    RPM(name='number-11-name', version='11.1',),
+    RPM(name='epochone', version='1.0', epoch=1),
+    RPM(name='epochone', version='1.1', epoch=1),
+    RPM(name='broken-a', version='1.2.3',),
+    RPM(name='broken-a', version='1.2.3.4', requires=['dinginessentail-doesnotexist']),
+    RPM(name='broken-a', version='1.2.4',),
+    RPM(name='broken-a', version='2.0.0', requires=['dinginessentail-doesnotexist']),
+    RPM(name='broken-b', version='1.0', requires=['broken-a = 1.2.3-1']),
+    RPM(name='broken-c', version='1.0', requires=['broken-c = 1.2.4-1']),
+    RPM(name='broken-d', version='1.0', requires=['broken-a']),
 ]
 
 
-def create_repo(arch='x86_64'):
+def create_repo():
     pkgs = []
     for spec in SPECS:
-        pkg = SimpleRpmBuild(spec.name, spec.version, spec.release, [spec.arch or arch])
+        pkg = SimpleRpmBuild(spec.name, spec.version, spec.release, spec.arch or ['noarch'])
         pkg.epoch = spec.epoch
 
-        if spec.recommends:
-            # Skip packages that require weak deps but an older version of RPM is being used
-            if not can_use_rpm_weak_deps or not can_use_rpm_weak_deps():
-                continue
+        for requires in spec.requires or []:
+            pkg.add_requires(requires)
 
-            for recommend in spec.recommends:
-                pkg.add_recommends(recommend)
+        for recommend in spec.recommends or []:
+            pkg.add_recommends(recommend)
+
+        if spec.file:
+            pkg.add_installed_file(
+                "/" + spec.file,
+                GeneratedSourceFile(
+                    spec.file, make_gif()
+                )
+            )
 
         pkgs.append(pkg)
 
     repo = YumRepoBuild(pkgs)
-    repo.make(arch, 'noarch')
+    repo.make('noarch', 'i686', 'x86_64')
 
     for pkg in pkgs:
         pkg.clean()
@@ -77,7 +95,6 @@ def create_repo(arch='x86_64'):
 def main():
     module = AnsibleModule(
         argument_spec={
-            'arch': {'required': True},
             'tempdir': {'type': 'path'},
         }
     )
@@ -92,7 +109,6 @@ def main():
 
         respawn_module(interpreter)
 
-    arch = module.params['arch']
     tempdir = module.params['tempdir']
 
     # Save current temp dir so we can set it back later
@@ -100,7 +116,7 @@ def main():
     tempfile.tempdir = tempdir
 
     try:
-        repo_dir = create_repo(arch)
+        repo_dir = create_repo()
     finally:
         tempfile.tempdir = original_tempdir
 

@@ -1,0 +1,26 @@
+- hosts: all
+  tasks:
+    - name: Check for apk
+      ansible.builtin.command: apk info
+      ignore_errors: true
+      register: apk_exists
+
+    - when: apk_exists is failed
+      block:
+        - name: Create a mock apk
+          ansible.builtin.copy:
+            dest: /usr/bin/apk
+            src: apk
+            mode: "0755"
+          become: true
+
+        - name: Elicit a warning about failing to list packages
+          ansible.builtin.package_facts:
+            manager: apk
+          failed_when: false
+
+        - name: Remove the mock
+          ansible.builtin.file:
+            dest: /usr/bin/apk
+            state: absent
+          become: true

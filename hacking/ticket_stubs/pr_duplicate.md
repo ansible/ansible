@@ -15,6 +15,6 @@ In the future, sometimes starting a discussion on the development list prior to 
 Because this project is very active, we're unlikely to see comments made on closed tickets and we lock them after some time.
 If you or anyone else has any further questions, please let us know by using any of the communication methods listed in the page below:
 
-* https://docs.ansible.com/ansible/latest/community/communication.html
+* <https://docs.ansible.com/ansible/latest/community/communication.html>
 
 Thank you once again for this and your interest in Ansible!

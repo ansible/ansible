@@ -3,6 +3,7 @@
   vars:
     nottemplated: this should not be seen
     imunsafe: !unsafe '{{ nottemplated }}'
+    unsafe_set: !unsafe '{{ "test" }}'
   tasks:
 
     - set_fact:
@@ -12,11 +13,15 @@
     - set_fact:
           this_always_safe: '{{ imunsafe }}'
 
+    - set_fact:
+        this_unsafe_set: "{{ unsafe_set }}"
+
     - name: ensure nothing was templated
       assert:
         that:
         - this_always_safe == imunsafe
         - imunsafe == this_was_unsafe.strip()
+        - unsafe_set == this_unsafe_set.strip()
 
 
 - hosts: localhost

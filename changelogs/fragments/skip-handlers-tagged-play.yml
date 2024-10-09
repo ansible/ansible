@@ -1,0 +1,2 @@
+bugfixes:
+  - "Do not run implicit ``flush_handlers`` meta tasks when the whole play is excluded from the run due to tags specified."

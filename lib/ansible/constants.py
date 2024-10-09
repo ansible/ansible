@@ -15,6 +15,10 @@ from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from ansible.release import __version__
 from ansible.utils.fqcn import add_internal_fqcns
 
+# initialize config manager/config data to read/store global settings
+# and generate 'pseudo constants' for app consumption.
+config = ConfigManager()
+
 
 def _warning(msg):
     ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
@@ -34,6 +38,28 @@ def _deprecated(msg, version):
     except Exception:
         import sys
         sys.stderr.write(' [DEPRECATED] %s, to be removed in %s\n' % (msg, version))
+
+
+def handle_config_noise(display=None):
+
+    if display is not None:
+        w = display.warning
+        d = display.deprecated
+    else:
+        w = _warning
+        d = _deprecated
+
+    while config.WARNINGS:
+        warn = config.WARNINGS.pop()
+        w(warn)
+
+    while config.DEPRECATED:
+        # tuple with name and options
+        dep = config.DEPRECATED.pop(0)
+        msg = config.get_deprecated_msg_from_config(dep[1])
+        # use tabs only for ansible-doc?
+        msg = msg.replace("\t", "")
+        d(f"{dep[0]} option. {msg}", version=dep[1]['version'])
 
 
 def set_constant(name, value, export=vars()):
@@ -111,11 +137,51 @@ CONFIGURABLE_PLUGINS = ('become', 'cache', 'callback', 'cliconf', 'connection', 
 DOCUMENTABLE_PLUGINS = CONFIGURABLE_PLUGINS + ('module', 'strategy', 'test', 'filter')
 IGNORE_FILES = ("COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES", "MANIFEST", "Makefile")  # ignore during module search
 INTERNAL_RESULT_KEYS = ('add_host', 'add_group')
+INTERNAL_STATIC_VARS = frozenset(
+    [
+        "ansible_async_path",
+        "ansible_collection_name",
+        "ansible_config_file",
+        "ansible_dependent_role_names",
+        "ansible_diff_mode",
+        "ansible_config_file",
+        "ansible_facts",
+        "ansible_forks",
+        "ansible_inventory_sources",
+        "ansible_limit",
+        "ansible_play_batch",
+        "ansible_play_hosts",
+        "ansible_play_hosts_all",
+        "ansible_play_role_names",
+        "ansible_playbook_python",
+        "ansible_role_name",
+        "ansible_role_names",
+        "ansible_run_tags",
+        "ansible_skip_tags",
+        "ansible_verbosity",
+        "ansible_version",
+        "inventory_dir",
+        "inventory_file",
+        "inventory_hostname",
+        "inventory_hostname_short",
+        "groups",
+        "group_names",
+        "omit",
+        "hostvars",
+        "playbook_dir",
+        "play_hosts",
+        "role_name",
+        "role_names",
+        "role_path",
+        "role_uuid",
+        "role_names",
+    ]
+)
 LOCALHOST = ('127.0.0.1', 'localhost', '::1')
-MODULE_REQUIRE_ARGS = tuple(add_internal_fqcns(('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
-                                                'ansible.windows.win_shell', 'raw', 'script')))
-MODULE_NO_JSON = tuple(add_internal_fqcns(('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
-                                           'ansible.windows.win_shell', 'raw')))
+WIN_MOVED = ['ansible.windows.win_command', 'ansible.windows.win_shell']
+MODULE_REQUIRE_ARGS_SIMPLE = ['command', 'raw', 'script', 'shell', 'win_command', 'win_shell']
+MODULE_REQUIRE_ARGS = tuple(add_internal_fqcns(MODULE_REQUIRE_ARGS_SIMPLE) + WIN_MOVED)
+MODULE_NO_JSON = tuple(add_internal_fqcns(('command', 'win_command', 'shell', 'win_shell', 'raw')) + WIN_MOVED)
 RESTRICTED_RESULT_KEYS = ('ansible_rsync_path', 'ansible_playbook_python', 'ansible_facts')
 SYNTHETIC_COLLECTIONS = ('ansible.builtin', 'ansible.legacy')
 TREE_DIR = None
@@ -178,11 +244,8 @@ MAGIC_VARIABLE_MAPPING = dict(
 )
 
 # POPULATE SETTINGS FROM CONFIG ###
-config = ConfigManager()
-
-# Generate constants from config
 for setting in config.get_configuration_definitions():
     set_constant(setting, config.get_config_value(setting, variables=vars()))
 
-for warn in config.WARNINGS:
-    _warning(warn)
+# emit any warnings or deprecations
+handle_config_noise()

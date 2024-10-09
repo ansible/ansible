@@ -26,13 +26,19 @@ ansible-playbook role_complete.yml -i ../../inventory -i fake, --tags unreachabl
 ansible-playbook data_integrity.yml -i ../../inventory "$@"
 
 # ensure role fails when trying to load 'non role' in  _from
-ansible-playbook no_outside.yml -i ../../inventory > role_outside_output.log 2>&1 || true
-if grep "as it is not inside the expected role path" role_outside_output.log >/dev/null; then
-  echo "Test passed (playbook failed with expected output, output not shown)."
-else
-  echo "Test failed, expected output from playbook failure is missing, output not shown)."
-  exit 1
-fi
+test_no_outside=("no_outside.yml" "no_outside_import.yml")
+for file in "${test_no_outside[@]}"; do
+  ansible-playbook "$file" -i ../../inventory > "${file}_output.log" 2>&1 || true
+  if grep "as it is not inside the expected role path" "${file}_output.log" >/dev/null; then
+    echo "Test passed for $file (playbook failed with expected output, output not shown)."
+  else
+    echo "Test failed for $file, expected output from playbook failure is missing, output not shown)."
+    exit 1
+  fi
+done
+
+# ensure subdir contained to role in tasks_from is valid
+ansible-playbook test_subdirs.yml -i ../../inventory "$@"
 
 # ensure vars scope is correct
 ansible-playbook vars_scope.yml -i ../../inventory "$@"
@@ -47,3 +53,11 @@ ansible-playbook role_dep_chain.yml -i ../../inventory "$@"
 ANSIBLE_PRIVATE_ROLE_VARS=1 ansible-playbook privacy.yml -e @vars/privacy_vars.yml "$@"
 ANSIBLE_PRIVATE_ROLE_VARS=0 ansible-playbook privacy.yml -e @vars/privacy_vars.yml "$@"
 ansible-playbook privacy.yml -e @vars/privacy_vars.yml "$@"
+
+for strategy in linear free; do
+  [ "$(ANSIBLE_STRATEGY=$strategy ansible-playbook end_role.yml | grep -c CHECKPOINT)" = "1" ]
+  [ "$(ANSIBLE_STRATEGY=$strategy ansible-playbook -i host1,host2 end_role_nested.yml | grep -c CHECKPOINT)" = "4" ]
+done
+
+[ "$(ansible localhost -m meta -a end_role 2>&1 | grep -c "ERROR! Cannot execute 'end_role' from outside of a role")" = "1" ]
+[ "$(ansible-playbook end_role_handler_error.yml 2>&1 | grep -c "ERROR! Cannot execute 'end_role' from a handler")" = "1" ]
