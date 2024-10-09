@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: rpm_key
 author:
@@ -52,9 +52,9 @@ attributes:
         support: none
     platform:
         platforms: rhel
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Import a key from a url
   ansible.builtin.rpm_key:
     state: present
@@ -81,9 +81,9 @@ EXAMPLES = '''
     fingerprint:
       - EBC6 E12C 62B1 C734 026B  2122 A20E 5214 6B8D 79E6
       - 19B7 913E 6284 8E3F 4D78 D6B4 ECD9 1AB2 2EB6 8D86
-'''
+"""
 
-RETURN = r'''#'''
+RETURN = r"""#"""
 
 import re
 import os.path

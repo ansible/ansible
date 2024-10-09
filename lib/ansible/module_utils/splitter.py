@@ -30,10 +30,10 @@ from __future__ import annotations
 
 
 def _get_quote_state(token, quote_char):
-    '''
+    """
     the goal of this block is to determine if the quoted string
     is unterminated in which case it needs to be put back together
-    '''
+    """
     # the char before the current one, used to see if
     # the current character is escaped
     prev_char = None
@@ -50,11 +50,11 @@ def _get_quote_state(token, quote_char):
 
 
 def _count_jinja2_blocks(token, cur_depth, open_token, close_token):
-    '''
+    """
     this function counts the number of opening/closing blocks for a
     given opening/closing type and adjusts the current depth for that
     block based on the difference
-    '''
+    """
     num_open = token.count(open_token)
     num_close = token.count(close_token)
     if num_open != num_close:
@@ -65,7 +65,7 @@ def _count_jinja2_blocks(token, cur_depth, open_token, close_token):
 
 
 def split_args(args):
-    '''
+    """
     Splits args on whitespace, but intelligently reassembles
     those that may have been split over a jinja2 block or quotes.
 
@@ -78,7 +78,7 @@ def split_args(args):
 
     Basically this is a variation shlex that has some more intelligence for
     how Ansible needs to use it.
-    '''
+    """
 
     # the list of params parsed out of the arg string
     # this is going to be the result value when we are done
@@ -212,7 +212,7 @@ def is_quoted(data):
 
 
 def unquote(data):
-    ''' removes first and last quotes from a string, if the string starts and ends with the same quotes '''
+    """ removes first and last quotes from a string, if the string starts and ends with the same quotes """
     if is_quoted(data):
         return data[1:-1]
     return data

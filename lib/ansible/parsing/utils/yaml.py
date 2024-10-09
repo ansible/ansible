@@ -21,11 +21,11 @@ __all__ = ('from_yaml',)
 
 
 def _handle_error(json_exc, yaml_exc, file_name, show_content):
-    '''
+    """
     Optionally constructs an object (AnsibleBaseYAMLObject) to encapsulate the
     file name/position where a YAML exception occurred, and raises an AnsibleParserError
     to display the syntax exception information.
-    '''
+    """
 
     # if the YAML exception contains a problem mark, use it to construct
     # an object the error class can use to display the faulty line
@@ -42,7 +42,7 @@ def _handle_error(json_exc, yaml_exc, file_name, show_content):
 
 
 def _safe_load(stream, file_name=None, vault_secrets=None):
-    ''' Implements yaml.safe_load(), except using our custom loader class. '''
+    """ Implements yaml.safe_load(), except using our custom loader class. """
 
     loader = AnsibleLoader(stream, file_name, vault_secrets)
     try:
@@ -55,10 +55,10 @@ def _safe_load(stream, file_name=None, vault_secrets=None):
 
 
 def from_yaml(data, file_name='<string>', show_content=True, vault_secrets=None, json_only=False):
-    '''
+    """
     Creates a python datastructure from the given data, which can be either
     a JSON or YAML string.
-    '''
+    """
     new_data = None
 
     try:

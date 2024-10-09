@@ -6,7 +6,7 @@ from ansible.plugins.action import ActionBase
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
-        ''' handler for file transfer operations '''
+        """ handler for file transfer operations """
         if task_vars is None:
             task_vars = dict()
 

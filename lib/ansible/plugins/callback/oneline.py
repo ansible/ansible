@@ -4,14 +4,14 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: oneline
     type: stdout
     short_description: oneline Ansible screen output
     version_added: historical
     description:
         - This is the output callback used by the C(-o)/C(--one-line) command line option.
-'''
+"""
 
 from ansible.plugins.callback import CallbackBase
 from ansible import constants as C
@@ -19,10 +19,10 @@ from ansible import constants as C
 
 class CallbackModule(CallbackBase):
 
-    '''
+    """
     This is the default callback interface, which simply prints messages
     to stdout when new callback events are received.
-    '''
+    """
 
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'stdout'

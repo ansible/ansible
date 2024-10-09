@@ -9,7 +9,7 @@ from __future__ import annotations
 class ModuleDocFragment:
 
     # Common options for Ansible.ModuleUtils.WebRequest
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
 options:
   method:
     description:
@@ -145,4 +145,4 @@ options:
     type: bool
 seealso:
 - module: community.windows.win_inet_proxy
-'''
+"""

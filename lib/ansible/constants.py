@@ -21,7 +21,7 @@ config = ConfigManager()
 
 
 def _warning(msg):
-    ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
+    """ display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write """
     try:
         from ansible.utils.display import Display
         Display().warning(msg)
@@ -31,7 +31,7 @@ def _warning(msg):
 
 
 def _deprecated(msg, version):
-    ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
+    """ display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write """
     try:
         from ansible.utils.display import Display
         Display().deprecated(msg, version=version)
@@ -63,7 +63,7 @@ def handle_config_noise(display=None):
 
 
 def set_constant(name, value, export=vars()):
-    ''' sets constants and returns resolved options dict '''
+    """ sets constants and returns resolved options dict """
     export[name] = value
 
 

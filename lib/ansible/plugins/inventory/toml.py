@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
     name: toml
     version_added: "2.8"
     short_description: Uses a specific TOML file as an inventory source.
@@ -13,9 +13,9 @@ DOCUMENTATION = r'''
     notes:
         - >
           Requires one of the following python libraries: 'toml', 'tomli', or 'tomllib'
-'''
+"""
 
-EXAMPLES = r'''# fmt: toml
+EXAMPLES = r"""# fmt: toml
 # Example 1
 [all.vars]
 has_java = false
@@ -84,7 +84,7 @@ host4 = {}
 
 [g2.hosts]
 host4 = {}
-'''
+"""
 
 import os
 import typing as t
@@ -265,7 +265,7 @@ class InventoryModule(BaseFileInventoryPlugin):
             )
 
     def parse(self, inventory, loader, path, cache=True):
-        ''' parses the inventory file '''
+        """ parses the inventory file """
         if not HAS_TOMLLIB and not HAS_TOML:
             # tomllib works here too, but we don't call it out in the error,
             # since you either have it or not as part of cpython stdlib >= 3.11

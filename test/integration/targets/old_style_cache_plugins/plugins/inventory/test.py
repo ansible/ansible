@@ -3,13 +3,13 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: test
     plugin_type: inventory
     short_description: test inventory source
     extends_documentation_fragment:
         - inventory_cache
-'''
+"""
 
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 

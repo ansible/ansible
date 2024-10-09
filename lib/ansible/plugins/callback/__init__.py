@@ -138,11 +138,11 @@ for data_type in _YAML_TEXT_TYPES:
 
 class CallbackBase(AnsiblePlugin):
 
-    '''
+    """
     This is a base ansible callback class that does nothing. New callbacks should
     use this class as a base and override any callback methods they wish to execute
     custom actions.
-    '''
+    """
 
     def __init__(self, display=None, options=None):
         if display:
@@ -175,9 +175,9 @@ class CallbackBase(AnsiblePlugin):
         return self._plugin_options[k]
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
-        ''' This is different than the normal plugin method as callbacks get called early and really don't accept keywords.
+        """ This is different than the normal plugin method as callbacks get called early and really don't accept keywords.
             Also _options was already taken for CLI args and callbacks use _plugin_options instead.
-        '''
+        """
 
         # load from config
         self._plugin_options = C.config.get_plugin_options(self.plugin_type, self._load_name, keys=task_keys, variables=var_options, direct=direct)
@@ -286,7 +286,7 @@ class CallbackBase(AnsiblePlugin):
             )
 
     def _handle_warnings(self, res):
-        ''' display warnings, if enabled and any exist in the result '''
+        """ display warnings, if enabled and any exist in the result """
         if C.ACTION_WARNINGS:
             if 'warnings' in res and res['warnings']:
                 for warning in res['warnings']:
@@ -404,7 +404,7 @@ class CallbackBase(AnsiblePlugin):
         return u''.join(ret)
 
     def _get_item_label(self, result):
-        ''' retrieves the value to be displayed as a label for an item entry from a result object'''
+        """ retrieves the value to be displayed as a label for an item entry from a result object"""
         if result.get('_ansible_no_log', False):
             item = "(censored due to no_log)"
         else:
@@ -416,7 +416,7 @@ class CallbackBase(AnsiblePlugin):
         del result._result['results']
 
     def _clean_results(self, result, task_name):
-        ''' removes data from results for display '''
+        """ removes data from results for display """
 
         # mostly controls that debug only outputs what it was meant to
         if task_name in C._ACTION_DEBUG:

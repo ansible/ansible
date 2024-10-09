@@ -249,9 +249,9 @@ class TestVariableManager(unittest.TestCase):
 
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_variable_manager_role_vars_dependencies(self):
-        '''
+        """
         Tests vars from role dependencies with duplicate dependencies.
-        '''
+        """
         mock_inventory = MagicMock()
 
         fake_loader = DictDataLoader({

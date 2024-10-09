@@ -253,19 +253,19 @@ def parse_vaulttext(b_vaulttext):
 
 
 def verify_secret_is_not_empty(secret, msg=None):
-    '''Check the secret against minimal requirements.
+    """Check the secret against minimal requirements.
 
     Raises: AnsibleVaultPasswordError if the password does not meet requirements.
 
     Currently, only requirement is that the password is not None or an empty string.
-    '''
+    """
     msg = msg or 'Invalid vault password was provided'
     if not secret:
         raise AnsibleVaultPasswordError(msg)
 
 
 class VaultSecret:
-    '''Opaque/abstract objects for a single vault secret. ie, a password or a key.'''
+    """Opaque/abstract objects for a single vault secret. ie, a password or a key."""
 
     def __init__(self, _bytes=None):
         # FIXME: ? that seems wrong... Unset etc?
@@ -273,10 +273,10 @@ class VaultSecret:
 
     @property
     def bytes(self):
-        '''The secret as a bytestring.
+        """The secret as a bytestring.
 
         Sub classes that store text types will need to override to encode the text to bytes.
-        '''
+        """
         return self._bytes
 
     def load(self):
@@ -335,7 +335,7 @@ class PromptVaultSecret(VaultSecret):
 
 
 def script_is_client(filename):
-    '''Determine if a vault secret script is a client script that can be given --vault-id args'''
+    """Determine if a vault secret script is a client script that can be given --vault-id args"""
 
     # if password script is 'something-client' or 'something-client.[sh|py|rb|etc]'
     # script_name can still have '.' or could be entire filename if there is no ext
@@ -349,7 +349,7 @@ def script_is_client(filename):
 
 
 def get_file_vault_secret(filename=None, vault_id=None, encoding=None, loader=None):
-    ''' Get secret from file content or execute file and get secret from stdout '''
+    """ Get secret from file content or execute file and get secret from stdout """
 
     # we unfrack but not follow the full path/context to possible vault script
     # so when the script uses 'adjacent' file for configuration or similar
@@ -519,7 +519,7 @@ class ClientScriptVaultSecret(ScriptVaultSecret):
 
 
 def match_secrets(secrets, target_vault_ids):
-    '''Find all VaultSecret objects that are mapped to any of the target_vault_ids in secrets'''
+    """Find all VaultSecret objects that are mapped to any of the target_vault_ids in secrets"""
     if not secrets:
         return []
 
@@ -528,10 +528,10 @@ def match_secrets(secrets, target_vault_ids):
 
 
 def match_best_secret(secrets, target_vault_ids):
-    '''Find the best secret from secrets that matches target_vault_ids
+    """Find the best secret from secrets that matches target_vault_ids
 
     Since secrets should be ordered so the early secrets are 'better' than later ones, this
-    just finds all the matches, then returns the first secret'''
+    just finds all the matches, then returns the first secret"""
     matches = match_secrets(secrets, target_vault_ids)
     if matches:
         return matches[0]
@@ -560,7 +560,7 @@ def match_encrypt_vault_id_secret(secrets, encrypt_vault_id=None):
 
 
 def match_encrypt_secret(secrets, encrypt_vault_id=None):
-    '''Find the best/first/only secret in secrets to use for encrypting'''
+    """Find the best/first/only secret in secrets to use for encrypting"""
 
     display.vvvv(u'encrypt_vault_id=%s' % to_text(encrypt_vault_id))
     # See if the --encrypt-vault-id matches a vault-id
@@ -634,7 +634,7 @@ class VaultLib:
         return b_vaulttext
 
     def decrypt(self, vaulttext, filename=None, obj=None):
-        '''Decrypt a piece of vault encrypted data.
+        """Decrypt a piece of vault encrypted data.
 
         :arg vaulttext: a string to decrypt.  Since vault encrypted data is an
             ascii text format this can be either a byte str or unicode string.
@@ -643,7 +643,7 @@ class VaultLib:
             decrypted.
         :returns: a byte string containing the decrypted data and the vault-id that was used
 
-        '''
+        """
         plaintext, vault_id, vault_secret = self.decrypt_and_get_vault_id(vaulttext, filename=filename, obj=obj)
         return plaintext
 

@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 name: vendor2
 short_description: lookup
 description: Lookup.
 author:
   - Ansible Core Team
-'''
+"""
 
-EXAMPLES = '''#'''
-RETURN = '''#'''
+EXAMPLES = """#"""
+RETURN = """#"""
 
 from ansible.plugins.lookup import LookupBase
 # noinspection PyUnresolvedReferences

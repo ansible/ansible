@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from ansible.plugins.callback import CallbackBase
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     callback: usercallback
     callback_type: notification
     short_description: does stuff
     description:
       - does some stuff
-'''
+"""
 
 
 class CallbackModule(CallbackBase):

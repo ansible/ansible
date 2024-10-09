@@ -110,11 +110,11 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         return new_ds
 
     def _load_role_name(self, ds):
-        '''
+        """
         Returns the role name (either the role: or name: field) from
         the role definition, or (when the role definition is a simple
         string), just that string
-        '''
+        """
 
         if isinstance(ds, string_types):
             return ds
@@ -133,12 +133,12 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         return role_name
 
     def _load_role_path(self, role_name):
-        '''
+        """
         the 'role', as specified in the ds (or as a bare string), can either
         be a simple name or a full path. If it is a full path, we use the
         basename as the role name, otherwise we take the name as-given and
         append it to the default role path
-        '''
+        """
 
         # create a templar class to template the dependency names, in
         # case they contain variables
@@ -201,10 +201,10 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(searches)), obj=self._ds)
 
     def _split_role_params(self, ds):
-        '''
+        """
         Splits any random role params off from the role spec and store
         them in a dictionary of params for parsing later
-        '''
+        """
 
         role_def = dict()
         role_params = dict()

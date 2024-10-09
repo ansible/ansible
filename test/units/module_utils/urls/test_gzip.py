@@ -37,22 +37,22 @@ def urlopen_mock(mocker):
 JSON_DATA = b'{"foo": "bar", "baz": "qux", "sandwich": "ham", "tech_level": "pickle", "pop": "corn", "ansible": "awesome"}'
 
 
-RESP = b'''HTTP/1.1 200 OK
+RESP = b"""HTTP/1.1 200 OK
 Content-Type: application/json; charset=utf-8
 Set-Cookie: foo
 Set-Cookie: bar
 Content-Length: 108
 
-%s''' % JSON_DATA
+%s""" % JSON_DATA
 
-GZIP_RESP = b'''HTTP/1.1 200 OK
+GZIP_RESP = b"""HTTP/1.1 200 OK
 Content-Type: application/json; charset=utf-8
 Set-Cookie: foo
 Set-Cookie: bar
 Content-Encoding: gzip
 Content-Length: 100
 
-%s''' % compress(JSON_DATA)
+%s""" % compress(JSON_DATA)
 
 
 def test_Request_open_gzip(urlopen_mock):

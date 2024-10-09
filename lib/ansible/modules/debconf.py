@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: debconf
 short_description: Configure a .deb package
@@ -86,9 +86,9 @@ options:
     default: false
 author:
 - Brian Coca (@bcoca)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Set default locale to fr_FR.UTF-8
   ansible.builtin.debconf:
     name: locales
@@ -121,9 +121,9 @@ EXAMPLES = r'''
     value: "{{ site_passphrase }}"
     vtype: password
   no_log: True
-'''
+"""
 
-RETURN = r'''#'''
+RETURN = r"""#"""
 
 from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule

@@ -9,10 +9,10 @@ import pytest
 from ansible.executor.module_common import modify_module
 
 
-FAKE_OLD_MODULE = b'''#!/usr/bin/python
+FAKE_OLD_MODULE = b"""#!/usr/bin/python
 import sys
 print('{"result": "%s"}' % sys.executable)
-'''
+"""
 
 
 @pytest.fixture

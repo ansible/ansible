@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: willremove
 version_added: histerical
@@ -43,17 +43,17 @@ attributes:
       support: none
     platform:
       platforms: all
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: useless
   willremove:
     one: true
     two: /etc/file.conf
-'''
+"""
 
-RETURN = r'''
-'''
+RETURN = r"""
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 

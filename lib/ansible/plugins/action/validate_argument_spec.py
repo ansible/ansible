@@ -10,13 +10,13 @@ from ansible.utils.vars import combine_vars
 
 
 class ActionModule(ActionBase):
-    ''' Validate an arg spec'''
+    """ Validate an arg spec"""
 
     TRANSFERS_FILES = False
     _requires_connection = False
 
     def get_args_from_task_vars(self, argument_spec, task_vars):
-        '''
+        """
         Get any arguments that may come from `task_vars`.
 
         Expand templated variables so we can validate the actual values.
@@ -25,7 +25,7 @@ class ActionModule(ActionBase):
         :param task_vars: A dict of task variables.
 
         :returns: A dict of values that can be validated against the arg spec.
-        '''
+        """
         args = {}
 
         for argument_name, argument_attrs in argument_spec.items():
@@ -35,7 +35,7 @@ class ActionModule(ActionBase):
         return args
 
     def run(self, tmp=None, task_vars=None):
-        '''
+        """
         Validate an argument specification against a provided set of data.
 
         The `validate_argument_spec` module expects to receive the arguments:
@@ -48,7 +48,7 @@ class ActionModule(ActionBase):
         :param task_vars: A dict of task variables.
         :return: An action result dict, including a 'argument_errors' key with a
             list of validation errors found.
-        '''
+        """
         if task_vars is None:
             task_vars = dict()
 

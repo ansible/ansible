@@ -247,7 +247,7 @@ display = Display()
 
 
 class Connection(ConnectionBase):
-    '''WinRM connections over HTTP/HTTPS.'''
+    """WinRM connections over HTTP/HTTPS."""
 
     transport = 'winrm'
     module_implementation_preferences = ('.ps1', '.exe', '')
@@ -444,9 +444,9 @@ class Connection(ConnectionBase):
         display.vvvvv("kinit succeeded for principal %s" % principal)
 
     def _winrm_connect(self) -> winrm.Protocol:
-        '''
+        """
         Establish a WinRM connection over HTTP/HTTPS.
-        '''
+        """
         display.vvv("ESTABLISH WINRM CONNECTION FOR USER: %s on PORT %s TO %s" %
                     (self._winrm_user, self._winrm_port, self._winrm_host), host=self._winrm_host)
 
@@ -806,7 +806,7 @@ class Connection(ConnectionBase):
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
             raise AnsibleFileNotFound('file or module does not exist: "%s"' % to_native(in_path))
 
-        script_template = u'''
+        script_template = u"""
             begin {{
                 $path = '{0}'
 
@@ -834,7 +834,7 @@ class Connection(ConnectionBase):
 
                 Write-Output "{{""sha1"":""$hash""}}"
             }}
-        '''
+        """
 
         script = script_template.format(self._shell._escape(out_path))
         cmd_parts = self._shell._encode_script(script, as_list=True, strict_mode=False, preserve_rc=False)
@@ -873,7 +873,7 @@ class Connection(ConnectionBase):
             offset = 0
             while True:
                 try:
-                    script = '''
+                    script = """
                         $path = '%(path)s'
                         If (Test-Path -LiteralPath $path -PathType Leaf)
                         {
@@ -899,7 +899,7 @@ class Connection(ConnectionBase):
                             Write-Error "$path does not exist";
                             Exit 1;
                         }
-                    ''' % dict(buffer_size=buffer_size, path=self._shell._escape(in_path), offset=offset)
+                    """ % dict(buffer_size=buffer_size, path=self._shell._escape(in_path), offset=offset)
                     display.vvvvv('WINRM FETCH "%s" to "%s" (offset=%d)' % (in_path, out_path, offset), host=self._winrm_host)
                     cmd_parts = self._shell._encode_script(script, as_list=True, preserve_rc=False)
                     status_code, b_stdout, b_stderr = self._winrm_exec(cmd_parts[0], cmd_parts[1:])

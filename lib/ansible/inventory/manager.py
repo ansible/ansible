@@ -50,7 +50,7 @@ IGNORED_EXTS = [b'%s$' % to_bytes(re.escape(x)) for x in C.INVENTORY_IGNORE_EXTS
 IGNORED = re.compile(b'|'.join(IGNORED_ALWAYS + IGNORED_PATTERNS + IGNORED_EXTS))
 
 PATTERN_WITH_SUBSCRIPT = re.compile(
-    r'''^
+    r"""^
         (.+)                    # A pattern expression ending with...
         \[(?:                   # A [subscript] expression comprising:
             (-?[0-9]+)|         # A single positive or negative number
@@ -58,12 +58,12 @@ PATTERN_WITH_SUBSCRIPT = re.compile(
             ([0-9]*)
         )\]
         $
-    ''', re.X
+    """, re.X
 )
 
 
 def order_patterns(patterns):
-    ''' takes a list of patterns and reorders them by modifier to apply them consistently '''
+    """ takes a list of patterns and reorders them by modifier to apply them consistently """
 
     # FIXME: this goes away if we apply patterns incrementally or by groups
     pattern_regular = []
@@ -125,19 +125,19 @@ def split_host_pattern(pattern):
             # This mishandles IPv6 addresses, and is retained only for backwards
             # compatibility.
             patterns = re.findall(
-                to_text(r'''(?:     # We want to match something comprising:
+                to_text(r"""(?:     # We want to match something comprising:
                         [^\s:\[\]]  # (anything other than whitespace or ':[]'
                         |           # ...or...
                         \[[^\]]*\]  # a single complete bracketed expression)
                     )+              # occurring once or more
-                '''), pattern, re.X
+                """), pattern, re.X
             )
 
     return [p.strip() for p in patterns if p.strip()]
 
 
 class InventoryManager(object):
-    ''' Creates and manages inventory '''
+    """ Creates and manages inventory """
 
     def __init__(self, loader, sources=None, parse=True, cache=True):
 
@@ -197,7 +197,7 @@ class InventoryManager(object):
         return self._inventory.get_host(hostname)
 
     def _fetch_inventory_plugins(self):
-        ''' sets up loaded inventory plugins for usage '''
+        """ sets up loaded inventory plugins for usage """
 
         display.vvvv('setting up inventory plugins')
 
@@ -215,7 +215,7 @@ class InventoryManager(object):
         return plugins
 
     def parse_sources(self, cache=False):
-        ''' iterate over inventory sources and parse each one to populate it'''
+        """ iterate over inventory sources and parse each one to populate it"""
 
         parsed = False
         # allow for multiple inventory parsing
@@ -243,7 +243,7 @@ class InventoryManager(object):
             host.vars = combine_vars(host.vars, get_vars_from_inventory_sources(self._loader, self._sources, [host], 'inventory'))
 
     def parse_source(self, source, cache=False):
-        ''' Generate or update inventory for the source provided '''
+        """ Generate or update inventory for the source provided """
 
         parsed = False
         failures = []
@@ -335,12 +335,12 @@ class InventoryManager(object):
         return parsed
 
     def clear_caches(self):
-        ''' clear all caches '''
+        """ clear all caches """
         self._hosts_patterns_cache = {}
         self._pattern_cache = {}
 
     def refresh_inventory(self):
-        ''' recalculate inventory '''
+        """ recalculate inventory """
 
         self.clear_caches()
         self._inventory = InventoryData()
@@ -657,9 +657,9 @@ class InventoryManager(object):
         self._pattern_cache = {}
 
     def add_dynamic_host(self, host_info, result_item):
-        '''
+        """
         Helper function to add a new host to inventory based on a task result.
-        '''
+        """
 
         changed = False
         if not result_item.get('refresh'):
@@ -697,10 +697,10 @@ class InventoryManager(object):
             result_item['changed'] = changed
 
     def add_dynamic_group(self, host, result_item):
-        '''
+        """
         Helper function to add a group (if it does not exist), and to assign the
         specified host to that group.
-        '''
+        """
 
         changed = False
 

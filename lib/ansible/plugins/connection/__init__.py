@@ -47,9 +47,9 @@ def ensure_connect(
 
 
 class ConnectionBase(AnsiblePlugin):
-    '''
+    """
     A base class for connections to contain common code.
-    '''
+    """
 
     has_pipelining = False
     has_native_async = False  # eg, winrm
@@ -119,12 +119,12 @@ class ConnectionBase(AnsiblePlugin):
 
     @property
     def connected(self) -> bool:
-        '''Read-only property holding whether the connection to the remote host is active or closed.'''
+        """Read-only property holding whether the connection to the remote host is active or closed."""
         return self._connected
 
     @property
     def socket_path(self) -> str | None:
-        '''Read-only property holding the connection socket path for this remote host'''
+        """Read-only property holding the connection socket path for this remote host"""
         return self._socket_path
 
     @staticmethod
@@ -247,10 +247,10 @@ class ConnectionBase(AnsiblePlugin):
         display.warning("Reset is not implemented for this connection")
 
     def update_vars(self, variables: dict[str, t.Any]) -> None:
-        '''
+        """
         Adds 'magic' variables relating to connections to the variable dictionary provided.
         In case users need to access from the play, this is a legacy from runner.
-        '''
+        """
         for varname in C.COMMON_CONNECTION_VARS:
             value = None
             if varname in variables:
@@ -356,9 +356,9 @@ class NetworkConnectionBase(ConnectionBase):
         return self._local.fetch_file(in_path, out_path)
 
     def reset(self) -> None:
-        '''
+        """
         Reset the connection
-        '''
+        """
         if self._socket_path:
             self.queue_message('vvvv', 'resetting persistent connection for socket_path %s' % self._socket_path)
             self.close()
@@ -390,14 +390,14 @@ class NetworkConnectionBase(ConnectionBase):
                 pass
 
     def _update_connection_state(self) -> None:
-        '''
+        """
         Reconstruct the connection socket_path and check if it exists
 
         If the socket path exists then the connection is active and set
         both the _socket_path value to the path and the _connected value
         to True.  If the socket path doesn't exist, leave the socket path
         value to None and the _connected value to False
-        '''
+        """
         ssh = connection_loader.get('ssh', class_only=True)
         control_path = ssh._create_control_path(
             self._play_context.remote_addr, self._play_context.port,

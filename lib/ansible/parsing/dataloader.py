@@ -32,7 +32,7 @@ RE_TASKS = re.compile(u'(?:^|%s)+tasks%s?$' % (os.path.sep, os.path.sep))
 
 class DataLoader:
 
-    '''
+    """
     The DataLoader class is used to load and parse YAML or JSON content,
     either from a given file name or from a string that was previously
     read in through other means. A Vault password can be specified, and
@@ -47,7 +47,7 @@ class DataLoader:
         # optionally: dl.set_vault_secrets([('default', ansible.parsing.vault.PrompVaultSecret(...),)])
         ds = dl.load('...')
         ds = dl.load_from_file('/path/to/file')
-    '''
+    """
 
     def __init__(self):
 
@@ -74,11 +74,11 @@ class DataLoader:
         self._vault.secrets = vault_secrets
 
     def load(self, data: str, file_name: str = '<string>', show_content: bool = True, json_only: bool = False) -> t.Any:
-        '''Backwards compat for now'''
+        """Backwards compat for now"""
         return from_yaml(data, file_name, show_content, self._vault.secrets, json_only=json_only)
 
     def load_from_file(self, file_name: str, cache: str = 'all', unsafe: bool = False, json_only: bool = False) -> t.Any:
-        '''
+        """
         Loads data from a file, which can contain either JSON or YAML.
 
         :param file_name: The name of the file to load data from.
@@ -86,7 +86,7 @@ class DataLoader:
         :param unsafe: If True, returns the parsed data as-is without deep copying.
         :param json_only: If True, only loads JSON data from the file.
         :return: The loaded data, optionally deep-copied for safety.
-        '''
+        """
 
         # Resolve the file name
         file_name = self.path_dwim(file_name)
@@ -133,12 +133,12 @@ class DataLoader:
         return os.listdir(path)
 
     def is_executable(self, path: str) -> bool:
-        '''is the given path executable?'''
+        """is the given path executable?"""
         path = self.path_dwim(path)
         return is_executable(path)
 
     def _decrypt_if_vault_data(self, b_vault_data: bytes, b_file_name: bytes | None = None) -> tuple[bytes, bool]:
-        '''Decrypt b_vault_data if encrypted and return b_data and the show_content flag'''
+        """Decrypt b_vault_data if encrypted and return b_data and the show_content flag"""
 
         if not is_encrypted(b_vault_data):
             show_content = True
@@ -151,7 +151,7 @@ class DataLoader:
         return b_data, show_content
 
     def _get_file_contents(self, file_name: str) -> tuple[bytes, bool]:
-        '''
+        """
         Reads the file contents from the given file name
 
         If the contents are vault-encrypted, it will decrypt them and return
@@ -162,7 +162,7 @@ class DataLoader:
         :raises AnsibleFileNotFound: if the file_name does not refer to a file
         :raises AnsibleParserError: if we were unable to read the file
         :return: Returns a byte string of the file contents
-        '''
+        """
         if not file_name or not isinstance(file_name, (binary_type, text_type)):
             raise AnsibleParserError("Invalid filename: '%s'" % to_native(file_name))
 
@@ -180,19 +180,19 @@ class DataLoader:
             raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (file_name, to_native(e)), orig_exc=e)
 
     def get_basedir(self) -> str:
-        ''' returns the current basedir '''
+        """ returns the current basedir """
         return self._basedir
 
     def set_basedir(self, basedir: str) -> None:
-        ''' sets the base directory, used to find files when a relative path is given '''
+        """ sets the base directory, used to find files when a relative path is given """
 
         if basedir is not None:
             self._basedir = to_text(basedir)
 
     def path_dwim(self, given: str) -> str:
-        '''
+        """
         make relative paths work like folks expect.
-        '''
+        """
 
         given = unquote(given)
         given = to_text(given, errors='surrogate_or_strict')
@@ -206,7 +206,7 @@ class DataLoader:
         return unfrackpath(path, follow=False)
 
     def _is_role(self, path: str) -> bool:
-        ''' imperfect role detection, roles are still valid w/o tasks|meta/main.yml|yaml|etc '''
+        """ imperfect role detection, roles are still valid w/o tasks|meta/main.yml|yaml|etc """
 
         b_path = to_bytes(path, errors='surrogate_or_strict')
         b_path_dirname = os.path.dirname(b_path)
@@ -240,13 +240,13 @@ class DataLoader:
         return False
 
     def path_dwim_relative(self, path: str, dirname: str, source: str, is_role: bool = False) -> str:
-        '''
+        """
         find one file in either a role or playbook dir with or without
         explicitly named dirname subdirs
 
         Used in action plugins and lookups to find supplemental files that
         could be in either place.
-        '''
+        """
 
         search = []
         source = to_text(source, errors='surrogate_or_strict')
@@ -295,7 +295,7 @@ class DataLoader:
         return candidate
 
     def path_dwim_relative_stack(self, paths: list[str], dirname: str, source: str, is_role: bool = False) -> str:
-        '''
+        """
         find one file in first path in stack taking roles into account and adding play basedir as fallback
 
         :arg paths: A list of text strings which are the paths to look for the filename in.
@@ -305,7 +305,7 @@ class DataLoader:
         :rtype: A text string
         :returns: An absolute path to the filename ``source`` if found
         :raises: An AnsibleFileNotFound Exception if the file is found to exist in the search paths
-        '''
+        """
         b_dirname = to_bytes(dirname, errors='surrogate_or_strict')
         b_source = to_bytes(source, errors='surrogate_or_strict')
 
@@ -353,7 +353,7 @@ class DataLoader:
         return result
 
     def _create_content_tempfile(self, content: str | bytes) -> str:
-        ''' Create a tempfile containing defined content '''
+        """ Create a tempfile containing defined content """
         fd, content_tempfile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
         f = os.fdopen(fd, 'wb')
         content = to_bytes(content)

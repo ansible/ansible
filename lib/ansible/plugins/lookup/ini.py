@@ -98,7 +98,7 @@ from ansible.plugins.lookup import LookupBase
 
 
 def _parse_params(term, paramvals):
-    '''Safely split parameter term to preserve spaces'''
+    """Safely split parameter term to preserve spaces"""
 
     # TODO: deprecate this method
     valid_keys = paramvals.keys()

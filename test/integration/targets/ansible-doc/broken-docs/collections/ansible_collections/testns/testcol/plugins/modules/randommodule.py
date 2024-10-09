@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: randommodule
 short_description: A random module
@@ -47,12 +47,12 @@ options:
                 version: '2.0.0'
 extends_documentation_fragment:
     - testns.testcol2.module
-'''
+"""
 
-EXAMPLES = '''
-'''
+EXAMPLES = """
+"""
 
-RETURN = '''
+RETURN = """
 z_last:
     description: A last result.
         broken:
@@ -77,7 +77,7 @@ a_first:
     description: A first result.
     type: str
     returned: success
-'''
+"""
 
 
 from ansible.module_utils.basic import AnsibleModule

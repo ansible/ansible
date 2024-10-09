@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 module: meta
 short_description: Execute Ansible 'actions'
 version_added: '1.2'
@@ -78,9 +78,9 @@ seealso:
 - module: ansible.builtin.fail
 author:
     - Ansible Core Team
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 # Example showing flushing handlers on demand, not at end of play
 - ansible.builtin.template:
     src: new.j2
@@ -126,4 +126,4 @@ EXAMPLES = r'''
   when:
   - ansible_distribution == 'CentOS'
   - ansible_distribution_major_version == '6'
-'''
+"""

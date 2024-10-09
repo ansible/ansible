@@ -3,14 +3,14 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: constructed_with_hostvars
     options:
       plugin:
         description: the load name of the plugin
     extends_documentation_fragment:
       - constructed
-'''
+"""
 
 from ansible.errors import AnsibleParserError
 from ansible.module_utils.common.text.converters import to_native

@@ -74,7 +74,7 @@ def _create_payload():
         raise Exception('unable to access ansible.module_utils.basic._ANSIBLE_ARGS (not launched by AnsiballZ?)')
     module_fqn = sys.modules['__main__']._module_fqn
     modlib_path = sys.modules['__main__']._modlib_path
-    respawn_code_template = '''
+    respawn_code_template = """
 import runpy
 import sys
 
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     basic._ANSIBLE_ARGS = smuggled_args
 
     runpy.run_module(module_fqn, init_globals=dict(_respawned=True), run_name='__main__', alter_sys=True)
-    '''
+    """
 
     respawn_code = respawn_code_template.format(module_fqn=module_fqn, modlib_path=modlib_path, smuggled_args=smuggled_args.strip())
 

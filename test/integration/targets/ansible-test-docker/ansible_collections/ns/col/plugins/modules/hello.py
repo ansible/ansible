@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: hello
 short_description: Hello test module
 description: Hello test module.
@@ -13,13 +13,13 @@ options:
     type: str
 author:
   - Ansible Core Team
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - minimal:
-'''
+"""
 
-RETURN = ''''''
+RETURN = """"""
 
 from ansible.module_utils.basic import AnsibleModule
 from ..module_utils.my_util import hello

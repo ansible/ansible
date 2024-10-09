@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_user_right
 version_added: '2.4'
@@ -56,9 +56,9 @@ seealso:
 - module: win_user
 author:
 - Jordan Borean (@jborean93)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 ---
 - name: Replace the entries of Deny log on locally
   win_user_right:
@@ -90,9 +90,9 @@ EXAMPLES = r'''
   win_user_right:
     name: SeDenyRemoteInteractiveLogonRight
     users: []
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 added:
   description: A list of accounts that were added to the right, this is empty
     if no accounts were added.
@@ -105,4 +105,4 @@ removed:
   returned: success
   type: list
   sample: ["SERVERNAME\\Administrator", "BUILTIN\\Administrators"]
-'''
+"""

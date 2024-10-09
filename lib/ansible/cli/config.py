@@ -47,14 +47,14 @@ def yaml_short(data):
 
 
 def get_constants():
-    ''' helper method to ensure we can template based on existing constants '''
+    """ helper method to ensure we can template based on existing constants """
     if not hasattr(get_constants, 'cvars'):
         get_constants.cvars = {k: getattr(C, k) for k in dir(C) if not k.startswith('__')}
     return get_constants.cvars
 
 
 def _ansible_env_vars(varname):
-    ''' return true or false depending if variable name is possibly a 'configurable' ansible env variable '''
+    """ return true or false depending if variable name is possibly a 'configurable' ansible env variable """
     return all(
         [
             varname.startswith("ANSIBLE_"),
@@ -188,9 +188,9 @@ class ConfigCLI(CLI):
         context.CLIARGS['func']()
 
     def execute_update(self):
-        '''
+        """
         Updates a single setting in the specified ansible.cfg
-        '''
+        """
         raise AnsibleError("Option not implemented yet")
 
         # pylint: disable=unreachable
@@ -212,9 +212,9 @@ class ConfigCLI(CLI):
         ])
 
     def execute_view(self):
-        '''
+        """
         Displays the current config file
-        '''
+        """
         try:
             with open(self.config_file, 'rb') as f:
                 self.pager(to_text(f.read(), errors='surrogate_or_strict'))
@@ -222,9 +222,9 @@ class ConfigCLI(CLI):
             raise AnsibleError("Failed to open config file: %s" % to_native(e))
 
     def execute_edit(self):
-        '''
+        """
         Opens ansible.cfg in the default EDITOR
-        '''
+        """
         raise AnsibleError("Option not implemented yet")
 
         # pylint: disable=unreachable
@@ -266,9 +266,9 @@ class ConfigCLI(CLI):
         return entries
 
     def _list_entries_from_args(self):
-        '''
+        """
         build a dict with the list requested configs
-        '''
+        """
 
         config_entries = {}
         if context.CLIARGS['type'] in ('base', 'all'):
@@ -294,9 +294,9 @@ class ConfigCLI(CLI):
         return config_entries
 
     def execute_list(self):
-        '''
+        """
         list and output available configs
-        '''
+        """
 
         config_entries = self._list_entries_from_args()
         if context.CLIARGS['format'] == 'yaml':
@@ -599,9 +599,9 @@ class ConfigCLI(CLI):
         return output
 
     def execute_dump(self):
-        '''
+        """
         Shows the current settings, merges ansible.cfg if specified
-        '''
+        """
         output = []
         if context.CLIARGS['type'] in ('base', 'all'):
             # deal with base

@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: group
 version_added: "0.0.2"
@@ -91,9 +91,9 @@ seealso:
 - module: ansible.windows.win_group
 author:
 - Stephen Fromm (@sfromm)
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Ensure group "somegroup" exists
   ansible.builtin.group:
     name: somegroup
@@ -104,9 +104,9 @@ EXAMPLES = '''
     name: docker
     state: present
     gid: 1750
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 gid:
   description: Group ID of the group.
   returned: When O(state) is C(present)
@@ -127,7 +127,7 @@ system:
   returned: When O(state) is C(present)
   type: bool
   sample: False
-'''
+"""
 
 import grp
 import os

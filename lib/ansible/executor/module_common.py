@@ -74,7 +74,7 @@ _MODULE_UTILS_PATH = os.path.join(os.path.dirname(__file__), '..', 'module_utils
 
 # ******************************************************************************
 
-ANSIBALLZ_TEMPLATE = u'''%(shebang)s
+ANSIBALLZ_TEMPLATE = u"""%(shebang)s
 %(coding)s
 _ANSIBALLZ_WRAPPER = True # For test-module.py script to tell this is a ANSIBALLZ_WRAPPER
 # This code is part of Ansible, but is an independent component.
@@ -333,9 +333,9 @@ def _ansiballz_main():
 
 if __name__ == '__main__':
     _ansiballz_main()
-'''
+"""
 
-ANSIBALLZ_COVERAGE_TEMPLATE = '''
+ANSIBALLZ_COVERAGE_TEMPLATE = """
         os.environ['COVERAGE_FILE'] = %(coverage_output)r + '=python-%%s=coverage' %% '.'.join(str(v) for v in sys.version_info[:2])
 
         import atexit
@@ -355,9 +355,9 @@ ANSIBALLZ_COVERAGE_TEMPLATE = '''
         atexit.register(atexit_coverage)
 
         cov.start()
-'''
+"""
 
-ANSIBALLZ_COVERAGE_CHECK_TEMPLATE = '''
+ANSIBALLZ_COVERAGE_CHECK_TEMPLATE = """
         try:
             if PY3:
                 import importlib.util
@@ -369,9 +369,9 @@ ANSIBALLZ_COVERAGE_CHECK_TEMPLATE = '''
         except ImportError:
             print('{"msg": "Could not find `coverage` module.", "failed": true}')
             sys.exit(1)
-'''
+"""
 
-ANSIBALLZ_RLIMIT_TEMPLATE = '''
+ANSIBALLZ_RLIMIT_TEMPLATE = """
     import resource
 
     existing_soft, existing_hard = resource.getrlimit(resource.RLIMIT_NOFILE)
@@ -385,7 +385,7 @@ ANSIBALLZ_RLIMIT_TEMPLATE = '''
         except ValueError:
             # some platforms (eg macOS) lie about their hard limit
             pass
-'''
+"""
 
 
 def _strip_comments(source):

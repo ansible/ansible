@@ -18,7 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 ########################################################################
-''' This manages remote shared Ansible objects, mainly roles'''
+""" This manages remote shared Ansible objects, mainly roles"""
 
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ def get_collections_galaxy_meta_info():
 
 
 class Galaxy(object):
-    ''' Keeps global galaxy info '''
+    """ Keeps global galaxy info """
 
     def __init__(self):
         # TODO: eventually remove this as it contains a mismash of properties that aren't really global

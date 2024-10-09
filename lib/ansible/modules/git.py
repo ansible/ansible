@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: git
 author:
@@ -236,9 +236,9 @@ notes:
       one solution is to use the option accept_hostkey. Another solution is to
       add the remote host public key in C(/etc/ssh/ssh_known_hosts) before calling
       the git module, with the following command: C(ssh-keyscan -H remote_host.com >> /etc/ssh/ssh_known_hosts)."
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Git checkout
   ansible.builtin.git:
     repo: 'https://github.com/ansible/ansible.git'
@@ -295,9 +295,9 @@ EXAMPLES = '''
   environment:
     GIT_TERMINAL_PROMPT: 0 # reports "terminal prompts disabled" on missing password
     # or GIT_ASKPASS: /bin/true # for git before version 2.3.0, reports "Authentication failed" on missing password
-'''
+"""
 
-RETURN = '''
+RETURN = """
 after:
     description: Last commit revision of the repository retrieved during the update.
     returned: success
@@ -328,7 +328,7 @@ git_dir_before:
     returned: success
     type: str
     sample: /path/to/old/git/dir
-'''
+"""
 
 import filecmp
 import os
@@ -366,7 +366,7 @@ def relocate_repo(module, result, repo_dir, old_repo_dir, worktree_dir):
 
 
 def head_splitter(headfile, remote, module=None, fail_on_error=False):
-    '''Extract the head reference'''
+    """Extract the head reference"""
     # https://github.com/ansible/ansible-modules-core/pull/907
 
     res = None
@@ -429,11 +429,11 @@ def get_submodule_update_params(module, git_path, cwd):
 
 
 def write_ssh_wrapper(module):
-    '''
+    """
         This writes an shell wrapper for ssh options to be used with git
         this is only relevant for older versions of gitthat cannot
         handle the options themselves. Returns path to the script
-    '''
+    """
     try:
         # make sure we have full permission to the module_dir, which
         # may not be the case if we're sudo'ing to a non-root user
@@ -466,10 +466,10 @@ def write_ssh_wrapper(module):
 
 
 def set_git_ssh_env(key_file, ssh_opts, git_version, module):
-    '''
+    """
         use environment variables to configure git's ssh execution,
         which varies by version but this function should handle all.
-    '''
+    """
 
     # initialise to existing ssh opts and/or append user provided
     if ssh_opts is None:
@@ -519,7 +519,7 @@ def set_git_ssh_env(key_file, ssh_opts, git_version, module):
 
 
 def get_version(module, git_path, dest, ref="HEAD"):
-    ''' samples the version of the git repo '''
+    """ samples the version of the git repo """
 
     cmd = "%s rev-parse %s" % (git_path, ref)
     rc, stdout, stderr = module.run_command(cmd, cwd=dest)
@@ -571,7 +571,7 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
           reference, refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_allowlist, single_branch):
-    ''' makes a new git repo if it does not already exist '''
+    """ makes a new git repo if it does not already exist """
     dest_dirname = os.path.dirname(dest)
     try:
         os.makedirs(dest_dirname)
@@ -653,17 +653,17 @@ def has_local_mods(module, git_path, dest, bare):
 
 
 def reset(git_path, module, dest):
-    '''
+    """
     Resets the index and working tree to HEAD.
     Discards any changes to tracked files in working
     tree since that commit.
-    '''
+    """
     cmd = "%s reset --hard HEAD" % (git_path,)
     return module.run_command(cmd, check_rc=True, cwd=dest)
 
 
 def get_diff(module, git_path, dest, repo, remote, depth, bare, before, after):
-    ''' Return the difference between 2 versions '''
+    """ Return the difference between 2 versions """
     if before is None:
         return {'prepared': '>> Newly checked out %s' % after}
     elif before != after:
@@ -817,13 +817,13 @@ def get_repo_path(dest, bare):
 
 
 def get_head_branch(git_path, module, dest, remote, bare=False):
-    '''
+    """
     Determine what branch HEAD is associated with.  This is partly
     taken from lib/ansible/utils/__init__.py.  It finds the correct
     path to .git/HEAD and reads from that file the branch that HEAD is
     associated with.  In the case of a detached HEAD, this will look
     up the branch in .git/refs/remotes/<remote>/HEAD.
-    '''
+    """
     try:
         repo_path = get_repo_path(dest, bare)
     except (IOError, ValueError) as err:
@@ -845,7 +845,7 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
 
 
 def get_remote_url(git_path, module, dest, remote):
-    '''Return URL of remote source for repo.'''
+    """Return URL of remote source for repo."""
     command = [git_path, 'ls-remote', '--get-url', remote]
     (rc, out, err) = module.run_command(command, cwd=dest)
     if rc != 0:
@@ -856,7 +856,7 @@ def get_remote_url(git_path, module, dest, remote):
 
 
 def set_remote_url(git_path, module, repo, dest, remote):
-    ''' updates repo from remote sources '''
+    """ updates repo from remote sources """
     # Return if remote URL isn't changing.
     remote_url = get_remote_url(git_path, module, dest, remote)
     if remote_url == repo or unfrackgitpath(remote_url) == unfrackgitpath(repo):
@@ -874,7 +874,7 @@ def set_remote_url(git_path, module, repo, dest, remote):
 
 
 def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, git_version_used, force=False):
-    ''' updates repo from remote sources '''
+    """ updates repo from remote sources """
     set_remote_url(git_path, module, repo, dest, remote)
     commands = []
 
@@ -981,7 +981,7 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
 
 
 def submodule_update(git_path, module, dest, track_submodules, force=False):
-    ''' init and update any submodules '''
+    """ init and update any submodules """
 
     # get the valid submodule params
     params = get_submodule_update_params(module, git_path, dest)

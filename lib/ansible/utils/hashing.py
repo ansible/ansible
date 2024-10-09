@@ -32,7 +32,7 @@ from ansible.module_utils.common.text.converters import to_bytes
 
 
 def secure_hash_s(data, hash_func=sha1):
-    ''' Return a secure hash hex digest of data. '''
+    """ Return a secure hash hex digest of data. """
 
     digest = hash_func()
     data = to_bytes(data, errors='surrogate_or_strict')
@@ -41,7 +41,7 @@ def secure_hash_s(data, hash_func=sha1):
 
 
 def secure_hash(filename, hash_func=sha1):
-    ''' Return a secure hash hex digest of local file, None if file is not present or a directory. '''
+    """ Return a secure hash hex digest of local file, None if file is not present or a directory. """
 
     if not os.path.exists(to_bytes(filename, errors='surrogate_or_strict')) or os.path.isdir(to_bytes(filename, errors='strict')):
         return None

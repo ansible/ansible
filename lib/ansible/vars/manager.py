@@ -44,11 +44,11 @@ display = Display()
 
 
 def preprocess_vars(a):
-    '''
+    """
     Ensures that vars contained in the parameter passed in are
     returned as a list of dictionaries, to ensure for instance
     that vars loaded from a file conform to an expected state.
-    '''
+    """
 
     if a is None:
         return None
@@ -137,7 +137,7 @@ class VariableManager:
 
     def get_vars(self, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=False, use_cache=True,
                  _hosts=None, _hosts_all=None, stage='task'):
-        '''
+        """
         Returns the variables, with optional "context" given via the parameters
         for the play, host, and task (which could possibly result in different
         sets of variables being returned due to the additional context).
@@ -158,7 +158,7 @@ class VariableManager:
         ``_hosts`` and ``_hosts_all`` should be considered private args, with only internal trusted callers relying
         on the functionality they provide. These arguments may be removed at a later date without a deprecation
         period and without warning.
-        '''
+        """
         if include_delegate_to:
             display.deprecated(
                 "`VariableManager.get_vars`'s argument `include_delegate_to` has no longer any effect.",
@@ -180,11 +180,11 @@ class VariableManager:
         _vars_sources = {}
 
         def _combine_and_track(data, new_data, source):
-            '''
+            """
             Wrapper function to update var sources dict and call combine_vars()
 
             See notes in the VarsWithSources docstring for caveats and limitations of the source tracking
-            '''
+            """
             if new_data == {}:
                 return data
 
@@ -247,11 +247,11 @@ class VariableManager:
 
             # internal functions that actually do the work
             def _plugins_inventory(entities):
-                ''' merges all entities by inventory source '''
+                """ merges all entities by inventory source """
                 return get_vars_from_inventory_sources(self._loader, self._inventory._sources, entities, stage)
 
             def _plugins_play(entities):
-                ''' merges all entities adjacent to play '''
+                """ merges all entities adjacent to play """
                 data = {}
                 for path in basedirs:
                     data = _combine_and_track(data, get_vars_from_path(self._loader, path, entities, stage), "path '%s'" % path)
@@ -268,22 +268,22 @@ class VariableManager:
                 return _plugins_play([all_group])
 
             def groups_inventory():
-                ''' gets group vars from inventory '''
+                """ gets group vars from inventory """
                 return get_group_vars(host_groups)
 
             def groups_plugins_inventory():
-                ''' gets plugin sources from inventory for groups '''
+                """ gets plugin sources from inventory for groups """
                 return _plugins_inventory(host_groups)
 
             def groups_plugins_play():
-                ''' gets plugin sources from play for groups '''
+                """ gets plugin sources from play for groups """
                 return _plugins_play(host_groups)
 
             def plugins_by_groups():
-                '''
+                """
                     merges all plugin sources by group,
                     This should be used instead, NOT in combination with the other groups_plugins* functions
-                '''
+                """
                 data = {}
                 for group in host_groups:
                     data[group] = _combine_and_track(data[group], _plugins_inventory(group), "inventory group_vars for '%s'" % group)
@@ -436,10 +436,10 @@ class VariableManager:
             return all_vars
 
     def _get_magic_variables(self, play, host, task, include_hostvars, _hosts=None, _hosts_all=None):
-        '''
+        """
         Returns a dictionary of so-called "magic" variables in Ansible,
         which are special variables we set internally for use.
-        '''
+        """
 
         variables = {}
         variables['playbook_dir'] = os.path.abspath(self._loader.get_basedir())
@@ -547,15 +547,15 @@ class VariableManager:
         return delegated_vars, delegated_host_name
 
     def clear_facts(self, hostname):
-        '''
+        """
         Clears the facts for a host
-        '''
+        """
         self._fact_cache.pop(hostname, None)
 
     def set_host_facts(self, host, facts):
-        '''
+        """
         Sets or updates the given facts for a host in the fact cache.
-        '''
+        """
 
         if not isinstance(facts, Mapping):
             raise AnsibleAssertionError("the type of 'facts' to set for host_facts should be a Mapping but is a %s" % type(facts))
@@ -576,9 +576,9 @@ class VariableManager:
         self._fact_cache[host] = host_cache
 
     def set_nonpersistent_facts(self, host, facts):
-        '''
+        """
         Sets or updates the given facts for a host in the fact cache.
-        '''
+        """
 
         if not isinstance(facts, Mapping):
             raise AnsibleAssertionError("the type of 'facts' to set for nonpersistent_facts should be a Mapping but is a %s" % type(facts))
@@ -589,9 +589,9 @@ class VariableManager:
             self._nonpersistent_fact_cache[host] = facts
 
     def set_host_variable(self, host, varname, value):
-        '''
+        """
         Sets a value in the vars_cache for a host.
-        '''
+        """
         if host not in self._vars_cache:
             self._vars_cache[host] = dict()
         if varname in self._vars_cache[host] and isinstance(self._vars_cache[host][varname], MutableMapping) and isinstance(value, MutableMapping):
@@ -601,21 +601,21 @@ class VariableManager:
 
 
 class VarsWithSources(MutableMapping):
-    '''
+    """
     Dict-like class for vars that also provides source information for each var
 
     This class can only store the source for top-level vars. It does no tracking
     on its own, just shows a debug message with the information that it is provided
     when a particular var is accessed.
-    '''
+    """
     def __init__(self, *args, **kwargs):
-        ''' Dict-compatible constructor '''
+        """ Dict-compatible constructor """
         self.data = dict(*args, **kwargs)
         self.sources = {}
 
     @classmethod
     def new_vars_with_sources(cls, data, sources):
-        ''' Alternate constructor method to instantiate class with sources '''
+        """ Alternate constructor method to instantiate class with sources """
         v = cls(data)
         v.sources = sources
         return v

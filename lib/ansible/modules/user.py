@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 module: user
 version_added: "0.2"
 short_description: Manage user accounts
@@ -319,9 +319,9 @@ seealso:
 - module: ansible.windows.win_user
 author:
 - Stephen Fromm (@sfromm)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Add the user 'johnd' with a specific uid and a primary group of 'admin'
   ansible.builtin.user:
     name: johnd
@@ -385,9 +385,9 @@ EXAMPLES = r'''
   ansible.builtin.user:
     name: jimholden2016
     password_expire_account_disable: 15
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 append:
   description: Whether or not to append the user to groups.
   returned: When O(state) is V(present) and the user exists
@@ -486,7 +486,7 @@ uid:
   returned: When O(uid) is passed to the module
   type: int
   sample: 1044
-'''
+"""
 
 
 import ctypes.util
@@ -1091,7 +1091,7 @@ class User(object):
         return groups
 
     def user_group_membership(self, exclude_primary=True):
-        ''' Return a list of groups the user belongs to '''
+        """ Return a list of groups the user belongs to """
         groups = []
         info = self.get_pwd_info()
         for group in grp.getgrall():
@@ -2423,7 +2423,7 @@ class DarwinUser(User):
         return groups
 
     def _get_user_property(self, property):
-        '''Return user PROPERTY as given my dscl(1) read or None if not found.'''
+        """Return user PROPERTY as given my dscl(1) read or None if not found."""
         cmd = self._get_dscl()
         cmd += ['-read', '/Users/%s' % self.name, property]
         (rc, out, err) = self.execute_command(cmd, obey_checkmode=False)
@@ -2443,10 +2443,10 @@ class DarwinUser(User):
         return None
 
     def _get_next_uid(self, system=None):
-        '''
+        """
         Return the next available uid. If system=True, then
         uid should be below of 500, if possible.
-        '''
+        """
         cmd = self._get_dscl()
         cmd += ['-list', '/Users', 'UniqueID']
         (rc, out, err) = self.execute_command(cmd, obey_checkmode=False)
@@ -2472,10 +2472,10 @@ class DarwinUser(User):
         return max_uid + 1
 
     def _change_user_password(self):
-        '''Change password for SELF.NAME against SELF.PASSWORD.
+        """Change password for SELF.NAME against SELF.PASSWORD.
 
         Please note that password must be cleartext.
-        '''
+        """
         # some documentation on how is stored passwords on OSX:
         # http://blog.lostpassword.com/2012/07/cracking-mac-os-x-lion-accounts-passwords/
         # http://null-byte.wonderhowto.com/how-to/hack-mac-os-x-lion-passwords-0130036/
@@ -2494,7 +2494,7 @@ class DarwinUser(User):
         return (rc, out, err)
 
     def _make_group_numerical(self):
-        '''Convert SELF.GROUP to is stringed numerical value suitable for dscl.'''
+        """Convert SELF.GROUP to is stringed numerical value suitable for dscl."""
         if self.group is None:
             self.group = 'nogroup'
         try:
@@ -2505,8 +2505,8 @@ class DarwinUser(User):
         self.group = str(self.group)
 
     def __modify_group(self, group, action):
-        '''Add or remove SELF.NAME to or from GROUP depending on ACTION.
-        ACTION can be 'add' or 'remove' otherwise 'remove' is assumed. '''
+        """Add or remove SELF.NAME to or from GROUP depending on ACTION.
+        ACTION can be 'add' or 'remove' otherwise 'remove' is assumed. """
         if action == 'add':
             option = '-a'
         else:
@@ -2519,8 +2519,8 @@ class DarwinUser(User):
         return (rc, out, err)
 
     def _modify_group(self):
-        '''Add or remove SELF.NAME to or from GROUP depending on ACTION.
-        ACTION can be 'add' or 'remove' otherwise 'remove' is assumed. '''
+        """Add or remove SELF.NAME to or from GROUP depending on ACTION.
+        ACTION can be 'add' or 'remove' otherwise 'remove' is assumed. """
 
         rc = 0
         out = ''
@@ -2551,9 +2551,9 @@ class DarwinUser(User):
         return (rc, out, err, changed)
 
     def _update_system_user(self):
-        '''Hide or show user on login window according SELF.SYSTEM.
+        """Hide or show user on login window according SELF.SYSTEM.
 
-        Returns 0 if a change has been made, None otherwise.'''
+        Returns 0 if a change has been made, None otherwise."""
 
         plist_file = '/Library/Preferences/com.apple.loginwindow.plist'
 
@@ -2592,14 +2592,14 @@ class DarwinUser(User):
                 return 0
 
     def user_exists(self):
-        '''Check is SELF.NAME is a known user on the system.'''
+        """Check is SELF.NAME is a known user on the system."""
         cmd = self._get_dscl()
         cmd += ['-read', '/Users/%s' % self.name, 'UniqueID']
         (rc, out, err) = self.execute_command(cmd, obey_checkmode=False)
         return rc == 0
 
     def remove_user(self):
-        '''Delete SELF.NAME. If SELF.FORCE is true, remove its home directory.'''
+        """Delete SELF.NAME. If SELF.FORCE is true, remove its home directory."""
         info = self.user_info()
 
         cmd = self._get_dscl()

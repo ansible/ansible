@@ -18,7 +18,7 @@ class TestAnsibleModuleSetCwd:
 
     def test_set_cwd(self, monkeypatch):
 
-        '''make sure /tmp is used'''
+        """make sure /tmp is used"""
 
         def mock_getcwd():
             return '/tmp'
@@ -40,7 +40,7 @@ class TestAnsibleModuleSetCwd:
 
     def test_set_cwd_unreadable_use_self_tmpdir(self, monkeypatch):
 
-        '''pwd is not readable, use instance's tmpdir property'''
+        """pwd is not readable, use instance's tmpdir property"""
 
         def mock_getcwd():
             return '/tmp'
@@ -77,7 +77,7 @@ class TestAnsibleModuleSetCwd:
 
     def test_set_cwd_unreadable_use_home(self, monkeypatch):
 
-        '''cwd and instance tmpdir are unreadable, use home'''
+        """cwd and instance tmpdir are unreadable, use home"""
 
         def mock_getcwd():
             return '/tmp'
@@ -114,7 +114,7 @@ class TestAnsibleModuleSetCwd:
 
     def test_set_cwd_unreadable_use_gettempdir(self, monkeypatch):
 
-        '''fallback to tempfile.gettempdir'''
+        """fallback to tempfile.gettempdir"""
 
         thisdir = None
 
@@ -154,7 +154,7 @@ class TestAnsibleModuleSetCwd:
 
     def test_set_cwd_unreadable_use_None(self, monkeypatch):
 
-        '''all paths are unreable, should return None and not an exception'''
+        """all paths are unreable, should return None and not an exception"""
 
         def mock_getcwd():
             return '/tmp'

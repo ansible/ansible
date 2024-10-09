@@ -6,7 +6,7 @@ from __future__ import annotations
 
 
 class ModuleDocFragment(object):
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
 options: {}
 version_added: 1.0.0
-'''
+"""

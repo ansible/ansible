@@ -29,8 +29,8 @@ display = Display()
 
 
 class PlaybookCLI(CLI):
-    ''' the tool to run *Ansible playbooks*, which are a configuration and multinode deployment system.
-        See the project home page (https://docs.ansible.com) for more information. '''
+    """ the tool to run *Ansible playbooks*, which are a configuration and multinode deployment system.
+        See the project home page (https://docs.ansible.com) for more information. """
 
     name = 'ansible-playbook'
 

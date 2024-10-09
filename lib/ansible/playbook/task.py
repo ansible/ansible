@@ -86,7 +86,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     loop_with = NonInheritableFieldAttribute(isa='string', private=True)
 
     def __init__(self, block=None, role=None, task_include=None):
-        ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
+        """ constructors a task, without the Task.load classmethod, it will be pretty blank """
 
         self._role = role
         self._parent = None
@@ -101,7 +101,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         super(Task, self).__init__()
 
     def get_name(self, include_role_fqcn=True):
-        ''' return the name of the task '''
+        """ return the name of the task """
 
         if self._role:
             role_name = self._role.get_name(include_role_fqcn=include_role_fqcn)
@@ -136,14 +136,14 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def __repr__(self):
-        ''' returns a human-readable representation of the task '''
+        """ returns a human-readable representation of the task """
         if self.action in C._ACTION_META:
             return "TASK: meta (%s)" % self.args['_raw_params']
         else:
             return "TASK: %s" % self.get_name()
 
     def _preprocess_with_loop(self, ds, new_ds, k, v):
-        ''' take a lookup plugin name and store it correctly '''
+        """ take a lookup plugin name and store it correctly """
 
         loop_name = k.removeprefix("with_")
         if new_ds.get('loop') is not None or new_ds.get('loop_with') is not None:
@@ -156,10 +156,10 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         #                    version="2.10", collection_name='ansible.builtin')
 
     def preprocess_data(self, ds):
-        '''
+        """
         tasks are especially complex arguments so need pre-processing.
         keep it short.
-        '''
+        """
 
         if not isinstance(ds, dict):
             raise AnsibleAssertionError('ds (%s) should be a dict but was a %s' % (ds, type(ds)))
@@ -281,10 +281,10 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             raise AnsibleParserError(f"Invalid variable name in 'register' specified: '{value}'")
 
     def post_validate(self, templar):
-        '''
+        """
         Override of base class post_validate, to also do final validation on
         the block and task include (if any) to which this task belongs.
-        '''
+        """
 
         if self._parent:
             self._parent.post_validate(templar)
@@ -295,17 +295,17 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         super(Task, self).post_validate(templar)
 
     def _post_validate_loop(self, attr, value, templar):
-        '''
+        """
         Override post validation for the loop field, which is templated
         specially in the TaskExecutor class when evaluating loops.
-        '''
+        """
         return value
 
     def _post_validate_environment(self, attr, value, templar):
-        '''
+        """
         Override post validation of vars on the play, as we don't want to
         template these too early.
-        '''
+        """
         env = {}
         if value is not None:
 
@@ -343,24 +343,24 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         return env
 
     def _post_validate_changed_when(self, attr, value, templar):
-        '''
+        """
         changed_when is evaluated after the execution of the task is complete,
         and should not be templated during the regular post_validate step.
-        '''
+        """
         return value
 
     def _post_validate_failed_when(self, attr, value, templar):
-        '''
+        """
         failed_when is evaluated after the execution of the task is complete,
         and should not be templated during the regular post_validate step.
-        '''
+        """
         return value
 
     def _post_validate_until(self, attr, value, templar):
-        '''
+        """
         until is evaluated after the execution of the task is complete,
         and should not be templated during the regular post_validate step.
-        '''
+        """
         return value
 
     def get_vars(self):
@@ -450,11 +450,11 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         super(Task, self).deserialize(data)
 
     def set_loader(self, loader):
-        '''
+        """
         Sets the loader on this object and recursively on parent, child objects.
         This is used primarily after the Task has been serialized/deserialized, which
         does not preserve the loader.
-        '''
+        """
 
         self._loader = loader
 
@@ -462,9 +462,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             self._parent.set_loader(loader)
 
     def _get_parent_attribute(self, attr, omit=False):
-        '''
+        """
         Generic logic to get the attribute or parent attribute for a task value.
-        '''
+        """
         fattr = self.fattributes[attr]
 
         extend = fattr.extend

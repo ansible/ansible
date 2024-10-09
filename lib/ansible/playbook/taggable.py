@@ -48,7 +48,7 @@ class Taggable:
             raise AnsibleError('tags must be specified as a list', obj=ds)
 
     def evaluate_tags(self, only_tags, skip_tags, all_vars):
-        ''' this checks if the current item should be executed depending on tag options '''
+        """ this checks if the current item should be executed depending on tag options """
 
         if self.tags:
             templar = Templar(loader=self._loader, variables=all_vars)

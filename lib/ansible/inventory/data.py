@@ -101,7 +101,7 @@ class InventoryData(object):
         return new_host
 
     def reconcile_inventory(self):
-        ''' Ensure inventory basic rules, run after updates '''
+        """ Ensure inventory basic rules, run after updates """
 
         display.debug('Reconcile groups and hosts in inventory.')
         self.current_source = None
@@ -145,7 +145,7 @@ class InventoryData(object):
         self._groups_dict_cache = {}
 
     def get_host(self, hostname):
-        ''' fetch host object using name deal with implicit localhost '''
+        """ fetch host object using name deal with implicit localhost """
 
         matching_host = self.hosts.get(hostname, None)
 
@@ -157,7 +157,7 @@ class InventoryData(object):
         return matching_host
 
     def add_group(self, group):
-        ''' adds a group to inventory if not there already, returns named actually used '''
+        """ adds a group to inventory if not there already, returns named actually used """
 
         if group:
             if not isinstance(group, string_types):
@@ -188,7 +188,7 @@ class InventoryData(object):
             h.remove_group(group)
 
     def add_host(self, host, group=None, port=None):
-        ''' adds a host to inventory and possibly a group if not there already '''
+        """ adds a host to inventory and possibly a group if not there already """
 
         if host:
             if not isinstance(host, string_types):
@@ -242,7 +242,7 @@ class InventoryData(object):
             g.remove_host(host)
 
     def set_variable(self, entity, varname, value):
-        ''' sets a variable for an inventory object '''
+        """ sets a variable for an inventory object """
 
         if entity in self.groups:
             inv_object = self.groups[entity]
@@ -255,7 +255,7 @@ class InventoryData(object):
         display.debug('set %s for %s' % (varname, entity))
 
     def add_child(self, group, child):
-        ''' Add host or group to group '''
+        """ Add host or group to group """
         added = False
         if group in self.groups:
             g = self.groups[group]

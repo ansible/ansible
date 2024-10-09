@@ -29,7 +29,7 @@ __all__ = ['HostVars', 'HostVarsVars']
 
 # Note -- this is a Mapping, not a MutableMapping
 class HostVars(Mapping):
-    ''' A special view of vars_cache that adds values from the inventory when needed. '''
+    """ A special view of vars_cache that adds values from the inventory when needed. """
 
     def __init__(self, inventory, variable_manager, loader):
         self._inventory = inventory
@@ -49,10 +49,10 @@ class HostVars(Mapping):
         return self._inventory.get_host(host_name)
 
     def raw_get(self, host_name):
-        '''
+        """
         Similar to __getitem__, however the returned data is not run through
         the templating engine to expand variables in the hostvars.
-        '''
+        """
         host = self._find_host(host_name)
         if host is None:
             return AnsibleUndefined(name="hostvars['%s']" % host_name)
@@ -138,8 +138,8 @@ class HostVarsVars(Mapping):
         return repr(self._templar.template(self._vars, fail_on_undefined=False, static_vars=C.INTERNAL_STATIC_VARS))
 
     def __getstate__(self):
-        ''' override serialization here to avoid
-            pickle issues with templar and Jinja native'''
+        """ override serialization here to avoid
+            pickle issues with templar and Jinja native"""
         state = self.__dict__.copy()
         state.pop('_templar', None)
         return state

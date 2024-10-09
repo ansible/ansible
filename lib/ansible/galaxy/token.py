@@ -40,10 +40,10 @@ display = Display()
 
 
 class KeycloakToken(object):
-    '''A token granted by a Keycloak server.
+    """A token granted by a Keycloak server.
 
     Like sso.redhat.com as used by cloud.redhat.com
-    ie Automation Hub'''
+    ie Automation Hub"""
 
     token_type = 'Bearer'
 
@@ -105,7 +105,7 @@ class KeycloakToken(object):
 
 
 class GalaxyToken(object):
-    ''' Class to storing and retrieving local galaxy token '''
+    """ Class to storing and retrieving local galaxy token """
 
     token_type = 'Token'
 

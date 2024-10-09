@@ -8,7 +8,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_certificate_store
 version_added: '2.5'
@@ -130,9 +130,9 @@ notes:
   binding the certificate to the https endpoint.
 author:
 - Jordan Borean (@jborean93)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Import a certificate
   win_certificate_store:
     path: C:\Temp\cert.pem
@@ -196,13 +196,13 @@ EXAMPLES = r'''
     store_location: LocalMachine
     key_storage: machine
     state: present
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 thumbprints:
   description: A list of certificate thumbprints that were touched by the
     module.
   returned: success
   type: list
   sample: ["BC05633694E675449136679A658281F17A191087"]
-'''
+"""

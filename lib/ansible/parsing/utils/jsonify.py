@@ -21,7 +21,7 @@ import json
 
 
 def jsonify(result, format=False):
-    ''' format JSON output (uncompressed or uncompressed) '''
+    """ format JSON output (uncompressed or uncompressed) """
 
     if result is None:
         return "{}"

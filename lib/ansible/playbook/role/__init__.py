@@ -316,7 +316,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         return getattr(self._metadata, 'argument_specs', {})
 
     def _prepend_validation_task(self, task_data, argspecs):
-        '''Insert a role validation task if we have a role argument spec.
+        """Insert a role validation task if we have a role argument spec.
 
         This method will prepend a validation task to the front of the role task
         list to perform argument spec validation before any other tasks, if an arg spec
@@ -326,7 +326,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         :param argspecs: The role argument spec data dict.
 
         :returns: The (possibly modified) task list.
-        '''
+        """
         if argspecs:
             # Determine the role entry point so we can retrieve the correct argument spec.
             # This comes from the `tasks_from` value to include_role or import_role.
@@ -345,13 +345,13 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         return task_data
 
     def _create_validation_task(self, argument_spec, entrypoint_name):
-        '''Create a new task data structure that uses the validate_argument_spec action plugin.
+        """Create a new task data structure that uses the validate_argument_spec action plugin.
 
         :param argument_spec: The arg spec definition for a particular role entry point.
             This will be the entire arg spec for the entry point as read from the input file.
         :param entrypoint_name: The name of the role entry point associated with the
             supplied `argument_spec`.
-        '''
+        """
 
         # If the arg spec provides a short description, use it to flesh out the validation task name
         task_name = "Validating arguments against arg spec '%s'" % entrypoint_name
@@ -376,7 +376,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         }
 
     def _load_role_yaml(self, subdir, main=None, allow_dir=False):
-        '''
+        """
         Find and load role YAML files and return data found.
         :param subdir: subdir of role to search (vars, files, tasks, handlers, defaults)
         :type subdir: string
@@ -387,7 +387,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         :type allow_dir: bool
 
         :returns: data from the matched file(s), type can be dict or list depending on vars or tasks.
-        '''
+        """
         data = None
         file_path = os.path.join(self._role_path, subdir)
         if self._loader.path_exists(file_path) and self._loader.is_directory(file_path):
@@ -430,10 +430,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         return data
 
     def _load_dependencies(self):
-        '''
+        """
         Recursively loads role dependencies from the metadata list of
         dependencies, if it exists
-        '''
+        """
 
         deps = []
         for role_include in self._metadata.dependencies:
@@ -445,7 +445,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
     # other functions
 
     def add_parent(self, parent_role):
-        ''' adds a role to the list of this roles parents '''
+        """ adds a role to the list of this roles parents """
         if not isinstance(parent_role, Role):
             raise AnsibleAssertionError()
 
@@ -533,10 +533,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         return self._dependencies[:]
 
     def get_all_dependencies(self):
-        '''
+        """
         Returns a list of all deps, built recursively from all child dependencies,
         in the proper order in which they should be executed or evaluated.
-        '''
+        """
         if self._all_dependencies is None:
 
             self._all_dependencies = []
@@ -579,15 +579,15 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         return block_list
 
     def has_run(self, host):
-        '''
+        """
         Returns true if this role has been iterated over completely and
         at least one task was run
-        '''
+        """
 
         return host.name in self._completed
 
     def compile(self, play, dep_chain=None):
-        '''
+        """
         Returns the task list for this role, which is created by first
         recursively compiling the tasks for all direct dependencies, and
         then adding on the tasks for this role.
@@ -595,7 +595,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         The role compile() also remembers and saves the dependency chain
         with each task, so tasks know by which route they were found, and
         can correctly take their parent's tags/conditionals into account.
-        '''
+        """
         from ansible.playbook.block import Block
         from ansible.playbook.task import Task
 

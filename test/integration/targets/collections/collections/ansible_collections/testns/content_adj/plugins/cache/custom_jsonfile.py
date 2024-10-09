@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     cache: jsonfile
     short_description: JSON formatted files.
     description:
@@ -37,7 +37,7 @@ DOCUMENTATION = '''
           - key: fact_caching_timeout
             section: defaults
         type: integer
-'''
+"""
 
 import codecs
 import json

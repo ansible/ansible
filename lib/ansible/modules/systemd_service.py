@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: systemd_service
 author:
     - Ansible Core Team
@@ -98,9 +98,9 @@ notes:
       It has been reported that C(systemctl) can behave differently depending on the order of operations if you do the same manually.
 requirements:
     - A system managed by systemd.
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Make sure a service unit is running
   ansible.builtin.systemd_service:
     state: started
@@ -149,9 +149,9 @@ EXAMPLES = '''
     scope: user
   environment:
     XDG_RUNTIME_DIR: "/run/user/{{ myuid }}"
-'''
+"""
 
-RETURN = '''
+RETURN = """
 status:
     description: A dictionary with the key=value pairs returned from C(systemctl show).
     returned: success
@@ -279,7 +279,7 @@ status:
             "WatchdogTimestampMonotonic": "0",
             "WatchdogUSec": "0",
         }
-'''  # NOQA
+"""  # NOQA
 
 import os
 

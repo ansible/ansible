@@ -224,9 +224,9 @@ class FreeBSDHardware(Hardware):
         return device_facts
 
     def get_dmi_facts(self):
-        ''' learn dmi facts from system
+        """ learn dmi facts from system
 
-        Use dmidecode executable if available'''
+        Use dmidecode executable if available"""
 
         dmi_facts = {}
 

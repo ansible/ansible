@@ -321,7 +321,7 @@ SFTP_CONNECTION_CACHE: dict[str, paramiko.sftp_client.SFTPClient] = {}
 
 
 class Connection(ConnectionBase):
-    ''' SSH based connections with Paramiko '''
+    """ SSH based connections with Paramiko """
 
     transport = 'paramiko'
     _log_channel: str | None = None
@@ -340,7 +340,7 @@ class Connection(ConnectionBase):
         return self
 
     def _set_log_channel(self, name: str) -> None:
-        '''Mimic paramiko.SSHClient.set_log_channel'''
+        """Mimic paramiko.SSHClient.set_log_channel"""
         self._log_channel = name
 
     def _parse_proxy_command(self, port: int = 22) -> dict[str, t.Any]:
@@ -366,7 +366,7 @@ class Connection(ConnectionBase):
         return sock_kwarg
 
     def _connect_uncached(self) -> paramiko.SSHClient:
-        ''' activates the connection object '''
+        """ activates the connection object """
 
         if paramiko is None:
             raise AnsibleError("paramiko is not installed: %s" % to_native(PARAMIKO_IMPORT_ERR))
@@ -461,7 +461,7 @@ class Connection(ConnectionBase):
         return ssh
 
     def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
-        ''' run a command on the remote host '''
+        """ run a command on the remote host """
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
@@ -541,7 +541,7 @@ class Connection(ConnectionBase):
         return (chan.recv_exit_status(), no_prompt_out + stdout, no_prompt_out + stderr)
 
     def put_file(self, in_path: str, out_path: str) -> None:
-        ''' transfer a file from local to remote '''
+        """ transfer a file from local to remote """
 
         super(Connection, self).put_file(in_path, out_path)
 
@@ -570,7 +570,7 @@ class Connection(ConnectionBase):
             return result
 
     def fetch_file(self, in_path: str, out_path: str) -> None:
-        ''' save a remote file to the specified path '''
+        """ save a remote file to the specified path """
 
         super(Connection, self).fetch_file(in_path, out_path)
 
@@ -596,10 +596,10 @@ class Connection(ConnectionBase):
         return False
 
     def _save_ssh_host_keys(self, filename: str) -> None:
-        '''
+        """
         not using the paramiko save_ssh_host_keys function as we want to add new SSH keys at the bottom so folks
         don't complain about it :)
-        '''
+        """
 
         if not self._any_keys_added():
             return
@@ -632,7 +632,7 @@ class Connection(ConnectionBase):
         self._connect()
 
     def close(self) -> None:
-        ''' terminate the connection '''
+        """ terminate the connection """
 
         cache_key = self._cache_key()
         SSH_CONNECTION_CACHE.pop(cache_key, None)

@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: ping
 version_added: historical
@@ -35,9 +35,9 @@ author:
   - Michael DeHaan
 notes:
   - Supports C(check_mode).
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 # Test we can logon to 'webservers' and execute python with json lib.
 # ansible webservers -m ping
 
@@ -47,15 +47,15 @@ EXAMPLES = '''
 - name: Induce an exception to see what happens
   ansible.builtin.ping:
     data: crash
-'''
+"""
 
-RETURN = '''
+RETURN = """
 ping:
     description: Value provided with the data parameter.
     returned: success
     type: str
     sample: pong
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 

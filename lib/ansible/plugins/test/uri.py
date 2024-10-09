@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 
 
 def is_uri(value, schemes=None):
-    ''' Will verify that the string passed is a valid 'URI', if given a list of valid schemes it will match those '''
+    """ Will verify that the string passed is a valid 'URI', if given a list of valid schemes it will match those """
     try:
         x = urlparse(value)
         isit = all([x.scheme is not None, x.path is not None, not schemes or x.scheme in schemes])
@@ -16,7 +16,7 @@ def is_uri(value, schemes=None):
 
 
 def is_url(value, schemes=None):
-    ''' Will verify that the string passed is a valid 'URL' '''
+    """ Will verify that the string passed is a valid 'URL' """
 
     isit = is_uri(value, schemes)
     if isit:
@@ -33,7 +33,7 @@ def is_urn(value):
 
 
 class TestModule(object):
-    ''' Ansible URI jinja2 test '''
+    """ Ansible URI jinja2 test """
 
     def tests(self):
         return {

@@ -61,18 +61,18 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         return "BLOCK(uuid=%s)(id=%s)(parent=%s)" % (self._uuid, id(self), self._parent)
 
     def __eq__(self, other):
-        '''object comparison based on _uuid'''
+        """object comparison based on _uuid"""
         return self._uuid == other._uuid
 
     def __ne__(self, other):
-        '''object comparison based on _uuid'''
+        """object comparison based on _uuid"""
         return self._uuid != other._uuid
 
     def get_vars(self):
-        '''
+        """
         Blocks do not store variables directly, however they may be a member
         of a role or task include which does, so return those if present.
-        '''
+        """
 
         all_vars = {}
 
@@ -100,10 +100,10 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         return is_block
 
     def preprocess_data(self, ds):
-        '''
+        """
         If a simple task is given, an implicit block for that single task
         is created, which goes in the main portion of the block
-        '''
+        """
 
         if not Block.is_block(ds):
             if isinstance(ds, list):
@@ -219,10 +219,10 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         return new_me
 
     def serialize(self):
-        '''
+        """
         Override of the default serialize method, since when we're serializing
         a task we don't want to include the attribute list of tasks.
-        '''
+        """
 
         data = dict()
         for attr in self.fattributes:
@@ -240,10 +240,10 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         return data
 
     def deserialize(self, data):
-        '''
+        """
         Override of the default deserialize method, to match the above overridden
         serialize method
-        '''
+        """
 
         # import is here to avoid import loops
         from ansible.playbook.task_include import TaskInclude
@@ -290,9 +290,9 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
                 dep.set_loader(loader)
 
     def _get_parent_attribute(self, attr, omit=False):
-        '''
+        """
         Generic logic to get the attribute or parent attribute for a block value.
-        '''
+        """
         fattr = self.fattributes[attr]
 
         extend = fattr.extend
@@ -363,9 +363,9 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         return value
 
     def filter_tagged_tasks(self, all_vars):
-        '''
+        """
         Creates a new block, with task lists filtered based on the tags.
-        '''
+        """
 
         def evaluate_and_append_task(target):
             tmp_list = []
@@ -417,12 +417,12 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
             return dict()
 
     def all_parents_static(self):
-        '''
+        """
         Determine if all of the parents of this block were statically loaded
         or not. Since Task/TaskInclude objects may be in the chain, they simply
         call their parents all_parents_static() method. Only Block objects in
         the chain check the statically_loaded value of the parent.
-        '''
+        """
         from ansible.playbook.task_include import TaskInclude
         if self._parent:
             if isinstance(self._parent, TaskInclude) and not self._parent.statically_loaded:

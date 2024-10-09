@@ -145,7 +145,7 @@ def inversepower(x, base=2):
 
 
 def human_readable(size, isbits=False, unit=None):
-    ''' Return a human-readable string '''
+    """ Return a human-readable string """
     try:
         return formatters.bytes_to_human(size, isbits, unit)
     except TypeError as e:
@@ -155,7 +155,7 @@ def human_readable(size, isbits=False, unit=None):
 
 
 def human_to_bytes(size, default_unit=None, isbits=False):
-    ''' Return bytes count from a human-readable string '''
+    """ Return bytes count from a human-readable string """
     try:
         return formatters.human_to_bytes(size, default_unit, isbits)
     except TypeError as e:
@@ -215,7 +215,7 @@ def rekey_on_member(data, key, duplicates='error'):
 
 
 class FilterModule(object):
-    ''' Ansible math jinja2 filters '''
+    """ Ansible math jinja2 filters """
 
     def filters(self):
         filters = {

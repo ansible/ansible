@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: lineinfile
 short_description: Manage lines in text files
@@ -152,9 +152,9 @@ author:
     - Daniel Hokka Zakrissoni (@dhozac)
     - Ahti Kitsik (@ahtik)
     - Jose Angel Munoz (@imjoseangel)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 # NOTE: Before 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
 - name: Ensure SELinux is set to enforcing mode
   ansible.builtin.lineinfile:
@@ -237,9 +237,9 @@ EXAMPLES = r'''
     regexp: ^(host=).*
     line: \g<1>{{ hostname }}
     backrefs: yes
-'''
+"""
 
-RETURN = r'''#'''
+RETURN = r"""#"""
 
 import os
 import re
