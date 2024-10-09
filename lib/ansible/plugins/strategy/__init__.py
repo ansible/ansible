@@ -176,11 +176,11 @@ def debug_closure(func):
             _queued_task_args = self._queued_task_cache.pop((host.name, task._uuid), None)
             task_vars = _queued_task_args['task_vars']
             play_context = _queued_task_args['play_context']
-            # Try to grab the previous host state, if it doesn't exist use get_host_state to generate an empty state
+            # Try to grab the previous host state, if it doesn't exist use get_state_for_host to generate an empty state
             try:
                 prev_host_state = prev_host_states[host.name]
             except KeyError:
-                prev_host_state = iterator.get_host_state(host)
+                prev_host_state = iterator.get_state_for_host(host.name)
 
             while result.needs_debugger(globally_enabled=self.debugger_active):
                 next_action = NextAction()
@@ -311,7 +311,8 @@ class StrategyBase:
         # execute one more pass through the iterator without peeking, to
         # make sure that all of the hosts are advanced to their final task.
         # This should be safe, as everything should be IteratingStates.COMPLETE by
-        # this point, though the strategy may not advance the hosts itself.
+        # this point, though the strategy may not advance the hosts itself as it
+        # may just end operating once peeking at the next state shows IteratingStates.COMPLETE.
 
         for host in self._hosts_cache:
             if host not in self._tqm._unreachable_hosts:
@@ -583,8 +584,7 @@ class StrategyBase:
                 role_ran = True
                 ignore_errors = original_task.ignore_errors
                 if not ignore_errors:
-                    # save the current state before failing it for later inspection
-                    state_when_failed = iterator.get_state_for_host(original_host.name)
+                    rescued = iterator.is_any_block_rescuing(iterator.get_state_for_host(original_host.name))
                     display.debug("marking %s as failed" % original_host.name)
                     if original_task.run_once:
                         # if we're using run_once, we have to fail every host here
@@ -594,15 +594,13 @@ class StrategyBase:
                     else:
                         iterator.mark_host_failed(original_host)
 
-                    state, dummy = iterator.get_next_task_for_host(original_host, peek=True)
-
-                    if iterator.is_failed(original_host) and state and state.run_state == IteratingStates.COMPLETE:
+                    if iterator.is_failed(original_host):
                         self._tqm._failed_hosts[original_host.name] = True
 
                     # if we're iterating on the rescue portion of a block then
                     # we save the failed task in a special var for use
                     # within the rescue/always
-                    if iterator.is_any_block_rescuing(state_when_failed):
+                    if rescued:
                         self._tqm._stats.increment('rescued', original_host.name)
                         iterator._play._removed_hosts.remove(original_host.name)
                         self._variable_manager.set_nonpersistent_facts(
