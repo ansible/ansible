@@ -3,17 +3,17 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 - key: "value"wrong
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - key: "value"wrong
-'''
+"""
 
-RETURN = '''
+RETURN = """
 - key: "value"wrong
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 

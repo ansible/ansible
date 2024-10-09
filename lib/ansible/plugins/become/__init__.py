@@ -16,7 +16,7 @@ from ansible.plugins import AnsiblePlugin
 
 
 def _gen_id(length=32):
-    ''' return random string used to identify the current privilege escalation '''
+    """ return random string used to identify the current privilege escalation """
     return ''.join(choice(ascii_lowercase) for x in range(length))
 
 
@@ -83,14 +83,14 @@ class BecomeBase(AnsiblePlugin):
         return any(b_success in l.rstrip() for l in b_output.splitlines(True))
 
     def check_password_prompt(self, b_output):
-        ''' checks if the expected password prompt exists in b_output '''
+        """ checks if the expected password prompt exists in b_output """
         if self.prompt:
             b_prompt = to_bytes(self.prompt).strip()
             return any(l.strip().startswith(b_prompt) for l in b_output.splitlines())
         return False
 
     def _check_password_error(self, b_out, msg):
-        ''' returns True/False if domain specific i18n version of msg is found in b_out '''
+        """ returns True/False if domain specific i18n version of msg is found in b_out """
         b_fail = to_bytes(dgettext(self.name, msg))
         return b_fail and b_fail in b_out
 

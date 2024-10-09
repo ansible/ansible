@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: async_status
 short_description: Obtain status of asynchronous task
@@ -51,9 +51,9 @@ seealso:
 author:
 - Ansible Core Team
 - Michael DeHaan
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 ---
 - name: Asynchronous dnf task
   ansible.builtin.dnf:
@@ -75,9 +75,9 @@ EXAMPLES = r'''
   ansible.builtin.async_status:
     jid: '{{ dnf_sleeper.ansible_job_id }}'
     mode: cleanup
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 ansible_job_id:
   description: The asynchronous job id
   returned: success
@@ -105,7 +105,7 @@ erased:
   description: Path to erased job file
   returned: when file is erased
   type: str
-'''
+"""
 
 import json
 import os

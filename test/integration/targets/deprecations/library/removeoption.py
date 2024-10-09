@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: removeoption
 short_description: noop
@@ -42,17 +42,17 @@ attributes:
       support: none
     platform:
       platforms: all
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: useless
   remove_option:
     one: true
     two: /etc/file.conf
-'''
+"""
 
-RETURN = r'''
-'''
+RETURN = r"""
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 

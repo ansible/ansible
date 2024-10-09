@@ -57,10 +57,10 @@ def file_lock(lock_path):
 
 
 class ConnectionProcess(object):
-    '''
+    """
     The connection process wraps around a Connection object that manages
     the connection to a remote device that persists over the playbook
-    '''
+    """
     def __init__(self, fd, play_context, socket_path, original_path, task_uuid=None, ansible_playbook_pid=None):
         self.play_context = play_context
         self.socket_path = socket_path

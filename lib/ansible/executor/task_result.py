@@ -22,11 +22,11 @@ CLEAN_EXCEPTIONS = (
 
 
 class TaskResult:
-    '''
+    """
     This class is responsible for interpreting the resulting data
     from an executed task, and provides helper methods for determining
     the result of a given task.
-    '''
+    """
 
     def __init__(self, host, task, return_data, task_fields=None):
         self._host = host
@@ -93,7 +93,7 @@ class TaskResult:
         return ret
 
     def _check_key(self, key):
-        '''get a specific key from the result or its items'''
+        """get a specific key from the result or its items"""
 
         if isinstance(self._result, dict) and key in self._result:
             return self._result.get(key, False)
@@ -106,7 +106,7 @@ class TaskResult:
 
     def clean_copy(self):
 
-        ''' returns 'clean' taskresult object '''
+        """ returns 'clean' taskresult object """
 
         # FIXME: clean task_fields, _task and _host copies
         result = TaskResult(self._host, self._task, {}, self._task_fields)

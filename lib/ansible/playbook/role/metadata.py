@@ -32,10 +32,10 @@ __all__ = ['RoleMetadata']
 
 
 class RoleMetadata(Base, CollectionSearch):
-    '''
+    """
     This class wraps the parsing and validation of the optional metadata
     within each Role (meta/main.yml).
-    '''
+    """
 
     allow_duplicates = NonInheritableFieldAttribute(isa='bool', default=False)
     dependencies = NonInheritableFieldAttribute(isa='list', default=list)
@@ -48,9 +48,9 @@ class RoleMetadata(Base, CollectionSearch):
 
     @staticmethod
     def load(data, owner, variable_manager=None, loader=None):
-        '''
+        """
         Returns a new RoleMetadata object based on the datastructure passed in.
-        '''
+        """
 
         if not isinstance(data, dict):
             raise AnsibleParserError("the 'meta/main.yml' for role %s is not a dictionary" % owner.get_name())
@@ -59,10 +59,10 @@ class RoleMetadata(Base, CollectionSearch):
         return m
 
     def _load_dependencies(self, attr, ds):
-        '''
+        """
         This is a helper loading function for the dependencies list,
         which returns a list of RoleInclude objects
-        '''
+        """
 
         roles = []
         if ds:

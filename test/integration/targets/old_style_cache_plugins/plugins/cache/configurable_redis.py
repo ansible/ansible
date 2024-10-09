@@ -3,7 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     cache: configurable_redis
     short_description: Use Redis DB for cache
     description:
@@ -38,7 +38,7 @@ DOCUMENTATION = '''
           - key: fact_caching_timeout
             section: defaults
         type: integer
-'''
+"""
 
 import time
 import json

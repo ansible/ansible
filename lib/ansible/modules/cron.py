@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: cron
 short_description: Manage cron.d and crontab entries
@@ -150,9 +150,9 @@ attributes:
     platform:
         support: full
         platforms: posix
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Ensure a job that runs at 2 and 5 exists. Creates an entry like "0 5,2 * * ls -alh > /dev/null"
   ansible.builtin.cron:
     name: "check dirs"
@@ -205,9 +205,9 @@ EXAMPLES = r'''
     name: APP_HOME
     env: yes
     state: absent
-'''
+"""
 
-RETURN = r'''#'''
+RETURN = r"""#"""
 
 import os
 import platform

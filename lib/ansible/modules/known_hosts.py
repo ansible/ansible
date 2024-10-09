@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: known_hosts
 short_description: Add or remove a host from the C(known_hosts) file
@@ -65,9 +65,9 @@ extends_documentation_fragment:
   - action_common_attributes
 author:
 - Matthew Vernon (@mcv21)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Tell the host about our servers it might want to ssh to
   ansible.builtin.known_hosts:
     path: /etc/ssh/ssh_known_hosts
@@ -87,7 +87,7 @@ EXAMPLES = r'''
     key: '[host1.example.com]:2222 ssh-rsa ASDeararAIUHI324324' # some key gibberish
     path: /etc/ssh/ssh_known_hosts
     state: present
-'''
+"""
 
 # Makes sure public host keys are present or absent in the given known_hosts
 # file.
@@ -195,13 +195,13 @@ def enforce_state(module, params):
 
 
 def sanity_check(module, host, key, sshkeygen):
-    '''Check supplied key is sensible
+    """Check supplied key is sensible
 
     host and key are parameters provided by the user; If the host
     provided is inconsistent with the key supplied, then this function
     quits, providing an error to the user.
     sshkeygen is the path to ssh-keygen, found earlier with get_bin_path
-    '''
+    """
     # If no key supplied, we're doing a removal, and have nothing to check here.
     if not key:
         return
@@ -232,7 +232,7 @@ def sanity_check(module, host, key, sshkeygen):
 
 
 def search_for_host_key(module, host, key, path, sshkeygen):
-    '''search_for_host_key(module,host,key,path,sshkeygen) -> (found,replace_or_add,found_line)
+    """search_for_host_key(module,host,key,path,sshkeygen) -> (found,replace_or_add,found_line)
 
     Looks up host and keytype in the known_hosts file path; if it's there, looks to see
     if one of those entries matches key. Returns:
@@ -241,7 +241,7 @@ def search_for_host_key(module, host, key, path, sshkeygen):
     found_line (int or None): the line where a key of the same type was found
     if found=False, then replace is always False.
     sshkeygen is the path to ssh-keygen, found earlier with get_bin_path
-    '''
+    """
     if os.path.exists(path) is False:
         return False, False, None
 
@@ -304,14 +304,14 @@ def hash_host_key(host, key):
 
 
 def normalize_known_hosts_key(key):
-    '''
+    """
     Transform a key, either taken from a known_host file or provided by the
     user, into a normalized form.
     The host part (which might include multiple hostnames or be hashed) gets
     replaced by the provided host. Also, any spurious information gets removed
     from the end (like the username@host tag usually present in hostkeys, but
     absent in known_hosts files)
-    '''
+    """
     key = key.strip()  # trim trailing newline
     k = key.split()
     d = dict()

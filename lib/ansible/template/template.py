@@ -23,12 +23,12 @@ __all__ = ['AnsibleJ2Template']
 
 
 class AnsibleJ2Template(NativeTemplate):
-    '''
+    """
     A helper class, which prevents Jinja2 from running AnsibleJ2Vars through dict().
     Without this, {% include %} and similar will create new contexts unlike the special
     one created in Templar.template. This ensures they are all alike, except for
     potential locals.
-    '''
+    """
 
     def new_context(self, vars=None, shared=False, locals=None):
         if vars is None:

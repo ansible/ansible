@@ -10,7 +10,7 @@ from ansible.module_utils.common.warnings import deprecate
 
 
 def get_bin_path(arg, opt_dirs=None, required=None):
-    '''
+    """
     Find system executable in PATH. Raises ValueError if the executable is not found.
 
     :param arg: the executable to find
@@ -24,7 +24,7 @@ def get_bin_path(arg, opt_dirs=None, required=None):
 
     In addition to PATH and opt_dirs, this function also looks through /sbin, /usr/sbin and /usr/local/sbin. A lot of
     modules, especially for gathering facts, depend on this behaviour.
-    '''
+    """
     if required is not None:
         deprecate(
             msg="The `required` parameter in `get_bin_path` API is deprecated.",

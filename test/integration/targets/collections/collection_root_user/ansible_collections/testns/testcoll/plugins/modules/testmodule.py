@@ -3,13 +3,13 @@ from __future__ import annotations
 
 import json
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 module: testmodule
 description: for testing
 extends_documentation_fragment:
   - testns.testcoll.frag
   - testns.testcoll.frag.other_documentation
-'''
+"""
 
 
 def main():

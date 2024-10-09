@@ -23,7 +23,7 @@ from .. base import BaseFactsTest
 
 from ansible.module_utils.facts.other.ohai import OhaiFactCollector
 
-ohai_json_output = r'''
+ohai_json_output = r"""
 {
   "kernel": {
     "name": "Linux",
@@ -6717,7 +6717,7 @@ ohai_json_output = r'''
   "cloud_v2": null,
   "cloud": null
 }
-'''  # noqa
+"""  # noqa
 
 
 class TestOhaiCollector(BaseFactsTest):

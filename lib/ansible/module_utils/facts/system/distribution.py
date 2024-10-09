@@ -46,7 +46,7 @@ def _file_exists(path, allow_empty=False):
 
 
 class DistributionFiles:
-    '''has-a various distro file parsers (os-release, etc) and logic for finding the right one.'''
+    """has-a various distro file parsers (os-release, etc) and logic for finding the right one."""
     # every distribution name mentioned here, must have one of
     #  - allowempty == True
     #  - be listed in SEARCH_STRING

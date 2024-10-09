@@ -29,10 +29,10 @@ from ansible.vars.manager import VarsWithSources
 
 
 class AnsibleDumper(SafeDumper):
-    '''
+    """
     A simple stub class that allows us to add representers
     for our overridden object types.
-    '''
+    """
 
 
 def represent_hostvars(self, data):

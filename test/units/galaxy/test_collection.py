@@ -64,7 +64,7 @@ def collection_input(tmp_path_factory, collection_path_suffix):
 
 @pytest.fixture()
 def collection_artifact(monkeypatch, tmp_path_factory):
-    ''' Creates a temp collection artifact and mocked open_url instance for publishing tests '''
+    """ Creates a temp collection artifact and mocked open_url instance for publishing tests """
     mock_open = MagicMock()
     monkeypatch.setattr(collection.concrete_artifact_manager, 'open_url', mock_open)
 
@@ -97,7 +97,7 @@ def galaxy_yml_dir(request, tmp_path_factory):
 
 @pytest.fixture()
 def tmp_tarfile(tmp_path_factory, manifest_info):
-    ''' Creates a temporary tar file for _extract_tar_file tests '''
+    """ Creates a temporary tar file for _extract_tar_file tests """
     filename = u'ÅÑŚÌβŁÈ'
     temp_dir = to_bytes(tmp_path_factory.mktemp('test-%s Collections' % to_native(filename)))
     tar_file = os.path.join(temp_dir, to_bytes('%s.tar.gz' % filename))

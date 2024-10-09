@@ -26,7 +26,7 @@ display = Display()
 
 
 class InventoryCLI(CLI):
-    ''' used to display or dump the configured inventory as Ansible sees it '''
+    """ used to display or dump the configured inventory as Ansible sees it """
 
     name = 'ansible-inventory'
 

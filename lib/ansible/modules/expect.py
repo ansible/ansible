@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: expect
 version_added: '2.0'
@@ -83,9 +83,9 @@ seealso:
 - module: ansible.builtin.script
 - module: ansible.builtin.shell
 author: "Matt Martz (@sivel)"
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Case insensitive password string match
   ansible.builtin.expect:
     command: passwd username
@@ -116,7 +116,7 @@ EXAMPLES = r'''
             - "{{ db_username }}"
         "Database password":
             - "{{ db_password }}"
-'''
+"""
 
 import datetime
 import os

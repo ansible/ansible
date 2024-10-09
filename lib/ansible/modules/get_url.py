@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: get_url
 short_description: Downloads files from HTTP, HTTPS, or FTP to node
@@ -219,9 +219,9 @@ seealso:
 - module: ansible.windows.win_get_url
 author:
 - Jan-Piet Mens (@jpmens)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Download foo.conf
   ansible.builtin.get_url:
     url: http://example.com/path/file.conf
@@ -272,9 +272,9 @@ EXAMPLES = r'''
     dest: /etc/foo.conf
     username: bar
     password: '{{ mysecret }}'
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 backup_file:
     description: name of backup file created after download
     returned: changed and if backup=yes
@@ -365,7 +365,7 @@ url:
     returned: always
     type: str
     sample: https://www.ansible.com/
-'''
+"""
 
 import email.message
 import os

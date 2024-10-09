@@ -3,19 +3,19 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: bad
 short_description: Bad test module
 description: Bad test module.
 author:
   - Ansible Core Team
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - bad:
-'''
+"""
 
-RETURN = ''''''
+RETURN = """"""
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible import constants  # intentionally trigger pylint ansible-bad-module-import error  # pylint: disable=unused-import

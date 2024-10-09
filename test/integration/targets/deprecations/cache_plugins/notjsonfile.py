@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     cache: notjsonfile
     short_description: NotJSON cache plugin
     description: This cache uses is NOT JSON
@@ -66,7 +66,7 @@ DOCUMENTATION = '''
             version: '2.0.0'
         env:
           - name: ANSIBLE_NOTJSON_CACHE_PLUGIN_REMOVEME
-'''
+"""
 
 from ansible.plugins.cache import BaseFileCacheModule
 

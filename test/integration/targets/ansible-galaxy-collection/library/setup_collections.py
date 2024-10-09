@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: setup_collections
 short_description: Set up test collections based on the input
@@ -57,9 +57,9 @@ options:
         default: '{}'
 author:
 - Jordan Borean (@jborean93)
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Build test collections
   setup_collections:
     path: ~/ansible/collections/ansible_collections
@@ -70,11 +70,11 @@ EXAMPLES = '''
     - namespace: namespace1
       name: name1
       version: 0.0.2
-'''
+"""
 
-RETURN = '''
+RETURN = """
 #
-'''
+"""
 
 import datetime
 import os

@@ -132,12 +132,12 @@ class ModuleArgsParser:
         self.resolved_action = None
 
     def _split_module_string(self, module_string):
-        '''
+        """
         when module names are expressed like:
         action: copy src=a dest=b
         the first part of the string is the name of the module
         and the rest are strings pertaining to the arguments.
-        '''
+        """
 
         tokens = split_args(module_string)
         if len(tokens) > 1:
@@ -146,9 +146,9 @@ class ModuleArgsParser:
             return (tokens[0].strip(), "")
 
     def _normalize_parameters(self, thing, action=None, additional_args=None):
-        '''
+        """
         arguments can be fuzzy.  Deal with all the forms.
-        '''
+        """
 
         additional_args = {} if additional_args is None else additional_args
 
@@ -205,7 +205,7 @@ class ModuleArgsParser:
         return (action, final_args)
 
     def _normalize_new_style_args(self, thing, action):
-        '''
+        """
         deals with fuzziness in new style module invocations
         accepting key=value pairs and dictionaries, and returns
         a dictionary of arguments
@@ -215,7 +215,7 @@ class ModuleArgsParser:
             {'region': 'xyz'}, 'ec2'
         standardized outputs like:
             { _raw_params: 'echo hi', _uses_shell: True }
-        '''
+        """
 
         if isinstance(thing, dict):
             # form is like: { xyz: { x: 2, y: 3 } }
@@ -232,7 +232,7 @@ class ModuleArgsParser:
         return args
 
     def _normalize_old_style_args(self, thing):
-        '''
+        """
         deals with fuzziness in old-style (action/local_action) module invocations
         returns tuple of (module_name, dictionary_args)
 
@@ -242,7 +242,7 @@ class ModuleArgsParser:
            {'module': 'ec2', 'x': 1 }
         standardized outputs like:
            ('ec2', { 'x': 1} )
-        '''
+        """
 
         action = None
         args = None
@@ -270,11 +270,11 @@ class ModuleArgsParser:
         return (action, args)
 
     def parse(self, skip_action_validation=False):
-        '''
+        """
         Given a task in one of the supported forms, parses and returns
         returns the action, arguments, and delegate_to values for the
         task, dealing with all sorts of levels of fuzziness.
-        '''
+        """
 
         thing = None
 

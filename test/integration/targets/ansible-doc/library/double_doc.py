@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 name: double_doc
 description:
     - module also uses 'DOCUMENTATION' in class
-'''
+"""
 
 
 class Foo:

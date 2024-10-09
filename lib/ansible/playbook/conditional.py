@@ -29,10 +29,10 @@ display = Display()
 
 
 class Conditional:
-    '''
+    """
     This is a mix-in class, to be used with Base to allow the object
     to be run conditionally when a condition is met or skipped.
-    '''
+    """
 
     when = FieldAttribute(isa='list', default=list, extend=True, prepend=True)
 
@@ -52,10 +52,10 @@ class Conditional:
             setattr(self, name, [value])
 
     def evaluate_conditional(self, templar: Templar, all_vars: dict[str, t.Any]) -> bool:
-        '''
+        """
         Loops through the conditionals set on this object, returning
         False if any of them evaluate as such.
-        '''
+        """
         return self.evaluate_conditional_with_result(templar, all_vars)[0]
 
     def evaluate_conditional_with_result(self, templar: Templar, all_vars: dict[str, t.Any]) -> tuple[bool, t.Optional[str]]:

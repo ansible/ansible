@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: shell
 short_description: Execute shell commands on targets
@@ -99,9 +99,9 @@ seealso:
 author:
     - Ansible Core Team
     - Michael DeHaan
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Execute the command in remote shell; stdout goes to the specified file on the remote
   ansible.builtin.shell: somescript.sh >> somelog.txt
 
@@ -150,9 +150,9 @@ EXAMPLES = r'''
   args:
     executable: /usr/bin/expect
   delegate_to: localhost
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 msg:
     description: changed
     returned: always
@@ -203,4 +203,4 @@ stderr_lines:
     returned: always
     type: list
     sample: [u'ls cannot access foo: No such file or directory', u'ls …']
-'''
+"""

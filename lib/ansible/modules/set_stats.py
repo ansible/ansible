@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: set_stats
 short_description: Define and display stats for the current ansible run
@@ -56,9 +56,9 @@ notes:
     - In order for custom stats to be displayed, you must set C(show_custom_stats) in section C([defaults]) in C(ansible.cfg)
       or by defining environment variable C(ANSIBLE_SHOW_CUSTOM_STATS) to V(true). See the P(ansible.builtin.default#callback) callback plugin for details.
 version_added: "2.3"
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Aggregating packages_installed stat per host
   ansible.builtin.set_stats:
     data:
@@ -78,4 +78,4 @@ EXAMPLES = r'''
     data:
       the_answer: 42
     aggregate: no
-'''
+"""

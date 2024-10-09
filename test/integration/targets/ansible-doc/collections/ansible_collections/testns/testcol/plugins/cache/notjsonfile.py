@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     cache: notjsonfile
     short_description: JSON formatted files.
     description:
@@ -55,7 +55,7 @@ DOCUMENTATION = '''
         type: integer
     extends_documentation_fragment:
         - testns.testcol2.plugin
-'''
+"""
 
 from ansible.plugins.cache import BaseFileCacheModule
 

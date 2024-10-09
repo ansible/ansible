@@ -104,9 +104,9 @@ class LookupBase(AnsiblePlugin):
         pass
 
     def find_file_in_search_path(self, myvars, subdir, needle, ignore_missing=False):
-        '''
+        """
         Return a file (needle) in the task's expected search path.
-        '''
+        """
 
         if 'ansible_search_path' in myvars:
             paths = myvars['ansible_search_path']

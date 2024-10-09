@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 author: 'Ansible Core Team (@ansible)'
 short_description: 'Add and remove deb822 formatted repositories'
 description:
@@ -145,9 +145,9 @@ options:
 requirements:
     - python3-debian / python-debian
 version_added: '2.15'
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Add debian repo
   deb822_repository:
     name: debian
@@ -189,9 +189,9 @@ EXAMPLES = '''
     components: stable
     architectures: amd64
     signed_by: https://download.example.com/linux/ubuntu/gpg
-'''
+"""
 
-RETURN = '''
+RETURN = """
 repo:
   description: A source string for the repository
   returned: always
@@ -224,7 +224,7 @@ key_filename:
   returned: always
   type: str
   sample: /etc/apt/keyrings/debian.gpg
-'''
+"""
 
 import os
 import re

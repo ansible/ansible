@@ -37,12 +37,12 @@ DEFAULT_PASSWORD_LENGTH = 20
 
 
 def random_password(length=DEFAULT_PASSWORD_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS, seed=None):
-    '''Return a random password string of length containing only chars
+    """Return a random password string of length containing only chars
 
     :kwarg length: The number of characters in the new password.  Defaults to 20.
     :kwarg chars: The characters to choose from.  The default is all ascii
         letters, ascii digits, and these symbols ``.,:-_``
-    '''
+    """
     if not isinstance(chars, text_type):
         raise AnsibleAssertionError('%s (%s) is not a text_type' % (chars, type(chars)))
 

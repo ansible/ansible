@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: command
 short_description: Execute commands on targets
@@ -118,9 +118,9 @@ seealso:
 author:
     - Ansible Core Team
     - Michael DeHaan
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Return motd to registered var
   ansible.builtin.command: cat /etc/motd
   register: mymotd
@@ -174,9 +174,9 @@ EXAMPLES = r'''
 - name: Safely use templated variable to run command. Always use the quote filter to avoid injection issues
   ansible.builtin.command: cat {{ myfile|quote }}
   register: myoutput
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 msg:
   description: changed
   returned: always
@@ -229,7 +229,7 @@ stderr_lines:
   returned: always
   type: list
   sample: [u'ls cannot access foo: No such file or directory', u'ls …']
-'''
+"""
 
 import datetime
 import glob

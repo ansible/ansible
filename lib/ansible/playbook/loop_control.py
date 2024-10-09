@@ -40,8 +40,8 @@ class LoopControl(FieldAttributeBase):
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def _post_validate_break_when(self, attr, value, templar):
-        '''
+        """
         break_when is evaluated after the execution of the loop is complete,
         and should not be templated during the regular post_validate step.
-        '''
+        """
         return value

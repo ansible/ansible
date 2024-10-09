@@ -164,7 +164,7 @@ class ShellBase(AnsiblePlugin):
         return cmd
 
     def expand_user(self, user_home_path, username=''):
-        ''' Return a command to expand tildes in a path
+        """ Return a command to expand tildes in a path
 
         It can be either "~" or "~username". We just ignore $HOME
         We use the POSIX definition of a username:
@@ -172,7 +172,7 @@ class ShellBase(AnsiblePlugin):
             http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap03.html#tag_03_276
 
             Falls back to 'current working directory' as we assume 'home is where the remote user ends up'
-        '''
+        """
 
         # Check that the user_path to expand is safe
         if user_home_path != '~':

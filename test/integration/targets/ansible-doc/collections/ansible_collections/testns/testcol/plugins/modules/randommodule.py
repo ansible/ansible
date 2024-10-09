@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: randommodule
 short_description: A random module
@@ -73,12 +73,12 @@ notes:
       This is just another line in the second paragraph.
       Eventually this will break into a new line,
       depending with which line width this is rendered.
-'''
+"""
 
-EXAMPLES = '''
-'''
+EXAMPLES = """
+"""
 
-RETURN = r'''
+RETURN = r"""
 z_last:
     description: A last result.
     type: str
@@ -103,7 +103,7 @@ a_first:
     description: A first result. Use RV(a_first=foo\(bar\\baz\)bam).
     type: str
     returned: success
-'''
+"""
 
 
 from ansible.module_utils.basic import AnsibleModule

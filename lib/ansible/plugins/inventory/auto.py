@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: auto
     author:
       - Matt Davis (@nitzmahone)
@@ -14,12 +14,12 @@ DOCUMENTATION = '''
           C(plugin) key at its root will automatically cause the named plugin to be loaded and executed with that
           config. This effectively provides automatic enabling of all installed/accessible inventory plugins.
         - To disable this behavior, remove C(auto) from the C(INVENTORY_ENABLED) config element.
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 # This plugin is not intended for direct use; it is a fallback mechanism for automatic enabling of
 # all installed inventory plugins.
-'''
+"""
 
 from ansible.errors import AnsibleParserError
 from ansible.plugins.inventory import BaseInventoryPlugin

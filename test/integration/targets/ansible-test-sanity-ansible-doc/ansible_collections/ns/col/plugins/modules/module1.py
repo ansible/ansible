@@ -3,20 +3,20 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: module1
 short_description: Hello test module
 description: Hello test module.
 options: {}
 author:
   - Ansible Core Team
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - minimal:
-'''
+"""
 
-RETURN = ''''''
+RETURN = """"""
 
 from ansible.module_utils.basic import AnsibleModule
 

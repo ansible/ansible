@@ -34,7 +34,7 @@ class ActionModule(ActionBase):
     DEFAULT_NEWLINE_SEQUENCE = "\n"
 
     def run(self, tmp=None, task_vars=None):
-        ''' handler for template operations '''
+        """ handler for template operations """
 
         if task_vars is None:
             task_vars = dict()

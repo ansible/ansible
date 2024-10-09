@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: unarchive
 version_added: '1.4'
@@ -150,9 +150,9 @@ seealso:
 - module: community.general.iso_extract
 - module: community.windows.win_unzip
 author: Michael DeHaan
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Extract foo.tgz into /var/lib/foo
   ansible.builtin.unarchive:
     src: foo.tgz
@@ -177,9 +177,9 @@ EXAMPLES = r'''
     extra_opts:
     - --transform
     - s/^xxx/yyy/
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 dest:
   description: Path to the destination directory.
   returned: always
@@ -237,7 +237,7 @@ uid:
   returned: always
   type: int
   sample: 1000
-'''
+"""
 
 import binascii
 import codecs
@@ -280,7 +280,7 @@ SIZE_DIFF_RE = re.compile(r': Size differs$')
 
 
 def crc32(path, buffer_size):
-    ''' Return a CRC32 checksum of a file '''
+    """ Return a CRC32 checksum of a file """
 
     crc = binascii.crc32(b'')
     with open(path, 'rb') as f:
@@ -290,7 +290,7 @@ def crc32(path, buffer_size):
 
 
 def shell_escape(string):
-    ''' Quote meta-characters in the args for the unix shell '''
+    """ Quote meta-characters in the args for the unix shell """
     return re.sub(r'([^A-Za-z0-9_])', r'\\\1', string)
 
 
@@ -321,7 +321,7 @@ class ZipArchive(object):
         )
 
     def _permstr_to_octal(self, modestr, umask):
-        ''' Convert a Unix permission string (rw-r--r--) into a mode (0644) '''
+        """ Convert a Unix permission string (rw-r--r--) into a mode (0644) """
         revstr = modestr[::-1]
         mode = 0
         for j in range(0, 3):

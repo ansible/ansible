@@ -7,7 +7,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_reboot
 short_description: Reboot a windows machine
@@ -79,9 +79,9 @@ seealso:
 - module: reboot
 author:
 - Matt Davis (@nitzmahone)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Reboot the machine with all defaults
   win_reboot:
 
@@ -115,9 +115,9 @@ EXAMPLES = r'''
 - name: Validate that the netlogon service has started, before running the next task
   win_reboot:
     test_command: 'exit (Get-Service -Name Netlogon).Status -ne "Running"'
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 rebooted:
   description: True if the machine was rebooted.
   returned: always
@@ -128,4 +128,4 @@ elapsed:
   returned: always
   type: float
   sample: 23.2
-'''
+"""

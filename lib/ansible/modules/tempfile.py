@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: tempfile
 version_added: "2.3"
@@ -53,7 +53,7 @@ seealso:
 - module: ansible.windows.win_tempfile
 author:
   - Krzysztof Magosa (@krzysztof-magosa)
-'''
+"""
 
 EXAMPLES = """
 - name: Create temporary build directory
@@ -80,13 +80,13 @@ EXAMPLES = """
   when: tempfile_1.path is defined
 """
 
-RETURN = '''
+RETURN = """
 path:
   description: Path to created file or directory.
   returned: success
   type: str
   sample: "/tmp/ansible.bMlvdk"
-'''
+"""
 
 from os import close
 from tempfile import mkstemp, mkdtemp

@@ -6,16 +6,16 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: module
 short_description: module to test module_defaults
 description: module to test module_defaults
 version_added: '2.13'
-'''
+"""
 
-EXAMPLES = r'''
-'''
+EXAMPLES = r"""
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 

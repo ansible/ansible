@@ -2,7 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 name: cmd
 version_added: '2.8'
 short_description: Windows Command Prompt
@@ -10,7 +10,7 @@ description:
 - Used with the 'ssh' connection plugin and no C(DefaultShell) has been set on the Windows host.
 extends_documentation_fragment:
 - shell_windows
-'''
+"""
 
 import re
 

@@ -21,7 +21,7 @@ from ansible.module_utils.six import string_types
 
 
 class ActionModule(ActionBase):
-    ''' Create inventory groups based on variables '''
+    """ Create inventory groups based on variables """
 
     # We need to be able to modify the inventory
     TRANSFERS_FILES = False

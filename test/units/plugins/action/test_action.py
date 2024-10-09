@@ -359,9 +359,9 @@ class TestActionBase(unittest.TestCase):
                 execute=execute)
 
         def get_shell_option_for_arg(args_kv, default):
-            '''A helper for get_shell_option. Returns a function that, if
+            """A helper for get_shell_option. Returns a function that, if
             called with ``option`` that exists in args_kv, will return the
-            value, else will return ``default`` for every other given arg'''
+            value, else will return ``default`` for every other given arg"""
             def _helper(option, *args, **kwargs):
                 return args_kv.get(option, default)
             return _helper
@@ -855,10 +855,10 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
     def test_json_facts_add_host(self):
         action_base = _action_base()
         rc = 0
-        stdout = '''{"ansible_facts": {"foo": "bar", "ansible_blip": "blip_value"},
+        stdout = """{"ansible_facts": {"foo": "bar", "ansible_blip": "blip_value"},
         "add_host": {"host_vars": {"some_key": ["whatever the add_host object is"]}
         }
-        }\n'''
+        }\n"""
         err = ''
 
         returned_data = {'rc': rc,

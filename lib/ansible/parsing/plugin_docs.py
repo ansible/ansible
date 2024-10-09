@@ -24,19 +24,19 @@ string_to_vars = {
 
 
 def _var2string(value):
-    ''' reverse lookup of the dict above '''
+    """ reverse lookup of the dict above """
     for k, v in string_to_vars.items():
         if v == value:
             return k
 
 
 def _init_doc_dict():
-    ''' initialize a return dict for docs with the expected structure '''
+    """ initialize a return dict for docs with the expected structure """
     return {k: None for k in string_to_vars.values()}
 
 
 def read_docstring_from_yaml_file(filename, verbose=True, ignore_errors=True):
-    ''' Read docs from 'sidecar' yaml file doc for a plugin '''
+    """ Read docs from 'sidecar' yaml file doc for a plugin """
 
     data = _init_doc_dict()
     file_data = {}
@@ -168,7 +168,7 @@ def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
 
 
 def read_docstring(filename, verbose=True, ignore_errors=True):
-    ''' returns a documentation dictionary from Ansible plugin docstrings '''
+    """ returns a documentation dictionary from Ansible plugin docstrings """
 
     # NOTE: adjacency of doc file to code file is responsibility of caller
     if filename.endswith(C.YAML_DOC_EXTENSIONS):

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     vars: noop_vars_plugin
     short_description: Do NOT load host and group vars
     description: don't test loading host and group vars from a collection
@@ -16,7 +16,7 @@ DOCUMENTATION = '''
           - name: ANSIBLE_VARS_PLUGIN_STAGE
     extends_documentation_fragment:
         - testns.testcol2.deprecation
-'''
+"""
 
 from ansible.plugins.vars import BaseVarsPlugin
 

@@ -21,7 +21,7 @@ from os.path import isdir, isfile, isabs, exists, lexists, islink, samefile, ism
 
 
 class TestModule(object):
-    ''' Ansible file jinja2 tests '''
+    """ Ansible file jinja2 tests """
 
     def tests(self):
         return {

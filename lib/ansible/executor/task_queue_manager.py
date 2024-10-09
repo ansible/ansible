@@ -112,7 +112,7 @@ class AnsibleEndPlay(Exception):
 
 class TaskQueueManager:
 
-    '''
+    """
     This class handles the multiprocessing requirements of Ansible by
     creating a pool of worker forks, a result handler fork, and a
     manager object with shared datastructures/queues for coordinating
@@ -120,7 +120,7 @@ class TaskQueueManager:
 
     The queue manager is responsible for loading the play strategy plugin,
     which dispatches the Play's tasks to hosts.
-    '''
+    """
 
     RUN_OK = 0
     RUN_ERROR = 1
@@ -176,11 +176,11 @@ class TaskQueueManager:
             self._workers.append(None)
 
     def load_callbacks(self):
-        '''
+        """
         Loads all available callbacks, with the exception of those which
         utilize the CALLBACK_TYPE option. When CALLBACK_TYPE is set to 'stdout',
         only one such callback plugin will be loaded.
-        '''
+        """
 
         if self._callbacks_loaded:
             return
@@ -269,13 +269,13 @@ class TaskQueueManager:
         self._callbacks_loaded = True
 
     def run(self, play):
-        '''
+        """
         Iterates over the roles/tasks in a play, using the given (or default)
         strategy for queueing tasks. The default is the linear strategy, which
         operates like classic Ansible by keeping all hosts in lock-step with
         a given task (meaning no hosts move on to the next task until all hosts
         are done with the current task).
-        '''
+        """
 
         if not self._callbacks_loaded:
             self.load_callbacks()

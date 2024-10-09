@@ -535,7 +535,7 @@ class Display(metaclass=Singleton):
         date: str | None = None,
         collection_name: str | None = None,
     ) -> str:
-        ''' used to print out a deprecation message.'''
+        """ used to print out a deprecation message."""
         msg = msg.strip()
         if msg and msg[-1] not in ['!', '?', '.']:
             msg += '.'
@@ -614,9 +614,9 @@ class Display(metaclass=Singleton):
 
     @_proxy
     def banner(self, msg: str, color: str | None = None, cows: bool = True) -> None:
-        '''
+        """
         Prints a header-looking line with cowsay or stars with length depending on terminal width (3 minimum)
-        '''
+        """
         msg = to_text(msg)
 
         if self.b_cowsay and cows:
