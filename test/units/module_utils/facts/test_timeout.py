@@ -83,8 +83,8 @@ def test_implicit_file_default_timesout(monkeypatch):
     monkeypatch.setattr(timeout, 'DEFAULT_GATHER_TIMEOUT', 1)
     # sleep_time is greater than the default
     sleep_time = timeout.DEFAULT_GATHER_TIMEOUT + 1
-    with pytest.raises(timeout.TimeoutError):
-        assert sleep_amount_implicit(sleep_time) == '(Not expected to succeed)'
+    with pytest.raises(timeout.TimeoutError, match="Timer expired after"):
+        sleep_amount_implicit(sleep_time)
 
 
 def test_implicit_file_overridden_succeeds(set_gather_timeout_higher):
@@ -96,8 +96,8 @@ def test_implicit_file_overridden_succeeds(set_gather_timeout_higher):
 def test_implicit_file_overridden_timesout(set_gather_timeout_lower):
     # Set sleep_time greater than our new timeout but less than the default
     sleep_time = 3
-    with pytest.raises(timeout.TimeoutError):
-        assert sleep_amount_implicit(sleep_time) == '(Not expected to Succeed)'
+    with pytest.raises(timeout.TimeoutError, match="Timer expired after"):
+        sleep_amount_implicit(sleep_time)
 
 
 def test_explicit_succeeds(monkeypatch):
@@ -110,8 +110,8 @@ def test_explicit_succeeds(monkeypatch):
 def test_explicit_timeout():
     # Set sleep_time greater than our new timeout but less than the default
     sleep_time = 3
-    with pytest.raises(timeout.TimeoutError):
-        assert sleep_amount_explicit_lower(sleep_time) == '(Not expected to succeed)'
+    with pytest.raises(timeout.TimeoutError, match="Timer expired after"):
+        sleep_amount_explicit_lower(sleep_time)
 
 
 #

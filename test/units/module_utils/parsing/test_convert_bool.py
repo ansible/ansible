@@ -15,8 +15,8 @@ class TestBoolean:
         assert boolean(False) is False
 
     def test_none(self):
-        with pytest.raises(TypeError):
-            assert boolean(None, strict=True) is False
+        with pytest.raises(TypeError, match="The value 'None' is not"):
+            boolean(None, strict=True)
         assert boolean(None, strict=False) is False
 
     def test_numbers(self):
@@ -45,14 +45,14 @@ class TestBoolean:
         assert boolean(object(), strict=False) is False
 
     def test_junk_values_strict(self):
-        with pytest.raises(TypeError):
-            assert boolean("flibbity", strict=True) is False
+        with pytest.raises(TypeError, match="The value 'flibbity' is not"):
+            boolean("flibbity", strict=True)
 
-        with pytest.raises(TypeError):
-            assert boolean(42, strict=True) is False
+        with pytest.raises(TypeError, match="The value '42' is not"):
+            boolean(42, strict=True)
 
-        with pytest.raises(TypeError):
-            assert boolean(42.0, strict=True) is False
+        with pytest.raises(TypeError, match="The value '42.0' is not"):
+            boolean(42.0, strict=True)
 
-        with pytest.raises(TypeError):
-            assert boolean(object(), strict=True) is False
+        with pytest.raises(TypeError, match="The value '<object object"):
+            boolean(object(), strict=True)
