@@ -1,0 +1,11 @@
+bugfixes:
+  - Set new default Vault method to take the place of the, now deemed week, AES256 method.
+  - Added extra validation for certain Vault parameters.
+  - Vault's salt configuration had it's documentation updated to clarify scope and usage.
+  - When writing vault output to stdout and it is a tty, ensure we line break to avoid message overlap.
+minor_changes:
+  - Created a configuration to select the Vault method to use for encryption.
+    The old AES256 method can still be chosen, for backwards compatibility.
+  - The ``vault`` filter plugin now accepts an optional ``method_name`` to specify the encryption method.
+  - Internal vault API were changed to streamline vault method updates in the future.
+  - Encapsulated ciphertext handling into the vault methods, mitigating the need for future changes to the API.

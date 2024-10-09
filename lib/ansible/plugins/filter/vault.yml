@@ -17,7 +17,7 @@ DOCUMENTATION:
       required: true
     salt:
       description:
-        - Encryption salt, will be random if not provided.
+        - Encryption salt for the methods that support it (only AES256), if not provided it will be randomly generated.
         - While providing one makes the resulting encrypted string reproducible, it can lower the security of the vault.
       type: string
     vault_id:
@@ -30,6 +30,10 @@ DOCUMENTATION:
         - Mostly useful when combining with the C(to_yaml) filter to output the 'inline vault' format.
       type: bool
       default: False
+    method_name:
+      description: If set, overrides the default vault method for the provided one, the method name must match an existing Ansible vault method.
+      type: string
+      version_added: '2.18'
 
 EXAMPLES: |
   # simply encrypt my key in a vault

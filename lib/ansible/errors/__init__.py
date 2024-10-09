@@ -57,7 +57,15 @@ class AnsibleError(Exception):
         self._suppress_extended_error = suppress_extended_error
         self._message = to_native(message)
         self.obj = obj
-        self.orig_exc = orig_exc
+        self._orig_exc = orig_exc
+
+    @property
+    def orig_exc(self) -> BaseException | None:
+        return self.__cause__ or self._orig_exc
+
+    @orig_exc.setter
+    def orig_exc(self, value: BaseException | None) -> None:
+        self._orig_exc = value
 
     @property
     def message(self):

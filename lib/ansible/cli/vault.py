@@ -74,9 +74,11 @@ class VaultCLI(CLI):
 
         # For encrypting actions, we can also specify which of multiple vault ids should be used for encrypting
         vault_id = opt_help.ArgumentParser(add_help=False)
-        vault_id.add_argument('--encrypt-vault-id', default=[], dest='encrypt_vault_id',
+        vault_id.add_argument('--encrypt-vault-id', dest='encrypt_vault_id',
                               action='store', type=str,
                               help='the vault id used to encrypt (required if more than one vault-id is provided)')
+        vault_id.add_argument('--vault-method', action='store', dest='vault_method', choices=C.config.get_config_choices('VAULT_METHOD'),
+                              help='the vault method used to encrypt, defaults to the configured method')
 
         create_parser = subparsers.add_parser('create', help='Create new vault encrypted file', parents=[vault_id, common])
         create_parser.set_defaults(func=self.execute_create)
@@ -177,12 +179,8 @@ class VaultCLI(CLI):
 
         if action in ['encrypt', 'encrypt_string', 'create']:
 
-            encrypt_vault_id = None
-            # no --encrypt-vault-id context.CLIARGS['encrypt_vault_id'] for 'edit'
-            if action not in ['edit']:
-                encrypt_vault_id = context.CLIARGS['encrypt_vault_id'] or C.DEFAULT_VAULT_ENCRYPT_IDENTITY
+            encrypt_vault_id = context.CLIARGS['encrypt_vault_id'] or C.DEFAULT_VAULT_ENCRYPT_IDENTITY
 
-            vault_secrets = None
             vault_secrets = \
                 self.setup_vault_secrets(loader,
                                          vault_ids=vault_ids,

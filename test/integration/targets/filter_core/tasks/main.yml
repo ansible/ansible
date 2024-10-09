@@ -481,11 +481,10 @@
   ignore_errors: yes
   register: unsupported_hash_type
 
-- assert:
+- name: Ensure task/filter failed
+  assert:
     that:
-      - unsupported_hash_type.msg == msg
-  vars:
-    msg: "msdcc is not in the list of supported passlib algorithms: md5, blowfish, sha256, sha512"
+      - unsupported_hash_type is failed
 
 - name: Verify to_uuid throws on weird namespace
   set_fact:

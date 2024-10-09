@@ -645,26 +645,18 @@ class ConfigManager(object):
             # deal with restricted values
             if value is not None and 'choices' in defs[config] and defs[config]['choices'] is not None:
                 invalid_choices = True  # assume the worst!
+                choices = self._get_choices(defs[config])
+
                 if defs[config].get('type') == 'list':
                     # for a list type, compare all values in type are allowed
-                    invalid_choices = not all(choice in defs[config]['choices'] for choice in value)
+                    invalid_choices = bool(set(value).difference(choices))
                 else:
                     # these should be only the simple data types (string, int, bool, float, etc) .. ignore dicts for now
-                    invalid_choices = value not in defs[config]['choices']
+                    invalid_choices = value not in choices
 
                 if invalid_choices:
-
-                    if isinstance(defs[config]['choices'], Mapping):
-                        valid = ', '.join([to_text(k) for k in defs[config]['choices'].keys()])
-                    elif isinstance(defs[config]['choices'], string_types):
-                        valid = defs[config]['choices']
-                    elif isinstance(defs[config]['choices'], Sequence):
-                        valid = ', '.join([to_text(c) for c in defs[config]['choices']])
-                    else:
-                        valid = defs[config]['choices']
-
                     raise AnsibleOptionsError('Invalid value "%s" for configuration option "%s", valid values are: %s' %
-                                              (value, to_native(_get_entry(plugin_type, plugin_name, config)), valid))
+                                              (value, to_native(_get_entry(plugin_type, plugin_name, config)), ','.join(choices)))
 
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':
@@ -673,6 +665,23 @@ class ConfigManager(object):
             raise AnsibleError('Requested entry (%s) was not defined in configuration.' % to_native(_get_entry(plugin_type, plugin_name, config)))
 
         return value, origin
+
+    def _get_choices(self, mydef):
+
+        choices = None
+        if 'choices' in mydef:
+            if isinstance(mydef['choices'], Mapping):
+                choices = list(mydef['choices'].keys())
+            elif isinstance(mydef['choices'], string_types):
+                choices = [mydef['choices']]
+            elif isinstance(mydef['choices'], Sequence):
+                choices = mydef['choices']
+        return choices
+
+    def get_config_choices(self, config, cfile=None, plugin_type=None, plugin_name=None):
+
+        defs = self.get_configuration_definitions(plugin_type=plugin_type, name=plugin_name)
+        return self._get_choices(defs[config])
 
     def initialize_plugin_configuration_definitions(self, plugin_type, name, defs):
 

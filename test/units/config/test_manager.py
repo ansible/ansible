@@ -72,6 +72,12 @@ ensure_unquoting_test_data = [
     ('""value""', '"value"', 'str', cfg_file, 'ini')
 ]
 
+choice_test_data = [
+    ('TEST_1', {'description': 'test_1', 'choices': ['a', 'b', 'c']}, ['a', 'b', 'c']),
+    ('TEST_2', {'description': 'test_2', 'choices': {'x': 1, 'y': 2, 'z': 3}}, ['x', 'y', 'z']),
+    ('TEST_3', {'description': 'test_3'}, None),
+]
+
 
 class TestConfigManager:
     @classmethod
@@ -154,6 +160,13 @@ class TestConfigManager:
 
         actual_value = ensure_type(vault_var, value_type)
         assert actual_value == "vault text"
+
+    @pytest.mark.parametrize('value', choice_test_data)
+    def test_get_choices(self, value):
+        config, config_def, expected_choices = value
+        self.manager._base_defs[config] = config_def
+        choices = self.manager.get_config_choices(config)
+        assert choices == expected_choices
 
 
 @pytest.mark.parametrize(("key", "expected_value"), (
