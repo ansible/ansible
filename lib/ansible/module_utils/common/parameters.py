@@ -89,6 +89,7 @@ PASS_VARS = {
     'diff': ('_diff', False),
     'keep_remote_files': ('_keep_remote_files', False),
     'ignore_unknown_opts': ('_ignore_unknown_opts', False),
+    'live_updates': ('live', None),
     'module_name': ('_name', None),
     'no_log': ('no_log', False),
     'remote_tmp': ('_remote_tmp', None),
@@ -103,7 +104,7 @@ PASS_VARS = {
     'version': ('ansible_version', '0.0'),
 }
 
-PASS_BOOLS = ('check_mode', 'debug', 'diff', 'keep_remote_files', 'ignore_unknown_opts', 'no_log')
+PASS_BOOLS = ('check_mode', 'debug', 'diff', 'keep_remote_files', 'ignore_unknown_opts', 'live', 'no_log')
 
 DEFAULT_TYPE_VALIDATORS = {
     'str': check_type_str,

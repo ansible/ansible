@@ -23,7 +23,7 @@ from ansible.executor.module_common import modify_module
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.errors import UnsupportedError
-from ansible.module_utils.json_utils import _filter_non_json_lines
+from ansible.module_utils.json_utils import _consume_json
 from ansible.module_utils.six import binary_type, string_types, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
@@ -300,6 +300,7 @@ class ActionBase(ABC):
                                                                             async_timeout=self._task.async_val,
                                                                             environment=final_environment,
                                                                             remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
+                                                                            live_updates=bool(self._task.live),
                                                                             **become_kwargs)
                 break
             except InterpreterDiscoveryRequiredError as idre:
@@ -944,6 +945,7 @@ class ActionBase(ABC):
             if not self._supports_check_mode:
                 raise AnsibleError("check mode is not supported for this operation")
             module_args['_ansible_check_mode'] = True
+
         else:
             module_args['_ansible_check_mode'] = False
 
@@ -994,6 +996,9 @@ class ActionBase(ABC):
 
         # make sure the remote_tmp value is sent through in case modules needs to create their own
         module_args['_ansible_remote_tmp'] = self.get_shell_option('remote_tmp', default='~/.ansible/tmp')
+
+        # enable live updates
+        module_args['_ansible_live_updates'] = self._task.live
 
         # tells the module to ignore options that are not in its argspec.
         module_args['_ansible_ignore_unknown_opts'] = ignore_unknown_opts
@@ -1153,7 +1158,7 @@ class ActionBase(ABC):
             self._fixup_perms2(remote_files, self._get_remote_user())
 
         # actually execute
-        res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data)
+        res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data, live=bool(self._task.live))
 
         # parse the main result
         data = self._parse_returned_data(res)
@@ -1216,7 +1221,7 @@ class ActionBase(ABC):
 
     def _parse_returned_data(self, res):
         try:
-            filtered_output, warnings = _filter_non_json_lines(res.get('stdout', u''), objects_only=True)
+            filtered_output, warnings = _consume_json(res.get('stdout', u''), objects_only=True)
             for w in warnings:
                 display.warning(w)
 
@@ -1265,7 +1270,7 @@ class ActionBase(ABC):
         return data
 
     # FIXME: move to connection base
-    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None):
+    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None, live=False):
         '''
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to

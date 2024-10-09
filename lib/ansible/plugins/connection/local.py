@@ -65,7 +65,7 @@ class Connection(ConnectionBase):
             self._connected = True
         return self
 
-    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
+    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True, live: bool = False) -> tuple[int, bytes, bytes]:
         ''' run a command on the local host '''
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
@@ -113,13 +113,13 @@ class Connection(ConnectionBase):
             os.close(stdin)
 
         display.debug("done running command with Popen()")
+        selector = selectors.DefaultSelector()
+        selector.register(p.stdout, selectors.EVENT_READ)
+        selector.register(p.stderr, selectors.EVENT_READ)
 
         if self.become and self.become.expect_prompt() and sudoable:
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
-            selector = selectors.DefaultSelector()
-            selector.register(p.stdout, selectors.EVENT_READ)
-            selector.register(p.stderr, selectors.EVENT_READ)
 
             become_output = b''
             try:
@@ -139,8 +139,9 @@ class Connection(ConnectionBase):
                         stdout, stderr = p.communicate()
                         raise AnsibleError('privilege output closed while waiting for password prompt:\n' + to_native(become_output))
                     become_output += chunk
-            finally:
+            except BaseException:
                 selector.close()
+                raise
 
             if not self.become.check_success(become_output):
                 become_pass = self.become.get_option('become_pass', playcontext=self._play_context)
@@ -152,8 +153,39 @@ class Connection(ConnectionBase):
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
 
-        display.debug("getting output with communicate()")
-        stdout, stderr = p.communicate(in_data)
+        display.debug("starting update loop")
+
+        stdout = b''
+        stdout_done = False
+        stderr = b''
+        stderr_done = False
+
+        while True:
+            events = selector.select(1)
+            for key, event in events:
+                output = b''
+                if key.fileobj == p.stdout:
+                    output = os.read(p.stdout.fileno(), 9000)
+                    if output == b'':
+                        stdout_done = True
+                        selector.unregister(p.stdout)
+                    stdout += output
+                elif key.fileobj == p.stderr:
+                    output = os.read(p.stderr.fileno(), 9000)
+                    if output == b'':
+                        stderr_done = True
+                        selector.unregister(p.stderr)
+                    stderr += output
+
+                is_update, rest = self._handle_updates(output)
+                if is_update:
+                    stdout = rest or b''
+
+            # Exit if the process has closed both fds and the process has
+            # finished
+            if stdout_done and stderr_done and p.poll() is not None:
+                break
+
         display.debug("done communicating")
 
         # finally, close the other half of the pty, if it was created

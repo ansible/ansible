@@ -7,6 +7,8 @@ from __future__ import annotations
 import collections.abc as c
 import fcntl
 import io
+import gettext
+import json
 import os
 import shlex
 import typing as t
@@ -17,6 +19,9 @@ from functools import wraps
 from ansible import constants as C
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.playbook.play_context import PlayContext
+from ansible.errors import AnsibleError
+from ansible.module_utils.json_utils import _filter_non_json_lines
+from ansible.module_utils.six import string_types
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.become import BecomeBase
 from ansible.plugins.shell import ShellBase
@@ -242,6 +247,25 @@ class ConnectionBase(AnsiblePlugin):
         f = self._play_context.connection_lockfd
         fcntl.lockf(f, fcntl.LOCK_UN)
         display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
+
+    def _handle_updates(self, data):
+
+        is_update = False
+        rest_data = ''
+        if b'_ansible_update' in data:
+            # consume update data
+            try:
+                updates, rest_data = _filter_non_json_lines(str(data))
+            except ValueError:
+                # improper json, incomplete, ignore try later
+                updates = None
+
+            if updates and updates.strip():
+                is_update = True
+                # TODO: once callbacks are expanded use those instead of restricting
+                display.display('[U]: <%s> %s' % (self._play_context.remote_addr, updates), color=C.COLOR_DEPRECATE, screen_only=True)
+
+        return is_update, to_bytes(rest_data)
 
     def reset(self) -> None:
         display.warning("Reset is not implemented for this connection")
