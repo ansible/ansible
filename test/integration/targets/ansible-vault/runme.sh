@@ -578,7 +578,7 @@ ansible-playbook symlink.yml "$@" --vault-password-file symlink/get-password-sym
 
 ### NEGATIVE TESTS
 
-ER='Attempting to decrypt'
+ER='Attempted to decrypt'
 #### no secrets
 # 'real script'
 ansible-playbook realpath.yml "$@" 2>&1 |grep "${ER}"
