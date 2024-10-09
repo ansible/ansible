@@ -337,7 +337,8 @@ class StrategyModule(StrategyBase):
                                 iterator.mark_host_failed(host)
                         self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
                         result |= self._tqm.RUN_FAILED_BREAK_PLAY
-                    display.debug('(%s failed / %s total )> %s max fail' % (len(self._tqm._failed_hosts), iterator.batch_size, percentage))
+                        display.debug('(%s failed / %s total )> %s max fail' % (len(self._tqm._failed_hosts), iterator.batch_size, percentage))
+                        return result
                 display.debug("done checking for max_fail_percentage")
 
                 display.debug("checking to see if all hosts have failed and the running result is not ok")
