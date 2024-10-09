@@ -28,7 +28,7 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
+def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None, allow_bare_tasks=True):
     '''
     Given a list of mixed task/block data (parsed from YAML),
     return a list of Block() objects, where implicit blocks
@@ -51,6 +51,8 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
             # squash them down to a single block to save processing time later.
             implicit_blocks = []
             while block_ds is not None and not Block.is_block(block_ds):
+                if not allow_bare_tasks:
+                    raise AnsibleParserError("Bare tasks are not allowed in this list of blocks.", obj=block_ds)
                 implicit_blocks.append(block_ds)
                 i += 1
                 # Advance the iterator, so we don't repeat
@@ -92,6 +94,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
     from ansible.playbook.task_include import TaskInclude
     from ansible.playbook.role_include import IncludeRole
     from ansible.playbook.handler_task_include import HandlerTaskInclude
+    from ansible.playbook.run_block import RunBlock
     from ansible.template import Templar
 
     if not isinstance(ds, list):
@@ -290,6 +293,9 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 else:
                     # passes task object itself for latter generation of list
                     task_list.append(ir)
+            elif action == 'run_block':
+                t = RunBlock.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
+                task_list.append(t)
             else:
                 if use_handlers:
                     t = Handler.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)

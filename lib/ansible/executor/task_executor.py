@@ -556,6 +556,10 @@ class TaskExecutor:
             include_args = self._task.args.copy()
             return dict(include_args=include_args)
 
+        # likewise if this is a run_block, we just return now with success
+        elif self._task.action == 'run_block':
+            return dict(run_block_args=self._task.args.copy())
+
         # Now we do final validation on the task, which sets all fields to their final values.
         try:
             self._task.post_validate(templar=templar)

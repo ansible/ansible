@@ -47,6 +47,7 @@ from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
+from ansible.playbook.run_block import RunBlock
 from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import loader as plugin_loader
@@ -643,7 +644,29 @@ class StrategyBase:
                 else:
                     result_items = [task_result._result]
 
+                new_blocks = []
                 for result_item in result_items:
+                    if isinstance(original_task, RunBlock) and 'skipped' not in result_item:
+                        # If this is a RunBlock task, we try and find the matching named block and
+                        # add that block to the iterator tasks for the given host
+                        target_name = original_task.args.get('name')
+                        for nb in original_task.play.named_blocks:
+                            if nb.name == target_name:
+                                # make a copy of the block, update required fields
+                                nb_copy = nb.copy()
+                                nb_copy._parent = original_task
+                                # if we had a loop, we need to merge the loop variables for this item into
+                                # the copied block vars so we have access to the loop_var later
+                                if original_task.loop:
+                                    nb_copy.vars.update(_get_item_vars(result_item, original_task))
+                                # and we copy in the vars from the task to the block to pass arguments
+                                nb_copy.vars.update(original_task.vars)
+                                # and append the named block to the new blocks list
+                                new_blocks.append(nb_copy)
+                                break
+                        else:
+                            raise AnsibleError("The named block '%s' was not found." % target_name)
+
                     if '_ansible_notify' in result_item and task_result.is_changed():
                         # only ensure that notified handlers exist, if so save the notifications for when
                         # handlers are actually flushed so the last defined handlers are executed,
@@ -752,11 +775,20 @@ class StrategyBase:
                                 else:
                                     self._tqm._stats.set_custom_stats(k, data[k], myhost)
 
+                if len(new_blocks):
+                    # update the iterator with the copied block and break out of the loop
+                    iterator.add_tasks(original_host, new_blocks)
+                    all_blocks = []
+                    for b in new_blocks:
+                        all_blocks.extend(b.get_tasks())
+                    iterator.all_tasks[iterator.cur_task:iterator.cur_task] = all_blocks
+
+
                 if 'diff' in task_result._result:
                     if self._diff or getattr(original_task, 'diff', False):
                         self._tqm.send_callback('v2_on_file_diff', task_result)
 
-                if not isinstance(original_task, TaskInclude):
+                if not isinstance(original_task, (TaskInclude, RunBlock)):
                     self._tqm._stats.increment('ok', original_host.name)
                     if 'changed' in task_result._result and task_result._result['changed']:
                         self._tqm._stats.increment('changed', original_host.name)
