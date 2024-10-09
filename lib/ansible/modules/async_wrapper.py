@@ -66,10 +66,9 @@ def daemonize_self():
         e = sys.exc_info()[1]
         end({'msg': "fork #2 failed: %d (%s)\n" % (e.errno, e.strerror), 'failed': True}, 1)
 
-    dev_null = open('/dev/null', 'w')
-    os.dup2(dev_null.fileno(), sys.stdin.fileno())
-    os.dup2(dev_null.fileno(), sys.stdout.fileno())
-    os.dup2(dev_null.fileno(), sys.stderr.fileno())
+    dev_null = open(os.devnull, 'w')
+    for fh in (sys.stdin, sys.stdout, sys.stderr):
+        os.dup2(dev_null.fileno(), fh.fileno())
 
 
 # NB: this function copied from module_utils/json_utils.py. Ensure any changes are propagated there.

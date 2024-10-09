@@ -35,6 +35,7 @@ import platform
 import select
 import shlex
 import subprocess
+import sys
 import traceback
 
 from ansible.module_utils.six import PY2, b
@@ -131,12 +132,13 @@ def fork_process():
         fd = os.open(os.devnull, os.O_RDWR)
 
         # clone stdin/out/err
-        for num in range(3):
+        file_nos = (sys.stdin.fileno(), sys.stdout.fileno(), sys.stderr.fileno())
+        for num in file_nos:
             if fd != num:
                 os.dup2(fd, num)
 
         # close otherwise
-        if fd not in range(3):
+        if fd not in file_nos:
             os.close(fd)
 
         # Make us a daemon

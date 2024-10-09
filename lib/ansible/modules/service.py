@@ -165,6 +165,7 @@ import re
 import select
 import shlex
 import subprocess
+import sys
 import tempfile
 import time
 
@@ -265,13 +266,12 @@ class Service(object):
             os.close(pipe[0])
             # Set stdin/stdout/stderr to /dev/null
             fd = os.open(os.devnull, os.O_RDWR)
-            if fd != 0:
-                os.dup2(fd, 0)
-            if fd != 1:
-                os.dup2(fd, 1)
-            if fd != 2:
-                os.dup2(fd, 2)
-            if fd not in (0, 1, 2):
+            file_nos = (sys.stdin.fileno(), sys.stdout.fileno(), sys.stderr.fileno())
+            for num in file_nos:
+                if fd != num:
+                    os.dup2(fd, num)
+
+            if fd not in file_nos:
                 os.close(fd)
 
             # Make us a daemon. Yes, that's all it takes.
