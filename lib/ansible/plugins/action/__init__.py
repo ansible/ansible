@@ -218,7 +218,7 @@ class ActionBase(ABC):
             return True
         return False
 
-    def _configure_module(self, module_name, module_args, task_vars):
+    def _configure_module(self, module_name, module_args, task_vars, wrap_async: bool = False):
         '''
         Handles the loading and templating of the module code through the
         modify_module() function.
@@ -276,7 +276,7 @@ class ActionBase(ABC):
             raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
 
         # insert shared code and arguments into the module
-        final_environment = dict()
+        final_environment: dict = dict()
         self._compute_environment_string(final_environment)
 
         become_kwargs = {}
@@ -298,6 +298,7 @@ class ActionBase(ABC):
                                                                             module_compression=C.config.get_config_value('DEFAULT_MODULE_COMPRESSION',
                                                                                                                          variables=task_vars),
                                                                             async_timeout=self._task.async_val,
+                                                                            wrap_async=wrap_async,
                                                                             environment=final_environment,
                                                                             remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
                                                                             **become_kwargs)
@@ -1047,7 +1048,12 @@ class ActionBase(ABC):
             self._task.environment.append({"ANSIBLE_ASYNC_DIR": async_dir})
 
         # FUTURE: refactor this along with module build process to better encapsulate "smart wrapper" functionality
-        (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
+        (module_style, shebang, module_data, module_path) = self._configure_module(
+            module_name=module_name,
+            module_args=module_args,
+            task_vars=task_vars,
+            wrap_async=wrap_async,
+        )
         display.vvv("Using module file %s" % module_path)
         if not shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)

@@ -1,0 +1,2 @@
+bugfixes:
+- gather_facts - Fix up parallel fact gathering for Windows modules - https://github.com/ansible/ansible/issues/83219

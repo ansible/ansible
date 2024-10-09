@@ -152,7 +152,7 @@ class ActionModule(ActionBase):
                 # FUTURE: use a more public method to get the exec payload
                 pc = self._task
                 exec_data = ps_manifest._create_powershell_wrapper(
-                    to_bytes(script_cmd), source, {}, env_dict, self._task.async_val,
+                    to_bytes(script_cmd), source, {}, env_dict, self._task.async_val, False,
                     pc.become, pc.become_method, pc.become_user,
                     self._play_context.become_pass, pc.become_flags, "script", task_vars, None
                 )

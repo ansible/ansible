@@ -78,6 +78,10 @@ class ShellBase(AnsiblePlugin):
     def env_prefix(self, **kwargs):
         return ' '.join(['%s=%s' % (k, self.quote(text_type(v))) for k, v in kwargs.items()])
 
+    def dirname(self, path: str) -> str:
+        """Gets the parent directory for the provided path."""
+        return os.path.dirname(path)
+
     def join_path(self, *args):
         return os.path.join(*args)
 

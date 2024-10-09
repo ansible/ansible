@@ -1,0 +1,11 @@
+- name: gather multiple facts
+  ansible.builtin.gather_facts:
+  vars:
+    ansible_facts_modules:
+    - smart
+    - win_other_facts
+
+- name: assert gather multiple facts
+  assert:
+    that:
+    - ansible_facts['other'] == 'foo'
