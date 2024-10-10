@@ -9,6 +9,60 @@ from ansible.module_utils.six import string_types
 
 """
 Utilities to create module/plugin specs from their documentation.
+
+# example usage:
+
+    #prep
+    argpsec = get_options_from_docs(doc.get('options', {}))
+    restrictions = get_restrictions_from_doc(doc.get('restrictions', {}))
+
+    # do
+    validated = validate_spec(argspec, restrictions, task_params)
+
+    # error handle
+    if valided.error_messages:
+        raise ActionFail({'msg': 'Validation of arguments failed:\n%s' % '\n'.join(validated.error_messages), 'argument_errors': validatec.error_messages})
+
+    # get info
+    final_params = valided.validated_parameters
+    no_log_values = valided._no_log_values
+    aliases = validated._aliases
+
+'''
+example of DOCUMENTATION with requirements:
+
+    options:
+         ...jkk
+    notes:
+         ...
+    requirements:
+         ...
+    restrictions:
+        # mutually_exclusive
+       - description: You cannot use 'a' and 'b' at the same time
+         exclusive: a, b
+       - description: You cannot use 'c' and 'x' at the same time
+         exclusive: c, x
+
+        # required_together
+       - description: 'a' and 'b' required together
+         together: a, b
+
+        # required_one_of
+       - description: at least one of a or b is required
+         one_of: a, b
+
+         # required_if
+       - description: if x is set to y, a,b and c are required
+         required: [a,b,c]
+         if: x
+         equals: y
+
+         # required_by
+       - required: x
+         description: x is required if b or c are set
+         by: [b,c]
+'''
 """
 
 ARGS_DOCS_KEYS = ("aliases", "choices", "default", "elements", "no_log", "required", "type")
@@ -107,63 +161,3 @@ def validate_spec(spec, restrictions, task_args):
 def validate_spec_from_plugin(plugin):
     # take plugin object (name?), get docs and process with above
     pass
-
-
-e1 = """
-# example usage:
-
-        #prep
-        argpsec = get_options_from_docs(doc.get('options', {}))
-        restrictions = get_restrictions_from_doc(doc.get('restrictions', {}))
-
-        # do
-        validated = validate_spec(argspec, restrictions, task_params)
-
-        # error handle
-        if valided.error_messages:
-            raise ActionFail({'msg': 'Validation of arguments failed:\n%s' % '\n'.join(validated.error_messages), 'argument_errors': validatec.error_messages})
-
-        # get info
-        final_params = valided.validated_parameters
-        no_log_values = valided._no_log_values
-        aliases = validated._aliases
-
-"""
-
-# TODO: attributes = {}
-# add_attributes(attributes, doc['ATTRIBUTES'])
-
-e2 = """
-# example of DOCUMENTATION with requirements:
-options:
-     ...jkk
-notes:
-     ...
-requirements:
-     ...
-restrictions:
-    # mutually_exclusive
-   - description: You cannot use 'a' and 'b' at the same time
-     exclusive: a, b
-   - description: You cannot use 'c' and 'x' at the same time
-     exclusive: c, x
-
-    # required_together
-   - description: 'a' and 'b' required together
-     together: a, b
-
-    # required_one_of
-   - description: at least one of a or b is required
-     one_of: a, b
-
-     # required_if
-   - description: if x is set to y, a,b and c are required
-     required: [a,b,c]
-     if: x
-     equals: y
-
-     # required_by
-   - required: x
-     description: x is required if b or c are set
-     by: [b,c]
-"""
