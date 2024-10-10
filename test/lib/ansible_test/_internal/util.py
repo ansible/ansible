@@ -930,14 +930,7 @@ class SubprocessError(ApplicationError):
         error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
     ) -> None:
         message = 'Command "%s" returned exit status %s.\n' % (shlex.join(cmd), status)
-
-        if stderr:
-            message += '>>> Standard Error\n'
-            message += '%s%s\n' % (stderr.strip(), Display.clear)
-
-        if stdout:
-            message += '>>> Standard Output\n'
-            message += '%s%s\n' % (stdout.strip(), Display.clear)
+        message += format_command_output(stdout, stderr)
 
         self.cmd = cmd
         self.message = message
@@ -979,6 +972,21 @@ class HostConnectionError(ApplicationError):
         """Run the error callback, if any."""
         if self._callback:
             self._callback()
+
+
+def format_command_output(stdout: str, stderr: str) -> str:
+    """Return a formatted string containing the given stdout and stderr (if any)."""
+    message = ''
+
+    if stderr := stderr.strip():
+        message += '>>> Standard Error\n'
+        message += f'{stderr}{Display.clear}\n'
+
+    if stdout := stdout.strip():
+        message += '>>> Standard Output\n'
+        message += f'{stdout}{Display.clear}\n'
+
+    return message
 
 
 def retry(func: t.Callable[..., TValue], ex_type: t.Type[BaseException] = SubprocessError, sleep: int = 10, attempts: int = 10, warn: bool = True) -> TValue:
