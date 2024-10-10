@@ -2,32 +2,42 @@
 *.py[co]
 build
 AUTHORS.TXT
+
 # Emacs backup and autosave files...
 *~
 .\#*
 \#*
+
 # RPM stuff...
 MANIFEST
 dist
 rpm-build
+
 # Eclipse/PyDev stuff...
 .project
 .pydevproject
+
 # PyCharm stuff...
 .idea
+
 #IntelliJ IDEA stuff..
 *.iml
+
 #VSCode stuff..
 .vscode/
+
 # Mac OS X stuff...
 .DS_Store
+
 # manpage build stuff...
 docs/man/man1/ansible*.1
 docs/man/man1/ansible*.1.asciidoc.in
 docs/man/man3/*
+
 # Sublime stuff
 *.sublime-project
 *.sublime-workspace
+
 # docsite stuff...
 docs/docsite/_build
 docs/docsite/*.html
@@ -53,11 +63,13 @@ docs/docsite/searchindex.js
 docs/docsite/_static/*.gif
 docs/docsite/_static/*.png
 docs/docsite/_static/websupport.js
+
 # Vim swap files
 *.swp
 *.swo
 [._]*.un~
 credentials.yml
+
 # test output
 *.retry
 *.out
@@ -71,8 +83,10 @@ coverage.xml
 /test/integration/inventory
 /test/integration/targets/*/backup/
 /test/cache/*
+
 # Development
 /test/develop
+
 # Environments
 .env
 .venv
@@ -85,22 +99,30 @@ venv
 env
 Vagrantfile
 .vagrant
+
 # Backwards compatibility with `stable-2.9` and earlier branches.
+
 # Also used in the `devel` branch during early Ansible 2.10 development.
 /lib/ansible.egg-info/
+
 # First used in the `devel` branch during Ansible 2.10 development.
 /lib/ansible_base.egg-info/
+
 # First used in the `devel` branch during Ansible 2.11 development.
 /lib/ansible_core.egg-info/
+
 # First used in the `devel` branch during Ansible 2.18 development.
 /ansible_core.egg-info/
+
 # vendored lib dir
 lib/ansible/_vendor/*
 !lib/ansible/_vendor/__init__.py
+
 # test stuff
 /test/integration/cloud-config-*.*
 !/test/integration/cloud-config-*.*.template
 .python-version
+
 # Release directory
 packaging/release/ansible_release
 /.cache/
@@ -110,14 +132,19 @@ packaging/release/ansible_release
 /test/integration/inventory.winrm
 /test/integration/cloud-config-aws.yml
 /test/integration/cloud-config-cs.ini
+
 # python 'rope' stuff
 .ropeproject
+
 # local 'ack' config files
 .ackrc
+
 # default 'coverage html' results
 htmlcov/
+
 # default 'coverage' tool data
 .coverage
+
 # ansible-test coverage results
 test/units/.coverage.*
 /test/integration/cloud-config-azure.yml
