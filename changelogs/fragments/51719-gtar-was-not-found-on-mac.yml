@@ -1,0 +1,2 @@
+bugfixes:
+  - unarchive - fix gtar not found on MacOS caused by a missing path, ``/usr/local/bin`` (https://github.com/ansible/ansible/pull/84102)

@@ -930,7 +930,10 @@ class TgzArchive(object):
     def can_handle_archive(self):
         # Prefer gtar (GNU tar) as it supports the compression options -z, -j and -J
         try:
-            self.cmd_path = get_bin_path('gtar')
+            if platform.system() == 'Darwin':
+                self.cmd_path = get_bin_path('gtar', ['/usr/local/bin'])
+            else:
+                self.cmd_path = get_bin_path('gtar')
         except ValueError:
             # Fallback to tar
             try:

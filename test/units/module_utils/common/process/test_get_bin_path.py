@@ -27,6 +27,22 @@ def test_get_bin_path(mocker):
     assert '/usr/local/bin/notacommand' == get_bin_path('notacommand')
 
 
+def test_get_bin_path_usr_local_bin_not_in_env(mocker):
+    path = '/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin'
+    mocker.patch.dict('os.environ', {'PATH': path})
+    mocker.patch('os.pathsep', ':')
+
+    mocker.patch('os.path.isdir', return_value=False)
+    mocker.patch('ansible.module_utils.common.process.is_executable', return_value=True)
+
+    def mock_path_exists(path):
+        return path in ('/usr/local/bin', '/usr/local/bin/notacommand')
+
+    mocker.patch('os.path.exists', return_value=mock_path_exists)
+
+    assert '/usr/local/bin/notacommand' == get_bin_path('notacommand', ['/usr/local/bin'])
+
+
 def test_get_path_path_raise_valueerror(mocker):
     mocker.patch.dict('os.environ', {'PATH': ''})
 
