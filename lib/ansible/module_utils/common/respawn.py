@@ -6,6 +6,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import typing as t
 
 from ansible.module_utils.common.text.converters import to_bytes
 
@@ -14,7 +15,7 @@ def has_respawned():
     return hasattr(sys.modules['__main__'], '_respawned')
 
 
-def respawn_module(interpreter_path):
+def respawn_module(interpreter_path) -> t.NoReturn:
     """
     Respawn the currently-running Ansible Python module under the specified Python interpreter.
 
