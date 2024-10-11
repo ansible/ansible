@@ -10,49 +10,53 @@ from ansible.module_utils.parsing.convert_bool import boolean
 
 
 class TestBoolean:
-    def test_bools(self):
-        assert boolean(True) is True
-        assert boolean(False) is False
+    @pytest.mark.parametrize("test,expected", [
+        (True, True),
+        (False, False),
+        (1, True),
+        (0, False),
+        (0.0, False),
+    ])
+    def test_numbers(self, test, expected):
+        assert boolean(test) is expected
 
-    def test_none(self):
-        with pytest.raises(TypeError, match="The value 'None' is not"):
-            boolean(None, strict=True)
-        assert boolean(None, strict=False) is False
+    @pytest.mark.skip(reason="Current boolean() doesn't consider these to be true values")
+    @pytest.mark.parametrize("test", [
+        (2),
+        (-1),
+        (0.1),
+    ])
+    def test_other_numbers(self, test):
+        assert boolean(test) is True
 
-    def test_numbers(self):
-        assert boolean(1) is True
-        assert boolean(0) is False
-        assert boolean(0.0) is False
+    @pytest.mark.parametrize("test", [
+        ("true"),
+        ("TRUE"),
+        ("t"),
+        ("yes"),
+        ("y"),
+        ("on"),
+    ])
+    def test_strings(self, test):
+        assert boolean(test) is True
 
-# Current boolean() doesn't consider these to be true values
-#    def test_other_numbers(self):
-#        assert boolean(2) is True
-#        assert boolean(-1) is True
-#        assert boolean(0.1) is True
+    @pytest.mark.parametrize("test,expected", [
+        ("flibbity", False),
+        (42, False),
+        (42.0, False),
+        (object(), False),
+        (None, False),
+    ])
+    def test_junk_values_nonstrict(self, test, expected):
+        assert boolean(test, strict=False) is expected
 
-    def test_strings(self):
-        assert boolean("true") is True
-        assert boolean("TRUE") is True
-        assert boolean("t") is True
-        assert boolean("yes") is True
-        assert boolean("y") is True
-        assert boolean("on") is True
-
-    def test_junk_values_nonstrict(self):
-        assert boolean("flibbity", strict=False) is False
-        assert boolean(42, strict=False) is False
-        assert boolean(42.0, strict=False) is False
-        assert boolean(object(), strict=False) is False
-
-    def test_junk_values_strict(self):
-        with pytest.raises(TypeError, match="The value 'flibbity' is not"):
-            boolean("flibbity", strict=True)
-
-        with pytest.raises(TypeError, match="The value '42' is not"):
-            boolean(42, strict=True)
-
-        with pytest.raises(TypeError, match="The value '42.0' is not"):
-            boolean(42.0, strict=True)
-
-        with pytest.raises(TypeError, match="The value '<object object"):
-            boolean(object(), strict=True)
+    @pytest.mark.parametrize("test, match", [
+        ("flibbity", r"^The value 'flibbity' is not"),
+        (42, r"The value '42' is not"),
+        (42.0, r"^The value '42\.0' is not"),
+        (object(), r"^The value '\<object object"),
+        (None, r"^The value 'None' is not")
+    ])
+    def test_junk_values_strict(self, test, match):
+        with pytest.raises(TypeError, match=match):
+            boolean(test, strict=True)

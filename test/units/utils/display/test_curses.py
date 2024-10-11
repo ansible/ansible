@@ -60,7 +60,7 @@ def test_pause_missing_curses(mocker, monkeypatch):
 
     assert mod.HAS_CURSES is False
 
-    with pytest.raises(AttributeError, match="module 'ansible.utils.display' has no attribute"):
+    with pytest.raises(AttributeError, match=r"^module 'ansible\.utils\.display' has no attribute"):
         mod.curses  # pylint: disable=pointless-statement
 
     assert mod.HAS_CURSES is False
