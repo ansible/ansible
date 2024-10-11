@@ -32,7 +32,7 @@ options:
     get_checksum:
         default: false
     checksum_algorithm:
-        version_added: "2.18"
+        version_added: "2.19"
     patterns:
         default: []
         description:
