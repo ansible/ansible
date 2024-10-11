@@ -1,0 +1,2 @@
+minor_changes:
+  - find - add a checksum_algorithm parameter to specify which type of checksum the module will return
