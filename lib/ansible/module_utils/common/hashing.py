@@ -15,6 +15,7 @@ except ImportError:
     _md5 = None  # type: ignore[assignment]
 
 from ansible.module_utils.common.text.converters import to_bytes
+from ansible.module_utils.six import string_types
 
 
 def _get_available_hash_algorithms():
@@ -39,16 +40,26 @@ def _get_available_hash_algorithms():
 AVAILABLE_HASH_ALGORITHMS = _get_available_hash_algorithms()
 
 
-def generate_secure_checksum(data, hash_func=hashlib.sha256):
+def generate_secure_checksum(data, hash_func='sha256'):
     """Generates a secure checksum for the given data using the specified hash function.
 
     Args:
         data: The data to be hashed.
-        hash_func: The hash function to use (default: hashlib.sha256).
+        hash_func: The hash function to use (default: sha256).
 
     Returns:
         A hexadecimal string representing the checksum.
     """
+    if hash_func is None:
+        raise ValueError("The parameter 'hash_func' can not be None")
+
+    if isinstance(hash_func, string_types):
+        if hash_func not in AVAILABLE_HASH_ALGORITHMS:
+            raise ValueError(f"{hash_func} is not available. Available algorithms: {', '.join(AVAILABLE_HASH_ALGORITHMS)}")
+        hash_func = getattr(hashlib, hash_func, None)
+
+    if not callable(hash_func):
+        raise ValueError("The parameter value of 'hash_func' is not callable. Please make sure hash_func is either string or method.")
 
     digest = hash_func()
     data = to_bytes(data, errors='surrogate_or_strict')
@@ -56,12 +67,12 @@ def generate_secure_checksum(data, hash_func=hashlib.sha256):
     return digest.hexdigest()
 
 
-def generate_secure_file_checksum(filename, hash_func=hashlib.sha256, write_to=None):
+def generate_secure_file_checksum(filename, hash_func='sha256', write_to=None):
     """Return a secure hash hex digest of local file, None if file is not present or a directory.
 
     Args:
         filename: The filename to be hashed.
-        hash_func: The hash function to use (default: hashlib.sha256).
+        hash_func: The hash function to use (default: sha256).
         write_to: The file handle to write to (default: None).
 
     Returns:
@@ -71,6 +82,17 @@ def generate_secure_file_checksum(filename, hash_func=hashlib.sha256, write_to=N
 
     if not os.path.exists(b_filename) or os.path.isdir(to_bytes(filename, errors='strict')):
         return None
+
+    if hash_func is None:
+        raise ValueError("The parameter 'hash_func' can not be None")
+
+    if isinstance(hash_func, string_types):
+        if hash_func not in AVAILABLE_HASH_ALGORITHMS:
+            raise ValueError(f"{hash_func} is not available. Available algorithms: {', '.join(AVAILABLE_HASH_ALGORITHMS)}")
+        hash_func = getattr(hashlib, hash_func, None)
+
+    if not callable(hash_func):
+        raise ValueError("The parameter value of 'hash_func' is not callable. Please make sure hash_func is either string or method.")
 
     digest = hash_func()
     blocksize = 64 * 1024

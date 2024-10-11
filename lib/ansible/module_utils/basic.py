@@ -1459,6 +1459,10 @@ class AnsibleModule(object):
 
     def digest_from_file(self, filename, algorithm):
         """ Return hex digest of local file for a digest_method specified by name, or None if file is not present. """
+        self.deprecate(
+            msg="API digest_from_file is deprecated. Use generate_secure_file_checksum instead.",
+            version="2.22"
+        )
         b_filename = to_bytes(filename, errors='surrogate_or_strict')
 
         if not os.path.exists(b_filename):
@@ -1475,18 +1479,17 @@ class AnsibleModule(object):
                 self.module.fail_json(
                     msg=f"Could not find file {filename} to calculate hash: {e}"
                 )
-
-        if algorithm not in AVAILABLE_HASH_ALGORITHMS:
-            self.fail_json(
-                msg=f"Could not hash file '{filename}' with algorithm '{algorithm}'. Available algorithms: {', '.join(AVAILABLE_HASH_ALGORITHMS)}"
-            )
+            except ValueError as e:
+                self.module.fail_json(msg=f"{e}")
 
         try:
-            return generate_secure_file_checksum(filename, hash_func=AVAILABLE_HASH_ALGORITHMS[algorithm])
+            return generate_secure_file_checksum(filename, hash_func=algorithm)
         except IOError as e:
             self.module.fail_json(
                 msg=f"Could not find file {filename} to calculate hash: {e}"
             )
+        except ValueError as e:
+            self.module.fail_json(msg=f"{e}")
 
     def md5(self, filename):
         """ Return MD5 hex digest of local file using digest_from_file().
@@ -1499,16 +1502,28 @@ class AnsibleModule(object):
 
         Most uses of this function can use the module.sha1 function instead.
         """
+        self.deprecate(
+            msg="Using md5 is not recommended. Use generate_secure_file_checksum with SHA256 instead.",
+            version="2.22"
+        )
         if 'md5' not in AVAILABLE_HASH_ALGORITHMS:
             raise ValueError('MD5 not available.  Possibly running in FIPS mode')
         return self.digest_from_file(filename, 'md5')
 
     def sha1(self, filename):
         """ Return SHA1 hex digest of local file using digest_from_file(). """
+        self.deprecate(
+            msg="Using SHA1 is not recommended. Use generate_secure_file_checksum with SHA256 instead.",
+            version="2.22"
+        )
         return self.digest_from_file(filename, 'sha1')
 
     def sha256(self, filename):
         """ Return SHA-256 hex digest of local file using digest_from_file(). """
+        self.deprecate(
+            msg="Use generate_secure_file_checksum with SHA256 instead.",
+            version="2.22"
+        )
         return self.digest_from_file(filename, 'sha256')
 
     def backup_local(self, fn):
