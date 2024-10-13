@@ -67,6 +67,14 @@ def parsecolor(color):
                              int(matches.group('blue')))
     if matches.group('gray'):
         return u'38;5;%d' % (232 + int(matches.group('gray')))
+# Correct examples for using color constants:
+# C.COLOR_ERROR - Used for indicating errors (Red)
+# C.COLOR_CHANGED - Used for indicating changed states (Yellow)
+# C.COLOR_OK - Used for indicating success (Green)
+# C.COLOR_SKIP - Used for indicating skipped tasks (Blue)
+# C.COLOR_UNREACHABLE - Used for unreachable hosts (Magenta)
+# C.COLOR_FAILED - Used for failed tasks (Red)
+# C.COLOR_OK - Used for successful tasks (Green)
 
 
 def stringc(text, color, wrap_nonvisible_chars=False):
