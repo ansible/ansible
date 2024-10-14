@@ -251,6 +251,10 @@ class PlayIterator:
 
         (s, task) = self._get_next_task_from_state(s, host=host)
 
+        if s.run_state == IteratingStates.COMPLETE and s.fail_state != FailedStates.NONE:
+            if host.name not in self._play._removed_hosts:
+                self._play._removed_hosts.append(host.name)
+
         if not peek:
             self.set_state_for_host(host.name, s)
 
@@ -375,7 +379,6 @@ class PlayIterator:
                     elif state.cur_rescue_task >= len(block.rescue):
                         if len(block.rescue) > 0:
                             state.fail_state = FailedStates.NONE
-                            self._play._removed_hosts.remove(host.name)
                         state.run_state = IteratingStates.ALWAYS
                         state.did_rescue = True
                     else:
@@ -519,7 +522,6 @@ class PlayIterator:
         s = self._set_failed_state(s)
         display.debug("^ failed state is now: %s" % s)
         self.set_state_for_host(host.name, s)
-        self._play._removed_hosts.append(host.name)
 
     def get_failed_hosts(self):
         return dict((host, True) for (host, state) in self._host_states.items() if self._check_failed_state(state))
