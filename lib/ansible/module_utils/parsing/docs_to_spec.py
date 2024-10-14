@@ -90,7 +90,7 @@ def option_to_spec(option, deprecate=None) -> dict:
     return spec
 
 
-def restriction_to_spec(r) -> dict:
+def restriction_to_spec(r) -> list[list[str]] | None:
     """ read documented restriction and create spec restriction """
 
     name = None
@@ -123,7 +123,7 @@ def restriction_to_spec(r) -> dict:
                 break
             else:
                 raise Exception('unknown restriction!')
-    return {name: rest}
+    return rest
 
 
 def add_options_from_doc(argspec, options, deprecate=None):
