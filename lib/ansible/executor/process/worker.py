@@ -137,11 +137,11 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         os._exit(1)
 
     def _detach(self) -> None:
-        '''
+        """
         The intent here is to detach the child process from the inherited stdio fds,
         including /dev/tty. Children should use Display instead of direct interactions
         with stdio fds.
-        '''
+        """
         try:
             os.setsid()
             # Create new fds for stdin/stdout/stderr, but also capture python uses of sys.stdout/stderr
