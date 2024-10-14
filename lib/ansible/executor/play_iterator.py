@@ -377,6 +377,7 @@ class PlayIterator:
                             state.fail_state = FailedStates.NONE
                         state.run_state = IteratingStates.ALWAYS
                         state.did_rescue = True
+                        self._play._removed_hosts.remove(host.name)
                     else:
                         task = block.rescue[state.cur_rescue_task]
                         if isinstance(task, Block):

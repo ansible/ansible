@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix an issue where rescued hosts were excluded from subsequent plays when ``any_errors_fatal`` was set (https://github.com/ansible/ansible/issues/84117)

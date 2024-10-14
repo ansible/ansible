@@ -604,7 +604,6 @@ class StrategyBase:
                     # within the rescue/always
                     if iterator.is_any_block_rescuing(state_when_failed):
                         self._tqm._stats.increment('rescued', original_host.name)
-                        iterator._play._removed_hosts.remove(original_host.name)
                         self._variable_manager.set_nonpersistent_facts(
                             original_host.name,
                             dict(

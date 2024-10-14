@@ -1,0 +1,14 @@
+- hosts: testhost,testhost2
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - block:
+        - fail:
+          when: inventory_hostname == "testhost"
+      rescue:
+        - debug:
+
+    - assert:
+        that:
+          - '"testhost" in play_hosts'
+          - '"testhost2" in play_hosts'
