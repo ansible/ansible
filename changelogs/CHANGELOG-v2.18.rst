@@ -4,6 +4,38 @@ ansible-core 2.18 "Fool in the Rain" Release Notes
 
 .. contents:: Topics
 
+v2.18.0rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2024-10-14
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Default to Python 3.13 in the ``base`` and ``default`` containers.
+- ansible-test - Disable the ``deprecated-`` prefixed ``pylint`` rules as their results vary by Python version.
+- ansible-test - Improve container runtime probe error handling. When unexpected probe output is encountered, an error with more useful debugging information is provided.
+- ansible-test - Update ``pylint`` sanity test to use version 3.3.1.
+- ansible-test - Update the ``base`` and ``default`` containers.
+
+Bugfixes
+--------
+
+- Errors now preserve stacked error messages even when YAML is involved.
+- Fix disabling SSL verification when installing collections and roles from git repositories. If ``--ignore-certs`` isn't provided, the value for the ``GALAXY_IGNORE_CERTS`` configuration option will be used (https://github.com/ansible/ansible/issues/83326).
+- Improve performance on large inventories by reducing the number of implicit meta tasks.
+- Use the requested error message in the ansible.module_utils.facts.timeout timeout function instead of hardcoding one.
+- ``package``/``dnf`` action plugins - provide the reason behind the failure to gather the ``ansible_pkg_mgr`` fact to identify the package backend
+- ansible-test - Enable the ``sys.unraisablehook`` work-around for the ``pylint`` sanity test on Python 3.11. Previously the work-around was only enabled for Python 3.12 and later. However, the same issue has been discovered on Python 3.11.
+- debconf - set empty password values (https://github.com/ansible/ansible/issues/83214).
+- dnf5 - fix traceback when ``enable_plugins``/``disable_plugins`` is used on ``python3-libdnf5`` versions that do not support this functionality
+- facts - skip if distribution file path is directory, instead of raising error (https://github.com/ansible/ansible/issues/84006).
+- user module now avoids changing ownership of files symlinked in provided home dir skeleton
+
 v2.18.0b1
 =========
 
