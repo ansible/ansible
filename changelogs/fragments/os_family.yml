@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - facts - skip if distribution file path is directory, instead of raising error (https://github.com/ansible/ansible/issues/84006).
