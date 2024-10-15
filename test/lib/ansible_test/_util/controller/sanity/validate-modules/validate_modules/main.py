@@ -1615,7 +1615,7 @@ class ModuleValidator(Validator):
             # Check if files doc_fragment is included
             file_common_keys = ['mode', 'owner', 'group', 'seuser', 'serole', 'setype', 'selevel', 'unsafe_writes', 'attributes']
             if any(missing_key not in list(doc_options.keys()) for missing_key in file_common_keys):
-                msg="add_file_common_args specified but no doc_fragment 'files' included in 'extends_documentation_fragment'"
+                msg = "add_file_common_args specified but no doc_fragment 'files' included in 'extends_documentation_fragment'"
                 self.reporter.error(
                     path=self.object_path,
                     code='no-file-common-args-doc-fragment',

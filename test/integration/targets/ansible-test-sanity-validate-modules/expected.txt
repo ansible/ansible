@@ -3,6 +3,27 @@ plugins/modules/check_mode_attribute_1.py:0:0: attributes-check-mode: The module
 plugins/modules/check_mode_attribute_2.py:0:0: attributes-check-mode: The module does not declare support for check mode, but the check_mode attribute's support value is 'partial' and not 'none'
 plugins/modules/check_mode_attribute_3.py:0:0: attributes-check-mode: The module does declare support for check mode, but the check_mode attribute's support value is 'none'
 plugins/modules/check_mode_attribute_4.py:0:0: attributes-check-mode-details: The module declares it does not fully support check mode, but has no details on what exactly that means
+plugins/modules/file_common_args.py:0:0: doc-default-does-not-match-spec: Argument 'unsafe_writes' in argument_spec defines default as (False) but documentation defines default as (None)
+plugins/modules/file_common_args.py:0:0: no-file-common-args-doc-fragment: add_file_common_args specified but no doc_fragment 'files' included in 'extends_documentation_fragment'
+plugins/modules/file_common_args.py:0:0: parameter-type-not-in-doc: Argument 'attributes' in argument_spec defines type as 'str' but documentation doesn't define type
+plugins/modules/file_common_args.py:0:0: parameter-type-not-in-doc: Argument 'group' in argument_spec defines type as 'str' but documentation doesn't define type
+plugins/modules/file_common_args.py:0:0: parameter-type-not-in-doc: Argument 'mode' in argument_spec defines type as 'raw' but documentation doesn't define type
+plugins/modules/file_common_args.py:0:0: parameter-type-not-in-doc: Argument 'owner' in argument_spec defines type as 'str' but documentation doesn't define type
+plugins/modules/file_common_args.py:0:0: parameter-type-not-in-doc: Argument 'selevel' in argument_spec defines type as 'str' but documentation doesn't define type
+plugins/modules/file_common_args.py:0:0: parameter-type-not-in-doc: Argument 'serole' in argument_spec defines type as 'str' but documentation doesn't define type
+plugins/modules/file_common_args.py:0:0: parameter-type-not-in-doc: Argument 'setype' in argument_spec defines type as 'str' but documentation doesn't define type
+plugins/modules/file_common_args.py:0:0: parameter-type-not-in-doc: Argument 'seuser' in argument_spec defines type as 'str' but documentation doesn't define type
+plugins/modules/file_common_args.py:0:0: parameter-type-not-in-doc: Argument 'unsafe_writes' in argument_spec defines type as 'bool' but documentation doesn't define type
+plugins/modules/file_common_args.py:0:0: undocumented-parameter: Argument 'attr' is listed in the argument_spec, but not documented in the module documentation
+plugins/modules/file_common_args.py:0:0: undocumented-parameter: Argument 'attributes' is listed in the argument_spec, but not documented in the module documentation
+plugins/modules/file_common_args.py:0:0: undocumented-parameter: Argument 'group' is listed in the argument_spec, but not documented in the module documentation
+plugins/modules/file_common_args.py:0:0: undocumented-parameter: Argument 'mode' is listed in the argument_spec, but not documented in the module documentation
+plugins/modules/file_common_args.py:0:0: undocumented-parameter: Argument 'owner' is listed in the argument_spec, but not documented in the module documentation
+plugins/modules/file_common_args.py:0:0: undocumented-parameter: Argument 'selevel' is listed in the argument_spec, but not documented in the module documentation
+plugins/modules/file_common_args.py:0:0: undocumented-parameter: Argument 'serole' is listed in the argument_spec, but not documented in the module documentation
+plugins/modules/file_common_args.py:0:0: undocumented-parameter: Argument 'setype' is listed in the argument_spec, but not documented in the module documentation
+plugins/modules/file_common_args.py:0:0: undocumented-parameter: Argument 'seuser' is listed in the argument_spec, but not documented in the module documentation
+plugins/modules/file_common_args.py:0:0: undocumented-parameter: Argument 'unsafe_writes' is listed in the argument_spec, but not documented in the module documentation
 plugins/modules/import_order.py:7:0: import-before-documentation: Import found before documentation variables. All imports must appear below DOCUMENTATION/EXAMPLES/RETURN.
 plugins/modules/invalid_argument_spec_extra_key.py:0:0: invalid-ansiblemodule-schema: AnsibleModule.argument_spec.foo.extra_key: extra keys not allowed @ data['argument_spec']['foo']['extra_key']. Got 'bar'
 plugins/modules/invalid_argument_spec_incorrect_context.py:0:0: invalid-ansiblemodule-schema: AnsibleModule.argument_spec.foo.context: expected dict for dictionary value @ data['argument_spec']['foo']['context']. Got 'bar'
