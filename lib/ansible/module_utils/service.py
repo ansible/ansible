@@ -147,9 +147,7 @@ def fork_process():
             os._exit(0)
 
         # get new process session and detach
-        sid = os.setsid()
-        if sid == -1:
-            raise Exception("Unable to detach session while daemonizing")
+        os.setsid()
 
         # avoid possible problems with cwd being removed
         os.chdir("/")
@@ -181,10 +179,8 @@ def daemonize(module, cmd):
     try:
         pipe = os.pipe()
         pid = fork_process()
-    except OSError:
+    except (OSError, RuntimeError):
         module.fail_json(msg="Error while attempting to fork: %s", exception=traceback.format_exc())
-    except Exception as exc:
-        module.fail_json(msg=to_text(exc), exception=traceback.format_exc())
 
     # we don't do any locking as this should be a unique module/process
     if pid == 0:
