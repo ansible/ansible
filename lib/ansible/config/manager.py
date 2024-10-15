@@ -688,6 +688,8 @@ class ConfigManager(object):
         if include_removal:
             if 'removed_at_date' in dep_docs:
                 removal = f"Will be removed in a release after {dep_docs['removed_at_date']}\n\t"
+            elif 'removed_from_collection' in dep_docs:
+                removal = f"Will be removed in: {dep_docs['removed_from_collection']} {dep_docs['removed_in']}\n\t"
             else:
                 removal = f"Will be removed in: Ansible {dep_docs['removed_in']}\n\t"
 
