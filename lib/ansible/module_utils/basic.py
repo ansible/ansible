@@ -1433,11 +1433,7 @@ class AnsibleModule(object):
             kwargs['deprecations'] = deprecations
 
         # preserve bools/none from no_log
-        # TODO: once python version on target high enough, dict comprehensions
-        preserved = {}
-        for k, v in kwargs.items():
-            if v is None or isinstance(v, bool):
-                preserved[k] = v
+        preserved = {k: v for k, v in kwargs.items() if v is None or isinstance(v, bool)}
 
         # strip no_log collisions
         kwargs = remove_values(kwargs, self.no_log_values)
