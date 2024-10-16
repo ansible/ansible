@@ -3,16 +3,13 @@
 
 from __future__ import annotations
 
+import pytest
+
 from ansible.module_utils.facts.system.fips import FipsFactCollector
 
 
-class TestFIPSFacts:
-    def test_fips_enabled(self, mocker):
-        mocker.patch('ansible.module_utils.facts.system.fips.get_file_content', return_value='1')
-        fips_mgr = FipsFactCollector().collect()
-        assert fips_mgr['fips'] is True
-
-    def test_fips_disbled(self, mocker):
-        mocker.patch('ansible.module_utils.facts.system.fips.get_file_content', return_value='0')
-        fips_mgr = FipsFactCollector().collect()
-        assert fips_mgr['fips'] is False
+@pytest.mark.parametrize(("return_value", "expected"), [('1', True), ('0', False)])
+def test_fips(mocker, return_value, expected):
+    mocker.patch('ansible.module_utils.facts.system.fips.get_file_content', return_value=return_value)
+    fips_mgr = FipsFactCollector().collect()
+    assert fips_mgr['fips'] is expected
