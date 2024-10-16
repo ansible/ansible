@@ -8,7 +8,7 @@ import typing as t
 from multiprocessing.shared_memory import SharedMemory
 
 
-def main() -> None:
+def main() -> t.NoReturn:
     kwargs: dict[str, t.Any] = {}
     if sys.version_info[:2] >= (3, 13):
         # deprecated: description='unneeded due to track argument for SharedMemory' python_version='3.13'
