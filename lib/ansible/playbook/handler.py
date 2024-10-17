@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+from ansible.errors import AnsibleAssertionError
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.task import Task
 from ansible.module_utils.six import string_types
@@ -59,7 +60,12 @@ class Handler(Task):
         return False
 
     def remove_host(self, host):
-        self.notified_hosts = [h for h in self.notified_hosts if h != host]
+        try:
+            self.notified_hosts.remove(host)
+        except ValueError:
+            raise AnsibleAssertionError(
+                f"Attempting to remove a notification on handler '{self}' for host '{host}' but it has not been notified."
+            )
 
     def clear_hosts(self):
         self.notified_hosts = []
