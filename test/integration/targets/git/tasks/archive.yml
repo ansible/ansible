@@ -84,7 +84,7 @@
 
 - name: ARCHIVE | Generate an archive prefix
   set_fact:
-    git_archive_prefix: '{{ range(2 ** 31, 2 ** 32) | random }}' # Generate some random archive prefix
+    git_archive_prefix: "{{ lookup('ansible.builtin.password', '/dev/null', length=10, chars=['digits']) }}" # Generate some random archive prefix
 
 - name: ARCHIVE | Archive repo using various archival format and with an archive prefix
   git:
