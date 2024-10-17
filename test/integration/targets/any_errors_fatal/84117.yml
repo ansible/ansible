@@ -1,0 +1,16 @@
+- hosts: testhost,testhost2
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - block:
+        - fail:
+          when: inventory_hostname == "testhost2"
+      rescue:
+        - assert:
+            that:
+              - ansible_failed_result.failed
+
+    - assert:
+        that:
+          - '"testhost" in play_hosts'
+          - '"testhost2" in play_hosts'

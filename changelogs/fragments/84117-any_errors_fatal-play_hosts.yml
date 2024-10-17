@@ -1,0 +1,3 @@
+bugfixes:
+   - Fix an issue where rescued hosts were excluded from subsequent plays when ``any_errors_fatal`` was set (https://github.com/ansible/ansible/issues/84117)
+   - Fix an issue where ``ansible_failed_task`` and ``ansible_failed_result`` were not available for hosts failed by ``any_errors_fatal`` (https://github.com/ansible/ansible/issues/84120)

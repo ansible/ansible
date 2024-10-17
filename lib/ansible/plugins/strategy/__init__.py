@@ -602,6 +602,7 @@ class StrategyBase:
                     # if we're iterating on the rescue portion of a block then
                     # we save the failed task in a special var for use
                     # within the rescue/always
+                    # FIXME this code is copied in the linear strategy, see the any_errors_fatal implementation there
                     if iterator.is_any_block_rescuing(state_when_failed):
                         self._tqm._stats.increment('rescued', original_host.name)
                         iterator._play._removed_hosts.remove(original_host.name)
