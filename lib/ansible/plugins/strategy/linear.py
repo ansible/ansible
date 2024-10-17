@@ -325,11 +325,34 @@ class StrategyModule(StrategyBase):
                     elif res.is_unreachable():
                         unreachable_hosts.append(res.host.name)
 
+                failed_result = None
+                for res in results:
+                    if res.is_failed():
+                        failed_result = res
+                        break
+
                 if any_errors_fatal and (failed_hosts or unreachable_hosts):
                     for host in hosts_left:
                         if host.name not in failed_hosts:
-                            self._tqm._failed_hosts[host.name] = True
+                            state_when_failed = iterator.get_state_for_host(host.name)
                             iterator.mark_host_failed(host)
+                            # FIXME this is a copy of the code from StrategyBase._process_pending_results() to handle rescued tasks
+                            # since any_errors_fatal is implemented here after the results processing is done we need to do the same.
+                            # Would it make sense to move any_errors_fatal functionality to StrategyBase._process_pending_results()
+                            # and guard it with something like strategy.supports_any_errors_fatal when it is implemented?
+                            if iterator.is_any_block_rescuing(state_when_failed):
+                                self._tqm._stats.increment('rescued', host.name)
+                                iterator._play._removed_hosts.remove(host.name)
+                                self._variable_manager.set_nonpersistent_facts(
+                                    host.name,
+                                    {
+                                        "ansible_failed_task": failed_result._task.dump_attrs(),
+                                        "ansible_failed_result": failed_result._return_data,
+                                    },
+                                )
+                            else:
+                                self._tqm._failed_hosts[host.name] = True
+                                self._tqm._stats.increment('failures', host.name)
                 display.debug("done checking for any_errors_fatal")
 
                 display.debug("checking for max_fail_percentage")
