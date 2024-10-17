@@ -514,7 +514,6 @@ def get_ca_certs(cafile=None, capath=None):
     # tries to find a valid CA cert in one of the
     # standard locations for the current distribution
 
-    # Using a dict, instead of a set for order, the value is meaningless and will be None
     # Not directly using a bytearray to avoid duplicates with fast lookup
     cadata = OrderedSet()
 
