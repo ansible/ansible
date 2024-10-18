@@ -81,16 +81,16 @@ class ActionModule(ActionBase):
             # re-run interpreter discovery if we ran it in the first iteration
             if self._discovered_interpreter_key:
                 task_vars['ansible_facts'].pop(self._discovered_interpreter_key, None)
-            # call connection reset between runs if it's there
-            try:
-                self._connection.reset()
-            except AttributeError:
-                pass
 
             ping_result = self._execute_module(module_name='ansible.legacy.ping', module_args=dict(), task_vars=task_vars)
 
             # Test module output
             if ping_result['ping'] != 'pong':
+                # call connection reset between runs if it's there
+                try:
+                    self._connection.reset()
+                except AttributeError:
+                    pass
                 raise Exception('ping test failed')
 
         start = datetime.now()
