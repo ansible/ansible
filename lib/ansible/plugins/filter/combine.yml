@@ -1,13 +1,14 @@
 DOCUMENTATION:
   name: combine
   version_added: "2.0"
-  short_description: combine two dictionaries
+  short_description: combine two or more dictionaries
   description:
     - Create a dictionary (hash/associative array) as a result of merging existing dictionaries.
+    - Dictionaries to the right (new) have precedence over dictionaries to the left (old).
   positional: _input, _dicts
   options:
     _input:
-      description: First dictionary to combine.
+      description: First dictionary to combine or a list of dictionaries to combine.
       type: dict
       required: true
     _dicts:  # TODO: this is really an *args so not list, but list ref
@@ -33,15 +34,51 @@ DOCUMENTATION:
 
 EXAMPLES: |
 
-    # ab => {'a':1, 'b':3, 'c': 4}
-    ab: {{ {'a':1, 'b':2} | ansible.builtin.combine({'b':3, 'c':4}) }}
+    # combine_ab_bc => { 'a' : 1, 'b' : 3, 'c' : 4 }
+    combine_ab_bc: "{{ {'a' : 1, 'b' : 2} | ansible.builtin.combine({'b' : 3, 'c' : 4}) }}"
 
-    many: "{{ dict1 | ansible.builtin.combine(dict2, dict3, dict4) }}"
-    
-    # defaults => {'a':{'b':3, 'c':4}, 'd': 5}
-    # customization => {'a':{'c':20}}
-    # final => {'a':{'b':3, 'c':20}, 'd': 5}
+    # combine_ab_bc_cd => { 'a' : 1, 'b' : 3, 'c' : 5, 'd' : 6 }
+    combine_ab_bc_cd: "{{ {'a' : 1, 'b' : 2} | ansible.builtin.combine({'b' : 3, 'c' : 4}, {'c' : 5, 'd' : 6}) }}"
+
+    # list_combine_ab_bc_cd => { 'a' : 1, 'b' : 3, 'c' : 5, 'd' : 6 }
+    list_combine_ab_bc_cd: "{{ [{'a' : 1, 'b' : 2}, {'b' : 3, 'c' : 4}, {'c' : 5, 'd' : 6}] | ansible.builtin.combine }}"
+
+    # defaults => {'a' : {'b' : 3, 'c' : 4}, 'd' : 5}
+    # customization => {'a' : {'c' : 20}}
+    # final => {'a' : {'b' : 3, 'c' : 20}, 'd' : 5}
     final: "{{ defaults | ansible.builtin.combine(customization, recursive=true) }}"
+
+    # defaults => {'a' : {'b' : 3, 'c' : 4}, 'd' : 5}
+    # customization => {'a' : {'c' : 20}, 'd' : 30}
+    # defaults_with_customization => { 'a' : { 'c' : 20 }, 'd' : 30 }
+    # :recursive=false: (which is the default) defaults' 'a' is replaced with customization's 'a'
+    defaults_with_customization: "{{ defaults | ansible.builtin.combine(customization) }}"
+
+    # defaults => {'a' : {'b' : 3, 'c' : 4}, 'd' : 5}
+    # customization => {'a' : {'c' : 20}, 'd' : 30}
+    # defaults_with_customization_recursive_true => { 'a' : { 'b' : 3, 'c' : 20 }, 'd' : 30 }
+    # recursive=true: defaults' 'a' is updated with customization's 'a', i.e., 'b' is untouched and 'c' is updated from 4 to 20
+    defaults_with_customization_recursive_true: "{{ defaults | ansible.builtin.combine(customization, recursive=true) }}"
+
+    # list_merge_replace => { 'a' : [ 20 ] }
+    list_merge_replace: "{{ {'a' : [1, 20]} | ansible.builtin.combine({'a' : [20]}, list_merge='replace') }}"
+
+    # list_merge_keep => { 'a' : [ 1, 20 ] }
+    list_merge_keep: "{{ {'a' : [1, 20]} | ansible.builtin.combine({'a' : [20]}, list_merge='keep') }}"
+
+    # list_merge_append => { 'a' : [ 1, 20, 20 ]
+    list_merge_append: "{{ {'a' : [1, 20]} | ansible.builtin.combine({'a' : [20]}, list_merge='append') }}"
+
+    # list_merge_prepend => { 'a' : [ 20, 1, 20 ] }
+    list_merge_prepend: "{{ {'a' : [1, 20]} | ansible.builtin.combine({'a' : [20]}, list_merge='prepend') }}"
+
+    # list_merge_append_rp => { 'a' : [ 1, 20 ] }
+    # note that there is only a single entry with value 20
+    list_merge_append_rp: "{{ {'a' : [1, 20]} | ansible.builtin.combine({'a' : [20]}, list_merge='append_rp') }}"
+
+    # list_merge_prepend_rp => { 'a' : [ 20, 1 ] }
+    # note that there is only a single entry with value 20
+    list_merge_prepend_rp: "{{ {'a' : [1, 20]} | ansible.builtin.combine({'a' : [20]}, list_merge='prepend_rp') }}"
 
 RETURN:
   _value:
