@@ -268,12 +268,22 @@ class TestScriptVaultSecret(unittest.TestCase):
         mock_popen_instance.communicate = communicate
 
     @patch('ansible.parsing.vault.subprocess.Popen')
-    def test_read_file(self, mock_popen):
+    def test_load(self, mock_popen):
+        self._mock_popen(mock_popen)
+        secret = vault.ScriptVaultSecret()
+        with patch.object(secret, 'loader') as mock_loader:
+            mock_loader.is_executable = MagicMock(return_value=True)
+            secret.load()
+
+    @patch('ansible.parsing.vault.subprocess.Popen')
+    def test_lazy_read_file(self, mock_popen):
         self._mock_popen(mock_popen, stdout=b'some_password')
         secret = vault.ScriptVaultSecret()
         with patch.object(secret, 'loader') as mock_loader:
             mock_loader.is_executable = MagicMock(return_value=True)
             secret.load()
+            self.assertIsNone(secret._bytes)
+            self.assertEqual(secret.bytes, b'some_password')
 
     @patch('ansible.parsing.vault.subprocess.Popen')
     def test_read_file_empty(self, mock_popen):
@@ -283,22 +293,23 @@ class TestScriptVaultSecret(unittest.TestCase):
             mock_loader.is_executable = MagicMock(return_value=True)
             self.assertRaisesRegex(vault.AnsibleVaultPasswordError,
                                    'Invalid vault password was provided from script',
-                                   secret.load)
+                                   lambda: secret.bytes)
 
     @patch('ansible.parsing.vault.subprocess.Popen')
     def test_read_file_os_error(self, mock_popen):
-        self._mock_popen(mock_popen)
+        self._mock_popen(mock_popen, stdout=b'')
         mock_popen.side_effect = OSError('That is not an executable')
         secret = vault.ScriptVaultSecret()
         with patch.object(secret, 'loader') as mock_loader:
             mock_loader.is_executable = MagicMock(return_value=True)
             self.assertRaisesRegex(errors.AnsibleError,
                                    'Problem running vault password script.*',
-                                   secret.load)
+                                   lambda: secret.bytes)
 
     @patch('ansible.parsing.vault.subprocess.Popen')
     def test_read_file_not_executable(self, mock_popen):
         self._mock_popen(mock_popen)
+        self._mock_popen(mock_popen, stdout=b'')
         secret = vault.ScriptVaultSecret()
         with patch.object(secret, 'loader') as mock_loader:
             mock_loader.is_executable = MagicMock(return_value=False)
@@ -309,15 +320,16 @@ class TestScriptVaultSecret(unittest.TestCase):
     @patch('ansible.parsing.vault.subprocess.Popen')
     def test_read_file_non_zero_return_code(self, mock_popen):
         stderr = b'That did not work for a random reason'
+        stdout = b''
         rc = 37
 
-        self._mock_popen(mock_popen, return_code=rc, stderr=stderr)
+        self._mock_popen(mock_popen, return_code=rc, stderr=stderr, stdout=stdout)
         secret = vault.ScriptVaultSecret(filename='/dev/null/some_vault_secret')
         with patch.object(secret, 'loader') as mock_loader:
             mock_loader.is_executable = MagicMock(return_value=True)
             self.assertRaisesRegex(errors.AnsibleError,
                                    r'Vault password script.*returned non-zero \(%s\): %s' % (rc, stderr),
-                                   secret.load)
+                                   lambda: secret.bytes)
 
 
 class TestScriptIsClient(unittest.TestCase):
