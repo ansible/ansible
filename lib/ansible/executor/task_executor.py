@@ -150,6 +150,7 @@ class TaskExecutor:
                         if 'unreachable' in item and item['unreachable']:
                             item_ignore_unreachable = item.pop('_ansible_ignore_unreachable')
                             if not res.get('unreachable'):
+                                res['unreachable'] = True
                                 self._task.ignore_unreachable = item_ignore_unreachable
                             elif self._task.ignore_unreachable and not item_ignore_unreachable:
                                 self._task.ignore_unreachable = item_ignore_unreachable
