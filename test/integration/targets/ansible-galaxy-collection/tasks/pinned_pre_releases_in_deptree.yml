@@ -19,7 +19,7 @@
     command: >-
       ansible-galaxy collection install
       meta_ns_with_transitive_wildcard_dep.meta_name_with_transitive_wildcard_dep
-      rc_meta_ns_with_transitive_dev_dep.rc_meta_name_with_transitive_dev_dep:=2.4.5-rc5
+      rc_meta_ns_with_transitive_dev_dep.rc_meta_name_with_transitive_dev_dep:==2.4.5-rc5
       {{ galaxy_verbosity }}
     register: prioritize_direct_req
   - assert:
