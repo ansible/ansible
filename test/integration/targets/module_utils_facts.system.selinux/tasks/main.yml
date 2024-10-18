@@ -22,7 +22,7 @@
   register: r
 
 - set_fact:
-    selinux_policytype: "{{ r.stdout_lines[0] }}"
+    selinux_policytype: "{{ r.stdout_lines[0] | trim }}"
   when: r is success and r.stdout_lines
 
 - assert:
