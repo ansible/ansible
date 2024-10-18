@@ -216,3 +216,32 @@
     that:
     - "non_zero_result.failed"
     - "non_zero_result.msg == 'non-zero return code'"
+
+- name: test the task invocation by running ansible in command task
+  vars:
+    pexpect_python: "{{ hostvars['localhost']['ansible_python_interpreter'] }}"
+    localhost_cmd_file: "{{ output_dir }}/test_command.py"
+  module_defaults:
+    ansible.builtin.pip:
+      virtualenv_python: "{{ pexpect_python }}"
+  block:
+    - include_role:
+        name: setup_pexpect
+        apply:
+          delegate_to: localhost
+          vars:
+            setup_pexpect_tmpdir: "{{ output_dir }}"
+
+    - name: copy script into output directory
+      copy: src=test_command.py dest={{ localhost_cmd_file }} mode=0444
+      delegate_to: localhost
+
+    - command: |
+        ansible localhost -m expect -a "command='{{pexpect_python}} {{localhost_cmd_file}} foo --quiet' responses='{\"foo\": \"bar\"}'" -vvv
+      delegate_to: localhost
+      register: task_invocation
+
+    - assert:
+        that:
+          - "'invocation' in task_invocation.stdout"
+          - "'bar' not in task_invocation.stdout"
