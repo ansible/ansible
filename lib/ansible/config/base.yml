@@ -159,6 +159,18 @@ AGNOSTIC_BECOME_PROMPT:
     - {key: agnostic_become_prompt, section: privilege_escalation}
   yaml: {key: privilege_escalation.agnostic_become_prompt}
   version_added: "2.5"
+BACKUP_FILE_NAME_TEMPLATE:
+  name: Tempalte to define backup file names
+  description:
+    - Defines a template that will name backup file(s) in modules using the standard backup facilities.
+    - Available variables are basename (includes extension), extension, stripname (no extension), timestamp and pid (process ID)
+  version_added: '2.18'
+  env: [{name: ANSIBLE_BACKUP_FILE_NAME_TEMPLATE}]
+  ini:
+  - {key: backup_file_name_template, section: defaults}
+  default: '{basename}.{pid}.{timestamp}~'
+  vars:
+  - {name: ansible_backup_file_name_template}
 CACHE_PLUGIN:
   name: Persistent Cache plugin
   default: memory
