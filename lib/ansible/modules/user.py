@@ -1322,7 +1322,9 @@ class User(object):
                 for d in dirs:
                     os.chown(os.path.join(root, d), uid, gid)
                 for f in files:
-                    os.chown(os.path.join(root, f), uid, gid)
+                    full_path = os.path.join(root, f)
+                    if not os.path.islink(full_path):
+                        os.chown(full_path, uid, gid)
         except OSError as e:
             self.module.exit_json(failed=True, msg="%s" % to_native(e))
 
