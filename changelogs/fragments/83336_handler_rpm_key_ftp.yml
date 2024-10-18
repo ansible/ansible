@@ -1,0 +1,2 @@
+bugfixes:
+  - rpm_key FTP - Change conditional for ftp support fetch keys (https://github.com/ansible/ansible/issues/83321)
