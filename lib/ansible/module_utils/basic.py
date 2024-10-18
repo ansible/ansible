@@ -1658,6 +1658,8 @@ class AnsibleModule(object):
                                 if keep_dest_attrs:
                                     if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
                                         os.chown(b_tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
+                                    if dest_stat:
+                                        shutil.copystat(b_dest, b_tmp_dest_name)
                                     os.utime(b_tmp_dest_name, times=(time.time(), time.time()))
                             except OSError as e:
                                 if e.errno != errno.EPERM:

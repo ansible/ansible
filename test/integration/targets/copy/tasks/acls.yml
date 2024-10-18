@@ -29,6 +29,21 @@
         - "'group::r--' in acls.stdout_lines"
         - "'other::r--' in acls.stdout_lines"
 
+  - name: Update the mode
+    command: chmod 664 /home/{{ remote_unprivileged_user }}/test.txt
+    become: yes
+
+  - name: Test updating the content preserves the mode
+    copy:
+      content: "UPDATE"
+      dest: "~/test.txt"
+    register: copy_update
+    become: yes
+    become_user: "{{ remote_unprivileged_user }}"
+
+  - assert:
+      that: copy_update.mode == "0664"
+
   always:
     - name: Clean up
       file:
