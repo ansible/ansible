@@ -684,8 +684,9 @@ class TaskExecutor:
                 self._handler.cleanup()
             display.debug("handler run complete")
 
-            # preserve no log
-            result["_ansible_no_log"] = no_log
+            # propagate no log to result- the action can set this, so only overwrite it with the task's value if missing or falsey
+            if not result.get('_ansible_no_log'):
+                result["_ansible_no_log"] = no_log
 
             if self._task.action not in C._ACTION_WITH_CLEAN_FACTS:
                 result = wrap_var(result)
