@@ -17,6 +17,13 @@ requirements: ["Any of the following supported init systems: systemd, sysv, upst
 extends_documentation_fragment:
   -  action_common_attributes
   -  action_common_attributes.facts
+options:
+  include_user:
+    description:
+      - This parameter controls whether user systemd services are included in facts.
+    type: bool
+    default: no
+    version_added: "2.18"
 attributes:
     check_mode:
         support: full
@@ -264,12 +271,18 @@ class SystemctlScanService(BaseService):
     def systemd_enabled(self):
         return is_systemd_managed(self.module)
 
-    def _list_from_units(self, systemctl_path, services):
+    def _list_from_units(self, systemctl_path, services, is_user=False):
+
+        if is_user:
+            systemctl_path += ' --user'
 
         # list units as systemd sees them
         rc, stdout, stderr = self.module.run_command("%s list-units --no-pager --type service --all --plain" % systemctl_path, use_unsafe_shell=True)
         if rc != 0:
-            self.module.warn("Could not list units from systemd: %s" % stderr)
+            if is_user:
+                self.module.warn("Could not list user units from systemd: %s" % stderr)
+            else:
+                self.module.warn("Could not list units from systemd: %s" % stderr)
         else:
             for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line]:
 
@@ -294,12 +307,18 @@ class SystemctlScanService(BaseService):
 
                 services[service_name] = {"name": service_name, "state": state_val, "status": status_val, "source": "systemd"}
 
-    def _list_from_unit_files(self, systemctl_path, services):
+    def _list_from_unit_files(self, systemctl_path, services, is_user=False):
+
+        if is_user:
+            systemctl_path += ' --user'
 
         # now try unit files for complete picture and final 'status'
         rc, stdout, stderr = self.module.run_command("%s list-unit-files --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
         if rc != 0:
-            self.module.warn("Could not get unit files data from systemd: %s" % stderr)
+            if is_user:
+                self.module.warn("Could not get user unit files data from systemd: %s" % stderr)
+            else:
+                self.module.warn("Could not get unit files data from systemd: %s" % stderr)
         else:
             for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line]:
                 # there is one more column (VENDOR PRESET) from `systemctl list-unit-files` for systemd >= 245
@@ -316,7 +335,7 @@ class SystemctlScanService(BaseService):
                 elif services[service_name]["status"] not in self.BAD_STATES:
                     services[service_name]["status"] = status_val
 
-    def gather_services(self):
+    def gather_services(self, include_user=False):
 
         services = {}
         if self.systemd_enabled():
@@ -324,6 +343,9 @@ class SystemctlScanService(BaseService):
             if systemctl_path:
                 self._list_from_units(systemctl_path, services)
                 self._list_from_unit_files(systemctl_path, services)
+                if include_user:
+                    self._list_from_units(systemctl_path, services, is_user=True)
+                    self._list_from_unit_files(systemctl_path, services, is_user=True)
 
         return services
 
@@ -488,7 +510,14 @@ class FreeBSDScanService(BaseService):
 
 
 def main():
-    module = AnsibleModule(argument_spec=dict(), supports_check_mode=True)
+    module = AnsibleModule(
+        argument_spec=dict(
+            include_user=dict(type='bool', default=False),
+        ),
+        supports_check_mode=True,
+    )
+    params = module.params
+
     locale = get_best_parsable_locale(module)
     module.run_command_environ_update = dict(LANG=locale, LC_ALL=locale)
 
@@ -501,7 +530,10 @@ def main():
     all_services = {}
     for svc_module in service_modules:
         svcmod = svc_module(module)
-        svc = svcmod.gather_services()
+        if isinstance(svcmod, SystemctlScanService):
+            svc = svcmod.gather_services(params['include_user'])
+        else:
+            svc = svcmod.gather_services()
         if svc:
             all_services.update(svc)
     if len(all_services) == 0:
