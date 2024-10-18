@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 
 from string import ascii_letters, digits
@@ -118,6 +119,13 @@ COLOR_CODES = {
     'dark gray': u'1;30', 'bright yellow': u'1;33',
     'magenta': u'0;35', 'bright magenta': u'1;35',
     'normal': u'0',
+}
+COLOR_CODES = {
+    name:
+    str(int(re.search(r'1;(?P<color_code>3\d)', ansi_seq).group('color_code')) + 60)
+    if os.getenv('COLORTERM') == 'truecolor' and '1;3' in ansi_seq
+    else ansi_seq
+    for name, ansi_seq in COLOR_CODES.items()
 }
 REJECT_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst')
 BOOL_TRUE = BOOLEANS_TRUE

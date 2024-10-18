@@ -113,6 +113,8 @@ def ansible_environment(args: CommonConfig, color: bool = True, ansible_config: 
         # ansible-test specific environment variables require an 'ANSIBLE_TEST_' prefix to distinguish them from ansible-core env vars defined by config
         ANSIBLE_TEST_ANSIBLE_LIB_ROOT=ANSIBLE_LIB_ROOT,  # used by the coverage injector
     )
+    if color_term := os.getenv('COLORTERM'):
+        ansible['COLORTERM'] = color_term
 
     if isinstance(args, IntegrationConfig) and args.coverage:
         # standard path injection is not effective for the persistent connection helper, instead the location must be configured
