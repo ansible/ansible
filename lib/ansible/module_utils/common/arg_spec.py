@@ -200,10 +200,10 @@ class ArgumentSpecValidator:
                 'collection_name': deprecation.get('collection_name'),
             })
 
-        try:
-            result._no_log_values.update(_list_no_log_values(self.argument_spec, result._validated_parameters))
-        except TypeError as te:
-            result.errors.append(NoLogError(to_native(te)))
+        no_log_introspection_errors = []
+        result._no_log_values.update(_list_no_log_values(self.argument_spec, result._validated_parameters, no_log_introspection_errors))
+        for error in no_log_introspection_errors:
+            result.errors.append(NoLogError(error))
 
         try:
             result._deprecations.extend(_list_deprecations(self.argument_spec, result._validated_parameters))
