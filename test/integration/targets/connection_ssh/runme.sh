@@ -19,6 +19,7 @@ if command -v sshpass > /dev/null; then
         # that the flag gets passed to sshpass.
         timeout 5 ansible -m ping \
             -e ansible_connection=ssh \
+            -e ansible_ssh_password_mechanism=sshpass \
             -e ansible_sshpass_prompt=notThis: \
             -e ansible_password=foo \
             -e ansible_user=definitelynotroot \
@@ -34,6 +35,7 @@ if command -v sshpass > /dev/null; then
     else
         ansible -m ping \
             -e ansible_connection=ssh \
+            -e ansible_ssh_password_mechanism=sshpass \
             -e ansible_sshpass_prompt=notThis: \
             -e ansible_password=foo \
             -e ansible_user=definitelynotroot \
