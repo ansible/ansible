@@ -301,6 +301,12 @@ class StrategyModule(StrategyBase):
             # pause briefly so we don't spin lock
             time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
 
+        display.debug("checking for early termination")
+        if all(iterator.is_failed(host)
+               for host in self.get_hosts_left(iterator)):
+            self._tqm.send_callback('v2_playbook_on_terminated_early')
+        display.debug("done checking for early termination")
+
         # collect all the final results
         results = self._wait_on_pending_results(iterator)
 

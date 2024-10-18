@@ -477,6 +477,9 @@ class CallbackBase(AnsiblePlugin):
     def playbook_on_no_hosts_remaining(self):
         pass
 
+    def playbook_on_terminated_early(self):
+        pass
+
     def playbook_on_task_start(self, name, is_conditional):
         pass
 
@@ -591,6 +594,9 @@ class CallbackBase(AnsiblePlugin):
 
     def v2_playbook_on_no_hosts_remaining(self):
         self.playbook_on_no_hosts_remaining()
+
+    def v2_playbook_on_terminated_early(self):
+        self.playbook_on_terminated_early()
 
     def v2_playbook_on_task_start(self, task, is_conditional):
         self.playbook_on_task_start(task.name, is_conditional)
