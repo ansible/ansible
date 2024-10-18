@@ -1,0 +1,3 @@
+---
+bugfixes:
+- ansible-connection - handle errors when passing methods to persistent connection instead of closing connection (https://github.com/ansible-collections/ansible.netcommon/issues/301).
