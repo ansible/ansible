@@ -29,7 +29,7 @@ from ansible.module_utils.common.text.converters import to_bytes, to_text, to_na
 from ansible.module_utils.six import string_types
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.loader import AnsibleLoader
-from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
+from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, PY_FILES
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder, _get_collection_metadata
 from ansible.utils.display import Display
@@ -229,6 +229,8 @@ class PluginLoader:
             PATH_CACHE[class_name] = None
         if class_name not in PLUGIN_PATH_CACHE:
             PLUGIN_PATH_CACHE[class_name] = defaultdict(dict)
+        if class_name not in PY_FILES:
+            PY_FILES[class_name] = {}
 
         # hold dirs added at runtime outside of config
         self._extra_dirs = []
@@ -236,6 +238,7 @@ class PluginLoader:
         # caches
         self._module_cache = MODULE_CACHE[class_name]
         self._paths = PATH_CACHE[class_name]
+        self._py_files = PY_FILES[class_name]
         self._plugin_path_cache = PLUGIN_PATH_CACHE[class_name]
         self._plugin_instance_cache = {} if self.subdir == 'vars_plugins' else None
 
@@ -257,12 +260,14 @@ class PluginLoader:
             MODULE_CACHE[self.class_name] = {}
             PATH_CACHE[self.class_name] = None
             PLUGIN_PATH_CACHE[self.class_name] = defaultdict(dict)
+            PY_FILES[self.class_name] = {}
 
             # reset internal caches
             self._module_cache = MODULE_CACHE[self.class_name]
             self._paths = PATH_CACHE[self.class_name]
             self._plugin_path_cache = PLUGIN_PATH_CACHE[self.class_name]
             self._plugin_instance_cache = {} if self.subdir == 'vars_plugins' else None
+            self._py_files = PY_FILES[self.class_name]
             self._searched_paths = set()
 
     def __setstate__(self, data):
@@ -279,6 +284,7 @@ class PluginLoader:
 
         PATH_CACHE[class_name] = data.get('PATH_CACHE')
         PLUGIN_PATH_CACHE[class_name] = data.get('PLUGIN_PATH_CACHE')
+        PY_FILES[class_name] = data.get('PY_FILES')
 
         self.__init__(class_name, package, config, subdir, aliases, base_class)
         self._extra_dirs = data.get('_extra_dirs', [])
@@ -300,6 +306,7 @@ class PluginLoader:
             _searched_paths=self._searched_paths,
             PATH_CACHE=PATH_CACHE[self.class_name],
             PLUGIN_PATH_CACHE=PLUGIN_PATH_CACHE[self.class_name],
+            PY_FILES=PY_FILES[self.class_name],
         )
 
     def format_paths(self, paths):
@@ -950,6 +957,11 @@ class PluginLoader:
 
             display.debug(msg)
 
+    def _get_py_files(self, path):
+        if path not in self._py_files:
+            self._py_files[path] = glob.glob(to_native(os.path.join(path, "*.py")))
+        return self._py_files[path]
+
     def all(self, *args, **kwargs):
         """
         Iterate through all plugins of this type, in configured paths (no collections)
@@ -996,7 +1008,7 @@ class PluginLoader:
 
         legacy_excluding_builtin = set()
         for path_with_context in self._get_paths_with_context():
-            matches = glob.glob(to_native(os.path.join(path_with_context.path, "*.py")))
+            matches = self._get_py_files(path_with_context.path)
             if not path_with_context.internal:
                 legacy_excluding_builtin.update(matches)
             # we sort within each path, but keep path precedence from config
