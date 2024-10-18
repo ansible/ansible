@@ -898,7 +898,7 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, g
             refspecs.append('+refs/heads/%s:refs/remotes/%s/%s' % (version, remote, version))
         elif is_remote_tag(git_path, module, dest, repo, version):
             refspecs.append('+refs/tags/' + version + ':refs/tags/' + version)
-        if refspecs:
+        if not refspecs:
             # if refspecs is empty, i.e. version is neither heads nor tags
             # assume it is a version hash
             # fall back to a full clone, otherwise we might not be able to checkout
