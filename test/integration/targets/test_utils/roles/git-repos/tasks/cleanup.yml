@@ -1,0 +1,20 @@
+- when: started_daemon is defined
+  block:
+  - name: Check if git daemon is running
+    command: 'pgrep -f "git daemon --export-all --enable=receive-pack --base-path={{ repo_path }} {{ repo_path }}"'
+    register: pid
+    ignore_errors: true
+
+  - name: Stop the git daemon
+    command: "kill {{ pid.stdout_lines | first }}"
+    when: pid.stdout_lines|length> 1
+
+  - name: Clean up after async task
+    async_status:
+      jid: '{{ started_daemon.ansible_job_id }}'
+      mode: cleanup
+    register: status_result
+    vars:
+      # https://github.com/ansible/ansible/issues/77450#issuecomment-1437626656
+      ansible_async_dir: '{{ started_daemon.results_file|dirname }}'
+    when: started_daemon is defined

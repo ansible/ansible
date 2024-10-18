@@ -1,0 +1,14 @@
+- name: Check is repo needs to be created
+  stat:
+    path: '{{ repo_path }}/{{ repository }}'
+  register: stat_repo
+
+- name: Initialize bare git repo
+  shell: 'git init --bare --shared {{ repo_path }}/{{ repository }}'
+  when: not stat_repo.stat.exists
+
+- name: Add repo as safe
+  shell: 'git config --add safe.directory .'
+  args:
+    chdir: "{{ repo_path }}/{{ repository }}"
+  when: not stat_repo.stat.exists

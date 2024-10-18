@@ -1,3 +1,32 @@
+- name: CHANGE-REPO-URL | setup
+  block:
+    - name: CHANGE-REPO-URL | setup | create repo
+      include_role: name=test_utils/roles/git-repos
+      vars:
+        repositories:
+          - git-test-old.git
+        exec:
+          - 'echo initial > README.md'
+          - 'git add README.md && git commit -m "Initial commit"'
+          - 'git push origin {{ git_default_branch }}'
+
+    - name: CHANGE-REPO-URL | setup | fork repo
+      shell: 'cp -pr git-test-old.git git-test-new.git'
+      args:
+        chdir: '{{ remote_tmp_dir }}/git_repositories'
+
+    - name: CHANGE-REPO-URL | setup | update forked repo
+      include_role: name=test_utils/roles/git-repos
+      vars:
+        repositories:
+          - git-test-new.git
+        exec:
+          - 'echo update > README.md'
+          - 'git add README.md && git commit -m "second commit"'
+          - 'echo foo > newfilename'
+          - 'git add newfilename && git commit -m "create newfile"'
+          - 'git push origin {{ git_default_branch }}'
+
 # test change of repo url
 # see https://github.com/ansible/ansible-modules-core/pull/721
 
