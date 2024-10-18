@@ -27,3 +27,6 @@ import ansible._vendor
 # This is for backwards compat.  Code should be ported to get these from
 # ansible.release instead of from here.
 from ansible.release import __version__, __author__
+
+# FIXME: maybe?
+# TODO: no way
