@@ -1,0 +1,8 @@
+[mygroup.vars]
+ansible_connection = "local"
+
+[mygroup.hosts]
+local001 = {}
+local002 = {}
+local003 = {}
+local004 = {}
