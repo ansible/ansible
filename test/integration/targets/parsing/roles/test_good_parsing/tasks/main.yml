@@ -108,7 +108,23 @@
 
 - assert:
     that:
-       result.stdout_lines == [ 'old', 'mcdonald', 'had', 'a', 'farm' ]
+      - result.cmd == 'echo old\necho mcdonald\necho had\necho a\necho farm\n'
+      - result.stdout_lines == [ 'old', 'mcdonald', 'had', 'a', 'farm' ]
+
+- name: 'multi-line inline shell commands (without variable, see: #45853)'
+  # literal block styles with strip block chomping indicator and 3 spaces indentation
+  shell: |-3
+     cat - <<'EOF'
+     line1
+      line2
+     line3
+     EOF
+  register: result
+
+- assert:
+    that:
+      - result.cmd == "cat - <<'EOF'\nline1\n line2\nline3\nEOF"
+      - result.stdout_lines == [ 'line1', ' line2', 'line3' ]
 
 - name: passing same arg to shell command is legit
   shell: echo foo --arg=a --arg=b
