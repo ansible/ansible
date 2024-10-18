@@ -15,6 +15,11 @@ DOCUMENTATION = """
       _terms:
         description: path(s) of files to read
         required: True
+      ignore_missing:
+        description: Flag to control whether or not no matches found return a warning
+        type: boolean
+        default: False
+        version_added: "2.18"
     notes:
       - Patterns are only supported on files, not directory/paths.
       - See R(Ansible task paths,playbook_task_paths) to understand how file lookup occurs with paths.
@@ -59,12 +64,14 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
+        self.set_options(direct=kwargs)
+
         ret = []
         for term in terms:
             term_file = os.path.basename(term)
             found_paths = []
             if term_file != term:
-                found_paths.append(self.find_file_in_search_path(variables, 'files', os.path.dirname(term)))
+                found_paths.append(self.find_file_in_search_path(variables, 'files', os.path.dirname(term), ignore_missing=self.get_option('ignore_missing')))
             else:
                 # no dir, just file, so use paths and 'files' paths instead
                 if 'ansible_search_path' in variables:
