@@ -272,6 +272,10 @@ class CLI(ABC):
                 loader.set_vault_secrets(vault_secrets)
                 continue
 
+            if not vault_id_value:
+                # silently ignore empty filenames
+                continue
+
             # assuming anything else is a password file
             display.vvvvv('Reading vault password file: %s' % vault_id_value)
             # read vault_pass from a file
