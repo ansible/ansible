@@ -1,0 +1,4 @@
+# Custom /etc/fstab for FreeBSD VM images
+/dev/gpt/rootfs   /       ufs     rw      1       1
+/dev/gpt/swapfs  none    swap    sw      0       0
+/dev/gpt/efiesp /boot/efi       msdosfs     rw      2       2
