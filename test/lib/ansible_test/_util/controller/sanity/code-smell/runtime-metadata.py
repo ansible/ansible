@@ -123,7 +123,9 @@ def get_collection_version():
     # noinspection PyBroadException
     try:
         result = collection_detail.read_manifest_json('.') or collection_detail.read_galaxy_yml('.')
-        return SemanticVersion(result['version'])
+        version = SemanticVersion()
+        version.parse(result['version'])
+        return version
     except Exception:  # pylint: disable=broad-except
         # We do not care why it fails, in case we cannot get the version
         # just return None to indicate "we don't know".

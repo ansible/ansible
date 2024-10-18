@@ -24,6 +24,6 @@ WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "${WORK_DIR}"' EXIT
 
 cp -a "${TEST_DIR}/ansible_collections" "${WORK_DIR}"
-cd "${WORK_DIR}/ansible_collections/ns/col"
+cd "${WORK_DIR}/ansible_collections/ns/${COLLECTION_NAME:-col}"
 
 "${TEST_DIR}/../collection/update-ignore.py"
