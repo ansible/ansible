@@ -353,7 +353,7 @@ def recursive_set_attributes(b_path, follow, file_args, mtime, atime):
                             tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
                             changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, expand=False)
                             changed |= update_timestamp_for_file(tmp_file_args['path'], mtime, atime)
-    except RuntimeError as e:
+    except (RuntimeError, FileNotFoundError) as e:
         # on Python3 "RecursionError" is raised which is derived from "RuntimeError"
         # TODO once this function is moved into the common file utilities, this should probably raise more general exception
         module.fail_json(
