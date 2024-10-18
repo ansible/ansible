@@ -276,6 +276,7 @@ class TaskExecutor:
 
         self._task.loop_control.post_validate(templar=templar)
 
+        unpack = self._task.loop_control.unpack
         loop_var = self._task.loop_control.loop_var
         index_var = self._task.loop_control.index_var
         loop_pause = self._task.loop_control.pause
@@ -297,6 +298,10 @@ class TaskExecutor:
         for item_index, item in enumerate(items):
             task_vars['ansible_loop_var'] = loop_var
 
+            if unpack is True:
+                if not isinstance(item, Mapping):
+                    raise AnsibleError('loop_control.unpack can only be used with a mapping/dictionary. Got %r' % item.__class__.__name__)
+                task_vars.update(item)
             task_vars[loop_var] = item
             if index_var:
                 task_vars['ansible_index_var'] = index_var
@@ -370,6 +375,7 @@ class TaskExecutor:
             res['_ansible_item_result'] = True
             res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
             res['_ansible_ignore_unreachable'] = task_fields.get('ignore_unreachable')
+            res['_ansible_loop_unpack'] = unpack
 
             # gets templated here unlike rest of loop_control fields, depends on loop_var above
             try:
