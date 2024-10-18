@@ -1,0 +1,9 @@
+Current: = cap_chown,cap_dac_override,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_net_bind_service,cap_net_raw,cap_sys_chroot,cap_mknod,cap_audit_write,cap_setfcap+eip
+Bounding set =cap_chown,cap_dac_override,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_net_bind_service,cap_net_raw,cap_sys_chroot,cap_mknod,cap_audit_write,cap_setfcap
+Securebits: 00/0x0/1'b0
+secure-noroot: no (unlocked)
+secure-no-suid-fixup: no (unlocked)
+secure-keep-caps: no (unlocked)
+uid=0(root)
+gid=0(root)
+groups=
