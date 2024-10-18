@@ -20,6 +20,15 @@ jobs:
           patterns: "Coverage */*=coverage.combined"
       - bash: .azure-pipelines/scripts/combine-coverage.py coverage/
         displayName: Combine Coverage Data
+      - task: PublishCodeCoverageResults@1
+        displayName: Publish to Azure DevOps
+        inputs:
+          # additionalCodeCoverageFiles:  # string. Additional files. 
+          codeCoverageTool: Cobertura
+          # failIfCoverageEmpty: false  # boolean. Fail when code coverage results are missing. Default: false.
+          # pathToSources:  # string. Path to Source files. 
+          # reportDirectory:  # string. Report directory. 
+          summaryFileLocation: coverage/reports/coverage*.xml
       - bash: .azure-pipelines/scripts/report-coverage.sh
         displayName: Generate Coverage Report
         condition: gt(variables.coverageFileCount, 0)
