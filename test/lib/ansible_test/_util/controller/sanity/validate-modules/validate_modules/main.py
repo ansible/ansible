@@ -1610,6 +1610,18 @@ class ModuleValidator(Validator):
         doc_options = docs.get('options', {})
         if doc_options is None:
             doc_options = {}
+
+        if last_context_spec.get('add_file_common_args', False):
+            # Check if files doc_fragment is included
+            file_common_keys = ['mode', 'owner', 'group', 'seuser', 'serole', 'setype', 'selevel', 'unsafe_writes', 'attributes']
+            if any(missing_key not in list(doc_options.keys()) for missing_key in file_common_keys):
+                msg = "add_file_common_args specified but no doc_fragment 'files' included in 'extends_documentation_fragment'"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='no-file-common-args-doc-fragment',
+                    msg=msg,
+                )
+
         for arg, data in spec.items():
             restricted_argument_names = ('message', 'syslog_facility')
             if arg.lower() in restricted_argument_names:
