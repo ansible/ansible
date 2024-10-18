@@ -146,13 +146,9 @@ class PlayContext(Base):
     def set_attributes_from_plugin(self, plugin):
         # generic derived from connection plugin, temporary for backwards compat, in the end we should not set play_context properties
 
-        # get options for plugins
         options = C.config.get_configuration_definitions(plugin.plugin_type, plugin._load_name)
-        for option in options:
-            if option:
-                flag = options[option].get('name')
-                if flag:
-                    setattr(self, flag, plugin.get_option(flag))
+        for option in options.keys():
+            setattr(self, option, plugin.get_option(option))
 
     def set_attributes_from_play(self, play):
         self.force_handlers = play.force_handlers
