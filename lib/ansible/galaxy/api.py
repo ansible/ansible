@@ -478,7 +478,7 @@ class GalaxyAPI:
         return data
 
     @g_connect(['v1'])
-    def create_import_task(self, github_user, github_repo, reference=None, role_name=None):
+    def create_import_task(self, github_user, github_repo, reference=None, role_name=None, namespace=None):
         """
         Post an import request
         """
@@ -490,6 +490,8 @@ class GalaxyAPI:
         }
         if role_name:
             args['alternate_role_name'] = role_name
+        if namespace:
+            args['alternate_namespace_name'] = namespace
         data = self._call_galaxy(url, args=urlencode(args), method="POST")
         if data.get('results', None):
             return data['results']

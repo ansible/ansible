@@ -397,6 +397,8 @@ class GalaxyCLI(CLI):
                                         '(usually master)')
         import_parser.add_argument('--role-name', dest='role_name',
                                    help='The name the role should have, if different than the repo name')
+        import_parser.add_argument('--namespace', dest='role_namespace',
+                                   help='The role namespace, if different than the user name')
         import_parser.add_argument('--status', dest='check_status', action='store_true', default=False,
                                    help='Check the status of the most recent import request for given github_'
                                         'user/github_repo.')
@@ -1782,7 +1784,8 @@ class GalaxyCLI(CLI):
             # Submit an import request
             task = self.api.create_import_task(github_user, github_repo,
                                                reference=context.CLIARGS['reference'],
-                                               role_name=context.CLIARGS['role_name'])
+                                               role_name=context.CLIARGS['role_name'],
+                                               namespace=context.CLIARGS['role_namespace'])
 
             if len(task) > 1:
                 # found multiple roles associated with github_user/github_repo
