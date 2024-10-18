@@ -32,6 +32,66 @@
       - '"found a duplicate dict key (foo)" not in duplicate_ignore.stderr'
       - duplicate_ignore.rc == 0
 
+- name: Test datetime parsing logic
+  command: ansible-playbook {{ role_path }}/datetime.yml
+  environment:
+    ANSIBLE_JINJA2_NATIVE: '{{ item }}'
+    ANSIBLE_NOCOLOR: 'true'
+    ANSIBLE_FORCE_COLOR: 'false'
+    ANSIBLE_DEPRECATION_WARNINGS: 'true'
+  loop:
+  - true
+  - false
+  register: datetime_result_raw
+
+- name: Parse datetime results
+  set_fact:
+    datetime_jnative_true_result: '{{ datetime_result_raw.results[0].stdout | parse_datetime_result }}'
+    datetime_jnative_true_warnings: '{{ datetime_result_raw.results[0].stderr | parse_datetime_warnings }}'
+    datetime_jnative_false_result: '{{ datetime_result_raw.results[1].stdout | parse_datetime_result }}'
+    datetime_jnative_false_warnings: '{{ datetime_result_raw.results[1].stderr | parse_datetime_warnings }}'
+
+- name: Assert datetime parsing logic
+  assert:
+    that:
+    - datetime_jnative_true_result.plain_scalar.v == '2023-05-19 11:49:01+00:00'
+    - datetime_jnative_true_result.plain_scalar.t == 'datetime'
+    - datetime_jnative_true_result.tag_shorthand.v == '2023-05-19 11:49:02+00:00'
+    - datetime_jnative_true_result.tag_shorthand.t == 'datetime'
+    - datetime_jnative_true_result.tag_full.v == '2023-05-19 11:49:03+00:00'
+    - datetime_jnative_true_result.tag_full.t == 'datetime'
+    - datetime_jnative_true_result.quoted.v == '2023-05-19T11:49:01Z'
+    - datetime_jnative_true_result.quoted.t != 'datetime'
+    - datetime_jnative_true_result.tag_str.v == '2023-05-19T11:49:01Z'
+    - datetime_jnative_true_result.tag_str.t != 'datetime'
+    - datetime_jnative_true_result.template_str.v == '2023-05-19T11:49:01Z'
+    - datetime_jnative_true_result.template_str.t != 'datetime'
+    - datetime_jnative_true_result.template_to_dt.v == '2023-05-19 11:49:01+00:00'
+    - datetime_jnative_true_result.template_to_dt.t == 'datetime'
+
+    - datetime_jnative_false_result.plain_scalar.v == '2023-05-19 11:49:01+00:00'
+    - datetime_jnative_false_result.plain_scalar.t == 'datetime'
+    - datetime_jnative_false_result.tag_shorthand.v == '2023-05-19 11:49:02+00:00'
+    - datetime_jnative_false_result.tag_shorthand.t == 'datetime'
+    - datetime_jnative_false_result.tag_full.v == '2023-05-19 11:49:03+00:00'
+    - datetime_jnative_false_result.tag_full.t == 'datetime'
+    - datetime_jnative_false_result.quoted.v == '2023-05-19T11:49:01Z'
+    - datetime_jnative_false_result.quoted.t != 'datetime'
+    - datetime_jnative_false_result.tag_str.v == '2023-05-19T11:49:01Z'
+    - datetime_jnative_false_result.tag_str.t != 'datetime'
+    - datetime_jnative_false_result.template_str.v == '2023-05-19T11:49:01Z'
+    - datetime_jnative_false_result.template_str.t != 'datetime'
+    - datetime_jnative_false_result.template_to_dt.v == '2023-05-19 11:49:01+00:00'
+    - datetime_jnative_false_result.template_to_dt.t != 'datetime'
+
+    - datetime_jnative_true_warnings | count == 3
+    - >-
+      "Found YAML value '2023-05-19T11:49:01Z' that has been converted to a datetime object from '" ~ role_path ~ "/datetime.yml', line 4, column 19" in datetime_jnative_true_warnings[0]
+    - >-
+      "Found YAML value '2023-05-19T11:49:02Z' that has been converted to a datetime object from '" ~ role_path ~ "/datetime.yml', line 5, column 20" in datetime_jnative_true_warnings[1]
+    - >-
+      "Found YAML value '2023-05-19T11:49:03Z' that has been converted to a datetime object from '" ~ role_path ~ "/datetime.yml', line 6, column 15" in datetime_jnative_true_warnings[2]
+    - datetime_jnative_true_warnings == datetime_jnative_false_warnings
 
 - name: test unsafe YAMLism
   import_tasks: unsafe.yml

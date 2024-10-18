@@ -1,0 +1,25 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    plain_scalar: 2023-05-19T11:49:01Z
+    tag_shorthand: !!timestamp 2023-05-19T11:49:02Z
+    tag_full: !<tag:yaml.org,2002:timestamp> 2023-05-19T11:49:03Z
+    quoted: '2023-05-19T11:49:01Z'
+    tag_str: !!str 2023-05-19T11:49:01Z
+    template_str: '{{ "2023-05-19T11:49:01Z" | string }}'
+    template_to_dt: '{{ "2023-05-19T11:49:01Z" | to_datetime("%Y-%m-%dT%H:%M:%S%z") }}'
+
+  tasks:
+  - set_fact:
+      parse_result:
+        plain_scalar: {v: '{{ plain_scalar | string }}', t: '{{ plain_scalar | type_debug }}'}
+        tag_shorthand: {v: '{{ tag_shorthand | string }}', t: '{{ tag_shorthand | type_debug }}'}
+        tag_full: {v: '{{ tag_full | string }}', t: '{{ tag_full | type_debug }}'}
+        quoted: {v: '{{ quoted | string }}', t: '{{ quoted | type_debug }}'}
+        tag_str: {v: '{{ tag_str | string }}', t: '{{ tag_str | type_debug }}'}
+        template_str: {v: '{{ template_str | string }}', t: '{{ template_str | type_debug }}'}
+        template_to_dt: {v: '{{ template_to_dt | string }}', t: '{{ template_to_dt | type_debug }}'}
+
+  - name: print result
+    debug:
+      var: parse_result

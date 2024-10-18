@@ -118,6 +118,22 @@ class AnsibleConstructor(SafeConstructor):
         data.extend(self.construct_sequence(node))
         data.ansible_pos = self._node_position_info(node)
 
+    def construct_yaml_timestamp(self, node):
+        ds, line, column = self._node_position_info(node)
+        msg = (
+            f"Found YAML value '{node.value}' that has been converted to a datetime object from "
+            f"'{ds}', line {line}, column {column}. YAML parsing of unquoted datetime values "
+            "has been deprecated as it changes the value when converted back to a string. "
+            "To avoid this deprecation warning and opt into the future behaviour, "
+            "quote the value or add the '!!str'."
+        )
+        display.deprecated(msg, version="2.21")
+
+        # In 2.21 change the constructor for 'tag:yaml.org,2002:timestamp'
+        # below to use construct_yaml_str instead.
+        dt_value = super().construct_yaml_timestamp(node)
+        return dt_value
+
     def construct_yaml_unsafe(self, node):
         try:
             constructor = getattr(node, 'id', 'object')
@@ -164,6 +180,10 @@ AnsibleConstructor.add_constructor(
 AnsibleConstructor.add_constructor(
     u'tag:yaml.org,2002:seq',
     AnsibleConstructor.construct_yaml_seq)  # type: ignore[type-var]
+
+AnsibleConstructor.add_constructor(
+    'tag:yaml.org,2002:timestamp',
+    AnsibleConstructor.construct_yaml_timestamp)
 
 AnsibleConstructor.add_constructor(
     u'!unsafe',

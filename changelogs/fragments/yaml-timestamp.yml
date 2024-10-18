@@ -1,0 +1,8 @@
+deprecated_features:
+- >-
+  Deprecated YAML parsing of unquoted datetime strings like ``2002-12-14``, ``2001-12-15 2:59:43.10``, ``2001-12-15T02:59:43.1Z``,
+  into a datetime object. Parsing as a datetime object will change the value used when using the value,
+  for example as a module option. To opt into the new behaviour before Ansible 2.21, quote the YAML value so it stays a string.
+  To preserve the existing behaviour use the ``to_datetime`` filter, for example ``key: 2023-05-19T11:49:52Z`` would now be
+  ``key: '{{ "2023-05-19T11:49:52Z" | to_datetime("%Y-%m-%dT%H:%M:%S%z") }}'``. Jinja2 native needs to be enabled to
+  preserve the datetime value outside the template.
