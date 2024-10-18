@@ -317,9 +317,8 @@ def _load_params():
         # We control the args and we pass them as utf8
         if len(sys.argv) > 1:
             if os.path.isfile(sys.argv[1]):
-                fd = open(sys.argv[1], 'rb')
-                buffer = fd.read()
-                fd.close()
+                with open(sys.argv[1], 'rb') as fd:
+                    buffer = fd.read()
             else:
                 buffer = sys.argv[1].encode('utf-8', errors='surrogateescape')
         # default case, read from stdin
@@ -655,9 +654,8 @@ class AnsibleModule(object):
         NFS or other 'special' fs  mount point, otherwise the return will be (False, None).
         """
         try:
-            f = open('/proc/mounts', 'r')
-            mount_data = f.readlines()
-            f.close()
+            with open('/proc/mounts', 'r') as f:
+                mount_data = f.readlines()
         except Exception:
             return (False, None)
 
@@ -2028,9 +2026,8 @@ class AnsibleModule(object):
 
     def append_to_file(self, filename, str):
         filename = os.path.expandvars(os.path.expanduser(filename))
-        fh = open(filename, 'a')
-        fh.write(str)
-        fh.close()
+        with open(filename, 'a') as fh:
+            fh.write(str)
 
     def bytes_to_human(self, size):
         return bytes_to_human(size)
