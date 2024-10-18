@@ -672,7 +672,7 @@ class GalaxyCLI(CLI):
                                                                 client_id=client_id)
                     else:
                         # The galaxy v1 / github / django / 'Token'
-                        server_options['token'] = GalaxyToken(token=token_val)
+                        server_options['token'] = GalaxyToken(token=token_val, config={})
 
             server_options.update(galaxy_options)
             config_servers.append(GalaxyAPI(
