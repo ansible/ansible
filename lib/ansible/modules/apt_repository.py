@@ -179,13 +179,13 @@ import sys
 import tempfile
 import time
 
+from urllib.parse import urlencode
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.file import S_IRWU_RG_RO as DEFAULT_SOURCES_PERM
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.urls import fetch_url
-
-from ansible.module_utils.common.locale import get_best_parsable_locale
+from ansible.module_utils.urls import fetch_file, fetch_url
 
 try:
     import apt
@@ -472,10 +472,9 @@ class UbuntuSourcesList(SourcesList):
         self.codename = module.params['codename'] or distro.codename
         super(UbuntuSourcesList, self).__init__(module)
 
-        self.apt_key_bin = self.module.get_bin_path('apt-key', required=False)
         self.gpg_bin = self.module.get_bin_path('gpg', required=False)
-        if not self.apt_key_bin and not self.gpg_bin:
-            self.module.fail_json(msg='Either apt-key or gpg binary is required, but neither could be found')
+        if not self.gpg_bin:
+            self.module.fail_json(msg='gpg binary is required, but this could be found')
 
     def __deepcopy__(self, memo=None):
         return UbuntuSourcesList(self.module)
@@ -489,7 +488,7 @@ class UbuntuSourcesList(SourcesList):
             self.module.fail_json(msg="failed to fetch PPA information, error was: %s" % info['msg'])
         return json.loads(to_native(response.read()))
 
-    def _expand_ppa(self, path):
+    def _expand_ppa(self, path, legacy=False):
         ppa = path.split(':')[1]
         ppa_owner = ppa.split('/')[0]
         try:
@@ -497,25 +496,16 @@ class UbuntuSourcesList(SourcesList):
         except IndexError:
             ppa_name = 'ppa'
 
-        line = 'deb %s/%s/%s/ubuntu %s main' % (self.PPA_URI, ppa_owner, ppa_name, self.codename)
+        if legacy:
+            line = 'deb %s/%s/%s/ubuntu %s main' % (self.PPA_URI, ppa_owner, ppa_name, self.codename)
+        else:
+            keypath = self._get_ppa_keyfile("ubuntu-%s-main" % self.codename, ppa_owner, ppa_name)
+            line = 'deb [signed-by=%s] %s/%s/%s/ubuntu %s main' % (keypath, self.PPA_URI, ppa_owner, ppa_name, self.codename)
         return line, ppa_owner, ppa_name
 
-    def _key_already_exists(self, key_fingerprint):
-
-        if self.apt_key_bin:
-            locale = get_best_parsable_locale(self.module)
-            APT_ENV = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LC_CTYPE=locale, LANGUAGE=locale)
-            self.module.run_command_environ_update = APT_ENV
-            rc, out, err = self.module.run_command([self.apt_key_bin, 'export', key_fingerprint], check_rc=True)
-            found = bool(not err or 'nothing exported' not in err)
-        else:
-            found = self._gpg_key_exists(key_fingerprint)
-
-        return found
-
-    def _gpg_key_exists(self, key_fingerprint):
-
-        found = False
+    def _existing_gpg_filepath(self, key_fingerprint):
+        """ Returns the path to an existing GPG key, or "" if one cannot be found """
+        found_keyfile = ""
         keyfiles = ['/etc/apt/trusted.gpg']  # main gpg repo for apt
         for other_dir in APT_KEY_DIRS:
             # add other known sources of gpg sigs for apt, skip hidden files
@@ -531,54 +521,60 @@ class UbuntuSourcesList(SourcesList):
                     continue
 
                 if key_fingerprint in out:
-                    found = True
+                    found_keyfile = key_file
                     break
 
-        return found
+        return found_keyfile
+
+    def _retreive_gpg_key(self, keyfile, info):
+        # TODO: report file that would have been added if not check_mode
+        if not self.module.check_mode:
+            # use first available key dir, in order of preference
+
+            keyserver_url = "https://keyserver.ubuntu.com/pks/lookup?{}".format(
+                urlencode({"op": "get", "search": "0x" + info['signing_key_fingerprint']})
+            )
+            armored_keyfile = fetch_file(self.module, keyserver_url)
+
+            command = [self.gpg_bin, '--no-tty', '-o', keyfile, '--dearmor', armored_keyfile]
+            rc, stdout, stderr = self.module.run_command(command, check_rc=True, encoding=None)
+
+            if rc != 0 or len(stderr) != 0:
+                self.module.fail_json(msg='Unable to get required signing key', rc=rc, stderr=stderr, command=command)
+            self.module.log('Added repo key "%s" for apt to file "%s"' % (info['signing_key_fingerprint'], keyfile))
+
+    def _get_ppa_keyfile(self, source, ppa_owner, ppa_name):
+        for keydir in APT_KEY_DIRS:
+            if os.path.exists(keydir):
+                break
+        else:
+            self.module.fail_json("Unable to find any existing apt gpgp repo directories, tried the following: %s" % ', '.join(APT_KEY_DIRS))
+
+        return '%s/%s-%s-%s.gpg' % (keydir, os.path.basename(source).replace(' ', '-'), ppa_owner, ppa_name)
 
     # https://www.linuxuprising.com/2021/01/apt-key-is-deprecated-how-to-add.html
     def add_source(self, line, comment='', file=None):
         if line.startswith('ppa:'):
             source, ppa_owner, ppa_name = self._expand_ppa(line)
+            legacy_source = self._expand_ppa(line, legacy=True)[0]
 
-            if source in self.repos_urls:
+            if source in self.repos_urls or legacy_source in self.repos_urls:
                 # repository already exists
                 return
 
             info = self._get_ppa_info(ppa_owner, ppa_name)
 
             # add gpg sig if needed
-            if not self._key_already_exists(info['signing_key_fingerprint']):
+            existing_keyfile = self._existing_gpg_filepath(info["signing_key_fingerprint"])
+            if not existing_keyfile:
+                for keydir in APT_KEY_DIRS:
+                    if os.path.exists(keydir):
+                        break
+                else:
+                    self.module.fail_json("Unable to find any existing apt gpgp repo directories, tried the following: %s" % ', '.join(APT_KEY_DIRS))
 
-                # TODO: report file that would have been added if not check_mode
-                keyfile = ''
-                if not self.module.check_mode:
-                    if self.apt_key_bin:
-                        command = [self.apt_key_bin, 'adv', '--recv-keys', '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80',
-                                   info['signing_key_fingerprint']]
-                    else:
-                        # use first available key dir, in order of preference
-                        for keydir in APT_KEY_DIRS:
-                            if os.path.exists(keydir):
-                                break
-                        else:
-                            self.module.fail_json("Unable to find any existing apt gpgp repo directories, tried the following: %s" % ', '.join(APT_KEY_DIRS))
-
-                        keyfile = '%s/%s-%s-%s.gpg' % (keydir, os.path.basename(source).replace(' ', '-'), ppa_owner, ppa_name)
-                        command = [self.gpg_bin, '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80', '--export', info['signing_key_fingerprint']]
-
-                    rc, stdout, stderr = self.module.run_command(command, check_rc=True, encoding=None)
-                    if keyfile:
-                        # using gpg we must write keyfile ourselves
-                        if len(stdout) == 0:
-                            self.module.fail_json(msg='Unable to get required signing key', rc=rc, stderr=stderr, command=command)
-                        try:
-                            with open(keyfile, 'wb') as f:
-                                f.write(stdout)
-                            self.module.log('Added repo key "%s" for apt to file "%s"' % (info['signing_key_fingerprint'], keyfile))
-                        except (OSError, IOError) as e:
-                            self.module.fail_json(msg='Unable to add required signing key for%s ', rc=rc, stderr=stderr, error=to_native(e))
-
+                keyfile = self._get_ppa_keyfile(source, ppa_owner, ppa_name)
+                self._retreive_gpg_key(keyfile, info)
             # apt source file
             file = file or self._suggest_filename('%s_%s' % (line, self.codename))
         else:
@@ -590,6 +586,9 @@ class UbuntuSourcesList(SourcesList):
     def remove_source(self, line):
         if line.startswith('ppa:'):
             source = self._expand_ppa(line)[0]
+            # Remove both explicit signed-by and "legancy" repos without the signed-by value set
+            legacy_source = self._expand_ppa(line, legacy=True)[0]
+            self._remove_valid_source(legacy_source)
         else:
             source = self._parse(line, raise_if_invalid_or_disabled=True)[2]
         self._remove_valid_source(source)
@@ -608,6 +607,8 @@ class UbuntuSourcesList(SourcesList):
 
                 if source_line.startswith('ppa:'):
                     source, ppa_owner, ppa_name = self._expand_ppa(source_line)
+                    _repositories.append(source)
+                    source = self._expand_ppa(source_line, legacy=True)[0]
                     _repositories.append(source)
                 else:
                     _repositories.append(source_line)
