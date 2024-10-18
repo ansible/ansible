@@ -1,0 +1,2 @@
+bugfixes:
+  - fix unable to find pip in the virtualenv when using relative path

@@ -621,3 +621,17 @@
         - pip_prereleases is successful
         - pip_prereleases is not changed
         - '"fallible==0.0.1a2" in pip_prereleases.stdout_lines'
+
+#https://github.com/ansible/ansible/issues/81522
+- name: Unable to find pip in the virtualenv when using relative path
+  pip:
+    chdir: checkout-dir # a relative path
+    requirements: "{{ remote_tmp_dir}}/pipreq.txt" #we dont care about what we are trying to install here
+    virtualenv: venv
+    virtualenv_command: "{{ ansible_python_interpreter }} -m venv"
+  register: pip_output  # Registering the output of the pip task
+
+- assert:
+    that:
+      - pip_output is successful
+      - '"checkout-dir/venv" in pip_output.virtualenv'
