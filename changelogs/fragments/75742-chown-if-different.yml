@@ -1,0 +1,6 @@
+minor_changes:
+  - >
+    module_utils - Consolidate the implemenations of
+    `AnsibleModule.set_owner_if_different()` &
+    `AnsibleModule.set_group_if_different()`. Provide wrappers to maintain
+    compatibility.
