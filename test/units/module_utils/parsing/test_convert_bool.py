@@ -9,37 +9,33 @@ import pytest
 from ansible.module_utils.parsing.convert_bool import boolean
 
 
-class TestBoolean:
-    @pytest.mark.parametrize(("test", "expected"), [
-        (True, True),
-        (False, False),
-        (1, True),
-        (0, False),
-        (0.0, False),
-    ])
-    def test_numbers(self, test, expected):
-        assert boolean(test) is expected
+junk_values = ("flibbity", 42, 42.0, object(), None, 2, -1, 0.1)
 
-    @pytest.mark.skip(reason="Current boolean() doesn't consider these to be true values")
-    @pytest.mark.parametrize("test", (2, -1, 0.1))
-    def test_other_numbers(self, test):
-        assert boolean(test) is True
 
-    @pytest.mark.parametrize("test", ("true", "TRUE", "t", "yes", "y", "on"))
-    def test_strings(self, test):
-        assert boolean(test) is True
+@pytest.mark.parametrize(("test", "expected"), [
+    (True, True),
+    (False, False),
+    (1, True),
+    (0, False),
+    (0.0, False),
+    ("true", True),
+    ("TRUE", True),
+    ("t", True),
+    ("yes", True),
+    ("y", True),
+    ("on", True),
+])
+def test_boolean(test, expected):
+    assert boolean(test) is expected
 
-    @pytest.mark.parametrize("test", ("flibbity", 42, 42.0, object(), None))
-    def test_junk_values_nonstrict(self, test):
-        assert boolean(test, strict=False) is False
 
-    @pytest.mark.parametrize(("test", "match"), [
-        ("flibbity", r"^The value 'flibbity' is not"),
-        (42, r"The value '42' is not"),
-        (42.0, r"^The value '42\.0' is not"),
-        (object(), r"^The value '\<object object"),
-        (None, r"^The value 'None' is not")
-    ])
-    def test_junk_values_strict(self, test, match):
-        with pytest.raises(TypeError, match=match):
-            boolean(test, strict=True)
+@pytest.mark.parametrize("test", junk_values)
+def test_junk_values_nonstrict(test):
+    assert boolean(test, strict=False) is False
+
+
+@pytest.mark.parametrize("test", junk_values)
+def test_junk_values_strict(test):
+    match = rf"^The value '{test}' is not"
+    with pytest.raises(TypeError, match=match):
+        boolean(test, strict=True)
