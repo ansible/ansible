@@ -3089,6 +3089,27 @@ class BusyBox(User):
         - modify_user()
     """
 
+    # This can probably just move out to User, it might be useful in
+    # other strategies some day.
+    def _disable_password_in_shadow_or_fail(self, username):
+        try:
+            self.backup_shadow()
+            out_lines = []
+            with open(self.SHADOWFILE, 'r') as f:
+                for line in f.readlines():
+                    components = line.split(':')
+                    if components[0] == self.name:
+                        components[1] = '*'
+                        out_lines.append(':'.join(components))
+                    else:
+                        out_lines.append(line)
+            with open(self.SHADOWFILE, 'w') as f:
+                f.writelines(out_lines)
+        except Exception as e:
+            self.module.fail_json(
+                msg="Something went wrong when trying to modify %s: %s" %
+                (self.SHADOWFILE, to_native(e)))
+
     def create_user(self):
         cmd = [self.module.get_bin_path('adduser', True)]
 
@@ -3145,7 +3166,16 @@ class BusyBox(User):
         if rc is not None and rc != 0:
             self.module.fail_json(name=self.name, msg=err, rc=rc)
 
-        if self.password is not None:
+        # Since -D is given to adduser above, the user is created locked by
+        # default, so cannot be accessed even if they have a valid SSH key
+        # in place. If a password is given, we `chpasswd` and the account
+        # unlocks. But otherwise, we have to unlock it manually.
+        #
+        # https://github.com/ansible/ansible/issues/68676
+        # https://bugs.busybox.net/show_bug.cgi?id=10981
+        if self.password is None:
+            self._disable_password_in_shadow_or_fail(self.name)
+        else:
             cmd = [self.module.get_bin_path('chpasswd', True)]
             cmd.append('--encrypted')
             data = '{name}:{password}'.format(name=self.name, password=self.password)
