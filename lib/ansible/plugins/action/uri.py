@@ -52,7 +52,7 @@ class ActionModule(ActionBase):
                 tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, os.path.basename(src))
                 kwargs['src'] = tmp_src
                 self._transfer_file(src, tmp_src)
-                self._fixup_perms2((self._connection._shell.tmpdir, tmp_src))
+                self._fixup_perms2((self._connection._shell.tmpdir, tmp_src), execute=False)
             elif body_format == 'form-multipart':
                 if not isinstance(body, Mapping):
                     raise AnsibleActionFail(

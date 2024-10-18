@@ -1,0 +1,3 @@
+bugfixes:
+  - ssh and local connection plugins now attempt to preseve or keep strict file permissions on transfers.
+  - copy, assemble, unarchive and uri actions will not force executable permissions on files anymore.

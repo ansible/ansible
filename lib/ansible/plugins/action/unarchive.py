@@ -97,7 +97,7 @@ class ActionModule(ActionBase):
 
             if not remote_src:
                 # fix file permissions when the copy is done as a different user
-                self._fixup_perms2((self._connection._shell.tmpdir, tmp_src))
+                self._fixup_perms2((self._connection._shell.tmpdir, tmp_src), execute=False)
                 new_module_args['src'] = tmp_src
 
             # execute the unarchive module now, with the updated args (using ansible.legacy prefix to eliminate collections
