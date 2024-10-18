@@ -1147,7 +1147,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             compression_method = zipfile.ZIP_STORED
 
         lookup_path = os.path.join(C.DEFAULT_LOCAL_TMP, 'ansiballz_cache')
-        cached_module_filename = os.path.join(lookup_path, "%s-%s" % (remote_module_fqn, module_compression))
+        cached_module_filename = os.path.join(lookup_path, "%s-%s-%s" % (module_name, remote_module_fqn, module_compression))
 
         zipdata = None
         # Optimization -- don't lock if the module has already been cached

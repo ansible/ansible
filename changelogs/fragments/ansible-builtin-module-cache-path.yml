@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix using a fully qualified ansible.builtin Python module after calling a custom ansible.legacy Python module by the short name.
