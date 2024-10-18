@@ -237,7 +237,8 @@ class ActionModule(ActionBase):
             b_data, show_content = self._loader._get_file_contents(filename)
             data = to_text(b_data, errors='surrogate_or_strict')
 
-            self.show_content = show_content
+            self.show_content &= show_content  # mask all results if any file was encrypted
+
             data = self._loader.load(data, file_name=filename, show_content=show_content)
             if not data:
                 data = dict()
