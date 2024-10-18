@@ -112,9 +112,10 @@ options:
     version_added: '2.4'
   checksum:
     description:
-    - SHA1 checksum of the file being transferred.
+    - SHA256 checksum of the file being transferred.
     - Used to validate that the copy of the file was successful.
     - If this is not provided, ansible will use the local calculated checksum of the src file.
+    - Ansible 2.19 and onwards, SHA256 is default instead of SHA1.
     type: str
     version_added: '2.5'
 extends_documentation_fragment:
@@ -238,10 +239,10 @@ md5sum:
     type: str
     sample: 2a5aeecc61dc98c4d780b14b330e3282
 checksum:
-    description: SHA1 checksum of the file after running copy.
+    description: SHA256 checksum of the file after running copy.
     returned: success
     type: str
-    sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
+    sample: e1ace7b1f177f35749523ce34721d2b1e1ad0b1e3196754f476a69730d24cb53
 backup_file:
     description: Name of backup file created.
     returned: changed and if backup=yes
@@ -562,9 +563,9 @@ def main():
 
     if os.path.isfile(src):
         try:
-            checksum_src = module.sha1(src)
+            checksum_src = module.sha256(src)
         except (OSError, IOError) as e:
-            module.warn("Unable to calculate src checksum, assuming change: %s" % to_native(e))
+            module.warn(f"Unable to calculate src checksum, assuming change: {to_native(e)}")
         try:
             # Backwards compat only.  This will be None in FIPS mode
             md5sum_src = module.md5(src)
