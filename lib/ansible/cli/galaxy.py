@@ -731,6 +731,15 @@ class GalaxyCLI(CLI):
         return self.lazy_role_api.api
 
     def _get_default_collection_path(self):
+
+        if isinstance(C.GALAXY_COLLECTIONS_INSTALL_PATH, list) and \
+            len(C.GALAXY_COLLECTIONS_INSTALL_PATH) > 0 :
+            path_candidates = C.GALAXY_COLLECTIONS_INSTALL_PATH
+            for _path in path_candidates:
+                if os.path.isdir(_path):
+                    return _path
+            return path_candidates[0]
+
         return C.COLLECTIONS_PATHS[0]
 
     def _parse_requirements_file(self, requirements_file, allow_old_format=True, artifacts_manager=None, validate_signature_options=True):
