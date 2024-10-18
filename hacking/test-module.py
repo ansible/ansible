@@ -38,6 +38,8 @@ import sys
 import traceback
 import shutil
 
+from pathlib import Path
+
 from ansible.release import __version__
 import ansible.utils.vars as utils_vars
 from ansible.parsing.dataloader import DataLoader
@@ -89,13 +91,11 @@ def parse():
 
 def write_argsfile(argstring, json=False):
     """ Write args to a file for old-style module's use. """
-    argspath = os.path.expanduser("~/.ansible_test_module_arguments")
-    argsfile = open(argspath, 'w')
+    argspath = Path("~/.ansible_test_module_arguments").expanduser()
     if json:
         args = parse_kv(argstring)
         argstring = jsonify(args)
-    argsfile.write(argstring)
-    argsfile.close()
+    argspath.write_text(argstring)
     return argspath
 
 
@@ -169,9 +169,8 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
     print("* including generated source, if any, saving to: %s" % modfile2_path)
     if module_style not in ('ansiballz', 'old'):
         print("* this may offset any line numbers in tracebacks/debuggers!")
-    modfile2 = open(modfile2_path, 'wb')
-    modfile2.write(module_data)
-    modfile2.close()
+    with open(modfile2_path, 'wb') as modfile2:
+        modfile2.write(module_data)
     modfile = modfile2_path
 
     return (modfile2_path, modname, module_style)

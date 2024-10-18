@@ -254,9 +254,8 @@ def _slurp(path):
     if not os.path.exists(path):
         raise AnsibleError("imported module support code does not exist at %s"
                            % os.path.abspath(path))
-    fd = open(path, 'rb')
-    data = fd.read()
-    fd.close()
+    with open(path, 'rb') as fd:
+        data = fd.read()
     return data
 
 

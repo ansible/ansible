@@ -219,15 +219,13 @@ class ActionModule(ActionBase):
     def _create_content_tempfile(self, content):
         """ Create a tempfile containing defined content """
         fd, content_tempfile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
-        f = os.fdopen(fd, 'wb')
         content = to_bytes(content)
         try:
-            f.write(content)
+            with os.fdopen(fd, 'wb') as f:
+                f.write(content)
         except Exception as err:
             os.remove(content_tempfile)
             raise Exception(err)
-        finally:
-            f.close()
         return content_tempfile
 
     def _create_zip_tempfile(self, files, directories):

@@ -373,9 +373,8 @@ def head_splitter(headfile, remote, module=None, fail_on_error=False):
     if os.path.exists(headfile):
         rawdata = None
         try:
-            f = open(headfile, 'r')
-            rawdata = f.readline()
-            f.close()
+            with open(headfile, 'r') as f:
+                rawdata = f.readline()
         except Exception:
             if fail_on_error and module:
                 module.fail_json(msg="Unable to read %s" % headfile)

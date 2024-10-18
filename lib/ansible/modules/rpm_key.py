@@ -172,9 +172,8 @@ class RpmKey(object):
             self.module.fail_json(msg="Not a public key: %s" % url)
         tmpfd, tmpname = tempfile.mkstemp()
         self.module.add_cleanup_file(tmpname)
-        tmpfile = os.fdopen(tmpfd, "w+b")
-        tmpfile.write(key)
-        tmpfile.close()
+        with os.fdopen(tmpfd, "w+b") as tmpfile:
+            tmpfile.write(key)
         return tmpname
 
     def normalize_keyid(self, keyid):

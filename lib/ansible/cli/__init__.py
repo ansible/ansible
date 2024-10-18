@@ -603,9 +603,8 @@ class CLI(ABC):
 
         else:
             try:
-                f = open(b_pwd_file, "rb")
-                secret = f.read().strip()
-                f.close()
+                with open(b_pwd_file, "rb") as f:
+                    secret = f.read().strip()
             except (OSError, IOError) as e:
                 raise AnsibleError("Could not read password file %s: %s" % (pwd_file, e))
 

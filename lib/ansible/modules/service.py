@@ -695,9 +695,8 @@ class LinuxService(Service):
         #
         if self.enable_cmd.endswith("initctl"):
             def write_to_override_file(file_name, file_contents, ):
-                override_file = open(file_name, 'w')
-                override_file.write(file_contents)
-                override_file.close()
+                with open(file_name, 'w') as override_file:
+                    override_file.write(file_contents)
 
             initpath = '/etc/init'
             if self.upstart_version >= LooseVersion('0.6.7'):

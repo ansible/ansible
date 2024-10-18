@@ -200,9 +200,8 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native
 def write_changes(module, contents, path):
 
     tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
-    f = os.fdopen(tmpfd, 'wb')
-    f.write(contents)
-    f.close()
+    with os.fdopen(tmpfd, 'wb') as tf:
+        tf.write(contents)
 
     validate = module.params.get('validate', None)
     valid = not validate
