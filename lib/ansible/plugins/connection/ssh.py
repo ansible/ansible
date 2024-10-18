@@ -368,7 +368,6 @@ DOCUMENTATION = """
 import collections.abc as c
 import errno
 import fcntl
-import hashlib
 import io
 import os
 import pty
@@ -387,6 +386,7 @@ from ansible.errors import (
     AnsibleFileNotFound,
 )
 from ansible.module_utils.six import PY3, text_type, binary_type
+from ansible.module_utils.common.hashing import generate_secure_checksum
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.plugins.shell.powershell import _parse_clixml
@@ -604,10 +604,7 @@ class Connection(ConnectionBase):
             pstring += '-%s' % connection
         if pid:
             pstring += '-%s' % to_text(pid)
-        m = hashlib.sha1()
-        m.update(to_bytes(pstring))
-        digest = m.hexdigest()
-        cpath = '%(directory)s/' + digest[:10]
+        cpath = '%(directory)s/' + generate_secure_checksum(pstring)[:10]
         return cpath
 
     @staticmethod

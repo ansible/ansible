@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ansible.module_utils.basic import _get_available_hash_algorithms
+from ansible.module_utils.common.hashing import _get_available_hash_algorithms
 
 
 def test_unavailable_algorithm(mocker):

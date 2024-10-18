@@ -1,19 +1,6 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Contributors to the Ansible project
+# Copyright: (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
 
@@ -22,7 +9,6 @@ import sys
 
 from collections import defaultdict
 from collections.abc import Mapping, MutableMapping, Sequence
-from hashlib import sha1
 
 from jinja2.exceptions import UndefinedError
 
@@ -30,6 +16,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
+from ansible.module_utils.common.hashing import generate_secure_checksum
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.six import text_type
 from ansible.vars.fact_cache import FactCache
@@ -78,7 +65,7 @@ class VariableManager:
         self._inventory = inventory
         self._loader = loader
         self._hostvars = None
-        self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
+        self._omit_token = f'__omit_place_holder__{generate_secure_checksum(os.urandom(64))[:40]}'
 
         self._options_vars = load_options_vars(version_info)
 
@@ -121,7 +108,7 @@ class VariableManager:
         self._extra_vars = data.get('extra_vars', dict())
         self._host_vars_files = data.get('host_vars_files', defaultdict(dict))
         self._group_vars_files = data.get('group_vars_files', defaultdict(dict))
-        self._omit_token = data.get('omit_token', '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest())
+        self._omit_token = data.get('omit_token', f'__omit_place_holder__{generate_secure_checksum(os.urandom(64))[:40]}')
         self._inventory = data.get('inventory', None)
         self._options_vars = data.get('options_vars', dict())
         self.safe_basedir = data.get('safe_basedir', False)

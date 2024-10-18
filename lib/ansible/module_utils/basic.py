@@ -87,30 +87,10 @@ from ansible.module_utils.common.text.formatters import (
     SIZE_RANGES,
 )
 
-import hashlib
-
-
-def _get_available_hash_algorithms():
-    """Return a dictionary of available hash function names and their associated function."""
-    algorithms = {}
-    for algorithm_name in hashlib.algorithms_available:
-        algorithm_func = getattr(hashlib, algorithm_name, None)
-        if algorithm_func:
-            try:
-                # Make sure the algorithm is actually available for use.
-                # Not all algorithms listed as available are actually usable.
-                # For example, md5 is not available in FIPS mode.
-                algorithm_func()
-            except Exception:
-                pass
-            else:
-                algorithms[algorithm_name] = algorithm_func
-
-    return algorithms
-
-
-AVAILABLE_HASH_ALGORITHMS = _get_available_hash_algorithms()
-
+from ansible.module_utils.common.hashing import (
+    generate_secure_file_checksum,
+    AVAILABLE_HASH_ALGORITHMS
+)
 from ansible.module_utils.six.moves.collections_abc import (
     KeysView,
     Mapping, MutableMapping,
@@ -1473,31 +1453,37 @@ class AnsibleModule(object):
 
     def digest_from_file(self, filename, algorithm):
         """ Return hex digest of local file for a digest_method specified by name, or None if file is not present. """
+        self.deprecate(
+            msg="API digest_from_file is deprecated. Use generate_secure_file_checksum instead.",
+            version="2.22"
+        )
         b_filename = to_bytes(filename, errors='surrogate_or_strict')
 
         if not os.path.exists(b_filename):
             return None
+
         if os.path.isdir(b_filename):
-            self.fail_json(msg="attempted to take checksum of directory: %s" % filename)
+            self.fail_json(msg=f"attempted to take checksum of directory: {filename}")
 
         # preserve old behaviour where the third parameter was a hash algorithm object
         if hasattr(algorithm, 'hexdigest'):
-            digest_method = algorithm
-        else:
             try:
-                digest_method = AVAILABLE_HASH_ALGORITHMS[algorithm]()
-            except KeyError:
-                self.fail_json(msg="Could not hash file '%s' with algorithm '%s'. Available algorithms: %s" %
-                                   (filename, algorithm, ', '.join(AVAILABLE_HASH_ALGORITHMS)))
+                return generate_secure_file_checksum(filename, hash_func=algorithm)
+            except IOError as e:
+                self.module.fail_json(
+                    msg=f"Could not find file {filename} to calculate hash: {e}"
+                )
+            except ValueError as e:
+                self.module.fail_json(msg=f"{e}")
 
-        blocksize = 64 * 1024
-        infile = open(os.path.realpath(b_filename), 'rb')
-        block = infile.read(blocksize)
-        while block:
-            digest_method.update(block)
-            block = infile.read(blocksize)
-        infile.close()
-        return digest_method.hexdigest()
+        try:
+            return generate_secure_file_checksum(filename, hash_func=algorithm)
+        except IOError as e:
+            self.module.fail_json(
+                msg=f"Could not find file {filename} to calculate hash: {e}"
+            )
+        except ValueError as e:
+            self.module.fail_json(msg=f"{e}")
 
     def md5(self, filename):
         """ Return MD5 hex digest of local file using digest_from_file().
@@ -1510,16 +1496,28 @@ class AnsibleModule(object):
 
         Most uses of this function can use the module.sha1 function instead.
         """
+        self.deprecate(
+            msg="Using md5 is not recommended. Use generate_secure_file_checksum with SHA256 instead.",
+            version="2.22"
+        )
         if 'md5' not in AVAILABLE_HASH_ALGORITHMS:
             raise ValueError('MD5 not available.  Possibly running in FIPS mode')
         return self.digest_from_file(filename, 'md5')
 
     def sha1(self, filename):
         """ Return SHA1 hex digest of local file using digest_from_file(). """
+        self.deprecate(
+            msg="Using SHA1 is not recommended. Use generate_secure_file_checksum with SHA256 instead.",
+            version="2.22"
+        )
         return self.digest_from_file(filename, 'sha1')
 
     def sha256(self, filename):
         """ Return SHA-256 hex digest of local file using digest_from_file(). """
+        self.deprecate(
+            msg="Use generate_secure_file_checksum with SHA256 instead.",
+            version="2.22"
+        )
         return self.digest_from_file(filename, 'sha256')
 
     def backup_local(self, fn):

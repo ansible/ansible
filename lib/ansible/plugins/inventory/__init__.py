@@ -1,23 +1,9 @@
-# (c) 2017,  Red Hat, inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <https://www.gnu.org/licenses/>.
+# Copyright: Contributors to the Ansible project
+# Copyright: (c) 2017,  Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
 
-import hashlib
 import os
 import string
 
@@ -28,6 +14,7 @@ from ansible.inventory.group import to_safe_group_name as original_safe
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.cache import CachePluginAdjudicator as CacheObject
+from ansible.module_utils.common.hashing import generate_secure_checksum
 from ansible.module_utils.common.text.converters import to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
@@ -309,13 +296,8 @@ class Cacheable(object):
     def _get_cache_prefix(self, path):
         """ create predictable unique prefix for plugin/inventory """
 
-        m = hashlib.sha1()
-        m.update(to_bytes(self.NAME, errors='surrogate_or_strict'))
-        d1 = m.hexdigest()
-
-        n = hashlib.sha1()
-        n.update(to_bytes(path, errors='surrogate_or_strict'))
-        d2 = n.hexdigest()
+        d1 = generate_secure_checksum(self.NAME)
+        d2 = generate_secure_checksum(path)
 
         return 's_'.join([d1[:5], d2[:5]])
 

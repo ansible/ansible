@@ -1719,7 +1719,7 @@ def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
 
         else:
             with tempfile.NamedTemporaryFile(dir=b_temp_path, delete=False) as tmpfile_obj:
-                actual_hash = _consume_file(tar_obj, tmpfile_obj)
+                actual_hash = _consume_file(tar_obj, write_to=tmpfile_obj)
 
         if expected_hash and actual_hash != expected_hash:
             raise AnsibleError("Checksum mismatch for '%s' inside collection at '%s'"
