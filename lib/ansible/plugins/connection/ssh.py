@@ -440,15 +440,26 @@ def _handle_error(
         # No exception is raised, so the connection is retried - except when attempting to use
         # sshpass_prompt with an sshpass that won't let us pass -P, in which case we fail loudly.
         elif return_tuple[0] in [1, 2, 3, 4, 6]:
-            msg = 'sshpass error:'
+            error_code = return_tuple[0]
+            cmd_error = to_native(return_tuple[2]).rstrip()
+            error_messages = {
+                1: "sshpass: Invalid command line argument. Command given ({})".format(cmd_error),
+                2: "sshpass: Conflicting arguments given. Arguments given ({})".format(cmd_error),
+                3: "sshpass: General runtime error",
+                4: "sshpass: Unrecognized response from ssh",
+                6: "sshpass: Host public key is unknown"
+            }
+            msg = error_messages.get(error_code, "sshpass: Unknown error")
             if no_log:
-                msg = '{0} <error censored due to no log>'.format(msg)
+                msg = "Error censored due to no log"
+                raise AnsibleConnectionFailure(msg)
             else:
                 details = to_native(return_tuple[2]).rstrip()
                 if "sshpass: invalid option -- 'P'" in details:
                     details = 'Installed sshpass version does not support customized password prompts. ' \
                               'Upgrade sshpass to use sshpass_prompt, or otherwise switch to ssh keys.'
                     raise AnsibleError('{0} {1}'.format(msg, details))
+
                 msg = '{0} {1}'.format(msg, details)
 
     if return_tuple[0] == 255:
