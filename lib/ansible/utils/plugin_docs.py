@@ -14,6 +14,7 @@ from ansible.module_utils.common.text.converters import to_native
 from ansible.parsing.plugin_docs import read_docstring
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.utils.display import Display
+from ansible.utils.sentinel import Sentinel
 
 display = Display()
 
@@ -204,10 +205,14 @@ def add_fragments(doc, filename, fragment_loader, is_module=False):
         raise AnsibleError('unknown doc_fragment(s) in file {0}: {1}'.format(filename, to_native(', '.join(unknown_fragments))))
 
 
-def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False, collection_name=None, is_module=None, plugin_type=None):
+def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False, collection_name=None, is_module=Sentinel, plugin_type=None):
     """
     DOCUMENTATION can be extended using documentation fragments loaded by the PluginLoader from the doc_fragments plugins.
     """
+    if is_module is Sentinel:
+        is_module = None
+    else:
+        display.deprecated("is_module is deprecated, pass plugin_type='module' instead", version='2.19')
 
     if is_module is None:
         if plugin_type is None:
@@ -215,7 +220,6 @@ def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False,
         else:
             is_module = (plugin_type == 'module')
     else:
-        # TODO deprecate is_module argument, now that we have 'type'
         pass
 
     data = read_docstring(filename, verbose=verbose, ignore_errors=ignore_errors)
