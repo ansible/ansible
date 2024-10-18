@@ -1,0 +1,67 @@
+---
+argument_specs:
+  no_log:
+    short_description: "Validate no_log in a role argument spec causes a warning."
+    description:
+      - "The validation for role argument specs is read-only and does not provide a way to mark a variable as no_log."
+    options:
+      password:
+        description: "Things not to do."
+        no_log: true
+
+  no_log_suboption:
+    short_description: "Validate no_log in a role argument spec causes a warning."
+    description:
+      - "The validation for role argument specs is read-only and does not provide a way to mark a subset of a variable as no_log."
+    options:
+      auth:
+        description: "A dictionary containing a no_log suboption."
+        type: dict
+        options:
+          password:
+            description: "Things not to do."
+            no_log: true
+
+  apply_defaults:
+    short_description: "Validate apply_defaults in a role argument spec causes a warning."
+    description:
+      - "The validation for role argument specs is read-only and does not provide a way to set a variable."
+    options:
+      option_with_suboptions:
+        description: "Things not to do."
+        type: dict
+        apply_defaults: true
+        options:
+          sub_option:
+            description: "A suboption of an option with apply_defaults."
+            default: "magic"
+
+  aliases:
+    short_description: "Validate aliases in a role argument spec causes a warning."
+    description:
+      - "The validation for role argument specs is read-only and does not provide a way to set a variable to an alias."
+    options:
+      option_name:
+        description: "Things not to do."
+        aliases:
+          - option_alias
+
+  fallback:
+    short_description: "Validate fallback in a role argument spec causes a warning."
+    description:
+      - "The validation for role argument specs is read-only and does not provide a way to set a variable to an environment variable."
+    options:
+      option_with_env_fallback:
+        description: "Things not to do."
+        fallback:
+          - ENV_VAR
+
+  unknown_field:
+    short_description: "Validate an unknown field in a role argument spec causes a warning."
+    description:
+      - "Help detect typos."
+    options:
+      option_name:
+        description: "Things not to do."
+        unknown: "yes"
+        choice: ["typo"]
