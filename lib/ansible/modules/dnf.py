@@ -743,18 +743,25 @@ class DnfModule(YumDnf):
         else:
             return bool(installed_query)
 
-    def _is_newer_version_installed(self, pkg_name):
+    def _is_newer_version_installed(self, pkg_spec):
         try:
-            if isinstance(pkg_name, dnf.package.Package):
-                available = pkg_name
+            if isinstance(pkg_spec, dnf.package.Package):
+                installed = sorted(self.base.sack.query().installed().filter(name=pkg_spec.name, arch=pkg_spec.arch))[-1]
+                return installed.evr_gt(pkg_spec)
             else:
-                available = sorted(
-                    dnf.subject.Subject(pkg_name).get_best_query(sack=self.base.sack).available().run()
-                )[-1]
-            installed = sorted(self.base.sack.query().installed().filter(name=available.name).run())[-1]
+                available = dnf.subject.Subject(pkg_spec).get_best_query(sack=self.base.sack).available()
+                installed = self.base.sack.query().installed().filter(name=available[0].name)
+                for arch in sorted(set(p.arch for p in installed)):  # select only from already-installed arches for this case
+                    installed_pkg = sorted(installed.filter(arch=arch))[-1]
+                    try:
+                        available_pkg = sorted(available.filter(arch=arch))[-1]
+                    except IndexError:
+                        continue  # nothing currently available for this arch; keep going
+                    if installed_pkg.evr_gt(available_pkg):
+                        return True
+                return False
         except IndexError:
             return False
-        return installed > available
 
     def _mark_package_install(self, pkg_spec, upgrade=False):
         """Mark the package for install."""
