@@ -634,8 +634,11 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
 
             pkgname_pattern, version_cmp, version = package_split(pkgspec_pattern)
 
+            if pkgname_pattern.startswith(('?', '~', '(?', '(~')):
+                # this is an apt-pattern (https://manpages.debian.org/bookworm/apt/apt-patterns.7.en.html)
+                new_pkgspec.append(pkgspec_pattern)
             # note that none of these chars is allowed in a (debian) pkgname
-            if frozenset('*?[]!').intersection(pkgname_pattern):
+            elif frozenset('*?[]!').intersection(pkgname_pattern):
                 # handle multiarch pkgnames, the idea is that "apt*" should
                 # only select native packages. But "apt*:i386" should still work
                 if ":" not in pkgname_pattern:
@@ -952,7 +955,7 @@ def remove(m, pkgspec, cache, purge=False, force=False,
     for package in pkgspec:
         name, version_cmp, version = package_split(package)
         installed, installed_version, upgradable, has_files = package_status(m, name, version_cmp, version, None, cache, state='remove')
-        if installed_version or (has_files and purge):
+        if installed_version or (has_files and purge) or package.startswith(('?', '~', '(?', '(~')):
             pkg_list.append("'%s'" % package)
     packages = ' '.join(pkg_list)
 
