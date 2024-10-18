@@ -82,6 +82,6 @@ ANSIBLE_SSH_CONTROL_PATH='/tmp/ssh cp with spaces' ansible -m ping all -e ansibl
 
 # Check if control path is different
 ansible -m ping -i control_path.inventory web -vvv 1> stdout.txt 2> /dev/null
-first=$(cat stdout.txt|grep ControlPath= | head -1)
-second=$(cat stdout.txt|grep ControlPath= | tail -1)
+first=$(grep stdout.txt -c "ControlPath=" | head -1)
+second=$(grep stdout.txt -c "ControlPath=" | tail -1)
 test "$first" != "$second"
