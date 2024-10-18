@@ -72,6 +72,15 @@ test/integration/targets/ansible-test-docker/ansible_collections/ns/col/plugins/
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-no-tty/ansible_collections/ns/col/vendored_pty.py pep8!skip # vendored code
+test/integration/targets/ansible-test-sanity-shebang/ansible_collections/ns/col/roles/foo/files/test.py shebang
+test/integration/targets/ansible-test-sanity-shebang/ansible_collections/ns/col/roles/foo/files/test.sh shebang
+test/integration/targets/ansible-test-sanity-shebang/ansible_collections/ns/col/roles/foo/files/test.sh shellcheck:SC1008
+test/integration/targets/ansible-test-sanity-shebang/ansible_collections/ns/col/tests/integration/targets/valid/files/test.py shebang
+test/integration/targets/ansible-test-sanity-shebang/ansible_collections/ns/col/tests/integration/targets/valid/files/test.sh shebang
+test/integration/targets/ansible-test-sanity-shebang/ansible_collections/ns/col/tests/integration/targets/valid/files/test.sh shellcheck:SC1008
+test/integration/targets/ansible-test-sanity-shebang/files/test.py shebang
+test/integration/targets/ansible-test-sanity-shebang/files/test.sh shebang
+test/integration/targets/ansible-test-sanity-shebang/files/test.sh shellcheck:SC1008
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/modules/my_module.py pylint:relative-beyond-top-level
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util2.py pylint:relative-beyond-top-level
 test/integration/targets/config/lookup_plugins/casting.py pylint:unidiomatic-typecheck
