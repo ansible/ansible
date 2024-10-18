@@ -55,6 +55,7 @@ files to exist and are passthrus to the python os.path functions
 path_join_simple = /etc/subdir/test
 path_join_with_slash = /test
 path_join_relative = etc/subdir/test
+path_join_merged = /etc/subdir/test
 
 TODO: realpath follows symlinks.  There isn't a test for this just now.
 

@@ -9,6 +9,7 @@ import hashlib
 import json
 import ntpath
 import os.path
+from pathlib import Path
 import re
 import shlex
 import sys
@@ -578,9 +579,9 @@ def path_join(paths):
     """ takes a sequence or a string, and return a concatenation
         of the different members """
     if isinstance(paths, string_types):
-        return os.path.join(paths)
+        return Path(paths).as_posix()
     if is_sequence(paths):
-        return os.path.join(*paths)
+        return Path(*paths).as_posix()
     raise AnsibleFilterTypeError("|path_join expects string or sequence, got %s instead." % type(paths))
 
 
