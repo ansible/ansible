@@ -8,7 +8,7 @@ from __future__ import annotations
 import pytest
 
 from collections.abc import Sequence
-from ansible.module_utils.common.collections import ImmutableDict, is_iterable, is_sequence
+from ansible.module_utils.common.collections import ImmutableDict, OrderedSet, is_iterable, is_sequence
 
 
 class SeqStub:
@@ -159,3 +159,34 @@ class TestImmutableDict:
         actual_repr = repr(imdict)
         expected_repr = "ImmutableDict({0})".format(initial_data_repr)
         assert actual_repr == expected_repr
+
+
+class TestOrderedSet:
+    def test_sorting(self):
+        expected = ['foo', 'bar', 'baz']
+        assert list(OrderedSet(expected)) == expected
+
+    def test_sorting_add_discard(self):
+        o = OrderedSet()
+        o.add('foo')
+        o.update(['bar', 'baz'])
+        assert list(o) == ['foo', 'bar', 'baz']
+
+        o.discard('foo')
+        assert list(o) == ['bar', 'baz']
+        o.add('foo')
+        assert list(o) == ['bar', 'baz', 'foo']
+
+    def test_sorting_set_opts(self):
+        o1 = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        o2 = OrderedSet(['qux', 'bar', 'ham', 'sandwich'])
+
+        difference = o1 - o2
+        intersect = o1 & o2
+        union = o1 | o2
+        symmetric_difference = o1 ^ o2
+
+        assert list(difference) == ['foo', 'baz']
+        assert list(intersect) == ['bar', 'qux']
+        assert list(union) == ['foo', 'bar', 'baz', 'qux', 'ham', 'sandwich']
+        assert list(symmetric_difference) == ['foo', 'baz', 'ham', 'sandwich']

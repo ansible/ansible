@@ -1,0 +1,2 @@
+minor_changes:
+- Add new OrderedSet class for situations a unique ordered list is needed
