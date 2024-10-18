@@ -23,16 +23,24 @@ import functools
 import os
 import pwd
 import re
+import tempfile
 import time
 
 from collections.abc import Iterator, Sequence, Mapping, MappingView, MutableMapping
 from contextlib import contextmanager
 from numbers import Number
 from traceback import format_exc
+from types import CodeType
 
+from jinja2 import __version__ as jinja2_version
+from jinja2 import nodes
+from jinja2 import bccache
+from jinja2.environment import Template
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
+from jinja2.compiler import generate
 from jinja2.loaders import FileSystemLoader
 from jinja2.nativetypes import NativeEnvironment
+from jinja2.parser import Parser
 from jinja2.runtime import Context, StrictUndefined
 
 from ansible import constants as C
@@ -47,6 +55,8 @@ from ansible.errors import (
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.compat import typing as t
+from ansible.module_utils.compat.version import LooseVersion
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.native_helpers import ansible_native_concat, ansible_eval_concat, ansible_concat
 from ansible.template.template import AnsibleJ2Template
@@ -68,6 +78,9 @@ JINJA2_OVERRIDE = '#jinja2:'
 
 JINJA2_BEGIN_TOKENS = frozenset(('variable_begin', 'block_begin', 'comment_begin', 'raw_begin'))
 JINJA2_END_TOKENS = frozenset(('variable_end', 'block_end', 'comment_end', 'raw_end'))
+
+# jinja2 3.1.2 fixed a race condition in FileSystemBytecodeCache
+_IS_JINJA2_312 = LooseVersion(jinja2_version) >= LooseVersion('3.1.2')
 
 RANGE_TYPE = type(range(0))
 
@@ -530,6 +543,69 @@ def _ansible_finalize(thing):
     return thing if _fail_on_undefined(thing) is not None else ''
 
 
+class FileSystemBytecodeCache(bccache.FileSystemBytecodeCache):
+    # jinja2 3.1.2 added fixes for race conditions that we rely on
+    # only define overrides as neccessary
+    if not _IS_JINJA2_312:
+        def load_bytecode(self, bucket: bccache.Bucket) -> None:
+            # BSD 3 Clause License https://opensource.org/license/bsd-3-clause/
+            # https://github.com/pallets/jinja/blob/b08cd4bc64bb980df86ed2876978ae5735572280/src/jinja2/bccache.py#L262-L275
+            filename = self._get_cache_filename(bucket)
+
+            # Don't test for existence before opening the file, since the
+            # file could disappear after the test before the open.
+            try:
+                f = open(filename, "rb")
+            except (FileNotFoundError, IsADirectoryError, PermissionError):
+                # PermissionError can occur on Windows when an operation is
+                # in progress, such as calling clear().
+                return
+
+            with f:
+                bucket.load_bytecode(f)
+
+        def dump_bytecode(self, bucket: bccache.Bucket) -> None:
+            # BSD 3 Clause License https://opensource.org/license/bsd-3-clause/
+            # https://github.com/pallets/jinja/blob/b08cd4bc64bb980df86ed2876978ae5735572280/src/jinja2/bccache.py#L277-L313
+
+            # Write to a temporary file, then rename to the real name after
+            # writing. This avoids another process reading the file before
+            # it is fully written.
+            name = self._get_cache_filename(bucket)
+            f = tempfile.NamedTemporaryFile(
+                mode="wb",
+                dir=os.path.dirname(name),
+                prefix=os.path.basename(name),
+                suffix=".tmp",
+                delete=False,
+            )
+
+            def remove_silent() -> None:
+                try:
+                    os.remove(f.name)
+                except OSError:
+                    # Another process may have called clear(). On Windows,
+                    # another program may be holding the file open.
+                    pass
+
+            try:
+                with f:
+                    bucket.write_bytecode(f)
+            except BaseException:
+                remove_silent()
+                raise
+
+            try:
+                os.replace(f.name, name)
+            except OSError:
+                # Another process may have called clear(). On Windows,
+                # another program may be holding the file open.
+                remove_silent()
+            except BaseException:
+                remove_silent()
+                raise
+
+
 class AnsibleEnvironment(NativeEnvironment):
     """
     Our custom environment, which simply allows us to override the class-level
@@ -546,9 +622,93 @@ class AnsibleEnvironment(NativeEnvironment):
         self.tests = JinjaPluginIntercept(self.tests, test_loader)
 
         self.trim_blocks = True
+        self.optimized = False
 
         self.undefined = AnsibleUndefined
         self.finalize = _ansible_finalize
+
+    def _make_bucket_name(self, source: str) -> str:
+        overrides = hash(
+            (
+                ('autoescape', self.autoescape),
+                ('block_end_string', self.block_end_string),
+                ('block_start_string', self.block_start_string),
+                ('comment_end_string', self.comment_end_string),
+                ('comment_start_string', self.comment_start_string),
+                ('extensions', tuple(self.extensions)),
+                ('keep_trailing_newline', self.keep_trailing_newline),
+                ('line_comment_prefix', self.line_comment_prefix),
+                ('line_statement_prefix', self.line_statement_prefix),
+                ('lstrip_blocks', self.lstrip_blocks),
+                ('newline_sequence', self.newline_sequence),
+                ('trim_blocks', self.trim_blocks),
+                ('variable_end_string', self.variable_end_string),
+                ('variable_start_string', self.variable_start_string),
+                ('native', self.__class__ is AnsibleNativeEnvironment),
+            )
+        )
+        return f'{source}[overrides={overrides}]'
+
+    def compile(  # type: ignore[override]
+        self,
+        source: str,
+        name: str | None = None,
+        filename: str | None = None,
+        raw: bool = False,
+        defer_init: bool = False,
+    ) -> str | CodeType:
+
+        if not C.JINJA2_BYTECODE_CACHE:
+            return super().compile(source, name=name, filename=filename, raw=raw, defer_init=defer_init)  # type: ignore[call-overload]
+
+        try:
+            # Environment._parse
+            parsed = Parser(self, source, name, filename).parse()
+
+            # This wrapper ensures that all templates are not considered literal/constant
+            eval_ctx = nodes.ScopedEvalContextModifier(lineno=-1)
+            eval_ctx.options = [nodes.Keyword('volatile', nodes.Const(True))]
+            eval_ctx.body = parsed.body
+
+            # Environment._generate
+            generated = generate(
+                nodes.Template([eval_ctx], lineno=-1),
+                self,
+                name,
+                filename,
+                defer_init=False,
+                optimized=self.optimized,
+            )
+
+            if raw:
+                return generated
+
+            return compile(generated, filename or '<template>', 'exec')
+        except TemplateSyntaxError:
+            self.handle_exception(source=source)
+
+    def from_string(
+        self,
+        source: str,  # type: ignore[override]
+        globals: t.MutableMapping[str, t.Any] | None = None,
+        template_class: t.Type[Template] | None = None,
+    ) -> Template:
+
+        if not C.JINJA2_BYTECODE_CACHE:
+            return super().from_string(source, globals=globals, template_class=template_class)
+
+        cache_dir = os.path.join(C.DEFAULT_LOCAL_TMP, 'j2cache')
+        if not os.path.isdir(cache_dir):
+            os.makedirs(cache_dir, mode=0o700, exist_ok=True)
+
+        bcc = FileSystemBytecodeCache(cache_dir, '__ansible_j2_%s.cache')
+        bucket = bcc.get_bucket(self, self._make_bucket_name(source), None, source)
+        if not bucket.code:
+            bucket.code = self.compile(source)  # type: ignore[assignment]
+            bcc.set_bucket(bucket)
+
+        cls = template_class or self.template_class
+        return cls.from_code(self, bucket.code, self.globals, None)
 
 
 class AnsibleNativeEnvironment(AnsibleEnvironment):
@@ -604,6 +764,9 @@ class Templar:
 
         :returns: Copy of Templar with updated environment.
         """
+        if environment_class not in {AnsibleEnvironment, AnsibleNativeEnvironment}:
+            raise AnsibleAssertionError('environment_class must be one of AnsibleEnvironment or AnsibleNativeEnvironment')
+
         # We need to use __new__ to skip __init__, mainly not to create a new
         # environment there only to override it below
         new_env = object.__new__(environment_class)
@@ -951,6 +1114,7 @@ class Templar:
                 if 'recursion' in to_native(e):
                     raise AnsibleError("recursive loop detected in template string: %s" % to_native(data), orig_exc=e)
                 else:
+                    display.warning(f'Unexpected exception when templating {data!r}: {e}')
                     return data
 
             if disable_lookups:
