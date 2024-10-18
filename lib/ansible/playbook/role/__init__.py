@@ -209,6 +209,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         self._role_path = role_include.get_role_path()
         self._role_collection = role_include._role_collection
         self._role_params = role_include.get_role_params()
+        self._internal_galaxy_spec = role_include._internal_galaxy_spec
         self._variable_manager = role_include.get_variable_manager()
         self._loader = role_include.get_loader()
 
@@ -269,11 +270,18 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
         if self._should_validate:
             role_argspecs = self._get_role_argspecs()
-            task_data = self._prepend_validation_task(task_data, role_argspecs)
+            validation_task_data = self._prepend_validation_task(None, role_argspecs)
+            validation_blocks = load_list_of_blocks(
+                validation_task_data, play=self._play, role=self, loader=self._loader, variable_manager=self._variable_manager
+            )
+            for block in validation_blocks:
+                for task in block.block:
+                    task.implicit = True
+            self._task_blocks = validation_blocks
 
         if task_data:
             try:
-                self._task_blocks = load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader, variable_manager=self._variable_manager)
+                self._task_blocks += load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader, variable_manager=self._variable_manager)
             except AssertionError as e:
                 raise AnsibleParserError("The tasks/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
                                          obj=task_data, orig_exc=e)
@@ -364,6 +372,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
                 # Pass only the 'options' portion of the arg spec to the module.
                 'argument_spec': argument_spec.get('options', {}),
                 'provided_arguments': self._role_params,
+                'optional_galaxy_arguments': self._internal_galaxy_spec,
                 'validate_args_context': {
                     'type': 'role',
                     'name': self._role_name,

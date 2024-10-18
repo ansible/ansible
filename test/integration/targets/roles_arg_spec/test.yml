@@ -477,3 +477,25 @@
     - name: Import role with an empty argument_specs key
       import_role:
         name: empty_argspec
+
+- name: "New play to reset vars: Test not validating ambiguous role params by default"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - block:
+      - name: Include role with dependencies using ansible-galaxy requirements syntax
+        include_role:
+          name: role_with_deps
+
+      - fail:
+          msg: "should not get here"
+
+      rescue:
+        - debug: var=ansible_failed_result
+
+        - name: Validate failure for role params
+          assert:
+            that:
+              - ansible_failed_result.argument_errors | length == 3
+              - ansible_failed_result.validate_args_context.name == 'validate_role_req'
+              - ansible_failed_result.validate_args_context.argument_spec_name == "main"

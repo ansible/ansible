@@ -787,8 +787,6 @@ class GalaxyCLI(CLI):
             if "include" not in requirement:
                 role = RoleRequirement.role_yaml_parse(requirement)
                 display.vvv("found role %s in yaml file" % to_text(role))
-                if "name" not in role and "src" not in role:
-                    raise AnsibleError("Must specify name or src for role")
                 return [GalaxyRole(self.galaxy, self.lazy_role_api, **role)]
             else:
                 b_include_path = to_bytes(requirement["include"], errors="surrogate_or_strict")
@@ -1263,9 +1261,9 @@ class GalaxyCLI(CLI):
                 role_info.update(gr.metadata)
 
             req = RoleRequirement()
-            role_spec = req.role_yaml_parse({'role': role})
-            if role_spec:
-                role_info.update(role_spec)
+            if ',' in role:
+                raise AnsibleError("Invalid old style role requirement: %s" % role)
+            role_info.update({'name': role, 'role': role})
 
             data += self._display_role_info(role_info)
 

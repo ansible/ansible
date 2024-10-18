@@ -6,6 +6,7 @@ from __future__ import annotations
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.playbook.role.requirement import RoleRequirement
 from ansible.utils.vars import combine_vars
 
 
@@ -74,6 +75,21 @@ class ActionModule(ActionBase):
 
         if not isinstance(provided_arguments, dict):
             raise AnsibleError('Incorrect type for provided_arguments, expected dict and got %s' % type(provided_arguments))
+
+        if self._task.implicit and (role_spec := self._task.args.get('optional_galaxy_arguments', ())):
+            galaxy_opts = {field: provided_arguments[field] for field in role_spec if field in provided_arguments and field not in argument_spec_data}
+            if galaxy_opts:
+                try:
+                    # TODO: port this to use an argument spec? May need to deprecate syntax or add new argspec behavior:
+                    # Suboptions don't support 'str' elements, defaults are determined from other options, values are mutated with custom rules, etc...
+                    RoleRequirement.role_yaml_parse(galaxy_opts)
+                except AnsibleError:
+                    # invalid for ansible-galaxy, validate normally
+                    pass
+                else:
+                    self._display.vvv(f"{self._task._role} - validated internal ansible-galaxy dependency format")
+                    for opt in galaxy_opts:
+                        provided_arguments.pop(opt)
 
         args_from_vars = self.get_args_from_task_vars(argument_spec_data, task_vars)
         validator = ArgumentSpecValidator(argument_spec_data)
