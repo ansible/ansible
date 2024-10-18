@@ -103,6 +103,7 @@ class ConnectionBase(AnsiblePlugin):
             shell_type = play_context.shell if play_context.shell else getattr(self, '_shell_type', None)
             self._shell = get_shell_plugin(shell_type=shell_type, executable=self._play_context.executable)
 
+        self._inventory_hostname = kwargs.get("inventory_hostname")
         self.become: BecomeBase | None = None
 
     @property
