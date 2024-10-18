@@ -3230,6 +3230,11 @@ class Alpine(BusyBox):
     distribution = 'Alpine'
 
 
+class Buildroot(BusyBox):
+    platform = 'Linux'
+    distribution = 'Buildroot'
+
+
 def main():
     ssh_defaults = dict(
         bits=0,
