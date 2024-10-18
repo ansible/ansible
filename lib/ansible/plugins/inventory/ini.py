@@ -2,10 +2,22 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
-DOCUMENTATION = """
+DOCUMENTATION = '''
     name: ini
     version_added: "2.4"
     short_description: Uses an Ansible INI file as inventory source.
+    options:
+      allowed_extensions:
+        description: What extensions this plugin will activate for.
+        version_added: "2.19"
+        default: ['ini', '']
+        type: list
+        elements: str
+        ini:
+           - section: inventory_plugin_ini
+             key: allowed_extensions
+        env:
+           - name: ANSIBLE_INVENTORY_PLUGIN_INI_EXT
     description:
         - INI file based inventory, sections are groups or group related with special C(:modifiers).
         - Entries in sections C([group_1]) are hosts, members of the group.
@@ -27,9 +39,12 @@ DOCUMENTATION = """
         - Enabled in configuration by default.
         - Consider switching to YAML format for inventory sources to avoid confusion on the actual type of a variable.
           The YAML inventory plugin processes variable values consistently and correctly.
-"""
+        - Passing an empty string `''` as part of O(allowed_extensions) allows matching files without extension.
+        - Making O(allowed_extensions) and empty list or None will enable 'any extension' to be considered.
+          This would make the inventory plugin match previous behaviour.
+'''
 
-EXAMPLES = """# fmt: ini
+EXAMPLES = '''fmt: ini
 # Example 1
 [web]
 host1
@@ -70,11 +85,13 @@ host4
 [g2]
 host4 # same host as above, but member of 2 groups, will inherit vars from both
       # inventory hostnames are unique
-"""
+'''
 
 import ast
 import re
 import warnings
+
+from pathlib import Path
 
 from ansible.inventory.group import to_safe_group_name
 from ansible.plugins.inventory import BaseFileInventoryPlugin
@@ -99,6 +116,15 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         self.patterns = {}
         self._filename = None
+
+    def verify_file(self, path):
+
+        valid = super().verify_file(path)
+        p = Path(path)
+        allowed = self.get_option('allowed_extensions')
+        if valid and allowed and p.suffix[1:] not in allowed:
+            valid = False
+        return valid
 
     def parse(self, inventory, loader, path, cache=True):
 
