@@ -30,6 +30,9 @@ ansible-doc -t keyword -l | grep "${GREP_OPTS[@]}" 'vars_prompt: list of variabl
 ansible-doc -t keyword vars_prompt | grep "${GREP_OPTS[@]}" 'description: list of variables to prompt for.'
 ansible-doc -t keyword asldkfjaslidfhals 2>&1 | grep "${GREP_OPTS[@]}" 'Skipping Invalid keyword'
 
+echo "Check if deprecation collection name is printed"
+ansible-doc --playbook-dir ./ testns.testcol.randommodule 2>&1 | grep "${GREP_OPTS[@]}" "Will be removed in: testns.testcol"
+
 # collections testing
 (
 unset ANSIBLE_PLAYBOOK_DIR
