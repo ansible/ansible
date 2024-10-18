@@ -86,7 +86,6 @@ class StrategyModule(StrategyBase):
             hosts_left = self.get_hosts_left(iterator)
 
             if len(hosts_left) == 0:
-                self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
                 result = False
                 break
 
@@ -300,6 +299,12 @@ class StrategyModule(StrategyBase):
 
             # pause briefly so we don't spin lock
             time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
+
+        display.debug("checking to see if all hosts have failed")
+        if all(iterator.is_failed(host)
+               for host in self.get_hosts_left(iterator)):
+            self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
+        display.debug("done checking to see if all hosts have failed")
 
         # collect all the final results
         results = self._wait_on_pending_results(iterator)

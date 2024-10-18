@@ -1,0 +1,1 @@
+export ANSIBLE_STRATEGY=linear

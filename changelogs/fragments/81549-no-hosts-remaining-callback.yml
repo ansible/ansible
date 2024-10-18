@@ -1,0 +1,2 @@
+bugfixes:
+  - Fixed an issue where the ``v2_playbook_on_no_hosts_remaining`` callback was not being triggered (https://github.com/ansible/ansible/issues/81549).
