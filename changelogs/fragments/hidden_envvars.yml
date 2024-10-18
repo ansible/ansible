@@ -1,0 +1,2 @@
+minor_changes:
+  - Added the ability to pass env vars directly to the module instead of wrapping the module execution.
