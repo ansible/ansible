@@ -14,6 +14,21 @@ configuration management, application deployment, cloud provisioning,
 ad-hoc task execution, network automation, and multi-node orchestration. Ansible makes complex
 changes like zero-downtime rolling updates with load balancers easy. More information on the Ansible [website](https://ansible.com/).
 
+## Table of Contents
+
+[Design Principles](#design-principles)
+[Use Ansible](#use-ansible)
+[Troubleshooting](#troubleshooting)
+[Basic Ideas](#basic-ideas)
+[Communication](#communication)
+[Contribute to Ansible](#contribute-to-ansible)
+[Coding Guidelines](#coding-guidelines)
+[Branch Info](#branch-info)
+[Roadmap](#roadmap)
+[FAQ](#faq)
+[Authors](#authors)
+[License](#license)
+
 ## Design Principles
 
 * Have an extremely simple setup process with a minimal learning curve.
@@ -40,6 +55,26 @@ features and fixes, directly. Although it is reasonably stable, you are more lik
 breaking changes when running the `devel` branch. We recommend getting involved
 in the Ansible community if you want to run the `devel` branch.
 
+## Troubleshooting
+
+If you face any problems while trying to install Ansible here is how you can proceed:
+* Be sure to check if you have the proper permissions are set into place to install Ansible when installing with pip.
+  * If you receive a "pip command not found" or "pip is not recognized" error," this may mean pip is not installed, not added to PATH enivornment, or it is installed but not compatible with current environment. To fix this try:
+    * Execute "python -v" and "pip -version," be sure that the versions are the same. If "pip -version" returns errors, then pip is either not installed or added to PATH environment.
+    * To install pip you can run, "curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py" then "python get-pip.py"
+
+## Basic Ideas 
+Here are key ideas which you should understand before contributing to Ansible.
+  * Control node is the machine where Ansible CLI tools are running.
+    *[Learn more about control node](https://docs.ansible.com/ansible/latest/getting_started/basic_concepts.html#control-node)
+  * Managed nodes are also known as hosts.
+    * [Learn more about managed nodes](https://docs.ansible.com/ansible/latest/getting_started/basic_concepts.html#managed-nodes)
+  * Ansible has playbooks. They work as an instruction book and inverntory for the raw material. 
+    * [Learn more about playbooks](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html)
+  * Inventory helps Ansible automate tasks that are on the managed node. 
+    * [Learn more about inventory](https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html#intro-inventory)
+  After reviewing these key ideas, you should have a better understanding of Ansible.
+  
 ## Communication
 
 Join the Ansible forum to ask questions, get help, and interact with the
@@ -68,6 +103,7 @@ For more ways to get in touch, see [Communicating with the Ansible community](ht
   know what is going on, but it also helps save time and effort if we decide
   some changes are needed.
 
+
 ## Coding Guidelines
 
 We document our Coding Guidelines in the [Developer Guide](https://docs.ansible.com/ansible/devel/dev_guide/). We particularly suggest you review:
@@ -86,6 +122,14 @@ We document our Coding Guidelines in the [Developer Guide](https://docs.ansible.
 
 Based on team and community feedback, an initial roadmap will be published for a major or minor version (ex: 2.7, 2.8).
 The [Ansible Roadmap page](https://docs.ansible.com/ansible/devel/roadmap/) details what is planned and how to influence the roadmap.
+
+## FAQ
+How to find a specific module?
+  * The runtime.yml file has a list containing the first place where a specific module appears.
+What are some tips on creating playbooks?
+  * Assure to make easy to read, name the plays, tasks, and blocks, and consistently make comments.
+When to make a module?
+  * Be sure that a similar module does not exist. A collection may be a better approach, if the functionality is too large for one module.
 
 ## Authors
 
