@@ -1,0 +1,44 @@
+# file module tests for diff being returned in results
+
+- name: Initialize the test output dir
+  import_tasks: initialize.yml
+
+- name: Create an empty file
+  file:
+    state: touch
+    mode: "755"
+    path: "{{ remote_tmp_dir_test }}/foobar.txt"
+  register: temp_file
+
+- name: Confirm diff was not returned in results
+  assert:
+    that:
+      - temp_file.diff is not defined
+
+- name: Toggle permissions on said empty file
+  file:
+    state: file
+    mode: "644"
+    path: "{{ temp_file.dest }}"
+  register: temp_file
+  diff: true
+
+- name: Confirm diff was returned in results
+  assert:
+    that:
+      - temp_file.diff is defined
+
+- name: Toggle permissions on said empty file...again
+  file:
+    state: file
+    mode: "755"
+    path: "{{ temp_file.path }}"
+  register: temp_file
+  diff: false
+  environment:
+    ANSIBLE_DIFF_ALWAYS: True
+
+- name: Confirm diff was not returned in results
+  assert:
+    that:
+      - temp_file.diff is not defined

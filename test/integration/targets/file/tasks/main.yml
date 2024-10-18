@@ -55,6 +55,9 @@
 - name: Test modification time
   import_tasks: modification_time.yml
 
+- name: Test diff_mode
+  import_tasks: diff.yml
+
 # These tests need to be organized by state parameter into separate files later
 
 - name: verify that we are checking a file and it is present
