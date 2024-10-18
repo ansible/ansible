@@ -12,7 +12,7 @@ from ansible.module_utils.parsing.convert_bool import boolean
 junk_values = ("flibbity", 42, 42.0, object(), None, 2, -1, 0.1)
 
 
-@pytest.mark.parametrize(("test", "expected"), [
+@pytest.mark.parametrize(("value", "expected"), [
     (True, True),
     (False, False),
     (1, True),
@@ -25,17 +25,16 @@ junk_values = ("flibbity", 42, 42.0, object(), None, 2, -1, 0.1)
     ("y", True),
     ("on", True),
 ])
-def test_boolean(test, expected):
-    assert boolean(test) is expected
+def test_boolean(value: object, expected: bool) -> None:
+    assert boolean(value) is expected
 
 
-@pytest.mark.parametrize("test", junk_values)
-def test_junk_values_nonstrict(test):
-    assert boolean(test, strict=False) is False
+@pytest.mark.parametrize("value", junk_values)
+def test_junk_values_non_strict(value: object) -> None:
+    assert boolean(value, strict=False) is False
 
 
-@pytest.mark.parametrize("test", junk_values)
-def test_junk_values_strict(test):
-    match = rf"^The value '{test}' is not"
-    with pytest.raises(TypeError, match=match):
-        boolean(test, strict=True)
+@pytest.mark.parametrize("value", junk_values)
+def test_junk_values_strict(value: object) -> None:
+    with pytest.raises(TypeError, match=f"^The value '{value}' is not"):
+        boolean(value, strict=True)
