@@ -1017,6 +1017,30 @@ def set_remote_branch(git_path, module, dest, remote, version, depth):
         module.fail_json(msg="Failed to fetch branch from remote: %s" % version, stdout=out, stderr=err, rc=rc)
 
 
+def fix_remote_tracking_branch(git_path, module, dest, remote, version, single_branch):
+    """
+    Fix the remote tracking branch configuration for a Git repository.
+
+    When a Git repository is cloned with the --single-branch or --depth options, it may not fetch other branches.
+    This function checks if the current branch is not a local branch but exists on the remote.
+    If so, it updates the remote tracking branch configuration to allow fetching the specified branch.
+    """
+    if single_branch:
+        fetch_ref = '+refs/heads/%s:refs/remotes/origin/%s' % (version, version)
+    else:
+        fetch_ref = '+refs/heads/*:refs/remotes/origin/*'
+
+    cmd = [git_path, 'config', 'remote.%s.fetch' % remote, fetch_ref]
+    (rc, out, err) = module.run_command(cmd, cwd=dest)
+    if rc != 0:
+        module.fail_json(
+            msg='Failed to fix remote tracking branch.',
+            stdout=out,
+            stderr=err,
+            rc=rc,
+            cmd=cmd)
+
+
 def switch_version(git_path, module, dest, remote, version, verify_commit, depth, gpg_allowlist):
     cmd = ''
     if version == 'HEAD':
@@ -1380,6 +1404,9 @@ def main():
                     result['diff'] = diff
             module.exit_json(**result)
         else:
+            if not is_local_branch(git_path, module, dest, version) and is_remote_branch(git_path, module, dest, remote, version):
+                fix_remote_tracking_branch(git_path, module, dest, remote, version, single_branch)
+                result.update(changed=True)
             fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, git_version_used, force=force)
 
         result['after'] = get_version(module, git_path, dest)
