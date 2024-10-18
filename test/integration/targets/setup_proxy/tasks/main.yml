@@ -1,0 +1,43 @@
+- name: install proxy.py
+  pip:
+    name: proxy.py
+    virtualenv: '{{ remote_tmp_dir }}/proxy_py'
+    virtualenv_command: "{{ ansible_python_interpreter }} -m venv"
+  notify: stop proxy.py
+
+- name: get venv site-packages
+  command: >-
+    {{ remote_tmp_dir }}/proxy_py/bin/python -c 'import site; print(site.getsitepackages()[0])'
+  register: proxy_py_site_packages
+
+- name: install proxy.py plugin
+  copy:
+    src: hamsandwich.py
+    dest: '{{ proxy_py_site_packages.stdout }}/hamsandwich.py'
+
+- name: start proxy.py
+  command: >-
+    {{ remote_tmp_dir }}/proxy_py/bin/proxy --port 8080 --log-file "{{ remote_tmp_dir }}/proxy_py/proxy_py.log"
+    --plugins hamsandwich.HamSandwichPlugin --pid-file "{{ remote_tmp_dir }}/proxy_py/proxy_py.pid"
+  async: 120
+  poll: 0
+  register: proxy_py
+
+- name: wait for proxy.py to start
+  wait_for:
+    port: 8080
+    connect_timeout: 1
+    timeout: 10
+
+- name: get proxy.py pid
+  slurp:
+    path: '{{ remote_tmp_dir }}/proxy_py/proxy_py.pid'
+  register: proxy_py_slurp_pid
+
+- name: set fact for proxy.py pid
+  set_fact:
+    proxy_py_pid: '{{ proxy_py_slurp_pid.content|b64decode }}'
+
+- name: set fact for proxy host
+  set_fact:
+    http_proxy: 'http://127.0.0.1:8080'

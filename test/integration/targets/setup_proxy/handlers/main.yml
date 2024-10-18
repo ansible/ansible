@@ -1,0 +1,2 @@
+- name: stop proxy.py
+  command: kill {{ proxy_py_pid }}
