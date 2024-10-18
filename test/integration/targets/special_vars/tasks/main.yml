@@ -98,3 +98,16 @@
 - name: ansible_parent_role_names - test functionality by importing another role
   import_role:
     name: include_parent_role_vars
+
+- name: test block name
+  block:
+    - assert:
+        that:
+          - ansible_parent_block_name is defined
+          - "ansible_parent_block_name == 'test block name'"
+
+- name: test no block name
+  assert:
+    that:
+      - ansible_parent_block_name is defined
+      - "ansible_parent_block_name == ''"
