@@ -399,6 +399,8 @@ class StrategyBase:
 
                 worker_prc = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
+                    if worker_prc:
+                        worker_prc.close()
                     self._queued_task_cache[(host.name, task._uuid)] = {
                         'host': host,
                         'task': task,
@@ -408,7 +410,8 @@ class StrategyBase:
 
                     # Pass WorkerProcess its strategy worker number so it can send an identifier along with intra-task requests
                     worker_prc = WorkerProcess(
-                        self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader, self._cur_worker,
+                        self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager,
+                        plugin_loader.get_plugin_loader_namespace(), self._cur_worker, context.CLIARGS,
                     )
                     self._workers[self._cur_worker] = worker_prc
                     self._tqm.send_callback('v2_runner_on_start', host, task)

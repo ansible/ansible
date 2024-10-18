@@ -161,7 +161,6 @@ lib/ansible/compat/selectors.py pylint:ansible-deprecated-version
 lib/ansible/module_utils/compat/importlib.py pylint:ansible-deprecated-version
 lib/ansible/module_utils/compat/selectors.py pylint:ansible-deprecated-version
 lib/ansible/module_utils/pycompat24.py pylint:ansible-deprecated-version
-lib/ansible/plugins/connection/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/filter/core.py pylint:ansible-deprecated-version
 lib/ansible/vars/manager.py pylint:ansible-deprecated-version
 test/units/module_utils/basic/test_exit_json.py mypy-3.13:assignment
