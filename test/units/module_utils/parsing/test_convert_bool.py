@@ -9,50 +9,32 @@ import pytest
 from ansible.module_utils.parsing.convert_bool import boolean
 
 
-class TestBoolean:
-    def test_bools(self):
-        assert boolean(True) is True
-        assert boolean(False) is False
+junk_values = ("flibbity", 42, 42.0, object(), None, 2, -1, 0.1)
 
-    def test_none(self):
-        with pytest.raises(TypeError):
-            assert boolean(None, strict=True) is False
-        assert boolean(None, strict=False) is False
 
-    def test_numbers(self):
-        assert boolean(1) is True
-        assert boolean(0) is False
-        assert boolean(0.0) is False
+@pytest.mark.parametrize(("value", "expected"), [
+    (True, True),
+    (False, False),
+    (1, True),
+    (0, False),
+    (0.0, False),
+    ("true", True),
+    ("TRUE", True),
+    ("t", True),
+    ("yes", True),
+    ("y", True),
+    ("on", True),
+])
+def test_boolean(value: object, expected: bool) -> None:
+    assert boolean(value) is expected
 
-# Current boolean() doesn't consider these to be true values
-#    def test_other_numbers(self):
-#        assert boolean(2) is True
-#        assert boolean(-1) is True
-#        assert boolean(0.1) is True
 
-    def test_strings(self):
-        assert boolean("true") is True
-        assert boolean("TRUE") is True
-        assert boolean("t") is True
-        assert boolean("yes") is True
-        assert boolean("y") is True
-        assert boolean("on") is True
+@pytest.mark.parametrize("value", junk_values)
+def test_junk_values_non_strict(value: object) -> None:
+    assert boolean(value, strict=False) is False
 
-    def test_junk_values_nonstrict(self):
-        assert boolean("flibbity", strict=False) is False
-        assert boolean(42, strict=False) is False
-        assert boolean(42.0, strict=False) is False
-        assert boolean(object(), strict=False) is False
 
-    def test_junk_values_strict(self):
-        with pytest.raises(TypeError):
-            assert boolean("flibbity", strict=True) is False
-
-        with pytest.raises(TypeError):
-            assert boolean(42, strict=True) is False
-
-        with pytest.raises(TypeError):
-            assert boolean(42.0, strict=True) is False
-
-        with pytest.raises(TypeError):
-            assert boolean(object(), strict=True) is False
+@pytest.mark.parametrize("value", junk_values)
+def test_junk_values_strict(value: object) -> None:
+    with pytest.raises(TypeError, match=f"^The value '{value}' is not"):
+        boolean(value, strict=True)

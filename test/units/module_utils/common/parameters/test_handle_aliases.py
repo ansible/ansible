@@ -8,7 +8,6 @@ from __future__ import annotations
 import pytest
 
 from ansible.module_utils.common.parameters import _handle_aliases
-from ansible.module_utils.common.text.converters import to_native
 
 
 def test_handle_aliases_no_aliases():
@@ -21,10 +20,7 @@ def test_handle_aliases_no_aliases():
         'path': 'bar'
     }
 
-    expected = {}
-    result = _handle_aliases(argument_spec, params)
-
-    assert expected == result
+    assert _handle_aliases(argument_spec, params) == {}
 
 
 def test_handle_aliases_basic():
@@ -54,9 +50,8 @@ def test_handle_aliases_value_error():
         'name': 'foo',
     }
 
-    with pytest.raises(ValueError) as ve:
+    with pytest.raises(ValueError, match='internal error: required and default are mutually exclusive'):
         _handle_aliases(argument_spec, params)
-        assert 'internal error: aliases must be a list or tuple' == to_native(ve.error)
 
 
 def test_handle_aliases_type_error():
@@ -68,6 +63,5 @@ def test_handle_aliases_type_error():
         'name': 'foo',
     }
 
-    with pytest.raises(TypeError) as te:
+    with pytest.raises(TypeError, match='internal error: aliases must be a list or tuple'):
         _handle_aliases(argument_spec, params)
-        assert 'internal error: required and default are mutually exclusive' in to_native(te.error)

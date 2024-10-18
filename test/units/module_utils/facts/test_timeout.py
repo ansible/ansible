@@ -1,20 +1,7 @@
 # -*- coding: utf-8 -*-
-# (c) 2017, Toshio Kuratomi <tkuratomi@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Toshio Kuratomi <tkuratomi@ansible.com>
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
 
@@ -83,8 +70,8 @@ def test_implicit_file_default_timesout(monkeypatch):
     monkeypatch.setattr(timeout, 'DEFAULT_GATHER_TIMEOUT', 1)
     # sleep_time is greater than the default
     sleep_time = timeout.DEFAULT_GATHER_TIMEOUT + 1
-    with pytest.raises(timeout.TimeoutError):
-        assert sleep_amount_implicit(sleep_time) == '(Not expected to succeed)'
+    with pytest.raises(timeout.TimeoutError, match=r"^Timer expired after"):
+        sleep_amount_implicit(sleep_time)
 
 
 def test_implicit_file_overridden_succeeds(set_gather_timeout_higher):
@@ -96,8 +83,8 @@ def test_implicit_file_overridden_succeeds(set_gather_timeout_higher):
 def test_implicit_file_overridden_timesout(set_gather_timeout_lower):
     # Set sleep_time greater than our new timeout but less than the default
     sleep_time = 3
-    with pytest.raises(timeout.TimeoutError):
-        assert sleep_amount_implicit(sleep_time) == '(Not expected to Succeed)'
+    with pytest.raises(timeout.TimeoutError, match=r"^Timer expired after"):
+        sleep_amount_implicit(sleep_time)
 
 
 def test_explicit_succeeds(monkeypatch):
@@ -110,8 +97,8 @@ def test_explicit_succeeds(monkeypatch):
 def test_explicit_timeout():
     # Set sleep_time greater than our new timeout but less than the default
     sleep_time = 3
-    with pytest.raises(timeout.TimeoutError):
-        assert sleep_amount_explicit_lower(sleep_time) == '(Not expected to succeed)'
+    with pytest.raises(timeout.TimeoutError, match=r"^Timer expired after"):
+        sleep_amount_explicit_lower(sleep_time)
 
 
 #
@@ -149,21 +136,21 @@ def function_catches_all_exceptions():
 
 
 def test_timeout_raises_timeout():
-    with pytest.raises(timeout.TimeoutError):
-        assert function_times_out() == '(Not expected to succeed)'
+    with pytest.raises(timeout.TimeoutError, match=r"^Timer expired after"):
+        function_times_out()
 
 
 @pytest.mark.parametrize('stdin', ({},), indirect=['stdin'])
 def test_timeout_raises_timeout_integration_test(am):
-    with pytest.raises(timeout.TimeoutError):
-        assert function_times_out_in_run_command(am) == '(Not expected to succeed)'
+    with pytest.raises(timeout.TimeoutError, match=r"^Timer expired after"):
+        function_times_out_in_run_command(am)
 
 
 def test_timeout_raises_other_exception():
-    with pytest.raises(ZeroDivisionError):
-        assert function_raises() == '(Not expected to succeed)'
+    with pytest.raises(ZeroDivisionError, match=r"^division by"):
+        function_raises()
 
 
 def test_exception_not_caught_by_called_code():
-    with pytest.raises(timeout.TimeoutError):
-        assert function_catches_all_exceptions() == '(Not expected to succeed)'
+    with pytest.raises(timeout.TimeoutError, match=r"^Timer expired after"):
+        function_catches_all_exceptions()

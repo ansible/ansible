@@ -71,7 +71,7 @@ class TestCachePluginAdjudicator(unittest.TestCase):
 
     def test_pop_without_default(self):
         with pytest.raises(KeyError):
-            assert self.cache.pop('foo')
+            self.cache.pop('foo')
 
     def test_pop(self):
         v = self.cache.pop('cache_key_2')

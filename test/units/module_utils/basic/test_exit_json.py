@@ -158,7 +158,7 @@ class TestAnsibleModuleExitValuesRemoved:
         monkeypatch.setattr(warnings, '_global_deprecations', [])
         expected['failed'] = True
         with pytest.raises(SystemExit):
-            am.fail_json(**return_val) == expected
+            am.fail_json(**return_val)
         out, err = capfd.readouterr()
 
         assert json.loads(out) == expected
