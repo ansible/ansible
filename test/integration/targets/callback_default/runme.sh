@@ -13,6 +13,8 @@
 
 set -eux
 
+umask 0022
+
 run_test() {
 	local testname=$1
 	local playbook=$2
@@ -36,6 +38,15 @@ run_test() {
 	sed -i -e 's#: .*/\.source\.txt$#: .../.source.txt#g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e '/secontext:/d' "${OUTFILE}.${testname}.stdout"
 	sed -i -e 's/group: wheel/group: root/g' "${OUTFILE}.${testname}.stdout"
+
+	# normalize gid/group/owner/uid/homedir so tests can run as non-root user
+	ESC_HOME=$(echo "${HOME}" | sed -e 's/\//\\\//g')
+	sed -i -e "s/${ESC_HOME}/\/<<HOMEDIR>>/g" "${OUTFILE}.${testname}.stdout"
+	sed -i -e "s/${ESC_HOME}/\/<<HOMEDIR>>/g" "${OUTFILE}.${testname}.stderr"
+	sed -i -e "s/gid: $(id -g)/gid: <<GID>>/g" "${OUTFILE}.${testname}.stdout"
+	sed -i -e "s/group: $(id -gn)/group: <<GROUP>>/g" "${OUTFILE}.${testname}.stdout"
+	sed -i -e "s/owner: $(id -un)/owner: <<OWNER>>/g" "${OUTFILE}.${testname}.stdout"
+	sed -i -e "s/uid: $(id -u)/uid: <<UID>>/g" "${OUTFILE}.${testname}.stdout"
 
 	diff -u "${ORIGFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stdout" || diff_failure
 	diff -u "${ORIGFILE}.${testname}.stderr" "${OUTFILE}.${testname}.stderr" || diff_failure
