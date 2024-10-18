@@ -597,13 +597,16 @@ class Connection(ConnectionBase):
         user: str | None,
         connection: ConnectionBase | None = None,
         pid: int | None = None,
+        inventory_hostname: str | None = None,
     ) -> str:
         """Make a hash for the controlpath based on con attributes"""
-        pstring = '%s-%s-%s' % (host, port, user)
+        pstring = f"{host}-{port}-{user}"
         if connection:
-            pstring += '-%s' % connection
+            pstring += f"-{connection}"
         if pid:
-            pstring += '-%s' % to_text(pid)
+            pstring += f"-{pid}"
+        if inventory_hostname:
+            pstring += f"-{inventory_hostname}"
         m = hashlib.sha1()
         m.update(to_bytes(pstring))
         digest = m.hexdigest()
@@ -810,7 +813,8 @@ class Connection(ConnectionBase):
                     self.control_path = self._create_control_path(
                         self.host,
                         self.port,
-                        self.user
+                        self.user,
+                        inventory_hostname=self._inventory_hostname,
                     )
                 b_args = (b"-o", b'ControlPath="%s"' % to_bytes(self.control_path % dict(directory=cpdir), errors='surrogate_or_strict'))
                 self._add_args(b_command, b_args, u"found only ControlPersist; added ControlPath")
