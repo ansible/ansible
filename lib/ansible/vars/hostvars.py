@@ -33,13 +33,8 @@ class HostVars(Mapping):
 
     def __init__(self, inventory, variable_manager, loader):
         self._inventory = inventory
+        self._variable_manager = variable_manager
         self._loader = loader
-        self._variable_manager = variable_manager
-        variable_manager._hostvars = self
-
-    def set_variable_manager(self, variable_manager):
-        self._variable_manager = variable_manager
-        variable_manager._hostvars = self
 
     def set_inventory(self, inventory):
         self._inventory = inventory
