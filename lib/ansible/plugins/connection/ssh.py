@@ -296,9 +296,9 @@ DOCUMENTATION = '''
             version_added: '2.7'
       sftp_batch_mode:
         default: true
-        description: '
+        description:
         - If set to C(true), Ansible will use SFTP batch mode for transfers. This can optimize file transfers, particularly for larger files.
-        - Set to C(false) to disable batch mode and send files one at a time.'
+        - Set to C(false) to disable batch mode and send files one at a time.
         env: [{name: ANSIBLE_SFTP_BATCH_MODE}]
         ini:
         - {key: sftp_batch_mode, section: ssh_connection}
