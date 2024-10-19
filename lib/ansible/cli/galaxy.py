@@ -1083,6 +1083,7 @@ class GalaxyCLI(CLI):
                 company='your company (optional)',
                 license='license (GPL-2.0-or-later, MIT, etc)',
                 role_name=obj_name,
+                namespace=obj_name.split('.')[0],
                 role_type=context.CLIARGS['role_type'],
                 issue_tracker_url='http://example.com/issue/tracker',
                 repository_url='http://example.com/repository',
