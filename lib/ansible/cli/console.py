@@ -558,6 +558,10 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         hosts = self.get_host_list(self.inventory, context.CLIARGS['subset'], self.pattern)
 
+        #flush fact cache if requested
+        if context.CLIARGS['flush_cache']:
+            self._flush_cache(self.inventory, self.variable_manager)
+
         self.groups = self.inventory.list_groups()
         self.hosts = [x.name for x in hosts]
 
@@ -597,6 +601,12 @@ class ConsoleCLI(CLI, cmd.Cmd):
             raise AttributeError(f"{self.__class__} does not have a {name} attribute")
 
         return attr
+
+    @staticmethod
+    def _flush_cache(inventory, variable_manager):
+        for host in inventory.list_hosts():
+            hostname = host.get_name()
+            variable_manager.clear_facts(hostname)
 
 
 def main(args=None):

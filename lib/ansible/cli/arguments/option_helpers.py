@@ -297,6 +297,8 @@ def add_inventory_options(parser):
                         help='outputs a list of matching hosts; does not execute anything else')
     parser.add_argument('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',
                         help='further limit selected hosts to an additional pattern')
+    parser.add_argument('--flush-cache', dest='flush_cache', action='store_true',
+                        help="clear the fact cache for every host in inventory")
 
 
 def add_meta_options(parser):
