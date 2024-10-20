@@ -558,7 +558,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         hosts = self.get_host_list(self.inventory, context.CLIARGS['subset'], self.pattern)
 
-        #flush fact cache if requested
+        # flush fact cache if requested
         if context.CLIARGS['flush_cache']:
             self._flush_cache(self.inventory, self.variable_manager)
 
