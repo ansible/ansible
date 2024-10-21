@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible cli - add --flush-cache option for ad-hoc commands (https://github.com/ansible/ansible/issues/83749).
