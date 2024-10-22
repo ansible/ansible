@@ -1089,7 +1089,7 @@ class GalaxyCLI(CLI):
                 repository_url='http://example.com/repository',
                 documentation_url='http://docs.example.com',
                 homepage_url='http://example.com',
-                min_ansible_version=re.search("(\d+\.\d+(\.\d+)?)", ansible_version).group(0),
+                min_ansible_version=re.search("([0-9]+\.[0-9]+(\.[0-9]+)?)", ansible_version).group(0),
                 dependencies=[],
             ))
 
