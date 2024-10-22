@@ -1082,14 +1082,14 @@ class GalaxyCLI(CLI):
                 author='your name',
                 company='your company (optional)',
                 license='license (GPL-2.0-or-later, MIT, etc)',
-                # role_name=obj_name,
+                role_name=obj_name,
                 # namespace=obj_name.split('.')[0],
                 role_type=context.CLIARGS['role_type'],
                 issue_tracker_url='http://example.com/issue/tracker',
                 repository_url='http://example.com/repository',
                 documentation_url='http://docs.example.com',
                 homepage_url='http://example.com',
-                min_ansible_version=re.search("([0-9]+\.[0-9]+(\.[0-9]+)?)", ansible_version).group(0),
+                min_ansible_version=re.search(r"([0-9]+\.[0-9]+(\.[0-9]+)?)", ansible_version).group(0),
                 dependencies=[],
             ))
 
