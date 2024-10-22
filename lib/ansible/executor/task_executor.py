@@ -866,6 +866,7 @@ class TaskExecutor:
             task_vars = self._job_vars
 
         async_jid = result.get('ansible_job_id')
+        results_file = result.get('results_file')
         if async_jid is None:
             return dict(failed=True, msg="No job id was returned by the async task")
 
@@ -875,7 +876,7 @@ class TaskExecutor:
 
         async_task = Task.load(dict(
             action='async_status',
-            args={'jid': async_jid},
+            args={'jid': results_file or async_jid},
             check_mode=self._task.check_mode,
             environment=self._task.environment,
         ))
@@ -947,7 +948,7 @@ class TaskExecutor:
             cleanup_task = Task.load(
                 {
                     'async_status': {
-                        'jid': async_jid,
+                        'jid': results_file or async_jid,
                         'mode': 'cleanup',
                     },
                     'check_mode': self._task.check_mode,
