@@ -12,34 +12,38 @@ from ansible.galaxy.dependency_resolution.dataclasses import Requirement
 
 @pytest.fixture
 def collection_object():
-    def _cobj(fqcn='sandwiches.ham'):
-        return Requirement(fqcn, '1.5.0', None, 'galaxy', None)
+    def _cobj(fqcn="sandwiches.ham"):
+        return Requirement(fqcn, "1.5.0", None, "galaxy", None)
+
     return _cobj
 
 
-def test_display_collection(capsys, collection_object):
-    _display_collection(collection_object())
-    out, err = capsys.readouterr()
-
-    assert out == 'sandwiches.ham 1.5.0  \n'
-
-
-def test_display_collections_small_max_widths(capsys, collection_object):
-    _display_collection(collection_object(), 1, 1)
-    out, err = capsys.readouterr()
-
-    assert out == 'sandwiches.ham 1.5.0  \n'
-
-
-def test_display_collections_large_max_widths(capsys, collection_object):
-    _display_collection(collection_object(), 20, 20)
-    out, err = capsys.readouterr()
-
-    assert out == 'sandwiches.ham       1.5.0               \n'
-
-
-def test_display_collection_small_minimum_widths(capsys, collection_object):
-    _display_collection(collection_object('a.b'), min_cwidth=0, min_vwidth=0)
-    out, err = capsys.readouterr()
-
-    assert out == 'a.b        1.5.0  \n'
+@pytest.mark.parametrize(
+    ("kwargs", "expected"),
+    [
+        pytest.param(
+            {},
+            "sandwiches.ham 1.5.0  \n",
+            id="default",
+        ),
+        pytest.param(
+            {"cwidth": 1, "vwidth": 1},
+            "sandwiches.ham 1.5.0  \n",
+            id="small-max-widths",
+        ),
+        pytest.param(
+            {"cwidth": 20, "vwidth": 20},
+            "sandwiches.ham       1.5.0               \n",
+            id="large-max-widths",
+        ),
+        pytest.param(
+            {"min_cwidth": 0, "min_vwidth": 0},
+            "sandwiches.ham 1.5.0  \n",
+            id="small-minimum-widths",
+        ),
+    ],
+)
+def test_display_collection(capsys, kwargs, expected, collection_object):
+    _display_collection(collection_object(), **kwargs)
+    out, dummy = capsys.readouterr()
+    assert out == expected

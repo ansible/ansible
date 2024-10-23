@@ -4,37 +4,39 @@
 
 from __future__ import annotations
 
+import pytest
+
 from ansible.cli.galaxy import _display_header
 
 
-def test_display_header_default(capsys):
-    _display_header('/collections/path', 'h1', 'h2')
-    out, err = capsys.readouterr()
+@pytest.mark.parametrize(
+    ("args", "expected"),
+    [
+        pytest.param(
+            ("/collections/path", "h1", "h2"),
+            ["", "# /collections/path", "h1         h2     ", "---------- -------"],
+            id="default",
+        ),
+        pytest.param(
+            ("/collections/path", "Collection", "Version", 18, 18),
+            [
+                "",
+                "# /collections/path",
+                "Collection         Version           ",
+                "------------------ ------------------",
+            ],
+            id="widths",
+        ),
+        pytest.param(
+            ("/collections/path", "Col", "Ver", 1, 1),
+            ["", "# /collections/path", "Col Ver", "--- ---"],
+            id="small_widths",
+        ),
+    ],
+)
+def test_display_header_default(capsys, args, expected):
+    _display_header(*args)
+    out, dummy = capsys.readouterr()
     out_lines = out.splitlines()
 
-    assert out_lines[0] == ''
-    assert out_lines[1] == '# /collections/path'
-    assert out_lines[2] == 'h1         h2     '
-    assert out_lines[3] == '---------- -------'
-
-
-def test_display_header_widths(capsys):
-    _display_header('/collections/path', 'Collection', 'Version', 18, 18)
-    out, err = capsys.readouterr()
-    out_lines = out.splitlines()
-
-    assert out_lines[0] == ''
-    assert out_lines[1] == '# /collections/path'
-    assert out_lines[2] == 'Collection         Version           '
-    assert out_lines[3] == '------------------ ------------------'
-
-
-def test_display_header_small_widths(capsys):
-    _display_header('/collections/path', 'Col', 'Ver', 1, 1)
-    out, err = capsys.readouterr()
-    out_lines = out.splitlines()
-
-    assert out_lines[0] == ''
-    assert out_lines[1] == '# /collections/path'
-    assert out_lines[2] == 'Col Ver'
-    assert out_lines[3] == '--- ---'
+    assert out_lines == expected
