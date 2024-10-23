@@ -157,9 +157,7 @@ lib/ansible/modules/user.py pylint:used-before-assignment
 lib/ansible/plugins/action/copy.py pylint:undefined-variable
 test/integration/targets/module_utils/library/test_optional.py pylint:used-before-assignment
 test/support/windows-integration/plugins/action/win_copy.py pylint:undefined-variable
-lib/ansible/compat/selectors.py pylint:ansible-deprecated-version
 lib/ansible/module_utils/compat/importlib.py pylint:ansible-deprecated-version
-lib/ansible/module_utils/compat/selectors.py pylint:ansible-deprecated-version
 lib/ansible/module_utils/pycompat24.py pylint:ansible-deprecated-version
 lib/ansible/plugins/connection/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/filter/core.py pylint:ansible-deprecated-version
