@@ -39,6 +39,15 @@
   tags:
     - user_test_local_mode
 
+- name: Ensure no local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: absent
+    local: yes
+    remove: true
+  tags:
+    - user_test_local_mode
+
 - name: Create local_ansibulluser
   user:
     name: local_ansibulluser
