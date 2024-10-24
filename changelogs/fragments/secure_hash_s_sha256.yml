@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - Replace secure_hash_s with generate_secure_checksum.
+  - Replace secure_hash with generate_secure_file_checksum.

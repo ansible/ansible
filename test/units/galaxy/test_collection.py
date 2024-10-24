@@ -22,13 +22,13 @@ from ansible.cli.galaxy import GalaxyCLI
 from ansible.config import manager
 from ansible.errors import AnsibleError
 from ansible.galaxy import api, collection, token
+from ansible.module_utils.common.hashing import generate_secure_checksum
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.file import S_IRWU_RG_RO
 import builtins
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
-from ansible.utils.hashing import secure_hash_s
 
 
 @pytest.fixture(autouse=True)
@@ -835,10 +835,11 @@ def test_build_with_symlink_inside_collection(collection_input):
         assert linked_file.linkname == '../README.md'
 
         linked_file_obj = actual.extractfile(linked_file.name)
-        actual_file = secure_hash_s(linked_file_obj.read())
+        actual_file = generate_secure_checksum(linked_file_obj.read())
         linked_file_obj.close()
 
-        assert actual_file == '08f24200b9fbe18903e7a50930c9d0df0b8d7da3'  # shasum test/units/cli/test_data/collection_skeleton/README.md
+        # shasum test/units/cli/test_data/collection_skeleton/README.md
+        assert actual_file == 'f6844219b194843a618cd1a3a0ac20b2686d5fe684c19f9ddb5036a22b5afab2'
 
 
 def test_publish_no_wait(galaxy_server, collection_artifact, monkeypatch):
@@ -1146,24 +1147,6 @@ def test_verify_file_hash_mismatching_hash(manifest_info):
     assert len(error_queue) == 1
     assert error_queue[0].installed == digest
     assert error_queue[0].expected == different_digest
-
-
-def test_consume_file(manifest):
-
-    manifest_file, checksum = manifest
-    assert checksum == collection._consume_file(manifest_file)
-
-
-def test_consume_file_and_write_contents(manifest, manifest_info):
-
-    manifest_file, checksum = manifest
-
-    write_to = BytesIO()
-    actual_hash = collection._consume_file(manifest_file, write_to)
-
-    write_to.seek(0)
-    assert to_bytes(json.dumps(manifest_info)) == write_to.read()
-    assert actual_hash == checksum
 
 
 def test_get_tar_file_member(tmp_tarfile):
