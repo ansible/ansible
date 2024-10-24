@@ -307,7 +307,7 @@ def _list_deprecations(argument_spec, parameters, prefix=''):
     return deprecations
 
 
-def _list_no_log_values(argument_spec, params):
+def _list_no_log_values(argument_spec, params, errors=None):
     """Return set of no log values
 
     :arg argument_spec: An argument spec dictionary
@@ -326,7 +326,11 @@ def _list_no_log_values(argument_spec, params):
                 try:
                     no_log_values.update(_return_datastructure_name(no_log_object))
                 except TypeError as e:
-                    raise TypeError('Failed to convert "%s": %s' % (arg_name, to_native(e)))
+                    message = 'Failed to convert "%s": %s' % (arg_name, to_native(e))
+                    if errors is not None:
+                        errors.append(message)
+                        continue
+                    raise TypeError(message)
 
         # Get no_log values from suboptions
         sub_argument_spec = arg_opts.get('options')
@@ -344,11 +348,21 @@ def _list_no_log_values(argument_spec, params):
                         # Validate dict fields in case they came in as strings
 
                         if isinstance(sub_param, string_types):
-                            sub_param = check_type_dict(sub_param)
+                            try:
+                                sub_param = check_type_dict(sub_param)
+                            except TypeError as e:
+                                if errors is not None:
+                                    errors.append(to_native(e))
+                                    continue
+                                raise
 
                         if not isinstance(sub_param, Mapping):
-                            raise TypeError("Value '{1}' in the sub parameter field '{0}' must be a {2}, "
-                                            "not '{1.__class__.__name__}'".format(arg_name, sub_param, wanted_type))
+                            message = ("Value '{1}' in the sub parameter field '{0}' must be a {2}, "
+                                       "not '{1.__class__.__name__}'".format(arg_name, sub_param, wanted_type))
+                            if errors is not None:
+                                errors.append(message)
+                                continue
+                            raise TypeError(message)
 
                         no_log_values.update(_list_no_log_values(sub_argument_spec, sub_param))
 
