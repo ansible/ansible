@@ -14,6 +14,7 @@ import time
 from jinja2 import __version__ as j2_version
 
 import ansible
+from ..splash import dump_splash
 from ansible import constants as C
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.yaml import HAS_LIBYAML, yaml_load
@@ -42,6 +43,7 @@ class ArgumentParser(argparse.ArgumentParser):
 
 class AnsibleVersion(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
+        dump_splash()
         ansible_version = to_native(version(getattr(parser, 'prog')))
         print(ansible_version)
         parser.exit()
