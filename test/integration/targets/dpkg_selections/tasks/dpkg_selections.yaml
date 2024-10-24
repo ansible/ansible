@@ -90,7 +90,7 @@
 
 - name: Try to select non-existent package
   dpkg_selections:
-    name: kernel
+    name: kerfufle_bad_name_test
     selection: hold
   ignore_errors: yes
   register: result
