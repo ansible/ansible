@@ -296,7 +296,7 @@ DOCUMENTATION = """
             version_added: '2.7'
       sftp_batch_mode:
         default: true
-        description: 'TODO: write it'
+        description: Determines if SSH disable batch mode for sshpass or not for a connection.
         env: [{name: ANSIBLE_SFTP_BATCH_MODE}]
         ini:
         - {key: sftp_batch_mode, section: ssh_connection}
