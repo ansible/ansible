@@ -1235,7 +1235,7 @@ class Connection(ConnectionBase):
         for method in methods:
             returncode = stdout = stderr = None
             if method == 'sftp':
-                cmd = self._build_command(self.get_option('sftp_executable'), 'sftp', to_bytes(host))
+                cmd = self._build_command(self.get_option('sftp_executable'), 'sftp', '-p', to_bytes(host))
                 in_data = u"{0} {1} {2}\n".format(sftp_action, shlex.quote(in_path), shlex.quote(out_path))
                 in_data = to_bytes(in_data, nonstring='passthru')
                 (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
@@ -1243,9 +1243,9 @@ class Connection(ConnectionBase):
                 scp = self.get_option('scp_executable')
 
                 if sftp_action == 'get':
-                    cmd = self._build_command(scp, 'scp', u'{0}:{1}'.format(host, self._shell.quote(in_path)), out_path)
+                    cmd = self._build_command(scp, 'scp', '-p', u'{0}:{1}'.format(host, self._shell.quote(in_path)), out_path)
                 else:
-                    cmd = self._build_command(scp, 'scp', in_path, u'{0}:{1}'.format(host, self._shell.quote(out_path)))
+                    cmd = self._build_command(scp, 'scp', '-p', in_path, u'{0}:{1}'.format(host, self._shell.quote(out_path)))
                 in_data = None
                 (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
             elif method == 'piped':
@@ -1266,6 +1266,11 @@ class Connection(ConnectionBase):
 
             # Check the return code and rollover to next method if failed
             if returncode == 0:
+                if method == 'piped':
+                    # cannot control umask for file, but directory should be safe enough, setting perms for possible subsequent copies
+                    (rc, out, err) = self.exec_command(f'chmod 0600 "{out_path}"', sudoable=False)
+                    if rc != 0:
+                        display.warning("Unable to set remote permissions for transfered '{out_path}': {err}")
                 return (returncode, stdout, stderr)
             else:
                 # If not in smart mode, the data will be printed by the raise below

@@ -524,6 +524,9 @@ def main():
         supports_check_mode=True,
     )
 
+    # This should eventually be set by controller
+    setattr(module, 'digest', 'sha1')
+
     src = module.params['src']
     b_src = to_bytes(src, errors='surrogate_or_strict')
     dest = module.params['dest']
@@ -548,8 +551,8 @@ def main():
     if not os.access(b_src, os.R_OK):
         module.fail_json(msg="Source %s not readable" % (src))
 
-    # Preserve is usually handled in the action plugin but mode + remote_src has to be done on the
-    # remote host
+    # Preserve is usually handled in the action plugin but mode + remote_src has to be done here.
+    # We are alterning 'params' as this is passed to functions later on.
     if module.params['mode'] == 'preserve':
         module.params['mode'] = '0%03o' % stat.S_IMODE(os.stat(b_src).st_mode)
     mode = module.params['mode']
@@ -562,12 +565,12 @@ def main():
 
     if os.path.isfile(src):
         try:
-            checksum_src = module.sha1(src)
+            checksum_src = module.digest_from_file(src, module.digest)
         except (OSError, IOError) as e:
             module.warn("Unable to calculate src checksum, assuming change: %s" % to_native(e))
         try:
             # Backwards compat only.  This will be None in FIPS mode
-            md5sum_src = module.md5(src)
+            md5sum_src = module.digest_from_file(src, 'md5')
         except ValueError:
             pass
     elif remote_src and not os.path.isdir(src):
@@ -620,7 +623,7 @@ def main():
         if not force:
             module.exit_json(msg="file already exists", src=src, dest=dest, changed=False)
         if os.access(b_dest, os.R_OK) and os.path.isfile(b_dest):
-            checksum_dest = module.sha1(dest)
+            checksum_dest = module.digest_from_file(dest, module.digest)
     else:
         if not os.path.exists(os.path.dirname(b_dest)):
             try:
@@ -667,10 +670,12 @@ def main():
                 b_mysrc = b_src
                 if remote_src and os.path.isfile(b_src):
 
+                    # create a destination tempfile  on the same directory (assures same partition for rename)
                     dummy, b_mysrc = tempfile.mkstemp(dir=os.path.dirname(b_dest))
 
-                    shutil.copyfile(b_src, b_mysrc)
+                    shutil.copy2(b_src, b_mysrc)
                     try:
+                        # this might be 'noop' if above copies attributes, but jic and so we can give a warning
                         shutil.copystat(b_src, b_mysrc)
                     except OSError as err:
                         if err.errno == errno.ENOSYS and mode == "preserve":
