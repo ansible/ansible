@@ -39,6 +39,7 @@ if t.TYPE_CHECKING:
 MODULE_CACHE = {}  # type: dict[str, dict[str, types.ModuleType]]
 PATH_CACHE = {}  # type: dict[str, list[PluginPathContext] | None]
 PLUGIN_PATH_CACHE = {}  # type: dict[str, dict[str, dict[str, PluginPathContext]]]
+PY_FILES = {}  # type: dict[str, list[str]]
 
 
 def get_plugin_class(obj):
