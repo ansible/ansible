@@ -6,11 +6,13 @@
 
 from __future__ import annotations
 
+import functools
 import glob
 import os
 import os.path
 import pkgutil
 import sys
+import types
 import warnings
 
 from collections import defaultdict, namedtuple
@@ -52,8 +54,17 @@ display = Display()
 get_with_context_result = namedtuple('get_with_context_result', ['object', 'plugin_load_context'])
 
 
-def get_all_plugin_loaders():
+@functools.cache
+def get_all_plugin_loaders() -> list[tuple[str, 'PluginLoader']]:
     return [(name, obj) for (name, obj) in globals().items() if isinstance(obj, PluginLoader)]
+
+
+@functools.cache
+def get_plugin_loader_namespace() -> types.SimpleNamespace:
+    ns = types.SimpleNamespace()
+    for name, obj in get_all_plugin_loaders():
+        setattr(ns, name, obj)
+    return ns
 
 
 def add_all_plugin_dirs(path):
