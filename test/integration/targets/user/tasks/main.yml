@@ -38,10 +38,11 @@
 - import_tasks: test_ssh_key_passphrase.yml
 - import_tasks: test_password_lock.yml
 - import_tasks: test_password_lock_new_user.yml
-- import_tasks: test_local.yml
+- include_tasks: test_local.yml
   when: not (ansible_distribution == 'openSUSE Leap' and ansible_distribution_version is version('15.4', '>='))
-- import_tasks: test_umask.yml
+- include_tasks: test_umask.yml
   when: ansible_facts.system == 'Linux'
 - import_tasks: test_inactive_new_account.yml
-- import_tasks: test_create_user_min_max.yml
+- include_tasks: test_create_user_min_max.yml
   when: ansible_facts.system == 'Linux'
+- import_tasks: ssh_keygen.yml
