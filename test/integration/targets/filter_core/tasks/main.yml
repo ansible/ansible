@@ -453,40 +453,6 @@
       - '[1,3,5,7,9]|shuffle(seed=1337)|length == 5'
       - '22|shuffle == 22'
 
-- name: Verify password_hash throws on weird salt_size type
-  set_fact:
-    foo: '{{"hey"|password_hash(salt_size=[999])}}'
-  ignore_errors: yes
-  register: password_hash_1
-
-- name: Verify password_hash throws on weird hashtype
-  set_fact:
-    foo: '{{"hey"|password_hash(hashtype="supersecurehashtype")}}'
-  ignore_errors: yes
-  register: password_hash_2
-
-- name: Verify password_hash
-  assert:
-    that:
-      - "'what in the WORLD is up?'|password_hash|length == 120 or 'what in the WORLD is up?'|password_hash|length == 106"
-      # This throws a vastly different error on py2 vs py3, so we just check
-      # that it's a failure, not a substring of the exception.
-      - password_hash_1 is failed
-      - password_hash_2 is failed
-      - "'not support' in password_hash_2.msg"
-
-- name: test using passlib with an unsupported hash type
-  set_fact:
-    foo: '{{"hey"|password_hash("msdcc")}}'
-  ignore_errors: yes
-  register: unsupported_hash_type
-
-- assert:
-    that:
-      - unsupported_hash_type.msg == msg
-  vars:
-    msg: "msdcc is not in the list of supported passlib algorithms: md5, blowfish, sha256, sha512"
-
 - name: Verify to_uuid throws on weird namespace
   set_fact:
     foo: '{{"hey"|to_uuid(namespace=22)}}'
@@ -739,3 +705,5 @@
     splitty:
       - "1,2,3"
       - "4,5,6"
+
+- include_tasks: password_hash.yml
