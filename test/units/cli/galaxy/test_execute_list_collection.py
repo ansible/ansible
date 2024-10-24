@@ -17,6 +17,7 @@ from ansible.galaxy.dependency_resolution.dataclasses import Requirement
 from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.loader import init_plugin_loader
 
+
 def isdir(path):
     if to_native(path) == 'nope':
         return False
