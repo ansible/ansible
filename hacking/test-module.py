@@ -37,7 +37,6 @@ import subprocess
 import sys
 import traceback
 import shutil
-
 from pathlib import Path
 
 from ansible.release import __version__
@@ -54,6 +53,7 @@ from ansible.template import Templar
 import json
 
 
+## Parse command-line arguments for testing the Ansible module
 def parse():
     """parse command line
 
@@ -89,6 +89,7 @@ def parse():
         return options, args
 
 
+## Write module arguments to a file (old-style module's use)
 def write_argsfile(argstring, json=False):
     """ Write args to a file for old-style module's use. """
     argspath = Path("~/.ansible_test_module_arguments").expanduser()
@@ -99,6 +100,7 @@ def write_argsfile(argstring, json=False):
     return argspath
 
 
+## Get the interpreters for running the module, ensuring proper format
 def get_interpreters(interpreter):
     result = dict()
     if interpreter:
@@ -114,17 +116,10 @@ def get_interpreters(interpreter):
     return result
 
 
+## Simulate Ansible's process to set up the module for testing
 def boilerplate_module(modfile, args, interpreters, check, destfile):
     """ simulate what ansible does with new style modules """
-
-    # module_fh = open(modfile)
-    # module_data = module_fh.read()
-    # module_fh.close()
-
-    # replacer = module_common.ModuleReplacer()
     loader = DataLoader()
-
-    # included_boilerplate = module_data.find(module_common.REPLACER) != -1 or module_data.find("import ansible.module_utils") != -1
 
     complex_args = {}
 
@@ -134,15 +129,15 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
     complex_args['_ansible_keep_remote_files'] = C.DEFAULT_KEEP_REMOTE_FILES
     complex_args['_ansible_version'] = __version__
 
+    # Load arguments if they are in YAML/JSON format
     if args.startswith("@"):
-        # Argument is a YAML file (JSON is a subset of YAML)
         complex_args = utils_vars.combine_vars(complex_args, loader.load_from_file(args[1:]))
         args = ''
     elif args.startswith("{"):
-        # Argument is a YAML document (not a file)
         complex_args = utils_vars.combine_vars(complex_args, loader.load(args))
         args = ''
 
+    # Add parsed arguments to the module execution
     if args:
         parsed_args = parse_kv(args)
         complex_args = utils_vars.combine_vars(complex_args, parsed_args)
@@ -176,6 +171,7 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
     return (modfile2_path, modname, module_style)
 
 
+## Extract and setup an AnsiBallZ module for execution
 def ansiballz_setup(modfile, modname, interpreters):
     os.system("chmod +x %s" % modfile)
 
@@ -196,11 +192,10 @@ def ansiballz_setup(modfile, modname, interpreters):
         sys.exit(err)
     debug_dir = lines[1].strip()
 
-    # All the directories in an AnsiBallZ that modules can live
     core_dirs = glob.glob(os.path.join(debug_dir, 'ansible/modules'))
     collection_dirs = glob.glob(os.path.join(debug_dir, 'ansible_collections/*/*/plugins/modules'))
 
-    # There's only one module in an AnsiBallZ payload so look for the first module and then exit
+    # Find and return the module
     for module_dir in core_dirs + collection_dirs:
         for dirname, directories, filenames in os.walk(module_dir):
             for filename in filenames:
@@ -214,6 +209,7 @@ def ansiballz_setup(modfile, modname, interpreters):
     return modfile, argsfile
 
 
+## Execute the test on the module, running it and piping its output
 def runtest(modfile, argspath, modname, module_style, interpreters):
     """Test run a module, piping it's output for reporting."""
     invoke = ""
@@ -250,6 +246,7 @@ def runtest(modfile, argspath, modname, module_style, interpreters):
     print(jsonify(results, format=True))
 
 
+## Debug the module with an interactive console debugger
 def rundebug(debugger, modfile, argspath, modname, module_style, interpreters):
     """Run interactively with console debugger."""
 
@@ -262,31 +259,33 @@ def rundebug(debugger, modfile, argspath, modname, module_style, interpreters):
         subprocess.call("%s %s" % (debugger, modfile), shell=True)
 
 
-def main():
-
+if __name__ == '__main__':
     options, args = parse()
-    init_plugin_loader()
     interpreters = get_interpreters(options.interpreter)
-    (modfile, modname, module_style) = boilerplate_module(options.module_path, options.module_args, interpreters, options.check, options.filename)
+    argspath = write_argsfile(options.module_args)
 
-    argspath = None
-    if module_style not in ('new', 'ansiballz'):
-        if module_style in ('non_native_want_json', 'binary'):
-            argspath = write_argsfile(options.module_args, json=True)
-        elif module_style == 'old':
-            argspath = write_argsfile(options.module_args, json=False)
-        else:
-            raise Exception("internal error, unexpected module style: %s" % module_style)
+    modfile, modname, module_style = boilerplate_module(
+        options.module_path,
+        options.module_args,
+        interpreters,
+        options.check,
+        options.filename
+    )
 
-    if options.execute:
-        if options.debugger:
-            rundebug(options.debugger, modfile, argspath, modname, module_style, interpreters)
-        else:
-            runtest(modfile, argspath, modname, module_style, interpreters)
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    finally:
-        shutil.rmtree(C.DEFAULT_LOCAL_TMP, True)
+    if options.debugger:
+        rundebug(
+            options.debugger,
+            modfile,
+            argspath,
+            modname,
+            module_style,
+            interpreters
+        )
+    elif options.execute:
+        runtest(
+            modfile,
+            argspath,
+            modname,
+            module_style,
+            interpreters
+        )
