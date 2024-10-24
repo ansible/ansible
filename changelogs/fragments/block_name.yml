@@ -1,0 +1,2 @@
+minor_changes:
+  - new constant 'ansible_parent_block_name' contains the 'name' of the current explicit block a task is in.
