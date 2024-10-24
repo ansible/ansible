@@ -227,6 +227,22 @@ COLLECTIONS_PATHS:
   - key: collections_path
     section: defaults
     version_added: '2.10'
+GALAXY_COLLECTIONS_INSTALL_PATH:
+  name: preferred collection install path
+  description: >
+    Preferred install path for collection. If empty or not set, fallback on first ``COLLECTIONS_PATHS`` path.
+    If one or more paths are provided, the first existing directory is selected. If no directory exists, it
+    will use the last one of the list. If the selected path is not in the ``COLLECTIONS_PATHS`` list, then
+    a warning is raised, unless ``GALAXY_COLLECTIONS_PATH_WARNING`` is set to ``false``.
+  default: null
+  type: pathspec
+  env:
+  - name: ANSIBLE_GALAXY_COLLECTIONS_INSTALL_PATH
+    version_added: '2.16'
+  ini:
+  - key: collections_install_path
+    section: defaults
+    version_added: '2.10'
 COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH:
   name: Defines behavior when loading a collection that does not support the current Ansible version
   description:
