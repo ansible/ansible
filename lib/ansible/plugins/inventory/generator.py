@@ -77,6 +77,7 @@ from itertools import product
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
 from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.utils.vars import load_extra_vars
 
 
 class InventoryModule(BaseInventoryPlugin):
@@ -124,9 +125,12 @@ class InventoryModule(BaseInventoryPlugin):
 
         config = self._read_config_data(path)
 
+        extra_vars = load_extra_vars(loader)
+
         template_inputs = product(*config['layers'].values())
         for item in template_inputs:
             template_vars = dict()
+            template_vars.update(extra_vars)
             for i, key in enumerate(config['layers'].keys()):
                 template_vars[key] = item[i]
             host = self.template(config['hosts']['name'], template_vars)
