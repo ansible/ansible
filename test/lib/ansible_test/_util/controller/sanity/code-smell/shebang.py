@@ -60,6 +60,7 @@ def main():
 
             is_module = False
             is_integration = False
+            is_role_file = False
 
             dirname = os.path.dirname(path)
 
@@ -83,6 +84,10 @@ def main():
                     print('%s:%d:%d: should not have a shebang' % (path, 0, 0))
 
                 continue
+            elif re.search('^roles/[^/]+/(?:files|templates)/', path):
+                is_role_file = True
+            elif re.search('^tests/integration/targets/[^/]+/(?:files|templates)/', path):
+                is_role_file = True
             elif path.startswith('test/integration/targets/') or path.startswith('tests/integration/targets/'):
                 is_integration = True
 
@@ -110,6 +115,8 @@ def main():
                     print('%s:%d:%d: expected module shebang "%s" but found: %s' % (path, 1, 1, expected_shebang, shebang))
                 else:
                     print('%s:%d:%d: expected module extension %s but found: %s' % (path, 0, 0, expected_ext, ext))
+            elif is_role_file:
+                continue
             else:
                 if is_integration:
                     allowed = integration_shebangs
