@@ -28,6 +28,7 @@ lib/ansible/modules/systemd_service.py validate-modules:parameter-invalid
 lib/ansible/modules/uri.py validate-modules:doc-required-mismatch
 lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/user.py validate-modules:use-run-command-not-popen
+lib/ansible/module_utils/basic.py pylint:unused-import  # deferring resolution to allow enabling the rule now
 lib/ansible/module_utils/compat/selinux.py import-3.8!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.9!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.10!skip # pass/fail depends on presence of libselinux.so
