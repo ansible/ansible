@@ -1,0 +1,2 @@
+minor_changes:
+    - ansiballz (module build and copy to remote) will now use the same tempdir as the rest of the controller/target communications.
