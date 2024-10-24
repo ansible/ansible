@@ -28,7 +28,6 @@ lib/ansible/modules/systemd_service.py validate-modules:parameter-invalid
 lib/ansible/modules/uri.py validate-modules:doc-required-mismatch
 lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/user.py validate-modules:use-run-command-not-popen
-lib/ansible/module_utils/basic.py no-get-exception  # only referenced in deprecation code
 lib/ansible/module_utils/basic.py pylint:unused-import  # deferring resolution to allow enabling the rule now
 lib/ansible/module_utils/compat/selinux.py import-3.8!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.9!skip # pass/fail depends on presence of libselinux.so
@@ -46,7 +45,6 @@ lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 pslint:PSP
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 pslint:PSCustomUseLiteralPath
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 pslint:PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.LinkUtil.psm1 pslint:PSUseApprovedVerbs
-lib/ansible/module_utils/pycompat24.py no-get-exception
 lib/ansible/module_utils/six/__init__.py pylint:self-assigning-variable
 lib/ansible/module_utils/six/__init__.py pylint:trailing-comma-tuple
 lib/ansible/module_utils/six/__init__.py pylint:unidiomatic-typecheck
@@ -157,8 +155,6 @@ lib/ansible/modules/user.py pylint:used-before-assignment
 lib/ansible/plugins/action/copy.py pylint:undefined-variable
 test/integration/targets/module_utils/library/test_optional.py pylint:used-before-assignment
 test/support/windows-integration/plugins/action/win_copy.py pylint:undefined-variable
-lib/ansible/module_utils/compat/importlib.py pylint:ansible-deprecated-version
-lib/ansible/module_utils/pycompat24.py pylint:ansible-deprecated-version
 lib/ansible/plugins/connection/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/filter/core.py pylint:ansible-deprecated-version
 lib/ansible/vars/manager.py pylint:ansible-deprecated-version
