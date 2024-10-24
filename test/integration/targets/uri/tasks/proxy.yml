@@ -1,0 +1,117 @@
+- include_role:
+    name: setup_proxy
+
+- name: Get IP address for ansible.http.tests
+  command: >-
+    {{ ansible_python_interpreter }} -c 'import socket; print(socket.gethostbyname("{{ httpbin_host }}"))'
+  register: httpbin_ip
+
+- name: Test http over http proxy
+  uri:
+    url: http://{{ httpbin_host }}/get
+  environment:
+    http_proxy: '{{ http_proxy }}'
+  register: http_over_http
+  failed_when: http_over_http.x_sandwich is undefined
+
+- name: Test https over http proxy
+  uri:
+    url: https://{{ httpbin_host }}/get
+  environment:
+    https_proxy: '{{ http_proxy }}'
+  register: https_over_http
+  # failed_when:
+  # failure checking is handled by the assert at the bottom comparing logs
+  # because we aren't running a proxy that can inspect the https stream
+  # there won't be added headers
+
+- name: Test request without a proxy
+  uri:
+    url: http://{{ httpbin_host }}/get
+  register: request_without_proxy
+  failed_when: request_without_proxy.x_sandwich is defined
+
+- name: Test request with proxy and no_proxy=hostname
+  uri:
+    url: http://{{ httpbin_host }}/get
+  environment:
+    http_proxy: '{{ http_proxy }}'
+    no_proxy: '{{ httpbin_host }}'
+  register: no_proxy_hostname
+  failed_when: no_proxy_hostname.x_sandwich is defined
+
+- name: Test request with proxy and no_proxy=ip
+  uri:
+    url: http://{{ httpbin_ip.stdout }}/get
+  environment:
+    http_proxy: '{{ http_proxy }}'
+    no_proxy: '{{ httpbin_ip.stdout }}'
+  register: no_proxy_ip
+  failed_when: no_proxy_ip.x_sandwich is defined
+
+- name: Test request with proxy and no_proxy=cidr/32
+  uri:
+    url: http://{{ httpbin_ip.stdout }}/get
+  environment:
+    http_proxy: '{{ http_proxy }}'
+    no_proxy: '{{ httpbin_ip.stdout }}/32'
+  register: no_proxy_cidr_32
+  failed_when: no_proxy_cidr_32.x_sandwich is defined
+
+- name: Test request with proxy and no_proxy=cidr/24
+  uri:
+    url: http://{{ httpbin_ip.stdout }}/get
+  environment:
+    http_proxy: '{{ http_proxy }}'
+    no_proxy: '{{ httpbin_cidr }}'
+  register: no_proxy_cidr_24
+  vars:
+    httpbin_cidr: "{{ httpbin_ip.stdout.split('.')[:3]|join('.') }}.0/24"
+  failed_when: no_proxy_cidr_24.x_sandwich is defined
+
+- name: Test request with proxy and non-matching no_proxy=cidr
+  uri:
+    url: http://{{ httpbin_ip.stdout }}/get
+  environment:
+    http_proxy: '{{ http_proxy }}'
+    no_proxy: 1.2.3.0/24
+  register: no_proxy_non_matching_cidr
+  failed_when: no_proxy_non_matching_cidr.x_sandwich is undefined
+
+- name: Test request with proxy and no_proxy=cidr:port
+  uri:
+    url: http://{{ httpbin_ip.stdout }}/get
+  environment:
+    http_proxy: '{{ http_proxy }}'
+    no_proxy: '{{ httpbin_ip.stdout }}/32:80'
+  register: no_proxy_cidr_port
+  failed_when: no_proxy_cidr_port.x_sandwich is defined
+
+- name: Test request with proxy and non-matching no_proxy=cidr:port
+  uri:
+    url: http://{{ httpbin_ip.stdout }}/get
+  environment:
+    http_proxy: '{{ http_proxy }}'
+    no_proxy: '{{ httpbin_ip.stdout }}/32:8080'
+  register: no_proxy_non_matching_cidr_port
+  failed_when: no_proxy_non_matching_cidr_port.x_sandwich is undefined
+
+- slurp:
+    path: "{{ remote_tmp_dir }}/proxy_py/proxy_py.log"
+  register: proxy_py_logs
+
+- debug:
+    msg: '{{ proxy_py_logs.content|b64decode }}'
+
+- assert:
+    that:
+      - >-
+        log_content is contains "CONNECT " ~ httpbin_host ~ ":443"
+      # https over http
+      - >-
+        log_content|regex_findall("CONNECT ")|length == 1
+      # 3 http over http
+      - >-
+        log_content|regex_findall('GET')|length == 3
+  vars:
+    log_content: '{{ proxy_py_logs.content|b64decode }}'

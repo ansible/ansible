@@ -37,6 +37,7 @@ import email.parser
 import email.policy
 import email.utils
 import http.client
+import ipaddress
 import mimetypes
 import netrc
 import os
@@ -67,6 +68,7 @@ else:
 from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.common.collections import Mapping, is_sequence
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.common import warnings
 
 try:
     import ssl
@@ -298,6 +300,49 @@ class UnixHTTPHandler(urllib.request.HTTPHandler):
 
     def http_open(self, req):
         return self.do_open(UnixHTTPConnection(self._unix_socket), req)
+
+
+class ProxyHandler(urllib.request.ProxyHandler):
+    _SPLITPORT_RE = re.compile('(.*):([0-9]{1,5})', re.DOTALL)
+
+    @classmethod
+    def _splitport(cls, host):
+        # Derived from cpython urllib.parse
+        port = None
+        if (match := cls._SPLITPORT_RE.fullmatch(host)):
+            host, port = match.groups()
+        return host, port or None
+
+    @staticmethod
+    def _matches(host, port, bypass_network, bypass_port, scheme):
+        if not port:
+            port = '443' if scheme == 'https' else '80'
+        if bypass_port and port != bypass_port:
+            return False
+        return host in bypass_network
+
+    def proxy_open(self, req, *args):
+        """Implements proxy bypassing for cidr ranges"""
+        hostonly, port = self._splitport(req.host)
+        try:
+            req_ip = ipaddress.ip_address(hostonly)
+        except ValueError:
+            return super().proxy_open(req, *args)
+
+        no_proxy = self.proxies.get('no') or ''
+        for bypass in map(str.strip, no_proxy.split(',')):
+            if '/' not in bypass:
+                continue
+            bypass_host, bypass_port = self._splitport(bypass)
+            try:
+                bypass_network = ipaddress.ip_network(bypass_host)
+            except ValueError as e:
+                warnings.warn(f'no_proxy entry appears to be a CIDR range, but could not be parsed: {e}')
+                continue
+            if self._matches(req_ip, port, bypass_network, bypass_port, req.type):
+                return None
+
+        return super().proxy_open(req, *args)
 
 
 class ParseResultDottedDict(dict):
@@ -847,9 +892,10 @@ class Request:
         headers.update(auth_headers)
         handlers.extend(auth_handlers)
 
+        proxies = None
         if not use_proxy:
-            proxyhandler = urllib.request.ProxyHandler({})
-            handlers.append(proxyhandler)
+            proxies = {}
+        handlers.append(ProxyHandler(proxies))
 
         if not context:
             context = make_context(
