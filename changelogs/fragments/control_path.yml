@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - connection - use inventory_hostname while generating control path directory name to make it more unique (https://github.com/ansible/ansible/issues/76956).
