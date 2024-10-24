@@ -41,10 +41,34 @@ def _handle_error(json_exc, yaml_exc, file_name, show_content):
     raise AnsibleParserError(n_err_msg, obj=err_obj, show_content=show_content, orig_exc=yaml_exc)
 
 
+# Mapping may be jinja scalar: {{ foo... }}
+def _construct_scalar(loader, node):
+    # It would have 1 pair:
+    if len(node.value) == 1:
+        map_as_key_key = node.value[0][0]
+        map_as_key_val = node.value[0][1]
+
+        # And have key that is a mapping, and a value that is null:
+        if map_as_key_key.tag == 'tag:yaml.org,2002:map' and \
+            map_as_key_val.tag == 'tag:yaml.org,2002:null':
+
+            # Get the intended jinja string value:
+            jinja_string = map_as_key_key.value[0][0]
+
+            # If jinja string was not quoted:
+            if jinja_string.tag == 'tag:yaml.org,2002:str' and \
+                jinja_string.style == '':
+                # Add jinja double braces back in:
+                return "{{%s}}" % jinja_string.value
+
+    # Else process mapping as usual:
+    return loader.construct_mapping(node)
+
 def _safe_load(stream, file_name=None, vault_secrets=None):
     """ Implements yaml.safe_load(), except using our custom loader class. """
 
     loader = AnsibleLoader(stream, file_name, vault_secrets)
+    loader.add_constructor('tag:yaml.org,2002:map', _construct_scalar)
     try:
         return loader.get_single_data()
     finally:
