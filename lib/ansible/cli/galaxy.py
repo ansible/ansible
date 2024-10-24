@@ -815,8 +815,9 @@ class GalaxyCLI(CLI):
 
         elif isinstance(file_requirements, dict):
             # Newer format with a collections and/or roles key
-            extra_keys = set(file_requirements.keys()).difference(set(['roles', 'collections']))
-            if extra_keys:
+            is_galaxy_yml = set(file_requirements.keys()).issuperset(['name', 'namespace'])
+            extra_keys = set(file_requirements.keys()).difference(['roles', 'collections'])
+            if extra_keys and not is_galaxy_yml:
                 raise AnsibleError("Expecting only 'roles' and/or 'collections' as base keys in the requirements "
                                    "file. Found: %s" % (to_native(", ".join(extra_keys))))
 
@@ -834,6 +835,10 @@ class GalaxyCLI(CLI):
 
         else:
             raise AnsibleError(f"Expecting requirements yaml to be a list or dictionary but got {type(file_requirements).__name__}")
+
+            if is_galaxy_yml:
+                for req_name, req_version in (file_requirements.get('dependencies') or {}).items():
+                    requirements['collections'].append((req_name, req_version, None, None))
 
         return requirements
 
