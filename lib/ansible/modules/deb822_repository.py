@@ -149,7 +149,7 @@ version_added: '2.15'
 
 EXAMPLES = """
 - name: Add debian repo
-  deb822_repository:
+  ansible.builtin.deb822_repository:
     name: debian
     types: deb
     uris: http://deb.debian.org/debian
@@ -160,7 +160,7 @@ EXAMPLES = """
       - non-free
 
 - name: Add debian repo with key
-  deb822_repository:
+  ansible.builtin.deb822_repository:
     name: debian
     types: deb
     uris: https://deb.debian.org
@@ -181,7 +181,7 @@ EXAMPLES = """
       -----END PGP PUBLIC KEY BLOCK-----
 
 - name: Add repo using key from URL
-  deb822_repository:
+  ansible.builtin.deb822_repository:
     name: example
     types: deb
     uris: https://download.example.com/linux/ubuntu
