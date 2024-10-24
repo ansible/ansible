@@ -163,6 +163,8 @@ class CallbackModule(CallbackBase):
         if not os.path.exists(self._output_dir):
             os.makedirs(self._output_dir)
 
+        self.wants_implicit_tasks = True
+
     def _start_task(self, task):
         """ record the start of a task for one or more hosts """
 

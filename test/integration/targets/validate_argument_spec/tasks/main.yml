@@ -1,0 +1,59 @@
+- name: Validate task vars with an argument spec
+  validate_argument_spec:
+    argument_spec:
+      option_with_suboptions:
+        type: dict
+        options:
+          required_suboption:
+            type: str
+            required: true
+  vars:
+    option_with_suboptions:
+      required_suboption: specified
+
+- name: Validate an argument spec containing invalid suboptions
+  validate_argument_spec:
+    argument_spec:
+      invalid_suboptions:
+        description: Valid top level option containing non-string options.
+        type: dict
+        options:
+          true:
+            description: Invalid suboption name.
+      invalid_option:
+        description: Not a dictionary or list.
+        type: str
+        options:
+          suboption:
+            type: str
+  ignore_errors: true
+  register: validation_result
+
+- assert:
+    that:
+      - validation_result is failed
+      - validation_result.msg == "Invalid argument_spec cannot be used to validate variables."
+      - validation_result.argument_spec_errors|length == 2
+      - validation_result.argument_spec_errors == [error1, error2]
+  vars:
+    error1: "invalid_suboptions.True: type <class 'bool'>. Option names must be strings."
+    error2: "invalid_option: options. Suboptions are supported for types dict and list."
+
+- name: Validate an argument spec containing an unsupported field for an option
+  validate_argument_spec:
+    argument_spec:
+      option1:
+        fallback:
+          - env_fallback  # ArgumentSpecValidator expects a callable, so fallback is unsupported for validate_argument_spec
+          - [ENV_VAR]
+  ignore_errors: true
+  register: validation_result
+
+- assert:
+    that:
+      - validation_result is failed
+      - validation_result.msg == "Invalid argument_spec cannot be used to validate variables."
+      - validation_result.argument_spec_errors|length == 1
+      - validation_result.argument_spec_errors == ["option1: fallback. " ~ valid_params]
+  vars:
+    valid_params: "Supported parameters include: aliases, apply_defaults, choices, default, description, elements, no_log, options, required, type, version_added."
