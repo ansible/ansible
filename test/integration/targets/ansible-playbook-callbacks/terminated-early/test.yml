@@ -1,0 +1,12 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - debug:
+        msg: Hello, world!
+
+    - fail:
+        msg: Oh dear
+
+    - debug:
+        msg: We don't get here

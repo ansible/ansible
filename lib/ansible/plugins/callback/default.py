@@ -138,6 +138,9 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_no_hosts_remaining(self):
         self._display.banner("NO MORE HOSTS LEFT")
 
+    def v2_playbook_on_terminated_early(self):
+        self._display.banner("TERMINATED EARLY")
+
     def v2_playbook_on_task_start(self, task, is_conditional):
         self._task_start(task, prefix='TASK')
 

@@ -337,7 +337,8 @@ class StrategyModule(StrategyBase):
                                 iterator.mark_host_failed(host)
                         self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
                         result |= self._tqm.RUN_FAILED_BREAK_PLAY
-                    display.debug('(%s failed / %s total )> %s max fail' % (len(self._tqm._failed_hosts), iterator.batch_size, percentage))
+                        display.debug('(%s failed / %s total )> %s max fail' % (len(self._tqm._failed_hosts), iterator.batch_size, percentage))
+                        return result
                 display.debug("done checking for max_fail_percentage")
 
                 display.debug("checking to see if all hosts have failed and the running result is not ok")
@@ -351,6 +352,12 @@ class StrategyModule(StrategyBase):
                 display.debug("got IOError/EOFError in task loop: %s" % e)
                 # most likely an abort, return failed
                 return self._tqm.RUN_UNKNOWN_ERROR
+
+        display.debug("checking for early termination")
+        if all(iterator.is_failed(host)
+               for host in self.get_hosts_left(iterator)):
+            self._tqm.send_callback('v2_playbook_on_terminated_early')
+        display.debug("done checking for early termination")
 
         # run the base class run() method, which executes the cleanup function
         # and runs any outstanding handlers which have been triggered
