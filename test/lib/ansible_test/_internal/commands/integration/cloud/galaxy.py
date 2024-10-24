@@ -98,7 +98,7 @@ class GalaxyProvider(CloudProvider):
 
         self.image = os.environ.get(
             'ANSIBLE_PULP_CONTAINER',
-            'quay.io/pulp/galaxy:4.7.1'
+            'quay.io/pulp/galaxy:4.9.0'  # https://github.com/ansible/galaxy_ng
         )
 
         self.uses_docker = True
