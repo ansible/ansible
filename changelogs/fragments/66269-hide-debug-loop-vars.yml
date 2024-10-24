@@ -1,0 +1,2 @@
+bugfixes:
+  - "Fixed it so that debug tasks using var option will no longer show loop control variables."
