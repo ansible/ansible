@@ -342,6 +342,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
 
         return env
 
+    _post_validate_module_env = _post_validate_environment
+
     def _post_validate_changed_when(self, attr, value, templar):
         """
         changed_when is evaluated after the execution of the task is complete,

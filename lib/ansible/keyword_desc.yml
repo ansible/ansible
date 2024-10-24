@@ -42,6 +42,7 @@ ignore_unreachable: Boolean that allows you to ignore task failures due to an un
 loop: "Takes a list for the task to iterate over, saving each list element into the ``item`` variable (configurable via loop_control)"
 loop_control: Several keys here allow you to modify/set loop behavior in a task. See :ref:`loop_control`.
 max_fail_percentage: can be used to abort the run after a given percentage of hosts in the current batch has failed. This only works on linear or linear-derived strategies.
+module_env: A dictionary that gets converted into environment vars to be provided for the task's module execution. Unlike `environment` this will not affect shell or privilege escalation and is only available to subprocesses of the module itself.
 module_defaults: Specifies default parameter values for modules.
 name: "Identifier. Can be used for documentation, or in tasks/handlers."
 no_log: Boolean that controls information disclosure.
