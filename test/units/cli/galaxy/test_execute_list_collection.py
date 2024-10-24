@@ -18,6 +18,11 @@ from ansible.module_utils.common.text.converters import to_native
 
 pytestmark = pytest.mark.usefixtures("collection_loader")
 
+def isdir(path):
+    if to_native(path) == 'nope':
+        return False
+    return True
+
 
 def cliargs(collections_paths=None, collection_name=None):
     if collections_paths is None:
@@ -210,7 +215,7 @@ def test_execute_list_collection_one_invalid_path(mocker, capsys, mock_from_path
     cliargs(collections_paths=['nope'])
 
     mocker.patch('os.path.exists', return_value=True)
-    mocker.patch('os.path.isdir', return_value=False)
+    mocker.patch('os.path.isdir', isdir)
     mocker.patch('ansible.utils.color.ANSIBLE_COLOR', False)
 
     gc = GalaxyCLI(['ansible-galaxy', 'collection', 'list', '-p', 'nope'])
