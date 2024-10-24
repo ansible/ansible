@@ -232,8 +232,7 @@ def from_yaml_all(data):
     return data
 
 
-@pass_environment
-def rand(environment, end, start=None, step=None, seed=None):
+def rand(end, start=None, step=None, seed=None):
     if seed is None:
         r = SystemRandom()
     else:

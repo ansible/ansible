@@ -780,6 +780,20 @@ DEFAULT_JINJA2_NATIVE:
   type: boolean
   yaml: {key: jinja2_native}
   version_added: 2.7
+JINJA2_BYTECODE_CACHE:
+  name: Cache the jinja2 bytecode for compiled templates
+  description:
+    - This option, which is enabled by default, will cache the jinja2 generated
+      bytecode for templates reducing execution time, specifically for template
+      heavy playbooks. Disabling this will prevent the bytecode cache from
+      being used.
+  env:
+    - {name: ANSIBLE_JINJA2_BYTECODE_CACHE}
+  ini:
+    - {key: jinja2_bytecode_cache, section: defaults}
+  type: boolean
+  default: True
+  version_added: '2.17'
 DEFAULT_KEEP_REMOTE_FILES:
   name: Keep remote files
   default: False
