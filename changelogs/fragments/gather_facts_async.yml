@@ -1,0 +1,2 @@
+bugfixes:
+- gather_facts - Fix up check mode support when ``parallel=true`` - https://github.com/ansible/ansible/issues/82685

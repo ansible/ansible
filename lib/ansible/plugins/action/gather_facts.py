@@ -133,23 +133,40 @@ class ActionModule(ActionBase):
                 self._display.vvvv("Running %s" % fact_module)
                 jobs[fact_module] = (self._execute_module(module_name=fact_module, module_args=mod_args, task_vars=task_vars, wrap_async=True))
 
-            while jobs:
-                for module in jobs:
-                    poll_args = {'jid': jobs[module]['ansible_job_id'], '_async_dir': os.path.dirname(jobs[module]['results_file'])}
-                    res = self._execute_module(module_name='ansible.legacy.async_status', module_args=poll_args, task_vars=task_vars, wrap_async=False)
-                    if res.get('finished', 0) == 1:
-                        if res.get('failed', False):
-                            failed[module] = res
-                        elif res.get('skipped', False):
-                            skipped[module] = res
+            check_mode = self._task.check_mode
+            try:
+                # async_status does not support check mode, this avoids
+                # that problem for this specific step.
+                self._task.check_mode = False
+
+                while jobs:
+                    for module in jobs:
+                        poll_args = {
+                            'jid': jobs[module]['ansible_job_id'], '_async_dir':
+                            os.path.dirname(jobs[module]['results_file']),
+                        }
+                        res = self._execute_module(
+                            module_name='ansible.legacy.async_status',
+                            module_args=poll_args,
+                            task_vars=task_vars,
+                            wrap_async=False,
+                        )
+                        if res.get('finished', 0) == 1:
+                            if res.get('failed', False):
+                                failed[module] = res
+                            elif res.get('skipped', False):
+                                skipped[module] = res
+                            else:
+                                result = self._combine_task_result(result, res)
+                            del jobs[module]
+                            break
                         else:
-                            result = self._combine_task_result(result, res)
-                        del jobs[module]
-                        break
+                            time.sleep(0.1)
                     else:
-                        time.sleep(0.1)
-                else:
-                    time.sleep(0.5)
+                        time.sleep(0.5)
+
+            finally:
+                self._task.check_mode = check_mode
 
         # restore value for post processing
         if self._task.async_val != async_val:
