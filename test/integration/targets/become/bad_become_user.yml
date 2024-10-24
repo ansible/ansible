@@ -1,0 +1,10 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: bad becoem user
+    unarchive:
+      src: does_not_exist.tgz
+      dest: /root/dontcreate
+      creates: /etc/passwd
+    become: true
+    become_user: "root touch /tmp/pwnd; ls /tmp; # "
