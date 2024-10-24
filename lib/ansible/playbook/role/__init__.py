@@ -372,7 +372,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
                 },
             },
             'name': task_name,
-            'tags': ['always'],
+            # Unless role is specifically tagged, the tag is set to 'always'
+            'tags': ['always'] if not self.tags else self.tags,
         }
 
     def _load_role_yaml(self, subdir, main=None, allow_dir=False):
