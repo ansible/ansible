@@ -434,6 +434,27 @@ def test_build_requirement_from_tar_invalid_manifest(tmp_path_factory):
         Requirement.from_requirement_dict({'name': to_text(tar_path)}, concrete_artifact_cm)
 
 
+def test_build_requirement_from_tar_unsupported_collection_keys(collection_artifact):
+    tmp_path = os.path.join(os.path.split(collection_artifact[1])[0], b'temp')
+    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(tmp_path, validate_certs=False)
+    expected = (
+        'The following {collection_name!s} collection requirement entry keys are not '
+        'valid: invalid_key, key'.format(collection_name=to_text(collection_artifact[1]))
+    )
+    with pytest.raises(AnsibleError, match=expected):
+        Requirement.from_requirement_dict({'name': to_text(collection_artifact[1]), 'invalid_key': 'foo', 'key': 'bar'}, concrete_artifact_cm)
+
+
+def test_build_requirement_from_tar_invalid_name_with_source(collection_artifact):
+    tmp_path = os.path.join(os.path.split(collection_artifact[1])[0], b'temp')
+    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(tmp_path, validate_certs=False)
+    expected = (
+        "The foo 'source' key is not applicable when 'name' is not a FQCN."
+    )
+    with pytest.raises(AnsibleError, match=expected):
+        Requirement.from_requirement_dict({'name': 'foo', 'source': 'foobar'}, concrete_artifact_cm)
+
+
 def test_build_requirement_from_name(galaxy_server, monkeypatch, tmp_path_factory):
     mock_get_versions = MagicMock()
     mock_get_versions.return_value = ['2.1.9', '2.1.10']
