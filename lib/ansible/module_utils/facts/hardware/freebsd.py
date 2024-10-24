@@ -1,17 +1,5 @@
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
 
@@ -22,6 +10,7 @@ import struct
 import time
 
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
+from ansible.module_utils.facts.sysctl import get_sysctl
 from ansible.module_utils.facts.timeout import TimeoutError, timeout
 from ansible.module_utils.facts.utils import get_file_content, get_mount_size
 
@@ -45,6 +34,7 @@ class FreeBSDHardware(Hardware):
     def populate(self, collected_facts=None):
         hardware_facts = {}
 
+        self.sysctl = get_sysctl(self.module, ['hw', 'vm.stats'])
         cpu_facts = self.get_cpu_facts()
         memory_facts = self.get_memory_facts()
         uptime_facts = self.get_uptime_facts()
@@ -69,15 +59,15 @@ class FreeBSDHardware(Hardware):
     def get_cpu_facts(self):
         cpu_facts = {}
         cpu_facts['processor'] = []
-        sysctl = self.module.get_bin_path('sysctl')
-        if sysctl:
-            rc, out, err = self.module.run_command("%s -n hw.ncpu" % sysctl, check_rc=False)
-            cpu_facts['processor_count'] = out.strip()
+        cpu_facts['processor_count'] = self.sysctl.get('hw.ncpu') or ''
 
         dmesg_boot = get_file_content(FreeBSDHardware.DMESG_BOOT)
         if not dmesg_boot:
+            dmesg_cmd = self.module.get_bin_path("dmesg")
+            if dmesg_cmd is None:
+                return cpu_facts
             try:
-                rc, dmesg_boot, err = self.module.run_command(self.module.get_bin_path("dmesg"), check_rc=False)
+                rc, dmesg_boot, err = self.module.run_command(dmesg_cmd, check_rc=False)
             except Exception:
                 dmesg_boot = ''
 
@@ -93,34 +83,35 @@ class FreeBSDHardware(Hardware):
     def get_memory_facts(self):
         memory_facts = {}
 
-        sysctl = self.module.get_bin_path('sysctl')
-        if sysctl:
-            rc, out, err = self.module.run_command("%s vm.stats" % sysctl, check_rc=False)
-            for line in out.splitlines():
-                data = line.split()
-                if 'vm.stats.vm.v_page_size' in line:
-                    pagesize = int(data[1])
-                if 'vm.stats.vm.v_page_count' in line:
-                    pagecount = int(data[1])
-                if 'vm.stats.vm.v_free_count' in line:
-                    freecount = int(data[1])
-            memory_facts['memtotal_mb'] = pagesize * pagecount // 1024 // 1024
-            memory_facts['memfree_mb'] = pagesize * freecount // 1024 // 1024
+        pagesize = pagecount = freecount = None
+        if 'vm.stats.vm.v_page_size' in self.sysctl:
+            pagesize = int(self.sysctl['vm.stats.vm.v_page_size'])
+        if 'vm.stats.vm.v_page_count' in self.sysctl:
+            pagecount = int(self.sysctl['vm.stats.vm.v_page_count'])
+        if 'vm.stats.vm.v_free_count' in self.sysctl:
+            freecount = int(self.sysctl['vm.stats.vm.v_free_count'])
+        if pagesize is not None:
+            if pagecount is not None:
+                memory_facts['memtotal_mb'] = pagesize * pagecount // 1024 // 1024
+            if freecount is not None:
+                memory_facts['memfree_mb'] = pagesize * freecount // 1024 // 1024
 
-        swapinfo = self.module.get_bin_path('swapinfo')
-        if swapinfo:
-            # Get swapinfo.  swapinfo output looks like:
-            # Device          1M-blocks     Used    Avail Capacity
-            # /dev/ada0p3        314368        0   314368     0%
-            #
-            rc, out, err = self.module.run_command("%s -k" % swapinfo)
-            lines = out.splitlines()
-            if len(lines[-1]) == 0:
-                lines.pop()
-            data = lines[-1].split()
-            if data[0] != 'Device':
-                memory_facts['swaptotal_mb'] = int(data[1]) // 1024
-                memory_facts['swapfree_mb'] = int(data[3]) // 1024
+        swapinfo_cmd = self.module.get_bin_path('swapinfo')
+        if swapinfo_cmd is None:
+            return memory_facts
+
+        # Get swapinfo.  swapinfo output looks like:
+        # Device          1M-blocks     Used    Avail Capacity
+        # /dev/ada0p3        314368        0   314368     0%
+        #
+        rc, out, err = self.module.run_command("%s -k" % swapinfo_cmd)
+        lines = out.splitlines()
+        if len(lines[-1]) == 0:
+            lines.pop()
+        data = lines[-1].split()
+        if data[0] != 'Device':
+            memory_facts['swaptotal_mb'] = int(data[1]) // 1024
+            memory_facts['swapfree_mb'] = int(data[3]) // 1024
 
         return memory_facts
 
@@ -128,10 +119,12 @@ class FreeBSDHardware(Hardware):
         # On FreeBSD, the default format is annoying to parse.
         # Use -b to get the raw value and decode it.
         sysctl_cmd = self.module.get_bin_path('sysctl')
+        if not sysctl_cmd:
+            return {}
         cmd = [sysctl_cmd, '-b', 'kern.boottime']
 
         # We need to get raw bytes, not UTF-8.
-        rc, out, err = self.module.run_command(cmd, encoding=None)
+        rc, out, dummy = self.module.run_command(cmd, encoding=None)
 
         # kern.boottime returns seconds and microseconds as two 64-bits
         # fields, but we are only interested in the first field.
@@ -158,10 +151,12 @@ class FreeBSDHardware(Hardware):
                     continue
                 fields = re.sub(r'\s+', ' ', line).split()
                 mount_statvfs_info = get_mount_size(fields[1])
-                mount_info = {'mount': fields[1],
-                              'device': fields[0],
-                              'fstype': fields[2],
-                              'options': fields[3]}
+                mount_info = {
+                    'mount': fields[1],
+                    'device': fields[0],
+                    'fstype': fields[2],
+                    'options': fields[3]
+                }
                 mount_info.update(mount_statvfs_info)
                 mount_facts['mounts'].append(mount_info)
 
@@ -232,6 +227,8 @@ class FreeBSDHardware(Hardware):
 
         # Fall back to using dmidecode, if available
         dmi_bin = self.module.get_bin_path('dmidecode')
+        if not dmi_bin:
+            return dmi_facts
         DMI_DICT = {
             'bios_date': 'bios-release-date',
             'bios_vendor': 'bios-vendor',
