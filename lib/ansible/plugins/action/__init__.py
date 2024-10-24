@@ -79,6 +79,7 @@ class ActionBase(ABC):
 
         # interpreter discovery state
         self._discovered_interpreter_key = None
+        self._delegate_discovered_interpreter_key = None
         self._discovered_interpreter = False
         self._discovery_deprecation_warnings = []
         self._discovery_warnings = []
@@ -325,6 +326,8 @@ class ActionBase(ABC):
                     # preserve this so _execute_module can propagate back to controller as a fact
                     self._discovered_interpreter_key = discovered_key
                 else:
+                    # allow action plugins to rediscover the delegate_to interpreter
+                    self._delegate_discovered_interpreter_key = discovered_key
                     task_vars['ansible_delegated_vars'][self._task.delegate_to]['ansible_facts'][discovered_key] = self._discovered_interpreter
 
         return (module_style, module_shebang, module_data, module_path)
