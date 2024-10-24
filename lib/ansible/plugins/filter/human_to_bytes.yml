@@ -4,10 +4,11 @@ DOCUMENTATION:
   short_description: Get bytes from string
   description:
     - Convert a human-readable byte or bit string into a number bytes.
+    - Will always use base 2 (1024) for the unit prefix, e.g 1 KB is 1024, 1MB is 1048576, etc.
   positional: _input, default_unit, isbits
   options:
     _input:
-      description: human-readable description of a number of bytes.
+      description: human-readable description of a number of bytes. "B" may be omitted from the unit.
       type: int
       required: true
     default_unit:
@@ -18,6 +19,9 @@ DOCUMENTATION:
       description: If V(True), force to interpret only bit input; if V(False), force bytes. Otherwise use the notation to guess.
       type: bool
 EXAMPLES: |
+  # size => 1024
+  size: '{{ "1 K" | human_to_bytes }}'
+  size: '{{ "1 KB" | human_to_bytes }}'
 
   # size => 1234803098
   size: '{{ "1.15 GB" | human_to_bytes }}'
