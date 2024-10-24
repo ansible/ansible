@@ -1,0 +1,32 @@
+- name: Test handler
+  hosts: testhost, testhost2
+  strategy: free
+  vars:
+    timeout:
+      testhost: 5
+      testhost2: 70
+  tasks:
+    - name: "Step #1"
+      shell: "sleep {{ timeout[inventory_hostname] }}"
+      notify: stage1
+
+    - name: "Step #2"
+      shell: "sleep {{ 5 | random }}"
+
+  handlers:
+    - name: "Stage 1 - Step #1"
+      shell: "sleep {{ item }}"
+      listen: stage1
+      with_items:
+        - "{{ 5 | random }}"
+        - "{{ 5 | random }}"
+
+    - name: "Stage 1 - Step #2"
+      shell: "sleep {{ 5 | random }}"
+      listen: stage1
+      notify: stage2
+
+    - name: "Stage 2"
+      debug:
+        msg: "{{ inventory_hostname }} second stage"
+      listen: stage2
