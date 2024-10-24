@@ -554,7 +554,18 @@ class CLI(ABC):
         # the code, ensuring a consistent view of global variables
         variable_manager = VariableManager(loader=loader, inventory=inventory, version_info=CLI.version_info(gitinfo=False))
 
+        # flush fact cache if requested
+        if options['flush_cache']:
+            CLI._flush_cache(inventory, variable_manager)
+
         return loader, inventory, variable_manager
+
+    @staticmethod
+    def _flush_cache(inventory, variable_manager):
+
+        for host in inventory.list_hosts():
+            hostname = host.get_name()
+            variable_manager.clear_facts(hostname)
 
     @staticmethod
     def get_host_list(inventory, subset, pattern='all'):
