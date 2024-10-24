@@ -1,0 +1,17 @@
+- include_tasks:
+    file: setup.yml
+  when: started_daemon is undefined
+
+- include_tasks:
+    file: add_repository.yml
+  when: "( [repo_path, repository] | path_join) is not is_dir"
+  loop: "{{ repositories }}"
+  loop_control:
+    loop_var: repository
+
+- include_tasks:
+    file: exec_in_clone.yml
+  loop_control:
+    loop_var: repository
+  loop: "{{ repositories }}"
+  when: "( exec | length ) > 0"

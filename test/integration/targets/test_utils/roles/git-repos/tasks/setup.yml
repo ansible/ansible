@@ -1,0 +1,37 @@
+- include_vars:
+    file: "{{ ansible_facts['os_family'] }}.yml"
+  ignore_errors: yes
+
+- name: Create repo path
+  file:
+    state: "{{ item }}"
+    path: "{{ repo_path }}"
+  loop:
+    - absent
+    - directory
+
+- command: "{{ git_package }} --help"
+  register: found_git
+  ignore_errors: yes
+- command: "{{ git_package }} daemon --help"
+  register: found_daemon
+  ignore_errors: yes
+
+- name: install git
+  package:
+    name:
+      - "{{ git_package }}"
+      - "{{ git_daemon }}"
+    state: present
+    update_cache: yes
+  when: (found_git is failed or found_daemon is failed) and ansible_facts['os_family'] in ['RedHat', 'Debian', 'FreeBSD', 'Suse']
+
+- name: install git (apk)
+  shell: "apk update && apk add {{ git_package }} {{ git_daemon }} -v -v"
+  when: (found_git is failed or found_daemon is failed) and ansible_facts['os_family'] == 'Alpine'
+
+- name: start git daemon
+  command: "git daemon --export-all --enable=receive-pack --base-path={{ repo_path }} {{ repo_path }}"
+  async: "{{ serve_timeout }}"
+  poll: 0
+  register: started_daemon

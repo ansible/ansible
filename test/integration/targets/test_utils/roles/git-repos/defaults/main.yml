@@ -1,0 +1,6 @@
+exec: []
+git_package: git
+git_daemon: git-daemon
+repo_path: '{{ remote_tmp_dir }}/git_repositories'
+repositories: []
+serve_timeout: 100

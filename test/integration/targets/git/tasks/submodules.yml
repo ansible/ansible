@@ -14,6 +14,90 @@
 # Repository III for a second submodule (repo_submodule2)
 #   Has 1 file checked in
 
+- name: SUBMODULES | setup
+  block:
+    - name: SUBMODULES | setup | start git daemon and create repositories
+      include_role: name=test_utils/roles/git-repos
+      vars:
+        repositories:
+          - test_submodules_newer.git
+          - test_submodules_subm1.git
+          - test_submodules_subm2.git
+        exec:
+          - 'echo initial > README.md'
+          - 'git add README.md && git commit -m "Initial commit"'
+          - 'git tag v0.1'
+          - 'git push origin {{ git_default_branch }} --tags'
+
+    - name: SUBMODULES | setup | add submodule1
+      include_role: name=test_utils/roles/git-repos
+      vars:
+        repositories:
+          - test_submodules_newer.git
+        exec:
+          - 'git submodule add --name submodule1 git://localhost/test_submodules_subm1.git submodule1'
+          # workaround for changing default submodule branch name
+          # ubuntu2004 docker image uses
+          # https://git-scm.com/docs/git-submodule/2.25.0#Documentation/git-submodule.txt-set-branch-d--default--ltpathgt
+          # which changes to HEAD in 2.28.0+
+          # https://git-scm.com/docs/git-submodule/2.28.0#Documentation/git-submodule.txt-set-branch-d--default--ltpathgt
+          - 'git submodule set-branch --branch {{ git_default_branch }} submodule1'
+          - 'git submodule sync && git submodule update --init'
+          - 'git add . && git commit -m "Add submodule1"'
+          - 'git tag v0.2'
+          - 'git push origin {{ git_default_branch }} --tags'
+
+    - name: SUBMODULES | setup | fork submodule1
+      shell: 'cp -pr test_submodules_subm1.git test_submodules_subm1_newer.git'
+      args:
+        chdir: '{{ remote_tmp_dir }}/git_repositories'
+
+    - name: SUBMODULES | setup | update forked submodule1
+      include_role: name=test_utils/roles/git-repos
+      vars:
+        repositories:
+          - test_submodules_subm1_newer.git
+        exec:
+          - 'echo update > newer_commit'
+          - 'git add newer_commit && git commit -m "Add an update"'
+          - 'git tag v0.3'
+          - 'git push origin {{ git_default_branch }} --tags'
+
+    - name: SUBMODULES | setup | add submodule2 and update the url for submodule1
+      include_role: name=test_utils/roles/git-repos
+      vars:
+        repositories:
+          - test_submodules_newer.git
+        exec:
+          - 'git submodule add --name submodule2 git://localhost/test_submodules_subm2.git submodule2'
+          - 'git config -f .gitmodules submodule.submodule1.url git://localhost/test_submodules_subm1_newer.git'
+          # same workaround as above
+          - 'git submodule set-branch --branch {{ git_default_branch }} submodule2'
+          - 'rm -rf submodule1'
+          - 'rm -rf .git/modules/submodule1'
+          - 'git submodule sync && git submodule update --init'
+          - 'cd submodule1; git checkout tags/v0.3'
+          - 'git add . && git commit -m "Add submodule2 and update submodule1"'
+          - 'git tag v0.3'
+          - 'git push origin {{ git_default_branch }} --tags'
+
+- name: Determine commits for each tag
+  command: "git rev-list -n 1 {{ tag }}"
+  args:
+    chdir: "{{ remote_tmp_dir }}/git_repositories/test_submodules_newer.git"
+  loop_control:
+    loop_var: tag
+  loop:
+    - v0.1
+    - v0.2
+    - v0.3
+  register: main_repo_commit
+
+- set_fact:
+    commit_0: "{{ main_repo_commit.results[0].stdout }}"
+    commit_1: "{{ main_repo_commit.results[1].stdout }}"
+    commit_2: "{{ main_repo_commit.results[2].stdout }}"
+
 - name: SUBMODULES | clear checkout_dir
   file:
     state: absent
@@ -22,7 +106,7 @@
 - name: SUBMODULES | Test that clone without recursive does not retrieve submodules
   git:
     repo: "{{ repo_submodules }}"
-    version: 45c6c07ef10fd9e453d90207e63da1ce5bd3ae1e
+    version: "{{ commit_1 }}"
     dest: "{{ checkout_dir }}"
     recursive: no
 
@@ -44,7 +128,7 @@
   git:
     repo: "{{ repo_submodules }}"
     dest: "{{ checkout_dir }}"
-    version: 45c6c07ef10fd9e453d90207e63da1ce5bd3ae1e
+    version: "{{ commit_1 }}"
     recursive: yes
 
 - name: SUBMODULES | List submodule1
@@ -62,7 +146,7 @@
 - name: SUBMODULES | Test that update without recursive does not change submodules
   git:
     repo: "{{ repo_submodules }}"
-    version: d2974e4bbccdb59368f1d5eff2205f0fa863297e
+    version: "{{ commit_2 }}"
     dest: "{{ checkout_dir }}"
     recursive: no
     update: yes
@@ -100,7 +184,7 @@
 - name: SUBMODULES | Test that update with recursive updated existing submodules
   git:
     repo: "{{ repo_submodules }}"
-    version: d2974e4bbccdb59368f1d5eff2205f0fa863297e
+    version: "{{ commit_2 }}"
     dest: "{{ checkout_dir }}"
     update: yes
     recursive: yes
@@ -133,7 +217,7 @@
   git:
     repo: "{{ repo_submodules }}"
     dest: "{{ checkout_dir }}/test.gitdir"
-    version: 45c6c07ef10fd9e453d90207e63da1ce5bd3ae1e
+    version: "{{ commit_1 }}"
     recursive: yes
 
 - name: SUBMODULES | Test that cloning submodule with .git in directory name works

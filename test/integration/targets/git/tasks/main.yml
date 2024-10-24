@@ -50,3 +50,7 @@
   environment:
     HOME: >-
       {{ remote_tmp_dir }}
+  always:
+    - include_role:
+        role: test_utils/roles/git-repos
+        tasks_from: cleanup.yml
