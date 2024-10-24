@@ -38,6 +38,7 @@ from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
 from ansible.utils.display import Display
+from ansible.utils.unsafe_proxy import wrap_var
 
 display = Display()
 
@@ -311,17 +312,39 @@ class StrategyModule(StrategyBase):
                 display.debug("checking for any_errors_fatal")
                 failed_hosts = []
                 unreachable_hosts = []
+                successful_host_results = {}
                 for res in results:
                     if res.is_failed():
                         failed_hosts.append(res._host.name)
                     elif res.is_unreachable():
                         unreachable_hosts.append(res._host.name)
+                    else:
+                        successful_host_results[res._host.name] = res
 
                 if any_errors_fatal and (failed_hosts or unreachable_hosts):
                     for host in hosts_left:
                         if host.name not in failed_hosts:
-                            self._tqm._failed_hosts[host.name] = True
+                            state_when_failed = iterator.get_state_for_host(host.name)
                             iterator.mark_host_failed(host)
+                            # FIXME this is a copy of the code from StrategyBase._process_pending_results() to handle rescued tasks
+                            # since any_errors_fatal is implemented here after the results processing is done we need to do the same.
+                            # Would it make sense to move any_errors_fatal functionality to StrategyBase._process_pending_results()
+                            # and guard it with something like strategy.supports_any_errors_fatal when it is implemented?
+                            if iterator.is_any_block_rescuing(state_when_failed):
+                                self._tqm._stats.increment('rescued', host.name)
+                                iterator._play._removed_hosts.remove(host.name)
+                                r = successful_host_results[host.name]._result.copy()
+                                r["failed"] = True
+                                self._variable_manager.set_nonpersistent_facts(
+                                    host.name,
+                                    {
+                                        "ansible_failed_task": wrap_var(successful_host_results[host.name]._task.serialize()),
+                                        "ansible_failed_result": r,
+                                    },
+                                )
+                            else:
+                                self._tqm._failed_hosts[host.name] = True
+                                self._tqm._stats.increment('failures', host.name)
                 display.debug("done checking for any_errors_fatal")
 
                 display.debug("checking for max_fail_percentage")
