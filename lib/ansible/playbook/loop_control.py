@@ -23,6 +23,7 @@ from ansible.playbook.base import FieldAttributeBase
 
 class LoopControl(FieldAttributeBase):
 
+    unpack = NonInheritableFieldAttribute(isa='bool', default=False, always_post_validate=True)
     loop_var = NonInheritableFieldAttribute(isa='string', default='item', always_post_validate=True)
     index_var = NonInheritableFieldAttribute(isa='string', always_post_validate=True)
     label = NonInheritableFieldAttribute(isa='string')
