@@ -1148,9 +1148,11 @@ class User(object):
         overwrite = None
         try:
             ssh_key_file = self.get_ssh_key_path()
+            pub_file = '%s.pub' % ssh_key_file
         except Exception as e:
             return (1, '', to_native(e))
         ssh_dir = os.path.dirname(ssh_key_file)
+
         if not os.path.exists(ssh_dir):
             if self.module.check_mode:
                 return (0, '', '')
@@ -1159,12 +1161,23 @@ class User(object):
                 os.chown(ssh_dir, info[2], info[3])
             except OSError as e:
                 return (1, '', 'Failed to create %s: %s' % (ssh_dir, to_native(e)))
+
         if os.path.exists(ssh_key_file):
             if self.force:
-                # ssh-keygen doesn't support overwriting the key interactively, so send 'y' to confirm
+                self.module.warn('Overwriting existing ssh key private file "%s"' % ssh_key_file)
                 overwrite = 'y'
             else:
+                self.module.warn('Found existing ssh key private file "%s", no force, so skipping ssh-keygen generation' % ssh_key_file)
                 return (None, 'Key already exists, use "force: yes" to overwrite', '')
+
+        if os.path.exists(pub_file):
+            if self.force:
+                self.module.warn('Overwriting existing ssh key public file "%s"' % pub_file)
+                os.unlink(pub_file)
+            else:
+                self.module.warn('Found existing ssh key public file "%s", no force, so skipping ssh-keygen generation' % pub_file)
+                return (None, 'Public key already exists, use "force: yes" to overwrite', '')
+
         cmd = [self.module.get_bin_path('ssh-keygen', True)]
         cmd.append('-t')
         cmd.append(self.ssh_type)
@@ -1231,7 +1244,7 @@ class User(object):
             # If the keys were successfully created, we should be able
             # to tweak ownership.
             os.chown(ssh_key_file, info[2], info[3])
-            os.chown('%s.pub' % ssh_key_file, info[2], info[3])
+            os.chown(pub_file, info[2], info[3])
         return (rc, out, err)
 
     def ssh_key_fingerprint(self):
