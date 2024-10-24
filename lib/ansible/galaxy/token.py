@@ -109,10 +109,10 @@ class GalaxyToken(object):
 
     token_type = 'Token'
 
-    def __init__(self, token=None):
+    def __init__(self, token=None, config=None):
         self.b_file = to_bytes(C.GALAXY_TOKEN_PATH, errors='surrogate_or_strict')
         # Done so the config file is only opened when set/get/save is called
-        self._config = None
+        self._config = config
         self._token = token
 
     @property
