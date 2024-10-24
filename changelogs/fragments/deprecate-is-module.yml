@@ -1,0 +1,2 @@
+deprecated_features:
+- passing is_module to get_docstring - is deprecated in favor of passing ``plugin_type='module'`` in instead (https://github.com/ansible/ansible/pull/82192).

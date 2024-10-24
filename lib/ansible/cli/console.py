@@ -515,7 +515,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def module_args(self, module_name):
         in_path = module_loader.find_plugin(module_name)
-        oc, a, _dummy1, _dummy2 = plugin_docs.get_docstring(in_path, fragment_loader, is_module=True)
+        oc, a, _dummy1, _dummy2 = plugin_docs.get_docstring(in_path, fragment_loader, plugin_type='module')
         return list(oc['options'].keys())
 
     def run(self):
