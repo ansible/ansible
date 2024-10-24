@@ -18,6 +18,34 @@
     - name: check for ansible_facts.packages exists
       assert:
         that: ansible_facts.packages is defined
+
+    - name: Now try again but installing misleading rpm
+      block:
+        - name: install misleading rpm api
+          package: name="python3-rpm" state=present
+
+        - name: prep outputdir
+          tempfile: path=~ state=directory
+          register: tempdir
+
+        - name: install misleading rpm 'binary' file
+          file: dest="{{tempdir['path']}}/rpm" state=touch mode='0700'
+
+        - name: Gather package facts, finding 'rpm' on debian fam (needed for latest version)
+          package_facts:
+          environment:
+            PATH: "${PATH}:{{tempdir['path']}}"
+
+        - name: check we got packages
+          assert:
+            that:
+              - (ansible_facts.packages | length ) > 0
+      always:
+        - package: name="python3-rpm" state=absent
+        - file: path="{{tempdir['path']}}/rpm" state=absent
+        - file: path="{{tempdir['path']}}" state=absent
+
+
   when: ansible_os_family == "Debian"
 
 - name: Run package_fact tests - Red Hat Family
