@@ -1,0 +1,5 @@
+@all:
+  |--@ungrouped:
+  |--@web:
+  |  |--@proxies:
+  |  |  |--local001
