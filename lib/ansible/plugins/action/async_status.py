@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import os
+
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import merge_hash
 
@@ -36,8 +38,13 @@ class ActionModule(ActionBase):
         mode = new_module_args["mode"]
 
         results['ansible_job_id'] = jid
-        async_dir = self._get_async_dir()
-        log_path = self._connection._shell.join_path(async_dir, jid)
+        if os.path.isabs(jid):
+            log_path = jid
+            new_module_args['_async_dir'] = ''
+        else:
+            async_dir = self._get_async_dir()
+            log_path = self._connection._shell.join_path(async_dir, jid)
+            new_module_args['_async_dir'] = async_dir
 
         if mode == 'cleanup':
             results['erased'] = log_path
@@ -45,7 +52,6 @@ class ActionModule(ActionBase):
             results['results_file'] = log_path
             results['started'] = 1
 
-        new_module_args['_async_dir'] = async_dir
         results = merge_hash(results, self._execute_module(module_name='ansible.legacy.async_status', task_vars=task_vars, module_args=new_module_args))
 
         return results

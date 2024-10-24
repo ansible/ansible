@@ -135,7 +135,12 @@ class ActionModule(ActionBase):
 
             while jobs:
                 for module in jobs:
-                    poll_args = {'jid': jobs[module]['ansible_job_id'], '_async_dir': os.path.dirname(jobs[module]['results_file'])}
+                    jid = jobs[module]['ansible_job_id']
+                    if os.path.isabs(jid):
+                        async_dir = ''
+                    else:
+                        async_dir = os.path.dirname(jobs[module]['results_file'])
+                    poll_args = {'jid': jid, '_async_dir': async_dir}
                     res = self._execute_module(module_name='ansible.legacy.async_status', module_args=poll_args, task_vars=task_vars, wrap_async=False)
                     if res.get('finished', 0) == 1:
                         if res.get('failed', False):

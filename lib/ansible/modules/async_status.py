@@ -18,6 +18,8 @@ options:
   jid:
     description:
     - Job or task identifier
+    - May be the exact value of C(ansible_job_id) or the full path to the results file provided by C(results_file)
+    - Support for this value taking a path was added in 2.19.
     type: str
     required: true
   mode:
@@ -73,7 +75,7 @@ EXAMPLES = r"""
 
 - name: Clean up async file
   ansible.builtin.async_status:
-    jid: '{{ dnf_sleeper.ansible_job_id }}'
+    jid: '{{ dnf_sleeper.results_file }}'
     mode: cleanup
 """
 
@@ -88,6 +90,12 @@ finished:
   returned: always
   type: int
   sample: 1
+results_file:
+  description: Path to the async results file, which is a concatenation of the
+               async dir and the C(ansible_job_id)
+  returned: always
+  type: str
+  sample: '/home/user/.async_status/360874038559.4169'
 started:
   description: Whether the asynchronous job has started (V(1)) or not (V(0))
   returned: always
@@ -132,7 +140,10 @@ def main():
     async_dir = module.params['_async_dir']
 
     # setup logging directory
-    log_path = os.path.join(async_dir, jid)
+    if os.path.isabs(jid):
+        log_path = jid
+    else:
+        log_path = os.path.join(async_dir, jid)
 
     if not os.path.exists(log_path):
         module.fail_json(msg="could not find job", ansible_job_id=jid, started=1, finished=1)
