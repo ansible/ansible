@@ -97,7 +97,6 @@ class StrategyModule(StrategyBase):
         """
 
         # iterate over each task, while there is one left to run
-        result = self._tqm.RUN_OK
         work_to_do = True
 
         self._set_hosts_cache(iterator._play)
@@ -335,24 +334,21 @@ class StrategyModule(StrategyBase):
                             if host.name not in failed_hosts:
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
-                        self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
-                        result |= self._tqm.RUN_FAILED_BREAK_PLAY
                     display.debug('(%s failed / %s total )> %s max fail' % (len(self._tqm._failed_hosts), iterator.batch_size, percentage))
                 display.debug("done checking for max_fail_percentage")
-
-                display.debug("checking to see if all hosts have failed and the running result is not ok")
-                if result != self._tqm.RUN_OK and len(self._tqm._failed_hosts) >= len(hosts_left):
-                    display.debug("^ not ok, so returning result now")
-                    self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
-                    return result
-                display.debug("done checking to see if all hosts have failed")
 
             except (IOError, EOFError) as e:
                 display.debug("got IOError/EOFError in task loop: %s" % e)
                 # most likely an abort, return failed
                 return self._tqm.RUN_UNKNOWN_ERROR
 
+        display.debug("checking to see if all hosts have failed")
+        if all(iterator.is_failed(host)
+               for host in self.get_hosts_left(iterator)):
+            self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
+        display.debug("done checking to see if all hosts have failed")
+
         # run the base class run() method, which executes the cleanup function
         # and runs any outstanding handlers which have been triggered
 
-        return super(StrategyModule, self).run(iterator, play_context, result)
+        return super(StrategyModule, self).run(iterator, play_context)

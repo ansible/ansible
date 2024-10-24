@@ -1,0 +1,1 @@
+export ANSIBLE_HOST_PATTERN_MISMATCH=warning
