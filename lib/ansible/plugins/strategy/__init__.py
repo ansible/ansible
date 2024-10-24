@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import cmd
+import collections
 import functools
 import os
 import pprint
@@ -36,7 +37,7 @@ from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleUndefinedVariable, AnsibleParserError
 from ansible.executor import action_write_locks
-from ansible.executor.play_iterator import IteratingStates, PlayIterator
+from ansible.executor.play_iterator import IteratingStates
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, PromptSend
@@ -47,6 +48,7 @@ from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
+from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import loader as plugin_loader
@@ -54,8 +56,11 @@ from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.unsafe_proxy import wrap_var
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import combine_vars, get_loop_item_vars
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
+
+if t.TYPE_CHECKING:
+    from ansible.executor.play_iterator import PlayIterator
 
 display = Display()
 
@@ -90,22 +95,6 @@ def post_process_whens(result, task, templar, task_vars):
             cond.when = task.failed_when
             failed_when_result = cond.evaluate_conditional(templar, templar.available_variables)
             result['failed_when_result'] = result['failed'] = failed_when_result
-
-
-def _get_item_vars(result, task):
-    item_vars = {}
-    if task.loop or task.loop_with:
-        loop_var = result.get('ansible_loop_var', 'item')
-        index_var = result.get('ansible_index_var')
-        if loop_var in result:
-            item_vars[loop_var] = result[loop_var]
-        if index_var and index_var in result:
-            item_vars[index_var] = result[index_var]
-        if '_ansible_item_label' in result:
-            item_vars['_ansible_item_label'] = result['_ansible_item_label']
-        if 'ansible_loop' in result:
-            item_vars['ansible_loop'] = result['ansible_loop']
-    return item_vars
 
 
 def results_thread_main(strategy):
@@ -685,7 +674,7 @@ class StrategyBase:
                         self._inventory.add_dynamic_group(original_host, result_item)
 
                     if 'add_host' in result_item or 'add_group' in result_item:
-                        item_vars = _get_item_vars(result_item, original_task)
+                        item_vars = get_loop_item_vars(result_item, original_task)
                         found_task_vars = self._queued_task_cache.get((original_host.name, task_result._task._uuid))['task_vars']
                         if item_vars:
                             all_task_vars = combine_vars(found_task_vars, item_vars)
@@ -795,6 +784,103 @@ class StrategyBase:
             cur_pass += 1
 
         return ret_results
+
+    def _process_includes(self, results: list[TaskResult], iterator: PlayIterator) -> None:
+        if not (
+            included_files := IncludedFile.process_include_results(
+                results=results,
+                iterator=iterator,
+                loader=self._loader,
+                variable_manager=self._variable_manager,
+            )
+        ):
+            return
+
+        display.debug("we have included files to process")
+        hosts_left = self.get_hosts_left(iterator)
+        all_blocks = collections.defaultdict(list)
+        included_tasks = []
+        failed_includes_hosts = set()
+        for included_file in included_files:
+            display.debug("processing included file: %s" % included_file._filename)
+            is_handler = False
+            try:
+                if included_file._is_role:
+                    new_ir = self._copy_included_file(included_file)
+                    new_blocks, unused_var = new_ir.get_block_list(
+                        play=iterator._play,
+                        variable_manager=self._variable_manager,
+                        loader=self._loader,
+                    )
+                else:
+                    is_handler = isinstance(included_file._task, Handler)
+                    new_blocks = self._load_included_file(
+                        included_file,
+                        iterator=iterator,
+                        is_handler=is_handler,
+                        handle_stats_and_callbacks=False,
+                    )
+
+                # let PlayIterator know about any new handlers included via include_role or
+                # import_role within include_role/include_taks
+                iterator.handlers = [h for b in iterator._play.handlers for h in b.block]
+
+                display.debug("iterating over new_blocks loaded from include file")
+                for new_block in new_blocks:
+                    if is_handler:
+                        for task in new_block.block:
+                            task.notified_hosts = included_file._hosts[:]
+                        final_block = new_block
+                    else:
+                        task_vars = self._variable_manager.get_vars(
+                            play=iterator._play,
+                            task=new_block.get_first_parent_include(),
+                            _hosts=self._hosts_cache,
+                            _hosts_all=self._hosts_cache_all,
+                        )
+                        display.debug("filtering new block on tags")
+                        final_block = new_block.filter_tagged_tasks(task_vars)
+                        display.debug("done filtering new block on tags")
+
+                    included_tasks.extend(final_block.get_tasks())
+
+                    for host in hosts_left:
+                        if host in included_file._hosts:
+                            all_blocks[host].append(final_block)
+
+                display.debug("done iterating over new_blocks loaded from include file")
+            except AnsibleParserError:
+                raise
+            except AnsibleError as e:
+                display.error(to_text(e), wrap_text=False)
+                for r in included_file._results:
+                    r._result['failed'] = True
+                    r._result['reason'] = str(e)
+                    self._tqm._stats.increment('failures', r._host.name)
+                    self._tqm.send_callback('v2_runner_on_failed', r)
+                    failed_includes_hosts.add(r._host)
+            else:
+                # since we skip incrementing the stats when the task result is
+                # first processed, we do so now for each host in the list
+                for host in included_file._hosts:
+                    self._tqm._stats.increment('ok', host.name)
+                self._tqm.send_callback('v2_playbook_on_include', included_file)
+
+        for host in failed_includes_hosts:
+            self._tqm._failed_hosts[host.name] = True
+            iterator.mark_host_failed(host)
+
+        # finally go through all of the hosts and append the
+        # accumulated blocks to their list of tasks
+        display.debug("extending task lists for all hosts with included blocks")
+
+        for host in hosts_left:
+            iterator.add_tasks(host, all_blocks[host])
+
+        iterator.all_tasks[iterator.cur_task:iterator.cur_task] = included_tasks
+
+        display.debug("done extending task lists")
+        display.debug("done processing included files")
 
     def _wait_on_pending_results(self, iterator):
         """

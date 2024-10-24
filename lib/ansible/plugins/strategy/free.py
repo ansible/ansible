@@ -32,9 +32,8 @@ DOCUMENTATION = """
 import time
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError
 from ansible.playbook.handler import Handler
-from ansible.playbook.included_file import IncludedFile
 from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
@@ -102,7 +101,7 @@ class StrategyModule(StrategyBase):
                 host_name = host.get_name()
 
                 # peek at the next task for the host, to see if there's
-                # anything to do do for this host
+                # anything to do for this host
                 (state, task) = iterator.get_next_task_for_host(host, peek=True)
                 display.debug("free host state: %s" % state, host=host_name)
                 display.debug("free host task: %s" % task, host=host_name)
@@ -179,7 +178,7 @@ class StrategyModule(StrategyBase):
                             self._execute_meta(task, play_context, iterator, target_host=host)
                             self._blocked_hosts[host_name] = False
                         else:
-                            # handle step if needed, skip meta actions as they are used internally
+                            # handle step if needed
                             if not self._step or self._take_step(task, host_name):
                                 if task.any_errors_fatal:
                                     display.warning("Using any_errors_fatal with the free strategy is not supported, "
@@ -219,91 +218,13 @@ class StrategyModule(StrategyBase):
 
             self.update_active_connections(results)
 
-            included_files = IncludedFile.process_include_results(
-                host_results,
-                iterator=iterator,
-                loader=self._loader,
-                variable_manager=self._variable_manager
-            )
-
-            if len(included_files) > 0:
-                all_blocks = dict((host, []) for host in hosts_left)
-                failed_includes_hosts = set()
-                for included_file in included_files:
-                    display.debug("collecting new blocks for %s" % included_file)
-                    is_handler = False
-                    try:
-                        if included_file._is_role:
-                            new_ir = self._copy_included_file(included_file)
-
-                            new_blocks, handler_blocks = new_ir.get_block_list(
-                                play=iterator._play,
-                                variable_manager=self._variable_manager,
-                                loader=self._loader,
-                            )
-                        else:
-                            is_handler = isinstance(included_file._task, Handler)
-                            new_blocks = self._load_included_file(
-                                included_file,
-                                iterator=iterator,
-                                is_handler=is_handler,
-                                handle_stats_and_callbacks=False,
-                            )
-
-                        # let PlayIterator know about any new handlers included via include_role or
-                        # import_role within include_role/include_taks
-                        iterator.handlers = [h for b in iterator._play.handlers for h in b.block]
-                    except AnsibleParserError:
-                        raise
-                    except AnsibleError as e:
-                        display.error(to_text(e), wrap_text=False)
-                        for r in included_file._results:
-                            r._result['failed'] = True
-                            r._result['reason'] = str(e)
-                            self._tqm._stats.increment('failures', r._host.name)
-                            self._tqm.send_callback('v2_runner_on_failed', r)
-                            failed_includes_hosts.add(r._host)
-                        continue
-                    else:
-                        # since we skip incrementing the stats when the task result is
-                        # first processed, we do so now for each host in the list
-                        for host in included_file._hosts:
-                            self._tqm._stats.increment('ok', host.name)
-                        self._tqm.send_callback('v2_playbook_on_include', included_file)
-
-                    for new_block in new_blocks:
-                        if is_handler:
-                            for task in new_block.block:
-                                task.notified_hosts = included_file._hosts[:]
-                            final_block = new_block
-                        else:
-                            task_vars = self._variable_manager.get_vars(
-                                play=iterator._play,
-                                task=new_block.get_first_parent_include(),
-                                _hosts=self._hosts_cache,
-                                _hosts_all=self._hosts_cache_all,
-                            )
-                            final_block = new_block.filter_tagged_tasks(task_vars)
-                        for host in hosts_left:
-                            if host in included_file._hosts:
-                                all_blocks[host].append(final_block)
-                    display.debug("done collecting new blocks for %s" % included_file)
-
-                for host in failed_includes_hosts:
-                    self._tqm._failed_hosts[host.name] = True
-                    iterator.mark_host_failed(host)
-
-                display.debug("adding all collected blocks from %d included file(s) to iterator" % len(included_files))
-                for host in hosts_left:
-                    iterator.add_tasks(host, all_blocks[host])
-                display.debug("done adding collected blocks to iterator")
+            self._process_includes(results, iterator)
 
             # pause briefly so we don't spin lock
             time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
 
         # collect all the final results
-        results = self._wait_on_pending_results(iterator)
+        self._wait_on_pending_results(iterator)
 
         # run the base class run() method, which executes the cleanup function
-        # and runs any outstanding handlers which have been triggered
         return super(StrategyModule, self).run(iterator, play_context, result)
