@@ -148,3 +148,51 @@
 - name: SUBMODULES | Ensure submodule1 is at the appropriate commit
   assert:
     that: '{{ submodule1.stdout_lines | length }} == 4'
+
+- name: SUBMODULES | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: SUBMODULES | Clone main_b submodule repository
+  git:
+    repo: "{{ repo_submodules_b }}"
+    dest: "{{ checkout_dir }}/test.gitdir"
+    recursive: yes  # checkout the submodules as-is.
+    # For the initial clone, don't track submodules.
+    # this is done to simulate e.g. updating a repository that already exists.
+    track_submodules: no
+- name: SUBMODULES | update main_b submodule repository
+  git:
+    repo: "{{ repo_submodules_b }}"
+    dest: "{{ checkout_dir }}/test.gitdir"
+    recursive: yes
+    # Track the submodules in the second deployment, to simulate updating an existing repository.
+    track_submodules: yes
+- name: SUBMODULES | check presense of submodule3's flag
+  stat:
+    path: "{{ checkout_dir }}/test.gitdir/submodule3/FLAG"
+  # submodule3's commited state does not have this file, but the tip of the branch in .gitmodules has this file.
+  # for track_submodules to have behaved correctly, this file must exist in the checkout.
+  register: submodule3_flag_stat
+- name: SUBMODULES | check presense of submodule4's flag
+  stat:
+    path: "{{ checkout_dir }}/test.gitdir/submodule4/FLAG"
+  # submodule4's commited state and tip of tracked branch have the FLAG present.
+  # however, a canary `master` branch exists with the flag removed.
+  # for track_submodules to have behaved correctly, this file must be present.
+  register: submodule4_flag_stat
+
+- name: SUBMODULES | Assert submodule3 FLAG is present.
+  assert:
+    that: submodule3_flag_stat.stat.exists
+    msg: "submodule3's FLAG must exist on this branch, but its missing!"
+- name: SUBMODULES | Assert submodule4 FLAG is present.
+  assert:
+    that: submodule4_flag_stat.stat.exists
+    msg: "submodule4's FLAG must exist on this branch, but its missing!"
+
+- name: SUBMODULES | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
