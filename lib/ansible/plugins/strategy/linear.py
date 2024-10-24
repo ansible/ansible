@@ -318,8 +318,15 @@ class StrategyModule(StrategyBase):
                         unreachable_hosts.append(res._host.name)
 
                 if any_errors_fatal and (failed_hosts or unreachable_hosts):
+                    # After processing the task results hosts_left are now outdated,
+                    # use updated failed and unreachable hosts for filtering.
+                    # Note that `failed_hosts` contains hosts that were already
+                    # failed in `_process_pending_results` but are not necessarily
+                    # in `_tqm._failed_hosts` as they may still have to execute
+                    # rescue/always section, so we can't fail them again now.
+                    ignore_hosts = set(failed_hosts).union(self._tqm._failed_hosts, self._tqm._unreachable_hosts)
                     for host in hosts_left:
-                        if host.name not in failed_hosts:
+                        if host.name not in ignore_hosts:
                             self._tqm._failed_hosts[host.name] = True
                             iterator.mark_host_failed(host)
                 display.debug("done checking for any_errors_fatal")
@@ -329,6 +336,8 @@ class StrategyModule(StrategyBase):
                     percentage = iterator._play.max_fail_percentage / 100.0
 
                     if (len(self._tqm._failed_hosts) / iterator.batch_size) > percentage:
+                        # FIXME hosts_left should also be filtered further on updated
+                        #       host statuses as with any_errors_fatal above
                         for host in hosts_left:
                             # don't double-mark hosts, or the iterator will potentially
                             # fail them out of the rescue/always states

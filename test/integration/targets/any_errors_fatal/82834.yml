@@ -1,0 +1,13 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - add_host:
+        hostname: unreachable_host
+
+- hosts: unreachable_host, localhost
+  gather_facts: false
+  any_errors_fatal: true
+  serial:
+    - 1
+  tasks:
+    - command: echo "SHOULD NOT HAPPEN"
