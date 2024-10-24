@@ -18,22 +18,17 @@ def fake_tar_obj(mocker):
     return m_tarfile
 
 
-def test_extract_tar_dir_exists(mocker, fake_tar_obj):
+@pytest.mark.parametrize(("isdir", "called", "call_args"), [
+    (True, False, None),
+    (False, True, (b'/some/dir', 0o0755)),
+])
+def test_extract_tar_dir_exists(mocker, fake_tar_obj, isdir, called, call_args):
     mocker.patch('os.makedirs', return_value=None)
     m_makedir = mocker.patch('os.mkdir', return_value=None)
-    mocker.patch('os.path.isdir', return_value=True)
+    mocker.patch('os.path.isdir', return_value=isdir)
 
     _extract_tar_dir(fake_tar_obj, '/some/dir', b'/some/dest')
 
-    assert not m_makedir.called
-
-
-def test_extract_tar_dir_does_not_exist(mocker, fake_tar_obj):
-    mocker.patch('os.makedirs', return_value=None)
-    m_makedir = mocker.patch('os.mkdir', return_value=None)
-    mocker.patch('os.path.isdir', return_value=False)
-
-    _extract_tar_dir(fake_tar_obj, '/some/dir', b'/some/dest')
-
-    assert m_makedir.called
-    assert m_makedir.call_args[0] == (b'/some/dir', 0o0755)
+    assert m_makedir.called == called
+    if m_makedir.called:
+        assert m_makedir.call_args[0] == call_args
