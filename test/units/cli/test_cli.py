@@ -22,6 +22,7 @@ from unittest.mock import patch, MagicMock
 
 from units.mock.loader import DictDataLoader
 
+from ansible.errors import AnsibleError
 from ansible.release import __version__
 from ansible.parsing import vault
 from ansible import cli
@@ -357,3 +358,22 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
         self.assertIsInstance(res, list)
         match = vault.match_secrets(res, ['some_vault_id'])[0][1]
         self.assertEqual(match.bytes, b'prompt1_password')
+
+    def test_empty_slug(self):
+        res = cli.CLI.setup_vault_secrets(loader=self.fake_loader,
+                                          vault_ids=[''])
+        self.assertIsInstance(res, list)
+        self.assertEqual(0, len(res))
+
+    def test_empty_name_part(self):
+        self.assertRaisesRegex(AnsibleError,
+                               '.*The vault password file .*/foo was not found.*',
+                               cli.CLI.setup_vault_secrets,
+                               loader=self.fake_loader,
+                               vault_ids=['@foo'])
+
+    def test_empty_value_part(self):
+        res = cli.CLI.setup_vault_secrets(loader=self.fake_loader,
+                                          vault_ids=['foo@'])
+        self.assertIsInstance(res, list)
+        self.assertEqual(0, len(res))

@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - passing a directory as vault password file now raises a meaningful error (https://github.com/ansible/ansible/pull/82721).
+  - empty vault filenames are now silently ignored (https://github.com/ansible/ansible/pull/82721).
