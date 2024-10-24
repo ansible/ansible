@@ -703,7 +703,11 @@ def main():
             break_system_packages=dict(type='bool', default=False),
         ),
         required_one_of=[['name', 'requirements']],
-        mutually_exclusive=[['name', 'requirements'], ['executable', 'virtualenv']],
+        mutually_exclusive=[
+            ['name', 'requirements'],
+            ['executable', 'virtualenv'],
+            ['editable', 'requirements'],
+        ],
         supports_check_mode=True,
     )
 
@@ -719,6 +723,7 @@ def main():
     chdir = module.params['chdir']
     umask = module.params['umask']
     env = module.params['virtualenv']
+    editable = module.params['editable']
 
     venv_created = False
     if env and chdir:
@@ -793,15 +798,6 @@ def main():
                 # if the version specifier is provided by version, append that into the package
                 packages[0] = Package(to_native(packages[0]), version)
 
-        if module.params['editable']:
-            args_list = []  # used if extra_args is not used at all
-            if extra_args:
-                args_list = extra_args.split(' ')
-            if '-e' not in args_list:
-                args_list.append('-e')
-                # Ok, we will reconstruct the option string
-                extra_args = ' '.join(args_list)
-
         if extra_args:
             cmd.extend(shlex.split(extra_args))
 
@@ -811,7 +807,10 @@ def main():
             os.environ['PIP_BREAK_SYSTEM_PACKAGES'] = '1'
 
         if name:
-            cmd.extend(to_native(p) for p in packages)
+            for p in packages:
+                if editable:
+                    cmd.append('-e')
+                cmd.append(to_native(p))
         elif requirements:
             cmd.extend(['-r', requirements])
         else:
