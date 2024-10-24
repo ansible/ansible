@@ -1,0 +1,6 @@
+---
+- hosts: '{{ target|default("localhost") }}'
+  gather_facts: false
+  tasks:
+    - name: 'Ping in common/playbooks/included.yaml'
+      ping:

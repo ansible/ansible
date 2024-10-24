@@ -1,0 +1,2 @@
+bugfixes:
+  - Now plays and their roles always keep the correct collection context they are in.
