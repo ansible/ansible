@@ -17,6 +17,11 @@ from ansible.galaxy.dependency_resolution.dataclasses import Requirement
 from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.loader import init_plugin_loader
 
+def isdir(path):
+    if to_native(path) == 'nope':
+        return False
+    return True
+
 
 def cliargs(collections_paths=None, collection_name=None):
     if collections_paths is None:
@@ -216,7 +221,7 @@ def test_execute_list_collection_one_invalid_path(mocker, capsys, mock_from_path
     init_plugin_loader()
 
     mocker.patch('os.path.exists', return_value=True)
-    mocker.patch('os.path.isdir', return_value=False)
+    mocker.patch('os.path.isdir', isdir)
     mocker.patch('ansible.utils.color.ANSIBLE_COLOR', False)
 
     gc = GalaxyCLI(['ansible-galaxy', 'collection', 'list', '-p', 'nope'])
