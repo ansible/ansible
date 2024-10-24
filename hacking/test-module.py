@@ -1,10 +1,32 @@
 #!/usr/bin/env python
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-# This file is part of Ansible, a free software under the GNU General Public License
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
 
-# This script is for testing Ansible modules without going through the entire Ansible engine.
-# It helps developers test modules directly. Example usage is provided in the comments above.
+# this script is for testing modules without running through the
+# entire guts of ansible, and is very helpful for when developing
+# modules
+#
+# example:
+#    ./hacking/test-module.py -m lib/ansible/modules/command.py -a "/bin/sleep 3"
+#    ./hacking/test-module.py -m lib/ansible/modules/command.py -a "/bin/sleep 3" --debugger /usr/bin/pdb
+#    ./hacking/test-module.py -m lib/ansible/modules/lineinfile.py -a "dest=/etc/exports line='/srv/home hostname1(rw,sync)'" --check
+#    ./hacking/test-module.py -m lib/ansible/modules/command.py -a "echo hello" -n -o "test_hello"
 
 from __future__ import annotations
 
