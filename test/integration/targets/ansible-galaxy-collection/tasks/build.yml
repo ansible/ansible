@@ -77,6 +77,60 @@
     - '"use --force to re-create the collection artifact" in build_existing_no_force.stderr'
     - '"Created collection for ansible_test.my_collection" in build_existing_force.stdout'
 
+- name: Extract the path to the built artifact
+  set_fact:
+    artifact_path: "{{ build_existing_force.stdout_lines | select('search', 'Created collection for ansible_test.my_collection at ') | map('regex_replace', '.* at (.*)$', '\\1') | first }}"
+
+- name: Define extraction path
+  set_fact:
+    extraction_path: "/tmp/new_ansible_collections_extraction"
+
+- name: Ensure extraction directory exists
+  file:
+    path: "{{ extraction_path }}"
+    state: directory
+    mode: '0755'
+
+- name: Extract collection artifact
+  unarchive:
+    src: "{{ artifact_path }}"
+    dest: "{{ extraction_path }}"
+    remote_src: yes
+
+- name: Slurp FILES.json content
+  slurp:
+    src: "/tmp/new_ansible_collections_extraction/FILES.json"
+  register: files_content
+
+- name: Decode FILES.json content
+  set_fact:
+    decoded_files_json: "{{ files_content['content'] | b64decode | from_json }}"
+
+
+- name: Set expected order of file names in FILES.json
+  set_fact:
+    expected_files_order: [
+      ".",
+      "README.md",
+      "docs",
+      "meta",
+      "meta/runtime.yml",
+      "plugins",
+      "plugins/README.md",
+      "roles"
+    ]
+
+- name: Set files_names for later use
+  set_fact:
+    files_names: "{{ decoded_files_json['files'] | map(attribute='name') | list }}"
+
+- name: Assert that files are sorted in the predefined ASCII order
+  assert:
+    that:
+      - files_names == expected_files_order
+    fail_msg: "The files are not sorted in the predefined ASCII order."
+    success_msg: "The files are sorted in the predefined ASCII order."
+
 - name: build collection containing ignored files
   command: ansible-galaxy collection build
   args:
