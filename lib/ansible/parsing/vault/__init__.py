@@ -52,6 +52,7 @@ except ImportError:
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible import constants as C
+from ansible.module_utils.common.file import atomic_move
 from ansible.module_utils.six import binary_type
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.utils.display import Display
@@ -1116,19 +1117,8 @@ class VaultEditor:
                 os.umask(current_umask)
 
     def shuffle_files(self, src, dest):
-        prev = None
-        # overwrite dest with src
-        if os.path.isfile(dest):
-            prev = os.stat(dest)
-            # old file 'dest' was encrypted, no need to _shred_file
-            os.remove(dest)
-        shutil.move(src, dest)
-
-        # reset permissions if needed
-        if prev is not None:
-            # TODO: selinux, ACLs, xattr?
-            os.chmod(dest, prev.st_mode)
-            os.chown(dest, prev.st_uid, prev.st_gid)
+        ''' attempts to atomically move file into place'''
+        atomic_move(src, dest, unsafe_writes=True, keep_dest_attrs=True)
 
     def _editor_shell_command(self, filename):
         env_editor = C.config.get_config_value('EDITOR')
