@@ -987,6 +987,11 @@ class StrategyBase:
                     self._tqm._failed_hosts.pop(host.name, False)
                     self._tqm._unreachable_hosts.pop(host.name, False)
                     iterator.clear_host_errors(host)
+                    if host.name in iterator._play._removed_hosts:
+                        # the host failed a previous play
+                        iterator._play._removed_hosts.remove(host.name)
+                        # update the host state to here
+                        iterator._host_states[host.name] = iterator._host_states[target_host.name].copy()
                 msg = "cleared host errors"
             else:
                 skipped = True

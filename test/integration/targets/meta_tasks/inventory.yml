@@ -4,6 +4,8 @@ local:
       host_var_role_name: role3
     testhost2:
       host_var_role_name: role2
+    testhost3:
+      host_var_role_name: role1
   vars:
     ansible_connection: local
     ansible_python_interpreter: "{{ ansible_playbook_python }}"
