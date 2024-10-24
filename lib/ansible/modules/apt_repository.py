@@ -200,7 +200,7 @@ except ImportError:
 
     HAVE_PYTHON_APT = False
 
-APT_KEY_DIRS = ['/etc/apt/keyrings', '/etc/apt/trusted.gpg.d', '/usr/share/keyrings']
+APT_KEY_DIRS = ['/etc/apt/trusted.gpg.d', '/etc/apt/keyrings', '/usr/share/keyrings']
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
 
 
@@ -502,14 +502,14 @@ class UbuntuSourcesList(SourcesList):
 
     def _key_already_exists(self, key_fingerprint):
 
-        if self.apt_key_bin:
+        if self.gpg_bin:
+            found = self._gpg_key_exists(key_fingerprint)
+        else:
             locale = get_best_parsable_locale(self.module)
             APT_ENV = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LC_CTYPE=locale, LANGUAGE=locale)
             self.module.run_command_environ_update = APT_ENV
             rc, out, err = self.module.run_command([self.apt_key_bin, 'export', key_fingerprint], check_rc=True)
             found = bool(not err or 'nothing exported' not in err)
-        else:
-            found = self._gpg_key_exists(key_fingerprint)
 
         return found
 
@@ -553,10 +553,7 @@ class UbuntuSourcesList(SourcesList):
                 # TODO: report file that would have been added if not check_mode
                 keyfile = ''
                 if not self.module.check_mode:
-                    if self.apt_key_bin:
-                        command = [self.apt_key_bin, 'adv', '--recv-keys', '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80',
-                                   info['signing_key_fingerprint']]
-                    else:
+                    if self.gpg_bin:
                         # use first available key dir, in order of preference
                         for keydir in APT_KEY_DIRS:
                             if os.path.exists(keydir):
@@ -565,19 +562,25 @@ class UbuntuSourcesList(SourcesList):
                             self.module.fail_json("Unable to find any existing apt gpgp repo directories, tried the following: %s" % ', '.join(APT_KEY_DIRS))
 
                         keyfile = '%s/%s-%s-%s.gpg' % (keydir, os.path.basename(source).replace(' ', '-'), ppa_owner, ppa_name)
-                        command = [self.gpg_bin, '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80', '--export', info['signing_key_fingerprint']]
 
-                    rc, stdout, stderr = self.module.run_command(command, check_rc=True, encoding=None)
-                    if keyfile:
-                        # using gpg we must write keyfile ourselves
-                        if len(stdout) == 0:
-                            self.module.fail_json(msg='Unable to get required signing key', rc=rc, stderr=stderr, command=command)
                         try:
-                            with open(keyfile, 'wb') as f:
-                                f.write(stdout)
-                            self.module.log('Added repo key "%s" for apt to file "%s"' % (info['signing_key_fingerprint'], keyfile))
+                            fd, keyring_path = tempfile.mkstemp()
                         except (OSError, IOError) as e:
-                            self.module.fail_json(msg='Unable to add required signing key for%s ', rc=rc, stderr=stderr, error=to_native(e))
+                            self.module.fail_json(msg="Unable to create temporary keyring file: %s" % e)
+                        # Import the GPG key into a temporary keyring before its exported into its own file.
+                        command = [self.gpg_bin, '--no-tty', '--no-default-keyring', '--keyring', keyring_path,
+                                   '--keyserver', 'hkps://keyserver.ubuntu.com:443', '--recv-keys', info['signing_key_fingerprint']]
+                        self.module.run_command(command, check_rc=True, encoding=None)
+
+                        command = [self.gpg_bin, '--no-default-keyring', '--keyring', keyring_path, '--output', keyfile,
+                                   '--export', info['signing_key_fingerprint']]
+                    else:
+                        command = [self.apt_key_bin, 'adv', '--recv-keys', '--no-tty', '--keyserver', 'hkps://keyserver.ubuntu.com:443',
+                                   info['signing_key_fingerprint']]
+
+                    self.module.run_command(command, check_rc=True, encoding=None)
+                    if keyfile:
+                        self.module.log('Added repo key "%s" for apt to file "%s"' % (info['signing_key_fingerprint'], keyfile))
 
             # apt source file
             file = file or self._suggest_filename('%s_%s' % (line, self.codename))
