@@ -143,10 +143,6 @@ class PlaybookCLI(CLI):
         # Fix this when we rewrite inventory by making localhost a real host (and thus show up in list_hosts())
         CLI.get_host_list(inventory, context.CLIARGS['subset'])
 
-        # flush fact cache if requested
-        if context.CLIARGS['flush_cache']:
-            self._flush_cache(inventory, variable_manager)
-
         # create the playbook executor, which manages running the plays via a task queue manager
         pbex = PlaybookExecutor(playbooks=context.CLIARGS['args'], inventory=inventory,
                                 variable_manager=variable_manager, loader=loader,
@@ -227,12 +223,6 @@ class PlaybookCLI(CLI):
             return 0
         else:
             return results
-
-    @staticmethod
-    def _flush_cache(inventory, variable_manager):
-        for host in inventory.list_hosts():
-            hostname = host.get_name()
-            variable_manager.clear_facts(hostname)
 
 
 def main(args=None):

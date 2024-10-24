@@ -305,8 +305,6 @@ def add_meta_options(parser):
     """Add options for commands which can launch meta tasks from the command line"""
     parser.add_argument('--force-handlers', default=C.DEFAULT_FORCE_HANDLERS, dest='force_handlers', action='store_true',
                         help="run handlers even if a task fails")
-    parser.add_argument('--flush-cache', dest='flush_cache', action='store_true',
-                        help="clear the fact cache for every host in inventory")
 
 
 def add_module_options(parser):
