@@ -1,0 +1,11 @@
+dependencies:
+  # src/scm/version/role are used by ansible-galaxy when installing dependencies
+  - src: a
+    version: unknown
+    a_str: required
+
+  # only validate these fields if the argument spec includes them
+  - role: validate_role_req
+    scm: svn
+    src: othersource
+    version: "1.0.0"

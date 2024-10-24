@@ -305,7 +305,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
     return task_list
 
 
-def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, loader=None, collection_search_list=None):
+def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, loader=None, collection_search_list=None, extra_spec=None):
     """
     Loads and returns a list of RoleInclude objects from the ds list of role definitions
     :param ds: list of roles to load
@@ -325,7 +325,7 @@ def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, 
     roles = []
     for role_def in ds:
         i = RoleInclude.load(role_def, play=play, current_role_path=current_role_path, variable_manager=variable_manager,
-                             loader=loader, collection_list=collection_search_list)
+                             loader=loader, collection_list=collection_search_list, extra_spec=extra_spec)
         roles.append(i)
 
     return roles
