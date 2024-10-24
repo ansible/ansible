@@ -130,44 +130,36 @@ class TaskExecutor:
                     item_results = self._run_loop(items)
 
                     # create the overall result item
-                    res = dict(results=item_results)
+                    res = dict(results=item_results, skipped=True)
 
                     # loop through the item results and set the global changed/failed/skipped result flags based on any item.
-                    res['skipped'] = True
                     for item in item_results:
-                        if 'changed' in item and item['changed'] and not res.get('changed'):
-                            res['changed'] = True
-                        if res['skipped'] and ('skipped' not in item or ('skipped' in item and not item['skipped'])):
+
+                        # skip if all items skip
+                        if res['skipped'] and not item.get('skipped', False):
                             res['skipped'] = False
-                        if 'failed' in item and item['failed']:
-                            item_ignore = item.pop('_ansible_ignore_errors')
-                            if not res.get('failed'):
-                                res['failed'] = True
-                                res['msg'] = 'One or more items failed'
-                                self._task.ignore_errors = item_ignore
-                            elif self._task.ignore_errors and not item_ignore:
-                                self._task.ignore_errors = item_ignore
-                        if 'unreachable' in item and item['unreachable']:
-                            item_ignore_unreachable = item.pop('_ansible_ignore_unreachable')
-                            if not res.get('unreachable'):
-                                self._task.ignore_unreachable = item_ignore_unreachable
-                            elif self._task.ignore_unreachable and not item_ignore_unreachable:
-                                self._task.ignore_unreachable = item_ignore_unreachable
+
+                        # set task state if any item matches this state
+                        for state in ('changed', 'unreachable', 'failed'):
+                            if not res.get(state) and item.get(state, False):
+                                res[state] = True
 
                         # ensure to accumulate these
-                        for array in ['warnings', 'deprecations']:
-                            if array in item and item[array]:
-                                if array not in res:
-                                    res[array] = []
-                                if not isinstance(item[array], list):
-                                    item[array] = [item[array]]
-                                res[array] = res[array] + item[array]
-                                del item[array]
+                        for say in ('warnings', 'deprecations'):
+                            if say in item and item[say]:
+                                if say not in res:
+                                    res[say] = []
+                                if not isinstance(item[say], list):
+                                    item[say] = [item[say]]
+                                res[say] = res[say] + item[say]
+                                del item[say]
 
-                    if not res.get('failed', False):
-                        res['msg'] = 'All items completed'
                     if res['skipped']:
                         res['msg'] = 'All items skipped'
+                    elif res.get('failed', False):
+                        res['msg'] = 'One or more items failed'
+                    else res.get('msg', False):
+                        res['msg'] = 'All items completed'
                 else:
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
             else:
@@ -368,8 +360,6 @@ class TaskExecutor:
                 res['ansible_loop'] = task_vars['ansible_loop']
 
             res['_ansible_item_result'] = True
-            res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
-            res['_ansible_ignore_unreachable'] = task_fields.get('ignore_unreachable')
 
             # gets templated here unlike rest of loop_control fields, depends on loop_var above
             try:
@@ -657,6 +647,7 @@ class TaskExecutor:
         elif self._task.until:
             retries += 3  # the default is not set in FA because we need to differentiate "unset" value
 
+        # TODO: move, really not needed here, should move to closer and evaluate at time of use
         delay = self._task.delay
         if delay < 0:
             delay = 1
@@ -666,17 +657,20 @@ class TaskExecutor:
         for attempt in range(1, retries + 1):
             display.debug("running the handler")
             try:
+                # we do NOT return on errors here so we can process result as normal
+                # create your own result dict to handle
                 if self._task.timeout:
                     old_sig = signal.signal(signal.SIGALRM, task_timeout)
                     signal.alarm(self._task.timeout)
                 result = self._handler.run(task_vars=vars_copy)
             except (AnsibleActionFail, AnsibleActionSkip) as e:
-                return e.result
+                result = e.result
             except AnsibleConnectionFailure as e:
-                return dict(unreachable=True, msg=to_text(e))
+                # we mostly want the 'failed' path in processing, but when we return we drop that key
+                result = dict(unreachable=True, msg=to_text(e), changed=False, failed=False)
             except TaskTimeoutError as e:
                 msg = 'The %s action failed to execute in the expected time frame (%d) and was terminated' % (self._task.action, self._task.timeout)
-                return dict(failed=True, msg=msg, timedout={'frame': e.frame, 'period': self._task.timeout})
+                result = dict(failed=True, msg=msg, timedout={'frame': e.frame, 'period': self._task.timeout})
             finally:
                 if self._task.timeout:
                     signal.alarm(0)
@@ -698,6 +692,7 @@ class TaskExecutor:
             if self._task.async_val > 0:
                 if self._task.poll > 0 and not result.get('skipped') and not result.get('failed'):
                     result = self._poll_async_result(result=result, templar=templar, task_vars=vars_copy)
+                    # TODO: add 'unreachable' event and handling
                     if result.get('failed'):
                         self._final_q.send_callback(
                             'v2_runner_on_async_failed',
@@ -794,8 +789,13 @@ class TaskExecutor:
                 if cond.evaluate_conditional(templar, vars_copy):
                     break
                 else:
+                    if result.get('unreachable', False) and not self._task.ignore_unreachable:
+                        # only continue retry if not unreachable or we ignore it
+                        break
+
                     # no conditional check, or it failed, so sleep for the specified time
                     if attempt < retries:
+
                         result['_ansible_retry'] = True
                         result['retries'] = retries
                         display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
@@ -852,6 +852,10 @@ class TaskExecutor:
             for requireshed in ('ansible_host', 'ansible_port', 'ansible_user', 'ansible_connection'):
                 if requireshed not in result["_ansible_delegated_vars"] and requireshed in cvars:
                     result["_ansible_delegated_vars"][requireshed] = cvars.get(requireshed)
+
+        # keep unreachable as it's own failure, we used 'failed' to navigate normal processing till here
+        if result.get('unreachable', False):
+            del result['failed']
 
         # and return
         display.debug("attempt loop complete, returning result")

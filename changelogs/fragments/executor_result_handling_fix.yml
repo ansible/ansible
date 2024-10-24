@@ -1,0 +1,3 @@
+bugfixes:
+  - task executor results for unreachable and action exceptions are treated as normal and don't bypass the handling anymore
+  - task_executor handling or ignore_errors and ignore_unreachable in loops now correclty handles each item individually
