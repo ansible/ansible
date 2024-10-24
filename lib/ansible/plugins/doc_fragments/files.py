@@ -41,7 +41,7 @@ options:
     type: str
   group:
     description:
-    - Name of the group that should own the filesystem object, as would be fed to C(chown).
+    - Name of the group or gid that should own the filesystem object, as would be fed to C(chown).
     - When left unspecified, it uses the current group of the current user unless you are root,
       in which case it can preserve the previous ownership.
     type: str
