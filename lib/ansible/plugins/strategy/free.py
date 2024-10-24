@@ -186,7 +186,7 @@ class StrategyModule(StrategyBase):
                                                     "as tasks are executed independently on each host")
                                 if isinstance(task, Handler):
                                     self._tqm.send_callback('v2_playbook_on_handler_task_start', task)
-                                else:
+                                elif action not in C._ACTION_IMPORT_TASKS + C._ACTION_IMPORT_ROLE:
                                     self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                                 self._queue_task(host, task, task_vars, play_context)
                                 # each task is counted as a worker being busy
