@@ -18,6 +18,7 @@ from ansible.module_utils.common.text.converters import to_native
 
 pytestmark = pytest.mark.usefixtures("collection_loader")
 
+
 def isdir(path):
     if to_native(path) == 'nope':
         return False
