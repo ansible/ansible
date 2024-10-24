@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# Copyright:
-#   (c) 2018 Ansible Project
-# License: GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Copyright: (c) 2018 Ansible Project
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
 
@@ -11,125 +11,55 @@ from ansible.modules.copy import AnsibleModuleError, split_pre_existing_dir
 
 from ansible.module_utils.basic import AnsibleModule
 
-THREE_DIRS_DATA: tuple[tuple[str, tuple[str, list[str]] | None, tuple[str, list[str]], tuple[str, list[str]], tuple[str, list[str]]], ...] = (
-    ('/dir1/dir2',
-     # 0 existing dirs: error (because / should always exist)
-     None,
-     # 1 existing dir:
-     ('/', ['dir1', 'dir2']),
-     # 2 existing dirs:
-     ('/dir1', ['dir2']),
-     # 3 existing dirs:
-     ('/dir1/dir2', [])
-     ),
-    ('/dir1/dir2/',
-     # 0 existing dirs: error (because / should always exist)
-     None,
-     # 1 existing dir:
-     ('/', ['dir1', 'dir2']),
-     # 2 existing dirs:
-     ('/dir1', ['dir2']),
-     # 3 existing dirs:
-     ('/dir1/dir2', [])
-     ),
-)
+success_testdata = [
+    # Level 1
+    ('/dir1/dir2', [True], ('/dir1', ['dir2'])),
+    ('/dir1/dir2/', [True], ('/dir1/dir2', [''])),
+    ('dir1/dir2', [True], ('dir1', ['dir2'])),
+    ('dir1/dir2/', [True], ('dir1/dir2', [''])),
+    ('/dir1', [True], ('/', ['dir1'])),
+    ('/dir1/', [True], ('/dir1', [''])),
+    ('dir1', [True], ('.', ['dir1'])),
+    ('dir1/', [True], ('dir1', [''])),
+    # Level 2
+    ('/dir1/dir2', [False, True], ('/', ['dir1', 'dir2'])),
+    ('/dir1/dir2/', [False, True], ('/dir1', ['dir2', ''])),
+    ('dir1/dir2', [False, True], ('.', ['dir1', 'dir2'])),
+    ('dir1/dir2/', [False, True], ('dir1', ['dir2', ''])),
+    ('/dir1/', [False, True], ('/', ['dir1', ''])),
+    ('dir1', [False, True], ('.', ['dir1'])),
+    ('dir1/', [False, True], ('.', ['dir1', ''])),
+    # Level 3
+    ('/dir1/dir2/', [False, False, True], ('/', ['dir1', 'dir2', ''])),
+    ('dir1/dir2', [False, False, True], ('.', ['dir1', 'dir2'])),
+    ('dir1/dir2/', [False, False, True], ('.', ['dir1', 'dir2', ''])),
+    ('dir1', [False, False, True], ('.', ['dir1'])),
+    ('dir1/', [False, False, True], ('.', ['dir1', ''])),
+]
 
 
-TWO_DIRS_DATA: tuple[tuple[str, tuple[str, list[str]] | None, tuple[str, list[str]], tuple[str, list[str]]], ...] = (
-    ('dir1/dir2',
-     # 0 existing dirs:
-     ('.', ['dir1', 'dir2']),
-     # 1 existing dir:
-     ('dir1', ['dir2']),
-     # 2 existing dirs:
-     ('dir1/dir2', []),
-     # 3 existing dirs: Same as 2 because we never get to the third
-     ),
-    ('dir1/dir2/',
-     # 0 existing dirs:
-     ('.', ['dir1', 'dir2']),
-     # 1 existing dir:
-     ('dir1', ['dir2']),
-     # 2 existing dirs:
-     ('dir1/dir2', []),
-     # 3 existing dirs: Same as 2 because we never get to the third
-     ),
-    ('/dir1',
-     # 0 existing dirs: error (because / should always exist)
-     None,
-     # 1 existing dir:
-     ('/', ['dir1']),
-     # 2 existing dirs:
-     ('/dir1', []),
-     # 3 existing dirs: Same as 2 because we never get to the third
-     ),
-    ('/dir1/',
-     # 0 existing dirs: error (because / should always exist)
-     None,
-     # 1 existing dir:
-     ('/', ['dir1']),
-     # 2 existing dirs:
-     ('/dir1', []),
-     # 3 existing dirs: Same as 2 because we never get to the third
-     ),
-)
-TWO_DIRS_DATA += tuple(item[:4] for item in THREE_DIRS_DATA)
+failure_testdata = [
+    # Level 2
+    ('/dir1', [False, True]),
+    # Level 3
+    ('/dir1/dir2', [False, False, True]),
+    ('/dir1', [False, False, True]),
+    ('/dir1/', [False, False, True]),
+]
 
 
-ONE_DIR_DATA: tuple[tuple[str, tuple[str, list[str]] | None, tuple[str, list[str]]], ...] = (
-    ('dir1',
-     # 0 existing dirs:
-     ('.', ['dir1']),
-     # 1 existing dir:
-     ('dir1', []),
-     # 2 existing dirs: Same as 1 because we never get to the third
-     ),
-    ('dir1/',
-     # 0 existing dirs:
-     ('.', ['dir1']),
-     # 1 existing dir:
-     ('dir1', []),
-     # 2 existing dirs: Same as 1 because we never get to the third
-     ),
-)
-ONE_DIR_DATA += tuple(item[:3] for item in TWO_DIRS_DATA)
+@pytest.mark.parametrize("actual, mock_os_exists, expected", success_testdata)
+def test_split_pre_existing_dir_root_does_exist(actual, mock_os_exists, expected, mocker):
+    mocker.patch('os.path.exists', side_effect=mock_os_exists)
+    assert split_pre_existing_dir(actual) == expected
 
 
-@pytest.mark.parametrize('directory, expected', ((d[0], d[4]) for d in THREE_DIRS_DATA))
-@pytest.mark.xfail(reason='broken test and/or code, original test missing assert', strict=False)
-def test_split_pre_existing_dir_three_levels_exist(directory, expected, mocker):
-    mocker.patch('os.path.exists', side_effect=[True, True, True])
-    assert split_pre_existing_dir(directory) == expected
-
-
-@pytest.mark.parametrize('directory, expected', ((d[0], d[3]) for d in TWO_DIRS_DATA))
-@pytest.mark.xfail(reason='broken test and/or code, original test missing assert', strict=False)
-def test_split_pre_existing_dir_two_levels_exist(directory, expected, mocker):
-    mocker.patch('os.path.exists', side_effect=[True, True, False])
-    assert split_pre_existing_dir(directory) == expected
-
-
-@pytest.mark.parametrize('directory, expected', ((d[0], d[2]) for d in ONE_DIR_DATA))
-@pytest.mark.xfail(reason='broken test and/or code, original test missing assert', strict=False)
-def test_split_pre_existing_dir_one_level_exists(directory, expected, mocker):
-    mocker.patch('os.path.exists', side_effect=[True, False, False])
-    assert split_pre_existing_dir(directory) == expected
-
-
-@pytest.mark.parametrize('directory', (d[0] for d in ONE_DIR_DATA if d[1] is None))
-def test_split_pre_existing_dir_root_does_not_exist(directory, mocker):
-    mocker.patch('os.path.exists', return_value=False)
+@pytest.mark.parametrize("actual, mock_os_exists", failure_testdata)
+def test_split_pre_existing_dir_root_does_not_exist(actual, mock_os_exists, mocker):
+    mocker.patch('os.path.exists', side_effect=mock_os_exists)
     with pytest.raises(AnsibleModuleError) as excinfo:
-        split_pre_existing_dir(directory)
+        split_pre_existing_dir(actual)
     assert excinfo.value.results['msg'].startswith("The '/' directory doesn't exist on this machine.")
-
-
-@pytest.mark.parametrize('directory, expected', ((d[0], d[1]) for d in ONE_DIR_DATA if not d[0].startswith('/')))
-@pytest.mark.xfail(reason='broken test and/or code, original test missing assert', strict=False)
-def test_split_pre_existing_dir_working_dir_exists(directory, expected, mocker):
-    mocker.patch('os.path.exists', return_value=False)
-    assert split_pre_existing_dir(directory) == expected
-
 
 #
 # Info helpful for making new test cases:
@@ -149,6 +79,7 @@ def test_split_pre_existing_dir_working_dir_exists(directory, expected, mocker):
 # 'u': 6,
 # 'g': 3,
 # 'o': 0}
+
 
 DATA = (  # Going from no permissions to setting all for user, group, and/or other
     (0o040000, u'a+rwx', 0o0777),
@@ -228,5 +159,5 @@ def test_invalid_symbolic_modes(mocker, stat_info, mode_string, expected):
     mock_stat = mocker.MagicMock()
     mock_stat.st_mode = stat_info
     with pytest.raises(ValueError) as exc:
-        assert AnsibleModule._symbolic_mode_to_octal(mock_stat, mode_string) == 'blah'
+        AnsibleModule._symbolic_mode_to_octal(mock_stat, mode_string)
     assert exc.match(expected)
