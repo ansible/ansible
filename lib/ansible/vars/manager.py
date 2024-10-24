@@ -465,6 +465,8 @@ class VariableManager:
 
             variables['ansible_play_name'] = play.get_name()
 
+            variables['ansible_play_strategy'] = play.strategy
+
         if task:
             if task._role:
                 variables['role_name'] = task._role.get_name(include_role_fqcn=False)
