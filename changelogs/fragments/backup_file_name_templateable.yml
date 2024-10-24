@@ -1,0 +1,2 @@
+minor_changes:
+  - module_utils common backup function, the backup file name is now user settable via new config setting BACKUP_FILE_NAME_TEMPLATE
