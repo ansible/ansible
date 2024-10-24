@@ -1,0 +1,2 @@
+bugfixes:
+  - apt - handle the error if the default_release can't be configured, and try updating the sources in the cache before giving up (https://github.com/ansible/ansible/issues/28991).

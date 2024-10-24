@@ -1361,6 +1361,10 @@ def main():
     # max times we'll retry
     deadline = time.time() + p['lock_timeout']
 
+    # https://github.com/ansible/ansible/issues/28991
+    # we may need to update the available sources before we can configure the default_release
+    cache_primed = retry_default_release = False
+
     # keep running on lock issues unless timeout or resolution is hit.
     while True:
 
@@ -1373,8 +1377,20 @@ def main():
                     apt_pkg.config['APT::Default-Release'] = p['default_release']
                 except AttributeError:
                     apt_pkg.Config['APT::Default-Release'] = p['default_release']
-                # reopen cache w/ modified config
-                cache.open(progress=None)
+                # attempt to reopen cache w/ modified config
+                try:
+                    cache.open(progress=None)
+                except SystemError as e:
+                    if cache_primed or module.check_mode:
+                        raise e
+                    try:
+                        del apt_pkg.config['APT::Default-Release']
+                    except AttributeError:
+                        del apt_pkg.Config['APT::Default-Release']
+                    cache.open(progress=None)
+                    retry_default_release = True
+                else:
+                    retry_default_release = False
 
             mtimestamp, updated_cache_time = get_updated_cache_time()
             # Cache valid time is default 0, which will update the cache if
@@ -1420,6 +1436,10 @@ def main():
                     if module.check_mode or updated_cache_time != post_cache_update_time:
                         updated_cache = True
                     updated_cache_time = post_cache_update_time
+
+                    if retry_default_release:
+                        cache_primed = True
+                        continue
 
                 # If there is nothing else to do exit. This will set state as
                 #  changed based on if the cache was updated.
@@ -1547,6 +1567,8 @@ def main():
             module.fail_json(msg="Failed to lock apt for exclusive operation: %s" % lockFailedException)
         except apt.cache.FetchFailedException as fetchFailedException:
             module.fail_json(msg="Could not fetch updated apt files: %s" % fetchFailedException)
+        except SystemError as e:
+            module.fail_json(msg=to_native(e))
 
         # got here w/o exception and/or exit???
         module.fail_json(msg='Unexpected code path taken, we really should have exited before, this is a bug')
