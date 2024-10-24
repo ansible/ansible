@@ -1148,7 +1148,7 @@ class User(object):
         overwrite = None
         try:
             ssh_key_file = self.get_ssh_key_path()
-            pub_file = f'{ssh_key_file}.pub'
+            pub_file = '%s.pub' % ssh_key_file
         except Exception as e:
             return (1, '', to_native(e))
         ssh_dir = os.path.dirname(ssh_key_file)
@@ -1164,18 +1164,18 @@ class User(object):
 
         if os.path.exists(ssh_key_file):
             if self.force:
-                self.module.warn(f'Overwriting existing ssh key private file "{ssh_key_file}"')
+                self.module.warn('Overwriting existing ssh key private file "%s"' % ssh_key_file)
                 overwrite = 'y'
             else:
-                self.module.warn(f'Found existing ssh key private file "{ssh_key_file}", no force, so skipping ssh-keygen generation')
+                self.module.warn('Found existing ssh key private file "%s", no force, so skipping ssh-keygen generation' % ssh_key_file)
                 return (None, 'Key already exists, use "force: yes" to overwrite', '')
 
         if os.path.exists(pub_file):
             if self.force:
-                self.module.warn(f'Overwriting existing ssh key public file "{pub_file}"')
+                self.module.warn('Overwriting existing ssh key public file "%s"' % pub_file)
                 os.unlink(pub_file)
             else:
-                self.module.warn(f'Found existing ssh key public file "{pub_file}", no force, so skipping ssh-keygen generation')
+                self.module.warn('Found existing ssh key public file "%s", no force, so skipping ssh-keygen generation' % pub_file)
                 return (None, 'Public key already exists, use "force: yes" to overwrite', '')
 
         cmd = [self.module.get_bin_path('ssh-keygen', True)]
