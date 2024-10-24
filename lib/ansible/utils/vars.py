@@ -100,10 +100,11 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
     # verify x & y are dicts
     _validate_mutable_mappings(x, y)
 
-    # to speed things up: if x is empty or equal to y, return y
+    # to speed things up: if x is empty or (x equal to y and
+    # list_merge != append and list_merge != prepend), return y
     # (this `if` can be remove without impact on the function
     #  except performance)
-    if x == {} or x == y:
+    if x == {} or (x == y and list_merge not in ('append', 'prepend')):
         return y.copy()
     if y == {}:
         return x
