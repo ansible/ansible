@@ -430,11 +430,19 @@ class FileVaultSecret(VaultSecret):
 
 
 class ScriptVaultSecret(FileVaultSecret):
-    def _read_file(self, filename):
-        if not self.loader.is_executable(filename):
-            raise AnsibleVaultError("The vault password script %s was not executable" % filename)
+    @property
+    def bytes(self):
+        if self._bytes is None:
+            self._bytes = self._read_file(self.filename)
+        return self._bytes
 
+    def load(self):
+        if not self.loader.is_executable(self.filename):
+            raise AnsibleVaultError("The vault password script %s was not executable" % self.filename)
+
+    def _read_file(self, filename):
         command = self._build_command()
+        display.vvvvv(u'The vault password script is reading the secret from %r' % self)
 
         stdout, stderr, p = self._run(command)
 
