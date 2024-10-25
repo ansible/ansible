@@ -1,12 +1,5 @@
 # Copyright: Contributors to the Ansible project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
-from __future__ import annotations
-
-from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
-from ansible.module_utils.common._collections_compat import Sequence
-from ansible.module_utils.six import string_types
-
 """
 Utilities to create module/plugin specs from their documentation.
 
@@ -64,6 +57,12 @@ example of DOCUMENTATION with requirements:
          by: [b,c]
 '''
 """
+from __future__ import annotations
+
+from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.module_utils.common._collections_compat import Sequence
+from ansible.module_utils.six import string_types
+
 
 ARGS_DOCS_KEYS = ("aliases", "choices", "default", "elements", "no_log", "required", "type")
 
@@ -90,7 +89,7 @@ def option_to_spec(option, deprecate=None) -> dict:
     return spec
 
 
-def restriction_to_spec(r) -> list[list[str]] | None:
+def restriction_to_spec(r) -> t.Any:
     """ read documented restriction and create spec restriction """
 
     name = None
