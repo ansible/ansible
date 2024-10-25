@@ -19,6 +19,7 @@
     modification_time_format: "%Y%m%d%H%M.%S"
   check_mode: true
   register: file_change_check_mode
+  diff: true
 
 - name: Re-stat the file
   stat:
@@ -41,6 +42,7 @@
     modification_time: "{{ modification_timestamp }}"
     modification_time_format: "%Y%m%d%H%M.%S"
   register: file_change_no_check_mode
+  diff: true
 
 - name: Stat of the file after the change
   stat:
@@ -61,6 +63,7 @@
     modification_time: "{{ modification_timestamp }}"
     modification_time_format: "%Y%m%d%H%M.%S"
   register: file_change_no_check_mode_second
+  diff: true
 
 - name: Confirm no changes made registered
   assert:
