@@ -354,7 +354,7 @@ class Display(metaclass=Singleton):
     @staticmethod
     def _proxy(
         func: c.Callable[t.Concatenate[Display, P], None]
-    ) -> c.Callable[..., None]:
+    ) -> c.Callable[..., None | str]:
         @wraps(func)
         def wrapper(self, *args: P.args, **kwargs: P.kwargs) -> None:
             if self._final_q:
