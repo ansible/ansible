@@ -1396,7 +1396,7 @@ class DocCLI(CLI, RoleMixin):
                 if 'removed_at_date' not in doc['deprecated'] and 'version' in doc['deprecated'] and 'removed_in' not in doc['deprecated']:
                     doc['deprecated']['removed_in'] = doc['deprecated']['version']
                 try:
-                    text.append('\t' + C.config.get_deprecated_msg_from_config(doc['deprecated'], True))
+                    text.append('\t' + C.config.get_deprecated_msg_from_config(doc['deprecated'], True, collection_name=collection_name))
                 except KeyError as e:
                     raise AnsibleError("Invalid deprecation documentation structure", orig_exc=e)
             else:

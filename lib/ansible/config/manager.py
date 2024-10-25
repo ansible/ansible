@@ -682,12 +682,14 @@ class ConfigManager(object):
         self._plugins[plugin_type][name] = defs
 
     @staticmethod
-    def get_deprecated_msg_from_config(dep_docs, include_removal=False):
+    def get_deprecated_msg_from_config(dep_docs, include_removal=False, collection_name=None):
 
         removal = ''
         if include_removal:
             if 'removed_at_date' in dep_docs:
                 removal = f"Will be removed in a release after {dep_docs['removed_at_date']}\n\t"
+            elif collection_name:
+                removal = f"Will be removed in: {collection_name} {dep_docs['removed_in']}\n\t"
             else:
                 removal = f"Will be removed in: Ansible {dep_docs['removed_in']}\n\t"
 

@@ -12,7 +12,7 @@
   messages.
 DEPRECATED: 
 	Reason: Test deprecation
-	Will be removed in: Ansible 3.0.0
+	Will be removed in: testns.testcol 3.0.0
 	Alternatives: Use some other module
 
 OPTIONS (= indicates it is required):
