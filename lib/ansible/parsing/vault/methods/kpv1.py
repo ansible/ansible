@@ -22,7 +22,7 @@ class NoParams:
 
 
 class VaultMethod(VaultMethodBase):
-    ''' Both public and private keys must RSA in PEM format and not protected by passhprase
+    """ Both public and private keys must RSA in PEM or OpenSSH format and not protected by passhprase
 
     # generate RSA, private one in PEM format, use empty passphrase on prompt,
     # public key will be openssh format
@@ -36,7 +36,7 @@ class VaultMethod(VaultMethodBase):
 
     # decrypt file with private
     ansible-vault decrypt data.txt --vault-id ~/.ssh/vault.pem -vvv
-    '''
+    """
 
     padding = padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
 
@@ -54,7 +54,6 @@ class VaultMethod(VaultMethodBase):
             except ValueError as e2:
                 raise ValueError(f"Could not load vault secret public key, as ssh: {e!r}.\n Nor as pem: {e2!r}")
 
-        print('hi')
         if hasattr(public_key, 'encrypt'):
             encrypted_text = public_key.encrypt(plaintext, cls.padding)
         else:
