@@ -1155,7 +1155,7 @@
   - name: install collection with directory source and trailing slash - {{ test_id }}
     command: ansible-galaxy collection install '{{ galaxy_dir }}/scratch/trailing_dir/name/' {{ galaxy_verbosity }}
     environment:
-      ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+      ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
     register: install_dir_slash
 
   - name: get result of install collections with with trailing slash - {{ test_id }}
