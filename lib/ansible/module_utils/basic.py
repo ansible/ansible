@@ -2066,13 +2066,7 @@ def get_module_path():
 
 def __getattr__(importable_name):
     """Inject import-time deprecation warnings."""
-    if importable_name == 'get_exception':
-        from ansible.module_utils.pycompat24 import get_exception
-        importable = get_exception
-    elif importable_name in {'literal_eval', '_literal_eval'}:
-        from ast import literal_eval
-        importable = literal_eval
-    elif importable_name == 'datetime':
+    if importable_name == 'datetime':
         import datetime
         importable = datetime
     elif importable_name == 'signal':
