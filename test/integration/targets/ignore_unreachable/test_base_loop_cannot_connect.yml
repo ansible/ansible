@@ -1,0 +1,41 @@
+- hosts: localhost,nonexistent
+  gather_facts: false
+  tasks:
+  - name: Test ignore_unreachable for all items (pass)
+    ping:
+    ignore_unreachable: "{{ item.ignore_unreachable }}"
+    loop:
+      - ignore_unreachable: true
+      - ignore_unreachable: true
+    register: unreachable_ignored
+
+  - name: Test ignore_unreachable for second item (fail)
+    ping:
+    ignore_unreachable: "{{ item.ignore_unreachable }}"
+    loop:
+      - ignore_unreachable: false
+      - ignore_unreachable: true
+    register: unreachable_first
+
+  - meta: clear_host_errors
+
+  - name: Test ignore_unreachable for first item (fail)
+    ping:
+    ignore_unreachable: "{{ item.ignore_unreachable }}"
+    loop:
+      - ignore_unreachable: true
+      - ignore_unreachable: false
+    register: unreachable_last
+
+  - meta: clear_host_errors
+
+  - assert:
+      that:
+        - unreachable_ignored is not unreachable
+        - unreachable_first["results"][0] is unreachable
+        - unreachable_first["results"][-1] is not unreachable
+        - unreachable_first is unreachable
+        - unreachable_last["results"][-1] is unreachable
+        - unreachable_last["results"][0] is not unreachable
+        - unreachable_last is unreachable
+    when: inventory_hostname == 'nonexistent'
