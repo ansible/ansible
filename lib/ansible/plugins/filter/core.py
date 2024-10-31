@@ -286,26 +286,15 @@ def get_encrypted_password(password, hashtype='sha512', salt=None, salt_size=Non
 
     hashtype = passlib_mapping.get(hashtype, hashtype)
 
-    unknown_passlib_hashtype = False
     if PASSLIB_AVAILABLE and hashtype not in passlib_mapping and hashtype not in passlib_mapping.values():
-        unknown_passlib_hashtype = True
-        display.deprecated(
-            f"Checking for unsupported password_hash passlib hashtype '{hashtype}'. "
-            "This will be an error in the future as all supported hashtypes must be documented.",
-            version='2.19'
-        )
+        raise AnsibleFilterError(f"{hashtype} is not in the list of supported passlib algorithms: {', '.join(passlib_mapping)}")
 
     try:
         return do_encrypt(password, hashtype, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
     except AnsibleError as e:
         reraise(AnsibleFilterError, AnsibleFilterError(to_native(e), orig_exc=e), sys.exc_info()[2])
     except Exception as e:
-        if unknown_passlib_hashtype:
-            # This can occur if passlib.hash has the hashtype attribute, but it has a different signature than the valid choices.
-            # In 2.19 this will replace the deprecation warning above and the extra exception handling can be deleted.
-            choices = ', '.join(passlib_mapping)
-            raise AnsibleFilterError(f"{hashtype} is not in the list of supported passlib algorithms: {choices}") from e
-        raise
+        raise AnsibleFilterError(f"Failed to encrypt the password due to: {e}")
 
 
 def to_uuid(string, namespace=UUID_NAMESPACE_ANSIBLE):
