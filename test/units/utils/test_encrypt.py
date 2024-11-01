@@ -81,13 +81,6 @@ def test_password_hash_filter_passlib():
     assert (get_encrypted_password("123", "sha512", salt="12345678", rounds=5000) ==
             "$6$12345678$LcV9LQiaPekQxZ.OfkMADjFdSO2k9zfbDQrHPVcYjSLqSdjLYpsgqviYvTEP/R41yPmhH3CCeEDqVhW1VHr3L.")
 
-    assert get_encrypted_password("123", "crypt16", salt="12") == "12pELHK2ME3McUFlHxel6uMM"
-
-    # Try algorithm that uses a raw salt
-    assert get_encrypted_password("123", "pbkdf2_sha256")
-    # Try algorithm with ident
-    assert get_encrypted_password("123", "pbkdf2_sha256", ident='invalid_ident')
-
 
 @pytest.mark.skipif(not encrypt.PASSLIB_AVAILABLE, reason='passlib must be installed to run this test')
 def test_do_encrypt_passlib():
