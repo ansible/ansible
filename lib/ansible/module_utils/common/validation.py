@@ -185,7 +185,7 @@ def check_required_by(requirements, parameters, options_context=None):
     :kwarg options_context: List of strings of parent key names if ``requirements`` are
         in a sub spec.
 
-    :returns: Empty dictionary or raises :class:`TypeError` if the
+    :returns: Empty dictionary or raises :class:`TypeError` if the check fails.
     """
 
     result = {}
@@ -195,22 +195,15 @@ def check_required_by(requirements, parameters, options_context=None):
     for (key, value) in requirements.items():
         if key not in parameters or parameters[key] is None:
             continue
-        result[key] = []
         # Support strings (single-item lists)
         if isinstance(value, string_types):
             value = [value]
-        for required in value:
-            if required not in parameters or parameters[required] is None:
-                result[key].append(required)
 
-    if result:
-        for key, missing in result.items():
-            if len(missing) > 0:
-                msg = "missing parameter(s) required by '%s': %s" % (key, ', '.join(missing))
-                if options_context:
-                    msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
-                raise TypeError(to_native(msg))
-
+        if missing := [required for required in value if required not in parameters or parameters[required] is None]:
+            msg = f"missing parameter(s) required by '{key}': {', '.join(missing)}"
+            if options_context:
+                msg = f"{msg} found in {' -> '.join(options_context)}"
+            raise TypeError(to_native(msg))
     return result
 
 

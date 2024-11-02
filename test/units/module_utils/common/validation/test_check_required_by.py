@@ -4,10 +4,10 @@
 
 from __future__ import annotations
 
+import re
 
 import pytest
 
-from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.validation import check_required_by
 
 
@@ -19,9 +19,7 @@ def path_arguments_terms():
 
 
 def test_check_required_by():
-    arguments_terms = {}
-    params = {}
-    assert check_required_by(arguments_terms, params) == {}
+    assert check_required_by({}, {}) == {}
 
 
 def test_check_required_by_missing():
@@ -30,11 +28,8 @@ def test_check_required_by_missing():
     }
     params = {"force": True}
     expected = "missing parameter(s) required by 'force': force_reason"
-
-    with pytest.raises(TypeError) as e:
+    with pytest.raises(TypeError, match=re.escape(expected)):
         check_required_by(arguments_terms, params)
-
-    assert to_native(e.value) == expected
 
 
 def test_check_required_by_multiple(path_arguments_terms):
@@ -43,20 +38,16 @@ def test_check_required_by_multiple(path_arguments_terms):
     }
     expected = "missing parameter(s) required by 'path': mode, owner"
 
-    with pytest.raises(TypeError) as e:
+    with pytest.raises(TypeError, match=re.escape(expected)):
         check_required_by(path_arguments_terms, params)
-
-    assert to_native(e.value) == expected
 
 
 def test_check_required_by_single(path_arguments_terms):
     params = {"path": "/foo/bar", "mode": "0700"}
     expected = "missing parameter(s) required by 'path': owner"
 
-    with pytest.raises(TypeError) as e:
+    with pytest.raises(TypeError, match=re.escape(expected)):
         check_required_by(path_arguments_terms, params)
-
-    assert to_native(e.value) == expected
 
 
 def test_check_required_by_missing_none(path_arguments_terms):
@@ -65,7 +56,7 @@ def test_check_required_by_missing_none(path_arguments_terms):
         "mode": "0700",
         "owner": "root",
     }
-    assert check_required_by(path_arguments_terms, params)
+    assert check_required_by(path_arguments_terms, params) == {}
 
 
 def test_check_required_by_options_context(path_arguments_terms):
@@ -75,10 +66,8 @@ def test_check_required_by_options_context(path_arguments_terms):
 
     expected = "missing parameter(s) required by 'path': owner found in foo_context"
 
-    with pytest.raises(TypeError) as e:
+    with pytest.raises(TypeError, match=re.escape(expected)):
         check_required_by(path_arguments_terms, params, options_context)
-
-    assert to_native(e.value) == expected
 
 
 def test_check_required_by_missing_multiple_options_context(path_arguments_terms):
@@ -91,7 +80,5 @@ def test_check_required_by_missing_multiple_options_context(path_arguments_terms
         "missing parameter(s) required by 'path': mode, owner found in foo_context"
     )
 
-    with pytest.raises(TypeError) as e:
+    with pytest.raises(TypeError, match=re.escape(expected)):
         check_required_by(path_arguments_terms, params, options_context)
-
-    assert to_native(e.value) == expected
