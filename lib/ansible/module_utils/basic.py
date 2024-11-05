@@ -394,7 +394,6 @@ class AnsibleModule(object):
         # run_command invocation
         self.run_command_environ_update = {}
         self._clean = {}
-        self._string_conversion_action = ''
 
         self.aliases = {}
         self._legal_inputs = []

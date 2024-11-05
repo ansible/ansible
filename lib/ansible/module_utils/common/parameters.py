@@ -96,7 +96,6 @@ PASS_VARS = {
     'selinux_special_fs': ('_selinux_special_fs', ['fuse', 'nfs', 'vboxsf', 'ramfs', '9p', 'vfat']),
     'shell_executable': ('_shell', '/bin/sh'),
     'socket': ('_socket_path', None),
-    'string_conversion_action': ('_string_conversion_action', 'warn'),
     'syslog_facility': ('_syslog_facility', 'INFO'),
     'tmpdir': ('_tmpdir', None),
     'verbosity': ('_verbosity', 0),
