@@ -1014,15 +1014,15 @@ class HostConnectionError(ApplicationError):
             self._callback()
 
 
-def format_command_output(stdout: str, stderr: str) -> str:
+def format_command_output(stdout: str | None, stderr: str | None) -> str:
     """Return a formatted string containing the given stdout and stderr (if any)."""
     message = ''
 
-    if stderr := stderr.strip():
+    if stderr and (stderr := stderr.strip()):
         message += '>>> Standard Error\n'
         message += f'{stderr}{Display.clear}\n'
 
-    if stdout := stdout.strip():
+    if stdout and (stdout := stdout.strip()):
         message += '>>> Standard Output\n'
         message += f'{stdout}{Display.clear}\n'
 
