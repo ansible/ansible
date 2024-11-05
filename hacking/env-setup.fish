@@ -3,9 +3,23 @@
 # Description: Modifies the environment for running Ansible from a checkout
 # Usage: . ./hacking/env-setup [-q]
 
+# Set PYTHON_BIN
+if not set -q PYTHON_BIN
+    for exe in python3 python
+        if command -v $exe > /dev/null
+            set -gx PYTHON_BIN (command -v $exe)
+            break
+        end
+    end
+    if not set -q PYTHON_BIN
+        echo "No valid Python found"
+        exit 1
+    end
+end
+
 # Retrieve the path of the current directory where the script resides
 set HACKING_DIR (dirname (status -f))
-set FULL_PATH (python -c "import os; print(os.path.realpath('$HACKING_DIR'))")
+set FULL_PATH ($PYTHON_BIN -c "import os; print(os.path.realpath('$HACKING_DIR'))")
 set ANSIBLE_HOME (dirname $FULL_PATH)
 
 # Set quiet flag
@@ -48,20 +62,6 @@ if not set -q MANPATH
     set -gx MANPATH $PREFIX_MANPATH
 else if not string match -qr $PREFIX_MANPATH'($|:)' $MANPATH
     set -gx MANPATH "$PREFIX_MANPATH:$MANPATH"
-end
-
-# Set PYTHON_BIN
-if not set -q PYTHON_BIN
-    for exe in python3 python
-        if command -v $exe > /dev/null
-            set -gx PYTHON_BIN (command -v $exe)
-            break
-        end
-    end
-    if not set -q PYTHON_BIN
-        echo "No valid Python found"
-        exit 1
-    end
 end
 
 pushd $ANSIBLE_HOME
