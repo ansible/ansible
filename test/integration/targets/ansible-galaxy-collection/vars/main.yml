@@ -4,13 +4,15 @@ gpg_homedir: "{{ galaxy_dir }}/gpg"
 
 offline_server: https://test-hub.demolab.local/api/galaxy/content/api/
 
+# Test oldest and most recently supported, and versions with notable changes.
+# The last breaking change for a feature ansible-galaxy uses was in 0.8.0.
+# It would be redundant to test every minor version since 0.8.0, so we just test against the latest minor release.
+# NOTE: If ansible-galaxy incorporates new resolvelib features, this matrix should be updated to verify the features work on all supported versions.
 supported_resolvelib_versions:
-  - "0.5.3"  # Oldest supported
-  - "0.6.0"
-  - "0.7.0"
-  - "0.8.0"
-  - "0.9.0"
-  - "1.0.1"
+  - "0.5.3"  # test CollectionDependencyProvider050
+  - "0.6.0"  # test CollectionDependencyProvider060
+  - "0.7.0"  # test CollectionDependencyProvider070
+  - "<2.0.0"  # test CollectionDependencyProvider080
 
 unsupported_resolvelib_versions:
   - "0.2.0"  # Fails on import
