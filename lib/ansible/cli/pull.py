@@ -298,6 +298,9 @@ class PullCLI(CLI):
         if context.CLIARGS['diff']:
             cmd += ' -D'
 
+        if context.CLIARGS['flush_cache']:
+            cmd += ' --flush-cache'
+
         os.chdir(context.CLIARGS['dest'])
 
         # redo inventory options as new files might exist now

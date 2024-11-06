@@ -1,0 +1,2 @@
+- hosts: localhost
+  gather_facts: true
