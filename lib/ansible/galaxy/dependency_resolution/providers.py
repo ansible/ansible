@@ -39,7 +39,7 @@ except ImportError:
 
 # TODO: add python requirements to ansible-test's ansible-core distribution info and remove the hardcoded lowerbound/upperbound fallback
 RESOLVELIB_LOWERBOUND = SemanticVersion("0.5.3")
-RESOLVELIB_UPPERBOUND = SemanticVersion("1.1.0")
+RESOLVELIB_UPPERBOUND = SemanticVersion("2.0.0")
 RESOLVELIB_VERSION = SemanticVersion.from_loose_version(LooseVersion(resolvelib_version))
 
 
