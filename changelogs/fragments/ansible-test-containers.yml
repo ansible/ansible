@@ -1,0 +1,3 @@
+minor_changes:
+  - ansible-test - Replace container Fedora 40 with 41.
+  - ansible-test - Update distro containers to remove unnecessary pakages (apache2, subversion, ruby).
