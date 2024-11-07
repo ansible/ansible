@@ -267,8 +267,10 @@ MAGIC_VARIABLE_MAPPING = dict(
 )
 
 
-# INITALIZE CONFIG MANAGER
-config = ConfigManager()
+def force_preload():
+    """ read all available constants, used for config dumps """
+    for setting in config.get_configuration_definitions():
+        set_constant(setting, config.get_config_value(setting, variables=vars()))
 
 
 def __getattr__(config_constant):
@@ -286,6 +288,10 @@ def __getattr__(config_constant):
         handle_config_noise()
 
     return globals()[config_constant]
+
+
+# INITALIZE CONFIG MANAGER
+config = ConfigManager()
 
 # we always initalize these constants as others depend on them for basic config templating.
 for c in __INITIALIZE:

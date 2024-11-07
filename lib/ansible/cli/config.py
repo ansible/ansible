@@ -95,6 +95,9 @@ class ConfigCLI(CLI):
         self.config = None
         super(ConfigCLI, self).__init__(args, callback)
 
+        # we don't want 'dynamic' constants
+        C.force_preload()
+
     def init_parser(self):
 
         super(ConfigCLI, self).init_parser(
