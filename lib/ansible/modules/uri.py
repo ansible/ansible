@@ -605,6 +605,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
 
 def main():
     argument_spec = url_argument_spec()
+    argument_spec['url']['required'] = True
     argument_spec.update(
         dest=dict(type='path'),
         url_username=dict(type='str', aliases=['user']),
