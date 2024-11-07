@@ -26,13 +26,13 @@ install_ssh_keys()
         echo "${ssh_private_key}" > "${ssh_private_key_path}"
 
         # add public key to authorized_keys
-        authoried_keys_path="${HOME}/.ssh/authorized_keys"
+        authorized_keys_path="${HOME}/.ssh/authorized_keys"
 
         # the existing file is overwritten to avoid conflicts (ex: RHEL on EC2 blocks root login)
-        cat "${public_key_path}" > "${authoried_keys_path}"
-        chmod 0600 "${authoried_keys_path}"
+        cat "${public_key_path}" > "${authorized_keys_path}"
+        chmod 0600 "${authorized_keys_path}"
 
-        # add localhost's server keys to known_hosts
+        # add localhost server keys to known_hosts
         known_hosts_path="${HOME}/.ssh/known_hosts"
 
         for key in /etc/ssh/ssh_host_*_key.pub; do
@@ -168,16 +168,8 @@ bootstrap_remote_freebsd()
         # Declare platform/python version combinations which do not have supporting OS packages available.
         # For these combinations ansible-test will use pip to install the requirements instead.
         case "${platform_version}/${python_version}" in
-            13.3/3.9)
-                # defaults above 'just work'TM
-                ;;
-            13.3/3.11)
-                jinja2_pkg=""  # not available
-                cryptography_pkg=""  # not available
-                pyyaml_pkg=""  # not available
-                ;;
-            14.1/3.9)
-                # defaults above 'just work'TM
+            13.4/3.11)
+                # defaults available
                 ;;
             14.1/3.11)
                 cryptography_pkg=""  # not available
