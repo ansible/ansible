@@ -83,9 +83,9 @@ class _DeprecatedSequenceConstant(Sequence):
 
 
 def __getattr__(config_constant):
-    ''' Handle dynamicall generating a 'constant' when first requested,
+    """ Handle dynamicall generating a 'constant' when first requested,
         otherwise just return it from cached value.
-    '''
+    """
 
     if config_constant not in globals():
         try:
@@ -267,8 +267,9 @@ MAGIC_VARIABLE_MAPPING = dict(
 )
 
 
-def force_preload():
+def _force_preload():
     """ read all available constants, used for config dumps """
+    # NOTE: previous templating dependencies should already be covered, order does not matter anymore
     for setting in config.get_configuration_definitions():
         set_constant(setting, config.get_config_value(setting, variables=vars()))
 
