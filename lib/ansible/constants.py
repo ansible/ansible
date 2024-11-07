@@ -272,6 +272,7 @@ config = ConfigManager()
 
 
 def __getattr__(config_constant):
+    """ Module level 'getter' that populates constants on demand and avoids having to preload them """
 
     if config_constant not in globals():
         try:
@@ -286,8 +287,8 @@ def __getattr__(config_constant):
 
     return globals()[config_constant]
 
+# we always initalize these constants as others depend on them for basic config templating.
 for c in __INITIALIZE:
-    # we always initalize these constants as others depend on them for basic config templating.
-    # TODO: create a dep system to avoid hardcoded list, previouslly relied on order in base.yml
-    #       now relies on order in hardcoded constant in this file.
+    # NOTE: We should create a dep system to avoid hardcoded list, previouslly relied on order in base.yml
+    #      now relies on order in hardcoded constant in this file.
     __getattr__(c)
