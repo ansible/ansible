@@ -6,19 +6,19 @@ export ANSIBLE_DEPRECATION_WARNINGS=True
 
 ### check general config
 
-# check for entry key valid, no deprecation
+# not using anything deprecated , so no notice
 [ "$(ANSIBLE_CONFIG='entry_key_not_deprecated.cfg' ansible -m meta -a 'noop'  localhost 2>&1 | grep -c 'DEPRECATION')" -eq "0" ]
 
-# key is deprecated, but not accessed, so no notice
+# entry source is deprecated, but entry is not consumed, so no notice
 [ "$(ANSIBLE_CONFIG='entry_key_deprecated.cfg' ansible -m meta -a 'noop' localhost 2>&1 | grep -c 'DEPRECATION')" -eq "0" ]
 
-# check for entry key deprecation including the name of the option, must be defined and accessed to trigger
+# check for entry source deprecation including the name of the option, consumed so must trigger
 [ "$(ANSIBLE_CONFIG='entry_key_deprecated.cfg' ansible -m debug -a 'msg={{q("config", "_Z_TEST_ENTRY")}}' localhost 2>&1 | grep -c "\[DEPRECATION WARNING\]: \[testing\]deprecated option.")" -eq "1" ]
 
-# check for entry deprecation, must be loaded to trigger
+# check deprecated entry is not accessed, so no notice
 [ "$(ANSIBLE_CONFIG='entry_key_deprecated2.cfg' ansible -m meta -a 'noop'  localhost 2>&1 | grep -c 'DEPRECATION')" -eq "0" ]
 
-# check for deprecation of entry itself, must be consumed to trigger
+# check deprecated entry, consumed so must trigger
 [ "$(ANSIBLE_TEST_ENTRY2=1 ansible -m debug -a 'msg={{q("config", "_Z_TEST_ENTRY_2")}}' localhost  2>&1 | grep -c 'DEPRECATION')" -eq "1" ]
 
 
