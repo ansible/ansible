@@ -78,6 +78,10 @@ stages:
               test: 2022/psrp/http
             - name: 2022 SSH Key
               test: 2022/ssh/key
+            - name: 2025 PSRP HTTP
+              test: 2025/psrp/http
+            - name: 2025 SSH Key
+              test: 2025/ssh/key
   - stage: Remote
     dependsOn: []
     jobs:
@@ -198,6 +202,10 @@ stages:
               test: 2022/psrp/http
             - name: 2022 SSH Key
               test: 2022/ssh/key
+            - name: 2025 PSRP HTTP
+              test: 2025/psrp/http
+            - name: 2025 SSH Key
+              test: 2025/ssh/key
   - stage: Incidental
     dependsOn: []
     jobs:
