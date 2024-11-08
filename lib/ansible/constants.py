@@ -82,10 +82,15 @@ class _DeprecatedSequenceConstant(Sequence):
         return self._value[y]
 
 
+def _force_preload():
+    """ read all available constants, used for config dumps """
+    # NOTE: previous templating dependencies should already be covered, order does not matter anymore
+    for setting in config.get_configuration_definitions():
+        set_constant(setting, config.get_config_value(setting, variables=vars()))
+
+
 def __getattr__(config_constant):
-    """ Handle dynamicall generating a 'constant' when first requested,
-        otherwise just return it from cached value.
-    """
+    """ Module level 'getter' that populates constants on demand and avoids having to preload them """
 
     if config_constant not in globals():
         try:
@@ -95,9 +100,8 @@ def __getattr__(config_constant):
 
         globals()[config_constant] = value
 
-        if config.WARNINGS:
-            for warn in config.WARNINGS.pop():
-                _warning(warn)
+        # emit any warnings or deprecations
+        handle_config_noise()
 
     return globals()[config_constant]
 
@@ -265,30 +269,6 @@ MAGIC_VARIABLE_MAPPING = dict(
     become_exe=('ansible_become_exe', ),
     become_flags=('ansible_become_flags', ),
 )
-
-
-def _force_preload():
-    """ read all available constants, used for config dumps """
-    # NOTE: previous templating dependencies should already be covered, order does not matter anymore
-    for setting in config.get_configuration_definitions():
-        set_constant(setting, config.get_config_value(setting, variables=vars()))
-
-
-def __getattr__(config_constant):
-    """ Module level 'getter' that populates constants on demand and avoids having to preload them """
-
-    if config_constant not in globals():
-        try:
-            value = config.get_config_value(config_constant, variables=globals())
-        except Exception as e:
-            raise AttributeError(e)
-
-        globals()[config_constant] = value
-
-        # emit any warnings or deprecations
-        handle_config_noise()
-
-    return globals()[config_constant]
 
 
 # INITALIZE CONFIG MANAGER
