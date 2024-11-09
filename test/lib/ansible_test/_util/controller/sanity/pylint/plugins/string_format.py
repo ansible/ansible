@@ -6,13 +6,6 @@ from __future__ import annotations
 
 import astroid
 
-# support pylint 2.x and 3.x -- remove when supporting only 3.x
-try:
-    from pylint.interfaces import IAstroidChecker
-except ImportError:
-    class IAstroidChecker:
-        """Backwards compatibility for 2.x / 3.x support."""
-
 try:
     from pylint.checkers.utils import check_messages
 except ImportError:
@@ -38,7 +31,6 @@ class AnsibleStringFormatChecker(BaseChecker):
     is valid and the arguments match the format string.
     """
 
-    __implements__ = (IAstroidChecker,)
     name = 'string'
     msgs = MSGS
 

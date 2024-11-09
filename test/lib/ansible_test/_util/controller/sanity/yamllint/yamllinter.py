@@ -12,7 +12,7 @@ import yaml
 from yaml.resolver import Resolver
 from yaml.constructor import SafeConstructor
 from yaml.error import MarkedYAMLError
-from yaml.cyaml import CParser
+from yaml.cyaml import CParser  # type: ignore[attr-defined]
 
 from yamllint import linter
 from yamllint.config import YamlLintConfig
@@ -45,17 +45,17 @@ class TestConstructor(SafeConstructor):
 
 TestConstructor.add_constructor(
     '!unsafe',
-    TestConstructor.construct_yaml_unsafe)
+    TestConstructor.construct_yaml_unsafe)  # type: ignore[type-var]
 
 
 TestConstructor.add_constructor(
     '!vault',
-    TestConstructor.construct_yaml_str)
+    TestConstructor.construct_yaml_str)  # type: ignore[type-var]
 
 
 TestConstructor.add_constructor(
     '!vault-encrypted',
-    TestConstructor.construct_yaml_str)
+    TestConstructor.construct_yaml_str)  # type: ignore[type-var]
 
 
 class TestLoader(CParser, TestConstructor, Resolver):
@@ -135,11 +135,11 @@ class YamlChecker:
 
             self.messages += [self.result_to_message(r, path, lineno - 1, key) for r in messages]
 
-    def check_parsable(self, path, contents, lineno=1, allow_multiple=False, prefix=""):  # type: (str, str, int, bool) -> None
+    def check_parsable(self, path: str, contents: str, lineno: int = 1, allow_multiple: bool = False, prefix: str = "") -> None:
         """Check the given contents to verify they can be parsed as YAML."""
         prefix = f"{prefix}: " if prefix else ""
         try:
-            documents = len(list(yaml.load_all(contents, Loader=TestLoader)))
+            documents = len(list(yaml.load_all(contents, Loader=TestLoader)))  # type: ignore[arg-type]
             if documents > 1 and not allow_multiple:
                 self.messages += [{'code': 'multiple-yaml-documents',
                                    'message': f'{prefix}expected a single document in the stream',

@@ -10,7 +10,7 @@ from yaml import load
 try:
     from yaml import CSafeLoader as SafeLoader
 except ImportError:
-    from yaml import SafeLoader
+    from yaml import SafeLoader  # type: ignore[assignment]
 
 # unique ISO date marker matching the one present in importer.py
 ISO_DATE_MARKER = 'isodate:f23983df-f3df-453c-9904-bcd08af468cc:'

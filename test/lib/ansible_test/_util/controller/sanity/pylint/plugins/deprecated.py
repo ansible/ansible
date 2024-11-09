@@ -12,16 +12,6 @@ from tokenize import COMMENT, TokenInfo
 
 import astroid
 
-# support pylint 2.x and 3.x -- remove when supporting only 3.x
-try:
-    from pylint.interfaces import IAstroidChecker, ITokenChecker
-except ImportError:
-    class IAstroidChecker:
-        """Backwards compatibility for 2.x / 3.x support."""
-
-    class ITokenChecker:
-        """Backwards compatibility for 2.x / 3.x support."""
-
 try:
     from pylint.checkers.utils import check_messages
 except ImportError:
@@ -151,7 +141,6 @@ class AnsibleDeprecatedChecker(BaseChecker):
     has not passed or met the time for removal
     """
 
-    __implements__ = (IAstroidChecker,)
     name = 'deprecated'
     msgs = MSGS
 
@@ -295,8 +284,6 @@ class AnsibleDeprecatedCommentChecker(BaseTokenChecker):
     """Checks for ``# deprecated:`` comments to ensure that the ``version``
     has not passed or met the time for removal
     """
-
-    __implements__ = (ITokenChecker,)
 
     name = 'deprecated-comment'
     msgs = {

@@ -31,13 +31,16 @@ def main() -> None:
     remote_only_python_versions = os.environ['ANSIBLE_TEST_REMOTE_ONLY_PYTHON_VERSIONS'].split(',')
 
     contexts = (
-        MyPyContext('ansible-test', ['test/lib/ansible_test/_util/target/sanity/import/'], controller_python_versions),
-        MyPyContext('ansible-test', ['test/lib/ansible_test/_internal/'], controller_python_versions),
+        MyPyContext('ansible-test', ['test/lib/ansible_test/'], controller_python_versions),
+        MyPyContext('ansible-test', ['test/lib/ansible_test/_util/target/'], remote_only_python_versions),
+
         MyPyContext('ansible-core', ['lib/ansible/'], controller_python_versions),
-        MyPyContext('modules', ['lib/ansible/modules/', 'lib/ansible/module_utils/'], remote_only_python_versions),
-        MyPyContext('packaging', ['packaging/'], controller_python_versions),
-        MyPyContext('modules', ['test/units/modules/', 'test/units/module_utils/'], remote_only_python_versions),
+        MyPyContext('ansible-core', ['lib/ansible/modules/', 'lib/ansible/module_utils/'], remote_only_python_versions),
+
         MyPyContext('ansible-core', ['test/units/'], controller_python_versions),
+        MyPyContext('ansible-core', ['test/units/modules/', 'test/units/module_utils/'], remote_only_python_versions),
+
+        MyPyContext('packaging', ['packaging/'], controller_python_versions),
     )
 
     unfiltered_messages: list[SanityMessage] = []

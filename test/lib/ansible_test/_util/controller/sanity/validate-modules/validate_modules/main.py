@@ -65,7 +65,7 @@ def setup_collection_loader():
 setup_collection_loader()
 
 from ansible import __version__ as ansible_version
-from ansible.executor.module_common import REPLACER_WINDOWS, NEW_STYLE_PYTHON_MODULE_RE
+from ansible.executor.module_common import REPLACER_WINDOWS as _REPLACER_WINDOWS, NEW_STYLE_PYTHON_MODULE_RE
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.parameters import DEFAULT_TYPE_VALIDATORS
 from ansible.module_utils.compat.version import StrictVersion, LooseVersion
@@ -90,7 +90,7 @@ from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, par
 TRY_EXCEPT = ast.Try
 # REPLACER_WINDOWS from ansible.executor.module_common is byte
 # string but we need unicode for Python 3
-REPLACER_WINDOWS = REPLACER_WINDOWS.decode('utf-8')
+REPLACER_WINDOWS = _REPLACER_WINDOWS.decode('utf-8')
 
 REJECTLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
@@ -311,8 +311,8 @@ class ModuleValidator(Validator):
 
         self.analyze_arg_spec = analyze_arg_spec and plugin_type == 'module'
 
-        self._Version = LooseVersion
-        self._StrictVersion = StrictVersion
+        self._Version: type[LooseVersion | SemanticVersion] = LooseVersion
+        self._StrictVersion: type[StrictVersion | SemanticVersion] = StrictVersion
 
         self.collection = collection
         self.collection_name = 'ansible.builtin'

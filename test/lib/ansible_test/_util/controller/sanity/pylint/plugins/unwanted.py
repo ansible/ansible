@@ -6,13 +6,6 @@ import typing as t
 
 import astroid
 
-# support pylint 2.x and 3.x -- remove when supporting only 3.x
-try:
-    from pylint.interfaces import IAstroidChecker
-except ImportError:
-    class IAstroidChecker:
-        """Backwards compatibility for 2.x / 3.x support."""
-
 from pylint.checkers import BaseChecker
 
 ANSIBLE_TEST_MODULES_PATH = os.environ['ANSIBLE_TEST_MODULES_PATH']
@@ -63,7 +56,6 @@ def is_module_path(path):  # type: (str) -> bool
 
 class AnsibleUnwantedChecker(BaseChecker):
     """Checker for unwanted imports and functions."""
-    __implements__ = (IAstroidChecker,)
 
     name = 'unwanted'
 

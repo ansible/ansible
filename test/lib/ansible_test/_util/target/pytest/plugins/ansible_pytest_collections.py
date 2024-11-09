@@ -69,7 +69,7 @@ def enable_assertion_rewriting_hook():  # type: () -> None
     # noinspection PyProtectedMember
     from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionPkgLoaderBase
 
-    _AnsibleCollectionPkgLoaderBase.exec_module = exec_module
+    _AnsibleCollectionPkgLoaderBase.exec_module = exec_module  # type: ignore[method-assign]
 
 
 def pytest_configure():

@@ -11,7 +11,7 @@ except ImportError:
 try:
     from yaml import CLoader
 except ImportError:
-    CLoader = None
+    CLoader = None  # type: ignore[misc]
 
 print(json.dumps(dict(
     yaml=bool(yaml),
