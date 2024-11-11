@@ -93,10 +93,21 @@ namespace Ansible.Become
             CachedRemoteInteractive,
             CachedUnlock
         }
+
+        [Flags]
+        public enum ProcessChildProcessPolicyFlags
+        {
+            None = 0x0,
+            NoChildProcessCreation = 0x1,
+            AuditNoChildProcessCreation = 0x2,
+            AllowSecureProcessCreation = 0x4,
+        }
     }
 
     internal class NativeMethods
     {
+        public const int ProcessChildProcessPolicy = 13;
+
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool AllocateLocallyUniqueId(
             out Luid Luid);
@@ -115,6 +126,13 @@ namespace Ansible.Become
 
         [DllImport("kernel32.dll")]
         public static extern UInt32 GetCurrentThreadId();
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool GetProcessMitigationPolicy(
+            SafeNativeHandle hProcess,
+            int MitigationPolicy,
+            ref NativeHelpers.ProcessChildProcessPolicyFlags lpBuffer,
+            IntPtr dwLength);
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern NoopSafeHandle GetProcessWindowStation();
@@ -217,6 +235,7 @@ namespace Ansible.Become
         };
         private static int WINDOWS_STATION_ALL_ACCESS = 0x000F037F;
         private static int DESKTOP_RIGHTS_ALL_ACCESS = 0x000F01FF;
+        private static bool _getProcessMitigationPolicySupported = true;
 
         public static Result CreateProcessAsUser(string username, string password, string command)
         {
@@ -333,12 +352,13 @@ namespace Ansible.Become
                 // Grant access to the current Windows Station and Desktop to the become user
                 GrantAccessToWindowStationAndDesktop(account);
 
-                // Try and impersonate a SYSTEM token. We need the SeTcbPrivilege for
-                //  - LogonUser for a service SID
-                //  - S4U logon
-                //  - Token elevation
+                // Try and impersonate a SYSTEM token, we need a SYSTEM token to either become a well known service
+                // account or have administrative rights on the become access token.
+                // If we ultimately are becoming the SYSTEM account we want the token with the most privileges available.
+                // https://github.com/ansible/ansible/issues/71453
+                bool usedForProcess = becomeSid == "S-1-5-18";
                 systemToken = GetPrimaryTokenForUser(new SecurityIdentifier("S-1-5-18"),
-                    new List<string>() { "SeTcbPrivilege" });
+                    new List<string>() { "SeTcbPrivilege" }, usedForProcess);
                 if (systemToken != null)
                 {
                     try
@@ -356,9 +376,11 @@ namespace Ansible.Become
 
             try
             {
+                if (becomeSid == "S-1-5-18")
+                    userTokens.Add(systemToken);
                 // Cannot use String.IsEmptyOrNull() as an empty string is an account that doesn't have a pass.
                 // We only use S4U if no password was defined or it was null
-                if (!SERVICE_SIDS.Contains(becomeSid) && password == null && logonType != LogonType.NewCredentials)
+                else if (!SERVICE_SIDS.Contains(becomeSid) && password == null && logonType != LogonType.NewCredentials)
                 {
                     // If no password was specified, try and duplicate an existing token for that user or use S4U to
                     // generate one without network credentials
@@ -381,11 +403,6 @@ namespace Ansible.Become
                     string domain = null;
                     switch (becomeSid)
                     {
-                        case "S-1-5-18":
-                            logonType = LogonType.Service;
-                            domain = "NT AUTHORITY";
-                            username = "SYSTEM";
-                            break;
                         case "S-1-5-19":
                             logonType = LogonType.Service;
                             domain = "NT AUTHORITY";
@@ -427,8 +444,10 @@ namespace Ansible.Become
             return userTokens;
         }
 
-        private static SafeNativeHandle GetPrimaryTokenForUser(SecurityIdentifier sid,
-            List<string> requiredPrivileges = null)
+        private static SafeNativeHandle GetPrimaryTokenForUser(
+            SecurityIdentifier sid,
+            List<string> requiredPrivileges = null,
+            bool usedForProcess = false)
         {
             // According to CreateProcessWithTokenW we require a token with
             //  TOKEN_QUERY, TOKEN_DUPLICATE and TOKEN_ASSIGN_PRIMARY
@@ -438,7 +457,19 @@ namespace Ansible.Become
                 TokenAccessLevels.AssignPrimary |
                 TokenAccessLevels.Impersonate;
 
-            foreach (SafeNativeHandle hToken in TokenUtil.EnumerateUserTokens(sid, dwAccess))
+            SafeNativeHandle userToken = null;
+            int privilegeCount = 0;
+
+            // If we are using this token for the process, we need to check the
+            // process mitigation policy allows child processes to be created.
+            var processFilter = usedForProcess
+                ? (Func<System.Diagnostics.Process, SafeNativeHandle, bool>)((p, t) =>
+                {
+                    return GetProcessChildProcessPolicyFlags(t) == NativeHelpers.ProcessChildProcessPolicyFlags.None;
+                })
+                : ((p, t) => true);
+
+            foreach (SafeNativeHandle hToken in TokenUtil.EnumerateUserTokens(sid, dwAccess, processFilter))
             {
                 // Filter out any Network logon tokens, using become with that is useless when S4U
                 // can give us a Batch logon
@@ -447,6 +478,10 @@ namespace Ansible.Become
                     continue;
 
                 List<string> actualPrivileges = TokenUtil.GetTokenPrivileges(hToken).Select(x => x.Name).ToList();
+
+                // If the token has less or the same number of privileges than the current token, skip it.
+                if (usedForProcess && privilegeCount >= actualPrivileges.Count)
+                    continue;
 
                 // Check that the required privileges are on the token
                 if (requiredPrivileges != null)
@@ -459,16 +494,22 @@ namespace Ansible.Become
                 // Duplicate the token to convert it to a primary token with the access level required.
                 try
                 {
-                    return TokenUtil.DuplicateToken(hToken, TokenAccessLevels.MaximumAllowed,
+                    userToken = TokenUtil.DuplicateToken(hToken, TokenAccessLevels.MaximumAllowed,
                         SecurityImpersonationLevel.Anonymous, TokenType.Primary);
+                    privilegeCount = actualPrivileges.Count;
                 }
                 catch (Process.Win32Exception)
                 {
                     continue;
                 }
+
+                // If we don't care about getting the token with the most privileges, escape the loop as we already
+                // have a token.
+                if (!usedForProcess)
+                    break;
             }
 
-            return null;
+            return userToken;
         }
 
         private static SafeNativeHandle GetS4UTokenForUser(SecurityIdentifier sid, LogonType logonType)
@@ -579,6 +620,35 @@ namespace Ansible.Become
                 return linkedToken;
             else
                 return null;
+        }
+
+        private static NativeHelpers.ProcessChildProcessPolicyFlags GetProcessChildProcessPolicyFlags(SafeNativeHandle processHandle)
+        {
+            // Because this is only used to check the policy, we ignore any
+            // errors and pretend that the policy is None.
+            NativeHelpers.ProcessChildProcessPolicyFlags policy = NativeHelpers.ProcessChildProcessPolicyFlags.None;
+
+            if (_getProcessMitigationPolicySupported)
+            {
+                try
+                {
+                    if (NativeMethods.GetProcessMitigationPolicy(
+                        processHandle,
+                        NativeMethods.ProcessChildProcessPolicy,
+                        ref policy,
+                        (IntPtr)4))
+                    {
+                        return policy;
+                    }
+                }
+                catch (EntryPointNotFoundException)
+                {
+                    // If the function is not available, we won't try to call it again
+                    _getProcessMitigationPolicySupported = false;
+                }
+            }
+
+            return policy;
         }
 
         private static NativeHelpers.SECURITY_LOGON_TYPE GetTokenLogonType(SafeNativeHandle hToken)

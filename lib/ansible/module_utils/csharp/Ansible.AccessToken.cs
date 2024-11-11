@@ -339,19 +339,47 @@ namespace Ansible.AccessToken
         public static IEnumerable<SafeNativeHandle> EnumerateUserTokens(SecurityIdentifier sid,
             TokenAccessLevels access = TokenAccessLevels.Query)
         {
+            return EnumerateUserTokens(sid, access, (p, h) => true);
+        }
+
+        public static IEnumerable<SafeNativeHandle> EnumerateUserTokens(
+            SecurityIdentifier sid,
+            TokenAccessLevels access,
+            Func<System.Diagnostics.Process, SafeNativeHandle, bool> processFilter)
+        {
+            // We always need the Query access level so we can query the TokenUser
+            access |= TokenAccessLevels.Query;
+
             foreach (System.Diagnostics.Process process in System.Diagnostics.Process.GetProcesses())
             {
-                // We always need the Query access level so we can query the TokenUser
                 using (process)
-                using (SafeNativeHandle hToken = TryOpenAccessToken(process, access | TokenAccessLevels.Query))
+                using (SafeNativeHandle processHandle = NativeMethods.OpenProcess(ProcessAccessFlags.QueryInformation, false, (UInt32)process.Id))
                 {
-                    if (hToken == null)
+                    if (processHandle.IsInvalid)
+                    {
                         continue;
+                    }
 
-                    if (!sid.Equals(GetTokenUser(hToken)))
+                    if (!processFilter(process, processHandle))
+                    {
                         continue;
+                    }
 
-                    yield return hToken;
+                    SafeNativeHandle accessToken;
+                    if (!NativeMethods.OpenProcessToken(processHandle, access, out accessToken))
+                    {
+                        continue;
+                    }
+
+                    using (accessToken)
+                    {
+                        if (!sid.Equals(GetTokenUser(accessToken)))
+                        {
+                            continue;
+                        }
+
+                        yield return accessToken;
+                    }
                 }
             }
         }
@@ -439,19 +467,6 @@ namespace Ansible.AccessToken
             IntPtr ptrOffset = ptr;
             for (int i = 0; i < array.Length; i++, ptrOffset = IntPtr.Add(ptrOffset, Marshal.SizeOf(typeof(T))))
                 array[i] = (T)Marshal.PtrToStructure(ptrOffset, typeof(T));
-        }
-
-        private static SafeNativeHandle TryOpenAccessToken(System.Diagnostics.Process process, TokenAccessLevels access)
-        {
-            try
-            {
-                using (SafeNativeHandle hProcess = OpenProcess(process.Id, ProcessAccessFlags.QueryInformation, false))
-                    return OpenProcessToken(hProcess, access);
-            }
-            catch (Win32Exception)
-            {
-                return null;
-            }
         }
     }
 }
