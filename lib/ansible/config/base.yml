@@ -782,7 +782,6 @@ DEFAULT_KEEP_REMOTE_FILES:
   - {key: keep_remote_files, section: defaults}
   type: boolean
 DEFAULT_LIBVIRT_LXC_NOSECLABEL:
-  # TODO: move to plugin
   name: No security label on Lxc
   default: False
   description:
@@ -794,6 +793,10 @@ DEFAULT_LIBVIRT_LXC_NOSECLABEL:
   - {key: libvirt_lxc_noseclabel, section: selinux}
   type: boolean
   version_added: "2.1"
+  deprecated:
+    why: This option was moved to the plugin itself
+    version: "2.22"
+    alternatives: Use the option from the plugin itself.
 DEFAULT_LOAD_CALLBACK_PLUGINS:
   name: Load callbacks for adhoc
   default: False
