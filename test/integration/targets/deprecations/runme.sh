@@ -34,6 +34,11 @@ export ANSIBLE_CACHE_PLUGIN=notjsonfile
 # check for plugin(s) config option deprecation
 [ "$(ANSIBLE_NOTJSON_CACHE_PLUGIN_REMOVEME=1 ansible -m meta -a 'noop'  localhost --playbook-dir ./ 2>&1 | grep -c 'DEPRECATION')" -eq "1" ]
 
-# TODO: check for module deprecation
-# TODO: check for module option deprecation
-# TODO: check for plugin deprecation
+# check for the module deprecation
+[ "$(ansible-doc willremove --playbook-dir ./ | grep -c 'DEPRECATED')" -eq "1" ]
+
+# check for the module option deprecation
+[ "$(ansible-doc removeoption --playbook-dir ./ | grep -c 'deprecated:')" -eq "1" ]
+
+# check for plugin deprecation
+[ "$(ansible-doc -t cache notjsonfile --playbook-dir ./ | grep -c 'DEPRECATED:')" -eq "1" ]
