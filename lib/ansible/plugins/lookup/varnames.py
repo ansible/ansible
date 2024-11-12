@@ -13,11 +13,14 @@ DOCUMENTATION = """
       _terms:
         description: List of Python regex patterns to search for in variable names.
         required: True
+    seealso:
+        - plugin_type: lookup
+          plugin: ansible.builtin.vars
 """
 
 EXAMPLES = """
 - name: List variables that start with qz_
-  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.varnames', '^qz_.+')}}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.varnames', '^qz_.+') }}"
   vars:
     qz_1: hello
     qz_2: world
@@ -25,13 +28,16 @@ EXAMPLES = """
     qz_: "I won't show either"
 
 - name: Show all variables
-  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.varnames', '.+')}}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.varnames', '.+') }}"
 
 - name: Show variables with 'hosts' in their names
-  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.varnames', 'hosts')}}"
+  ansible.builtin.debug: msg="{{ q('varnames', 'hosts') }}"
 
 - name: Find several related variables that end specific way
-  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.varnames', '.+_zone$', '.+_location$') }}"
+  ansible.builtin.debug: msg="{{ query('ansible.builtin.varnames', '.+_zone$', '.+_location$') }}"
+
+- name: display values from variables found via varnames (note "*" is used to dereference the list to a 'list of arguments')
+  debug: msg="{{ lookup('vars', *lookup('varnames', 'ansible_play_.+')) }}"
 
 """
 

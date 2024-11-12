@@ -17,6 +17,10 @@ DOCUMENTATION = """
         description:
             - What to return if a variable is undefined.
             - If no default is set, it will result in an error if any of the variables is undefined.
+    seealso:
+    - plugin_type: lookup
+      plugin: ansible.builtin.varnames
+
 """
 
 EXAMPLES = """
@@ -27,20 +31,23 @@ EXAMPLES = """
     myvar: ename
 
 - name: Show default empty since i dont have 'variablnotename'
-  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.vars', 'variabl' + myvar, default='')}}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.vars', 'variabl' + myvar, default='') }}"
   vars:
     variablename: hello
     myvar: notename
 
 - name: Produce an error since i dont have 'variablnotename'
-  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.vars', 'variabl' + myvar)}}"
+  ansible.builtin.debug: msg="{{ q('vars', 'variabl' + myvar) }}"
   ignore_errors: True
   vars:
     variablename: hello
     myvar: notename
 
 - name: find several related variables
-  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.vars', 'ansible_play_hosts', 'ansible_play_batch', 'ansible_play_hosts_all') }}"
+  ansible.builtin.debug: msg="{{ query('ansible.builtin.vars', 'ansible_play_hosts', 'ansible_play_batch', 'ansible_play_hosts_all') }}"
+
+- name: show values from variables found via varnames (note "*" is used to dereference the list to a 'list of arguments')
+  debug: msg="{{ q('vars', *q('varnames', 'ansible_play_.+')) }}"
 
 - name: Access nested variables
   ansible.builtin.debug: msg="{{ lookup('ansible.builtin.vars', 'variabl' + myvar).sub_var }}"
