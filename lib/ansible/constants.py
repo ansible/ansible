@@ -271,11 +271,9 @@ MAGIC_VARIABLE_MAPPING = dict(
 )
 
 
-# INITALIZE CONFIG MANAGER
-config = ConfigManager()
-
-# we always initalize these constants as others depend on them for basic config templating.
+# we always initialize these constants as others depend on them for basic config templating.
 for c in __INITIALIZE:
-    # NOTE: We should create a dep system to avoid hardcoded list, previouslly relied on order in base.yml
-    #      now relies on order in hardcoded constant in this file.
+    # NOTE: We should create a dep system to avoid a hardcoded list,
+    #       previously relied on the order in base.yml.
+    #       now relies on order in hardcoded constant in this file.
     __getattr__(c)

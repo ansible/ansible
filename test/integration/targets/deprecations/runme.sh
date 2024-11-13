@@ -6,7 +6,7 @@ export ANSIBLE_DEPRECATION_WARNINGS=True
 
 ### check general config
 
-# not using anything deprecated , so no notice
+# not using anything deprecated, so no notice
 [ "$(ANSIBLE_CONFIG='entry_key_not_deprecated.cfg' ansible -m meta -a 'noop'  localhost 2>&1 | grep -c 'DEPRECATION')" -eq "0" ]
 
 # entry source is deprecated, but entry is not consumed, so no notice
