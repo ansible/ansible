@@ -19,7 +19,7 @@ def collection_object():
 
 
 @pytest.mark.parametrize(
-    ("kwargs", "expected"),
+    ("display_collection_keyword_args", "expected"),
     [
         pytest.param(
             {},
@@ -43,7 +43,7 @@ def collection_object():
         ),
     ],
 )
-def test_display_collection(capsys, kwargs, expected, collection_object):
-    _display_collection(collection_object(), **kwargs)
+def test_display_collection(capsys, display_collection_keyword_args, expected, collection_object):
+    _display_collection(collection_object(), **display_collection_keyword_args)
     out, dummy = capsys.readouterr()
     assert out == expected

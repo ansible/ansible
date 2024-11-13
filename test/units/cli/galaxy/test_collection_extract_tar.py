@@ -29,6 +29,5 @@ def test_extract_tar_dir_exists(mocker, fake_tar_obj, isdir, called, call_args):
 
     _extract_tar_dir(fake_tar_obj, '/some/dir', b'/some/dest')
 
-    assert m_makedir.called == called
-    if m_makedir.called:
-        assert m_makedir.call_args[0] == call_args
+    assert m_makedir.called is called
+    assert not called or m_makedir.call_args[0] == call_args

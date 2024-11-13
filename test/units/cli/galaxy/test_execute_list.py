@@ -11,17 +11,17 @@ from ansible.cli.galaxy import GalaxyCLI
 
 
 @pytest.mark.parametrize(
-    ("test_type", "expected"),
+    ("installable_content_type", "expected"),
     [
         pytest.param("role", (1, 0), id="list-role-called"),
         pytest.param("collection", (0, 1), id="list-collection-called"),
     ],
 )
-def test_execute_list(mocker, test_type, expected):
+def test_execute_list(mocker, installable_content_type, expected):
     """Make sure the correct method is called for a role"""
 
-    gc = GalaxyCLI(["ansible-galaxy", test_type, "list"])
-    context.CLIARGS._store = {"type": test_type}
+    gc = GalaxyCLI(["ansible-galaxy", installable_content_type, "list"])
+    context.CLIARGS._store = {"type": installable_content_type}
     execute_list_role_mock = mocker.patch(
         "ansible.cli.galaxy.GalaxyCLI.execute_list_role",
         side_effect=AttributeError("raised intentionally"),

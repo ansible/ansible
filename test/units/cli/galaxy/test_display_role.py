@@ -10,7 +10,7 @@ import pytest
 
 
 @pytest.mark.parametrize(
-    ("test", "expected"),
+    ("role_metadata", "expected"),
     [
         pytest.param(
             {"name": "testrole", "install_info": None},
@@ -24,9 +24,9 @@ import pytest
         ),
     ],
 )
-def test_display_role(mocker, capsys, test, expected):
-    mocked_galaxy_role = mocker.Mock(**test)
-    mocked_galaxy_role.name = test["name"]
+def test_display_role(mocker, capsys, role_metadata, expected):
+    mocked_galaxy_role = mocker.Mock(**role_metadata)
+    mocked_galaxy_role.name = role_metadata["name"]
     _display_role(mocked_galaxy_role)
     out, dummy = capsys.readouterr()
     out_lines = out.splitlines()
