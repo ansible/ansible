@@ -196,3 +196,32 @@
           - ansible_failed_result.msg == expected
       vars:
         expected: "bad formatting string: d"
+
+# Tests for lookup()/plugin() jinja invocation:
+# Many of these tests check edge case behaviors that are only possible when invoking query/lookup sequence through jinja.
+# While they aren't particularly intuitive, these tests ensure playbooks that could be relying on these behaviors don't
+# break in future
+- name: Test lookup with keyword args only
+  assert:
+    that:
+      - query("ansible.builtin.sequence", count=5, start=10) == ["10", "11", "12", "13", "14"]
+
+- name: Test that multiple positional args produces concatenated sequence
+  assert:
+    that:
+      - query("ansible.builtin.sequence", "count=5 start=1", "count=3 start=10 stride=2") == ["1", "2", "3", "4", "5", "10", "12", "14"]
+
+- name: Test that keyword arguments are applied to all positional expressions
+  assert:
+    that:
+      - query("ansible.builtin.sequence", "count=5 start=0", "count=5 start=20", stride=2) == ["0", "2", "4", "6", "8", "20", "22", "24", "26", "28"]
+
+- name: Test that keyword arguments do not overwrite parameters present in positional expressions
+  assert:
+    that:
+      - query("ansible.builtin.sequence", "count=5 start=0", "count=5", start=20) == ["0", "1", "2", "3", "4", "20", "21", "22", "23", "24"]
+
+- name: Test that call with no arguments produces an empty list
+  assert:
+    that:
+      - query("ansible.builtin.sequence") == []
