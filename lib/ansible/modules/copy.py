@@ -292,8 +292,53 @@ import shutil
 import stat
 import tempfile
 
-from ansible.module_utils.common.text.converters import to_bytes, to_native
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
+
+DIFF_BY_PATH = {}
+
+
+def generate_dirnames(path):
+    """Yield the parent directories from an absolute path until the dirname is /."""
+    while path not in (os.path.sep):
+        path = os.path.dirname(path)
+        yield path
+
+
+def update_diff(path, diff):
+    """Update the global diff cache for the provided path."""
+    if not diff:
+        return
+
+    # TODO: module is passing around bytes in some places, text in others.
+    path = to_text(os.path.abspath(path))
+
+    # The 'before' needs to be settable, but not overwritable, in order to preserve the real before state for cumulative updates.
+    # TODO: Simplify once callers are unified.
+
+    # initialize DIFF_BY_PATH[path] and add/update before
+    if path not in DIFF_BY_PATH:
+        DIFF_BY_PATH[path] = {"before": {}, "after": {"dest": path}}
+        # new or updated?
+        if any(
+            bool(parent_path in DIFF_BY_PATH and DIFF_BY_PATH[parent_path]["before"]["dest"] is None)
+            for parent_path in generate_dirnames(path)
+        ):
+            # new by extension
+            DIFF_BY_PATH[path]["before"]["dest"] = None
+        else:
+            # maybe existed, but let the caller override
+            DIFF_BY_PATH[path]["before"]["dest"] = path
+            DIFF_BY_PATH[path]["before"].update(diff["before"])
+    else:
+        for key in diff["before"]:
+            # preserve the earliest
+            if key in DIFF_BY_PATH[path]["before"]:
+                continue
+            DIFF_BY_PATH[path]["before"][key] = diff["before"][key]
+
+    # update after to preserve latest
+    DIFF_BY_PATH[path]["after"].update(diff["after"])
 
 
 class AnsibleModuleError(Exception):
@@ -327,15 +372,21 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
     if new_directory_list:
         working_dir = os.path.join(pre_existing_dir, new_directory_list.pop(0))
         directory_args['path'] = working_dir
-        changed = module.set_fs_attributes_if_different(directory_args, changed)
+        _diff = {}
+        changed = module.set_fs_attributes_if_different(directory_args, changed, _diff)
+        update_diff(working_dir, _diff)
         changed = adjust_recursive_directory_permissions(working_dir, new_directory_list, module, directory_args, changed)
     return changed
 
 
 def chown_path(module, path, owner, group):
     """Update the owner/group if specified and different from the current owner/group."""
-    changed = module.set_owner_if_different(path, owner, False)
-    return module.set_group_if_different(path, group, changed)
+    changed = False
+    for func, apply_owner in [(module.set_owner_if_different, owner), (module.set_group_if_different, group)]:
+        _diff = {}
+        changed = func(path, apply_owner, changed, _diff)
+        update_diff(path, _diff)
+    return changed
 
 
 def chown_recursive(path, module):
@@ -364,6 +415,13 @@ def copy_diff_files(src, dest, module):
     diff_files = filecmp.dircmp(src, dest).diff_files
     if len(diff_files):
         changed = True
+    if changed and module._diff:
+        for file in diff_files:
+            _diff = {
+                'before': {'lines': open(os.path.join(dest, file), 'r').read().splitlines()},
+                'after': {'lines': open(os.path.join(src, file), 'r').read().splitlines()}
+            }
+            update_diff(os.path.join(dest, file), _diff)
     if not module.check_mode:
         for item in diff_files:
             src_item_path = os.path.join(src, item)
@@ -392,6 +450,10 @@ def copy_left_only(src, dest, module):
     left_only = filecmp.dircmp(src, dest).left_only
     if len(left_only):
         changed = True
+    if changed and module._diff:
+        for new in left_only:
+            dest_path = os.path.join(dest, new)
+            update_diff(dest_path, {'before': {'dest': None}, 'after': {'dest': dest_path}})
     if not module.check_mode:
         for item in left_only:
             src_item_path = os.path.join(src, item)
@@ -553,8 +615,14 @@ def main():
                 e.result['msg'] += ' Could not copy to {0}'.format(dest)
                 module.fail_json(**e.results)
 
+            create_path = pre_existing_dir
+            for new_dir in new_directory_list:
+                create_path = os.path.join(create_path, new_dir)
+                update_diff(create_path, {'before': {'dest': None}, 'after': {'dest': create_path}})
+
             if module.check_mode:
-                module.exit_json(msg='dest directory %s would be created' % dirname, changed=True, src=src)
+                exit_kwargs = {} if not (module._diff and DIFF_BY_PATH) else {'diff': [DIFF_BY_PATH[modified_content] for modified_content in DIFF_BY_PATH]}
+                module.exit_json(msg='dest directory %s would be created' % dirname, changed=True, src=src, **exit_kwargs)
             os.makedirs(b_dirname)
             changed = True
             directory_args = module.load_file_common_arguments(module.params)
@@ -598,6 +666,19 @@ def main():
 
     backup_file = None
     if checksum_src != checksum_dest or os.path.islink(b_dest):
+        if remote_src:
+            # local source diff is handled by the action plugin
+            if checksum_dest is None and not os.path.islink(b_dest):
+                dest_before = None
+            elif os.path.islink(b_dest):
+                dest_before = to_text(os.path.realpath(b_dest))
+            else:
+                dest_before = to_text(b_dest)
+            _diff = {"before": {"dest": dest_before}, "after": {}}
+            update_diff(b_dest, _diff)
+        else:
+            # TODO: move/simplify action plugin diff handling so it just returns the diffs from the modules it executes
+            pass
 
         if not module.check_mode:
             try:
@@ -664,7 +745,12 @@ def main():
     directory_mode = module.params['directory_mode']
     if os.path.isdir(b_dest) and directory_mode is not None:
         file_args['mode'] = directory_mode
-    res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
+    _diff = {}
+    res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], _diff)
+    update_diff(file_args['path'], _diff)
+
+    if module._diff and DIFF_BY_PATH:
+        res_args['diff'] = [DIFF_BY_PATH[modified_content] for modified_content in DIFF_BY_PATH]
 
     module.exit_json(**res_args)
 

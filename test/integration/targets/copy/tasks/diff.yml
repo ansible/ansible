@@ -1,0 +1,285 @@
+- name: Test copy action plugin (remote_src=false) and diff mode
+  block:
+    # https://github.com/ansible/ansible/issues/57618
+    # https://github.com/ansible/ansible/issues/79749
+    - name: Test diff contents
+      copy:
+        content: "Ansible managed\n"
+        dest: "{{ local_temp_dir }}/file.txt"
+      diff: true
+      register: diff_output
+
+    - assert:
+        that:
+          - diff_output.diff[0].before == ""
+          - '"Ansible managed" in diff_output.diff[0].after'
+          - '"file.txt" in diff_output.diff[0].after_header'
+
+- name: Test copy module (remote_src=true) and diff mode
+  vars:
+    test_remote_src: "{{ remote_tmp_dir }}/test_remote_src_diff"
+  block:
+    - name: Setup - create remote directory structure
+      file:
+        path: "{{ test_remote_src }}/{{ item }}"
+        state: directory
+      loop:
+        - ""
+        - ../copied_with_diff
+        - dir1
+
+    - name: Setup - create remote files
+      file:
+        path: "{{ test_remote_src }}/{{ item }}"
+        state: touch
+        mode: "0660"
+      loop:
+        - file1
+        - dir1/file2
+
+    - name: Test - copy remote directory recursively with diff=true (check mode)
+      copy:
+        src: "{{ test_remote_src }}/"
+        dest: "{{ remote_tmp_dir }}/copied_with_diff"
+        mode: preserve
+        remote_src: true
+      diff: true
+      check_mode: true
+      register: diff_copy_check
+
+    - name: Test - copy remote directory recursively with diff=true
+      copy:
+        src: "{{ test_remote_src }}/"
+        dest: "{{ remote_tmp_dir }}/copied_with_diff"
+        mode: preserve
+        remote_src: true
+      diff: true
+      register: diff_copy
+
+    - assert:
+        that:
+          - (diff_copy_check.diff | length) == 2
+          - (diff_copy.diff | length) == 2
+          - (diff_copy_check.diff | map(attribute="before.dest") | unique) == [absent]
+          - (diff_copy_check.diff | map(attribute="after.dest")) == dest_after
+          - (diff_copy.diff | map(attribute="before.dest")| unique) == [absent]
+          - (diff_copy.diff | map(attribute="after.dest")) == dest_after
+      vars:
+        absent: null
+        dest_after:
+          - "{{ remote_tmp_dir }}/copied_with_diff/dir1"
+          - "{{ remote_tmp_dir }}/copied_with_diff/file1"
+
+    - name: Test - validate the nested file was also copied
+      stat:
+        path: "{{ test_remote_src }}/dir1/file2"
+      register: expected_to_exist
+      failed_when: not expected_to_exist.stat.exists
+
+    - name: Setup - modify nested src file content
+      copy:
+        dest: "{{ test_remote_src }}/dir1/file2"
+        content: |
+          line1
+          line2
+
+    - name: Test - copy recursively with modified content and diff=true (check mode)
+      copy:
+        src: "{{ test_remote_src }}/"
+        dest: "{{ remote_tmp_dir }}/copied_with_diff"
+        remote_src: true
+      diff: true
+      check_mode: true
+      register: diff_update_content_check
+
+    - name: Test - copy recursively with modified content and diff=true
+      copy:
+        src: "{{ test_remote_src }}/"
+        dest: "{{ remote_tmp_dir }}/copied_with_diff"
+        remote_src: true
+      diff: true
+      register: diff_update_content
+
+    - assert:
+        that:
+          - (diff_update_content_check.diff | length) == 1
+          - (diff_update_content.diff | length) == 1
+          - diff_update_content_check.diff[0].before.lines == []
+          - diff_update_content_check.diff[0].after.lines == ["line1", "line2"]
+          - diff_update_content.diff[0].before.lines == []
+          - diff_update_content.diff[0].after.lines == ["line1", "line2"]
+
+    # TODO: this test should be updated when https://github.com/ansible/ansible/issues/81126 is fixed
+    # Currently this modified the ownership of everything, not just new content
+    - name: Test - copy recursively with modified ownership and diff=true (check mode)
+      copy:
+        src: "{{ test_remote_src }}/"
+        dest: "{{ remote_tmp_dir }}/copied_with_diff"
+        owner: "{{ remote_unprivileged_user }}"
+        group: "{{ remote_unprivileged_user_group }}"
+        remote_src: true
+      diff: true
+      check_mode: true
+      register: diff_update_ownership_check
+
+    - name: Test - copy recursively with modified ownership and diff=true
+      copy:
+        src: "{{ test_remote_src }}/"
+        dest: "{{ remote_tmp_dir }}/copied_with_diff"
+        owner: "{{ remote_unprivileged_user }}"
+        group: "{{ remote_unprivileged_user_group }}"
+        remote_src: true
+      diff: true
+      check_mode: true
+      register: diff_update_ownership
+
+    - assert:
+        that:
+          - (diff_update_ownership_check.diff | length) == 4
+          - (diff_update_ownership.diff | length) == 4
+          - (diff_update_ownership_check.diff | map(attribute="before.dest")) == expected_dest
+          - (diff_update_ownership_check.diff | map(attribute="after.dest")) == expected_dest
+          - (diff_update_ownership_check.diff | map(attribute="before.owner") | unique) == [0]
+          - (diff_update_ownership_check.diff | map(attribute="after.owner") | unique | length) == 1
+          - (diff_update_ownership_check.diff | map(attribute="after.owner") | unique) != [0]
+          - (diff_update_ownership.diff | map(attribute="before.dest")) == expected_dest
+          - (diff_update_ownership.diff | map(attribute="after.dest")) == expected_dest
+          - (diff_update_ownership.diff | map(attribute="before.owner") | unique) == [0]
+          - (diff_update_ownership.diff | map(attribute="after.owner") | unique | length) == 1
+          - (diff_update_ownership.diff | map(attribute="after.owner") | unique) != [0]
+      vars:
+        expected_dest:
+          - "{{ remote_tmp_dir }}/copied_with_diff"
+          - "{{ remote_tmp_dir }}/copied_with_diff/dir1"
+          - "{{ remote_tmp_dir }}/copied_with_diff/file1"
+          - "{{ remote_tmp_dir }}/copied_with_diff/dir1/file2"
+
+    # TODO: the module does not handle modifying mode recursively (https://github.com/ansible/ansible/issues/81126)
+    # TODO: the module does not handle directory_mode correctly (https://github.com/ansible/ansible/issues/81292)
+    - name: Test - copy with modified mode and diff=true (check mode)
+      copy:
+        src: "{{ test_remote_src }}/file1"
+        dest: "{{ remote_tmp_dir }}/copied_with_diff/file1"
+        mode: "0664"
+        remote_src: true
+      diff: true
+      check_mode: true
+      register: diff_update_mode_check
+
+    - name: Test - copy with modified mode and diff=true
+      copy:
+        src: "{{ test_remote_src }}/file1"
+        dest: "{{ remote_tmp_dir }}/copied_with_diff/file1"
+        mode: "0664"
+        remote_src: true
+      diff: true
+      register: diff_update_mode
+
+    - assert:
+        that:
+          - (diff_update_mode_check.diff | length) == 1
+          - (diff_update_mode.diff | length) == 1
+          - diff_update_mode_check.diff[0].before.mode == "0660"
+          - diff_update_mode_check.diff[0].after.mode == "0664"
+          - diff_update_mode.diff[0].before.mode == "0660"
+          - diff_update_mode.diff[0].after.mode == "0664"
+
+    - name: Setup - remove dest to test intermediate dir creation
+      file:
+        path: "{{ remote_tmp_dir }}/copied_with_diff/"
+        state: absent
+
+    - name: Test - copy source with intermediate directory creation and diff=true (check mode)
+      copy:
+        src: "{{ test_remote_src }}/"
+        dest: "{{ remote_tmp_dir }}/inter1/inter2/"
+        remote_src: true
+      diff: true
+      check_mode: true
+      register: diff_intermediate_dirs_check
+
+    - name: Test - copy source with intermediate directory creation and diff=true
+      copy:
+        src: "{{ test_remote_src }}/"
+        dest: "{{ remote_tmp_dir }}/inter1/inter2/"
+        remote_src: true
+        owner: "{{ remote_unprivileged_user }}"
+        group: "{{ remote_unprivileged_user_group }}"
+      diff: true
+      register: diff_intermediate_dirs
+
+    - assert:
+        that:
+          - (diff_intermediate_dirs_check.diff | length) == 2
+          - (diff_intermediate_dirs.diff | length) == 5
+          - (diff_intermediate_dirs_check.diff | map(attribute="before.dest") | unique) == [absent]
+          - (diff_intermediate_dirs_check.diff | map(attribute="after.dest")) == dest_after_check
+          - (diff_intermediate_dirs.diff | map(attribute="before.dest") | unique) == [absent]
+          - (diff_intermediate_dirs.diff | map(attribute="after.dest")) == dest_after
+      vars:
+        absent: null
+        dest_after_check:
+          - "{{ remote_tmp_dir }}/inter1"
+          - "{{ remote_tmp_dir }}/inter1/inter2"
+        dest_after:
+          - "{{ remote_tmp_dir }}/inter1"
+          - "{{ remote_tmp_dir }}/inter1/inter2"
+          - "{{ remote_tmp_dir }}/inter1/inter2/dir1"
+          - "{{ remote_tmp_dir }}/inter1/inter2/file1"
+          - "{{ remote_tmp_dir }}/inter1/inter2/dir1/file2"
+
+    - name: Setup - add new deeply nested file in the remote src
+      file:
+        path: "{{ test_remote_src }}/{{ item.name }}"
+        state: "{{ item.state }}"
+        mode: "{{ (item.state == 'touch') | ternary('0660', omit) }}"
+      loop:
+        - name: dir2
+          state: directory
+        - name: dir2/subdir1
+          state: directory
+        - name: dir2/subdir1/file3
+          state: touch
+
+    - name: Test - copy recursively with new nested paths and diff=true (check mode)
+      copy:
+        src: "{{ test_remote_src }}/"
+        dest: "{{ remote_tmp_dir }}/inter1/inter2/"
+        remote_src: true
+      diff: true
+      check_mode: true
+      register: diff_new_check
+
+    - name: Test - copy recursively with new nested paths and diff=true
+      copy:
+        src: "{{ test_remote_src }}/"
+        dest: "{{ remote_tmp_dir }}/inter1/inter2/"
+        remote_src: true
+      diff: true
+      register: diff_new
+
+    - assert:
+        that:
+          - (diff_new_check.diff | length ) == 1
+          - (diff_new.diff | length ) == 1
+          - diff_new_check.diff[0]["before"]["dest"] == absent
+          - diff_new_check.diff[0]["after"]["dest"] == expected
+          - diff_new.diff[0]["before"]["dest"] == absent
+          - diff_new.diff[0]["after"]["dest"] == expected
+      vars:
+        absent: null
+        expected: "{{ remote_tmp_dir }}/inter1/inter2/dir2"
+
+    - name: Test - validate the nested file was copied
+      stat:
+        path: "{{ remote_tmp_dir }}/inter1/inter2/dir2/subdir1/file3"
+      register: expected_to_exist
+      failed_when: not expected_to_exist.stat.exists
+  always:
+    - name: Cleanup after setup and test
+      file:
+        path: "{{ remote_tmp_dir }}/{{ item }}"
+        state: absent
+      loop:
+        - "{{ test_remote_src }}"
+        - "{{ remote_tmp_dir }}/copied_with_diff"
