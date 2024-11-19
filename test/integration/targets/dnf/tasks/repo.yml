@@ -517,3 +517,50 @@
       dnf:
         name: provides_foo*
         state: absent
+
+# https://github.com/ansible/ansible/issues/84259
+- name: test installing a package named `package-name` while a package providing `/usr/sbin/package-name` is installed
+  block:
+    - dnf:
+        name: package-name
+        state: absent
+
+    - dnf:
+        name: provides-binary
+        state: present
+
+    - dnf:
+        name: package-name
+        state: latest
+      register: dnf_result
+
+    - assert:
+        that:
+          - dnf_result is changed
+  always:
+    - name: Clean up
+      dnf:
+        name:
+          - provides-binary
+          - package-name
+        state: absent
+
+- name: test installing a package that provides a binary by specifying the binary name
+  block:
+    - dnf:
+        name: provides-binary
+        state: absent
+
+    - dnf:
+        name: /usr/sbin/package-name
+        state: present
+      register: dnf_result
+
+    - assert:
+        that:
+          - dnf_result is changed
+  always:
+    - name: Clean up
+      dnf:
+        name: provides-binary
+        state: absent

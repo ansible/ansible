@@ -15,8 +15,10 @@ try:
     from rpmfluff.make import make_gif
     from rpmfluff.sourcefile import GeneratedSourceFile
     from rpmfluff.rpmbuild import SimpleRpmBuild
+    from rpmfluff.utils import expectedArch
     from rpmfluff.yumrepobuild import YumRepoBuild
 except ImportError:
+    expectedArch = None  # define here to avoid NameError as it is used on top level in SPECS
     HAS_RPMFLUFF = False
 
 
@@ -30,6 +32,7 @@ class RPM:
     recommends: list[str] | None = None
     requires: list[str] | None = None
     file: str | None = None
+    binary: str | None = None
 
 
 SPECS = [
@@ -58,6 +61,8 @@ SPECS = [
     RPM(name='broken-b', version='1.0', requires=['broken-a = 1.2.3-1']),
     RPM(name='broken-c', version='1.0', requires=['broken-c = 1.2.4-1']),
     RPM(name='broken-d', version='1.0', requires=['broken-a']),
+    RPM(name='provides-binary', version='1.0', arch=[expectedArch], binary='/usr/sbin/package-name'),
+    RPM(name='package-name', version='1.0'),
 ]
 
 
@@ -81,10 +86,13 @@ def create_repo():
                 )
             )
 
+        if spec.binary:
+            pkg.add_simple_compilation(installPath=spec.binary)
+
         pkgs.append(pkg)
 
     repo = YumRepoBuild(pkgs)
-    repo.make('noarch', 'i686', 'x86_64')
+    repo.make('noarch', 'i686', 'x86_64', expectedArch)
 
     for pkg in pkgs:
         pkg.clean()

@@ -358,6 +358,15 @@ libdnf5 = None
 
 def is_installed(base, spec):
     settings = libdnf5.base.ResolveSpecSettings()
+    # Disable checking whether SPEC is a binary -> `/usr/(s)bin/<SPEC>`,
+    # this prevents scenarios like the following:
+    #   * the `sssd-common` package is installed and provides `/usr/sbin/sssd` binary
+    #   * the `sssd` package is NOT installed
+    #   * due to `set_with_binaries(True)` being default `is_installed(base, "sssd")` would "unexpectedly" return True
+    # If users wish to target the `sssd` binary they can by specifying the full path `name=/usr/sbin/sssd` explicitly
+    # due to settings.set_with_filenames(True) being default.
+    settings.set_with_binaries(False)
+
     installed_query = libdnf5.rpm.PackageQuery(base)
     installed_query.filter_installed()
     match, nevra = installed_query.resolve_pkg_spec(spec, settings, True)
