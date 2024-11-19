@@ -292,10 +292,13 @@ def get_docker_preferred_network_name(args: EnvironmentConfig) -> t.Optional[str
         current_container_id = get_docker_container_id()
 
         if current_container_id:
-            # Make sure any additional containers we launch use the same network as the current container we're running in.
-            # This is needed when ansible-test is running in a container that is not connected to Docker's default network.
-            container = docker_inspect(args, current_container_id, always=True)
-            network = container.get_network_name()
+            try:
+                # Make sure any additional containers we launch use the same network as the current container we're running in.
+                # This is needed when ansible-test is running in a container that is not connected to Docker's default network.
+                container = docker_inspect(args, current_container_id, always=True)
+                network = container.get_network_name()
+            except ContainerNotFoundError:
+                display.warning('Unable to detect the network for the current container. Use the `--docker-network` option if containers are unreachable.')
 
     # The default docker behavior puts containers on the same network.
     # The default podman behavior puts containers on isolated networks which don't allow communication between containers or network disconnect.
