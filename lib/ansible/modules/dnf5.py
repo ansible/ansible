@@ -358,14 +358,20 @@ libdnf5 = None
 
 def is_installed(base, spec):
     settings = libdnf5.base.ResolveSpecSettings()
-    # Disable checking whether SPEC is a binary -> `/usr/(s)bin/<SPEC>`,
-    # this prevents scenarios like the following:
-    #   * the `sssd-common` package is installed and provides `/usr/sbin/sssd` binary
-    #   * the `sssd` package is NOT installed
-    #   * due to `set_with_binaries(True)` being default `is_installed(base, "sssd")` would "unexpectedly" return True
-    # If users wish to target the `sssd` binary they can by specifying the full path `name=/usr/sbin/sssd` explicitly
-    # due to settings.set_with_filenames(True) being default.
-    settings.set_with_binaries(False)
+    try:
+        settings.set_group_with_name(True)
+        # Disable checking whether SPEC is a binary -> `/usr/(s)bin/<SPEC>`,
+        # this prevents scenarios like the following:
+        #   * the `sssd-common` package is installed and provides `/usr/sbin/sssd` binary
+        #   * the `sssd` package is NOT installed
+        #   * due to `set_with_binaries(True)` being default `is_installed(base, "sssd")` would "unexpectedly" return True
+        # If users wish to target the `sssd` binary they can by specifying the full path `name=/usr/sbin/sssd` explicitly
+        # due to settings.set_with_filenames(True) being default.
+        settings.set_with_binaries(False)
+    except AttributeError:
+        # dnf5 < 5.2.0.0
+        settings.group_with_name = True
+        settings.with_binaries = False
 
     installed_query = libdnf5.rpm.PackageQuery(base)
     installed_query.filter_installed()
@@ -655,9 +661,12 @@ class Dnf5Module(YumDnf):
         settings = libdnf5.base.GoalJobSettings()
         try:
             settings.set_group_with_name(True)
+            settings.set_with_binaries(False)
         except AttributeError:
             # dnf5 < 5.2.0.0
             settings.group_with_name = True
+            settings.with_binaries = False
+
         if self.bugfix or self.security:
             advisory_query = libdnf5.advisory.AdvisoryQuery(base)
             types = []

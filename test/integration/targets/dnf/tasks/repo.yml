@@ -564,3 +564,26 @@
       dnf:
         name: provides-binary
         state: absent
+
+# https://github.com/ansible/ansible/issues/84334
+- name: test that a binary is not matched by its base name
+  block:
+    - dnf:
+        name: provides-binary
+        state: present
+
+    - dnf:
+        name: package-name
+        state: absent
+      register: dnf_result
+
+    - assert:
+        that:
+          - dnf_result is not changed
+  always:
+    - name: Clean up
+      dnf:
+        name:
+          - provides-binary
+          - package-name
+        state: absent
