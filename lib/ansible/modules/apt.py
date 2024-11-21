@@ -17,6 +17,12 @@ description:
   - Manages I(apt) packages (such as for Debian/Ubuntu).
 version_added: "0.0.2"
 options:
+  auto_install_module_deps:
+    description:
+      - Automatically install dependencies required to run this module.
+    type: bool
+    default: yes
+    version_added: 2.19
   name:
     description:
       - A list of package names, like V(foo), or package specifier with version, like V(foo=1.0) or V(foo>=1.0).
@@ -191,8 +197,7 @@ options:
     default: 60
     version_added: "2.12"
 requirements:
-   - python-apt (python 2)
-   - python3-apt (python 3)
+   - python3-apt
    - aptitude (before 2.4)
 author: "Matthew Williams (@mgwilliams)"
 extends_documentation_fragment: action_common_attributes
@@ -214,8 +219,8 @@ notes:
    - When used with a C(loop:) each package will be processed individually, it is much more efficient to pass the list directly to the O(name) option.
    - When O(default_release) is used, an implicit priority of 990 is used. This is the same behavior as C(apt-get -t).
    - When an exact version is specified, an implicit priority of 1001 is used.
-   - If the interpreter can't import C(python-apt)/C(python3-apt) the module will check for it in system-owned interpreters as well.
-     If the dependency can't be found, the module will attempt to install it.
+   - If the interpreter can't import C(python3-apt) the module will check for it in system-owned interpreters as well.
+     If the dependency can't be found, depending on the value of O(auto_install_module_deps) the module will attempt to install it.
      If the dependency is found or installed, the module will be respawned under the correct interpreter.
 """
 
@@ -1233,6 +1238,7 @@ def main():
             allow_downgrade=dict(type='bool', default=False, aliases=['allow-downgrade', 'allow_downgrades', 'allow-downgrades']),
             allow_change_held_packages=dict(type='bool', default=False),
             lock_timeout=dict(type='int', default=60),
+            auto_install_module_deps=dict(type='bool', default=True),
         ),
         mutually_exclusive=[['deb', 'package', 'upgrade']],
         required_one_of=[['autoremove', 'deb', 'package', 'update_cache', 'upgrade']],
@@ -1268,7 +1274,7 @@ def main():
     if not HAS_PYTHON_APT:
         # This interpreter can't see the apt Python library- we'll do the following to try and fix that:
         # 1) look in common locations for system-owned interpreters that can see it; if we find one, respawn under it
-        # 2) finding none, try to install a matching python-apt package for the current interpreter version;
+        # 2) finding none, try to install a matching python3-apt package for the current interpreter version;
         #    we limit to the current interpreter version to try and avoid installing a whole other Python just
         #    for apt support
         # 3) if we installed a support package, try to respawn under what we think is the right interpreter (could be
@@ -1294,39 +1300,47 @@ def main():
 
         # don't make changes if we're in check_mode
         if module.check_mode:
-            module.fail_json(msg="%s must be installed to use check mode. "
-                                 "If run normally this module can auto-install it." % apt_pkg_name)
+            module.fail_json(
+                msg=f"{apt_pkg_name} must be installed to use check mode. "
+                    "If run normally this module can auto-install it, "
+                    "see the auto_install_module_deps option.",
+            )
+        elif p['auto_install_module_deps']:
+            # We skip cache update in auto install the dependency if the
+            # user explicitly declared it with update_cache=no.
+            if module.params.get('update_cache') is False:
+                module.warn("Auto-installing missing dependency without updating cache: %s" % apt_pkg_name)
+            else:
+                module.warn("Updating cache and auto-installing missing dependency: %s" % apt_pkg_name)
+                module.run_command([APT_GET_CMD, 'update'], check_rc=True)
 
-        # We skip cache update in auto install the dependency if the
-        # user explicitly declared it with update_cache=no.
-        if module.params.get('update_cache') is False:
-            module.warn("Auto-installing missing dependency without updating cache: %s" % apt_pkg_name)
-        else:
-            module.warn("Updating cache and auto-installing missing dependency: %s" % apt_pkg_name)
-            module.run_command([APT_GET_CMD, 'update'], check_rc=True)
+            # try to install the apt Python binding
+            apt_pkg_cmd = [APT_GET_CMD, 'install', apt_pkg_name, '-y', '-q', dpkg_options]
 
-        # try to install the apt Python binding
-        apt_pkg_cmd = [APT_GET_CMD, 'install', apt_pkg_name, '-y', '-q', dpkg_options]
+            if install_recommends is False:
+                apt_pkg_cmd.extend(["-o", "APT::Install-Recommends=no"])
+            elif install_recommends is True:
+                apt_pkg_cmd.extend(["-o", "APT::Install-Recommends=yes"])
+            # install_recommends is None uses the OS default
 
-        if install_recommends is False:
-            apt_pkg_cmd.extend(["-o", "APT::Install-Recommends=no"])
-        elif install_recommends is True:
-            apt_pkg_cmd.extend(["-o", "APT::Install-Recommends=yes"])
-        # install_recommends is None uses the OS default
+            module.run_command(apt_pkg_cmd, check_rc=True)
 
-        module.run_command(apt_pkg_cmd, check_rc=True)
+            # try again to find the bindings in common places
+            interpreter = probe_interpreters_for_module(interpreters, 'apt')
 
-        # try again to find the bindings in common places
-        interpreter = probe_interpreters_for_module(interpreters, 'apt')
+            if interpreter:
+                # found the Python bindings; respawn this module under the interpreter where we found them
+                # NB: respawn is somewhat wasteful if it's this interpreter, but simplifies the code
+                respawn_module(interpreter)
+                # this is the end of the line for this process, it will exit here once the respawned module has completed
 
-        if interpreter:
-            # found the Python bindings; respawn this module under the interpreter where we found them
-            # NB: respawn is somewhat wasteful if it's this interpreter, but simplifies the code
-            respawn_module(interpreter)
-            # this is the end of the line for this process, it will exit here once the respawned module has completed
-        else:
-            # we've done all we can do; just tell the user it's busted and get out
-            module.fail_json(msg="{0} must be installed and visible from {1}.".format(apt_pkg_name, sys.executable))
+        # we've done all we can do; just tell the user it's busted and get out
+        py_version = sys.version.replace("\n", "")
+        module.fail_json(
+            msg=f"Could not import the {apt_pkg_name} module using {sys.executable} ({py_version}). "
+            f"Ensure {apt_pkg_name} package is installed (either manually or via the auto_install_module_deps option) "
+            f"or that you have specified the correct ansible_python_interpreter. (attempted {interpreters}).",
+        )
 
     if p['clean'] is True:
         aptclean_stdout, aptclean_stderr, aptclean_diff = aptclean(module)

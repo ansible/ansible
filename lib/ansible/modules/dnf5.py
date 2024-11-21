@@ -14,6 +14,12 @@ description:
     provides are implemented in M(ansible.builtin.dnf5), please consult specific options for more information."
 short_description: Manages packages with the I(dnf5) package manager
 options:
+  auto_install_module_deps:
+    description:
+      - Automatically install dependencies required to run this module.
+    type: bool
+    default: yes
+    version_added: 2.19
   name:
     description:
       - "A package name or package specifier with version, like C(name-1.0).
@@ -246,6 +252,10 @@ attributes:
         platforms: rhel
 requirements:
   - "python3-libdnf5"
+notes:
+  - If the interpreter can't import C(python3-libdnf5) the module will check for it in system-owned interpreters as well.
+    If the dependency can't be found, depending on the value of O(auto_install_module_deps) the module will attempt to install it.
+    If the dependency is found or installed, the module will be respawned under the correct interpreter.
 version_added: 2.15
 """
 
@@ -460,6 +470,8 @@ def get_unneeded_pkgs(base):
 class Dnf5Module(YumDnf):
     def __init__(self, module):
         super(Dnf5Module, self).__init__(module)
+        self.auto_install_module_deps = self.module.params["auto_install_module_deps"]
+
         self._ensure_dnf()
 
         self.pkg_mgr_name = "dnf5"
@@ -509,21 +521,30 @@ class Dnf5Module(YumDnf):
         ]
 
         if not has_respawned():
-            # probe well-known system Python locations for accessible bindings, favoring py3
-            interpreter = probe_interpreters_for_module(system_interpreters, "libdnf5")
+            for attempt in (1, 2):
+                # probe well-known system Python locations for accessible bindings
+                interpreter = probe_interpreters_for_module(system_interpreters, "libdnf5")
+                if interpreter:
+                    # respawn under the interpreter where the bindings should be found
+                    respawn_module(interpreter)
+                    # end of the line for this module, the process will exit here once the respawned module completes
+                if attempt == 1:
+                    if self.module.check_mode:
+                        self.module.fail_json(
+                            msg="python3-libdnf5 must be installed to use check mode. "
+                                "If run normally this module can auto-install it, "
+                                "see the auto_install_module_deps option.",
+                        )
+                    elif self.auto_install_module_deps:
+                        self.module.run_command(["dnf", "install", "-y", "python3-libdnf5"], check_rc=True)
+                    else:
+                        break
 
-            if interpreter:
-                # respawn under the interpreter where the bindings should be found
-                respawn_module(interpreter)
-                # end of the line for this module, the process will exit here once the respawned module completes
-
-        # done all we can do, something is just broken (auto-install isn't useful anymore with respawn, so it was removed)
+        py_version = sys.version.replace("\n", "")
         self.module.fail_json(
-            msg="Could not import the libdnf5 python module using {0} ({1}). "
-            "Please install python3-libdnf5 package or ensure you have specified the "
-            "correct ansible_python_interpreter. (attempted {2})".format(
-                sys.executable, sys.version.replace("\n", ""), system_interpreters
-            ),
+            msg=f"Could not import the libdnf5 python module using {sys.executable} ({py_version}). "
+            "Ensure python3-libdnf5 package is installed (either manually or via the auto_install_module_deps option) "
+            f"or that you have specified the correct ansible_python_interpreter. (attempted {system_interpreters}).",
             failures=[],
         )
 
@@ -780,6 +801,11 @@ class Dnf5Module(YumDnf):
 
 
 def main():
+    yumdnf_argument_spec["argument_spec"].update(
+        dict(
+            auto_install_module_deps=dict(type="bool", default=True),
+        )
+    )
     Dnf5Module(AnsibleModule(**yumdnf_argument_spec)).run()
 
 

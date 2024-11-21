@@ -8,17 +8,17 @@
     distro_mirror: http://archive.ubuntu.com/ubuntu
   when: ansible_distribution == 'Ubuntu'
 
-# UNINSTALL 'python-apt'
-#  The `apt` module has the smarts to auto-install `python-apt(3)`.  To test, we
-#  will first uninstall `python-apt`.
-- name: uninstall python-apt with apt
+# UNINSTALL 'python3-apt'
+#  The `apt` module has the smarts to auto-install `python3-apt`.  To test, we
+#  will first uninstall `python3-apt`.
+- name: uninstall python3-apt with apt
   apt:
-    pkg: [python-apt, python3-apt]
+    pkg: python3-apt
     state: absent
     purge: yes
   register: apt_result
 
-# In check mode, auto-install of `python-apt` must fail
+# In check mode, auto-install of `python3-apt` must fail
 - name: test fail uninstall hello without required apt deps in check mode
   apt:
     pkg: hello
@@ -32,12 +32,24 @@
   assert:
     that:
     - apt_result is failed
-    - '"If run normally this module can auto-install it." in apt_result.msg'
+    - '"If run normally this module can auto-install it" in apt_result.msg'
 
 - name: check with dpkg
-  shell: dpkg -s python-apt python3-apt
+  shell: dpkg -s python3-apt
   register: dpkg_result
   ignore_errors: true
+
+- name: Test the auto_install_module_deps option
+  apt:
+    pkg: hello
+    auto_install_module_deps: false
+  register: r
+  ignore_errors: true
+
+- assert:
+    that:
+      - r is failed
+      - r.msg is contains("Could not import the python3-apt module")
 
 # UNINSTALL 'hello'
 #   With 'python-apt' uninstalled, the first call to 'apt' should install
