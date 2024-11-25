@@ -1573,21 +1573,11 @@ INTERPRETER_PYTHON:
   description:
   - Path to the Python interpreter to be used for module execution on remote targets, or an automatic discovery mode.
     Supported discovery modes are ``auto`` (the default), ``auto_silent``, ``auto_legacy``, and ``auto_legacy_silent``.
-    All discovery modes employ a lookup table to use the included system Python (on distributions known to include one),
-    falling back to a fixed ordered list of well-known Python interpreter locations if a platform-specific default is not
-    available. The fallback behavior will issue a warning that the interpreter should be set explicitly (since interpreters
+    All discovery modes match against an ordered list of well-known Python interpreter locations. 
+    The fallback behavior will issue a warning that the interpreter should be set explicitly (since interpreters
     installed later may change which one is used). This warning behavior can be disabled by setting ``auto_silent`` or
     ``auto_legacy_silent``. The value of ``auto_legacy`` provides all the same behavior, but for backward-compatibility
-    with older Ansible releases that always defaulted to ``/usr/bin/python``, will use that interpreter if present.
-_INTERPRETER_PYTHON_DISTRO_MAP:
-  name: Mapping of known included platform pythons for various Linux distros
-  default:
-    # Entry only for testing
-    ansible test:
-      '99': /usr/bin/python99
-  version_added: "2.8"
-  # FUTURE: add inventory override once we're sure it can't be abused by a rogue target
-  # FUTURE: add a platform layer to the map so we could use for, eg, freebsd/macos/etc?
+    with older Ansible releases that always defaulted to ``/usr/bin/python3``, will use that interpreter if present.
 INTERPRETER_PYTHON_FALLBACK:
   name: Ordered list of Python interpreters to check for in discovery
   default:
