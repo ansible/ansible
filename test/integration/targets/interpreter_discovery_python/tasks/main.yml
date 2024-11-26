@@ -95,6 +95,7 @@
         - /usr/bin/does_not_exist
     ping:
     register: discovery
+    ignore_errors: yes  # the fallback interpreter /usr/bin/python3 may not exist (e.g. FreeBSD)
 
   - name: check for warning and default interpreter
     assert:
@@ -113,6 +114,7 @@
         - /usr/bin/does_not_exist
     ping:
     register: discovery
+    ignore_errors: yes  # the fallback interpreter /usr/bin/python3 may not exist (e.g. FreeBSD)
 
   - name: verify auto_silent suppresses warning
     assert:
@@ -134,6 +136,7 @@
         - "'i_have_a_single_quote"
     ping:
     register: discovery
+    ignore_errors: yes  # the fallback interpreter /usr/bin/python3 may not exist (e.g. FreeBSD)
 
   - debug:
       var: discovery
@@ -158,6 +161,7 @@
         - "'i_have_a_single_quote"
     ping:
     register: discovery
+    ignore_errors: yes  # the fallback interpreter /usr/bin/python3 may not exist (e.g. FreeBSD)
 
   - debug:
       var: discovery
