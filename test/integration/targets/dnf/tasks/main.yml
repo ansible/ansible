@@ -16,47 +16,49 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- block:
-    - include_tasks: dnf.yml
-    - include_tasks: skip_broken_and_nobest.yml
-    - block:
-        - include_tasks: filters.yml
-        - include_tasks: filters_check_mode.yml
-      tags:
-        - filters
-    - include_tasks: gpg.yml
-    - include_tasks: repo.yml
-    - include_tasks: dnf_group_remove.yml
-    - include_tasks: dnfinstallroot.yml
-    - include_tasks: logging.yml
-    - include_tasks: cacheonly.yml
-    - include_tasks: multilib.yml
-  when: ansible_distribution in ['Fedora', 'RedHat']
-
-# Attempting to install a different RHEL release in a tmpdir doesn't work (rhel8 beta)
-- include_tasks: dnfreleasever.yml
-  when: ansible_distribution == 'Fedora'
-
-- when:
-    - ansible_distribution == 'RedHat'
-    - not dnf5|default(false)
+- when: not (ansible_distribution == 'Fedora' and ansible_distribution_version is version(41, '>=') and not (dnf5 | default(False)))
   block:
-    # FUTURE - look at including AppStream support in our local repo
-    - name: list modules
-      command: dnf module list -q
-      register: module_list
+  - block:
+      - include_tasks: dnf.yml
+      - include_tasks: skip_broken_and_nobest.yml
+      - block:
+          - include_tasks: filters.yml
+          - include_tasks: filters_check_mode.yml
+        tags:
+          - filters
+      - include_tasks: gpg.yml
+      - include_tasks: repo.yml
+      - include_tasks: dnf_group_remove.yml
+      - include_tasks: dnfinstallroot.yml
+      - include_tasks: logging.yml
+      - include_tasks: cacheonly.yml
+      - include_tasks: multilib.yml
+    when: ansible_distribution in ['Fedora', 'RedHat']
 
-    # A module that only has a single version
-    - name: Find a module that meets our testing needs
-      set_fact:
-        astream_name: '@{{ module.name }}:{{ module.version }}/{{ module.profile }}'
-        astream_name_no_stream: '@{{ module.name }}/{{ module.profile }}'
-      vars:
-        module: '{{ module_list.stdout|get_first_single_version_module }}'
+  # Attempting to install a different RHEL release in a tmpdir doesn't work (rhel8 beta)
+  - include_tasks: dnfreleasever.yml
+    when: ansible_distribution == 'Fedora'
 
-    - include_tasks: modularity.yml
-      tags:
-        - dnf_modularity
-  rescue:
-    # Just in case something crazy happens when listing or parsing modules
-    - meta: noop
+  - when:
+      - ansible_distribution == 'RedHat'
+      - not dnf5|default(false)
+    block:
+      # FUTURE - look at including AppStream support in our local repo
+      - name: list modules
+        command: dnf module list -q
+        register: module_list
+
+      # A module that only has a single version
+      - name: Find a module that meets our testing needs
+        set_fact:
+          astream_name: '@{{ module.name }}:{{ module.version }}/{{ module.profile }}'
+          astream_name_no_stream: '@{{ module.name }}/{{ module.profile }}'
+        vars:
+          module: '{{ module_list.stdout|get_first_single_version_module }}'
+
+      - include_tasks: modularity.yml
+        tags:
+          - dnf_modularity
+    rescue:
+      # Just in case something crazy happens when listing or parsing modules
+      - meta: noop
