@@ -1,0 +1,5 @@
+- name: run module in collection to test coverage for collection plugins
+  win_collection:
+
+- name: run module in library adjacent to test coverage for test plugins
+  test_win_collection:

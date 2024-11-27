@@ -293,6 +293,11 @@ def sanitize_filename(
         new_name = re.sub('^.*/ansible_modlib.zip/ansible/', ansible_path, filename)
         display.info('%s -> %s' % (filename, new_name), verbosity=3)
         filename = new_name
+    elif integration_temp_path in filename:
+        # Rewrite the path of code running from an integration test temporary directory.
+        new_name = re.sub(r'^.*' + re.escape(integration_temp_path) + '[^/]+/', root_path, filename)
+        display.info('%s -> %s' % (filename, new_name), verbosity=3)
+        filename = new_name
     elif collection_search_re and collection_search_re.search(filename):
         new_name = os.path.abspath(collection_sub_re.sub('', filename))
         display.info('%s -> %s' % (filename, new_name), verbosity=3)
@@ -326,11 +331,6 @@ def sanitize_filename(
     elif re.search('^(/.*?)?/root/ansible/', filename):
         # Rewrite the path of code running on a remote host or in a docker container as root.
         new_name = re.sub('^(/.*?)?/root/ansible/', root_path, filename)
-        display.info('%s -> %s' % (filename, new_name), verbosity=3)
-        filename = new_name
-    elif integration_temp_path in filename:
-        # Rewrite the path of code running from an integration test temporary directory.
-        new_name = re.sub(r'^.*' + re.escape(integration_temp_path) + '[^/]+/', root_path, filename)
         display.info('%s -> %s' % (filename, new_name), verbosity=3)
         filename = new_name
 
