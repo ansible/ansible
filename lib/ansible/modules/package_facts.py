@@ -23,7 +23,7 @@ options:
     default: ['auto']
     choices:
         auto: Depending on O(strategy), will match the first or all package managers provided, in order
-        rpm: For RPM based distros, requires RPM Python bindings, not installed by default on Suse (python3-rpm)
+        rpm: For RPM based distros, requires RPM Python bindings, not installed by default on Suse or Fedora 41+ (python3-rpm)
         yum: Alias to rpm
         dnf: Alias to rpm
         dnf5: Alias to rpm
