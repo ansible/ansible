@@ -1,3 +1,6 @@
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 - name: test with_sequence
   set_fact: "{{ 'x' + item }}={{ item }}"
   with_sequence: start=0 end=3
@@ -215,6 +218,16 @@
   assert:
     that:
       - query("ansible.builtin.sequence", "count=5 start=0", "count=5 start=20", stride=2) == ["0", "2", "4", "6", "8", "20", "22", "24", "26", "28"]
+
+- name: Test stride=0 produces an empty list
+  assert:
+    that:
+      - query("ansible.builtin.sequence", "count=5 start=0", stride=0) == []
+
+- name: Test stride=-1 produces an list of negative numbers
+  assert:
+    that:
+      - query("ansible.builtin.sequence", "count=5 start=0", stride=-1) == ["0", "-1", "-2", "-3", "-4", "-5", "-6"]
 
 - name: Test that keyword arguments do not overwrite parameters present in positional expressions
   assert:
