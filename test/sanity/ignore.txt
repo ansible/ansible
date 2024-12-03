@@ -155,7 +155,6 @@ lib/ansible/plugins/action/copy.py pylint:undefined-variable
 test/integration/targets/module_utils/library/test_optional.py pylint:used-before-assignment
 test/support/windows-integration/plugins/action/win_copy.py pylint:undefined-variable
 lib/ansible/plugins/connection/__init__.py pylint:ansible-deprecated-version
-lib/ansible/vars/manager.py pylint:ansible-deprecated-version
 test/units/module_utils/basic/test_exit_json.py mypy-3.13:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.13:misc
 test/units/module_utils/common/text/converters/test_json_encode_fallback.py mypy-3.13:abstract

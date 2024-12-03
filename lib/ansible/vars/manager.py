@@ -135,7 +135,7 @@ class VariableManager:
     def set_inventory(self, inventory):
         self._inventory = inventory
 
-    def get_vars(self, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=False, use_cache=True,
+    def get_vars(self, play=None, host=None, task=None, include_hostvars=True, use_cache=True,
                  _hosts=None, _hosts_all=None, stage='task'):
         """
         Returns the variables, with optional "context" given via the parameters
@@ -159,11 +159,6 @@ class VariableManager:
         on the functionality they provide. These arguments may be removed at a later date without a deprecation
         period and without warning.
         """
-        if include_delegate_to:
-            display.deprecated(
-                "`VariableManager.get_vars`'s argument `include_delegate_to` has no longer any effect.",
-                version="2.19",
-            )
 
         display.debug("in VariableManager get_vars()")
 
