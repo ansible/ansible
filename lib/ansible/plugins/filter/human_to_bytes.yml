@@ -8,7 +8,7 @@ DOCUMENTATION:
   options:
     _input:
       description: human-readable description of a number of bytes.
-      type: int
+      type: string
       required: true
     default_unit:
       description: Unit to assume when input does not specify it.
