@@ -189,6 +189,9 @@ class Connection(ConnectionBase):
         display.vvv(u"FETCH {0} TO {1}".format(in_path, out_path), host=self._play_context.remote_addr)
         self.put_file(in_path, out_path)
 
+    def reset(self) -> None:
+        pass
+
     def close(self) -> None:
         """ terminate the connection; nothing to do here """
         self._connected = False
