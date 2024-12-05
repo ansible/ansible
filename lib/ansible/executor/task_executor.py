@@ -1073,18 +1073,6 @@ class TaskExecutor:
         option_vars = C.config.get_plugin_vars('connection', self._connection._load_name)
         varnames.extend(option_vars)
 
-        # create dict of 'templated vars'
-        options = {'_extras': {}}
-        for k in option_vars:
-            if k in variables:
-                options[k] = templar.template(variables[k])
-
-        # add extras if plugin supports them
-        if getattr(self._connection, 'allow_extras', False):
-            for k in variables:
-                if k.startswith('ansible_%s_' % self._connection.extras_prefix) and k not in options:
-                    options['_extras'][k] = templar.template(variables[k])
-
         task_keys = self._task.dump_attrs()
 
         # The task_keys 'timeout' attr is the task's timeout, not the connection timeout.
@@ -1102,7 +1090,8 @@ class TaskExecutor:
         del task_keys['retries']
 
         # set options with 'templated vars' specific to this plugin and dependent ones
-        self._connection.set_options(task_keys=task_keys, var_options=options)
+        var_options = self._connection._resolve_option_variables(variables, templar)
+        self._connection.set_options(task_keys=task_keys, var_options=var_options)
         varnames.extend(self._set_plugin_options('shell', variables, templar, task_keys))
 
         if self._connection.become is not None:
