@@ -36,15 +36,6 @@ from yaml.parser import ParserError
 from yaml.scanner import ScannerError
 
 
-class NameStringIO(StringIO):
-    """In py2.6, StringIO doesn't let you set name because a baseclass has it
-    as readonly property"""
-    name = None
-
-    def __init__(self, *args, **kwargs):
-        super(NameStringIO, self).__init__(*args, **kwargs)
-
-
 class TestAnsibleLoaderBasic(unittest.TestCase):
 
     def test_parse_number(self):
@@ -205,7 +196,7 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
         return tagged_vaulted_var
 
     def _build_stream(self, yaml_text):
-        stream = NameStringIO(yaml_text)
+        stream = StringIO(yaml_text)
         stream.name = 'my.yml'
         return stream
 
@@ -226,13 +217,9 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
 
     def test_embedded_vault_from_dump(self):
         avu = AnsibleVaultEncryptedUnicode.from_plaintext('setec astronomy', self.vault, self.vault_secret)
-        blip = {'stuff1': [{'a dict key': 24},
-                           {'shhh-ssh-secrets': avu,
-                            'nothing to see here': 'move along'}],
-                'another key': 24.1}
 
         blip = ['some string', 'another string', avu]
-        stream = NameStringIO()
+        stream = StringIO()
 
         self._dump_stream(blip, stream, dumper=AnsibleDumper)
 
@@ -244,7 +231,7 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
 
         data_from_yaml = loader.get_data()
 
-        stream2 = NameStringIO(u'')
+        stream2 = StringIO(u'')
         # verify we can dump the object again
         self._dump_stream(data_from_yaml, stream2, dumper=AnsibleDumper)
 
@@ -294,7 +281,7 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
 class TestAnsibleLoaderPlay(unittest.TestCase):
 
     def setUp(self):
-        stream = NameStringIO(u"""
+        stream = StringIO(u"""
                 - hosts: localhost
                   vars:
                     number: 1
