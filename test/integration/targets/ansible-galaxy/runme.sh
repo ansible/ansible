@@ -526,7 +526,7 @@ f_ansible_galaxy_status \
 
     ansible-galaxy collection list -p ~/.ansible/collections | tee out.txt
 
-    [[ $(grep -c '# /root/.ansible/collections/ansible_collections' out.txt) -eq 1 ]]
+    [[ $(grep -c "# ${HOME}/.ansible/collections/ansible_collections" out.txt) -eq 1 ]]
 
 f_ansible_galaxy_status \
     "collection list invalid collection name"

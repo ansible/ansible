@@ -167,15 +167,15 @@ changed: [testhost] =>
     changed: true
     checksum: 0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33
     dest: .../test_diff.txt
-    gid: 0
-    group: root
+    gid: <<GID>>
+    group: <<GROUP>>
     md5sum: acbd18db4cc2f85cedef654fccc4a4d8
     mode: '0644'
-    owner: root
+    owner: <<OWNER>>
     size: 3
     src: .../.source.txt
     state: file
-    uid: 0
+    uid: <<UID>>
 
 TASK [replace] *****************************************************************
 --- before: .../test_diff.txt

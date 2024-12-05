@@ -13,6 +13,8 @@
 
 set -eux
 
+umask 0022
+
 run_test() {
 	local testname=$1
 	local playbook=$2
@@ -29,13 +31,20 @@ run_test() {
 	sed -i -e 's/@@ -1,1 +1,1 @@/@@ -1 +1 @@/g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e 's/: .*\/test_diff\.txt/: ...\/test_diff.txt/g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e "s#${ANSIBLE_PLAYBOOK_DIR}#TEST_PATH#g" "${OUTFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stderr"
-	sed -i -e "s#/var/root/#/root/#g" "${OUTFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stderr"  # macos
 	sed -i -e 's/^Using .*//g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e 's/[0-9]:[0-9]\{2\}:[0-9]\{2\}\.[0-9]\{6\}/0:00:00.000000/g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e 's/[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\} [0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}\.[0-9]\{6\}/0000-00-00 00:00:00.000000/g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e 's#: .*/\.source\.txt$#: .../.source.txt#g' "${OUTFILE}.${testname}.stdout"
 	sed -i -e '/secontext:/d' "${OUTFILE}.${testname}.stdout"
-	sed -i -e 's/group: wheel/group: root/g' "${OUTFILE}.${testname}.stdout"
+
+	# normalize gid/group/owner/uid/homedir so tests can run as non-root user
+	ESC_HOME=$(echo "${HOME}" | sed -e 's/\//\\\//g')
+	sed -i -e "s/${ESC_HOME}/\/<<HOMEDIR>>/g" "${OUTFILE}.${testname}.stdout"
+	sed -i -e "s/${ESC_HOME}/\/<<HOMEDIR>>/g" "${OUTFILE}.${testname}.stderr"
+	sed -i -e "s/gid: $(id -g)/gid: <<GID>>/g" "${OUTFILE}.${testname}.stdout"
+	sed -i -e "s/group: $(id -gn)/group: <<GROUP>>/g" "${OUTFILE}.${testname}.stdout"
+	sed -i -e "s/owner: $(id -un)/owner: <<OWNER>>/g" "${OUTFILE}.${testname}.stdout"
+	sed -i -e "s/uid: $(id -u)/uid: <<UID>>/g" "${OUTFILE}.${testname}.stdout"
 
 	diff -u "${ORIGFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stdout" || diff_failure
 	diff -u "${ORIGFILE}.${testname}.stderr" "${OUTFILE}.${testname}.stderr" || diff_failure

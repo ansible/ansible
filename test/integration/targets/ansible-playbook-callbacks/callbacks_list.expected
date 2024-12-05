@@ -1,7 +1,7 @@
  1 __init__
-95 v2_on_any
+98 v2_on_any
  1 v2_on_file_diff
- 4 v2_playbook_on_handler_task_start
+ 5 v2_playbook_on_handler_task_start
  3 v2_playbook_on_include
  1 v2_playbook_on_no_hosts_matched
  2 v2_playbook_on_no_hosts_remaining
@@ -18,8 +18,8 @@
  1 v2_runner_on_async_ok
  2 v2_runner_on_async_poll
  5 v2_runner_on_failed
-16 v2_runner_on_ok
+17 v2_runner_on_ok
  1 v2_runner_on_skipped
-23 v2_runner_on_start
+24 v2_runner_on_start
  1 v2_runner_on_unreachable
  2 v2_runner_retry
