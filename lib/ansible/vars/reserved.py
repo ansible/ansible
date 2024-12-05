@@ -17,10 +17,12 @@
 
 from __future__ import annotations
 
+from ansible.parsing.dataloader import DataLoader
 from ansible.playbook import Play
 from ansible.playbook.block import Block
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
+from ansible.template import Templar
 from ansible.utils.display import Display
 
 display = Display()
@@ -29,7 +31,9 @@ display = Display()
 def get_reserved_names(include_private=True):
     """ this function returns the list of reserved names associated with play objects"""
 
-    public = set()
+    l = DataLoader()
+    templar = Templar(l)
+    public = set(templar.environment.globals.keys())
     private = set()
     result = set()
 
