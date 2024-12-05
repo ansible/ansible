@@ -14,6 +14,14 @@ def fake_ansible_module():
     return FakeAnsibleModule()
 
 
+def max_zip_timestamp():
+    """Return the max clamp value that will be selected."""
+    try:
+        return time.mktime(time.struct_time((2107, 12, 31, 23, 59, 59, 0, 0, 0)))
+    except OverflowError:
+        return time.mktime(time.struct_time((2038, 1, 1, 0, 0, 0, 0, 0, 0)))
+
+
 class FakeAnsibleModule:
     def __init__(self):
         self.params = {}
@@ -68,7 +76,7 @@ class TestCaseZipArchive:
             ),
             pytest.param(
                 "21081231.000000",
-                time.mktime(time.struct_time((2107, 12, 31, 23, 59, 59, 0, 0, 0))),
+                max_zip_timestamp(),
                 id="invalid-year-2108",
             ),
             pytest.param(
