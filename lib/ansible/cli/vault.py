@@ -84,7 +84,7 @@ class VaultCLI(CLI):
         create_parser.add_argument('--skip-tty-check', default=False, help='allows editor to be opened when no tty attached',
                                    dest='skip_tty_check', action='store_true')
 
-        decrypt_parser = subparsers.add_parser('decrypt', help='Decrypt vault encrypted file', parents=[output, common])
+        decrypt_parser = subparsers.add_parser('decrypt', help='Decrypt vault encrypted file or string', parents=[output, common])
         decrypt_parser.set_defaults(func=self.execute_decrypt)
         decrypt_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
 
