@@ -53,6 +53,36 @@
   vars:
     ansible_remote_tmp: yolo
 
+- name: check if plugin_type and plugin_name is required together
+  set_fact:
+    lookup_failure: '{{ q("config", "remote_tmp", plugin_type="shell") }}'
+  ignore_errors: yes
+  register: lookup_config_8
+
+- name: check if plugin_type and plugin_name is required together
+  set_fact:
+    lookup_failure: '{{ q("config", "remote_tmp", plugin_name="sh") }}'
+  ignore_errors: yes
+  register: lookup_config_9
+
+- name: query non-existent config setting
+  set_fact:
+    lookup_failure: "{{ q('config', 'plugin_type1', plugin_type='lookup', plugin_name='config', ) }}"
+  ignore_errors: yes
+  register: lookup_config_10
+
+- name: query non-existent plugin
+  set_fact:
+    lookup_failure: "{{ q('config', 'plugin_type', plugin_type='lookup', plugin_name='some.nonexistent.mylookup', ) }}"
+  ignore_errors: yes
+  register: lookup_config_11
+
+- name: exception handling while reading configuration
+  set_fact:
+    lookup_failure: "{{ q('config', 'test_list', plugin_type='lookup', plugin_name='bogus', ) }}"
+  ignore_errors: yes
+  register: lookup_config_12
+
 - name: Verify lookup_config
   assert:
     that:
@@ -71,6 +101,16 @@
       - '"Invalid setting identifier" in lookup_config_6.msg'
       - lookup_config_7 is failed
       - '"Invalid setting" in lookup_config_7.msg'
+      - lookup_config_8 is failed
+      - '"Both plugin_type and plugin_name" in lookup_config_8.msg'
+      - lookup_config_9 is failed
+      - '"Both plugin_type and plugin_name" in lookup_config_9.msg'
+      - lookup_config_10 is failed
+      - '"Unable to find setting plugin_type1" in lookup_config_10.msg'
+      - lookup_config_11 is failed
+      - '"Unable to load lookup" in lookup_config_11.msg'
+      - lookup_config_12 is failed
+      - '"No setting was provided for required" in lookup_config_12.msg'
       - ssh_user_and_port == ['lola', 2022]
       - "ssh_user_and_port_and_origin == [['lola', 'var: ansible_ssh_user'], [2022, 'var: ansible_ssh_port']]"
       - yolo_remote == ["yolo"]
