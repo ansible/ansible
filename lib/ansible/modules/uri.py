@@ -262,7 +262,7 @@ EXAMPLES = r"""
     url: http://www.example.com
     return_content: true
   register: this
-  failed_when: this is failed or "'AWESOME' not in this.content"
+  failed_when: "this is failed or 'AWESOME' not in this.content"
 
 - name: Create a JIRA issue
   ansible.builtin.uri:
