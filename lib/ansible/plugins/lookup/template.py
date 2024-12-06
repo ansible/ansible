@@ -17,8 +17,8 @@ DOCUMENTATION = """
       convert_data:
         type: bool
         description:
-            - Whether to convert YAML into data. If False, strings that are YAML will be left untouched.
-            - Mutually exclusive with the jinja2_native option.
+            - Whether to convert YAML into data. If V(False), strings that are YAML will be left untouched.
+            - Mutually exclusive with the O(jinja2_native) option.
         default: true
       variable_start_string:
         description: The string marking the beginning of a print statement.
@@ -33,10 +33,10 @@ DOCUMENTATION = """
       jinja2_native:
         description:
             - Controls whether to use Jinja2 native types.
-            - It is off by default even if global jinja2_native is True.
-            - Has no effect if global jinja2_native is False.
+            - It is off by default even if global O(jinja2_native) is V(True).
+            - Has no effect if global O(jinja2_native) is V(False).
             - This offers more flexibility than the template module which does not use Jinja2 native types at all.
-            - Mutually exclusive with the convert_data option.
+            - Mutually exclusive with the O(convert_data) option.
         default: False
         version_added: '2.11'
         type: bool
@@ -55,6 +55,13 @@ DOCUMENTATION = """
         version_added: '2.12'
         type: str
         default: '#}'
+      trim_blocks:
+        description:
+        - Determine when newlines should be removed from blocks.
+        - When set to V(yes) the first newline after a block is removed (block, not variable tag!).
+        type: bool
+        default: yes
+        version_added: '2.19'
     seealso:
       - ref: playbook_task_paths
         description: Search paths used for relative templates.
@@ -72,6 +79,11 @@ EXAMPLES = """
 - name: show templating results with different comment start and end string
   ansible.builtin.debug:
     msg: "{{ lookup('ansible.builtin.template', './some_template.j2', comment_start_string='[#', comment_end_string='#]') }}"
+
+- name: show templating results with trim_blocks
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.template', './some_template.j2', trim_blocks=True) }}"
+
 """
 
 RETURN = """
@@ -113,6 +125,7 @@ class LookupModule(LookupBase):
         variable_end_string = self.get_option('variable_end_string')
         comment_start_string = self.get_option('comment_start_string')
         comment_end_string = self.get_option('comment_end_string')
+        trim_blocks = self.get_option('trim_blocks')
 
         if jinja2_native:
             templar = self._templar
@@ -154,7 +167,8 @@ class LookupModule(LookupBase):
                         variable_start_string=variable_start_string,
                         variable_end_string=variable_end_string,
                         comment_start_string=comment_start_string,
-                        comment_end_string=comment_end_string
+                        comment_end_string=comment_end_string,
+                        trim_blocks=trim_blocks,
                     )
                     res = templar.template(template_data, preserve_trailing_newlines=True,
                                            convert_data=convert_data_p, escape_backslashes=False,

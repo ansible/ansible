@@ -32,3 +32,5 @@
       - lookup('template', 'dict.j2') is mapping
       - lookup('template', 'dict.j2', convert_data=True) is mapping
       - lookup('template', 'dict.j2', convert_data=False) is not mapping
+
+- include_tasks: trim_blocks.yml
