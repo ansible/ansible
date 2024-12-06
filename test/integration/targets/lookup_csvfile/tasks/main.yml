@@ -82,7 +82,19 @@
   assert:
     that:
       - lookup('csvfile', 'notfound file=people.csv delimiter=, col=2') == []
-      - lookup('csvfile', 'notfound file=people.csv delimiter=, col=2, default=what?') == "what?"
+      - lookup('csvfile', 'notfound file=people.csv delimiter=, col=2 default=what?') == "what?"
+
+- name: Pass wrong terms value fails parse_kv
+  set_fact:
+    people_col_2: '{{ lookup("csvfile", "notfound file=people.csv delimiter=, col=2, default=what?") }}'
+  ignore_errors: yes
+  register: people_col_2_r
+
+- name: Check if wrong terms value fails parse_kv
+  assert:
+    that:
+      - people_col_2_r.failed
+      - "'Invalid type for configuration option' in people_col_2_r.msg"
 
 # NOTE: For historical reasons, this is correct; quotes in the search field must
 # be treated literally as if they appear (escaped as required) in the field in the
