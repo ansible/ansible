@@ -2139,55 +2139,55 @@
     register: testcase5
     become: true
 
-  - name: gather - Stat the new_dir_with_chown
+  - name: Stat destination to verify ownership
     stat:
-      path: '{{ remote_dir }}/new_dir_with_chown'
-    register: stat_new_dir_with_chown
+      path: "{{ remote_dir }}/{{ item }}"
+    loop:
+      - 'new_dir_with_chown'
+      - 'new_dir_with_chown/file1'
+      - 'new_dir_with_chown/subdir'
+      - 'new_dir_with_chown/subdir/file12'
+      - 'new_dir_with_chown/link_file12'
+    register: testcase5_stat
 
-  - name: gather - Stat the new_dir_with_chown/file1
-    stat:
-      path: '{{ remote_dir }}/new_dir_with_chown/file1'
-    register: stat_new_dir_with_chown_file1
-
-  - name: gather - Stat the new_dir_with_chown/subdir
-    stat:
-      path: '{{ remote_dir }}/new_dir_with_chown/subdir'
-    register: stat_new_dir_with_chown_subdir
-
-  - name: gather - Stat the new_dir_with_chown/subdir/file12
-    stat:
-      path: '{{ remote_dir }}/new_dir_with_chown/subdir/file12'
-    register: stat_new_dir_with_chown_subdir_file12
-
-  - name: gather - Stat the new_dir_with_chown/link_file12
-    stat:
-      path: '{{ remote_dir }}/new_dir_with_chown/link_file12'
-    register: stat_new_dir_with_chown_link_file12
-
-  - name: assert - owner and group have changed
-    assert:
+  - assert:
       that:
       - testcase5 is changed
-      - stat_new_dir_with_chown.stat.uid == ansible_copy_test_user.uid
-      - stat_new_dir_with_chown.stat.gid == ansible_copy_test_group.gid
-      - stat_new_dir_with_chown.stat.pw_name == ansible_copy_test_user_name
-      - stat_new_dir_with_chown.stat.gr_name == ansible_copy_test_user_name
-      - stat_new_dir_with_chown_file1.stat.uid == ansible_copy_test_user.uid
-      - stat_new_dir_with_chown_file1.stat.gid == ansible_copy_test_group.gid
-      - stat_new_dir_with_chown_file1.stat.pw_name == ansible_copy_test_user_name
-      - stat_new_dir_with_chown_file1.stat.gr_name == ansible_copy_test_user_name
-      - stat_new_dir_with_chown_subdir.stat.uid == ansible_copy_test_user.uid
-      - stat_new_dir_with_chown_subdir.stat.gid == ansible_copy_test_group.gid
-      - stat_new_dir_with_chown_subdir.stat.pw_name == ansible_copy_test_user_name
-      - stat_new_dir_with_chown_subdir.stat.gr_name == ansible_copy_test_user_name
-      - stat_new_dir_with_chown_subdir_file12.stat.uid == ansible_copy_test_user.uid
-      - stat_new_dir_with_chown_subdir_file12.stat.gid == ansible_copy_test_group.gid
-      - stat_new_dir_with_chown_subdir_file12.stat.pw_name == ansible_copy_test_user_name
-      - stat_new_dir_with_chown_subdir_file12.stat.gr_name == ansible_copy_test_user_name
-      - stat_new_dir_with_chown_link_file12.stat.uid == ansible_copy_test_user.uid
-      - stat_new_dir_with_chown_link_file12.stat.gid == ansible_copy_test_group.gid
-      - stat_new_dir_with_chown_link_file12.stat.pw_name == ansible_copy_test_user_name
-      - stat_new_dir_with_chown_link_file12.stat.gr_name == ansible_copy_test_user_name
+      - testcase5_stat.results | map(attribute='stat') | map(attribute='uid') | unique == [ansible_copy_test_user.uid]
+      - testcase5_stat.results | map(attribute='stat') | map(attribute='gid') | unique == [ansible_copy_test_group.gid]
+      - testcase5_stat.results | map(attribute='stat') | map(attribute='pw_name') | unique == [ansible_copy_test_user_name]
+      - testcase5_stat.results | map(attribute='stat') | map(attribute='gr_name') | unique == [ansible_copy_test_user_name]
+
+  - command: whoami
+    register: who
+
+  - name: Modify ownership recursively
+    copy:
+      remote_src: True
+      src: '{{ remote_dir_expanded }}/remote_dir_src/'
+      dest: '{{ remote_dir_expanded }}/new_dir_with_chown'
+      owner: '{{ who.stdout }}'
+      group: '{{ who.stdout }}'
+      follow: true
+    register: testcase5_updated
+    become: true
+
+  - name: Stat destination to verify updated ownership
+    stat:
+      path: "{{ remote_dir }}/{{ item }}"
+    loop:
+      - 'new_dir_with_chown'
+      - 'new_dir_with_chown/file1'
+      - 'new_dir_with_chown/subdir'
+      - 'new_dir_with_chown/subdir/file12'
+      - 'new_dir_with_chown/link_file12'
+    register: testcase5_updated_stat
+
+  - assert:
+      that:
+      - testcase5_updated is changed
+      - testcase5_updated_stat.results | map(attribute='stat') | map(attribute='pw_name') | unique == [who.stdout]
+      - testcase5_updated_stat.results | map(attribute='stat') | map(attribute='gr_name') | unique == [who.stdout]
 
   always:
     - name: execute - remove the user for test
