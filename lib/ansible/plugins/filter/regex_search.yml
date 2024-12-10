@@ -8,6 +8,9 @@ DOCUMENTATION:
     - Maps to Python's C(re.search).
     - 'The substring matched by the group is accessible via the symbolic group name or
       the ``\{number}`` special sequence. See examples section.'
+    - The return for no match will be C(None) in most cases, depending on whether it is used with other filters/tests or not.
+      It also depends on the Jinja version used and whether native is enabled.
+    - "For a more complete explanation see U(https://docs.ansible.com/ansible-core/devel/reference_appendices/faq.html#why-does-the-regex-search-filter-return-none-instead-of-an-empty-string)."
   positional: _input, _regex
   options:
     _input:
@@ -52,5 +55,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: Matched string or empty string if no match.
+    description: Matched string or if no match a C(None) or an empty string (see notes)
     type: str
