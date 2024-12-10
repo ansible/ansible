@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import multiprocessing.synchronize
 
-from multiprocessing import Lock
+from ansible.utils.multiprocessing import context as multiprocessing_context
 
 from ansible.module_utils.facts.system.pkg_mgr import PKG_MGRS
 
@@ -32,7 +32,7 @@ if 'action_write_locks' not in globals():
     # Below is a Lock for use when we weren't expecting a named module.  It gets used when an action
     # plugin invokes a module whose name does not match with the action's name.  Slightly less
     # efficient as all processes with unexpected module names will wait on this lock
-    action_write_locks[None] = Lock()
+    action_write_locks[None] = multiprocessing_context.Lock()
 
     # These plugins are known to be called directly by action plugins with names differing from the
     # action plugin name.  We precreate them here as an optimization.
@@ -41,4 +41,4 @@ if 'action_write_locks' not in globals():
 
     mods.update(('copy', 'file', 'setup', 'slurp', 'stat'))
     for mod_name in mods:
-        action_write_locks[mod_name] = Lock()
+        action_write_locks[mod_name] = multiprocessing_context.Lock()

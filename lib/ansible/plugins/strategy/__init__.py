@@ -28,7 +28,7 @@ import time
 import typing as t
 
 from collections import deque
-from multiprocessing import Lock
+
 
 from jinja2.exceptions import UndefinedError
 
@@ -55,6 +55,7 @@ from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.utils.vars import combine_vars
+from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
 display = Display()
@@ -365,7 +366,7 @@ class StrategyBase:
 
         if task.action not in action_write_locks.action_write_locks:
             display.debug('Creating lock for %s' % task.action)
-            action_write_locks.action_write_locks[task.action] = Lock()
+            action_write_locks.action_write_locks[task.action] = multiprocessing_context.Lock()
 
         # create a templar and template things we need later for the queuing process
         templar = Templar(loader=self._loader, variables=task_vars)
