@@ -456,7 +456,8 @@ def copy_directory(src, dest, module):
         diff_files_changed = copy_diff_files(src, dest, module)
         left_only_changed = copy_left_only(src, dest, module)
         common_dirs_changed = copy_common_dirs(src, dest, module)
-        changed = any([diff_files_changed, left_only_changed, common_dirs_changed])
+        owner_group_changed = chown_recursive(dest, module)
+        changed = any([diff_files_changed, left_only_changed, common_dirs_changed, owner_group_changed])
     return changed
 
 
