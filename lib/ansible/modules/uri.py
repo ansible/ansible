@@ -106,18 +106,6 @@ options:
       - The webservice bans or rate-limits clients that cause any HTTP 401 errors.
     type: bool
     default: no
-  follow_redirects:
-    description:
-      - Whether or not the URI module should follow redirects.
-    type: str
-    default: safe
-    choices:
-      all: Will follow all redirects.
-      none: Will not follow any redirects.
-      safe: Only redirects doing GET or HEAD requests will be followed.
-      urllib2: Defer to urllib2 behavior (As of writing this follows HTTP redirects).
-      'no': (DEPRECATED, removed in 2.22) alias of V(none).
-      'yes': (DEPRECATED, removed in 2.22) alias of V(all).
   creates:
     description:
       - A filename, when it already exists, this step will not be run.
@@ -235,6 +223,7 @@ options:
 extends_documentation_fragment:
   - action_common_attributes
   - files
+  - url.url_redirect
 attributes:
     check_mode:
         support: none
@@ -455,7 +444,14 @@ from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.compat.datetime import utcnow, utcfromtimestamp
 from ansible.module_utils.six.moves.collections_abc import Mapping, Sequence
-from ansible.module_utils.urls import fetch_url, get_response_filename, parse_content_type, prepare_multipart, url_argument_spec
+from ansible.module_utils.urls import (
+    fetch_url,
+    get_response_filename,
+    parse_content_type,
+    prepare_multipart,
+    url_argument_spec,
+    url_redirect_argument_spec,
+)
 
 JSON_CANDIDATES = {'json', 'javascript'}
 
@@ -609,6 +605,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
 def main():
     argument_spec = url_argument_spec()
     argument_spec['url']['required'] = True
+    argument_spec.update(url_redirect_argument_spec())
     argument_spec.update(
         dest=dict(type='path'),
         url_username=dict(type='str', aliases=['user']),

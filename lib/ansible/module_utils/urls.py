@@ -1153,6 +1153,16 @@ def url_argument_spec():
     )
 
 
+def url_redirect_argument_spec():
+    """
+    Creates an addition arugment spec to `url_argument_spec`
+    for  `follow_redirects` argument
+    """
+    return dict(
+        follow_redirects=dict(type='str', default='safe', choices=['all', 'no', 'none', 'safe', 'urllib2', 'yes']),
+    )
+
+
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=None, force=False, last_mod_time=None, timeout=10,
               use_gssapi=False, unix_socket=None, ca_path=None, cookies=None, unredirected_headers=None,

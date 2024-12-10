@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - Move ``follow_redirects`` parameter to module_utils so external modules can reuse it.
