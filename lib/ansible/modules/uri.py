@@ -61,6 +61,7 @@ options:
         or list of tuples into an C(application/x-www-form-urlencoded) string. (Added in v2.7)
       - If O(body_format) is set to V(form-multipart) it will convert a dictionary
         into C(multipart/form-multipart) body. (Added in v2.10)
+      - If C(body_format) is set to V(form-multipart) the option 'multipart_encoding' allows to change multipart file encoding. (Added in v2.19)
     type: raw
   body_format:
     description:
@@ -308,10 +309,12 @@ EXAMPLES = r"""
       file1:
         filename: /bin/true
         mime_type: application/octet-stream
+        multipart_encoding: base64
       file2:
         content: text based file content
         filename: fake.txt
         mime_type: text/plain
+        multipart_encoding: 7or8bit
       text_form_field: value
 
 - name: Connect to website using a previously stored cookie
