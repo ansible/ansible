@@ -1372,7 +1372,7 @@ class ActionBase(ABC):
             elif peek_result.get('size') and C.MAX_FILE_SIZE_FOR_DIFF > 0 and peek_result['size'] > C.MAX_FILE_SIZE_FOR_DIFF:
                 diff['dst_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
             else:
-                display.debug(u"Slurping the file %s" % source)
+                display.debug(u"Slurping the file %s" % destination)
                 dest_result = self._execute_module(
                     module_name='ansible.legacy.slurp', module_args=dict(path=destination),
                     task_vars=task_vars, persist_files=True)
