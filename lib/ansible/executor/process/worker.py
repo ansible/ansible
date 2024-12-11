@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import errno
+import faulthandler
 import io
 import os
 import signal
@@ -26,6 +27,7 @@ import textwrap
 import traceback
 import types
 import typing as t
+from functools import partial
 
 from multiprocessing.queues import Queue
 
@@ -35,6 +37,7 @@ from ansible.errors import AnsibleError
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_queue_manager import FinalQueue, STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO
 from ansible.inventory.host import Host
+from ansible.module_utils._internal import _debug
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.task import Task
 from ansible.playbook.play_context import PlayContext
@@ -192,6 +195,13 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         # Set the queue on Display so calls to Display.display are proxied over the queue
         display.set_queue(self._final_q)
         self._detach()
+
+        _debug.register(partial(display.display, stderr=True))
+        try:
+            faulthandler.enable(file=STDERR_FILENO + 100, all_threads=True)
+        except Exception:
+            pass
+
         # propagate signals
         signal.signal(signal.SIGINT, self._term)
         signal.signal(signal.SIGTERM, self._term)
