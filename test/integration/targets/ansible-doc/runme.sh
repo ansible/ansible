@@ -84,18 +84,15 @@ do
 	# FIXME post=$(ansible-doc -l -t ${ptype} --playbook-dir ./|wc -l)
 	# FIXME test "$pre" -eq $((post - 1))
 	if [ "${ptype}" == "filter" ]; then
-		expected=5
 		expected_names=("b64decode" "filter_subdir.nested" "filter_subdir.noop" "noop" "ultimatequestion")
 	elif [ "${ptype}" == "module" ]; then
-		expected=4
 		expected_names=("fakemodule" "notrealmodule" "randommodule" "database.database_type.subdir_module")
-	else
-		expected=1
-                if [ "${ptype}" == "cache" ]; then expected_names=("notjsonfile");
-                elif [ "${ptype}" == "inventory" ]; then expected_names=("statichost");
-                elif [ "${ptype}" == "lookup" ]; then expected_names=("noop");
-                elif [ "${ptype}" == "vars" ]; then expected_names=("noop_vars_plugin"); fi
+	elif [ "${ptype}" == "cache" ]; then expected_names=("notjsonfile");
+	elif [ "${ptype}" == "inventory" ]; then expected_names=("statichost" "testinv");
+	elif [ "${ptype}" == "lookup" ]; then expected_names=("noop");
+	elif [ "${ptype}" == "vars" ]; then expected_names=("noop_vars_plugin");
 	fi
+	expected=${#expected_names[@]}
 	echo "testing collection-filtered list for plugin ${ptype}"
 	justcol=$(ansible-doc -l -t ${ptype} --playbook-dir ./ testns.testcol|wc -l)
 	test "$justcol" -eq "$expected"
@@ -249,6 +246,10 @@ ansible-doc -t filter --playbook-dir ./ nodocs 2>&1| grep "${GREP_OPTS[@]}" -c '
 echo "testing sidecar docs for module"
 [ "$(ansible-doc -M ./library test_win_module| wc -l)" -gt "0" ]
 [ "$(ansible-doc --playbook-dir ./ test_win_module| wc -l)" -gt "0" ]
+
+echo "testing sidecar docs for module, with yaml return and examples"
+[ "$(ansible-doc -M ./library test_win_module2| wc -l)" -gt "0" ]
+[ "$(ansible-doc --playbook-dir ./ test_win_module2| wc -l)" -gt "0" ]
 
 echo "testing duplicate DOCUMENTATION"
 [ "$(ansible-doc --playbook-dir ./ double_doc| wc -l)" -gt "0" ]

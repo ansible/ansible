@@ -1,0 +1,20 @@
+DOCUMENTATION:
+  plugin: testinv
+  short_description: Foo inventory for test4
+  description:
+      - This is a foo inventory
+  author:
+      - me
+
+EXAMPLES:
+  - plugin: testinv
+    access_key: <your access key>
+    secret_key: <your secret key>
+    api_url: https://api.apis.com
+    regions:
+      - fr-par-2
+      - nl-ams-1
+    tags:
+      - dev
+    variables:
+      ansible_host: public_ipv4

@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-doc will now correctly handle YAML formated examples secions
+  - validate-modules will now require example docs for inventory and lookup plugins and require return docs for lookup plugins

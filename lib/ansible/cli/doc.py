@@ -1359,7 +1359,7 @@ class DocCLI(CLI, RoleMixin):
                     text.append(doc.pop('examples').strip())
                 else:
                     try:
-                        text.append(yaml_dump(doc.pop('examples'), indent=2, default_flow_style=False))
+                        text.append(DocCLI._dump_yaml(doc.pop('examples')))
                     except Exception as e:
                         raise AnsibleParserError("Unable to parse examples section", orig_exc=e)
 
@@ -1507,7 +1507,7 @@ class DocCLI(CLI, RoleMixin):
                 text.append(doc.pop('plainexamples').strip())
             else:
                 try:
-                    text.append(yaml_dump(doc.pop('plainexamples'), indent=2, default_flow_style=False))
+                    text.append(DocCLI._dump_yaml(doc.pop('plainexamples')))
                 except Exception as e:
                     raise AnsibleParserError("Unable to parse examples section", orig_exc=e)
 
