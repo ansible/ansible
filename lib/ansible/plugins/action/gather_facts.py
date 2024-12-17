@@ -8,6 +8,7 @@ import time
 import typing as t
 
 from ansible import constants as C
+from ansible.errors import AnsibleActionFail
 from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
@@ -61,6 +62,7 @@ class ActionModule(ActionBase):
         return mod_args
 
     def _combine_task_result(self, result: dict[str, t.Any], task_result: dict[str, t.Any]) -> dict[str, t.Any]:
+        """ builds the final result to return """
         filtered_res = {
             'ansible_facts': task_result.get('ansible_facts', {}),
             'warnings': task_result.get('warnings', []),
@@ -70,6 +72,33 @@ class ActionModule(ActionBase):
         # on conflict the last plugin processed wins, but try to do deep merge and append to lists.
         return merge_hash(result, filtered_res, list_merge='append_rp')
 
+    def _handle_smart(self, modules: list, task_vars: dict[str, t.Any]):
+        """ Updates the module list when 'smart' is used, lookup network os mappings or use setup, warn when things seem inconsistent """
+
+        if 'smart' not in modules:
+            return
+
+        modules.pop(modules.index('smart'))  # remove as this will cause 'module not found' errors
+        network_os = self._task.args.get('network_os', task_vars.get('ansible_network_os', task_vars.get('ansible_facts', {}).get('network_os')))
+
+        if network_os:
+
+            connection_map = C.config.get_config_value('CONNECTION_FACTS_MODULES', variables=task_vars)
+            if network_os in connection_map:
+                modules.append(connection_map[network_os])
+            elif not modules:
+                raise AnsibleActionFail(f"No fact modules available and we could not find a fact module for your network OS ({network_os}), "
+                                        "try setting one via the `FACTS_MODULES` configuration.")
+
+            if set(modules).intersection(set(C._ACTION_SETUP)):
+                # most don't realize how setup works with networking connection plugins (forced_local)
+                self._display.warning("Detected 'setup' module and a network OS is set, the output when running it will reflect 'localhost'"
+                                      " and not the target when a netwoking connection plugin is used.")
+
+        elif not set(modules).difference(set(C._ACTION_SETUP)):
+            # no network OS and setup not in list, add setup by default since 'smart'
+            modules.append('ansible.legacy.setup')
+
     def run(self, tmp: t.Optional[str] = None, task_vars: t.Optional[dict[str, t.Any]] = None) -> dict[str, t.Any]:
 
         result = super(ActionModule, self).run(tmp, task_vars)
@@ -77,13 +106,9 @@ class ActionModule(ActionBase):
 
         # copy the value with list() so we don't mutate the config
         modules = list(C.config.get_config_value('FACTS_MODULES', variables=task_vars))
+        self._handle_smart(modules, task_vars)
 
         parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', None))
-        if 'smart' in modules:
-            connection_map = C.config.get_config_value('CONNECTION_FACTS_MODULES', variables=task_vars)
-            network_os = self._task.args.get('network_os', task_vars.get('ansible_network_os', task_vars.get('ansible_facts', {}).get('network_os')))
-            modules.extend([connection_map.get(network_os or self._connection.ansible_name, 'ansible.legacy.setup')])
-            modules.pop(modules.index('smart'))
 
         failed = {}
         skipped = {}
