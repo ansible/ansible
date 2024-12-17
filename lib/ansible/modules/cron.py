@@ -72,33 +72,39 @@ options:
   minute:
     description:
       - Minute when the job should run (V(0-59), V(*), V(*/2), and so on).
+      - Cannot be combined with O(special_time).
     type: str
     default: "*"
   hour:
     description:
       - Hour when the job should run (V(0-23), V(*), V(*/2), and so on).
+      - Cannot be combined with O(special_time).
     type: str
     default: "*"
   day:
     description:
       - Day of the month the job should run (V(1-31), V(*), V(*/2), and so on).
+      - Cannot be combined with O(special_time).
     type: str
     default: "*"
     aliases: [ dom ]
   month:
     description:
-      - Month of the year the job should run (V(1-12), V(*), V(*/2), and so on).
+      - Month of the year the job should run (V(JAN-DEC) or V(1-12), V(*), V(*/2), and so on).
+      - Cannot be combined with O(special_time).
     type: str
     default: "*"
   weekday:
     description:
-      - Day of the week that the job should run (V(0-6) for Sunday-Saturday, V(*), and so on).
+      - Day of the week that the job should run (V(SUN-SAT) or V(0-6), V(*), and so on).
+      - Cannot be combined with O(special_time).
     type: str
     default: "*"
     aliases: [ dow ]
   special_time:
     description:
       - Special time specification nickname.
+      - Cannot be combined with O(minute), O(hour), O(day), O(month) or O(weekday).
     type: str
     choices: [ annually, daily, hourly, monthly, reboot, weekly, yearly ]
     version_added: "1.3"
@@ -645,7 +651,7 @@ def main():
 
     if special_time and \
        (True in [(x != '*') for x in [minute, hour, day, month, weekday]]):
-        module.fail_json(msg="You must specify time and date fields or special time.")
+        module.fail_json(msg="You cannot combine special_time with any of the time or day/date parameters.")
 
     # cannot support special_time on solaris
     if special_time and platform.system() == 'SunOS':
