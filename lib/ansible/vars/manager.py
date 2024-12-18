@@ -580,10 +580,10 @@ class VariableManager:
         Sets or updates the given facts for a host in the fact cache.
         """
 
-        warn_if_reserved(facts.keys())
         if not isinstance(facts, Mapping):
             raise AnsibleAssertionError("the type of 'facts' to set for nonpersistent_facts should be a Mapping but is a %s" % type(facts))
 
+        warn_if_reserved(facts.keys())
         try:
             self._nonpersistent_fact_cache[host] |= facts
         except KeyError:
