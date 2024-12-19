@@ -114,7 +114,7 @@ class ModuleArgsParser:
     Args may also be munged for certain shell command parameters.
     """
 
-    def __init__(self, task_ds=None, collection_list=None):
+    def __init__(self, task_ds: dict | None = None, collection_list: list[str] | None = None):
         task_ds = {} if task_ds is None else task_ds
 
         if not isinstance(task_ds, dict):
@@ -130,6 +130,8 @@ class ModuleArgsParser:
         # HACK: why are these not FieldAttributes on task with a post-validate to check usage?
         self._task_attrs.update(['local_action', 'static'])
         self._task_attrs = frozenset(self._task_attrs)
+
+        self.resolved_action = None
 
     def _split_module_string(self, module_string: str) -> tuple[str, str]:
         """
@@ -156,7 +158,7 @@ class ModuleArgsParser:
 
         return AnsibleTagHelper.tag_copy(module_string, result[0]), AnsibleTagHelper.tag_copy(module_string, result[1])
 
-    def _normalize_parameters(self, thing, action=None, additional_args=None):
+    def _normalize_parameters(self, thing: dict | str | bytes, action: str | None = None, additional_args: dict | None = None) -> tuple(str, dict[str]):
         """
         arguments can be fuzzy.  Deal with all the forms.
         """
@@ -215,7 +217,7 @@ class ModuleArgsParser:
 
         return (action, final_args)
 
-    def _normalize_new_style_args(self, thing, action):
+    def _normalize_new_style_args(self, thing: dict | str | bytes, action: str) -> dict[str]:
         """
         deals with fuzziness in new style module invocations
         accepting key=value pairs and dictionaries, and returns
@@ -244,7 +246,7 @@ class ModuleArgsParser:
             raise AnsibleParserError("unexpected parameter type in action: %s" % type(thing), obj=self._task_ds)
         return args
 
-    def _normalize_old_style_args(self, thing):
+    def _normalize_old_style_args(self, thing: dict | str | bytes) -> tuple(str, dict[str]):
         """
         deals with fuzziness in old-style (action/local_action) module invocations
         returns tuple of (module_name, dictionary_args)
@@ -282,7 +284,7 @@ class ModuleArgsParser:
 
         return (action, args)
 
-    def parse(self, skip_action_validation=False):
+    def parse(self, skip_action_validation: bool = False):
         """
         Given a task in one of the supported forms, parses and returns
         returns the action, arguments, and delegate_to values for the
