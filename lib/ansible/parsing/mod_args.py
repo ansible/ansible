@@ -125,17 +125,14 @@ class ModuleArgsParser:
 
         self._task_ds = task_ds
         self._collection_list = collection_list
+        self.resolved_action = None
+
+        # store the valid Task/Handler attrs for quick access
         # delayed local imports to prevent circular import
         from ansible.playbook.task import Task
         from ansible.playbook.handler import Handler
-        # store the valid Task/Handler attrs for quick access
-        self._task_attrs = set(Task.fattributes)
-        self._task_attrs.update(set(Handler.fattributes))
         # HACK: why are these not FieldAttributes on task with a post-validate to check usage?
-        self._task_attrs.update(['local_action', 'static'])
-        self._task_attrs = frozenset(self._task_attrs)
-
-        self.resolved_action = None
+        self._task_attrs = frozenset(set(Task.fattributes) + set(Handler.fattributes) + ['local_action', 'static'])
 
     def _split_module_string(self, module_string: str) -> tuple[str, str]:
         """
@@ -147,10 +144,10 @@ class ModuleArgsParser:
 
         tokens = split_args(module_string)
 
-        for t in tokens:  # pylint: disable=locally-disabled, modified-iterating-list
-            if t.startswith('module='):  # allows for action: module=<action name>
-                action = t.lstrip('module=').strip()
-                tokens.remove(t)
+        for token in tokens:  # pylint: disable=locally-disabled, modified-iterating-list
+            if token.startswith('module='):  # allows for action: module=<action name>
+                action = token.lstrip('module=').strip()
+                tokens.remove(token)
                 break
         else:  # this is action: <action name> case
             action = tokens[0].strip()
