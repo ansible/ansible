@@ -17,6 +17,8 @@
 
 from __future__ import annotations
 
+import typing as t
+
 from ansible.playbook import Play
 from ansible.playbook.block import Block
 from ansible.playbook.role import Role
@@ -27,7 +29,7 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def get_reserved_names(include_private: bool = True) -> set(str):
+def get_reserved_names(include_private: bool = True) -> t.Set(str):
     """ this function returns the list of reserved names associated with play objects"""
 
     templar = Templar(loader=None)
