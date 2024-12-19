@@ -140,10 +140,19 @@ class ModuleArgsParser:
         """
 
         tokens = split_args(module_string)
+
+        for t in tokens:
+            if t.startswith('module='):  # allows for action: module=<action name>
+                action = t.lstrip('module=').strip()
+                tokens.remove(t)
+                break
+        else:  # this is action: <action name> case
+            action = tokens[0].strip()
+
         if len(tokens) > 1:
-            result = (tokens[0].strip(), " ".join(tokens[1:]))
+            result = (action, " ".join(tokens[1:]))
         else:
-            result = (tokens[0].strip(), "")
+            result = (action, "")
 
         return AnsibleTagHelper.tag_copy(module_string, result[0]), AnsibleTagHelper.tag_copy(module_string, result[1])
 
