@@ -132,7 +132,7 @@ class ModuleArgsParser:
         from ansible.playbook.task import Task
         from ansible.playbook.handler import Handler
         # HACK: why are these not FieldAttributes on task with a post-validate to check usage?
-        self._task_attrs = frozenset(set(Task.fattributes) + set(Handler.fattributes) + ['local_action', 'static'])
+        self._task_attrs = frozenset(set(Task.fattributes).union(set(Handler.fattributes)).union(set(['local_action', 'static']))
 
     def _split_module_string(self, module_string: str) -> tuple[str, str]:
         """
@@ -164,7 +164,7 @@ class ModuleArgsParser:
         thing: dict[str, t.Any] | str | bytes,
         action: str | None = None,
         additional_args: str | dict[str, t.Any] | None = None
-    ) -> tuple(str, dict[str, t.Any]):
+    ) -> t.Tuple(str, dict[str, t.Any]):
         """
         arguments can be fuzzy.  Deal with all the forms.
         """
@@ -252,7 +252,7 @@ class ModuleArgsParser:
             raise AnsibleParserError(f"unexpected parameter type in action: {type(thing)}", obj=self._task_ds)
         return args
 
-    def _normalize_old_style_args(self, thing: dict[str, t.Any] | str | bytes | None) -> tuple(str, dict[str]):
+    def _normalize_old_style_args(self, thing: dict[str, t.Any] | str | bytes | None) -> t.Tuple(str, dict[str, t.Any]):
         """
         deals with fuzziness in old-style (action/local_action) module invocations
         returns tuple of (module_name, dictionary_args)
