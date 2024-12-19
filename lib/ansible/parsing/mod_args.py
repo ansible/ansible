@@ -147,7 +147,7 @@ class ModuleArgsParser:
 
         tokens = split_args(module_string)
 
-        for t in tokens:
+        for t in tokens:  # pylint: disable=locally-disabled, modified-iterating-list
             if t.startswith('module='):  # allows for action: module=<action name>
                 action = t.lstrip('module=').strip()
                 tokens.remove(t)
