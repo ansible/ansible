@@ -17,8 +17,6 @@
 
 from __future__ import annotations
 
-import typing as t
-
 from ansible.playbook import Play
 from ansible.playbook.block import Block
 from ansible.playbook.role import Role
