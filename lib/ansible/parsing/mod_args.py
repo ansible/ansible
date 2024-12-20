@@ -164,7 +164,7 @@ class ModuleArgsParser:
         thing: dict[str, t.Any] | str | bytes,
         action: str | None = None,
         additional_args: str | dict[str, t.Any] | None = None
-    ) -> tuple[(str, dict[str, t.Any]]:
+    ) -> tuple[str, dict[str, t.Any]]:
         """
         arguments can be fuzzy.  Deal with all the forms.
         """
