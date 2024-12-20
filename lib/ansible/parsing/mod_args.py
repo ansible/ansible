@@ -144,7 +144,7 @@ class ModuleArgsParser:
 
         tokens = split_args(module_string)
 
-        for token in tokens:  # pylint: disable=locally-disabled, modified-iterating-list
+        for token in tokens:  # pylint: disable=modified-iterating-list,locally-disabled
             if token.startswith('module='):  # allows for action: module=<action name>
                 action = token.lstrip('module=').strip()
                 tokens.remove(token)
@@ -164,7 +164,7 @@ class ModuleArgsParser:
         thing: dict[str, t.Any] | str | bytes,
         action: str | None = None,
         additional_args: str | dict[str, t.Any] | None = None
-    ) -> t.Tuple(str, dict[str, t.Any]):
+    ) -> tuple[(str, dict[str, t.Any]]:
         """
         arguments can be fuzzy.  Deal with all the forms.
         """
@@ -252,7 +252,7 @@ class ModuleArgsParser:
             raise AnsibleParserError(f"unexpected parameter type in action: {type(thing)}", obj=self._task_ds)
         return args
 
-    def _normalize_old_style_args(self, thing: dict[str, t.Any] | str | bytes | None) -> t.Tuple(str, dict[str, t.Any]):
+    def _normalize_old_style_args(self, thing: dict[str, t.Any] | str | bytes | None) -> tuple[str, dict[str, t.Any]]:
         """
         deals with fuzziness in old-style (action/local_action) module invocations
         returns tuple of (module_name, dictionary_args)
