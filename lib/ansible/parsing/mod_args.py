@@ -134,7 +134,7 @@ class ModuleArgsParser:
         # HACK: why are these not FieldAttributes on task with a post-validate to check usage?
         self._task_attrs = frozenset(set(Task.fattributes).union(set(Handler.fattributes)).union(set(['local_action', 'static'])))
 
-    def _split_module_string(self, module_string: str) -> tuple[str, str]:
+    def _split_module_string(self, module_string: str | dict[str, t.Any]) -> tuple[str, str]:
         """
         when module names are expressed like:
         action: copy src=a dest=b
@@ -290,7 +290,7 @@ class ModuleArgsParser:
 
         return (action, args)
 
-    def parse(self, skip_action_validation: bool = False) -> tuple(str | None, dict[str, t.any], str | Sentinel):
+    def parse(self, skip_action_validation: bool = False) -> tuple[str | None, dict[str, t.any], str | Sentinel]:
         """
         Given a task in one of the supported forms, parses and returns
         returns the action, arguments, and delegate_to values for the
@@ -299,7 +299,7 @@ class ModuleArgsParser:
 
         action = None
         delegate_to = self._task_ds.get('delegate_to', Sentinel)
-        args = dict()
+        args: dict[str, t.Any] = dict()
 
         # This is the standard YAML form for command-type modules. We grab
         # the args and pass them in as additional arguments, which can/will
