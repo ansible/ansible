@@ -29,7 +29,7 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def get_reserved_names(include_private: bool = True) -> t.Set(str):
+def get_reserved_names(include_private: bool = True) -> set[str]:
     """ this function returns the list of reserved names associated with play objects"""
 
     templar = Templar(loader=None)
