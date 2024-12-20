@@ -132,7 +132,7 @@ class ModuleArgsParser:
         from ansible.playbook.task import Task
         from ansible.playbook.handler import Handler
         # HACK: why are these not FieldAttributes on task with a post-validate to check usage?
-        self._task_attrs = frozenset(set(Task.fattributes).union(set(Handler.fattributes)).union(set(['local_action', 'static']))
+        self._task_attrs = frozenset(set(Task.fattributes).union(set(Handler.fattributes)).union(set(['local_action', 'static'])))
 
     def _split_module_string(self, module_string: str) -> tuple[str, str]:
         """
