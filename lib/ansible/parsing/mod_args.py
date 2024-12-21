@@ -144,7 +144,7 @@ class ModuleArgsParser:
 
         tokens = split_args(module_string)
 
-        for token in tokens:  # pylint: disable=modified-iterating-list,locally-disabled
+        for token in tokens:  # pylint: disable=modified-iterating-list, locally-disabled
             if token.startswith('module='):  # allows for action: module=<action name>
                 action = token.lstrip('module=').strip()
                 tokens.remove(token)
@@ -280,9 +280,9 @@ class ModuleArgsParser:
 
         elif isinstance(thing, string_types):
             # form is like:  action: copy src=a dest=b
-            (action, args) = self._split_module_string(thing)
+            (action, module_args) = self._split_module_string(thing)
             check_raw = action in FREEFORM_ACTIONS
-            args = parse_kv(args, check_raw=check_raw)
+            args = parse_kv(module_args, check_raw=check_raw)
 
         else:
             # need a dict or a string, so giving up
@@ -290,7 +290,7 @@ class ModuleArgsParser:
 
         return (action, args)
 
-    def parse(self, skip_action_validation: bool = False) -> tuple[str | None, dict[str, t.any], str | Sentinel]:
+    def parse(self, skip_action_validation: bool = False) -> tuple[str | None, dict[str, t.Any], str | Sentinel]:
         """
         Given a task in one of the supported forms, parses and returns
         returns the action, arguments, and delegate_to values for the
