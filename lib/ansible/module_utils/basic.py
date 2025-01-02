@@ -1299,6 +1299,7 @@ class AnsibleModule(object):
         # TODO: generalize a separate log function and make log_invocation use it
         # Sanitize possible password argument when logging.
         log_args = dict()
+        log_args["PRIORITY"] = 6
 
         for param in self.params:
             canon = self.aliases.get(param, param)
