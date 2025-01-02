@@ -32,7 +32,7 @@ def test_module_utils_basic__log_invocation(am, mocker):
     message = args[0]
 
     assert len(message) == \
-        len('Invoked with bam=bam bar=[1, 2, 3] foo=False baz=baz no_log=NOT_LOGGING_PARAMETER password=NOT_LOGGING_PASSWORD')
+        len('Invoked with bam=bam bar=[1, 2, 3] foo=False baz=baz no_log=NOT_LOGGING_PARAMETER password=NOT_LOGGING_PASSWORD PRIORITY=6')
 
     assert message.startswith('Invoked with ')
     assert ' bam=bam' in message
@@ -51,4 +51,5 @@ def test_module_utils_basic__log_invocation(am, mocker):
             'baz': 'baz',
             'password': 'NOT_LOGGING_PASSWORD',
             'no_log': 'NOT_LOGGING_PARAMETER',
+            'PRIORITY': 6,
         })
