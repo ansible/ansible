@@ -8,7 +8,7 @@
       - result.msg == expected_msg
       - result is failed
   vars:
-    expected_msg: "cannot pickle 'Undefined' object"
+    expected_msg: "pickle intentionally not supported"
 
 - debug:
     msg: Success, no hang

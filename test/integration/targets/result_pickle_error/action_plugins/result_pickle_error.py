@@ -5,10 +5,14 @@
 from __future__ import annotations
 
 from ansible.plugins.action import ActionBase
-from jinja2 import Undefined
+
+
+class CannotBePickled:
+    def __getstate__(self):
+        raise Exception('pickle intentionally not supported')
 
 
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
-        return {'obj': Undefined('obj')}
+        return {'obj': CannotBePickled()}
