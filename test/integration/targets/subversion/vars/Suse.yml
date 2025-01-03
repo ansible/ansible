@@ -1,6 +1,8 @@
 ---
 subversion_packages:
-- subversion
-- subversion-server
+- >-  # version sync needed post Dec 17, 2024
+  subversion >= 1.14.1-150400.5.3.1
+- >-  # version sync needed post Dec 17, 2024
+  subversion-server >= 1.14.1-150400.5.3.1
 apache_user: wwwrun
 apache_group: www
