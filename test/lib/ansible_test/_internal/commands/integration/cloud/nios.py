@@ -28,7 +28,7 @@ class NiosProvider(CloudProvider):
     #
     # It's source source itself resides at:
     # https://github.com/ansible/nios-test-container
-    DOCKER_IMAGE = 'quay.io/ansible/nios-test-container:6.0.0'
+    DOCKER_IMAGE = 'quay.io/ansible/nios-test-container:7.0.0'
 
     def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
