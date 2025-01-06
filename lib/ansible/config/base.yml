@@ -1575,9 +1575,10 @@ INTERPRETER_PYTHON:
     Supported discovery modes are ``auto`` (the default), ``auto_silent``, ``auto_legacy``, and ``auto_legacy_silent``.
     All discovery modes match against an ordered list of well-known Python interpreter locations. 
     The fallback behavior will issue a warning that the interpreter should be set explicitly (since interpreters
-    installed later may change which one is used). This warning behavior can be disabled by setting ``auto_silent`` or
-    ``auto_legacy_silent``. The value of ``auto_legacy`` provides all the same behavior, but for backward-compatibility
-    with older Ansible releases that always defaulted to ``/usr/bin/python3``, will use that interpreter if present.
+    installed later may change which one is used). This warning behavior can be disabled by setting ``auto_silent``.
+    The ``auto_legacy`` modes are deprecated and behave the same as their respective ``auto`` modes.
+    They exist for backward-compatibility with older Ansible releases that always defaulted to ``/usr/bin/python3``,
+    which will use that interpreter if present.
 INTERPRETER_PYTHON_FALLBACK:
   name: Ordered list of Python interpreters to check for in discovery
   default:
