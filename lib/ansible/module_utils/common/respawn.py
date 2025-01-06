@@ -58,7 +58,8 @@ def probe_interpreters_for_module(interpreter_paths, module_name):
     be returned (or ``None`` if probing fails for all supplied paths).
     :arg module_name: fully-qualified Python module name to probe for (eg, ``selinux``)
     """
-    env = os.environ | {'PYTHONPATH': _ANSIBLE_PARENT_PATH}
+    PYTHONPATH = os.getenv('PYTHONPATH', '')
+    env = os.environ | {'PYTHONPATH': f'{_ANSIBLE_PARENT_PATH}:{PYTHONPATH}'.rstrip(': ')}
     for interpreter_path in interpreter_paths:
         if not os.path.exists(interpreter_path):
             continue
