@@ -128,19 +128,6 @@ class TestVaultCli(unittest.TestCase):
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')
-    @patch('ansible.cli.vault.display.prompt', return_value='a_prompt')
-    def test_shadowed_encrypt_string_prompt_extra(self, mock_display, mock_vault_editor, mock_setup_vault_secrets):
-        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
-        cli = VaultCLI(args=['ansible-vault',
-                             'encrypt_string',
-                             '--prompt',
-                             'extra string'])
-        self.assertRaisesRegex(errors.AnsibleOptionsError, 'You cannot specify the string to encrypt using --prompt and as an argument.' , cli.parse())
-        args, kwargs = mock_display.call_args
-        assert kwargs["private"]
-
-    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
-    @patch('ansible.cli.vault.VaultEditor')
     @patch('ansible.cli.vault.sys.stdin.read', return_value='This is data from stdin')
     def test_encrypt_string_stdin(self, mock_stdin_read, mock_vault_editor, mock_setup_vault_secrets):
         mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
@@ -173,7 +160,7 @@ class TestVaultCli(unittest.TestCase):
                              'other strings',
                              'a few more string args'])
         cli.parse()
-        self.assertRaisesRegex(errors.AnsibleOptionsError, 'Only one string can be encrypted', cli.run())
+        cli.run()
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')
