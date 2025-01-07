@@ -19,7 +19,7 @@ contact_links:
   url: https://docs.ansible.com/ansible/devel/community/communication.html?utm_medium=github&utm_source=issue_template_chooser#mailing-list-information
   about: Please ask and answer usage questions here
 - name: ⚡ Working groups
-  url: https://github.com/ansible/community/wiki
+  url: https://forum.ansible.com/g?utm_medium=github&utm_source=issue_template_chooser
   about: Interested in improving a specific area? Become a part of a working group!
 - name: 💼 For Enterprise
   url: https://www.ansible.com/products/engine?utm_medium=github&utm_source=issue_template_chooser
