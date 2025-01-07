@@ -1,4 +1,3 @@
-# NOTE: The HTTP HEAD turns into an HTTP GET
 - name: Test HTTP 301 using HEAD
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=301&url=https://{{ httpbin_host }}/anything
@@ -10,12 +9,26 @@
 - assert:
     that:
     - http_301_head is successful
-    - http_301_head.json.data == ''
-    - http_301_head.json.method == 'GET'
-    - http_301_head.json.url == 'https://{{ httpbin_host }}/anything'
     - http_301_head.redirected == true
     - http_301_head.status == 200
     - http_301_head.url == 'https://{{ httpbin_host }}/anything'
+
+# HTTP 301 responses on HEAD requests behave differently depending on the Python version
+# see: https://github.com/python/cpython/issues/99730
+
+- name: Check results on Python versions 3.13 and later
+  assert:
+    that:
+      - http_301_head.json is undefined
+  when: ansible_python_version is version("3.13", ">=")
+
+- name: Check results on Python versions before 3.13
+  assert:
+    that:
+      - http_301_head.json.data == ''
+      - http_301_head.json.method == 'GET'
+      - http_301_head.json.url == 'https://{{ httpbin_host }}/anything'
+  when: ansible_python_version is version("3.13", "<")
 
 - name: Test HTTP 301 using GET
   uri:
@@ -56,7 +69,6 @@
     - http_301_post.status == 200
     - http_301_post.url == 'https://{{ httpbin_host }}/anything'
 
-# NOTE: The HTTP HEAD turns into an HTTP GET
 - name: Test HTTP 302 using HEAD
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/anything
@@ -68,12 +80,26 @@
 - assert:
     that:
     - http_302_head is successful
-    - http_302_head.json.data == ''
-    - http_302_head.json.method == 'GET'
-    - http_302_head.json.url == 'https://{{ httpbin_host }}/anything'
     - http_302_head.redirected == true
     - http_302_head.status == 200
     - http_302_head.url == 'https://{{ httpbin_host }}/anything'
+
+# HTTP 302 responses on HEAD requests behave differently depending on the Python version
+# see: https://github.com/python/cpython/issues/99730
+
+- name: Check results on Python versions 3.13 and later
+  assert:
+    that:
+      - http_302_head.json is undefined
+  when: ansible_python_version is version("3.13", ">=")
+
+- name: Check results on Python versions before 3.13
+  assert:
+    that:
+      - http_302_head.json.data == ''
+      - http_302_head.json.method == 'GET'
+      - http_302_head.json.url == 'https://{{ httpbin_host }}/anything'
+  when: ansible_python_version is version("3.13", "<")
 
 - name: Test HTTP 302 using GET
   uri:
@@ -114,7 +140,6 @@
     - http_302_post.status == 200
     - http_302_post.url == 'https://{{ httpbin_host }}/anything'
 
-# NOTE: The HTTP HEAD turns into an HTTP GET
 - name: Test HTTP 303 using HEAD
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=303&url=https://{{ httpbin_host }}/anything
@@ -126,12 +151,26 @@
 - assert:
     that:
     - http_303_head is successful
-    - http_303_head.json.data == ''
-    - http_303_head.json.method == 'GET'
-    - http_303_head.json.url == 'https://{{ httpbin_host }}/anything'
     - http_303_head.redirected == true
     - http_303_head.status == 200
     - http_303_head.url == 'https://{{ httpbin_host }}/anything'
+
+# HTTP 303 responses on HEAD requests behave differently depending on the Python version
+# see: https://github.com/python/cpython/issues/99730
+
+- name: Check results on Python versions 3.13 and later
+  assert:
+    that:
+      - http_303_head.json is undefined
+  when: ansible_python_version is version("3.13", ">=")
+
+- name: Check results on Python versions before 3.13
+  assert:
+    that:
+      - http_303_head.json.data == ''
+      - http_303_head.json.method == 'GET'
+      - http_303_head.json.url == 'https://{{ httpbin_host }}/anything'
+  when: ansible_python_version is version("3.13", "<")
 
 - name: Test HTTP 303 using GET
   uri:
@@ -172,7 +211,6 @@
     - http_303_post.status == 200
     - http_303_post.url == 'https://{{ httpbin_host }}/anything'
 
-# NOTE: The HTTP HEAD turns into an HTTP GET
 - name: Test HTTP 307 using HEAD
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=307&url=https://{{ httpbin_host }}/anything
@@ -184,12 +222,26 @@
 - assert:
     that:
     - http_307_head is successful
-    - http_307_head.json.data == ''
-    - http_307_head.json.method == 'GET'
-    - http_307_head.json.url == 'https://{{ httpbin_host }}/anything'
     - http_307_head.redirected == true
     - http_307_head.status == 200
     - http_307_head.url == 'https://{{ httpbin_host }}/anything'
+
+# HTTP 307 responses on HEAD requests behave differently depending on the Python version
+# see: https://github.com/python/cpython/issues/99730
+
+- name: Check results on Python versions 3.13 and later
+  assert:
+    that:
+      - http_307_head.json is undefined
+  when: ansible_python_version is version("3.13", ">=")
+
+- name: Check results on Python versions before 3.13
+  assert:
+    that:
+      - http_307_head.json.data == ''
+      - http_307_head.json.method == 'GET'
+      - http_307_head.json.url == 'https://{{ httpbin_host }}/anything'
+  when: ansible_python_version is version("3.13", "<")
 
 - name: Test HTTP 307 using GET
   uri:
@@ -254,19 +306,32 @@
   # See: https://github.com/python/cpython/issues/84501
   when: ansible_python_version is version('3.11', '<')
 
-# NOTE: The HTTP HEAD turns into an HTTP GET
 - assert:
     that:
     - http_308_head is successful
-    - http_308_head.json.data == ''
-    - http_308_head.json.method == 'GET'
-    - http_308_head.json.url == 'https://{{ httpbin_host }}/anything'
     - http_308_head.redirected == true
     - http_308_head.status == 200
     - http_308_head.url == 'https://{{ httpbin_host }}/anything'
   # Python 3.11 introduced support for HTTP 308 responses.
   # See: https://github.com/python/cpython/issues/84501
   when: ansible_python_version is version('3.11', '>=')
+
+# HTTP 308 responses on HEAD requests behave differently depending on the Python version
+# see: https://github.com/python/cpython/issues/99730
+
+- name: Check results on Python versions 3.13 and later
+  assert:
+    that:
+      - http_308_head.json is undefined
+  when: ansible_python_version is version("3.13", ">=")
+
+- name: Check results on Python versions before 3.13
+  assert:
+    that:
+      - http_308_head.json.data == ''
+      - http_308_head.json.method == 'GET'
+      - http_308_head.json.url == 'https://{{ httpbin_host }}/anything'
+  when: ansible_python_version is version('3.11', '>=') and ansible_python_version is version("3.13", "<")
 
 # FIXME: This is fixed in https://github.com/ansible/ansible/pull/36809
 - name: Test HTTP 308 using GET
