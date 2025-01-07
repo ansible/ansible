@@ -1,5 +1,6 @@
 ---
 subversion_packages:
+- apache2
 - subversion
 - libapache2-mod-svn
 apache_user: www-data

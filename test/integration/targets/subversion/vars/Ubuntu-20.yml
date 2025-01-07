@@ -1,8 +1,0 @@
----
-subversion_packages:
-- apache2  # /usr/sbin/apachectl
-- apache2-utils  # htpasswd
-- subversion
-- libapache2-mod-svn
-apache_user: www-data
-apache_group: www-data
