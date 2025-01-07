@@ -1046,12 +1046,7 @@ class DocCLI(CLI, RoleMixin):
     @staticmethod
     def _combine_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata):
         # generate extra data
-        if plugin_type == 'module':
-            # is there corresponding action plugin?
-            if plugin in action_loader:
-                doc['has_action'] = True
-            else:
-                doc['has_action'] = False
+        doc['has_action'] = plugin in action_loader
 
         # return everything as one dictionary
         return {'doc': doc, 'examples': plainexamples, 'return': returndocs, 'metadata': metadata}
