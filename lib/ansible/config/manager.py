@@ -40,6 +40,7 @@ GALAXY_SERVER_DEF = [
     ('api_version', False, 'int'),
     ('validate_certs', False, 'bool'),
     ('client_id', False, 'str'),
+    ('client_secret', False, 'str'),
     ('timeout', False, 'int'),
 ]
 

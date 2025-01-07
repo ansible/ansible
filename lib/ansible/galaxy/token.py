@@ -26,6 +26,7 @@ import os
 import time
 from stat import S_IRUSR, S_IWUSR
 from urllib.error import HTTPError
+from urllib.parse import urlencode
 
 from ansible import constants as C
 from ansible.galaxy.api import GalaxyError
@@ -47,7 +48,7 @@ class KeycloakToken(object):
 
     token_type = 'Bearer'
 
-    def __init__(self, access_token=None, auth_url=None, validate_certs=True, client_id=None):
+    def __init__(self, access_token=None, auth_url=None, validate_certs=True, client_id=None, client_secret=None):
         self.access_token = access_token
         self.auth_url = auth_url
         self._token = None
@@ -55,11 +56,26 @@ class KeycloakToken(object):
         self.client_id = client_id
         if self.client_id is None:
             self.client_id = 'cloud-services'
+        self.client_secret = client_secret
         self._expiration = None
 
     def _form_payload(self):
-        return 'grant_type=refresh_token&client_id=%s&refresh_token=%s' % (self.client_id,
-                                                                           self.access_token)
+        payload = {
+            'client_id': self.client_id,
+        }
+        if self.client_secret:
+            payload['client_secret'] = self.client_secret
+            payload['scope'] = 'api.console'
+            payload['grant_type'] = 'client_credentials'
+            if self.access_token:
+                display.warning(
+                    'Found both a client_secret and access_token for galaxy authentication, ignoring access_token'
+                )
+        else:
+            payload['refresh_token'] = self.access_token
+            payload['grant_type'] = 'refresh_token'
+
+        return urlencode(payload)
 
     def get(self):
         if self._expiration and time.time() >= self._expiration:
@@ -68,16 +84,9 @@ class KeycloakToken(object):
         if self._token:
             return self._token
 
-        # - build a request to POST to auth_url
-        #  - body is form encoded
-        #    - 'refresh_token' is the offline token stored in ansible.cfg
-        #    - 'grant_type' is 'refresh_token'
-        #    - 'client_id' is 'cloud-services'
-        #       - should probably be based on the contents of the
-        #         offline_ticket's JWT payload 'aud' (audience)
-        #         or 'azp' (Authorized party - the party to which the ID Token was issued)
         payload = self._form_payload()
 
+        display.vvv(f'Authenticating via {self.auth_url}')
         try:
             resp = open_url(to_native(self.auth_url),
                             data=payload,
@@ -86,15 +95,18 @@ class KeycloakToken(object):
                             http_agent=user_agent())
         except HTTPError as e:
             raise GalaxyError(e, 'Unable to get access token')
+        display.vvv('Authentication successful')
 
         data = json.load(resp)
 
         # So that we have a buffer, expire the token in ~2/3 the given value
         expires_in = data['expires_in'] // 3 * 2
         self._expiration = time.time() + expires_in
+        display.vvv(f'Authentication token expires in {expires_in} seconds')
 
-        # - extract 'access_token'
         self._token = data.get('access_token')
+        if token_type := data.get('token_type'):
+            self.token_type = token_type
 
         return self._token
 
