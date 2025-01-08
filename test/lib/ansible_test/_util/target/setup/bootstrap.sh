@@ -154,6 +154,7 @@ bootstrap_remote_freebsd()
         py${python_package_version}-sqlite3
         py${python_package_version}-setuptools
         bash
+        ca_root_nss
         curl
         gtar
         sudo
