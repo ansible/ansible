@@ -129,7 +129,7 @@ class AnsiblePlugin(ABC):
 
     @property
     def option_definitions(self):
-        if self._defs is None:
+        if (not hasattr(self, "_defs")) or self._defs is None:
             self._defs = C.config.get_configuration_definitions(plugin_type=self.plugin_type, name=self._load_name)
         return self._defs
 

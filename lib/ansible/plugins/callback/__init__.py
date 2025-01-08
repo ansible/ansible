@@ -171,8 +171,11 @@ class CallbackBase(AnsiblePlugin):
     def set_option(self, k, v):
         self._plugin_options[k] = C.config.get_config_value(k, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={k: v})
 
-    def get_option(self, k):
+    def get_option(self, k, hostvars=None):
         return self._plugin_options[k]
+
+    def has_option(self, option):
+        return (option in self._plugin_options)
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         """ This is different than the normal plugin method as callbacks get called early and really don't accept keywords.
