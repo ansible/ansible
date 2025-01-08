@@ -101,23 +101,7 @@ body:
 - type: dropdown
   attributes:
     label: Issue Type
-    description: >
-      Please select the single available option in the drop-down.
-
-      <details>
-        <summary>
-          <em>Why?</em>
-        </summary>
-
-        We would do it by ourselves but unfortunately, the current
-        edition of GitHub Issue Forms Alpha does not support this yet 🤷
-
-
-        _We will make it easier in the future, once GitHub
-        supports dropdown defaults. Promise!_
-
-      </details>
-    # FIXME: Once GitHub allows defining the default choice, update this
+    description: This is a marker for our automatic bot. Do not change it.
     options:
     - Feature Idea
   validations:
