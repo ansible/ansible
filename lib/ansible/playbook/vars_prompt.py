@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from ansible.playbook.attribute import NonInheritableFieldAttribute
+from ansible.playbook.base import FieldAttributeBase
 
 
 class VarsPrompt(FieldAttributeBase):
@@ -8,7 +9,7 @@ class VarsPrompt(FieldAttributeBase):
     name = NonInheritableFieldAttribute(isa='string', always_post_validate=True)
     prompt = NonInheritableFieldAttribute(isa='string')
     default = NonInheritableFieldAttribute(isa='raw')
-    private = NonInheritableFieldAttribute(isa='bool')
+    private = NonInheritableFieldAttribute(isa='bool', default=True)
     confirm = NonInheritableFieldAttribute(isa='bool')
     encrypt = NonInheritableFieldAttribute(isa='bool')
     salt_size = NonInheritableFieldAttribute(isa='int')
