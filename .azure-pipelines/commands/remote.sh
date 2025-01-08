@@ -18,15 +18,27 @@ if [ "${#splitversion[@]}" -gt 1 ]; then
     pyver="${splitversion[1]}"
 fi
 
-if [ "${#args[@]}" -gt 2 ]; then
-    target="shippable/posix/group${args[2]}/"
-else
-    target="shippable/posix/"
-fi
+group="${args[2]}"
+
+declare -a group_args
+IFS='@' read -ra group_args <<< "${group}"
+
+arch="${group_args[0]}"
+group="${group_args[1]}"
+
+echo "Group ${group} on ${arch}"
+
+target="shippable/posix/group${group}/"
 
 stage="${S:-prod}"
 provider="${P:-default}"
 
+if [ "${arch}" = "c7a" ]; then
+  arch="x86_64"
+  stage="dev"
+fi
+
 # shellcheck disable=SC2086
 ansible-test integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
     --python "${pyver}" --remote "${platform}/${version}" --remote-terminate always --remote-stage "${stage}" --remote-provider "${provider}" \
+    --remote-arch "${arch}" \

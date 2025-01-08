@@ -36,60 +36,12 @@ variables:
 pool: Standard
 
 stages:
-  - stage: Sanity
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Test {0}
-          testFormat: sanity/{0}
-          targets:
-            - test: 1
-            - test: 2
-  - stage: Units
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Python {0}
-          testFormat: units/{0}
-          targets:
-            - test: 3.8
-            - test: 3.9
-            - test: '3.10'
-            - test: 3.11
-            - test: 3.12
-            - test: 3.13
-  - stage: Windows
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Server {0}
-          testFormat: windows/{0}/1
-          targets:
-            - name: 2016 WinRM HTTP
-              test: 2016/winrm/http
-            - name: 2019 WinRM HTTPS
-              test: 2019/winrm/https
-            - name: 2022 WinRM HTTPS
-              test: 2022/winrm/https
-            - name: 2022 PSRP HTTP
-              test: 2022/psrp/http
-            - name: 2022 SSH Key
-              test: 2022/ssh/key
-            - name: 2025 PSRP HTTP
-              test: 2025/psrp/http
-            - name: 2025 SSH Key
-              test: 2025/ssh/key
-  - stage: Remote
+  - stage: c7a
     dependsOn: []
     jobs:
       - template: templates/matrix.yml  # context/target
         parameters:
           targets:
-            - name: macOS 14.3
-              test: macos/14.3
             - name: RHEL 9.5 py39
               test: rhel/9.5@3.9
             - name: RHEL 9.5 py312
@@ -99,13 +51,11 @@ stages:
             - name: FreeBSD 14.2
               test: freebsd/14.2
           groups:
-            - 1
-            - 2
+            - c7a@1
+            - c7a@2
       - template: templates/matrix.yml  # context/controller
         parameters:
           targets:
-            - name: macOS 14.3
-              test: macos/14.3
             - name: RHEL 9.5
               test: rhel/9.5
             - name: FreeBSD 13.4
@@ -113,9 +63,9 @@ stages:
             - name: FreeBSD 14.2
               test: freebsd/14.2
           groups:
-            - 3
-            - 4
-            - 5
+            - c7a@3
+            - c7a@4
+            - c7a@5
       - template: templates/matrix.yml  # context/controller (ansible-test container management)
         parameters:
           targets:
@@ -128,104 +78,90 @@ stages:
             - name: Ubuntu 24.04
               test: ubuntu/24.04
           groups:
-            - 6
-  - stage: Docker
+            - c7a@6
+  - stage: x86_64
     dependsOn: []
     jobs:
       - template: templates/matrix.yml  # context/target
         parameters:
-          testFormat: linux/{0}
           targets:
-            - name: Alpine 3.21
-              test: alpine321
-            - name: Fedora 41
-              test: fedora41
-            - name: Ubuntu 22.04
-              test: ubuntu2204
-            - name: Ubuntu 24.04
-              test: ubuntu2404
+            - name: RHEL 9.5 py39
+              test: rhel/9.5@3.9
+            - name: RHEL 9.5 py312
+              test: rhel/9.5@3.12
+            - name: FreeBSD 13.4
+              test: freebsd/13.4
+            - name: FreeBSD 14.2
+              test: freebsd/14.2
           groups:
-            - 1
-            - 2
+            - x86_64@1
+            - x86_64@2
       - template: templates/matrix.yml  # context/controller
         parameters:
-          testFormat: linux/{0}
+          targets:
+            - name: RHEL 9.5
+              test: rhel/9.5
+            - name: FreeBSD 13.4
+              test: freebsd/13.4
+            - name: FreeBSD 14.2
+              test: freebsd/14.2
+          groups:
+            - x86_64@3
+            - x86_64@4
+            - x86_64@5
+      - template: templates/matrix.yml  # context/controller (ansible-test container management)
+        parameters:
           targets:
             - name: Alpine 3.21
-              test: alpine321
+              test: alpine/3.21
             - name: Fedora 41
-              test: fedora41
+              test: fedora/41
+            - name: RHEL 9.5
+              test: rhel/9.5
             - name: Ubuntu 24.04
-              test: ubuntu2404
+              test: ubuntu/24.04
           groups:
-            - 3
-            - 4
-            - 5
-  - stage: Galaxy
+            - x86_64@6
+  - stage: aarch64
     dependsOn: []
     jobs:
-      - template: templates/matrix.yml
+      - template: templates/matrix.yml  # context/target
         parameters:
-          nameFormat: Python {0}
-          testFormat: galaxy/{0}/1
           targets:
-            - test: 3.11
-            - test: 3.12
-            - test: 3.13
-  - stage: Generic
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
+            - name: RHEL 9.5 py39
+              test: rhel/9.5@3.9
+            - name: RHEL 9.5 py312
+              test: rhel/9.5@3.12
+            - name: FreeBSD 13.4
+              test: freebsd/13.4
+            - name: FreeBSD 14.2
+              test: freebsd/14.2
+          groups:
+            - aarch64@1
+            - aarch64@2
+      - template: templates/matrix.yml  # context/controller
         parameters:
-          nameFormat: Python {0}
-          testFormat: generic/{0}/1
           targets:
-            - test: 3.11
-            - test: 3.12
-            - test: 3.13
-  - stage: Incidental_Windows
-    displayName: Incidental Windows
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
+            - name: RHEL 9.5
+              test: rhel/9.5
+            - name: FreeBSD 13.4
+              test: freebsd/13.4
+            - name: FreeBSD 14.2
+              test: freebsd/14.2
+          groups:
+            - aarch64@3
+            - aarch64@4
+            - aarch64@5
+      - template: templates/matrix.yml  # context/controller (ansible-test container management)
         parameters:
-          nameFormat: Server {0}
-          testFormat: i/windows/{0}
           targets:
-            - name: 2016 WinRM HTTP
-              test: 2016/winrm/http
-            - name: 2019 WinRM HTTPS
-              test: 2019/winrm/https
-            - name: 2022 WinRM HTTPS
-              test: 2022/winrm/https
-            - name: 2022 PSRP HTTP
-              test: 2022/psrp/http
-            - name: 2022 SSH Key
-              test: 2022/ssh/key
-            - name: 2025 PSRP HTTP
-              test: 2025/psrp/http
-            - name: 2025 SSH Key
-              test: 2025/ssh/key
-  - stage: Incidental
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: i/{0}/1
-          targets:
-            - name: IOS Python
-              test: ios/csr1000v/
-  - stage: Summary
-    condition: succeededOrFailed()
-    dependsOn:
-      - Sanity
-      - Units
-      - Windows
-      - Remote
-      - Docker
-      - Galaxy
-      - Generic
-      - Incidental_Windows
-      - Incidental
-    jobs:
-      - template: templates/coverage.yml
+            - name: Alpine 3.21
+              test: alpine/3.21
+            - name: Fedora 41
+              test: fedora/41
+            - name: RHEL 9.5
+              test: rhel/9.5
+            - name: Ubuntu 24.04
+              test: ubuntu/24.04
+          groups:
+            - aarch64@6
