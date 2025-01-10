@@ -247,7 +247,7 @@ display = Display()
 
 
 class Connection(ConnectionBase):
-    """WinRM connections over HTTP/HTTPS."""
+    '''WinRM connections over HTTP/HTTPS.'''
 
     transport = 'winrm'
     module_implementation_preferences = ('.ps1', '.exe', '')
@@ -444,9 +444,9 @@ class Connection(ConnectionBase):
         display.vvvvv("kinit succeeded for principal %s" % principal)
 
     def _winrm_connect(self) -> winrm.Protocol:
-        """
+        '''
         Establish a WinRM connection over HTTP/HTTPS.
-        """
+        '''
         display.vvv("ESTABLISH WINRM CONNECTION FOR USER: %s on PORT %s TO %s" %
                     (self._winrm_user, self._winrm_port, self._winrm_host), host=self._winrm_host)
 
@@ -770,18 +770,35 @@ class Connection(ConnectionBase):
             yield payload_bytes[i:i + buffer_size], i + buffer_size >= byte_count
 
     def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
-        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
-        cmd_parts = self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False)
-
-        # TODO: display something meaningful here
-        display.vvv("EXEC (via pipeline wrapper)")
-
-        stdin_iterator = None
-
-        if in_data:
-            stdin_iterator = self._wrapper_payload_stream(in_data)
-
-        return self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True, stdin_iterator=stdin_iterator)
+        remaining_tries = 10
+        winrm_exec_value = None
+        for attempt in range(remaining_tries):
+           try:
+             super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
+             cmd_parts = self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False)
+     
+             # TODO: display something meaningful here
+             display.vvv("EXEC (via pipeline wrapper)")
+     
+             stdin_iterator = None
+     
+             if in_data:
+                 stdin_iterator = self._wrapper_payload_stream(in_data)
+     
+             
+             winrm_exec_value =  self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True, stdin_iterator=stdin_iterator)
+             return winrm_exec_value    
+           except Exception as exc:
+             if attempt >= remaining_tries - 1:
+               display.vvv("+++ RETRY END +++")
+               raise AnsibleConnectionFailure('winrm connection error: %s' % to_native(exc))
+             else:
+               display.vvv(f"+++ RETRY cmd {cmd_parts[0]}   +++")
+               display.vvv(f"+++ RETRY args {cmd_parts[1:]}   +++")
+               time.sleep(2)
+               continue  
+             
+        return winrm_exec_value
 
     # FUTURE: determine buffer size at runtime via remote winrm config?
     def _put_file_stdin_iterator(self, in_path: str, out_path: str, buffer_size: int = 250000) -> t.Iterable[tuple[bytes, bool]]:
@@ -806,7 +823,7 @@ class Connection(ConnectionBase):
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
             raise AnsibleFileNotFound('file or module does not exist: "%s"' % to_native(in_path))
 
-        script_template = u"""
+        script_template = u'''
             begin {{
                 $path = '{0}'
 
@@ -834,7 +851,7 @@ class Connection(ConnectionBase):
 
                 Write-Output "{{""sha1"":""$hash""}}"
             }}
-        """
+        '''
 
         script = script_template.format(self._shell._escape(out_path))
         cmd_parts = self._shell._encode_script(script, as_list=True, strict_mode=False, preserve_rc=False)
@@ -873,7 +890,7 @@ class Connection(ConnectionBase):
             offset = 0
             while True:
                 try:
-                    script = """
+                    script = '''
                         $path = '%(path)s'
                         If (Test-Path -LiteralPath $path -PathType Leaf)
                         {
@@ -899,7 +916,7 @@ class Connection(ConnectionBase):
                             Write-Error "$path does not exist";
                             Exit 1;
                         }
-                    """ % dict(buffer_size=buffer_size, path=self._shell._escape(in_path), offset=offset)
+                    ''' % dict(buffer_size=buffer_size, path=self._shell._escape(in_path), offset=offset)
                     display.vvvvv('WINRM FETCH "%s" to "%s" (offset=%d)' % (in_path, out_path, offset), host=self._winrm_host)
                     cmd_parts = self._shell._encode_script(script, as_list=True, preserve_rc=False)
                     status_code, b_stdout, b_stderr = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
