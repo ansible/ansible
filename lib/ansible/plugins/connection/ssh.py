@@ -380,6 +380,7 @@ import time
 import typing as t
 
 from functools import wraps
+from ansible.constants import SSHPASS_ERROR_CODES
 from ansible.errors import (
     AnsibleAuthenticationFailure,
     AnsibleConnectionFailure,
@@ -441,14 +442,7 @@ def _handle_error(
         # No exception is raised, so the connection is retried - except when attempting to use
         # sshpass_prompt with an sshpass that won't let us pass -P, in which case we fail loudly.
         elif return_code in [1, 2, 3, 4, 6]:
-            error_messages = {
-                1: "sshpass: Invalid command line argument",
-                2: "sshpass: Conflicting arguments given",
-                3: "sshpass: General runtime error",
-                4: "sshpass: Unrecognized response from ssh",
-                6: "sshpass: Host public key is unknown"
-            }
-            msg = error_messages.get(return_code, "sshpass: Unknown error")
+            msg = SSHPASS_ERROR_CODES.get(return_code, "sshpass: Unknown error")
             if no_log:
                 msg = '{0} <error censored due to no log>'.format(msg)
             else:

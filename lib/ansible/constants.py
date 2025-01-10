@@ -243,6 +243,14 @@ MAGIC_VARIABLE_MAPPING = dict(
     become_flags=('ansible_become_flags', ),
 )
 
+SSHPASS_ERROR_CODES = {
+    1: "sshpass: Invalid command line argument",
+    2: "sshpass: Conflicting arguments given",
+    3: "sshpass: General runtime error",
+    4: "sshpass: Unrecognized response from ssh",
+    6: "sshpass: Host public key is unknown"
+}
+
 # POPULATE SETTINGS FROM CONFIG ###
 for setting in config.get_configuration_definitions():
     set_constant(setting, config.get_config_value(setting, variables=vars()))
