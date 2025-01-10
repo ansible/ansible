@@ -1,0 +1,8 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: test block
+    vars:
+      query: jinja2 uses me internally
+    block:
+    - debug:

@@ -1,0 +1,23 @@
+- name: check output for warning
+  vars:
+    canary: Found variable using reserved name
+  block:
+  - shell: ansible-playbook '{{[ role_path, "tasks", item ~ ".yml"] | path_join }}'
+    environment:
+      ANSIBLE_LOCALHOST_WARNING: 0
+    failed_when: false
+    loop:
+    - play_vars
+    - block_vars
+    - task_vars
+    - task_vars_used
+    - set_fact
+    register: play_out
+
+  - name: check they all complain about bad defined var
+    assert:
+      that:
+        - canary in item['stderr']
+    loop: '{{play_out.results}}'
+    loop_control:
+      label: '{{item.item}}'

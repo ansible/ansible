@@ -21,15 +21,17 @@ from ansible.playbook import Play
 from ansible.playbook.block import Block
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
+from ansible.template import Templar
 from ansible.utils.display import Display
 
 display = Display()
 
 
-def get_reserved_names(include_private=True):
+def get_reserved_names(include_private: bool = True) -> set[str]:
     """ this function returns the list of reserved names associated with play objects"""
 
-    public = set()
+    templar = Templar(loader=None)
+    public = set(templar.environment.globals.keys())
     private = set()
     result = set()
 
@@ -61,7 +63,7 @@ def get_reserved_names(include_private=True):
     return result
 
 
-def warn_if_reserved(myvars, additional=None):
+def warn_if_reserved(myvars: list[str], additional: list[str] | None = None) -> None:
     """ this function warns if any variable passed conflicts with internally reserved names """
 
     if additional is None:
@@ -75,7 +77,7 @@ def warn_if_reserved(myvars, additional=None):
         display.warning('Found variable using reserved name: %s' % varname)
 
 
-def is_reserved_name(name):
+def is_reserved_name(name: str) -> bool:
     return name in _RESERVED_NAMES
 
 

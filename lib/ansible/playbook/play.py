@@ -31,7 +31,6 @@ from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
 from ansible.playbook.taggable import Taggable
-from ansible.vars.manager import preprocess_vars
 from ansible.utils.display import Display
 
 display = Display()
@@ -236,6 +235,9 @@ class Play(Base, Taggable, CollectionSearch):
         return self.roles
 
     def _load_vars_prompt(self, attr, ds):
+        # avoid circular dep
+        from ansible.vars.manager import preprocess_vars
+
         new_ds = preprocess_vars(ds)
         vars_prompts = []
         if new_ds is not None:

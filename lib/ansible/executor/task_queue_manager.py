@@ -39,7 +39,6 @@ from ansible.plugins.loader import callback_loader, strategy_loader, module_load
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
 from ansible.vars.hostvars import HostVars
-from ansible.vars.reserved import warn_if_reserved
 from ansible.utils.display import Display
 from ansible.utils.lock import lock_decorator
 from ansible.utils.multiprocessing import context as multiprocessing_context
@@ -282,7 +281,6 @@ class TaskQueueManager:
 
         all_vars = self._variable_manager.get_vars(play=play)
         templar = Templar(loader=self._loader, variables=all_vars)
-        warn_if_reserved(all_vars, templar.environment.globals.keys())
 
         new_play = play.copy()
         new_play.post_validate(templar)
