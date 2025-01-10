@@ -41,3 +41,16 @@ class TestUri(ModuleTestCase):
                 uri.main()
             fetch_url.assert_called_once()
             assert fetch_url.call_args[1].get("force")
+
+    def test_absolute_location(self):
+        assert (
+            uri.absolute_location("http://example.com/a", "/a")
+            == "http://example.com/a"
+        )
+        assert (
+            uri.absolute_location("http://example.com/a?x=1", "/b?y=2")
+            == "http://example.com/b?y=2"
+        )
+        assert (
+            uri.absolute_location("http://example.com/", "/a") == "http://example.com/a"
+        )
