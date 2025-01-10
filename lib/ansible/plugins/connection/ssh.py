@@ -448,7 +448,7 @@ def _handle_error(
                 4: "sshpass: Unrecognized response from ssh",
                 6: "sshpass: Host public key is unknown"
             }
-            msg = error_messages.get(error_code, "sshpass: Unknown error")
+            msg = error_messages.get(return_code, "sshpass: Unknown error")
             if no_log:
                 msg = '{0} <error censored due to no log>'.format(msg)
             else:
