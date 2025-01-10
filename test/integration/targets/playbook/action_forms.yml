@@ -19,7 +19,7 @@
     - ping:
       delegate_to: localhost
 
-  - name: now templated! NOTE: this bypasses module_defaults
+  - name: 'now templated! NOTE: this bypasses module_defaults'
     vars:
       doit: ping
     block:

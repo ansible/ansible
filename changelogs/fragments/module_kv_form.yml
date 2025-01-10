@@ -1,2 +1,2 @@
 bugfixes:
-  - restore `action: module=<name>` form which was accidtenally disabled during refactor.
+  - "restore `action: module=<name>` form which was accidtenally disabled during refactor."
