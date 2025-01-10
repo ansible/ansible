@@ -394,7 +394,7 @@ def run_test(scenario: TestScenario) -> TestResult:
 
 def prepare_prime_podman_storage() -> list[str]:
     """Partially prime podman storage and return a command to complete the remainder."""
-    prime_storage_command = ['rm -rf ~/.local/share/containers; STORAGE_DRIVER=overlay podman pull quay.io/bedrock/alpine:3.16.2']
+    prime_storage_command = ['rm -rf ~/.local/share/containers; STORAGE_DRIVER=overlay podman pull public.ecr.aws/docker/library/alpine:3.21.2']
 
     test_containers = pathlib.Path(f'~{UNPRIVILEGED_USER_NAME}/.local/share/containers').expanduser()
 
