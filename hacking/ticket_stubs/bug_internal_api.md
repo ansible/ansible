@@ -16,7 +16,7 @@ If you need a stable API target to use Ansible, consider using ansible-runner:
 * <https://github.com/ansible/ansible-runner>
 
 Because this project is very active, we're unlikely to see comments made on closed tickets and we lock them after some time.
-If you or anyone else has any further questions, please let us know by using any of the communication methods listed on the page below:
+If you or anyone else has any further questions, please let us know by using any of the methods listed on the communication page:
 
 * <https://docs.ansible.com/ansible/latest/community/communication.html>
 

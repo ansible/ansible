@@ -6,10 +6,10 @@ It looks like the work from this pull request is a duplicate of the following PR
 
 * INSERT PR(S) HERE
 
-Based on this, we are going to close this PR in favour of the above as a consolidated location to keep track of the issue.
+Based on this, we are going to close this PR in favor of the above as a consolidated location to keep track of the issue.
 
 However, we're always up for discussion.
-In the future, sometimes starting a discussion on the development list before implementing a feature
+In the future, sometimes starting a discussion on the Ansible Forum before implementing a feature
  can make getting things included a little easier, but it's not always necessary.
 
 Because this project is very active, we're unlikely to see comments made on closed tickets and we lock them after some time.
