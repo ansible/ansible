@@ -90,3 +90,6 @@ ansible-playbook -i ../../inventory vars_files_null.yml -v "$@"
 
 # test vars_files: filename.yml
 ansible-playbook -i ../../inventory vars_files_string.yml -v "$@"
+
+# test all variations of defining a task action
+ansible-playbook -i ../../inventory action_forms.yml -v "$@"
