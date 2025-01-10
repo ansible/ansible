@@ -439,11 +439,10 @@ import re
 import shutil
 import tempfile
 from datetime import datetime, timezone
-import urllib
 
 from ansible.module_utils.basic import AnsibleModule, sanitize_keys
 from ansible.module_utils.six import binary_type, iteritems, string_types
-from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
+from ansible.module_utils.six.moves.urllib.parse import urlencode, urljoin
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.six.moves.collections_abc import Mapping, Sequence
 from ansible.module_utils.urls import (
@@ -511,7 +510,7 @@ def absolute_location(url, location):
     next URL, specifically in the case of a ``Location`` header.
     """
 
-    return urllib.parse.urljoin(url, location)
+    return urljoin(url, location)
 
 
 def kv_list(data):
