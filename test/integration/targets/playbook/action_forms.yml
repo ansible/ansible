@@ -27,5 +27,5 @@
     - action:
         module: '{{doit}}'
     - action: '{{doit}}'
-    #- name: this does not work and this is good
+    #- name: this does not work, never did and that is good
     #  '{{doit}}':
