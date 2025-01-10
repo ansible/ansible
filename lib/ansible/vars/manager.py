@@ -41,6 +41,7 @@ from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
+from ansible.vars.reserved import warn_if_reserved
 
 display = Display()
 
@@ -417,6 +418,9 @@ class VariableManager:
         # extra vars
         all_vars = _combine_and_track(all_vars, self._extra_vars, "extra vars")
 
+        # before we add 'reserved vars', check we didn't add any reserved vars
+        warn_if_reserved(all_vars.keys())
+
         # magic variables
         all_vars = _combine_and_track(all_vars, magic_variables, "magic vars")
 
@@ -703,6 +707,7 @@ class VariableManager:
         if not isinstance(facts, Mapping):
             raise AnsibleAssertionError("the type of 'facts' to set for host_facts should be a Mapping but is a %s" % type(facts))
 
+        warn_if_reserved(facts.keys())
         try:
             host_cache = self._fact_cache[host]
         except KeyError:
@@ -726,15 +731,18 @@ class VariableManager:
         if not isinstance(facts, Mapping):
             raise AnsibleAssertionError("the type of 'facts' to set for nonpersistent_facts should be a Mapping but is a %s" % type(facts))
 
+        warn_if_reserved(facts.keys())
         try:
             self._nonpersistent_fact_cache[host] |= facts
         except KeyError:
             self._nonpersistent_fact_cache[host] = facts
 
     def set_host_variable(self, host, varname, value):
-        '''
+        """
         Sets a value in the vars_cache for a host.
-        '''
+        """
+
+        warn_if_reserved(varname)
         if host not in self._vars_cache:
             self._vars_cache[host] = dict()
         if varname in self._vars_cache[host] and isinstance(self._vars_cache[host][varname], MutableMapping) and isinstance(value, MutableMapping):
