@@ -69,7 +69,7 @@ def run_pypi_proxy(args: EnvironmentConfig, targets_use_pypi: bool) -> None:
         display.warning('Unable to use the PyPI proxy because Docker is not available. Installation of packages using `pip` may fail.')
         return
 
-    image = 'quay.io/ansible/pypi-test-container:3.2.0'
+    image = 'quay.io/ansible/pypi-test-container:3.3.0'
     port = 3141
 
     run_support_container(

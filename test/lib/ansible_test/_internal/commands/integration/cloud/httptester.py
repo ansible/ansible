@@ -31,7 +31,7 @@ class HttptesterProvider(CloudProvider):
     def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
-        self.image = os.environ.get('ANSIBLE_HTTP_TEST_CONTAINER', 'quay.io/ansible/http-test-container:3.2.0')
+        self.image = os.environ.get('ANSIBLE_HTTP_TEST_CONTAINER', 'quay.io/ansible/http-test-container:3.3.0')
 
         self.uses_docker = True
 
