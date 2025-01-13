@@ -67,6 +67,17 @@ def collection_name(v, error_code=None):
     return v
 
 
+def fqcn(v, error_code=None):
+    if not isinstance(v, string_types):
+        raise _add_ansible_error_code(
+            Invalid('Module/plugin name must be a string'), error_code or 'invalid-documentation')
+    m = FULLY_QUALIFIED_COLLECTION_RESOURCE_RE.match(v)
+    if not m:
+        raise _add_ansible_error_code(
+            Invalid('Module/plugin name must be of format `<namespace>.<collection>.<name>(.<subname>)*`'), error_code or 'invalid-documentation')
+    return v
+
+
 def deprecation_versions():
     """Create a list of valid version for deprecation entries, current+4"""
     major, minor = [int(version) for version in __version__.split('.')[0:2]]
@@ -196,11 +207,11 @@ seealso_schema = Schema(
     [
         Any(
             {
-                Required('module'): Any(*string_types),
+                Required('module'): fqcn,
                 'description': doc_string,
             },
             {
-                Required('plugin'): Any(*string_types),
+                Required('plugin'): fqcn,
                 Required('plugin_type'): Any(*DOCUMENTABLE_PLUGINS),
                 'description': doc_string,
             },
