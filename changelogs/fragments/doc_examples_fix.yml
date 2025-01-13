@@ -1,3 +1,4 @@
 bugfixes:
-  - ansible-doc will now correctly handle YAML formated examples secions
-  - validate-modules will now require example docs for inventory and lookup plugins and require return docs for lookup plugins
+  - ansible-doc now correctly handles YAML formatted examples secions.
+  - ansible-doc removed unused processing of 'examples' sections for role argument specs.
+  - ansilbe-testx, the ``validate-modules`` sanity test now requires example docs for inventory and lookup plugins and requires return docs for lookup plugins
