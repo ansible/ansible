@@ -63,7 +63,6 @@ from ansible.utils.vars import combine_vars
 CANONICAL_PATHS = {}  # type: dict[str, str]
 FOUND = {}  # type: dict[str, list[str]]
 NAK = set()  # type: set[str]
-PATH_CACHE = {}  # type: dict[tuple[str, str], str]
 
 
 class VarsModule(BaseVarsPlugin):
@@ -119,11 +118,7 @@ class VarsModule(BaseVarsPlugin):
                     else:
                         raise AnsibleParserError("Supplied entity must be Host or Group, got %s instead" % (type(entity)))
 
-                    try:
-                        opath = PATH_CACHE[(realpath_basedir, subdir)]
-                    except KeyError:
-                        opath = PATH_CACHE[(realpath_basedir, subdir)] = os.path.join(realpath_basedir, subdir)
-
+                    opath = os.path.join(realpath_basedir, subdir)
                     key = '%s.%s' % (entity_name, opath)
 
                     if cache:
