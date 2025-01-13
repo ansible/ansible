@@ -1402,12 +1402,6 @@ class DocCLI(CLI, RoleMixin):
                 DocCLI._add_seealso(text, doc['seealso'], limit=limit, opt_indent=opt_indent)
                 del doc['seealso']
 
-            if doc.get('requirements', False):
-                text.append('')
-                req = ", ".join(doc.pop('requirements'))
-                text.append(_format("REQUIREMENTS:", 'bold') + "%s\n" % DocCLI.warp_fill(DocCLI.tty_ify(req), limit - 16, initial_indent="  ",
-                            subsequent_indent=opt_indent))
-
             # generic elements we will handle identically
             for k in ('author',):
                 if k not in doc:

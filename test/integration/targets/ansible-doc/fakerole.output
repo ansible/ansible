@@ -48,7 +48,4 @@ SEE ALSO:
              Reads a file from the controller.
              https://docs.ansible.com/ansible-core/devel/collections/ansible/builtin/file_lookup.html
 
-REQUIREMENTS:  foo, bar
-
-
 AUTHOR: John Doe (@john), Jane Doe (@jane)

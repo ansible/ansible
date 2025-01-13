@@ -19,9 +19,6 @@ ATTRIBUTES:
             target
           support: full
 
-REQUIREMENTS:  Linux
-
-
 AUTHOR: Ansible Core (@ansible)
 
 EXAMPLES:
