@@ -36,6 +36,10 @@ options:
       - Whether to install (V(present)), or remove (V(absent)) a package.
       - You can use other states like V(latest) ONLY if they are supported by the underlying package module(s) executed.
     required: true
+  update_cache:
+    description:
+      - Run the cache update of the required package manager before the operation. Can be run as part of the package installation or as a separate step.
+        default: false
   use:
     description:
       - The required package manager module to use (V(dnf), V(apt), and so on). The default V(auto) will use existing facts or try to auto-detect it.
