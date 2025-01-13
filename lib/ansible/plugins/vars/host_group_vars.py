@@ -119,21 +119,19 @@ class VarsModule(BaseVarsPlugin):
                     else:
                         raise AnsibleParserError("Supplied entity must be Host or Group, got %s instead" % (type(entity)))
 
-                    if cache:
-                        try:
-                            opath = PATH_CACHE[(realpath_basedir, subdir)]
-                        except KeyError:
-                            opath = PATH_CACHE[(realpath_basedir, subdir)] = os.path.join(realpath_basedir, subdir)
+                    try:
+                        opath = PATH_CACHE[(realpath_basedir, subdir)]
+                    except KeyError:
+                        opath = PATH_CACHE[(realpath_basedir, subdir)] = os.path.join(realpath_basedir, subdir)
 
+                    key = '%s.%s' % (entity_name, opath)
+
+                    if cache:
                         if opath in NAK:
                             continue
-                        key = '%s.%s' % (entity_name, opath)
                         if key in FOUND:
                             data = self.load_found_files(loader, data, FOUND[key])
                             continue
-                    else:
-                        opath = PATH_CACHE[(realpath_basedir, subdir)] = os.path.join(realpath_basedir, subdir)
-
                     if os.path.isdir(opath):
                         self._display.debug("\tprocessing dir %s" % opath)
                         FOUND[key] = found_files = loader.find_vars_files(opath, entity_name)
