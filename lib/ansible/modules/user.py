@@ -1376,16 +1376,24 @@ class User(object):
                     self.module.exit_json(failed=True, msg="%s" % to_native(e))
             # get umask from /etc/login.defs and set correct home mode
             if os.path.exists(self.LOGIN_DEFS):
-                with open(self.LOGIN_DEFS, 'r') as f:
-                    for line in f:
-                        m = re.match(r'^UMASK\s+(\d+)$', line)
-                        if m:
-                            umask = int(m.group(1), 8)
+                # fallback if neither HOME_MODE nor UMASK are set;
+                # follow behaviour of useradd initializing UMASK = 022
+                mode = 0o755
+                with open(self.LOGIN_DEFS, 'r') as fh:
+                    for line in fh:
+                        # HOME_MODE has higher precedence as UMASK
+                        match = re.match(r'^HOME_MODE\s+(\d+)$', line)
+                        if match:
+                            mode = int(match.group(1), 8)
+                            break  # higher precedence
+                        match = re.match(r'^UMASK\s+(\d+)$', line)
+                        if match:
+                            umask = int(match.group(1), 8)
                             mode = 0o777 & ~umask
-                            try:
-                                os.chmod(path, mode)
-                            except OSError as e:
-                                self.module.exit_json(failed=True, msg="%s" % to_native(e))
+                try:
+                    os.chmod(path, mode)
+                except OSError as e:
+                    self.module.exit_json(failed=True, msg=to_native(e))
 
     def chown_homedir(self, uid, gid, path):
         try:
