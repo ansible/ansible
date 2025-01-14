@@ -34,3 +34,6 @@ ATTRIBUTES:
           support: partial
 
 AUTHOR: John Doe (@john), Jane Doe (@jane)
+
+EXAMPLES:
+- import_role: name=test_role1

@@ -36,3 +36,5 @@ argument_specs:
                 choices:
                     - choice1
                     - choice2
+        examples:
+          - import_role: name=test_role1
