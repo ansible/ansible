@@ -104,7 +104,7 @@ class RoleMixin(object):
         """ Load and process the YAML for the first found of a set of role files
 
         :param str root: The root path to get the files from
-        :param str files: List of candidate file names in order of precedence
+        :param list files: List of candidate file names in order of precedence
         :param str role_name: The name of the role for which we want the argspec data.
         :param str collection: collection name or None in case of stand alone roles
 
@@ -117,6 +117,7 @@ class RoleMixin(object):
             meta_path = os.path.join(root, 'meta')
 
         # Check all potential spec files
+        path = None
         for specfile in files:
             full_path = os.path.join(meta_path, specfile)
             if os.path.exists(full_path):
