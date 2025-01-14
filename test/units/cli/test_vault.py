@@ -120,8 +120,21 @@ class TestVaultCli(unittest.TestCase):
         mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
         cli = VaultCLI(args=['ansible-vault',
                              'encrypt_string',
-                             '--prompt',
-                             'some string to encrypt'])
+                             '--prompt'])
+        cli.parse()
+        cli.run()
+        args, kwargs = mock_display.call_args
+        assert kwargs["private"]
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
+    @patch('ansible.cli.vault.display.prompt', return_value='a_prompt')
+    def test_shadowed_encrypt_string_prompt_plus(self, mock_display, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault',
+                             'encrypt_string',
+                             'some string to encrypt',
+                             '--prompt'])
         cli.parse()
         cli.run()
         args, kwargs = mock_display.call_args
