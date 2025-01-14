@@ -1,36 +1,29 @@
-"""
-Primitive replacement for requests to avoid extra dependency.
-Avoids use of urllib2 due to lack of SNI support.
-"""
+"""A simple HTTP client."""
 from __future__ import annotations
 
+import http.client
 import json
 import time
 import typing as t
+import urllib.error
+import urllib.request
 
 from .util import (
     ApplicationError,
-    SubprocessError,
     display,
 )
 
 from .util_common import (
     CommonConfig,
-    run_command,
 )
 
 
 class HttpClient:
-    """Make HTTP requests via curl."""
+    """Make HTTP requests."""
 
-    def __init__(self, args: CommonConfig, always: bool = False, insecure: bool = False, proxy: t.Optional[str] = None) -> None:
+    def __init__(self, args: CommonConfig, always: bool = False) -> None:
         self.args = args
         self.always = always
-        self.insecure = insecure
-        self.proxy = proxy
-
-        self.username = None
-        self.password = None
 
     def get(self, url: str) -> HttpResponse:
         """Perform an HTTP GET and return the response."""
@@ -46,74 +39,65 @@ class HttpClient:
 
     def request(self, method: str, url: str, data: t.Optional[str] = None, headers: t.Optional[dict[str, str]] = None) -> HttpResponse:
         """Perform an HTTP request and return the response."""
-        cmd = ['curl', '-s', '-S', '-i', '-X', method]
-
-        if self.insecure:
-            cmd += ['--insecure']
-
         if headers is None:
             headers = {}
 
-        headers['Expect'] = ''  # don't send expect continue header
+        data_bytes = data.encode() if data else None
 
-        if self.username:
-            if self.password:
-                display.sensitive.add(self.password)
-                cmd += ['-u', '%s:%s' % (self.username, self.password)]
-            else:
-                cmd += ['-u', self.username]
+        request = urllib.request.Request(method=method, url=url, data=data_bytes, headers=headers)
+        response: http.client.HTTPResponse
 
-        for header in headers.keys():
-            cmd += ['-H', '%s: %s' % (header, headers[header])]
-
-        if data is not None:
-            cmd += ['-d', data]
-
-        if self.proxy:
-            cmd += ['-x', self.proxy]
-
-        cmd += [url]
+        display.info(f'HTTP {method} {url}', verbosity=2)
 
         attempts = 0
         max_attempts = 3
         sleep_seconds = 3
 
-        # curl error codes which are safe to retry (request never sent to server)
-        retry_on_status = (
-            6,  # CURLE_COULDNT_RESOLVE_HOST
-        )
-
-        stdout = ''
+        status_code = 200
+        reason = 'OK'
+        body_bytes = b''
 
         while True:
             attempts += 1
 
-            try:
-                stdout = run_command(self.args, cmd, capture=True, always=self.always, cmd_verbosity=2)[0]
+            start = time.monotonic()
+
+            if self.args.explain and not self.always:
                 break
-            except SubprocessError as ex:
-                if ex.status in retry_on_status and attempts < max_attempts:
-                    display.warning('%s' % ex)
-                    time.sleep(sleep_seconds)
-                    continue
 
-                raise
+            try:
+                try:
+                    with urllib.request.urlopen(request) as response:
+                        status_code = response.status
+                        reason = response.reason
+                        body_bytes = response.read()
+                except urllib.error.HTTPError as ex:
+                    status_code = ex.status
+                    reason = ex.reason
+                    body_bytes = ex.read()
+            except Exception as ex:  # pylint: disable=broad-exception-caught
+                if attempts >= max_attempts:
+                    raise
 
-        if self.args.explain and not self.always:
-            return HttpResponse(method, url, 200, '')
+                # all currently implemented methods are idempotent, so retries are unconditionally supported
+                duration = time.monotonic() - start
+                display.warning(f'{type(ex).__module__}.{type(ex).__name__}: {ex} [{duration:.2f} seconds]')
+                time.sleep(sleep_seconds)
 
-        header, body = stdout.split('\r\n\r\n', 1)
+                continue
 
-        response_headers = header.split('\r\n')
-        first_line = response_headers[0]
-        http_response = first_line.split(' ')
-        status_code = int(http_response[1])
+            break
+
+        duration = time.monotonic() - start
+        display.info(f'HTTP {method} {url} -> HTTP {status_code} ({reason}) [{len(body_bytes)} bytes, {duration:.2f} seconds]', verbosity=3)
+
+        body = body_bytes.decode()
 
         return HttpResponse(method, url, status_code, body)
 
 
 class HttpResponse:
-    """HTTP response from curl."""
+    """HTTP response."""
 
     def __init__(self, method: str, url: str, status_code: int, response: str) -> None:
         self.method = method
