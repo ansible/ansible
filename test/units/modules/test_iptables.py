@@ -1196,6 +1196,7 @@ def test_chain_creation(mocker):
             "chain": "FOOBAR",
             "state": "present",
             "chain_management": True,
+            "wait": 10,
         }
     )
 
@@ -1224,6 +1225,8 @@ def test_chain_creation(mocker):
         "filter",
         "-L",
         "FOOBAR",
+        "-w",
+        "10",
     ]
 
     second_cmd_args_list = run_command.call_args_list[1]
@@ -1233,6 +1236,8 @@ def test_chain_creation(mocker):
         "filter",
         "-N",
         "FOOBAR",
+        "-w",
+        "10",
     ]
 
     commands_results = [
@@ -1257,6 +1262,7 @@ def test_chain_creation_check_mode(mocker):
             "chain": "FOOBAR",
             "state": "present",
             "chain_management": True,
+            "wait": 10,
             "_ansible_check_mode": True,
         }
     )
@@ -1285,6 +1291,8 @@ def test_chain_creation_check_mode(mocker):
         "filter",
         "-L",
         "FOOBAR",
+        "-w",
+        "10",
     ]
 
     commands_results = [

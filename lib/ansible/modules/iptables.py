@@ -614,7 +614,6 @@ def append_wait(rule, param, flag):
 
 def construct_rule(params):
     rule = []
-    append_wait(rule, params['wait'], '-w')
     append_param(rule, params['protocol'], '-p', False)
     append_param(rule, params['source'], '-s', False)
     append_param(rule, params['destination'], '-d', False)
@@ -701,6 +700,8 @@ def push_arguments(iptables_path, action, params, make_rule=True):
     cmd.extend([action, params['chain']])
     if action == '-I' and params['rule_num']:
         cmd.extend([params['rule_num']])
+    if params['wait']:
+        cmd.extend(['-w', params['wait']])
     if make_rule:
         cmd.extend(construct_rule(params))
     return cmd
@@ -861,6 +862,7 @@ def main():
         rule=' '.join(construct_rule(module.params)),
         state=module.params['state'],
         chain_management=module.params['chain_management'],
+        wait=module.params['wait'],
     )
 
     ip_version = module.params['ip_version']
@@ -910,7 +912,7 @@ def main():
 
     else:
         # Create the chain if there are no rule arguments
-        if (args['state'] == 'present') and not args['rule']:
+        if (args['state'] == 'present') and not args['rule'] and args['chain_management']:
             chain_is_present = check_chain_present(
                 iptables_path, module, module.params
             )
