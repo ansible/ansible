@@ -304,14 +304,14 @@ class TestTemplarLookup(BaseTemplar, unittest.TestCase):
 
     def test_lookup_jinja_dict_string_passed(self):
         self.assertRaisesRegex(AnsibleError,
-                               "with_dict expects a dict",
+                               "lookup plugin expects a dictionary",
                                self.templar._lookup,
                                'dict',
                                '{{ some_var }}')
 
     def test_lookup_jinja_dict_list_passed(self):
         self.assertRaisesRegex(AnsibleError,
-                               "with_dict expects a dict",
+                               "lookup plugin expects a dictionary",
                                self.templar._lookup,
                                'dict',
                                ['foo', 'bar'])
