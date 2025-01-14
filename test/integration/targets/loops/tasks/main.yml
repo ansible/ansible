@@ -220,7 +220,7 @@
 - assert:
     that:
       - with_dict_passed_a_list is failed
-      - '"with_dict expects a dict" in with_dict_passed_a_list.msg'
+      - '"lookup plugin expects a dictionary" in with_dict_passed_a_list.msg'
 - debug:
     msg: "with_list passed a dict: {{item}}"
   with_list: "{{ a_dict }}"
