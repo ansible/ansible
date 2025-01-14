@@ -460,6 +460,37 @@ def is_url(checksum):
     return urlsplit(checksum).scheme in supported_schemes
 
 
+def parse_digest_lines(filename, lines):
+    """Returns a list of tuple containing the filename and digest depending upon
+      the lines provided
+
+    Args:
+        filename (str): Name of the filename, used only when the digest is one-liner
+        lines (list): A list of lines containing filenames and checksums
+    """
+    checksum_map = []
+    BSD_DIGEST_LINE = re.compile(r'^(\w+) ?\((?P<path>.+)\) ?= (?P<digest>[\w.]+)$')
+    GNU_DIGEST_LINE = re.compile(r'^(?P<digest>[\w.]+) ([ *])(?P<path>.+)$')
+
+    if len(lines) == 1 and len(lines[0].split()) == 1:
+        # Only a single line with a single string
+        # treat it as a checksum only file
+        checksum_map.append((lines[0], filename))
+        return checksum_map
+    # The assumption here is the file is in the format of
+    # checksum filename
+    for line in lines:
+        match = BSD_DIGEST_LINE.match(line)
+        if match:
+            checksum_map.append((match.group('digest'), match.group('path')))
+        else:
+            match = GNU_DIGEST_LINE.match(line)
+            if match:
+                checksum_map.append((match.group('digest'), match.group('path').lstrip("./")))
+
+    return checksum_map
+
+
 # ==============================================================
 # main
 
@@ -527,31 +558,13 @@ def main():
         if is_url(checksum):
             checksum_url = checksum
             # download checksum file to checksum_tmpsrc
-            checksum_tmpsrc, checksum_info = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest,
-                                                     unredirected_headers=unredirected_headers, ciphers=ciphers, use_netrc=use_netrc)
+            checksum_tmpsrc, _dummy = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest,
+                                              unredirected_headers=unredirected_headers, ciphers=ciphers, use_netrc=use_netrc)
             with open(checksum_tmpsrc) as f:
                 lines = [line.rstrip('\n') for line in f]
             os.remove(checksum_tmpsrc)
-            checksum_map = []
             filename = url_filename(url)
-            if len(lines) == 1 and len(lines[0].split()) == 1:
-                # Only a single line with a single string
-                # treat it as a checksum only file
-                checksum_map.append((lines[0], filename))
-            else:
-                # The assumption here is the file is in the format of
-                # checksum filename
-                for line in lines:
-                    # Split by one whitespace to keep the leading type char ' ' (whitespace) for text and '*' for binary
-                    parts = line.split(" ", 1)
-                    if len(parts) == 2:
-                        # Remove the leading type char, we expect
-                        if parts[1].startswith((" ", "*",)):
-                            parts[1] = parts[1][1:]
-
-                        # Append checksum and path without potential leading './'
-                        checksum_map.append((parts[0], parts[1].lstrip("./")))
-
+            checksum_map = parse_digest_lines(filename=filename, lines=lines)
             # Look through each line in the checksum file for a hash corresponding to
             # the filename in the url, returning the first hash that is found.
             for cksum in (s for (s, f) in checksum_map if f == filename):
