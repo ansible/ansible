@@ -2,19 +2,8 @@
 
 <!--- Describe the change below, including rationale and design decisions -->
 
-<!--- HINT: Include "Fixes #nnn" if you are fixing an existing issue -->
+<!--- Add "Fixes #1234" or steps to reproduce the problem if there is no corresponding issue -->
 
 ##### ISSUE TYPE
 
 - Bugfix Pull Request
-
-##### ADDITIONAL INFORMATION
-
-<!--- Include additional information to help people understand the change here -->
-<!--- A step-by-step reproduction of the problem is helpful if there is no related issue -->
-
-<!--- Paste verbatim command output below, e.g. before and after your change -->
-
-```paste below
-
-```
