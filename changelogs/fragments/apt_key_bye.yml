@@ -1,4 +1,4 @@
-documentation:
+docs:
   - apt_key module - add notes to point at the CLI tool deprecation by Debian and alternatives
 bugfixes:
   - apt_key module - prevent tests from running when apt-key was removed

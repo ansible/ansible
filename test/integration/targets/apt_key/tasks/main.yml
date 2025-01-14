@@ -31,4 +31,3 @@
       - import_tasks: 'apt_key_inline_data.yml'
       - import_tasks: 'file.yml'
       - import_tasks: 'apt_key_binary.yml'
-
