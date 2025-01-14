@@ -48,16 +48,19 @@ echo $?
 ansible-vault view "$@" --vault-id vault-password encrypted-vault-password
 
 # check if ansible-vault fails when destination is not writable
-NOT_WRITABLE_DIR="${MYTMPDIR}/not_writable"
-TEST_FILE_EDIT4="${NOT_WRITABLE_DIR}/testfile"
-mkdir "${NOT_WRITABLE_DIR}"
-touch "${TEST_FILE_EDIT4}"
-chmod ugo-w "${NOT_WRITABLE_DIR}"
-ansible-vault encrypt "$@" --vault-password-file vault-password "${TEST_FILE_EDIT4}" < /dev/null > log 2>&1 && :
-grep "not writable" log && :
-WRONG_RC=$?
-echo "rc was $WRONG_RC (1 is expected)"
-[ $WRONG_RC -eq 1 ]
+# skip check as root as root can always read/write
+if [ ${UID} -ne "0" ]; then
+    NOT_WRITABLE_DIR="${MYTMPDIR}/not_writable"
+    TEST_FILE_EDIT4="${NOT_WRITABLE_DIR}/testfile"
+    mkdir "${NOT_WRITABLE_DIR}"
+    touch "${TEST_FILE_EDIT4}"
+    chmod ugo-w "${NOT_WRITABLE_DIR}"
+    ansible-vault encrypt "$@" --vault-password-file vault-password "${TEST_FILE_EDIT4}" < /dev/null > log 2>&1 && :
+    grep "not writable" log && :
+    WRONG_RC=$?
+    echo "rc was $WRONG_RC (0 is expected)"
+    [ $WRONG_RC -eq 0 ]
+fi
 
 # encrypt with a password from a vault encrypted password file and multiple vault-ids
 # should fail because we dont know which vault id to use to encrypt with
