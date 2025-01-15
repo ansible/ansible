@@ -1355,13 +1355,7 @@ class DocCLI(CLI, RoleMixin):
             if doc.get('examples', False):
                 text.append('')
                 text.append(_format("EXAMPLES:", 'bold'))
-                if isinstance(doc['examples'], string_types):
-                    text.append(doc.pop('examples').strip())
-                else:
-                    try:
-                        text.append(yaml_dump(doc.pop('examples'), indent=2, default_flow_style=False))
-                    except Exception as e:
-                        raise AnsibleParserError("Unable to parse examples section", orig_exc=e)
+                text.append(doc.pop('examples').strip())
 
         return text
 
@@ -1503,13 +1497,7 @@ class DocCLI(CLI, RoleMixin):
         if doc.get('plainexamples', False):
             text.append('')
             text.append(_format("EXAMPLES:", 'bold'))
-            if isinstance(doc['plainexamples'], string_types):
-                text.append(doc.pop('plainexamples').strip())
-            else:
-                try:
-                    text.append(yaml_dump(doc.pop('plainexamples'), indent=2, default_flow_style=False))
-                except Exception as e:
-                    raise AnsibleParserError("Unable to parse examples section", orig_exc=e)
+            text.append(doc.pop('plainexamples').strip())
 
         if doc.get('returndocs', False):
             text.append('')
