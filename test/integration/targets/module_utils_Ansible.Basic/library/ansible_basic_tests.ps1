@@ -3054,6 +3054,34 @@ test_no_log - Invoked with:
         $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
     }
 
+    "Required if for unset option" = {
+        $spec = @{
+            options = @{
+                state = @{ choices = "absent", "present" }
+                name = @{}
+                path = @{}
+            }
+            required_if = @(, @("state", "absent", @("name", "path")))
+        }
+        Set-Variable -Name complex_args -Scope Global -Value @{}
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        }
+        catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equal -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equal -Expected $true
+
+        $actual.Keys.Count | Assert-Equal -Expected 2
+        $actual.changed | Assert-Equal -Expected $false
+        $actual.invocation | Assert-DictionaryEqual -Expected @{ module_args = $complex_args }
+    }
+
     "PS Object in return result" = {
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
 
