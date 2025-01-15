@@ -121,7 +121,8 @@ OS_CALL_REGEX = re.compile(r'os\.call.*')
 
 LOOSE_ANSIBLE_VERSION = LooseVersion('.'.join(ansible_version.split('.')[:3]))
 
-
+# NOTE: filter and test plugins are not currently validated by this library,
+#       but when they are implented they should obey these constraints.
 PLUGINS_REQUIRE_RETURN_VALUES = ('module', 'lookup', 'test', 'filter')
 PLUGINS_REQUIRE_EXAMPLES = ('module', 'inventory', 'lookup', 'filter', 'test')
 PLUGINS_REQUIRE_YAML_EXAMPLES = ('module',)
