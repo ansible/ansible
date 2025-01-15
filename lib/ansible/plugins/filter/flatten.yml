@@ -7,8 +7,9 @@ DOCUMENTATION:
   positional: _input, levels, skip_nulls
   options:
     _input:
-      description: First dictionary to combine.
-      type: dict
+      description: List to flatten.
+      type: list
+      elements: any
       required: true
     levels:
       description: Number of recursive list depths to flatten.
