@@ -132,9 +132,6 @@ class _BaseTaskResult:
         return bool(self._return_data.get('skipped', False))
 
     def is_failed(self) -> bool:
-        if 'failed_when_result' in self._return_data or any(isinstance(loop_res, dict) and 'failed_when_result' in loop_res for loop_res in self._loop_results):
-            return self._check_key('failed_when_result')
-
         return self._check_key('failed')
 
     def is_unreachable(self) -> bool:
