@@ -194,7 +194,10 @@ def main():
 
     if chdir:
         chdir = os.path.abspath(chdir)
-        os.chdir(chdir)
+        try:
+            os.chdir(chdir)
+        except (IOError, OSError) as e:
+            module.fail_json(msg=f"Unable to change directory before execution: {e}")
 
     if creates:
         # do not run the command if the line contains creates=filename

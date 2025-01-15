@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - expect - handle exception while doing chdir to non-existent directory.

@@ -1,20 +1,8 @@
-# test code for the ping module
-# (c) 2014, James Cammarata <jcammarata@ansible.com>
+# test code for the expect module
+# Copyright: (c) 2014, James Cammarata <jcammarata@ansible.com>
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 - name: Install test requirements
   import_role:
     name: setup_pexpect
@@ -118,6 +106,21 @@
   assert:
     that:
     - "'{{chdir_result.stdout | trim}}' == '{{remote_tmp_dir_real_path.stdout | trim}}'"
+
+- name: test non-existent chdir
+  expect:
+    command: "/bin/sh -c 'pwd && sleep 1'"
+    chdir: /opt/non-existent-dir
+    responses:
+      foo: bar
+  register: non_existant_chdir_result
+  ignore_errors: yes
+
+- name: Check if expect fails to change current directory to non-existent directory
+  assert:
+    that:
+      - non_existant_chdir_result.failed
+      - "'Unable to change directory before execution' in non_existant_chdir_result.msg"
 
 - name: test timeout option
   expect:
