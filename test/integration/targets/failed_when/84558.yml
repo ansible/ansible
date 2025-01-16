@@ -1,0 +1,13 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - command: sleep {{ item }}
+      timeout: 2
+      register: r
+      failed_when: r is failed
+      loop:
+        - 1
+        - 3
+
+    - debug:
+        msg: SHOULD_NOT_RUN

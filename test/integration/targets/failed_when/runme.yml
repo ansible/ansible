@@ -1,0 +1,4 @@
+- hosts: localhost
+  gather_facts: false
+  roles:
+    - failed_when
