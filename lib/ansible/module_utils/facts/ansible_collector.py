@@ -117,9 +117,9 @@ class CollectorMetaDataCollector(collector.BaseFactCollector):
         # we can return this data, but should not be top level key
         meta_facts = {'gather_subset': self.gather_subset}
 
-        # NOTE: this is just boolean indicator that 'facts were gathered'
+        # NOTE: this is just a boolean indicator that 'facts were gathered'
         # and should be moved to the 'gather_facts' action plugin
-        # probaly revised to handle modules/subsets combos
+        # probably revised to handle modules/subsets combos
         if self.module_setup:
             meta_facts['module_setup'] = self.module_setup
         return meta_facts
