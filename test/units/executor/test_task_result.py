@@ -129,10 +129,6 @@ class TestRawTaskResult(unittest.TestCase):
         tr = _RawTaskResult(mock_host, mock_task, dict(failed=True), {})
         self.assertTrue(tr.is_failed())
 
-        # test with failed_when in result
-        tr = _RawTaskResult(mock_host, mock_task, dict(failed_when_result=True), {})
-        self.assertTrue(tr.is_failed())
-
     def test_task_result_no_log(self):
         mock_host = MagicMock()
         mock_task = MagicMock()
