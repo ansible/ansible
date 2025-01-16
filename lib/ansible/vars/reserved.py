@@ -63,7 +63,7 @@ def get_reserved_names(include_private: bool = True) -> set[str]:
     return result
 
 
-def warn_if_reserved(myvars: list[str], additional: list[str] | None = None) -> None:
+def warn_if_reserved(myvars: list[str], additional: list[str] | None = None, ignores: list[str] | None = None) -> None:
     """ this function warns if any variable passed conflicts with internally reserved names """
 
     if additional is None:
@@ -71,10 +71,14 @@ def warn_if_reserved(myvars: list[str], additional: list[str] | None = None) -> 
     else:
         reserved = _RESERVED_NAMES.union(additional)
 
+    if ignores is None:
+        ignores = []
+
     varnames = set(myvars)
     varnames.discard('vars')  # we add this one internally, so safe to ignore
     for varname in varnames.intersection(reserved):
-        display.warning('Found variable using reserved name: %s' % varname)
+        if varname not in ignores:
+            display.warning('Found variable using reserved name: %s' % varname)
 
 
 def is_reserved_name(name: str) -> bool:
