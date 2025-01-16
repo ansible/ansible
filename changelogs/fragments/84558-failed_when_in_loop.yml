@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix processing ``failed_when`` per loop iteration (https://github.com/ansible/ansible/issues/84558)
