@@ -740,9 +740,9 @@ class TaskExecutor:
                         self._handler = self._get_action_handler(templar=templar)
         else:
             if retries > 1:
-                # we ran out of attempts, so mark the result as failed
+                # we ran out of attempts, so mark the result as failed, but let failed_when take precedence
                 result['attempts'] = retries - 1
-                result['failed'] = True
+                result['failed'] = result.get('failed_when_result', True)
 
         # do the final update of the local variables here, for both registered
         # values and any facts which may have been created
