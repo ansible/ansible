@@ -559,7 +559,8 @@ class VariableManager:
         if not isinstance(facts, Mapping):
             raise AnsibleAssertionError("the type of 'facts' to set for host_facts should be a Mapping but is a %s" % type(facts))
 
-        warn_if_reserved(facts.keys())
+        # NOTE: will ignore gather_subset until we can deprecate/remove this as a return from setup.py
+        warn_if_reserved(facts.keys(), ignores=['gather_subset'])
         try:
             host_cache = self._fact_cache[host]
         except KeyError:
@@ -583,7 +584,8 @@ class VariableManager:
         if not isinstance(facts, Mapping):
             raise AnsibleAssertionError("the type of 'facts' to set for nonpersistent_facts should be a Mapping but is a %s" % type(facts))
 
-        warn_if_reserved(facts.keys())
+        # NOTE: will ignore gather_subset until we can deprecate/remove this as a return from setup.py
+        warn_if_reserved(facts.keys(), ignores=['gather_subset'])
         try:
             self._nonpersistent_fact_cache[host] |= facts
         except KeyError:
