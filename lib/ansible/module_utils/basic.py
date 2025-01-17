@@ -395,6 +395,7 @@ class AnsibleModule(object):
         self._socket_path = None
         self._shell = None
         self._syslog_facility = 'LOG_USER'
+        self._target_log_severity = 'LOG_INFO'
         self._verbosity = 0
         # May be used to set modifications to the environment for any
         # run_command invocation
@@ -1255,8 +1256,9 @@ class AnsibleModule(object):
             try:
                 module = 'ansible-%s' % self._name
                 facility = getattr(syslog, self._syslog_facility, syslog.LOG_USER)
+                level = getattr(syslog, self._target_log_severity, syslog.LOG_INFO)
                 syslog.openlog(str(module), 0, facility)
-                syslog.syslog(syslog.LOG_INFO, msg)
+                syslog.syslog(level, msg)
             except (TypeError, ValueError) as e:
                 self.fail_json(
                     msg='Failed to log to syslog (%s). To proceed anyway, '

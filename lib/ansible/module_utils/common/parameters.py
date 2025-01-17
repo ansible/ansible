@@ -86,6 +86,7 @@ PASS_VARS: dict[str, t.Any] = {
     'no_log': ('no_log', False),
     'remote_tmp': ('_remote_tmp', None),
     'target_log_info': ('_target_log_info', None),
+    'target_log_severity': ('_target_log_severity', 'LOG_INFO'),
     'selinux_special_fs': ('_selinux_special_fs', ['fuse', 'nfs', 'vboxsf', 'ramfs', '9p', 'vfat']),
     'shell_executable': ('_shell', '/bin/sh'),
     'socket': ('_socket_path', None),
