@@ -1313,6 +1313,8 @@ class AnsibleModule(object):
                         name = "_%s" % name
                     journal_args.append((name, value))
 
+                priority = getattr(syslog, self._target_log_severity, syslog.LOG_INFO)
+
                 try:
                     if HAS_SYSLOG:
                         # If syslog_facility specified, it needs to convert
@@ -1323,9 +1325,11 @@ class AnsibleModule(object):
                                            syslog.LOG_USER) >> 3
                         journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
                                      SYSLOG_FACILITY=facility,
+                                     PRIORITY=priority,
                                      **dict(journal_args))
                     else:
                         journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
+                                     PRIORITY=priority,
                                      **dict(journal_args))
                 except OSError:
                     # fall back to syslog since logging to journal failed
