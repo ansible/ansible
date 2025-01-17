@@ -90,7 +90,7 @@ PASS_VARS: dict[str, t.Any] = {
     'selinux_special_fs': ('_selinux_special_fs', ['fuse', 'nfs', 'vboxsf', 'ramfs', '9p', 'vfat']),
     'shell_executable': ('_shell', '/bin/sh'),
     'socket': ('_socket_path', None),
-    'syslog_facility': ('_syslog_facility', 'INFO'),
+    'syslog_facility': ('_syslog_facility', 'LOG_USER'),
     'tmpdir': ('_tmpdir', None),
     'tracebacks_for': ('_tracebacks_for', frozenset()),
     'verbosity': ('_verbosity', 0),
