@@ -62,7 +62,7 @@ def get_reserved_names(include_private: bool = True) -> set[str]:
 
     # due to Collectors always adding, need to ignore this
     # eventually should remove after we deprecate it in setup.py
-    result.pop('gather_subset')
+    result.remove('gather_subset')
 
     return result
 
