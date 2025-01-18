@@ -60,19 +60,20 @@ def get_reserved_names(include_private: bool = True) -> set[str]:
     else:
         result = public
 
+    # due to Collectors always adding, need to ignore this
+    # eventually should remove after we deprecate it in setup.py
+    result.pop('gather_subset')
+
     return result
 
 
-def warn_if_reserved(myvars: list[str], additional: list[str] | None = None, ignores: list[str] | None = None) -> None:
+def warn_if_reserved(myvars: list[str], additional: list[str] | None = None) -> None:
     """ this function warns if any variable passed conflicts with internally reserved names """
 
     if additional is None:
         reserved = _RESERVED_NAMES
     else:
         reserved = _RESERVED_NAMES.union(additional)
-
-    if ignores is None:
-        ignores = []
 
     varnames = set(myvars)
     varnames.discard('vars')  # we add this one internally, so safe to ignore
