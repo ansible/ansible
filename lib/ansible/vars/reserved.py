@@ -78,8 +78,7 @@ def warn_if_reserved(myvars: list[str], additional: list[str] | None = None) -> 
     varnames = set(myvars)
     varnames.discard('vars')  # we add this one internally, so safe to ignore
     for varname in varnames.intersection(reserved):
-        if varname not in ignores:
-            display.warning('Found variable using reserved name: %s' % varname)
+        display.warning('Found variable using reserved name: %s' % varname)
 
 
 def is_reserved_name(name: str) -> bool:
