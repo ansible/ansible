@@ -4,6 +4,29 @@ ansible-core 2.18 "Fool in the Rain" Release Notes
 
 .. contents:: Topics
 
+v2.18.2rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2025-01-20
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+Bugfixes
+--------
+
+- Ansible will now also warn when reserved keywords are set via a module (set_fact, include_vars, etc).
+- Ansible.Basic - Fix ``required_if`` check when the option value to check is unset or set to null.
+- Use consistent multiprocessing context for action write locks
+- ansible-test - Fix up coverage reporting to properly translate the temporary path of integration test modules to the expected static test module path.
+- ansible-vault will now correctly handle `--prompt`, previously it would issue an error about stdin if no 2nd argument was passed
+- copy action now prevents user from setting internal options.
+- gather_facts action now defaults to `ansible.legacy.setup` if `smart` was set, no network OS was found and no other alias for `setup` was present.
+- gather_facts action will now issues errors and warnings as appropriate if a network OS is detected but no facts modules are defined for it.
+- ssh - Improve the logic for parsing CLIXML data in stderr when working with Windows host. This fixes issues when the raw stderr contains invalid UTF-8 byte sequences and improves embedded CLIXML sequences.
+- ssh - connection options were incorrectly templated during ``reset_connection`` tasks (https://github.com/ansible/ansible/pull/84238).
+
 v2.18.1
 =======
 

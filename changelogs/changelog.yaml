@@ -659,3 +659,43 @@ releases:
     - become-runas-system-deux.yml
     - unsafe_hostvars_fix.yml
     release_date: '2024-11-25'
+  2.18.2rc1:
+    changes:
+      bugfixes:
+      - Ansible will now also warn when reserved keywords are set via a module (set_fact,
+        include_vars, etc).
+      - Ansible.Basic - Fix ``required_if`` check when the option value to check is
+        unset or set to null.
+      - Use consistent multiprocessing context for action write locks
+      - ansible-test - Fix up coverage reporting to properly translate the temporary
+        path of integration test modules to the expected static test module path.
+      - ansible-vault will now correctly handle `--prompt`, previously it would issue
+        an error about stdin if no 2nd argument was passed
+      - copy action now prevents user from setting internal options.
+      - gather_facts action now defaults to `ansible.legacy.setup` if `smart` was
+        set, no network OS was found and no other alias for `setup` was present.
+      - gather_facts action will now issues errors and warnings as appropriate if
+        a network OS is detected but no facts modules are defined for it.
+      - ssh - Improve the logic for parsing CLIXML data in stderr when working with
+        Windows host. This fixes issues when the raw stderr contains invalid UTF-8
+        byte sequences and improves embedded CLIXML sequences.
+      - ssh - connection options were incorrectly templated during ``reset_connection``
+        tasks (https://github.com/ansible/ansible/pull/84238).
+      release_summary: '| Release Date: 2025-01-20
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.2rc1_summary.yaml
+    - 84238-fix-reset_connection-ssh_executable-templated.yml
+    - Ansible.Basic-required_if-null.yml
+    - ansible-test-coverage-test-files.yml
+    - copy_validate_input.yml
+    - gather_facts_netos_fixes.yml
+    - macos-correct-lock.yml
+    - reserved_module_chekc.yml
+    - ssh-clixml.yml
+    - vault_cli_fix.yml
+    release_date: '2025-01-20'
