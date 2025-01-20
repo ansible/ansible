@@ -17,6 +17,6 @@
 
 from __future__ import annotations
 
-__version__ = '2.17.7.post0'
+__version__ = '2.17.8rc1'
 __author__ = 'Ansible, Inc.'
 __codename__ = "Gallows Pole"

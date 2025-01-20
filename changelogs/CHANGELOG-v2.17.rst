@@ -4,6 +4,28 @@ ansible-core 2.17 "Gallows Pole" Release Notes
 
 .. contents:: Topics
 
+v2.17.8rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2025-01-20
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+Bugfixes
+--------
+
+- Ansible will now also warn when reserved keywords are set via a module (set_fact, include_vars, etc).
+- Ansible.Basic - Fix ``required_if`` check when the option value to check is unset or set to null.
+- Use consistent multiprocessing context for action write locks
+- ansible-test - Fix up coverage reporting to properly translate the temporary path of integration test modules to the expected static test module path.
+- ansible-vault will now correctly handle `--prompt`, previously it would issue an error about stdin if no 2nd argument was passed
+- copy action now prevents user from setting internal options.
+- gather_facts action now defaults to `ansible.legacy.setup` if `smart` was set, no network OS was found and no other alias for `setup` was present.
+- gather_facts action will now issues errors and warnings as appropriate if a network OS is detected but no facts modules are defined for it.
+- ssh - connection options were incorrectly templated during ``reset_connection`` tasks (https://github.com/ansible/ansible/pull/84238).
+
 v2.17.7
 =======
 
