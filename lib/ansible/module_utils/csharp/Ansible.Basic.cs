@@ -1209,7 +1209,7 @@ namespace Ansible.Basic
                 object val = requiredCheck[1];
                 IList requirements = (IList)requiredCheck[2];
 
-                if (ParseStr(param[key]) != ParseStr(val))
+                if (param[key] == null || ParseStr(param[key]) != ParseStr(val))
                     continue;
 
                 string term = "all";
