@@ -1,0 +1,6 @@
+breaking_changes:
+  - >-
+    Ansible's systemd logs now contain a PRIORITY field (default value: 5).
+    Downstream programs that inspect Ansible's systemd logs should be updated
+    if they expect the PRIORITY field to be missing
+    (https://github.com/ansible/ansible/pull/84574).
