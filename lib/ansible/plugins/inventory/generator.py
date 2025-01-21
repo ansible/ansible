@@ -41,6 +41,8 @@ DOCUMENTATION = """
         ini:
           - section: inventory_plugins
             key: use_extra_vars
+          - section: inventory_plugin_generator
+            key: use_extra_vars
         env:
           - name: ANSIBLE_INVENTORY_USE_EXTRA_VARS
           - name: ANSIBLE_GENERATOR_USE_EXTRA_VARS
