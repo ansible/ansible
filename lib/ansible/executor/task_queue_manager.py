@@ -414,6 +414,7 @@ class TaskQueueManager:
 
     @lock_decorator(attr='_callback_lock')
     def send_callback(self, method_name, *args, **kwargs):
+        # We always send events to stdout callback first, rest should follow config order
         for callback_plugin in [self._stdout_callback] + self._callback_plugins:
             # a plugin that set self.disabled to True will not be called
             # see osx_say.py example for such a plugin
