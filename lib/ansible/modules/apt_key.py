@@ -33,8 +33,8 @@ notes:
       To generate a full-fingerprint imported key: C(apt-key adv --list-public-keys --with-fingerprint --with-colons)."
     - If you specify both the key O(id) and the O(url) with O(state=present), the task can verify or add the key as needed.
     - Adding a new key requires an apt cache update (e.g. using the M(ansible.builtin.apt) module's C(update_cache) option).
-    - The C(apt-key) utility has been deprecated and removed in modern debian versions, use M(ansible.legacy.deb822_repository) as an alternative
-      to M(ansible.legacy.apt_repository) + apt_key combinations.
+    - The C(apt-key) utility has been deprecated and removed in modern debian versions, use M(ansible.builtin.deb822_repository) as an alternative
+      to M(ansible.builtin.apt_repository) + apt_key combinations.
 requirements:
     - gpg
 seealso:
