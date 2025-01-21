@@ -5,6 +5,7 @@ DOCUMENTATION:
   short_description: Get a Windows path's base name
   description:
     - Returns the last name component of a Windows path, what is left in the string that is not 'win_dirname'.
+    - While specifying an UNC (Universal Naming Convention) path, please make sure the path conforms to the UNC path syntax.
   options:
     _input:
       description: A Windows path.
@@ -16,7 +17,11 @@ DOCUMENTATION:
 EXAMPLES: |
 
   # To get the last name of a file Windows path, like 'foo.txt' out of 'C:\Users\asdf\foo.txt'
-  {{ mypath | win_basename }}
+  filename: "{{ mypath | win_basename }}"
+
+  # Get basename from the UNC path in the form of '\\<SERVER_NAME>\<SHARE_NAME>\<FILENAME.FILE_EXTENSION>'
+  # like '\\server1\test\foo.txt' returns 'foo.txt'
+  filename: "{{ mypath | win_basename }}"
 
 RETURN:
   _value:
