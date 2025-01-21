@@ -100,6 +100,19 @@
     - "{{fail_checksum.results}}"
     - "{{fail.results}}"
 
+- name: Request IncompleteRead from localhost
+  uri:
+    return_content: yes
+    url: http://localhost:{{ http_port }}/chunked
+  register: r
+  ignore_errors: true
+
+- name: Check if IncompleteRead raises error
+  assert:
+    that:
+      - r.failed
+      - "'HTTP Error while fetching' in r.msg"
+
 - name: test https fetch to a site with mismatched hostname and certificate
   uri:
     url: "https://{{ badssl_host }}/"
