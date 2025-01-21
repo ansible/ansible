@@ -58,6 +58,10 @@ class FactCache(MutableMapping):
         self._plugin.flush()
 
     def first_order_merge(self, key, value):
+        display.deprecated(
+            "API 'first_order_merge' is deprecated, please update the usage",
+            version="2.22"
+        )
         host_facts = {key: value}
 
         try:

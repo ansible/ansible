@@ -1,0 +1,3 @@
+---
+deprecated_features:
+  - fact_cache - deprecate first_order_merge API (https://github.com/ansible/ansible/pull/84568).
