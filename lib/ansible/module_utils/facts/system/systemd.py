@@ -52,4 +52,3 @@ class SystemdFactCollector(BaseFactCollector):
                 systemd_facts["systemd"]["version"] = str(systemd_version)
 
         return systemd_facts
-
