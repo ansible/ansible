@@ -42,7 +42,7 @@ class SystemdFactCollector(BaseFactCollector):
             systemd_version = str(stdout.split(" ")[1])
 
             systemd_facts["systemd"] = {}
-            systemd_facts["systemd"]["features"] = str(stdout.split("\n")[1])
+            systemd_facts["systemd"]["features"] = stdout.split("\n")[1]
             systemd_facts["systemd"]["full_version"] = str(
                 stdout.split(" ")[2].split(")")[0][1:],
             )
