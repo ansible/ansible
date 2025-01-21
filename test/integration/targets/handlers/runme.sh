@@ -135,9 +135,7 @@ ansible-playbook test_handlers_meta.yml -i inventory.handlers -vv "$@" | tee out
 [ "$(grep out.txt -ce 'META: noop')" = "1" ]
 
 # https://github.com/ansible/ansible/issues/46447
-set +e
-test "$(ansible-playbook 46447.yml -i inventory.handlers -vv "$@" 2>&1 | grep -c 'SHOULD NOT GET HERE')"
-set -e
+test "$(ansible-playbook 46447.yml -i inventory.handlers "$@" 2>&1 | grep -c 'SHOULD NOT GET HERE')" = "0"
 
 # https://github.com/ansible/ansible/issues/52561
 ansible-playbook 52561.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
