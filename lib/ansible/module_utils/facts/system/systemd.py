@@ -46,9 +46,9 @@ class SystemdFactCollector(BaseFactCollector):
             systemd_facts["systemd"]["full_version"] = str(
                 stdout.split(" ")[2].split(")")[0][1:],
             )
-            try:
-                systemd_facts["systemd"]["version"] = int(systemd_version)
-            except ValueError:
-                systemd_facts["systemd"]["version"] = str(systemd_version)
+            with contextlib.suppress(ValueError):
+                systemd_version = int(systemd_version)
+
+            systemd_facts["systemd"]["version"] = systemd_version
 
         return systemd_facts
