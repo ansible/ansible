@@ -39,7 +39,7 @@ class SystemdFactCollector(BaseFactCollector):
             if rc != 0:
                 return systemd_facts
 
-            systemd_version = str(stdout.split(" ")[1])
+            systemd_version = stdout.split(" ")[1]
 
             systemd_facts["systemd"] = {}
             systemd_facts["systemd"]["features"] = stdout.split("\n")[1]
