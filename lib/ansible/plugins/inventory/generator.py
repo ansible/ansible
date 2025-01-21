@@ -43,6 +43,7 @@ DOCUMENTATION = """
             key: use_extra_vars
         env:
           - name: ANSIBLE_INVENTORY_USE_EXTRA_VARS
+          - name: ANSIBLE_GENERATOR_USE_EXTRA_VARS
 """
 
 EXAMPLES = """
