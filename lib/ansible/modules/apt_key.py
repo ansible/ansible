@@ -201,12 +201,12 @@ def find_needed_binaries(module):
     try:
         apt_key_bin = module.get_bin_path('apt-key', required=True)
     except ValueError as e:
-        module.exit_json('%s. Apt-key has been deprecated. See the deb822_repository as an alternative.', to_native(e))
+        module.exit_json(f'{to_native(e)}. Apt-key has been deprecated. See the deb822_repository as an alternative.')
 
     try:
         gpg_bin = module.get_bin_path('gpg', required=True)
     except ValueError as e:
-        module.exit_json('%s', to_native(e))
+        module.exit_json(msg=to_native(e))
 
 
 def add_http_proxy(cmd):
