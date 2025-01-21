@@ -1,0 +1,10 @@
+plugin: ansible.builtin.generator
+hosts:
+    name: "{{ region }}_{{ machine_type }}"
+layers:
+    machine_type:
+        - web
+        - db
+    region:
+        - mumbai
+        - pune

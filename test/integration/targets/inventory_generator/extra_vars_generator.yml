@@ -1,0 +1,8 @@
+plugin: ansible.builtin.generator
+use_extra_vars: True
+hosts:
+    name: "{{ region }}_{{ machine_type }}"
+layers:
+    machine_type:
+        - web
+        - db

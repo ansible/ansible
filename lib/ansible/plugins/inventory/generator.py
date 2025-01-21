@@ -32,6 +32,20 @@ DOCUMENTATION = """
         description:
           - A dictionary of layers, with the key being the layer name, used as a variable name in the C(host)
             C(name) and C(parents) keys. Each layer value is a list of possible values for that layer.
+      use_extra_vars:
+        version_added: '2.19'
+        description:
+          - Merge extra vars into the available variables for composition (highest precedence).
+        type: bool
+        default: false
+        ini:
+          - section: inventory_plugins
+            key: use_extra_vars
+          - section: inventory_plugin_generator
+            key: use_extra_vars
+        env:
+          - name: ANSIBLE_INVENTORY_USE_EXTRA_VARS
+          - name: ANSIBLE_GENERATOR_USE_EXTRA_VARS
 """
 
 EXAMPLES = """
@@ -77,6 +91,7 @@ from itertools import product
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
 from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.utils.vars import load_extra_vars
 
 
 class InventoryModule(BaseInventoryPlugin):
@@ -123,10 +138,14 @@ class InventoryModule(BaseInventoryPlugin):
         super(InventoryModule, self).parse(inventory, loader, path, cache=cache)
 
         config = self._read_config_data(path)
-
+        if self.get_option('use_extra_vars'):
+            extra_vars = load_extra_vars(loader)
+        else:
+            extra_vars = {}
         template_inputs = product(*config['layers'].values())
         for item in template_inputs:
             template_vars = dict()
+            template_vars.update(extra_vars)
             for i, key in enumerate(config['layers'].keys()):
                 template_vars[key] = item[i]
             host = self.template(config['hosts']['name'], template_vars)
