@@ -450,6 +450,7 @@ def _handle_error(
                               'Upgrade sshpass to use sshpass_prompt, or otherwise switch to ssh keys.'
                     raise AnsibleError('{0} {1}'.format(msg, details))
                 msg = '{0} {1}'.format(msg, details)
+            raise AnsibleConnectionFailure(msg)
 
     if return_tuple[0] == 255:
         SSH_ERROR = True

@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - ssh - Raise exception when sshpass returns error code (https://github.com/ansible/ansible/issues/58133).
