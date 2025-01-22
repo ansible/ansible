@@ -505,14 +505,6 @@ def write_file(module, dest, content, resp):
         os.remove(tmpsrc)
 
 
-def absolute_location(url, location):
-    """Attempts to create an absolute URL based on initial URL, and
-    next URL, specifically in the case of a ``Location`` header.
-    """
-
-    return urljoin(url, location)
-
-
 def kv_list(data):
     """ Convert data into a list of key-value tuples """
     if data is None:
@@ -760,7 +752,7 @@ def main():
         uresp[ukey] = value
 
     if 'location' in uresp:
-        uresp['location'] = absolute_location(url, uresp['location'])
+        uresp['location'] = urljoin(url, uresp['location'])
 
     # Default content_encoding to try
     if isinstance(content, binary_type):

@@ -294,3 +294,24 @@
     - http_308_post.redirected == false
     - http_308_post.status == 308
     - http_308_post.url == 'https://' + httpbin_host + '/redirect-to?status_code=308&url=https://' + httpbin_host + '/anything'
+
+- name: Test HTTP return value for location using relative redirects
+  uri:
+    url: https://{{ httpbin_host }}/redirect-to?url={{ item }}
+    status_code: 302
+    follow_redirects: none
+  register: http_302
+  loop:
+    - "/anything?foo=bar"
+    - "status/302"
+    - "./status/302"
+    - "/status/302"
+    - "//{{ httpbin_host }}/status/302"
+    - "https:status/302"
+
+- assert:
+    that:
+      - item.location == ('https://' + httpbin_host + ((idx == 0) | ternary('/anything?foo=bar', '/status/302')))
+  loop: "{{ http_302.results }}"
+  loop_control:
+    index_var: idx
