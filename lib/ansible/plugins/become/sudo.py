@@ -123,4 +123,4 @@ class BecomeModule(BecomeBase):
 
         command.append(self._build_success_command(cmd, shell))
 
-        return shlex.join(command)
+        return shlex.join([x for x in command if x])

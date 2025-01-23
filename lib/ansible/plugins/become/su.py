@@ -164,4 +164,4 @@ class BecomeModule(BecomeBase):
         user = self.get_option('become_user') or ''
         success_cmd = self._build_success_command(cmd, shell)
 
-        return shlex.join([exe, flags, user, '-c', success_cmd])
+        return shlex.join([x for x in [exe, flags, user, '-c', success_cmd] if x])
