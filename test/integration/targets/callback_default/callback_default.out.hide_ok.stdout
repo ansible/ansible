@@ -106,5 +106,5 @@ TASK [Include some tasks] ******************************************************
 included: .../test/integration/targets/callback_default/include_me.yml for testhost => (item=1)
 
 PLAY RECAP *********************************************************************
-testhost                   : ok=19   changed=11   unreachable=0    failed=0    skipped=4    rescued=1    ignored=2   
+testhost                   : ok=20   changed=11   unreachable=0    failed=0    skipped=4    rescued=1    ignored=2   
 

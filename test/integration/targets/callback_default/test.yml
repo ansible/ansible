@@ -95,6 +95,13 @@
         - 1
         - 2
 
+    - debug:
+        msg: "{{ _x }}"
+      loop:
+        - a
+      loop_control:
+        loop_var: _x
+
   handlers:
     - name: Test handler 1
       command: echo foo

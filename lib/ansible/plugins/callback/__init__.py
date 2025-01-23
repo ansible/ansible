@@ -504,7 +504,7 @@ class CallbackBase(AnsiblePlugin):
             if 'msg' in result:
                 # msg should be alone
                 for key in list(result.keys()):
-                    if key not in _DEBUG_ALLOWED_KEYS and not key.startswith('_'):
+                    if key not in _DEBUG_ALLOWED_KEYS and not key.startswith('_ansible_'):
                         result.pop(key)
             else:
                 # 'var' value as field, so eliminate others and what is left should be varname
