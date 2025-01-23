@@ -120,7 +120,6 @@ failed: [testhost] (item=debug-2) =>
 ok: [testhost] => (item=debug-3) => 
     msg: debug-3
 skipping: [testhost] => (item=debug-4)  => 
-    ansible_loop_var: item
     false_condition: item != 4
     item: 4
 fatal: [testhost]: FAILED! => 
@@ -200,11 +199,9 @@ skipping: [testhost] =>
 
 TASK [debug] *******************************************************************
 skipping: [testhost] => (item=1)  => 
-    ansible_loop_var: item
     false_condition: false
     item: 1
 skipping: [testhost] => (item=2)  => 
-    ansible_loop_var: item
     false_condition: false
     item: 2
 skipping: [testhost] => 
