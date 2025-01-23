@@ -694,6 +694,12 @@ def common_environment() -> dict[str, str]:
         'CFLAGS',
     )
 
+    # Allow additional environment variables to be passed to subprocesses.
+    # Use with caution, as additional environment variables may have unintended consequences.
+    # Variables are only exposed on the origin host and will not be relayed to delegated hosts.
+    pass_env = tuple(os.environ.get('ANSIBLE_TEST_PASS_ENV', '').split())
+    optional = optional + pass_env
+
     # FreeBSD Compatibility
     # This is required to include libyaml support in PyYAML.
     # The header /usr/local/include/yaml.h isn't in the default include path for the compiler.

@@ -1,0 +1,5 @@
+minor_changes:
+  - ansible-test - Experimental support has been added for passing additional environment variables to subprocesses.
+                   Set ``ANSIBLE_TEST_PASS_ENV`` to a space-separated list of environment variable names to propagate.
+                   Use with caution, as additional environment variables may have unintended consequences.
+                   Variables are only exposed on the origin host and will not be relayed to delegated hosts.

@@ -1,0 +1,5 @@
+- assert:
+    that:
+      - lookup("env", "MYVAR1") == "one"
+      - lookup("env", "MYVAR2") == "two"
+      - lookup("env", "MYVAR3") == ""
