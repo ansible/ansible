@@ -432,6 +432,9 @@ class CallbackBase(AnsiblePlugin):
                 # 'var' value as field, so eliminate others and what is left should be varname
                 for hidme in self._hide_in_debug:
                     result.pop(hidme, None)
+                for control_var in ("ansible_loop_var", "ansible_index_var", "ansible_loop"):
+                    if control_var in result:
+                        result.pop(control_var, None)
 
     def _print_task_path(self, task, color=C.COLOR_DEBUG):
         path = task.get_path()

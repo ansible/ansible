@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - debug - hide loop vars in debug var display (https://github.com/ansible/ansible/issues/65856).
