@@ -1,0 +1,12 @@
+---
+- name: Invalid URL for git clone
+  git:
+    repo: "{{ invalid_repo_url }}"
+    dest: '{{ checkout_dir }}'
+  register: r
+  ignore_errors: yes
+
+- name: Check if invalid url fails
+  assert:
+    that:
+      - "'repo parameter starts with invalid protocol' in r.msg"

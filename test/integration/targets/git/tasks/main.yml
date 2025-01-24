@@ -26,6 +26,7 @@
   - import_tasks: setup.yml
   - import_tasks: setup-local-repos.yml
 
+  - import_tasks: invalid_url.yml
   - import_tasks: formats.yml
   - import_tasks: missing_hostkey.yml
   - import_tasks: missing_hostkey_acceptnew.yml

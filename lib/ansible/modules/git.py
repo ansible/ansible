@@ -1238,6 +1238,10 @@ def main():
 
     result = dict(changed=False, warnings=list())
 
+    valid_urls = ("https://", "http://", "file://", "/", "git", "ssh://", "~",)
+    if not repo.startswith(valid_urls):
+        module.fail_json(msg="repo parameter starts with invalid protocol")
+
     if module.params['accept_hostkey']:
         if ssh_opts is not None:
             if ("-o StrictHostKeyChecking=no" not in ssh_opts) and ("-o StrictHostKeyChecking=accept-new" not in ssh_opts):

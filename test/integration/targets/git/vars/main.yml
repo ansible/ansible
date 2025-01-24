@@ -38,6 +38,7 @@ repo_submodule1: 'https://github.com/abadger/test_submodules_subm1.git'
 repo_submodule2: 'https://github.com/abadger/test_submodules_subm2.git'
 repo_update_url_1: 'https://github.com/ansible-test-robinro/git-test-old'
 repo_update_url_2: 'https://github.com/ansible-test-robinro/git-test-new'
+invalid_repo_url: 'username:password@https://github.com/test_role.git'
 known_host_files:
   - "{{ lookup('env','HOME') }}/.ssh/known_hosts"
   - '/etc/ssh/ssh_known_hosts'
