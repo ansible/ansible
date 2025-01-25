@@ -3,6 +3,7 @@
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import annotations
+from ansible.executor.fault_handler import setup_fault_handler
 
 import json
 import sys
@@ -370,7 +371,8 @@ class AnsibleModule(object):
         See :ref:`developing_modules_general` for a general introduction
         and :ref:`developing_program_flow_modules` for more detailed explanation.
         """
-
+        
+        setup_fault_handler(str(os.getpid()))
         self._name = os.path.basename(__file__)  # initialize name until we can parse from options
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode

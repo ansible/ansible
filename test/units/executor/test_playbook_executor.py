@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.playbook import Playbook
@@ -37,7 +37,7 @@ class TestPlaybookExecutor(unittest.TestCase):
     def tearDown(self):
         # And cleanup after ourselves too
         co.GlobalCLIArgs._Singleton__instance = None
-
+   
     def test_get_serialized_batches(self):
         fake_loader = DictDataLoader({
             'no_serial.yml': """
@@ -144,3 +144,18 @@ class TestPlaybookExecutor(unittest.TestCase):
             pbe._get_serialized_batches(play),
             [['host0', 'host1'], ['host2', 'host3'], ['host4', 'host5'], ['host6', 'host7'], ['host8', 'host9'], ['host10']]
         )
+    def test_fault_handler_setup(self):
+        """Test that fault handler is properly set up"""
+        fake_loader = DictDataLoader({})
+        mock_inventory = MagicMock()
+        mock_var_manager = MagicMock()
+
+        with patch('ansible.executor.playbook_executor.setup_fault_handler') as mock_setup:
+            pbe = PlaybookExecutor(
+                playbooks=['test.yml'],
+                inventory=mock_inventory,
+                variable_manager=mock_var_manager,
+                loader=fake_loader,
+                passwords=[],
+            )
+            mock_setup.assert_called_once()

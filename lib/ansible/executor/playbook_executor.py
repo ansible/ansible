@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import annotations
+from ansible.executor.fault_handler import setup_fault_handler
 
 import os
 
@@ -46,6 +47,7 @@ class PlaybookExecutor:
     """
 
     def __init__(self, playbooks, inventory, variable_manager, loader, passwords):
+        setup_fault_handler()
         self._playbooks = playbooks
         self._inventory = inventory
         self._variable_manager = variable_manager
@@ -79,6 +81,7 @@ class PlaybookExecutor:
         may limit the runs to serialized groups, etc.
         """
 
+        setup_fault_handler()
         result = 0
         entrylist = []
         entry = {}

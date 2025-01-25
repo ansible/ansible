@@ -10,6 +10,7 @@ import datetime
 import typing as t
 
 import pytest
+from unittest.mock import patch
 
 from ansible.module_utils.common import warnings
 
@@ -162,3 +163,13 @@ class TestAnsibleModuleExitValuesRemoved:
         out, err = capfd.readouterr()
 
         assert json.loads(out) == expected
+
+
+class TestAnsibleModuleInitialization:
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_fault_handler_setup(self, am, monkeypatch):
+        """Test that fault handler is set up during initialization"""
+        with patch('ansible.module_utils.basic.setup_fault_handler') as mock_setup:
+            from ansible.module_utils.basic import AnsibleModule
+            AnsibleModule(argument_spec={})
+            mock_setup.assert_called_once()

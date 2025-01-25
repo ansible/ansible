@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import annotations
+from ansible.executor.fault_handler import setup_fault_handler
 
 import os
 import sys
@@ -56,6 +57,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
     def __init__(self, final_q, task_vars, host, task, play_context, loader, variable_manager, shared_loader_obj, worker_id):
 
         super(WorkerProcess, self).__init__()
+        setup_fault_handler(str(worker_id))
         # takes a task queue manager as the sole param:
         self._final_q = final_q
         self._task_vars = task_vars
