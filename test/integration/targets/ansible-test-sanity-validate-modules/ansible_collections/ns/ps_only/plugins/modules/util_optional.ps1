@@ -4,8 +4,11 @@
 #AnsibleRequires -CSharpUtil Ansible.Basic
 #AnsibleRequires -PowerShell .foo -Optional
 
-$module = [Ansible.Basic.AnsibleModule]::Create($args, @{
-    options = @{}
-})
+$module = [Ansible.Basic.AnsibleModule]::Create(
+    $args,
+    @{
+        options = @{}
+    }
+)
 
 $module.ExitJson()
