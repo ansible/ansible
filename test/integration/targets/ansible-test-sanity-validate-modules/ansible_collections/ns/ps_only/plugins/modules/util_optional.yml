@@ -1,0 +1,17 @@
+# Copyright (c) 2025 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+DOCUMENTATION:
+  module: util_optional
+  short_description: Short description for util_optional module
+  description:
+  - Description for util_optional module
+  options: {}
+  author:
+  - Ansible Core Team
+
+EXAMPLES: |
+  - name: example for sidecar
+    ns.col.util_optional:
+
+RETURN: {}

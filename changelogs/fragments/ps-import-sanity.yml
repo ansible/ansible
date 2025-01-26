@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-test - Fix support for detecting PowerShell modules importing module utils with the newer ``#AnsibleRequires`` format.
+  - ansible-test - Fix support for PowerShell module_util imports with the ``-Optional`` flag.
