@@ -1029,6 +1029,17 @@ releases:
     - selinux_import.yml
     - unsafe_hostvars_fix.yml
     release_date: '2024-11-25'
+  2.17.8:
+    changes:
+      release_summary: '| Release Date: 2025-01-27
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+        '
+    codename: Gallows Pole
+    fragments:
+    - 2.17.8_summary.yaml
+    release_date: '2025-01-27'
   2.17.8rc1:
     changes:
       bugfixes:
