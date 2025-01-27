@@ -475,6 +475,7 @@ class DnfModule(YumDnf):
         global dnf
         try:
             import dnf
+            import dnf.cli
             import dnf.const
             import dnf.exceptions
             import dnf.package
