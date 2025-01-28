@@ -82,7 +82,7 @@ CLEAR_TO_EOL = b'\x1b[K'
 
 def _is_controller_traceback_enabled(event: _traceback.TracebackEvent) -> bool:
     """Controller utility function to determine if traceback collection is enabled for the specified event."""
-    flag_values = set(value for value in C.config.get_config_value('DISPLAY_TRACEBACK'))
+    flag_values: set[str] = set(value for value in C.config.get_config_value('DISPLAY_TRACEBACK'))
 
     if 'always' in flag_values:
         return True

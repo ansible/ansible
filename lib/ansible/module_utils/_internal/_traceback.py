@@ -18,6 +18,11 @@ class TracebackEvent(enum.Enum):
     DEPRECATED = enum.auto()
 
 
+def traceback_for() -> list[str]:
+    """Return a list of traceback event names (not enums) which are enabled."""
+    return [value.name.lower() for value in TracebackEvent if is_traceback_enabled(value)]
+
+
 def is_traceback_enabled(event: TracebackEvent) -> bool:
     """Return True if tracebacks are enabled for the specified event, otherwise return False."""
     return _is_traceback_enabled(event)
@@ -80,4 +85,4 @@ def _is_module_traceback_enabled(event: TracebackEvent) -> bool:
 
 
 _is_traceback_enabled = _is_module_traceback_enabled
-"""Callable to determine if tracebacks are enabled. Overridden on the controller. Use `is_traceback_enabled` instead of calling this directly."""
+"""Callable to determine if tracebacks are enabled. Overridden on the controller by display. Use `is_traceback_enabled` instead of calling this directly."""

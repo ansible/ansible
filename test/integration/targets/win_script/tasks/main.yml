@@ -36,7 +36,6 @@
   assert:
     that:
       - "test_script_result.rc == 0"
-      - "test_script_result.stdout"
       - "'Woohoo' in test_script_result.stdout"
       - (ansible_connection == 'ssh') | ternary(test_script_result.stderr is defined, not test_script_result.stderr)
       - "test_script_result is not failed"
@@ -50,7 +49,7 @@
   assert:
     that:
       - "test_script_with_args_result.rc == 0"
-      - "test_script_with_args_result.stdout"
+      - "test_script_with_args_result.stdout | length > 0"
       - "test_script_with_args_result.stdout_lines[0] == '/this'"
       - "test_script_with_args_result.stdout_lines[1] == '/that'"
       - "test_script_with_args_result.stdout_lines[2] == '/Ӧther'"
@@ -95,7 +94,7 @@
   assert:
     that:
       - "test_script_with_splatting_result.rc == 0"
-      - "test_script_with_splatting_result.stdout"
+      - "test_script_with_splatting_result.stdout | length > 0"
       - "test_script_with_splatting_result.stdout_lines[0] == 'this'"
       - "test_script_with_splatting_result.stdout_lines[1] == test_win_script_value"
       - "test_script_with_splatting_result.stdout_lines[2] == 'other'"
@@ -111,7 +110,7 @@
   assert:
     that:
       - "test_script_with_splatting2_result.rc == 0"
-      - "test_script_with_splatting2_result.stdout"
+      - "test_script_with_splatting2_result.stdout | length > 0"
       - "test_script_with_splatting2_result.stdout_lines[0] == 'THIS'"
       - "test_script_with_splatting2_result.stdout_lines[1] == 'THAT'"
       - "test_script_with_splatting2_result.stdout_lines[2] == 'OTHER'"
@@ -129,7 +128,7 @@
     that:
       - "test_script_with_errors_result.rc != 0"
       - "not test_script_with_errors_result.stdout"
-      - "test_script_with_errors_result.stderr"
+      - "test_script_with_errors_result.stderr | length > 0"
       - "test_script_with_errors_result is failed"
       - "test_script_with_errors_result is changed"
 
@@ -203,7 +202,6 @@
     assert:
       that:
         - "test_batch_result.rc == 0"
-        - "test_batch_result.stdout"
         - "'batch' in test_batch_result.stdout"
         - (ansible_connection == 'ssh') | ternary(test_batch_result.stderr is defined, not test_batch_result.stderr)
         - "test_batch_result is not failed"
@@ -217,7 +215,6 @@
     assert:
       that:
         - "test_cmd_result.rc == 0"
-        - "test_cmd_result.stdout"
         - "'cmd extension' in test_cmd_result.stdout"
         - (ansible_connection == 'ssh') | ternary(test_cmd_result.stderr is defined, not test_cmd_result.stderr)
         - "test_cmd_result is not failed"
@@ -232,8 +229,8 @@
     assert:
       that:
         - test_batch_result.rc == 1
-        - test_batch_result.stdout
-        - test_batch_result.stderr
+        - test_batch_result.stdout | length > 0
+        - test_batch_result.stderr | length > 0
         - test_batch_result is failed
         - test_batch_result is changed
   when: not ansible_distribution_version.startswith('6.0')

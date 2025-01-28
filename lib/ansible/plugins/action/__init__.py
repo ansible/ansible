@@ -1037,7 +1037,7 @@ class ActionBase(ABC):
         # allow user to insert string to add context to remote loggging
         module_args['_ansible_target_log_info'] = C.config.get_config_value('TARGET_LOG_INFO', variables=task_vars)
 
-        module_args['_ansible_tracebacks_for'] = [value.name.lower() for value in _traceback.TracebackEvent if _traceback.is_traceback_enabled(value)]
+        module_args['_ansible_tracebacks_for'] = _traceback.traceback_for()
 
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False,
                         ignore_unknown_opts: bool = False):

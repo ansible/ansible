@@ -4,10 +4,10 @@ import dataclasses
 import typing as t
 
 
-def dump_object(value: object) -> object:
+def dump_object(value: t.Any) -> object:
     """Internal filter to convert objects not supported by JSON to types which are."""
     if dataclasses.is_dataclass(value):
-        return dataclasses.asdict(value)
+        return dataclasses.asdict(value)  # type: ignore[call-overload]
 
     return value
 
