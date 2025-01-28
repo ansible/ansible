@@ -590,7 +590,8 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
         Without this, `_wrap_filter` will wrap `args` and `kwargs` in templating lazy containers.
         This provides consistency with plugin output handling by preventing auto-templating of trusted templates passed in native containers.
         """
-        args = _AnsibleLazyTemplateMixin._try_create(args, auto_template=False)
+        # DTFIX-MERGE: need better logic to handle non-list/non-dict inputs for args/kwargs
+        args = _AnsibleLazyTemplateMixin._try_create(list(args or []), auto_template=False)
         kwargs = _AnsibleLazyTemplateMixin._try_create(kwargs, auto_template=False)
 
         return super().call_filter(name, value, args, kwargs, context, eval_ctx)
@@ -609,7 +610,8 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
         Without this, `_wrap_test` will wrap `args` and `kwargs` in templating lazy containers.
         This provides consistency with plugin output handling by preventing auto-templating of trusted templates passed in native containers.
         """
-        args = _AnsibleLazyTemplateMixin._try_create(args, auto_template=False)
+        # DTFIX-MERGE: need better logic to handle non-list/non-dict inputs for args/kwargs
+        args = _AnsibleLazyTemplateMixin._try_create(list(args or []), auto_template=False)
         kwargs = _AnsibleLazyTemplateMixin._try_create(kwargs, auto_template=False)
 
         return super().call_test(name, value, args, kwargs, context, eval_ctx)
