@@ -4,36 +4,63 @@
 
 from __future__ import annotations
 
-from ansible.module_utils.six import string_types
+import datetime
+import typing as t
 
-_global_warnings = []
-_global_deprecations = []
-
-
-def warn(warning):
-    if isinstance(warning, string_types):
-        _global_warnings.append(warning)
-    else:
-        raise TypeError("warn requires a string not a %s" % type(warning))
+from .._internal import _traceback
+from ..common.messages import Detail, WarningSummary, DeprecationSummary
 
 
-def deprecate(msg, version=None, date=None, collection_name=None):
-    if isinstance(msg, string_types):
-        # For compatibility, we accept that neither version nor date is set,
-        # and treat that the same as if version would haven been set
-        if date is not None:
-            _global_deprecations.append({'msg': msg, 'date': date, 'collection_name': collection_name})
-        else:
-            _global_deprecations.append({'msg': msg, 'version': version, 'collection_name': collection_name})
-    else:
-        raise TypeError("deprecate requires a string not a %s" % type(msg))
+def warn(warning: str) -> None:
+    """Record a warning to be returned with the module result."""
+    _global_warnings[WarningSummary(
+        details=(
+            Detail(msg=warning),
+        ),
+        formatted_traceback=_traceback.maybe_capture_traceback(_traceback.TracebackEvent.WARNING),
+    )] = None
 
 
-def get_warning_messages():
-    """Return a tuple of warning messages accumulated over this run"""
-    return tuple(_global_warnings)
+def deprecate(msg: str, version: str | None = None, date: str | datetime.date | None = None, collection_name: str | None = None) -> None:
+    """Record a deprecation warning to be returned with the module result."""
+    if isinstance(date, datetime.date):
+        date = str(date)
+
+    _global_deprecations[DeprecationSummary(
+        details=(
+            Detail(msg=msg),
+        ),
+        formatted_traceback=_traceback.maybe_capture_traceback(_traceback.TracebackEvent.DEPRECATED),
+        version=version,
+        date=date,
+        collection_name=collection_name,
+    )] = None
 
 
-def get_deprecation_messages():
-    """Return a tuple of deprecations accumulated over this run"""
-    return tuple(_global_deprecations)
+def get_warning_messages() -> tuple[str, ...]:
+    """Return a tuple of warning messages accumulated over this run."""
+    # DTFIX-MERGE: add future deprecation comment
+    return tuple(item.format() for item in _global_warnings)
+
+
+def get_deprecation_messages() -> tuple[dict[str, t.Any], ...]:
+    """Return a tuple of deprecation warning messages accumulated over this run."""
+    # DTFIX-MERGE: add future deprecation comment
+    return tuple(item._as_simple_dict() for item in _global_deprecations)
+
+
+def get_warnings() -> list[WarningSummary]:
+    """Return a list of warning messages accumulated over this run."""
+    return list(_global_warnings)
+
+
+def get_deprecations() -> list[DeprecationSummary]:
+    """Return a list of deprecations accumulated over this run."""
+    return list(_global_deprecations)
+
+
+_global_warnings: dict[WarningSummary, object] = {}
+"""Global, ordered, de-deplicated storage of acculumated warnings for the current module run."""
+
+_global_deprecations: dict[DeprecationSummary, object] = {}
+"""Global, ordered, de-deplicated storage of acculumated deprecations for the current module run."""

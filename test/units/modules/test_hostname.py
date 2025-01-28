@@ -5,14 +5,15 @@ import shutil
 import tempfile
 
 from unittest.mock import patch, MagicMock, mock_open
+
 from ansible.module_utils.common._utils import get_all_subclasses
 from ansible.modules import hostname
-from units.modules.utils import ModuleTestCase, set_module_args
+from units.modules.utils import ModuleTestCase
 
 
-class TestHostname(ModuleTestCase):
+class TestHostname:
     @patch('os.path.isfile')
-    def test_stategy_get_never_writes_in_check_mode(self, isfile):
+    def test_stategy_get_never_writes_in_check_mode(self, isfile, set_module_args):
         isfile.return_value = True
 
         set_module_args({'name': 'fooname', '_ansible_check_mode': True})
@@ -29,9 +30,7 @@ class TestHostname(ModuleTestCase):
             with patch('%s.open' % builtins, m):
                 instance.get_permanent_hostname()
                 instance.get_current_hostname()
-                self.assertFalse(
-                    m.return_value.write.called,
-                    msg='%s called write, should not have' % str(cls))
+                assert not m.return_value.write.called
 
     def test_all_named_strategies_exist(self):
         """Loop through the STRATS and see if anything is missing."""
@@ -41,7 +40,7 @@ class TestHostname(ModuleTestCase):
 
             assert cls is not None
 
-            self.assertTrue(issubclass(cls, hostname.BaseStrategy))
+            assert issubclass(cls, hostname.BaseStrategy)
 
 
 class TestRedhatStrategy(ModuleTestCase):

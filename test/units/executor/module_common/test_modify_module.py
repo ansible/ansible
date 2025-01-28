@@ -32,5 +32,6 @@ def test_shebang_task_vars(fake_old_module_open, templar):
         'ansible_python_interpreter': '/usr/bin/python3'
     }
 
-    (data, style, shebang) = modify_module('fake_module', 'fake_path', {}, templar, task_vars=task_vars)
-    assert shebang == '#!/usr/bin/python3'
+    built_module = modify_module('fake_module', 'fake_path', {}, templar, task_vars=task_vars)
+
+    assert built_module.shebang == '#!/usr/bin/python3'

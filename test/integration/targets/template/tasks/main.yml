@@ -759,13 +759,12 @@
   - template:
       src: override_separator.j2
       dest: "{{ output_dir }}/override_separator.templated"
-  - assert:
-      that:
-        - False
+  - fail:
+      msg: should not reach this point due to previous fail
   rescue:
   - assert:
       that:
-        - "'failed to parse jinja2 override' in ansible_failed_result.msg"
+        - "'Missing key-value separator' in ansible_failed_result.msg"
 
 - name: test jinja2 override with colon in value
   template:
@@ -785,18 +784,27 @@
     that:
       - override_colon_value_task is success
       - override_colon_value_diff.rc == 0
+- debug:
+    msg: '{{data_converted | type_debug}}'
+  vars:
+    data_converted: "{{ lookup('template', 'json_macro.j2') }}"
 
-- assert:
-    that:
-      - data_not_converted | type_debug == 'NativeJinjaUnsafeText'
-      - data_converted | type_debug == 'dict'
+
+- block:
+  - debug:
+      var: data_not_converted
+  - assert:
+      that:
+        - data_converted['foo'] == 'bar'
+        - |
+          data_not_converted == {'foo': 'bar'}
   vars:
     data_not_converted: "{{ lookup('template', 'json_macro.j2', convert_data=False) }}"
     data_converted: "{{ lookup('template', 'json_macro.j2') }}"
 
 - name: Test convert_data is correctly set to True for nested vars evaluation
   debug:
-    msg: "{{ lookup('template', 'indirect_dict.j2', convert_data=False) }}"
+    msg: "{{ lookup('template', 'indirect_dict.j2') }}"
   vars:
     d:
       foo: bar

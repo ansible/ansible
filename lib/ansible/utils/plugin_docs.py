@@ -318,8 +318,6 @@ def find_plugin_docfile(plugin, plugin_type, loader):
 
 def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
 
-    docs = []
-
     # find plugin doc file, if it doesn't exist this will throw error, we let it through
     # can raise exception and short circuit when 'not found'
     filename, context = find_plugin_docfile(plugin, plugin_type, loader)
@@ -327,8 +325,8 @@ def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
 
     try:
         docs = get_docstring(filename, fragment_loader, verbose=verbose, collection_name=collection_name, plugin_type=plugin_type)
-    except Exception as e:
-        raise AnsibleParserError('%s did not contain a DOCUMENTATION attribute (%s)' % (plugin, filename), orig_exc=e)
+    except Exception as ex:
+        raise AnsibleParserError(f'{plugin_type} plugin {plugin!r} did not contain a DOCUMENTATION attribute in {filename!r}.') from ex
 
     # no good? try adjacent
     if not docs[0]:
@@ -338,15 +336,15 @@ def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
                 filename = newfile
                 if docs[0] is not None:
                     break
-            except Exception as e:
-                raise AnsibleParserError('Adjacent file %s did not contain a DOCUMENTATION attribute (%s)' % (plugin, filename), orig_exc=e)
+            except Exception as ex:
+                raise AnsibleParserError(f'{plugin_type} plugin {plugin!r} adjacent file did not contain a DOCUMENTATION attribute in {filename!r}.') from ex
 
     # add extra data to docs[0] (aka 'DOCUMENTATION')
     if docs[0] is None:
-        raise AnsibleParserError('No documentation available for %s (%s)' % (plugin, filename))
-    else:
-        docs[0]['filename'] = filename
-        docs[0]['collection'] = collection_name
-        docs[0]['plugin_name'] = context.resolved_fqcn
+        raise AnsibleParserError(f'No documentation available for {plugin_type} plugin {plugin!r} in {filename!r}.')
+
+    docs[0]['filename'] = filename
+    docs[0]['collection'] = collection_name
+    docs[0]['plugin_name'] = context.resolved_fqcn
 
     return docs

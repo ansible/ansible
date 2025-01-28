@@ -4,9 +4,12 @@
 
 from __future__ import annotations
 
-from ansible.module_utils.common import warnings
+import pytest
 
+from ansible.module_utils.common import warnings
 from ansible.module_utils.common.arg_spec import ModuleArgumentSpecValidator, ValidationResult
+
+pytestmark = pytest.mark.usefixtures("module_env_mocker")
 
 
 def test_module_validate():
@@ -24,9 +27,7 @@ def test_module_validate():
     assert result.validated_parameters == expected
 
 
-def test_module_alias_deprecations_warnings(monkeypatch):
-    monkeypatch.setattr(warnings, '_global_deprecations', [])
-
+def test_module_alias_deprecations_warnings():
     arg_spec = {
         'path': {
             'aliases': ['source', 'src', 'flamethrower'],
@@ -52,6 +53,6 @@ def test_module_alias_deprecations_warnings(monkeypatch):
             'version': None,
         }
     ]
-    assert "Alias 'flamethrower' is deprecated" in warnings._global_deprecations[0]['msg']
+    assert "Alias 'flamethrower' is deprecated" in warnings.get_deprecation_messages()[0]['msg']
     assert result._warnings == [{'alias': 'flamethrower', 'option': 'path'}]
-    assert "Both option path and its alias flamethrower are set" in warnings._global_warnings[0]
+    assert "Both option path and its alias flamethrower are set" in warnings.get_warning_messages()[0]

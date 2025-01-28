@@ -8,8 +8,7 @@ import pytest
 from jinja2 import Environment
 
 import ansible.plugins.filter.mathstuff as ms
-from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
-
+from ansible.errors import AnsibleFilterTypeError, AnsibleTemplatePluginError
 
 UNIQUE_DATA: list[tuple[list, list]] = [
     ([], []),
@@ -144,10 +143,10 @@ class TestRekeyOnMember():
     # (Input data structure, member to rekey on, expected error message)
     INVALID_ENTRIES = (
         # Fail when key is not found
-        (AnsibleFilterError, [{"proto": "eigrp", "state": "enabled"}], 'invalid_key', "Key invalid_key was not found"),
-        (AnsibleFilterError, {"eigrp": {"proto": "eigrp", "state": "enabled"}}, 'invalid_key', "Key invalid_key was not found"),
+        (AnsibleTemplatePluginError, [{"proto": "eigrp", "state": "enabled"}], 'invalid_key', "Key invalid_key was not found"),
+        (AnsibleTemplatePluginError, {"eigrp": {"proto": "eigrp", "state": "enabled"}}, 'invalid_key', "Key invalid_key was not found"),
         # Fail when key is duplicated
-        (AnsibleFilterError, [{"proto": "eigrp"}, {"proto": "ospf"}, {"proto": "ospf"}],
+        (AnsibleTemplatePluginError, [{"proto": "eigrp"}, {"proto": "ospf"}, {"proto": "ospf"}],
          'proto', 'Key ospf is not unique, cannot correctly turn into dict'),
         # Fail when value is not a dict
         (AnsibleFilterTypeError, ["string"], 'proto', "List item is not a valid dict"),

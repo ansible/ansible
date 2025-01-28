@@ -19,15 +19,12 @@
 
 from __future__ import annotations
 
-from abc import ABC
-
+import abc
 import types
 import typing as t
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.six import string_types
 from ansible.utils.display import Display
 
 display = Display()
@@ -42,13 +39,13 @@ PLUGIN_PATH_CACHE = {}  # type: dict[str, dict[str, dict[str, PluginPathContext]
 
 
 def get_plugin_class(obj):
-    if isinstance(obj, string_types):
+    if isinstance(obj, str):
         return obj.lower().replace('module', '')
     else:
         return obj.__class__.__name__.lower().replace('module', '')
 
 
-class AnsiblePlugin(ABC):
+class AnsiblePlugin(metaclass=abc.ABCMeta):
 
     # Set by plugin loader
     _load_name: str
@@ -81,7 +78,7 @@ class AnsiblePlugin(ABC):
         try:
             option_value, origin = C.config.get_config_value_and_origin(option, plugin_type=self.plugin_type, plugin_name=self._load_name, variables=hostvars)
         except AnsibleError as e:
-            raise KeyError(to_native(e))
+            raise KeyError(str(e))
         return option_value, origin
 
     def get_option(self, option, hostvars=None):
@@ -137,23 +134,48 @@ class AnsiblePlugin(ABC):
         # FIXME: standardize required check based on config
         pass
 
+    def __repr__(self):
+        load_name = getattr(self, '_load_name', '(unknown)')
+        return f'{type(self).__name__}(plugin_type={self.plugin_type!r}, {load_name=!r})'
 
-class AnsibleJinja2Plugin(AnsiblePlugin):
 
-    def __init__(self, function):
-
+class AnsibleJinja2Plugin(AnsiblePlugin, metaclass=abc.ABCMeta):
+    def __init__(self, function: t.Callable) -> None:
         super(AnsibleJinja2Plugin, self).__init__()
         self._function = function
 
-    @property
-    def plugin_type(self):
-        return self.__class__.__name__.lower().replace('ansiblejinja2', '')
+        # DTFIX-MERGE: should this come from sidecar config or another more user/doc-friendly mechanism?
+        # Declare support for markers. Plugins with `False` here will never be invoked with markers for top-level arguments.
+        self.accept_marker = getattr(self._function, 'accept_marker', False)
 
-    def _no_options(self, *args, **kwargs):
+    @property
+    @abc.abstractmethod
+    def plugin_type(self) -> str:
+        ...
+
+    def _no_options(self, *args, **kwargs) -> t.NoReturn:
         raise NotImplementedError()
 
     has_option = get_option = get_options = option_definitions = set_option = set_options = _no_options
 
     @property
-    def j2_function(self):
+    def j2_function(self) -> t.Callable:
         return self._function
+
+
+_TCallable = t.TypeVar('_TCallable', bound=t.Callable)
+
+
+def accept_marker(plugin: _TCallable) -> _TCallable:
+    """
+    A decorator to mark a Jinja plugin as capable of handling `Marker` values.
+
+    When the decorator is not applied to a plugin:
+      * The plugin invocation is skipped if any top-level argument to it is a `Marker`, with the first such value substituted for its return value.
+      * Lazy containers will raise `MarkerError` when a plugin attempts to retrieve a `Marker`.
+
+    This ensures that a plugin will never see a `Marker` instance unless it has declared support for the feature.
+    """
+    plugin.accept_marker = True
+
+    return plugin

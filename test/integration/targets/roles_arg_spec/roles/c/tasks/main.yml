@@ -1,6 +1,5 @@
 ---
-- debug:
-    msg: "Role C that includes Role A with var {{ c_int }}"
+- raw: echo "Role C that includes Role A with var {{ c_int }}"
 
 - name: "Role C import_role A with a_str {{ a_str }}"
   import_role:

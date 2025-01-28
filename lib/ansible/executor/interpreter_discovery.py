@@ -16,9 +16,10 @@ from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_versioned_doclink
 from ansible.module_utils.compat.version import LooseVersion
 from ansible.module_utils.facts.system.distribution import Distribution
-from traceback import format_exc
 
 OS_FAMILY_LOWER = {k.lower(): v.lower() for k, v in Distribution.OS_FAMILY.items()}
+
+_FALLBACK_INTERPRETER = '/usr/bin/python3'
 
 display = Display()
 foundre = re.compile(r'(?s)PLATFORM[\r\n]+(.*)FOUND(.*)ENDFOUND')
@@ -53,7 +54,7 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
     host = task_vars.get('inventory_hostname', 'unknown')
     res = None
     platform_type = 'unknown'
-    found_interpreters = [u'/usr/bin/python3']  # fallback value
+    found_interpreters = [_FALLBACK_INTERPRETER]  # fallback value
     is_auto_legacy = discovery_mode.startswith('auto_legacy')
     is_silent = discovery_mode.endswith('_silent')
 
@@ -86,10 +87,9 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
 
         if not found_interpreters:
             if not is_silent:
-                action._discovery_warnings.append(u'No python interpreters found for '
-                                                  u'host {0} (tried {1})'.format(host, bootstrap_python_list))
+                display.warning(msg=f'No python interpreters found for host {host!r} (tried {bootstrap_python_list!r}).')
             # this is lame, but returning None or throwing an exception is uglier
-            return u'/usr/bin/python3'
+            return _FALLBACK_INTERPRETER
 
         if platform_type != 'linux':
             raise NotImplementedError('unsupported platform for extended discovery: {0}'.format(to_native(platform_type)))
@@ -119,31 +119,32 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
 
         # provide a transition period for hosts that were using /usr/bin/python previously (but shouldn't have been)
         if is_auto_legacy:
-            if platform_interpreter != u'/usr/bin/python3' and u'/usr/bin/python3' in found_interpreters:
+            if platform_interpreter != _FALLBACK_INTERPRETER and _FALLBACK_INTERPRETER in found_interpreters:
                 if not is_silent:
-                    action._discovery_warnings.append(
-                        u"Distribution {0} {1} on host {2} should use {3}, but is using "
-                        u"/usr/bin/python3 for backward compatibility with prior Ansible releases. "
-                        u"See {4} for more information"
-                        .format(distro, version, host, platform_interpreter,
-                                get_versioned_doclink('reference_appendices/interpreter_discovery.html')))
-                return u'/usr/bin/python3'
+                    display.warning(
+                        msg=(
+                            f"Distribution {distro!r} {version!r} on host {host!r} should use {platform_interpreter!r}, "
+                            f"but is using {_FALLBACK_INTERPRETER!r} for backward compatibility with prior Ansible releases."
+                        ),
+                        help_text=f"See {get_versioned_doclink('reference_appendices/interpreter_discovery.html')} for more information.",
+                    )
+                return _FALLBACK_INTERPRETER
 
         if platform_interpreter not in found_interpreters:
             if platform_interpreter not in bootstrap_python_list:
                 # sanity check to make sure we looked for it
                 if not is_silent:
-                    action._discovery_warnings \
-                        .append(u"Platform interpreter {0} on host {1} is missing from bootstrap list"
-                                .format(platform_interpreter, host))
+                    display.warning(msg=f"Platform interpreter {platform_interpreter!r} on host {host!r} is missing from bootstrap list.")
 
             if not is_silent:
-                action._discovery_warnings \
-                    .append(u"Distribution {0} {1} on host {2} should use {3}, but is using {4}, since the "
-                            u"discovered platform python interpreter was not present. See {5} "
-                            u"for more information."
-                            .format(distro, version, host, platform_interpreter, found_interpreters[0],
-                                    get_versioned_doclink('reference_appendices/interpreter_discovery.html')))
+                display.warning(
+                    msg=(
+                        f"Distribution {distro!r} {version!r} on host {host!r} should use {platform_interpreter!r}, but is using {found_interpreters[0]!r}, "
+                        "since the discovered platform python interpreter was not present."
+                    ),
+                    help_text=f"See {get_versioned_doclink('reference_appendices/interpreter_discovery.html')} for more information.",
+                )
+
             return found_interpreters[0]
 
         return platform_interpreter
@@ -153,18 +154,19 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
         raise
     except Exception as ex:
         if not is_silent:
-            display.warning(msg=u'Unhandled error in Python interpreter discovery for host {0}: {1}'.format(host, to_text(ex)))
-            display.debug(msg=u'Interpreter discovery traceback:\n{0}'.format(to_text(format_exc())), host=host)
+            display.error_as_warning(msg=f'Unhandled error in Python interpreter discovery for host {host!r}.', exception=ex)
+
             if res and res.get('stderr'):
                 display.vvv(msg=u'Interpreter discovery remote stderr:\n{0}'.format(to_text(res.get('stderr'))), host=host)
 
     if not is_silent:
-        action._discovery_warnings \
-            .append(u"Platform {0} on host {1} is using the discovered Python interpreter at {2}, but future installation of "
-                    u"another Python interpreter could change the meaning of that path. See {3} "
-                    u"for more information."
-                    .format(platform_type, host, found_interpreters[0],
-                            get_versioned_doclink('reference_appendices/interpreter_discovery.html')))
+        display.warning(
+            msg=(
+                f"Platform {platform_type!r} on host {host!r} is using the discovered Python interpreter at {found_interpreters[0]!r}, "
+                "but future installation of another Python interpreter could cause a different interpreter to be discovered."
+            ),
+            help_text=f"See {get_versioned_doclink('reference_appendices/interpreter_discovery.html')} for more information.",
+        )
     return found_interpreters[0]
 
 

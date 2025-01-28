@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import json
+
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
 from ansible import constants as C
@@ -15,10 +17,11 @@ from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.splitter import parse_kv
-from ansible.parsing.utils.yaml import from_yaml
 from ansible.playbook import Playbook
 from ansible.playbook.play import Play
+from ansible.utils.datatag.tags import AnsibleSourcePosition
 from ansible.utils.display import Display
+from ansible.utils.serialization import legacy
 
 display = Display()
 
@@ -76,7 +79,7 @@ class AdHocCLI(CLI):
         module_args = None
         if module_args_raw and module_args_raw.startswith('{') and module_args_raw.endswith('}'):
             try:
-                module_args = from_yaml(module_args_raw.strip(), json_only=True)
+                module_args = json.loads(module_args_raw, cls=legacy.Decoder)
             except AnsibleParserError:
                 pass
 
@@ -85,6 +88,8 @@ class AdHocCLI(CLI):
 
         mytask = {'action': {'module': context.CLIARGS['module_name'], 'args': module_args},
                   'timeout': context.CLIARGS['task_timeout']}
+
+        mytask = AnsibleSourcePosition(description=f'<adhoc {context.CLIARGS["module_name"]!r} task>').tag(mytask)
 
         # avoid adding to tasks that don't support it, unless set, then give user an error
         if context.CLIARGS['module_name'] not in C._ACTION_ALL_INCLUDE_ROLE_TASKS and any(frozenset((async_val, poll))):

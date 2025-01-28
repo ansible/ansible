@@ -295,9 +295,9 @@
 - name: regex_search check
   assert:
     that:
-      - match_case == ''
+      - match_case is none
       - ignore_case == 'hello'
-      - single_line == ''
+      - single_line is none
       - multi_line == 'world'
       - named_groups == ['bye', 'good']
       - numbered_groups == ['bye', 'good']
@@ -522,7 +522,7 @@
     that:
       - mandatory_demo | mandatory == 123
       - mandatory_1 is failed
-      - "mandatory_1.msg == \"Mandatory variable 'hey'  not defined.\""
+      - mandatory_1.msg is contains "Mandatory variable 'hey' not defined."
       - mandatory_2 is failed
       - mandatory_2.msg is contains "You did not give me a variable. I am a sad wolf."
 
@@ -726,7 +726,6 @@
       - thing|map(attribute="bar")|first == 123
       - thing_result|first == 123
       - thing_items|first|last == 123
-      - thing_range == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
   vars:
     thing:
       - bar: 123
@@ -734,7 +733,6 @@
     thing_dict:
       bar: 123
     thing_items: '{{ thing_dict.items() }}'
-    thing_range: '{{ range(10) }}'
 
 - name: Assert that quote works on None
   assert:

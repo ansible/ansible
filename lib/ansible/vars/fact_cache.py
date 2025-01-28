@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import typing as t
+
 from collections.abc import MutableMapping
 
 from ansible import constants as C
@@ -16,7 +18,7 @@ from ansible.utils.display import Display
 display = Display()
 
 
-class FactCache(MutableMapping):
+class FactCache(MutableMapping[str, dict[str, t.Any]]):
 
     def __init__(self, *args, **kwargs):
 

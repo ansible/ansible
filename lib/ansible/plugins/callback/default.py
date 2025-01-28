@@ -49,7 +49,6 @@ class CallbackModule(CallbackBase):
     def v2_runner_on_failed(self, result, ignore_errors=False):
 
         host_label = self.host_label(result)
-        self._clean_results(result._result, result._task.action)
 
         if self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
@@ -57,9 +56,12 @@ class CallbackModule(CallbackBase):
         self._handle_exception(result._result, use_stderr=self.get_option('display_failed_stderr'))
         self._handle_warnings(result._result)
 
+        # FIXME: this method should not exist, delegate "suggested keys to display" to the plugin or something... As-is, the placement of this
+        #          call obliterates `results`, which causes a task summary to be printed on loop failures, which we don't do anywhere else.
+        self._clean_results(result._result, result._task.action)
+
         if result._task.loop and 'results' in result._result:
             self._process_items(result)
-
         else:
             if self._display.verbosity < 2 and self.get_option('show_task_path_on_failure'):
                 self._print_task_path(result._task)
@@ -105,6 +107,7 @@ class CallbackModule(CallbackBase):
             self._display.display(msg, color=color)
 
     def v2_runner_on_skipped(self, result):
+        self._handle_warnings(result._result)
 
         if self.get_option('display_skipped_hosts'):
 
@@ -171,6 +174,7 @@ class CallbackModule(CallbackBase):
         # that they can secure this if they feel that their stdout is insecure
         # (shoulder surfing, logging stdout straight to a file, etc).
         args = ''
+        # FIXME: the no_log value is not templated at this point, so any template will be considered truthy
         if not task.no_log and C.DISPLAY_ARGS_TO_STDOUT:
             args = u', '.join(u'%s=%s' % a for a in task.args.items())
             args = u' %s' % args
@@ -266,11 +270,11 @@ class CallbackModule(CallbackBase):
             self._print_task_banner(result._task)
 
         host_label = self.host_label(result)
-        self._clean_results(result._result, result._task.action)
         self._handle_exception(result._result, use_stderr=self.get_option('display_failed_stderr'))
 
         msg = "failed: [%s]" % (host_label,)
         self._handle_warnings(result._result)
+        self._clean_results(result._result, result._task.action)
         self._display.display(
             msg + " (item=%s) => %s" % (self._get_item_label(result._result), self._dump_results(result._result)),
             color=C.COLOR_ERROR,

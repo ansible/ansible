@@ -40,6 +40,8 @@ class CallbackModule(CallbackBase):
     This callback puts results into a host specific file in a directory in json format.
     """
 
+    # DTFIX-MERGE: deprecate this plugin and its associated CLI arg (--tree in adhoc)
+
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'aggregate'
     CALLBACK_NAME = 'tree'

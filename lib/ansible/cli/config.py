@@ -10,7 +10,6 @@ from ansible.cli import CLI
 
 import os
 import shlex
-import subprocess
 import sys
 import yaml
 
@@ -178,38 +177,12 @@ class ConfigCLI(CLI):
             except Exception:
                 if context.CLIARGS['action'] in ['view']:
                     raise
-                elif context.CLIARGS['action'] in ['edit', 'update']:
-                    display.warning("File does not exist, used empty file: %s" % self.config_file)
 
         elif context.CLIARGS['action'] == 'view':
             raise AnsibleError('Invalid or no config file was supplied')
 
         # run the requested action
         context.CLIARGS['func']()
-
-    def execute_update(self):
-        """
-        Updates a single setting in the specified ansible.cfg
-        """
-        raise AnsibleError("Option not implemented yet")
-
-        # pylint: disable=unreachable
-        if context.CLIARGS['setting'] is None:
-            raise AnsibleOptionsError("update option requires a setting to update")
-
-        (entry, value) = context.CLIARGS['setting'].split('=')
-        if '.' in entry:
-            (section, option) = entry.split('.')
-        else:
-            section = 'defaults'
-            option = entry
-        subprocess.call([
-            'ansible',
-            '-m', 'ini_file',
-            'localhost',
-            '-c', 'local',
-            '-a', '"dest=%s section=%s option=%s value=%s backup=yes"' % (self.config_file, section, option, value)
-        ])
 
     def execute_view(self):
         """
@@ -220,20 +193,6 @@ class ConfigCLI(CLI):
                 self.pager(to_text(f.read(), errors='surrogate_or_strict'))
         except Exception as e:
             raise AnsibleError("Failed to open config file: %s" % to_native(e))
-
-    def execute_edit(self):
-        """
-        Opens ansible.cfg in the default EDITOR
-        """
-        raise AnsibleError("Option not implemented yet")
-
-        # pylint: disable=unreachable
-        try:
-            editor = shlex.split(C.config.get_config_value('EDITOR'))
-            editor.append(self.config_file)
-            subprocess.call(editor)
-        except Exception as e:
-            raise AnsibleError("Failed to open editor: %s" % to_native(e))
 
     def _list_plugin_settings(self, ptype, plugins=None):
         entries = {}
@@ -495,11 +454,12 @@ class ConfigCLI(CLI):
         # Add base
         config = self.config.get_configuration_definitions(ignore_private=True)
         # convert to settings
+        settings = {}
         for setting in config.keys():
             v, o = C.config.get_config_value_and_origin(setting, cfile=self.config_file, variables=get_constants())
-            config[setting] = Setting(setting, v, o, None)
+            settings[setting] = Setting(setting, v, o, None)
 
-        return self._render_settings(config)
+        return self._render_settings(settings)
 
     def _get_plugin_configs(self, ptype, plugins):
 

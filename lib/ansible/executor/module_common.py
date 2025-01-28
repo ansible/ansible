@@ -20,27 +20,39 @@ from __future__ import annotations
 
 import ast
 import base64
+import dataclasses
 import datetime
 import json
 import os
+import pathlib
+import pickle
 import shlex
 import time
 import zipfile
 import re
 import pkgutil
+import typing as t
 
 from ast import AST, Import, ImportFrom
 from io import BytesIO
 
+from ansible.module_utils._internal import _dataclass_validation
+from ansible.module_utils.common.yaml import yaml_load
+from ansible.utils.datatag.tags import AnsibleSourcePosition
+from ansible.module_utils.serialization import get_module_encoder, Direction
 from ansible.release import __version__, __author__
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredError
 from ansible.executor.powershell import module_manifest as ps_manifest
-from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.plugins.loader import module_utils_loader
+from ansible._internal._templating._engine import TemplateOptions
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, _nested_dict_get
+
+if t.TYPE_CHECKING:
+    from ansible import template as _template
+    from ansible.playbook.task import Task
 
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
@@ -155,15 +167,9 @@ def _ansiballz_main():
     sys.path = [p for p in sys.path if p not in excludes]
 
     import base64
-    import runpy
     import shutil
     import tempfile
     import zipfile
-
-    if sys.version_info < (3,):
-        PY3 = False
-    else:
-        PY3 = True
 
     ZIPDATA = %(zipdata)r
 
@@ -190,17 +196,16 @@ def _ansiballz_main():
         # can monkeypatch the right basic
         sys.path.insert(0, modlib_path)
 
-        # Monkeypatch the parameters into basic
-        from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = json_params
-%(coverage)s
-        # Run the module!  By importing it as '__main__', it thinks it is executing as a script
-        runpy.run_module(mod_name=%(module_fqn)r, init_globals=dict(_module_fqn=%(module_fqn)r, _modlib_path=modlib_path),
-                         run_name='__main__', alter_sys=True)
+        from ansible.module_utils._internal._ansiballz import run_module
 
-        # Ansible modules must exit themselves
-        print('{"msg": "New-style module did not handle its own exit", "failed": true}')
-        sys.exit(1)
+        run_module(
+            json_params=json_params,
+            profile=%(profile)r,
+            module_fqn=%(module_fqn)r,
+            modlib_path=modlib_path,
+            coverage_config=%(coverage_config)r,
+            coverage_output=%(coverage_output)r,
+        )
 
     def debug(command, zipped_mod, json_params):
         # The code here normally doesn't run.  It's only used for debugging on the
@@ -281,16 +286,14 @@ def _ansiballz_main():
             with open(args_path, 'rb') as f:
                 json_params = f.read()
 
-            # Monkeypatch the parameters into basic
-            from ansible.module_utils import basic
-            basic._ANSIBLE_ARGS = json_params
+            from ansible.module_utils._internal._ansiballz import run_module
 
-            # Run the module!  By importing it as '__main__', it thinks it is executing as a script
-            runpy.run_module(mod_name=%(module_fqn)r, init_globals=None, run_name='__main__', alter_sys=True)
-
-            # Ansible modules must exit themselves
-            print('{"msg": "New-style module did not handle its own exit", "failed": true}')
-            sys.exit(1)
+            run_module(
+                json_params=json_params,
+                profile=%(profile)r,
+                module_fqn=%(module_fqn)r,
+                modlib_path=modlib_path,
+            )
 
         else:
             print('WARNING: Unknown debug command.  Doing nothing.')
@@ -303,8 +306,7 @@ def _ansiballz_main():
     #
 
     ANSIBALLZ_PARAMS = %(params)s
-    if PY3:
-        ANSIBALLZ_PARAMS = ANSIBALLZ_PARAMS.encode('utf-8')
+    ANSIBALLZ_PARAMS = ANSIBALLZ_PARAMS.encode('utf-8')
     try:
         # There's a race condition with the controller removing the
         # remote_tmpdir and this module executing under async.  So we cannot
@@ -333,42 +335,6 @@ def _ansiballz_main():
 
 if __name__ == '__main__':
     _ansiballz_main()
-"""
-
-ANSIBALLZ_COVERAGE_TEMPLATE = """
-        os.environ['COVERAGE_FILE'] = %(coverage_output)r + '=python-%%s=coverage' %% '.'.join(str(v) for v in sys.version_info[:2])
-
-        import atexit
-
-        try:
-            import coverage
-        except ImportError:
-            print('{"msg": "Could not import `coverage` module.", "failed": true}')
-            sys.exit(1)
-
-        cov = coverage.Coverage(config_file=%(coverage_config)r)
-
-        def atexit_coverage():
-            cov.stop()
-            cov.save()
-
-        atexit.register(atexit_coverage)
-
-        cov.start()
-"""
-
-ANSIBALLZ_COVERAGE_CHECK_TEMPLATE = """
-        try:
-            if PY3:
-                import importlib.util
-                if importlib.util.find_spec('coverage') is None:
-                    raise ImportError
-            else:
-                import imp
-                imp.find_module('coverage')
-        except ImportError:
-            print('{"msg": "Could not find `coverage` module.", "failed": true}')
-            sys.exit(1)
 """
 
 ANSIBALLZ_RLIMIT_TEMPLATE = """
@@ -581,7 +547,7 @@ def _slurp(path):
     return data
 
 
-def _get_shebang(interpreter, task_vars, templar, args=tuple(), remote_is_local=False):
+def _get_shebang(interpreter, task_vars, templar: _template.Templar, args=tuple(), remote_is_local=False):
     """
       Handles the different ways ansible allows overriding the shebang target for a module.
     """
@@ -606,7 +572,8 @@ def _get_shebang(interpreter, task_vars, templar, args=tuple(), remote_is_local=
         elif C.config.get_configuration_definition(interpreter_config_key):
 
             interpreter_from_config = C.config.get_config_value(interpreter_config_key, variables=task_vars)
-            interpreter_out = templar.template(interpreter_from_config.strip())
+            interpreter_out = templar._engine.template(interpreter_from_config.strip(),
+                                                       options=TemplateOptions(value_for_omit=C.config.get_config_default(interpreter_config_key)))
 
             # handle interpreter discovery if requested or empty interpreter was provided
             if not interpreter_out or interpreter_out in ['auto', 'auto_legacy', 'auto_silent', 'auto_legacy_silent']:
@@ -624,7 +591,7 @@ def _get_shebang(interpreter, task_vars, templar, args=tuple(), remote_is_local=
 
     elif interpreter_config in task_vars:
         # for non python we consult vars for a possible direct override
-        interpreter_out = templar.template(task_vars.get(interpreter_config).strip())
+        interpreter_out = templar._engine.template(task_vars.get(interpreter_config).strip(), options=TemplateOptions(value_for_omit=None))
 
     if not interpreter_out:
         # nothing matched(None) or in case someone configures empty string or empty intepreter
@@ -803,12 +770,12 @@ class LegacyModuleUtilLocator(ModuleUtilLocatorBase):
 
         # find_spec needs the full module name
         self._info = info = importlib.machinery.PathFinder.find_spec('.'.join(name_parts), paths)
-        if info is not None and os.path.splitext(info.origin)[1] in importlib.machinery.SOURCE_SUFFIXES:
+        if info is not None and info.origin is not None and os.path.splitext(info.origin)[1] in importlib.machinery.SOURCE_SUFFIXES:
             self.is_package = info.origin.endswith('/__init__.py')
             path = info.origin
         else:
             return False
-        self.source_code = _slurp(path)
+        self.source_code = AnsibleSourcePosition(src=path).tag(_slurp(path))
 
         return True
 
@@ -843,9 +810,18 @@ class CollectionModuleUtilLocator(ModuleUtilLocatorBase):
         resource_base_path = os.path.join(*name_parts[3:])
 
         src = None
+
         # look for package_dir first, then module
+        src_path = to_native(os.path.join(resource_base_path, '__init__.py'))
+
         try:
-            src = pkgutil.get_data(collection_pkg_name, to_native(os.path.join(resource_base_path, '__init__.py')))
+            collection_pkg = importlib.import_module(collection_pkg_name)
+            pkg_path = os.path.dirname(collection_pkg.__file__)
+        except (ImportError, AttributeError):
+            pkg_path = None
+
+        try:
+            src = pkgutil.get_data(collection_pkg_name, src_path)
         except ImportError:
             pass
 
@@ -854,15 +830,25 @@ class CollectionModuleUtilLocator(ModuleUtilLocatorBase):
         if src is not None:  # empty string is OK
             self.is_package = True
         else:
+            src_path = to_native(resource_base_path + '.py')
+
             try:
-                src = pkgutil.get_data(collection_pkg_name, to_native(resource_base_path + '.py'))
+                src = pkgutil.get_data(collection_pkg_name, src_path)
             except ImportError:
                 pass
 
         if src is None:  # empty string is OK
             return False
 
-        self.source_code = src
+        # TODO: this feels brittle and funky; we should be able to more definitively assure the source path
+
+        if pkg_path:
+            origin_tag = AnsibleSourcePosition(src=os.path.join(pkg_path, src_path))
+        else:
+            # DTFIX-MERGE: not sure if this case is even reachable
+            origin_tag = AnsibleSourcePosition(description=f'<synthetic collection package for {collection_pkg_name}!r>')
+
+        self.source_code = origin_tag.tag(src)
         return True
 
     def _get_module_utils_remainder_parts(self, name_parts):
@@ -879,7 +865,76 @@ def _make_zinfo(filename, date_time, zf=None):
     return zinfo
 
 
-def recursive_finder(name, module_fqn, module_data, zf, date_time=None):
+@dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
+class ModuleMetadata:
+    @classmethod
+    def __post_init__(cls):
+        _dataclass_validation.inject_post_init_validation(cls)
+
+
+@dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
+class ModuleMetadataV1(ModuleMetadata):
+    serialization_profile: str
+
+
+metadata_versions: dict[t.Any, type[ModuleMetadata]] = {
+    1: ModuleMetadataV1,
+}
+
+
+def _get_module_metadata(module: ast.Module) -> ModuleMetadata:
+    # DTFIX-RELEASE: while module metadata works, this feature isn't fully baked and should be turned off before release
+    metadata_nodes: list[ast.Assign] = []
+
+    for node in module.body:
+        if isinstance(node, ast.Assign):
+            if len(node.targets) == 1:
+                target = node.targets[0]
+
+                if isinstance(target, ast.Name):
+                    if target.id == 'METADATA':
+                        metadata_nodes.append(node)
+
+    if not metadata_nodes:
+        return ModuleMetadataV1(
+            serialization_profile='legacy',
+        )
+
+    if len(metadata_nodes) > 1:
+        raise ValueError('Module METADATA must defined only once.')
+
+    metadata_node = metadata_nodes[0]
+
+    if not isinstance(metadata_node.value, ast.Constant):
+        raise TypeError(f'Module METADATA node must be {ast.Constant} not {type(metadata_node)}.')
+
+    unparsed_metadata = metadata_node.value.value
+
+    if not isinstance(unparsed_metadata, str):
+        raise TypeError(f'Module METADATA must be {str} not {type(unparsed_metadata)}.')
+
+    try:
+        parsed_metadata = yaml_load(unparsed_metadata)
+    except Exception as ex:
+        raise ValueError('Module METADATA must be valid YAML.') from ex
+
+    if not isinstance(parsed_metadata, dict):
+        raise TypeError(f'Module METADATA must parse to {dict} not {type(parsed_metadata)}.')
+
+    schema_version = parsed_metadata.pop('schema_version', None)
+
+    if not (metadata_type := metadata_versions.get(schema_version)):
+        raise ValueError(f'Module METADATA schema_version {schema_version} is unknown.')
+
+    try:
+        metadata = metadata_type(**parsed_metadata)  # type: ignore
+    except Exception as ex:
+        raise ValueError('Module METADATA is invalid.') from ex
+
+    return metadata
+
+
+def recursive_finder(name, module_fqn, module_data, zf, date_time=None) -> ModuleMetadata:
     """
     Using ModuleDepFinder, make sure we have all of the module_utils files that
     the module and its module_utils files needs. (no longer actually recursive)
@@ -913,20 +968,27 @@ def recursive_finder(name, module_fqn, module_data, zf, date_time=None):
     module_utils_paths = [p for p in module_utils_loader._get_paths(subdirs=False) if os.path.isdir(p)]
     module_utils_paths.append(_MODULE_UTILS_PATH)
 
-    # Parse the module code and find the imports of ansible.module_utils
-    try:
-        tree = compile(module_data, '<unknown>', 'exec', ast.PyCF_ONLY_AST)
-    except (SyntaxError, IndentationError) as e:
-        raise AnsibleError("Unable to import %s due to %s" % (name, e.msg))
-
+    tree = _compile_module_ast(name, module_data)
+    module_metadata = _get_module_metadata(tree)
     finder = ModuleDepFinder(module_fqn, tree)
 
     # the format of this set is a tuple of the module name and whether or not the import is ambiguous as a module name
     # or an attribute of a module (eg from x.y import z <-- is z a module or an attribute of x.y?)
     modules_to_process = [ModuleUtilsProcessEntry(m, True, False, is_optional=m in finder.optional_imports) for m in finder.submodules]
 
-    # HACK: basic is currently always required since module global init is currently tied up with AnsiballZ arg input
+    # include module_utils that are always required
+    modules_to_process.append(ModuleUtilsProcessEntry(('ansible', 'module_utils', '_internal', '_ansiballz'), False, False, is_optional=False))
     modules_to_process.append(ModuleUtilsProcessEntry(('ansible', 'module_utils', 'basic'), False, False, is_optional=False))
+
+    if not isinstance(module_metadata, ModuleMetadataV1):
+        raise NotImplementedError()
+
+    profile = module_metadata.serialization_profile
+
+    modules_to_process.append(ModuleUtilsProcessEntry(('ansible', 'module_utils', 'serialization', f'module_{profile}_c2m'), False, False, is_optional=False))
+    modules_to_process.append(ModuleUtilsProcessEntry(('ansible', 'module_utils', 'serialization', f'module_{profile}_m2c'), False, False, is_optional=False))
+
+    module_info: ModuleUtilLocatorBase
 
     # we'll be adding new modules inline as we discover them, so just keep going til we've processed them all
     while modules_to_process:
@@ -955,7 +1017,7 @@ def recursive_finder(name, module_fqn, module_data, zf, date_time=None):
                 # this was a best-effort optional import that we couldn't find, oh well, move along...
                 continue
             # FIXME: use dot-joined candidate names
-            msg = 'Could not find imported module support code for {0}.  Looked for ({1})'.format(module_fqn, module_info.candidate_names_joined)
+            msg = 'Could not find imported module support code for {0}. Looked for ({1})'.format(module_fqn, module_info.candidate_names_joined)
             raise AnsibleError(msg)
 
         # check the cache one more time with the module we actually found, since the name could be different than the input
@@ -963,12 +1025,7 @@ def recursive_finder(name, module_fqn, module_data, zf, date_time=None):
         if module_info.fq_name_parts in py_module_cache:
             continue
 
-        # compile the source, process all relevant imported modules
-        try:
-            tree = compile(module_info.source_code, '<unknown>', 'exec', ast.PyCF_ONLY_AST)
-        except (SyntaxError, IndentationError) as e:
-            raise AnsibleError("Unable to import %s due to %s" % (module_info.fq_name_parts, e.msg))
-
+        tree = _compile_module_ast('.'.join(module_info.fq_name_parts), module_info.source_code)
         finder = ModuleDepFinder('.'.join(module_info.fq_name_parts), tree, module_info.is_package)
         modules_to_process.extend(ModuleUtilsProcessEntry(m, True, False, is_optional=m in finder.optional_imports)
                                   for m in finder.submodules if m not in py_module_cache)
@@ -993,6 +1050,20 @@ def recursive_finder(name, module_fqn, module_data, zf, date_time=None):
         )
         mu_file = to_text(py_module_file_name, errors='surrogate_or_strict')
         display.vvvvv("Including module_utils file %s" % mu_file)
+
+    return module_metadata
+
+
+def _compile_module_ast(module_name: str, source_code: str) -> ast.Module:
+    origin = AnsibleSourcePosition.get_tag(source_code) or AnsibleSourcePosition.UNKNOWN
+
+    # compile the source, process all relevant imported modules
+    try:
+        tree = t.cast(ast.Module, compile(source_code, str(origin), 'exec', ast.PyCF_ONLY_AST))
+    except SyntaxError as ex:
+        raise AnsibleError(f"Unable to compile {module_name!r}.", obj=origin.replace(line=ex.lineno, col=ex.offset)) from ex
+
+    return tree
 
 
 def _is_binary(b_module_data):
@@ -1068,8 +1139,55 @@ def _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data):
         )
 
 
-def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
-                       become_method, become_user, become_password, become_flags, environment, remote_is_local=False):
+@dataclasses.dataclass(kw_only=True, slots=True, frozen=True)
+class _BuiltModule:
+    """Payload required to execute an Ansible module, along with information required to do so."""
+    b_module_data: bytes
+    module_style: str
+    shebang: str | None
+    serialization_profile: str
+
+
+@dataclasses.dataclass(kw_only=True, slots=True, frozen=True)
+class _CachedModule:
+    """Cached Python module created by AnsiballZ."""
+
+    # DTFIX-RELEASE: secure this (locked down pickle, don't use pickle, etc.)
+
+    zip_data: bytes
+    metadata: ModuleMetadata
+
+    def dump(self, path: str) -> None:
+        temp_path = pathlib.Path(path + '-part')
+
+        with temp_path.open('wb') as cache_file:
+            pickle.dump(self, cache_file)
+
+        temp_path.rename(path)
+
+    @classmethod
+    def load(cls, path: str) -> t.Self:
+        with pathlib.Path(path).open('rb') as cache_file:
+            return pickle.load(cache_file)
+
+
+def _find_module_utils(
+        module_name: str,
+        b_module_data: bytes,
+        module_path,
+        module_args,
+        task_vars,
+        templar,
+        module_compression,
+        async_timeout,
+        become,
+        become_method,
+        become_user,
+        become_password,
+        become_flags,
+        environment,
+        remote_is_local=False,
+) -> _BuiltModule:
     """
     Given the source of the module, convert it to a Jinja2 template to insert
     module code and return whether it's a new or old style module.
@@ -1114,7 +1232,12 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     # Neither old-style, non_native_want_json nor binary modules should be modified
     # except for the shebang line (Done by modify_module)
     if module_style in ('old', 'non_native_want_json', 'binary'):
-        return b_module_data, module_style, shebang
+        return _BuiltModule(
+            b_module_data=b_module_data,
+            module_style=module_style,
+            shebang=shebang,
+            serialization_profile='legacy',
+        )
 
     output = BytesIO()
 
@@ -1134,11 +1257,6 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         if date_time[0] < 1980:
             date_string = datetime.datetime(*date_time, tzinfo=datetime.timezone.utc).strftime('%c')
             raise AnsibleError(f'Cannot create zipfile due to pre-1980 configured date: {date_string}')
-        params = dict(ANSIBLE_MODULE_ARGS=module_args,)
-        try:
-            python_repred_params = repr(json.dumps(params, cls=AnsibleJSONEncoder, vault_to_text=True))
-        except TypeError as e:
-            raise AnsibleError("Unable to pass options to module, they must be JSON serializable: %s" % to_native(e))
 
         try:
             compression_method = getattr(zipfile, module_compression)
@@ -1153,8 +1271,8 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         # Optimization -- don't lock if the module has already been cached
         if os.path.exists(cached_module_filename):
             display.debug('ANSIBALLZ: using cached module: %s' % cached_module_filename)
-            with open(cached_module_filename, 'rb') as module_data:
-                zipdata = module_data.read()
+            cached_module = _CachedModule.load(cached_module_filename)
+            zipdata, module_metadata = cached_module.zip_data, cached_module.metadata
         else:
             if module_name in action_write_locks.action_write_locks:
                 display.debug('ANSIBALLZ: Using lock for %s' % module_name)
@@ -1179,7 +1297,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                     zf = zipfile.ZipFile(zipoutput, mode='w', compression=compression_method)
 
                     # walk the module imports, looking for module_utils to send- they'll be added to the zipfile
-                    recursive_finder(module_name, remote_module_fqn, b_module_data, zf, date_time)
+                    module_metadata = recursive_finder(module_name, remote_module_fqn, AnsibleSourcePosition(src=module_path).tag(b_module_data), zf, date_time)
 
                     display.debug('ANSIBALLZ: Writing module into payload')
                     _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data)
@@ -1204,14 +1322,8 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                             if not os.path.exists(lookup_path):
                                 raise
                     display.debug('ANSIBALLZ: Writing module')
-                    with open(cached_module_filename + '-part', 'wb') as f:
-                        f.write(zipdata)
-
-                    # Rename the file into its final position in the cache so
-                    # future users of this module can read it off the
-                    # filesystem instead of constructing from scratch.
-                    display.debug('ANSIBALLZ: Renaming module')
-                    os.rename(cached_module_filename + '-part', cached_module_filename)
+                    cached_module = _CachedModule(zip_data=zipdata, metadata=module_metadata)
+                    cached_module.dump(cached_module_filename)
                     display.debug('ANSIBALLZ: Done creating module')
 
             if zipdata is None:
@@ -1220,11 +1332,13 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                 # the write lock.  Go ahead and read the data from disk
                 # instead of re-creating it.
                 try:
-                    with open(cached_module_filename, 'rb') as f:
-                        zipdata = f.read()
+                    cached_module = _CachedModule.load(cached_module_filename)
                 except IOError:
                     raise AnsibleError('A different worker process failed to create module file. '
                                        'Look at traceback for that process for debugging information.')
+
+                zipdata, module_metadata = cached_module.zip_data, cached_module.metadata
+
         zipdata = to_text(zipdata, errors='surrogate_or_strict')
 
         o_interpreter, o_args = _extract_interpreter(b_module_data)
@@ -1237,7 +1351,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         rlimit_nofile = C.config.get_config_value('PYTHON_MODULE_RLIMIT_NOFILE', variables=task_vars)
 
         if not isinstance(rlimit_nofile, int):
-            rlimit_nofile = int(templar.template(rlimit_nofile))
+            rlimit_nofile = int(templar._engine.template(rlimit_nofile, options=TemplateOptions(value_for_omit=0)))
 
         if rlimit_nofile:
             rlimit = ANSIBALLZ_RLIMIT_TEMPLATE % dict(
@@ -1250,35 +1364,37 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
 
         if coverage_config:
             coverage_output = os.environ['_ANSIBLE_COVERAGE_OUTPUT']
-
-            if coverage_output:
-                # Enable code coverage analysis of the module.
-                # This feature is for internal testing and may change without notice.
-                coverage = ANSIBALLZ_COVERAGE_TEMPLATE % dict(
-                    coverage_config=coverage_config,
-                    coverage_output=coverage_output,
-                )
-            else:
-                # Verify coverage is available without importing it.
-                # This will detect when a module would fail with coverage enabled with minimal overhead.
-                coverage = ANSIBALLZ_COVERAGE_CHECK_TEMPLATE
         else:
-            coverage = ''
+            coverage_output = None
+
+        if not isinstance(module_metadata, ModuleMetadataV1):
+            raise NotImplementedError()
+
+        params = dict(ANSIBLE_MODULE_ARGS=module_args,)
+        encoder = get_module_encoder(module_metadata.serialization_profile, Direction.CONTROLLER_TO_MODULE)
+        try:
+            python_repred_params = repr(json.dumps(params, cls=encoder))
+        except TypeError as ex:
+            raise AnsibleError(f'Failed to serialize arguments for the {module_name!r} module.') from ex
 
         output.write(to_bytes(ACTIVE_ANSIBALLZ_TEMPLATE % dict(
             zipdata=zipdata,
             ansible_module=module_name,
             module_fqn=remote_module_fqn,
             params=python_repred_params,
+            profile=module_metadata.serialization_profile,
             shebang=shebang,
             coding=ENCODING_STRING,
             date_time=date_time,
-            coverage=coverage,
+            coverage_config=coverage_config,
+            coverage_output=coverage_output,
             rlimit=rlimit,
         )))
         b_module_data = output.getvalue()
 
     elif module_substyle == 'powershell':
+        module_metadata = ModuleMetadataV1(serialization_profile='legacy')  # DTFIX-FUTURE: support serialization profiles for PowerShell modules
+
         # Powershell/winrm don't actually make use of shebang so we can
         # safely set this here.  If we let the fallback code handle this
         # it can fail in the presence of the UTF8 BOM commonly added by
@@ -1289,11 +1405,13 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         b_module_data = ps_manifest._create_powershell_wrapper(
             b_module_data, module_path, module_args, environment,
             async_timeout, become, become_method, become_user, become_password,
-            become_flags, module_substyle, task_vars, remote_module_fqn
+            become_flags, module_substyle, task_vars, remote_module_fqn,
+            module_metadata.serialization_profile,
         )
 
     elif module_substyle == 'jsonargs':
-        module_args_json = to_bytes(json.dumps(module_args, cls=AnsibleJSONEncoder, vault_to_text=True))
+        encoder = get_module_encoder('legacy', Direction.CONTROLLER_TO_MODULE)
+        module_args_json = to_bytes(json.dumps(module_args, cls=encoder))
 
         # these strings could be included in a third-party module but
         # officially they were included in the 'basic' snippet for new-style
@@ -1311,7 +1429,19 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         facility = b'syslog.' + to_bytes(task_vars.get('ansible_syslog_facility', C.DEFAULT_SYSLOG_FACILITY), errors='surrogate_or_strict')
         b_module_data = b_module_data.replace(b'syslog.LOG_USER', facility)
 
-    return (b_module_data, module_style, shebang)
+        module_metadata = ModuleMetadataV1(serialization_profile='legacy')
+    else:
+        module_metadata = ModuleMetadataV1(serialization_profile='legacy')
+
+    if not isinstance(module_metadata, ModuleMetadataV1):
+        raise NotImplementedError(type(module_metadata))
+
+    return _BuiltModule(
+        b_module_data=b_module_data,
+        module_style=module_style,
+        shebang=shebang,
+        serialization_profile=module_metadata.serialization_profile,
+    )
 
 
 def _extract_interpreter(b_module_data):
@@ -1337,8 +1467,22 @@ def _extract_interpreter(b_module_data):
     return interpreter, args
 
 
-def modify_module(module_name, module_path, module_args, templar, task_vars=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
-                  become_method=None, become_user=None, become_password=None, become_flags=None, environment=None, remote_is_local=False):
+def modify_module(
+        module_name: str,
+        module_path,
+        module_args,
+        templar,
+        task_vars=None,
+        module_compression='ZIP_STORED',
+        async_timeout=0,
+        become=False,
+        become_method=None,
+        become_user=None,
+        become_password=None,
+        become_flags=None,
+        environment=None,
+        remote_is_local=False,
+) -> _BuiltModule:
     """
     Used to insert chunks of code into modules before transfer rather than
     doing regular python imports.  This allows for more efficient transfer in
@@ -1367,13 +1511,23 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
         # read in the module source
         b_module_data = f.read()
 
-    (b_module_data, module_style, shebang) = _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression,
-                                                                async_timeout=async_timeout, become=become, become_method=become_method,
-                                                                become_user=become_user, become_password=become_password, become_flags=become_flags,
-                                                                environment=environment, remote_is_local=remote_is_local)
+    module_bits = _find_module_utils(
+        module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression,
+        async_timeout=async_timeout, become=become, become_method=become_method,
+        become_user=become_user, become_password=become_password, become_flags=become_flags,
+        environment=environment, remote_is_local=remote_is_local,
+    )
 
-    if module_style == 'binary':
-        return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))
+    b_module_data = module_bits.b_module_data
+    shebang = module_bits.shebang
+
+    if module_bits.module_style == 'binary':
+        return _BuiltModule(
+            b_module_data=module_bits.b_module_data,
+            module_style=module_bits.module_style,
+            shebang=to_text(module_bits.shebang, nonstring='passthru'),
+            serialization_profile=module_bits.serialization_profile,
+        )
     elif shebang is None:
         interpreter, args = _extract_interpreter(b_module_data)
         # No interpreter/shebang, assume a binary module?
@@ -1392,10 +1546,18 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
 
             b_module_data = b"\n".join(b_lines)
 
-    return (b_module_data, module_style, shebang)
+    return _BuiltModule(
+        b_module_data=b_module_data,
+        module_style=module_bits.module_style,
+        shebang=shebang,
+        serialization_profile=module_bits.serialization_profile,
+    )
 
 
-def get_action_args_with_defaults(action, args, defaults, templar, action_groups=None):
+def _get_action_arg_defaults(action: str, task: Task) -> dict[str, t.Any]:
+    action_groups = task._parent._play._action_groups
+    defaults = task.module_defaults
+
     # Get the list of groups that contain this action
     if action_groups is None:
         msg = (
@@ -1408,7 +1570,7 @@ def get_action_args_with_defaults(action, args, defaults, templar, action_groups
     else:
         group_names = action_groups.get(action, [])
 
-    tmp_args = {}
+    tmp_args: dict[str, t.Any] = {}
     module_defaults = {}
 
     # Merge latest defaults into dict, since they are a list of dicts
@@ -1416,8 +1578,6 @@ def get_action_args_with_defaults(action, args, defaults, templar, action_groups
         for default in defaults:
             module_defaults.update(default)
 
-    # module_defaults keys are static, but the values may be templated
-    module_defaults = templar.template(module_defaults)
     for default in module_defaults:
         if default.startswith('group/'):
             group_name = default.split('group/')[-1]
@@ -1427,7 +1587,11 @@ def get_action_args_with_defaults(action, args, defaults, templar, action_groups
     # handle specific action defaults
     tmp_args.update(module_defaults.get(action, {}).copy())
 
-    # direct args override all
-    tmp_args.update(args)
-
     return tmp_args
+
+
+def _apply_action_arg_defaults(action: str, task: Task, action_args: dict[str, t.Any]) -> dict[str, t.Any]:
+    args = _get_action_arg_defaults(action, task)
+    args.update(action_args)
+
+    return args

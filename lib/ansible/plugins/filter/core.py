@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import base64
+import functools
 import glob
 import hashlib
 import json
@@ -11,26 +12,29 @@ import ntpath
 import os.path
 import re
 import shlex
-import sys
 import time
 import uuid
 import yaml
 import datetime
+import typing as t
 
 from collections.abc import Mapping
 from functools import partial
 from random import Random, SystemRandom, shuffle
 
-from jinja2.filters import pass_environment
+from jinja2.filters import do_map, do_select, do_selectattr, do_reject, do_rejectattr, pass_environment, sync_do_groupby
+from jinja2.environment import Environment
 
-from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeError
-from ansible.module_utils.six import string_types, integer_types, reraise, text_type
+from ansible.errors import AnsibleFilterError, AnsibleTypeError
+from ansible.module_utils.datatag import AnsibleTagHelper
+from ansible.module_utils.serialization import get_encoder, get_decoder
+from ansible.module_utils.six import string_types, integer_types, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.yaml import yaml_load, yaml_load_all
-from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.template import recursive_check_defined
+from ansible.plugins import accept_marker
+from ansible._internal._templating._jinja_common import MarkerError, get_first_marker_arg, UndefinedMarker, validate_arg_type
 from ansible.utils.display import Display
 from ansible.utils.encrypt import do_encrypt, PASSLIB_AVAILABLE
 from ansible.utils.hashing import md5s, checksum_s
@@ -42,42 +46,47 @@ display = Display()
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
 
-def to_yaml(a, *args, **kw):
-    """Make verbose, human-readable yaml"""
-    default_flow_style = kw.pop('default_flow_style', None)
-    try:
-        transformed = yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, default_flow_style=default_flow_style, **kw)
-    except Exception as e:
-        raise AnsibleFilterError("to_yaml - %s" % to_native(e), orig_exc=e)
-    return to_text(transformed)
+def to_yaml(a, *_args, default_flow_style: bool | None = None, dump_vault_tags: bool | None = None, **kwargs) -> str:
+    """Serialize input as terse flow-style YAML."""
+    dumper = partial(AnsibleDumper, dump_vault_tags=dump_vault_tags)
+
+    return yaml.dump(a, Dumper=dumper, allow_unicode=True, default_flow_style=default_flow_style, **kwargs)
 
 
-def to_nice_yaml(a, indent=4, *args, **kw):
-    """Make verbose, human-readable yaml"""
-    try:
-        transformed = yaml.dump(a, Dumper=AnsibleDumper, indent=indent, allow_unicode=True, default_flow_style=False, **kw)
-    except Exception as e:
-        raise AnsibleFilterError("to_nice_yaml - %s" % to_native(e), orig_exc=e)
-    return to_text(transformed)
+def to_nice_yaml(a, indent=4, *_args, default_flow_style=False, **kwargs) -> str:
+    """Serialize input as verbose multi-line YAML."""
+    return to_yaml(a, indent=indent, default_flow_style=default_flow_style, **kwargs)
 
 
-def to_json(a, *args, **kw):
-    """ Convert the value to JSON """
+def from_json(a, profile: str | None = None, **kwargs) -> t.Any:
+    """Deserialize JSON with an optional decoder profile."""
+    cls = get_decoder(profile or "tagless")
 
-    # defaults for filters
-    if 'vault_to_text' not in kw:
-        kw['vault_to_text'] = True
-    if 'preprocess_unsafe' not in kw:
-        kw['preprocess_unsafe'] = False
-
-    return json.dumps(a, cls=AnsibleJSONEncoder, *args, **kw)
+    return json.loads(a, cls=cls, **kwargs)
 
 
-def to_nice_json(a, indent=4, sort_keys=True, *args, **kw):
-    """Make verbose, human-readable JSON"""
+def to_json(a, profile: str | None = None, vault_to_text: t.Any = ..., preprocess_unsafe: t.Any = ..., **kwargs) -> str:
+    """Serialize as JSON with an optional encoder profile."""
+
+    if profile and vault_to_text is not ...:
+        raise ValueError("Only one of `vault_to_text` or `profile` can be specified.")
+
+    if profile and preprocess_unsafe is not ...:
+        raise ValueError("Only one of `preprocess_unsafe` or `profile` can be specified.")
+
+    # deprecated: description='deprecate vault_to_text' core_version='2.26'
+    # deprecated: description='deprecate preprocess_unsafe' core_version='2.26'
+
+    cls = get_encoder(profile or "tagless")
+
+    return json.dumps(a, cls=cls, **kwargs)
+
+
+def to_nice_json(a, indent=4, sort_keys=True, **kwargs):
+    """Make verbose, human-readable JSON."""
     # TODO separators can be potentially exposed to the user as well
-    kw.pop('separators', None)
-    return to_json(a, indent=indent, sort_keys=sort_keys, separators=(',', ': '), *args, **kw)
+    kwargs.pop('separators', None)
+    return to_json(a, indent=indent, sort_keys=sort_keys, separators=(',', ': '), **kwargs)
 
 
 def to_bool(a):
@@ -88,6 +97,9 @@ def to_bool(a):
         a = a.lower()
     if a in ('yes', 'on', '1', 'true', 1):
         return True
+    # DTFIX-MERGE: This should warn about unrecognized falsey values.
+    #        It should also have a strict-mode tri-state that defaults to False now and in the future becomes True.
+    #        Failure to specify strict should result in a deprecation warning if the fallthrough case occurs.
     return False
 
 
@@ -289,12 +301,7 @@ def get_encrypted_password(password, hashtype='sha512', salt=None, salt_size=Non
     if PASSLIB_AVAILABLE and hashtype not in passlib_mapping and hashtype not in passlib_mapping.values():
         raise AnsibleFilterError(f"{hashtype} is not in the list of supported passlib algorithms: {', '.join(passlib_mapping)}")
 
-    try:
-        return do_encrypt(password, hashtype, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
-    except AnsibleError as e:
-        reraise(AnsibleFilterError, AnsibleFilterError(to_native(e), orig_exc=e), sys.exc_info()[2])
-    except Exception as e:
-        raise AnsibleFilterError(f"Failed to encrypt the password due to: {e}")
+    return do_encrypt(password, hashtype, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
 
 
 def to_uuid(string, namespace=UUID_NAMESPACE_ANSIBLE):
@@ -308,19 +315,21 @@ def to_uuid(string, namespace=UUID_NAMESPACE_ANSIBLE):
     return to_text(uuid.uuid5(uuid_namespace, to_native(string, errors='surrogate_or_strict')))
 
 
+@accept_marker
 def mandatory(a, msg=None):
     """Make a variable mandatory."""
-    from jinja2.runtime import Undefined
+    # DTFIX-MERGE: deprecate this filter; there are much better ways via undef, etc...
+    #              also remember to remove unit test checking for _undefined_name
+    if isinstance(a, UndefinedMarker):
+        if msg is not None:
+            raise AnsibleFilterError(to_text(msg))
 
-    if isinstance(a, Undefined):
         if a._undefined_name is not None:
-            name = "'%s' " % to_text(a._undefined_name)
+            name = f'{to_text(a._undefined_name)!r} '
         else:
             name = ''
 
-        if msg is not None:
-            raise AnsibleFilterError(to_native(msg))
-        raise AnsibleFilterError("Mandatory variable %s not defined." % name)
+        raise AnsibleFilterError(f"Mandatory variable {name}not defined.")
 
     return a
 
@@ -333,9 +342,6 @@ def combine(*terms, **kwargs):
 
     # allow the user to do `[dict1, dict2, ...] | combine`
     dictionaries = flatten(terms, levels=1)
-
-    # recursively check that every elements are defined (for jinja2)
-    recursive_check_defined(dictionaries)
 
     if not dictionaries:
         return {}
@@ -442,7 +448,7 @@ def comment(text, style='plain', **kw):
 
 
 @pass_environment
-def extract(environment, item, container, morekeys=None):
+def extract(environment: Environment, item, container, morekeys=None):
     if morekeys is None:
         keys = [item]
     elif isinstance(morekeys, list):
@@ -451,8 +457,12 @@ def extract(environment, item, container, morekeys=None):
         keys = [item, morekeys]
 
     value = container
+
     for key in keys:
-        value = environment.getitem(value, key)
+        try:
+            value = environment.getitem(value, key)
+        except MarkerError as ex:
+            value = ex.source
 
     return value
 
@@ -507,7 +517,7 @@ def subelements(obj, subelements, skip_missing=False):
     elif isinstance(subelements, string_types):
         subelement_list = subelements.split('.')
     else:
-        raise AnsibleFilterTypeError('subelements must be a list or a string')
+        raise AnsibleTypeError('subelements must be a list or a string')
 
     results = []
 
@@ -521,10 +531,10 @@ def subelements(obj, subelements, skip_missing=False):
                     values = []
                     break
                 raise AnsibleFilterError("could not find %r key in iterated item %r" % (subelement, values))
-            except TypeError:
-                raise AnsibleFilterTypeError("the key %s should point to a dictionary, got '%s'" % (subelement, values))
+            except TypeError as ex:
+                raise AnsibleTypeError("the key %s should point to a dictionary, got '%s'" % (subelement, values)) from ex
         if not isinstance(values, list):
-            raise AnsibleFilterTypeError("the key %r should point to a list, got %r" % (subelement, values))
+            raise AnsibleTypeError("the key %r should point to a list, got %r" % (subelement, values))
 
         for value in values:
             results.append((element, value))
@@ -537,7 +547,7 @@ def dict_to_list_of_dict_key_value_elements(mydict, key_name='key', value_name='
         with each having a 'key' and 'value' keys that correspond to the keys and values of the original """
 
     if not isinstance(mydict, Mapping):
-        raise AnsibleFilterTypeError("dict2items requires a dictionary, got %s instead." % type(mydict))
+        raise AnsibleTypeError("dict2items requires a dictionary, got %s instead." % type(mydict))
 
     ret = []
     for key in mydict:
@@ -550,17 +560,17 @@ def list_of_dict_key_value_elements_to_dict(mylist, key_name='key', value_name='
         effectively as the reverse of dict2items """
 
     if not is_sequence(mylist):
-        raise AnsibleFilterTypeError("items2dict requires a list, got %s instead." % type(mylist))
+        raise AnsibleTypeError("items2dict requires a list, got %s instead." % type(mylist))
 
     try:
         return dict((item[key_name], item[value_name]) for item in mylist)
     except KeyError:
-        raise AnsibleFilterTypeError(
+        raise AnsibleTypeError(
             "items2dict requires each dictionary in the list to contain the keys '%s' and '%s', got %s instead."
             % (key_name, value_name, mylist)
         )
     except TypeError:
-        raise AnsibleFilterTypeError("items2dict requires a list of dictionaries, got %s instead." % mylist)
+        raise AnsibleTypeError("items2dict requires a list of dictionaries, got %s instead." % mylist)
 
 
 def path_join(paths):
@@ -570,7 +580,7 @@ def path_join(paths):
         return os.path.join(paths)
     if is_sequence(paths):
         return os.path.join(*paths)
-    raise AnsibleFilterTypeError("|path_join expects string or sequence, got %s instead." % type(paths))
+    raise AnsibleTypeError("|path_join expects string or sequence, got %s instead." % type(paths))
 
 
 def commonpath(paths):
@@ -583,9 +593,99 @@ def commonpath(paths):
     :rtype: str
     """
     if not is_sequence(paths):
-        raise AnsibleFilterTypeError("|commonpath expects sequence, got %s instead." % type(paths))
+        raise AnsibleTypeError("|commonpath expects sequence, got %s instead." % type(paths))
 
     return os.path.commonpath(paths)
+
+
+# DTFIX-MERGE: FDI038 - this needs to be a generic return-type coercion for plugins that don't claim to be aware of the expanded var type system
+@pass_environment
+def _cleansed_groupby(*args, **kwargs):
+    res = sync_do_groupby(*args, **kwargs)
+
+    # flatten _GroupTuple children to dumb lists
+    res = [list(g) for g in res]
+
+    return res
+
+# DTFIX-MERGE: make these dumb wrappers more dynamic
+
+
+@accept_marker
+def ansible_default(
+    value: t.Any,
+    default_value: t.Any = '',
+    boolean: bool = False,
+) -> t.Any:
+    """Updated `default` filter that only coalesces classic undefined objects; other Undefined-derived types (eg, ErrorMarker) pass through."""
+    validate_arg_type('boolean', boolean, bool)
+
+    if isinstance(value, UndefinedMarker):
+        return default_value
+
+    if boolean and not value:
+        return default_value
+
+    return value
+
+
+@accept_marker
+@functools.wraps(do_map)
+def wrapped_map(*args, **kwargs) -> t.Any:
+    # DTFIX-MERGE: FDI050 consider replacing this with split decorators?
+    if (first_marker := get_first_marker_arg(args, kwargs)) is not None:
+        return first_marker
+
+    return do_map(*args, **kwargs)
+
+
+@accept_marker
+@functools.wraps(do_select)
+def wrapped_select(*args, **kwargs) -> t.Any:
+    # DTFIX-MERGE: FDI050 consider replacing this with split decorators?
+    if (first_marker := get_first_marker_arg(args, kwargs)) is not None:
+        return first_marker
+
+    return do_select(*args, **kwargs)
+
+
+@accept_marker
+@functools.wraps(do_selectattr)
+def wrapped_selectattr(*args, **kwargs) -> t.Any:
+    # DTFIX-MERGE: FDI050 consider replacing this with split decorators?
+    if (first_marker := get_first_marker_arg(args, kwargs)) is not None:
+        return first_marker
+
+    return do_selectattr(*args, **kwargs)
+
+
+@accept_marker
+@functools.wraps(do_reject)
+def wrapped_reject(*args, **kwargs) -> t.Any:
+    # DTFIX-MERGE: FDI050 consider replacing this with split decorators?
+    if (first_marker := get_first_marker_arg(args, kwargs)) is not None:
+        return first_marker
+
+    return do_reject(*args, **kwargs)
+
+
+@accept_marker
+@functools.wraps(do_rejectattr)
+def wrapped_rejectattr(*args, **kwargs) -> t.Any:
+    # DTFIX-MERGE: FDI050 consider replacing this with split decorators?
+    if (first_marker := get_first_marker_arg(args, kwargs)) is not None:
+        return first_marker
+
+    return do_rejectattr(*args, **kwargs)
+
+
+@accept_marker
+def type_debug(obj: t.Any, true_sight: bool = False) -> str:
+    # DTFIX-MERGE: bikeshed the unmask/true_sight arg name
+    if true_sight:
+        return obj.__class__.__name__
+
+    return AnsibleTagHelper.base_type_name(obj)
 
 
 class FilterModule(object):
@@ -603,9 +703,10 @@ class FilterModule(object):
             # json
             'to_json': to_json,
             'to_nice_json': to_nice_json,
-            'from_json': json.loads,
+            'from_json': from_json,
 
             # yaml
+            # DTFIX-MERGE: validate these to ensure that we serialize lazy/tagged values as their plain types properly
             'to_yaml': to_yaml,
             'to_nice_yaml': to_nice_yaml,
             'from_yaml': from_yaml,
@@ -670,7 +771,7 @@ class FilterModule(object):
             'comment': comment,
 
             # debug
-            'type_debug': lambda o: o.__class__.__name__,
+            'type_debug': type_debug,
 
             # Data structures
             'combine': combine,
@@ -680,4 +781,17 @@ class FilterModule(object):
             'items2dict': list_of_dict_key_value_elements_to_dict,
             'subelements': subelements,
             'split': partial(unicode_wrap, text_type.split),
+            # FDI038 - replace this with a standard type compat shim
+            'groupby': _cleansed_groupby,
+
+            # Jinja builtins that need special arg handling
+            # DTFIX-MERGE: document these now that they're overridden, or hide them so they don't show up as undocumented
+            'default': ansible_default,  # replaces the implementation instead of wrapping it
+            'map': wrapped_map,
+            'select': wrapped_select,
+            'selectattr': wrapped_selectattr,
+            'reject': wrapped_reject,
+            'rejectattr': wrapped_rejectattr,
         }
+
+# DTFIX-MERGE: document protomatter plugins, or hide them from ansible-doc (not related to this code, but needed some place to put this comment)

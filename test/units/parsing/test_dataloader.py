@@ -18,10 +18,11 @@
 from __future__ import annotations
 
 import os
+import tempfile
 
 import unittest
-from unittest.mock import patch, mock_open
-from ansible.errors import AnsibleParserError, yaml_strings, AnsibleFileNotFound
+from unittest.mock import patch
+from ansible.errors import AnsibleParserError, AnsibleFileNotFound
 from ansible.parsing.vault import AnsibleVaultError
 from ansible.module_utils.common.text.converters import to_text
 
@@ -66,16 +67,6 @@ class TestDataLoader(unittest.TestCase):
                NOT VALID
         """, True)
         self.assertRaises(AnsibleParserError, self._loader.load_from_file, 'dummy_yaml_bad.txt')
-
-    @patch('ansible.errors.AnsibleError._get_error_lines_from_file')
-    @patch.object(DataLoader, '_get_file_contents')
-    def test_tab_error(self, mock_def, mock_get_error_lines):
-        mock_def.return_value = (u"""---\nhosts: localhost\nvars:\n  foo: bar\n\tblip: baz""", True)
-        mock_get_error_lines.return_value = ("""\tblip: baz""", """..foo: bar""")
-        with self.assertRaises(AnsibleParserError) as cm:
-            self._loader.load_from_file('dummy_yaml_text.txt')
-        self.assertIn(yaml_strings.YAML_COMMON_LEADING_TAB_ERROR, str(cm.exception))
-        self.assertIn('foo: bar', str(cm.exception))
 
     @patch('ansible.parsing.dataloader.unfrackpath', mock_unfrackpath_noop)
     @patch.object(DataLoader, '_is_role')
@@ -135,7 +126,7 @@ class TestDataLoader(unittest.TestCase):
         self.assertTrue(self._loader.is_directory(os.path.dirname(__file__)))
 
     def test_get_file_contents_none_path(self):
-        self.assertRaisesRegex(AnsibleParserError, 'Invalid filename',
+        self.assertRaisesRegex(TypeError, 'Invalid filename',
                                self._loader._get_file_contents, None)
 
     def test_get_file_contents_non_existent_path(self):
@@ -217,7 +208,6 @@ class TestDataLoaderWithVault(unittest.TestCase):
     def test_get_real_file_not_a_path(self):
         self.assertRaisesRegex(AnsibleParserError, 'Invalid filename', self._loader.get_real_file, None)
 
-    @patch.multiple(DataLoader, path_exists=lambda s, x: True, is_file=lambda s, x: True)
     def test_parse_from_vault_1_1_file(self):
         vaulted_data = """$ANSIBLE_VAULT;1.1;AES256
 33343734386261666161626433386662623039356366656637303939306563376130623138626165
@@ -227,15 +217,17 @@ class TestDataLoaderWithVault(unittest.TestCase):
 3035
 """
 
-        with patch('builtins.open', mock_open(read_data=vaulted_data.encode('utf-8'))):
-            output = self._loader.load_from_file('dummy_vault.txt', cache='none')
+        with tempfile.NamedTemporaryFile(mode='w') as file:
+            file.write(vaulted_data)
+            file.flush()
+            output = self._loader.load_from_file(file.name, cache='none')
             self.assertEqual(output, dict(foo='bar'))
 
             # no cache used
             self.assertFalse(self._loader._FILE_CACHE)
 
             # vault cache entry written
-            output = self._loader.load_from_file('dummy_vault.txt', cache='vaulted')
+            output = self._loader.load_from_file(file.name, cache='vaulted')
             self.assertEqual(output, dict(foo='bar'))
             self.assertTrue(self._loader._FILE_CACHE)
 
@@ -243,5 +235,5 @@ class TestDataLoaderWithVault(unittest.TestCase):
             key = next(iter(self._loader._FILE_CACHE.keys()))
             modified = {'changed': True}
             self._loader._FILE_CACHE[key] = modified
-            output = self._loader.load_from_file('dummy_vault.txt', cache='vaulted')
+            output = self._loader.load_from_file(file.name, cache='vaulted')
             self.assertEqual(output, modified)

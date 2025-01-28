@@ -229,7 +229,7 @@
 
 - assert:
     that:
-      - baz.ansible_facts.foo|type_debug != "AnsibleUnsafeText"
+      - baz.ansible_facts.foo is tagged_with("TrustedAsTemplate")
 
 - name: setup test following symlinks
   delegate_to: localhost

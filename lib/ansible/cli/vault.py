@@ -228,6 +228,7 @@ class VaultCLI(CLI):
                                          vault_ids=new_vault_ids,
                                          vault_password_files=new_vault_password_files,
                                          ask_vault_pass=context.CLIARGS['ask_vault_pass'],
+                                         initialize_context=False,
                                          create_new_password=True)
 
             if not new_vault_secrets:
@@ -259,7 +260,7 @@ class VaultCLI(CLI):
             display.display("Reading plaintext input from stdin", stderr=True)
 
         for f in context.CLIARGS['args'] or ['-']:
-            # Fixme: use the correct vau
+            # FIXME: use the correct vau
             self.editor.encrypt_file(f, self.encrypt_secret,
                                      vault_id=self.encrypt_vault_id,
                                      output_file=context.CLIARGS['output_file'])

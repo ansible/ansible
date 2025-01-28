@@ -5,19 +5,20 @@ from __future__ import annotations
 
 import json
 import sys
-from io import BytesIO
 
 import pytest
 
 import ansible.module_utils.basic
-from ansible.module_utils.common.text.converters import to_bytes
 from collections.abc import MutableMapping
+
+from ansible.module_utils.testing import patch_module_args
+from ..mock.module import module_env_mocker  # expose shared fixture in this part of the unit test tree
+
+assert module_env_mocker is not None  # avoid unused imports
 
 
 @pytest.fixture
-def stdin(mocker, request):
-    old_args = ansible.module_utils.basic._ANSIBLE_ARGS
-    ansible.module_utils.basic._ANSIBLE_ARGS = None
+def stdin(request):
     old_argv = sys.argv
     sys.argv = ['ansible_unittest']
 
@@ -30,25 +31,20 @@ def stdin(mocker, request):
             request.param['ANSIBLE_MODULE_ARGS']['_ansible_remote_tmp'] = '/tmp'
         if '_ansible_keep_remote_files' not in request.param['ANSIBLE_MODULE_ARGS']:
             request.param['ANSIBLE_MODULE_ARGS']['_ansible_keep_remote_files'] = False
+        if '_ansible_tracebacks_for' not in request.param['ANSIBLE_MODULE_ARGS']:
+            request.param['ANSIBLE_MODULE_ARGS']['_ansible_tracebacks_for'] = []
         args = json.dumps(request.param)
     else:
         raise Exception('Malformed data to the stdin pytest fixture')
 
-    fake_stdin = BytesIO(to_bytes(args, errors='surrogate_or_strict'))
+    with patch_module_args(args, 'legacy'):
+        yield
 
-    mocker.patch('ansible.module_utils.basic.sys.stdin', mocker.MagicMock())
-    mocker.patch('ansible.module_utils.basic.sys.stdin.buffer', fake_stdin)
-
-    yield fake_stdin
-
-    ansible.module_utils.basic._ANSIBLE_ARGS = old_args
     sys.argv = old_argv
 
 
 @pytest.fixture
 def am(stdin, request):
-    old_args = ansible.module_utils.basic._ANSIBLE_ARGS
-    ansible.module_utils.basic._ANSIBLE_ARGS = None
     old_argv = sys.argv
     sys.argv = ['ansible_unittest']
 
@@ -64,5 +60,4 @@ def am(stdin, request):
 
     yield am
 
-    ansible.module_utils.basic._ANSIBLE_ARGS = old_args
     sys.argv = old_argv

@@ -73,7 +73,9 @@ host4 # same host as above, but member of 2 groups, will inherit vars from both
 """
 
 import ast
+import os
 import re
+import typing as t
 import warnings
 
 from ansible.inventory.group import to_safe_group_name
@@ -81,6 +83,8 @@ from ansible.plugins.inventory import BaseFileInventoryPlugin
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.module_utils.datatag import AnsibleTagHelper
+from ansible.utils.datatag.tags import AnsibleSourcePosition, TrustedAsTemplate
 from ansible.utils.shlex import shlex_split
 
 
@@ -93,18 +97,22 @@ class InventoryModule(BaseFileInventoryPlugin):
     _COMMENT_MARKERS = frozenset((u';', u'#'))
     b_COMMENT_MARKERS = frozenset((b';', b'#'))
 
-    def __init__(self):
+    # template trust is applied internally to strings
+
+    def __init__(self) -> None:
 
         super(InventoryModule, self).__init__()
 
-        self.patterns = {}
-        self._filename = None
+        self.patterns: dict[str, re.Pattern] = {}
+        self._source_pos: AnsibleSourcePosition | None = None
 
-    def parse(self, inventory, loader, path, cache=True):
+    def verify_file(self, path):
+        # hardcode exclusion for TOML to prevent partial parsing of things we know we don't want
+        return super().verify_file(path) and os.path.splitext(path)[1] != '.toml'
+
+    def parse(self, inventory, loader, path: str, cache=True):
 
         super(InventoryModule, self).parse(inventory, loader, path)
-
-        self._filename = path
 
         try:
             # Read in the hosts, groups, and variables defined in the inventory file.
@@ -133,11 +141,11 @@ class InventoryModule(BaseFileInventoryPlugin):
                         data.append(to_text(line, errors='surrogate_or_strict'))
 
             self._parse(path, data)
-        except Exception as e:
-            raise AnsibleParserError(e)
+        except Exception as ex:
+            raise AnsibleParserError(str(ex)) from ex
 
     def _raise_error(self, message):
-        raise AnsibleError("%s:%d: " % (self._filename, self.lineno) + message)
+        raise AnsibleError(f'{self._source_pos}: {message}')
 
     def _parse(self, path, lines):
         """
@@ -155,9 +163,9 @@ class InventoryModule(BaseFileInventoryPlugin):
         pending_declarations = {}
         groupname = 'ungrouped'
         state = 'hosts'
-        self.lineno = 0
+        self._source_pos = AnsibleSourcePosition(src=path, line=0)
         for line in lines:
-            self.lineno += 1
+            self._source_pos = self._source_pos.replace(line=self._source_pos.line + 1)
 
             line = line.strip()
             # Skip empty lines and comments
@@ -189,7 +197,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                     # declarations will take the appropriate action for a pending child group instead of
                     # incorrectly handling it as a var state pending declaration
                     if state == 'vars' and groupname not in pending_declarations:
-                        pending_declarations[groupname] = dict(line=self.lineno, state=state, name=groupname)
+                        pending_declarations[groupname] = dict(line=self._source_pos.line, state=state, name=groupname)
 
                     self.inventory.add_group(groupname)
 
@@ -229,7 +237,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                 child = self._parse_group_name(line)
                 if child not in self.inventory.groups:
                     if child not in pending_declarations:
-                        pending_declarations[child] = dict(line=self.lineno, state=state, name=child, parents=[groupname])
+                        pending_declarations[child] = dict(line=self._source_pos.line, state=state, name=child, parents=[groupname])
                     else:
                         pending_declarations[child]['parents'].append(groupname)
                 else:
@@ -279,7 +287,7 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         if '=' in line:
             (k, v) = [e.strip() for e in line.split("=", 1)]
-            return (k, self._parse_value(v))
+            return (self._source_pos.tag(k), self._parse_value(v))
 
         self._raise_error("Expected key=value, got: %s" % (line))
 
@@ -312,7 +320,7 @@ class InventoryModule(BaseFileInventoryPlugin):
             if '=' not in t:
                 self._raise_error("Expected key=value host variable assignment, got: %s" % (t))
             (k, v) = t.split('=', 1)
-            variables[k] = self._parse_value(v)
+            variables[self._source_pos.tag(k)] = self._parse_value(v)
 
         return hostnames, port, variables
 
@@ -334,8 +342,18 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         return (hostnames, port)
 
-    @staticmethod
-    def _parse_value(v):
+    def _recursive_apply_tags(self, value: t.Any) -> t.Any:
+        if isinstance(value, str):
+            return AnsibleTagHelper.tag(value, (TrustedAsTemplate(), self._source_pos))
+        if isinstance(value, (list, tuple, set)):
+            # NB: intentional coercion of tuple/set to list, deal with it
+            return self._source_pos.tag([self._recursive_apply_tags(v) for v in value])
+        if isinstance(value, dict):
+            # FIXME: enforce keys are strings
+            return self._source_pos.tag({self._source_pos.tag(k): self._recursive_apply_tags(v) for k, v in value.items()})
+        return self._source_pos.tag(value)
+
+    def _parse_value(self, v: str) -> t.Any:
         """
         Attempt to transform the string value from an ini file into a basic python object
         (int, dict, list, unicode string, etc).
@@ -352,7 +370,8 @@ class InventoryModule(BaseFileInventoryPlugin):
         except SyntaxError:
             # Is this a hash with an equals at the end?
             pass
-        return to_text(v, nonstring='passthru', errors='surrogate_or_strict')
+        # this is mostly unnecessary, but prevents the (possible) case of bytes literals showing up in inventory
+        return self._recursive_apply_tags(to_text(v, nonstring='passthru', errors='surrogate_or_strict'))
 
     def _compile_patterns(self):
         """

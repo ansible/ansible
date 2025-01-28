@@ -6,6 +6,9 @@
 
 from __future__ import annotations
 
+import pytest
+
+from ansible.module_utils.testing import patch_module_args
 from units.mock.procenv import ModuleTestCase
 
 from unittest.mock import patch, MagicMock
@@ -14,10 +17,16 @@ import builtins
 realimport = builtins.__import__
 
 
+@pytest.fixture
+def no_module_args():
+    with patch_module_args(None, 'legacy'):
+        yield
+
+
+@pytest.mark.usefixtures("no_module_args")
 class TestOtherFilesystem(ModuleTestCase):
     def test_module_utils_basic_ansible_module_user_and_group(self):
         from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec=dict(),
@@ -32,7 +41,6 @@ class TestOtherFilesystem(ModuleTestCase):
 
     def test_module_utils_basic_ansible_module_find_mount_point(self):
         from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec=dict(),
@@ -56,7 +64,6 @@ class TestOtherFilesystem(ModuleTestCase):
 
     def test_module_utils_basic_ansible_module_set_owner_if_different(self):
         from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec=dict(),
@@ -95,7 +102,6 @@ class TestOtherFilesystem(ModuleTestCase):
 
     def test_module_utils_basic_ansible_module_set_group_if_different(self):
         from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec=dict(),
@@ -134,7 +140,6 @@ class TestOtherFilesystem(ModuleTestCase):
 
     def test_module_utils_basic_ansible_module_set_directory_attributes_if_different(self):
         from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec=dict(),

@@ -173,3 +173,5 @@
 
   always:
   - meta: clear_facts
+
+- include_tasks: config_templating.yml

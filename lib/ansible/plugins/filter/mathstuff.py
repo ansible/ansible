@@ -27,7 +27,7 @@ from collections.abc import Mapping, Iterable
 
 from jinja2.filters import pass_environment
 
-from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
+from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.common.text import formatters
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.common.text.converters import to_native, to_text
@@ -48,10 +48,12 @@ display = Display()
 # explicitly set and cannot be handle (by Jinja2 w/o 'unique' or fallback version)
 def unique(environment, a, case_sensitive=None, attribute=None):
 
-    def _do_fail(e):
+    def _do_fail(ex):
         if case_sensitive is False or attribute:
-            raise AnsibleFilterError("Jinja2's unique filter failed and we cannot fall back to Ansible's version "
-                                     "as it does not support the parameters supplied", orig_exc=e)
+            # DTFIX-MERGE: better error type?
+            raise AnsibleError(
+                "Jinja2's unique filter failed and we cannot fall back to Ansible's version as it does not support the parameters supplied."
+            ) from ex
 
     error = e = None
     try:
@@ -69,8 +71,8 @@ def unique(environment, a, case_sensitive=None, attribute=None):
 
         # handle Jinja2 specific attributes when using Ansible's version
         if case_sensitive is False or attribute:
-            raise AnsibleFilterError("Ansible's unique filter does not support case_sensitive=False nor attribute parameters, "
-                                     "you need a newer version of Jinja2 that provides their version of the filter.")
+            raise AnsibleError("Ansible's unique filter does not support case_sensitive=False nor attribute parameters, "
+                               "you need a newer version of Jinja2 that provides their version of the filter.")
 
         c = []
         for x in a:
@@ -177,9 +179,6 @@ def rekey_on_member(data, key, duplicates='error'):
         raise AnsibleFilterError("duplicates parameter to rekey_on_member has unknown value: {0}".format(duplicates))
 
     new_obj = {}
-
-    # Ensure the positional args are defined - raise jinja2.exceptions.UndefinedError if not
-    bool(data) and bool(key)
 
     if isinstance(data, Mapping):
         iterate_over = data.values()

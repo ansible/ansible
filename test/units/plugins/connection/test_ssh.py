@@ -545,8 +545,7 @@ class TestSSHConnectionRetries(object):
         self.conn._build_command.return_value = [b'sshpass', b'-d41', b'ssh', b'-C']
 
         exception_info = pytest.raises(AnsibleAuthenticationFailure, self.conn.exec_command, 'sshpass', 'some data')
-        assert exception_info.value.message == ('Invalid/incorrect username/password. Skipping remaining 5 retries to prevent account lockout: '
-                                                'Permission denied, please try again.')
+        assert 'Invalid/incorrect username/password. Skipping remaining 5 retries to prevent account lockout' in exception_info.value.message
         assert self.mock_popen.call_count == 1
 
     def test_retry_then_success(self, monkeypatch):

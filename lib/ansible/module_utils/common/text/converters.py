@@ -9,6 +9,7 @@ import codecs
 import datetime
 import json
 
+from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.six.moves.collections_abc import Set
 from ansible.module_utils.six import (
     PY3,
@@ -267,14 +268,8 @@ def _json_encode_fallback(obj):
 
 
 def jsonify(data, **kwargs):
-    # After 2.18, we should remove this loop, and hardcode to utf-8 in alignment with requiring utf-8 module responses
-    for encoding in ("utf-8", "latin-1"):
-        try:
-            new_data = container_to_text(data, encoding=encoding)
-        except UnicodeDecodeError:
-            continue
-        return json.dumps(new_data, default=_json_encode_fallback, **kwargs)
-    raise UnicodeError('Invalid unicode encoding encountered')
+    # DTFIX-MERGE: what to do with this? we shouldn't be (but are in validation.py), using this internally
+    return json.dumps(data, cls=AnsibleJSONEncoder, **kwargs)
 
 
 def container_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):

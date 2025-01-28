@@ -1,0 +1,5 @@
+- hosts: localhost
+  tasks:
+    - name: throttle template that resolves to a non-integer
+      debug:
+      throttle: "{{ 'nope' }}"

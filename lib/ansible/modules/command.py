@@ -249,6 +249,7 @@ def main():
         argument_spec=dict(
             _raw_params=dict(),
             _uses_shell=dict(type='bool', default=False),
+            cmd=dict(),
             argv=dict(type='list', elements='str'),
             chdir=dict(type='path'),
             executable=dict(),
@@ -260,12 +261,14 @@ def main():
             stdin_add_newline=dict(type='bool', default=True),
             strip_empty_ends=dict(type='bool', default=True),
         ),
+        required_one_of=[['_raw_params', 'cmd', 'argv']],
+        mutually_exclusive=[['_raw_params', 'cmd', 'argv']],
         supports_check_mode=True,
     )
     shell = module.params['_uses_shell']
     chdir = module.params['chdir']
     executable = module.params['executable']
-    args = module.params['_raw_params']
+    args = module.params['_raw_params'] or module.params['cmd']
     argv = module.params['argv']
     creates = module.params['creates']
     removes = module.params['removes']
@@ -280,16 +283,6 @@ def main():
     if not shell and executable:
         module.warn("As of Ansible 2.4, the parameter 'executable' is no longer supported with the 'command' module. Not using '%s'." % executable)
         executable = None
-
-    if (not args or args.strip() == '') and not argv:
-        r['rc'] = 256
-        r['msg'] = "no command given"
-        module.fail_json(**r)
-
-    if args and argv:
-        r['rc'] = 256
-        r['msg'] = "only command or argv can be given, not both"
-        module.fail_json(**r)
 
     if not shell and args:
         args = shlex.split(args)

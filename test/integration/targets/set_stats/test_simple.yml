@@ -76,4 +76,4 @@
           - assert:
               that:
                   - ansible_failed_task.name == "EXPECTED FAILURE - bad data"
-                  - ansible_failed_result.msg == "The variable name '.bad' is not valid. Variables must start with a letter or underscore character, and contain only letters, numbers and underscores."
+                  - ansible_failed_result.msg is contains "Invalid variable name '.bad'"

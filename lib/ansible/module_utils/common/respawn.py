@@ -81,29 +81,29 @@ def probe_interpreters_for_module(interpreter_paths, module_name):
 
 
 def _create_payload():
+    # FIXME: move this into _ansiballz and skip the template
     from ansible.module_utils import basic
-    smuggled_args = getattr(basic, '_ANSIBLE_ARGS')
-    if not smuggled_args:
-        raise Exception('unable to access ansible.module_utils.basic._ANSIBLE_ARGS (not launched by AnsiballZ?)')
+
     module_fqn = sys.modules['__main__']._module_fqn
     modlib_path = sys.modules['__main__']._modlib_path
+
     respawn_code_template = """
-import runpy
-import sys
-
-module_fqn = {module_fqn!r}
-modlib_path = {modlib_path!r}
-smuggled_args = {smuggled_args!r}
-
 if __name__ == '__main__':
+    import runpy
+    import sys
+
+    json_params = {json_params!r}
+    profile = {profile!r}
+    module_fqn = {module_fqn!r}
+    modlib_path = {modlib_path!r}
+
     sys.path.insert(0, modlib_path)
 
-    from ansible.module_utils import basic
-    basic._ANSIBLE_ARGS = smuggled_args
+    from ansible.module_utils._internal import _ansiballz
 
-    runpy.run_module(module_fqn, init_globals=dict(_respawned=True), run_name='__main__', alter_sys=True)
-    """
+    _ansiballz.run_module(json_params=json_params, profile=profile, module_fqn=module_fqn, modlib_path=modlib_path, init_globals=dict(_respawned=True))
+"""
 
-    respawn_code = respawn_code_template.format(module_fqn=module_fqn, modlib_path=modlib_path, smuggled_args=smuggled_args.strip())
+    respawn_code = respawn_code_template.format(json_params=basic._ANSIBLE_ARGS, profile=basic._ANSIBLE_PROFILE, module_fqn=module_fqn, modlib_path=modlib_path)
 
     return respawn_code

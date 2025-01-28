@@ -1,0 +1,11 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: look up an environment variable which is set with various default behaviors
+      assert:
+        that:
+          - lookup('env', 'USR') == ''
+          - lookup('env', 'USR', default='nobody') == ''
+          - lookup('env', 'USR', default=undef()) == ''
+          - lookup('env', 'USR', default=undef('custom')) == ''
+          - lookup('env', 'ENVVAR1') == 'var1value'

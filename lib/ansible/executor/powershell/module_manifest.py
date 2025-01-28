@@ -10,6 +10,8 @@ import os
 import pkgutil
 import secrets
 import re
+import typing as t
+
 from importlib import import_module
 
 from ansible.module_utils.compat.version import LooseVersion
@@ -17,6 +19,7 @@ from ansible.module_utils.compat.version import LooseVersion
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.serialization import get_module_encoder, Direction
 from ansible.plugins.loader import ps_module_utils_loader
 from ansible.utils.collection_loader import resource_from_fqcr
 
@@ -284,7 +287,8 @@ def _strip_comments(source):
 def _create_powershell_wrapper(b_module_data, module_path, module_args,
                                environment, async_timeout, become,
                                become_method, become_user, become_password,
-                               become_flags, substyle, task_vars, module_fqn):
+                               become_flags, substyle, task_vars, module_fqn,
+                               profile: str):
     # creates the manifest/wrapper used in PowerShell/C# modules to enable
     # things like become and async - this is also called in action/script.py
 
@@ -303,7 +307,7 @@ def _create_powershell_wrapper(b_module_data, module_path, module_args,
         powershell_modules=dict(),
         csharp_utils=dict(),
         csharp_utils_module=list(),  # csharp_utils only required by a module
-        module_args=module_args,
+        module_args=_prepare_module_args(module_args, profile),
         actions=[module_wrapper],
         environment=environment,
         encoded_output=False,
@@ -398,3 +402,13 @@ def _create_powershell_wrapper(b_module_data, module_path, module_args,
     # delimit the payload JSON from the wrapper to keep sensitive contents out of scriptblocks (which can be logged)
     b_data = exec_wrapper + b'\0\0\0\0' + b_json
     return b_data
+
+
+def _prepare_module_args(module_args: dict[str, t.Any], profile: str) -> dict[str, t.Any]:
+    """
+    Serialize the module args with the specified profile and deserialize them with the Python built-in JSON decoder.
+    This is used to facilitate serializing module args with a different encoder (profile) than is used for the manifest.
+    """
+    encoder = get_module_encoder(profile, Direction.CONTROLLER_TO_MODULE)
+
+    return json.loads(json.dumps(module_args, cls=encoder))

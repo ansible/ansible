@@ -54,7 +54,7 @@ from ansible.module_utils.common.text.converters import to_text
 
 class LookupModule(LookupBase):
 
-    def run(self, terms, variables, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
 
         ret = []
         for term in terms:

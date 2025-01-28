@@ -31,7 +31,7 @@
   - name: check that warning is not given when force_apt_get set
     assert:
       that:
-        - "'warnings' not in upgrade_result"
+        - upgrade_result.warnings | default([]) | length == 0
     when:
       - force_apt_get
 

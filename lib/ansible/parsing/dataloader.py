@@ -3,22 +3,26 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
+from __future__ import annotations
 
 import copy
 import os
 import os.path
+import pathlib
 import re
 import tempfile
 import typing as t
 
 from ansible import constants as C
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
+from ansible.errors.utils import RedactAnnotatedSourceContext
 from ansible.module_utils.basic import is_executable
+from ansible.utils.datatag.tags import AnsibleSourcePosition, TrustedAsTemplate, _EncryptedSource
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.parsing.quoting import unquote
 from ansible.parsing.utils.yaml import from_yaml
-from ansible.parsing.vault import VaultLib, is_encrypted, is_encrypted_file, parse_vaulttext_envelope, PromptVaultSecret
+from ansible.parsing.vault import VaultLib, is_encrypted, is_encrypted_file, PromptVaultSecret
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
 
@@ -73,11 +77,18 @@ class DataLoader:
     def set_vault_secrets(self, vault_secrets: list[tuple[str, PromptVaultSecret]] | None) -> None:
         self._vault.secrets = vault_secrets
 
-    def load(self, data: str, file_name: str = '<string>', show_content: bool = True, json_only: bool = False) -> t.Any:
+    def load(
+            self,
+            data: str,
+            file_name: str | None = None,  # DTFIX-MERGE: consider deprecating this in favor of tagging AnsibleSourcePosition on data
+            show_content: bool = True,  # deprecated: description='deprecate show_content in favor of RedactAnnotatedSourceContext' core_version='2.22'
+            json_only: bool = False,
+    ) -> t.Any:
         """Backwards compat for now"""
-        return from_yaml(data, file_name, show_content, self._vault.secrets, json_only=json_only)
+        with RedactAnnotatedSourceContext.when(not show_content):
+            return from_yaml(data=data, file_name=file_name, json_only=json_only)
 
-    def load_from_file(self, file_name: str, cache: str = 'all', unsafe: bool = False, json_only: bool = False) -> t.Any:
+    def load_from_file(self, file_name: str, cache: str = 'all', unsafe: bool = False, json_only: bool = False, trusted_as_template: bool = False) -> t.Any:
         """
         Loads data from a file, which can contain either JSON or YAML.
 
@@ -101,8 +112,15 @@ class DataLoader:
             # Read the file contents and load the data structure from them
             (b_file_data, show_content) = self._get_file_contents(file_name)
 
+            if trusted_as_template:
+                b_file_data = TrustedAsTemplate().tag(b_file_data)
+
             file_data = to_text(b_file_data, errors='surrogate_or_strict')
-            parsed_data = self.load(data=file_data, file_name=file_name, show_content=show_content, json_only=json_only)
+            parsed_data = self.load(data=file_data, file_name=file_name, json_only=json_only)
+
+            # we're tagging the resulting container with _EncryptedSource if it was loaded from a vaulted file, since this method doesn't expose show_content
+            if not show_content:
+                parsed_data = _EncryptedSource().tag(parsed_data)
 
             # Cache the file contents for next time based on the cache option
             if cache == 'all':
@@ -137,18 +155,17 @@ class DataLoader:
         path = self.path_dwim(path)
         return is_executable(path)
 
-    def _decrypt_if_vault_data(self, b_vault_data: bytes, b_file_name: bytes | None = None) -> tuple[bytes, bool]:
+    def _decrypt_if_vault_data(self, b_data: bytes) -> tuple[bytes, bool]:
         """Decrypt b_vault_data if encrypted and return b_data and the show_content flag"""
 
-        if not is_encrypted(b_vault_data):
-            show_content = True
-            return b_vault_data, show_content
+        if encrypted_source := is_encrypted(b_data):
+            b_data = self._vault.decrypt(b_data)
 
-        b_ciphertext, b_version, cipher_name, vault_id = parse_vaulttext_envelope(b_vault_data)
-        b_data = self._vault.decrypt(b_vault_data, filename=b_file_name)
+        return b_data, not encrypted_source
 
-        show_content = False
-        return b_data, show_content
+    def get_text_file_contents(self, file_name: str) -> str:
+        # DTFIX-MERGE: test/docstring this method
+        return to_text(self._get_file_contents(file_name)[0])
 
     def _get_file_contents(self, file_name: str) -> tuple[bytes, bool]:
         """
@@ -163,21 +180,22 @@ class DataLoader:
         :raises AnsibleParserError: if we were unable to read the file
         :return: Returns a byte string of the file contents
         """
-        if not file_name or not isinstance(file_name, (binary_type, text_type)):
-            raise AnsibleParserError("Invalid filename: '%s'" % to_native(file_name))
+        if not file_name or not isinstance(file_name, str):
+            raise TypeError(f"Invalid filename {file_name!r}.")
 
-        b_file_name = to_bytes(self.path_dwim(file_name))
-        # This is what we really want but have to fix unittests to make it pass
-        # if not os.path.exists(b_file_name) or not os.path.isfile(b_file_name):
-        if not self.path_exists(b_file_name):
-            raise AnsibleFileNotFound("Unable to retrieve file contents", file_name=file_name)
+        file_name = self.path_dwim(file_name)
 
         try:
-            with open(b_file_name, 'rb') as f:
-                data = f.read()
-                return self._decrypt_if_vault_data(data, b_file_name)
-        except (IOError, OSError) as e:
-            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (file_name, to_native(e)), orig_exc=e)
+            data = pathlib.Path(file_name).read_bytes()
+        except FileNotFoundError as ex:
+            # DTFIX-FUTURE: why not just let the builtin one fly?
+            raise AnsibleFileNotFound("Unable to retrieve file contents.", file_name=file_name) from ex
+        except (IOError, OSError) as ex:
+            raise AnsibleParserError(f"An error occurred while trying to read the file {file_name!r}.") from ex
+
+        data = AnsibleSourcePosition(src=file_name, line=1, col=1).tag(data)
+
+        return self._decrypt_if_vault_data(data)
 
     def get_basedir(self) -> str:
         """ returns the current basedir """
@@ -194,8 +212,8 @@ class DataLoader:
         make relative paths work like folks expect.
         """
 
-        given = unquote(given)
         given = to_text(given, errors='surrogate_or_strict')
+        given = unquote(given)
 
         if given.startswith(to_text(os.path.sep)) or given.startswith(u'~'):
             path = given
@@ -403,8 +421,8 @@ class DataLoader:
 
             return real_path
 
-        except (IOError, OSError) as e:
-            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (to_native(real_path), to_native(e)), orig_exc=e)
+        except (IOError, OSError) as ex:
+            raise AnsibleParserError(f"an error occurred while trying to read the file {to_text(real_path)!r}.") from ex
 
     def cleanup_tmp_file(self, file_path: str) -> None:
         """

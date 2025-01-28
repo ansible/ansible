@@ -1,0 +1,36 @@
+PLAYBOOK: output_tests.yml *****************************************************
+PLAY [localhost] ***************************************************************
+TASK [Gathering Facts] *********************************************************
+TASK [run our sample module and keep its output] *******************************
+ok: [localhost] => {
+    "changed": false,
+    "invocation": {
+        "module_args": {
+            "sensitive_module_arg": "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
+        }
+    },
+    "sensitive_module_arg": "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER",
+    "something_old": "an old thing",
+    "untrusted_template": "{{ [\"me\", \"see\", \"not\", \"should\"] | sort(reverse=true) | join(\" \") }}"
+}
+TASK [reference a deprecated return value from a template, we should see a deprecation warning pointing here] ***
+ok: [localhost] => {
+    "msg": "touching deprecated value an old thing"
+}
+TASK [access a deprecated return value directly, we should see a deprecation warning pointing here] ***
+ok: [localhost] => {
+    "demo_out.something_old": "an old thing"
+}
+TASK [try to directly display something the module marked as no_log (should be masked)] ***
+ok: [localhost] => {
+    "demo_out.sensitive_module_arg": "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
+}
+TASK [try to render a template returned by the module (we don't allow this, should see the raw template)] ***
+ok: [localhost] => {
+    "demo_out.untrusted_template": "{{ [\"me\", \"see\", \"not\", \"should\"] | sort(reverse=true) | join(\" \") }}"
+}
+TASK [we can track var/template provenance from any inventory now; note that this tells us ** where ** the problem is] ***
+ok: [localhost] => {
+    "hostvar_access_deprecated": "an old thing"
+}
+PLAY RECAP *********************************************************************

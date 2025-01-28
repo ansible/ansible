@@ -503,13 +503,13 @@ import socket
 import subprocess
 import time
 import math
+import typing as t
 
 from ansible.module_utils import distro
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.sys_info import get_platform_subclass
-import ansible.module_utils.compat.typing as t
 
 
 class StructSpwdType(ctypes.Structure):

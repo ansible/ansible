@@ -9,7 +9,7 @@ import typing as t
 
 from ansible import constants as C
 from ansible.errors import AnsibleActionFail
-from ansible.executor.module_common import get_action_args_with_defaults
+from ansible.executor.module_common import _apply_action_arg_defaults
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import merge_hash
@@ -54,10 +54,7 @@ class ActionModule(ActionBase):
             fact_module, collection_list=self._task.collections
         ).resolved_fqcn
 
-        mod_args = get_action_args_with_defaults(
-            resolved_fact_module, mod_args, self._task.module_defaults, self._templar,
-            action_groups=self._task._parent._play._action_groups
-        )
+        mod_args = _apply_action_arg_defaults(resolved_fact_module, self._task, mod_args)
 
         return mod_args
 

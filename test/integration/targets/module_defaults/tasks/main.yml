@@ -75,7 +75,7 @@
 
       - assert:
           that:
-            foo.msg == "Hello world!"
+            foo.msg == "Hello overridden world!"
 
     - name: test that module defaults can be overridden by module params
       block:
@@ -87,10 +87,15 @@
           that:
             foo.msg == "another test message"
 
-      - debug:
-          msg: '{{ omit }}'
-        register: foo
+- name: ensure that untemplate-able module_defaults breaks task templating
+  module_defaults:
+    ansible.builtin.ping:
+      data: '{{ busted_invalid_var }}'
+  ansible.builtin.ping:  # debug was chosen because it ignores failures during task templating; this ensures the expected failure comes from task templating of module_defaults
+  ignore_errors: true
+  register: result
 
-      - assert:
-          that:
-            foo.msg == "Hello world!"
+- assert:
+    that:
+      - result is failed
+      - result.msg is contains("'busted_invalid_var' is undefined")

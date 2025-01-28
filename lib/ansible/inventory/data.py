@@ -18,46 +18,62 @@
 #############################################
 from __future__ import annotations
 
+import functools
 import sys
+import typing as t
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
-from ansible.module_utils.six import string_types
+from ansible.utils.datatag.tags import AnsibleSourcePosition
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
 from ansible.utils.path import basedir
+from ansible._internal import _serialization
+from ansible.utils._wrapt import ObjectProxy
+
+from . import helpers  # this is left as a module import to facilitate easier unit test patching
+
+if t.TYPE_CHECKING:
+    from ansible.plugins.inventory import BaseInventoryPlugin
 
 display = Display()
 
 
-class InventoryData(object):
+class InventoryData:
     """
     Holds inventory data (host and group objects).
-    Using it's methods should guarantee expected relationships and data.
+    Using its methods should guarantee expected relationships and data.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
 
-        self.groups = {}
-        self.hosts = {}
+        self.groups: dict[str, Group] = {}
+        self.hosts: dict[str, Host] = {}
 
         # provides 'groups' magic var, host object has group_names
-        self._groups_dict_cache = {}
+        self._groups_dict_cache: dict[str, list[str]] = {}
 
         # current localhost, implicit or explicit
-        self.localhost = None
+        self.localhost: Host | None = None
 
-        self.current_source = None
-        self.processed_sources = []
+        self.current_source: str | None = None
+        self.processed_sources: list[str] = []
 
         # Always create the 'all' and 'ungrouped' groups,
         for group in ('all', 'ungrouped'):
             self.add_group(group)
+
         self.add_child('all', 'ungrouped')
 
+    def __deepcopy__(self, memodict):
+        raise Exception("deepcopy was not properly implemented on data")  # DTFIX-MERGE: ensure this is unneeded and remove
+
     def serialize(self):
+        if bool(1):
+            raise Exception("is this getting hit?")  # DTFIX-MERGE: ensure this is dead code and remove
+
         self._groups_dict_cache = None
         data = {
             'groups': self.groups,
@@ -69,6 +85,9 @@ class InventoryData(object):
         return data
 
     def deserialize(self, data):
+        if bool(1):
+            raise Exception("is this getting hit?")  # DTFIX-MERGE: ensure this is dead code and remove
+
         self._groups_dict_cache = {}
         self.hosts = data.get('hosts')
         self.groups = data.get('groups')
@@ -76,7 +95,7 @@ class InventoryData(object):
         self.current_source = data.get('source')
         self.processed_sources = data.get('processed_sources')
 
-    def _create_implicit_localhost(self, pattern):
+    def _create_implicit_localhost(self, pattern: str) -> Host:
 
         if self.localhost:
             new_host = self.localhost
@@ -100,8 +119,8 @@ class InventoryData(object):
 
         return new_host
 
-    def reconcile_inventory(self):
-        """ Ensure inventory basic rules, run after updates """
+    def reconcile_inventory(self) -> None:
+        """Ensure inventory basic rules, run after updates."""
 
         display.debug('Reconcile groups and hosts in inventory.')
         self.current_source = None
@@ -125,7 +144,7 @@ class InventoryData(object):
 
             if self.groups['ungrouped'] in mygroups:
                 # clear ungrouped of any incorrectly stored by parser
-                if set(mygroups).difference(set([self.groups['all'], self.groups['ungrouped']])):
+                if set(mygroups).difference({self.groups['all'], self.groups['ungrouped']}):
                     self.groups['ungrouped'].remove_host(host)
 
             elif not host.implicit:
@@ -144,8 +163,10 @@ class InventoryData(object):
 
         self._groups_dict_cache = {}
 
-    def get_host(self, hostname):
-        """ fetch host object using name deal with implicit localhost """
+    def get_host(self, hostname: str) -> Host | None:
+        """Fetch host object using name deal with implicit localhost."""
+
+        hostname = helpers.remove_trust(hostname)
 
         matching_host = self.hosts.get(hostname, None)
 
@@ -156,19 +177,19 @@ class InventoryData(object):
 
         return matching_host
 
-    def add_group(self, group):
-        """ adds a group to inventory if not there already, returns named actually used """
+    def add_group(self, group: str) -> str:
+        """Adds a group to inventory if not there already, returns named actually used."""
 
         if group:
-            if not isinstance(group, string_types):
+            if not isinstance(group, str):
                 raise AnsibleError("Invalid group name supplied, expected a string but got %s for %s" % (type(group), group))
             if group not in self.groups:
                 g = Group(group)
-                if g.name not in self.groups:
-                    self.groups[g.name] = g
+                group = g.name  # the group object may have sanitized the group name; use whatever it has
+                if group not in self.groups:
+                    self.groups[group] = g
                     self._groups_dict_cache = {}
                     display.debug("Added group %s to inventory" % group)
-                group = g.name
             else:
                 display.debug("group %s already in inventory" % group)
         else:
@@ -176,22 +197,24 @@ class InventoryData(object):
 
         return group
 
-    def remove_group(self, group):
+    def remove_group(self, group: Group) -> None:
 
-        if group in self.groups:
-            del self.groups[group]
-            display.debug("Removed group %s from inventory" % group)
+        if group.name in self.groups:
+            del self.groups[group.name]
+            display.debug("Removed group %s from inventory" % group.name)
             self._groups_dict_cache = {}
 
         for host in self.hosts:
             h = self.hosts[host]
             h.remove_group(group)
 
-    def add_host(self, host, group=None, port=None):
-        """ adds a host to inventory and possibly a group if not there already """
+    def add_host(self, host: str, group: str | None = None, port: int | str | None = None) -> str:
+        """Adds a host to inventory and possibly a group if not there already."""
+
+        host = helpers.remove_trust(host)
 
         if host:
-            if not isinstance(host, string_types):
+            if not isinstance(host, str):
                 raise AnsibleError("Invalid host name supplied, expected a string but got %s for %s" % (type(host), host))
 
             # TODO: add to_safe_host_name
@@ -211,7 +234,7 @@ class InventoryData(object):
                 else:
                     self.set_variable(host, 'inventory_file', None)
                     self.set_variable(host, 'inventory_dir', None)
-                display.debug("Added host %s to inventory" % (host))
+                display.debug("Added host %s to inventory" % host)
 
                 # set default localhost from inventory to avoid creating an implicit one. Last localhost defined 'wins'.
                 if host in C.LOCALHOST:
@@ -232,7 +255,7 @@ class InventoryData(object):
 
         return host
 
-    def remove_host(self, host):
+    def remove_host(self, host: Host) -> None:
 
         if host.name in self.hosts:
             del self.hosts[host.name]
@@ -241,8 +264,10 @@ class InventoryData(object):
             g = self.groups[group]
             g.remove_host(host)
 
-    def set_variable(self, entity, varname, value):
-        """ sets a variable for an inventory object """
+    def set_variable(self, entity: str, varname: str, value: t.Any) -> None:
+        """Sets a variable for an inventory object."""
+
+        inv_object: Host | Group
 
         if entity in self.groups:
             inv_object = self.groups[entity]
@@ -254,9 +279,8 @@ class InventoryData(object):
         inv_object.set_variable(varname, value)
         display.debug('set %s for %s' % (varname, entity))
 
-    def add_child(self, group, child):
-        """ Add host or group to group """
-        added = False
+    def add_child(self, group: str, child: str) -> bool:
+        """Add host or group to group."""
         if group in self.groups:
             g = self.groups[group]
             if child in self.groups:
@@ -271,12 +295,39 @@ class InventoryData(object):
             raise AnsibleError("%s is not a known group" % group)
         return added
 
-    def get_groups_dict(self):
+    def get_groups_dict(self) -> dict[str, list[str]]:
         """
         We merge a 'magic' var 'groups' with group name keys and hostname list values into every host variable set. Cache for speed.
         """
         if not self._groups_dict_cache:
-            for (group_name, group) in self.groups.items():
+            for group_name, group in self.groups.items():
                 self._groups_dict_cache[group_name] = [h.name for h in group.get_hosts()]
 
         return self._groups_dict_cache
+
+
+class _InventoryDataWrapper(ObjectProxy):
+    # DTFIX-MERGE: bikeshed name and location of this class
+
+    # declared as class attrs to signal ObjectProxy that we want them stored on the proxy, not the wrapped value
+    _target_plugin = None
+    _default_source_position_tag = None
+
+    def __init__(self, referent: InventoryData, target_plugin: BaseInventoryPlugin, origin_tag: AnsibleSourcePosition) -> None:
+        super().__init__(referent)
+        self._target_plugin = target_plugin
+        # fallback source position to ensure that vars are tagged with at least the file they came from
+        self._default_source_position_tag = origin_tag
+
+    @functools.cached_property
+    def _inspector(self) -> _serialization.AnsibleVariableVisitor:
+        # DTFIX-MERGE: we don't need to defer this if we instead change auto's plugin validation/load to
+        #  occur inside verify_file.
+        return _serialization.AnsibleVariableVisitor(
+            trusted_as_template=self._target_plugin.trusted_by_default,
+            source_position=self._default_source_position_tag,
+            allow_encrypted_string=True,
+        )
+
+    def set_variable(self, entity: str, varname: str, value: t.Any) -> None:
+        self.__wrapped__.set_variable(entity, varname, self._inspector.visit(value))

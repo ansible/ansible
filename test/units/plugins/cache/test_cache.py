@@ -27,7 +27,7 @@ import unittest
 from ansible.errors import AnsibleError
 from ansible.plugins.cache import CachePluginAdjudicator
 from ansible.plugins.cache.memory import CacheModule as MemoryCache
-from ansible.plugins.loader import cache_loader, init_plugin_loader
+from ansible.plugins.loader import cache_loader
 from ansible.vars.fact_cache import FactCache
 
 import pytest
@@ -180,8 +180,8 @@ class TestFactCache(unittest.TestCase):
         self.cache.flush()
         assert len(self.cache.keys()) == 0
 
+    @pytest.mark.usefixtures('collection_loader')
     def test_plugin_load_failure(self):
-        init_plugin_loader()
         # See https://github.com/ansible/ansible/issues/18751
         # Note no fact_connection config set, so this will fail
         with mock.patch('ansible.constants.CACHE_PLUGIN', 'json'):

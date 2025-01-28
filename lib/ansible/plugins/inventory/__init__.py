@@ -17,23 +17,30 @@
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import os
 import string
+import typing as t
 
 from collections.abc import Mapping
 
+from ansible import template as _template
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.inventory.group import to_safe_group_name as original_safe
 from ansible.parsing.utils.addresses import parse_address
+from ansible.parsing.dataloader import DataLoader
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.cache import CachePluginAdjudicator as CacheObject
 from ansible.module_utils.common.text.converters import to_bytes, to_native
-from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
-from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, load_extra_vars
+from ansible._internal import _serialization
+from ansible._internal._templating import _engine
+
+if t.TYPE_CHECKING:
+    from ansible.inventory.data import InventoryData
 
 display = Display()
 
@@ -145,8 +152,13 @@ def get_cache_plugin(plugin_name, **kwargs):
     return cache
 
 
-class BaseInventoryPlugin(AnsiblePlugin):
-    """ Parses an Inventory Source"""
+class _BaseInventoryPlugin(AnsiblePlugin):
+    """
+    Internal base implementation for inventory plugins.
+
+    Do not inherit from this directly, use one of its public subclasses instead.
+    Used to introduce an extra layer in the class hierarchy to allow Constructed to subclass this while remaining a mixin for existing inventory plugins.
+    """
 
     TYPE = 'generator'
 
@@ -156,16 +168,31 @@ class BaseInventoryPlugin(AnsiblePlugin):
     # it by default.
     _sanitize_group_name = staticmethod(to_safe_group_name)
 
-    def __init__(self):
+    def __init__(self) -> None:
 
-        super(BaseInventoryPlugin, self).__init__()
+        super().__init__()
 
         self._options = {}
-        self.inventory = None
         self.display = display
-        self._vars = {}
 
-    def parse(self, inventory, loader, path, cache=True):
+        # These attributes are set by the parse() method on this (base) class.
+        self.loader: DataLoader | None = None
+        self.inventory: InventoryData | None = None
+        self._vars: dict[str, t.Any] | None = None
+
+    trusted_by_default: bool = False
+    """Inventory plugins that only source templates from trusted sources can set this True to have trust automatically applied to all templates."""
+
+    @functools.cached_property
+    def templar(self) -> _template.Templar:
+        if self.trusted_by_default:
+            return _template.Templar._from_template_engine(_AutoTrustInputTemplateEngine(loader=self.loader))
+
+        # DTFIX-FUTURE: implement an optional "strict" mode that always uses the AnsibleVariableVisitor to check for unsupported types
+
+        return _template.Templar._from_template_engine(_engine.TemplateEngine(loader=self.loader))
+
+    def parse(self, inventory: InventoryData, loader: DataLoader, path: str, cache: bool = True) -> None:
         """ Populates inventory from the given data. Raises an error on any parse failure
             :arg inventory: a copy of the previously accumulated inventory data,
                  to be updated with any new data this plugin provides.
@@ -178,10 +205,8 @@ class BaseInventoryPlugin(AnsiblePlugin):
             :arg cache: a boolean that indicates if the plugin should use the cache or not
                  you can ignore if this plugin does not implement caching.
         """
-
         self.loader = loader
         self.inventory = inventory
-        self.templar = Templar(loader=loader)
         self._vars = load_extra_vars(loader)
 
     def verify_file(self, path):
@@ -214,11 +239,10 @@ class BaseInventoryPlugin(AnsiblePlugin):
             :arg path: path to common yaml format config file for this plugin
         """
 
-        config = {}
         try:
             # avoid loader cache so meta: refresh_inventory can pick up config changes
             # if we read more than once, fs cache should be good enough
-            config = self.loader.load_from_file(path, cache='none')
+            config = self.loader.load_from_file(path, cache='none', trusted_as_template=True)
         except Exception as e:
             raise AnsibleParserError(to_native(e))
 
@@ -279,7 +303,11 @@ class BaseInventoryPlugin(AnsiblePlugin):
         return (hostnames, port)
 
 
-class BaseFileInventoryPlugin(BaseInventoryPlugin):
+class BaseInventoryPlugin(_BaseInventoryPlugin):
+    """ Parses an Inventory Source """
+
+
+class BaseFileInventoryPlugin(_BaseInventoryPlugin):
     """ Parses a File based Inventory Source"""
 
     TYPE = 'storage'
@@ -329,11 +357,11 @@ class Cacheable(object):
         self._cache.set_cache()
 
 
-class Constructable(object):
-
-    def _compose(self, template, variables, disable_lookups=True):
+class Constructable(_BaseInventoryPlugin):
+    def _compose(self, template, variables, disable_lookups=...):
         """ helper method for plugins to compose variables for Ansible based on jinja2 expression and inventory vars"""
-        t = self.templar
+        if disable_lookups is not ...:
+            self.display.deprecated("The disable_lookups arg has no effect.", version="2.21")
 
         try:
             use_extra = self.get_option('use_extra_vars')
@@ -341,12 +369,11 @@ class Constructable(object):
             use_extra = False
 
         if use_extra:
-            t.available_variables = combine_vars(variables, self._vars)
+            self.templar.available_variables = combine_vars(variables, self._vars)
         else:
-            t.available_variables = variables
+            self.templar.available_variables = variables
 
-        return t.template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string),
-                          disable_lookups=disable_lookups)
+        return self.templar.evaluate_expression(template)
 
     def _set_composite_vars(self, compose, variables, host, strict=False):
         """ loops over compose entries to create vars for hosts """
@@ -368,10 +395,10 @@ class Constructable(object):
                 variables = combine_vars(variables, self.inventory.get_host(host).get_vars())
             self.templar.available_variables = variables
             for group_name in groups:
-                conditional = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % groups[group_name]
+                conditional = groups[group_name]
                 group_name = self._sanitize_group_name(group_name)
                 try:
-                    result = boolean(self.templar.template(conditional))
+                    result = self.templar.evaluate_conditional(conditional)
                 except Exception as e:
                     if strict:
                         raise AnsibleParserError("Could not add host %s to group %s: %s" % (host, group_name, to_native(e)))
@@ -405,13 +432,14 @@ class Constructable(object):
                         prefix = keyed.get('prefix', '')
                         sep = keyed.get('separator', '_')
                         raw_parent_name = keyed.get('parent_group', None)
-                        if raw_parent_name:
-                            try:
-                                raw_parent_name = self.templar.template(raw_parent_name)
-                            except AnsibleError as e:
-                                if strict:
-                                    raise AnsibleParserError("Could not generate parent group %s for group %s: %s" % (raw_parent_name, key, to_native(e)))
-                                continue
+
+                        try:
+                            raw_parent_name = self.templar._engine.template(raw_parent_name, options=_engine.TemplateOptions(value_for_omit=None))
+                        except Exception as ex:
+                            if strict:
+                                raise AnsibleParserError(f'Could not generate parent group {raw_parent_name!r} for group {key!r}: {ex}') from ex
+
+                            continue
 
                         new_raw_group_names = []
                         if isinstance(key, string_types):
@@ -459,3 +487,25 @@ class Constructable(object):
                             raise AnsibleParserError("No key or key resulted empty for %s in host %s, invalid entry" % (keyed.get('key'), host))
                 else:
                     raise AnsibleParserError("Invalid keyed group entry, it must be a dictionary: %s " % keyed)
+
+
+class _AutoTrustInputTemplateEngine(_engine.TemplateEngine):
+    """Compatibility wrapper around Templar that automatically trusts templates passed directly to some templating methods."""
+
+    # DTFIX-MERGE: bikeshed name and location of this class, and review for correctness
+    # DTFIX-MERGE: we only want to auto-trust values passed directly in from inventory
+    #              however when this templar is inherited the auto-trust will apply to lazy containers which inherit this templar, which is not desirable
+    #              solving this requires a proxy, not an actual templar -- which we need anyways, since this should expose the old templar API not the new one
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
+        self._visitor = _serialization.AnsibleVariableVisitor(trusted_as_template=True)
+
+    def template(self, variable: t.Any, **kwargs) -> t.Any:
+        return super().template(self._visitor.visit(variable), **kwargs)
+
+    def evaluate_expression(self, expression: str, **kwargs) -> t.Any:
+        return super().evaluate_expression(self._visitor.visit(expression), **kwargs)
+
+    def evaluate_conditional(self, conditional: str | bool | None) -> bool:
+        return super().evaluate_conditional(self._visitor.visit(conditional))

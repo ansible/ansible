@@ -12,10 +12,10 @@ import os.path
 import pkgutil
 import sys
 import warnings
+import typing as t
 
 from collections import defaultdict, namedtuple
 from importlib import import_module
-from traceback import format_exc
 from yaml.parser import ParserError
 
 import ansible.module_utils.compat.typing as t
@@ -24,7 +24,7 @@ from .filter import AnsibleJinja2Filter
 from .test import AnsibleJinja2Test
 
 from ansible import __version__ as ansible_version
-from ansible import constants as C
+from ansible import _internal, constants as C
 from ansible.errors import AnsibleError, AnsiblePluginCircularRedirect, AnsiblePluginRemovedError, AnsibleCollectionUnsupportedVersionError
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.module_utils.six import string_types
@@ -409,6 +409,7 @@ class PluginLoader:
             # if type name != 'module_doc_fragment':
             if type_name in C.CONFIGURABLE_PLUGINS and not C.config.has_configuration_definition(type_name, name):
                 try:
+                    # DTFIX-MERGE: can this be from_yaml -- also, is AnsibleLoader even the right thing in this context (vault support)?
                     dstring = AnsibleLoader(getattr(module, 'DOCUMENTATION', ''), file_name=path).get_single_data()
                 except ParserError as e:
                     raise AnsibleError(f"plugin {name} has malformed documentation!") from e
@@ -1126,10 +1127,10 @@ class Jinja2Loader(PluginLoader):
     We need to do a few things differently in the base class because of file == plugin
     assumptions and dedupe logic.
     """
-    def __init__(self, class_name, package, config, subdir, plugin_wrapper_type, aliases=None, required_base_class=None):
+    def __init__(self, class_name, package, config, subdir, plugin_wrapper_type, aliases=None, required_base_class=None) -> None:
         super(Jinja2Loader, self).__init__(class_name, package, config, subdir, aliases=aliases, required_base_class=required_base_class)
         self._plugin_wrapper_type = plugin_wrapper_type
-        self._cached_non_collection_wrappers = {}
+        self._cached_non_collection_wrappers: dict[str, AnsibleJinja2Filter | AnsibleJinja2Test | _DeferredPluginLoadFailure] = {}
 
     def _clear_caches(self):
         super(Jinja2Loader, self)._clear_caches()
@@ -1194,6 +1195,9 @@ class Jinja2Loader(PluginLoader):
 
         # check for stuff loaded via legacy/builtin paths first
         if known_plugin := self._cached_non_collection_wrappers.get(name):
+            if isinstance(known_plugin, _DeferredPluginLoadFailure):
+                raise known_plugin.ex
+
             context.resolved = True
             context.plugin_resolved_name = name
             context.plugin_resolved_path = known_plugin._original_path
@@ -1220,7 +1224,7 @@ class Jinja2Loader(PluginLoader):
                 ts = _get_collection_metadata(acr.collection)
             except ValueError as e:
                 # no collection
-                raise KeyError('Invalid plugin FQCN ({0}): {1}'.format(key, to_native(e)))
+                raise KeyError('Invalid plugin FQCN ({0}): {1}'.format(key, to_native(e))) from e
 
             # TODO: implement cycle detection (unified across collection redir as well)
             routing_entry = ts.get('plugin_routing', {}).get(self.type, {}).get(leaf_key, {})
@@ -1304,14 +1308,10 @@ class Jinja2Loader(PluginLoader):
                             # FIXME: once we start caching these results, we'll be missing functions that would have loaded later
                             break  # go to next file as it can override if dupe (dont break both loops)
 
-        except AnsiblePluginRemovedError as apre:
-            raise AnsibleError(to_native(apre), 0, orig_exc=apre)
         except (AnsibleError, KeyError):
             raise
         except Exception as ex:
-            display.warning('An unexpected error occurred during Jinja2 plugin loading: {0}'.format(to_native(ex)))
-            display.vvv('Unexpected error during Jinja2 plugin loading: {0}'.format(format_exc()))
-            raise AnsibleError(to_native(ex), 0, orig_exc=ex)
+            raise AnsibleError('An unexpected error occurred during Jinja2 plugin loading.') from ex
 
         return get_with_context_result(plugin, context)
 
@@ -1325,10 +1325,11 @@ class Jinja2Loader(PluginLoader):
             raise AnsibleError('Do not set both path_only and class_only when calling PluginLoader.all()')
 
         self._ensure_non_collection_wrappers(*args, **kwargs)
+        # DTFIX-MERGE: surface these plugin errors (as wrapped plugins?) instead of hiding them
         if path_only:
-            yield from (w._original_path for w in self._cached_non_collection_wrappers.values())
+            yield from (w._original_path for w in self._cached_non_collection_wrappers.values() if not isinstance(w, _DeferredPluginLoadFailure))
         else:
-            yield from (w for w in self._cached_non_collection_wrappers.values())
+            yield from (w for w in self._cached_non_collection_wrappers.values() if not isinstance(w, _DeferredPluginLoadFailure))
 
     def _ensure_non_collection_wrappers(self, *args, **kwargs):
         if self._cached_non_collection_wrappers:
@@ -1357,12 +1358,17 @@ class Jinja2Loader(PluginLoader):
 
                 # the plugin class returned by the loader may host multiple Jinja plugins, but we wrap each plugin in
                 # its own surrogate wrapper instance here to ease the bookkeeping...
-                wrapper = self._plugin_wrapper_type(plugins[plugin_name])
+                try:
+                    wrapper = self._plugin_wrapper_type(plugins[plugin_name])
+                except Exception as ex:
+                    wrapper = _DeferredPluginLoadFailure(ex)
+
                 fqcn = plugin_name
                 collection = '.'.join(p_map.ansible_name.split('.')[:2]) if p_map.ansible_name.count('.') >= 2 else ''
                 if not plugin_name.startswith(collection):
                     fqcn = f"{collection}.{plugin_name}"
 
+                # FIXME: the target_names below are not reflected on the wrapper
                 self._update_object(wrapper, plugin_name, p_map._original_path, resolved=fqcn)
 
                 target_names = {plugin_name, fqcn}
@@ -1376,6 +1382,13 @@ class Jinja2Loader(PluginLoader):
                         continue
 
                     self._cached_non_collection_wrappers[target_name] = wrapper
+
+
+class _DeferredPluginLoadFailure:
+    """Represents a plugin which failed to load. For internal use only within plugin loader."""
+
+    def __init__(self, ex: Exception) -> None:
+        self.ex = ex
 
 
 def get_fqcr_and_name(resource, collection='ansible.builtin'):
@@ -1490,7 +1503,8 @@ def _configure_collection_loader(prefix_collections_path=None):
     if prefix_collections_path is None:
         prefix_collections_path = []
 
-    paths = list(prefix_collections_path) + C.COLLECTIONS_PATHS
+    # insert the internal ansible._protomatter collection up front
+    paths = [os.path.dirname(_internal.__file__)] + list(prefix_collections_path) + C.COLLECTIONS_PATHS
     finder = _AnsibleCollectionFinder(paths, C.COLLECTIONS_SCAN_SYS_PATH)
     finder._install()
 

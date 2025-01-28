@@ -43,13 +43,15 @@ def read_docstring_from_yaml_file(filename, verbose=True, ignore_errors=True):
 
     try:
         with open(filename, 'rb') as yamlfile:
+            # DTFIX-MERGE: use from_yaml instead of direct AnsibleLoader usage; also, is AnsibleLoader even the right thing in this context (vault support)?
             file_data = AnsibleLoader(yamlfile.read(), file_name=filename).get_single_data()
-    except Exception as e:
-        msg = "Unable to parse yaml file '%s': %s" % (filename, to_native(e))
+    except Exception as ex:
+        msg = f"Unable to parse yaml file {filename}"
+        # DTFIX-MERGE: find a better pattern for this
         if not ignore_errors:
-            raise AnsibleParserError(msg, orig_exc=e)
+            raise AnsibleParserError(f'{msg}.') from ex
         elif verbose:
-            display.error(msg)
+            display.error(f'{msg}: {ex}')
 
     if file_data:
         for key in string_to_vars:
@@ -104,12 +106,13 @@ def read_docstring_from_python_module(filename, verbose=True, ignore_errors=True
                     # yaml load the data
                     try:
                         data[next_string] = AnsibleLoader(value, file_name=filename).get_single_data()
-                    except Exception as e:
-                        msg = "Unable to parse docs '%s' in python file '%s': %s" % (_var2string(next_string), filename, to_native(e))
+                    except Exception as ex:
+                        msg = f"Unable to parse docs {_var2string(next_string)!r} in python file {filename!r}"
+                        # DTFIX-MERGE: use a better pattern to just conditionally send augmented exception to display.error or raise
                         if not ignore_errors:
-                            raise AnsibleParserError(msg, orig_exc=e)
+                            raise AnsibleParserError(f'{msg}.') from ex
                         elif verbose:
-                            display.error(msg)
+                            display.error(f'{msg}: {ex}')
 
                 next_string = None
 
@@ -157,12 +160,13 @@ def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
 
                         display.debug('Documentation assigned: %s' % varkey)
 
-    except Exception as e:
-        msg = "Unable to parse documentation in python file '%s': %s" % (filename, to_native(e))
+    except Exception as ex:
+        msg = f"Unable to parse documentation in python file {filename!r}"
+        # DTFIX-MERGE: better pattern to conditionally raise/display
         if not ignore_errors:
-            raise AnsibleParserError(msg, orig_exc=e)
+            raise AnsibleParserError(f'{msg}.') from ex
         elif verbose:
-            display.error(msg)
+            display.error(f'{msg}: {ex}.')
 
     return data
 

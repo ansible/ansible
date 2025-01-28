@@ -20,12 +20,14 @@ from jinja2.defaults import (
 
 from ansible import constants as C
 from ansible.config.manager import ensure_type
-from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleAction, AnsibleActionFail
+from ansible.errors import AnsibleError, AnsibleAction, AnsibleActionFail
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
+from ansible.utils.datatag.tags import TrustedAsTemplate
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
-from ansible.template import generate_ansible_template_vars, AnsibleEnvironment
+from ansible.plugin_utils.template import generate_ansible_template_vars
+from ansible._internal._templating._engine import TemplateOptions, TemplateOverrides
 
 
 class ActionModule(ActionBase):
@@ -98,63 +100,41 @@ class ActionModule(ActionBase):
             if mode == 'preserve':
                 mode = '0%03o' % stat.S_IMODE(os.stat(source).st_mode)
 
-            # Get vault decrypted tmp file
-            try:
-                tmp_source = self._loader.get_real_file(source)
-            except AnsibleFileNotFound as e:
-                raise AnsibleActionFail("could not find src=%s, %s" % (source, to_text(e)))
-            b_tmp_source = to_bytes(tmp_source, errors='surrogate_or_strict')
-
             # template the source data locally & get ready to transfer
-            try:
-                with open(b_tmp_source, 'rb') as f:
-                    try:
-                        template_data = to_text(f.read(), errors='surrogate_or_strict')
-                    except UnicodeError:
-                        raise AnsibleActionFail("Template source files must be utf-8 encoded")
+            template_data = self._loader.get_text_file_contents(source)
+            template_data = TrustedAsTemplate().tag(template_data)
 
-                # set jinja2 internal search path for includes
-                searchpath = task_vars.get('ansible_search_path', [])
-                searchpath.extend([self._loader._basedir, os.path.dirname(source)])
+            # set jinja2 internal search path for includes
+            searchpath = task_vars.get('ansible_search_path', [])
+            searchpath.extend([self._loader._basedir, os.path.dirname(source)])
 
-                # We want to search into the 'templates' subdir of each search path in
-                # addition to our original search paths.
-                newsearchpath = []
-                for p in searchpath:
-                    newsearchpath.append(os.path.join(p, 'templates'))
-                    newsearchpath.append(p)
-                searchpath = newsearchpath
+            # We want to search into the 'templates' subdir of each search path in
+            # addition to our original search paths.
+            newsearchpath = []
+            for p in searchpath:
+                newsearchpath.append(os.path.join(p, 'templates'))
+                newsearchpath.append(p)
+            searchpath = newsearchpath
 
-                # add ansible 'template' vars
-                temp_vars = task_vars.copy()
-                # NOTE in the case of ANSIBLE_DEBUG=1 task_vars is VarsWithSources(MutableMapping)
-                # so | operator cannot be used as it can be used only on dicts
-                # https://peps.python.org/pep-0584/#what-about-mapping-and-mutablemapping
-                temp_vars.update(generate_ansible_template_vars(self._task.args.get('src', None), source, dest))
+            # add ansible 'template' vars
+            temp_vars = task_vars.copy()
+            temp_vars.update(generate_ansible_template_vars(self._task.args.get('src', None), source, dest))
 
-                # force templar to use AnsibleEnvironment to prevent issues with native types
-                # https://github.com/ansible/ansible/issues/46169
-                templar = self._templar.copy_with_new_env(environment_class=AnsibleEnvironment,
-                                                          searchpath=searchpath,
-                                                          newline_sequence=newline_sequence,
-                                                          available_variables=temp_vars)
-                overrides = dict(
-                    block_start_string=block_start_string,
-                    block_end_string=block_end_string,
-                    variable_start_string=variable_start_string,
-                    variable_end_string=variable_end_string,
-                    comment_start_string=comment_start_string,
-                    comment_end_string=comment_end_string,
-                    trim_blocks=trim_blocks,
-                    lstrip_blocks=lstrip_blocks
-                )
-                resultant = templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False, overrides=overrides)
-            except AnsibleAction:
-                raise
-            except Exception as e:
-                raise AnsibleActionFail("%s: %s" % (type(e).__name__, to_text(e)))
-            finally:
-                self._loader.cleanup_tmp_file(b_tmp_source)
+            overrides = TemplateOverrides(
+                block_start_string=block_start_string,
+                block_end_string=block_end_string,
+                variable_start_string=variable_start_string,
+                variable_end_string=variable_end_string,
+                comment_start_string=comment_start_string,
+                comment_end_string=comment_end_string,
+                trim_blocks=trim_blocks,
+                lstrip_blocks=lstrip_blocks,
+                newline_sequence=newline_sequence,
+            )
+
+            # DTFIX-MERGE: use public API for these (convert TemplateOverrides to dict or make it public also)
+            with self._templar._engine.set_temporary_context(searchpath=searchpath, available_variables=temp_vars):
+                resultant = self._templar._engine.template(template_data, options=TemplateOptions(escape_backslashes=False, overrides=overrides))
 
             new_task = self._task.copy()
             # mode is either the mode from task.args or the mode of the source file if the task.args

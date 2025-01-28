@@ -17,104 +17,51 @@
 
 from __future__ import annotations
 
-import yaml
+import collections.abc as c
+import typing as t
 
-from ansible.module_utils.six import text_type, binary_type
-from ansible.module_utils.common.yaml import SafeDumper
-from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping, AnsibleVaultEncryptedUnicode
-from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes, NativeJinjaUnsafeText, NativeJinjaText
-from ansible.template import AnsibleUndefined
-from ansible.vars.hostvars import HostVars, HostVarsVars
-from ansible.vars.manager import VarsWithSources
+from yaml.representer import SafeRepresenter
+
+from ansible.module_utils.datatag import AnsibleTaggedObject, Tripwire, AnsibleTagHelper
+from ansible.parsing.vault import VaultHelper
+from ansible.module_utils.common.yaml import HAS_LIBYAML
+
+if HAS_LIBYAML:
+    from yaml.cyaml import CSafeDumper as SafeDumper
+else:
+    from yaml import SafeDumper  # type: ignore[assignment]
 
 
 class AnsibleDumper(SafeDumper):
-    """
-    A simple stub class that allows us to add representers
-    for our overridden object types.
-    """
+    """A simple stub class that allows us to add representers for our custom types."""
+
+    # DTFIX-MERGE: need a better way to handle serialization controls during YAML dumping
+    def __init__(self, *args, dump_vault_tags: bool | None = None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._dump_vault_tags = dump_vault_tags
 
 
-def represent_hostvars(self, data):
-    return self.represent_dict(dict(data))
+def represent_ansible_tagged_object(self, data):
+    if self._dump_vault_tags is not False and (ciphertext := VaultHelper.get_ciphertext(data, with_tags=False)):
+        # deprecated: description='enable the deprecation warning below' core_version='2.21'
+        # if self._dump_vault_tags is None:
+        #     Display().deprecated(
+        #         msg="Implicit YAML dumping of vaulted value ciphertext is deprecated. Set `dump_vault_tags` to explicitly specify the desired behavior",
+        #         version="2.25",
+        #     )
+
+        return self.represent_scalar('!vault', ciphertext, style='|')
+
+    return self.represent_data(AnsibleTagHelper.as_native_type(data))  # automatically decrypts encrypted strings
 
 
-# Note: only want to represent the encrypted data
-def represent_vault_encrypted_unicode(self, data):
-    return self.represent_scalar(u'!vault', data._ciphertext.decode(), style='|')
+def represent_tripwire(self, data: Tripwire) -> t.NoReturn:
+    data.trip()
 
 
-def represent_unicode(self, data):
-    return yaml.representer.SafeRepresenter.represent_str(self, text_type(data))
+AnsibleDumper.add_multi_representer(AnsibleTaggedObject, represent_ansible_tagged_object)
 
-
-def represent_binary(self, data):
-    return yaml.representer.SafeRepresenter.represent_binary(self, binary_type(data))
-
-
-def represent_undefined(self, data):
-    # Here bool will ensure _fail_with_undefined_error happens
-    # if the value is Undefined.
-    # This happens because Jinja sets __bool__ on StrictUndefined
-    return bool(data)
-
-
-AnsibleDumper.add_representer(
-    AnsibleUnicode,
-    represent_unicode,
-)
-
-AnsibleDumper.add_representer(
-    AnsibleUnsafeText,
-    represent_unicode,
-)
-
-AnsibleDumper.add_representer(
-    AnsibleUnsafeBytes,
-    represent_binary,
-)
-
-AnsibleDumper.add_representer(
-    HostVars,
-    represent_hostvars,
-)
-
-AnsibleDumper.add_representer(
-    HostVarsVars,
-    represent_hostvars,
-)
-
-AnsibleDumper.add_representer(
-    VarsWithSources,
-    represent_hostvars,
-)
-
-AnsibleDumper.add_representer(
-    AnsibleSequence,
-    yaml.representer.SafeRepresenter.represent_list,
-)
-
-AnsibleDumper.add_representer(
-    AnsibleMapping,
-    yaml.representer.SafeRepresenter.represent_dict,
-)
-
-AnsibleDumper.add_representer(
-    AnsibleVaultEncryptedUnicode,
-    represent_vault_encrypted_unicode,
-)
-
-AnsibleDumper.add_representer(
-    AnsibleUndefined,
-    represent_undefined,
-)
-
-AnsibleDumper.add_representer(
-    NativeJinjaUnsafeText,
-    represent_unicode,
-)
-
-AnsibleDumper.add_representer(
-    NativeJinjaText,
-    represent_unicode,
-)
+AnsibleDumper.add_multi_representer(Tripwire, represent_tripwire)
+AnsibleDumper.add_multi_representer(c.Mapping, SafeRepresenter.represent_dict)
+AnsibleDumper.add_multi_representer(c.Sequence, SafeRepresenter.represent_list)

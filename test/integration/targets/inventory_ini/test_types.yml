@@ -1,0 +1,22 @@
+- hosts: local
+  gather_facts: no
+  tasks:
+    - debug:
+        msg: "{{ none | type_debug }}"
+    - assert:
+        that:
+          - value_bool == True
+          - value_int == 1
+          - value_float == 1.2
+          - value_str_single_quote == 'single'
+          - value_str_double_quote == "double"
+          - value_bytes_single_quote == 'single'  # DTFIX-MERGE: should we preserve bytes?
+          - value_bytes_double_quote == "double"  # DTFIX-MERGE: should we preserve bytes?
+#          - value_ellipsis == ...  # DTFIX-MERGE: how do we want to handle this?
+          - 'value_dict == {"a": "b" }'
+          - value_list == [1, 2]
+          - value_tuple == [1, 2]  # DTFIX-MERGE: should we preserve tuples?
+          - value_set == [1, 2]  # DTFIX-MERGE: should we preserve sets?
+          - value_empty_set == []  # DTFIX-MERGE: should we preserve sets?
+          - value_none is none
+          - value_invalid == 'invalid'

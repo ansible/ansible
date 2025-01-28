@@ -24,17 +24,28 @@ from ansible.plugins.loader import init_plugin_loader
 
 MODULE_UTILS_BASIC_FILES = frozenset(('ansible/__init__.py',
                                       'ansible/module_utils/__init__.py',
-                                      'ansible/module_utils/_text.py',
                                       'ansible/module_utils/basic.py',
                                       'ansible/module_utils/six/__init__.py',
-                                      'ansible/module_utils/_text.py',
+                                      'ansible/module_utils/_internal/__init__.py',
+                                      'ansible/module_utils/_internal/_ansiballz.py',
+                                      'ansible/module_utils/_internal/_dataclass_validation.py',
+                                      'ansible/module_utils/_internal/_debugging.py',
+                                      'ansible/module_utils/_internal/_errors.py',
+                                      'ansible/module_utils/_internal/_serialization.py',
+                                      'ansible/module_utils/_internal/_traceback.py',
+                                      'ansible/module_utils/_internal/_patches/_dataclass_annotation_patch.py',
+                                      'ansible/module_utils/_internal/_patches/_socket_patch.py',
+                                      'ansible/module_utils/_internal/_patches/_sys_intern_patch.py',
+                                      'ansible/module_utils/_internal/_patches/__init__.py',
                                       'ansible/module_utils/common/collections.py',
                                       'ansible/module_utils/common/parameters.py',
                                       'ansible/module_utils/common/warnings.py',
                                       'ansible/module_utils/parsing/convert_bool.py',
                                       'ansible/module_utils/common/__init__.py',
                                       'ansible/module_utils/common/file.py',
+                                      'ansible/module_utils/common/json.py',
                                       'ansible/module_utils/common/locale.py',
+                                      'ansible/module_utils/common/messages.py',
                                       'ansible/module_utils/common/process.py',
                                       'ansible/module_utils/common/sys_info.py',
                                       'ansible/module_utils/common/text/__init__.py',
@@ -45,11 +56,17 @@ MODULE_UTILS_BASIC_FILES = frozenset(('ansible/__init__.py',
                                       'ansible/module_utils/common/arg_spec.py',
                                       'ansible/module_utils/compat/__init__.py',
                                       'ansible/module_utils/compat/selinux.py',
+                                      'ansible/module_utils/compat/typing.py',
+                                      'ansible/module_utils/datatag/__init__.py',
+                                      'ansible/module_utils/datatag/tags.py',
                                       'ansible/module_utils/distro/__init__.py',
                                       'ansible/module_utils/distro/_distro.py',
                                       'ansible/module_utils/errors.py',
                                       'ansible/module_utils/parsing/__init__.py',
                                       'ansible/module_utils/parsing/convert_bool.py',
+                                      'ansible/module_utils/serialization/__init__.py',
+                                      'ansible/module_utils/serialization/module_legacy_c2m.py',
+                                      'ansible/module_utils/serialization/module_legacy_m2c.py',
                                       'ansible/module_utils/six/__init__.py',
                                       ))
 
@@ -82,14 +99,14 @@ class TestRecursiveFinder(object):
         data = b'#!/usr/bin/python\ndef something(:\n   pass\n'
         with pytest.raises(ansible.errors.AnsibleError) as exec_info:
             recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'fake_module.py'), data, *finder_containers)
-        assert 'Unable to import fake_module due to invalid syntax' in str(exec_info.value)
+        assert "Unable to compile 'fake_module': invalid syntax" in str(exec_info.value)
 
     def test_module_utils_with_identation_error(self, finder_containers):
         name = 'fake_module'
         data = b'#!/usr/bin/python\n    def something():\n    pass\n'
         with pytest.raises(ansible.errors.AnsibleError) as exec_info:
             recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'fake_module.py'), data, *finder_containers)
-        assert 'Unable to import fake_module due to unexpected indent' in str(exec_info.value)
+        assert "Unable to compile 'fake_module': unexpected indent" in str(exec_info.value)
 
     #
     # Test importing six with many permutations because it is not a normal module

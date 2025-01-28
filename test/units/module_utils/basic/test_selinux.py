@@ -16,11 +16,13 @@ from ansible.module_utils import basic
 from ansible.module_utils.common.text.converters import to_bytes
 import builtins
 
+from ansible.module_utils.testing import patch_module_args
+
 
 @pytest.fixture
 def no_args_module_exec():
-    with patch.object(basic, '_ANSIBLE_ARGS', b'{"ANSIBLE_MODULE_ARGS": {}}'):
-        yield  # we're patching the global module object, so nothing to yield
+    with patch_module_args(None, 'legacy'):
+        yield
 
 
 def no_args_module(selinux_enabled=None, selinux_mls_enabled=None):
@@ -135,7 +137,7 @@ class TestSELinuxMU:
                                                              '_ansible_remote_tmp': "/tmp",
                                                              '_ansible_keep_remote_files': False})))
 
-        with patch.object(basic, '_ANSIBLE_ARGS', args):
+        with patch_module_args(args, 'legacy'):
             am = basic.AnsibleModule(
                 argument_spec=dict(),
             )

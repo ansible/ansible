@@ -79,5 +79,4 @@
 
 - assert:
     that:
-        - 'list_from_list == [4, 2]'
-        - 'list_from_list|type_debug == "list"'
+        - 'list_from_list | python_literal_eval == [4, 2]'

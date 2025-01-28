@@ -1,21 +1,64 @@
 - hosts: all
   gather_facts: no
   tasks:
-    - name: intentionally fail module execution
-      ping:
-        data: crash
+    - name: intentionally fail module execution with a handled exception
+      ansibull:
+        errors:
+          - one
+          - two
       ignore_errors: yes
-      register: ping
+      register: handled_error
+    - name: intentionally fail module execution with an unhandled handled exception
+      ansibull:
+        trigger_unhandled_exception: boom
+      ignore_errors: yes
+      register: unhandled_error
+    - name: intentionally return from module main instead of exiting
+      ansibull:
+        return_from_main: true
+      ignore_errors: yes
+      register: return_from_main
 
 - hosts: localhost
   gather_facts: no
   tasks:
-    - name: verify exceptions were properly captured
+    - name: check if error tracebacks are enabled
+      set_fact:
+        error_tracebacks: "{{ lookup('env', 'ANSIBLE_DISPLAY_TRACEBACK') == 'error' }}"
+
+    - name: verify exceptions were properly handled
       assert:
         that:
-          - hostvars.testhost_local.ping is failed
-          - "'boom' in hostvars.testhost_local.ping.exception"
-          - "'boom' in hostvars.testhost_local.ping.module_stderr"
-          - hostvars.testhost_ssh.ping is failed
-          - "'boom' in hostvars.testhost_ssh.ping.exception"
-          - "'boom' in hostvars.testhost_ssh.ping.module_stdout"
+          # NB: these are regexes- using . to avoid YAML colon escaping
+          - hostvars.testhost_local.handled_error is failed
+          - hostvars.testhost_local.handled_error.msg is match 'Task failed. Module failed. one. two'
+          - hostvars.testhost_ssh.handled_error is failed
+          - hostvars.testhost_ssh.handled_error.msg is match 'Task failed. Module failed. one. two'
+
+          - hostvars.testhost_local.unhandled_error is failed
+          - hostvars.testhost_local.unhandled_error.module_stderr is search 'Die. boom'
+          - hostvars.testhost_ssh.unhandled_error is failed
+          - hostvars.testhost_ssh.unhandled_error.module_stdout is search 'Die. boom'
+
+          - hostvars.testhost_local.return_from_main is failed
+          - hostvars.testhost_local.return_from_main.msg is match 'Task failed. Module failed. New-style module did not handle its own exit.'
+          - hostvars.testhost_ssh.return_from_main is failed
+          - hostvars.testhost_ssh.return_from_main.msg is match 'Task failed. Module failed. New-style module did not handle its own exit.'
+
+    - name: verify tracebacks were captured
+      assert:
+        that:
+          - hostvars.testhost_local.handled_error.exception is contains 'Traceback'
+          - hostvars.testhost_ssh.handled_error.exception is contains 'Traceback'
+          - hostvars.testhost_local.unhandled_error.exception is contains 'Traceback'
+          - hostvars.testhost_ssh.unhandled_error.exception is contains 'Traceback'
+      when: error_tracebacks
+
+    - name: verify tracebacks were not captured
+      assert:
+        that:
+          - hostvars.testhost_local.handled_error.exception == '(traceback unavailable)'
+          - hostvars.testhost_ssh.handled_error.exception == '(traceback unavailable)'
+          - hostvars.testhost_local.unhandled_error.exception == '(traceback unavailable)'
+          - hostvars.testhost_ssh.unhandled_error.exception == '(traceback unavailable)'
+      when: not error_tracebacks

@@ -159,4 +159,5 @@ cat <<EOF > test_dead_ping_error.yml
   tasks:
   - dead_ping:
 EOF
-ansible-playbook test_dead_ping_error.yml 2>&1 >/dev/null | grep -e 'line 4, column 5'
+ansible-playbook test_dead_ping_error.yml 2>&1 >/dev/null | grep -e ':4:5'
+echo PASS

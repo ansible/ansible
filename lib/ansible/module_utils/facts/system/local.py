@@ -7,8 +7,7 @@ import glob
 import json
 import os
 import stat
-
-import ansible.module_utils.compat.typing as t
+import typing as t
 
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.facts.utils import get_file_content
