@@ -66,7 +66,7 @@ class Playbook:
         self._file_name = file_name
 
         try:
-            ds = self._loader.load_from_file(os.path.basename(file_name))
+            ds = self._loader.load_from_file(os.path.basename(file_name), trusted_as_template=True)
         except UnicodeDecodeError as e:
             raise AnsibleParserError("Could not read playbook (%s) due to encoding issues: %s" % (file_name, to_native(e)))
 

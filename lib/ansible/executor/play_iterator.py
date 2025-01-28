@@ -155,9 +155,6 @@ class PlayIterator:
         setup_block.run_once = False
         setup_task = Task(block=setup_block)
         setup_task.action = 'gather_facts'
-        # TODO: hardcoded resolution here, but should use actual resolution code in the end,
-        #       in case of 'legacy' mismatch
-        setup_task.resolved_action = 'ansible.builtin.gather_facts'
         setup_task.name = 'Gathering Facts'
         setup_task.args = {}
 
@@ -255,7 +252,6 @@ class PlayIterator:
             self.set_state_for_host(host.name, s)
 
         display.debug("done getting next task for host %s" % host.name)
-        display.debug(" ^ task is: %s" % task)
         display.debug(" ^ state is: %s" % s)
         return (s, task)
 
@@ -292,7 +288,7 @@ class PlayIterator:
 
                     if (gathering == 'implicit' and implied) or \
                        (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or \
-                       (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name, {}).get('_ansible_facts_gathered', False))):
+                       (gathering == 'smart' and implied and not self._variable_manager._facts_gathered_for_host(host.name)):
                         # The setup block is always self._blocks[0], as we inject it
                         # during the play compilation in __init__ above.
                         setup_block = self._blocks[0]
@@ -450,8 +446,7 @@ class PlayIterator:
                 # skip implicit flush_handlers if there are no handlers notified
                 if (
                     task.implicit
-                    and task.action in C._ACTION_META
-                    and task.args.get('_raw_params', None) == 'flush_handlers'
+                    and task._get_meta() == 'flush_handlers'
                     and (
                         # the state store in the `state` variable could be a nested state,
                         # notifications are always stored in the top level state, get it here

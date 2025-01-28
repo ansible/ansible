@@ -11,7 +11,6 @@ import platform
 import pytest
 from ansible.modules import service
 from ansible.module_utils.basic import AnsibleModule
-from units.modules.utils import set_module_args
 
 
 def mocker_sunos_service(mocker):
@@ -49,7 +48,7 @@ def mocked_sunos_service(mocker):
     mocker_sunos_service(mocker)
 
 
-def test_sunos_service_start(mocked_sunos_service, capfd):
+def test_sunos_service_start(mocked_sunos_service, capfd, set_module_args):
     """
     test SunOS Service Start
     """

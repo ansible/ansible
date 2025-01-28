@@ -17,18 +17,16 @@
 
 from __future__ import annotations
 
-import os
+
 import shutil
 import tempfile
 
-from unittest import mock
 
 import unittest
 from ansible.errors import AnsibleError
 from ansible.plugins.cache import CachePluginAdjudicator
 from ansible.plugins.cache.memory import CacheModule as MemoryCache
-from ansible.plugins.loader import cache_loader, init_plugin_loader
-from ansible.vars.fact_cache import FactCache
+from ansible.plugins.loader import cache_loader
 
 import pytest
 
@@ -91,42 +89,28 @@ class TestCachePluginAdjudicator(unittest.TestCase):
         self.cache.update_cache_if_changed()
         assert len(self.cache._plugin.keys()) == 2
 
-    def test_flush(self):
-        # Fake that the cache already has some data in it but the adjudicator
-        # hasn't loaded it in.
-        self.cache._plugin.set('monkey', 'animal')
-        self.cache._plugin.set('wolf', 'animal')
-        self.cache._plugin.set('another wolf', 'another animal')
-
-        # The adjudicator does't know about the new entries
-        assert len(self.cache.keys()) == 2
-        # But the cache itself does
-        assert len(self.cache._plugin.keys()) == 3
-
-        # If we call flush, both the adjudicator and the cache should flush
-        self.cache.flush()
-        assert len(self.cache.keys()) == 0
-        assert len(self.cache._plugin.keys()) == 0
-
 
 class TestJsonFileCache(TestCachePluginAdjudicator):
     cache_prefix = ''
 
     def setUp(self):
         self.cache_dir = tempfile.mkdtemp(prefix='ansible-plugins-cache-')
-        self.cache = CachePluginAdjudicator(
-            plugin_name='jsonfile', _uri=self.cache_dir,
-            _prefix=self.cache_prefix)
+        self.cache = self.get_cache(self.cache_prefix)
         self.cache['cache_key'] = {'key1': 'value1', 'key2': 'value2'}
         self.cache['cache_key_2'] = {'key': 'value'}
+
+    def get_cache(self, prefix):
+        return CachePluginAdjudicator(
+            plugin_name='jsonfile', _uri=self.cache_dir,
+            _prefix=prefix)
 
     def test_keys(self):
         # A cache without a prefix will consider all files in the cache
         # directory as valid cache entries.
-        self.cache._plugin._dump(
-            'no prefix', os.path.join(self.cache_dir, 'no_prefix'))
-        self.cache._plugin._dump(
-            'special cache', os.path.join(self.cache_dir, 'special_test'))
+        cache_writer = self.get_cache(self.cache_prefix)
+        cache_writer["no_prefix"] = dict(a=1)
+        cache_writer["special_test"] = dict(b=2)
+        cache_writer.update_cache_if_changed()
 
         # The plugin does not know the CachePluginAdjudicator entries.
         assert sorted(self.cache._plugin.keys()) == [
@@ -135,8 +119,8 @@ class TestJsonFileCache(TestCachePluginAdjudicator):
         assert 'no_prefix' in self.cache
         assert 'special_test' in self.cache
         assert 'test' not in self.cache
-        assert self.cache['no_prefix'] == 'no prefix'
-        assert self.cache['special_test'] == 'special cache'
+        assert self.cache['no_prefix'] == dict(a=1)
+        assert self.cache['special_test'] == dict(b=2)
 
     def tearDown(self):
         shutil.rmtree(self.cache_dir)
@@ -148,10 +132,13 @@ class TestJsonFileCachePrefix(TestJsonFileCache):
     def test_keys(self):
         # For caches with a prefix only files that match the prefix are
         # considered. The prefix is removed from the key name.
-        self.cache._plugin._dump(
-            'no prefix', os.path.join(self.cache_dir, 'no_prefix'))
-        self.cache._plugin._dump(
-            'special cache', os.path.join(self.cache_dir, 'special_test'))
+        cache_writer = self.get_cache('')
+        cache_writer["no_prefix"] = dict(a=1)
+        cache_writer.update_cache_if_changed()
+
+        cache_writer = self.get_cache(self.cache_prefix)
+        cache_writer["test"] = dict(b=2)
+        cache_writer.update_cache_if_changed()
 
         # The plugin does not know the CachePluginAdjudicator entries.
         assert sorted(self.cache._plugin.keys()) == ['test']
@@ -159,39 +146,23 @@ class TestJsonFileCachePrefix(TestJsonFileCache):
         assert 'no_prefix' not in self.cache
         assert 'special_test' not in self.cache
         assert 'test' in self.cache
-        assert self.cache['test'] == 'special cache'
+        assert self.cache['test'] == dict(b=2)
 
 
-class TestFactCache(unittest.TestCase):
+class TestCachePlugin(unittest.TestCase):
     def setUp(self):
-        with mock.patch('ansible.constants.CACHE_PLUGIN', 'memory'):
-            self.cache = FactCache()
+        self.cache = cache_loader.get('memory')
 
-    def test_copy(self):
-        self.cache['avocado'] = 'fruit'
-        self.cache['daisy'] = 'flower'
-        a_copy = self.cache.copy()
-        self.assertEqual(type(a_copy), dict)
-        self.assertEqual(a_copy, dict(avocado='fruit', daisy='flower'))
-
-    def test_flush(self):
-        self.cache['motorcycle'] = 'vehicle'
-        self.cache['sock'] = 'clothing'
-        self.cache.flush()
-        assert len(self.cache.keys()) == 0
-
+    @pytest.mark.usefixtures('collection_loader')
     def test_plugin_load_failure(self):
-        init_plugin_loader()
         # See https://github.com/ansible/ansible/issues/18751
         # Note no fact_connection config set, so this will fail
-        with mock.patch('ansible.constants.CACHE_PLUGIN', 'json'):
-            self.assertRaisesRegex(AnsibleError,
-                                   "Unable to load the facts cache plugin.*json.*",
-                                   FactCache)
+        with pytest.raises(AnsibleError, match="Unable to load the cache plugin.*json.*"):
+            cache_loader.get('json')
 
     def test_update(self):
-        self.cache.update({'cache_key': {'key2': 'updatedvalue'}})
-        assert self.cache['cache_key']['key2'] == 'updatedvalue'
+        self.cache.set('cache_key', {'key2': 'updatedvalue'})
+        assert self.cache.get('cache_key')['key2'] == 'updatedvalue'
 
 
 def test_memory_cachemodule_with_loader():

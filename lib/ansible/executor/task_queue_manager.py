@@ -27,18 +27,22 @@ import multiprocessing.queues
 
 from ansible import constants as C
 from ansible import context
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, ExitCode, AnsibleCallbackError
+from ansible._internal._errors._handler import ErrorHandler
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import TaskResult
+from ansible.inventory.data import InventoryData
 from ansible.module_utils.six import string_types
-from ansible.module_utils.common.text.converters import to_text, to_native
+from ansible.module_utils.common.text.converters import to_native
+from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.play_context import PlayContext
 from ansible.playbook.task import Task
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
-from ansible.template import Templar
+from ansible._internal._templating._engine import TemplateEngine
 from ansible.vars.hostvars import HostVars
+from ansible.vars.manager import VariableManager
 from ansible.utils.display import Display
 from ansible.utils.lock import lock_decorator
 from ansible.utils.multiprocessing import context as multiprocessing_context
@@ -125,27 +129,38 @@ class TaskQueueManager:
     which dispatches the Play's tasks to hosts.
     """
 
-    RUN_OK = 0
-    RUN_ERROR = 1
-    RUN_FAILED_HOSTS = 2
-    RUN_UNREACHABLE_HOSTS = 4
-    RUN_FAILED_BREAK_PLAY = 8
-    RUN_UNKNOWN_ERROR = 255
+    RUN_OK = ExitCode.SUCCESS
+    RUN_ERROR = ExitCode.GENERIC_ERROR
+    RUN_FAILED_HOSTS = ExitCode.HOST_FAILED
+    RUN_UNREACHABLE_HOSTS = ExitCode.HOST_UNREACHABLE
+    RUN_FAILED_BREAK_PLAY = 8  # never leaves PlaybookExecutor.run
+    RUN_UNKNOWN_ERROR = 255  # never leaves PlaybookExecutor.run, intentionally includes the bit value for 8
 
-    def __init__(self, inventory, variable_manager, loader, passwords, stdout_callback=None, run_additional_callbacks=True, run_tree=False, forks=None):
+    _callback_dispatch_error_handler = ErrorHandler.from_config('_CALLBACK_DISPATCH_ERROR_BEHAVIOR')
 
+    def __init__(
+        self,
+        inventory: InventoryData,
+        variable_manager: VariableManager,
+        loader: DataLoader,
+        passwords: dict[str, str | None],
+        stdout_callback: str | None = None,
+        run_additional_callbacks: bool = True,
+        run_tree: bool = False,
+        forks: int | None = None,
+    ) -> None:
         self._inventory = inventory
         self._variable_manager = variable_manager
         self._loader = loader
         self._stats = AggregateStats()
         self.passwords = passwords
-        self._stdout_callback = stdout_callback
+        self._stdout_callback: str | None | CallbackBase = stdout_callback
         self._run_additional_callbacks = run_additional_callbacks
         self._run_tree = run_tree
         self._forks = forks or 5
 
         self._callbacks_loaded = False
-        self._callback_plugins = []
+        self._callback_plugins: list[CallbackBase] = []
         self._start_at_done = False
 
         # make sure any module paths (if specified) are added to the module_loader
@@ -158,8 +173,8 @@ class TaskQueueManager:
         self._terminated = False
 
         # dictionaries to keep track of failed/unreachable hosts
-        self._failed_hosts = dict()
-        self._unreachable_hosts = dict()
+        self._failed_hosts: dict[str, t.Literal[True]] = dict()
+        self._unreachable_hosts: dict[str, t.Literal[True]] = dict()
 
         try:
             self._final_q = FinalQueue()
@@ -291,7 +306,7 @@ class TaskQueueManager:
             self.load_callbacks()
 
         all_vars = self._variable_manager.get_vars(play=play)
-        templar = Templar(loader=self._loader, variables=all_vars)
+        templar = TemplateEngine(loader=self._loader, variables=all_vars)
 
         new_play = play.copy()
         new_play.post_validate(templar)
@@ -394,25 +409,25 @@ class TaskQueueManager:
                     except AttributeError:
                         pass
 
-    def clear_failed_hosts(self):
+    def clear_failed_hosts(self) -> None:
         self._failed_hosts = dict()
 
-    def get_inventory(self):
+    def get_inventory(self) -> InventoryData:
         return self._inventory
 
-    def get_variable_manager(self):
+    def get_variable_manager(self) -> VariableManager:
         return self._variable_manager
 
-    def get_loader(self):
+    def get_loader(self) -> DataLoader:
         return self._loader
 
     def get_workers(self):
         return self._workers[:]
 
-    def terminate(self):
+    def terminate(self) -> None:
         self._terminated = True
 
-    def has_dead_workers(self):
+    def has_dead_workers(self) -> bool:
 
         # [<WorkerProcess(WorkerProcess-2, stopped[SIGKILL])>,
         # <WorkerProcess(WorkerProcess-2, stopped[SIGTERM])>
@@ -469,11 +484,8 @@ class TaskQueueManager:
                 continue
 
             for method in methods:
-                try:
-                    method(*new_args, **kwargs)
-                except Exception as e:
-                    # TODO: add config toggle to make this fatal or not?
-                    display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_text(method_name), to_text(callback_plugin), to_text(e)))
-                    from traceback import format_tb
-                    from sys import exc_info
-                    display.vvv('Callback Exception: \n' + ' '.join(format_tb(exc_info()[2])))
+                with self._callback_dispatch_error_handler.handle(AnsibleCallbackError):
+                    try:
+                        method(*new_args, **kwargs)
+                    except Exception as ex:
+                        raise AnsibleCallbackError(f"Callback dispatch {method_name!r} failed for plugin {callback_plugin._load_name!r}.") from ex

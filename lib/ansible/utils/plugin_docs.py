@@ -6,6 +6,8 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSet, MutableSequence
 from pathlib import Path
 
+import yaml
+
 from ansible import constants as C
 from ansible.release import __version__ as ansible_version
 from ansible.errors import AnsibleError, AnsibleParserError, AnsiblePluginNotFound
@@ -14,6 +16,7 @@ from ansible.module_utils.common.text.converters import to_native
 from ansible.parsing.plugin_docs import read_docstring
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.utils.display import Display
+from ansible._internal._datatag import _tags
 
 display = Display()
 
@@ -160,7 +163,7 @@ def add_fragments(doc, filename, fragment_loader, is_module=False):
             else:
                 fragment_yaml = '{}'  # TODO: this is still an error later since we require 'options' below...
 
-        fragment = AnsibleLoader(fragment_yaml, file_name=filename).get_single_data()
+        fragment = yaml.load(_tags.Origin(path=filename).tag(fragment_yaml), Loader=AnsibleLoader)
 
         real_fragment_name = getattr(fragment_class, 'ansible_name')
         real_collection_name = '.'.join(real_fragment_name.split('.')[0:2]) if '.' in real_fragment_name else ''
@@ -318,8 +321,6 @@ def find_plugin_docfile(plugin, plugin_type, loader):
 
 def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
 
-    docs = []
-
     # find plugin doc file, if it doesn't exist this will throw error, we let it through
     # can raise exception and short circuit when 'not found'
     filename, context = find_plugin_docfile(plugin, plugin_type, loader)
@@ -327,8 +328,8 @@ def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
 
     try:
         docs = get_docstring(filename, fragment_loader, verbose=verbose, collection_name=collection_name, plugin_type=plugin_type)
-    except Exception as e:
-        raise AnsibleParserError('%s did not contain a DOCUMENTATION attribute (%s)' % (plugin, filename), orig_exc=e)
+    except Exception as ex:
+        raise AnsibleParserError(f'{plugin_type} plugin {plugin!r} did not contain a DOCUMENTATION attribute in {filename!r}.') from ex
 
     # no good? try adjacent
     if not docs[0]:
@@ -338,15 +339,15 @@ def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
                 filename = newfile
                 if docs[0] is not None:
                     break
-            except Exception as e:
-                raise AnsibleParserError('Adjacent file %s did not contain a DOCUMENTATION attribute (%s)' % (plugin, filename), orig_exc=e)
+            except Exception as ex:
+                raise AnsibleParserError(f'{plugin_type} plugin {plugin!r} adjacent file did not contain a DOCUMENTATION attribute in {filename!r}.') from ex
 
     # add extra data to docs[0] (aka 'DOCUMENTATION')
     if docs[0] is None:
-        raise AnsibleParserError('No documentation available for %s (%s)' % (plugin, filename))
-    else:
-        docs[0]['filename'] = filename
-        docs[0]['collection'] = collection_name
-        docs[0]['plugin_name'] = context.resolved_fqcn
+        raise AnsibleParserError(f'No documentation available for {plugin_type} plugin {plugin!r} in {filename!r}.')
+
+    docs[0]['filename'] = filename
+    docs[0]['collection'] = collection_name
+    docs[0]['plugin_name'] = context.resolved_fqcn
 
     return docs

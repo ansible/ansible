@@ -21,9 +21,12 @@ from __future__ import annotations
 from io import StringIO
 import pytest
 
+from ansible.module_utils import _internal
 from ansible.plugins.connection import paramiko_ssh as paramiko_ssh_module
 from ansible.plugins.loader import connection_loader
 from ansible.playbook.play_context import PlayContext
+
+from units.test_utils.controller.display import emits_warnings
 
 
 @pytest.fixture
@@ -54,3 +57,19 @@ def test_paramiko_connect(play_context, in_stream, mocker):
 
     assert isinstance(connection, paramiko_ssh_module.Connection)
     assert connection._connected is True
+
+
+def test_deprecation_warning_controller():
+    """Ensures deprecation warnings are generated for external paramiko imports."""
+    assert _internal.is_controller
+
+    # ensure direct access to `_` prefixed attrs does not warn
+    with emits_warnings(deprecation_pattern=[], warning_pattern=[]):
+        from ansible.module_utils.compat import paramiko
+        assert paramiko._paramiko is not None
+        assert isinstance(paramiko._PARAMIKO_IMPORT_ERR, (Exception, type(None)))
+
+    with emits_warnings(deprecation_pattern=["The 'paramiko' compat import is deprecated", "The 'PARAMIKO_IMPORT_ERR' compat import is deprecated"]):
+        from ansible.module_utils.compat import paramiko
+        assert paramiko.paramiko is not None
+        assert isinstance(paramiko.PARAMIKO_IMPORT_ERR, (Exception, type(None)))

@@ -22,19 +22,24 @@ import os
 import re
 from importlib import import_module
 
-from ansible import constants as C
+
+import builtins
+import pytest
+import shlex
 import unittest
+
 from unittest.mock import patch, MagicMock, mock_open
 
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAuthenticationFailure
-import builtins
-import shlex
+from ansible.executor.module_common import _BuiltModule
 from ansible.module_utils.common.text.converters import to_bytes
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.action import ActionBase
-from ansible.plugins.loader import init_plugin_loader
-from ansible.template import Templar
 from ansible.vars.clean import clean_facts
+from ansible.template import Templar
+from ansible.plugins import loader
 
 from units.mock.loader import DictDataLoader
 
@@ -108,8 +113,8 @@ class TestActionBase(unittest.TestCase):
         results = action_base.run()
         self.assertEqual(results, {})
 
+    @pytest.mark.usefixtures('collection_loader')
     def test_action_base__configure_module(self):
-        init_plugin_loader()
         # Pre-populate the ansible.builtin collection
         # so reading the ansible_builtin_runtime.yml happens
         # before the mock_open below
@@ -139,12 +144,11 @@ class TestActionBase(unittest.TestCase):
             else:
                 mockctx.resolved = True
                 mockctx.plugin_resolved_path = '/fake/path/to/%s' % name
+            mockctx.resolved_fqcn = name
             return mockctx
 
         mock_module_loader = MagicMock()
         mock_module_loader.find_plugin_with_context.side_effect = mock_find_plugin_with_context
-        mock_shared_obj_loader = MagicMock()
-        mock_shared_obj_loader.module_loader = mock_module_loader
 
         # we're using a real play context here
         play_context = PlayContext()
@@ -156,31 +160,44 @@ class TestActionBase(unittest.TestCase):
             play_context=play_context,
             loader=fake_loader,
             templar=Templar(loader=fake_loader),
-            shared_loader_obj=mock_shared_obj_loader,
         )
 
+        original_open = builtins.open
+
+        def custom_open(file, *args, **kwargs):
+            if file.endswith('.lock'):
+                return original_open(file, *args, **kwargs)
+            else:
+                return mock_open(read_data=to_bytes(python_module_replacers.strip(), encoding='utf-8'))(file, *args, **kwargs)
+
         # test python module formatting
-        with patch.object(builtins, 'open', mock_open(read_data=to_bytes(python_module_replacers.strip(), encoding='utf-8'))):
+        with (
+            patch.object(builtins, 'open', custom_open),
+            patch.object(loader, 'module_loader', mock_module_loader)
+        ):
             with patch.object(os, 'rename'):
                 mock_task.args = dict(a=1, foo='fö〩')
                 mock_connection.module_implementation_preferences = ('',)
-                (style, shebang, data, path) = action_base._configure_module(mock_task.action, mock_task.args,
-                                                                             task_vars=dict(ansible_python_interpreter='/usr/bin/python',
-                                                                                            ansible_playbook_python='/usr/bin/python'))
-                self.assertEqual(style, "new")
-                self.assertEqual(shebang, u"#!/usr/bin/python")
+                built_module, path = action_base._configure_module(mock_task.action, mock_task.args,
+                                                                   task_vars=dict(ansible_python_interpreter='/usr/bin/python',
+                                                                                  ansible_playbook_python='/usr/bin/python'))
+                self.assertEqual(built_module.module_style, "new")
+                self.assertEqual(built_module.shebang, u"#!/usr/bin/python")
 
                 # test module not found
                 self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args, {})
 
         # test powershell module formatting
-        with patch.object(builtins, 'open', mock_open(read_data=to_bytes(powershell_module_replacers.strip(), encoding='utf-8'))):
+        with (
+            patch.object(builtins, 'open', mock_open(read_data=to_bytes(powershell_module_replacers.strip(), encoding='utf-8'))),
+            patch.object(loader, 'module_loader', mock_module_loader),
+        ):
             mock_task.action = 'win_copy'
             mock_task.args = dict(b=2)
             mock_connection.module_implementation_preferences = ('.ps1',)
-            (style, shebang, data, path) = action_base._configure_module('stat', mock_task.args, {})
-            self.assertEqual(style, "new")
-            self.assertEqual(shebang, u'#!powershell')
+            built_module, path = action_base._configure_module('stat', mock_task.args, {})
+            self.assertEqual(built_module.module_style, "new")
+            self.assertEqual(built_module.shebang, u'#!powershell')
 
             # test module not found
             self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args, {})
@@ -228,7 +245,7 @@ class TestActionBase(unittest.TestCase):
 
         # test environment with a variable in it
         templar.available_variables = dict(the_var='bar')
-        mock_task.environment = [dict(FOO='{{the_var}}')]
+        mock_task.environment = [dict(FOO=TrustedAsTemplate().tag('{{the_var}}'))]
         env_string = action_base._compute_environment_string()
         self.assertEqual(env_string, "FOO=bar")
 
@@ -606,11 +623,14 @@ class TestActionBase(unittest.TestCase):
 
         self.assertEqual(action_base._transfer_data('/path/to/remote/file', 'some data'), '/path/to/remote/file')
         self.assertEqual(action_base._transfer_data('/path/to/remote/file', 'some mixed data: fö〩'), '/path/to/remote/file')
-        self.assertEqual(action_base._transfer_data('/path/to/remote/file', dict(some_key='some value')), '/path/to/remote/file')
-        self.assertEqual(action_base._transfer_data('/path/to/remote/file', dict(some_key='fö〩')), '/path/to/remote/file')
+        self.assertEqual(action_base._transfer_data('/path/to/remote/file', 'some data'.encode()), '/path/to/remote/file')
+        self.assertEqual(action_base._transfer_data('/path/to/remote/file', 'some mixed data: fö〩'.encode()), '/path/to/remote/file')
 
         mock_afo.write.side_effect = Exception()
         self.assertRaises(AnsibleError, action_base._transfer_data, '/path/to/remote/file', '')
+
+        with pytest.raises(TypeError):
+            action_base._transfer_data('/path/to/remote/file', dict())
 
     def test_action_base__execute_remote_stat(self):
         # create our fake task
@@ -698,7 +718,8 @@ class TestActionBase(unittest.TestCase):
         action_base._low_level_execute_command = MagicMock()
         action_base._fixup_perms2 = MagicMock()
 
-        action_base._configure_module.return_value = ('new', '#!/usr/bin/python', 'this is the module data', 'path')
+        action_base._configure_module.return_value = (
+            _BuiltModule(module_style='new', shebang='#!/usr/bin/python', b_module_data=b'this is the module data', serialization_profile='legacy'), 'path')
         action_base._is_pipelining_enabled.return_value = False
         action_base._compute_environment_string.return_value = ''
         action_base._connection.has_pipelining = False
@@ -720,12 +741,15 @@ class TestActionBase(unittest.TestCase):
         )
 
         # test with needing/removing a remote tmp path
-        action_base._configure_module.return_value = ('old', '#!/usr/bin/python', 'this is the module data', 'path')
+        action_base._configure_module.return_value = (
+            _BuiltModule(module_style='old', shebang='#!/usr/bin/python', b_module_data=b'this is the module data', serialization_profile='legacy'), 'path')
         action_base._is_pipelining_enabled.return_value = False
         action_base._make_tmp_path.return_value = '/the/tmp/path'
         self.assertEqual(action_base._execute_module(), dict(_ansible_parsed=True, rc=0, stdout="ok", stdout_lines=['ok']))
 
-        action_base._configure_module.return_value = ('non_native_want_json', '#!/usr/bin/python', 'this is the module data', 'path')
+        action_base._configure_module.return_value = (
+            _BuiltModule(module_style='non_native_want_json', shebang='#!/usr/bin/python', b_module_data=b'this is the module data',
+                         serialization_profile='legacy'), 'path')
         self.assertEqual(action_base._execute_module(), dict(_ansible_parsed=True, rc=0, stdout="ok", stdout_lines=['ok']))
 
         play_context.become = True
@@ -735,7 +759,8 @@ class TestActionBase(unittest.TestCase):
         self.assertEqual(action_base._execute_module(), dict(_ansible_parsed=True, rc=0, stdout="ok", stdout_lines=['ok']))
 
         # test an invalid shebang return
-        action_base._configure_module.return_value = ('new', '', 'this is the module data', 'path')
+        action_base._configure_module.return_value = (
+            _BuiltModule(module_style='new', shebang='', b_module_data=b'this is the module data', serialization_profile='legacy'), 'path')
         action_base._is_pipelining_enabled.return_value = False
         action_base._make_tmp_path.return_value = '/the/tmp/path'
         self.assertRaises(AnsibleError, action_base._execute_module)
@@ -744,7 +769,8 @@ class TestActionBase(unittest.TestCase):
         # mode and once with support disabled to raise an error
         play_context.check_mode = True
         mock_task.check_mode = True
-        action_base._configure_module.return_value = ('new', '#!/usr/bin/python', 'this is the module data', 'path')
+        action_base._configure_module.return_value = (
+            _BuiltModule(module_style='new', shebang='#!/usr/bin/python', b_module_data=b'this is the module data', serialization_profile='legacy'), 'path')
         self.assertEqual(action_base._execute_module(), dict(_ansible_parsed=True, rc=0, stdout="ok", stdout_lines=['ok']))
         action_base._supports_check_mode = False
         self.assertRaises(AnsibleError, action_base._execute_module)
@@ -763,6 +789,7 @@ class TestActionBase(unittest.TestCase):
         action_base._connection._shell = shell = MagicMock(append_command=MagicMock(return_value=('JOINED CMD')))
 
         action_base._connection.become = become = MagicMock()
+        action_base._connection.transport = ''
         become.build_become_command.return_value = 'foo'
 
         action_base._low_level_execute_command('ECHO', sudoable=True)
@@ -818,7 +845,7 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
                          'stdout': stdout,
                          'stdout_lines': stdout.splitlines(),
                          'stderr': err}
-        res = action_base._parse_returned_data(returned_data)
+        res = action_base._parse_returned_data(returned_data, 'legacy')
         self.assertFalse(res['_ansible_parsed'])
         self.assertTrue(res['failed'])
         self.assertEqual(res['module_stderr'], err)
@@ -832,7 +859,7 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
                          'stdout': stdout,
                          'stdout_lines': stdout.splitlines(),
                          'stderr': err}
-        res = action_base._parse_returned_data(returned_data)
+        res = action_base._parse_returned_data(returned_data, 'legacy')
         del res['_ansible_parsed']  # we always have _ansible_parsed
         self.assertEqual(len(res), 0)
         self.assertFalse(res)
@@ -847,11 +874,9 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
                          'stdout': stdout,
                          'stdout_lines': stdout.splitlines(),
                          'stderr': err}
-        res = action_base._parse_returned_data(returned_data)
+        res = action_base._parse_returned_data(returned_data, 'legacy')
         self.assertTrue(res['ansible_facts'])
         self.assertIn('ansible_blip', res['ansible_facts'])
-        # TODO: Should this be an AnsibleUnsafe?
-        # self.assertIsInstance(res['ansible_facts'], AnsibleUnsafe)
 
     def test_json_facts_add_host(self):
         action_base = _action_base()
@@ -866,9 +891,7 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
                          'stdout': stdout,
                          'stdout_lines': stdout.splitlines(),
                          'stderr': err}
-        res = action_base._parse_returned_data(returned_data)
+        res = action_base._parse_returned_data(returned_data, 'legacy')
         self.assertTrue(res['ansible_facts'])
         self.assertIn('ansible_blip', res['ansible_facts'])
         self.assertIn('add_host', res)
-        # TODO: Should this be an AnsibleUnsafe?
-        # self.assertIsInstance(res['ansible_facts'], AnsibleUnsafe)

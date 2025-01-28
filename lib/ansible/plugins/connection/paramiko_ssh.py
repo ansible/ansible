@@ -248,7 +248,7 @@ from ansible.errors import (
     AnsibleError,
     AnsibleFileNotFound,
 )
-from ansible.module_utils.compat.paramiko import PARAMIKO_IMPORT_ERR, paramiko
+from ansible.module_utils.compat.paramiko import _PARAMIKO_IMPORT_ERR as PARAMIKO_IMPORT_ERR, _paramiko as paramiko
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe
@@ -327,8 +327,8 @@ class Connection(ConnectionBase):
     _log_channel: str | None = None
 
     def __init__(self, *args, **kwargs):
+        display.deprecated('The paramiko connection plugin is deprecated.', version='2.21')
         super().__init__(*args, **kwargs)
-        display.deprecated('The paramiko connection plugin is deprecated', version='2.21')
 
     def _cache_key(self) -> str:
         return "%s__%s__" % (self.get_option('remote_addr'), self.get_option('remote_user'))
@@ -448,19 +448,18 @@ class Connection(ConnectionBase):
             )
         except paramiko.ssh_exception.BadHostKeyException as e:
             raise AnsibleConnectionFailure('host key mismatch for %s' % e.hostname)
-        except paramiko.ssh_exception.AuthenticationException as e:
-            msg = 'Failed to authenticate: {0}'.format(to_text(e))
-            raise AnsibleAuthenticationFailure(msg)
-        except Exception as e:
-            msg = to_text(e)
+        except paramiko.ssh_exception.AuthenticationException as ex:
+            raise AnsibleAuthenticationFailure() from ex
+        except Exception as ex:
+            msg = str(ex)
             if u"PID check failed" in msg:
-                raise AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
+                raise AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible") from ex
             elif u"Private key file is encrypted" in msg:
                 msg = 'ssh %s@%s:%s : %s\nTo connect as a different user, use -u <username>.' % (
                     self.get_option('remote_user'), self.get_options('remote_addr'), port, msg)
-                raise AnsibleConnectionFailure(msg)
+                raise AnsibleConnectionFailure(msg) from ex
             else:
-                raise AnsibleConnectionFailure(msg)
+                raise AnsibleConnectionFailure(msg) from ex
 
         return ssh
 

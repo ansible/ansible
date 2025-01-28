@@ -28,6 +28,7 @@ import typing as t
 from multiprocessing.queues import Queue
 
 from ansible import context
+from ansible._internal import _task
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_queue_manager import FinalQueue, STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO
@@ -39,6 +40,7 @@ from ansible.playbook.task import Task
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import init_plugin_loader
 from ansible.utils.context_objects import CLIArgs
+from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.vars.manager import VariableManager
@@ -189,7 +191,8 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         display.set_queue(self._final_q)
         self._detach()
         try:
-            return self._run()
+            with _task.TaskContext(self._task):
+                return self._run()
         except BaseException:
             self._hard_exit(traceback.format_exc())
 
@@ -259,20 +262,17 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
                     executor_result,
                     task_fields=self._task.dump_attrs(),
                 )
-            except Exception as e:
-                display.debug(f'failed to send task result ({e}), sending surrogate result')
-                self._final_q.send_task_result(
-                    self._host.name,
-                    self._task._uuid,
-                    # Overriding the task result, to represent the failure
-                    {
-                        'failed': True,
-                        'msg': f'{e}',
-                        'exception': traceback.format_exc(),
-                    },
-                    # The failure pickling may have been caused by the task attrs, omit for safety
-                    {},
-                )
+            except Exception as ex:
+                try:
+                    raise AnsibleError("Task result omitted due to queue send failure.") from ex
+                except Exception as ex_wrapper:
+                    self._final_q.send_task_result(
+                        self._host.name,
+                        self._task._uuid,
+                        ActionBase.result_dict_from_exception(ex_wrapper),  # Overriding the task result, to represent the failure
+                        {},  # The failure pickling may have been caused by the task attrs, omit for safety
+                    )
+
             display.debug("done sending task result for task %s" % self._task._uuid)
 
         except AnsibleConnectionFailure:

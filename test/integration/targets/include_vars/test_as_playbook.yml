@@ -1,0 +1,10 @@
+- hosts: testhost
+  gather_facts: no
+  name: cover playbook-specific test cases
+  tasks:
+    - include_vars:
+        dir: vars/all
+    - assert:
+        that:
+          - testing == 123
+          - base_dir == 'all'

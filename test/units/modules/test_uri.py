@@ -6,38 +6,41 @@
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
-from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
+
+import pytest
+
+from ansible.module_utils.testing import patch_module_args
 from ansible.modules import uri
 
 
-class TestUri(ModuleTestCase):
+class TestUri:
 
     def test_main_no_args(self):
         """Module must fail if called with no args."""
-        with self.assertRaises(AnsibleFailJson):
-            set_module_args({})
+        with pytest.raises(SystemExit), \
+             patch_module_args():
             uri.main()
 
-    def test_main_no_force(self):
+    def test_main_no_force(self, mocker):
         """The "force" parameter to fetch_url() must be absent or false when the module is called without "force"."""
-        set_module_args({"url": "http://example.com/"})
         resp = MagicMock()
         resp.headers.get_content_type.return_value = "text/html"
         info = {"url": "http://example.com/", "status": 200}
-        with patch.object(uri, "fetch_url", return_value=(resp, info)) as fetch_url:
-            with self.assertRaises(AnsibleExitJson):
+        with patch.object(uri, "fetch_url", return_value=(resp, info)) as fetch_url, \
+             patch_module_args({"url": "http://example.com/"}):
+            with pytest.raises(SystemExit):
                 uri.main()
             fetch_url.assert_called_once()
             assert not fetch_url.call_args[1].get("force")
 
     def test_main_force(self):
         """The "force" parameter to fetch_url() must be true when the module is called with "force"."""
-        set_module_args({"url": "http://example.com/", "force": True})
         resp = MagicMock()
         resp.headers.get_content_type.return_value = "text/html"
         info = {"url": "http://example.com/", "status": 200}
-        with patch.object(uri, "fetch_url", return_value=(resp, info)) as fetch_url:
-            with self.assertRaises(AnsibleExitJson):
+        with patch.object(uri, "fetch_url", return_value=(resp, info)) as fetch_url, \
+             patch_module_args({"url": "http://example.com/", "force": True}):
+            with pytest.raises(SystemExit):
                 uri.main()
             fetch_url.assert_called_once()
             assert fetch_url.call_args[1].get("force")

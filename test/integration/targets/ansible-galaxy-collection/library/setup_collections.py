@@ -78,21 +78,20 @@ RETURN = """
 
 import datetime
 import os
-import random
 import subprocess
 import tarfile
 import tempfile
-import time
 import yaml
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_bytes
 from functools import partial
 from multiprocessing import dummy as threading
-from multiprocessing import TimeoutError
+from multiprocessing import TimeoutError, Lock
 
 
 COLLECTIONS_BUILD_AND_PUBLISH_TIMEOUT = 180
+LOCK = Lock()
 
 
 def publish_collection(module, collection):
@@ -101,8 +100,6 @@ def publish_collection(module, collection):
     version = collection['version']
     dependencies = collection['dependencies']
     use_symlink = collection['use_symlink']
-
-    time.sleep(random.random())  # inject some time wobble into parallel publish operations since Galaxy publish DB key generation is not mutex'd
 
     result = {}
     collection_dir = os.path.join(module.tmpdir, "%s-%s-%s" % (namespace, name, version))
@@ -178,7 +175,10 @@ def publish_collection(module, collection):
     if module.params['token']:
         publish_args.extend(['--token', module.params['token']])
 
-    rc, stdout, stderr = module.run_command(publish_args)
+    with LOCK:
+        # lock publish operations since Galaxy publish DB key generation is not mutex'd
+        rc, stdout, stderr = module.run_command(publish_args)
+
     result['publish'] = {
         'rc': rc,
         'stdout': stdout,
