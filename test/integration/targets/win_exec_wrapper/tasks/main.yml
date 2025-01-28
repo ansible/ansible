@@ -23,7 +23,7 @@
     that:
     - fail_module is failed
     - fail_module.msg == "fail message"
-    - not fail_module.exception is defined
+    - fail_module.exception is defined
 
 - name: test module with exception thrown
   test_fail:
@@ -118,7 +118,7 @@
     that:
     - proc_exit_fail is failed
     - proc_exit_fail.msg == "proc_exit_fail"
-    - not proc_exit_fail.exception is defined
+    - proc_exit_fail.exception is defined
 
 - name: test out invalid options
   test_invalid_requires:
