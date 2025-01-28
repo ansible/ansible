@@ -252,7 +252,6 @@ def _invoke_lookup(*, plugin_name: str, lookup_terms: list, lookup_kwargs: dict[
                 if not instance.accept_marker and (first_marker := get_first_marker_arg(lookup_terms, {})) is not None:
                     return first_marker
             else:
-                # not using proxy_args since it's a list, and we want to preserve tags
                 lookup_terms = AnsibleTagHelper.tag_copy(lookup_terms, (lazify_container(value) for value in lookup_terms), value_type=list)
 
             lookup_res = instance.run(lookup_terms, variables=templar.available_variables, **lazify_container_kwargs(lookup_kwargs))
