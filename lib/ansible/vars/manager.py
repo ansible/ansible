@@ -599,7 +599,7 @@ class VariableManager:
         Sets a value in the vars_cache for a host.
         """
 
-        warn_if_reserved(varname)
+        warn_if_reserved([varname])
         if host not in self._vars_cache:
             self._vars_cache[host] = dict()
         if varname in self._vars_cache[host] and isinstance(self._vars_cache[host][varname], MutableMapping) and isinstance(value, MutableMapping):
