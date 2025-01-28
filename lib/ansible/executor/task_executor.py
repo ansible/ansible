@@ -440,9 +440,7 @@ class TaskExecutor:
                     raise AnsibleTaskError(obj=self._task.get_ds()) from ex
                 except AnsibleTaskError as atex:
                     result = ActionBase.result_dict_from_exception(atex)
-                    result.update(
-                        changed=False,
-                    )
+                    result.setdefault('changed', False)
 
             self._task.update_result_no_log(templar, result)
 
