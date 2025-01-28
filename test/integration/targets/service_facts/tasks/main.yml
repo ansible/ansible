@@ -3,24 +3,12 @@
 # Copyright: (c) 2020, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Gather service facts on Alpine
-  when: ansible_distribution == 'Alpine'
-  block:
-    - name: Gather service facts
-      service_facts:
-    - name: Check if services are defined
-      assert:
-        that: ansible_facts.services is defined
+- name: Gather service facts
+  service_facts:
 
-- name: Gather service facts on other distributions
-  when: ansible_distribution != 'Alpine'
-  block:
-    - name: Gather service facts
-      service_facts:
-
-    - name: check for ansible_facts.services exists
-      assert:
-        that: ansible_facts.services is defined
+- name: check for ansible_facts.services exists
+  assert:
+    that: ansible_facts.services is defined
 
 - name: Test disabled service facts (https://github.com/ansible/ansible/issues/69144)
   block:
