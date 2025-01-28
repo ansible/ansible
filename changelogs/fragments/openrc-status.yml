@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - service_facts - skip lines which does not contain service names in openrc output (https://github.com/ansible/ansible/issues/84512).
