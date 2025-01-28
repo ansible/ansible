@@ -6,7 +6,7 @@ Jinja2==3.1.4
 MarkupSafe==2.1.5
 mypy==1.11.2
 mypy-extensions==1.0.0
-packaging==24.1
+packaging==24.2
 pluggy==1.5.0
 pycparser==2.22
 pytest==8.3.3
