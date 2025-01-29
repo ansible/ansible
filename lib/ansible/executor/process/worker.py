@@ -106,7 +106,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
     def _term(self, signum, frame) -> None:
         """
         terminate the process group created by calling setsid when
-        SIGTERM is received by the fork
+        a terminate signal is received by the fork
         """
         os.killpg(self.pid, signum)
 
@@ -124,8 +124,9 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
             super(WorkerProcess, self).start()
         # Since setsid is called later, if the worker is termed
         # it won't term the new process group
-        # register a handler to propagate the SIGTERM
+        # register a handler to propagate the signal
         signal.signal(signal.SIGTERM, self._term)
+        signal.signal(signal.SIGINT, self._term)
 
     def _hard_exit(self, e: str) -> t.NoReturn:
         """
