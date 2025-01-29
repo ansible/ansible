@@ -75,7 +75,7 @@ class HttpClient:
                     status_code = ex.status
                     reason = ex.reason
                     body_bytes = ex.read()
-            except Exception as ex:  # pylint: disable=broad-exception-caught
+            except Exception as ex:  # pylint: disable=broad-except
                 if attempts >= max_attempts:
                     raise
 
