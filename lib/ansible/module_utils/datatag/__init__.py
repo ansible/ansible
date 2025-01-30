@@ -160,7 +160,8 @@ class AnsibleTagHelper:
     def tag(value: _T, tags: t.Union[AnsibleDatatagBase, t.Iterable[AnsibleDatatagBase]], *, value_type: t.Optional[type] = None) -> _T:
         """
         Return a copy of `value`, with `tags` applied, overwriting any existing tags of the same types.
-        If the `value` is not taggable, or `tags` is empty, the original `value` will be returned.
+        If `value` is an ignored type, or `tags` is empty, the original `value` will be returned.
+        If `value` is not taggable, a `NotTaggableError` exception will be raised.
         If `value_type` was given, that type will be returned instead.
         """
         if value_type is None:
@@ -416,9 +417,18 @@ class AnsibleDatatagBase(AnsibleSerializableDataclass, metaclass=abc.ABCMeta):
 
     @classmethod
     def untag(cls, value: _T) -> _T:
+        """
+        If this tag type is present on `value`, return a copy with that tag removed.
+        Otherwise, the original `value` is returned.
+        """
         return AnsibleTagHelper.untag(value, cls)
 
     def tag(self, value: _T) -> _T:
+        """
+        Return a copy of `value` with this tag applied, overwriting any existing tag of the same type.
+        If `value` is an ignored type, the original `value` will be returned.
+        If `value` is not taggable, a `NotTaggableError` exception will be raised.
+        """
         return AnsibleTagHelper.tag(value, self)
 
     def __repr__(self) -> str:
