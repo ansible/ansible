@@ -291,7 +291,18 @@ options:
             - Requires O(local) is omitted or V(False).
         type: int
         version_added: "2.18"
-
+    unsafe_writes:
+        description:
+            - Influence when to use atomic operation to prevent data corruption or inconsistent reads from the target filesystem object.
+            - By default this module uses atomic operations to prevent data corruption or inconsistent reads from the target filesystem objects,
+              but sometimes systems are configured or just broken in ways that prevent this. One example is docker mounted filesystem objects,
+              which cannot be updated atomically from inside the container and can only be written in an unsafe manner.
+            - This option allows Ansible to fall back to unsafe methods of updating filesystem objects when atomic operations fail
+              (however, it doesn't force Ansible to perform unsafe writes).
+            - IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
+        type: bool
+        default: no
+        version_added: '2.19'
 extends_documentation_fragment: action_common_attributes
 attributes:
     check_mode:
@@ -501,6 +512,7 @@ import select
 import shutil
 import socket
 import subprocess
+import tempfile
 import time
 import math
 import typing as t
@@ -1408,6 +1420,14 @@ class User(object):
         except OSError as e:
             self.module.exit_json(failed=True, msg="%s" % to_native(e))
 
+    def write_changes(self, contents, path):
+        tmpfd, tmpfile = tempfile.mkstemp(dir=self.module.tmpdir)
+        with os.fdopen(tmpfd, 'w') as tf:
+            for line in contents:
+                tf.write(line)
+
+        self.module.atomic_move(tmpfile, path, unsafe_writes=self.module.params['unsafe_writes'])
+
 
 # ===========================================
 
@@ -2246,8 +2266,7 @@ class SunOS(User):
                                     pass
                             line = ':'.join(fields)
                             lines.append('%s\n' % line)
-                    with open(self.SHADOWFILE, 'w+') as f:
-                        f.writelines(lines)
+                    self.write_changes(lines, self.SHADOWFILE)
                 except Exception as err:
                     self.module.fail_json(msg="failed to update users password: %s" % to_native(err))
 
@@ -2359,8 +2378,7 @@ class SunOS(User):
                                 fields[5] = str(int(warnweeks) * 7)
                             line = ':'.join(fields)
                             lines.append('%s\n' % line)
-                    with open(self.SHADOWFILE, 'w+') as f:
-                        f.writelines(lines)
+                    self.write_changes(lines, self.SHADOWFILE)
                     rc = 0
                 except Exception as err:
                     self.module.fail_json(msg="failed to update users password: %s" % to_native(err))
@@ -3114,6 +3132,23 @@ class BusyBox(User):
         - remove_user()
         - modify_user()
     """
+    def _disable_password_in_shadow_or_fail(self, username):
+        self.backup_shadow()
+        out_lines = []
+        try:
+            with open(self.SHADOWFILE, 'r') as f:
+                for line in f.readlines():
+                    components = line.split(':')
+                    if components[0] == username:
+                        components[1] = '*'
+                        out_lines.append(':'.join(components))
+                    else:
+                        out_lines.append(line)
+        except Exception as e:
+            self.module.fail_json(
+                msg="Something went wrong when trying to modify %s: %s" %
+                (self.SHADOWFILE, to_native(e)))
+        self.write_changes(out_lines, self.SHADOWFILE)
 
     def create_user(self):
         cmd = [self.module.get_bin_path('adduser', True)]
@@ -3179,6 +3214,8 @@ class BusyBox(User):
 
             if rc is not None and rc != 0:
                 self.module.fail_json(name=self.name, msg=err, rc=rc)
+        else:
+            self._disable_password_in_shadow_or_fail(self.name)
 
         # Add to additional groups
         if self.groups is not None and len(self.groups):

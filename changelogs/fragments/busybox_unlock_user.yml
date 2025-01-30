@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - user - When creating a user account with no password on busybox systems such as Alpine, the account is now unlocked after it is created, for consistency with other platforms (https://github.com/ansible/ansible/issues/68676).
+  - user - add helper method to write safely to the shadow file.
