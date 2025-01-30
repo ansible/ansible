@@ -369,6 +369,7 @@ ANSIBLE_DIR = ANSIBLE_LIB_DIR / "ansible"
 ANSIBLE_BIN_DIR = CHECKOUT_DIR / "bin"
 ANSIBLE_RELEASE_FILE = ANSIBLE_DIR / "release.py"
 ANSIBLE_REQUIREMENTS_FILE = CHECKOUT_DIR / "requirements.txt"
+ANSIBLE_CHANGELOG_REQUIREMENTS_FILE = CHECKOUT_DIR / "test/lib/ansible_test/_data/requirements/sanity.changelog.txt"
 ANSIBLE_PYPROJECT_TOML_FILE = CHECKOUT_DIR / "pyproject.toml"
 
 DIST_DIR = CHECKOUT_DIR / "dist"
@@ -660,23 +661,8 @@ def get_git_state(version: Version, allow_stale: bool) -> GitState:
 
 
 @functools.cache
-def ensure_venv() -> dict[str, t.Any]:
+def ensure_venv(requirements_content: str) -> dict[str, t.Any]:
     """Ensure the release venv is ready and return the env vars needed to use it."""
-
-    # TODO: consider freezing the ansible and release requirements along with their dependencies
-
-    ansible_requirements = ANSIBLE_REQUIREMENTS_FILE.read_text()
-
-    release_requirements = """
-build
-twine
-"""
-
-    requirements_file = CHECKOUT_DIR / "test/lib/ansible_test/_data/requirements/sanity.changelog.txt"
-    requirements_content = requirements_file.read_text()
-    requirements_content += ansible_requirements
-    requirements_content += release_requirements
-
     requirements_hash = hashlib.sha256(requirements_content.encode()).hexdigest()[:8]
 
     python_version = ".".join(map(str, sys.version_info[:2]))
@@ -1299,7 +1285,12 @@ release_summary: |
 @command
 def generate_changelog() -> None:
     """Generate the changelog and validate the results."""
-    env = ensure_venv()
+    changelog_requirements = (
+        ANSIBLE_CHANGELOG_REQUIREMENTS_FILE.read_text() +
+        ANSIBLE_REQUIREMENTS_FILE.read_text()  # TODO: consider pinning the ansible requirements and dependencies
+    )
+
+    env = ensure_venv(changelog_requirements)
     env.update(
         PATH=os.pathsep.join((str(ANSIBLE_BIN_DIR), env["PATH"])),
         PYTHONPATH=ANSIBLE_LIB_DIR,
@@ -1353,7 +1344,12 @@ def complete(repository: str, mailto: bool = True, allow_dirty: bool = False) ->
 def build(allow_dirty: bool = False) -> None:
     """Build the sdist and wheel."""
     version = get_ansible_version(mode=VersionMode.ALLOW_DEV_POST)
-    env = ensure_venv()
+
+    # TODO: consider pinning the build requirement and its dependencies
+    build_requirements = """
+build
+"""
+    env = ensure_venv(build_requirements)
 
     dirty = git("status", "--porcelain", "--untracked-files=all", capture_output=True).stdout.strip().splitlines()
 
@@ -1450,7 +1446,12 @@ def publish(repository: str, prompt: bool = True) -> None:
     version = get_ansible_version()
     sdist_file = get_sdist_path(version)
     wheel_file = get_wheel_path(version)
-    env = ensure_venv()
+
+    # TODO: consider pinning the twine requirement and its dependencies
+    publish_requirements = """
+twine
+"""
+    env = ensure_venv(publish_requirements)
 
     if prompt:
         try:
