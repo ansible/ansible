@@ -634,8 +634,7 @@ class TaskExecutor:
                     old_sig = signal.signal(signal.SIGALRM, task_timeout)
                     signal.alarm(self._task.timeout)
                 result = self._handler.run(task_vars=vars_copy)
-                # DTFIX-MERGE: Actions that don't handle their own exceptions kill loops.
-            # DTFIX-MERGE: nuke this, it hides a lot of error detail- remove the active exception propagation hack from AnsibleActionFail at the same time
+            # DTFIX-RELEASE: nuke this, it hides a lot of error detail- remove the active exception propagation hack from AnsibleActionFail at the same time
             except (AnsibleActionFail, AnsibleActionSkip) as e:
                 return e.result
             except AnsibleConnectionFailure as e:

@@ -364,7 +364,7 @@ class AnsibleActionFail(AnsibleAction):
 
         result_overrides = {'failed': True, 'msg': message}
         # deprecated: description='use sys.exception()' python_version='3.11'
-        if sys.exc_info()[1]:  # DTFIX-MERGE: remove this hack once TaskExecutor is no longer shucking AnsibleActionFail and returning its result
+        if sys.exc_info()[1]:  # DTFIX-RELEASE: remove this hack once TaskExecutor is no longer shucking AnsibleActionFail and returning its result
             result_overrides['exception'] = traceback.format_exc()
 
         self.result.update(result_overrides)
@@ -398,10 +398,6 @@ class AnsibleTypeError(AnsibleRuntimeError, TypeError):
     """Ansible-augmented TypeError subclass."""
 
 
-# DTFIX-MERGE: deprecate
-AnsibleFilterTypeError = AnsibleTypeError
-
-
 class AnsiblePluginNotFound(AnsiblePluginError):
     """Indicates we did not find an Ansible plugin."""
 
@@ -418,3 +414,19 @@ class AnsibleVariableTypeError(AnsibleRuntimeError):
         type_name = type(obj).__name__ if isinstance(obj, type) else AnsibleTagHelper.base_type_name(obj)
 
         super().__init__(f'Variables of type {type_name!r} are not supported.', obj=obj)
+
+
+def __getattr__(name: str) -> t.Any:
+    """Inject import-time deprecation warnings."""
+    from ..utils.display import Display
+
+    if name == 'AnsibleFilterTypeError':
+        Display().deprecated(
+            msg="Importing 'AnsibleFilterTypeError' is deprecated.",
+            help_text=f"Import {AnsibleTypeError.__name__!r} instead.",
+            version="2.23",
+        )
+
+        return AnsibleTypeError
+
+    raise AttributeError(f'module {__name__!r} has no attribute {name!r}')
