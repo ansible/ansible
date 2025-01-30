@@ -1,0 +1,37 @@
+---
+- name: Test locked user on Alpine
+  block:
+    - name: Remove ansibulluser
+      user:
+        name: ansibulluser
+        state: absent
+        remove: yes
+
+    - name: Create ansibulluser without password
+      user:
+        name: ansibulluser
+      register: password_lock_1
+
+    - name: Ensure task reported changes appropriately
+      assert:
+        that:
+          - password_lock_1 is changed
+
+    - name: Verify account lock for Linux
+      block:
+        - name: LINUX | Get account status
+          getent:
+            database: shadow
+            key: ansibulluser
+
+        - name: LINUX | Ensure account is locked
+          assert:
+            that:
+              - getent_shadow['ansibulluser'][0].startswith('!')
+
+  always:
+    - name: Remove ansibulluser
+      user:
+        name: ansibulluser
+        state: absent
+        remove: yes
