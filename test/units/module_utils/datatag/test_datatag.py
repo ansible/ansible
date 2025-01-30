@@ -823,7 +823,7 @@ def test_helper_untag():
     assert not AnsibleTagHelper.tags(untagged_empty_tags_ok_value)
 
 
-def test_serializable_dataclass_with_tuple():
+def test_serializable_dataclass_with_tuple() -> None:
     """Validate that dataclass deserialization converts inbound lists for tuple-typed fields."""
     @dataclasses.dataclass(**_tag_dataclass_kwargs)
     class HasTuple(AnsibleSerializableDataclass):
