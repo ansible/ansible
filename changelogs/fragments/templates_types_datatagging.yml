@@ -125,6 +125,7 @@ bugfixes:
   - default callback - Error context is now shown for failing tasks that use the ``debug`` action.
   - module arg templating - When using a templated raw task arg and a templated ``args`` keyword, args are now merged.
     Previously use of templated raw task args silently ignored all values from the templated ``args`` keyword.
+  - action plugins - Action plugins that raise unhandled exceptions no longer terminate playbook loops. Previously, exceptions raised by an action plugin caused abnormal loop termination and loss of loop iteration results.
 
 deprecated_features:
   - facts - In a future Ansible release, gathered facts will no longer be accessible as top-level host variables; they must be accessed via `ansible_facts`.
