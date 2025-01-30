@@ -9,3 +9,7 @@
           - lookup('env', 'USR', default=undef()) == ''
           - lookup('env', 'USR', default=undef('custom')) == ''
           - lookup('env', 'ENVVAR1') == 'var1value'
+    - name: verify source position is reported
+      assert:
+        that:
+          - lookup('env', 'ENVVAR1') | ansible._protomatter.source_position == "<environment variable 'ENVVAR1'>"
