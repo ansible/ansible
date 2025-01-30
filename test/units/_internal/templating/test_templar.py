@@ -31,10 +31,10 @@ from jinja2.runtime import Context
 import unittest
 
 from ansible.errors import (
-    AnsibleError, AnsibleUndefinedVariable, AnsibleTemplateSyntaxError, AnsibleTemplatePluginNotFoundError,
-    AnsibleBrokenConditionalError, AnsibleTemplatePluginLoadError, AnsibleTemplatePluginRuntimeError, AnsibleTemplateError, AnsibleTemplateTransformLimitError,
+    AnsibleError, AnsibleUndefinedVariable, AnsibleTemplateSyntaxError, AnsibleBrokenConditionalError, AnsibleTemplateError, AnsibleTemplateTransformLimitError,
     TemplateTrustCheckFailedError,
 )
+from ansible._internal._templating._errors import AnsibleTemplatePluginRuntimeError, AnsibleTemplatePluginLoadError, AnsibleTemplatePluginNotFoundError
 from ansible.errors.handler import ErrorAction, ErrorHandler
 from ansible.module_utils.datatag import AnsibleTagHelper, AnsibleDatatagBase
 from ansible.module_utils.datatag.tags import Deprecated

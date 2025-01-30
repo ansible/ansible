@@ -304,30 +304,6 @@ AnsibleFilterError = AnsibleTemplatePluginError
 AnsibleLookupError = AnsibleTemplatePluginError
 
 
-class AnsibleTemplatePluginRuntimeError(AnsibleTemplatePluginError):
-    """The specified template plugin (lookup/filter/test) raised an exception during execution."""
-
-    # DTFIX-MERGE: content authors shouldn't be raising this (or the other two below) template errors -- use TypeError, ValueError, etc. instead
-    #        so how should this be named, located? internal errors?
-
-    def __init__(self, plugin_type: str, plugin_name: str) -> None:
-        super().__init__(f'The {plugin_type} plugin {plugin_name!r} failed.')
-
-
-class AnsibleTemplatePluginLoadError(AnsibleTemplatePluginError):
-    """The specified template plugin (lookup/filter/test) failed to load."""
-
-    def __init__(self, plugin_type: str, plugin_name: str) -> None:
-        super().__init__(f'The {plugin_type} plugin {plugin_name!r} failed to load.')
-
-
-class AnsibleTemplatePluginNotFoundError(AnsibleTemplatePluginError):
-    """The specified template plugin (lookup/filter/test) was not found."""
-
-    def __init__(self, plugin_type: str, plugin_name: str) -> None:
-        super().__init__(f'The {plugin_type} plugin {plugin_name!r} was not found.')
-
-
 class AnsibleFileNotFound(AnsibleRuntimeError):
     """A file missing failure."""
 

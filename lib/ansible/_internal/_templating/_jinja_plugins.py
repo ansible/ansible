@@ -10,10 +10,7 @@ import typing as t
 
 from ansible.errors import (
     AnsibleError,
-    AnsibleTemplatePluginNotFoundError,
     AnsibleTemplatePluginError,
-    AnsibleTemplatePluginLoadError,
-    AnsibleTemplatePluginRuntimeError,
 )
 
 from ansible.module_utils._internal._ambient_context import AmbientContextBase
@@ -26,6 +23,7 @@ from ansible.plugins.lookup import LookupBase
 from ansible.utils.display import Display
 
 from ._datatag import _JinjaConstTemplate
+from ._errors import AnsibleTemplatePluginRuntimeError, AnsibleTemplatePluginLoadError, AnsibleTemplatePluginNotFoundError
 from ._jinja_common import MarkerError, _TemplateConfig, get_first_marker_arg, Marker, JinjaCallContext
 from ._lazy_containers import _ITERATOR_TYPES, lazify_container_kwargs, lazify_container_args, lazify_container, _AnsibleLazyTemplateMixin
 from ._utils import TemplateContext
