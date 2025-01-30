@@ -3353,6 +3353,7 @@ def main():
             password_expire_account_disable=dict(type='int', no_log=False),
             uid_min=dict(type='int'),
             uid_max=dict(type='int'),
+            unsafe_writes=dict(type='bool', default=False, fallback=(env_fallback, ['ANSIBLE_UNSAFE_WRITES'])),
         ),
         supports_check_mode=True,
     )
