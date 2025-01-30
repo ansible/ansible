@@ -33,6 +33,8 @@
       shell: |
         import re
         import os
+        umask = os.umask(0)
+        mode = oct(0o777 & ~umask)
         try:
             for line in open('/etc/login.defs').readlines():
                 m = re.match(r'^HOME_MODE\s+(\d+)$', line)
@@ -44,8 +46,7 @@
                     umask = int(m.group(1), 8)
                     mode = oct(0o777 & ~umask)
         except:
-            umask = os.umask(0)
-            mode = oct(0o777 & ~umask)
+            pass
         print(str(mode).replace('o', ''))
       args:
         executable: "{{ ansible_python_interpreter }}"
