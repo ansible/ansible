@@ -203,6 +203,17 @@ class AnsibleTagHelper:
 
         return t.cast(_T, tagged_type._instance_factory(value, tags_mapping))
 
+    @staticmethod
+    def try_tag(value: _T, tags: t.Union[AnsibleDatatagBase, t.Iterable[AnsibleDatatagBase]]) -> _T:
+        """
+        Return a copy of `value`, with `tags` applied, overwriting any existing tags of the same types.
+        If `value` is not taggable or `tags` is empty, the original `value` will be returned.
+        """
+        try:
+            return AnsibleTagHelper.tag(value, tags)
+        except NotTaggableError:
+            return value
+
 
 class AnsibleSerializable(metaclass=abc.ABCMeta):
     __slots__ = _NO_INSTANCE_STORAGE
@@ -430,6 +441,13 @@ class AnsibleDatatagBase(AnsibleSerializableDataclass, metaclass=abc.ABCMeta):
         If `value` is not taggable, a `NotTaggableError` exception will be raised.
         """
         return AnsibleTagHelper.tag(value, self)
+
+    def try_tag(self, value: _T) -> _T:
+        """
+        Return a copy of `value` with this tag applied, overwriting any existing tag of the same type.
+        If `value` is not taggable, the original `value` will be returned.
+        """
+        return AnsibleTagHelper.try_tag(value, self)
 
     def __repr__(self) -> str:
         return AnsibleSerializable._repr(self, self.__class__.__name__)

@@ -159,6 +159,14 @@ def test_silent_untaggable(untaggable_instance):
     assert post_tag is untaggable_instance
 
 
+def test_try_tag() -> None:
+    untaggable_value = object()
+    taggable_value = "Hello"
+
+    assert ExampleSingletonTag().try_tag(untaggable_value) is untaggable_value
+    assert ExampleSingletonTag.is_tagged_on(ExampleSingletonTag().try_tag(taggable_value))
+
+
 def no_op() -> None:
     """No-op function."""
 
