@@ -47,8 +47,7 @@ _source_pos_y = AnsibleSourcePosition(src='/y')
         ],
         'a: b',
         (
-            'a: b\n\n'
-            'one'
+            'a: b one'
         ),
     ),
     (
@@ -58,8 +57,7 @@ _source_pos_y = AnsibleSourcePosition(src='/y')
         ],
         'a: b',
         (
-            'a: b\n\n'
-            'one'
+            'a: b one'
         ),
     ),
     (
@@ -70,8 +68,7 @@ _source_pos_y = AnsibleSourcePosition(src='/y')
         ],
         'a: b: c',
         (
-            'a: b: c\n\n'
-            'one'
+            'a: b: c one'
         ),
     ),
     (
@@ -82,11 +79,9 @@ _source_pos_y = AnsibleSourcePosition(src='/y')
         'a: b',
         (
             'a: b\n\n'
-            'a\n\n'
-            'one\n\n'
+            'a one\n\n'
             '<<< caused by >>>\n\n'
-            'b\n\n'
-            'two'
+            'b two'
         ),
     ),
     (
@@ -99,8 +94,7 @@ _source_pos_y = AnsibleSourcePosition(src='/y')
             'a: b\n\n'
             'a\n\n'
             '<<< caused by >>>\n\n'
-            'b\n\n'
-            'one'
+            'b one'
         ),
     ),
 

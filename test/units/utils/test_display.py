@@ -156,9 +156,7 @@ def test_format_message_deprecation_with_multiple_details() -> None:
 
     assert result == '''Ignoring ExceptionX. This feature will be removed in a future release: Something went wrong.
 
-Ignoring ExceptionX. This feature will be removed in a future release.
-
-Plugins must handle it internally.
+Ignoring ExceptionX. This feature will be removed in a future release. Plugins must handle it internally.
 
 <<< caused by >>>
 
