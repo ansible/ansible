@@ -92,16 +92,6 @@ class TestHost(unittest.TestCase):
         hostA_clone.deserialize(hostA_data)
         self.assertEqual(self.hostA, hostA_clone)
 
-    @pytest.mark.xfail(reason="likely to be removed")
-    def test_set_state(self):
-        group = Group('some_group')
-        self.hostA.add_group(group)
-
-        pickled_hostA = pickle.dumps(self.hostA)
-
-        hostA_clone = pickle.loads(pickled_hostA)
-        self.assertEqual(self.hostA, hostA_clone)
-
 
 class TestHostWithPort(TestHost):
     ansible_port = 8822
