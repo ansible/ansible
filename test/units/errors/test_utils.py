@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from ansible.errors import get_chained_message, AnsibleError
-from ansible.errors.utils import _create_error_summary
+from ansible.errors import AnsibleError
+from ansible._internal._errors._utils import _create_error_summary, get_chained_message
 from ansible.module_utils.common.messages import ErrorSummary
 from ansible.utils.datatag.tags import AnsibleSourcePosition
 from ansible.utils.display import format_message

@@ -37,7 +37,7 @@ from binascii import Error as BinasciiError
 from ansible.module_utils.datatag import (
     AnsibleTagHelper, AnsibleTaggedObject, _AnsibleTagsMapping, _EmptyROInternalTagsMapping, _EMPTY_INTERNAL_TAGS_MAPPING,
 )
-from ansible._internal._templating._jinja_common import VaultExceptionMarker, Marker
+from ansible._internal._templating import _jinja_common
 from ansible.utils.datatag.tags import AnsibleSourcePosition, VaultedValue
 
 HAS_CRYPTOGRAPHY = False
@@ -1519,12 +1519,12 @@ class VaultHelper:
         ciphertext: str | None
         tags = AnsibleTagHelper.tags(value)
 
-        if value_type is VaultExceptionMarker:
+        if value_type is _jinja_common.VaultExceptionMarker:
             ciphertext = value._marker_undecryptable_ciphertext
             tags = AnsibleTagHelper.tags(ciphertext)  # ciphertext has tags but value does not
         elif value_type is EncryptedString:
             ciphertext = value._ciphertext
-        elif value_type in Marker.concrete_subclasses:  # avoid wasteful raise/except of Marker when calling get_tag below
+        elif value_type in _jinja_common.Marker.concrete_subclasses:  # avoid wasteful raise/except of Marker when calling get_tag below
             ciphertext = None
         elif vaulted_value := VaultedValue.get_tag(value):
             ciphertext = vaulted_value.ciphertext

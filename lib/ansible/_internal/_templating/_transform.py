@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import typing as t
 
-from ansible.errors import get_chained_message
 from ansible.module_utils._internal import _traceback
 from ansible.module_utils.common.messages import ErrorSummary, WarningSummary, DeprecationSummary
 from ansible.parsing.vault import EncryptedString, VaultHelper
 from ansible.utils.display import Display
 
 from ._jinja_common import VaultExceptionMarker
-from .._errors import _captured
+from .._errors import _captured, _utils
 
 display = Display()
 
@@ -38,7 +37,7 @@ def encrypted_string(value: EncryptedString) -> str | VaultExceptionMarker:
     except Exception as ex:
         return VaultExceptionMarker(
             ciphertext=VaultHelper.get_ciphertext(value, with_tags=True),
-            reason=get_chained_message(ex),
+            reason=_utils.get_chained_message(ex),
             traceback=_traceback.maybe_extract_traceback(ex, _traceback.TracebackEvent.ERROR),
         )
 

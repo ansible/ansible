@@ -5,7 +5,7 @@ import pathlib
 import pytest
 
 from ansible.errors import AnsibleError, AnsibleVariableTypeError
-from ansible.errors.utils import SourceContext
+from ansible._internal._errors._utils import SourceContext
 from ansible.utils.datatag.tags import AnsibleSourcePosition
 
 from ..test_utils.controller.display import emits_deprecation_warning

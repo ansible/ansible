@@ -11,7 +11,7 @@ import pytest
 import pytest_mock
 
 from ansible import constants as C
-from ansible.errors import get_chained_message
+from ansible._internal._errors._utils import get_chained_message
 from ansible.utils.datatag.tags import AnsibleSourcePosition
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.errors import AnsibleYAMLParserError

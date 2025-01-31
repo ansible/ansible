@@ -24,7 +24,7 @@ from ansible import constants as C
 from ansible._internal._errors import _captured
 from ansible._internal._templating._chain_templar import ChainTemplar
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
-from ansible.errors.utils import _create_error_summary, _dedupe_and_concat_message_chain
+from ansible._internal._errors import _utils
 from ansible.executor.module_common import modify_module, _BuiltModule
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
 from ansible.module_utils._internal import _traceback
@@ -1477,7 +1477,7 @@ class ActionBase(ABC):
         else:
             result = {}
 
-        error_summary = _create_error_summary(exception, _traceback.TracebackEvent.ERROR)
+        error_summary = _utils._create_error_summary(exception, _traceback.TracebackEvent.ERROR)
 
         result.update(
             failed=True,
@@ -1485,7 +1485,7 @@ class ActionBase(ABC):
         )
 
         if 'msg' not in result:
-            result.update(msg=NotATemplate().tag(_dedupe_and_concat_message_chain([md.msg for md in error_summary.details])))
+            result.update(msg=NotATemplate().tag(_utils._dedupe_and_concat_message_chain([md.msg for md in error_summary.details])))
 
         return result
 

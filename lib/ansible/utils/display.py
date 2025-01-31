@@ -51,7 +51,7 @@ from struct import unpack, pack
 
 from ansible import constants as C
 from ansible.errors import AnsibleAssertionError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive
-from ansible.errors.utils import SourceContext, _collapse_error_details, _create_error_summary, _dedupe_and_concat_message_chain
+from ansible._internal._errors import _utils
 from ansible.module_utils._internal import _ambient_context
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.utils.datatag.tags import TrustedAsTemplate, NotATemplate
@@ -657,7 +657,7 @@ class Display(metaclass=Singleton):
 
         self.warning('Deprecation warnings can be disabled by setting `deprecation_warnings=False` in ansible.cfg.')
 
-        if source_context := SourceContext.from_value(obj):
+        if source_context := _utils.SourceContext.from_value(obj):
             formatted_source_context = str(source_context)
         else:
             formatted_source_context = None
@@ -713,7 +713,7 @@ class Display(metaclass=Singleton):
         # This is the pre-proxy half of the `warning` implementation.
         # Any logic that must occur on workers needs to be implemented here.
 
-        if source_context := SourceContext.from_value(obj):
+        if source_context := _utils.SourceContext.from_value(obj):
             formatted_source_context = str(source_context)
         else:
             formatted_source_context = None
@@ -804,7 +804,7 @@ class Display(metaclass=Singleton):
     def error_as_warning(self, msg: str | None, exception: BaseException) -> None:
         """Display an exception as a warning."""
 
-        error = _create_error_summary(exception, _traceback.TracebackEvent.WARNING)
+        error = _utils._create_error_summary(exception, _traceback.TracebackEvent.WARNING)
 
         if msg:
             error = dataclasses.replace(error, details=(Detail(msg=msg),) + error.details)
@@ -827,7 +827,7 @@ class Display(metaclass=Singleton):
         # Any logic that must occur on workers needs to be implemented here.
 
         if isinstance(msg, BaseException):
-            error = _create_error_summary(msg, _traceback.TracebackEvent.ERROR)
+            error = _utils._create_error_summary(msg, _traceback.TracebackEvent.ERROR)
             wrap_text = False
         else:
             error = ErrorSummary(details=(Detail(msg=msg),), formatted_traceback=_traceback.maybe_capture_traceback(_traceback.TracebackEvent.ERROR))
@@ -1117,12 +1117,12 @@ class _DeferredWarningContext(_ambient_context.AmbientContextBase):
 
 
 def _format_error_details(details: t.Sequence[Detail], formatted_tb: str | None = None) -> str:
-    details = _collapse_error_details(details)
+    details = _utils._collapse_error_details(details)
 
     message_lines: list[str] = []
 
     if len(details) > 1:
-        message_lines.append(_dedupe_and_concat_message_chain([md.msg for md in details]))
+        message_lines.append(_utils._dedupe_and_concat_message_chain([md.msg for md in details]))
         message_lines.append('')
 
     for idx, edc in enumerate(details):

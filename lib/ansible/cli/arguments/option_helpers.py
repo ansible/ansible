@@ -499,7 +499,6 @@ def _tagged_type_factory(name: str, func: t.Callable[[str], object], /) -> t.Cal
             # not sufficient to prevent them being tagged as trusted when they should not.
             result = TrustedAsTemplate().tag(result)
 
-        # DTFIX-MERGE: bikeshed description format
         return AnsibleSourcePosition(description=f'<CLI option {name!r}>').tag(result)
 
     tag_value._name = name  # simplify debugging by attaching the argument name to the function

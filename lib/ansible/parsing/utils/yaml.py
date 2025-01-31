@@ -9,7 +9,7 @@ import json
 import typing as t
 
 from ansible.errors import AnsibleJSONParserError
-from ansible.errors.utils import RedactAnnotatedSourceContext
+from ansible._internal._errors import _utils
 from ansible.parsing.vault import VaultSecret
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.errors import AnsibleYAMLParserError
@@ -31,7 +31,7 @@ def from_yaml(
 
     # DTFIX-MERGE: provide Ansible-specific top-level APIs to expose JSON and YAML serialization/deserialization to hide the error handling logic
 
-    with RedactAnnotatedSourceContext.when(not show_content):
+    with _utils.RedactAnnotatedSourceContext.when(not show_content):
         # FIXME: this whole two-step should be unnecessary, implement this natively in the YAML decoder or delegate?
         try:
             # we first try to load this data as JSON.

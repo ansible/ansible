@@ -5,7 +5,8 @@ import tempfile
 
 import pytest
 
-from ansible.errors import AnsibleJSONParserError, get_chained_message
+from ansible._internal._errors._utils import get_chained_message
+from ansible.errors import AnsibleJSONParserError
 from ansible.utils.datatag.tags import AnsibleSourcePosition
 from ansible.parsing.utils.yaml import from_yaml
 

@@ -845,7 +845,7 @@ class CollectionModuleUtilLocator(ModuleUtilLocatorBase):
         if pkg_path:
             origin_tag = AnsibleSourcePosition(src=os.path.join(pkg_path, src_path))
         else:
-            # DTFIX-MERGE: not sure if this case is even reachable
+            # DTFIX-RELEASE: not sure if this case is even reachable
             origin_tag = AnsibleSourcePosition(description=f'<synthetic collection package for {collection_pkg_name}!r>')
 
         self.source_code = origin_tag.tag(src)

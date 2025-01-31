@@ -1,5 +1,3 @@
-# DTFIX-MERGE: this is part of the new DT changes, the API needs additional cleanup before releasing
-
 from __future__ import annotations
 
 import dataclasses
@@ -9,12 +7,13 @@ import sys
 import textwrap
 import typing as t
 
-from ..module_utils.common.messages import Detail, ErrorSummary
-from ..utils.datatag.tags import AnsibleSourcePosition
-from ..module_utils._internal import _ambient_context, _traceback
+from ansible.module_utils.common.messages import Detail, ErrorSummary
+from ansible.utils.datatag.tags import AnsibleSourcePosition
+from ansible.module_utils._internal import _ambient_context, _traceback
+from ansible import errors
 
 if t.TYPE_CHECKING:
-    from ..utils.display import Display
+    from ansible.utils.display import Display
 
 
 class RedactAnnotatedSourceContext(_ambient_context.AmbientContextBase):
@@ -69,9 +68,7 @@ def _collapse_error_details(error_details: t.Sequence[Detail]) -> list[Detail]:
 def _get_cause(exception: BaseException) -> BaseException | None:
     # deprecated: description='remove support for orig_exc (should have been deprecated in 2.22)' core_version='2.26'
 
-    from . import AnsibleError
-
-    if not isinstance(exception, AnsibleError):
+    if not isinstance(exception, errors.AnsibleError):
         return exception.__cause__
 
     if exception.__cause__:
@@ -113,9 +110,7 @@ def _get_display() -> Display | _TemporaryDisplay:
 
 
 def _create_error_summary(exception: BaseException, event: _traceback.TracebackEvent | None = None) -> ErrorSummary:
-    # DTFIX-MERGE: can this be moved to _internal._errors?
-    from . import AnsibleError
-    from .._internal._errors import _captured
+    from . import _captured  # avoid circular import due to AnsibleError import
 
     current_exception: BaseException | None = exception
     error_details: list[Detail] = []
@@ -126,7 +121,7 @@ def _create_error_summary(exception: BaseException, event: _traceback.TracebackE
         formatted_traceback = None
 
     while current_exception:
-        if isinstance(current_exception, AnsibleError):
+        if isinstance(current_exception, errors.AnsibleError):
             include_cause_message = current_exception.include_cause_message
             edc = Detail(
                 msg=current_exception.original_message.strip(),
@@ -239,7 +234,7 @@ class SourceContext:
     @classmethod
     def from_source_position(cls, position: AnsibleSourcePosition) -> SourceContext:
         """Attempt to retrieve source and render a contextual indicator of an error location."""
-        from ..parsing.vault import is_encrypted
+        from ansible.parsing.vault import is_encrypted  # avoid circular import
 
         # DTFIX-FUTURE: support referencing the column after the end of the target line, so we can indicate where a missing character (quote) needs to be added
         #               this is also useful for cases like end-of-stream reported by the YAML parser

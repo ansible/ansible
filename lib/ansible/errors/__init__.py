@@ -16,8 +16,7 @@ from json import JSONDecodeError
 from ansible.module_utils.common.text.converters import to_text
 from ..module_utils.datatag import AnsibleTagHelper
 from ..utils.datatag.tags import AnsibleSourcePosition
-
-from .utils import concat_message, get_chained_message, RedactAnnotatedSourceContext, SourceContext, _dedupe_and_concat_message_chain
+from .._internal._errors import _utils
 
 
 class ExitCode(enum.IntEnum):
@@ -72,7 +71,7 @@ class AnsibleError(Exception):
             message = str(message)
 
         if self.default_message and message:
-            message = concat_message(self.default_message, message)
+            message = _utils.concat_message(self.default_message, message)
         elif self.default_message:
             message = self.default_message
         elif not message:
@@ -114,7 +113,7 @@ class AnsibleError(Exception):
         The recursion is due to `AnsibleError.__str__` calling this method, which uses `str` on child exceptions to create the cause message.
         Recursion stops on the first non-AnsibleError since those exceptions do not implement the custom `__str__` behavior.
         """
-        return get_chained_message(self)
+        return _utils.get_chained_message(self)
 
     @message.setter
     def message(self, val) -> None:
@@ -124,8 +123,8 @@ class AnsibleError(Exception):
     def formatted_source_context(self) -> str | None:
         # DTFIX-MERGE: this is part of the new DT changes, the API needs additional cleanup before releasing
 
-        with RedactAnnotatedSourceContext.when(not self._show_content):
-            if source_context := SourceContext.from_value(self.obj):
+        with _utils.RedactAnnotatedSourceContext.when(not self._show_content):
+            if source_context := _utils.SourceContext.from_value(self.obj):
                 return str(source_context)
 
         return None

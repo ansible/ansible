@@ -15,7 +15,7 @@ import typing as t
 
 from ansible import constants as C
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
-from ansible.errors.utils import RedactAnnotatedSourceContext
+from ansible._internal._errors import _utils
 from ansible.module_utils.basic import is_executable
 from ansible.utils.datatag.tags import AnsibleSourcePosition, TrustedAsTemplate, _EncryptedSource
 from ansible.module_utils.six import binary_type, text_type
@@ -85,7 +85,7 @@ class DataLoader:
             json_only: bool = False,
     ) -> t.Any:
         """Backwards compat for now"""
-        with RedactAnnotatedSourceContext.when(not show_content):
+        with _utils.RedactAnnotatedSourceContext.when(not show_content):
             return from_yaml(data=data, file_name=file_name, json_only=json_only)
 
     def load_from_file(self, file_name: str, cache: str = 'all', unsafe: bool = False, json_only: bool = False, trusted_as_template: bool = False) -> t.Any:
