@@ -50,6 +50,7 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).__init__()
 
     def get_option(self, option_name):
+
         # Check extra_vars first
         if option_name in self._extra_vars:
             return self._extra_vars.get(option_name).lower() == 'true'
