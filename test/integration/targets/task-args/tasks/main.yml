@@ -1,4 +1,4 @@
-# DTFIX-MERGE: finish the full precedence decscription in DT docs and include it here
+# DTFIX-RELEASE: finish the full precedence decscription in DT docs and include it here
 
 - name: validate templated raw params from the action statement and the args keyword are merged
   echo: '{{ vp }}'

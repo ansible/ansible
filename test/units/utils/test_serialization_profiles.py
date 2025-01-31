@@ -1,4 +1,4 @@
-# DTFIX-MERGE: these tests need to be split so they can run under both module_utils and controller contexts
+# DTFIX-RELEASE: these tests need to be split so they can run under both module_utils and controller contexts
 
 from __future__ import annotations
 

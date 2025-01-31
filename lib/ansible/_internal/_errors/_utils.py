@@ -299,6 +299,9 @@ class SourceContext:
             column_marker = f'{" " * line_label_width} {column_marker}'
 
             annotated_source_lines.append(column_marker)
+        elif target_col_num is None:
+            underline_length = len(annotated_source_lines[-1]) - line_label_width - 1
+            annotated_source_lines.append(f'{" " * line_label_width} {"^" * underline_length}')
 
         return SourceContext(
             source_position=position,

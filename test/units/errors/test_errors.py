@@ -18,7 +18,8 @@ from ..test_utils.controller.display import emits_deprecation_warning
     ('short_file.txt', 3, 324762384, "short_file_overflowed_col.txt"),
     ('short_file.txt', -1, 3, "short_file_underflowed_line.txt"),
     ('short_file.txt', 3, -1, "short_file_underflowed_col.txt"),
-    ('short_file.txt', 2, None, "short_file_no_column.txt"),
+    ('short_file.txt', 5, None, "short_file_no_column.txt"),
+    ('short_file.txt', 2, None, "short_file_no_column_overflowed.txt"),
     ('empty_file.txt', 2, 1, "empty_file_unavailable.txt"),
     ('short_file.txt', 1, 1, "short_file_no_context_left_marker.txt"),
     ('short_file.txt', 5, 1, "short_file_left_marker.txt"),
@@ -31,6 +32,10 @@ from ..test_utils.controller.display import emits_deprecation_warning
     ('file_with_tabs.txt', 3, 22, "file_with_tabs_replaced_left_marker.txt"),
 ))
 def test_source_context(filename: str, line: int | None, col: int | None, expected_filename: str) -> None:
+    """
+    Validate various SourceContext formatting scenarios.
+    Test case outputs are generated; set `overwrite_expected` to regenerate.
+    """
     # set this to true to regenerate and overwrite the expected test output files
     overwrite_expected = False
 

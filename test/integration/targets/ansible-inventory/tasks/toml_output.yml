@@ -1,5 +1,5 @@
 - block:
-# DTFIX-MERGE: plug in variable visitor on TOML output and re-enable this test
+# DTFIX-RELEASE: plug in variable visitor on TOML output and re-enable this test
 #  - name: check baseline
 #    command: ansible-inventory -i '{{ role_path }}/files/valid_sample.yml' --list --toml
 #    register: limited

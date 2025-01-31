@@ -140,14 +140,20 @@ class InventoryModule(BaseFileInventoryPlugin):
                         # Non-comment lines still have to be valid uf-8
                         data.append(to_text(line, errors='surrogate_or_strict'))
 
-            self._parse(path, data)
+            self._source_pos = AnsibleSourcePosition(src=path, line=0)
+
+            try:
+                self._parse(data)
+            finally:
+                self._source_pos = self._source_pos.replace(line=None)
+
         except Exception as ex:
-            raise AnsibleParserError(str(ex)) from ex
+            raise AnsibleParserError('Failed to parse inventory.', obj=self._source_pos) from ex
 
     def _raise_error(self, message):
-        raise AnsibleError(f'{self._source_pos}: {message}')
+        raise AnsibleError(message)
 
-    def _parse(self, path, lines):
+    def _parse(self, lines):
         """
         Populates self.groups from the given array of lines. Raises an error on
         any parse failure.
@@ -163,7 +169,6 @@ class InventoryModule(BaseFileInventoryPlugin):
         pending_declarations = {}
         groupname = 'ungrouped'
         state = 'hosts'
-        self._source_pos = AnsibleSourcePosition(src=path, line=0)
         for line in lines:
             self._source_pos = self._source_pos.replace(line=self._source_pos.line + 1)
 
@@ -250,10 +255,11 @@ class InventoryModule(BaseFileInventoryPlugin):
         # We report only the first such error here.
         for g in pending_declarations:
             decl = pending_declarations[g]
+            self._source_pos = self._source_pos.replace(line=decl['line'])
             if decl['state'] == 'vars':
-                raise AnsibleError("%s:%d: Section [%s:vars] not valid for undefined group: %s" % (path, decl['line'], decl['name'], decl['name']))
+                raise ValueError(f"Section [{decl['name']}:vars] not valid for undefined group {decl['name']!r}.")
             elif decl['state'] == 'children':
-                raise AnsibleError("%s:%d: Section [%s:children] includes undefined group: %s" % (path, decl['line'], decl['parents'].pop(), decl['name']))
+                raise ValueError(f"Section [{decl['parents'][-1]}:children] includes undefined group {decl['name']!r}.")
 
     def _add_pending_children(self, group, pending):
         for parent in pending[group]['parents']:
@@ -342,15 +348,24 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         return (hostnames, port)
 
-    def _recursive_apply_tags(self, value: t.Any) -> t.Any:
+    def _parse_recursive_coerce_types_and_tag(self, value: t.Any) -> t.Any:
         if isinstance(value, str):
             return AnsibleTagHelper.tag(value, (TrustedAsTemplate(), self._source_pos))
         if isinstance(value, (list, tuple, set)):
             # NB: intentional coercion of tuple/set to list, deal with it
-            return self._source_pos.tag([self._recursive_apply_tags(v) for v in value])
+            return self._source_pos.tag([self._parse_recursive_coerce_types_and_tag(v) for v in value])
         if isinstance(value, dict):
             # FIXME: enforce keys are strings
-            return self._source_pos.tag({self._source_pos.tag(k): self._recursive_apply_tags(v) for k, v in value.items()})
+            return self._source_pos.tag({self._source_pos.tag(k): self._parse_recursive_coerce_types_and_tag(v) for k, v in value.items()})
+
+        if value is ...:  # literal_eval parses ellipsis, but it's not a supported variable type
+            value = TrustedAsTemplate().tag("...")
+
+        if isinstance(value, complex):  # convert unsupported variable types recognized by literal_eval back to str
+            value = TrustedAsTemplate().tag(str(value))
+
+        value = to_text(value, nonstring='passthru', errors='surrogate_or_strict')
+
         return self._source_pos.tag(value)
 
     def _parse_value(self, v: str) -> t.Any:
@@ -370,8 +385,9 @@ class InventoryModule(BaseFileInventoryPlugin):
         except SyntaxError:
             # Is this a hash with an equals at the end?
             pass
+
         # this is mostly unnecessary, but prevents the (possible) case of bytes literals showing up in inventory
-        return self._recursive_apply_tags(to_text(v, nonstring='passthru', errors='surrogate_or_strict'))
+        return self._parse_recursive_coerce_types_and_tag(v)
 
     def _compile_patterns(self):
         """
