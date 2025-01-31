@@ -102,7 +102,7 @@ class _TemporaryDisplay:
 
 def _get_display() -> Display | _TemporaryDisplay:
     try:
-        from ..utils.display import Display
+        from ansible.utils.display import Display
     except ImportError:
         return _TemporaryDisplay()
 
