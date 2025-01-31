@@ -55,7 +55,7 @@ class CallbackModule(CallbackBase):
         if option_name in self._extra_vars:
             return self._extra_vars.get(option_name).lower() == 'true'
 
-        # Fallback to default functionality 
+        # Fallback to default functionality
         return super(CallbackModule, self).get_option(option_name)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
