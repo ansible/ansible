@@ -1,0 +1,2 @@
+minor_changes:
+  - plugins - allow callback plugins to be dynamically configured using extra_vars

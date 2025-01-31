@@ -25,6 +25,7 @@ from ansible.playbook.task_include import TaskInclude
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
 from ansible.utils.fqcn import add_internal_fqcns
+from ansible.vars.manager import VariableManager
 
 
 class CallbackModule(CallbackBase):
@@ -44,7 +45,17 @@ class CallbackModule(CallbackBase):
         self._last_task_banner = None
         self._last_task_name = None
         self._task_type_cache = {}
+        self._variable_manager = VariableManager()
+        self._extra_vars = self._variable_manager.extra_vars
         super(CallbackModule, self).__init__()
+
+    def get_option(self, option_name):
+        # Check extra_vars first
+        if option_name in self._extra_vars:
+            return self._extra_vars.get(option_name).lower() == 'true'
+
+        # Fallback to environment variable and configuration file
+        return super(CallbackModule, self).get_option(option_name)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
 
