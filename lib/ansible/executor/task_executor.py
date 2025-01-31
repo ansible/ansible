@@ -40,7 +40,7 @@ from ansible.utils.display import Display, _DeferredWarningContext
 from ansible.utils.vars import combine_vars
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.vars.manager import _deprecate_top_level_fact
-from ansible._internal import _errors
+from ansible._internal._errors import _captured
 
 display = Display()
 
@@ -434,7 +434,7 @@ class TaskExecutor:
                 # DTFIX-FUTURE: improve error handling to prioritize the earliest exception, turning the remaining ones into warnings
                 result = self._execute_internal(templar, variables)
                 self._apply_task_result_compat(result, warning_ctx)
-                _errors.AnsibleActionCapturedError.maybe_raise_on_result(result)
+                _captured.AnsibleActionCapturedError.maybe_raise_on_result(result)
             except Exception as ex:
                 try:
                     raise AnsibleTaskError(obj=self._task.get_ds()) from ex

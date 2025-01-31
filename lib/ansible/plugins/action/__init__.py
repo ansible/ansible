@@ -21,6 +21,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 
 from ansible import constants as C
+from ansible._internal._errors import _captured
 from ansible._internal._templating._chain_templar import ChainTemplar
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
 from ansible.errors.utils import _create_error_summary, _dedupe_and_concat_message_chain
@@ -42,7 +43,6 @@ from ansible.utils.display import Display
 from ansible.vars.clean import remove_internal_keys
 from ansible.utils.plugin_docs import get_versioned_doclink
 from ansible import _internal
-from ansible._internal import _errors
 from ansible._internal._templating import _engine
 
 display = Display()
@@ -1251,7 +1251,7 @@ class ActionBase(ABC):
 
             data = json.loads(filtered_output, cls=decoder)
 
-            _errors.AnsibleModuleCapturedError.normalize_result_exception(data)
+            _captured.AnsibleModuleCapturedError.normalize_result_exception(data)
 
             data.update(_ansible_parsed=True)  # this must occur after normalize_result_exception, since it checks the type of data to ensure it's a dict
         except ValueError as ex:
@@ -1472,7 +1472,7 @@ class ActionBase(ABC):
     @staticmethod
     def result_dict_from_exception(exception: BaseException) -> dict[str, t.Any]:
         """Return a failed task result dict from the given exception."""
-        if ansible_remoted_error := _errors.AnsibleResultCapturedError.find_first_remoted_error(exception):
+        if ansible_remoted_error := _captured.AnsibleResultCapturedError.find_first_remoted_error(exception):
             result = ansible_remoted_error._result.copy()
         else:
             result = {}

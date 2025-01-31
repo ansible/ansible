@@ -115,7 +115,7 @@ def _get_display() -> Display | _TemporaryDisplay:
 def _create_error_summary(exception: BaseException, event: _traceback.TracebackEvent | None = None) -> ErrorSummary:
     # DTFIX-MERGE: can this be moved to _internal._errors?
     from . import AnsibleError
-    from .._internal import _errors
+    from .._internal._errors import _captured
 
     current_exception: BaseException | None = exception
     error_details: list[Detail] = []
@@ -141,7 +141,7 @@ def _create_error_summary(exception: BaseException, event: _traceback.TracebackE
 
         error_details.append(edc)
 
-        if isinstance(current_exception, _errors.AnsibleCapturedError):
+        if isinstance(current_exception, _captured.AnsibleCapturedError):
             detail = current_exception.error_summary
             error_details.extend(detail.details)
 

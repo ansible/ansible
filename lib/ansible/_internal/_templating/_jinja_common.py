@@ -18,7 +18,7 @@ from ansible.module_utils.datatag import Tripwire, AnsibleTagHelper, _untaggable
 from ._access import NotifiableAccessContextBase
 from ._jinja_patches import _patch_jinja
 from ._utils import TemplateContext
-from .. import _errors
+from .._errors import _captured
 
 
 _patch_jinja()  # apply Jinja2 patches before types are declared that are dependent on the changes
@@ -241,7 +241,7 @@ class CapturedExceptionMarker(ExceptionMarker):
         return self._marker_captured_exception
 
 
-class UndecryptableVaultError(_errors.AnsibleCapturedError):
+class UndecryptableVaultError(_captured.AnsibleCapturedError):
     """Template-external error raised by VaultExceptionMarker when an undecryptable variable is accessed."""
 
     context = 'vault'

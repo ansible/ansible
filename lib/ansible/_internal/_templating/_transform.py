@@ -11,7 +11,7 @@ from ansible.parsing.vault import EncryptedString, VaultHelper
 from ansible.utils.display import Display
 
 from ._jinja_common import VaultExceptionMarker
-from .. import _errors
+from .._errors import _captured
 
 display = Display()
 
@@ -44,7 +44,7 @@ def encrypted_string(value: EncryptedString) -> str | VaultExceptionMarker:
 
 
 _type_transform_mapping: dict[type, t.Callable[[t.Any], t.Any]] = {
-    _errors.CapturedErrorSummary: error_summary,
+    _captured.CapturedErrorSummary: error_summary,
     ErrorSummary: error_summary,
     WarningSummary: warning_summary,
     DeprecationSummary: deprecation_summary,
