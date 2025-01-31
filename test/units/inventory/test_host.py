@@ -75,23 +75,6 @@ class TestHost(unittest.TestCase):
         assert other != self.hostA
         self.assertNotEqual(self.hostA, other)
 
-    @pytest.mark.xfail(reason="likely to be removed")
-    def test_serialize(self):
-        group = Group('some_group')
-        self.hostA.add_group(group)
-        data = self.hostA.serialize()
-        self.assertIsInstance(data, dict)
-
-    @pytest.mark.xfail(reason="likely to be removed")
-    def test_serialize_then_deserialize(self):
-        group = Group('some_group')
-        self.hostA.add_group(group)
-        hostA_data = self.hostA.serialize()
-
-        hostA_clone = Host()
-        hostA_clone.deserialize(hostA_data)
-        self.assertEqual(self.hostA, hostA_clone)
-
 
 class TestHostWithPort(TestHost):
     ansible_port = 8822

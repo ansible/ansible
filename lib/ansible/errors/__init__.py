@@ -298,7 +298,7 @@ class AnsibleTemplatePluginError(AnsibleTemplateError):
     """An error sourced by a template plugin (lookup/filter/test)."""
 
 
-# deprecated: description='add deprecation warnings for these aliases' core_version='2.21'
+# deprecated: description='add deprecation warnings for these aliases' core_version='2.23'
 AnsibleFilterError = AnsibleTemplatePluginError
 AnsibleLookupError = AnsibleTemplatePluginError
 

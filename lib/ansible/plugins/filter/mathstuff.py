@@ -27,10 +27,9 @@ from collections.abc import Mapping, Iterable
 
 from jinja2.filters import pass_environment
 
-from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeError
+from ansible.errors import AnsibleError
 from ansible.module_utils.common.text import formatters
 from ansible.module_utils.six import binary_type, text_type
-from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.utils.display import Display
 
 try:
@@ -64,7 +63,7 @@ def unique(environment, a, case_sensitive=None, attribute=None):
     except Exception as e:
         error = e
         _do_fail(e)
-        display.warning('Falling back to Ansible unique filter as Jinja2 one failed: %s' % to_text(e))
+        display.error_as_warning('Falling back to Ansible unique filter as Jinja2 one failed.', e)
 
     if not HAS_UNIQUE or error:
 
@@ -124,15 +123,15 @@ def logarithm(x, base=math.e):
             return math.log10(x)
         else:
             return math.log(x, base)
-    except TypeError as e:
-        raise AnsibleFilterTypeError('log() can only be used on numbers: %s' % to_native(e))
+    except TypeError as ex:
+        raise AnsibleError('log() can only be used on numbers') from ex
 
 
 def power(x, y):
     try:
         return math.pow(x, y)
-    except TypeError as e:
-        raise AnsibleFilterTypeError('pow() can only be used on numbers: %s' % to_native(e))
+    except TypeError as ex:
+        raise AnsibleError('pow() can only be used on numbers') from ex
 
 
 def inversepower(x, base=2):
@@ -141,28 +140,28 @@ def inversepower(x, base=2):
             return math.sqrt(x)
         else:
             return math.pow(x, 1.0 / float(base))
-    except (ValueError, TypeError) as e:
-        raise AnsibleFilterTypeError('root() can only be used on numbers: %s' % to_native(e))
+    except (ValueError, TypeError) as ex:
+        raise AnsibleError('root() can only be used on numbers') from ex
 
 
 def human_readable(size, isbits=False, unit=None):
     """ Return a human-readable string """
     try:
         return formatters.bytes_to_human(size, isbits, unit)
-    except TypeError as e:
-        raise AnsibleFilterTypeError("human_readable() failed on bad input: %s" % to_native(e))
-    except Exception:
-        raise AnsibleFilterError("human_readable() can't interpret following string: %s" % size)
+    except TypeError as ex:
+        raise AnsibleError("human_readable() failed on bad input") from ex
+    except Exception as ex:
+        raise AnsibleError("human_readable() can't interpret the input") from ex
 
 
 def human_to_bytes(size, default_unit=None, isbits=False):
     """ Return bytes count from a human-readable string """
     try:
         return formatters.human_to_bytes(size, default_unit, isbits)
-    except TypeError as e:
-        raise AnsibleFilterTypeError("human_to_bytes() failed on bad input: %s" % to_native(e))
-    except Exception:
-        raise AnsibleFilterError("human_to_bytes() can't interpret following string: %s" % size)
+    except TypeError as ex:
+        raise AnsibleError("human_to_bytes() failed on bad input") from ex
+    except Exception as ex:
+        raise AnsibleError("human_to_bytes() can't interpret the input") from ex
 
 
 def rekey_on_member(data, key, duplicates='error'):
@@ -175,7 +174,7 @@ def rekey_on_member(data, key, duplicates='error'):
     value would be duplicated or to overwrite previous entries if that's the case.
     """
     if duplicates not in ('error', 'overwrite'):
-        raise AnsibleFilterError("duplicates parameter to rekey_on_member has unknown value: {0}".format(duplicates))
+        raise AnsibleError(f"duplicates parameter to rekey_on_member has unknown value {duplicates!r}")
 
     new_obj = {}
 
@@ -184,26 +183,22 @@ def rekey_on_member(data, key, duplicates='error'):
     elif isinstance(data, Iterable) and not isinstance(data, (text_type, binary_type)):
         iterate_over = data
     else:
-        raise AnsibleFilterTypeError("Type is not a valid list, set, or dict")
+        raise AnsibleError("Type is not a valid list, set, or dict")
 
     for item in iterate_over:
         if not isinstance(item, Mapping):
-            raise AnsibleFilterTypeError("List item is not a valid dict")
+            raise AnsibleError("List item is not a valid dict")
 
         try:
             key_elem = item[key]
         except KeyError:
-            raise AnsibleFilterError("Key {0} was not found".format(key))
-        except TypeError as e:
-            raise AnsibleFilterTypeError(to_native(e))
-        except Exception as e:
-            raise AnsibleFilterError(to_native(e))
+            raise AnsibleError(f"Key {key!r} was not found.", obj=item) from None
 
         # Note: if new_obj[key_elem] exists it will always be a non-empty dict (it will at
         # minimum contain {key: key_elem}
         if new_obj.get(key_elem, None):
             if duplicates == 'error':
-                raise AnsibleFilterError("Key {0} is not unique, cannot correctly turn into dict".format(key_elem))
+                raise AnsibleError(f"Key {key_elem!r} is not unique, cannot convert to dict.")
             elif duplicates == 'overwrite':
                 new_obj[key_elem] = item
         else:
