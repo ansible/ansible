@@ -25,6 +25,8 @@ from ansible.playbook.task_include import TaskInclude
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
 from ansible.utils.fqcn import add_internal_fqcns
+from ansible.cli import CLI
+from ansible.template import Templar
 
 
 class CallbackModule(CallbackBase):
@@ -44,7 +46,29 @@ class CallbackModule(CallbackBase):
         self._last_task_banner = None
         self._last_task_name = None
         self._task_type_cache = {}
+        self._display_skipped_hosts = None
         super(CallbackModule, self).__init__()
+
+    def display_skipped_hosts(self):
+        """
+        Evaluates and returns dynamic configuration of display_skipped_hosts in a playbook
+        """
+        self._loader, _, self._variable_manager = CLI._play_prereqs()
+        vars = self._variable_manager.get_vars(play=self._play)
+        if "display_skipped_hosts" not in vars:
+            return self.get_option("display_skipped_hosts")
+        #print(variableManager.get_vars(play=self._play)["display_skipped_hosts"])
+        templar = Templar(loader=self._loader, variables=vars)
+
+        display_skipped_hosts_val = templar.template(vars["display_skipped_hosts"], convert_data=True)
+        if display_skipped_hosts_val == True or display_skipped_hosts_val == "true":
+            return True
+        elif display_skipped_hosts_val == False or display_skipped_hosts_val == "false":
+            return False
+        else:
+            msg = "[WARNING]: display_skipped_hosts requires boolean value, has value \"%s\"" % display_skipped_hosts_val
+            self._display.display(msg, color=C.COLOR_WARN)
+            return self.get_option("display_skipped_hosts")
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
 
@@ -105,8 +129,9 @@ class CallbackModule(CallbackBase):
             self._display.display(msg, color=color)
 
     def v2_runner_on_skipped(self, result):
-
-        if self.get_option('display_skipped_hosts'):
+        if self._display_skipped_hosts == None:
+            self._display_skipped_hosts = self.display_skipped_hosts()
+        if self._display_skipped_hosts:
 
             self._clean_results(result._result, result._task.action)
 
@@ -158,7 +183,9 @@ class CallbackModule(CallbackBase):
             self._last_task_name = task.get_name().strip()
 
             # Display the task banner immediately if we're not doing any filtering based on task result
-            if self.get_option('display_skipped_hosts') and self.get_option('display_ok_hosts'):
+            if self._display_skipped_hosts == None:
+                self._display_skipped_hosts = self.display_skipped_hosts()
+            if self._display_skipped_hosts and self.get_option('display_ok_hosts'):
                 self._print_task_banner(task)
 
     def _print_task_banner(self, task):
@@ -278,7 +305,9 @@ class CallbackModule(CallbackBase):
         )
 
     def v2_runner_item_on_skipped(self, result):
-        if self.get_option('display_skipped_hosts'):
+        if self._display_skipped_hosts == None:
+            self._display_skipped_hosts = self.display_skipped_hosts()
+        if self._display_skipped_hosts:
             if self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
 
