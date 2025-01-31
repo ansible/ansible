@@ -67,34 +67,6 @@ class InventoryData:
 
         self.add_child('all', 'ungrouped')
 
-    def __deepcopy__(self, memodict):
-        raise Exception("deepcopy was not properly implemented on data")  # DTFIX-MERGE: ensure this is unneeded and remove
-
-    def serialize(self):
-        if bool(1):
-            raise Exception("is this getting hit?")  # DTFIX-MERGE: ensure this is dead code and remove
-
-        self._groups_dict_cache = None
-        data = {
-            'groups': self.groups,
-            'hosts': self.hosts,
-            'local': self.localhost,
-            'source': self.current_source,
-            'processed_sources': self.processed_sources
-        }
-        return data
-
-    def deserialize(self, data):
-        if bool(1):
-            raise Exception("is this getting hit?")  # DTFIX-MERGE: ensure this is dead code and remove
-
-        self._groups_dict_cache = {}
-        self.hosts = data.get('hosts')
-        self.groups = data.get('groups')
-        self.localhost = data.get('local')
-        self.current_source = data.get('source')
-        self.processed_sources = data.get('processed_sources')
-
     def _create_implicit_localhost(self, pattern: str) -> Host:
 
         if self.localhost:

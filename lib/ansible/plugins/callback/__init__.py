@@ -281,7 +281,7 @@ class CallbackBase(AnsiblePlugin):
     def _handle_warnings(self, res):
         """Display warnings and deprecation warnings sourced by task execution."""
         for warning in res.pop('warnings', []):
-            # DTFIX-MERGE: what to do about propagating wrap_text from the original display.warning call?
+            # DTFIX-RELEASE: what to do about propagating wrap_text from the original display.warning call?
             self._display._warning(warning, wrap_text=False)
 
         for warning in res.pop('deprecations', []):

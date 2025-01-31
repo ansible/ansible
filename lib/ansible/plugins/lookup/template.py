@@ -164,7 +164,7 @@ class LookupModule(LookupBase):
                 vars.update(generate_ansible_template_vars(term, lookupfile))
                 vars.update(lookup_template_vars)
 
-                # DTFIX-MERGE: use public API for these (convert TemplateOverrides to dict or make it public also)
+                # DTFIX-RELEASE: use public API for these (convert TemplateOverrides to dict or make it public also)
                 with templar._engine.set_temporary_context(available_variables=vars, searchpath=searchpath):
                     overrides = TemplateOverrides(
                         variable_start_string=variable_start_string,

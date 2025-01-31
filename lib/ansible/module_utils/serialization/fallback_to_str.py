@@ -60,7 +60,7 @@ class _Profile(_json._JSONSerializationProfile["Encoder", "Decoder"]):
     @classmethod
     def default(cls, o: _t.Any) -> _t.Any:
         # DTFIX-MERGE: what error handling should be used here?
-        # DTFIX-MERGE: tests needed for error handling scenarios
+        # DTFIX-RELEASE: tests needed for error handling scenarios
 
         if isinstance(o, _c.Mapping):
             return dict(o)

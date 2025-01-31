@@ -161,7 +161,7 @@ class ModuleArgsParser:
         final_args = dict()
         if additional_args:
             if isinstance(additional_args, (str, EncryptedString)):
-                # DTFIX-MERGE: should this be is_possibly_template?
+                # DTFIX-RELEASE: should this be is_possibly_template?
                 if TemplateEngine().is_template(additional_args):
                     final_args['_variable_params'] = additional_args
                 else:

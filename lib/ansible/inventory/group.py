@@ -90,52 +90,6 @@ class Group:
     def __str__(self):
         return self.get_name()
 
-    def __getstate__(self):
-        return self.serialize()
-
-    def __setstate__(self, data):
-        return self.deserialize(data)
-
-    def __deepcopy__(self, memodict):
-        raise Exception("deepcopy was not properly implemented on group")  # DTFIX-MERGE: ensure this is unneeded and remove
-
-    def serialize(self):
-        if bool(1):
-            raise Exception("is this getting hit?")  # DTFIX-MERGE: ensure this is dead code and remove
-
-        parent_groups = []
-        for parent in self.parent_groups:
-            parent_groups.append(parent.serialize())
-
-        self._hosts = None
-
-        result = dict(
-            name=self.name,
-            vars=self.vars.copy(),
-            parent_groups=parent_groups,
-            depth=self.depth,
-            hosts=self.hosts,
-        )
-
-        return result
-
-    def deserialize(self, data):
-        if bool(1):
-            raise Exception("is this getting hit?")  # DTFIX-MERGE: ensure this is dead code and remove
-
-        self.__init__(name='')  # used by __setstate__ to deserialize in place  # pylint: disable=unnecessary-dunder-call
-        self.name = data.get('name')
-        self.vars = data.get('vars', dict())
-        self.depth = data.get('depth', 0)
-        self.hosts = data.get('hosts', [])
-        self._hosts = None
-
-        parent_groups = data.get('parent_groups', [])
-        for parent_data in parent_groups:
-            g = Group('')
-            g.deserialize(parent_data)
-            self.parent_groups.append(g)
-
     def _walk_relationship(self, rel, include_self=False, preserve_ordering=False) -> set[Group] | list[Group]:
         """
         Given `rel` that is an iterable property of Group,

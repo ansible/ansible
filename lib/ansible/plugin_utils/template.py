@@ -39,7 +39,7 @@ def generate_ansible_template_vars(path, fullpath=None, dest_path=None):
 
     managed_default = constants.config.get_config_value('DEFAULT_MANAGED_STR')
 
-    # DTFIX-MERGE: deprecate this in favor of users defining their own variable to replace ansible_managed
+    # DTFIX-RELEASE: deprecate this in favor of users defining their own variable to replace ansible_managed
     #        to make the transition easier, there should be a facility to define custom variables (with templates) in config
     managed_str = managed_default.format(
         # IMPORTANT: These values must be constant strings to avoid template injection.

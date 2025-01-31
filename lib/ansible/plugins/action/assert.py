@@ -43,7 +43,7 @@ class ActionModule(ActionBase):
 
         if not isinstance(templated_that, list):
             # if `that` is a non-list, restore the original input (template or container)
-            # DTFIX-MERGE: ensure that we get a warning below because of template instead of expression
+            # DTFIX-RELEASE: ensure that we get a warning below because of template instead of expression
             return value
 
         return templated_that

@@ -524,7 +524,7 @@ class TaskExecutor:
         # if we ran into an error while setting up the PlayContext, raise it now, unless is known issue with delegation
         # and undefined vars (correct values are in cvars later on and connection plugins, if still error, blows up there)
 
-        # DTFIX-MERGE: this should probably be declaratively handled in post_validate (or better, get rid of play_context)
+        # DTFIX-RELEASE: this should probably be declaratively handled in post_validate (or better, get rid of play_context)
         if context_validation_error is not None:
             raiseit = True
             if self._task.delegate_to:
@@ -533,7 +533,7 @@ class TaskExecutor:
                     if isinstance(context_validation_error.__cause__, AnsibleUndefinedVariable):
                         raiseit = False
                 elif isinstance(context_validation_error, AnsibleUndefinedVariable):
-                    # DTFIX-MERGE: should not be possible to hit this now (all are AnsibleFieldAttributeError)?
+                    # DTFIX-RELEASE: should not be possible to hit this now (all are AnsibleFieldAttributeError)?
                     raiseit = False
             if raiseit:
                 raise context_validation_error  # pylint: disable=raising-bad-type

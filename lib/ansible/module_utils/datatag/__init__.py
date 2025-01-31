@@ -44,7 +44,7 @@ class AnsibleTagHelper:
     # DTFIX-MERGE: bikeshed the name and location of this class, since it's public API
     #        it may make sense to move this into another module, but the implementations should remain here (so they can be used without circular imports here)
     #        if they're in a separate module, is a class even needed, or should they be globals?
-    # DTFIX-MERGE: add docstrings to all non-override methods in this class
+    # DTFIX-RELEASE: add docstrings to all non-override methods in this class
 
     @staticmethod
     def untag(value: _T, *tag_types: t.Type[AnsibleDatatagBase]) -> _T:

@@ -692,7 +692,7 @@ class Display(metaclass=Singleton):
         msg = format_message(warning)
         msg = f'[DEPRECATION WARNING]: {msg}'
 
-        # DTFIX-MERGE: ?
+        # DTFIX-RELEASE: what should we do with wrap_message?
         msg = self._wrap_message(msg=msg, wrap_text=True)
 
         if self._deduplicate(msg, self._deprecations):
@@ -731,7 +731,7 @@ class Display(metaclass=Singleton):
 
         if warning_ctx := _DeferredWarningContext.current(optional=True):
             warning_ctx.capture(warning)
-            # DTFIX-MERGE: what to do about propagating wrap_text?
+            # DTFIX-RELEASE: what to do about propagating wrap_text?
             return
 
         self._warning(warning, wrap_text=not formatted)
@@ -749,7 +749,7 @@ class Display(metaclass=Singleton):
         if self._deduplicate(msg, self._warns):
             return
 
-        # DTFIX-MERGE: errr?
+        # DTFIX-RELEASE: what should we do with wrap_message?
         msg = self._wrap_message(msg=msg, wrap_text=wrap_text)
 
         self.display(msg, color=C.config.get_config_value('COLOR_WARN'), stderr=True, caplevel=-2)
@@ -847,7 +847,7 @@ class Display(metaclass=Singleton):
         if self._deduplicate(msg, self._errors):
             return
 
-        # DTFIX-MERGE: errr?
+        # DTFIX-RELEASE: what should we do with wrap_message?
         msg = self._wrap_message(msg=msg, wrap_text=wrap_text)
 
         self.display(msg, color=C.config.get_config_value('COLOR_ERROR'), stderr=stderr, caplevel=-1)
@@ -1154,9 +1154,8 @@ def _format_error_details(details: t.Sequence[Detail], formatted_tb: str | None 
 def _get_message_lines(message: str, help_text: str | None, formatted_source_context: str | None) -> list[str]:
     """Return a list of error/warning message lines constructed from the given message, help text and source context."""
 
-    # DTFIX-MERGE: do we want to collapse these cases?
-    # if help_text and not formatted_source_context and '\n' not in message and '\n' not in help_text:
-    #     return [f'{message} {help_text}']  # prefer a single-line message with help text when there is no source context
+    if help_text and not formatted_source_context and '\n' not in message and '\n' not in help_text:
+        return [f'{message} {help_text}']  # prefer a single-line message with help text when there is no source context
 
     message_lines = [message]
 

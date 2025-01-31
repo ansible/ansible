@@ -376,24 +376,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         """
         env = {}
 
-        # DTFIX-MERGE: move this into an integration test for environment
-        #     """
-        # - shell: echo "IAMHERE = $IAMHERE; NOTHERE = $NOTHERE; ANOTHER = $ANOTHER"
-        #   environment:
-        #     - NOTHERE: '{{ omit }}'
-        #       IAMHERE: hello
-        #     - '{{ omit }}'
-        #     - ANOTHER: stillhere
-        #
-        # - shell: echo hi
-        #   environment: '{{ omit }}'
-        #
-        # - shell: echo hi
-        #   environment:
-        #     - blar
-        #
-        #     """
-
         # DTFIX-FUTURE: kill this with fire
         def _parse_env_kv(k, v):
             try:

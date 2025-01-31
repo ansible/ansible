@@ -55,8 +55,8 @@ class AnsibleLoader(_YamlParser, AnsibleConstructor, Resolver):
     def __init__(
         self,
         stream: str | bytes | t.TextIO | t.BinaryIO,
-        file_name: str | None = None,  # DTFIX-MERGE: can we eliminate this arg or make it origin instead?
-        vault_secrets: list[tuple[str, VaultSecret]] | None = None,  # DTFIX-MERGE: can we remove/deprecate this?
+        file_name: str | None = None,  # DTFIX-RELEASE: can we eliminate this arg or make it origin instead?
+        vault_secrets: list[tuple[str, VaultSecret]] | None = None,  # DTFIX-RELEASE: can we remove/deprecate this?
         trusted_as_template: bool | None = None,  # DTFIX-MERGE: we're not using this, can we use a stream wrapper to carry this flag instead?
     ) -> None:
         trusted_as_template = trusted_as_template if isinstance(trusted_as_template, bool) else TrustedAsTemplate.is_tagged_on(stream)

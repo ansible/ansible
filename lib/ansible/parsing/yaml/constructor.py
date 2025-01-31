@@ -45,7 +45,7 @@ class AnsibleConstructor(SafeConstructor):
     def __init__(
         self,
         origin: AnsibleSourcePosition,
-        vault_secrets: list[tuple[str, VaultSecret]] | None = None,  # DTFIX-MERGE: can we remove/deprecate this?
+        vault_secrets: list[tuple[str, VaultSecret]] | None = None,  # DTFIX-RELEASE: can we remove/deprecate this?
         trusted_as_template: bool = False,
     ) -> None:
         self._origin = origin

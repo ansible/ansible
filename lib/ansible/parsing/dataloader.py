@@ -80,7 +80,7 @@ class DataLoader:
     def load(
             self,
             data: str,
-            file_name: str | None = None,  # DTFIX-MERGE: consider deprecating this in favor of tagging AnsibleSourcePosition on data
+            file_name: str | None = None,  # DTFIX-RELEASE: consider deprecating this in favor of tagging AnsibleSourcePosition on data
             show_content: bool = True,  # deprecated: description='deprecate show_content in favor of RedactAnnotatedSourceContext' core_version='2.22'
             json_only: bool = False,
     ) -> t.Any:

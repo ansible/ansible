@@ -40,7 +40,7 @@ class TaskResult:
         else:
             self._result = DataLoader().load(return_data)
 
-        # DTFIX-MERGE: do this inline and on everything (or more things)?
+        # DTFIX-RELEASE: do this inline and on everything (or more things)?
         if msg := self._result.get('msg'):
             if isinstance(msg, str):
                 msg = NotATemplate().tag(msg)

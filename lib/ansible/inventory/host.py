@@ -37,12 +37,6 @@ class Host:
 
     # __slots__ = [ 'name', 'vars', 'groups' ]
 
-    def __getstate__(self):
-        return self.serialize()
-
-    def __setstate__(self, data):
-        return self.deserialize(data)
-
     def __eq__(self, other):
         if not isinstance(other, Host):
             return False
@@ -59,44 +53,6 @@ class Host:
 
     def __repr__(self):
         return self.get_name()
-
-    def __deepcopy__(self, memodict):
-        raise Exception("deepcopy was not properly implemented on host")  # DTFIX-MERGE: ensure this is unneeded and remove
-
-    def serialize(self):
-        if bool(1):
-            raise Exception("is this getting hit?")  # DTFIX-MERGE: ensure this is dead code and remove
-
-        groups = []
-        for group in self.groups:
-            groups.append(group.serialize())
-
-        return dict(
-            name=self.name,
-            vars=self.vars.copy(),
-            address=self.address,
-            uuid=self._uuid,
-            groups=groups,
-            implicit=self.implicit,
-        )
-
-    def deserialize(self, data):
-        if bool(1):
-            raise Exception("is this getting hit?")  # DTFIX-MERGE: ensure this is dead code and remove
-
-        # self.__init__(name='', gen_uuid=False)  # used by __setstate__ to deserialize in place  # pylint: disable=unnecessary-dunder-call
-
-        # self.name = data.get('name')
-        # self.vars = data.get('vars', dict())
-        # self.address = data.get('address', '')
-        # self._uuid = data.get('uuid', None)
-        # self.implicit = data.get('implicit', False)
-
-        groups = data.get('groups', [])
-        for group_data in groups:
-            g = Group('')
-            g.deserialize(group_data)
-            self.groups.append(g)
 
     def __init__(self, name: str, port: int | str | None = None, gen_uuid: bool = True) -> None:
         name = helpers.remove_trust(name)

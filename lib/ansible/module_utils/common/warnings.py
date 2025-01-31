@@ -39,13 +39,13 @@ def deprecate(msg: str, version: str | None = None, date: str | datetime.date | 
 
 def get_warning_messages() -> tuple[str, ...]:
     """Return a tuple of warning messages accumulated over this run."""
-    # DTFIX-MERGE: add future deprecation comment
+    # DTFIX-RELEASE: add future deprecation comment
     return tuple(item.format() for item in _global_warnings)
 
 
 def get_deprecation_messages() -> tuple[dict[str, t.Any], ...]:
     """Return a tuple of deprecation warning messages accumulated over this run."""
-    # DTFIX-MERGE: add future deprecation comment
+    # DTFIX-RELEASE: add future deprecation comment
     return tuple(item._as_simple_dict() for item in _global_deprecations)
 
 

@@ -34,8 +34,6 @@ __all__ = ['HostVars', 'HostVarsVars']
 
 class HostVars(c.Mapping):
     """A read-only wrapper to enable on-demand templating of a specific host's variables under that host's variable context."""
-    # DTFIX-MERGE: why isn't this dict-ish enough to render eg `debug: var=hostvars`?
-
     def __init__(self, inventory: InventoryManager, variable_manager: VariableManager, loader: DataLoader) -> None:
         self._inventory = inventory
         self._loader = loader
@@ -48,10 +46,9 @@ class HostVars(c.Mapping):
         host = self._inventory.get_host(key)
 
         if host is None:
-            # DTFIX-MERGE: untangle HostVars/HostVarsVars setup so we don't need to defer this import
-            from ansible._internal._templating._jinja_bits import _undef
+            from ansible._internal._templating import _jinja_bits
 
-            return _undef(f"hostvars['{key}']")
+            return _jinja_bits._undef(f"hostvars['{key}']")
 
         # DTFIX-FUTURE: this should be able to fetch play/task from a context so that vars defined at those layers are available within hostvarsvars
         data = self._variable_manager.get_vars(host=host, include_hostvars=False)
@@ -78,11 +75,10 @@ class HostVarsVars(c.Mapping):
     """A read-only view of a specific host's vars that will template on access under that host's variable context."""
 
     def __init__(self, variables: dict[str, t.Any], loader: DataLoader | None, host: str) -> None:
-        # DTFIX-MERGE: can we eliminate this deferred import?
-        from ansible._internal._templating._engine import TemplateEngine
+        from ansible._internal._templating import _engine
 
         self._vars = variables
-        self._templar = TemplateEngine(variables=variables, loader=loader)
+        self._templar = _engine.TemplateEngine(variables=variables, loader=loader)
         self._host = host
 
     def __getitem__(self, key: str) -> t.Any:
@@ -106,5 +102,5 @@ class HostVarsVars(c.Mapping):
         return self
 
 
-# DTFIX-MERGE: is there a better way to add this to the ignorable types in the module_utils code
+# DTFIX-RELEASE: is there a better way to add this to the ignorable types in the module_utils code
 datatag._untaggable_types.update({HostVars, HostVarsVars})

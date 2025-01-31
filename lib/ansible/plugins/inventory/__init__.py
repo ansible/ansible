@@ -492,7 +492,7 @@ class Constructable(_BaseInventoryPlugin):
 class _AutoTrustInputTemplateEngine(_engine.TemplateEngine):
     """Compatibility wrapper around Templar that automatically trusts templates passed directly to some templating methods."""
 
-    # DTFIX-MERGE: bikeshed name and location of this class, and review for correctness
+    # DTFIX-RELEASE: bikeshed name and location of this class, and review for correctness
     # DTFIX-MERGE: we only want to auto-trust values passed directly in from inventory
     #              however when this templar is inherited the auto-trust will apply to lazy containers which inherit this templar, which is not desirable
     #              solving this requires a proxy, not an actual templar -- which we need anyways, since this should expose the old templar API not the new one

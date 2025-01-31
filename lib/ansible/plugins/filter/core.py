@@ -632,7 +632,7 @@ def ansible_default(
 @accept_marker
 @functools.wraps(do_map)
 def wrapped_map(*args, **kwargs) -> t.Any:
-    # DTFIX-MERGE: FDI050 consider replacing this with split decorators?
+    # DTFIX-RELEASE: FDI050 consider replacing this with split decorators?
     if (first_marker := get_first_marker_arg(args, kwargs)) is not None:
         return first_marker
 
@@ -642,7 +642,7 @@ def wrapped_map(*args, **kwargs) -> t.Any:
 @accept_marker
 @functools.wraps(do_select)
 def wrapped_select(*args, **kwargs) -> t.Any:
-    # DTFIX-MERGE: FDI050 consider replacing this with split decorators?
+    # DTFIX-RELEASE: FDI050 consider replacing this with split decorators?
     if (first_marker := get_first_marker_arg(args, kwargs)) is not None:
         return first_marker
 
@@ -652,7 +652,7 @@ def wrapped_select(*args, **kwargs) -> t.Any:
 @accept_marker
 @functools.wraps(do_selectattr)
 def wrapped_selectattr(*args, **kwargs) -> t.Any:
-    # DTFIX-MERGE: FDI050 consider replacing this with split decorators?
+    # DTFIX-RELEASE: FDI050 consider replacing this with split decorators?
     if (first_marker := get_first_marker_arg(args, kwargs)) is not None:
         return first_marker
 
@@ -662,7 +662,7 @@ def wrapped_selectattr(*args, **kwargs) -> t.Any:
 @accept_marker
 @functools.wraps(do_reject)
 def wrapped_reject(*args, **kwargs) -> t.Any:
-    # DTFIX-MERGE: FDI050 consider replacing this with split decorators?
+    # DTFIX-RELEASE: FDI050 consider replacing this with split decorators?
     if (first_marker := get_first_marker_arg(args, kwargs)) is not None:
         return first_marker
 
@@ -672,7 +672,7 @@ def wrapped_reject(*args, **kwargs) -> t.Any:
 @accept_marker
 @functools.wraps(do_rejectattr)
 def wrapped_rejectattr(*args, **kwargs) -> t.Any:
-    # DTFIX-MERGE: FDI050 consider replacing this with split decorators?
+    # DTFIX-RELEASE: FDI050 consider replacing this with split decorators?
     if (first_marker := get_first_marker_arg(args, kwargs)) is not None:
         return first_marker
 
@@ -785,7 +785,7 @@ class FilterModule(object):
             'groupby': _cleansed_groupby,
 
             # Jinja builtins that need special arg handling
-            # DTFIX-MERGE: document these now that they're overridden, or hide them so they don't show up as undocumented
+            # DTFIX-RELEASE: document these now that they're overridden, or hide them so they don't show up as undocumented
             'default': ansible_default,  # replaces the implementation instead of wrapping it
             'map': wrapped_map,
             'select': wrapped_select,
@@ -794,4 +794,4 @@ class FilterModule(object):
             'rejectattr': wrapped_rejectattr,
         }
 
-# DTFIX-MERGE: document protomatter plugins, or hide them from ansible-doc (not related to this code, but needed some place to put this comment)
+# DTFIX-RELEASE: document protomatter plugins, or hide them from ansible-doc (not related to this code, but needed some place to put this comment)

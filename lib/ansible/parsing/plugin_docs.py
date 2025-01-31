@@ -47,7 +47,7 @@ def read_docstring_from_yaml_file(filename, verbose=True, ignore_errors=True):
             file_data = AnsibleLoader(yamlfile.read(), file_name=filename).get_single_data()
     except Exception as ex:
         msg = f"Unable to parse yaml file {filename}"
-        # DTFIX-MERGE: find a better pattern for this
+        # DTFIX-RELEASE: find a better pattern for this (can we use the new optional error behavior?)
         if not ignore_errors:
             raise AnsibleParserError(f'{msg}.') from ex
         elif verbose:
@@ -108,7 +108,7 @@ def read_docstring_from_python_module(filename, verbose=True, ignore_errors=True
                         data[next_string] = AnsibleLoader(value, file_name=filename).get_single_data()
                     except Exception as ex:
                         msg = f"Unable to parse docs {_var2string(next_string)!r} in python file {filename!r}"
-                        # DTFIX-MERGE: use a better pattern to just conditionally send augmented exception to display.error or raise
+                        # DTFIX-RELEASE: use a better pattern to just conditionally send augmented exception to display.error or raise
                         if not ignore_errors:
                             raise AnsibleParserError(f'{msg}.') from ex
                         elif verbose:
@@ -162,7 +162,7 @@ def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
 
     except Exception as ex:
         msg = f"Unable to parse documentation in python file {filename!r}"
-        # DTFIX-MERGE: better pattern to conditionally raise/display
+        # DTFIX-RELEASE: better pattern to conditionally raise/display
         if not ignore_errors:
             raise AnsibleParserError(f'{msg}.') from ex
         elif verbose:
