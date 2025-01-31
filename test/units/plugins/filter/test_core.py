@@ -7,8 +7,9 @@ from __future__ import annotations
 import pytest
 
 from ansible.module_utils.common.text.converters import to_native
-from ansible.plugins.filter.core import to_uuid
+from ansible.plugins.filter.core import to_bool, to_uuid
 from ansible.errors import AnsibleError
+from ...test_utils.controller.display import emits_deprecation_warning
 
 UUID_DEFAULT_NAMESPACE_TEST_CASES = (
     ('example.com', 'ae780c3a-a3ab-53c2-bfb4-098da300b3fe'),
@@ -37,3 +38,9 @@ def test_to_uuid_invalid_namespace():
     with pytest.raises(AnsibleError) as e:
         to_uuid('example.com', namespace='11111111-2222-3333-4444-555555555')
     assert 'Invalid value' in to_native(e.value)
+
+
+@pytest.mark.parametrize('value', [None, 'nope', 1.1])
+def to_bool_deprecation(value: object):
+    with emits_deprecation_warning(match=f'The `bool` filter coerced invalid value .+ to False'):
+        to_bool(value)

@@ -307,11 +307,16 @@
 - name: Verify to_bool
   assert:
     that:
-      - 'None|bool == None'
-      - 'False|bool == False'
-      - '"TrUe"|bool == True'
-      - '"FalSe"|bool == False'
-      - '7|bool == False'
+      - (None|bool)==false  # triggers a warning, which is verified in unit tests
+      - (true|bool)==true
+      - ("TrUe"|bool)==true
+      - (1|bool)==true
+      - ('on'|bool)==true
+      - (false|bool)==false
+      - ("FaLsE"|bool)==false
+      - (0|bool)==false
+      - ('off'|bool)==false
+      - (7|bool)==false
 
 - name: Verify to_datetime
   assert:
