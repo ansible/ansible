@@ -40,12 +40,14 @@ class CallbackModule(CallbackBase):
     This callback puts results into a host specific file in a directory in json format.
     """
 
-    # DTFIX-MERGE: deprecate this plugin and its associated CLI arg (--tree in adhoc)
-
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'aggregate'
     CALLBACK_NAME = 'tree'
     CALLBACK_NEEDS_ENABLED = True
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._display.deprecated('The tree callback plugin is deprecated.', version='2.23')
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         """ override to set self.tree """

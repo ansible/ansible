@@ -42,5 +42,5 @@ def test_to_uuid_invalid_namespace():
 
 @pytest.mark.parametrize('value', [None, 'nope', 1.1])
 def test_to_bool_deprecation(value: object):
-    with emits_deprecation_warning(match=f'The `bool` filter coerced invalid value .+ to False'):
+    with emits_deprecation_warning(match='The `bool` filter coerced invalid value .+ to False'):
         to_bool(value)

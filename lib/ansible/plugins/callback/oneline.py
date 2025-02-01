@@ -29,7 +29,9 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'oneline'
 
-    # DTFIX-MERGE: deprecate this callback and associated CLI args (adhoc -o/--one-line)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._display.deprecated('The oneline callback plugin is deprecated.', version='2.23')
 
     def _command_generic_msg(self, hostname, result, caption):
         stdout = result.get('stdout', '').replace('\n', '\\n').replace('\r', '\\r')

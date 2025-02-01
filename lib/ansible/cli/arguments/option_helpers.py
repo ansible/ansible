@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import copy
+import dataclasses
 import inspect
 import operator
 import argparse
@@ -34,6 +35,28 @@ class SortingHelpFormatter(argparse.HelpFormatter):
     def add_arguments(self, actions):
         actions = sorted(actions, key=operator.attrgetter('option_strings'))
         super(SortingHelpFormatter, self).add_arguments(actions)
+
+
+@dataclasses.dataclass(frozen=True, kw_only=True)
+class DeprecatedArgument:
+    version: str
+    """The Ansible version that will remove the deprecated argument."""
+
+    option: str | None = None
+    """The specific option string that is deprecated; None applies to all options for this argument."""
+
+    def is_deprecated(self, option: str) -> bool:
+        """Return True if the given option is deprecated, otherwise False."""
+        return self.option is None or option == self.option
+
+    def check(self, option: str) -> None:
+        """Display a deprecation warning if the given option is deprecated."""
+        if not self.is_deprecated(option):
+            return
+
+        from ansible.utils.display import Display
+
+        Display().deprecated(f'The {option!r} argument is deprecated.', version=self.version)
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -107,6 +130,21 @@ class ArgumentParser(argparse.ArgumentParser):
         kwargs['help'] = help
 
         self._patch_argument(args, kwargs)
+
+        deprecated: DeprecatedArgument | None
+
+        if deprecated := kwargs.pop('deprecated', None):
+            action_type = self.__actions.get(action, action)
+
+            class DeprecatedAction(action_type):
+                """A wrapper around an action which handles deprecation warnings."""
+
+                def __call__(self, parser, namespace, values, option_string=None) -> t.Any:
+                    deprecated.check(option_string)
+
+                    return super().__call__(parser, namespace, values, option_string)
+
+            kwargs['action'] = DeprecatedAction
 
         return super().add_argument(*args, **kwargs)
 
@@ -378,7 +416,8 @@ def add_fork_options(parser):
 def add_inventory_options(parser):
     """Add options for commands that utilize inventory"""
     parser.add_argument('-i', '--inventory', '--inventory-file', dest='inventory', action="append",
-                        help="specify inventory host path or comma separated host list. --inventory-file is deprecated")
+                        help="specify inventory host path or comma separated host list",
+                        deprecated=DeprecatedArgument(version='2.23', option='--inventory-file'))
     parser.add_argument('--list-hosts', dest='listhosts', action='store_true',
                         help='outputs a list of matching hosts; does not execute anything else')
     parser.add_argument('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',
@@ -404,9 +443,9 @@ def add_module_options(parser):
 def add_output_options(parser):
     """Add options for commands which can change their output"""
     parser.add_argument('-o', '--one-line', dest='one_line', action='store_true',
-                        help='condense output')
+                        help='condense output', deprecated=DeprecatedArgument(version='2.23'))
     parser.add_argument('-t', '--tree', dest='tree', default=None,
-                        help='log output to this directory')
+                        help='log output to this directory', deprecated=DeprecatedArgument(version='2.23'))
 
 
 def add_runas_options(parser):

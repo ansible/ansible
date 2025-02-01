@@ -147,7 +147,10 @@ deprecated_features:
   - config - The ``ACTION_WARNINGS`` config has no effect. It previously disabled command warnings, which have since been removed.
   - templating - Support for enabling Jinja2 extensions (not plugins) has been deprecated.
   - playbook variables - The ``play_hosts`` variable has been deprecated, use ``ansible_play_batch`` instead.
-  - bool filter - Support for coercing unrecognized input values (including None) to False has been deprecated. Consult the filter documentation for acceptable values, or consider use of the ``truthy`` and ``falsy`` tests.
+  - bool filter - Support for coercing unrecognized input values (including None) has been deprecated. Consult the filter documentation for acceptable values, or consider use of the ``truthy`` and ``falsy`` tests.  # DTFIX-RELEASE: porting guide
+  - oneline callback - The ``oneline`` callback and its associated ad-hoc CLI args (``-o``, ``--one-line``) are deprecated.
+  - tree callback - The ``tree`` callback and its associated ad-hoc CLI args (``-t``, ``--tree``) are deprecated.
+  - CLI - The ``--inventory-file`` option alias is deprecated. Use the ``-i`` or ``--inventory`` option instead.
 
 removed_features:
   - modules - Modules returning non-UTF8 strings now result in an error.
