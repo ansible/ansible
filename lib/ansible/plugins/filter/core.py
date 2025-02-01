@@ -89,13 +89,19 @@ def to_nice_json(a, indent=4, sort_keys=True, **kwargs):
     return to_json(a, indent=indent, sort_keys=sort_keys, separators=(',', ': '), **kwargs)
 
 
-_valid_bool_true = {True, 'yes', 'on', '1', 'true', 1}
-_valid_bool_false = {False, 'no', 'off', '0', 'false', 0}
+# CAUTION: Do not put non-string values here since they can have unwanted logical equality, such as 1.0 (equal to 1 and True) or 0.0 (equal to 0 and False).
+_valid_bool_true = {'yes', 'on', 'true', '1'}
+_valid_bool_false = {'no', 'off', 'false', '0'}
 
 
 def to_bool(value: object) -> bool:
     """Convert well-known input values to a boolean value."""
-    value_to_check = value.lower() if isinstance(value, str) else value
+    if isinstance(value, str):
+        value_to_check = value.lower()  # accept mixed case variants
+    elif isinstance(value, int):  # bool is also an int
+        value_to_check = str(value).lower()  # accept int (0, 1) and bool (True, False) -- not just string versions
+    else:
+        value_to_check = value
 
     if value_to_check in _valid_bool_true:
         return True
@@ -103,9 +109,13 @@ def to_bool(value: object) -> bool:
     if value_to_check in _valid_bool_false:
         return False
 
+    # if we're still here, the value is unsupported- always fire a deprecation warning
+    result = value_to_check == 1  # backwards compatibility with the old code which checked: value in ('yes', 'on', '1', 'true', 1)
+
     # NB: update the doc string to reflect reality once this fallback is removed
-    display.deprecated(f'The `bool` filter coerced invalid value {value!r} to False.', version='2.23')
-    return False
+    display.deprecated(f'The `bool` filter coerced invalid value {value!r} ({AnsibleTagHelper.base_type_name(value)}) to {result!r}.', version='2.23')
+
+    return result
 
 
 def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
