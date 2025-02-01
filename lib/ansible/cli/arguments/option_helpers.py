@@ -122,7 +122,7 @@ class ArgumentParser(argparse.ArgumentParser):
     def add_mutually_exclusive_group(self, *args, **kwargs):
         return self._patch_parser(super().add_mutually_exclusive_group(*args, **kwargs))
 
-    def add_argument(self, *args, **kwargs):
+    def add_argument(self, *args, **kwargs) -> argparse.Action:
         action = kwargs.get('action')
         help = kwargs.get('help')
         if help and action in {'append', 'append_const', 'count', 'extend', PrependListAction}:
@@ -136,7 +136,7 @@ class ArgumentParser(argparse.ArgumentParser):
         if deprecated := kwargs.pop('deprecated', None):
             action_type = self.__actions.get(action, action)
 
-            class DeprecatedAction(action_type):
+            class DeprecatedAction(action_type):  # type: ignore[misc, valid-type]
                 """A wrapper around an action which handles deprecation warnings."""
 
                 def __call__(self, parser, namespace, values, option_string=None) -> t.Any:
