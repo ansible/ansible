@@ -96,6 +96,7 @@ _valid_bool_false = {'no', 'off', 'false', '0'}
 
 def to_bool(value: object) -> bool:
     """Convert well-known input values to a boolean value."""
+    value_to_check: object
     if isinstance(value, str):
         value_to_check = value.lower()  # accept mixed case variants
     elif isinstance(value, int):  # bool is also an int
