@@ -46,6 +46,13 @@ import traceback
 from functools import reduce
 
 try:
+    from ansible.module_utils.faulthandler import setup_module_fault_handler
+except ImportError:
+    def setup_module_fault_handler():
+        """Fallback if fault handler import fails."""
+        return False
+
+try:
     import syslog
     HAS_SYSLOG = True
 except ImportError:
@@ -372,6 +379,7 @@ class AnsibleModule(object):
         """
 
         self._name = os.path.basename(__file__)  # initialize name until we can parse from options
+        setup_module_fault_handler() # Add fault handler setup here
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
         self.check_mode = False

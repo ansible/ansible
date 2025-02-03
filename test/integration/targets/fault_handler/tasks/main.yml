@@ -1,0 +1,31 @@
+---
+- name: Test fault handler registration
+  hosts: localhost
+  gather_facts: yes
+
+  tasks:
+    - name: Execute Python script with fault handler
+      command: "{{ ansible_python_interpreter | default('python3') }} -c 'from ansible.module_utils.faulthandler import setup_process_fault_handler; import os; setup_process_fault_handler(\"test\"); print(os.getpid())'"
+      register: python_output
+
+    - name: Debug Python output
+      debug:
+        var: python_output.stdout
+
+    - name: Check for fault handler file
+      stat:
+        path: "/tmp/ansible-test-{{ python_output.stdout }}.stack"
+      register: fault_file
+
+    - name: Assert fault handler file exists
+      assert:
+        that:
+          - fault_file.stat.exists
+        msg: "Fault handler file does not exist at /tmp/ansible-test-{{ python_output.stdout }}.stack"
+
+    - name: Cleanup fault handler file
+      file:
+        path: "/tmp/ansible-test-{{ python_output.stdout }}.stack"
+        state: absent
+      when: fault_file.stat.exists
+   
