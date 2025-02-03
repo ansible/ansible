@@ -199,20 +199,18 @@ class _AnsibleCollectionFinder:
             paths.extend(sys.path)
 
         good_paths = []
-        seen = set()
+        real_paths = set()
         # expand any placeholders in configured paths
         for p in paths:
-
-            # ensure we always have ansible_collections
-            if os.path.basename(p) == 'ansible_collections':
-                p = os.path.dirname(p)
-                real_path = os.path.realpath(p)
-                if real_path in seen:
-                    continue
-                seen.add(real_path)
-
-            if p not in good_paths and os.path.isdir(_to_bytes(os.path.join(p, 'ansible_collections'))):
-                good_paths.append(p)
+            if p not in good_paths:
+                # ensure we always have ansible_collections
+                if os.path.basename(p) == 'ansible_collections':
+                    p = os.path.dirname(p)
+                     
+                r = os.path.realpath(p)
+                if r not in real_paths and os.path.isdir(_to_bytes(os.path.join(p, 'ansible_collections'))):
+                    real_paths.add(r)
+                    good_paths.append(p)
 
         self._internal_collections = internal_collections
         self._n_configured_paths = good_paths
