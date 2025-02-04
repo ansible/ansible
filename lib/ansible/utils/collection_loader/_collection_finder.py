@@ -206,7 +206,6 @@ class _AnsibleCollectionFinder:
                 # ensure we always have ansible_collections
                 if os.path.basename(p) == 'ansible_collections':
                     p = os.path.dirname(p)
-                     
                 r = os.path.realpath(p)
                 if r not in real_paths and os.path.isdir(_to_bytes(os.path.join(p, 'ansible_collections'))):
                     real_paths.add(r)
