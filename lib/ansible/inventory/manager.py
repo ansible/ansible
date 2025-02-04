@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import fnmatch
+import functools
 import os
 import re
 import itertools
@@ -28,8 +29,9 @@ from operator import attrgetter
 from random import shuffle
 
 from ansible import constants as C
+from ansible._internal import _serialization, _wrapt
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.inventory.data import InventoryData, _InventoryDataWrapper
+from ansible.inventory.data import InventoryData
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
@@ -757,3 +759,28 @@ class InventoryManager(object):
             self.reconcile_inventory()
 
         result_item['changed'] = changed
+
+
+class _InventoryDataWrapper(_wrapt.ObjectProxy):
+    # declared as class attrs to signal ObjectProxy that we want them stored on the proxy, not the wrapped value
+    _target_plugin = None
+    _default_source_position_tag = None
+
+    def __init__(self, referent: InventoryData, target_plugin: BaseInventoryPlugin, origin_tag: AnsibleSourcePosition) -> None:
+        super().__init__(referent)
+        self._target_plugin = target_plugin
+        # fallback source position to ensure that vars are tagged with at least the file they came from
+        self._default_source_position_tag = origin_tag
+
+    @functools.cached_property
+    def _inspector(self) -> _serialization.AnsibleVariableVisitor:
+        # DTFIX-MERGE: we don't need to defer this if we instead change auto's plugin validation/load to
+        #  occur inside verify_file.
+        return _serialization.AnsibleVariableVisitor(
+            trusted_as_template=self._target_plugin.trusted_by_default,
+            source_position=self._default_source_position_tag,
+            allow_encrypted_string=True,
+        )
+
+    def set_variable(self, entity: str, varname: str, value: t.Any) -> None:
+        self.__wrapped__.set_variable(entity, varname, self._inspector.visit(value))

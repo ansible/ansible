@@ -18,7 +18,6 @@
 #############################################
 from __future__ import annotations
 
-import functools
 import sys
 import typing as t
 
@@ -26,17 +25,12 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
-from ansible.utils.datatag.tags import AnsibleSourcePosition
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
 from ansible.utils.path import basedir
-from ansible._internal import _serialization
-from ansible.utils._wrapt import ObjectProxy
 
 from . import helpers  # this is left as a module import to facilitate easier unit test patching
 
-if t.TYPE_CHECKING:
-    from ansible.plugins.inventory import BaseInventoryPlugin
 
 display = Display()
 
@@ -276,30 +270,3 @@ class InventoryData:
                 self._groups_dict_cache[group_name] = [h.name for h in group.get_hosts()]
 
         return self._groups_dict_cache
-
-
-class _InventoryDataWrapper(ObjectProxy):
-    # DTFIX-MERGE: bikeshed name and location of this class
-
-    # declared as class attrs to signal ObjectProxy that we want them stored on the proxy, not the wrapped value
-    _target_plugin = None
-    _default_source_position_tag = None
-
-    def __init__(self, referent: InventoryData, target_plugin: BaseInventoryPlugin, origin_tag: AnsibleSourcePosition) -> None:
-        super().__init__(referent)
-        self._target_plugin = target_plugin
-        # fallback source position to ensure that vars are tagged with at least the file they came from
-        self._default_source_position_tag = origin_tag
-
-    @functools.cached_property
-    def _inspector(self) -> _serialization.AnsibleVariableVisitor:
-        # DTFIX-MERGE: we don't need to defer this if we instead change auto's plugin validation/load to
-        #  occur inside verify_file.
-        return _serialization.AnsibleVariableVisitor(
-            trusted_as_template=self._target_plugin.trusted_by_default,
-            source_position=self._default_source_position_tag,
-            allow_encrypted_string=True,
-        )
-
-    def set_variable(self, entity: str, varname: str, value: t.Any) -> None:
-        self.__wrapped__.set_variable(entity, varname, self._inspector.visit(value))
