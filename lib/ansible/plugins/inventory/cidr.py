@@ -50,7 +50,7 @@ class InventoryModule(BaseInventoryPlugin):
     def parse(self, inventory, loader, path, cache=True):
         ''' parses the inventory string'''
 
-        super(InventoryModule, self).parse(inventory, loader, path)
+        super().parse(inventory, loader, path)
 
         # not really a path at this point, also remove token
         host_list = path.lstrip(self._TOKEN)
