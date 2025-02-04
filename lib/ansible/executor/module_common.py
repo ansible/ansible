@@ -22,7 +22,6 @@ import ast
 import base64
 import dataclasses
 import datetime
-import functools
 import json
 import os
 import pathlib
@@ -94,7 +93,6 @@ def _strip_comments(source):
     return '\n'.join(buf)
 
 
-@functools.cache
 def _read_ansiballz_code() -> str:
     code = (pathlib.Path(__file__).parent.parent / '_internal/_ansiballz.py').read_text()
 
@@ -107,9 +105,11 @@ def _read_ansiballz_code() -> str:
     return code
 
 
-@functools.cache
+_ANSIBALLZ_CODE = _read_ansiballz_code()  # read during startup to prevent individual workers from doing so
+
+
 def _get_ansiballz_code(shebang: str) -> str:
-    code = _read_ansiballz_code()
+    code = _ANSIBALLZ_CODE
     code = code.replace('# shebang placeholder', shebang)
 
     return code
