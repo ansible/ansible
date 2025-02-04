@@ -112,7 +112,6 @@ def _ansiballz_main(
     import tempfile
     import zipfile
 
-    # Note: temp_path isn't needed once we switch to zipimport
     def invoke_module(modlib_path: str, json_params: bytes) -> None:
         # When installed via setuptools (including python setup.py install),
         # ansible may be installed with an easy-install.pth file.  That file
@@ -256,7 +255,6 @@ def _ansiballz_main(
         if len(sys.argv) == 2:
             debug(sys.argv[1], zipped_mod, encoded_params)
         else:
-            # Note: temp_path isn't needed once we switch to zipimport
             invoke_module(zipped_mod, encoded_params)
     finally:
         shutil.rmtree(temp_path, ignore_errors=True)
