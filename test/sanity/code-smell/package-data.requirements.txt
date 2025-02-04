@@ -1,4 +1,4 @@
 # edit "package-data.requirements.in" and generate with: hacking/update-sanity-requirements.py --test package-data
-build==1.2.2
-packaging==24.1
+build==1.2.2.post1
+packaging==24.2
 pyproject_hooks==1.2.0
