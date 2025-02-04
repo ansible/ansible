@@ -124,7 +124,7 @@ ALLOW_EXTRA_VARS_BLEED:
       key: allow_extra_vars_bleed
   type: boolean
   default: False
-  version_added: '2.18'
+  version_added: '2.19'
 ANY_ERRORS_FATAL:
   name: Make Task failures fatal
   default: False
