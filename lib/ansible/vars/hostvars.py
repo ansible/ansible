@@ -116,12 +116,13 @@ class HostVarsVars(Mapping):
     def __init__(self, variables, loader, extra_vars):
         self._vars = variables
         self._loader = loader
+        self._extra_vars = extra_vars
 
     @cached_property
     def _templar(self):
         # NOTE: this only has access to the host's own vars and extra_vars
         # so templates that depend on vars in other scopes aside will not work.
-        return Templar(variables=combine_vars(self._vars, extra_vars), loader=self._loader)
+        return Templar(variables=combine_vars(self._vars, self._extra_vars), loader=self._loader)
 
     def __getitem__(self, var):
         return self._templar.template(self._vars[var], fail_on_undefined=False, static_vars=C.INTERNAL_STATIC_VARS)
