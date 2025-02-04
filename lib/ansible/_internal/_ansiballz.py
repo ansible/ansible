@@ -1,5 +1,7 @@
 # shebang placeholder
 
+from __future__ import annotations
+
 # For test-module.py script to tell this is a ANSIBALLZ_WRAPPER
 _ANSIBALLZ_WRAPPER = True
 
@@ -30,17 +32,19 @@ _ANSIBALLZ_WRAPPER = True
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
 def _ansiballz_main(
-    zipdata,
-    ansible_module,
-    module_fqn,
-    params,
-    profile,
-    date_time,
-    coverage_config,
-    coverage_output,
-    rlimit_nofile,
-):
+    zipdata: str,
+    ansible_module: str,
+    module_fqn: str,
+    params: str,
+    profile: str,
+    date_time: tuple[int, int, int, int, int, int],
+    coverage_config: str | None,
+    coverage_output: str | None,
+    rlimit_nofile: int,
+) -> None:
     import os
     import os.path
 
@@ -100,7 +104,7 @@ def _ansiballz_main(
         pass
 
     # Strip cwd from sys.path to avoid potential permissions issues
-    excludes = set(('', '.', scriptdir))
+    excludes = {'', '.', scriptdir}
     sys.path = [p for p in sys.path if p not in excludes]
 
     import base64
@@ -108,10 +112,8 @@ def _ansiballz_main(
     import tempfile
     import zipfile
 
-    ZIPDATA = zipdata
-
     # Note: temp_path isn't needed once we switch to zipimport
-    def invoke_module(modlib_path, temp_path, json_params):
+    def invoke_module(modlib_path, json_params):
         # When installed via setuptools (including python setup.py install),
         # ansible may be installed with an easy-install.pth file.  That file
         # may load the system-wide install of ansible rather than the one in
@@ -144,7 +146,7 @@ def _ansiballz_main(
             coverage_output=coverage_output,
         )
 
-    def debug(command, zipped_mod, json_params):
+    def debug(command, modlib_path, json_params):
         # The code here normally doesn't run.  It's only used for debugging on the
         # remote machine.
         #
@@ -186,7 +188,7 @@ def _ansiballz_main(
             # print the path to the code.  This is an easy way for people to look
             # at the code on the remote machine for debugging it in that
             # environment
-            z = zipfile.ZipFile(zipped_mod)
+            z = zipfile.ZipFile(modlib_path)
             for filename in z.namelist():
                 if filename.startswith('/'):
                     raise Exception('Something wrong with this module zip file: should not contain absolute paths')
@@ -209,7 +211,6 @@ def _ansiballz_main(
 
             print('Module expanded into:')
             print(basedir)
-            exitcode = 0
 
         elif command == 'execute':
             # Execute the exploded code instead of executing the module from the
@@ -234,39 +235,30 @@ def _ansiballz_main(
 
         else:
             print('WARNING: Unknown debug command.  Doing nothing.')
-            exitcode = 0
-
-        return exitcode
 
     #
     # See comments in the debug() method for information on debugging
     #
 
-    ANSIBALLZ_PARAMS = params
-    ANSIBALLZ_PARAMS = ANSIBALLZ_PARAMS.encode('utf-8')
-    try:
-        # There's a race condition with the controller removing the
-        # remote_tmpdir and this module executing under async.  So we cannot
-        # store this in remote_tmpdir (use system tempdir instead)
-        # Only need to use [ansible_module]_payload_ in the temp_path until we move to zipimport
-        # (this helps ansible-test produce coverage stats)
-        temp_path = tempfile.mkdtemp(prefix='ansible_' + ansible_module + '_payload_')
+    encoded_params = params.encode()
 
+    # There's a race condition with the controller removing the
+    # remote_tmpdir and this module executing under async.  So we cannot
+    # store this in remote_tmpdir (use system tempdir instead)
+    # Only need to use [ansible_module]_payload_ in the temp_path until we move to zipimport
+    # (this helps ansible-test produce coverage stats)
+    temp_path = tempfile.mkdtemp(prefix='ansible_' + ansible_module + '_payload_')
+
+    try:
         zipped_mod = os.path.join(temp_path, 'ansible_' + ansible_module + '_payload.zip')
 
         with open(zipped_mod, 'wb') as modlib:
-            modlib.write(base64.b64decode(ZIPDATA))
+            modlib.write(base64.b64decode(zipdata))
 
         if len(sys.argv) == 2:
-            exitcode = debug(sys.argv[1], zipped_mod, ANSIBALLZ_PARAMS)
+            debug(sys.argv[1], zipped_mod, encoded_params)
         else:
             # Note: temp_path isn't needed once we switch to zipimport
-            invoke_module(zipped_mod, temp_path, ANSIBALLZ_PARAMS)
+            invoke_module(zipped_mod, encoded_params)
     finally:
-        try:
-            shutil.rmtree(temp_path)
-        except (NameError, OSError):
-            # tempdir creation probably failed
-            pass
-
-    sys.exit(exitcode)
+        shutil.rmtree(temp_path, ignore_errors=True)

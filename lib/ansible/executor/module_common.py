@@ -1108,7 +1108,7 @@ def _find_module_utils(
         params = dict(ANSIBLE_MODULE_ARGS=module_args,)
         encoder = get_module_encoder(module_metadata.serialization_profile, Direction.CONTROLLER_TO_MODULE)
         try:
-            python_repred_params = json.dumps(params, cls=encoder)
+            encoded_params = json.dumps(params, cls=encoder)
         except TypeError as ex:
             raise AnsibleError(f'Failed to serialize arguments for the {module_name!r} module.') from ex
 
@@ -1117,7 +1117,7 @@ def _find_module_utils(
             zipdata=zipdata,
             ansible_module=module_name,
             module_fqn=remote_module_fqn,
-            params=python_repred_params,
+            params=encoded_params,
             profile=module_metadata.serialization_profile,
             date_time=date_time,
             coverage_config=coverage_config,
