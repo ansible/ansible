@@ -48,7 +48,7 @@ class InventoryModule(BaseInventoryPlugin):
         return valid
 
     def parse(self, inventory, loader, path, cache=True):
-        ''' parses the inventory string'''
+        """Extract hosts from the inventory string."""
 
         super().parse(inventory, loader, path)
 
