@@ -89,7 +89,7 @@ def _strip_comments(source: str) -> str:
     for line in source.splitlines():
         l = line.strip()
         if (not l or l.startswith('#')) and l != _SHEBANG_PLACEHOLDER:
-            continue
+            line = ''
         buf.append(line)
     return '\n'.join(buf)
 
