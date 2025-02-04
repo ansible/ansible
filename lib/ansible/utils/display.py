@@ -519,8 +519,8 @@ class Display(metaclass=Singleton):
             msg = "<%s> %s" % (host, msg)
         self._log(msg, C.COLOR_VERBOSE, caplevel)
 
-    @_meets_debug
     @_proxy
+    @_meets_debug
     def debug(self, msg: str, host: str | None = None) -> None:
         prefix = "%6d %0.5f" % (os.getpid(), time.time())
         if host is not None:
