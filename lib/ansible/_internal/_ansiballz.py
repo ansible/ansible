@@ -113,7 +113,7 @@ def _ansiballz_main(
     import zipfile
 
     # Note: temp_path isn't needed once we switch to zipimport
-    def invoke_module(modlib_path, json_params):
+    def invoke_module(modlib_path: str, json_params: bytes) -> None:
         # When installed via setuptools (including python setup.py install),
         # ansible may be installed with an easy-install.pth file.  That file
         # may load the system-wide install of ansible rather than the one in
@@ -146,7 +146,7 @@ def _ansiballz_main(
             coverage_output=coverage_output,
         )
 
-    def debug(command, modlib_path, json_params):
+    def debug(command: str, modlib_path: str, json_params: bytes) -> None:
         # The code here normally doesn't run.  It's only used for debugging on the
         # remote machine.
         #
