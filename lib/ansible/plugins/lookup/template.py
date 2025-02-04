@@ -164,17 +164,17 @@ class LookupModule(LookupBase):
                 vars.update(generate_ansible_template_vars(term, lookupfile))
                 vars.update(lookup_template_vars)
 
-                # DTFIX-RELEASE: use public API for these (convert TemplateOverrides to dict or make it public also)
-                with templar._engine.set_temporary_context(available_variables=vars, searchpath=searchpath):
-                    overrides = TemplateOverrides(
-                        variable_start_string=variable_start_string,
-                        variable_end_string=variable_end_string,
-                        comment_start_string=comment_start_string,
-                        comment_end_string=comment_end_string,
-                        trim_blocks=trim_blocks,
-                    )
+                overrides = TemplateOverrides(
+                    variable_start_string=variable_start_string,
+                    variable_end_string=variable_end_string,
+                    comment_start_string=comment_start_string,
+                    comment_end_string=comment_end_string,
+                    trim_blocks=trim_blocks,
+                )
 
-                    res = templar._engine.template(template_data, options=TemplateOptions(escape_backslashes=False, overrides=overrides))
+                # DTFIX-RELEASE: use public API for these (convert TemplateOverrides to dict or make it public also)
+                data_templar = templar.copy_with_new_env(available_variables=vars, searchpath=searchpath)
+                res = data_templar._engine.template(template_data, options=TemplateOptions(escape_backslashes=False, overrides=overrides))
 
                 ret.append(res)
             else:

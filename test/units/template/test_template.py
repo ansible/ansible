@@ -237,7 +237,7 @@ def test_copy_with_new_searchpath() -> None:
 def test_set_temporary_context_overrides() -> None:
     templar = Templar()
 
-    with emits_deprecation_warning(match='overrides.*set_temporary_context.* is deprecated'):
+    with emits_deprecation_warning(match='set_temporary_context.* is deprecated'):
         with templar.set_temporary_context(variable_start_string='!!'):
             assert templar.template(TRUST.tag('!! 1 }}')) == 1
 

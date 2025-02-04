@@ -130,7 +130,7 @@ class Templar:
         """Deprecated."""
         _display.deprecated(
             msg='Direct access to the `environment` attribute is deprecated.',
-            help_text='Consider using `copy_with_new_env`, `set_temporary_context` or passing `overrides` to `template`.',
+            help_text='Consider using `copy_with_new_env` or passing `overrides` to `template`.',
             version='2.23',
         )
 
@@ -139,7 +139,7 @@ class Templar:
     def copy_with_new_env(
         self,
         *,
-        searchpath: str | None = None,
+        searchpath: str | _os.PathLike | _t.Sequence[str | _os.PathLike] | None = None,
         available_variables: _VariableContainer | None = None,
         **context_overrides: _t.Any,
     ) -> Templar:
@@ -178,24 +178,39 @@ class Templar:
         **context_overrides: _t.Any,
     ) -> _t.Generator[None, None, None]:
         """Context manager used to set temporary templating context, without having to worry about resetting original values afterward."""
+        _display.deprecated(
+            msg='The `set_temporary_context` method on `Templar` is deprecated.',
+            help_text='Use the `copy_with_new_env` method on `Templar` instead.',
+            version='2.23',
+        )
+
+        targets = dict(
+            searchpath=self._engine.environment.loader,
+            available_variables=self._engine,
+        )
+
+        kwargs = dict(
+            searchpath=searchpath,
+            available_variables=available_variables,
+        )
+
+        original: dict[str, _t.Any] = {}
         previous_overrides = self._overrides
 
-        # DTFIX-MERGE: deprecate this entire function in favor of copy_with_new_env
-        #              when doing so, also eliminate the same named function from TemplateEngine (if we still need it, why deprecate this one?)
-
-        if context_overrides:
-            _display.deprecated(
-                msg='Passing Jinja environment overrides to `set_temporary_context` is deprecated.',
-                help_text='Pass Jinja environment overrides to individual `template` calls.',
-                version='2.23',
-            )
+        try:
+            for key, value in kwargs.items():
+                if value is not None:
+                    target = targets[key]
+                    original[key] = getattr(target, key)
+                    setattr(target, key, value)
 
             self._overrides = self._overrides.merge(context_overrides)
 
-        try:
-            with self._engine.set_temporary_context(searchpath=searchpath, available_variables=available_variables):
-                yield
+            yield
         finally:
+            for key, value in original.items():
+                setattr(targets[key], key, value)
+
             self._overrides = previous_overrides
 
     # noinspection PyUnusedLocal

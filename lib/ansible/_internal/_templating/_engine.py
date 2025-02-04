@@ -6,13 +6,11 @@ from __future__ import annotations
 import copy
 import dataclasses
 import enum
-import os
 import textwrap
 import typing as t
 import collections.abc as c
 import re
 
-from contextlib import contextmanager
 from collections import ChainMap
 
 from ansible.errors import (
@@ -210,8 +208,8 @@ class TemplateEngine:
     @property
     def available_variables(self) -> dict[str, t.Any] | ChainMap[str, t.Any]:
         """Available variables this instance will use when templating."""
-        # DTFIX-MERGE: ensure that we're always accessing this as a shallow container-level snapshot, and eliminate uses of set_temporary_context and anything
-        #  else that directly mutates this value. _new_context may resolve this for us?
+        # DTFIX-MERGE: ensure that we're always accessing this as a shallow container-level snapshot, and eliminate uses of anything
+        #  that directly mutates this value. _new_context may resolve this for us?
         if self._variables is None:
             self._variables = self._variables_factory() if self._variables_factory else {}
 
@@ -220,39 +218,6 @@ class TemplateEngine:
     @available_variables.setter
     def available_variables(self, variables: dict[str, t.Any]) -> None:
         self._variables = variables
-
-    @contextmanager
-    def set_temporary_context(
-        self,
-        searchpath: str | os.PathLike | t.Sequence[str | os.PathLike] | None = None,
-        available_variables: dict[str, t.Any] | ChainMap[str, t.Any] | None = None,
-    ) -> t.Generator[None, None, None]:
-        """Context manager used to set temporary templating context, without having to worry about resetting original values afterward."""
-        env = self.environment
-
-        targets = dict(
-            available_variables=self,
-            searchpath=env.loader,
-        )
-
-        kwargs = dict(
-            searchpath=searchpath,
-            available_variables=available_variables,
-        )
-
-        original: dict[str, t.Any] = {}
-
-        for key, value in kwargs.items():
-            if value is not None:
-                target = targets[key]
-                original[key] = getattr(target, key)
-                setattr(target, key, value)
-
-        try:
-            yield
-        finally:
-            for key, value in original.items():
-                setattr(targets[key], key, value)
 
     def resolve_variable_expression(
         self,

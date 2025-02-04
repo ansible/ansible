@@ -133,8 +133,8 @@ class ActionModule(ActionBase):
             )
 
             # DTFIX-MERGE: use public API for these (convert TemplateOverrides to dict or make it public also)
-            with self._templar._engine.set_temporary_context(searchpath=searchpath, available_variables=temp_vars):
-                resultant = self._templar._engine.template(template_data, options=TemplateOptions(escape_backslashes=False, overrides=overrides))
+            data_templar = self._templar.copy_with_new_env(searchpath=searchpath, available_variables=temp_vars)
+            resultant = data_templar._engine.template(template_data, options=TemplateOptions(escape_backslashes=False, overrides=overrides))
 
             new_task = self._task.copy()
             # mode is either the mode from task.args or the mode of the source file if the task.args

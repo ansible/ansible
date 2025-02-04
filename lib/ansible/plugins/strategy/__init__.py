@@ -41,7 +41,6 @@ from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, Promp
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
-from ansible.playbook.conditional import Conditional
 from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.task import Task
@@ -72,22 +71,8 @@ class StrategySentinel:
 
 _sentinel = StrategySentinel()
 
-
-def post_process_whens(result, task, templar, task_vars):
-    cond = None
-    if task.changed_when:
-        with templar.set_temporary_context(available_variables=task_vars):
-            cond = Conditional(loader=templar._loader)
-            cond.when = task.changed_when
-            result['changed'] = cond.evaluate_conditional(templar, templar.available_variables)
-
-    if task.failed_when:
-        with templar.set_temporary_context(available_variables=task_vars):
-            if cond is None:
-                cond = Conditional(loader=templar._loader)
-            cond.when = task.failed_when
-            failed_when_result = cond.evaluate_conditional(templar, templar.available_variables)
-            result['failed_when_result'] = result['failed'] = failed_when_result
+if t.TYPE_CHECKING:
+    from ansible.inventory.host import Host
 
 
 def _get_item_vars(result, task):
@@ -575,7 +560,7 @@ class StrategyBase:
                 self._results_lock.release()
 
             original_host = task_result._host
-            original_task = task_result._task
+            original_task: Task = task_result._task
 
             # all host status messages contain 2 entries: (msg, task_result)
             role_ran = False
@@ -692,7 +677,14 @@ class StrategyBase:
                         else:
                             all_task_vars = found_task_vars
                         all_task_vars[original_task.register] = result_item
-                        post_process_whens(result_item, original_task, TemplateEngine(self._loader), all_task_vars)
+
+                        if original_task.changed_when:
+                            result_item['changed'] = original_task._resolve_conditional(original_task.changed_when, all_task_vars)
+
+                        if original_task.failed_when:
+                            result_item['failed_when_result'] = result_item['failed'] = (
+                                original_task._resolve_conditional(original_task.failed_when, all_task_vars))
+
                         if original_task.loop or original_task.loop_with:
                             new_item_result = TaskResult(
                                 task_result._host,
@@ -919,20 +911,19 @@ class StrategyBase:
     def _cond_not_supported_warn(self, task_name):
         display.warning("%s task does not support when conditional" % task_name)
 
-    def _execute_meta(self, task, play_context, iterator, target_host):
+    def _execute_meta(self, task: Task, play_context, iterator, target_host):
         task.resolved_action = 'ansible.builtin.meta'  # _post_validate_args is never called for meta actions, so resolved_action hasn't been set
 
         # meta tasks store their args in the _raw_params field of args,
         # since they do not use k=v pairs, so get that
         meta_action = task.args.get('_raw_params')
 
-        def _evaluate_conditional(h):
+        def _evaluate_conditional(conditional_host: Host) -> bool:
             if not task.when:
                 return True
-            all_vars = self._variable_manager.get_vars(play=iterator._play, host=h, task=task,
-                                                       _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
-            templar = TemplateEngine(loader=self._loader, variables=all_vars)
-            return task.evaluate_conditional(templar, all_vars)
+
+            return task._resolve_conditional(task.when, self._variable_manager.get_vars(
+                play=iterator._play, host=conditional_host, task=task, _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all))
 
         skipped = False
         msg = meta_action

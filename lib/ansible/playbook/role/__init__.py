@@ -27,7 +27,6 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionErr
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.six import binary_type, text_type
-from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional

@@ -247,6 +247,8 @@ def _invoke_lookup(*, plugin_name: str, lookup_terms: list, lookup_kwargs: dict[
                 lookup_terms = templar.template(_trust_jinja_constants(lookup_terms))
 
                 # if embedded template support is enabled, repeat the check for `Marker` on lookup_terms, since a template may render as a `Marker`
+                # DTFIX-MERGE: this doesn't work as intended since it's now already running under the JinjaCallContext with accept_marker=False
+                #              additionally, which of these contexts (JinjaCallContext, _LookupContext) should the above templar call be under?
                 if not instance.accept_marker and (first_marker := get_first_marker_arg(lookup_terms, {})) is not None:
                     return first_marker
             else:

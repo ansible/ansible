@@ -451,7 +451,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             all_vars |= self.vars
         return all_vars
 
-    def copy(self, exclude_parent=False, exclude_tasks=False):
+    def copy(self, exclude_parent: bool = False, exclude_tasks: bool = False) -> Task:
         new_me = super(Task, self).copy()
 
         new_me._parent = None
@@ -591,3 +591,22 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         attrs = super().dump_attrs()
         attrs.update(resolved_action=self.resolved_action)
         return attrs
+
+    def _resolve_conditional(
+        self,
+        conditional: list[str | bool],
+        variables: dict[str, t.Any],
+        *,
+        result_context: dict[str, t.Any] | None = None,
+    ) -> bool:
+        """Loops through the conditionals set on this object, returning False if any of them evaluate as such, as well as the condition that was False."""
+        engine = TemplateEngine(self._loader, variables=variables)
+
+        for item in conditional:
+            if not engine.evaluate_conditional(item):
+                if result_context is not None:
+                    result_context.update(false_condition=item)
+
+                return False
+
+        return True

@@ -22,12 +22,12 @@ from ansible.errors import (
 )
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.common.messages import Detail, WarningSummary, DeprecationSummary
+from ansible.module_utils.datatag import AnsibleTagHelper
 from ansible.utils.datatag.tags import TrustedAsTemplate
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.connection import write_to_stream
 from ansible.module_utils.six import string_types
-from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.plugins import get_plugin_class
 from ansible.plugins.action import ActionBase
@@ -189,7 +189,7 @@ class TaskExecutor:
             except Exception as e:
                 display.debug(u"error closing connection: %s" % to_text(e))
 
-    def _get_loop_items(self):
+    def _get_loop_items(self) -> list[t.Any] | None:
         """
         Loads a lookup plugin to handle the with_* portion of a task (if specified),
         and returns the items result.
@@ -225,21 +225,21 @@ class TaskExecutor:
 
             # Smuggle a special wrapped lookup invocation in as a local variable for its exclusive use when being evaluated as `with_(lookup)`.
             # This value will not be visible to other users of this templar or its `available_variables`.
-            # DTFIX-FUTURE: should we wrap this up into a `Templar.invoke()` or something? Only one instance of it now, but might be useful in other places.
             items = templar.evaluate_expression(expression=TrustedAsTemplate().tag("invoke_lookup()"), local_variables=dict(invoke_lookup=invoke_lookup))
 
         elif self._task.loop is not None:
             items = self._task_templar.template(self._task.loop)
+
             if not isinstance(items, list):
                 raise AnsibleError(
-                    "Invalid data passed to 'loop', it requires a list, got this instead: %s."
-                    " Hint: If you passed a list/dict of just one element,"
-                    " try adding wantlist=True to your lookup invocation or use q/query instead of lookup." % items
+                    f"The `loop` value must resolve to a 'list', not {AnsibleTagHelper.base_type_name(items)!r}.",
+                    help_text="Provide a list of items/templates, or a template resolving to a list.",
+                    obj=self._task.loop,
                 )
 
         return items
 
-    def _run_loop(self, items):
+    def _run_loop(self, items: list[t.Any]) -> list[dict[str, t.Any]]:
         """
         Runs the task with the loop items specified and collates the result
         into an array named 'results' which is inserted into the final result
@@ -308,7 +308,7 @@ class TaskExecutor:
                 ran_once = True
 
             try:
-                tmp_task = self._task.copy(exclude_parent=True, exclude_tasks=True)
+                tmp_task: Task = self._task.copy(exclude_parent=True, exclude_tasks=True)
                 tmp_task._parent = self._task._parent
                 tmp_play_context = self._play_context.copy()
             except AnsibleParserError as e:
@@ -317,6 +317,7 @@ class TaskExecutor:
 
             # now we swap the internal task and play context with their copies,
             # execute, and swap them back so we can do the next iteration cleanly
+            # NB: this swap-a-dee-doo confuses some type checkers about the type of tmp_task/self._task
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
 
@@ -381,11 +382,14 @@ class TaskExecutor:
 
             # break loop if break_when conditions are met
             if self._task.loop_control and self._task.loop_control.break_when:
-                cond = Conditional(loader=self._loader)
-                cond.when = self._task.loop_control.get_validated_value(
-                    'break_when', self._task.loop_control.fattributes.get('break_when'), self._task.loop_control.break_when, templar
+                break_when = self._task.loop_control.get_validated_value(
+                    'break_when',
+                    self._task.loop_control.fattributes.get('break_when'),
+                    self._task.loop_control.break_when,
+                    templar,
                 )
-                if cond.evaluate_conditional(templar, task_vars):
+
+                if self._task._resolve_conditional(break_when, task_vars):
                     # delete loop vars before exiting loop
                     del task_vars[loop_var]
                     break
@@ -505,9 +509,8 @@ class TaskExecutor:
         # the fact that the conditional may specify that the task be skipped due to a
         # variable not being present which would otherwise cause validation to fail
         try:
-            conditional_result, false_condition = self._task.evaluate_conditional_with_result(templar, tempvars)
-            if not conditional_result:
-                return dict(changed=False, skipped=True, skip_reason='Conditional result was False', false_condition=false_condition)
+            if not self._task._resolve_conditional(self._task.when, tempvars, result_context=(rc := t.cast(dict[str, t.Any], {}))):
+                return dict(changed=False, skipped=True, skip_reason='Conditional result was False') | rc
         except AnsibleError as e:
             # loop error takes precedence
             if self._loop_eval_error is not None:
@@ -672,23 +675,6 @@ class TaskExecutor:
                                        result,
                                        task_fields=self._task.dump_attrs()))
 
-            # helper methods for use below in evaluating changed/failed_when
-            def _evaluate_changed_when_result(result):
-                if self._task.changed_when is not None and self._task.changed_when:
-                    cond = Conditional(loader=self._loader)
-                    cond.when = self._task.changed_when
-                    result['changed'] = cond.evaluate_conditional(templar, vars_copy)
-
-            def _evaluate_failed_when_result(result):
-                if self._task.failed_when:
-                    cond = Conditional(loader=self._loader)
-                    cond.when = self._task.failed_when
-                    failed_when_result = cond.evaluate_conditional(templar, vars_copy)
-                    result['failed_when_result'] = result['failed'] = failed_when_result
-                else:
-                    failed_when_result = False
-                return failed_when_result
-
             if 'ansible_facts' in result and self._task.action not in C._ACTION_DEBUG:
                 if self._task.action in C._ACTION_WITH_CLEAN_FACTS:
                     if self._task.delegate_to and self._task.delegate_facts:
@@ -737,17 +723,20 @@ class TaskExecutor:
                 # DTFIX-MERGE: these lose the source position; let the error fly
                 # DTFIX-MERGE: the error message on a False failed_when also needs improvement (Task failed: Action failed: Unknown error.)
                 try:
-                    _evaluate_changed_when_result(result)
+                    if self._task.changed_when is not None and self._task.changed_when:
+                        result['changed'] = self._task._resolve_conditional(self._task.changed_when, vars_copy)
+
                     condname = 'failed'
-                    _evaluate_failed_when_result(result)
+
+                    if self._task.failed_when:
+                        result['failed_when_result'] = result['failed'] = self._task._resolve_conditional(self._task.failed_when, vars_copy)
+
                 except AnsibleError as e:
                     result['failed'] = True
                     result['%s_when_result' % condname] = to_text(e)
 
             if retries > 1:
-                cond = Conditional(loader=self._loader)
-                cond.when = self._task.until or [not result['failed']]  # type: ignore[arg-type]
-                if cond.evaluate_conditional(templar, vars_copy):
+                if self._task._resolve_conditional(self._task.until or [not result['failed']], vars_copy):
                     break
                 else:
                     # no conditional check, or it failed, so sleep for the specified time
