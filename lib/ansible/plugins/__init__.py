@@ -110,7 +110,7 @@ class AnsiblePlugin(ABC):
                 if hasattr(pc, option):
                     return getattr(pc, option)
 
-        raise KeyError("The %s plugin '%s' does not support any of these options: %s" % (self.plugin_type, self._load_name, ', '.join(options))
+        raise KeyError(f"The {self.plugin_type} plugin '{self.ansible_name}' does not support any of these options: {', '.join(options)}")
 
     def set_option(self, option, value):
         self._options[option] = C.config.get_config_value(option, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={option: value})
