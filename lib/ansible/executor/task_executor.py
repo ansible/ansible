@@ -720,8 +720,15 @@ class TaskExecutor:
             if 'skipped' not in result:
                 condname = 'changed'
 
-                # DTFIX-MERGE: these lose the source position; let the error fly
-                # DTFIX-MERGE: the error message on a False failed_when also needs improvement (Task failed: Action failed: Unknown error.)
+                # DTFIX-MERGE: error normalization has not yet occurred; this means that the expressions used for until/failed_when/changed_when/break_when
+                #  and when (for loops on the second and later iterations) cannot see the normalized error shapes. This, and the current impl of the expression
+                #  handling here causes a number of problems:
+                #  * any error in one of the post-task exec expressions is silently ignored and detail lost (eg: `failed_when: syntax ERROR @$123`)
+                #  * they cannot reliably access error/warning details, since many of those details are inaccessible until the error normalization occurs
+                #  * error normalization includes `msg` if present, and supplies `unknown error` if not; this leads to screwy results on True failed_when if
+                #    `msg` is present, eg: `{debug: {}, failed_when: True` -> "Task failed: Action failed: Hello world!"
+                #  * detail about failed_when is lost; any error details from the task could potentially be grafted in/preserved if error normalization was done
+
                 try:
                     if self._task.changed_when is not None and self._task.changed_when:
                         result['changed'] = self._task._resolve_conditional(self._task.changed_when, vars_copy)

@@ -543,7 +543,7 @@ class StrategyBase:
                 yield handler
 
     @debug_closure
-    def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
+    def _process_pending_results(self, iterator: PlayIterator, one_pass: bool = False, max_passes: int | None = None) -> list[TaskResult]:
         """
         Reads results off the final queue and takes appropriate action
         based on the result (executing callbacks, updating state, etc.).
@@ -635,7 +635,7 @@ class StrategyBase:
                         # otherwise depending on the setting either error or warn
                         host_state = iterator.get_state_for_host(original_host.name)
                         for notification in result_item['_ansible_notify']:
-                            handler = Sentinel
+                            handler: type[Sentinel] | Handler = Sentinel
                             for handler in self.search_handlers_by_notification(notification, iterator):
                                 if host_state.run_state == IteratingStates.HANDLERS:
                                     # we're currently iterating handlers, so we need to expand this now
