@@ -120,6 +120,15 @@ options:
     type: bool
     default: 'no'
     version_added: '2.13'
+  allow_remove_essential:
+    description:
+      - Allows user to remove essentials without prompting.
+      - This is a dangerous option that will cause apt to continue without prompting if it is removing essentials.
+      - It should not be used except in very special situations.
+      - Using this option can potentially destroy your system.
+    type: bool
+    default: 'no'
+    version_added: '2.20'
   upgrade:
     description:
       - If yes or safe, performs an aptitude safe-upgrade.
@@ -719,7 +728,8 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
             build_dep=False, fixed=False, autoremove=False, fail_on_autoremove=False, only_upgrade=False,
-            allow_unauthenticated=False, allow_downgrade=False, allow_change_held_packages=False):
+            allow_unauthenticated=False, allow_downgrade=False, allow_change_held_packages=False,
+            allow_remove_essential=False):
     pkg_list = []
     packages = ""
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
@@ -816,6 +826,9 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         if allow_change_held_packages:
             cmd += " --allow-change-held-packages"
 
+        if allow_remove_essential:
+            cmd += " --allow-remove-essential"
+
         with PolicyRcD(m):
             rc, out, err = m.run_command(cmd)
 
@@ -859,6 +872,7 @@ def install_deb(
         allow_change_held_packages,
         dpkg_options,
         lock_timeout,
+        allow_remove_essential,
 ):
     changed = False
     deps_to_install = []
@@ -914,7 +928,8 @@ def install_deb(
                                      allow_unauthenticated=allow_unauthenticated,
                                      allow_downgrade=allow_downgrade,
                                      allow_change_held_packages=allow_change_held_packages,
-                                     dpkg_options=install_dpkg_options)
+                                     dpkg_options=install_dpkg_options,
+                                     allow_remove_essential=allow_remove_essential)
         if not success:
             m.fail_json(**retvals)
         # Mark the dependencies as auto installed
@@ -959,7 +974,8 @@ def install_deb(
 
 def remove(m, pkgspec, cache, purge=False, force=False,
            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False,
-           allow_change_held_packages=False):
+           allow_change_held_packages=False,
+           allow_remove_essential=False):
     pkg_list = []
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
     for package in pkgspec:
@@ -997,7 +1013,9 @@ def remove(m, pkgspec, cache, purge=False, force=False,
         else:
             allow_change_held_packages = ''
 
-        cmd = "%s -q -y %s %s %s %s %s %s remove %s" % (
+        allow_remove_essential = '--allow-remove-essential' if allow_remove_essential else ''
+
+        cmd = "%s -q -y %s %s %s %s %s %s %s remove %s" % (
             APT_GET_CMD,
             dpkg_options,
             purge,
@@ -1005,6 +1023,7 @@ def remove(m, pkgspec, cache, purge=False, force=False,
             autoremove,
             check_arg,
             allow_change_held_packages,
+            allow_remove_essential,
             packages
         )
 
@@ -1074,6 +1093,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False, fail_on_autoremove=False,
             allow_unauthenticated=False,
             allow_downgrade=False,
+            allow_remove_essential=False,
             ):
 
     if autoremove:
@@ -1123,6 +1143,15 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     else:
         fail_on_autoremove = ''
 
+    if allow_remove_essential:
+        if apt_cmd == APT_GET_CMD:
+            allow_remove_essential = '--allow-remove-essential'
+        else:
+            m.warn("APTITUDE does not support '--allow-remove-essential', ignoring the 'allow_remove_essential' parameter.")
+            allow_remove_essential = ''
+    else:
+        allow_remove_essential = ''
+
     allow_unauthenticated = '--allow-unauthenticated' if allow_unauthenticated else ''
 
     if allow_downgrade:
@@ -1142,7 +1171,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
                             "to have APTITUDE in path or use 'force_apt_get=True'")
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
 
-    cmd = '%s -y %s %s %s %s %s %s %s' % (
+    cmd = '%s -y %s %s %s %s %s %s %s %s' % (
         apt_cmd_path,
         dpkg_options,
         force_yes,
@@ -1151,6 +1180,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
         allow_downgrade,
         check_arg,
         upgrade_command,
+        allow_remove_essential,
     )
 
     if default_release:
@@ -1247,6 +1277,7 @@ def main():
             allow_change_held_packages=dict(type='bool', default=False),
             lock_timeout=dict(type='int', default=60),
             auto_install_module_deps=dict(type='bool', default=True),
+            allow_remove_essential=dict(type='bool', default=False),
         ),
         mutually_exclusive=[['deb', 'package', 'upgrade']],
         required_one_of=[['autoremove', 'deb', 'package', 'update_cache', 'upgrade']],
@@ -1379,6 +1410,7 @@ def main():
     autoremove = p['autoremove']
     fail_on_autoremove = p['fail_on_autoremove']
     autoclean = p['autoclean']
+    allow_remove_essential = p['allow_remove_essential']
 
     # max times we'll retry
     deadline = time.time() + p['lock_timeout']
@@ -1465,7 +1497,8 @@ def main():
                     autoremove,
                     fail_on_autoremove,
                     allow_unauthenticated,
-                    allow_downgrade
+                    allow_downgrade,
+                    allow_remove_essential,
                 )
 
             if p['deb']:
@@ -1481,8 +1514,9 @@ def main():
                             force=force_yes,
                             fail_on_autoremove=fail_on_autoremove,
                             dpkg_options=p['dpkg_options'],
-                            lock_timeout=p['lock_timeout']
-                            )
+                            lock_timeout=p['lock_timeout'],
+                            allow_remove_essential=allow_remove_essential,
+                )
 
             unfiltered_packages = p['package'] or ()
             packages = [package.strip() for package in unfiltered_packages if package != '*']
@@ -1502,7 +1536,8 @@ def main():
                     autoremove,
                     fail_on_autoremove,
                     allow_unauthenticated,
-                    allow_downgrade
+                    allow_downgrade,
+                    allow_remove_essential,
                 )
 
             if packages:
@@ -1544,6 +1579,7 @@ def main():
                     allow_unauthenticated=allow_unauthenticated,
                     allow_downgrade=allow_downgrade,
                     allow_change_held_packages=allow_change_held_packages,
+                    allow_remove_essential=allow_remove_essential,
                 )
 
                 # Store if the cache has been updated
@@ -1564,7 +1600,8 @@ def main():
                     force=force_yes,
                     dpkg_options=dpkg_options,
                     autoremove=autoremove,
-                    allow_change_held_packages=allow_change_held_packages
+                    allow_change_held_packages=allow_change_held_packages,
+                    allow_remove_essential=allow_remove_essential,
                 )
 
         except apt.cache.LockFailedException as lockFailedException:
