@@ -78,16 +78,17 @@ REPLACER_SELINUX = b"<<SELINUX_SPECIAL_FILESYSTEMS>>"
 
 # module_common is relative to module_utils, so fix the path
 _MODULE_UTILS_PATH = os.path.join(os.path.dirname(__file__), '..', 'module_utils')
+_SHEBANG_PLACEHOLDER = '# shebang placeholder'
 
 # ******************************************************************************
 
 
-def _strip_comments(source):
+def _strip_comments(source: str) -> str:
     # Strip comments and blank lines from the wrapper
     buf = []
-    for idx, line in enumerate(source.splitlines()):
+    for line in source.splitlines():
         l = line.strip()
-        if idx and (not l or l.startswith('#')):
+        if (not l or l.startswith('#')) and l != _SHEBANG_PLACEHOLDER:
             continue
         buf.append(line)
     return '\n'.join(buf)
@@ -110,7 +111,7 @@ _ANSIBALLZ_CODE = _read_ansiballz_code()  # read during startup to prevent indiv
 
 def _get_ansiballz_code(shebang: str) -> str:
     code = _ANSIBALLZ_CODE
-    code = code.replace('# shebang placeholder', shebang)
+    code = code.replace(_SHEBANG_PLACEHOLDER, shebang)
 
     return code
 
