@@ -451,7 +451,7 @@ class ActionModule(ActionBase):
                 content_tempfile = self._create_content_tempfile(source)
             except (AttributeError, UnicodeError) as err:
                 raise AnsibleActionFail("Unable to encode content for writing to file", result=result) from err
-            except (IOError, OSError) as err:
+            except OSError as err:
                 raise AnsibleActionFail("Could not use temporary file", result=result) from err
 
         # if we have first_available_file in our vars
