@@ -3,3 +3,4 @@ minor_changes:
   - ansible-test - Default to Python 3.13 in the ``base`` and ``default`` containers.
   - ansible-test - Disable the ``deprecated-`` prefixed ``pylint`` rules as their results vary by Python version.
   - ansible-test - Update the ``base`` and ``default`` containers.
+  - ansible-test - Update sanity test requirements to latest available versions.
