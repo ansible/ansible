@@ -200,14 +200,12 @@ def _ansiballz_main(
                     directory = os.path.dirname(dest_filename)
                     if not os.path.exists(directory):
                         os.makedirs(directory)
-                    f = open(dest_filename, 'wb')
-                    f.write(z.read(filename))
-                    f.close()
+                    with open(dest_filename, 'wb') as writer:
+                        writer.write(z.read(filename))
 
             # write the args file
-            f = open(args_path, 'wb')
-            f.write(json_params)
-            f.close()
+            with open(args_path, 'wb') as writer:
+                writer.write(json_params)
 
             print('Module expanded into:')
             print(basedir)
@@ -221,8 +219,8 @@ def _ansiballz_main(
             sys.path.insert(0, basedir)
 
             # read in the args file which the user may have modified
-            with open(args_path, 'rb') as f:
-                json_params = f.read()
+            with open(args_path, 'rb') as reader:
+                json_params = reader.read()
 
             from ansible.module_utils._internal._ansiballz import run_module
 
