@@ -1336,7 +1336,6 @@ DISPLAY_TRACEBACK:
   name: Control traceback display
   default: never
   description: When to include tracebacks in extended error messages
-  # DTFIX-MERGE: bikeshed a CLI option for this and wire it up here
   env:
     - name: ANSIBLE_DISPLAY_TRACEBACK
   ini:
