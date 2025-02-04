@@ -302,7 +302,7 @@ def command_sanity(args: SanityConfig) -> None:
 
     if created_venvs and isinstance(controller, DockerConfig) and controller.name == 'default' and not args.prime_venvs:
         names = ', '.join(created_venvs)
-        display.warning(f'There following sanity test virtual environments are out-of-date in the "default" container: {names}')
+        display.warning(f'The following sanity test virtual environments are out-of-date in the "default" container: {names}')
 
     if failed:
         message = 'The %d sanity test(s) listed below (out of %d) failed. See error output above for details.\n%s' % (
