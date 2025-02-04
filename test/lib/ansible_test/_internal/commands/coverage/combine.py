@@ -364,4 +364,4 @@ class CoverageCombineConfig(CoverageConfig):
         self.stub: bool = args.stub
 
         # only available to coverage combine
-        self.export: str = args.export if 'export' in args else False
+        self.export: str | None = args.export if 'export' in args else None
