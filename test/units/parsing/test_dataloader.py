@@ -25,6 +25,7 @@ from unittest.mock import patch
 from ansible.errors import AnsibleParserError, AnsibleFileNotFound
 from ansible.parsing.vault import AnsibleVaultError
 from ansible.module_utils.common.text.converters import to_text
+from ansible.utils.datatag.tags import Origin
 
 from units.mock.vault_helper import TextVaultSecret
 from ansible.parsing.dataloader import DataLoader
@@ -237,3 +238,23 @@ class TestDataLoaderWithVault(unittest.TestCase):
             self._loader._FILE_CACHE[key] = modified
             output = self._loader.load_from_file(file.name, cache='vaulted')
             self.assertEqual(output, modified)
+
+
+def test_get_text_file_contents() -> None:
+    original_contents = 'Hello World'
+
+    with tempfile.NamedTemporaryFile(mode='w') as temp_file:
+        temp_file.write(original_contents)
+        temp_file.flush()
+
+        loader = DataLoader()
+        read_contents = loader.get_text_file_contents(temp_file.name)
+
+    assert read_contents == original_contents
+
+    origin = Origin.get_tag(read_contents)
+
+    assert origin.path == temp_file.name
+    assert origin.line_num == 1
+    assert origin.col_num == 1
+    assert origin.description is None

@@ -164,7 +164,7 @@ class DataLoader:
         return b_data, not encrypted_source
 
     def get_text_file_contents(self, file_name: str) -> str:
-        # DTFIX-MERGE: test/docstring this method
+        """Returns an `Origin` tagged string with the content of the specified (DWIM-expanded for relative) file path, decrypting if necessary."""
         return to_text(self._get_file_contents(file_name)[0])
 
     def _get_file_contents(self, file_name: str) -> tuple[bytes, bool]:
