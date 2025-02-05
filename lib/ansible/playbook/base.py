@@ -790,7 +790,7 @@ class Base(FieldAttributeBase):
                 pass
 
         if origin:
-            path = "%s:%s" % (origin.path, origin.line)
+            path = "%s:%s" % (origin.path, origin.line_num)
         else:
             path = ""
 

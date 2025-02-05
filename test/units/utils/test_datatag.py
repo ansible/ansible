@@ -38,7 +38,7 @@ class TestDatatagController(_TestDatatagTarget):
     later = t.cast(t.Self, Later(locals(), parent_type=_TestDatatagTarget))
 
     tag_instances_with_reprs = [
-        (Origin(path='/himom.yml', line=42, col=42), "Origin(path='/himom.yml', line=42, col=42)"),
+        (Origin(path='/himom.yml', line_num=42, col=42), "Origin(path='/himom.yml', line_num=42, col=42)"),
         (NotATemplate(), "NotATemplate()"),
         (TrustedAsTemplate(), "TrustedAsTemplate()"),
         (VaultedValue(ciphertext="hi mom I am a secret"), "VaultedValue(ciphertext='hi mom I am a secret')"),
@@ -88,18 +88,18 @@ class TestDatatagController(_TestDatatagTarget):
 
 @pytest.mark.parametrize("sp, value", (
     (Origin(path="/hi"), "/hi"),
-    (Origin(path="/hi", line=1), "/hi:1"),
-    (Origin(path="/hi", line=1, col=2), "/hi:1:2"),
+    (Origin(path="/hi", line_num=1), "/hi:1"),
+    (Origin(path="/hi", line_num=1, col=2), "/hi:1:2"),
     (Origin(path="/hi", col=2), "/hi"),
-    (Origin(path="/hi", line=0), "/hi"),
-    (Origin(path="/hi", line=0, col=0), "/hi"),
+    (Origin(path="/hi", line_num=0), "/hi"),
+    (Origin(path="/hi", line_num=0, col=0), "/hi"),
     (Origin(path="/hi", col=0), "/hi"),
-    (Origin(path="/hi", line=-1), "/hi"),
-    (Origin(path="/hi", line=1, col=-1), "/hi:1"),
+    (Origin(path="/hi", line_num=-1), "/hi"),
+    (Origin(path="/hi", line_num=1, col=-1), "/hi:1"),
     (Origin(description='<something>'), "<something>"),
-    (Origin(description='<something>', line=1), "<something>:1"),
+    (Origin(description='<something>', line_num=1), "<something>:1"),
     (Origin(path="/hi", description='<something>'), "/hi (<something>)"),
-    (Origin(path="/hi", description='<something>', line=1), "/hi:1 (<something>)"),
+    (Origin(path="/hi", description='<something>', line_num=1), "/hi:1 (<something>)"),
 ), ids=str)
 def test_origin_str(sp: Origin, value: str) -> None:
     assert str(sp) == value
@@ -121,7 +121,7 @@ def test_tag_builtins():
         assert TrustedAsTemplate.get_tag(tagged_val) is TrustedAsTemplate()  # singleton tag type, should be reference-equal
         assert original_val is zero_tagged_val  # original value should reference-equal the zero-tagged value
 
-        origin = Origin(path="/foo", line=12, col=34)
+        origin = Origin(path="/foo", line_num=12, col=34)
 
         multi_tagged_val = origin.tag(tagged_val)
         assert tagged_val is not multi_tagged_val

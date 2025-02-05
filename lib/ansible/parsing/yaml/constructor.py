@@ -184,7 +184,7 @@ class AnsibleConstructor(SafeConstructor):
     def _node_position_info(self, node) -> Origin:
         # the line number where the previous token has ended (plus empty lines)
         # Add one so that the first line is line 1 rather than line 0
-        return self._origin.replace(line=node.start_mark.line + 1, col=node.start_mark.column + 1)
+        return self._origin.replace(line_num=node.start_mark.line + 1, col=node.start_mark.column + 1)
 
 # DTFIX-MERGE: review and deprecate tags below as appropriate
 

@@ -17,11 +17,11 @@ class Origin(AnsibleDatatagBase):
     Either `path` or `description` must be present.
     """
 
-    path: str | None = None  # DTFIX-MERGE: rename src to path (don't forget the replace method)
+    path: str | None = None
     """The path from which the tagged content originated."""
     description: str | None = None
     """A description of the origin, for display to users."""
-    line: int | None = None  # DTFIX-MERGE: rename to line_num (don't forget the replace method)
+    line_num: int | None = None
     """An optional line number, starting at 1."""
     col: int | None = None  # DTFIX-MERGE: rename to col_num (don't forget the replace method)
     """An optional column number, starting at 1."""
@@ -43,7 +43,7 @@ class Origin(AnsibleDatatagBase):
         self,
         path: str | types.EllipsisType = ...,
         description: str | types.EllipsisType = ...,
-        line: int | None | types.EllipsisType = ...,
+        line_num: int | None | types.EllipsisType = ...,
         col: int | None | types.EllipsisType = ...,
     ) -> t.Self:
         """Return a new origin based on an existing one, with the given fields replaced."""
@@ -52,7 +52,7 @@ class Origin(AnsibleDatatagBase):
             **{key: value for key, value in dict(
                 path=path,
                 description=description,
-                line=line,
+                line_num=line_num,
                 col=col,
             ).items() if value is not ...}  # type: ignore[arg-type]
         )
@@ -71,8 +71,8 @@ class Origin(AnsibleDatatagBase):
         else:
             value = self.description
 
-        if self.line and self.line > 0:
-            value += f':{self.line}'
+        if self.line_num and self.line_num > 0:
+            value += f':{self.line_num}'
 
             if self.col and self.col > 0:
                 value += f':{self.col}'

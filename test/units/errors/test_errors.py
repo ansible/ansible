@@ -41,7 +41,7 @@ def test_source_context(filename: str, line: int | None, col: int | None, expect
 
     fixture_path = pathlib.Path(__file__).parent / 'fixtures'
 
-    origin = Origin(path=str(fixture_path / 'inputs' / filename), line=line, col=col)
+    origin = Origin(path=str(fixture_path / 'inputs' / filename), line_num=line, col=col)
 
     # DTFIX-FUTURE: assert target_line contents as well?
     source_context = SourceContext.from_origin(origin)

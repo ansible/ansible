@@ -245,7 +245,7 @@ class SourceContext:
         max_annotated_line_width: t.Final = 120
         truncation_marker: t.Final = '...'
 
-        target_line_num = origin.line
+        target_line_num = origin.line_num
 
         if RedactAnnotatedSourceContext.current(optional=True):
             return cls.error('content redacted', origin)

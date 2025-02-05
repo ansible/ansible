@@ -29,7 +29,7 @@ class AnsibleYAMLParserError(AnsibleParserError):
     @classmethod
     def handle_exception(cls, exception: Exception, origin: Origin) -> t.NoReturn:
         if isinstance(exception, MarkedYAMLError):
-            origin = origin.replace(line=exception.problem_mark.line + 1, col=exception.problem_mark.column + 1)
+            origin = origin.replace(line_num=exception.problem_mark.line + 1, col=exception.problem_mark.column + 1)
 
         source_context = _utils.SourceContext.from_origin(origin)
 

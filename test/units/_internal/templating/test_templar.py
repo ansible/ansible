@@ -57,7 +57,7 @@ import pytest
 NOT_A_TEMPLATE = NotATemplate()
 TRUST = TrustedAsTemplate()
 
-origin = Origin(path="/some/path/for/testing", line=1, col=2)
+origin = Origin(path="/some/path/for/testing", line_num=1, col=2)
 
 
 class BaseTemplar(object):

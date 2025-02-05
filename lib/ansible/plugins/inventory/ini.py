@@ -140,12 +140,12 @@ class InventoryModule(BaseFileInventoryPlugin):
                         # Non-comment lines still have to be valid uf-8
                         data.append(to_text(line, errors='surrogate_or_strict'))
 
-            self._origin = Origin(path=path, line=0)
+            self._origin = Origin(path=path, line_num=0)
 
             try:
                 self._parse(data)
             finally:
-                self._origin = self._origin.replace(line=None)
+                self._origin = self._origin.replace(line_num=None)
 
         except Exception as ex:
             raise AnsibleParserError('Failed to parse inventory.', obj=self._origin) from ex
@@ -170,7 +170,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         groupname = 'ungrouped'
         state = 'hosts'
         for line in lines:
-            self._origin = self._origin.replace(line=self._origin.line + 1)
+            self._origin = self._origin.replace(line_num=self._origin.line_num + 1)
 
             line = line.strip()
             # Skip empty lines and comments
@@ -202,7 +202,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                     # declarations will take the appropriate action for a pending child group instead of
                     # incorrectly handling it as a var state pending declaration
                     if state == 'vars' and groupname not in pending_declarations:
-                        pending_declarations[groupname] = dict(line=self._origin.line, state=state, name=groupname)
+                        pending_declarations[groupname] = dict(line=self._origin.line_num, state=state, name=groupname)
 
                     self.inventory.add_group(groupname)
 
@@ -242,7 +242,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                 child = self._parse_group_name(line)
                 if child not in self.inventory.groups:
                     if child not in pending_declarations:
-                        pending_declarations[child] = dict(line=self._origin.line, state=state, name=child, parents=[groupname])
+                        pending_declarations[child] = dict(line=self._origin.line_num, state=state, name=child, parents=[groupname])
                     else:
                         pending_declarations[child]['parents'].append(groupname)
                 else:
@@ -255,7 +255,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         # We report only the first such error here.
         for g in pending_declarations:
             decl = pending_declarations[g]
-            self._origin = self._origin.replace(line=decl['line'])
+            self._origin = self._origin.replace(line_num=decl['line'])
             if decl['state'] == 'vars':
                 raise ValueError(f"Section [{decl['name']}:vars] not valid for undefined group {decl['name']!r}.")
             elif decl['state'] == 'children':

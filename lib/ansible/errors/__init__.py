@@ -217,7 +217,7 @@ class AnsibleJSONParserError(AnsibleParserError):
     @classmethod
     def handle_exception(cls, exception: Exception, origin: Origin) -> t.NoReturn:
         if isinstance(exception, JSONDecodeError):
-            origin = origin.replace(line=exception.lineno, col=exception.colno)
+            origin = origin.replace(line_num=exception.lineno, col=exception.colno)
 
         message = str(exception)
 
