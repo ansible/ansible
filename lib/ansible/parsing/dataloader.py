@@ -17,7 +17,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible._internal._errors import _utils
 from ansible.module_utils.basic import is_executable
-from ansible.utils.datatag.tags import AnsibleSourcePosition, TrustedAsTemplate, _EncryptedSource
+from ansible.utils.datatag.tags import Origin, TrustedAsTemplate, _EncryptedSource
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.parsing.quoting import unquote
@@ -80,7 +80,7 @@ class DataLoader:
     def load(
             self,
             data: str,
-            file_name: str | None = None,  # DTFIX-RELEASE: consider deprecating this in favor of tagging AnsibleSourcePosition on data
+            file_name: str | None = None,  # DTFIX-RELEASE: consider deprecating this in favor of tagging Origin on data
             show_content: bool = True,  # deprecated: description='deprecate show_content in favor of RedactAnnotatedSourceContext' core_version='2.22'
             json_only: bool = False,
     ) -> t.Any:
@@ -193,7 +193,7 @@ class DataLoader:
         except (IOError, OSError) as ex:
             raise AnsibleParserError(f"An error occurred while trying to read the file {file_name!r}.") from ex
 
-        data = AnsibleSourcePosition(src=file_name, line=1, col=1).tag(data)
+        data = Origin(src=file_name, line=1, col=1).tag(data)
 
         return self._decrypt_if_vault_data(data)
 

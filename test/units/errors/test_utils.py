@@ -5,7 +5,7 @@ import pytest
 from ansible.errors import AnsibleError
 from ansible._internal._errors._utils import _create_error_summary, get_chained_message
 from ansible.module_utils.common.messages import ErrorSummary
-from ansible.utils.datatag.tags import AnsibleSourcePosition
+from ansible.utils.datatag.tags import Origin
 from ansible.utils.display import format_message
 
 
@@ -20,8 +20,8 @@ def raise_exceptions(exceptions: list[BaseException]) -> None:
 
 
 _shared_cause = Exception('shared cause')
-_source_pos_x = AnsibleSourcePosition(src='/x')
-_source_pos_y = AnsibleSourcePosition(src='/y')
+_origin_x = Origin(src='/x')
+_origin_y = Origin(src='/y')
 
 
 @pytest.mark.parametrize("exceptions, expected_message_chain, expected_formatted_message", (
@@ -98,11 +98,11 @@ _source_pos_y = AnsibleSourcePosition(src='/y')
         ),
     ),
 
-    # collapsing source position
+    # collapsing origin
 
     (
         [
-            AnsibleError('a', obj=_source_pos_x.tag('x'), orig_exc=Exception('ignored')),
+            AnsibleError('a', obj=_origin_x.tag('x'), orig_exc=Exception('ignored')),
             Exception('b'),
         ],
         'a: b',
@@ -113,7 +113,7 @@ _source_pos_y = AnsibleSourcePosition(src='/y')
     ),
     (
         [
-            AnsibleError('a', obj=_source_pos_x.tag('x'), orig_exc=_shared_cause),
+            AnsibleError('a', obj=_origin_x.tag('x'), orig_exc=_shared_cause),
             _shared_cause,
         ],
         'a: shared cause',
@@ -125,7 +125,7 @@ _source_pos_y = AnsibleSourcePosition(src='/y')
     (
         [
             # same as above, but exercises the old `orig_exc` path that displays a warning
-            AnsibleError('a', obj=_source_pos_x.tag('x'), orig_exc=Exception('b')),
+            AnsibleError('a', obj=_origin_x.tag('x'), orig_exc=Exception('b')),
         ],
         'a: b',
         (
@@ -135,8 +135,8 @@ _source_pos_y = AnsibleSourcePosition(src='/y')
     ),
     (
         [
-            AnsibleError('a', obj=_source_pos_x.tag('x')),
-            AnsibleError('b', obj=_source_pos_x.tag('x')),
+            AnsibleError('a', obj=_origin_x.tag('x')),
+            AnsibleError('b', obj=_origin_x.tag('x')),
         ],
         'a: b',
         (
@@ -146,9 +146,9 @@ _source_pos_y = AnsibleSourcePosition(src='/y')
     ),
     (
         [
-            AnsibleError('a', obj=_source_pos_x.tag('x')),
+            AnsibleError('a', obj=_origin_x.tag('x')),
             Exception('b'),
-            AnsibleError('c', obj=_source_pos_x.tag('x')),
+            AnsibleError('c', obj=_origin_x.tag('x')),
         ],
         'a: b: c',
         (
@@ -158,8 +158,8 @@ _source_pos_y = AnsibleSourcePosition(src='/y')
     ),
     (
         [
-            AnsibleError('a', obj=_source_pos_x.tag('x')),
-            AnsibleError('b', obj=_source_pos_y.tag('x')),
+            AnsibleError('a', obj=_origin_x.tag('x')),
+            AnsibleError('b', obj=_origin_y.tag('x')),
         ],
         'a: b',
         (
@@ -174,7 +174,7 @@ _source_pos_y = AnsibleSourcePosition(src='/y')
     (
         [
             AnsibleError('a'),
-            AnsibleError('b', obj=_source_pos_y.tag('x')),
+            AnsibleError('b', obj=_origin_y.tag('x')),
         ],
         'a: b',
         (

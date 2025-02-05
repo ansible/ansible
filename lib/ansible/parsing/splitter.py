@@ -23,7 +23,7 @@ import re
 from ansible.errors import AnsibleParserError
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.datatag import AnsibleTagHelper
-from ansible.utils.datatag.tags import AnsibleSourcePosition, TrustedAsTemplate
+from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
 from ansible.parsing.quoting import unquote
 
 
@@ -55,9 +55,9 @@ def parse_kv(args, check_raw=False):
     """
 
     tags = []
-    if src_tag := AnsibleSourcePosition.get_tag(args):
+    if origin_tag := Origin.get_tag(args):
         # NB: adjusting the column number is left as an exercise for the reader
-        tags.append(src_tag)
+        tags.append(origin_tag)
     if trusted_tag := TrustedAsTemplate.get_tag(args):
         tags.append(trusted_tag)
 
@@ -102,8 +102,8 @@ def parse_kv(args, check_raw=False):
     if tags:
         options = {AnsibleTagHelper.tag(k, tags): AnsibleTagHelper.tag(v, tags) for k, v in options.items()}
 
-    if src_tag:
-        options = src_tag.tag(options)
+    if origin_tag:
+        options = origin_tag.tag(options)
 
     return options
 

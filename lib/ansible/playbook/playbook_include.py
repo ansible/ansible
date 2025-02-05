@@ -131,7 +131,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
             raise AnsibleAssertionError('ds (%s) should be a dict but was a %s' % (ds, type(ds)))
 
         # the new, cleaned datastructure, which will have legacy items reduced to a standard structure suitable for the
-        # attributes of the task class; copy any tagged data to preserve things like source position
+        # attributes of the task class; copy any tagged data to preserve things like origin
         new_ds = AnsibleTagHelper.tag_copy(ds, {})
 
         for (k, v) in ds.items():

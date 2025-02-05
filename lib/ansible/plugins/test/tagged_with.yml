@@ -11,7 +11,7 @@ DOCUMENTATION:
       type: raw
 
 EXAMPLES: |
-    is_data_tagged: "{{ my_variable is tagged_with('AnsibleSourcePosition') }}"
+    is_data_tagged: "{{ my_variable is tagged_with('Origin') }}"
 
 RETURN:
   _value:

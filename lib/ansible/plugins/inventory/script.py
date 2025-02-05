@@ -165,7 +165,7 @@ from ansible.module_utils.datatag import AnsibleTagHelper
 from ansible.module_utils.serialization import get_decoder
 from ansible.parsing.dataloader import DataLoader
 from ansible.plugins.inventory import BaseInventoryPlugin
-from ansible.utils.datatag.tags import TrustedAsTemplate, AnsibleSourcePosition
+from ansible.utils.datatag.tags import TrustedAsTemplate, Origin
 from ansible.utils.display import Display
 from ansible.utils.serialization import inventory_legacy, legacy
 
@@ -190,7 +190,7 @@ class InventoryModule(BaseInventoryPlugin):
 
         self.set_options()
 
-        origin = AnsibleSourcePosition(description=f'<inventory script output from {path!r}>')
+        origin = Origin(description=f'<inventory script output from {path!r}>')
 
         data, stderr, stderr_help_text = run_command(path, ['--list'], origin)
 
@@ -251,7 +251,7 @@ class InventoryModule(BaseInventoryPlugin):
 
             self._populate_host_vars([host], got)
 
-    def _parse_group(self, group: str, data: t.Any, origin: AnsibleSourcePosition) -> None:
+    def _parse_group(self, group: str, data: t.Any, origin: Origin) -> None:
         """Normalize and ingest host/var information for the named group."""
         group = self.inventory.add_group(group)
 
@@ -291,7 +291,7 @@ class InventoryModule(BaseInventoryPlugin):
                 self.inventory.add_child(group, child_name)
 
     @staticmethod
-    def get_host_variables(path: str, host: str, origin: AnsibleSourcePosition) -> dict:
+    def get_host_variables(path: str, host: str, origin: Origin) -> dict:
         """Runs <script> --host <hostname>, to determine additional host variables."""
         origin = origin.replace(description=f'{origin.description} for host {host!r}')
 
@@ -348,7 +348,7 @@ def detect_profile_name(value: str) -> str:
     return profile
 
 
-def run_command(path: str, options: list[str], origin: AnsibleSourcePosition) -> tuple[str, str, str]:
+def run_command(path: str, options: list[str], origin: Origin) -> tuple[str, str, str]:
     """Run an inventory script, normalize and validate output."""
     cmd = [path] + options
 

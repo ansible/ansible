@@ -8,7 +8,7 @@ import textwrap
 import typing as t
 
 from ansible.module_utils.common.messages import Detail, ErrorSummary
-from ansible.utils.datatag.tags import AnsibleSourcePosition
+from ansible.utils.datatag.tags import Origin
 from ansible.module_utils._internal import _ambient_context, _traceback
 from ansible import errors
 
@@ -18,7 +18,7 @@ if t.TYPE_CHECKING:
 
 class RedactAnnotatedSourceContext(_ambient_context.AmbientContextBase):
     """
-    When active, this context will redact annotated source lines, showing only source position.
+    When active, this context will redact annotated source lines, showing only the origin.
     """
 
 
@@ -172,12 +172,12 @@ def get_chained_message(exception: BaseException) -> str:
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
 class SourceContext:
-    source_position: AnsibleSourcePosition
+    origin: Origin
     annotated_source_lines: list[str]
     target_line: str | None
 
     def __str__(self) -> str:
-        msg_lines = [f'Origin: {self.source_position}']
+        msg_lines = [f'Origin: {self.origin}']
 
         if self.annotated_source_lines:
             msg_lines.append('')
@@ -187,21 +187,21 @@ class SourceContext:
 
     @classmethod
     def from_value(cls, value: t.Any) -> SourceContext | None:
-        """Attempt to retrieve source and render a contextual indicator from the value's source position (if any)."""
+        """Attempt to retrieve source and render a contextual indicator from the value's origin (if any)."""
         if value is None:
             return None
 
-        if isinstance(value, AnsibleSourcePosition):
-            position = value
+        if isinstance(value, Origin):
+            origin = value
             value = None
         else:
-            position = AnsibleSourcePosition.get_tag(value)
+            origin = Origin.get_tag(value)
 
         if RedactAnnotatedSourceContext.current(optional=True):
             return cls.error('content redacted')
 
-        if position and position.src:
-            return cls.from_source_position(position)
+        if origin and origin.src:
+            return cls.from_origin(origin)
 
         # DTFIX-RELEASE: redaction context may not be sufficient to avoid secret disclosure without SensitiveData and other enhancements
         if value is None:
@@ -218,21 +218,21 @@ class SourceContext:
             annotated_source_lines = [truncated_value]
 
         return SourceContext(
-            source_position=position or AnsibleSourcePosition.UNKNOWN,
+            origin=origin or Origin.UNKNOWN,
             annotated_source_lines=annotated_source_lines,
             target_line=truncated_value,
         )
 
     @staticmethod
-    def error(message: str | None, position: AnsibleSourcePosition | None = None) -> SourceContext:
+    def error(message: str | None, origin: Origin | None = None) -> SourceContext:
         return SourceContext(
-            source_position=position,
+            origin=origin,
             annotated_source_lines=[f'(source not shown: {message})'] if message else [],
             target_line=None,
         )
 
     @classmethod
-    def from_source_position(cls, position: AnsibleSourcePosition) -> SourceContext:
+    def from_origin(cls, origin: Origin) -> SourceContext:
         """Attempt to retrieve source and render a contextual indicator of an error location."""
         from ansible.parsing.vault import is_encrypted  # avoid circular import
 
@@ -245,29 +245,29 @@ class SourceContext:
         max_annotated_line_width: t.Final = 120
         truncation_marker: t.Final = '...'
 
-        target_line_num = position.line
+        target_line_num = origin.line
 
         if RedactAnnotatedSourceContext.current(optional=True):
-            return cls.error('content redacted', position)
+            return cls.error('content redacted', origin)
 
         if not target_line_num or target_line_num < 1:
-            return cls.error(None, position)  # message omitted since lack of line number is obvious from pos
+            return cls.error(None, origin)  # message omitted since lack of line number is obvious from pos
 
         start_line_idx = max(0, (target_line_num - 1) - context_line_count)  # if near start of file
-        target_col_num = position.col
+        target_col_num = origin.col
 
         try:
-            with pathlib.Path(position.src).open() as src:
+            with pathlib.Path(origin.src).open() as src:
                 first_line = src.readline()
                 lines = list(itertools.islice(itertools.chain((first_line,), src), start_line_idx, target_line_num))
         except Exception as ex:
-            return cls.error(type(ex).__name__, position)
+            return cls.error(type(ex).__name__, origin)
 
         if is_encrypted(first_line):
-            return cls.error('content encrypted', position)
+            return cls.error('content encrypted', origin)
 
         if len(lines) != target_line_num - start_line_idx:
-            return cls.error('file truncated', position)
+            return cls.error('file truncated', origin)
 
         annotated_source_lines = []
 
@@ -304,7 +304,7 @@ class SourceContext:
             annotated_source_lines.append(f'{" " * line_label_width} {"^" * underline_length}')
 
         return SourceContext(
-            source_position=position,
+            origin=origin,
             annotated_source_lines=annotated_source_lines,
             target_line=lines[-1].rstrip('\n'),  # universal newline default mode on `open` ensures we'll never see anything but \n
         )

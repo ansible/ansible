@@ -25,7 +25,7 @@ from ansible.module_utils.common.yaml import HAS_LIBYAML, yaml_load
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
 
-from ...utils.datatag.tags import TrustedAsTemplate, NotATemplate, AnsibleSourcePosition
+from ...utils.datatag.tags import TrustedAsTemplate, NotATemplate, Origin
 
 
 #
@@ -526,7 +526,7 @@ def add_vault_options(parser):
 def _tagged_type_factory(name: str, func: t.Callable[[str], object], /) -> t.Callable[[str], object]:
     """
     Return a callable that wraps the given function.
-    The result of the wrapped function will be tagged with AnsibleSourcePosition.
+    The result of the wrapped function will be tagged with Origin.
     It will also be tagged with TrustedAsTemplate if it is equal to the original input string.
     """
     def tag_value(value: str) -> object:
@@ -538,7 +538,7 @@ def _tagged_type_factory(name: str, func: t.Callable[[str], object], /) -> t.Cal
             # not sufficient to prevent them being tagged as trusted when they should not.
             result = TrustedAsTemplate().tag(result)
 
-        return AnsibleSourcePosition(description=f'<CLI option {name!r}>').tag(result)
+        return Origin(description=f'<CLI option {name!r}>').tag(result)
 
     tag_value._name = name  # simplify debugging by attaching the argument name to the function
 

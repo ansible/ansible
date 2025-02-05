@@ -12,7 +12,7 @@ import pytest
 from ansible.errors import AnsibleTemplateError, AnsibleUndefinedVariable
 from ansible._internal._templating._jinja_bits import is_possibly_template
 from ansible._internal._templating._jinja_common import CapturedExceptionMarker, MarkerError, JinjaCallContext, Marker
-from ansible.utils.datatag.tags import AnsibleSourcePosition, TrustedAsTemplate
+from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
 from ansible._internal._templating._utils import TemplateContext
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
 from ansible._internal._templating._lazy_containers import _AnsibleLazyTemplateMixin, _AnsibleLazyTemplateList, _AnsibleLazyTemplateDict, _LazyValue
@@ -491,17 +491,17 @@ LISTIFIED_ITERATOR_TEMPLATES = tuple(TRUST.tag(f'{{{{ {value} }}}}') for value i
 
 @pytest.mark.parametrize("value, expected", LISTIFIED_ITERATOR_VALUES_AND_EXPECTED)
 def test_list_adapter_equality(value: str, expected: list) -> None:
-    src_pos = AnsibleSourcePosition(src='/test')  # here to make sure it doesn't trigger an exception, it won't be in the result
+    origin = Origin(src='/test')  # here to make sure it doesn't trigger an exception, it won't be in the result
 
-    assert TemplateEngine().evaluate_expression(TRUST.tag(src_pos.tag(f"{value} == {expected}")))
+    assert TemplateEngine().evaluate_expression(TRUST.tag(origin.tag(f"{value} == {expected}")))
 
 
 @pytest.mark.parametrize("value", LISTIFIED_ITERATOR_VALUES)
 def test_list_adapter_source_propagation(value: t.Any) -> None:
-    src_pos = AnsibleSourcePosition(src='/test')
-    tag = AnsibleSourcePosition.get_tag(TemplateEngine().template(TRUST.tag(src_pos.tag(f"{{{{ {value} }}}}"))))
+    origin = Origin(src='/test')
+    tag = Origin.get_tag(TemplateEngine().template(TRUST.tag(origin.tag(f"{{{{ {value} }}}}"))))
 
-    assert tag is src_pos
+    assert tag is origin
 
 
 @pytest.mark.parametrize("value", t.cast(tuple, CONTAINER_VALUES) + LISTIFIED_ITERATOR_TEMPLATES, ids=str)

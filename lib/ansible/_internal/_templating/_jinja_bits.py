@@ -36,7 +36,7 @@ from ansible.module_utils.datatag import (
 
 from ansible.errors.handler import ErrorAction
 from ansible.parsing import vault as _vault
-from ansible.utils.datatag.tags import AnsibleSourcePosition, NotATemplate, TrustedAsTemplate
+from ansible.utils.datatag.tags import Origin, NotATemplate, TrustedAsTemplate
 
 from ._access import AnsibleAccessContext
 from ._datatag import _JinjaConstTemplate
@@ -485,8 +485,8 @@ def create_template_error(ex: Exception, variable: t.Any, is_expression: bool) -
         exception_to_raise.obj = TemplateContext.current().template_value
 
     # DTFIX-FUTURE: Look through the TemplateContext hierarchy to find the most recent non-template
-    #   caller and use that for source position when no source position is available on obj. This could be useful for situations where the template
-    #   was embedded in a plugin, or a plugin is otherwise responsible for losing the source position and/or trust. We can't just use the first
+    #   caller and use that for origin when no origin is available on obj. This could be useful for situations where the template
+    #   was embedded in a plugin, or a plugin is otherwise responsible for losing the origin and/or trust. We can't just use the first
     #   non-template caller as that will lead to false positives for re-entrant calls (e.g. template plugins that call into templar).
 
     return exception_to_raise
@@ -644,7 +644,7 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
 
     def _compile(self, source: str, filename: str) -> types.CodeType:
         if csc := _CompileStateSmugglingCtx.current(optional=True):
-            origin = AnsibleSourcePosition.get_tag(csc.template_source) or AnsibleSourcePosition.UNKNOWN
+            origin = Origin.get_tag(csc.template_source) or Origin.UNKNOWN
 
             source = '\n'.join((
                 "import sys; breakpoint() if type(sys.breakpointhook) is not type(breakpoint) else None",
@@ -694,14 +694,14 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
     @staticmethod
     def _access_const(const_template: t.LiteralString) -> t.Any:
         """
-        Called during template rendering on template-looking string constants embedded in the template. Propagates source position from the
+        Called during template rendering on template-looking string constants embedded in the template. Propagates origin from the
         containing template, and performs a managed access on it. This allows custom behavior on constants for backward-compatibility (eg,
         application of trust or inline template rendering).
         """
         ctx = TemplateContext.current()
 
-        if (tv := ctx.template_value) and (source_pos := AnsibleSourcePosition.get_tag(tv)):
-            const_template = source_pos.tag(const_template)
+        if (tv := ctx.template_value) and (origin := Origin.get_tag(tv)):
+            const_template = origin.tag(const_template)
 
         # deprecated: description='embedded Jinja constant string template support' core_version='2.21'
         # NOTE: This will fire on Jinja string constants that look like templates, whether templating is applied or not.

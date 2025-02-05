@@ -13,19 +13,19 @@ from ansible._internal._errors import _utils
 from ansible.parsing.vault import VaultSecret
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.errors import AnsibleYAMLParserError
-from ansible.utils.datatag.tags import AnsibleSourcePosition
+from ansible.utils.datatag.tags import Origin
 from ansible.utils.serialization import legacy
 
 
 def from_yaml(
     data: str,
-    file_name: str | None = None,  # DTFIX-MERGE: consider deprecating this in favor of tagging AnsibleSourcePosition on data
+    file_name: str | None = None,  # DTFIX-MERGE: consider deprecating this in favor of tagging Origin on data
     show_content: bool = True,  # deprecated: description='deprecate show_content in favor of RedactAnnotatedSourceContext' core_version='2.22'
     vault_secrets: list[tuple[str, VaultSecret]] | None = None,  # DTFIX-MERGE: can we remove/deprecate this?
     json_only: bool = False,
 ) -> t.Any:
     """Creates a Python data structure from the given data, which can be either a JSON or YAML string."""
-    origin = AnsibleSourcePosition.get_or_create_tag(data, file_name)
+    origin = Origin.get_or_create_tag(data, file_name)
 
     data = origin.tag(data)
 
@@ -46,6 +46,6 @@ def from_yaml(
         try:
             return AnsibleLoader(data).get_single_data()
         except Exception as yaml_ex:
-            # DTFIX-RELEASE: how can we indicate in AnsibleSourcePosition that the data is in-memory only, to support context information -- is that useful?
+            # DTFIX-RELEASE: how can we indicate in Origin that the data is in-memory only, to support context information -- is that useful?
             #        we'd need to pass data to handle_exception so it could be used as the content instead of reading from disk
             AnsibleYAMLParserError.handle_exception(yaml_ex, origin=origin)

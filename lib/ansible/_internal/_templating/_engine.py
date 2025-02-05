@@ -25,7 +25,7 @@ from ansible.errors import (
 
 from ansible.module_utils.datatag import AnsibleTaggedObject, NotTaggableError, AnsibleTagHelper
 from ansible.errors.handler import Skippable
-from ansible.utils.datatag.tags import AnsibleSourcePosition, TrustedAsTemplate, NotATemplate
+from ansible.utils.datatag.tags import Origin, TrustedAsTemplate, NotATemplate
 from ansible.utils.display import Display
 from ansible.utils.vars import validate_variable_name
 from ansible.parsing.dataloader import DataLoader
@@ -427,9 +427,9 @@ class TemplateEngine:
 
         # If the input string template was source-tagged and the result is not, propagate the source tag to the new value.
         # This provides further contextual information when a template-derived value/var causes an error.
-        if not AnsibleSourcePosition.is_tagged_on(result) and (src_pos := AnsibleSourcePosition.get_tag(template)):
+        if not Origin.is_tagged_on(result) and (origin := Origin.get_tag(template)):
             try:
-                result = src_pos.tag(result)
+                result = origin.tag(result)
             except NotTaggableError:
                 pass  # best effort- if we can't, oh well
 

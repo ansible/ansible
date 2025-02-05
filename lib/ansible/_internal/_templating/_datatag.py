@@ -6,7 +6,7 @@ import typing as t
 
 from ansible.module_utils.datatag import AnsibleSingletonTagBase, _tag_dataclass_kwargs
 from ansible.module_utils.datatag.tags import Deprecated
-from ansible.utils.datatag.tags import AnsibleSourcePosition
+from ansible.utils.datatag.tags import Origin
 from ansible.utils.display import Display
 
 from ._access import NotifiableAccessContextBase
@@ -48,10 +48,10 @@ class DeprecatedAccessAuditContext(NotifiableAccessContextBase):
         result = super().__exit__(exc_type, exc_val, exc_tb)
 
         for item in self._tripped_deprecation_info.values():
-            if AnsibleSourcePosition.is_tagged_on(item.template):
+            if Origin.is_tagged_on(item.template):
                 msg = item.deprecated.msg
             else:
-                # without a source position, we need to include what context we do have (the template)
+                # without an origin, we need to include what context we do have (the template)
                 msg = f'While processing {item.template!r}: {item.deprecated.msg}'
 
             display.deprecated(
@@ -73,10 +73,10 @@ class DeprecatedAccessAuditContext(NotifiableAccessContextBase):
         template_ctx = TemplateContext.current(optional=True)
         template = template_ctx.template_value if template_ctx else None
 
-        # when the current template input is a container, provide a descriptive string with source position propagated (if possible)
+        # when the current template input is a container, provide a descriptive string with origin propagated (if possible)
         if not isinstance(template, str):
             # DTFIX-FUTURE: ascend the template stack to try and find the nearest string source template
-            src_pos = AnsibleSourcePosition.get_tag(template)
+            origin = Origin.get_tag(template)
 
             # DTFIX-MERGE: this should probably use a synthesized description value on the tag
             #              it is reachable from the data_tagging_controller test: ../playbook_output_validator/filter.py actual_stdout.txt actual_stderr.txt
@@ -84,8 +84,8 @@ class DeprecatedAccessAuditContext(NotifiableAccessContextBase):
             # +[DEPRECATION WARNING]: While processing '<<container>>': `something_old` is deprecated, don't use it! This feature will be removed in ...
             template = '<<container>>'
 
-            if src_pos:
-                src_pos.tag(template)
+            if origin:
+                origin.tag(template)
 
         self._tripped_deprecation_info[deprecated_key] = _TrippedDeprecationInfo(
             template=template,

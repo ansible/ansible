@@ -40,7 +40,7 @@ from ansible.module_utils.datatag import AnsibleTagHelper, AnsibleDatatagBase
 from ansible.module_utils.datatag.tags import Deprecated
 from ansible._internal._templating import _transform
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
-from ansible.utils.datatag.tags import AnsibleSourcePosition, TrustedAsTemplate, NotATemplate
+from ansible.utils.datatag.tags import Origin, TrustedAsTemplate, NotATemplate
 from ansible.plugins.loader import init_plugin_loader
 from ansible._internal._templating._jinja_common import _TemplateConfig
 from ansible._internal._templating._jinja_plugins import _lookup
@@ -57,7 +57,7 @@ import pytest
 NOT_A_TEMPLATE = NotATemplate()
 TRUST = TrustedAsTemplate()
 
-source_pos = AnsibleSourcePosition(src="/some/path/for/testing", line=1, col=2)
+origin = Origin(src="/some/path/for/testing", line=1, col=2)
 
 
 class BaseTemplar(object):
@@ -377,8 +377,8 @@ def test_dict_template(tagged: bool) -> None:
     val1 = "val1"
 
     if tagged:
-        key1 = source_pos.tag(key1)
-        val1 = source_pos.tag(val1)
+        key1 = origin.tag(key1)
+        val1 = origin.tag(val1)
 
     test1 = {
         key1: val1,
@@ -905,19 +905,19 @@ def test_jinja2_loader_plugin(fixture: str, plugin_type: str, plugin_name: str, 
 
 
 def test_variable_name_as_template_success() -> None:
-    name = NotATemplate().tag(source_pos.tag("blar"))
+    name = NotATemplate().tag(origin.tag("blar"))
 
     res = TemplateEngine().variable_name_as_template(name)
     assert res.replace(' ', '') == "{{blar}}"
 
-    required_tags: frozenset[AnsibleDatatagBase] = frozenset({source_pos, TrustedAsTemplate()})
+    required_tags: frozenset[AnsibleDatatagBase] = frozenset({origin, TrustedAsTemplate()})
 
     assert required_tags - AnsibleTagHelper.tags(res) == set()  # there might be others, that's fine
     assert not NotATemplate.is_tagged_on(res)
 
 
 def test_variable_name_as_template_invalid() -> None:
-    invalid_name = source_pos.tag("  invalid[var*name")
+    invalid_name = origin.tag("  invalid[var*name")
 
     with pytest.raises(AnsibleError) as err:
         TemplateEngine().variable_name_as_template(invalid_name)
@@ -959,14 +959,14 @@ def test_resolve_variable_expression_invalid(expression: str) -> None:
 def test_resolve_variable_expression_missing() -> None:
     templar = TemplateEngine()
 
-    expr = source_pos.tag("missing_variable")
+    expr = origin.tag("missing_variable")
 
     with pytest.raises(AnsibleUndefinedVariable) as err:
         templar.resolve_variable_expression(expr)
 
     assert err.value.obj == expr  # may not be the same instance, since it was tagged TrustedAsTemplate internally
 
-    required_tags: frozenset[AnsibleDatatagBase] = frozenset({source_pos, TrustedAsTemplate()})
+    required_tags: frozenset[AnsibleDatatagBase] = frozenset({origin, TrustedAsTemplate()})
 
     assert required_tags - AnsibleTagHelper.tags(err.value.obj) == set()  # there might be others, that's fine
 

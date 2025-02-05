@@ -27,7 +27,7 @@ from yaml.resolver import BaseResolver
 from ansible import constants as C
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.datatag import AnsibleTagHelper
-from ...utils.datatag.tags import AnsibleSourcePosition, TrustedAsTemplate, NotATemplate
+from ...utils.datatag.tags import Origin, TrustedAsTemplate, NotATemplate
 from ansible.parsing.vault import VaultSecret, EncryptedString
 from ansible.utils.display import Display
 
@@ -44,7 +44,7 @@ class AnsibleConstructor(SafeConstructor):
 
     def __init__(
         self,
-        origin: AnsibleSourcePosition,
+        origin: Origin,
         vault_secrets: list[tuple[str, VaultSecret]] | None = None,  # DTFIX-RELEASE: can we remove/deprecate this?
         trusted_as_template: bool = False,
     ) -> None:
@@ -96,28 +96,28 @@ class AnsibleConstructor(SafeConstructor):
         return self._node_position_info(node).tag(value)
 
     def construct_yaml_omap(self, node):
-        src_pos = self._node_position_info(node)
+        origin = self._node_position_info(node)
         display.deprecated(
             msg='Use of the YAML `!!omap` tag is deprecated.',
             version='2.21',
-            obj=src_pos,
+            obj=origin,
             help_text='Use a standard mapping instead, as key order is always preserved.',
         )
         items = list(super().construct_yaml_omap(node))[0]
-        items = [src_pos.tag(item) for item in items]
-        yield src_pos.tag(items)
+        items = [origin.tag(item) for item in items]
+        yield origin.tag(items)
 
     def construct_yaml_pairs(self, node):
-        src_pos = self._node_position_info(node)
+        origin = self._node_position_info(node)
         display.deprecated(
             msg='Use of the YAML `!!pairs` tag is deprecated.',
             version='2.21',
-            obj=src_pos,
+            obj=origin,
             help_text='Use a standard mapping instead.',
         )
         items = list(super().construct_yaml_pairs(node))[0]
-        items = [src_pos.tag(item) for item in items]
-        yield src_pos.tag(items)
+        items = [origin.tag(item) for item in items]
+        yield origin.tag(items)
 
     def construct_yaml_str(self, node):
         # Override the default string handling function
@@ -181,7 +181,7 @@ class AnsibleConstructor(SafeConstructor):
         # non-deferred construction of hierarchical nodes so the result is a fully realized object, and so our stateful unsafe propagation behavior works
         return self.construct_object(copied_node, deep=True)
 
-    def _node_position_info(self, node) -> AnsibleSourcePosition:
+    def _node_position_info(self, node) -> Origin:
         # the line number where the previous token has ended (plus empty lines)
         # Add one so that the first line is line 1 rather than line 0
         return self._origin.replace(line=node.start_mark.line + 1, col=node.start_mark.column + 1)

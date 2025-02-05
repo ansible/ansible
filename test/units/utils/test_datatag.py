@@ -8,7 +8,7 @@ import pytest
 
 from ansible.module_utils.datatag import AnsibleTagHelper
 from ansible.parsing.vault import EncryptedString, VaultSecretsContext, VaultSecret, VaultLib
-from ansible.utils.datatag.tags import AnsibleSourcePosition, NotATemplate, TrustedAsTemplate, VaultedValue
+from ansible.utils.datatag.tags import Origin, NotATemplate, TrustedAsTemplate, VaultedValue
 from ..module_utils.datatag.test_datatag import TestDatatagTarget as _TestDatatagTarget, Later
 
 
@@ -38,23 +38,23 @@ class TestDatatagController(_TestDatatagTarget):
     later = t.cast(t.Self, Later(locals(), parent_type=_TestDatatagTarget))
 
     tag_instances_with_reprs = [
-        (AnsibleSourcePosition(src='/himom.yml', line=42, col=42), "AnsibleSourcePosition(src='/himom.yml', line=42, col=42)"),
+        (Origin(src='/himom.yml', line=42, col=42), "Origin(src='/himom.yml', line=42, col=42)"),
         (NotATemplate(), "NotATemplate()"),
         (TrustedAsTemplate(), "TrustedAsTemplate()"),
         (VaultedValue(ciphertext="hi mom I am a secret"), "VaultedValue(ciphertext='hi mom I am a secret')"),
     ]
 
     test_dataclass_tag_base_field_validation_fail_instances = [
-        (AnsibleSourcePosition, dict(src=NotATemplate().tag(''))),
-        (AnsibleSourcePosition, dict(line=NotATemplate().tag(1), src='')),
-        (AnsibleSourcePosition, dict(col=NotATemplate().tag(1), src='')),
+        (Origin, dict(src=NotATemplate().tag(''))),
+        (Origin, dict(line=NotATemplate().tag(1), src='')),
+        (Origin, dict(col=NotATemplate().tag(1), src='')),
         (VaultedValue, dict(ciphertext=NotATemplate().tag(''))),
     ]
 
     test_dataclass_tag_base_field_validation_pass_instances = [
-        (AnsibleSourcePosition, dict(src='/something')),
-        (AnsibleSourcePosition, dict(src='/something', line=1)),
-        (AnsibleSourcePosition, dict(src='/something', col=1)),
+        (Origin, dict(src='/something')),
+        (Origin, dict(src='/something', line=1)),
+        (Origin, dict(src='/something', col=1)),
         (VaultedValue, dict(ciphertext='')),
     ]
 
@@ -87,21 +87,21 @@ class TestDatatagController(_TestDatatagTarget):
 
 
 @pytest.mark.parametrize("sp, value", (
-    (AnsibleSourcePosition(src="/hi"), "/hi"),
-    (AnsibleSourcePosition(src="/hi", line=1), "/hi:1"),
-    (AnsibleSourcePosition(src="/hi", line=1, col=2), "/hi:1:2"),
-    (AnsibleSourcePosition(src="/hi", col=2), "/hi"),
-    (AnsibleSourcePosition(src="/hi", line=0), "/hi"),
-    (AnsibleSourcePosition(src="/hi", line=0, col=0), "/hi"),
-    (AnsibleSourcePosition(src="/hi", col=0), "/hi"),
-    (AnsibleSourcePosition(src="/hi", line=-1), "/hi"),
-    (AnsibleSourcePosition(src="/hi", line=1, col=-1), "/hi:1"),
-    (AnsibleSourcePosition(description='<something>'), "<something>"),
-    (AnsibleSourcePosition(description='<something>', line=1), "<something>:1"),
-    (AnsibleSourcePosition(src="/hi", description='<something>'), "/hi (<something>)"),
-    (AnsibleSourcePosition(src="/hi", description='<something>', line=1), "/hi:1 (<something>)"),
+    (Origin(src="/hi"), "/hi"),
+    (Origin(src="/hi", line=1), "/hi:1"),
+    (Origin(src="/hi", line=1, col=2), "/hi:1:2"),
+    (Origin(src="/hi", col=2), "/hi"),
+    (Origin(src="/hi", line=0), "/hi"),
+    (Origin(src="/hi", line=0, col=0), "/hi"),
+    (Origin(src="/hi", col=0), "/hi"),
+    (Origin(src="/hi", line=-1), "/hi"),
+    (Origin(src="/hi", line=1, col=-1), "/hi:1"),
+    (Origin(description='<something>'), "<something>"),
+    (Origin(description='<something>', line=1), "<something>:1"),
+    (Origin(src="/hi", description='<something>'), "/hi (<something>)"),
+    (Origin(src="/hi", description='<something>', line=1), "/hi:1 (<something>)"),
 ), ids=str)
-def test_ansible_source_position_str(sp: AnsibleSourcePosition, value: str) -> None:
+def test_origin_str(sp: Origin, value: str) -> None:
     assert str(sp) == value
 
 
@@ -121,14 +121,14 @@ def test_tag_builtins():
         assert TrustedAsTemplate.get_tag(tagged_val) is TrustedAsTemplate()  # singleton tag type, should be reference-equal
         assert original_val is zero_tagged_val  # original value should reference-equal the zero-tagged value
 
-        somedata_tag = AnsibleSourcePosition(src="/foo", line=12, col=34)
+        somedata_tag = Origin(src="/foo", line=12, col=34)
 
         multi_tagged_val = somedata_tag.tag(tagged_val)
         assert tagged_val is not multi_tagged_val
         assert TrustedAsTemplate.is_tagged_on(multi_tagged_val)
-        assert AnsibleSourcePosition.is_tagged_on(multi_tagged_val)
+        assert Origin.is_tagged_on(multi_tagged_val)
         assert TrustedAsTemplate.get_tag(multi_tagged_val) is TrustedAsTemplate()  # singleton tag type, should be reference-equal
-        assert AnsibleSourcePosition.get_tag(multi_tagged_val) is somedata_tag
+        assert Origin.get_tag(multi_tagged_val) is somedata_tag
 
 
 # pylint: disable=unnecessary-lambda

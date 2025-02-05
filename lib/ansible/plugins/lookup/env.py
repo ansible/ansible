@@ -55,7 +55,7 @@ import os
 
 from ansible.plugins.lookup import LookupBase
 from ansible._internal._templating._jinja_bits import _undef, _DEFAULT_UNDEF
-from ansible.utils.datatag.tags import AnsibleSourcePosition
+from ansible.utils.datatag.tags import Origin
 
 
 class LookupModule(LookupBase):
@@ -73,6 +73,6 @@ class LookupModule(LookupBase):
             if val is _DEFAULT_UNDEF:
                 val = _undef(f'The environment variable {var!r} is not set.')
             else:
-                val = AnsibleSourcePosition(description=f"<environment variable {var!r}>").try_tag(val)
+                val = Origin(description=f"<environment variable {var!r}>").try_tag(val)
             ret.append(val)
         return ret

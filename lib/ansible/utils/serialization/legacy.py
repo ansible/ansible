@@ -35,13 +35,13 @@ class _LegacyVariableVisitor(_serialization.AnsibleVariableVisitor):
         *,
         trusted_as_template: bool = False,
         invert_trust: bool = False,
-        source_position: _tags.AnsibleSourcePosition | None = None,
+        origin: _tags.Origin | None = None,
         convert_mapping_to_dict: bool = False,
         convert_sequence_to_list: bool = False,
     ):
         super().__init__(
             trusted_as_template=trusted_as_template,
-            source_position=source_position,
+            origin=origin,
             convert_mapping_to_dict=convert_mapping_to_dict,
             convert_sequence_to_list=convert_sequence_to_list,
             allow_encrypted_string=True,
@@ -162,7 +162,7 @@ class _Profile(_json._JSONSerializationProfile["Encoder", "Decoder"]):
 
     @classmethod
     def post_deserialize(cls, decoder: Decoder, o: _t.Any) -> _t.Any:
-        avv = cls.visitor_type(trusted_as_template=decoder._trusted_as_template, source_position=decoder._origin)
+        avv = cls.visitor_type(trusted_as_template=decoder._trusted_as_template, origin=decoder._origin)
 
         return avv.visit(o)
 
@@ -186,18 +186,18 @@ class Decoder(_json.AnsibleProfileJSONDecoder):
     def __init__(
         self,
         # DTFIX-MERGE: can we eliminate origin and trusted_as_template args by having a way to attach them to input streams?
-        origin: _tags.AnsibleSourcePosition | None = None,
+        origin: _tags.Origin | None = None,
         trusted_as_template: bool | None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
 
-        self._origin: _tags.AnsibleSourcePosition | None = origin
+        self._origin: _tags.Origin | None = origin
         self._trusted_as_template = trusted_as_template
 
     def raw_decode(self, s: str, idx: int = 0) -> tuple[_t.Any, int]:
         if self._origin is None:
-            self._origin = _tags.AnsibleSourcePosition.get_tag(s)
+            self._origin = _tags.Origin.get_tag(s)
 
         if self._trusted_as_template is None:
             self._trusted_as_template = _tags.TrustedAsTemplate.is_tagged_on(s)

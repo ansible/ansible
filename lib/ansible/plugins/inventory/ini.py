@@ -84,7 +84,7 @@ from ansible.plugins.inventory import BaseFileInventoryPlugin
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.datatag import AnsibleTagHelper
-from ansible.utils.datatag.tags import AnsibleSourcePosition, TrustedAsTemplate
+from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
 from ansible.utils.shlex import shlex_split
 
 
@@ -104,7 +104,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         super(InventoryModule, self).__init__()
 
         self.patterns: dict[str, re.Pattern] = {}
-        self._source_pos: AnsibleSourcePosition | None = None
+        self._origin: Origin | None = None
 
     def verify_file(self, path):
         # hardcode exclusion for TOML to prevent partial parsing of things we know we don't want
@@ -140,15 +140,15 @@ class InventoryModule(BaseFileInventoryPlugin):
                         # Non-comment lines still have to be valid uf-8
                         data.append(to_text(line, errors='surrogate_or_strict'))
 
-            self._source_pos = AnsibleSourcePosition(src=path, line=0)
+            self._origin = Origin(src=path, line=0)
 
             try:
                 self._parse(data)
             finally:
-                self._source_pos = self._source_pos.replace(line=None)
+                self._origin = self._origin.replace(line=None)
 
         except Exception as ex:
-            raise AnsibleParserError('Failed to parse inventory.', obj=self._source_pos) from ex
+            raise AnsibleParserError('Failed to parse inventory.', obj=self._origin) from ex
 
     def _raise_error(self, message):
         raise AnsibleError(message)
@@ -170,7 +170,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         groupname = 'ungrouped'
         state = 'hosts'
         for line in lines:
-            self._source_pos = self._source_pos.replace(line=self._source_pos.line + 1)
+            self._origin = self._origin.replace(line=self._origin.line + 1)
 
             line = line.strip()
             # Skip empty lines and comments
@@ -202,7 +202,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                     # declarations will take the appropriate action for a pending child group instead of
                     # incorrectly handling it as a var state pending declaration
                     if state == 'vars' and groupname not in pending_declarations:
-                        pending_declarations[groupname] = dict(line=self._source_pos.line, state=state, name=groupname)
+                        pending_declarations[groupname] = dict(line=self._origin.line, state=state, name=groupname)
 
                     self.inventory.add_group(groupname)
 
@@ -242,7 +242,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                 child = self._parse_group_name(line)
                 if child not in self.inventory.groups:
                     if child not in pending_declarations:
-                        pending_declarations[child] = dict(line=self._source_pos.line, state=state, name=child, parents=[groupname])
+                        pending_declarations[child] = dict(line=self._origin.line, state=state, name=child, parents=[groupname])
                     else:
                         pending_declarations[child]['parents'].append(groupname)
                 else:
@@ -255,7 +255,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         # We report only the first such error here.
         for g in pending_declarations:
             decl = pending_declarations[g]
-            self._source_pos = self._source_pos.replace(line=decl['line'])
+            self._origin = self._origin.replace(line=decl['line'])
             if decl['state'] == 'vars':
                 raise ValueError(f"Section [{decl['name']}:vars] not valid for undefined group {decl['name']!r}.")
             elif decl['state'] == 'children':
@@ -293,7 +293,7 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         if '=' in line:
             (k, v) = [e.strip() for e in line.split("=", 1)]
-            return (self._source_pos.tag(k), self._parse_value(v))
+            return (self._origin.tag(k), self._parse_value(v))
 
         self._raise_error("Expected key=value, got: %s" % (line))
 
@@ -326,7 +326,7 @@ class InventoryModule(BaseFileInventoryPlugin):
             if '=' not in t:
                 self._raise_error("Expected key=value host variable assignment, got: %s" % (t))
             (k, v) = t.split('=', 1)
-            variables[self._source_pos.tag(k)] = self._parse_value(v)
+            variables[self._origin.tag(k)] = self._parse_value(v)
 
         return hostnames, port, variables
 
@@ -350,13 +350,13 @@ class InventoryModule(BaseFileInventoryPlugin):
 
     def _parse_recursive_coerce_types_and_tag(self, value: t.Any) -> t.Any:
         if isinstance(value, str):
-            return AnsibleTagHelper.tag(value, (TrustedAsTemplate(), self._source_pos))
+            return AnsibleTagHelper.tag(value, (TrustedAsTemplate(), self._origin))
         if isinstance(value, (list, tuple, set)):
             # NB: intentional coercion of tuple/set to list, deal with it
-            return self._source_pos.tag([self._parse_recursive_coerce_types_and_tag(v) for v in value])
+            return self._origin.tag([self._parse_recursive_coerce_types_and_tag(v) for v in value])
         if isinstance(value, dict):
             # FIXME: enforce keys are strings
-            return self._source_pos.tag({self._source_pos.tag(k): self._parse_recursive_coerce_types_and_tag(v) for k, v in value.items()})
+            return self._origin.tag({self._origin.tag(k): self._parse_recursive_coerce_types_and_tag(v) for k, v in value.items()})
 
         if value is ...:  # literal_eval parses ellipsis, but it's not a supported variable type
             value = TrustedAsTemplate().tag("...")
@@ -366,7 +366,7 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         value = to_text(value, nonstring='passthru', errors='surrogate_or_strict')
 
-        return self._source_pos.tag(value)
+        return self._origin.tag(value)
 
     def _parse_value(self, v: str) -> t.Any:
         """

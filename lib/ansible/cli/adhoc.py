@@ -19,7 +19,7 @@ from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook import Playbook
 from ansible.playbook.play import Play
-from ansible.utils.datatag.tags import AnsibleSourcePosition
+from ansible.utils.datatag.tags import Origin
 from ansible.utils.display import Display
 from ansible.utils.serialization import legacy
 
@@ -89,7 +89,7 @@ class AdHocCLI(CLI):
         mytask = {'action': {'module': context.CLIARGS['module_name'], 'args': module_args},
                   'timeout': context.CLIARGS['task_timeout']}
 
-        mytask = AnsibleSourcePosition(description=f'<adhoc {context.CLIARGS["module_name"]!r} task>').tag(mytask)
+        mytask = Origin(description=f'<adhoc {context.CLIARGS["module_name"]!r} task>').tag(mytask)
 
         # avoid adding to tasks that don't support it, unless set, then give user an error
         if context.CLIARGS['module_name'] not in C._ACTION_ALL_INCLUDE_ROLE_TASKS and any(frozenset((async_val, poll))):

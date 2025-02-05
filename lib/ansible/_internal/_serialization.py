@@ -16,7 +16,7 @@ from ansible.module_utils.datatag import (
 )
 from ansible._internal._templating._lazy_containers import _AnsibleLazyTemplateDict, _AnsibleLazyTemplateList
 from ansible.parsing.vault import EncryptedString
-from ansible.utils.datatag.tags import AnsibleSourcePosition, TrustedAsTemplate
+from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
 
 _T = t.TypeVar('_T')
 
@@ -62,7 +62,7 @@ class AnsibleVariableVisitor:
         self,
         *,
         trusted_as_template: bool = False,
-        source_position: AnsibleSourcePosition | None = None,
+        origin: Origin | None = None,
         convert_mapping_to_dict: bool = False,
         convert_sequence_to_list: bool = False,
         allow_encrypted_string: bool = False,
@@ -70,7 +70,7 @@ class AnsibleVariableVisitor:
         super().__init__()  # supports StateTrackingMixIn
 
         self.trusted_as_template = trusted_as_template
-        self.source_position = source_position
+        self.origin = origin
         self.convert_mapping_to_dict = convert_mapping_to_dict
         self.convert_sequence_to_list = convert_sequence_to_list
         self.allow_encrypted_string = allow_encrypted_string
@@ -139,8 +139,8 @@ class AnsibleVariableVisitor:
             # supported scalar type that requires no special handling, just return as-is
             result = value
 
-        if self.source_position and not AnsibleSourcePosition.is_tagged_on(result):
-            # apply shared instance default source position tag
-            result = self.source_position.tag(result)
+        if self.origin and not Origin.is_tagged_on(result):
+            # apply shared instance default origin tag
+            result = self.origin.tag(result)
 
         return result

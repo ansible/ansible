@@ -40,7 +40,7 @@ from ansible.parsing.vault import EncryptedString, VaultSecretsContext, VaultLib
 from ansible._internal._templating._jinja_common import VaultExceptionMarker, TruncationMarker, Marker
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
 from ansible._internal._templating._utils import TemplateContext
-from ansible.utils.datatag.tags import VaultedValue, AnsibleSourcePosition
+from ansible.utils.datatag.tags import VaultedValue, Origin
 from ansible.utils.collection_loader import _EncryptedStringProtocol
 
 from units.mock.loader import DictDataLoader
@@ -890,19 +890,19 @@ def make_vault_ciphertext(plaintext: str) -> str:
 def make_encrypted_string(plaintext: str) -> EncryptedString:
     """Creates an `EncryptedString` from the first secret in the active VaultSecretsContext."""
 
-    return AnsibleSourcePosition(src="/tmp/sometest", line=42, col=42).tag(EncryptedString(ciphertext=make_vault_ciphertext(plaintext)))
+    return Origin(src="/tmp/sometest", line=42, col=42).tag(EncryptedString(ciphertext=make_vault_ciphertext(plaintext)))
 
 
 def test_encrypted_string_unmanaged_access(_vault_secrets_context) -> None:
     """
     Validates that unmanaged access to an `EncryptedString`:
     * properly decrypts and caches the value when secrets are available
-    * propagates AnsibleSourcePosition and VaultedValue tags
+    * propagates Origin and VaultedValue tags
     """
     plaintext = 'i am plaintext'
     encrypted_string = make_encrypted_string(plaintext)
 
-    source_pos_tag = AnsibleSourcePosition.get_required_tag(encrypted_string)
+    origin_tag = Origin.get_required_tag(encrypted_string)
     vaulted_value_tag = VaultedValue(ciphertext=VaultHelper.get_ciphertext(encrypted_string, with_tags=False))
 
     res1 = str(encrypted_string)
@@ -911,7 +911,7 @@ def test_encrypted_string_unmanaged_access(_vault_secrets_context) -> None:
     assert res1 == res2 == plaintext
     assert res1 is res2  # ensure the result is cached
 
-    assert AnsibleSourcePosition.get_required_tag(res1) is source_pos_tag
+    assert Origin.get_required_tag(res1) is origin_tag
     assert VaultedValue.get_required_tag(res1).ciphertext == vaulted_value_tag.ciphertext
 
 
@@ -950,19 +950,19 @@ def make_marker(marker_type: type[Marker], *args, **kwargs):
         return marker_type(*args, **kwargs)
 
 
-src_pos = AnsibleSourcePosition(src="/test")
+origin = Origin(src="/test")
 
 
 @pytest.mark.parametrize("value, expected_ciphertext", (
-    (src_pos.tag(EncryptedString(ciphertext="ciphertext")), "ciphertext"),
-    (src_pos.tag(VaultedValue(ciphertext="ciphertext").tag("something")), "ciphertext"),
-    (make_marker(VaultExceptionMarker, ciphertext=src_pos.tag("ciphertext"), reason="", traceback=""), "ciphertext"),
+    (origin.tag(EncryptedString(ciphertext="ciphertext")), "ciphertext"),
+    (origin.tag(VaultedValue(ciphertext="ciphertext").tag("something")), "ciphertext"),
+    (make_marker(VaultExceptionMarker, ciphertext=origin.tag("ciphertext"), reason="", traceback=""), "ciphertext"),
     (make_marker(TruncationMarker), None),
     ("not vaulted", None),
 ))
 def test_vaulthelper_get_ciphertext(value: t.Any, expected_ciphertext: str | None) -> None:
     """Validate `get_ciphertext` helper reponses and tag preservation behavior."""
-    expected_tags = {src_pos} if expected_ciphertext is not None else set()
+    expected_tags = {origin} if expected_ciphertext is not None else set()
 
     tagged_ciphertext = VaultHelper.get_ciphertext(value, with_tags=True)
     untagged_ciphertext = VaultHelper.get_ciphertext(value, with_tags=False)

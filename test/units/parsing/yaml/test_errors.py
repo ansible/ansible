@@ -12,7 +12,7 @@ import pytest_mock
 
 from ansible import constants as C
 from ansible._internal._errors._utils import get_chained_message
-from ansible.utils.datatag.tags import AnsibleSourcePosition
+from ansible.utils.datatag.tags import Origin
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.errors import AnsibleYAMLParserError
 from ansible.utils.display import Display
@@ -90,7 +90,7 @@ def test_yaml_parser_error(
     assert get_chained_message(error.value) == expected_message
     assert str(error.value) == expected_message
 
-    assert error.value.obj == AnsibleSourcePosition(src=str(source_path), line=line, col=col)
+    assert error.value.obj == Origin(src=str(source_path), line=line, col=col)
 
     if expect_help_text:
         assert error.value.help_text is not None  # DTFIX-FUTURE: check the content later once it's less volatile

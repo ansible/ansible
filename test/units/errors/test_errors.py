@@ -6,7 +6,7 @@ import pytest
 
 from ansible.errors import AnsibleError, AnsibleVariableTypeError
 from ansible._internal._errors._utils import SourceContext
-from ansible.utils.datatag.tags import AnsibleSourcePosition
+from ansible.utils.datatag.tags import Origin
 
 from ..test_utils.controller.display import emits_deprecation_warning
 
@@ -41,10 +41,10 @@ def test_source_context(filename: str, line: int | None, col: int | None, expect
 
     fixture_path = pathlib.Path(__file__).parent / 'fixtures'
 
-    pos = AnsibleSourcePosition(src=str(fixture_path / 'inputs' / filename), line=line, col=col)
+    origin_tag = Origin(src=str(fixture_path / 'inputs' / filename), line=line, col=col)
 
     # DTFIX-FUTURE: assert target_line contents as well?
-    source_context = SourceContext.from_source_position(pos)
+    source_context = SourceContext.from_origin(origin_tag)
     result = '\n'.join(source_context.annotated_source_lines) + '\n'
 
     expected_path = fixture_path / 'outputs' / expected_filename

@@ -36,7 +36,7 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins.loader import inventory_loader
-from ansible.utils.datatag.tags import AnsibleSourcePosition
+from ansible.utils.datatag.tags import Origin
 from ansible.utils.helpers import deduplicate_list
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
@@ -292,7 +292,7 @@ class InventoryManager(object):
 
                 if plugin_wants:
                     # have this tag ready to apply to errors or output; str-ify source since it is often tagged by the CLI
-                    origin_tag = AnsibleSourcePosition(description=f'<inventory plugin {plugin_name!r} with source {str(source)!r}>')
+                    origin_tag = Origin(description=f'<inventory plugin {plugin_name!r} with source {str(source)!r}>')
                     try:
                         inventory_wrapper = _InventoryDataWrapper(self._inventory, target_plugin=plugin, origin_tag=origin_tag)
 
@@ -764,13 +764,13 @@ class InventoryManager(object):
 class _InventoryDataWrapper(_wrapt.ObjectProxy):
     # declared as class attrs to signal ObjectProxy that we want them stored on the proxy, not the wrapped value
     _target_plugin = None
-    _default_source_position_tag = None
+    _default_origin_tag = None
 
-    def __init__(self, referent: InventoryData, target_plugin: BaseInventoryPlugin, origin_tag: AnsibleSourcePosition) -> None:
+    def __init__(self, referent: InventoryData, target_plugin: BaseInventoryPlugin, origin_tag: Origin) -> None:
         super().__init__(referent)
         self._target_plugin = target_plugin
-        # fallback source position to ensure that vars are tagged with at least the file they came from
-        self._default_source_position_tag = origin_tag
+        # fallback origin to ensure that vars are tagged with at least the file they came from
+        self._default_origin_tag = origin_tag
 
     @functools.cached_property
     def _inspector(self) -> _serialization.AnsibleVariableVisitor:
@@ -778,7 +778,7 @@ class _InventoryDataWrapper(_wrapt.ObjectProxy):
         #  occur inside verify_file.
         return _serialization.AnsibleVariableVisitor(
             trusted_as_template=self._target_plugin.trusted_by_default,
-            source_position=self._default_source_position_tag,
+            origin=self._default_origin_tag,
             allow_encrypted_string=True,
         )
 

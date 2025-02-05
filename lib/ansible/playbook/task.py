@@ -199,7 +199,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             templar=templar,
         )
 
-        # DTFIX-MERGE: the args dict should be tagged with the source position of the task
+        # DTFIX-MERGE: the args dict should be tagged with the origin of the task
 
         try:
             with action_type.get_finalize_task_args_context() as finalize_context:
@@ -249,7 +249,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             raise AnsibleAssertionError('ds (%s) should be a dict but was a %s' % (ds, type(ds)))
 
         # the new, cleaned datastructure, which will have legacy items reduced to a standard structure suitable for the
-        # attributes of the task class; copy any tagged data to preserve things like source position
+        # attributes of the task class; copy any tagged data to preserve things like origin
         new_ds = AnsibleTagHelper.tag_copy(ds, {})
 
         # since this affects the task action parsing, we have to resolve in preprocess instead of in typical validator

@@ -38,7 +38,7 @@ from io import BytesIO
 
 from ansible.module_utils._internal import _dataclass_validation
 from ansible.module_utils.common.yaml import yaml_load
-from ansible.utils.datatag.tags import AnsibleSourcePosition
+from ansible.utils.datatag.tags import Origin
 from ansible.module_utils.serialization import get_module_encoder, Direction
 from ansible.release import __version__, __author__
 from ansible import constants as C
@@ -518,7 +518,7 @@ class LegacyModuleUtilLocator(ModuleUtilLocatorBase):
             path = info.origin
         else:
             return False
-        self.source_code = AnsibleSourcePosition(src=path).tag(_slurp(path))
+        self.source_code = Origin(src=path).tag(_slurp(path))
 
         return True
 
@@ -586,10 +586,10 @@ class CollectionModuleUtilLocator(ModuleUtilLocatorBase):
         # TODO: this feels brittle and funky; we should be able to more definitively assure the source path
 
         if pkg_path:
-            origin_tag = AnsibleSourcePosition(src=os.path.join(pkg_path, src_path))
+            origin_tag = Origin(src=os.path.join(pkg_path, src_path))
         else:
             # DTFIX-RELEASE: not sure if this case is even reachable
-            origin_tag = AnsibleSourcePosition(description=f'<synthetic collection package for {collection_pkg_name}!r>')
+            origin_tag = Origin(description=f'<synthetic collection package for {collection_pkg_name}!r>')
 
         self.source_code = origin_tag.tag(src)
         return True
@@ -798,7 +798,7 @@ def recursive_finder(name, module_fqn, module_data, zf, date_time=None) -> Modul
 
 
 def _compile_module_ast(module_name: str, source_code: str) -> ast.Module:
-    origin = AnsibleSourcePosition.get_tag(source_code) or AnsibleSourcePosition.UNKNOWN
+    origin = Origin.get_tag(source_code) or Origin.UNKNOWN
 
     # compile the source, process all relevant imported modules
     try:
@@ -1040,7 +1040,7 @@ def _find_module_utils(
                     zf = zipfile.ZipFile(zipoutput, mode='w', compression=compression_method)
 
                     # walk the module imports, looking for module_utils to send- they'll be added to the zipfile
-                    module_metadata = recursive_finder(module_name, remote_module_fqn, AnsibleSourcePosition(src=module_path).tag(b_module_data), zf, date_time)
+                    module_metadata = recursive_finder(module_name, remote_module_fqn, Origin(src=module_path).tag(b_module_data), zf, date_time)
 
                     display.debug('ANSIBALLZ: Writing module into payload')
                     _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data)

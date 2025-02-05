@@ -11,7 +11,7 @@ import pytest
 
 from ansible.module_utils.datatag import AnsibleTaggedObject, _untaggable_types, AnsibleTagHelper
 from ansible.module_utils.datatag.tags import Deprecated
-from ansible.utils.datatag.tags import AnsibleSourcePosition, TrustedAsTemplate
+from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
 from ansible.module_utils.serialization import module_legacy_c2m, module_legacy_m2c, module_modern_c2m, module_modern_m2c, get_encoder, get_decoder, tagless
 from ansible.utils.serialization import legacy
 
@@ -30,12 +30,12 @@ _converted_json_values = (
     ({1}, [1]),
 )
 
-source_position = AnsibleSourcePosition(src='/absolute/path/for/testing')
+origin = Origin(src='/absolute/path/for/testing')
 
 
 @pytest.mark.parametrize("value, expected", _converted_json_values, ids=str)
 def test_modern_controller_to_module_converted_types(value: t.Any, expected: t.Any) -> None:
-    args = dict(untagged_value=value, tagged_value=source_position.tag(value))
+    args = dict(untagged_value=value, tagged_value=origin.tag(value))
     profile = module_modern_c2m
     payload = json.dumps(args, cls=get_encoder(profile))
     result = json.loads(payload, cls=get_decoder(profile))
@@ -51,7 +51,7 @@ def test_modern_controller_to_module_converted_types(value: t.Any, expected: t.A
 
 @pytest.mark.parametrize("value, expected", _converted_json_values, ids=str)
 def test_legacy_controller_to_module_converted_types(value: t.Any, expected: t.Any) -> None:
-    args = dict(untagged_value=value, tagged_value=source_position.tag(value))
+    args = dict(untagged_value=value, tagged_value=origin.tag(value))
     profile = module_legacy_c2m
     payload = json.dumps(args, cls=get_encoder(profile))
     result = json.loads(payload, cls=get_decoder(profile))
@@ -103,7 +103,7 @@ def test_legacy_module_to_controller_converted_types(value: t.Any, expected: t.A
 
 @pytest.mark.parametrize("value", _simple_json_values, ids=str)
 def test_modern_controller_to_module(value: t.Any) -> None:
-    args = dict(untagged_value=value, tagged_value=source_position.tag(value))
+    args = dict(untagged_value=value, tagged_value=origin.tag(value))
     profile = module_modern_c2m
     payload = json.dumps(args, cls=get_encoder(profile))
     result = json.loads(payload, cls=get_decoder(profile))
@@ -119,7 +119,7 @@ def test_modern_controller_to_module(value: t.Any) -> None:
 
 @pytest.mark.parametrize("value", _simple_json_values, ids=str)
 def test_legacy_controller_to_module(value: t.Any) -> None:
-    args = dict(untagged_value=value, tagged_value=source_position.tag(value))
+    args = dict(untagged_value=value, tagged_value=origin.tag(value))
     profile = module_legacy_c2m
     payload = json.dumps(args, cls=get_encoder(profile))
     result = json.loads(payload, cls=get_decoder(profile))
@@ -139,7 +139,7 @@ def test_modern_module_to_controller(value: t.Any) -> None:
     args = dict(
         untagged_value=value,
         tagged_value=deprecation_tag.tag(value),
-        # tagged_with_unwanted_tag_only=source_position.tag(value),
+        # tagged_with_unwanted_tag_only=origin.tag(value),
     )
     profile = module_modern_m2c
     payload = json.dumps(args, cls=get_encoder(profile))
@@ -168,7 +168,7 @@ def test_legacy_module_to_controller(value: t.Any) -> None:
     args = dict(
         untagged_value=value,
         # tagged_value=deprecation_tag.tag(value),
-        # tagged_with_unwanted_tag_only=source_position.tag(value),
+        # tagged_with_unwanted_tag_only=origin.tag(value),
     )
     profile = module_legacy_m2c
     payload = json.dumps(args, cls=get_encoder(profile))
@@ -191,7 +191,7 @@ def test_legacy_module_to_controller(value: t.Any) -> None:
 def test_legacy(value: t.Any) -> None:
     args = dict(
         untagged_value=value,
-        tagged_value=source_position.tag(value),
+        tagged_value=origin.tag(value),
         trusted_value=apply_trust(value),
     )
     profile = legacy
@@ -216,7 +216,7 @@ def test_legacy(value: t.Any) -> None:
     ({1}, [1]),
 ), ids=str)
 def test_legacy_converted_types(value: t.Any, expected: t.Any) -> None:
-    args = dict(untagged_value=value, tagged_value=source_position.tag(value))
+    args = dict(untagged_value=value, tagged_value=origin.tag(value))
     profile = legacy
     payload = json.dumps(args, cls=get_encoder(profile))
     result = json.loads(payload, cls=get_decoder(profile))
@@ -234,7 +234,7 @@ def test_legacy_converted_types(value: t.Any, expected: t.Any) -> None:
 def test_tagless(value: t.Any) -> None:
     args = dict(
         untagged_value=value,
-        tagged_value=source_position.tag(value),
+        tagged_value=origin.tag(value),
         trusted_value=apply_trust(value),
     )
     profile = tagless
@@ -254,7 +254,7 @@ def test_tagless(value: t.Any) -> None:
 
 @pytest.mark.parametrize("value, expected", _converted_json_values, ids=str)
 def test_tagless_converted_types(value: t.Any, expected: t.Any) -> None:
-    args = dict(untagged_value=value, tagged_value=source_position.tag(value))
+    args = dict(untagged_value=value, tagged_value=origin.tag(value))
     profile = tagless
     payload = json.dumps(args, cls=get_encoder(profile))
     result = json.loads(payload, cls=get_decoder(profile))

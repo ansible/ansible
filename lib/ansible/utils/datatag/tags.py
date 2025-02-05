@@ -9,14 +9,14 @@ from ansible.module_utils.datatag import _tag_dataclass_kwargs, AnsibleDatatagBa
 
 
 @dataclasses.dataclass(**_tag_dataclass_kwargs)
-class AnsibleSourcePosition(AnsibleDatatagBase):
+class Origin(AnsibleDatatagBase):
     """
     A tag that stores origin metadata for a tagged value, intended for forensic/diagnostic use.
-    Source position metadata should not be used to make runtime decisions, as it is not guaranteed to be present or accurate.
+    Origin metadata should not be used to make runtime decisions, as it is not guaranteed to be present or accurate.
     Setting both `path` and `line_num` can result in diagnostic display of referenced file contents.
     Either `path` or `description` must be present.
     """
-    # DTFIX-MERGE: rename class to Origin, and rename src_pos/source_position/etc. locals/args to origin
+
     src: str | None = None  # DTFIX-MERGE: rename src to path (don't forget the replace method)
     """The path from which the tagged content originated."""
     description: str | None = None
@@ -29,13 +29,13 @@ class AnsibleSourcePosition(AnsibleDatatagBase):
     UNKNOWN: t.ClassVar[t.Self]
 
     @classmethod
-    def get_or_create_tag(cls, value: t.Any, path: str | os.PathLike | None) -> AnsibleSourcePosition:
+    def get_or_create_tag(cls, value: t.Any, path: str | os.PathLike | None) -> Origin:
         """Return the tag from the given value, creating a tag from the provided path if no tag was found."""
         if not (tag := cls.get_tag(value)):
             if path:
-                tag = AnsibleSourcePosition(src=str(path))  # convert tagged strings and path-like values to a native str
+                tag = Origin(src=str(path))  # convert tagged strings and path-like values to a native str
             else:
-                tag = AnsibleSourcePosition.UNKNOWN
+                tag = Origin.UNKNOWN
 
         return tag
 
@@ -46,7 +46,7 @@ class AnsibleSourcePosition(AnsibleDatatagBase):
         line: int | None | types.EllipsisType = ...,
         col: int | None | types.EllipsisType = ...,
     ) -> t.Self:
-        """Return a new source position based on an existing one, with the given fields replaced."""
+        """Return a new origin based on an existing one, with the given fields replaced."""
         return dataclasses.replace(
             self,
             **{key: value for key, value in dict(
@@ -65,7 +65,7 @@ class AnsibleSourcePosition(AnsibleDatatagBase):
             raise RuntimeError('The `src` or `description` field must be specified.')
 
     def __str__(self) -> str:
-        """Renders the source position in the form of file:line:col, omitting missing/invalid elements from the right."""
+        """Renders the origin in the form of path:line_num:col_num, omitting missing/invalid elements from the right."""
         if self.src:
             value = self.src
         else:
@@ -83,7 +83,7 @@ class AnsibleSourcePosition(AnsibleDatatagBase):
         return value
 
 
-AnsibleSourcePosition.UNKNOWN = AnsibleSourcePosition(description='<unknown>')
+Origin.UNKNOWN = Origin(description='<unknown>')
 
 
 @dataclasses.dataclass(**_tag_dataclass_kwargs)

@@ -18,7 +18,7 @@ from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError, AnsibleValueOmittedError, AnsibleFieldAttributeError
 from ansible.module_utils.datatag import AnsibleTagHelper
-from ansible.utils.datatag.tags import AnsibleSourcePosition
+from ansible.utils.datatag.tags import Origin
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.sentinel import Sentinel
@@ -481,13 +481,13 @@ class FieldAttributeBase:
 
                         raise AnsibleParserError(
                             message=f"Keyword {name!r} items must be of type {type_names}, not {AnsibleTagHelper.base_type_name(item)!r}.",
-                            obj=AnsibleSourcePosition.first_tagged_on(item, value, self.get_ds()),
+                            obj=Origin.first_tagged_on(item, value, self.get_ds()),
                         )
                     elif attribute.required and attribute.listof == (str,):
                         if item is None or item.strip() == "":
                             raise AnsibleParserError(
                                 message=f"Keyword {name!r} is required, and cannot have empty values.",
-                                obj=AnsibleSourcePosition.first_tagged_on(item, value, self.get_ds()),
+                                obj=Origin.first_tagged_on(item, value, self.get_ds()),
                             )
         elif attribute.isa == 'dict':
             if value is None:
@@ -779,13 +779,13 @@ class Base(FieldAttributeBase):
 
     def get_path(self) -> str:
         """ return the absolute path of the playbook object and its line number """
-        # DTFIX-MERGE: this is an abuse of source position; we can kill this off in core (and deprecate) in favor of sampling this info on ds load or ?
-        tag: AnsibleSourcePosition | None = None
+        # DTFIX-MERGE: this is an abuse of origin; we can kill this off in core (and deprecate) in favor of sampling this info on ds load or ?
+        tag: Origin | None = None
         try:
-            tag = AnsibleSourcePosition.get_tag(self._ds)
+            tag = Origin.get_tag(self._ds)
         except AttributeError:
             try:
-                tag = AnsibleSourcePosition.get_tag(self._parent._play._ds)
+                tag = Origin.get_tag(self._parent._play._ds)
             except AttributeError:
                 pass
 

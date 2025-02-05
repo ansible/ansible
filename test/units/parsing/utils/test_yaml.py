@@ -7,7 +7,7 @@ import pytest
 
 from ansible._internal._errors._utils import get_chained_message
 from ansible.errors import AnsibleJSONParserError
-from ansible.utils.datatag.tags import AnsibleSourcePosition
+from ansible.utils.datatag.tags import Origin
 from ansible.parsing.utils.yaml import from_yaml
 
 
@@ -33,7 +33,7 @@ def test_json_parser_error() -> None:
     assert get_chained_message(error.value) == expected_message
     assert str(error.value) == expected_message
 
-    assert error.value.obj == AnsibleSourcePosition(src=str(source_path), line=line, col=col)
+    assert error.value.obj == Origin(src=str(source_path), line=line, col=col)
 
     if expect_help_text:
         assert error.value.help_text is not None  # DTFIX-FUTURE: check the content later once it's less volatile

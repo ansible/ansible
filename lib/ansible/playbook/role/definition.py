@@ -80,7 +80,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         self._ds = ds
 
         # the new, cleaned datastructure, which will have legacy items reduced to a standard structure suitable for the
-        # attributes of the task class; copy any tagged data to preserve things like source position
+        # attributes of the task class; copy any tagged data to preserve things like origin
         new_ds = AnsibleTagHelper.tag_copy(ds, {})
 
         # first we pull the role name out of the data structure,

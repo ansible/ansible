@@ -15,7 +15,7 @@ from json import JSONDecodeError
 
 from ansible.module_utils.common.text.converters import to_text
 from ..module_utils.datatag import AnsibleTagHelper
-from ..utils.datatag.tags import AnsibleSourcePosition
+from ..utils.datatag.tags import Origin
 from .._internal._errors import _utils
 
 
@@ -42,7 +42,7 @@ class AnsibleError(Exception):
 
         raise AnsibleError('some message here', obj=obj)
 
-    Where "obj" may be tagged with AnsibleSourcePosition to provide context for error messages.
+    Where "obj" may be tagged with Origin to provide context for error messages.
     """
 
     # DTFIX-MERGE: this is part of the new DT changes, the API needs additional cleanup before releasing
@@ -215,7 +215,7 @@ class AnsibleJSONParserError(AnsibleParserError):
     include_cause_message = False  # hide the underlying cause message, it's included by `handle_exception` as needed
 
     @classmethod
-    def handle_exception(cls, exception: Exception, origin: AnsibleSourcePosition) -> t.NoReturn:
+    def handle_exception(cls, exception: Exception, origin: Origin) -> t.NoReturn:
         if isinstance(exception, JSONDecodeError):
             origin = origin.replace(line=exception.lineno, col=exception.colno)
 

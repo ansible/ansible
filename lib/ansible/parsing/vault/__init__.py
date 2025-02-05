@@ -38,7 +38,7 @@ from ansible.module_utils.datatag import (
     AnsibleTagHelper, AnsibleTaggedObject, _AnsibleTagsMapping, _EmptyROInternalTagsMapping, _EMPTY_INTERNAL_TAGS_MAPPING,
 )
 from ansible._internal._templating import _jinja_common
-from ansible.utils.datatag.tags import AnsibleSourcePosition, VaultedValue
+from ansible.utils.datatag.tags import Origin, VaultedValue
 
 HAS_CRYPTOGRAPHY = False
 CRYPTOGRAPHY_BACKEND = None
@@ -665,7 +665,7 @@ class VaultLib:
         """
         # DTFIX-MERGE: deprecate/fail on presence filename/obj args; should never have been plumbed here in the first place
 
-        pos = AnsibleSourcePosition.get_tag(vaulttext)
+        origin = Origin.get_tag(vaulttext)
 
         b_vaulttext = to_bytes(vaulttext, nonstring='error')  # enforce vaulttext is str/bytes, keep type check if removing type conversion
 
@@ -704,7 +704,7 @@ class VaultLib:
             vault_id_matchers.append(vault_id)
             _matches = match_secrets(self.secrets, vault_id_matchers)
             if _matches:
-                display.vvvvv(u'We have a secret associated with vault id (%s), will try to use to decrypt %s' % (to_text(vault_id), to_text(pos)))
+                display.vvvvv(u'We have a secret associated with vault id (%s), will try to use to decrypt %s' % (to_text(vault_id), to_text(origin)))
             else:
                 display.vvvvv(u'Found a vault_id (%s) in the vault text, but we do not have a associated secret (--vault-id)' % to_text(vault_id))
 
@@ -718,7 +718,7 @@ class VaultLib:
 
         # for vault_secret_id in vault_secret_ids:
         for vault_secret_id, vault_secret in matched_secrets:
-            display.vvvvv(u'Trying to use vault secret=(%s) id=%s to decrypt %s' % (to_text(vault_secret), to_text(vault_secret_id), to_text(pos)))
+            display.vvvvv(u'Trying to use vault secret=(%s) id=%s to decrypt %s' % (to_text(vault_secret), to_text(vault_secret_id), to_text(origin)))
 
             try:
                 # secret = self.secrets[vault_secret_id]
@@ -729,8 +729,8 @@ class VaultLib:
                     vault_id_used = vault_secret_id
                     vault_secret_used = vault_secret
                     file_slug = ''
-                    if pos:
-                        file_slug = ' of "%s"' % pos
+                    if origin:
+                        file_slug = ' of "%s"' % origin
                     display.vvvvv(
                         u'Decrypt%s successful with secret=%s and vault_id=%s' % (to_text(file_slug), to_text(vault_secret), to_text(vault_secret_id))
                     )
@@ -739,7 +739,7 @@ class VaultLib:
                 raise
             except AnsibleError as e:
                 display.vvvv(u'Tried to use the vault secret (%s) to decrypt (%s) but it failed. Error: %s' %
-                             (to_text(vault_secret_id), to_text(pos), e))
+                             (to_text(vault_secret_id), to_text(origin), e))
                 continue
         else:
             raise AnsibleVaultError("Decryption failed (no vault secrets were found that could decrypt).", obj=vaulttext)
@@ -1456,7 +1456,7 @@ class EncryptedString(AnsibleTaggedObject):
         """
         if self._plaintext is None:
             vault = VaultLib(secrets=VaultSecretsContext.current().secrets)
-            # use the utility method to ensure that source position tags are available
+            # use the utility method to ensure that origin tags are available
             plaintext = to_text(vault.decrypt(VaultHelper.get_ciphertext(self, with_tags=True)))  # raises if the ciphertext cannot be decrypted
 
             # propagate source value tags plus VaultedValue for round-tripping ciphertext

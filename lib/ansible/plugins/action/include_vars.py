@@ -9,7 +9,7 @@ import pathlib
 
 import ansible.constants as C
 from ansible.errors import AnsibleError
-from ansible.utils.datatag.tags import AnsibleSourcePosition, _EncryptedSource
+from ansible.utils.datatag.tags import Origin, _EncryptedSource
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.action import ActionBase
@@ -168,8 +168,8 @@ class ActionModule(ActionBase):
                 )
                 self.source_dir = path_to_use
         else:
-            # DTFIX-MERGE: source position tags should be advisory, not used for runtime behavior or flow control- glean this path information differently
-            if (tag := AnsibleSourcePosition.get_tag(self._task._ds)) and tag.src:
+            # DTFIX-MERGE: Origin tags should be advisory, not used for runtime behavior or flow control- glean this path information differently
+            if (tag := Origin.get_tag(self._task._ds)) and tag.src:
                 current_dir = (
                     "/".join(tag.src.split('/')[:-1])
                 )
