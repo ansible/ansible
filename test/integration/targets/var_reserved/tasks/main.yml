@@ -21,3 +21,13 @@
     loop: '{{play_out.results}}'
     loop_control:
       label: '{{item.item}}'
+
+- name: check output for absence of warning
+  shell: "ansible localhost -m include_vars -a file={{ lookup('first_found', 'set_host_variable.yml') }}"
+  environment:
+    ANSIBLE_LOCALHOST_WARNING: 0
+  register: test_vm_set_host_variable
+
+- assert:
+    that:
+      - '"Found variable using reserved name: q" not in test_vm_set_host_variable.stderr'
