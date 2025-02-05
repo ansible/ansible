@@ -38,23 +38,23 @@ class TestDatatagController(_TestDatatagTarget):
     later = t.cast(t.Self, Later(locals(), parent_type=_TestDatatagTarget))
 
     tag_instances_with_reprs = [
-        (Origin(src='/himom.yml', line=42, col=42), "Origin(src='/himom.yml', line=42, col=42)"),
+        (Origin(path='/himom.yml', line=42, col=42), "Origin(path='/himom.yml', line=42, col=42)"),
         (NotATemplate(), "NotATemplate()"),
         (TrustedAsTemplate(), "TrustedAsTemplate()"),
         (VaultedValue(ciphertext="hi mom I am a secret"), "VaultedValue(ciphertext='hi mom I am a secret')"),
     ]
 
     test_dataclass_tag_base_field_validation_fail_instances = [
-        (Origin, dict(src=NotATemplate().tag(''))),
-        (Origin, dict(line=NotATemplate().tag(1), src='')),
-        (Origin, dict(col=NotATemplate().tag(1), src='')),
+        (Origin, dict(path=NotATemplate().tag(''))),
+        (Origin, dict(line=NotATemplate().tag(1), path='')),
+        (Origin, dict(col=NotATemplate().tag(1), path='')),
         (VaultedValue, dict(ciphertext=NotATemplate().tag(''))),
     ]
 
     test_dataclass_tag_base_field_validation_pass_instances = [
-        (Origin, dict(src='/something')),
-        (Origin, dict(src='/something', line=1)),
-        (Origin, dict(src='/something', col=1)),
+        (Origin, dict(path='/something')),
+        (Origin, dict(path='/something', line=1)),
+        (Origin, dict(path='/something', col=1)),
         (VaultedValue, dict(ciphertext='')),
     ]
 
@@ -87,19 +87,19 @@ class TestDatatagController(_TestDatatagTarget):
 
 
 @pytest.mark.parametrize("sp, value", (
-    (Origin(src="/hi"), "/hi"),
-    (Origin(src="/hi", line=1), "/hi:1"),
-    (Origin(src="/hi", line=1, col=2), "/hi:1:2"),
-    (Origin(src="/hi", col=2), "/hi"),
-    (Origin(src="/hi", line=0), "/hi"),
-    (Origin(src="/hi", line=0, col=0), "/hi"),
-    (Origin(src="/hi", col=0), "/hi"),
-    (Origin(src="/hi", line=-1), "/hi"),
-    (Origin(src="/hi", line=1, col=-1), "/hi:1"),
+    (Origin(path="/hi"), "/hi"),
+    (Origin(path="/hi", line=1), "/hi:1"),
+    (Origin(path="/hi", line=1, col=2), "/hi:1:2"),
+    (Origin(path="/hi", col=2), "/hi"),
+    (Origin(path="/hi", line=0), "/hi"),
+    (Origin(path="/hi", line=0, col=0), "/hi"),
+    (Origin(path="/hi", col=0), "/hi"),
+    (Origin(path="/hi", line=-1), "/hi"),
+    (Origin(path="/hi", line=1, col=-1), "/hi:1"),
     (Origin(description='<something>'), "<something>"),
     (Origin(description='<something>', line=1), "<something>:1"),
-    (Origin(src="/hi", description='<something>'), "/hi (<something>)"),
-    (Origin(src="/hi", description='<something>', line=1), "/hi:1 (<something>)"),
+    (Origin(path="/hi", description='<something>'), "/hi (<something>)"),
+    (Origin(path="/hi", description='<something>', line=1), "/hi:1 (<something>)"),
 ), ids=str)
 def test_origin_str(sp: Origin, value: str) -> None:
     assert str(sp) == value
@@ -121,14 +121,14 @@ def test_tag_builtins():
         assert TrustedAsTemplate.get_tag(tagged_val) is TrustedAsTemplate()  # singleton tag type, should be reference-equal
         assert original_val is zero_tagged_val  # original value should reference-equal the zero-tagged value
 
-        somedata_tag = Origin(src="/foo", line=12, col=34)
+        origin = Origin(path="/foo", line=12, col=34)
 
-        multi_tagged_val = somedata_tag.tag(tagged_val)
+        multi_tagged_val = origin.tag(tagged_val)
         assert tagged_val is not multi_tagged_val
         assert TrustedAsTemplate.is_tagged_on(multi_tagged_val)
         assert Origin.is_tagged_on(multi_tagged_val)
         assert TrustedAsTemplate.get_tag(multi_tagged_val) is TrustedAsTemplate()  # singleton tag type, should be reference-equal
-        assert Origin.get_tag(multi_tagged_val) is somedata_tag
+        assert Origin.get_tag(multi_tagged_val) is origin
 
 
 # pylint: disable=unnecessary-lambda

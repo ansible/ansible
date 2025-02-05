@@ -890,7 +890,7 @@ def make_vault_ciphertext(plaintext: str) -> str:
 def make_encrypted_string(plaintext: str) -> EncryptedString:
     """Creates an `EncryptedString` from the first secret in the active VaultSecretsContext."""
 
-    return Origin(src="/tmp/sometest", line=42, col=42).tag(EncryptedString(ciphertext=make_vault_ciphertext(plaintext)))
+    return Origin(path="/tmp/sometest", line=42, col=42).tag(EncryptedString(ciphertext=make_vault_ciphertext(plaintext)))
 
 
 def test_encrypted_string_unmanaged_access(_vault_secrets_context) -> None:
@@ -902,7 +902,7 @@ def test_encrypted_string_unmanaged_access(_vault_secrets_context) -> None:
     plaintext = 'i am plaintext'
     encrypted_string = make_encrypted_string(plaintext)
 
-    origin_tag = Origin.get_required_tag(encrypted_string)
+    origin = Origin.get_required_tag(encrypted_string)
     vaulted_value_tag = VaultedValue(ciphertext=VaultHelper.get_ciphertext(encrypted_string, with_tags=False))
 
     res1 = str(encrypted_string)
@@ -911,7 +911,7 @@ def test_encrypted_string_unmanaged_access(_vault_secrets_context) -> None:
     assert res1 == res2 == plaintext
     assert res1 is res2  # ensure the result is cached
 
-    assert Origin.get_required_tag(res1) is origin_tag
+    assert Origin.get_required_tag(res1) is origin
     assert VaultedValue.get_required_tag(res1).ciphertext == vaulted_value_tag.ciphertext
 
 
@@ -950,7 +950,7 @@ def make_marker(marker_type: type[Marker], *args, **kwargs):
         return marker_type(*args, **kwargs)
 
 
-origin = Origin(src="/test")
+origin = Origin(path="/test")
 
 
 @pytest.mark.parametrize("value, expected_ciphertext", (

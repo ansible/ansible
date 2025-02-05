@@ -169,9 +169,9 @@ class ActionModule(ActionBase):
                 self.source_dir = path_to_use
         else:
             # DTFIX-MERGE: Origin tags should be advisory, not used for runtime behavior or flow control- glean this path information differently
-            if (tag := Origin.get_tag(self._task._ds)) and tag.src:
+            if (origin := Origin.get_tag(self._task._ds)) and origin.path:
                 current_dir = (
-                    "/".join(tag.src.split('/')[:-1])
+                    "/".join(origin.path.split('/')[:-1])
                 )
                 self.source_dir = path.join(current_dir, self.source_dir)
 

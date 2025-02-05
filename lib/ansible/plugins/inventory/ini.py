@@ -140,7 +140,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                         # Non-comment lines still have to be valid uf-8
                         data.append(to_text(line, errors='surrogate_or_strict'))
 
-            self._origin = Origin(src=path, line=0)
+            self._origin = Origin(path=path, line=0)
 
             try:
                 self._parse(data)

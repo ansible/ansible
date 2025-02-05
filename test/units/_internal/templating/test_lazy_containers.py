@@ -491,17 +491,16 @@ LISTIFIED_ITERATOR_TEMPLATES = tuple(TRUST.tag(f'{{{{ {value} }}}}') for value i
 
 @pytest.mark.parametrize("value, expected", LISTIFIED_ITERATOR_VALUES_AND_EXPECTED)
 def test_list_adapter_equality(value: str, expected: list) -> None:
-    origin = Origin(src='/test')  # here to make sure it doesn't trigger an exception, it won't be in the result
+    origin = Origin(path='/test')  # here to make sure it doesn't trigger an exception, it won't be in the result
 
     assert TemplateEngine().evaluate_expression(TRUST.tag(origin.tag(f"{value} == {expected}")))
 
 
 @pytest.mark.parametrize("value", LISTIFIED_ITERATOR_VALUES)
 def test_list_adapter_source_propagation(value: t.Any) -> None:
-    origin = Origin(src='/test')
-    tag = Origin.get_tag(TemplateEngine().template(TRUST.tag(origin.tag(f"{{{{ {value} }}}}"))))
+    origin = Origin(path='/test')
 
-    assert tag is origin
+    assert Origin.get_tag(TemplateEngine().template(TRUST.tag(origin.tag(f"{{{{ {value} }}}}")))) is origin
 
 
 @pytest.mark.parametrize("value", t.cast(tuple, CONTAINER_VALUES) + LISTIFIED_ITERATOR_TEMPLATES, ids=str)

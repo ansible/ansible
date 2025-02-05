@@ -292,9 +292,9 @@ class InventoryManager(object):
 
                 if plugin_wants:
                     # have this tag ready to apply to errors or output; str-ify source since it is often tagged by the CLI
-                    origin_tag = Origin(description=f'<inventory plugin {plugin_name!r} with source {str(source)!r}>')
+                    origin = Origin(description=f'<inventory plugin {plugin_name!r} with source {str(source)!r}>')
                     try:
-                        inventory_wrapper = _InventoryDataWrapper(self._inventory, target_plugin=plugin, origin_tag=origin_tag)
+                        inventory_wrapper = _InventoryDataWrapper(self._inventory, target_plugin=plugin, origin=origin)
 
                         # DTFIX-MERGE: now that we have a wrapper around inventory, we can have it use ChainMaps to preview the in-progress inventory,
                         #  but be able to roll back partial inventory failures by discarding the outermost layer
@@ -309,12 +309,12 @@ class InventoryManager(object):
                         break
                     except AnsibleError as ex:
                         if not ex.obj:
-                            ex.obj = origin_tag
+                            ex.obj = origin
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': ex})
                     except Exception as ex:
                         try:
                             # omit line number to prevent contextual display of script or possibly sensitive info
-                            raise AnsibleError(str(ex), obj=origin_tag) from ex
+                            raise AnsibleError(str(ex), obj=origin) from ex
                         except AnsibleError as ex:
                             failures.append({'src': source, 'plugin': plugin_name, 'exc': ex})
                 else:
@@ -764,13 +764,13 @@ class InventoryManager(object):
 class _InventoryDataWrapper(_wrapt.ObjectProxy):
     # declared as class attrs to signal ObjectProxy that we want them stored on the proxy, not the wrapped value
     _target_plugin = None
-    _default_origin_tag = None
+    _default_origin = None
 
-    def __init__(self, referent: InventoryData, target_plugin: BaseInventoryPlugin, origin_tag: Origin) -> None:
+    def __init__(self, referent: InventoryData, target_plugin: BaseInventoryPlugin, origin: Origin) -> None:
         super().__init__(referent)
         self._target_plugin = target_plugin
         # fallback origin to ensure that vars are tagged with at least the file they came from
-        self._default_origin_tag = origin_tag
+        self._default_origin = origin
 
     @functools.cached_property
     def _inspector(self) -> _serialization.AnsibleVariableVisitor:
@@ -778,7 +778,7 @@ class _InventoryDataWrapper(_wrapt.ObjectProxy):
         #  occur inside verify_file.
         return _serialization.AnsibleVariableVisitor(
             trusted_as_template=self._target_plugin.trusted_by_default,
-            origin=self._default_origin_tag,
+            origin=self._default_origin,
             allow_encrypted_string=True,
         )
 

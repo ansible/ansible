@@ -17,7 +17,7 @@ class Origin(AnsibleDatatagBase):
     Either `path` or `description` must be present.
     """
 
-    src: str | None = None  # DTFIX-MERGE: rename src to path (don't forget the replace method)
+    path: str | None = None  # DTFIX-MERGE: rename src to path (don't forget the replace method)
     """The path from which the tagged content originated."""
     description: str | None = None
     """A description of the origin, for display to users."""
@@ -31,17 +31,17 @@ class Origin(AnsibleDatatagBase):
     @classmethod
     def get_or_create_tag(cls, value: t.Any, path: str | os.PathLike | None) -> Origin:
         """Return the tag from the given value, creating a tag from the provided path if no tag was found."""
-        if not (tag := cls.get_tag(value)):
+        if not (origin := cls.get_tag(value)):
             if path:
-                tag = Origin(src=str(path))  # convert tagged strings and path-like values to a native str
+                origin = Origin(path=str(path))  # convert tagged strings and path-like values to a native str
             else:
-                tag = Origin.UNKNOWN
+                origin = Origin.UNKNOWN
 
-        return tag
+        return origin
 
     def replace(
         self,
-        src: str | types.EllipsisType = ...,
+        path: str | types.EllipsisType = ...,
         description: str | types.EllipsisType = ...,
         line: int | None | types.EllipsisType = ...,
         col: int | None | types.EllipsisType = ...,
@@ -50,7 +50,7 @@ class Origin(AnsibleDatatagBase):
         return dataclasses.replace(
             self,
             **{key: value for key, value in dict(
-                src=src,
+                path=path,
                 description=description,
                 line=line,
                 col=col,
@@ -58,16 +58,16 @@ class Origin(AnsibleDatatagBase):
         )
 
     def _post_validate(self) -> None:
-        if self.src:
-            if not self.src.startswith('/'):
+        if self.path:
+            if not self.path.startswith('/'):
                 raise RuntimeError('The `src` field must be an absolute path.')
         elif not self.description:
             raise RuntimeError('The `src` or `description` field must be specified.')
 
     def __str__(self) -> str:
         """Renders the origin in the form of path:line_num:col_num, omitting missing/invalid elements from the right."""
-        if self.src:
-            value = self.src
+        if self.path:
+            value = self.path
         else:
             value = self.description
 
@@ -77,7 +77,7 @@ class Origin(AnsibleDatatagBase):
             if self.col and self.col > 0:
                 value += f':{self.col}'
 
-        if self.src and self.description:
+        if self.path and self.description:
             value += f' ({self.description})'
 
         return value

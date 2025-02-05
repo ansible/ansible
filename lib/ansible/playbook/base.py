@@ -780,17 +780,17 @@ class Base(FieldAttributeBase):
     def get_path(self) -> str:
         """ return the absolute path of the playbook object and its line number """
         # DTFIX-MERGE: this is an abuse of origin; we can kill this off in core (and deprecate) in favor of sampling this info on ds load or ?
-        tag: Origin | None = None
+        origin: Origin | None = None
         try:
-            tag = Origin.get_tag(self._ds)
+            origin = Origin.get_tag(self._ds)
         except AttributeError:
             try:
-                tag = Origin.get_tag(self._parent._play._ds)
+                origin = Origin.get_tag(self._parent._play._ds)
             except AttributeError:
                 pass
 
-        if tag:
-            path = "%s:%s" % (tag.src, tag.line)
+        if origin:
+            path = "%s:%s" % (origin.path, origin.line)
         else:
             path = ""
 

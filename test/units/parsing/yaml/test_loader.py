@@ -69,7 +69,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data, u'Ansible')
         self.assertIsInstance(data, str)
 
-        self.assertEqual(Origin.get_tag(data), Origin(src=file_name, line=2, col=17))
+        self.assertEqual(Origin.get_tag(data), Origin(path=file_name, line=2, col=17))
 
     def test_parse_utf8_string(self):
         stream = StringIO(u"""
@@ -80,7 +80,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(data, u'Cafè Eñyei')
         self.assertIsInstance(data, str)
 
-        self.assertEqual(Origin.get_tag(data), Origin(src=file_name, line=2, col=17))
+        self.assertEqual(Origin.get_tag(data), Origin(path=file_name, line=2, col=17))
 
     def test_parse_dict(self):
         stream = StringIO(u"""
@@ -95,10 +95,10 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertIsInstance(list(data.values())[0], str)
 
         # Beginning of the first key
-        self.assertEqual(Origin.get_tag(data), Origin(src=file_name, line=2, col=17))
+        self.assertEqual(Origin.get_tag(data), Origin(path=file_name, line=2, col=17))
 
-        self.assertEqual(Origin.get_tag(data[u'webster']), Origin(src=file_name, line=2, col=26))
-        self.assertEqual(Origin.get_tag(data[u'oed']), Origin(src=file_name, line=3, col=22))
+        self.assertEqual(Origin.get_tag(data[u'webster']), Origin(path=file_name, line=2, col=26))
+        self.assertEqual(Origin.get_tag(data[u'oed']), Origin(path=file_name, line=3, col=22))
 
     def test_parse_list(self):
         stream = StringIO(u"""
@@ -111,10 +111,10 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         self.assertEqual(len(data), 2)
         self.assertIsInstance(data[0], str)
 
-        self.assertEqual(Origin.get_tag(data), Origin(src=file_name, line=2, col=17))
+        self.assertEqual(Origin.get_tag(data), Origin(path=file_name, line=2, col=17))
 
-        self.assertEqual(Origin.get_tag(data[0]), Origin(src=file_name, line=2, col=19))
-        self.assertEqual(Origin.get_tag(data[1]), Origin(src=file_name, line=3, col=19))
+        self.assertEqual(Origin.get_tag(data[0]), Origin(path=file_name, line=2, col=19))
+        self.assertEqual(Origin.get_tag(data[1]), Origin(path=file_name, line=3, col=19))
 
     def test_parse_short_dict(self):
         stream = StringIO(u"""{"foo": "bar"}""")
@@ -122,16 +122,16 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         data = loader.get_single_data()
         self.assertEqual(data, dict(foo=u'bar'))
 
-        self.assertEqual(Origin.get_tag(data), Origin(src=file_name, line=1, col=1))
-        self.assertEqual(Origin.get_tag(data[u'foo']), Origin(src=file_name, line=1, col=9))
+        self.assertEqual(Origin.get_tag(data), Origin(path=file_name, line=1, col=1))
+        self.assertEqual(Origin.get_tag(data[u'foo']), Origin(path=file_name, line=1, col=9))
 
         stream = StringIO(u"""foo: bar""")
         loader = AnsibleLoader(stream, file_name)
         data = loader.get_single_data()
         self.assertEqual(data, dict(foo=u'bar'))
 
-        self.assertEqual(Origin.get_tag(data), Origin(src=file_name, line=1, col=1))
-        self.assertEqual(Origin.get_tag(data[u'foo']), Origin(src=file_name, line=1, col=6))
+        self.assertEqual(Origin.get_tag(data), Origin(path=file_name, line=1, col=1))
+        self.assertEqual(Origin.get_tag(data[u'foo']), Origin(path=file_name, line=1, col=6))
 
     def test_error_conditions(self):
         stream = StringIO(u"""{""")
@@ -149,8 +149,8 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         data = loader.get_single_data()
         self.assertEqual(data, dict(foo=u'bar'))
 
-        self.assertEqual(Origin.get_tag(data), Origin(src=file_name, line=2, col=1))
-        self.assertEqual(Origin.get_tag(data[u'foo']), Origin(src=file_name, line=2, col=6))
+        self.assertEqual(Origin.get_tag(data), Origin(path=file_name, line=2, col=1))
+        self.assertEqual(Origin.get_tag(data[u'foo']), Origin(path=file_name, line=2, col=6))
 
         # Initial indent (See: #6348)
         stream = StringIO(u""" - foo: bar\n   baz: qux""")
@@ -158,10 +158,10 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         data = loader.get_single_data()
         self.assertEqual(data, [{u'foo': u'bar', u'baz': u'qux'}])
 
-        self.assertEqual(Origin.get_tag(data), Origin(src=file_name, line=1, col=2))
-        self.assertEqual(Origin.get_tag(data[0]), Origin(src=file_name, line=1, col=4))
-        self.assertEqual(Origin.get_tag(data[0][u'foo']), Origin(src=file_name, line=1, col=9))
-        self.assertEqual(Origin.get_tag(data[0][u'baz']), Origin(src=file_name, line=2, col=9))
+        self.assertEqual(Origin.get_tag(data), Origin(path=file_name, line=1, col=2))
+        self.assertEqual(Origin.get_tag(data[0]), Origin(path=file_name, line=1, col=4))
+        self.assertEqual(Origin.get_tag(data[0][u'foo']), Origin(path=file_name, line=1, col=9))
+        self.assertEqual(Origin.get_tag(data[0][u'baz']), Origin(path=file_name, line=2, col=9))
 
 
 class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
@@ -311,55 +311,55 @@ class TestAnsibleLoaderPlay(unittest.TestCase):
         self.walk(self.data)
 
     def check_vars(self):
-        self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'number']), Origin(src=self.play_filename, line=4, col=29))
+        self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'number']), Origin(path=self.play_filename, line=4, col=29))
 
-        self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'string']), Origin(src=self.play_filename, line=5, col=29))
-        self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'utf8_string']), Origin(src=self.play_filename, line=6, col=34))
+        self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'string']), Origin(path=self.play_filename, line=5, col=29))
+        self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'utf8_string']), Origin(path=self.play_filename, line=6, col=34))
 
-        self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'dictionary']), Origin(src=self.play_filename, line=8, col=23))
+        self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'dictionary']), Origin(path=self.play_filename, line=8, col=23))
         self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'dictionary'][u'webster']),
-                         Origin(src=self.play_filename, line=8, col=32))
+                         Origin(path=self.play_filename, line=8, col=32))
         self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'dictionary'][u'oed']),
-                         Origin(src=self.play_filename, line=9, col=28))
+                         Origin(path=self.play_filename, line=9, col=28))
 
-        self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'list']), Origin(src=self.play_filename, line=11, col=23))
-        self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'list'][0]), Origin(src=self.play_filename, line=11, col=25))
-        self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'list'][1]), Origin(src=self.play_filename, line=12, col=25))
-        self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'list'][2]), Origin(src=self.play_filename, line=13, col=25))
-        self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'list'][3]), Origin(src=self.play_filename, line=14, col=25))
+        self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'list']), Origin(path=self.play_filename, line=11, col=23))
+        self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'list'][0]), Origin(path=self.play_filename, line=11, col=25))
+        self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'list'][1]), Origin(path=self.play_filename, line=12, col=25))
+        self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'list'][2]), Origin(path=self.play_filename, line=13, col=25))
+        self.assertEqual(Origin.get_tag(self.data[0][u'vars'][u'list'][3]), Origin(path=self.play_filename, line=14, col=25))
 
     def check_tasks(self):
         #
         # First Task
         #
-        self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][0]), Origin(src=self.play_filename, line=16, col=23))
-        self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][0][u'name']), Origin(src=self.play_filename, line=16, col=29))
-        self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][0][u'ping']), Origin(src=self.play_filename, line=18, col=25))
+        self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][0]), Origin(path=self.play_filename, line=16, col=23))
+        self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][0][u'name']), Origin(path=self.play_filename, line=16, col=29))
+        self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][0][u'ping']), Origin(path=self.play_filename, line=18, col=25))
         self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][0][u'ping'][u'data']),
-                         Origin(src=self.play_filename, line=18, col=31))
+                         Origin(path=self.play_filename, line=18, col=31))
 
         #
         # Second Task
         #
-        self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][1]), Origin(src=self.play_filename, line=20, col=23))
-        self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][1][u'name']), Origin(src=self.play_filename, line=20, col=29))
-        self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][1][u'ping']), Origin(src=self.play_filename, line=22, col=25))
+        self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][1]), Origin(path=self.play_filename, line=20, col=23))
+        self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][1][u'name']), Origin(path=self.play_filename, line=20, col=29))
+        self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][1][u'ping']), Origin(path=self.play_filename, line=22, col=25))
         self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][1][u'ping'][u'data']),
-                         Origin(src=self.play_filename, line=22, col=31))
+                         Origin(path=self.play_filename, line=22, col=31))
 
         #
         # Third Task
         #
-        self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][2]), Origin(src=self.play_filename, line=24, col=23))
-        self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][2][u'name']), Origin(src=self.play_filename, line=24, col=29))
-        self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][2][u'command']), Origin(src=self.play_filename, line=25, col=32))
+        self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][2]), Origin(path=self.play_filename, line=24, col=23))
+        self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][2][u'name']), Origin(path=self.play_filename, line=24, col=29))
+        self.assertEqual(Origin.get_tag(self.data[0][u'tasks'][2][u'command']), Origin(path=self.play_filename, line=25, col=32))
 
         not_safe = self.data[0][u'tasks'][2][u'vars']['not_safe']
         also_not_safe = self.data[0][u'tasks'][2][u'vars']['also_not_safe']
 
-        assert Origin.get_tag(not_safe) == Origin(src=self.play_filename, line=27, col=35)
-        assert Origin.get_tag(also_not_safe) == Origin(src=self.play_filename, line=28, col=40)
-        assert Origin.get_tag(also_not_safe) == Origin(src=self.play_filename, line=28, col=40)
+        assert Origin.get_tag(not_safe) == Origin(path=self.play_filename, line=27, col=35)
+        assert Origin.get_tag(also_not_safe) == Origin(path=self.play_filename, line=28, col=40)
+        assert Origin.get_tag(also_not_safe) == Origin(path=self.play_filename, line=28, col=40)
 
         assert NotATemplate.is_tagged_on(not_safe)
         assert NotATemplate.is_tagged_on(also_not_safe[0])
@@ -371,13 +371,13 @@ class TestAnsibleLoaderPlay(unittest.TestCase):
     def test_line_numbers(self):
         # Check the line/column numbers are correct
         # Note: Remember, currently dicts begin at the start of their first entry
-        self.assertEqual(Origin.get_tag(self.data[0]), Origin(src=self.play_filename, line=2, col=19))
-        self.assertEqual(Origin.get_tag(self.data[0][u'hosts']), Origin(src=self.play_filename, line=2, col=26))
-        self.assertEqual(Origin.get_tag(self.data[0][u'vars']), Origin(src=self.play_filename, line=4, col=21))
+        self.assertEqual(Origin.get_tag(self.data[0]), Origin(path=self.play_filename, line=2, col=19))
+        self.assertEqual(Origin.get_tag(self.data[0][u'hosts']), Origin(path=self.play_filename, line=2, col=26))
+        self.assertEqual(Origin.get_tag(self.data[0][u'vars']), Origin(path=self.play_filename, line=4, col=21))
 
         self.check_vars()
 
-        self.assertEqual(Origin.get_tag(self.data[0][u'tasks']), Origin(src=self.play_filename, line=16, col=21))
+        self.assertEqual(Origin.get_tag(self.data[0][u'tasks']), Origin(path=self.play_filename, line=16, col=21))
 
         self.check_tasks()
 
@@ -448,7 +448,7 @@ def test_load_data_types(value: str, expected: t.Any) -> None:
     if type(result) in _untaggable_types:
         assert origin is None
     else:
-        assert origin.src == file_name
+        assert origin.path == file_name
 
 
 @pytest.mark.parametrize("expected, value", YAML_STRINGS_AND_VALUES + YAML_STRINGS_FROM_VALUES)

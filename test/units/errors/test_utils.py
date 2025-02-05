@@ -20,8 +20,8 @@ def raise_exceptions(exceptions: list[BaseException]) -> None:
 
 
 _shared_cause = Exception('shared cause')
-_origin_x = Origin(src='/x')
-_origin_y = Origin(src='/y')
+_origin_x = Origin(path='/x')
+_origin_y = Origin(path='/y')
 
 
 @pytest.mark.parametrize("exceptions, expected_message_chain, expected_formatted_message", (

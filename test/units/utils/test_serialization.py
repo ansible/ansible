@@ -30,7 +30,7 @@ _converted_json_values = (
     ({1}, [1]),
 )
 
-origin = Origin(src='/absolute/path/for/testing')
+origin = Origin(path='/absolute/path/for/testing')
 
 
 @pytest.mark.parametrize("value, expected", _converted_json_values, ids=str)

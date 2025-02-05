@@ -200,7 +200,7 @@ class SourceContext:
         if RedactAnnotatedSourceContext.current(optional=True):
             return cls.error('content redacted')
 
-        if origin and origin.src:
+        if origin and origin.path:
             return cls.from_origin(origin)
 
         # DTFIX-RELEASE: redaction context may not be sufficient to avoid secret disclosure without SensitiveData and other enhancements
@@ -257,7 +257,7 @@ class SourceContext:
         target_col_num = origin.col
 
         try:
-            with pathlib.Path(origin.src).open() as src:
+            with pathlib.Path(origin.path).open() as src:
                 first_line = src.readline()
                 lines = list(itertools.islice(itertools.chain((first_line,), src), start_line_idx, target_line_num))
         except Exception as ex:

@@ -518,7 +518,7 @@ class LegacyModuleUtilLocator(ModuleUtilLocatorBase):
             path = info.origin
         else:
             return False
-        self.source_code = Origin(src=path).tag(_slurp(path))
+        self.source_code = Origin(path=path).tag(_slurp(path))
 
         return True
 
@@ -586,12 +586,12 @@ class CollectionModuleUtilLocator(ModuleUtilLocatorBase):
         # TODO: this feels brittle and funky; we should be able to more definitively assure the source path
 
         if pkg_path:
-            origin_tag = Origin(src=os.path.join(pkg_path, src_path))
+            origin = Origin(path=os.path.join(pkg_path, src_path))
         else:
             # DTFIX-RELEASE: not sure if this case is even reachable
-            origin_tag = Origin(description=f'<synthetic collection package for {collection_pkg_name}!r>')
+            origin = Origin(description=f'<synthetic collection package for {collection_pkg_name}!r>')
 
-        self.source_code = origin_tag.tag(src)
+        self.source_code = origin.tag(src)
         return True
 
     def _get_module_utils_remainder_parts(self, name_parts):
@@ -1040,7 +1040,7 @@ def _find_module_utils(
                     zf = zipfile.ZipFile(zipoutput, mode='w', compression=compression_method)
 
                     # walk the module imports, looking for module_utils to send- they'll be added to the zipfile
-                    module_metadata = recursive_finder(module_name, remote_module_fqn, Origin(src=module_path).tag(b_module_data), zf, date_time)
+                    module_metadata = recursive_finder(module_name, remote_module_fqn, Origin(path=module_path).tag(b_module_data), zf, date_time)
 
                     display.debug('ANSIBALLZ: Writing module into payload')
                     _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data)
