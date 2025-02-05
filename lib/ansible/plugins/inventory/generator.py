@@ -106,9 +106,8 @@ class InventoryModule(BaseInventoryPlugin):
         # This limitation was part of the original plugin implementation and was updated to maintain feature parity with the new templating API.
         if not isinstance(pattern, str):
             return pattern
-        # DTFIX-MERGE: don't clobber variables
-        self.templar.available_variables = variables
-        return self.templar.template(pattern)
+
+        return self.templar.copy_with_new_env(available_variables=variables).template(pattern)
 
     def add_parents(self, inventory, child, parents, template_vars):
         for parent in parents:
