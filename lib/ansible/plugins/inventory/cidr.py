@@ -5,8 +5,8 @@ from __future__ import annotations
 
 DOCUMENTATION = '''
     name: cidr
-    version_added: "2.18"
-    short_description: Parses CIDR expressions to generate inventory
+    version_added: "2.19"
+    short_description: Parses CIDR expressions to generate inventory (not really adding to core, here to show usage of more generic inv plugin addressing).
     description:
         - Parses a host list string as a comma separated values of CIDR notations to generate an IP range of hosts
     notes:
