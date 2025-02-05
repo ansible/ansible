@@ -385,8 +385,7 @@ def check_type_str(value, allow_conversion=True, param=None, prefix=''):
     raise TypeError(to_native(msg))
 
 
-# DTFIX-MERGE: bikeshed name
-def check_type_str_no_conversion(value) -> str:
+def _check_type_str_no_conversion(value) -> str:
     return check_type_str(value, allow_conversion=False)
 
 
@@ -405,6 +404,7 @@ def check_type_list(value):
     if isinstance(value, list):
         return value
 
+    # DTFIX-RELEASE: deprecate legacy comma split functionality, eventually replace with `_check_type_list_strict`
     if isinstance(value, string_types):
         return value.split(",")
     elif isinstance(value, int) or isinstance(value, float):
@@ -413,8 +413,8 @@ def check_type_list(value):
     raise TypeError('%s cannot be converted to a list' % type(value))
 
 
-def check_type_list_that_does_not_suck(value):
-    # DTFIX-MERGE: bikeshed name
+def _check_type_list_strict(value):
+    # FUTURE: this impl should replace `check_type_list`
     if isinstance(value, list):
         return value
 
