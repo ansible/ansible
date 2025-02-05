@@ -1,0 +1,5 @@
+bugfixes:
+- >-
+  include_vars - fixed erroneous warning if an unreserved variable name
+  contains a single character that matches a reserved variable.
+  (https://github.com/ansible/ansible/issues/84623)
