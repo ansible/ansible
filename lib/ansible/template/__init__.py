@@ -263,7 +263,7 @@ class Templar:
             )
 
         if disable_lookups is not _UNSET:
-            # Skipping a deferred deprecation due to no known usage outside anible-core.
+            # Skipping a deferred deprecation due to no known usage outside ansible-core.
             # Use `hasattr(templar, 'evaluate_expression')` as a surrogate check to determine if `disable_lookups` is accepted.
             _display.deprecated(
                 msg="Passing `disable_lookups` to `template` is deprecated.",

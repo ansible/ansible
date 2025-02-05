@@ -22,7 +22,7 @@ ALLOW_BROKEN_CONDITIONALS:
   ini:
   - {key: allow_broken_conditionals, section: defaults}
   type: boolean
-  version_added: "2.17"
+  version_added: "2.19"
 ALLOW_EMBEDDED_TEMPLATES:
   name: Allow embedded templates
   default: true
@@ -39,7 +39,7 @@ ALLOW_EMBEDDED_TEMPLATES:
   ini:
   - {key: allow_embedded_templates, section: defaults}
   type: boolean
-  version_added: "2.17"
+  version_added: "2.19"
 ANSIBLE_HOME:
   name: The Ansible home path
   description:
@@ -1347,6 +1347,7 @@ DISPLAY_TRACEBACK:
     - deprecated
     - always
     - never
+  version_added: "2.19"
 DOCSITE_ROOT_URL:
   name: Root docsite URL
   default: https://docs.ansible.com/ansible-core/
@@ -2132,7 +2133,7 @@ WRAP_STDERR:
   env: [{name: ANSIBLE_WRAP_STDERR}]
   default: false
   type: bool
-  version_added: "2.16"
+  version_added: "2.19"
 YAML_FILENAME_EXTENSIONS:
   name: Valid YAML extensions
   default: [".yml", ".yaml", ".json"]
