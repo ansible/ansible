@@ -33,6 +33,7 @@ from ansible import constants as C
 from ansible.module_utils.common.messages import ErrorSummary
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins import AnsiblePlugin
+from ansible.template import Templar
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
@@ -243,6 +244,8 @@ class CallbackBase(AnsiblePlugin):
         abridged_result.pop('exception', None)
         abridged_result.pop('warnings', None)
         abridged_result.pop('deprecations', None)
+
+        abridged_result = Templar().template(abridged_result)  # ensure the callback now sees the same view a playbook does
 
         if not serialize:
             # Just return ``abridged_result`` without going through serialization
