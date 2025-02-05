@@ -804,7 +804,7 @@ def _compile_module_ast(module_name: str, source_code: str) -> ast.Module:
     try:
         tree = t.cast(ast.Module, compile(source_code, str(origin), 'exec', ast.PyCF_ONLY_AST))
     except SyntaxError as ex:
-        raise AnsibleError(f"Unable to compile {module_name!r}.", obj=origin.replace(line_num=ex.lineno, col=ex.offset)) from ex
+        raise AnsibleError(f"Unable to compile {module_name!r}.", obj=origin.replace(line_num=ex.lineno, col_num=ex.offset)) from ex
 
     return tree
 

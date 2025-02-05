@@ -23,7 +23,7 @@ class Origin(AnsibleDatatagBase):
     """A description of the origin, for display to users."""
     line_num: int | None = None
     """An optional line number, starting at 1."""
-    col: int | None = None  # DTFIX-MERGE: rename to col_num (don't forget the replace method)
+    col_num: int | None = None
     """An optional column number, starting at 1."""
 
     UNKNOWN: t.ClassVar[t.Self]
@@ -44,7 +44,7 @@ class Origin(AnsibleDatatagBase):
         path: str | types.EllipsisType = ...,
         description: str | types.EllipsisType = ...,
         line_num: int | None | types.EllipsisType = ...,
-        col: int | None | types.EllipsisType = ...,
+        col_num: int | None | types.EllipsisType = ...,
     ) -> t.Self:
         """Return a new origin based on an existing one, with the given fields replaced."""
         return dataclasses.replace(
@@ -53,7 +53,7 @@ class Origin(AnsibleDatatagBase):
                 path=path,
                 description=description,
                 line_num=line_num,
-                col=col,
+                col_num=col_num,
             ).items() if value is not ...}  # type: ignore[arg-type]
         )
 
@@ -74,8 +74,8 @@ class Origin(AnsibleDatatagBase):
         if self.line_num and self.line_num > 0:
             value += f':{self.line_num}'
 
-            if self.col and self.col > 0:
-                value += f':{self.col}'
+            if self.col_num and self.col_num > 0:
+                value += f':{self.col_num}'
 
         if self.path and self.description:
             value += f' ({self.description})'

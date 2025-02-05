@@ -254,7 +254,7 @@ class SourceContext:
             return cls.error(None, origin)  # message omitted since lack of line number is obvious from pos
 
         start_line_idx = max(0, (target_line_num - 1) - context_line_count)  # if near start of file
-        target_col_num = origin.col
+        target_col_num = origin.col_num
 
         try:
             with pathlib.Path(origin.path).open() as src:

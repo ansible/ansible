@@ -33,7 +33,7 @@ def test_json_parser_error() -> None:
     assert get_chained_message(error.value) == expected_message
     assert str(error.value) == expected_message
 
-    assert error.value.obj == Origin(path=str(source_path), line_num=line, col=col)
+    assert error.value.obj == Origin(path=str(source_path), line_num=line, col_num=col)
 
     if expect_help_text:
         assert error.value.help_text is not None  # DTFIX-FUTURE: check the content later once it's less volatile

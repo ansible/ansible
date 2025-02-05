@@ -890,7 +890,7 @@ def make_vault_ciphertext(plaintext: str) -> str:
 def make_encrypted_string(plaintext: str) -> EncryptedString:
     """Creates an `EncryptedString` from the first secret in the active VaultSecretsContext."""
 
-    return Origin(path="/tmp/sometest", line_num=42, col=42).tag(EncryptedString(ciphertext=make_vault_ciphertext(plaintext)))
+    return Origin(path="/tmp/sometest", line_num=42, col_num=42).tag(EncryptedString(ciphertext=make_vault_ciphertext(plaintext)))
 
 
 def test_encrypted_string_unmanaged_access(_vault_secrets_context) -> None:

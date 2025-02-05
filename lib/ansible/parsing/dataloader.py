@@ -193,7 +193,7 @@ class DataLoader:
         except (IOError, OSError) as ex:
             raise AnsibleParserError(f"An error occurred while trying to read the file {file_name!r}.") from ex
 
-        data = Origin(path=file_name, line_num=1, col=1).tag(data)
+        data = Origin(path=file_name, line_num=1, col_num=1).tag(data)
 
         return self._decrypt_if_vault_data(data)
 
