@@ -31,4 +31,4 @@
 
 - assert:
     that:
-      - '"Found variable using reserved name: q" not in test_vm_set_host_variable.stderr'
+      - 'canary ~ ": q" not in test_vm_set_host_variable.stderr'
