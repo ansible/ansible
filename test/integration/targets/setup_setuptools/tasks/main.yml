@@ -1,0 +1,4 @@
+- name: Install setuptools
+  pip:
+    name: setuptools
+    state: present
