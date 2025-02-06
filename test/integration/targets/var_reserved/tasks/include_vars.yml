@@ -1,5 +1,0 @@
-- hosts: localhost
-  gather_facts: false
-  tasks:
-    - include_vars:
-        file: ../vars/reserved_set_host_variable.yml

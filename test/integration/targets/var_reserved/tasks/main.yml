@@ -1,8 +1,6 @@
 - name: check output for warning
   vars:
     canary: Found variable using reserved name
-    reserved_name:
-      include_vars: q
   block:
   - shell: ansible-playbook '{{[ role_path, "tasks", item ~ ".yml"] | path_join }}'
     environment:
@@ -14,26 +12,12 @@
     - task_vars
     - task_vars_used
     - set_fact
-    - include_vars
     register: play_out
 
   - name: check they all complain about bad defined var
     assert:
       that:
-        - warning in item['stderr']
-    vars:
-      warning: "{{ canary ~ varname | default('') }}"
-      varname: "{{ reserved_name[item] is defined | ternary(': ' ~ reserved_name[item], '') }}"
+        - canary in item['stderr']
     loop: '{{play_out.results}}'
     loop_control:
       label: '{{item.item}}'
-
-  - name: check output for absence of warning
-    shell: "ansible localhost -m include_vars -a file={{ lookup('first_found', 'set_host_variable.yml') }}"
-    environment:
-      ANSIBLE_LOCALHOST_WARNING: 0
-    register: test_vm_set_host_variable
-
-  - assert:
-      that:
-        - 'canary ~ ": q" not in test_vm_set_host_variable.stderr'
