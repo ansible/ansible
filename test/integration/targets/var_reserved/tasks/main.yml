@@ -12,12 +12,14 @@
     - task_vars
     - task_vars_used
     - set_fact
+    - include_vars
     register: play_out
 
   - name: check they all complain about bad defined var
     assert:
       that:
         - canary in item['stderr']
+        - (item['stderr'] | regex_findall(canary) | length) == 1
     loop: '{{play_out.results}}'
     loop_control:
       label: '{{item.item}}'
