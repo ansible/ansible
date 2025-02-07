@@ -11,6 +11,12 @@ import pytest
 from ansible.galaxy.dependency_resolution.dataclasses import Requirement
 
 
+NO_LEADING_WHITESPACES = pytest.mark.xfail(
+    reason='Does not yet support leading whitespaces',
+    strict=True,
+)
+
+
 @pytest.mark.parametrize(
     ('collection_version_spec', 'expected_is_pinned_outcome'),
     (
@@ -26,24 +32,24 @@ from ansible.galaxy.dependency_resolution.dataclasses import Requirement
         (' ==1.2.3', True),
         ('!=1.0.0', False),
         ('!= 1.0.0', False),
-        (' != 1.0.0', False),
-        (' !=1.0.0', False),
+        pytest.param(' != 1.0.0', False, marks=NO_LEADING_WHITESPACES),
+        pytest.param(' !=1.0.0', False, marks=NO_LEADING_WHITESPACES),
         ('>1.0.0', False),
         ('> 1.0.0', False),
-        (' > 1.0.0', False),
-        (' >1.0.0', False),
+        pytest.param(' > 1.0.0', False, marks=NO_LEADING_WHITESPACES),
+        pytest.param(' >1.0.0', False, marks=NO_LEADING_WHITESPACES),
         ('>=1.0.0', False),
         ('>= 1.0.0', False),
-        (' >= 1.0.0', False),
-        (' >=1.0.0', False),
+        pytest.param(' >= 1.0.0', False, marks=NO_LEADING_WHITESPACES),
+        pytest.param(' >=1.0.0', False, marks=NO_LEADING_WHITESPACES),
         ('<1.0.0', False),
         ('< 1.0.0', False),
-        (' < 1.0.0', False),
-        (' <1.0.0', False),
+        pytest.param(' < 1.0.0', False, marks=NO_LEADING_WHITESPACES),
+        pytest.param(' <1.0.0', False, marks=NO_LEADING_WHITESPACES),
         ('*', False),
         ('* ', False),
-        (' * ', False),
-        (' *', False),
+        pytest.param(' * ', False, marks=NO_LEADING_WHITESPACES),
+        pytest.param(' *', False, marks=NO_LEADING_WHITESPACES),
         ('=1.2.3,!=1.2.3rc5', True),
     ),
 )

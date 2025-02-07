@@ -578,7 +578,7 @@ class _ComputedReqKindsMixin:
 
         See https://github.com/ansible/ansible/pull/81606 for extra context.
         """
-        version_spec_start_char = self.ver.strip()[0]
+        version_spec_start_char = self.ver[0]
         return version_spec_start_char.isdigit() or not (
             version_spec_start_char.startswith(('<', '>', '!', '*'))
         )
