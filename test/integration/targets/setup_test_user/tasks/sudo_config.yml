@@ -1,0 +1,14 @@
+- name: probe for sudoers config path
+  shell: visudo -c
+  ignore_errors: true
+  register: visudo_result
+
+- set_fact:
+    sudoers_path: '{{ ((visudo_result.stdout ~ visudo_result.stderr) | regex_search("(/.*sudoers).*:", "\1"))[0] }}'
+
+- name: allow the user to use sudo {{"with no password" if test_user_allow_sudo == "nopasswd" else "with a password"}}
+  copy:
+    content: |
+      {{ test_user_name }}  ALL=(ALL)  {{"NOPASSWD: " if test_user_allow_sudo == "nopasswd" else ""}} ALL
+    mode: '0440'
+    dest: '{{ sudoers_path ~ ".d/" ~ test_user_name }}'

@@ -1,6 +1,5 @@
 - name: set variables
   set_fact:
-    test_user_name: ansibletest0
     test_user_group: staff
 
 - name: set plaintext password

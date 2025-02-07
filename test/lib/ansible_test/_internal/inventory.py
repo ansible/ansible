@@ -13,6 +13,11 @@ from .util import (
     exclude_none_values,
 )
 
+from .host_configs import (
+    ControllerConfig,
+    PosixRemoteConfig,
+)
+
 from .host_profiles import (
     ControllerHostProfile,
     ControllerProfile,
@@ -124,12 +129,30 @@ def create_posix_inventory(args: EnvironmentConfig, path: str, target_hosts: lis
         raise Exception()
 
     target_host = target_hosts[0]
+    target_config = target_host.config
+
+    common_variables: dict[str, str | int | None] = {}
+
+    posix_remote_config: PosixRemoteConfig | None = None
+
+    if isinstance(target_config, PosixRemoteConfig):
+        posix_remote_config = target_config  # target is a macOS remote
+    elif isinstance(target_config, ControllerConfig):
+        controller = target_config.controller
+
+        if isinstance(controller, PosixRemoteConfig):
+            posix_remote_config = controller  # controller is a macOS remote
+
+    if posix_remote_config and posix_remote_config.name.startswith('macos/'):
+        # When using sudo on macOS we may encounter permission denied errors when dropping privileges due to inability to access the current working directory.
+        # To compensate for this we'll perform a `cd /` before running any commands after `sudo` succeeds.
+        common_variables.update(ansible_sudo_chdir='/')
 
     if isinstance(target_host, ControllerProfile) and not needs_ssh:
         inventory = Inventory(
             host_groups=dict(
                 testgroup=dict(
-                    testhost=dict(
+                    testhost=common_variables | dict(
                         ansible_connection='local',
                         ansible_pipelining='yes',
                         ansible_python_interpreter=target_host.python.path,
@@ -145,7 +168,7 @@ def create_posix_inventory(args: EnvironmentConfig, path: str, target_hosts: lis
 
         ssh = connections[0]
 
-        testhost: dict[str, t.Optional[t.Union[str, int]]] = dict(
+        testhost: dict[str, t.Optional[t.Union[str, int]]] = common_variables | dict(
             ansible_connection='ssh',
             ansible_pipelining='yes',
             ansible_python_interpreter=ssh.settings.python_interpreter,

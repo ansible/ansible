@@ -26,3 +26,9 @@ def test_su(mocker, parser, reset_cli_args):
 
     cmd = su.build_become_command('/bin/foo', sh)
     assert re.match(r"""su\s+foo -c '/bin/bash -c '"'"'echo BECOME-SUCCESS-.+?; /bin/foo'"'"''""", cmd)
+
+
+def test_no_cmd() -> None:
+    cmd = ''
+
+    assert become_loader.get('su').build_become_command(cmd, shell_loader.get('sh')) is cmd
