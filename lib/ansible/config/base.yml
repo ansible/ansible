@@ -29,9 +29,9 @@ ALLOW_EMBEDDED_TEMPLATES:
   description:
     - When enabled, this option allows embedded templates to be used for specific backward compatibility scenarios.
     - A deprecation warning will be emitted in these cases.
-    - First, conditionals (e.g., ``failed_when``, ``until``, ``assert.that``) fully enclosed in template delimiters.
-    - "Second, string constants in conditionals (e.g., ``when: some_var == '{{ some_other_var }}'``)."
-    - Finally, positional arguments to lookups (e.g., ``lookup('pipe', 'echo {{ some_var }}')``).
+    - First, conditionals (for example, ``failed_when``, ``until``, ``assert.that``) fully enclosed in template delimiters.
+    - "Second, string constants in conditionals (for example, ``when: some_var == '{{ some_other_var }}'``)."
+    - Finally, positional arguments to lookups (for example, ``lookup('pipe', 'echo {{ some_var }}')``).
     - This feature is deprecated, since embedded templates are unnecessary in these cases.
     - When disabled, use of embedded templates will result in an error.
     - A future release will disable this feature by default.
