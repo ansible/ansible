@@ -31,7 +31,7 @@ EXAMPLES: |
   # size => 2684354560
   size: '{{ "2.5 gigabyte" | human_to_bytes }}'
   
-  # size => 1234803098
+  # size => 1073741824
   size: '{{ "1 Gigabyte" | human_to_bytes }}'
 
   # this is an error, because gigggabyte is not a valid unit
