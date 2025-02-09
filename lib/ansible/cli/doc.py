@@ -1172,12 +1172,16 @@ class DocCLI(CLI, RoleMixin):
         return 'version %s' % (version_added, )
 
     @staticmethod
-    def warp_fill(text, limit, initial_indent='', subsequent_indent='', **kwargs):
+    def warp_fill(text, limit, initial_indent='', subsequent_indent='', initial_extra=0, **kwargs):
         result = []
         for paragraph in text.split('\n\n'):
-            result.append(textwrap.fill(paragraph, limit, initial_indent=initial_indent, subsequent_indent=subsequent_indent,
-                                        break_on_hyphens=False, break_long_words=False, drop_whitespace=True, **kwargs))
+            wrapped = textwrap.fill(paragraph, limit, initial_indent=initial_indent + ' ' * initial_extra, subsequent_indent=subsequent_indent,
+                                   break_on_hyphens=False, break_long_words=False, drop_whitespace=True, **kwargs)
+            if initial_extra and wrapped.startswith(' ' * initial_extra):
+                wrapped = wrapped[initial_extra:]
+            result.append(wrapped)
             initial_indent = subsequent_indent
+            initial_extra = 0
         return '\n'.join(result)
 
     @staticmethod
@@ -1217,13 +1221,15 @@ class DocCLI(CLI, RoleMixin):
                     if not isinstance(entry, string_types):
                         raise AnsibleError("Expected string in description of %s at index %s, got %s" % (o, entry_idx, type(entry)))
                     if entry_idx == 1:
-                        text.append(key + DocCLI.warp_fill(DocCLI.tty_ify(entry), limit, initial_indent=inline_indent, subsequent_indent=sub_indent))
+                        text.append(key + DocCLI.warp_fill(DocCLI.tty_ify(entry), limit,
+                                    initial_indent=inline_indent, subsequent_indent=sub_indent, initial_extra=len(extra_indent)))
                     else:
                         text.append(DocCLI.warp_fill(DocCLI.tty_ify(entry), limit, initial_indent=sub_indent, subsequent_indent=sub_indent))
             else:
                 if not isinstance(opt['description'], string_types):
                     raise AnsibleError("Expected string in description of %s, got %s" % (o, type(opt['description'])))
-                text.append(key + DocCLI.warp_fill(DocCLI.tty_ify(opt['description']), limit, initial_indent=inline_indent, subsequent_indent=sub_indent))
+                text.append(key + DocCLI.warp_fill(DocCLI.tty_ify(opt['description']), limit,
+                            initial_indent=inline_indent, subsequent_indent=sub_indent, initial_extra=len(extra_indent)))
             del opt['description']
 
             suboptions = []

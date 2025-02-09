@@ -17,8 +17,8 @@ DEPRECATED:
 
 OPTIONS (= indicates it is required):
 
-- sub     Suboptions. Contains `sub.subtest', which can be set to `123'.
-           You can use `TEST_ENV' to set this.
+- sub     Suboptions. Contains `sub.subtest', which can be set to
+           `123'. You can use `TEST_ENV' to set this.
         set_via:
           env:
           - deprecated:
@@ -31,14 +31,16 @@ OPTIONS (= indicates it is required):
         type: dict
         options:
 
-        - subtest2  Another suboption. Useful when [[ansible.builtin.shuffle]] is used
-                     with value `[a,b,),d\]'.
+        - subtest2  Another suboption. Useful when
+                     [[ansible.builtin.shuffle]] is used with value
+                     `[a,b,),d\]'.
           default: null
           type: float
           added in: version 1.1.0
         suboptions:
 
-        - subtest  A suboption. Not compatible to `path=c:\foo(1).txt' (of module
+        - subtest  A suboption. Not compatible to
+                    `path=c:\foo(1).txt' (of module
                     ansible.builtin.copy).
           default: null
           type: int
