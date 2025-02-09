@@ -25,6 +25,8 @@ options:
           or, if available for your specific inventory datasource (for example P(amazon.aws.aws_ec2#inventory)), you can use the an inventory plugin instead
           of an inventory script). This is mainly useful when additional hosts are created and users wish to use them instead of using the
           M(ansible.builtin.add_host) module.
+        - Note that neither V(refresh_inventory) nor the M(ansible.builtin.add_host) add hosts to the selected hosts for the current play.
+          You can expilicitly delegate tasks to new hosts with C(delegate_to) if needed, though.
         - V(noop) (added in Ansible 2.0) This literally does 'nothing'. It is mainly used internally and not recommended for general use.
         - V(clear_facts) (added in Ansible 2.1) causes the gathered facts for the hosts specified in the play's list of hosts to be cleared,
           including the fact cache.
