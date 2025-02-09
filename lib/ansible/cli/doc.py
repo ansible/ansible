@@ -1209,8 +1209,9 @@ class DocCLI(CLI, RoleMixin):
             text.append('')
 
             # TODO: push this to top of for and sort by size, create indent on largest key?
-            inline_indent = base_indent + ' ' * max((len(opt_indent) - len(o)) - len(base_indent), 2)
-            sub_indent = inline_indent + ' ' * (len(o) + 3)
+            inline_indent = ' ' * max((len(opt_indent) - len(o)) - len(base_indent), 2)
+            extra_indent = base_indent + ' ' * (len(o) + 3)
+            sub_indent = inline_indent + extra_indent
             if is_sequence(opt['description']):
                 for entry_idx, entry in enumerate(opt['description'], 1):
                     if not isinstance(entry, string_types):

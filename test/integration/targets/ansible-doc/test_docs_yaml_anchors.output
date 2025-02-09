@@ -12,7 +12,7 @@ OPTIONS (= indicates it is required):
         type: list
         suboptions:
 
-        = port          Rule port
+        = port  Rule port
           type: int
 
 - ingress  Ingress firewall rules
@@ -21,7 +21,7 @@ OPTIONS (= indicates it is required):
         type: list
         suboptions:
 
-        = port          Rule port
+        = port  Rule port
           type: int
 
 - last_one  Short desc
