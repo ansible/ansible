@@ -1176,7 +1176,7 @@ class DocCLI(CLI, RoleMixin):
         result = []
         for paragraph in text.split('\n\n'):
             wrapped = textwrap.fill(paragraph, limit, initial_indent=initial_indent + ' ' * initial_extra, subsequent_indent=subsequent_indent,
-                                   break_on_hyphens=False, break_long_words=False, drop_whitespace=True, **kwargs)
+                                    break_on_hyphens=False, break_long_words=False, drop_whitespace=True, **kwargs)
             if initial_extra and wrapped.startswith(' ' * initial_extra):
                 wrapped = wrapped[initial_extra:]
             result.append(wrapped)
