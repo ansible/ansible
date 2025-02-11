@@ -11,6 +11,7 @@ import os.path
 import sys
 import stat
 import tempfile
+import typing as t
 
 from collections.abc import Mapping, Sequence
 from jinja2.nativetypes import NativeEnvironment
@@ -671,6 +672,13 @@ class ConfigManager(object):
             raise AnsibleError('Requested entry (%s) was not defined in configuration.' % to_native(_get_entry(plugin_type, plugin_name, config)))
 
         return value, origin
+
+    def get_config_default(self, config: str, plugin_type: str | None = None, plugin_name: str | None = None) -> t.Any:
+        defs = self.get_configuration_definitions(plugin_type=plugin_type, name=plugin_name)
+        try:
+            return defs[config].get('default', None)
+        except KeyError:
+            raise AnsibleError(f'The requested entry {_get_entry(plugin_type, plugin_name, config)} was not defined in configuration and has no default.')
 
     def initialize_plugin_configuration_definitions(self, plugin_type, name, defs):
 
