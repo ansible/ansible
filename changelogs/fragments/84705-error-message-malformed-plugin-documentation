@@ -1,0 +1,3 @@
+bugfixes:
+minor_changes:
+  - improved error message for yaml parsing errors in plugin documentation
