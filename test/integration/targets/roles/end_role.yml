@@ -1,4 +1,4 @@
-- hosts: localhost
+- hosts: localhost,testhost
   gather_facts: false
   pre_tasks:
     - set_fact:

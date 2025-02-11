@@ -1,7 +1,8 @@
 - set_fact:
     role_executed: "{{ role_executed|default(0)|int + 1 }}"
 
-- command: echo
+- debug:
+  changed_when: true
   notify: role_handler
 
 - meta: end_role
