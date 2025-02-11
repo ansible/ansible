@@ -97,7 +97,7 @@ class AnsiblePlugin(ABC):
             options[option] = self.get_option(option, hostvars=hostvars)
         return options
 
-    def get_option_default(self, option):
+    def get_option_default(self, option: str) -> t.Any:
         return C.config.get_config_default(option, plugin_type=self.plugin_type, plugin_name=self._load_name)
 
     def set_option(self, option, value):
