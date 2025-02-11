@@ -488,7 +488,7 @@ class PolicyRcD(object):
 
 
 def package_split(pkgspec):
-    parts = re.split(r'(>?=)', pkgspec, 1)
+    parts = re.split(r'(>?=)', pkgspec, maxsplit=1)
     if len(parts) > 1:
         return parts
     return parts[0], None, None
