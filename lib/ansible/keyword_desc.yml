@@ -13,7 +13,7 @@ become_method: Which method of privilege escalation to use (such as sudo or su).
 become_user: "User that you 'become' after using privilege escalation. The remote/login user must have permissions to become this user."
 block: List of tasks in a block.
 changed_when: "Conditional expression that overrides the task's normal 'changed' status."
-check_mode: A boolean that controls if a task is executed in 'check' mode. See :ref:`check_mode_dry`.
+check_mode: A boolean that controls if a task is run normally or avoids changes to the target and tries to report what it would have done (check mode/dry run). See :ref:`check_mode_dry`.
 collections: |
     List of collection namespaces to search for modules, plugins, and roles. See :ref:`collections_using_playbook`
 
