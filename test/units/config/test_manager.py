@@ -101,6 +101,9 @@ class TestConfigManager:
     def test_value_and_origin_from_ini(self):
         assert self.manager.get_config_value_and_origin('config_entry') == ('fromini', cfg_file)
 
+    def test_default(self):
+        assert self.manager.get_config_default('config_entry') == 'DEFAULT'
+
     def test_value_from_ini(self):
         assert self.manager.get_config_value('config_entry') == 'fromini'
 
