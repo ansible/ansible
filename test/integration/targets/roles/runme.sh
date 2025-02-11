@@ -55,7 +55,7 @@ ANSIBLE_PRIVATE_ROLE_VARS=0 ansible-playbook privacy.yml -e @vars/privacy_vars.y
 ansible-playbook privacy.yml -e @vars/privacy_vars.yml "$@"
 
 for strategy in linear free; do
-  [ "$(ANSIBLE_STRATEGY=$strategy ansible-playbook end_role.yml | grep -c CHECKPOINT)" = "1" ]
+  [ "$(ANSIBLE_STRATEGY=$strategy ansible-playbook -i testhost, end_role.yml | grep -c CHECKPOINT)" = "2" ]
   [ "$(ANSIBLE_STRATEGY=$strategy ansible-playbook -i host1,host2 end_role_nested.yml | grep -c CHECKPOINT)" = "4" ]
 done
 
