@@ -26,8 +26,8 @@ options:
           of an inventory script). This is mainly useful when additional hosts are created and users wish to use them instead of using the
           M(ansible.builtin.add_host) module.
         - Note that neither V(refresh_inventory) nor the M(ansible.builtin.add_host) add hosts to the hosts the current play iterates over.
-          You can expilicitly delegate tasks to new hosts with C(delegate_to) if needed, though. Generally,
-          C(delegate_to) can be used against hosts regardless whether they are in the inventory or not, as long as
+          However, if needed, you can explicitly delegate tasks to new hosts with C(delegate_to). Generally,
+          C(delegate_to) can be used against hosts regardless of whether they are in the inventory or not, as long as
           the value supplied is sufficient for the connection plugin to access the host.
         - V(noop) (added in Ansible 2.0) This literally does 'nothing'. It is mainly used internally and not recommended for general use.
         - V(clear_facts) (added in Ansible 2.1) causes the gathered facts for the hosts specified in the play's list of hosts to be cleared,
