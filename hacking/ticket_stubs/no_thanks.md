@@ -1,13 +1,13 @@
 Hi!
 
-Thanks very much for your submission to Ansible.  It means a lot to us that you've taken the time to contribute.
+Thank you very much for your submission to Ansible.  It means a lot to us that you've taken the time to contribute.
 
-Unfortunately, we're not sure if we want this feature in the program, and I don't want this to seem confrontational.
-Our reasons for this are:
+Unfortunately, we're not sure if we want this feature in the program, our reasons are:
 
 * (A) INSERT ITEM HERE
 
 However, we're always up for discussion.
+
 Because this project is very active, we're unlikely to see comments made on closed tickets and we lock them after some time.
 If you or anyone else has any further questions, please let us know by using any of the communication methods listed on the page below:
 
