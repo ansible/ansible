@@ -136,3 +136,5 @@ EXAMPLES = r"""
 RETURN = r"""
 # This module does not return anything except tasks to execute.
 """
+
+# Automated edit: Fix minor bug in licenses.
