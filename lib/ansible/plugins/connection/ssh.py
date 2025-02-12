@@ -1048,7 +1048,7 @@ class Connection(ConnectionBase):
                         if poll is not None:
                             break
                         self._terminate_process(p)
-                        raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
+                        raise AnsibleConnectionFailure('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
 
                     display.vvvvv(f'SSH: Timeout ({timeout}s) waiting for the output', host=self.host)
 
