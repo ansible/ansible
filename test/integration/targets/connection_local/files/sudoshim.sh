@@ -45,7 +45,7 @@ for i in "${!args[@]}"; do
       ;;
     "--close-stderr")
       >&2 echo "some injected stderr, EOF now"
-      exec 2>&-
+      exec 2>&-  # close stderr, doesn't seem to work on Ubuntu 24.04 (either not closed or not seen in Python?)
       unset "args[i]"
       ;;
     "--sleep-before-sudo")

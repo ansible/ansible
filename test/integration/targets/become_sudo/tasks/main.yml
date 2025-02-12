@@ -2,25 +2,25 @@
   include_role:
     name: setup_test_user
     public: true
+  vars:
+    test_user_name: '{{ target_user_name }}'
 
-- name: capture the target user name
-  set_fact:
-    target_user_name: "{{ test_user_name }}"
-    intermediate_user_name: "ansibletest1"
-
-- name: create an intermediate user to force a sudo password prompt
+- name: create an intermediate user on target with password-required sudo ability
   include_role:
     name: setup_test_user
   vars:
     test_user_name: "{{ intermediate_user_name }}"
     test_user_allow_sudo: true
 
-- set_fact:
+- name: capture config values, intermediate user password from role
+  set_fact:
     intermediate_user_password: "{{ test_user_plaintext_password }}"
-    default_flags: "{{ lookup('config', 'become_flags', plugin_type='become', plugin_name='sudo') }}"
-    intermediate_flags: --intermediate-user {{ intermediate_user_name }}
+    # this needs to be looked up and stored before setting ansible_become_flags
+    default_become_flags: "{{ lookup('config', 'become_flags', plugin_type='become', plugin_name='sudo') }}"
+    intermediate_flags: --intermediate-user {{ intermediate_user_name | quote }}
 
-- copy:
+- name: deploy sudo shim
+  copy:
     src: sudoshim.sh
     dest: /tmp/sudoshim.sh
     mode: a+rx
@@ -32,7 +32,7 @@
     ansible_become_user: '{{ target_user_name }}'
     ansible_become_password: '{{ intermediate_user_password }}'
     ansible_become_exe: /tmp/sudoshim.sh
-    ansible_become_flags: '{{ default_flags }} {{ intermediate_flags }}'
+    ansible_become_flags: '{{ default_become_flags }} {{ intermediate_flags }}'
     ansible_local_become_strip_preamble: true
   block:
     - name: basic success check
@@ -76,13 +76,13 @@
         that:
           - chdir_root.stdout is contains 'CWD IS </>'
 
-    - name: use custom sudo `--` flags (similar to defaults)
+    - name: become with custom sudo `--` flags (similar to defaults)
       vars:
         ansible_become_flags: --set-home --stdin --non-interactive {{ intermediate_flags }}
       raw: whoami
       register: custom_flags
 
-    - name: no user
+    - name: become with no user
       vars:
         ansible_become_user: ""
       raw: whoami

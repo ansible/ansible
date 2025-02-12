@@ -139,7 +139,7 @@ class Connection(ConnectionBase):
         stdout, stderr = p.communicate(in_data)
         display.debug("done communicating")
 
-        # preserve output from privilege escalation stage as `bytes`; it may contain actual output (eg `raw`) or error messages (errors from sudo)
+        # preserve output from privilege escalation stage as `bytes`; it may contain actual output (eg `raw`) or error messages
         stdout = become_stdout_bytes + stdout
         stderr = become_stderr_bytes + stderr
 
@@ -152,7 +152,7 @@ class Connection(ConnectionBase):
 
     def _ensure_become_success(self, p: subprocess.Popen, pty_primary: int, sudoable: bool) -> tuple[bytes, bytes]:
         """
-        Ensure that become succeeds, returning captured stdout after success and all stderr.
+        Ensure that become succeeds, returning a tuple containing stdout captured after success and all stderr.
         Returns immediately if `self.become` or `sudoable` are False, or `build_become_command` was not called, without performing any additional checks.
         """
         if not self.become or not sudoable or not self.become._id:  # _id is set by build_become_command, if it was not called, assume no become
@@ -192,7 +192,7 @@ class Connection(ConnectionBase):
         os.set_blocking(p.stdout.fileno(), False)
         os.set_blocking(p.stderr.fileno(), False)
 
-        with (selectors.DefaultSelector() as selector):
+        with selectors.DefaultSelector() as selector:
             selector.register(p.stdout, selectors.EVENT_READ, 'stdout')
             selector.register(p.stderr, selectors.EVENT_READ, 'stderr')
 
@@ -200,26 +200,25 @@ class Connection(ConnectionBase):
                 if not selector.get_map():  # we only reach end of stream after all descriptors are EOF
                     become_error('Premature end of stream')
 
-                if expect_password_prompt:
-                    if (
-                        self.become.check_password_prompt(become_stdout[last_stdout_prompt_offset:]) or
-                        self.become.check_password_prompt(become_stderr[last_stderr_prompt_offset:])
-                    ):
-                        if sent_password:
-                            become_error('Duplicate become password prompt encountered')
+                if expect_password_prompt and (
+                    self.become.check_password_prompt(become_stdout[last_stdout_prompt_offset:]) or
+                    self.become.check_password_prompt(become_stderr[last_stderr_prompt_offset:])
+                ):
+                    if sent_password:
+                        become_error('Duplicate become password prompt encountered')
 
-                        last_stdout_prompt_offset = len(become_stdout)
-                        last_stderr_prompt_offset = len(become_stderr)
+                    last_stdout_prompt_offset = len(become_stdout)
+                    last_stderr_prompt_offset = len(become_stderr)
 
-                        send_password = to_bytes(self.become.get_option('become_pass') or '') + b'\n'
+                    password_to_send = to_bytes(self.become.get_option('become_pass') or '') + b'\n'
 
-                        if pty_primary is None:
-                            p.stdin.write(send_password)
-                            p.stdin.flush()
-                        else:
-                            os.write(pty_primary, send_password)
+                    if pty_primary is None:
+                        p.stdin.write(password_to_send)
+                        p.stdin.flush()
+                    else:
+                        os.write(pty_primary, password_to_send)
 
-                        sent_password = True
+                    sent_password = True
 
                 remaining_timeout_seconds = self._become_success_timeout - (time.monotonic() - start_seconds)
                 events = selector.select(remaining_timeout_seconds) if remaining_timeout_seconds > 0 else []
