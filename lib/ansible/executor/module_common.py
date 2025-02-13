@@ -36,6 +36,7 @@ import typing as t
 from ast import AST, Import, ImportFrom
 from io import BytesIO
 
+from ansible._internal import _locking
 from ansible.module_utils._internal import _dataclass_validation
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.utils.datatag.tags import Origin
@@ -53,11 +54,6 @@ from ansible.utils.collection_loader._collection_finder import _get_collection_m
 if t.TYPE_CHECKING:
     from ansible import template as _template
     from ansible.playbook.task import Task
-
-# Must import strategy and use write_locks from there
-# If we import write_locks directly then we end up binding a
-# variable to the object and then it never gets updated.
-from ansible.executor import action_write_locks
 
 from ansible.utils.display import Display
 from collections import namedtuple
@@ -1010,6 +1006,8 @@ def _find_module_utils(
         lookup_path = os.path.join(C.DEFAULT_LOCAL_TMP, 'ansiballz_cache')
         cached_module_filename = os.path.join(lookup_path, "%s-%s" % (remote_module_fqn, module_compression))
 
+        os.makedirs(os.path.dirname(cached_module_filename), exist_ok=True)
+
         zipdata = None
         # Optimization -- don't lock if the module has already been cached
         if os.path.exists(cached_module_filename):
@@ -1017,20 +1015,10 @@ def _find_module_utils(
             cached_module = _CachedModule.load(cached_module_filename)
             zipdata, module_metadata = cached_module.zip_data, cached_module.metadata
         else:
-            if module_name in action_write_locks.action_write_locks:
-                display.debug('ANSIBALLZ: Using lock for %s' % module_name)
-                lock = action_write_locks.action_write_locks[module_name]
-            else:
-                # If the action plugin directly invokes the module (instead of
-                # going through a strategy) then we don't have a cross-process
-                # Lock specifically for this module.  Use the "unexpected
-                # module" lock instead
-                display.debug('ANSIBALLZ: Using generic lock for %s' % module_name)
-                lock = action_write_locks.action_write_locks[None]
-
             display.debug('ANSIBALLZ: Acquiring lock')
-            with lock:
-                display.debug('ANSIBALLZ: Lock acquired: %s' % id(lock))
+            lock_path = f'{cached_module_filename}.lock'
+            with _locking.named_mutex(lock_path):
+                display.debug(f'ANSIBALLZ: Lock acquired: {lock_path}')
                 # Check that no other process has created this while we were
                 # waiting for the lock
                 if not os.path.exists(cached_module_filename):

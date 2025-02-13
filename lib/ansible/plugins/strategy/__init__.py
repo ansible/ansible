@@ -33,7 +33,6 @@ from collections import deque
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError, AnsibleTemplateError
-from ansible.executor import action_write_locks
 from ansible.executor.play_iterator import IteratingStates, PlayIterator
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
@@ -51,7 +50,6 @@ from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars
-from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
 display = Display()
@@ -332,21 +330,6 @@ class StrategyBase:
         """ handles queueing the task up to be sent to a worker """
 
         display.debug("entering _queue_task() for %s/%s" % (host.name, task.action))
-
-        # Add a write lock for tasks.
-        # Maybe this should be added somewhere further up the call stack but
-        # this is the earliest in the code where we have task (1) extracted
-        # into its own variable and (2) there's only a single code path
-        # leading to the module being run.  This is called by two
-        # functions: linear.py::run(), and
-        # free.py::run() so we'd have to add to both to do it there.
-        # The next common higher level is __init__.py::run() and that has
-        # tasks inside of play_iterator so we'd have to extract them to do it
-        # there.
-
-        if task.action not in action_write_locks.action_write_locks:
-            display.debug('Creating lock for %s' % task.action)
-            action_write_locks.action_write_locks[task.action] = multiprocessing_context.Lock()
 
         # create a templar and template things we need later for the queuing process
         templar = TemplateEngine(loader=self._loader, variables=task_vars)
