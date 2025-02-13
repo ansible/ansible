@@ -144,11 +144,11 @@ class BecomeModule(BecomeBase):
         prompts = self.get_option('prompt_l10n') or self.SU_PROMPT_LOCALIZATIONS
         password_prompt_strings = "|".join(re.escape(p) for p in prompts)
         # Colon or unicode fullwidth colon
-        prompt_pattern = to_bytes(rf"(?:{password_prompt_strings})\s*[:：]")
-        match = re.match(prompt_pattern, b_output, flags=re.IGNORECASE)
+        prompt_pattern = rf"(?:{password_prompt_strings})\s*[:：]"
+        match = re.search(prompt_pattern, to_text(b_output), flags=re.IGNORECASE)
 
         if match:
-            self.prompt = to_text(match.group(0))  # preserve the actual matched string so we can scrub the output
+            self.prompt = match.group(0)  # preserve the actual matched string so we can scrub the output
 
         return bool(match)
 
