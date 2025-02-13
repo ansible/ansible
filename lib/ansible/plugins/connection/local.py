@@ -252,8 +252,7 @@ class Connection(ConnectionBase):
     def _become_success_timeout(self) -> int:
         """Timeout value for become success in seconds."""
         if (timeout := self.get_option('become_success_timeout')) < 1:
-            timeout = C.config.get_configuration_definitions('connection', 'local')['become_success_timeout']['default']
-
+            timeout = self.get_option_default('become_success_timeout')
         return timeout
 
     def put_file(self, in_path: str, out_path: str) -> None:

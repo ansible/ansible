@@ -247,12 +247,11 @@ class GalaxyCLI(CLI):
         offline.add_argument('--offline', dest='offline', default=False, action='store_true',
                              help="Don't query the galaxy API when creating roles")
 
-        default_roles_path = C.config.get_configuration_definition('DEFAULT_ROLES_PATH').get('default', '')
         roles_path = opt_help.ArgumentParser(add_help=False)
         roles_path.add_argument('-p', '--roles-path', dest='roles_path', type=opt_help.unfrack_path(pathsep=True),
                                 default=C.DEFAULT_ROLES_PATH, action=opt_help.PrependListAction,
                                 help='The path to the directory containing your roles. The default is the first '
-                                     'writable one configured via DEFAULT_ROLES_PATH: %s ' % default_roles_path)
+                                     'writable one configured via DEFAULT_ROLES_PATH: %s ' % C.config.get_config_default('DEFAULT_ROLES_PATH')
 
         collections_path = opt_help.ArgumentParser(add_help=False)
         collections_path.add_argument('-p', '--collections-path', dest='collections_path', type=opt_help.unfrack_path(pathsep=True),
