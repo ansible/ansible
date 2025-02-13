@@ -29,6 +29,7 @@ class ShellModule(ShellBase):
 
     # commonly used
     ECHO = 'echo'
+    CD = 'cd'
     COMMAND_SEP = ';'
 
     # How to end lines in a python script one-liner

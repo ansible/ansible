@@ -1,0 +1,2 @@
+target_user_name: ansibletest0  # target unprivileged user
+intermediate_user_name: ansibletest1  # an intermediate user

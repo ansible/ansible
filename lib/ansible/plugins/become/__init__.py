@@ -3,6 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
+import re
 import shlex
 
 from abc import abstractmethod
@@ -13,6 +14,7 @@ from gettext import dgettext
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.plugins import AnsiblePlugin
+from ansible.utils import display as _display
 
 
 def _gen_id(length=32):
@@ -53,11 +55,11 @@ class BecomeBase(AnsiblePlugin):
 
             return getattr(playcontext, option, None)
 
-    def expect_prompt(self):
+    def expect_prompt(self) -> bool:
         """This function assists connection plugins in determining if they need to wait for
         a prompt. Both a prompt and a password are required.
         """
-        return self.prompt and self.get_option('become_pass')
+        return bool(self.prompt and self.get_option('become_pass'))
 
     def _build_success_command(self, cmd, shell, noexe=False):
         if not all((cmd, shell, self.success)):
@@ -65,9 +67,8 @@ class BecomeBase(AnsiblePlugin):
 
         try:
             cmd = shlex.quote('%s %s %s %s' % (shell.ECHO, self.success, shell.COMMAND_SEP, cmd))
-        except AttributeError:
-            # TODO: This should probably become some more robust functionality used to detect incompat
-            raise AnsibleError('The %s shell family is incompatible with the %s become plugin' % (shell.SHELL_FAMILY, self.name))
+        except AttributeError as ex:
+            raise AnsibleError(f'The {shell._load_name!r} shell plugin does not support become. It is missing the {ex.name!r} attribute.')
         exe = getattr(shell, 'executable', None)
         if exe and not noexe:
             cmd = '%s -c %s' % (exe, cmd)
@@ -77,6 +78,25 @@ class BecomeBase(AnsiblePlugin):
     def build_become_command(self, cmd, shell):
         self._id = _gen_id()
         self.success = 'BECOME-SUCCESS-%s' % self._id
+
+    def strip_become_prompt(self, data: bytes) -> bytes:
+        """
+        Strips the first found configured become prompt from `data`, trailing whitespace and anything that precedes the prompt, then returns the result.
+        If no prompt is expected, or the prompt is not `str` or `bytes`, `data` will be returned as-is.
+        """
+        if not self.prompt or not isinstance(self.prompt, (str, bytes)) or not self.expect_prompt():
+            return data
+
+        return self._strip_through_prefix(self.prompt, data)
+
+    def strip_become_success(self, data: bytes) -> bytes:
+        """Strips the first found success marker from `data`, trailing whitespace and anything that precedes the success marker, then returns the result."""
+        return self._strip_through_prefix(self.success, data)
+
+    @staticmethod
+    def _strip_through_prefix(match: str | bytes, data: bytes) -> bytes:
+        """Strips the first occurrence of `match` from `data`, trailing whitespace and anything that precedes `match`, then returns the result."""
+        return re.sub(br'^.*?' + re.escape(to_bytes(match)) + br'\s*', b'', data, count=1, flags=re.DOTALL)
 
     def check_success(self, b_output):
         b_success = to_bytes(self.success)

@@ -229,6 +229,7 @@ prefer-binary = yes
 
     # enable sudo without a password for the wheel group, allowing ansible to use the sudo become plugin
     echo '%wheel ALL=(ALL:ALL) NOPASSWD: ALL' > /usr/local/etc/sudoers.d/ansible-test
+    chmod 440 /usr/local/etc/sudoers.d/ansible-test
 }
 
 bootstrap_remote_macos()

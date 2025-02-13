@@ -72,12 +72,25 @@ DOCUMENTATION = """
             ini:
               - section: sudo_become_plugin
                 key: password
+        sudo_chdir:
+            description: Directory to change to before invoking sudo; can avoid permission errors when dropping privileges.
+            type: string
+            required: False
+            version_added: '2.19'
+            vars:
+              - name: ansible_sudo_chdir
+            env:
+              - name: ANSIBLE_SUDO_CHDIR
+            ini:
+              - section: sudo_become_plugin
+                key: chdir
 """
 
 import re
 import shlex
 
 from ansible.plugins.become import BecomeBase
+from ansible.errors import AnsibleError
 
 
 class BecomeModule(BecomeBase):
@@ -116,5 +129,11 @@ class BecomeModule(BecomeBase):
         user = self.get_option('become_user') or ''
         if user:
             user = '-u %s' % (user)
+
+        if chdir := self.get_option('sudo_chdir'):
+            try:
+                becomecmd = f'{shell.CD} {shlex.quote(chdir)} {shell._SHELL_AND} {becomecmd}'
+            except AttributeError as ex:
+                raise AnsibleError(f'The {shell._load_name!r} shell plugin does not support sudo chdir. It is missing the {ex.name!r} attribute.')
 
         return ' '.join([becomecmd, flags, prompt, user, self._build_success_command(cmd, shell)])

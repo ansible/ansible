@@ -4,6 +4,7 @@
     - name: make sure the test user is available
       include_role:
         name: setup_test_user
+        public: yes
 
     - name: verify AnsibleModule works when cwd is missing
       test_cwd_missing:

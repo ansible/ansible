@@ -1,8 +1,3 @@
-- name: set variables
-  set_fact:
-    test_user_name: ansibletest0
-    test_user_group: null
-
 - name: set plaintext password
   no_log: yes
   set_fact:
