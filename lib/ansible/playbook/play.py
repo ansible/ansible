@@ -298,7 +298,7 @@ class Play(Base, Taggable, CollectionSearch):
         # of the playbook execution
         flush_block = Block(play=self)
 
-        t = Task()
+        t = Task(block=flush_block)
         t.action = 'meta'
         t.resolved_action = 'ansible.builtin.meta'
         t.args['_raw_params'] = 'flush_handlers'
@@ -327,17 +327,20 @@ class Play(Base, Taggable, CollectionSearch):
             noop_task.set_loader(self._loader)
 
             b = Block(play=self)
+            noop_task._parent = b
             b.block = self.pre_tasks or [noop_task]
             b.always = [flush_block]
             block_list.append(b)
 
             tasks = self._compile_roles() + self.tasks
             b = Block(play=self)
+            noop_task._parent = b
             b.block = tasks or [noop_task]
             b.always = [flush_block]
             block_list.append(b)
 
             b = Block(play=self)
+            noop_task._parent = b
             b.block = self.post_tasks or [noop_task]
             b.always = [flush_block]
             block_list.append(b)
