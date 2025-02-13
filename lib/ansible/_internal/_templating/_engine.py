@@ -50,6 +50,8 @@ def as_non_templatable_text(value: t.Any) -> str:
 
 _shared_empty_unmask_type_names: frozenset[str] = frozenset()
 
+TRANSFORM_CHAIN_LIMIT: int = 10
+"""Arbitrary limit for chained transforms to prevent cycles; an exception will be raised if exceeded."""
 
 class TemplateMode(enum.Enum):
     DEFAULT = enum.auto()
@@ -250,6 +252,30 @@ class TemplateEngine:
         validate_variable_name(name)
         return AnsibleTagHelper.tag('{{' + name + '}}', (AnsibleTagHelper.tags(name) | {TrustedAsTemplate()}) - {NotATemplate()})
 
+    def transform(self, variable: t.Any) -> t.Any:
+        """Recursively apply transformations to the given value and return the result."""
+        original_variable = variable
+
+        # NB: standalone recursive transform was a convenience to avoid conditional disabling spurious checks and warnings in the lazy templating-integrated
+        # transformation. New transforms on container types may require it to be augmented or return to using the lazy template-backed impl.
+        for _attempt in range(TRANSFORM_CHAIN_LIMIT):
+            if isinstance(variable, str):  # str short-circuit matches templating's assumption that str instances cannot be transformed
+                return variable
+
+            if transform := _type_transform_mapping.get(type(variable)):
+                variable = transform(variable)
+                continue
+
+            if isinstance(variable, c.Mapping):
+                return AnsibleTagHelper.tag_copy(variable, ((key, self.transform(value)) for key, value in variable.items()), value_type=dict)
+
+            if isinstance(variable, c.Sequence):
+                return AnsibleTagHelper.tag_copy(variable, (self.transform(item) for item in variable), value_type=list)
+
+            return variable
+
+        raise AnsibleTemplateTransformLimitError(obj=original_variable)
+
     def template(
         self,
         variable: t.Any,  # DTFIX-MERGE: once we settle the new/old API boundaries, rename this (here and in other methods)
@@ -260,7 +286,7 @@ class TemplateEngine:
         """Templates (possibly recursively) any given data as input."""
         original_variable = variable
 
-        for _attempt in range(10):  # arbitrary limit for chained transforms to prevent cycles; an exception will be raised if exceeded
+        for _attempt in range(TRANSFORM_CHAIN_LIMIT):
             if variable is None or (value_type := type(variable)) in IGNORE_SCALAR_VAR_TYPES:
                 return variable  # quickly ignore supported scalar types which are not be templated
 
@@ -286,11 +312,12 @@ class TemplateEngine:
                 DeprecatedAccessAuditContext.when(ctx.is_top_level),
             ):
                 try:
-                    if (transform := _type_transform_mapping.get(value_type)) and value_type.__name__ not in ctx.options.unmask_type_names:
-                        variable = transform(variable)
-                        continue
-
                     if not value_is_str:
+                        # transforms are currently limited to non-str types as an optimization
+                        if (transform := _type_transform_mapping.get(value_type)) and value_type.__name__ not in ctx.options.unmask_type_names:
+                            variable = transform(variable)
+                            continue
+
                         template_result = _AnsibleLazyTemplateMixin._try_create(variable)
                     elif not is_possibly_template(variable, options.overrides):
                         template_result = variable

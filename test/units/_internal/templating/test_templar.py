@@ -1003,6 +1003,25 @@ def test_template_transform_limit_exceeded(mocker: pytest_mock.MockerFixture) ->
         TemplateEngine(variables=dict(limit=One())).template(TRUST.tag("{{ limit }}"))
 
 
+def test_transform_transform_limit_exceeded(mocker: pytest_mock.MockerFixture) -> None:
+    """
+    Verify that standalone recursive transforms cannot trigger an infinite loop.
+    This currently requires injecting bogus transforms to trigger the condition, but the logic is present to catch future coding errors.
+    """
+    class One:
+        def __init__(self, *args, **kwargs):
+            pass
+
+    class Two:
+        def __init__(self, *args, **kwargs):
+            pass
+
+    mocker.patch.dict(_transform._type_transform_mapping, {One: Two, Two: One})
+
+    with pytest.raises(AnsibleTemplateTransformLimitError):
+        TemplateEngine().transform(One())
+
+
 def test_deprecated_dedupe_and_source():
     """Validate dedupe and source context behavior for deprecated item access and associated warning behavior."""
     # unique tag instances that share the same contents (can be tracked independently by the audit context)

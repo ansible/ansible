@@ -245,7 +245,7 @@ class CallbackBase(AnsiblePlugin):
         abridged_result.pop('warnings', None)
         abridged_result.pop('deprecations', None)
 
-        abridged_result = Templar().template(abridged_result)  # ensure the callback now sees the same view a playbook does
+        abridged_result = Templar()._engine.transform(abridged_result)  # ensure the dumped view matches the transformed view a playbook sees
 
         if not serialize:
             # Just return ``abridged_result`` without going through serialization
