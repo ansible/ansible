@@ -541,7 +541,7 @@ DEFAULT_ALLOW_UNSAFE_LOOKUPS:
   version_added: "2.2.3"
   deprecated:
     why: This option is no longer used in the Ansible Core code base.
-    version: "2.21"
+    version: "2.23"
     alternatives: Lookup plugins are responsible for tagging strings containing templates to allow evaluation as a template.
 DEFAULT_ASK_PASS:
   name: Ask for the login password
@@ -811,7 +811,7 @@ DEFAULT_JINJA2_EXTENSIONS:
   - {key: jinja2_extensions, section: defaults}
   deprecated:
     why: Jinja2 extensions have been deprecated
-    version: "2.21"
+    version: "2.23"
     alternatives: Ansible-supported Jinja plugins (tests, filters, lookups)
 DEFAULT_JINJA2_NATIVE:
   name: Use Jinja2's NativeEnvironment for templating
@@ -825,7 +825,7 @@ DEFAULT_JINJA2_NATIVE:
   version_added: 2.7
   deprecated:
     why: This option is no longer used in the Ansible Core code base.
-    version: "2.21"
+    version: "2.23"
     alternatives: Jinja2 native mode is now the default and only option.
 DEFAULT_KEEP_REMOTE_FILES:
   name: Keep remote files
@@ -988,7 +988,7 @@ DEFAULT_NULL_REPRESENTATION:
   type: raw
   deprecated:
     why: This option is no longer used in the Ansible Core code base.
-    version: "2.21"
+    version: "2.23"
     alternatives: There is no alternative at the moment. A different mechanism would have to be implemented in the current code base.
 DEFAULT_POLL_INTERVAL:
   name: Async poll interval
@@ -1191,7 +1191,7 @@ DEFAULT_UNDEFINED_VAR_BEHAVIOR:
   type: boolean
   deprecated:
     why: This option is no longer used in the Ansible Core code base.
-    version: "2.21"
+    version: "2.23"
     alternatives: There is no alternative at the moment. A different mechanism would have to be implemented in the current code base.
 DEFAULT_VARS_PLUGIN_PATH:
   name: Vars Plugins Path
@@ -1279,6 +1279,7 @@ DEPRECATION_WARNINGS:
   type: boolean
   vars:
     - name: ansible_deprecation_warnings
+      version_added: '2.19'
 DEVEL_WARNING:
   name: Running devel warning
   default: True
@@ -1991,7 +1992,7 @@ STRING_TYPE_FILTERS:
   type: list
   deprecated:
     why: This option has no effect.
-    version: "2.18"
+    version: "2.23"
     alternatives: None; native types returned from filters are always preserved.
 SYSTEM_WARNINGS:
   name: System warnings
