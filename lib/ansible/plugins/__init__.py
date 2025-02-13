@@ -135,8 +135,9 @@ class AnsiblePlugin(metaclass=abc.ABCMeta):
         pass
 
     def __repr__(self):
+        ansible_name = getattr(self, 'ansible_name', '(unknown)')
         load_name = getattr(self, '_load_name', '(unknown)')
-        return f'{type(self).__name__}(plugin_type={self.plugin_type!r}, {load_name=!r})'
+        return f'{type(self).__name__}(plugin_type={self.plugin_type!r}, {ansible_name=!r}, {load_name=!r})'
 
 
 class AnsibleJinja2Plugin(AnsiblePlugin, metaclass=abc.ABCMeta):
