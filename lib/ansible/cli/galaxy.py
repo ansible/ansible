@@ -1791,8 +1791,8 @@ class GalaxyCLI(CLI):
                 display.display("WARNING: More than one Galaxy role associated with Github repo %s/%s." % (github_user, github_repo),
                                 color='yellow')
                 display.display("The following Galaxy roles are being updated:" + u'\n', color=C.COLOR_CHANGED)
-                for t in task:
-                    display.display('%s.%s' % (t['summary_fields']['role']['namespace'], t['summary_fields']['role']['name']), color=C.COLOR_CHANGED)
+                for ts in task:
+                    display.display('%s.%s' % (ts['summary_fields']['role']['namespace'], ts['summary_fields']['role']['name']), color=C.COLOR_CHANGED)
                 display.display(u'\nTo properly namespace this role, remove each of the above and re-import %s/%s from scratch' % (github_user, github_repo),
                                 color=C.COLOR_CHANGED)
                 return rc
