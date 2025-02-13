@@ -1,8 +1,6 @@
 - hosts: localhost
   gather_facts: false
   vars:
-    ansible_become: true
-    ansible_become_user: root
     become_unreachable_test_user: become_unreachable_test_user1
     ansible_connection: ssh
   tasks:
@@ -10,13 +8,15 @@
       block:
         - user:
             name: "{{ become_unreachable_test_user }}"
-            shell: /bin/sh
+            shell: /bin/bash
 
         - lineinfile:
-            name: "/home/{{ become_unreachable_test_user }}/.profile"
+            name: "~/.bashrc"
             regexp: "^sleep \\d+"
             line: "sleep 15"
             create: true
+          become: true
+          become_user: "{{ become_unreachable_test_user }}"
 
         - command: whoami
           loop:
@@ -26,9 +26,9 @@
           ignore_errors: true
           ignore_unreachable: true
           timeout: 30
-          vars:
-            ansible_become_user: "{{ become_unreachable_test_user }}"
-            ansible_become_flags: "-i"
+          become: true
+          become_user: "{{ become_unreachable_test_user }}"
+          become_flags: "-i"  # force loading .bashrc to timeout become
 
         - assert:
             that:
