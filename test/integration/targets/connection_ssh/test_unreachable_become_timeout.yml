@@ -8,10 +8,10 @@
       block:
         - user:
             name: "{{ become_unreachable_test_user }}"
-            shell: /bin/bash
+            shell: "{{ lookup('pipe', 'which bash') }}"
 
         - lineinfile:
-            name: "~/.bashrc"
+            name: "~/.bash_profile"
             regexp: "^sleep \\d+"
             line: "sleep 15"
             create: true
@@ -28,7 +28,7 @@
           timeout: 30
           become: true
           become_user: "{{ become_unreachable_test_user }}"
-          become_flags: "-i"  # force loading .bashrc to timeout become
+          become_flags: "-i"  # force loading .bash_profile to timeout become
 
         - assert:
             that:
