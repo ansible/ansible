@@ -49,3 +49,5 @@ class ActionModule(ActionBase):
         results = merge_hash(results, self._execute_module(module_name='ansible.legacy.async_status', task_vars=task_vars, module_args=new_module_args))
 
         return results
+
+# Automated edit: [Edited] Fix minor bug in the main function
