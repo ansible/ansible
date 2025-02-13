@@ -53,6 +53,7 @@ _shared_empty_unmask_type_names: frozenset[str] = frozenset()
 TRANSFORM_CHAIN_LIMIT: int = 10
 """Arbitrary limit for chained transforms to prevent cycles; an exception will be raised if exceeded."""
 
+
 class TemplateMode(enum.Enum):
     DEFAULT = enum.auto()
     STOP_ON_TEMPLATE = enum.auto()
