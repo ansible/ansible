@@ -181,3 +181,13 @@
           - '"[DEPRECATION WARNING]" in result.stderr'
           - '"deprecated_with_adj_docs " in result.stdout'
           - '"AUTHOR: Ansible Core Team" in result.stdout'
+
+    - name: Handle plugin docs
+      debug:
+        msg: "{{ lookup('broken_docs') }}"
+      register: r
+      ignore_errors: yes
+
+    - assert:
+        that:
+          - "'plugin broken_docs has malformed documentation' in r.msg"
