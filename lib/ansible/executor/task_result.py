@@ -7,7 +7,6 @@ from __future__ import annotations
 import typing as t
 
 from ansible import constants as C
-from ansible.utils.datatag.tags import NotATemplate
 from ansible.parsing.dataloader import DataLoader
 from ansible.vars.clean import module_response_deepcopy, strip_internal_keys
 
@@ -39,13 +38,6 @@ class TaskResult:
             self._result = return_data.copy()
         else:
             self._result = DataLoader().load(return_data)
-
-        # DTFIX-RELEASE: do this inline and on everything (or more things)?
-        if msg := self._result.get('msg'):
-            if isinstance(msg, str):
-                msg = NotATemplate().tag(msg)
-
-            self._result['msg'] = msg
 
         if task_fields is None:
             self._task_fields = dict()

@@ -101,14 +101,6 @@ class TrustedAsTemplate(AnsibleSingletonTagBase):
 
 
 @dataclasses.dataclass(**_tag_dataclass_kwargs)
-class NotATemplate(AnsibleSingletonTagBase):
-    """
-    Used for internal things like error messages that might contain a template-ish looking thing but that we don't
-    want to spam users with untrusted warnings or unnecessarily recurse into containers we know shouldn't be templated (for performance, not security).
-    """
-
-
-@dataclasses.dataclass(**_tag_dataclass_kwargs)
 class _EncryptedSource(AnsibleSingletonTagBase):
     """
     For internal use only.

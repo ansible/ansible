@@ -1327,7 +1327,7 @@ class EncryptedString(AnsibleTaggedObject):
     """
 
     # DTFIX-MERGE: DT allows templates in vaulted values; previously they were marked unsafe (why?) - if we want to preserve the old behavior,
-    #              just apply NotATemplate everywhere we create EncryptedString, since the tag will propagate to the output string upon decryption.
+    #              just remove TrustedAsTemplate everywhere we create an EncryptedString, since the tag will propagate to the output string upon decryption.
     __slots__ = ('_ciphertext', '_plaintext', '_ansible_tags_mapping')
 
     _subclasses_native_type: t.ClassVar[bool] = False

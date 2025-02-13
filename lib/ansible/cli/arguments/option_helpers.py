@@ -25,7 +25,7 @@ from ansible.module_utils.common.yaml import HAS_LIBYAML, yaml_load
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
 
-from ...utils.datatag.tags import TrustedAsTemplate, NotATemplate, Origin
+from ...utils.datatag.tags import TrustedAsTemplate, Origin
 
 
 #
@@ -534,7 +534,7 @@ def _tagged_type_factory(name: str, func: t.Callable[[str], object], /) -> t.Cal
 
         if result is value:
             # Values which are not mutated are automatically trusted for templating.
-            # The `is` reference equality is critically important, as other types like `_not_a_template_str` only alter the tags, so object equality is
+            # The `is` reference equality is critically important, as other types may only alter the tags, so object equality is
             # not sufficient to prevent them being tagged as trusted when they should not.
             result = TrustedAsTemplate().tag(result)
 
@@ -543,8 +543,3 @@ def _tagged_type_factory(name: str, func: t.Callable[[str], object], /) -> t.Cal
     tag_value._name = name  # simplify debugging by attaching the argument name to the function
 
     return tag_value
-
-
-def _not_a_template_str(value: str) -> str:
-    """An argparse type for CLI-sourced strings that should be marked NotATemplate instead of TrustedAsTemplate."""
-    return NotATemplate().tag(value)

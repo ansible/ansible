@@ -2058,7 +2058,7 @@ _TEMPLAR_UNSUPPORTED_VARIABLE_TYPE_BEHAVIOR:
   version_added: '2.19'
 _TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR:
   name: Templar untrusted template behavior
-  default: warn
+  default: ignore
   description:
     - Action to take when processing of an untrusted template is skipped.
     - For `ignore` or `warn`, the input template string is returned as-is.

@@ -27,7 +27,7 @@ from yaml.resolver import BaseResolver
 from ansible import constants as C
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.datatag import AnsibleTagHelper
-from ...utils.datatag.tags import Origin, TrustedAsTemplate, NotATemplate
+from ...utils.datatag.tags import Origin, TrustedAsTemplate
 from ansible.parsing.vault import VaultSecret, EncryptedString
 from ansible.utils.display import Display
 
@@ -35,7 +35,6 @@ from .errors import AnsibleConstructorError
 
 display = Display()
 
-_NOT_A_TEMPLATE: t.Final[NotATemplate] = NotATemplate()
 _TRUSTED_AS_TEMPLATE: t.Final[TrustedAsTemplate] = TrustedAsTemplate()
 
 
@@ -127,9 +126,7 @@ class AnsibleConstructor(SafeConstructor):
 
         tags = [self._node_position_info(node)]
 
-        if self._unsafe_depth:
-            tags.append(_NOT_A_TEMPLATE)
-        elif self._trusted_as_template:
+        if self._trusted_as_template and not self._unsafe_depth:
             # NB: since we're not context aware, this will happily add trust to dictionary keys; this is actually necessary for
             #  certain backward compat scenarios, though might be accomplished in other ways if we wanted to avoid trusting keys in
             #  the general scenario

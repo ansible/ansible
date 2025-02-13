@@ -40,7 +40,7 @@ from ansible.module_utils.datatag import AnsibleTagHelper, AnsibleDatatagBase
 from ansible.module_utils.datatag.tags import Deprecated
 from ansible._internal._templating import _transform
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
-from ansible.utils.datatag.tags import Origin, TrustedAsTemplate, NotATemplate
+from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
 from ansible.plugins.loader import init_plugin_loader
 from ansible._internal._templating._jinja_common import _TemplateConfig
 from ansible._internal._templating._jinja_plugins import _lookup
@@ -54,7 +54,6 @@ from units.mock.loader import DictDataLoader
 
 import pytest
 
-NOT_A_TEMPLATE = NotATemplate()
 TRUST = TrustedAsTemplate()
 
 origin = Origin(path="/some/path/for/testing", line_num=1, col_num=2)
@@ -905,7 +904,7 @@ def test_jinja2_loader_plugin(fixture: str, plugin_type: str, plugin_name: str, 
 
 
 def test_variable_name_as_template_success() -> None:
-    name = NotATemplate().tag(origin.tag("blar"))
+    name = origin.tag("blar")
 
     res = TemplateEngine().variable_name_as_template(name)
     assert res.replace(' ', '') == "{{blar}}"
@@ -913,7 +912,6 @@ def test_variable_name_as_template_success() -> None:
     required_tags: frozenset[AnsibleDatatagBase] = frozenset({origin, TrustedAsTemplate()})
 
     assert required_tags - AnsibleTagHelper.tags(res) == set()  # there might be others, that's fine
-    assert not NotATemplate.is_tagged_on(res)
 
 
 def test_variable_name_as_template_invalid() -> None:

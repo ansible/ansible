@@ -9,8 +9,6 @@ import locale
 import os
 import sys
 
-from ansible.utils.datatag.tags import NotATemplate
-
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
 if sys.version_info < (3, 11):
@@ -317,7 +315,7 @@ class CLI(ABC):
 
     @staticmethod
     def _get_secret(prompt: str) -> str:
-        return NotATemplate().tag(getpass.getpass(prompt=prompt))
+        return getpass.getpass(prompt=prompt)
 
     @staticmethod
     def ask_passwords():
@@ -626,7 +624,7 @@ class CLI(ABC):
         if not secret:
             raise AnsibleError('Empty password was provided from file (%s)' % pwd_file)
 
-        return NotATemplate().tag(to_text(secret))
+        return to_text(secret)
 
     @classmethod
     def cli_executor(cls, args=None):

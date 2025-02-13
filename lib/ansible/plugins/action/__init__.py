@@ -30,7 +30,6 @@ from ansible.executor.interpreter_discovery import discover_interpreter, Interpr
 from ansible.module_utils._internal import _traceback
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.datatag import AnsibleTagHelper
-from ansible.utils.datatag.tags import NotATemplate
 from ansible.module_utils.errors import UnsupportedError
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.serialization import get_module_decoder, Direction, get_module_encoder
@@ -1485,7 +1484,7 @@ class ActionBase(ABC):
         )
 
         if 'msg' not in result:
-            result.update(msg=NotATemplate().tag(_utils._dedupe_and_concat_message_chain([md.msg for md in error_summary.details])))
+            result.update(msg=_utils._dedupe_and_concat_message_chain([md.msg for md in error_summary.details]))
 
         return result
 

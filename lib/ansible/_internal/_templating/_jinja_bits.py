@@ -36,7 +36,7 @@ from ansible.module_utils.datatag import (
 
 from ansible.errors.handler import ErrorAction
 from ansible.parsing import vault as _vault
-from ansible.utils.datatag.tags import Origin, NotATemplate, TrustedAsTemplate
+from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
 
 from ._access import AnsibleAccessContext
 from ._datatag import _JinjaConstTemplate
@@ -479,7 +479,7 @@ def create_template_error(ex: Exception, variable: t.Any, is_expression: bool) -
         else:
             msg = f"Error rendering {kind}."
 
-        exception_to_raise = ex_type(NotATemplate().tag(msg), obj=variable)
+        exception_to_raise = ex_type(msg, obj=variable)
 
     if exception_to_raise.obj is None:
         exception_to_raise.obj = TemplateContext.current().template_value

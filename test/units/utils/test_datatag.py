@@ -8,7 +8,7 @@ import pytest
 
 from ansible.module_utils.datatag import AnsibleTagHelper
 from ansible.parsing.vault import EncryptedString, VaultSecretsContext, VaultSecret, VaultLib
-from ansible.utils.datatag.tags import Origin, NotATemplate, TrustedAsTemplate, VaultedValue
+from ansible.utils.datatag.tags import Origin, TrustedAsTemplate, VaultedValue
 from ..module_utils.datatag.test_datatag import TestDatatagTarget as _TestDatatagTarget, Later
 
 
@@ -39,16 +39,15 @@ class TestDatatagController(_TestDatatagTarget):
 
     tag_instances_with_reprs = [
         (Origin(path='/himom.yml', line_num=42, col_num=42), "Origin(path='/himom.yml', line_num=42, col_num=42)"),
-        (NotATemplate(), "NotATemplate()"),
         (TrustedAsTemplate(), "TrustedAsTemplate()"),
         (VaultedValue(ciphertext="hi mom I am a secret"), "VaultedValue(ciphertext='hi mom I am a secret')"),
     ]
 
     test_dataclass_tag_base_field_validation_fail_instances = [
-        (Origin, dict(path=NotATemplate().tag(''))),
-        (Origin, dict(line_num=NotATemplate().tag(1), path='')),
-        (Origin, dict(col_num=NotATemplate().tag(1), path='')),
-        (VaultedValue, dict(ciphertext=NotATemplate().tag(''))),
+        (Origin, dict(path=TrustedAsTemplate().tag(''))),
+        (Origin, dict(line_num=TrustedAsTemplate().tag(1), path='')),
+        (Origin, dict(col_num=TrustedAsTemplate().tag(1), path='')),
+        (VaultedValue, dict(ciphertext=TrustedAsTemplate().tag(''))),
     ]
 
     test_dataclass_tag_base_field_validation_pass_instances = [

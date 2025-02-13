@@ -37,7 +37,7 @@ from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.parsing.yaml.errors import AnsibleYAMLParserError
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing import vault
-from ansible.utils.datatag.tags import Origin, TrustedAsTemplate, NotATemplate
+from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
 from ansible.module_utils.datatag import _untaggable_types
 
 from units.mock.yaml_helper import YamlTestUtils
@@ -360,9 +360,6 @@ class TestAnsibleLoaderPlay(unittest.TestCase):
         assert Origin.get_tag(not_safe) == Origin(path=self.play_filename, line_num=27, col_num=35)
         assert Origin.get_tag(also_not_safe) == Origin(path=self.play_filename, line_num=28, col_num=40)
         assert Origin.get_tag(also_not_safe) == Origin(path=self.play_filename, line_num=28, col_num=40)
-
-        assert NotATemplate.is_tagged_on(not_safe)
-        assert NotATemplate.is_tagged_on(also_not_safe[0])
 
         assert not TrustedAsTemplate.is_tagged_on(not_safe)
         assert not TrustedAsTemplate.is_tagged_on(also_not_safe)

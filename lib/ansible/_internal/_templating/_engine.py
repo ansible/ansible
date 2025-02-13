@@ -25,7 +25,7 @@ from ansible.errors import (
 
 from ansible.module_utils.datatag import AnsibleTaggedObject, NotTaggableError, AnsibleTagHelper
 from ansible.errors.handler import Skippable
-from ansible.utils.datatag.tags import Origin, TrustedAsTemplate, NotATemplate
+from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
 from ansible.utils.display import Display
 from ansible.utils.vars import validate_variable_name
 from ansible.parsing.dataloader import DataLoader
@@ -42,10 +42,6 @@ from ._transform import _type_transform_mapping
 from ._utils import Omit, TemplateContext, IGNORE_SCALAR_VAR_TYPES
 
 _display = Display()
-
-
-def as_non_templatable_text(value: t.Any) -> str:
-    return AnsibleTagHelper.tag(str(value), AnsibleTagHelper.tags(value) | {NotATemplate()})
 
 
 _shared_empty_unmask_type_names: frozenset[str] = frozenset()
@@ -251,7 +247,7 @@ class TemplateEngine:
     def variable_name_as_template(name: str) -> str:
         """Return a trusted template string that will resolve the provided variable name. Raises an error if `name` is not a valid identifier."""
         validate_variable_name(name)
-        return AnsibleTagHelper.tag('{{' + name + '}}', (AnsibleTagHelper.tags(name) | {TrustedAsTemplate()}) - {NotATemplate()})
+        return AnsibleTagHelper.tag('{{' + name + '}}', (AnsibleTagHelper.tags(name) | {TrustedAsTemplate()}))
 
     def transform(self, variable: t.Any) -> t.Any:
         """Recursively apply transformations to the given value and return the result."""
@@ -292,9 +288,6 @@ class TemplateEngine:
                 return variable  # quickly ignore supported scalar types which are not be templated
 
             value_is_str = isinstance(variable, str)
-
-            if value_is_str and NotATemplate.is_tagged_on(variable):
-                return variable  # silently ignore strings explicitly tagged NotATemplate
 
             # DTFIX-MERGE: tighten this up, and figure out a better way to avoid propagating options
             if template_ctx := TemplateContext.current(optional=True):

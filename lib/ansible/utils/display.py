@@ -54,7 +54,7 @@ from ansible.errors import AnsibleAssertionError, AnsiblePromptInterrupt, Ansibl
 from ansible._internal._errors import _utils
 from ansible.module_utils._internal import _ambient_context
 from ansible.module_utils.common.text.converters import to_bytes, to_text
-from ansible.utils.datatag.tags import TrustedAsTemplate, NotATemplate
+from ansible.utils.datatag.tags import TrustedAsTemplate
 from ansible.module_utils.common.messages import ErrorSummary, WarningSummary, DeprecationSummary, Detail, SummaryBase
 from ansible.module_utils.six import text_type
 from ansible.module_utils._internal import _traceback
@@ -647,8 +647,6 @@ class Display(metaclass=Singleton):
     ) -> None:
         """Display a deprecation warning message, if enabled."""
 
-        msg = NotATemplate().tag(msg)  # avoid templates in deprecation messages triggering untrusted template warnings
-
         # This is the pre-proxy half of the `deprecated` implementation.
         # Any logic that must occur on workers needs to be implemented here.
 
@@ -908,11 +906,10 @@ class Display(metaclass=Singleton):
         # handle utf-8 chars
         result = to_text(result, errors='surrogate_or_strict')
 
-        if unsafe:
-            result = NotATemplate().tag(result)
-        else:
+        if not unsafe:
             # to maintain backward compatibility, assume these values are safe to template
             result = TrustedAsTemplate().tag(result)
+
         return result
 
     def _set_column_width(self) -> None:
