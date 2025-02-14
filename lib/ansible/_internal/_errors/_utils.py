@@ -125,7 +125,7 @@ def _create_error_summary(exception: BaseException, event: _traceback.TracebackE
             include_cause_message = current_exception.include_cause_message
             edc = Detail(
                 msg=current_exception.original_message.strip(),
-                formatted_source_context=current_exception.formatted_source_context,
+                formatted_source_context=current_exception._formatted_source_context,
                 help_text=current_exception.help_text,
             )
         else:

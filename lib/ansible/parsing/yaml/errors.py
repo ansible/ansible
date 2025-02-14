@@ -26,7 +26,7 @@ class AnsibleYAMLParserError(AnsibleParserError):
     _formatted_source_context_value: str | None = None
 
     @property
-    def formatted_source_context(self) -> str | None:
+    def _formatted_source_context(self) -> str | None:
         return self._formatted_source_context_value
 
     @classmethod

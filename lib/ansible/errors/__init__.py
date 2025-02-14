@@ -120,9 +120,7 @@ class AnsibleError(Exception):
         self._message = val
 
     @property
-    def formatted_source_context(self) -> str | None:
-        # DTFIX-MERGE: this is part of the new DT changes, the API needs additional cleanup before releasing
-
+    def _formatted_source_context(self) -> str | None:
         with _utils.RedactAnnotatedSourceContext.when(not self._show_content):
             if source_context := _utils.SourceContext.from_value(self.obj):
                 return str(source_context)
