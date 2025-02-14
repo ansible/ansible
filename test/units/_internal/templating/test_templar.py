@@ -836,18 +836,18 @@ def test_template_var_isolation():
 
 
 @pytest.mark.parametrize('fixture, plugin_type, plugin_name, expected', (
-    ('no_collections', 'filter', 'invalid/name.does_not_matter.also_does_not_matter', AnsibleTemplatePluginNotFoundError),  # plugin is None
+    ('no_collections', 'filter', 'invalid/name.does_not_matter.also_does_not_matter', AnsibleTemplateSyntaxError),  # plugin is None
     ('no_collections', 'lookup', 'invalid/name.does_not_matter.also_does_not_matter', AnsibleTemplatePluginNotFoundError),
-    ('no_collections', 'filter', 'missing_namespace_name.does_not_matter.also_does_not_matter', AnsibleTemplatePluginNotFoundError),  # KeyError
+    ('no_collections', 'filter', 'missing_namespace_name.does_not_matter.also_does_not_matter', AnsibleTemplateSyntaxError),  # KeyError
     ('no_collections', 'lookup', 'missing_namespace_name.does_not_matter.also_does_not_matter', AnsibleTemplatePluginNotFoundError),
 
-    ('valid_collection', 'filter', 'valid.invalid/name.does_not_matter', AnsibleTemplatePluginNotFoundError),  # KeyError
+    ('valid_collection', 'filter', 'valid.invalid/name.does_not_matter', AnsibleTemplateSyntaxError),  # KeyError
     ('valid_collection', 'lookup', 'valid.invalid/name.does_not_matter', AnsibleTemplatePluginNotFoundError),
-    ('valid_collection', 'filter', 'valid.missing_collection.does_not_matter', AnsibleTemplatePluginNotFoundError),  # KeyError
+    ('valid_collection', 'filter', 'valid.missing_collection.does_not_matter', AnsibleTemplateSyntaxError),  # KeyError
     ('valid_collection', 'lookup', 'valid.missing_collection.does_not_matter', AnsibleTemplatePluginNotFoundError),
-    ('valid_collection', 'filter', 'valid.also_valid.invalid/name', AnsibleTemplatePluginNotFoundError),  # plugin is None
+    ('valid_collection', 'filter', 'valid.also_valid.invalid/name', AnsibleTemplateSyntaxError),  # plugin is None
     ('valid_collection', 'lookup', 'valid.also_valid.invalid/name', AnsibleTemplatePluginNotFoundError),
-    ('valid_collection', 'filter', 'valid.also_valid.missing_plugin', AnsibleTemplatePluginNotFoundError),  # plugin is None
+    ('valid_collection', 'filter', 'valid.also_valid.missing_plugin', AnsibleTemplateSyntaxError),  # plugin is None
     ('valid_collection', 'lookup', 'valid.also_valid.missing_plugin', AnsibleTemplatePluginNotFoundError),
     ('valid_collection', 'filter', 'valid.also_valid.also_also_valid', []),
     ('valid_collection', 'lookup', 'valid.also_valid.also_also_valid', []),
@@ -855,21 +855,23 @@ def test_template_var_isolation():
     ('valid_collection', 'lookup', 'valid.also_valid.runtime_error', AnsibleTemplatePluginRuntimeError),
     ('valid_collection', 'filter', 'valid.also_valid.load_error', AnsibleTemplatePluginLoadError),  # AnsibleError
     ('valid_collection', 'lookup', 'valid.also_valid.load_error', AnsibleTemplatePluginLoadError),
+    ('valid_collection', 'template', '{% if false %}{{ 123 | valid.also_valid.load_error }}{% else %}Success{% endif %}', AnsibleTemplatePluginLoadError),
 
-    ('no_collections', 'filter', 'ansible.invalid/name.does_not_matter', AnsibleTemplatePluginNotFoundError),  # KeyError
+    ('no_collections', 'filter', 'ansible.invalid/name.does_not_matter', AnsibleTemplateSyntaxError),  # KeyError
     ('no_collections', 'lookup', 'ansible.invalid/name.does_not_matter', AnsibleTemplatePluginNotFoundError),
-    ('no_collections', 'filter', 'ansible.missing_collection.does_not_matter', AnsibleTemplatePluginNotFoundError),  # KeyError
+    ('no_collections', 'filter', 'ansible.missing_collection.does_not_matter', AnsibleTemplateSyntaxError),  # KeyError
     ('no_collections', 'lookup', 'ansible.missing_collection.does_not_matter', AnsibleTemplatePluginNotFoundError),
-    ('no_collections', 'filter', 'ansible.builtin.invalid/name', AnsibleTemplatePluginNotFoundError),  # plugin is None
+    ('no_collections', 'filter', 'ansible.builtin.invalid/name', AnsibleTemplateSyntaxError),  # plugin is None
     ('no_collections', 'lookup', 'ansible.builtin.invalid/name', AnsibleTemplatePluginNotFoundError),
-    ('no_collections', 'filter', 'ansible.builtin.missing_plugin', AnsibleTemplatePluginNotFoundError),  # plugin is None
+    ('no_collections', 'filter', 'ansible.builtin.missing_plugin', AnsibleTemplateSyntaxError),  # plugin is None
     ('no_collections', 'lookup', 'ansible.builtin.missing_plugin', AnsibleTemplatePluginNotFoundError),
     ('no_collections', 'filter', 'ansible.builtin.quote', 'foo'),
     ('no_collections', 'lookup', 'ansible.builtin.env', []),
+    ('no_collections', 'template', '{% if false %}{{ 123 | ansible.builtin.missing_plugin }}{% else %}Success{% endif %}', 'Success'),
 
-    ('no_collections', 'filter', 'invalid/name', AnsibleTemplatePluginNotFoundError),  # plugin is None
+    ('no_collections', 'filter', 'invalid/name', AnsibleTemplateSyntaxError),  # plugin is None
     ('no_collections', 'lookup', 'invalid/name', AnsibleTemplatePluginNotFoundError),
-    ('no_collections', 'filter', 'missing_plugin', AnsibleTemplatePluginNotFoundError),  # plugin is None
+    ('no_collections', 'filter', 'missing_plugin', AnsibleTemplateSyntaxError),  # plugin is None
     ('no_collections', 'lookup', 'missing_plugin', AnsibleTemplatePluginNotFoundError),
     ('no_collections', 'filter', 'quote', 'foo'),
     ('no_collections', 'lookup', 'env', []),
@@ -877,6 +879,8 @@ def test_template_var_isolation():
 def test_jinja2_loader_plugin(fixture: str, plugin_type: str, plugin_name: str, expected: t.Any) -> None:
     if plugin_type == 'filter':
         expression = f'{{{{ "foo" | {plugin_name} }}}}'
+    elif plugin_type == 'template':
+        expression = plugin_name  # abusing plugin_type and plugin_name to allow for testing arbitrary expressions
     else:
         expression = f'{{{{ lookup("{plugin_name}") }}}}'
 

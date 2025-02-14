@@ -17,7 +17,7 @@
 - assert:
     that:
       - error is failed
-      - error.msg is contains("filter plugin 'nope' was not found")
+      - error.msg is contains("No filter named 'nope'")
 
 - name: attempt to use a test plugin that fails to load
   raw: echo {{ '' is broken }}
@@ -38,7 +38,7 @@
 - assert:
     that:
       - error is failed
-      - error.msg is contains("test plugin 'nope' was not found")
+      - error.msg is contains("No test named 'nope'")
 
 - name: attempt to use a lookup plugin that fails to load
   raw: echo {{ lookup('broken') }}

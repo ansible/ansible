@@ -163,8 +163,16 @@ class TestActionBase(unittest.TestCase):
             shared_loader_obj=mock_shared_obj_loader,
         )
 
+        original_open = builtins.open
+
+        def custom_open(file, *args, **kwargs):
+            if file.endswith('.lock'):
+                return original_open(file, *args, **kwargs)
+            else:
+                return mock_open(read_data=to_bytes(python_module_replacers.strip(), encoding='utf-8'))(file, *args, **kwargs)
+            
         # test python module formatting
-        with patch.object(builtins, 'open', mock_open(read_data=to_bytes(python_module_replacers.strip(), encoding='utf-8'))):
+        with patch.object(builtins, 'open', custom_open):
             with patch.object(os, 'rename'):
                 mock_task.args = dict(a=1, foo='fö〩')
                 mock_connection.module_implementation_preferences = ('',)

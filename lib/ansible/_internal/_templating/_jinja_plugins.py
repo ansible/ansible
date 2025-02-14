@@ -67,7 +67,6 @@ class JinjaPluginIntercept(c.MutableMapping):
         if plugin_func := self._wrapped_funcs.get(key):
             return plugin_func
 
-        plugin_load_ex: Exception | None = None
         accept_marker = False
 
         try:
@@ -75,9 +74,6 @@ class JinjaPluginIntercept(c.MutableMapping):
         except KeyError:
             # The plugin name was invalid or no plugin was found by that name.
             pass
-        except AnsibleError as ex:
-            # The plugin was found, but an error occurred while trying to load the plugin.
-            plugin_load_ex = ex
         except Exception as ex:
             # An unexpected exception occurred.
             raise AnsibleTemplatePluginLoadError(self._plugin_loader.type, key) from ex
@@ -91,9 +87,6 @@ class JinjaPluginIntercept(c.MutableMapping):
             try:
                 plugin_func = self._jinja_builtins[key]
             except KeyError:
-                if plugin_load_ex:
-                    raise AnsibleTemplatePluginLoadError(self._plugin_loader.type, key) from plugin_load_ex
-
                 raise AnsibleTemplatePluginNotFoundError(self._plugin_loader.type, key) from None
 
         plugin_func = self._wrap_and_set_func(key, plugin_func, accept_marker)

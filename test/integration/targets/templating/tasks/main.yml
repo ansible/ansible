@@ -30,7 +30,7 @@
 - assert:
     that:
       - result is failed
-      - result.msg is contains("test plugin 'asdf ' was not found")
+      - result.msg is contains("No test named 'asdf '")
 
 - name: Ensure that runtime dispatch errors result in a failure
   debug:
