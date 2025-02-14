@@ -9,7 +9,6 @@ import functools
 import typing as t
 
 from ansible.errors import (
-    AnsibleError,
     AnsibleTemplatePluginError,
 )
 

@@ -170,7 +170,7 @@ class TestActionBase(unittest.TestCase):
                 return original_open(file, *args, **kwargs)
             else:
                 return mock_open(read_data=to_bytes(python_module_replacers.strip(), encoding='utf-8'))(file, *args, **kwargs)
-            
+
         # test python module formatting
         with patch.object(builtins, 'open', custom_open):
             with patch.object(os, 'rename'):
