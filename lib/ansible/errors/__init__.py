@@ -81,7 +81,7 @@ class AnsibleError(Exception):
 
         self._show_content = show_content
         self._message = message
-        self._help_text = help_text or self.default_help_text
+        self._help_text_value = help_text or self.default_help_text
         self.obj = obj
 
         # deprecated: description='deprecate support for orig_exc, callers should use `raise ... from` only' core_version='2.22'
@@ -128,14 +128,12 @@ class AnsibleError(Exception):
         return None
 
     @property
-    def help_text(self) -> str | None:
-        # DTFIX-MERGE: this is part of the new DT changes, the API needs additional cleanup before releasing
+    def _help_text(self) -> str | None:
+        return self._help_text_value
 
-        return self._help_text
-
-    @help_text.setter
-    def help_text(self, value: str | None) -> None:
-        self._help_text = value
+    @_help_text.setter
+    def _help_text(self, value: str | None) -> None:
+        self._help_text_value = value
 
     def __str__(self) -> str:
         return self.message

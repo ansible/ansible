@@ -157,7 +157,7 @@ Should be:
 
         error = cls(message, obj=source_context.origin)
         error._formatted_source_context_value = str(source_context)
-        error.help_text = help_text
+        error._help_text = help_text
 
         raise error from exception
 
