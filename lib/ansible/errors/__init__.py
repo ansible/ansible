@@ -48,7 +48,7 @@ class AnsibleError(Exception):
     # DTFIX-MERGE: this is part of the new DT changes, the API needs additional cleanup before releasing
     _exit_code = ExitCode.GENERIC_ERROR
     _default_message = ''
-    default_help_text: str | None = None
+    _default_help_text: str | None = None
     include_cause_message = True
     """
     When `True`, the exception message will be augmented with cause message(s).
@@ -81,7 +81,7 @@ class AnsibleError(Exception):
 
         self._show_content = show_content
         self._message = message
-        self._help_text_value = help_text or self.default_help_text
+        self._help_text_value = help_text or self._default_help_text
         self.obj = obj
 
         # deprecated: description='deprecate support for orig_exc, callers should use `raise ... from` only' core_version='2.22'
@@ -258,7 +258,7 @@ class TemplateTrustCheckFailedError(AnsibleTemplateError):
     """Raised when processing was requested on an untrusted template or expression."""
 
     _default_message = 'Encountered untrusted template or expression.'
-    default_help_text = 'Templates and expressions must be defined by trusted sources such as playbooks or roles, not untrusted sources such as module results.'
+    _default_help_text = 'Templates and expressions must be defined by trusted sources such as playbooks or roles, not untrusted sources such as module results.'
 
 
 class AnsibleTemplateTransformLimitError(AnsibleTemplateError):
