@@ -245,7 +245,7 @@ class UndecryptableVaultError(_captured.AnsibleCapturedError):
     """Template-external error raised by VaultExceptionMarker when an undecryptable variable is accessed."""
 
     context = 'vault'
-    default_message = "Attempt to use undecryptable variable."
+    _default_message = "Attempt to use undecryptable variable."
 
 
 class VaultExceptionMarker(ExceptionMarker):

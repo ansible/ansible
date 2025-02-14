@@ -47,7 +47,7 @@ class AnsibleError(Exception):
 
     # DTFIX-MERGE: this is part of the new DT changes, the API needs additional cleanup before releasing
     _exit_code = ExitCode.GENERIC_ERROR
-    default_message = ''
+    _default_message = ''
     default_help_text: str | None = None
     include_cause_message = True
     """
@@ -70,10 +70,10 @@ class AnsibleError(Exception):
         elif not isinstance(message, str):
             message = str(message)
 
-        if self.default_message and message:
-            message = _utils.concat_message(self.default_message, message)
-        elif self.default_message:
-            message = self.default_message
+        if self._default_message and message:
+            message = _utils.concat_message(self._default_message, message)
+        elif self._default_message:
+            message = self._default_message
         elif not message:
             message = f'Unexpected {type(self).__name__} error.'
 
@@ -169,7 +169,7 @@ class AnsibleUndefinedConfigEntry(AnsibleError):
 class AnsibleTaskError(AnsibleError):
     """Task execution failed; provides contextual information about the task."""
 
-    default_message = 'Task failed.'
+    _default_message = 'Task failed.'
 
 
 class AnsiblePromptInterrupt(AnsibleError):
@@ -209,7 +209,7 @@ class AnsibleFieldAttributeError(AnsibleParserError):
 class AnsibleJSONParserError(AnsibleParserError):
     """JSON-specific parsing failure wrapping an exception raised by the JSON parser."""
 
-    default_message = 'JSON parsing failed.'
+    _default_message = 'JSON parsing failed.'
     include_cause_message = False  # hide the underlying cause message, it's included by `handle_exception` as needed
 
     @classmethod
@@ -243,7 +243,7 @@ class AnsibleConnectionFailure(AnsibleRuntimeError):
 class AnsibleAuthenticationFailure(AnsibleConnectionFailure):
     """Invalid username/password/key."""
 
-    default_message = "Failed to authenticate."
+    _default_message = "Failed to authenticate."
 
 
 class AnsibleCallbackError(AnsibleRuntimeError):
@@ -257,14 +257,14 @@ class AnsibleTemplateError(AnsibleRuntimeError):
 class TemplateTrustCheckFailedError(AnsibleTemplateError):
     """Raised when processing was requested on an untrusted template or expression."""
 
-    default_message = 'Encountered untrusted template or expression.'
+    _default_message = 'Encountered untrusted template or expression.'
     default_help_text = 'Templates and expressions must be defined by trusted sources such as playbooks or roles, not untrusted sources such as module results.'
 
 
 class AnsibleTemplateTransformLimitError(AnsibleTemplateError):
     """The internal template transform limit was exceeded."""
 
-    default_message = "Template transform limit exceeded."
+    _default_message = "Template transform limit exceeded."
 
 
 class AnsibleTemplateSyntaxError(AnsibleTemplateError):

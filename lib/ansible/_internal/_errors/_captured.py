@@ -111,14 +111,14 @@ class AnsibleResultCapturedError(AnsibleCapturedError):
 class AnsibleActionCapturedError(AnsibleResultCapturedError):
     """An exception representing error detail sourced directly by an action in its result dictionary."""
 
-    default_message = 'Action failed.'
+    _default_message = 'Action failed.'
     context = 'action'
 
 
 class AnsibleModuleCapturedError(AnsibleResultCapturedError):
     """An exception representing error detail captured in a module context and returned from an action's result dictionary."""
 
-    default_message = 'Module failed.'
+    _default_message = 'Module failed.'
     context = 'target'
 
 

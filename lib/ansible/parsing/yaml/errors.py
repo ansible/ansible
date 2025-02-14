@@ -19,7 +19,7 @@ class AnsibleConstructorError(ConstructorError):
 class AnsibleYAMLParserError(AnsibleParserError):
     """YAML-specific parsing failure wrapping an exception raised by the YAML parser."""
 
-    default_message = 'YAML parsing failed.'
+    _default_message = 'YAML parsing failed.'
 
     include_cause_message = False  # hide the underlying cause message, it's included by `handle_exception` as needed
 
