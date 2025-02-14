@@ -135,6 +135,10 @@ class AnsibleError(Exception):
 
         return self._help_text
 
+    @help_text.setter
+    def help_text(self, value: str | None) -> None:
+        self._help_text = value
+
     def __str__(self) -> str:
         return self.message
 

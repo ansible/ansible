@@ -22,9 +22,12 @@ class AnsibleYAMLParserError(AnsibleParserError):
     default_message = 'YAML parsing failed.'
 
     include_cause_message = False  # hide the underlying cause message, it's included by `handle_exception` as needed
-    origin: Origin | None = None
-    formatted_source_context: str | None = None
-    help_text: str | None = None
+
+    _formatted_source_context_value: str | None = None
+
+    @property
+    def formatted_source_context(self) -> str | None:
+        return self._formatted_source_context_value
 
     @classmethod
     def handle_exception(cls, exception: Exception, origin: Origin) -> t.NoReturn:
@@ -153,7 +156,7 @@ Should be:
             message = re.sub(r'\s+', ' ', message).strip()
 
         error = cls(message, obj=source_context.origin)
-        error.formatted_source_context = str(source_context)
+        error._formatted_source_context_value = str(source_context)
         error.help_text = help_text
 
         raise error from exception
