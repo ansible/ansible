@@ -93,7 +93,7 @@ class ActionModule(ActionBase):
             if set(modules).intersection(set(C._ACTION_SETUP)):
                 # most don't realize how setup works with networking connection plugins (forced_local)
                 self._display.warning("Detected 'setup' module and a network OS is set, the output when running it will reflect 'localhost'"
-                                      " and not the target when a netwoking connection plugin is used.")
+                                      " and not the target when a networking connection plugin is used.")
 
         elif not set(modules).difference(set(C._ACTION_SETUP)):
             # no network OS and setup not in list, add setup by default since 'smart'
