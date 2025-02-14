@@ -46,7 +46,7 @@ class AnsibleError(Exception):
     """
 
     # DTFIX-MERGE: this is part of the new DT changes, the API needs additional cleanup before releasing
-    exit_code = ExitCode.GENERIC_ERROR
+    _exit_code = ExitCode.GENERIC_ERROR
     default_message = ''
     default_help_text: str | None = None
     include_cause_message = True
@@ -189,7 +189,7 @@ class AnsibleOptionsError(AnsibleError):
 
     # FIXME: This exception is used for many non-CLI related errors.
     #          The few cases which are CLI related should really be handled by argparse instead, at which point the exit code here can be removed.
-    exit_code = ExitCode.INVALID_CLI_OPTION
+    _exit_code = ExitCode.INVALID_CLI_OPTION
 
 
 class AnsibleRequiredOptionError(AnsibleOptionsError):
@@ -199,7 +199,7 @@ class AnsibleRequiredOptionError(AnsibleOptionsError):
 class AnsibleParserError(AnsibleError):
     """A playbook or data file could not be parsed."""
 
-    exit_code = ExitCode.PARSER_ERROR
+    _exit_code = ExitCode.PARSER_ERROR
 
 
 class AnsibleFieldAttributeError(AnsibleParserError):

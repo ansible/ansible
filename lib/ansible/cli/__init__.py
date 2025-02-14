@@ -649,7 +649,7 @@ class CLI(ABC):
             exit_code = cli.run()
         except AnsibleError as ex:
             display.error(ex)
-            exit_code = ex.exit_code
+            exit_code = ex._exit_code
         except KeyboardInterrupt:
             display.error("User interrupted execution")
             exit_code = ExitCode.KEYBOARD_INTERRUPT
