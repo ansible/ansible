@@ -81,4 +81,4 @@ ANSIBLE_CONFIG=./test_ssh_defaults.cfg ansible-playbook verify_config.yml "$@"
 ANSIBLE_SSH_CONTROL_PATH='/tmp/ssh cp with spaces' ansible -m ping all -e ansible_connection=ssh -i test_connection.inventory "$@"
 
 # Test that timeout on waiting on become is an unreachable error
-ANSIBLE_TIMEOUT=10 ansible-playbook test_unreachable_become_timeout.yml "$@"
+ansible-playbook test_unreachable_become_timeout.yml "$@"
