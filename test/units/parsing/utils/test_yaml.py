@@ -29,7 +29,7 @@ def test_json_parser_error() -> None:
             from_yaml(content, file_name=str(source_path), json_only=True)
 
     assert error.value.message == expected_message
-    assert error.value.original_message == expected_message
+    assert error.value._original_message == expected_message
     assert get_chained_message(error.value) == expected_message
     assert str(error.value) == expected_message
 

@@ -100,9 +100,7 @@ class AnsibleError(Exception):
             )
 
     @property
-    def original_message(self) -> str:
-        # DTFIX-MERGE: this is part of the new DT changes, the API needs additional cleanup before releasing
-
+    def _original_message(self) -> str:
         return self._message
 
     @property

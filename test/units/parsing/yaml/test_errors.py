@@ -86,7 +86,7 @@ def test_yaml_parser_error(
             from_yaml(content, file_name=str(source_path))
 
     assert error.value.message == expected_message
-    assert error.value.original_message == expected_message
+    assert error.value._original_message == expected_message
     assert get_chained_message(error.value) == expected_message
     assert str(error.value) == expected_message
 

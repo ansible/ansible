@@ -292,7 +292,7 @@ def test_profile(test_case: _TestCase) -> None:
         assert type(output.round_trip) is type(test_case.expected.round_trip)
 
         if isinstance(output.round_trip, AnsibleRuntimeError):
-            assert str(output.round_trip.original_message) == str(test_case.expected.round_trip.original_message)
+            assert str(output.round_trip._original_message) == str(test_case.expected.round_trip._original_message)
         else:
             assert output.round_trip == test_case.expected.round_trip
 
