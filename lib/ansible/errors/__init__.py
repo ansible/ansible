@@ -257,7 +257,8 @@ class TemplateTrustCheckFailedError(AnsibleTemplateError):
     """Raised when processing was requested on an untrusted template or expression."""
 
     _default_message = 'Encountered untrusted template or expression.'
-    _default_help_text = 'Templates and expressions must be defined by trusted sources such as playbooks or roles, not untrusted sources such as module results.'
+    _default_help_text = ('Templates and expressions must be defined by trusted sources such as playbooks or roles, '
+                          'not untrusted sources such as module results.')
 
 
 class AnsibleTemplateTransformLimitError(AnsibleTemplateError):
