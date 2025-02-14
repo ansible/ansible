@@ -21,7 +21,7 @@ class AnsibleYAMLParserError(AnsibleParserError):
 
     _default_message = 'YAML parsing failed.'
 
-    include_cause_message = False  # hide the underlying cause message, it's included by `handle_exception` as needed
+    _include_cause_message = False  # hide the underlying cause message, it's included by `handle_exception` as needed
 
     _formatted_source_context_value: str | None = None
 

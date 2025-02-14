@@ -122,7 +122,7 @@ def _create_error_summary(exception: BaseException, event: _traceback.TracebackE
 
     while current_exception:
         if isinstance(current_exception, errors.AnsibleError):
-            include_cause_message = current_exception.include_cause_message
+            include_cause_message = current_exception._include_cause_message
             edc = Detail(
                 msg=current_exception._original_message.strip(),
                 formatted_source_context=current_exception._formatted_source_context,

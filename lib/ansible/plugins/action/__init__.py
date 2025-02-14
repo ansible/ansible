@@ -1280,7 +1280,7 @@ class ActionBase(ABC):
                     help_text=help_text + "See stdout/stderr for the returned output.",
                 )
 
-                error.include_cause_message = include_cause_message
+                error._include_cause_message = include_cause_message
 
                 raise error from ex
             except AnsibleError as ansible_ex:

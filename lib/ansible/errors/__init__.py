@@ -45,11 +45,10 @@ class AnsibleError(Exception):
     Where "obj" may be tagged with Origin to provide context for error messages.
     """
 
-    # DTFIX-MERGE: this is part of the new DT changes, the API needs additional cleanup before releasing
     _exit_code = ExitCode.GENERIC_ERROR
     _default_message = ''
     _default_help_text: str | None = None
-    include_cause_message = True
+    _include_cause_message = True
     """
     When `True`, the exception message will be augmented with cause message(s).
     Subclasses doing complex error analysis can disable this to take responsibility for reporting cause messages as needed.
@@ -210,7 +209,7 @@ class AnsibleJSONParserError(AnsibleParserError):
     """JSON-specific parsing failure wrapping an exception raised by the JSON parser."""
 
     _default_message = 'JSON parsing failed.'
-    include_cause_message = False  # hide the underlying cause message, it's included by `handle_exception` as needed
+    _include_cause_message = False  # hide the underlying cause message, it's included by `handle_exception` as needed
 
     @classmethod
     def handle_exception(cls, exception: Exception, origin: Origin) -> t.NoReturn:
