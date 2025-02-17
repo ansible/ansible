@@ -4,6 +4,27 @@ ansible-core 2.18 "Fool in the Rain" Release Notes
 
 .. contents:: Topics
 
+v2.18.3rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2025-02-17
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Automatically retry HTTP GET/PUT/DELETE requests on exceptions.
+- ansible-test - Use Python's ``urllib`` instead of ``curl`` for HTTP requests.
+
+Bugfixes
+--------
+
+- include_vars - fixed erroneous warning if an unreserved variable name contains a single character that matches a reserved variable. (https://github.com/ansible/ansible/issues/84623)
+- linear strategy - fix executing ``end_role`` meta tasks for each host, instead of handling these as implicit run_once tasks (https://github.com/ansible/ansible/issues/84660).
+
 v2.18.2
 =======
 
