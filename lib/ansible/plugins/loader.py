@@ -16,6 +16,7 @@ import warnings
 from collections import defaultdict, namedtuple
 from importlib import import_module
 from traceback import format_exc
+from yaml.parser import ParserError
 
 import ansible.module_utils.compat.typing as t
 
@@ -407,7 +408,10 @@ class PluginLoader:
 
             # if type name != 'module_doc_fragment':
             if type_name in C.CONFIGURABLE_PLUGINS and not C.config.has_configuration_definition(type_name, name):
-                dstring = AnsibleLoader(getattr(module, 'DOCUMENTATION', ''), file_name=path).get_single_data()
+                try:
+                    dstring = AnsibleLoader(getattr(module, 'DOCUMENTATION', ''), file_name=path).get_single_data()
+                except ParserError as e:
+                    raise AnsibleError(f"plugin {name} has malformed documentation!") from e
 
                 # TODO: allow configurable plugins to use sidecar
                 # if not dstring:
