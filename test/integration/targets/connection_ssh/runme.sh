@@ -79,3 +79,6 @@ ANSIBLE_CONFIG=./test_ssh_defaults.cfg ansible-playbook verify_config.yml "$@"
 # ensure we handle cp with spaces correctly, otherwise would fail with
 # `"Failed to connect to the host via ssh: command-line line 0: keyword controlpath extra arguments at end of line"`
 ANSIBLE_SSH_CONTROL_PATH='/tmp/ssh cp with spaces' ansible -m ping all -e ansible_connection=ssh -i test_connection.inventory "$@"
+
+# Test that timeout on waiting on become is an unreachable error
+ansible-playbook test_unreachable_become_timeout.yml "$@"

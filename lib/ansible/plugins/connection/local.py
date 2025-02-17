@@ -46,7 +46,7 @@ import time
 import typing as t
 
 import ansible.constants as C
-from ansible.errors import AnsibleError, AnsibleFileNotFound
+from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleConnectionFailure
 from ansible.module_utils.six import text_type, binary_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
@@ -173,7 +173,7 @@ class Connection(ConnectionBase):
         expect_password_prompt = self.become.expect_prompt()
         sent_password = False
 
-        def become_error(reason: str) -> t.NoReturn:
+        def become_error_msg(reason: str) -> str:
             error_message = f'{reason} waiting for become success'
 
             if expect_password_prompt and not sent_password:
@@ -187,7 +187,7 @@ class Connection(ConnectionBase):
             if become_stderr:
                 error_message += f'\n>>> Standard Error\n{to_text(bytes(become_stderr))}'
 
-            raise AnsibleError(error_message)
+            return error_message
 
         os.set_blocking(p.stdout.fileno(), False)
         os.set_blocking(p.stderr.fileno(), False)
@@ -198,14 +198,14 @@ class Connection(ConnectionBase):
 
             while not self.become.check_success(become_stdout):
                 if not selector.get_map():  # we only reach end of stream after all descriptors are EOF
-                    become_error('Premature end of stream')
+                    raise AnsibleError(become_error_msg('Premature end of stream'))
 
                 if expect_password_prompt and (
                     self.become.check_password_prompt(become_stdout[last_stdout_prompt_offset:]) or
                     self.become.check_password_prompt(become_stderr[last_stderr_prompt_offset:])
                 ):
                     if sent_password:
-                        become_error('Duplicate become password prompt encountered')
+                        raise AnsibleError(become_error_msg('Duplicate become password prompt encountered'))
 
                     last_stdout_prompt_offset = len(become_stdout)
                     last_stderr_prompt_offset = len(become_stderr)
@@ -225,7 +225,7 @@ class Connection(ConnectionBase):
 
                 if not events:
                     # ignoring remaining output after timeout to prevent hanging
-                    become_error('Timed out')
+                    raise AnsibleConnectionFailure(become_error_msg('Timed out'))
 
                 # read all content (non-blocking) from streams that signaled available input and append to the associated buffer
                 for key, event in events:

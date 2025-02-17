@@ -54,10 +54,10 @@
         ansible_su_prompt_l10n: NOT_A_VALID_PROMPT
         ansible_local_become_success_timeout: 3  # actual become success timeout
         ansible_ssh_timeout: 3  # connection timeout, which results in an N+2 second select timeout
-      ignore_errors: yes
+      ignore_unreachable: yes
 
     - assert:
         that:
-          - wrong_su_prompt is failed
+          - wrong_su_prompt is unreachable
           - ansible_connection != "local" or wrong_su_prompt.msg is contains "Timed out waiting for become success or become password prompt"
           - ansible_connection != "ssh" or wrong_su_prompt.msg is contains "waiting for privilege escalation prompt"

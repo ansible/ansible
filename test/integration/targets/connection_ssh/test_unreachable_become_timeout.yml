@@ -1,0 +1,43 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    become_unreachable_test_user: become_unreachable_test_user1
+    ansible_connection: ssh
+    ansible_ssh_timeout: 3
+  tasks:
+    - name: Test that timeout on waiting on become is an unreachable error
+      block:
+        - user:
+            name: "{{ become_unreachable_test_user }}"
+            shell: "{{ lookup('pipe', 'which bash') }}"
+
+        - lineinfile:
+            name: "~/.bash_profile"
+            regexp: "^sleep \\d+"
+            line: "sleep 5"
+            create: true
+          become: true
+          become_user: "{{ become_unreachable_test_user }}"
+
+        - command: whoami
+          loop:
+            - 1
+            - 2
+          register: r
+          ignore_errors: true
+          ignore_unreachable: true
+          timeout: 15
+          become: true
+          become_user: "{{ become_unreachable_test_user }}"
+          become_flags: "-i"  # force loading .bash_profile to timeout become
+
+        - assert:
+            that:
+              - r.results|length == 2
+              - r.results[0]["msg"] is contains("Timeout (5s) waiting for privilege escalation prompt:")
+              - r.results[1]["msg"] is contains("Timeout (5s) waiting for privilege escalation prompt:")
+              - r is unreachable
+      always:
+        - user:
+            name: "{{ become_unreachable_test_user }}"
+            state: absent
