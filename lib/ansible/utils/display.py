@@ -354,7 +354,7 @@ class Display(metaclass=Singleton):
     @staticmethod
     def _proxy(
         func: c.Callable[t.Concatenate[Display, P], str | None]
-    ) -> c.Callable[..., None | str]:
+    ) -> c.Callable[..., None]:
         @wraps(func)
         def wrapper(self, *args: P.args, **kwargs: P.kwargs) -> str | None:
             if self._final_q:
@@ -577,24 +577,18 @@ class Display(metaclass=Singleton):
         removed: bool = False,
         date: str | None = None,
         collection_name: str | None = None,
-    ) -> str:
+    ) -> None:
 
-        if not removed and not C.DEPRECATION_WARNINGS:
-            return ''
+        if removed or C.DEPRECATION_WARNINGS:
 
-        message_text = self.get_deprecation_message(msg, version=version, removed=removed, date=date, collection_name=collection_name)
+            message_text = self.get_deprecation_message(msg, version=version, removed=removed, date=date, collection_name=collection_name)
 
-        wrapped = textwrap.wrap(message_text, self.columns, drop_whitespace=False)
-        message_text = "\n".join(wrapped) + "\n"
+            wrapped = textwrap.wrap(message_text, self.columns, drop_whitespace=False)
+            message_text = "\n".join(wrapped) + "\n"
 
-        if removed:
-            return message_text
-
-        if message_text not in self._deprecations:
-            self.display(message_text.strip(), color=C.COLOR_DEPRECATE, stderr=True)
-            self._deprecations[message_text] = 1
-
-        return ''
+            if message_text not in self._deprecations:
+                self.display(message_text.strip(), color=C.COLOR_DEPRECATE, stderr=True)
+                self._deprecations[message_text] = 1
 
     @_proxy
     def warning(self, msg: str, formatted: bool = False) -> None:
