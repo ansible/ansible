@@ -864,12 +864,10 @@ class PluginLoader:
         ctx = self.get_with_context(name, *args, **kwargs)
         is_core_plugin = ctx.plugin_load_context.plugin_resolved_collection == 'ansible.builtin'
         if self.class_name == 'StrategyModule' and not is_core_plugin:
-            display.deprecated(
-                (
-                    'Use of strategy plugins not included in ansible.builtin is deprecated. No alternative '
-                    'for third party strategy plugins is currently planned.'
-                ),
-                version='2.21'
+            display.deprecated(  # pylint: disable=ansible-deprecated-no-version
+                'Use of strategy plugins not included in ansible.builtin are deprecated and do not carry '
+                'any backwards compatibility guarantees. No alternative for third party strategy plugins '
+                'is currently planned.'
             )
 
         return ctx.object
