@@ -259,10 +259,36 @@ from ansible.module_utils.facts.packages import CLIMgr, RespawningLibMgr, get_al
 
 
 ALIASES = {
-    'rpm': ['dnf', 'dnf5', 'yum' , 'zypper'],
+    'dnf': ['dnf', 'dnf5'],
+    'rpm': ['yum' , 'zypper'],
     'pkg': ['pkg5', 'pkgng'],
     'pkg_info': ['openbsd_pkg'],
 }
+
+
+class DNF(RespawningLibMgr):
+    LIB = "dnf"
+    CLI_BINARIES = ['dnf']
+
+    def list_installed(self):
+        base = self._lib.Base()
+        base.read_all_repos()
+
+        base.update_cache()
+        base.fill_sack()
+
+        packages = base.sack.query().installed()
+        return packages
+
+    def get_package_details(self, package):
+        return dict(
+            name=package.name,
+            version=package.version,
+            release=package.release,
+            epoch=package.epoch,
+            arch=package.arch,
+            repo=package.reponame,
+        )
 
 
 class RPM(RespawningLibMgr):

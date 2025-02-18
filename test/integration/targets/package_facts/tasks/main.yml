@@ -71,6 +71,40 @@
         that: ansible_facts.packages is defined
   when: (ansible_os_family == "RedHat")
 
+- name: Run package_fact tests using dnf
+  block:
+    - name: Install DNF bindings
+      package: name="python3-rpm" state=present
+
+    - name: Gather package facts
+      package_facts:
+        manager: dnf
+
+    - name: Get first package available
+      set_fact:
+        package_name: "{{ (ansible_facts.packages.keys() | list )[0] }}"
+      when: ansible_facts.packages is defined
+
+    - name: check for ansible_facts.packages exists
+      assert:
+        that:
+          - ansible_facts.packages is defined
+
+    - name: Check if the required values are also populated
+      assert:
+        that:
+          - ansible_facts.packages[package_name][0][item] is defined
+      loop:
+        - 'name'
+        - 'version'
+        - 'release'
+        - 'epoch'
+        - 'arch'
+        - 'repo'
+        - 'source'
+      when: package_name is defined
+  when: ansible_distribution == 'Fedora'
+
 - name: Run package_fact tests - SUSE/OpenSUSE Family
   block:
     - name: install python rpm bindings - python2

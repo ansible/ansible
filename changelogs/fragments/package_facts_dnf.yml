@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - pacakge_facts - add support for dnf Python bindings for gathering package facts (https://github.com/ansible/ansible/issues/84123).
