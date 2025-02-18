@@ -330,24 +330,33 @@ class Play(Base, Taggable, CollectionSearch):
             noop_task.set_loader(self._loader)
 
             b = Block(play=self)
-            nt = noop_task.copy(exclude_parent=True)
-            nt._parent = b
-            b.block = self.pre_tasks or [nt]
+            if self.pre_tasks:
+                b.block = self.pre_tasks
+            else:
+                nt = noop_task.copy(exclude_parent=True)
+                nt._parent = b
+                b.block = [nt]
             b.always = [flush_block]
             block_list.append(b)
 
             tasks = self._compile_roles() + self.tasks
             b = Block(play=self)
-            nt = noop_task.copy(exclude_parent=True)
-            nt._parent = b
-            b.block = tasks or [nt]
+            if tasks:
+                b.block = tasks
+            else:
+                nt = noop_task.copy(exclude_parent=True)
+                nt._parent = b
+                b.block = [nt]
             b.always = [flush_block]
             block_list.append(b)
 
             b = Block(play=self)
-            nt = noop_task.copy(exclude_parent=True)
-            nt._parent = b
-            b.block = self.post_tasks or [nt]
+            if self.post_tasks:
+                b.block = self.post_tasks
+            else:
+                nt = noop_task.copy(exclude_parent=True)
+                nt._parent = b
+                b.block = [nt]
             b.always = [flush_block]
             block_list.append(b)
 
