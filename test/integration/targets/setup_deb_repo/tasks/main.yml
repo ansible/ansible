@@ -61,6 +61,9 @@
       - testing
     when: install_repo|default(True)|bool is true
 
+  when: ansible_distribution in ['Ubuntu', 'Debian']
+
+- block:
   # Need to uncomment the deb-src for the universe component for build-dep state
   - name: Ensure deb-src for the universe component
     lineinfile:
@@ -80,4 +83,4 @@
       sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
     when: ansible_distribution_version is version('24.04', '>=')
 
-  when: ansible_distribution in ['Ubuntu', 'Debian']
+  when: ansible_distribution == 'Ubuntu'
