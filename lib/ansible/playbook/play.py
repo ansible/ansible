@@ -318,6 +318,9 @@ class Play(Base, Taggable, CollectionSearch):
         else:
             flush_block.block = [t]
 
+        # NOTE keep flush_handlers tasks even if a section has no regular tasks,
+        #      there may be notified handlers from the previous section
+        #      (typically when a handler notifies a handler defined before)
         block_list = []
         if self.force_handlers:
             noop_task = Task()
@@ -327,21 +330,24 @@ class Play(Base, Taggable, CollectionSearch):
             noop_task.set_loader(self._loader)
 
             b = Block(play=self)
-            noop_task._parent = b
-            b.block = self.pre_tasks or [noop_task]
+            nt = noop_task.copy(exclude_parent=True)
+            nt._parent = b
+            b.block = self.pre_tasks or [nt]
             b.always = [flush_block]
             block_list.append(b)
 
             tasks = self._compile_roles() + self.tasks
             b = Block(play=self)
-            noop_task._parent = b
-            b.block = tasks or [noop_task]
+            nt = noop_task.copy(exclude_parent=True)
+            nt._parent = b
+            b.block = tasks or [nt]
             b.always = [flush_block]
             block_list.append(b)
 
             b = Block(play=self)
-            noop_task._parent = b
-            b.block = self.post_tasks or [noop_task]
+            nt = noop_task.copy(exclude_parent=True)
+            nt._parent = b
+            b.block = self.post_tasks or [nt]
             b.always = [flush_block]
             block_list.append(b)
 
