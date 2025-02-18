@@ -79,8 +79,7 @@ def test_jinja_undefined_shape():
 
     assert all(hasattr(jinja2.StrictUndefined, a) for a in required_attrs)
 
-    # DTFIX-U: this just started failing after the most recent rebase when it was `assert jinja2.StrictUndefined.__slots__`
-    assert hasattr(jinja2.StrictUndefined, '__slots__')  # we don't currently care what's slotted, just that the attr exists (or has been patched back on)
+    assert isinstance(jinja2.StrictUndefined.__slots__, tuple)  # we don't actually care what's slotted, just that the attr exists (or has been patched back on)
 
 
 @pytest.mark.parametrize("name", get_dunder_methods_to_intercept())
