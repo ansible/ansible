@@ -18,8 +18,6 @@ from collections import defaultdict, namedtuple
 from importlib import import_module
 from yaml.parser import ParserError
 
-import ansible.module_utils.compat.typing as t
-
 from ansible import __version__ as ansible_version
 from ansible import _internal, constants as C
 from ansible.errors import AnsibleError, AnsiblePluginCircularRedirect, AnsiblePluginRemovedError, AnsibleCollectionUnsupportedVersionError
