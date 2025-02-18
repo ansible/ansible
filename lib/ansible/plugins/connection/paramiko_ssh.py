@@ -326,6 +326,10 @@ class Connection(ConnectionBase):
     transport = 'paramiko'
     _log_channel: str | None = None
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        display.deprecated('The paramiko connection plugin is deprecated', version='2.21')
+
     def _cache_key(self) -> str:
         return "%s__%s__" % (self.get_option('remote_addr'), self.get_option('remote_user'))
 

@@ -7,6 +7,8 @@ from __future__ import annotations
 import types  # pylint: disable=unused-import
 import warnings
 
+from ansible.module_utils.common.warnings import deprecate
+
 PARAMIKO_IMPORT_ERR = None
 
 try:
@@ -24,3 +26,5 @@ try:
 except Exception as err:
     paramiko = None  # type: types.ModuleType | None  # type: ignore[no-redef]
     PARAMIKO_IMPORT_ERR = err
+
+deprecate('The paramiko compat import is deprecated', version='2.21')
