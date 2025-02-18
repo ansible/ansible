@@ -40,6 +40,7 @@ import shutil
 
 from pathlib import Path
 
+from ansible.module_utils.common.messages import PluginInfo
 from ansible.release import __version__
 import ansible.utils.vars as utils_vars
 from ansible.parsing.dataloader import DataLoader
@@ -171,11 +172,18 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
     modname = os.path.basename(modfile)
     modname = os.path.splitext(modname)[0]
 
+    plugin = PluginInfo(
+        requested_name=modname,
+        resolved_name=modname,
+        type='module',
+    )
+
     built_module = module_common.modify_module(
-        modname,
-        modfile,
-        complex_args,
-        Templar(loader=loader),
+        module_name=modname,
+        plugin=plugin,
+        module_path=modfile,
+        module_args=complex_args,
+        templar=Templar(loader=loader),
         task_vars=task_vars
     )
 

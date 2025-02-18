@@ -23,7 +23,7 @@ from ansible.module_utils.common.json import (
     _JSONSerializationProfile,
 )
 
-from ansible.module_utils.common.messages import ErrorSummary, WarningSummary, DeprecationSummary, Detail
+from ansible.module_utils.common.messages import ErrorSummary, WarningSummary, DeprecationSummary, Detail, PluginInfo
 
 from ansible.module_utils.datatag import (
     AnsibleSerializable,
@@ -77,6 +77,7 @@ message_instances = [
     ErrorSummary._from_details(Detail(msg="bla"), formatted_traceback="tb"),
     WarningSummary._from_details(Detail(msg="bla", formatted_source_context="sc"), formatted_traceback="tb"),
     DeprecationSummary._from_details(Detail(msg="bla", formatted_source_context="sc"), formatted_traceback="tb", version="1.2.3"),
+    PluginInfo(requested_name='a.b.c', resolved_name='a.b.c', type='module'),
 ]
 
 

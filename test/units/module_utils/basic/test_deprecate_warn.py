@@ -6,11 +6,16 @@
 from __future__ import annotations
 
 import json
+import typing as t
 
 import pytest
 
+from ansible.module_utils._internal._ansiballz import _ModulePluginWrapper
+from ansible.module_utils._internal._plugin_exec_context import PluginExecContext
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.serialization import get_module_decoder, Direction
-from ansible.module_utils.common.messages import Detail, DeprecationSummary, WarningSummary
+from ansible.module_utils.common import warnings
+from ansible.module_utils.common.messages import Detail, DeprecationSummary, WarningSummary, PluginInfo
 
 pytestmark = pytest.mark.usefixtures("module_env_mocker")
 
@@ -28,34 +33,39 @@ def test_warn(am, capfd):
     assert actual == expected
 
 
-@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
-def test_deprecate(am, capfd):
-    am.deprecate('deprecation1')  # pylint: disable=ansible-deprecated-no-version
-    am.deprecate('deprecation2', '2.3')  # pylint: disable=ansible-deprecated-version
-    am.deprecate('deprecation3', version='2.4')  # pylint: disable=ansible-deprecated-version
-    am.deprecate('deprecation4', date='2020-03-10')
-    am.deprecate('deprecation5', collection_name='ansible.builtin')  # pylint: disable=ansible-deprecated-no-version
-    am.deprecate('deprecation6', '2.3', collection_name='ansible.builtin')  # pylint: disable=ansible-deprecated-version
-    am.deprecate('deprecation7', version='2.4', collection_name='ansible.builtin')  # pylint: disable=ansible-deprecated-version
-    am.deprecate('deprecation8', date='2020-03-10', collection_name='ansible.builtin')
+@pytest.mark.parametrize('kwargs,plugin_name,stdin', (
+    (dict(msg='deprecation1'), None, {}),
+    (dict(msg='deprecation3', version='2.4'), None, {}),
+    (dict(msg='deprecation4', date='2020-03-10'), None, {}),
+    (dict(msg='deprecation5'), 'ansible.builtin.ping', {}),
+    (dict(msg='deprecation7', version='2.4'), 'ansible.builtin.ping', {}),
+    (dict(msg='deprecation8', date='2020-03-10'), 'ansible.builtin.ping', {}),
+), indirect=['stdin'])
+def test_deprecate(am: AnsibleModule, capfd, kwargs: dict[str, t.Any], plugin_name: str | None) -> None:
+    plugin_info = PluginInfo(requested_name=plugin_name, resolved_name=plugin_name, type='module') if plugin_name else None
+    executing_plugin = _ModulePluginWrapper(plugin_info) if plugin_info else None
+    collection_name = plugin_name.rpartition('.')[0] if plugin_name else None
 
-    with pytest.raises(SystemExit):
-        am.exit_json(deprecations=['deprecation9', ('deprecation10', '2.4')])
+    with PluginExecContext.when(bool(executing_plugin), executing_plugin=executing_plugin):
+        am.deprecate(**kwargs)
+
+        assert warnings.get_deprecation_messages() == (dict(collection_name=collection_name, **kwargs),)
+
+        with pytest.raises(SystemExit):
+            am.exit_json(deprecations=['deprecation9', ('deprecation10', '2.4')])
 
     out, err = capfd.readouterr()
+
     output = json.loads(out, cls=get_module_decoder('legacy', Direction.MODULE_TO_CONTROLLER))
+
     assert ('warnings' not in output or output['warnings'] == [])
+
+    msg = kwargs.pop('msg')
+
     assert output['deprecations'] == [
-        DeprecationSummary._from_details(Detail(msg='deprecation1'), version=None, collection_name=None),
-        DeprecationSummary._from_details(Detail(msg='deprecation2'), version='2.3', collection_name=None),
-        DeprecationSummary._from_details(Detail(msg='deprecation3'), version='2.4', collection_name=None),
-        DeprecationSummary._from_details(Detail(msg='deprecation4'), date='2020-03-10', collection_name=None),
-        DeprecationSummary._from_details(Detail(msg='deprecation5'), version=None, collection_name='ansible.builtin'),
-        DeprecationSummary._from_details(Detail(msg='deprecation6'), version='2.3', collection_name='ansible.builtin'),
-        DeprecationSummary._from_details(Detail(msg='deprecation7'), version='2.4', collection_name='ansible.builtin'),
-        DeprecationSummary._from_details(Detail(msg='deprecation8'), date='2020-03-10', collection_name='ansible.builtin'),
-        DeprecationSummary._from_details(Detail(msg='deprecation9'), version=None, collection_name=None),
-        DeprecationSummary._from_details(Detail(msg='deprecation10'), version='2.4', collection_name=None),
+        DeprecationSummary._from_details(Detail(msg=msg), **kwargs, plugin=plugin_info),
+        DeprecationSummary._from_details(Detail(msg='deprecation9'), plugin=plugin_info),
+        DeprecationSummary._from_details(Detail(msg='deprecation10'), version='2.4', plugin=plugin_info),
     ]
 
 
@@ -68,7 +78,7 @@ def test_deprecate_without_list(am, capfd):
     output = json.loads(out, cls=get_module_decoder('legacy', Direction.MODULE_TO_CONTROLLER))
     assert ('warnings' not in output or output['warnings'] == [])
     assert output['deprecations'] == [
-        DeprecationSummary._from_details(Detail(msg='Simple deprecation warning'), version=None, collection_name=None),
+        DeprecationSummary._from_details(Detail(msg='Simple deprecation warning')),
     ]
 
 

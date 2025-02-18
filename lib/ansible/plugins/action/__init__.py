@@ -44,6 +44,9 @@ from ansible.utils.plugin_docs import get_versioned_doclink
 from ansible import _internal
 from ansible._internal._templating import _engine
 
+from .. import _AnsiblePluginInfoMixin
+from ...module_utils.common.messages import PluginInfo
+
 display = Display()
 
 if t.TYPE_CHECKING:
@@ -66,8 +69,7 @@ def _validate_utf8_json(d):
             _validate_utf8_json(o)
 
 
-class ActionBase(ABC):
-
+class ActionBase(ABC, _AnsiblePluginInfoMixin):
     """
     This class is the base class for all action plugins, and defines
     code common to all actions. The base class handles the connection
@@ -86,13 +88,16 @@ class ActionBase(ABC):
     _supports_async = False
     supports_raw_params = False
 
-    def __init__(self, task: Task, connection: ConnectionBase, play_context: PlayContext, loader: DataLoader, templar: Templar, shared_loader_obj):
+    def __init__(self, task: Task, connection: ConnectionBase, play_context: PlayContext, loader: DataLoader, templar: Templar, shared_loader_obj=None):
         self._task = task
         self._connection = connection
         self._play_context = play_context
         self._loader = loader
         self._templar = templar
-        self._shared_loader_obj = shared_loader_obj
+
+        from ansible.plugins import loader as plugin_loaders  # avoid circular global import since PluginLoader needs ActionBase
+
+        self._shared_loader_obj = plugin_loaders  # shared_loader_obj was just a ref to `ansible.plugins.loader` anyway; this lets us inherit its type
         self._cleanup_remote_tmp = False
 
         # interpreter discovery state
@@ -328,16 +333,27 @@ class ActionBase(ABC):
             become_kwargs['become_flags'] = self._connection.become.get_option('become_flags',
                                                                                playcontext=self._play_context)
 
+        # `modify_module` adapts PluginInfo to allow target-side use of `PluginExecContext` since modules aren't plugins
+        plugin = PluginInfo(
+            requested_name=module_name,
+            resolved_name=result.resolved_fqcn,
+            type='module',
+        )
+
         # modify_module will exit early if interpreter discovery is required; re-run after if necessary
         for _dummy in (1, 2):
             try:
                 module_bits = modify_module(
-                    module_name, module_path, module_args, self._templar,
+                    module_name=module_name,
+                    module_path=module_path,
+                    module_args=module_args,
+                    templar=self._templar,
                     task_vars=use_vars,
                     module_compression=C.config.get_config_value('DEFAULT_MODULE_COMPRESSION', variables=task_vars),
                     async_timeout=self._task.async_val,
                     environment=final_environment,
                     remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
+                    plugin=plugin,
                     **become_kwargs,
                 )
 

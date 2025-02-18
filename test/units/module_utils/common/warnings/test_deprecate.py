@@ -7,48 +7,13 @@
 from __future__ import annotations
 
 import pytest
-import typing as t
 
 from ansible.module_utils._internal import _traceback
 from ansible.module_utils.common import warnings
-from ansible.module_utils.common.messages import Detail, DeprecationSummary
 from ansible.module_utils.common.warnings import deprecate
 from units.mock.module import ModuleEnvMocker
 
 pytestmark = pytest.mark.usefixtures("module_env_mocker")
-
-
-@pytest.mark.parametrize("deprecate_kwargs", (
-    dict(msg='Deprecation message'),
-    dict(msg='Deprecation message', collection_name='ansible.builtin'),
-    dict(msg='Deprecation message', version='2.14'),
-    dict(msg='Deprecation message', version='2.14', collection_name='ansible.builtin'),
-    dict(msg='Deprecation message', date='2199-12-31'),
-    dict(msg='Deprecation message', date='2199-12-31', collection_name='ansible.builtin'),
-))
-def test_deprecate(deprecate_kwargs: dict[str, t.Any]):
-    deprecate(**deprecate_kwargs)
-    assert warnings.get_deprecation_messages() == (deprecate_kwargs,)
-    assert warnings.get_deprecations() == [DeprecationSummary._from_details(Detail(msg=deprecate_kwargs.pop('msg')), **deprecate_kwargs)]
-
-
-def test_multiple_deprecations():
-    messages = [
-        {'msg': 'First deprecation', 'version': None, 'collection_name': None},
-        {'msg': 'Second deprecation', 'version': None, 'collection_name': 'ansible.builtin'},
-        {'msg': 'Third deprecation', 'version': '2.14', 'collection_name': None},
-        {'msg': 'Fourth deprecation', 'version': '2.9', 'collection_name': None},
-        {'msg': 'Fifth deprecation', 'version': '2.9', 'collection_name': 'ansible.builtin'},
-        {'msg': 'Sixth deprecation', 'date': '2199-12-31', 'collection_name': None},
-        {'msg': 'Seventh deprecation', 'date': '2199-12-31', 'collection_name': 'ansible.builtin'},
-    ]
-    for d in messages:
-        deprecate(**d)
-
-    expected_deprecations = [DeprecationSummary._from_details(Detail(msg=d.pop('msg')), **d) for d in messages]
-
-    assert warnings.get_deprecation_messages() == tuple(expected_deprecation._as_simple_dict() for expected_deprecation in expected_deprecations)
-    assert warnings.get_deprecations() == expected_deprecations
 
 
 def test_dedupe_with_traceback(module_env_mocker: ModuleEnvMocker) -> None:

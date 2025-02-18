@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import atexit
+import dataclasses
 import importlib.util
 import json
 import os
@@ -14,15 +15,34 @@ import sys
 import typing as t
 
 from . import _errors
+from ._plugin_exec_context import PluginExecContext, HasPluginInfo
 from .. import basic
 from ..common.json import AnsibleJSONEncoder
+from ..common.messages import PluginInfo
 
 
-def run_module(*, coverage_config: str | None = None, coverage_output: str | None = None, **kwargs) -> None:  # pragma: nocover
+def run_module(
+    *,
+    json_params: bytes,
+    profile: str,
+    plugin_info_dict: dict[str, object],
+    module_fqn: str,
+    modlib_path: str,
+    init_globals: dict[str, t.Any] | None = None,
+    coverage_config: str | None = None,
+    coverage_output: str | None = None,
+) -> None:  # pragma: nocover
     """Used internally by the AnsiballZ wrapper to run an Ansible module."""
     try:
         _enable_coverage(coverage_config, coverage_output)
-        _run_module(**kwargs)
+        _run_module(
+            json_params=json_params,
+            profile=profile,
+            plugin_info_dict=plugin_info_dict,
+            module_fqn=module_fqn,
+            modlib_path=modlib_path,
+            init_globals=init_globals,
+        )
     except Exception as ex:  # not BaseException, since modules are expected to raise SystemExit
         _handle_exception(ex)
 
@@ -56,7 +76,15 @@ def _enable_coverage(coverage_config: str | None, coverage_output: str | None) -
             raise RuntimeError('Could not find the `coverage` Python module.')
 
 
-def _run_module(*, json_params: bytes, profile: str, module_fqn: str, modlib_path: str, init_globals: dict[str, t.Any] | None = None) -> None:
+def _run_module(
+    *,
+    json_params: bytes,
+    profile: str,
+    plugin_info_dict: dict[str, object],
+    module_fqn: str,
+    modlib_path: str,
+    init_globals: dict[str, t.Any] | None = None,
+) -> None:
     """Used internally by `_run_module` to run an Ansible module after coverage has been enabled (if applicable)."""
     basic._ANSIBLE_ARGS = json_params
     basic._ANSIBLE_PROFILE = profile
@@ -64,11 +92,12 @@ def _run_module(*, json_params: bytes, profile: str, module_fqn: str, modlib_pat
     init_globals = init_globals or {}
     init_globals.update(_module_fqn=module_fqn, _modlib_path=modlib_path)
 
-    # Run the module. By importing it as '__main__', it executes as a script.
-    runpy.run_module(mod_name=module_fqn, init_globals=init_globals, run_name='__main__', alter_sys=True)
+    with PluginExecContext(_ModulePluginWrapper(PluginInfo._from_dict(plugin_info_dict))):
+        # Run the module. By importing it as '__main__', it executes as a script.
+        runpy.run_module(mod_name=module_fqn, init_globals=init_globals, run_name='__main__', alter_sys=True)
 
-    # An Ansible module must print its own results and exit. If execution reaches this point, that did not happen.
-    raise RuntimeError('New-style module did not handle its own exit.')
+        # An Ansible module must print its own results and exit. If execution reaches this point, that did not happen.
+        raise RuntimeError('New-style module did not handle its own exit.')
 
 
 def _handle_exception(exception: BaseException) -> t.NoReturn:
@@ -81,3 +110,22 @@ def _handle_exception(exception: BaseException) -> t.NoReturn:
     print(json.dumps(result, cls=AnsibleJSONEncoder, preserve_datatags=True))  # pylint: disable=ansible-bad-function
 
     sys.exit(1)  # pylint: disable=ansible-bad-function
+
+
+@dataclasses.dataclass(frozen=True)
+class _ModulePluginWrapper(HasPluginInfo):
+    """Modules aren't plugin instances; this adapter implements the `HasPluginInfo` protocol to allow `PluginExecContext` infra to work with modules."""
+
+    plugin: PluginInfo
+
+    @property
+    def _load_name(self) -> str:
+        return self.plugin.requested_name
+
+    @property
+    def ansible_name(self) -> str:
+        return self.plugin.resolved_name
+
+    @property
+    def plugin_type(self) -> str:
+        return self.plugin.type

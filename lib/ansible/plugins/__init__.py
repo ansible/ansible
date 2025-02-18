@@ -27,6 +27,8 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.utils.display import Display
 
+from ansible.module_utils._internal import _plugin_exec_context
+
 display = Display()
 
 if t.TYPE_CHECKING:
@@ -45,7 +47,20 @@ def get_plugin_class(obj):
         return obj.__class__.__name__.lower().replace('module', '')
 
 
-class AnsiblePlugin(metaclass=abc.ABCMeta):
+class _AnsiblePluginInfoMixin(_plugin_exec_context.HasPluginInfo):
+    """Mixin to provide type annotations and default values for existing PluginLoader-set load-time attrs."""
+    _original_path: str | None = None
+    _load_name: str | None = None
+    _redirected_names: list[str] | None = None
+    ansible_aliases: list[str] | None = None
+    ansible_name: str | None = None
+
+    @property
+    def plugin_type(self) -> str:
+        return self.__class__.__name__.lower().replace('module', '')
+
+
+class AnsiblePlugin(_AnsiblePluginInfoMixin, metaclass=abc.ABCMeta):
 
     # Set by plugin loader
     _load_name: str
@@ -119,10 +134,6 @@ class AnsiblePlugin(metaclass=abc.ABCMeta):
         if not self._options:
             self.set_options()
         return option in self._options
-
-    @property
-    def plugin_type(self):
-        return self.__class__.__name__.lower().replace('module', '')
 
     @property
     def option_definitions(self):

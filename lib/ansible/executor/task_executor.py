@@ -21,6 +21,7 @@ from ansible.errors import (
     AnsibleValueOmittedError,
 )
 from ansible.executor.task_result import TaskResult
+from ansible.module_utils._internal._plugin_exec_context import PluginExecContext
 from ansible.module_utils.common.messages import Detail, WarningSummary, DeprecationSummary
 from ansible.module_utils.datatag import AnsibleTagHelper
 from ansible.utils.datatag.tags import TrustedAsTemplate
@@ -636,7 +637,9 @@ class TaskExecutor:
                 if self._task.timeout:
                     old_sig = signal.signal(signal.SIGALRM, task_timeout)
                     signal.alarm(self._task.timeout)
-                result = self._handler.run(task_vars=vars_copy)
+                with PluginExecContext(self._handler):
+                    result = self._handler.run(task_vars=vars_copy)
+
             # DTFIX-RELEASE: nuke this, it hides a lot of error detail- remove the active exception propagation hack from AnsibleActionFail at the same time
             except (AnsibleActionFail, AnsibleActionSkip) as e:
                 return e.result
@@ -832,6 +835,13 @@ class TaskExecutor:
                     if not isinstance(deprecation, DeprecationSummary):
                         # translate non-DeprecationMessageDetail message dicts
                         try:
+                            if deprecation.pop('collection_name', ...) is not ...:
+                                # deprecated: description='enable the deprecation message for collection_name' core_version='2.23'
+                                # self.deprecated('The `collection_name` key in the `deprecations` dictionary is deprecated.', version='2.25')
+                                pass
+
+                            # DTFIX-RELEASE: when plugin isn't set, do it at the boundary where we receive the module/action results
+                            #                that may even allow us to never set it in modules/actions directly and to populate it at the boundary
                             deprecation = DeprecationSummary(
                                 details=(
                                     Detail(msg=deprecation.pop('msg')),

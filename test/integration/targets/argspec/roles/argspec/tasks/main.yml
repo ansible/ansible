@@ -321,7 +321,7 @@
   register: argspec_aliases_both_different
 
 - command: >-
-    ansible localhost -m argspec
+    ansible localhost -m foo.bar.argspec --playbook-dir .
     -a 'required=value required_one_of_one=value primary=foo alias=bar'
   environment:
     ANSIBLE_LIBRARY: '{{ role_path }}/library'

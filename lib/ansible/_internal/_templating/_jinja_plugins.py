@@ -13,6 +13,7 @@ from ansible.errors import (
 )
 
 from ansible.module_utils._internal._ambient_context import AmbientContextBase
+from ansible.module_utils._internal._plugin_exec_context import PluginExecContext
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.datatag import AnsibleTagHelper
 from ansible.utils.datatag.tags import TrustedAsTemplate
@@ -50,17 +51,24 @@ class JinjaPluginIntercept(c.MutableMapping):
         self._jinja_builtins = jinja_builtins
         self._wrapped_funcs: dict[str, t.Callable] = {}
 
-    def _wrap_and_set_func(self, name: str, plugin_func: t.Callable, accept_marker: bool) -> t.Callable:
+    def _wrap_and_set_func(
+        self,
+        name: str,
+        plugin_func: t.Callable,
+        plugin_instance: AnsibleJinja2Plugin | None = None,
+        accept_marker: bool = False,
+    ) -> t.Callable:
         if self._plugin_loader.type == 'filter':
-            plugin_func = self._wrap_filter(plugin_func, name, accept_marker=accept_marker)
+            plugin_func = self._wrap_filter(plugin_func, name, plugin_instance=plugin_instance, accept_marker=accept_marker)
         else:
-            plugin_func = self._wrap_test(plugin_func, name, accept_marker=accept_marker)
+            plugin_func = self._wrap_test(plugin_func, name, plugin_instance=plugin_instance, accept_marker=accept_marker)
 
         self._wrapped_funcs[name] = plugin_func
 
         return plugin_func
 
     def __getitem__(self, key: str) -> t.Callable:
+        plugin: AnsibleJinja2Plugin | None = None
         plugin_func: t.Callable[..., t.Any] | None
 
         if plugin_func := self._wrapped_funcs.get(key):
@@ -69,7 +77,7 @@ class JinjaPluginIntercept(c.MutableMapping):
         accept_marker = False
 
         try:
-            plugin: AnsibleJinja2Plugin | None = self._plugin_loader.get(key)
+            plugin = self._plugin_loader.get(key)
         except KeyError:
             # The plugin name was invalid or no plugin was found by that name.
             pass
@@ -88,7 +96,7 @@ class JinjaPluginIntercept(c.MutableMapping):
             except KeyError:
                 raise AnsibleTemplatePluginNotFoundError(self._plugin_loader.type, key) from None
 
-        plugin_func = self._wrap_and_set_func(key, plugin_func, accept_marker)
+        plugin_func = self._wrap_and_set_func(key, plugin_func, plugin_instance=plugin, accept_marker=accept_marker)
 
         return plugin_func
 
@@ -115,7 +123,7 @@ class JinjaPluginIntercept(c.MutableMapping):
         raise NotImplementedError()  # dynamic container
 
     @staticmethod
-    def _wrap_test(func: t.Callable, plugin_name: str, accept_marker: bool) -> t.Callable:
+    def _wrap_test(func: t.Callable, plugin_name: str, plugin_instance: AnsibleJinja2Plugin | None, accept_marker: bool) -> t.Callable:
         """Intercept point for all test plugins to ensure that args are properly templated/lazified."""
 
         @functools.wraps(func)
@@ -125,8 +133,10 @@ class JinjaPluginIntercept(c.MutableMapping):
                 if (first_marker := get_first_marker_arg(args, kwargs)) is not None:
                     return first_marker
 
+            # DTFIX-RELEASE: collapse _wrap_test and _wrap_filter, handle non-plugins (eg Jinja builtins) more gracefully
             try:
-                with JinjaCallContext(accept_marker=accept_marker):
+                # DTFIX-RELEASE: mask exec context for Jinja builtins or provide dummy values
+                with JinjaCallContext(accept_marker=accept_marker), PluginExecContext.when(plugin_instance is not None, executing_plugin=plugin_instance):
                     test_res = func(*lazify_container_args(args), **lazify_container_kwargs(kwargs))
             except MarkerError as ex:
                 return ex.source
@@ -150,7 +160,7 @@ class JinjaPluginIntercept(c.MutableMapping):
         return wrapper
 
     @staticmethod
-    def _wrap_filter(func: t.Callable, plugin_name: str, accept_marker: bool) -> t.Callable:
+    def _wrap_filter(func: t.Callable, plugin_name: str, plugin_instance: AnsibleJinja2Plugin | None, accept_marker: bool) -> t.Callable:
         """Intercept point for all filter plugins to ensure that args are properly templated/lazified."""
 
         @functools.wraps(func)
@@ -160,8 +170,10 @@ class JinjaPluginIntercept(c.MutableMapping):
                 if (first_marker := get_first_marker_arg(args, kwargs)) is not None:
                     return first_marker
 
+            # DTFIX-RELEASE: collapse _wrap_test and _wrap_filter, handle non-plugins (eg Jinja builtins) more gracefully
             try:
-                with JinjaCallContext(accept_marker=accept_marker):
+                # DTFIX-RELEASE: mask exec context for Jinja builtins or provide dummy values
+                with JinjaCallContext(accept_marker=accept_marker), PluginExecContext.when(plugin_instance is not None, executing_plugin=plugin_instance):
                     return _wrap_plugin_output(func(*lazify_container_args(args), **lazify_container_kwargs(kwargs)))
             except MarkerError as ex:
                 return ex.source

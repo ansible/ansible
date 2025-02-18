@@ -29,9 +29,9 @@ class AmbientContextBase:
         cls._contextvar = contextvars.ContextVar(cls.__name__)
 
     @classmethod
-    def when(cls, condition: bool, /) -> t.Self | contextlib.nullcontext:
+    def when(cls, condition: bool, /, *args, **kwargs) -> t.Self | contextlib.nullcontext:
         """Return an instance of the context if `condition` is `True`, otherwise return a `nullcontext` instance."""
-        return cls() if condition else contextlib.nullcontext()
+        return cls(*args, **kwargs) if condition else contextlib.nullcontext()
 
     @classmethod
     def current(cls, optional: bool = False) -> t.Self | None:

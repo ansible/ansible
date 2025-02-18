@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import dataclasses
 import typing as t
 
 from ansible.module_utils._internal import _traceback
-from ansible.module_utils.common.messages import ErrorSummary, WarningSummary, DeprecationSummary
+from ansible.module_utils.common.messages import PluginInfo, ErrorSummary, WarningSummary, DeprecationSummary
 from ansible.parsing.vault import EncryptedString, VaultHelper
 from ansible.utils.display import Display
 
@@ -13,6 +14,11 @@ from ._jinja_common import VaultExceptionMarker
 from .._errors import _captured, _utils
 
 display = Display()
+
+
+def plugin_info(value: PluginInfo) -> dict[str, str]:
+    """Render PluginInfo as a dictionary."""
+    return dataclasses.asdict(value)
 
 
 def error_summary(value: ErrorSummary) -> str:
@@ -44,6 +50,7 @@ def encrypted_string(value: EncryptedString) -> str | VaultExceptionMarker:
 
 _type_transform_mapping: dict[type, t.Callable[[t.Any], t.Any]] = {
     _captured.CapturedErrorSummary: error_summary,
+    PluginInfo: plugin_info,
     ErrorSummary: error_summary,
     WarningSummary: warning_summary,
     DeprecationSummary: deprecation_summary,

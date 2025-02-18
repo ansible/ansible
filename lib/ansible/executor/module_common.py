@@ -38,6 +38,7 @@ from io import BytesIO
 
 from ansible._internal import _locking
 from ansible.module_utils._internal import _dataclass_validation
+from ansible.module_utils.common.messages import PluginInfo
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.utils.datatag.tags import Origin
 from ansible.module_utils.serialization import get_module_encoder, Direction
@@ -909,9 +910,10 @@ class _CachedModule:
         with pathlib.Path(path).open('rb') as cache_file:
             return pickle.load(cache_file)
 
-
 def _find_module_utils(
+        *,
         module_name: str,
+        plugin: PluginInfo,
         b_module_data: bytes,
         module_path,
         module_args,
@@ -1108,6 +1110,7 @@ def _find_module_utils(
             module_fqn=remote_module_fqn,
             params=encoded_params,
             profile=module_metadata.serialization_profile,
+            plugin_info_dict=plugin._as_dict(),
             date_time=date_time,
             coverage_config=coverage_config,
             coverage_output=coverage_output,
@@ -1204,7 +1207,9 @@ def _extract_interpreter(b_module_data):
 
 
 def modify_module(
+        *,
         module_name: str,
+        plugin: PluginInfo,
         module_path,
         module_args,
         templar,
@@ -1248,10 +1253,22 @@ def modify_module(
         b_module_data = f.read()
 
     module_bits = _find_module_utils(
-        module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression,
-        async_timeout=async_timeout, become=become, become_method=become_method,
-        become_user=become_user, become_password=become_password, become_flags=become_flags,
-        environment=environment, remote_is_local=remote_is_local,
+        module_name=module_name,
+        plugin=plugin,
+        b_module_data=b_module_data,
+        module_path=module_path,
+        module_args=module_args,
+        task_vars=task_vars,
+        templar=templar,
+        module_compression=module_compression,
+        async_timeout=async_timeout,
+        become=become,
+        become_method=become_method,
+        become_user=become_user,
+        become_password=become_password,
+        become_flags=become_flags,
+        environment=environment,
+        remote_is_local=remote_is_local,
     )
 
     b_module_data = module_bits.b_module_data

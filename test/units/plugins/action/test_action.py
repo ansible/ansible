@@ -39,6 +39,7 @@ from ansible.playbook.play_context import PlayContext
 from ansible.plugins.action import ActionBase
 from ansible.vars.clean import clean_facts
 from ansible.template import Templar
+from ansible.plugins import loader
 
 from units.mock.loader import DictDataLoader
 
@@ -143,12 +144,11 @@ class TestActionBase(unittest.TestCase):
             else:
                 mockctx.resolved = True
                 mockctx.plugin_resolved_path = '/fake/path/to/%s' % name
+            mockctx.resolved_fqcn = name
             return mockctx
 
         mock_module_loader = MagicMock()
         mock_module_loader.find_plugin_with_context.side_effect = mock_find_plugin_with_context
-        mock_shared_obj_loader = MagicMock()
-        mock_shared_obj_loader.module_loader = mock_module_loader
 
         # we're using a real play context here
         play_context = PlayContext()
@@ -160,7 +160,6 @@ class TestActionBase(unittest.TestCase):
             play_context=play_context,
             loader=fake_loader,
             templar=Templar(loader=fake_loader),
-            shared_loader_obj=mock_shared_obj_loader,
         )
 
         original_open = builtins.open
@@ -172,7 +171,10 @@ class TestActionBase(unittest.TestCase):
                 return mock_open(read_data=to_bytes(python_module_replacers.strip(), encoding='utf-8'))(file, *args, **kwargs)
 
         # test python module formatting
-        with patch.object(builtins, 'open', custom_open):
+        with (
+            patch.object(builtins, 'open', custom_open),
+            patch.object(loader, 'module_loader', mock_module_loader)
+        ):
             with patch.object(os, 'rename'):
                 mock_task.args = dict(a=1, foo='fö〩')
                 mock_connection.module_implementation_preferences = ('',)
@@ -186,7 +188,10 @@ class TestActionBase(unittest.TestCase):
                 self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args, {})
 
         # test powershell module formatting
-        with patch.object(builtins, 'open', mock_open(read_data=to_bytes(powershell_module_replacers.strip(), encoding='utf-8'))):
+        with (
+            patch.object(builtins, 'open', mock_open(read_data=to_bytes(powershell_module_replacers.strip(), encoding='utf-8'))),
+            patch.object(loader, 'module_loader', mock_module_loader),
+        ):
             mock_task.action = 'win_copy'
             mock_task.args = dict(b=2)
             mock_connection.module_implementation_preferences = ('.ps1',)

@@ -54,11 +54,12 @@ class DeprecatedAccessAuditContext(NotifiableAccessContextBase):
                 # without an origin, we need to include what context we do have (the template)
                 msg = f'While processing {item.template!r}: {item.deprecated.msg}'
 
-            display.deprecated(
+            display._deprecated_with_plugin_info(
                 msg=msg,
                 version=item.deprecated.removal_version,
                 date=item.deprecated.removal_date,
                 obj=item.template,
+                plugin=item.deprecated.plugin,
             )
 
         return result
