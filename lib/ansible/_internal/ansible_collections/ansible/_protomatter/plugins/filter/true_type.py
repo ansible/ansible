@@ -12,5 +12,6 @@ def true_type(obj: object) -> str:
 
 
 class FilterModule(object):
-    def filters(self) -> dict[str, t.Callable]:
+    @staticmethod
+    def filters() -> dict[str, t.Callable]:
         return dict(true_type=true_type)

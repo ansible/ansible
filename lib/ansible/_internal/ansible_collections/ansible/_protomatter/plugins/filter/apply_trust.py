@@ -5,7 +5,7 @@ import typing as t
 from ansible.utils.datatag.tags import TrustedAsTemplate
 
 
-def apply_trust(value: t.Any) -> t.Any:
+def apply_trust(value: object) -> object:
     """
     Filter that returns a tagged copy of the input string with TrustedAsTemplate.
     Containers and other non-string values are returned unmodified.
@@ -14,5 +14,6 @@ def apply_trust(value: t.Any) -> t.Any:
 
 
 class FilterModule:
-    def filters(self) -> dict[str, t.Callable]:
+    @staticmethod
+    def filters() -> dict[str, t.Callable]:
         return dict(apply_trust=apply_trust)

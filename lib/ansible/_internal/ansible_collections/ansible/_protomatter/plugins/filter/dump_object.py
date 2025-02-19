@@ -13,5 +13,6 @@ def dump_object(value: t.Any) -> object:
 
 
 class FilterModule(object):
-    def filters(self) -> dict[str, t.Callable]:
+    @staticmethod
+    def filters() -> dict[str, t.Callable]:
         return dict(dump_object=dump_object)

@@ -19,13 +19,18 @@ def unmask(value: object, type_names: str | list[str]) -> object:
 
     # DTFIX-MERGE: validation
 
-    if isinstance(value, _AnsibleLazyTemplateMixin):
-        copied_value = copy.copy(value)
-        copied_value._template_options = TemplateOptions(unmask_type_names=frozenset(type_names))
+    result: object
 
-    return copied_value
+    if isinstance(value, _AnsibleLazyTemplateMixin):
+        result = copy.copy(value)
+        result._template_options = TemplateOptions(unmask_type_names=frozenset(type_names))
+    else:
+        result = value
+
+    return result
 
 
 class FilterModule(object):
-    def filters(self) -> dict[str, t.Callable]:
+    @staticmethod
+    def filters() -> dict[str, t.Callable]:
         return dict(unmask=unmask)
