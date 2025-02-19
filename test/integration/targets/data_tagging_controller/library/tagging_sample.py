@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._FIXMEtags.tags import Deprecated
+from ansible.module_utils._internal._datatag._tags import Deprecated
 
 METADATA = """
 schema_version: 1

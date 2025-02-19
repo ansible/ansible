@@ -31,7 +31,7 @@ from ansible.module_utils._internal._datatag import (
     AnsibleTagHelper,
 )
 
-from ansible.module_utils._FIXMEtags.tags import Deprecated as _Deprecated
+from ansible.module_utils._internal._datatag._tags import Deprecated as _Deprecated
 
 # transformations to "final" JSON representations can only use:
 # str, float, int, bool, None, dict, list

@@ -6,7 +6,7 @@ import pytest
 
 from ansible.module_utils.common.yaml import yaml_dump, yaml_dump_all
 from ansible.module_utils._internal._datatag import Tripwire
-from ansible.module_utils._FIXMEtags.tags import Deprecated
+from ansible.module_utils._internal._datatag._tags import Deprecated
 from units.mock.custom_collections import CustomMapping, CustomSequence
 
 _test_tag = Deprecated(msg="test")

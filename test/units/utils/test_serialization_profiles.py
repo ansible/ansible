@@ -17,7 +17,7 @@ import pytest
 from ansible.module_utils import serialization as target_serialization
 from ansible.module_utils._internal import _serialization
 from ansible.module_utils._internal._datatag import AnsibleDatatagBase, NotTaggableError, AnsibleTagHelper
-from ansible.module_utils._FIXMEtags.tags import Deprecated
+from ansible.module_utils._internal._datatag._tags import Deprecated
 from ansible._internal._templating._lazy_containers import _AnsibleLazyTemplateMixin
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
 from ansible._internal._templating._utils import TemplateContext
