@@ -861,7 +861,16 @@ class PluginLoader:
         setattr(obj, 'ansible_name', names[0])
 
     def get(self, name, *args, **kwargs):
-        return self.get_with_context(name, *args, **kwargs).object
+        ctx = self.get_with_context(name, *args, **kwargs)
+        is_core_plugin = ctx.plugin_load_context.plugin_resolved_collection == 'ansible.builtin'
+        if self.class_name == 'StrategyModule' and not is_core_plugin:
+            display.deprecated(  # pylint: disable=ansible-deprecated-no-version
+                'Use of strategy plugins not included in ansible.builtin are deprecated and do not carry '
+                'any backwards compatibility guarantees. No alternative for third party strategy plugins '
+                'is currently planned.'
+            )
+
+        return ctx.object
 
     def get_with_context(self, name, *args, **kwargs):
         """ instantiates a plugin of the given name using arguments """
