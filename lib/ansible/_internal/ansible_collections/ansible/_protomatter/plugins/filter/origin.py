@@ -3,10 +3,8 @@ from __future__ import annotations
 import typing as t
 
 from ansible.utils.datatag.tags import Origin
-from ansible.plugins import accept_marker
 
 
-@accept_marker
 def origin(value: object) -> str | None:
     """Return the origin of the value, if any, otherwise `None`."""
     origin_tag = Origin.get_tag(value)
