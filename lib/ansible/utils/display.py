@@ -93,9 +93,9 @@ def get_text_width(text: str) -> int:
 
     width = 0
     counter = 0
-    for c in text:
+    for char in text:
         counter += 1
-        if c in (u'\x08', u'\x7f', u'\x94', u'\x1b'):
+        if char in (u'\x08', u'\x7f', u'\x94', u'\x1b'):
             # A few characters result in a subtraction of length:
             # BS, DEL, CCH, ESC
             # ESC is slightly different in that it's part of an escape sequence, and
@@ -106,7 +106,7 @@ def get_text_width(text: str) -> int:
             continue
 
         try:
-            w = _LIBC.wcwidth(c)
+            w = _LIBC.wcwidth(char)
         except ctypes.ArgumentError:
             w = -1
         if w == -1:
@@ -356,7 +356,7 @@ class Display(metaclass=Singleton):
         func: c.Callable[t.Concatenate[Display, P], str | None]
     ) -> c.Callable[..., None]:
         @wraps(func)
-        def wrapper(self, *args: P.args, **kwargs: P.kwargs) -> str | None:
+        def wrapper(self, *args: P.args, **kwargs: P.kwargs) -> func:
             if self._final_q:
                 # If _final_q is set, that means we are in a WorkerProcess
                 # and instead of displaying messages directly from the fork
@@ -771,7 +771,6 @@ class Display(metaclass=Singleton):
         #         raise AnsiblePromptInterrupt('user interrupt')
 
         self.display(msg)
-        result = b''
         with self._lock:
             original_stdin_settings = termios.tcgetattr(self._stdin_fd)
             try:
