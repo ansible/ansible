@@ -696,11 +696,7 @@ def wrapped_rejectattr(*args, **kwargs) -> t.Any:
 
 
 @accept_marker
-def type_debug(obj: t.Any, true_sight: bool = False) -> str:
-    # DTFIX-MERGE: bikeshed the unmask/true_sight arg name -- should the true sight version just be in protomatter?
-    if true_sight:
-        return obj.__class__.__name__
-
+def type_debug(obj: object) -> str:
     return AnsibleTagHelper.base_type_name(obj)
 
 
