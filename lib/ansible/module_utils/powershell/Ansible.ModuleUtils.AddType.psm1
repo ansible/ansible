@@ -312,7 +312,7 @@ Function Add-CSharpType {
         # fatal error.
         # https://github.com/ansible-collections/ansible.windows/issues/598
         $ignore_warnings = [System.Collections.ArrayList]@('1610')
-        $compile_units = [System.Collections.Generic.List`1[System.CodeDom.CodeSnippetCompileUnit]]@()
+        $compile_units = [System.Collections.Generic.List`1[string]]@()
         foreach ($reference in $References) {
             # scan through code and add any assemblies that match
             # //AssemblyReference -Name ... [-CLR Framework]
@@ -346,7 +346,7 @@ Function Add-CSharpType {
                 }
                 $ignore_warnings.Add($warning_id) > $null
             }
-            $compile_units.Add((New-Object -TypeName System.CodeDom.CodeSnippetCompileUnit -ArgumentList $reference)) > $null
+            $compile_units.Add($reference) > $null
 
             $type_matches = $type_pattern.Matches($reference)
             foreach ($match in $type_matches) {
@@ -381,7 +381,10 @@ Function Add-CSharpType {
 
             $null = New-Item -Path $temp_path -ItemType Directory -Force
             try {
-                $compile = $provider.CompileAssemblyFromDom($compile_parameters, $compile_units)
+                # FromSource is important, it will create the .cs files with
+                # the required extended attribute for the source to be trusted
+                # when using WDAC.
+                $compile = $provider.CompileAssemblyFromSource($compile_parameters, $compile_units)
             }
             finally {
                 # Try to delete the temp path, if this fails and we are running
