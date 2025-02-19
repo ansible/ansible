@@ -9,7 +9,7 @@ from ansible.plugins import accept_marker
 @accept_marker
 def tag_names(value: t.Any) -> list[str]:
     """Return a list of tag type names (if any) present on the given object."""
-    return [tag_type.__name__ for tag_type in AnsibleTagHelper.tag_types(value)]
+    return sorted(tag_type.__name__ for tag_type in AnsibleTagHelper.tag_types(value))
 
 
 class FilterModule:
