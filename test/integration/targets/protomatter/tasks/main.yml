@@ -1,0 +1,75 @@
+- name: test the origin filter  # CAUTION: moving this task requires updating the assertion line numbers
+  vars:  # vars placed before assert to allow adding assertions without changing the line number of existing vars
+    some_var: Hello
+  assert:
+    that:
+      - "'some_string' | ansible._protomatter.origin == None"
+      - some_var | ansible._protomatter.origin == role_path ~ '/tasks/main.yml:3:15'
+      - missing_var | ansible._protomatter.origin is undefined
+
+- name: register a task result which generates a deprecation warning for use by later tests
+  debug:
+    var: lookup('emit_deprecation_warning')
+  vars:
+    ansible_deprecation_warnings: true
+  register: deprecation_warning
+
+- name: create variables to test the apply_trust filter
+  set_fact:
+    untrusted_string: "{{ untrusted }}"
+    formerly_untrusted_string: "{{ untrusted | ansible._protomatter.apply_trust }}"
+    still_untrusted_number: "{{ a_number | ansible._protomatter.apply_trust }}"
+  vars:
+    untrusted: !unsafe "{{ 1 }}"
+    a_number: 1
+
+- name: test the apply_trust filter
+  assert:
+    that:
+      - untrusted_string == "{" + "{ 1 }}"
+      - formerly_untrusted_string == 1
+      - still_untrusted_number | ansible._protomatter.tag_names == ['Origin']  # does not have TrustedAsTemplate
+      - missing_var | ansible._protomatter.apply_trust is undefined
+
+- name: test the dump_object filter
+  assert:
+    that:
+      - "'some_string' | ansible._protomatter.dump_object == 'some_string'"
+      - some_var | ansible._protomatter.dump_object == some_var
+      - missing_var | ansible._protomatter.dump_object is undefined
+      - lookup('synthetic_plugin_info') | type_debug == 'PluginInfo'
+      - lookup('synthetic_plugin_info') | ansible._protomatter.dump_object | type_debug == 'dict'
+      - lookup('synthetic_plugin_info') | ansible._protomatter.dump_object == expected_plugin_info
+  vars:
+    some_var: Hello
+    expected_plugin_info:
+      requested_name: requested_name
+      resolved_name: resolved_name
+      type: type
+
+- name: test the tag_names filter
+  assert:
+    that:
+      - "'some_string' | ansible._protomatter.tag_names == []"
+      - some_var | ansible._protomatter.tag_names == ['Origin', 'TrustedAsTemplate']
+      - missing_var | ansible._protomatter.tag_names is undefined
+  vars:
+    some_var: Hello
+
+- name: test the true_type filter
+  assert:
+    that:
+      - "'some_string' | ansible._protomatter.true_type == 'str'"
+      - some_var | ansible._protomatter.true_type == "_AnsibleTaggedStr"
+      - missing_var | ansible._protomatter.true_type == "UndefinedMarker"
+  vars:
+    some_var: Hello
+
+- name: test the unmask filter
+  assert:
+    that:
+      - deprecation_warning.deprecations[0].plugin | type_debug == 'dict'
+      - (deprecation_warning.deprecations[0] | ansible._protomatter.unmask("PluginInfo")).plugin | type_debug == "PluginInfo"
+      - (deprecation_warning.deprecations[0] | ansible._protomatter.unmask(["PluginInfo"])).plugin | type_debug == "PluginInfo"
+      - 1 | ansible._protomatter.unmask("PluginInfo") == 1
+      - missing_var | ansible._protomatter.unmask("PluginInfo") is undefined
