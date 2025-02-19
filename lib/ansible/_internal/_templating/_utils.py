@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import typing as t
 
-from ansible.module_utils import datatag
-from ansible.module_utils._internal import _ambient_context
+from ansible.module_utils._internal import _ambient_context, _datatag
 
 if t.TYPE_CHECKING:
     from ._engine import TemplateEngine, TemplateOptions
@@ -68,10 +67,10 @@ class _OmitType:
 Omit = object.__new__(_OmitType)
 
 # DTFIX-MERGE: decide if these should be taggable; do we need to support other kinds of Undefineds, etc
-datatag._untaggable_types.add(_OmitType)
+_datatag._untaggable_types.add(_OmitType)
 
-IGNORE_SCALAR_VAR_TYPES = {value for value in datatag._ANSIBLE_ALLOWED_SCALAR_VAR_TYPES if not issubclass(value, str)}
+IGNORE_SCALAR_VAR_TYPES = {value for value in _datatag._ANSIBLE_ALLOWED_SCALAR_VAR_TYPES if not issubclass(value, str)}
 
-PASS_THROUGH_SCALAR_VAR_TYPES = datatag._ANSIBLE_ALLOWED_SCALAR_VAR_TYPES | {
+PASS_THROUGH_SCALAR_VAR_TYPES = _datatag._ANSIBLE_ALLOWED_SCALAR_VAR_TYPES | {
     _OmitType,  # allow pass through of omit for later handling after top-level finalize completes
 }

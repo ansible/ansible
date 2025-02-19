@@ -17,7 +17,7 @@ from functools import cache
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError, AnsibleValueOmittedError, AnsibleFieldAttributeError
-from ansible.module_utils.datatag import AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.utils.datatag.tags import Origin
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean

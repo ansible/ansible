@@ -7,7 +7,7 @@ import typing as t
 
 from ansible.errors import AnsibleVariableTypeError
 
-from ansible.module_utils.datatag import (
+from ansible.module_utils._internal._datatag import (
     _ANSIBLE_ALLOWED_MAPPING_VAR_TYPES,
     _ANSIBLE_ALLOWED_NON_SCALAR_COLLECTION_VAR_TYPES,
     _ANSIBLE_ALLOWED_VAR_TYPES,

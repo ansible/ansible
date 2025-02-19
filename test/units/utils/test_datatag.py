@@ -6,7 +6,7 @@ import typing as t
 
 import pytest
 
-from ansible.module_utils.datatag import AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.parsing.vault import EncryptedString, VaultSecretsContext, VaultSecret, VaultLib
 from ansible.utils.datatag.tags import Origin, TrustedAsTemplate, VaultedValue
 from ..module_utils.datatag.test_datatag import TestDatatagTarget as _TestDatatagTarget, Later

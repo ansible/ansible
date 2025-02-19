@@ -23,7 +23,7 @@ from ansible.errors import (
     TemplateTrustCheckFailedError,
 )
 
-from ansible.module_utils.datatag import AnsibleTaggedObject, NotTaggableError, AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTaggedObject, NotTaggableError, AnsibleTagHelper
 from ansible.errors.handler import Skippable
 from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
 from ansible.utils.display import Display

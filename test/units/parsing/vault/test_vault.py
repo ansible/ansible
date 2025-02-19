@@ -34,7 +34,7 @@ from unittest.mock import patch, MagicMock
 
 from ansible import errors
 from ansible.module_utils.common.text.converters import to_bytes, to_text
-from ansible.module_utils.datatag import AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.parsing import vault
 from ansible.parsing.vault import EncryptedString, VaultSecretsContext, VaultLib, AnsibleVaultError, VaultHelper
 from ansible._internal._templating._jinja_common import VaultExceptionMarker, TruncationMarker, Marker

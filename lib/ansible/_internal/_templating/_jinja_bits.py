@@ -26,7 +26,7 @@ from jinja2.utils import missing, LRUCache
 from ansible.utils.display import Display
 from ansible.errors import AnsibleVariableTypeError, AnsibleTemplateSyntaxError, AnsibleTemplateError
 from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils.datatag import (
+from ansible.module_utils._internal._datatag import (
     _AnsibleTaggedDict,
     _AnsibleTaggedList,
     _AnsibleTaggedSet,

@@ -9,7 +9,7 @@ import datetime as _datetime
 import typing as _t
 
 from ansible._internal import _serialization
-from ansible.module_utils import datatag as _datatag
+from ansible.module_utils._internal import _datatag
 from ansible.module_utils.common import json as _json
 from ansible.parsing import vault as _vault
 from ansible.utils.datatag import tags as _tags

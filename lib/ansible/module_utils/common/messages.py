@@ -8,7 +8,7 @@ import dataclasses
 # deprecated: description='typing.Self exists in Python 3.11+' python_version='3.10'
 from ..compat import typing as t
 
-from ..datatag import AnsibleSerializableDataclass
+from ansible.module_utils._internal._datatag import AnsibleSerializableDataclass
 
 if sys.version_info >= (3, 10):
     # Using slots for reduced memory usage and improved performance.

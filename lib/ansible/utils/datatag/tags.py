@@ -5,7 +5,7 @@ import os
 import types
 import typing as t
 
-from ansible.module_utils.datatag import _tag_dataclass_kwargs, AnsibleDatatagBase, AnsibleSingletonTagBase
+from ansible.module_utils._internal._datatag import _tag_dataclass_kwargs, AnsibleDatatagBase, AnsibleSingletonTagBase
 
 
 @dataclasses.dataclass(**_tag_dataclass_kwargs)

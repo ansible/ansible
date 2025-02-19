@@ -24,7 +24,7 @@ from ansible.module_utils.common.sentinel import Sentinel
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError, AnsibleValueOmittedError
 from ansible.executor.module_common import _get_action_arg_defaults
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.datatag import AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.module_utils.six import string_types
 from ansible.parsing.mod_args import ModuleArgsParser, RAW_PARAM_MODULES
 from ansible.plugins.action import ActionBase, TaskArgsFinalizer

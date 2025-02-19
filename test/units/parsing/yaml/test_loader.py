@@ -38,7 +38,7 @@ from ansible.parsing.yaml.errors import AnsibleYAMLParserError
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing import vault
 from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
-from ansible.module_utils.datatag import _untaggable_types
+from ansible.module_utils._internal._datatag import _untaggable_types
 
 from units.mock.yaml_helper import YamlTestUtils
 from units.mock.vault_helper import TextVaultSecret

@@ -20,7 +20,7 @@ from __future__ import annotations
 import collections.abc as c
 import typing as t
 
-from ansible.module_utils import datatag
+from ansible.module_utils._internal import _datatag
 
 if t.TYPE_CHECKING:
     from ansible.inventory.manager import InventoryManager
@@ -103,4 +103,4 @@ class HostVarsVars(c.Mapping):
 
 
 # DTFIX-RELEASE: is there a better way to add this to the ignorable types in the module_utils code
-datatag._untaggable_types.update({HostVars, HostVarsVars})
+_datatag._untaggable_types.update({HostVars, HostVarsVars})

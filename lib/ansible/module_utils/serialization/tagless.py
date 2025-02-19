@@ -9,7 +9,7 @@ from __future__ import annotations as _annotations
 import datetime as _datetime
 import functools as _functools
 
-from ansible.module_utils import datatag as _datatag
+from ansible.module_utils._internal import _datatag
 from ansible.module_utils.common import json as _json
 
 

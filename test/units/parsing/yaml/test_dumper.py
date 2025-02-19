@@ -24,7 +24,7 @@ import unittest
 import pytest_mock
 import yaml
 
-from ansible.module_utils.datatag import Tripwire
+from ansible.module_utils._internal._datatag import Tripwire
 from ansible.module_utils._FIXMEtags.tags import Deprecated
 from ansible.parsing import vault
 from ansible.utils.datatag.tags import VaultedValue, TrustedAsTemplate

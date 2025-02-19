@@ -12,7 +12,7 @@ from collections import deque
 from itertools import chain
 
 from ansible.module_utils.common.collections import is_iterable
-from ansible.module_utils.datatag import AnsibleSerializable, AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleSerializable, AnsibleTagHelper
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.warnings import warn
 from ansible.module_utils.errors import (

@@ -5,7 +5,7 @@ import typing as t
 
 import pytest
 
-from ansible.module_utils.datatag import (
+from ansible.module_utils._internal._datatag import (
     AnsibleSerializable,
     AnsibleTaggedObject,
 )

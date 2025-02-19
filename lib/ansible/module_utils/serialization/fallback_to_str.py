@@ -13,7 +13,7 @@ import typing as _t
 
 from json import dumps as _dumps
 
-from ansible.module_utils import datatag as _datatag
+from ansible.module_utils._internal import _datatag
 from ansible.module_utils.common import json as _json
 
 

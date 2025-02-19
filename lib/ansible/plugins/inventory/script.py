@@ -161,7 +161,7 @@ import typing as t
 
 from ansible.errors import AnsibleError, AnsibleJSONParserError
 from ansible.inventory.data import InventoryData
-from ansible.module_utils.datatag import AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.module_utils.serialization import get_decoder
 from ansible.parsing.dataloader import DataLoader
 from ansible.plugins.inventory import BaseInventoryPlugin

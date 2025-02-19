@@ -146,7 +146,7 @@ import typing as t
 
 from ansible._internal import _task_context
 from ansible.errors import AnsibleError
-from ansible.module_utils.datatag import AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.plugins.lookup import LookupBase
 from ansible._internal._templating._jinja_common import UndefinedMarker
 from ansible._internal._templating._jinja_plugins import _LookupContext

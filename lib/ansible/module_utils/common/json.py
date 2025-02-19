@@ -12,7 +12,7 @@ import typing as t
 
 from ..import _internal
 from ..common import messages as _messages
-from ..datatag import (
+from ansible.module_utils._internal._datatag import (
     AnsibleSerializable,
     AnsibleSerializableWrapper,
     AnsibleTaggedObject,

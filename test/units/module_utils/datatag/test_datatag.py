@@ -25,7 +25,7 @@ from ansible.module_utils.common.json import (
 
 from ansible.module_utils.common.messages import ErrorSummary, WarningSummary, DeprecationSummary, Detail, PluginInfo
 
-from ansible.module_utils.datatag import (
+from ansible.module_utils._internal._datatag import (
     AnsibleSerializable,
     AnsibleSingletonTagBase,
     AnsibleTaggedObject,

@@ -21,7 +21,7 @@ import typing as t
 
 from yaml.resolver import Resolver
 
-from ansible.module_utils.datatag import AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.parsing.vault import VaultSecret
 from ansible.parsing.yaml.constructor import AnsibleConstructor
 from ansible.module_utils.common.yaml import HAS_LIBYAML

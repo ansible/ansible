@@ -7,7 +7,7 @@ import time
 
 from ansible import constants
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
-from ansible.module_utils.datatag import AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.utils.datatag.tags import TrustedAsTemplate
 
 

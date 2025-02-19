@@ -12,10 +12,10 @@ import sys
 from itertools import chain
 
 # deprecated: description='typing.Self exists in Python 3.11+' python_version='3.10'
-from ..compat import typing as t
+from ansible.module_utils.compat import typing as t
 
-from .._internal import _dataclass_validation
-from .._internal._patches import _sys_intern_patch, _socket_patch
+from ansible.module_utils._internal import _dataclass_validation
+from ansible.module_utils._internal._patches import _sys_intern_patch, _socket_patch
 
 _sys_intern_patch.SysInternPatch.patch()
 _socket_patch.GetAddrInfoPatch.patch()  # DTFIX-FUTURE: consider replacing this with a socket import shim that installs the patch

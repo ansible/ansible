@@ -22,7 +22,7 @@ import typing as t
 
 from yaml.representer import SafeRepresenter
 
-from ansible.module_utils.datatag import AnsibleTaggedObject, Tripwire, AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTaggedObject, Tripwire, AnsibleTagHelper
 from ansible.parsing.vault import VaultHelper
 from ansible.module_utils.common.yaml import HAS_LIBYAML
 

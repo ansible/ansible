@@ -21,7 +21,7 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
-from ansible.module_utils.datatag import AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base

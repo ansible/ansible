@@ -9,7 +9,7 @@ from collections import abc as c
 
 from jinja2.environment import TemplateModule
 
-from ansible.module_utils.datatag import (
+from ansible.module_utils._internal._datatag import (
     AnsibleTaggedObject,
     _AnsibleTaggedDict,
     _AnsibleTaggedList,

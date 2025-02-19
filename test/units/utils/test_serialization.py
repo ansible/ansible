@@ -9,7 +9,7 @@ import collections.abc as c
 
 import pytest
 
-from ansible.module_utils.datatag import AnsibleTaggedObject, _untaggable_types, AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTaggedObject, _untaggable_types, AnsibleTagHelper
 from ansible.module_utils._FIXMEtags.tags import Deprecated
 from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
 from ansible.module_utils.serialization import module_legacy_c2m, module_legacy_m2c, module_modern_c2m, module_modern_m2c, get_encoder, get_decoder, tagless

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing as t
 
-from ansible.module_utils.datatag import AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 
 
 def tag_names(value: object) -> list[str]:

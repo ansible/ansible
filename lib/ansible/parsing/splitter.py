@@ -22,7 +22,7 @@ import re
 
 from ansible.errors import AnsibleParserError
 from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils.datatag import AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
 from ansible.parsing.quoting import unquote
 

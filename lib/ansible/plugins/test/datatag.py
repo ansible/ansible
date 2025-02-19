@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing as t
 
-from ansible.module_utils.datatag import AnsibleTagHelper, _known_tag_type_map
+from ansible.module_utils._internal._datatag import AnsibleTagHelper, _known_tag_type_map
 
 
 def tagged(value: t.Any) -> bool:

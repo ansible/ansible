@@ -22,7 +22,7 @@ import os
 import unittest
 from unittest.mock import MagicMock, patch
 from ansible.inventory.manager import InventoryManager
-from ansible.module_utils.datatag import AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.playbook.play import Play
 
 

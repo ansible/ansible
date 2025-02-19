@@ -13,7 +13,7 @@ import typing as _t
 
 from functools import partial as _partial
 
-from .. import datatag as _datatag
+from .._internal import _datatag
 
 HAS_LIBYAML = False
 

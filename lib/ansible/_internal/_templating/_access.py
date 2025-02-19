@@ -5,7 +5,7 @@ import typing as t
 
 from contextvars import ContextVar
 
-from ansible.module_utils.datatag import AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 
 
 class NotifiableAccessContextBase(metaclass=abc.ABCMeta):

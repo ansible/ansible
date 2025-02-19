@@ -32,7 +32,7 @@ from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils.datatag import AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.module_utils.six import text_type
 from ansible.module_utils._FIXMEtags.tags import Deprecated
 from ansible.parsing.dataloader import DataLoader

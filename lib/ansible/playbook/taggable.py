@@ -20,7 +20,7 @@ from __future__ import annotations
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.sentinel import Sentinel
-from ansible.module_utils.datatag import AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.playbook.attribute import FieldAttribute
 from ansible._internal._templating._engine import TemplateEngine
 

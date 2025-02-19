@@ -7,7 +7,7 @@ import datetime
 import typing as t
 
 from ansible.module_utils.common import messages as _messages
-from ansible.module_utils import datatag as _datatag
+from ansible.module_utils._internal import _datatag
 
 
 @dataclasses.dataclass(**_datatag._tag_dataclass_kwargs)

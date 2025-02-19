@@ -9,7 +9,7 @@ from typing import ClassVar
 
 from ansible.module_utils.compat import typing as typing_surrogate
 from ansible.module_utils.compat.typing import ClassVar as ClassVarFromSurrogate
-from ansible.module_utils.datatag import _tag_dataclass_kwargs
+from ansible.module_utils._internal._datatag import _tag_dataclass_kwargs
 
 
 def test_classvar_fields() -> None:

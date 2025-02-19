@@ -34,7 +34,7 @@ from binascii import hexlify
 from binascii import unhexlify
 from binascii import Error as BinasciiError
 
-from ansible.module_utils.datatag import (
+from ansible.module_utils._internal._datatag import (
     AnsibleTagHelper, AnsibleTaggedObject, _AnsibleTagsMapping, _EmptyROInternalTagsMapping, _EMPTY_INTERNAL_TAGS_MAPPING,
 )
 from ansible._internal._templating import _jinja_common

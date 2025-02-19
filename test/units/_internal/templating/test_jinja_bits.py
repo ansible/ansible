@@ -11,7 +11,7 @@ import pytest_mock
 
 from ansible.errors import AnsibleUndefinedVariable, AnsibleTemplateError
 from ansible._internal._templating._errors import AnsibleTemplatePluginRuntimeError
-from ansible.module_utils.datatag import AnsibleTaggedObject
+from ansible.module_utils._internal._datatag import AnsibleTaggedObject
 from ansible._internal._templating._jinja_common import CapturedExceptionMarker, MarkerError, Marker, UndefinedMarker
 from ansible._internal._templating._utils import TemplateContext
 from ansible.utils.datatag.tags import TrustedAsTemplate

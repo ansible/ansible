@@ -26,7 +26,7 @@ from jinja2.filters import do_map, do_select, do_selectattr, do_reject, do_rejec
 from jinja2.environment import Environment
 
 from ansible.errors import AnsibleFilterError, AnsibleTypeError
-from ansible.module_utils.datatag import AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.module_utils.serialization import get_encoder, get_decoder
 from ansible.module_utils.six import string_types, integer_types, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text

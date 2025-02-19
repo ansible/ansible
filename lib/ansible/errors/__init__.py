@@ -14,7 +14,7 @@ from collections.abc import Sequence
 from json import JSONDecodeError
 
 from ansible.module_utils.common.text.converters import to_text
-from ..module_utils.datatag import AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ..utils.datatag.tags import Origin
 from .._internal._errors import _utils
 
