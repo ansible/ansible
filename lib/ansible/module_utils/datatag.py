@@ -3,8 +3,8 @@ from __future__ import annotations as _annotations
 import datetime as _datetime
 import typing as _t
 
-from ansible.module_utils._internal import _plugin_exec_context
-from ansible.module_utils._internal._datatag import _tags
+from ._internal import _plugin_exec_context
+from ._internal._datatag import _tags
 
 _T = _t.TypeVar('_T')
 

@@ -109,8 +109,8 @@ class DeprecationSummary(WarningSummary):
         collection_name = '.'.join(parts[:2])
 
         # deprecated: description='enable the deprecation message for collection_name' core_version='2.23'
-        # from ansible.module_utils.datatag.tags import Deprecated
-        # collection_name = Deprecated('The `collection_name` property is deprecated.', removal_version='2.25').tag(collection_name)
+        # from ansible.module_utils.datatag import deprecate_value
+        # collection_name = deprecate_value(collection_name, 'The `collection_name` property is deprecated.', removal_version='2.25')
 
         return collection_name
 

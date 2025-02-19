@@ -34,7 +34,7 @@ from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.module_utils.six import text_type
-from ansible.module_utils._internal._datatag._tags import Deprecated
+from ansible.module_utils.datatag import deprecate_value
 from ansible.parsing.dataloader import DataLoader
 from ansible.vars.fact_cache import FactCache
 from ansible._internal._templating._engine import TemplateEngine
@@ -61,7 +61,7 @@ def _deprecate_top_level_fact(value: t.Any) -> t.Any:
     The inner values are shared to aid in message de-duplication across hosts/values, and reduce intra-process memory usage.
     Unique tag instances are required to achieve the correct de-duplication within a top-level templating operation.
     """
-    return Deprecated(msg=_DEPRECATE_TOP_LEVEL_FACT_MSG, removal_version=_DEPRECATE_TOP_LEVEL_FACT_REMOVAL_VERSION).tag(value)
+    return deprecate_value(value, _DEPRECATE_TOP_LEVEL_FACT_MSG, removal_version=_DEPRECATE_TOP_LEVEL_FACT_REMOVAL_VERSION)
 
 
 def preprocess_vars(a):
@@ -501,10 +501,11 @@ class VariableManager:
                 variables['ansible_play_hosts'] = [x for x in variables['ansible_play_hosts_all'] if x not in play._removed_hosts]
                 variables['ansible_play_batch'] = [x for x in _hosts if x not in play._removed_hosts]
 
-                variables['play_hosts'] = Deprecated(
+                variables['play_hosts'] = deprecate_value(
+                    value=variables['ansible_play_batch'],
                     msg='Use `ansible_play_batch` instead of `play_hosts`.',
                     removal_version='2.21',
-                ).tag(variables['ansible_play_batch'])
+                )
 
         # Set options vars
         for option, option_value in self._options_vars.items():

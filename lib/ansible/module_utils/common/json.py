@@ -29,9 +29,8 @@ from ansible.module_utils._internal._datatag import (
     _AnsibleTaggedTime,
     _AnsibleTaggedTuple,
     AnsibleTagHelper,
+    _tags,
 )
-
-from ansible.module_utils._internal._datatag._tags import Deprecated as _Deprecated
 
 # transformations to "final" JSON representations can only use:
 # str, float, int, bool, None, dict, list
@@ -89,7 +88,7 @@ _common_module_response_types: frozenset[type[AnsibleSerializable]] = frozenset(
     _messages.ErrorSummary,
     _messages.WarningSummary,
     _messages.DeprecationSummary,
-    _Deprecated,
+    _tags.Deprecated,
 })
 """Types that must be supported for all Ansible module-to-controller serialization profiles."""
 
