@@ -4,7 +4,7 @@ import datetime as _datetime
 import typing as _t
 
 from ansible.module_utils._internal import _plugin_exec_context
-from ansible.module_utils.datatag import tags as _tags
+from ansible.module_utils._FIXMEtags import tags as _tags
 
 _T = _t.TypeVar('_T')
 

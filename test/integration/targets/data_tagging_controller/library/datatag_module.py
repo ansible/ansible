@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.datatag.tags import Deprecated
+from ansible.module_utils._FIXMEtags.tags import Deprecated
 
 
 def main():

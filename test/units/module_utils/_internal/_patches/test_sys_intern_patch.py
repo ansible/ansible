@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 
-from ansible.module_utils.datatag.tags import Deprecated
+from ansible.module_utils._FIXMEtags.tags import Deprecated
 
 
 def test_sys_intern() -> None:

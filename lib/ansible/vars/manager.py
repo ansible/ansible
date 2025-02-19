@@ -34,7 +34,7 @@ from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.datatag import AnsibleTagHelper
 from ansible.module_utils.six import text_type
-from ansible.module_utils.datatag.tags import Deprecated
+from ansible.module_utils._FIXMEtags.tags import Deprecated
 from ansible.parsing.dataloader import DataLoader
 from ansible.vars.fact_cache import FactCache
 from ansible._internal._templating._engine import TemplateEngine

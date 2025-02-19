@@ -37,7 +37,7 @@ from ansible.errors import (
 from ansible._internal._templating._errors import AnsibleTemplatePluginRuntimeError, AnsibleTemplatePluginLoadError, AnsibleTemplatePluginNotFoundError
 from ansible.errors.handler import ErrorAction, ErrorHandler
 from ansible.module_utils.datatag import AnsibleTagHelper, AnsibleDatatagBase
-from ansible.module_utils.datatag.tags import Deprecated
+from ansible.module_utils._FIXMEtags.tags import Deprecated
 from ansible._internal._templating import _transform
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
 from ansible.utils.datatag.tags import Origin, TrustedAsTemplate

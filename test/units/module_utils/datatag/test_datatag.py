@@ -42,7 +42,7 @@ from ansible.module_utils.datatag import (
     _tag_dataclass_kwargs,
     AnsibleTagHelper,
 )
-from ansible.module_utils.datatag.tags import Deprecated
+from ansible.module_utils._FIXMEtags.tags import Deprecated
 
 
 if sys.version_info >= (3, 9):

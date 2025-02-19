@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import socket
 
-from ansible.module_utils.datatag.tags import Deprecated
+from ansible.module_utils._FIXMEtags.tags import Deprecated
 
 
 def test_getaddrinfo() -> None:
