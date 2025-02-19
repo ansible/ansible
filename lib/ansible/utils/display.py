@@ -352,11 +352,9 @@ class Display(metaclass=Singleton):
                     self.b_cowsay = b_cow_path
 
     @staticmethod
-    def _proxy(
-        func: c.Callable[t.Concatenate[Display, P], str | None]
-    ) -> c.Callable[..., None]:
+    def _proxy(func: c.Callable[t.Concatenate[Display, P], str | None]) -> c.Callable[..., None]:
         @wraps(func)
-        def wrapper(self, *args: P.args, **kwargs: P.kwargs) -> func:
+        def wrapper(self, *args: P.args, **kwargs: P.kwargs) -> c.Callable[..., None]:
             if self._final_q:
                 # If _final_q is set, that means we are in a WorkerProcess
                 # and instead of displaying messages directly from the fork
