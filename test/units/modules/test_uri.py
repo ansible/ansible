@@ -18,7 +18,7 @@ class TestUri:
     def test_main_no_args(self):
         """Module must fail if called with no args."""
         with pytest.raises(SystemExit), \
-             patch_module_args(None, 'legacy'):
+             patch_module_args(None):
             uri.main()
 
     def test_main_no_force(self, mocker):
@@ -27,7 +27,7 @@ class TestUri:
         resp.headers.get_content_type.return_value = "text/html"
         info = {"url": "http://example.com/", "status": 200}
         with patch.object(uri, "fetch_url", return_value=(resp, info)) as fetch_url, \
-             patch_module_args({"ANSIBLE_MODULE_ARGS": {"url": "http://example.com/"}}, 'legacy'):
+             patch_module_args({"ANSIBLE_MODULE_ARGS": {"url": "http://example.com/"}}):
             with pytest.raises(SystemExit):
                 uri.main()
             fetch_url.assert_called_once()
@@ -39,7 +39,7 @@ class TestUri:
         resp.headers.get_content_type.return_value = "text/html"
         info = {"url": "http://example.com/", "status": 200}
         with patch.object(uri, "fetch_url", return_value=(resp, info)) as fetch_url, \
-             patch_module_args({"ANSIBLE_MODULE_ARGS": {"url": "http://example.com/", "force": True}}, 'legacy'):
+             patch_module_args({"ANSIBLE_MODULE_ARGS": {"url": "http://example.com/", "force": True}}):
             with pytest.raises(SystemExit):
                 uri.main()
             fetch_url.assert_called_once()

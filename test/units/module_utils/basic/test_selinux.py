@@ -21,7 +21,7 @@ from ansible.module_utils.testing import patch_module_args
 
 @pytest.fixture
 def no_args_module_exec():
-    with patch_module_args(None, 'legacy'):
+    with patch_module_args(None):
         yield
 
 
@@ -133,11 +133,11 @@ class TestSELinuxMU:
                 am.selinux_context(path='/foo/bar')
 
     def test_is_special_selinux_path(self):
-        args = to_bytes(json.dumps(dict(ANSIBLE_MODULE_ARGS={'_ansible_selinux_special_fs': "nfs,nfsd,foos",
-                                                             '_ansible_remote_tmp': "/tmp",
-                                                             '_ansible_keep_remote_files': False})))
+        args = dict(ANSIBLE_MODULE_ARGS={'_ansible_selinux_special_fs': "nfs,nfsd,foos",
+                                         '_ansible_remote_tmp': "/tmp",
+                                         '_ansible_keep_remote_files': False})
 
-        with patch_module_args(args, 'legacy'):
+        with patch_module_args(args):
             am = basic.AnsibleModule(
                 argument_spec=dict(),
             )

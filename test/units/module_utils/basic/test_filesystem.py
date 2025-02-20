@@ -19,7 +19,7 @@ realimport = builtins.__import__
 
 @pytest.fixture
 def no_module_args():
-    with patch_module_args(None, 'legacy'):
+    with patch_module_args(None):
         yield
 
 

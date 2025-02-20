@@ -21,9 +21,9 @@ def patch_ansible_module(request):
     request.param['ANSIBLE_MODULE_ARGS']['_ansible_remote_tmp'] = '/tmp'
     request.param['ANSIBLE_MODULE_ARGS']['_ansible_keep_remote_files'] = False
 
-    args = json.dumps(request.param)
+    args = request.param
 
-    with patch_module_args(args, 'legacy'):
+    with patch_module_args(args):
         yield
 
 
@@ -37,9 +37,9 @@ def set_module_args():
         args['_ansible_remote_tmp'] = '/tmp'
         args['_ansible_keep_remote_files'] = False
 
-        args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
+        args = {'ANSIBLE_MODULE_ARGS': args}
 
-        ctx = patch_module_args(args, 'legacy')
+        ctx = patch_module_args(args)
         ctx.__enter__()
 
     try:

@@ -20,7 +20,7 @@ def test_run_non_existent_command(monkeypatch):
 
     monkeypatch.setattr(subprocess, 'Popen', popen)
 
-    with patch_module_args(None, 'legacy'):
+    with patch_module_args(None):
         am = basic.AnsibleModule(argument_spec={})
 
     monkeypatch.setattr(am, 'fail_json', fail_json)

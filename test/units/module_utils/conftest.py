@@ -33,11 +33,11 @@ def stdin(request):
             request.param['ANSIBLE_MODULE_ARGS']['_ansible_keep_remote_files'] = False
         if '_ansible_tracebacks_for' not in request.param['ANSIBLE_MODULE_ARGS']:
             request.param['ANSIBLE_MODULE_ARGS']['_ansible_tracebacks_for'] = []
-        args = json.dumps(request.param)
+        args = request.param
     else:
         raise Exception('Malformed data to the stdin pytest fixture')
 
-    with patch_module_args(args, 'legacy'):
+    with patch_module_args(args):
         yield
 
     sys.argv = old_argv
