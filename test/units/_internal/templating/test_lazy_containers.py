@@ -12,7 +12,7 @@ import pytest
 from ansible.errors import AnsibleTemplateError, AnsibleUndefinedVariable
 from ansible._internal._templating._jinja_bits import is_possibly_template
 from ansible._internal._templating._jinja_common import CapturedExceptionMarker, MarkerError, JinjaCallContext, Marker
-from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
+from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 from ansible._internal._templating._utils import TemplateContext
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
 from ansible._internal._templating._lazy_containers import _AnsibleLazyTemplateMixin, _AnsibleLazyTemplateList, _AnsibleLazyTemplateDict, _LazyValue

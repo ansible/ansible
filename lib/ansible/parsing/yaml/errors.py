@@ -9,7 +9,7 @@ from yaml.constructor import ConstructorError
 
 from ansible._internal._errors import _utils
 from ansible.errors import AnsibleParserError
-from ansible.utils.datatag.tags import Origin
+from ansible._internal._datatag._tags import Origin
 
 
 class AnsibleConstructorError(ConstructorError):

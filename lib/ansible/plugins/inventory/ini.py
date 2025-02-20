@@ -83,7 +83,7 @@ from ansible.plugins.inventory import BaseFileInventoryPlugin
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.common.text.converters import to_bytes, to_text
-from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
+from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 from ansible.utils.shlex import shlex_split
 
 

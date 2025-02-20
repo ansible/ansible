@@ -165,7 +165,7 @@ from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.serialization import get_decoder
 from ansible.parsing.dataloader import DataLoader
 from ansible.plugins.inventory import BaseInventoryPlugin
-from ansible.utils.datatag.tags import TrustedAsTemplate, Origin
+from ansible._internal._datatag._tags import TrustedAsTemplate, Origin
 from ansible.utils.display import Display
 from ansible.utils.serialization import inventory_legacy, legacy
 

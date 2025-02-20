@@ -8,7 +8,7 @@ import textwrap
 import typing as t
 
 from ansible.module_utils.common.messages import Detail, ErrorSummary
-from ansible.utils.datatag.tags import Origin
+from ansible._internal._datatag._tags import Origin
 from ansible.module_utils._internal import _ambient_context, _traceback
 from ansible import errors
 

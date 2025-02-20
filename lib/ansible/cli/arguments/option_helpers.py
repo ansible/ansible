@@ -25,7 +25,7 @@ from ansible.module_utils.common.yaml import HAS_LIBYAML, yaml_load
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
 
-from ...utils.datatag.tags import TrustedAsTemplate, Origin
+from ansible._internal._datatag._tags import TrustedAsTemplate, Origin
 
 
 #

@@ -14,7 +14,7 @@ from ansible._internal._templating._errors import AnsibleTemplatePluginRuntimeEr
 from ansible.module_utils._internal._datatag import AnsibleTaggedObject
 from ansible._internal._templating._jinja_common import CapturedExceptionMarker, MarkerError, Marker, UndefinedMarker
 from ansible._internal._templating._utils import TemplateContext
-from ansible.utils.datatag.tags import TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible._internal._templating._jinja_bits import (AnsibleEnvironment, TemplateOverrides, _TEMPLATE_OVERRIDE_FIELD_NAMES, defer_template_error,
                                                        AnsibleTemplate)
 from ansible._internal._templating import _jinja_plugins

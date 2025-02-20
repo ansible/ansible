@@ -12,7 +12,7 @@ from ansible._internal import _serialization
 from ansible.module_utils._internal import _datatag
 from ansible.module_utils.common import json as _json
 from ansible.parsing import vault as _vault
-from ansible.utils.datatag import tags as _tags
+from ansible._internal._datatag import _tags
 
 
 class _Untrusted:

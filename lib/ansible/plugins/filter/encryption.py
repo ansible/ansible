@@ -6,7 +6,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_native, to_bytes
 from ansible.plugins import accept_marker
 from ansible._internal._templating._jinja_common import get_first_marker_arg, VaultExceptionMarker
-from ansible.utils.datatag.tags import VaultedValue
+from ansible._internal._datatag._tags import VaultedValue
 from ansible.parsing.vault import is_encrypted, VaultSecret, VaultLib, VaultHelper
 from ansible.utils.display import Display
 

@@ -53,7 +53,7 @@ from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.utils.datatag.tags import TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.module_utils import six
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.role.requirement import RoleRequirement

@@ -40,7 +40,7 @@ from ansible.module_utils._internal._datatag import AnsibleTagHelper, AnsibleDat
 from ansible.module_utils._internal._datatag._tags import Deprecated
 from ansible._internal._templating import _transform
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
-from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
+from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 from ansible.plugins.loader import init_plugin_loader
 from ansible._internal._templating._jinja_common import _TemplateConfig
 from ansible._internal._templating._jinja_plugins import _lookup

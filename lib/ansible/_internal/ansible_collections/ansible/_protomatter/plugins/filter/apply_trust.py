@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing as t
 
-from ansible.utils.datatag.tags import TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 
 
 def apply_trust(value: object) -> object:

@@ -22,7 +22,7 @@ import typing as t
 
 from ansible.parsing.dataloader import DataLoader
 from ansible.module_utils.common.text.converters import to_bytes, to_text
-from ansible.utils.datatag.tags import TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 
 
 class DictDataLoader(DataLoader):

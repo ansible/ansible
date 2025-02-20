@@ -18,7 +18,7 @@ from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError, AnsibleValueOmittedError, AnsibleFieldAttributeError
 from ansible.module_utils.datatag import native_type_name
-from ansible.utils.datatag.tags import Origin
+from ansible._internal._datatag._tags import Origin
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.sentinel import Sentinel

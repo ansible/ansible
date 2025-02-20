@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import unittest
 
-from ansible.utils.datatag.tags import TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible._internal._templating._jinja_bits import AnsibleEnvironment
 from ansible._internal._templating._engine import TemplateEngine
 

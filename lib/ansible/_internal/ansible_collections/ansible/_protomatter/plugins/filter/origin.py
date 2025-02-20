@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing as t
 
-from ansible.utils.datatag.tags import Origin
+from ansible._internal._datatag._tags import Origin
 
 
 def origin(value: object) -> str | None:

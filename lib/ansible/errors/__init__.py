@@ -15,7 +15,7 @@ from json import JSONDecodeError
 
 from ansible.module_utils.common.text.converters import to_text
 from ..module_utils.datatag import native_type_name
-from ..utils.datatag.tags import Origin
+from ansible._internal._datatag import _tags
 from .._internal._errors import _utils
 
 
@@ -212,7 +212,7 @@ class AnsibleJSONParserError(AnsibleParserError):
     _include_cause_message = False  # hide the underlying cause message, it's included by `handle_exception` as needed
 
     @classmethod
-    def handle_exception(cls, exception: Exception, origin: Origin) -> t.NoReturn:
+    def handle_exception(cls, exception: Exception, origin: _tags.Origin) -> t.NoReturn:
         if isinstance(exception, JSONDecodeError):
             origin = origin.replace(line_num=exception.lineno, col_num=exception.colno)
 

@@ -18,7 +18,7 @@
 #############################################
 from __future__ import annotations
 
-from ansible.utils.datatag.tags import TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.utils.vars import combine_vars
 
 

@@ -5,7 +5,7 @@ import pytest
 from ansible.errors import AnsibleError
 from ansible._internal._errors._utils import _create_error_summary, get_chained_message
 from ansible.module_utils.common.messages import ErrorSummary
-from ansible.utils.datatag.tags import Origin
+from ansible._internal._datatag._tags import Origin
 from ansible.utils.display import format_message
 
 

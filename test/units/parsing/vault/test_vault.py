@@ -40,7 +40,7 @@ from ansible.parsing.vault import EncryptedString, VaultSecretsContext, VaultLib
 from ansible._internal._templating._jinja_common import VaultExceptionMarker, TruncationMarker, Marker
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
 from ansible._internal._templating._utils import TemplateContext
-from ansible.utils.datatag.tags import VaultedValue, Origin
+from ansible._internal._datatag._tags import VaultedValue, Origin
 from ansible.utils.collection_loader import _EncryptedStringProtocol
 
 from units.mock.loader import DictDataLoader

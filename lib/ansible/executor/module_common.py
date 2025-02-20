@@ -40,7 +40,7 @@ from ansible._internal import _locking
 from ansible.module_utils._internal import _dataclass_validation
 from ansible.module_utils.common.messages import PluginInfo
 from ansible.module_utils.common.yaml import yaml_load
-from ansible.utils.datatag.tags import Origin
+from ansible._internal._datatag._tags import Origin
 from ansible.module_utils.serialization import get_module_encoder, Direction
 from ansible.release import __version__, __author__
 from ansible import constants as C

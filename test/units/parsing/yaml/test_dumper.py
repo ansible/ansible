@@ -27,7 +27,7 @@ import yaml
 from ansible.module_utils._internal._datatag import Tripwire
 from ansible.module_utils._internal._datatag._tags import Deprecated
 from ansible.parsing import vault
-from ansible.utils.datatag.tags import VaultedValue, TrustedAsTemplate
+from ansible._internal._datatag._tags import VaultedValue, TrustedAsTemplate
 from ansible.parsing.yaml import dumper
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.dumper import AnsibleDumper

@@ -16,7 +16,7 @@ from ansible.module_utils._internal._datatag import (
 )
 from ansible._internal._templating._lazy_containers import _AnsibleLazyTemplateDict, _AnsibleLazyTemplateList
 from ansible.parsing.vault import EncryptedString
-from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
+from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 
 _T = t.TypeVar('_T')
 

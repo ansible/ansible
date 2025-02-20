@@ -25,7 +25,7 @@ from unittest.mock import patch
 from ansible.errors import AnsibleParserError, AnsibleFileNotFound
 from ansible.parsing.vault import AnsibleVaultError
 from ansible.module_utils.common.text.converters import to_text
-from ansible.utils.datatag.tags import Origin
+from ansible._internal._datatag._tags import Origin
 
 from units.mock.vault_helper import TextVaultSecret
 from ansible.parsing.dataloader import DataLoader

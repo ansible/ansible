@@ -54,7 +54,7 @@ from ansible.errors import AnsibleAssertionError, AnsiblePromptInterrupt, Ansibl
 from ansible._internal._errors import _utils
 from ansible.module_utils._internal import _ambient_context, _plugin_exec_context
 from ansible.module_utils.common.text.converters import to_bytes, to_text
-from ansible.utils.datatag.tags import TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.module_utils.common.messages import ErrorSummary, WarningSummary, DeprecationSummary, Detail, SummaryBase, PluginInfo
 from ansible.module_utils.six import text_type
 from ansible.module_utils._internal import _traceback

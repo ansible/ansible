@@ -10,7 +10,7 @@ from ansible import errors as _errors
 from ansible import template as _template
 from ansible._internal._templating import _engine, _jinja_bits
 from ansible.template import Templar
-from ansible.utils.datatag.tags import TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 
 from ..test_utils.controller.display import emits_deprecation_warning
 

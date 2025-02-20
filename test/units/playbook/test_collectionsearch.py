@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 from ansible.errors import AnsibleParserError
-from ansible.utils.datatag.tags import TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.playbook.play import Play
 from ansible.playbook.task import Task
 from ansible.playbook.block import Block

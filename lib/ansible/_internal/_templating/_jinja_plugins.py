@@ -16,7 +16,7 @@ from ansible.module_utils._internal._ambient_context import AmbientContextBase
 from ansible.module_utils._internal._plugin_exec_context import PluginExecContext
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
-from ansible.utils.datatag.tags import TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.plugins import AnsibleJinja2Plugin
 from ansible.plugins.loader import lookup_loader, Jinja2Loader
 from ansible.plugins.lookup import LookupBase

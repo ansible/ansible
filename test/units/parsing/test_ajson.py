@@ -14,7 +14,7 @@ from datetime import date, datetime, timezone, timedelta
 
 from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.parsing.vault import EncryptedString, AnsibleVaultError
-from ansible.utils.datatag.tags import TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.module_utils.serialization import get_decoder, get_encoder
 from ansible.utils.serialization import legacy
 

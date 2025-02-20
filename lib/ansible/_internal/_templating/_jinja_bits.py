@@ -36,7 +36,7 @@ from ansible.module_utils._internal._datatag import (
 
 from ansible.errors.handler import ErrorAction
 from ansible.parsing import vault as _vault
-from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
+from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 
 from ._access import AnsibleAccessContext
 from ._datatag import _JinjaConstTemplate

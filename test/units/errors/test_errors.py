@@ -6,7 +6,7 @@ import pytest
 
 from ansible.errors import AnsibleError, AnsibleVariableTypeError
 from ansible._internal._errors._utils import SourceContext
-from ansible.utils.datatag.tags import Origin
+from ansible._internal._datatag._tags import Origin
 
 from ..test_utils.controller.display import emits_deprecation_warning
 

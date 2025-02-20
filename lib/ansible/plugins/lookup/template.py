@@ -106,7 +106,7 @@ import os
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils.common.text.converters import to_text
-from ansible.utils.datatag.tags import TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.plugin_utils.template import generate_ansible_template_vars
 from ansible.utils.display import Display
 from ansible._internal._templating._engine import TemplateOptions, TemplateOverrides

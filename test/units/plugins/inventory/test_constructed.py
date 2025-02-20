@@ -22,7 +22,7 @@ from __future__ import annotations
 import pytest
 
 from ansible.errors import AnsibleParserError
-from ansible.utils.datatag.tags import TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.plugins.inventory.constructed import InventoryModule
 from ansible.inventory.data import InventoryData
 from ansible.template import Templar

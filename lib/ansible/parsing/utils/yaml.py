@@ -13,7 +13,7 @@ from ansible._internal._errors import _utils
 from ansible.parsing.vault import VaultSecret
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.errors import AnsibleYAMLParserError
-from ansible.utils.datatag.tags import Origin
+from ansible._internal._datatag._tags import Origin
 from ansible.utils.serialization import legacy
 
 

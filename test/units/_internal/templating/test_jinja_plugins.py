@@ -5,7 +5,7 @@ import typing as t
 import pytest
 
 from ansible.errors import AnsibleUndefinedVariable
-from ansible.utils.datatag.tags import TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible._internal._templating._engine import TemplateEngine
 
 TRUST = TrustedAsTemplate()

@@ -34,7 +34,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAuthenticationFailure
 from ansible.executor.module_common import _BuiltModule
 from ansible.module_utils.common.text.converters import to_bytes
-from ansible.utils.datatag.tags import TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.action import ActionBase
 from ansible.vars.clean import clean_facts

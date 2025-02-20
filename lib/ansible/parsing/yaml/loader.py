@@ -25,7 +25,7 @@ from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.parsing.vault import VaultSecret
 from ansible.parsing.yaml.constructor import AnsibleConstructor
 from ansible.module_utils.common.yaml import HAS_LIBYAML
-from ansible.utils.datatag.tags import TrustedAsTemplate, Origin
+from ansible._internal._datatag._tags import TrustedAsTemplate, Origin
 
 if HAS_LIBYAML:
     from yaml.cyaml import CParser

@@ -20,7 +20,7 @@ from __future__ import annotations
 import unittest
 
 from ansible.errors import AnsibleParserError, AnsibleFieldAttributeError
-from ansible.utils.datatag.tags import TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.playbook.attribute import FieldAttribute, NonInheritableFieldAttribute
 from ansible._internal._templating._engine import TemplateEngine
 from ansible.playbook import base

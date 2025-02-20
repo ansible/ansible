@@ -7,7 +7,7 @@ import pytest
 
 from ansible._internal._errors._utils import get_chained_message
 from ansible.errors import AnsibleJSONParserError
-from ansible.utils.datatag.tags import Origin
+from ansible._internal._datatag._tags import Origin
 from ansible.parsing.utils.yaml import from_yaml
 
 

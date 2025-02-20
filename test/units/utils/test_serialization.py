@@ -11,7 +11,7 @@ import pytest
 
 from ansible.module_utils._internal._datatag import AnsibleTaggedObject, _untaggable_types, AnsibleTagHelper
 from ansible.module_utils._internal._datatag._tags import Deprecated
-from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
+from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 from ansible.module_utils.serialization import module_legacy_c2m, module_legacy_m2c, module_modern_c2m, module_modern_m2c, get_encoder, get_decoder, tagless
 from ansible.utils.serialization import legacy
 

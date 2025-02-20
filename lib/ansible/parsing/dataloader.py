@@ -17,7 +17,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible._internal._errors import _utils
 from ansible.module_utils.basic import is_executable
-from ansible.utils.datatag.tags import Origin, TrustedAsTemplate, _EncryptedSource
+from ansible._internal._datatag._tags import Origin, TrustedAsTemplate, _EncryptedSource
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.parsing.quoting import unquote

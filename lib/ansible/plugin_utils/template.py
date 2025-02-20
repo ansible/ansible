@@ -8,7 +8,7 @@ import time
 from ansible import constants
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
-from ansible.utils.datatag.tags import TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 
 
 def generate_ansible_template_vars(path, fullpath=None, dest_path=None):

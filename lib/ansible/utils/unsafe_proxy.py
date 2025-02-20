@@ -9,7 +9,7 @@ from collections.abc import Mapping, Set
 
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.common.collections import is_sequence
-from ansible.utils.datatag.tags import TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.module_utils.six import binary_type, text_type
 
 import typing as t

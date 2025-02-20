@@ -6,7 +6,7 @@ import typing as t
 
 from ansible.module_utils._internal._datatag import AnsibleSingletonTagBase, _tag_dataclass_kwargs
 from ansible.module_utils._internal._datatag._tags import Deprecated
-from ansible.utils.datatag.tags import Origin
+from ansible._internal._datatag._tags import Origin
 from ansible.utils.display import Display
 
 from ._access import NotifiableAccessContextBase

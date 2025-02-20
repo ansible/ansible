@@ -55,7 +55,7 @@ import os
 
 from ansible.plugins.lookup import LookupBase
 from ansible._internal._templating._jinja_bits import _undef, _DEFAULT_UNDEF
-from ansible.utils.datatag.tags import Origin
+from ansible._internal._datatag._tags import Origin
 
 
 class LookupModule(LookupBase):
