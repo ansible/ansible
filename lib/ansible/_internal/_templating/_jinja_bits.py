@@ -493,6 +493,9 @@ def create_template_error(ex: Exception, variable: t.Any, is_expression: bool) -
     return exception_to_raise
 
 
+# DTFIX-RELEASE: implement CapturedExceptionMarker deferral support on call (and lookup), filter/test plugins, etc.
+#                also update the protomatter integration test once this is done (the test was written differently since this wasn't done yet)
+
 class AnsibleEnvironment(ImmutableSandboxedEnvironment):
     """
     Our custom environment, which simply allows us to override the class-level
