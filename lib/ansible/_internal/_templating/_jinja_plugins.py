@@ -243,6 +243,7 @@ def _invoke_lookup(*, plugin_name: str, lookup_terms: list, lookup_kwargs: dict[
     with (
         JinjaCallContext(accept_marker=instance.accept_marker),
         _LookupContext(invoked_as_with=invoked_as_with),
+        PluginExecContext(executing_plugin=instance),
     ):
         # safely catch run failures per #5059
         try:
