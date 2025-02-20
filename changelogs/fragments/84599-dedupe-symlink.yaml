@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy - listing collections would duplicate on symlinks. Fix prevents listing duplicate paths caused by symlinks 
