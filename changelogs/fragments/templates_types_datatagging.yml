@@ -50,11 +50,11 @@ minor_changes:
     Attempting to use an undefined hint also results in an error, ensuring incorrect use of the function can be distinguished from the function's normal behavior.
 
 breaking_changes:
-  - loops - Omit placeholders no longer leak between loop item templating and task templating.  # DTFIX-RELEASE: porting guide entry with examples 
+  - loops - Omit placeholders no longer leak between loop item templating and task templating.
     Previously, ``omit`` placeholders could remain embedded in loop items after templating and be used as an ``omit`` for task templating.
     Now, values resolving to ``omit`` are dropped immediately when loop items are templated.
     To turn missing values into an ``omit`` for task templating, use ``| default(omit)``.
-    This solution is backwards compatible with previous versions of ansible-core.
+    This solution is backwards compatible with previous versions of ansible-core.  # DTFIX-RELEASE: porting guide entry with examples
   - conditionals - Conditional expressions that result in non-boolean values are now an error by default.
     Such results often indicate unintentional use of templates where they are not supported, resulting in a conditional that is always true.
     When this option is enabled, conditional expressions which are a literal ``None`` or empty string will evaluate as true, for backwards compatibility.
