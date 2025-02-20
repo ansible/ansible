@@ -334,8 +334,8 @@ def to_uuid(string, namespace=UUID_NAMESPACE_ANSIBLE):
 @accept_marker
 def mandatory(a, msg=None):
     """Make a variable mandatory."""
-    # DTFIX-MERGE: deprecate this filter; there are much better ways via undef, etc...
-    #              also remember to remove unit test checking for _undefined_name
+    # DTFIX-RELEASE: deprecate this filter; there are much better ways via undef, etc...
+    #                also remember to remove unit test checking for _undefined_name
     if isinstance(a, UndefinedMarker):
         if msg is not None:
             raise AnsibleFilterError(to_text(msg))
