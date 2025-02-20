@@ -130,6 +130,7 @@ bugfixes:
     Previously use of templated raw task args silently ignored all values from the templated ``args`` keyword.
   - action plugins - Action plugins that raise unhandled exceptions no longer terminate playbook loops. Previously, exceptions raised by an action plugin caused abnormal loop termination and loss of loop iteration results.
   - display - The ``Display.deprecated`` method once again properly handles the ``removed=True`` argument (https://github.com/ansible/ansible/issues/82358).
+
 deprecated_features:
   - display - The ``Display.get_deprecation_message`` method has been deprecated.
     Call ``Display.deprecated`` to display a deprecation message, or call it with ``removed=True`` to raise an ``AnsibleError``.
@@ -158,6 +159,7 @@ deprecated_features:
   - CLI - The ``--inventory-file`` option alias is deprecated. Use the ``-i`` or ``--inventory`` option instead.
   - first_found lookup - Splitting of file paths on ``,;:`` is deprecated. Pass a list of paths instead.
     The ``split`` method on strings can be used to split variables into a list as needed.
+
 removed_features:
   - modules - Modules returning non-UTF8 strings now result in an error.
     The ``MODULE_STRICT_UTF8_RESPONSE`` setting can be used to disable this check.
