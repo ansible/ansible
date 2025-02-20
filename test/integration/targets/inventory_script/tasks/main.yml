@@ -81,15 +81,15 @@
     - {mode: non_zero_exit, expected_error: Inventory script returned non-zero exit code 1}
     - {mode: invalid_utf8, expected_error: Inventory script result contained characters that cannot be interpreted as UTF-8}
     - {mode: invalid_json, expected_error: Unable to get JSON decoder for inventory script result. Value could not be parsed as JSON}
-    - {mode: invalid_type, expected_error: Unable to get JSON decoder for inventory script result. Value is <class 'str'> instead of <class 'dict'>}
-    - {mode: invalid_meta_type, expected_error: Unable to get JSON decoder for inventory script result. Value contains '_meta' which is <class 'str'> instead of <class 'dict'>}
-    - {mode: invalid_profile_type, expected_error: Unable to get JSON decoder for inventory script result. Value contains '_meta.profile' which is <class 'int'> instead of <class 'str'>}
+    - {mode: invalid_type, expected_error: Unable to get JSON decoder for inventory script result. Value is 'str' instead of 'dict'}
+    - {mode: invalid_meta_type, expected_error: Unable to get JSON decoder for inventory script result. Value contains '_meta' which is 'str' instead of 'dict'}
+    - {mode: invalid_profile_type, expected_error: Unable to get JSON decoder for inventory script result. Value contains '_meta.profile' which is 'int' instead of 'str'}
     - {mode: invalid_profile_name, expected_error: Non-inventory profile 'invalid_profile' is not allowed.}
     - {mode: invalid_inventory_profile_name, expected_error: Unable to get JSON decoder for inventory script result. Unknown profile name 'inventory_invalid_profile'}
     - {mode: invalid_json_for_profile, expected_error: Inventory script result could not be parsed as JSON}
-    - {mode: invalid_meta_hostvars_type, expected_error: Value contains '_meta.hostvars' which is <class 'list'> instead of <class 'dict'>}
+    - {mode: invalid_meta_hostvars_type, expected_error: Value contains '_meta.hostvars' which is 'list' instead of 'dict'}
     - {mode: invalid_meta_hostvars_type_for_host, expected_error: Invalid data from file, expected dictionary and got}
-    - {mode: invalid_group_type, expected_error: Value contains 'mygroup.hosts' which is <class 'NoneType'> instead of <class 'list'>}
-    - {mode: invalid_group_vars_type, expected_error: Value contains 'mygroup.vars' which is <class 'list'> instead of <class 'dict'>}
+    - {mode: invalid_group_type, expected_error: Value contains 'mygroup.hosts' which is 'NoneType' instead of 'list'}
+    - {mode: invalid_group_vars_type, expected_error: Value contains 'mygroup.vars' which is 'list' instead of 'dict'}
     - {mode: no_meta_hostvars_host_nonzero_rc, expected_error: Inventory script returned non-zero exit code 1}
     - {mode: no_meta_hostvars_host_invalid_json, expected_error: Inventory script result for host 'myhost' could not be parsed as JSON}
