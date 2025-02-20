@@ -1865,7 +1865,7 @@ def _resolve_depenency_map(
             max_rounds=2000000,  # NOTE: same constant pip uses
         ).mapping
     except CollectionDependencyResolutionImpossible as dep_exc:
-        display.error(
+        display.display(
             f'Collection dependency resolution impossible: {dep_exc !s}',
         )
         conflict_causes = (
@@ -1889,7 +1889,7 @@ def _resolve_depenency_map(
         error_msg_lines.append(pre_release_hint)
         raise AnsibleError('\n'.join(error_msg_lines)) from dep_exc
     except CollectionDependencyInconsistentCandidate as dep_exc:
-        display.error(
+        display.display(
             f'Collection dependency inconsistent candidate: {dep_exc !s}',
         )
         parents = [
