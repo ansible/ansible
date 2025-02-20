@@ -64,6 +64,7 @@ from ._utils import Omit, TemplateContext, PASS_THROUGH_SCALAR_VAR_TYPES
 from ansible.module_utils._internal import _ambient_context, _dataclass_validation
 from ansible.plugins.loader import filter_loader, test_loader
 from ansible.vars.hostvars import HostVars, HostVarsVars
+from ...module_utils.datatag import native_type_name
 
 JINJA2_OVERRIDE = '#jinja2:'
 
@@ -941,7 +942,7 @@ def _finalize_fallback_collection(
 ) -> t.Collection[t.Any]:
     match _TemplateConfig.unsupported_variable_type_handler.action:
         case ErrorAction.WARN:
-            display.warning(f'Converting unsupported type {AnsibleTagHelper.base_type_name(o)!r} to {target_type.__name__!r}.')
+            display.warning(f'Converting unsupported type {native_type_name(o)!r} to {native_type_name(target_type)!r}.')
         case ErrorAction.FAIL:
             raise AnsibleVariableTypeError(obj=o)
 

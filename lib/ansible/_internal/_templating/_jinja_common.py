@@ -13,13 +13,13 @@ from ansible.module_utils.common.messages import ErrorSummary, Detail
 from ansible.constants import config
 from ansible.errors import AnsibleUndefinedVariable, AnsibleTypeError
 from ansible.errors.handler import ErrorHandler
-from ansible.module_utils._internal._datatag import Tripwire, AnsibleTagHelper, _untaggable_types
+from ansible.module_utils._internal._datatag import Tripwire, _untaggable_types
 
 from ._access import NotifiableAccessContextBase
 from ._jinja_patches import _patch_jinja
 from ._utils import TemplateContext
 from .._errors import _captured
-
+from ...module_utils.datatag import native_type_name
 
 _patch_jinja()  # apply Jinja2 patches before types are declared that are dependent on the changes
 
@@ -68,7 +68,7 @@ class Marker(StrictUndefined, Tripwire):
         **kwargs,
     ) -> None:
         if not hint and name and obj is not missing:
-            hint = f"object of type {AnsibleTagHelper.base_type_name(obj)!r} has no attribute {name!r}"
+            hint = f"object of type {native_type_name(obj)!r} has no attribute {name!r}"
 
         kwargs.update(
             hint=hint,
@@ -310,9 +310,9 @@ def validate_arg_type(name: str, value: t.Any, allowed_type_or_types: type | tup
         return
 
     if isinstance(allowed_type_or_types, type):
-        arg_type_description = AnsibleTagHelper.base_type_name(allowed_type_or_types)
+        arg_type_description = native_type_name(allowed_type_or_types)
     else:
-        arg_type_description = ' or '.join(AnsibleTagHelper.base_type_name(item) for item in allowed_type_or_types)
+        arg_type_description = ' or '.join(native_type_name(item) for item in allowed_type_or_types)
 
     if isinstance(value, Marker):
         try:
@@ -320,4 +320,4 @@ def validate_arg_type(name: str, value: t.Any, allowed_type_or_types: type | tup
         except Exception as ex:
             raise AnsibleTypeError(f"The {name!r} argument must be of type {arg_type_description}.") from ex
 
-    raise TypeError(f"The {name!r} argument must be of type {arg_type_description}, not {AnsibleTagHelper.base_type_name(value)!r}.")
+    raise TypeError(f"The {name!r} argument must be of type {arg_type_description}, not {native_type_name(value)!r}.")

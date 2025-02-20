@@ -83,7 +83,6 @@ from ansible.plugins.inventory import BaseFileInventoryPlugin
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.common.text.converters import to_bytes, to_text
-from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.utils.datatag.tags import Origin, TrustedAsTemplate
 from ansible.utils.shlex import shlex_split
 
@@ -350,7 +349,7 @@ class InventoryModule(BaseFileInventoryPlugin):
 
     def _parse_recursive_coerce_types_and_tag(self, value: t.Any) -> t.Any:
         if isinstance(value, str):
-            return AnsibleTagHelper.tag(value, (TrustedAsTemplate(), self._origin))
+            return TrustedAsTemplate().tag(self._origin.tag(value))
         if isinstance(value, (list, tuple, set)):
             # NB: intentional coercion of tuple/set to list, deal with it
             return self._origin.tag([self._parse_recursive_coerce_types_and_tag(v) for v in value])

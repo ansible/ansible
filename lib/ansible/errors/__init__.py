@@ -14,7 +14,7 @@ from collections.abc import Sequence
 from json import JSONDecodeError
 
 from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils._internal._datatag import AnsibleTagHelper
+from ..module_utils.datatag import native_type_name
 from ..utils.datatag.tags import Origin
 from .._internal._errors import _utils
 
@@ -407,10 +407,7 @@ class AnsibleVariableTypeError(AnsibleRuntimeError):
     """An error due to attempted storage of an unsupported variable type."""
 
     def __init__(self, *, obj: t.Any) -> None:
-        # avoid an incorrect error message when `obj` is a type
-        type_name = type(obj).__name__ if isinstance(obj, type) else AnsibleTagHelper.base_type_name(obj)
-
-        super().__init__(f'Variables of type {type_name!r} are not supported.', obj=obj)
+        super().__init__(f'Variables of type {native_type_name(obj)!r} are not supported.', obj=obj)
 
 
 def __getattr__(name: str) -> t.Any:

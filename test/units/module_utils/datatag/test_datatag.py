@@ -43,7 +43,7 @@ from ansible.module_utils._internal._datatag import (
     AnsibleTagHelper,
 )
 from ansible.module_utils._internal._datatag._tags import Deprecated
-
+from ansible.module_utils.datatag import native_type_name
 
 if sys.version_info >= (3, 9):
     from typing import get_type_hints
@@ -760,7 +760,7 @@ def create_container_test_cases(types: t.Iterable[t.Type[t.Collection]]) -> t.Li
     (_AnsibleTaggedStr, 'str'),
 ))
 def test_friendly_name(value: object, expected_type_name: str) -> None:
-    assert AnsibleTagHelper.base_type_name(value) == expected_type_name
+    assert native_type_name(value) == expected_type_name
 
 
 def test_deserialize_unknown_type() -> None:

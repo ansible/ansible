@@ -15,6 +15,7 @@ from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils._internal._datatag import AnsibleSerializable, AnsibleTagHelper
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.warnings import warn
+from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.errors import (
     AliasError,
     AnsibleFallbackNotFound,
@@ -574,7 +575,7 @@ def _validate_elements(wanted_type, parameter, values, options_context=None, err
             msg = "Elements value for option '%s'" % parameter
             if options_context:
                 msg += " found in '%s'" % " -> ".join(options_context)
-            msg += " is of type %s and we were unable to convert to %s: %s" % (AnsibleTagHelper.base_type_name(value), wanted_element_type, to_native(e))
+            msg += " is of type %s and we were unable to convert to %s: %s" % (native_type_name(value), wanted_element_type, to_native(e))
             errors.append(ElementError(msg))
     return validated_parameters
 
@@ -642,7 +643,7 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
                 parameters[param] = _validate_elements(elements_wanted_type, param, elements, options_context, errors)
 
         except (TypeError, ValueError) as e:
-            msg = "argument '%s' is of type %s" % (param, AnsibleTagHelper.base_type_name(value))
+            msg = "argument '%s' is of type %s" % (param, native_type_name(value))
             if options_context:
                 msg += " found in '%s'." % " -> ".join(options_context)
             msg += " and we were unable to convert to %s: %s" % (wanted_name, to_native(e))

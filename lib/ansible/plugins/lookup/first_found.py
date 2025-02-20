@@ -146,25 +146,34 @@ import typing as t
 
 from ansible._internal import _task_context
 from ansible.errors import AnsibleError
-from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.plugins.lookup import LookupBase
 from ansible._internal._templating._jinja_common import UndefinedMarker
 from ansible._internal._templating._jinja_plugins import _LookupContext
 from ansible.utils.path import unfrackpath
+from ansible.utils.display import Display
 
 
-def _split_on(terms, spliters=','):
-    termlist = []
+def _split_on(target: str, terms: str | list[str], splitters: str) -> list[str]:
+    termlist: list[str] = []
+
     if isinstance(terms, str):
-        termlist = re.split(r'[%s]' % ''.join(map(re.escape, spliters)), terms)
+        split_terms = re.split(r'[%s]' % ''.join(map(re.escape, splitters)), terms)
 
-        # propagate tags from the input term to all output terms
-        termlist = [AnsibleTagHelper.tag_copy(terms, term) for term in termlist]
+        if split_terms == [terms]:
+            termlist = [terms]
+        else:
+            Display().deprecated(
+                msg=f'Automatic splitting of {target} on {splitters!r} is deprecated.',
+                help_text=f'Provide a list of paths for {target} instead.',
+                version='2.23',
+                obj=terms,
+            )
 
+            termlist = split_terms
     else:
         # added since options will already listify
         for term in terms:
-            termlist.extend(_split_on(term, spliters))
+            termlist.extend(_split_on(target, term, splitters))
 
     return termlist
 
@@ -181,8 +190,10 @@ class LookupModule(LookupBase):
             if isinstance(term, c.Mapping):
                 self.set_options(var_options=variables, direct=term)
                 files = self.get_option('files')
+                files_description = "the 'files' option"
             elif isinstance(term, str):
                 files = [term]
+                files_description = "files"
             elif isinstance(term, c.Sequence):
                 partial = self._process_terms(term, variables, kwargs)
                 total_search.extend(partial)
@@ -193,8 +204,8 @@ class LookupModule(LookupBase):
             paths = self.get_option('paths')
 
             # magic extra splitting to create lists
-            filelist = _split_on(files, ',;')
-            pathlist = _split_on(paths, ',:;')
+            filelist = _split_on(files_description, files, ',;')
+            pathlist = _split_on('the "paths" option', paths, ',:;')
 
             # create search structure
             if pathlist:

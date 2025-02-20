@@ -1,9 +1,10 @@
+"""Public API for data tagging."""
 from __future__ import annotations as _annotations
 
 import datetime as _datetime
 import typing as _t
 
-from ._internal import _plugin_exec_context
+from ._internal import _plugin_exec_context, _datatag
 from ._internal._datatag import _tags
 
 _T = _t.TypeVar('_T')
@@ -36,3 +37,8 @@ def deprecate_value(
     )
 
     return deprecated.tag(value)
+
+
+def native_type_name(value: object | type, /) -> str:
+    """Return the type name of `value`, substituting the native Python type name for internal tagged types."""
+    return _datatag.AnsibleTagHelper.base_type(value).__name__

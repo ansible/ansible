@@ -28,7 +28,7 @@ from json import dumps
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils._internal._datatag import AnsibleTagHelper
+from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.parsing.splitter import parse_kv
 from ansible.parsing.dataloader import DataLoader
@@ -277,7 +277,7 @@ def validate_variable_name(name: object) -> None:
         key_description = 'name'
 
     if not isinstance(name, str):
-        key_description += f' of type {AnsibleTagHelper.base_type_name(name)!r}'  # show the type name of all non-string keys
+        key_description += f' of type {native_type_name(name)!r}'  # show the type name of all non-string keys
 
     raise AnsibleError(
         message=f'Invalid variable {key_description}.',

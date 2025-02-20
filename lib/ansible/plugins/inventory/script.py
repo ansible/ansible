@@ -161,7 +161,7 @@ import typing as t
 
 from ansible.errors import AnsibleError, AnsibleJSONParserError
 from ansible.inventory.data import InventoryData
-from ansible.module_utils._internal._datatag import AnsibleTagHelper
+from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.serialization import get_decoder
 from ansible.parsing.dataloader import DataLoader
 from ansible.plugins.inventory import BaseInventoryPlugin
@@ -231,7 +231,7 @@ class InventoryModule(BaseInventoryPlugin):
                 data_from_meta = gdata.get('hostvars')
 
                 if not isinstance(data_from_meta, dict):
-                    raise TypeError(f"Value contains '_meta.hostvars' which is {AnsibleTagHelper.base_type(type(data_from_meta))} instead of {dict}.")
+                    raise TypeError(f"Value contains '_meta.hostvars' which is {native_type_name(data_from_meta)!r} instead of {native_type_name(dict)!r}.")
             else:
                 self._parse_group(group, gdata, origin)
 
@@ -258,7 +258,7 @@ class InventoryModule(BaseInventoryPlugin):
         if not isinstance(data, dict):
             data = {'hosts': data}
             display.deprecated(
-                msg=f"Group {group!r} was converted to {dict} from {AnsibleTagHelper.base_type(type(data))}.",
+                msg=f"Group {group!r} was converted to {native_type_name(dict)!r} from {native_type_name(data)!r}.",
                 version='2.22',
                 obj=origin,
             )
@@ -272,7 +272,7 @@ class InventoryModule(BaseInventoryPlugin):
 
         if (data_hosts := data.get('hosts', ...)) is not ...:
             if not isinstance(data_hosts, list):
-                raise TypeError(f"Value contains '{group}.hosts' which is {AnsibleTagHelper.base_type(type(data_hosts))} instead of {list}.")
+                raise TypeError(f"Value contains '{group}.hosts' which is {native_type_name(data_hosts)!r} instead of {native_type_name(list)!r}.")
 
             for hostname in data_hosts:
                 self._hosts.add(hostname)
@@ -280,7 +280,7 @@ class InventoryModule(BaseInventoryPlugin):
 
         if (data_vars := data.get('vars', ...)) is not ...:
             if not isinstance(data_vars, dict):
-                raise TypeError(f"Value contains '{group}.vars' which is {AnsibleTagHelper.base_type(type(data_vars))} instead of {dict}.")
+                raise TypeError(f"Value contains '{group}.vars' which is {native_type_name(data_vars)!r} instead of {native_type_name(dict)!r}.")
 
             for k, v in data_vars.items():
                 self.inventory.set_variable(group, k, v)
@@ -362,7 +362,7 @@ def run_command(path: str, options: list[str], origin: Origin) -> tuple[str, str
 
     (stdout_bytes, stderr_bytes) = sp.communicate()
 
-    stdout_bytes = AnsibleTagHelper.tag(stdout_bytes, (TrustedAsTemplate(), origin))
+    stdout_bytes = TrustedAsTemplate().tag(origin.tag(stdout_bytes))
 
     stderr = stderr_bytes.decode(errors='surrogateescape')
 

@@ -26,7 +26,7 @@ from jinja2.filters import do_map, do_select, do_selectattr, do_reject, do_rejec
 from jinja2.environment import Environment
 
 from ansible.errors import AnsibleFilterError, AnsibleTypeError
-from ansible.module_utils._internal._datatag import AnsibleTagHelper
+from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.serialization import get_encoder, get_decoder
 from ansible.module_utils.six import string_types, integer_types, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
@@ -114,7 +114,7 @@ def to_bool(value: object) -> bool:
     result = value_to_check == 1  # backwards compatibility with the old code which checked: value in ('yes', 'on', '1', 'true', 1)
 
     # NB: update the doc string to reflect reality once this fallback is removed
-    display.deprecated(f'The `bool` filter coerced invalid value {value!r} ({AnsibleTagHelper.base_type_name(value)}) to {result!r}.', version='2.23')
+    display.deprecated(f'The `bool` filter coerced invalid value {value!r} ({native_type_name(value)}) to {result!r}.', version='2.23')
 
     return result
 
@@ -697,7 +697,7 @@ def wrapped_rejectattr(*args, **kwargs) -> t.Any:
 
 @accept_marker
 def type_debug(obj: object) -> str:
-    return AnsibleTagHelper.base_type_name(obj)
+    return native_type_name(obj)
 
 
 class FilterModule(object):

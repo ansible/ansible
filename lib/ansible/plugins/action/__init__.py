@@ -29,7 +29,6 @@ from ansible.executor.module_common import modify_module, _BuiltModule
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
 from ansible.module_utils._internal import _traceback
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
-from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.module_utils.errors import UnsupportedError
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.serialization import get_module_decoder, Direction, get_module_encoder
@@ -46,6 +45,7 @@ from ansible._internal._templating import _engine
 
 from .. import _AnsiblePluginInfoMixin
 from ...module_utils.common.messages import PluginInfo
+from ...module_utils.datatag import native_type_name
 
 display = Display()
 
@@ -1544,7 +1544,7 @@ class TaskArgsFinalizer:
                 resolved_layer = layer
 
             if not isinstance(resolved_layer, dict):
-                raise AnsibleError(f'Task args must resolve to a {dict.__name__!r} not {AnsibleTagHelper.base_type_name(resolved_layer)!r}.', obj=layer)
+                raise AnsibleError(f'Task args must resolve to a {native_type_name(dict)!r} not {native_type_name(resolved_layer)!r}.', obj=layer)
 
             resolved_layers.append(resolved_layer)
 

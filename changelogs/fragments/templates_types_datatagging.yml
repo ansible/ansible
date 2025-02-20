@@ -156,7 +156,8 @@ deprecated_features:
   - oneline callback - The ``oneline`` callback and its associated ad-hoc CLI args (``-o``, ``--one-line``) are deprecated.
   - tree callback - The ``tree`` callback and its associated ad-hoc CLI args (``-t``, ``--tree``) are deprecated.
   - CLI - The ``--inventory-file`` option alias is deprecated. Use the ``-i`` or ``--inventory`` option instead.
-
+  - first_found lookup - Splitting of file paths on ``,;:`` is deprecated. Pass a list of paths instead.
+    The ``split`` method on strings can be used to split variables into a list as needed.
 removed_features:
   - modules - Modules returning non-UTF8 strings now result in an error.
     The ``MODULE_STRICT_UTF8_RESPONSE`` setting can be used to disable this check.

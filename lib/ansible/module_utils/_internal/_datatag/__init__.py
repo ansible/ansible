@@ -92,11 +92,6 @@ class AnsibleTagHelper:
         return frozenset(tags)
 
     @staticmethod
-    def base_type_name(type_or_value: t.Any, /) -> str:
-        """Return the friendly name of the given type or value. If the type is an AnsibleTaggedObject, the native type will be used."""
-        return AnsibleTagHelper.base_type(type_or_value).__name__
-
-    @staticmethod
     def base_type(type_or_value: t.Any, /) -> type:
         """Return the friendly type of the given type or value. If the type is an AnsibleTaggedObject, the native type will be used."""
         if isinstance(type_or_value, type):

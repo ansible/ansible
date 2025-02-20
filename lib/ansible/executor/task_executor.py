@@ -23,7 +23,7 @@ from ansible.errors import (
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils._internal._plugin_exec_context import PluginExecContext
 from ansible.module_utils.common.messages import Detail, WarningSummary, DeprecationSummary
-from ansible.module_utils._internal._datatag import AnsibleTagHelper
+from ansible.module_utils.datatag import native_type_name
 from ansible.utils.datatag.tags import TrustedAsTemplate
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.text.converters import to_text, to_native
@@ -233,7 +233,7 @@ class TaskExecutor:
 
             if not isinstance(items, list):
                 raise AnsibleError(
-                    f"The `loop` value must resolve to a 'list', not {AnsibleTagHelper.base_type_name(items)!r}.",
+                    f"The `loop` value must resolve to a 'list', not {native_type_name(items)!r}.",
                     help_text="Provide a list of items/templates, or a template resolving to a list.",
                     obj=self._task.loop,
                 )

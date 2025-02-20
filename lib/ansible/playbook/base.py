@@ -17,7 +17,7 @@ from functools import cache
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError, AnsibleValueOmittedError, AnsibleFieldAttributeError
-from ansible.module_utils._internal._datatag import AnsibleTagHelper
+from ansible.module_utils.datatag import native_type_name
 from ansible.utils.datatag.tags import Origin
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -477,10 +477,10 @@ class FieldAttributeBase:
             if attribute.listof is not None:
                 for item in value:
                     if not isinstance(item, attribute.listof):
-                        type_names = ' or '.join(f'{attribute_type.__name__!r}' for attribute_type in attribute.listof)
+                        type_names = ' or '.join(f'{native_type_name(attribute_type)!r}' for attribute_type in attribute.listof)
 
                         raise AnsibleParserError(
-                            message=f"Keyword {name!r} items must be of type {type_names}, not {AnsibleTagHelper.base_type_name(item)!r}.",
+                            message=f"Keyword {name!r} items must be of type {type_names}, not {native_type_name(item)!r}.",
                             obj=Origin.first_tagged_on(item, value, self.get_ds()),
                         )
                     elif attribute.required and attribute.listof == (str,):

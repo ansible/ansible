@@ -40,6 +40,7 @@ from ._lazy_containers import _AnsibleLazyTemplateMixin
 from ._marker_behaviors import MarkerBehavior, FAIL_ON_UNDEFINED
 from ._transform import _type_transform_mapping
 from ._utils import Omit, TemplateContext, IGNORE_SCALAR_VAR_TYPES
+from ...module_utils.datatag import native_type_name
 
 _display = Display()
 
@@ -586,7 +587,7 @@ class TemplateEngine:
         bool_result = bool(result)
 
         msg = (
-            f'Conditional result was {textwrap.shorten(str(result), width=40)!r} of type {AnsibleTagHelper.base_type_name(result)!r}, '
+            f'Conditional result was {textwrap.shorten(str(result), width=40)!r} of type {native_type_name(result)!r}, '
             f'which evaluates to {bool_result}. Conditionals must have a boolean result.'
         )
 
