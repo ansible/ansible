@@ -38,7 +38,7 @@
 
     - assert:
         that:
-          - unsafe_foo is not tagged_with('TrustedAsTemplate')
+          - unsafe_foo is not ansible._protomatter.tagged_with('TrustedAsTemplate')
 
     - block:
       - copy:

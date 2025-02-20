@@ -44,8 +44,8 @@
   assert:
     that:
       - data1_plaintext|vault(data1_password, salt=data1_salt) == data1_vaulted_string_with_id
-      - data1_plaintext|vault(data1_password, salt=data1_salt) is not tagged_with('VaultedValue')
-      - data1_plaintext|vault(data1_password, salt=data1_salt, wrap_object=True) is tagged_with('VaultedValue')
+      - data1_plaintext|vault(data1_password, salt=data1_salt) is not ansible._protomatter.tagged_with('VaultedValue')
+      - data1_plaintext|vault(data1_password, salt=data1_salt, wrap_object=True) is ansible._protomatter.tagged_with('VaultedValue')
 
 - name: check round-trip without salt
   assert:

@@ -1,7 +1,7 @@
 DOCUMENTATION:
   name: tagged
   author: Ansible Core
-  version_added: "2.16"
+  version_added: "2.19"
   short_description: does the value have a data tag
   description:
     - Check if the provided value has a data tag.
@@ -11,7 +11,7 @@ DOCUMENTATION:
       type: raw
 
 EXAMPLES: |
-    is_data_tagged: "{{ my_variable is tagged }}"
+    is_data_tagged: "{{ my_variable is ansible._protomatter.tagged }}"
 
 RETURN:
   _value:
