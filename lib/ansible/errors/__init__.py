@@ -407,7 +407,10 @@ class AnsibleVariableTypeError(AnsibleRuntimeError):
     """An error due to attempted storage of an unsupported variable type."""
 
     def __init__(self, *, obj: t.Any) -> None:
-        super().__init__(f'Variables of type {native_type_name(obj)!r} are not supported.', obj=obj)
+        # avoid an incorrect error message when `obj` is a type
+        type_name = type(obj).__name__ if isinstance(obj, type) else native_type_name(obj)
+
+        super().__init__(f'Variables of type {type_name!r} are not supported.', obj=obj)
 
 
 def __getattr__(name: str) -> t.Any:
