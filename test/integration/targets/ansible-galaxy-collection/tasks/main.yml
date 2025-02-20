@@ -227,3 +227,11 @@
       environment:
         ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
         ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+
+- include_tasks: uninstall.yml
+  args:
+    apply:
+      environment:
+        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
+        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+        ANSIBLE_ROLES_PATH: '{{ galaxy_dir }}/roles'

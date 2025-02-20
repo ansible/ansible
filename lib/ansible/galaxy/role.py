@@ -33,6 +33,7 @@ from shutil import rmtree
 
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.galaxy import _ask_uninstall, _uninstall_paths
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.common.text.converters import to_native, to_text
@@ -479,3 +480,34 @@ class GalaxyRole(object):
             raise AnsibleParserError(f"Expected role dependencies to be a list. Role {self} has meta/requirements.yml {self._requirements}")
 
         return self._requirements
+
+
+def uninstall_roles(requirements: list[GalaxyRole], search_paths: list[str], skip_prompt: bool) -> int:
+    """Uninstall all roles that match each requirement name (and optional version)."""
+    roles = []
+    for requirement in requirements:
+        for path in search_paths:
+            for role_name in os.listdir(path):
+                if requirement.name != role_name:
+                    continue
+                gr = GalaxyRole(requirement.galaxy, requirement.api, role_name, requirement.src, requirement.version, requirement.scm, path)
+                if requirement.version is None or (gr.install_info or {}).get("version") == requirement.version:
+                    roles.append(gr)
+
+    remove = set()
+    keep = set()
+    role_paths = {}
+    for role in roles:
+        if role.path in remove or role.path in keep:
+            continue
+        label = f"{role.name} (unknown version)" if not role.version else f"{role.name} ({role.version})"
+        if _ask_uninstall(label, [role.path], collection=False, skip_prompt=skip_prompt):
+            remove.add(role.path)
+            role_paths[label] = [role.path]
+        else:
+            keep.add(role.path)
+
+    rc = 0
+    for label, paths in role_paths.items():
+        rc = _uninstall_paths(label, paths, collection=False) or rc
+    return rc

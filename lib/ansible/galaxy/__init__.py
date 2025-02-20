@@ -22,15 +22,55 @@
 
 from __future__ import annotations
 
+import shutil
 import os
 
 import ansible.constants as C
 from ansible import context
+from ansible.utils.display import Display
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.module_utils.common.yaml import yaml_load
 
 #      default_readme_template
 #      default_meta_template
+
+display = Display()
+
+
+def _ask_uninstall(label: str, paths: list[str], collection: bool = True, skip_prompt: bool = False) -> bool:
+    """Confirm whether the list of paths should be removed and return a boolean."""
+    if skip_prompt:
+        return True
+
+    prompt = f"Uninstalling {'collection' if collection else 'role'} {label}:"
+    prompt += (
+        "\n  Would remove:\n    " +
+        "\n    ".join(paths)
+    )
+    display.display(prompt)
+    while (response := input("Proceed (y/n)? ").lower()) not in ("y", "n"):
+        display.display(f"Your response ('{response}') was not one of the expected responses: y, n,")
+    return response == "y"
+
+
+def _uninstall_paths(label: str, paths: list[str], collection: bool = True) -> int:
+    """Remove a list of paths, depth first."""
+    rc = 0
+    for path in reversed(sorted(paths)):
+        try:
+            if os.path.islink(path):
+                os.unlink(path)
+            else:
+                shutil.rmtree(path)
+        except OSError as e:
+            display.error(f"Unable to remove {'collection' if collection else 'role'} {label} path {path}: {e}")
+            rc = 1
+        else:
+            display.vvvv(f"Removed {path}")
+    if rc == 0:
+        display.display(f"Uninstalled {'collection' if collection else 'role'} {label}")
+
+    return rc
 
 
 def get_collections_galaxy_meta_info():

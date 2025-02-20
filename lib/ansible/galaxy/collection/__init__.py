@@ -87,6 +87,7 @@ if t.TYPE_CHECKING:
 import ansible.constants as C
 from ansible.compat.importlib_resources import files
 from ansible.errors import AnsibleError
+from ansible.galaxy import _ask_uninstall, _uninstall_paths
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection.concrete_artifact_manager import (
     _consume_file,
@@ -954,6 +955,48 @@ def verify_collections(
                     raise
 
     return results
+
+
+def uninstall_collections(requirements: list[Requirement], search_paths: list[str], skip_prompt: bool, artifacts_manager: ConcreteArtifactsManager = None):
+    """Uninstall collections in any of the search paths that match a requirement."""
+    collections = []
+    for requirement in requirements:
+        namespace, name = requirement.fqcn.split(".")
+        for installed in find_existing_collections(
+            search_paths,
+            artifacts_manager,
+            namespace_filter=namespace,
+            collection_filter=name,
+            dedupe=False
+        ):
+            if requirement.ver in (None, "*") or meets_requirements(installed.ver, requirement.ver):
+                collections.append(installed)
+
+    remove = set()
+    keep = set()
+    collection_paths = {}
+    for collection in collections:
+        collection_path = to_text(collection.src, errors="surrogate_or_strict")
+        if collection_path in remove or collection_path in keep:
+            continue
+
+        content = [collection_path]
+        namespace = os.path.dirname(collection_path)
+        for other_collection in os.listdir(namespace):
+            if other_collection != collection.name and os.path.join(namespace, other_collection) not in remove:
+                break
+        else:
+            content.append(namespace)
+        content.extend(glob.glob(f"{os.path.dirname(namespace)}/{collection.fqcn}-*.info"))
+        if _ask_uninstall(f"{collection}", content, skip_prompt=skip_prompt):
+            remove.add(collection_path)
+            collection_paths[f"{collection}"] = content
+        else:
+            keep.add(collection_path)
+
+    rc = 0
+    for label, paths in collection_paths.items():
+        rc = _uninstall_paths(label, paths) or rc
 
 
 @contextmanager

@@ -36,6 +36,7 @@ from ansible.galaxy.collection import (
     find_existing_collections,
     install_collections,
     publish_collection,
+    uninstall_collections,
     validate_collection_name,
     validate_collection_path,
     verify_collections,
@@ -47,7 +48,7 @@ from ansible.galaxy.collection.concrete_artifact_manager import (
 from ansible.galaxy.collection.gpg import GPG_ERROR_MAP
 from ansible.galaxy.dependency_resolution.dataclasses import Requirement
 
-from ansible.galaxy.role import GalaxyRole
+from ansible.galaxy.role import GalaxyRole, uninstall_roles
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken, NoTokenSentinel
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils.common.collections import is_iterable
@@ -282,6 +283,7 @@ class GalaxyCLI(CLI):
         self.add_publish_options(collection_parser, parents=[common])
         self.add_install_options(collection_parser, parents=[common, force, cache_options])
         self.add_list_options(collection_parser, parents=[common, collections_path])
+        self.add_uninstall_options(collection_parser, parents=[common])
         self.add_verify_options(collection_parser, parents=[common, collections_path])
 
         # Add sub parser for the Galaxy role actions
@@ -299,6 +301,7 @@ class GalaxyCLI(CLI):
 
         self.add_info_options(role_parser, parents=[common, roles_path, offline])
         self.add_install_options(role_parser, parents=[common, force, roles_path])
+        self.add_uninstall_options(role_parser, parents=[common])
 
     def add_download_options(self, parser, parents=None):
         download_parser = parser.add_parser('download', parents=parents,
@@ -374,6 +377,32 @@ class GalaxyCLI(CLI):
         if galaxy_type == 'collection':
             list_parser.add_argument('--format', dest='output_format', choices=('human', 'yaml', 'json'), default='human',
                                      help="Format to display the list of collections in.")
+
+    def add_uninstall_options(self, parser, parents=None):
+        galaxy_type = "role" if parser.metavar == "ROLE_ACTION" else "collection"
+
+        uninstall_parser = parser.add_parser("uninstall", parents=parents or [],
+                                             help=f"Uninstall collections from {C.COLLECTIONS_PATHS} and roles from {C.DEFAULT_ROLES_PATH}")
+
+        if galaxy_type == "role":
+            uninstall_parser.add_argument("--roles-path", dest="roles_path", default=C.DEFAULT_ROLES_PATH,
+                                          type=opt_help.unfrack_path(pathsep=True), action=opt_help.PrependListAction,
+                                          help="Remove roles from additional paths.")
+        if self._implicit_role or galaxy_type == "collection":
+            uninstall_parser.add_argument("--collections-path", dest="collections_path", default=C.COLLECTIONS_PATHS,
+                                          type=opt_help.unfrack_path(pathsep=True), action=opt_help.PrependListAction,
+                                          help="Remove collections from additional paths.")
+
+        # one required, mutually exclusive
+        uninstall_parser.add_argument("args", metavar=f"{galaxy_type}_name", nargs="*", help=f"{galaxy_type.upper()} to uninstall")
+        uninstall_parser.add_argument("-r", "--requirements-file", dest="requirements",
+                                      help="A file containing a list of collections to be installed.")
+
+        # bypass prompting
+        uninstall_parser.add_argument("-y", "--yes", dest="yes", action="store_true", default=False,
+                                      help=f"Remove all {galaxy_type}s matching the requirements without prompting")
+
+        uninstall_parser.set_defaults(func=self.execute_uninstall)
 
     def add_search_options(self, parser, parents=None):
         search_parser = parser.add_parser('search', parents=parents,
@@ -1622,6 +1651,55 @@ class GalaxyCLI(CLI):
             )
 
         return 0
+
+    @with_collection_artifacts_manager
+    def execute_uninstall(self, artifacts_manager=None):
+        """Locate collections/roles that match any requirement, and get user confirmation on which paths to remove."""
+        if artifacts_manager is not None:
+            artifacts_manager.require_build_metadata = False
+
+        if context.CLIARGS["args"] and context.CLIARGS["requirements"]:
+            raise AnsibleOptionsError(f"Positional {context.CLIARGS['type']} requirements and --requirements-file are mutually exclusive.")
+        if not context.CLIARGS["args"] and not context.CLIARGS["requirements"]:
+            raise AnsibleOptionsError(f"Positional {context.CLIARGS['type']} requirements or --requirements-file is required.")
+
+        collection_requirements = []
+        role_requirements = []
+
+        if context.CLIARGS["type"] == "role" and context.CLIARGS["args"]:
+            for role_requirement in context.CLIARGS["args"]:
+                role_spec = RoleRequirement.role_yaml_parse(role_requirement)
+                if "role" in role_spec:
+                    name = role_spec["role"]
+                elif "name" in role_spec:
+                    name = role_spec["name"]
+                elif "src" in role_spec:
+                    name = RoleRequirement.repo_url_to_role_name(role_spec["src"])
+                else:
+                    raise AnsibleError("Invalid role requirement: '{role_requirement}'. A role name is required.")
+                role_requirements.append(GalaxyRole(self.galaxy, self.lazy_role_api, name, version=role_spec.get("version")))
+        elif context.CLIARGS["args"]:
+            for collection_requirement in context.CLIARGS["args"]:
+                collection_requirements.append(
+                    Requirement.from_string(collection_requirement, artifacts_manager, None)
+                )
+        else:
+            requirements_file = GalaxyCLI._resolve_path(context.CLIARGS["requirements"])
+            requirements = self._parse_requirements_file(
+                requirements_file, allow_old_format=False, artifacts_manager=artifacts_manager, validate_signature_options=False
+            )
+            collection_requirements = requirements["collections"]
+            role_requirements = requirements["roles"]
+
+        rc = 0
+        if self._implicit_role or context.CLIARGS["type"] == "collection":
+            rc = uninstall_collections(
+                collection_requirements, context.CLIARGS["collections_path"], context.CLIARGS["yes"], artifacts_manager=artifacts_manager
+            )
+        if self._implicit_role or context.CLIARGS["type"] == "role":
+            rc = uninstall_roles(role_requirements, context.CLIARGS["roles_path"], context.CLIARGS["yes"]) or rc
+
+        return rc
 
     @with_collection_artifacts_manager
     def execute_list_collection(self, artifacts_manager=None):

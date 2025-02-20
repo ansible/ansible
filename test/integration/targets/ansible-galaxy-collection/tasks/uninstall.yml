@@ -1,0 +1,84 @@
+- name: Uninstall a collection which isn't installed
+  command: ansible-galaxy collection uninstall namespace1.name1 -y {{ galaxy_verbosity }}
+  register: not_installed
+
+- name: Install a collection
+  command: ansible-galaxy collection install namespace1.name1 {{ galaxy_verbosity }}
+
+- name: Uninstall the collection
+  command: ansible-galaxy collection uninstall namespace1.name1 -y {{ galaxy_verbosity }}
+  register: uninstalled
+
+- name: Install a specific version
+  command: ansible-galaxy collection install namespace1.name1:1.1.0-beta.1 {{ galaxy_verbosity }}
+
+- name: Uninstall a different version
+  command: ansible-galaxy collection uninstall -y namespace1.name1:1.0.0 -y {{ galaxy_verbosity }}
+  register: not_installed_2
+
+- name: Uninstall a compatible requirement
+  command: ansible-galaxy collection uninstall -y namespace1.name1:>1.0.0 -y {{ galaxy_verbosity }}
+  register: uninstalled_beta
+
+- assert:
+    that:
+      - '"Uninstalled collection" not in not_installed.stdout'
+      - '"Uninstalled collection namespace1.name1:1.0.9" in uninstalled.stdout'
+      - '"Uninstalled collection" not in not_installed_2.stdout'
+      - '"Uninstalled collection namespace1.name1:1.1.0-beta.1" in uninstalled_beta.stdout'
+
+- name: Download a collection
+  command: ansible-galaxy collection download namespace1.name1 -p {{ galaxy_dir }}/artifacts {{ galaxy_verbosity }}
+
+- name: Initialize a role
+  command: ansible-galaxy role init test.role --init-path {{ galaxy_dir }}/roles_src {{ galaxy_verbosity }}
+
+- name: Create installable role
+  command: tar -czvf test.role.tar.gz test.role
+  args:
+    chdir: "{{ galaxy_dir }}/roles_src"
+
+- name: Create a requirements file to test uninstalling roles and collections
+  copy:
+    dest: "{{ galaxy_dir }}/uninstall_requirements.yml"
+    content: |
+      collections:
+        - name: parent_dep.parent_collection
+          version: <=2.0.0
+        - name: {{ galaxy_dir }}/artifacts/namespace1-name1-1.0.9.tar.gz
+      roles:
+        - src: "file://{{ galaxy_dir }}/roles_src/test.role.tar.gz"
+
+- name: Install requirements file
+  command: ansible-galaxy install -r {{ galaxy_dir }}/uninstall_requirements.yml {{ galaxy_verbosity }}
+
+- name: Uninstall requirements file
+  command: ansible-galaxy uninstall -r {{ galaxy_dir }}/uninstall_requirements.yml -y {{ galaxy_verbosity }}
+  register: uninstall_requirements
+
+- assert:
+    that:
+      - '"Uninstalled collection parent_dep.parent_collection:2.0.0" in uninstall_requirements.stdout'
+      - '"Uninstalled collection namespace1.name1:1.0.9" in uninstall_requirements.stdout'
+      - '"Uninstalled role test.role (unknown version)" in uninstall_requirements.stdout'
+      # Dependencies are not removed
+      - '"Uninstalled collection child_dep.child_collection:1.0.0" not in uninstall_requirements.stdout'
+      - '"Uninstalled collection child_dep.child_dep2:1.2.2" not in uninstall_requirements.stdout'
+
+- name: Uninstall remaining dependencies
+  command: ansible-galaxy collection uninstall child_dep.child_collection child_dep.child_dep2 -y {{ galaxy_verbosity }}
+  register: uninstall_dependencies
+
+- assert:
+    that:
+      - '"Uninstalled collection child_dep.child_collection:1.0.0" in uninstall_dependencies.stdout'
+      - '"Uninstalled collection child_dep.child_dep2:1.2.2" in uninstall_dependencies.stdout'
+
+- name: Remove uninstall test files
+  file:
+    path: "{{ galaxy_dir }}/{{ item }}"
+    state: absent
+  loop:
+    - uninstall_requirements.yml
+    - roles_src
+    - roles
