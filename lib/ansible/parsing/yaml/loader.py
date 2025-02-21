@@ -17,22 +17,22 @@
 
 from __future__ import annotations
 
-import typing as t
+import io as _io
 
 from yaml.resolver import Resolver
 
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
-from ansible.parsing.vault import VaultSecret
 from ansible.parsing.yaml.constructor import AnsibleConstructor
 from ansible.module_utils.common.yaml import HAS_LIBYAML
-from ansible._internal._datatag._tags import TrustedAsTemplate, Origin
+from ansible._internal._datatag import _tags
 
 if HAS_LIBYAML:
     from yaml.cyaml import CParser
 
     class _YamlParser(CParser):
-        def __init__(self, stream: str | bytes | t.TextIO | t.BinaryIO) -> None:
-            stream = AnsibleTagHelper.untag(stream)  # PyYAML + libyaml barfs on str subclasses
+        def __init__(self, stream: str | bytes | _io.IOBase) -> None:
+            if isinstance(stream, (str, bytes)):
+                stream = AnsibleTagHelper.untag(stream)  # PyYAML + libyaml barfs on str/bytes subclasses
 
             CParser.__init__(self, stream)
 
@@ -44,7 +44,7 @@ else:
     from yaml.parser import Parser
 
     class _YamlParser(Reader, Scanner, Parser, Composer):  # type: ignore[no-redef]
-        def __init__(self, stream: str | bytes | t.TextIO | t.BinaryIO) -> None:
+        def __init__(self, stream: str | bytes | _io.IOBase) -> None:
             Reader.__init__(self, stream)
             Scanner.__init__(self)
             Parser.__init__(self)
@@ -52,18 +52,13 @@ else:
 
 
 class AnsibleLoader(_YamlParser, AnsibleConstructor, Resolver):
-    def __init__(
-        self,
-        stream: str | bytes | t.TextIO | t.BinaryIO,
-        file_name: str | None = None,  # DTFIX-RELEASE: can we eliminate this arg or make it origin instead?
-        vault_secrets: list[tuple[str, VaultSecret]] | None = None,  # DTFIX-RELEASE: can we remove/deprecate this?
-        trusted_as_template: bool | None = None,  # DTFIX-MERGE: we're not using this, can we use a stream wrapper to carry this flag instead?
-    ) -> None:
-        trusted_as_template = trusted_as_template if isinstance(trusted_as_template, bool) else TrustedAsTemplate.is_tagged_on(stream)
-
+    def __init__(self, stream: str | bytes | _io.IOBase) -> None:
         _YamlParser.__init__(self, stream)
 
-        origin = Origin.get_or_create_tag(stream, file_name or self.name)
+        AnsibleConstructor.__init__(
+            self,
+            origin=_tags.Origin.get_or_create_tag(stream, self.name),
+            trusted_as_template=_tags.TrustedAsTemplate.is_tagged_on(stream),
+        )
 
-        AnsibleConstructor.__init__(self, origin=origin, trusted_as_template=trusted_as_template)
         Resolver.__init__(self)

@@ -8,6 +8,8 @@ from __future__ import annotations
 import json
 import typing as t
 
+import yaml
+
 from ansible.errors import AnsibleJSONParserError
 from ansible._internal._errors import _utils
 from ansible.parsing.vault import VaultSecret
@@ -44,7 +46,7 @@ def from_yaml(
             AnsibleJSONParserError.handle_exception(json_ex, origin=origin)
 
         try:
-            return AnsibleLoader(data).get_single_data()
+            return yaml.load(data, Loader=AnsibleLoader)  # type: ignore[arg-type]
         except Exception as yaml_ex:
             # DTFIX-RELEASE: how can we indicate in Origin that the data is in-memory only, to support context information -- is that useful?
             #        we'd need to pass data to handle_exception so it could be used as the content instead of reading from disk

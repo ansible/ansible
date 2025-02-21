@@ -14,6 +14,8 @@ import sys
 import warnings
 import typing as t
 
+import yaml
+
 from collections import defaultdict, namedtuple
 from importlib import import_module
 from yaml.parser import ParserError
@@ -30,6 +32,7 @@ from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleColl
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder, _get_collection_metadata
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import add_fragments
+from ansible._internal._datatag import _tags
 
 from . import _AnsiblePluginInfoMixin
 from .filter import AnsibleJinja2Filter
@@ -408,16 +411,15 @@ class PluginLoader:
 
             # if type name != 'module_doc_fragment':
             if type_name in C.CONFIGURABLE_PLUGINS and not C.config.has_configuration_definition(type_name, name):
+                documentation_source = getattr(module, 'DOCUMENTATION', '')
                 try:
-                    # DTFIX-MERGE: can this be from_yaml -- also, is AnsibleLoader even the right thing in this context (vault support)?
-                    dstring = AnsibleLoader(getattr(module, 'DOCUMENTATION', ''), file_name=path).get_single_data()
+                    dstring = yaml.load(_tags.Origin(path=path).tag(documentation_source), Loader=AnsibleLoader)
                 except ParserError as e:
                     raise AnsibleError(f"plugin {name} has malformed documentation!") from e
 
                 # TODO: allow configurable plugins to use sidecar
                 # if not dstring:
                 #     filename, cn = find_plugin_docfile( name, type_name, self, [os.path.dirname(path)], C.YAML_DOC_EXTENSIONS)
-                #     # TODO: dstring = AnsibleLoader(, file_name=path).get_single_data()
 
                 if dstring:
                     add_fragments(dstring, path, fragment_loader=fragment_loader, is_module=(type_name == 'module'))

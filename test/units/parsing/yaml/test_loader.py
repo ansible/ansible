@@ -20,7 +20,6 @@ from __future__ import annotations
 
 import collections.abc as c
 import datetime
-import functools
 import typing as t
 
 import pytest
@@ -55,8 +54,8 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         stream = StringIO(u"""
                 1
                 """)
-        loader = AnsibleLoader(stream, file_name)
-        data = loader.get_single_data()
+        stream.name = file_name
+        data = yaml.load(stream, Loader=AnsibleLoader)
         self.assertEqual(data, 1)
         # No line/column info saved yet
 
@@ -64,8 +63,8 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         stream = StringIO(u"""
                 Ansible
                 """)
-        loader = AnsibleLoader(stream, file_name)
-        data = loader.get_single_data()
+        stream.name = file_name
+        data = yaml.load(stream, Loader=AnsibleLoader)
         self.assertEqual(data, u'Ansible')
         self.assertIsInstance(data, str)
 
@@ -75,8 +74,8 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         stream = StringIO(u"""
                 Cafè Eñyei
                 """)
-        loader = AnsibleLoader(stream, file_name)
-        data = loader.get_single_data()
+        stream.name = file_name
+        data = yaml.load(stream, Loader=AnsibleLoader)
         self.assertEqual(data, u'Cafè Eñyei')
         self.assertIsInstance(data, str)
 
@@ -87,8 +86,8 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
                 webster: daniel
                 oed: oxford
                 """)
-        loader = AnsibleLoader(stream, file_name)
-        data = loader.get_single_data()
+        stream.name = file_name
+        data = yaml.load(stream, Loader=AnsibleLoader)
         self.assertEqual(data, {'webster': 'daniel', 'oed': 'oxford'})
         self.assertEqual(len(data), 2)
         self.assertIsInstance(list(data.keys())[0], str)
@@ -105,8 +104,8 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
                 - a
                 - b
                 """)
-        loader = AnsibleLoader(stream, file_name)
-        data = loader.get_single_data()
+        stream.name = file_name
+        data = yaml.load(stream, Loader=AnsibleLoader)
         self.assertEqual(data, [u'a', u'b'])
         self.assertEqual(len(data), 2)
         self.assertIsInstance(data[0], str)
@@ -118,16 +117,16 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
 
     def test_parse_short_dict(self):
         stream = StringIO(u"""{"foo": "bar"}""")
-        loader = AnsibleLoader(stream, file_name)
-        data = loader.get_single_data()
+        stream.name = file_name
+        data = yaml.load(stream, Loader=AnsibleLoader)
         self.assertEqual(data, dict(foo=u'bar'))
 
         self.assertEqual(Origin.get_tag(data), Origin(path=file_name, line_num=1, col_num=1))
         self.assertEqual(Origin.get_tag(data[u'foo']), Origin(path=file_name, line_num=1, col_num=9))
 
         stream = StringIO(u"""foo: bar""")
-        loader = AnsibleLoader(stream, file_name)
-        data = loader.get_single_data()
+        stream.name = file_name
+        data = yaml.load(stream, Loader=AnsibleLoader)
         self.assertEqual(data, dict(foo=u'bar'))
 
         self.assertEqual(Origin.get_tag(data), Origin(path=file_name, line_num=1, col_num=1))
@@ -135,18 +134,20 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
 
     def test_error_conditions(self):
         stream = StringIO(u"""{""")
-        loader = AnsibleLoader(stream, file_name)
-        self.assertRaises(ParserError, loader.get_single_data)
+        stream.name = file_name
+        with self.assertRaises(ParserError):
+            yaml.load(stream, Loader=AnsibleLoader)
 
     def test_tab_error(self):
         stream = StringIO(u"""---\nhosts: localhost\nvars:\n  foo: bar\n\tblip: baz""")
-        loader = AnsibleLoader(stream, file_name)
-        self.assertRaises(ScannerError, loader.get_single_data)
+        stream.name = file_name
+        with self.assertRaises(ScannerError):
+            yaml.load(stream, Loader=AnsibleLoader)
 
     def test_front_matter(self):
         stream = StringIO(u"""---\nfoo: bar""")
-        loader = AnsibleLoader(stream, file_name)
-        data = loader.get_single_data()
+        stream.name = file_name
+        data = yaml.load(stream, Loader=AnsibleLoader)
         self.assertEqual(data, dict(foo=u'bar'))
 
         self.assertEqual(Origin.get_tag(data), Origin(path=file_name, line_num=2, col_num=1))
@@ -154,8 +155,8 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
 
         # Initial indent (See: #6348)
         stream = StringIO(u""" - foo: bar\n   baz: qux""")
-        loader = AnsibleLoader(stream, file_name)
-        data = loader.get_single_data()
+        stream.name = file_name
+        data = yaml.load(stream, Loader=AnsibleLoader)
         self.assertEqual(data, [{u'foo': u'bar', u'baz': u'qux'}])
 
         self.assertEqual(Origin.get_tag(data), Origin(path=file_name, line_num=1, col_num=2))
@@ -213,16 +214,11 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
         stream.name = 'my.yml'
         return stream
 
-    def _loader(self, stream):
-        return AnsibleLoader(stream, vault_secrets=self.vault.secrets)
-
     def _load_yaml(self, yaml_text, password):
         stream = self._build_stream(yaml_text)
-        loader = self._loader(stream)
+        data = yaml.load(stream, Loader=AnsibleLoader)
 
-        data_from_yaml = loader.get_single_data()
-
-        return data_from_yaml
+        return data
 
 
 class TestAnsibleLoaderPlay(unittest.TestCase):
@@ -259,8 +255,7 @@ class TestAnsibleLoaderPlay(unittest.TestCase):
                 """)
         self.play_filename = '/path/to/myplay.yml'
         stream.name = self.play_filename
-        self.loader = AnsibleLoader(stream)
-        self.data = self.loader.get_single_data()
+        self.data = yaml.load(stream, Loader=AnsibleLoader)
 
     def tearDown(self):
         pass
@@ -437,7 +432,8 @@ YAML_STRINGS_FROM_VALUES = (
 @pytest.mark.parametrize("value, expected", YAML_STRINGS_AND_VALUES)
 def test_load_data_types(value: str, expected: t.Any) -> None:
     """Verify supported data types can be YAML loaded."""
-    result = from_yaml(value, file_name=file_name)
+    value = Origin(path=file_name).tag(value)
+    result = from_yaml(value)
     origin = Origin.get_tag(result)
 
     assert result == expected
@@ -456,15 +452,11 @@ def test_dump_data_types(value: str, expected: t.Any) -> None:
     assert result == expected
 
 
-@pytest.mark.parametrize("trust_input_str, override_trust_value, expected_trust", (
-    (True, None, True),
-    (True, True, True),
-    (True, False, False),
-    (False, None, False),
-    (False, True, True),
-    (False, False, False),
+@pytest.mark.parametrize("trust_input_str", (
+    True,
+    False,
 ))
-def test_string_trust_propagation(trust_input_str: bool, override_trust_value: bool | None, expected_trust: bool) -> None:
+def test_string_trust_propagation(trust_input_str: bool) -> None:
     """
     Verify that input trust propagation behaves as expected. An explicit boolean `trusted_as_template` arg to the loader is always
     respected; if not specified, the presence of trust on the input string determines if trust is applied to outputs.
@@ -474,8 +466,6 @@ def test_string_trust_propagation(trust_input_str: bool, override_trust_value: b
     if trust_input_str:
         data = TrustedAsTemplate().tag(data)
 
-    loader: t.Any = functools.partial(AnsibleLoader, trusted_as_template=override_trust_value) if override_trust_value is not None else AnsibleLoader
+    res = yaml.load(data, Loader=AnsibleLoader)  # type: ignore[arg-type]
 
-    res = yaml.load(data, Loader=loader)
-
-    assert expected_trust == TrustedAsTemplate.is_tagged_on(res['foo'])
+    assert trust_input_str == TrustedAsTemplate.is_tagged_on(res['foo'])

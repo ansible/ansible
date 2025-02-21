@@ -6,6 +6,8 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSet, MutableSequence
 from pathlib import Path
 
+import yaml
+
 from ansible import constants as C
 from ansible.release import __version__ as ansible_version
 from ansible.errors import AnsibleError, AnsibleParserError, AnsiblePluginNotFound
@@ -14,6 +16,7 @@ from ansible.module_utils.common.text.converters import to_native
 from ansible.parsing.plugin_docs import read_docstring
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.utils.display import Display
+from ansible._internal._datatag import _tags
 
 display = Display()
 
@@ -160,7 +163,7 @@ def add_fragments(doc, filename, fragment_loader, is_module=False):
             else:
                 fragment_yaml = '{}'  # TODO: this is still an error later since we require 'options' below...
 
-        fragment = AnsibleLoader(fragment_yaml, file_name=filename).get_single_data()
+        fragment = yaml.load(_tags.Origin(path=filename).tag(fragment_yaml), Loader=AnsibleLoader)
 
         real_fragment_name = getattr(fragment_class, 'ansible_name')
         real_collection_name = '.'.join(real_fragment_name.split('.')[0:2]) if '.' in real_fragment_name else ''

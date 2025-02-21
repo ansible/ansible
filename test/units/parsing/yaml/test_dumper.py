@@ -56,7 +56,7 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
         return stream
 
     def _loader(self, stream):
-        return AnsibleLoader(stream, vault_secrets=self.vault.secrets)
+        return AnsibleLoader(stream)
 
     def test_bytes(self):
         b_text = u'tréma'.encode('utf-8')
@@ -64,9 +64,8 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
         yaml_out = self._dump_string(unsafe_object, dumper=self.dumper)
 
         stream = self._build_stream(yaml_out)
-        loader = self._loader(stream)
 
-        data_from_yaml = loader.get_single_data()
+        data_from_yaml = yaml.load(stream, Loader=AnsibleLoader)
 
         result = b_text
 
@@ -78,9 +77,8 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
         yaml_out = self._dump_string(unsafe_object, dumper=self.dumper)
 
         stream = self._build_stream(yaml_out)
-        loader = self._loader(stream)
 
-        data_from_yaml = loader.get_single_data()
+        data_from_yaml = yaml.load(stream, Loader=AnsibleLoader)
 
         self.assertEqual(u_text, data_from_yaml)
 

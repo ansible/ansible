@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import copy
+import io
+import pathlib
 import pickle
 import typing as t
 
 import pytest
 
-from ansible.module_utils._internal._datatag import AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTagHelper, NotTaggableError
 from ansible.parsing.vault import EncryptedString, VaultSecretsContext, VaultSecret, VaultLib
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate, VaultedValue
+from ansible.utils.datatag import trust_value
 from ..module_utils.datatag.test_datatag import TestDatatagTarget as _TestDatatagTarget, Later
 
 
@@ -173,3 +176,35 @@ def test_encrypted_string_binary_operators(comparison: str, expected: bool) -> N
 
         object.__setattr__(es, '_plaintext', None)
         object.__setattr__(copied_es, '_plaintext', None)
+
+
+@pytest.mark.parametrize("value", (
+    "astring",
+    lambda tmppath: pathlib.Path(tmppath / "afile").open("w"),
+    io.StringIO("blee"),
+    io.BytesIO(b"blee"),
+))
+def test_trust_value_success(value: str | io.IOBase, tmp_path: pytest.TempPathFactory) -> None:
+    """Validate expected success behavior for `trust_value`."""
+    if callable(value):
+        value = value(tmp_path)
+
+    result = trust_value(value)
+
+    assert result is not value
+    assert TrustedAsTemplate.is_tagged_on(result)
+    assert isinstance(result, type(value))
+
+
+class CustomStr(str):
+    ...
+
+
+@pytest.mark.parametrize("value, error_type, error_pattern", (
+    (123, TypeError, "cannot be applied to"),
+    (CustomStr("hey"), NotTaggableError, "is not taggable"),
+))
+def test_trust_value_errors(value: object, error_type: t.Type[Exception], error_pattern: str | None) -> None:
+    """Validate expected error behavior for `trust_value`."""
+    with pytest.raises(error_type, match=error_pattern):
+        trust_value(value)  # type: ignore

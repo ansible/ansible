@@ -28,7 +28,7 @@ from ansible import constants as C
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
-from ansible.parsing.vault import VaultSecret, EncryptedString
+from ansible.parsing.vault import EncryptedString
 from ansible.utils.display import Display
 
 from .errors import AnsibleConstructorError
@@ -44,7 +44,6 @@ class AnsibleConstructor(SafeConstructor):
     def __init__(
         self,
         origin: Origin,
-        vault_secrets: list[tuple[str, VaultSecret]] | None = None,  # DTFIX-RELEASE: can we remove/deprecate this?
         trusted_as_template: bool = False,
     ) -> None:
         self._origin = origin

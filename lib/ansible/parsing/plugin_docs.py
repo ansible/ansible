@@ -4,13 +4,15 @@
 from __future__ import annotations
 
 import ast
-import tokenize
+
+import yaml
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.utils.display import Display
+from ansible._internal._datatag import _tags
 
 display = Display()
 
@@ -21,13 +23,6 @@ string_to_vars = {
     'RETURN': 'returndocs',
     'ANSIBLE_METADATA': 'metadata',  # NOTE: now unused, but kept for backwards compat
 }
-
-
-def _var2string(value):
-    """ reverse lookup of the dict above """
-    for k, v in string_to_vars.items():
-        if v == value:
-            return k
 
 
 def _init_doc_dict():
@@ -43,8 +38,7 @@ def read_docstring_from_yaml_file(filename, verbose=True, ignore_errors=True):
 
     try:
         with open(filename, 'rb') as yamlfile:
-            # DTFIX-MERGE: use from_yaml instead of direct AnsibleLoader usage; also, is AnsibleLoader even the right thing in this context (vault support)?
-            file_data = AnsibleLoader(yamlfile.read(), file_name=filename).get_single_data()
+            file_data = yaml.load(yamlfile, Loader=AnsibleLoader)
     except Exception as ex:
         msg = f"Unable to parse yaml file {filename}"
         # DTFIX-RELEASE: find a better pattern for this (can we use the new optional error behavior?)
@@ -60,75 +54,11 @@ def read_docstring_from_yaml_file(filename, verbose=True, ignore_errors=True):
     return data
 
 
-def read_docstring_from_python_module(filename, verbose=True, ignore_errors=True):
-    """
-    Use tokenization to search for assignment of the documentation variables in the given file.
-    Parse from YAML and return the resulting python structure or None together with examples as plain text.
-    """
-
-    seen = set()
-    data = _init_doc_dict()
-
-    next_string = None
-    with tokenize.open(filename) as f:
-        tokens = tokenize.generate_tokens(f.readline)
-        for token in tokens:
-
-            # found label that looks like variable
-            if token.type == tokenize.NAME:
-
-                # label is expected value, in correct place and has not been seen before
-                if token.start == 1 and token.string in string_to_vars and token.string not in seen:
-                    # next token that is string has the docs
-                    next_string = string_to_vars[token.string]
-                    continue
-
-            # previous token indicated this string is a doc string
-            if next_string is not None and token.type == tokenize.STRING:
-
-                # ensure we only process one case of it
-                seen.add(token.string)
-
-                value = token.string
-
-                # strip string modifiers/delimiters
-                if value.startswith(('r', 'b')):
-                    value = value.lstrip('rb')
-
-                if value.startswith(("'", '"')):
-                    value = value.strip("'\"")
-
-                # actually use the data
-                if next_string == 'plainexamples':
-                    # keep as string, can be yaml, but we let caller deal with it
-                    data[next_string] = to_text(value)
-                else:
-                    # yaml load the data
-                    try:
-                        data[next_string] = AnsibleLoader(value, file_name=filename).get_single_data()
-                    except Exception as ex:
-                        msg = f"Unable to parse docs {_var2string(next_string)!r} in python file {filename!r}"
-                        # DTFIX-RELEASE: use a better pattern to just conditionally send augmented exception to display.error or raise
-                        if not ignore_errors:
-                            raise AnsibleParserError(f'{msg}.') from ex
-                        elif verbose:
-                            display.error(f'{msg}: {ex}')
-
-                next_string = None
-
-    # if nothing else worked, fall back to old method
-    if not seen:
-        data = read_docstring_from_python_file(filename, verbose, ignore_errors)
-
-    return data
-
-
 def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
     """
     Use ast to search for assignment of the DOCUMENTATION and EXAMPLES variables in the given file.
     Parse DOCUMENTATION from YAML and return the YAML doc or None together with EXAMPLES, as plain text.
     """
-
     data = _init_doc_dict()
 
     try:
@@ -156,7 +86,8 @@ def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
                                 data[varkey] = to_text(child.value.value)
                             else:
                                 # string should be yaml if already not a dict
-                                data[varkey] = AnsibleLoader(child.value.value, file_name=filename).get_single_data()
+                                child_value = _tags.Origin(path=filename, line_num=child.value.lineno).tag(child.value.value)
+                                data[varkey] = yaml.load(child_value, Loader=AnsibleLoader)
 
                         display.debug('Documentation assigned: %s' % varkey)
 
@@ -178,7 +109,7 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
     if filename.endswith(C.YAML_DOC_EXTENSIONS):
         docstring = read_docstring_from_yaml_file(filename, verbose=verbose, ignore_errors=ignore_errors)
     elif filename.endswith(C.PYTHON_DOC_EXTENSIONS):
-        docstring = read_docstring_from_python_module(filename, verbose=verbose, ignore_errors=ignore_errors)
+        docstring = read_docstring_from_python_file(filename, verbose=verbose, ignore_errors=ignore_errors)
     elif not ignore_errors:
         raise AnsibleError("Unknown documentation format: %s" % to_native(filename))
 
@@ -225,6 +156,6 @@ def read_docstub(filename):
                 in_documentation = True
 
     short_description = r''.join(doc_stub).strip().rstrip('.')
-    data = AnsibleLoader(short_description, file_name=filename).get_single_data()
+    data = yaml.load(_tags.Origin(path=str(filename)).tag(short_description), Loader=AnsibleLoader)
 
     return data

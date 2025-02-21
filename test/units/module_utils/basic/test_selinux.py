@@ -7,13 +7,11 @@
 from __future__ import annotations
 
 import errno
-import json
 import pytest
 
 from unittest.mock import mock_open, patch
 
 from ansible.module_utils import basic
-from ansible.module_utils.common.text.converters import to_bytes
 import builtins
 
 from ansible.module_utils.testing import patch_module_args
