@@ -465,8 +465,6 @@ def _remove_values_conditions(value, no_log_strings, deferred_removals):
 
     elif isinstance(value, (datetime.datetime, datetime.date, datetime.time)):
         return value
-        # value = value.isoformat()  # DTFIX-MERGE: how long has this been here? what's the downside to killing it? the new serializer handles it
-    # DTFIX-MERGE: is this the right thing?
     elif isinstance(value, AnsibleSerializable):
         return value
     else:

@@ -138,7 +138,7 @@ class Group:
     @property
     def host_names(self) -> set[str]:
         if self._hosts is None:
-            self._hosts = {h.name for h in self.hosts}  # DTFIX-MERGE: if serialization works properly, this can just be set in __init__ like it was before
+            self._hosts = {h.name for h in self.hosts}
         return self._hosts
 
     def get_name(self) -> str:

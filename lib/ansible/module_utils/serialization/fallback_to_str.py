@@ -59,13 +59,10 @@ class _Profile(_json._JSONSerializationProfile["Encoder", "Decoder"]):
 
     @classmethod
     def default(cls, o: _t.Any) -> _t.Any:
-        # DTFIX-MERGE: what error handling should be used here?
-        # DTFIX-RELEASE: tests needed for error handling scenarios
-
         if isinstance(o, _c.Mapping):
             return dict(o)
 
-        if isinstance(o, _c.Collection) and not isinstance(o, (str, bytes)):
+        if isinstance(o, _c.Iterable) and not isinstance(o, (str, bytes)):
             return list(o)
 
         return str(o)

@@ -723,7 +723,7 @@ class TaskExecutor:
             if 'skipped' not in result:
                 condname = 'changed'
 
-                # DTFIX-MERGE: error normalization has not yet occurred; this means that the expressions used for until/failed_when/changed_when/break_when
+                # DTFIX-RELEASE: error normalization has not yet occurred; this means that the expressions used for until/failed_when/changed_when/break_when
                 #  and when (for loops on the second and later iterations) cannot see the normalized error shapes. This, and the current impl of the expression
                 #  handling here causes a number of problems:
                 #  * any error in one of the post-task exec expressions is silently ignored and detail lost (eg: `failed_when: syntax ERROR @$123`)

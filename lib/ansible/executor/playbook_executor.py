@@ -133,8 +133,6 @@ class PlaybookExecutor:
                     # Allow variables to be used in vars_prompt fields.
                     all_vars = self._variable_manager.get_vars(play=play)
                     templar = TemplateEngine(loader=self._loader, variables=all_vars)
-                    # DTFIX-MERGE: this does not properly handle omit, undefined, or dynamic structure from templated `vars_prompt` ;
-                    #        templating should be done earlier
                     setattr(play, 'vars_prompt', templar.template(play.vars_prompt))
 
                     # FIXME: this should be a play 'sub object' like loop_control
