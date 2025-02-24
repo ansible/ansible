@@ -4,13 +4,13 @@ ansible-core 2.17 "Gallows Pole" Release Notes
 
 .. contents:: Topics
 
-v2.17.9rc1
-==========
+v2.17.9
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2025-02-17
+| Release Date: 2025-02-24
 | `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
 
 Minor Changes

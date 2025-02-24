@@ -1076,6 +1076,17 @@ releases:
     - reserved_module_chekc.yml
     - vault_cli_fix.yml
     release_date: '2025-01-20'
+  2.17.9:
+    changes:
+      release_summary: '| Release Date: 2025-02-24
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+        '
+    codename: Gallows Pole
+    fragments:
+    - 2.17.9_summary.yaml
+    release_date: '2025-02-24'
   2.17.9rc1:
     changes:
       bugfixes:
