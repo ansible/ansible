@@ -41,6 +41,7 @@ _empty_frozenset: t.FrozenSet = frozenset()
 
 class AnsibleTagHelper:
     """Utility methods for working with Ansible data tags."""
+
     # DTFIX-MERGE: bikeshed the name and location of this class, since it's public API
     #        it may make sense to move this into another module, but the implementations should remain here (so they can be used without circular imports here)
     #        if they're in a separate module, is a class even needed, or should they be globals?
@@ -118,18 +119,15 @@ class AnsibleTagHelper:
 
     @staticmethod
     @t.overload
-    def tag_copy(src: t.Any, value: _T) -> _T:
-        ...  # pragma: nocover
+    def tag_copy(src: t.Any, value: _T) -> _T: ...  # pragma: nocover
 
     @staticmethod
     @t.overload
-    def tag_copy(src: t.Any, value: t.Any, *, value_type: type[_T]) -> _T:
-        ...  # pragma: nocover
+    def tag_copy(src: t.Any, value: t.Any, *, value_type: type[_T]) -> _T: ...  # pragma: nocover
 
     @staticmethod
     @t.overload
-    def tag_copy(src: t.Any, value: _T, *, value_type: None = None) -> _T:
-        ...  # pragma: nocover
+    def tag_copy(src: t.Any, value: _T, *, value_type: None = None) -> _T: ...  # pragma: nocover
 
     @staticmethod
     def tag_copy(src: t.Any, value: _T, *, value_type: t.Optional[type] = None) -> _T:
@@ -138,18 +136,15 @@ class AnsibleTagHelper:
 
     @staticmethod
     @t.overload
-    def tag(value: _T, tags: t.Union[AnsibleDatatagBase, t.Iterable[AnsibleDatatagBase]]) -> _T:
-        ...  # pragma: nocover
+    def tag(value: _T, tags: t.Union[AnsibleDatatagBase, t.Iterable[AnsibleDatatagBase]]) -> _T: ...  # pragma: nocover
 
     @staticmethod
     @t.overload
-    def tag(value: t.Any, tags: t.Union[AnsibleDatatagBase, t.Iterable[AnsibleDatatagBase]], *, value_type: type[_T]) -> _T:
-        ...  # pragma: nocover
+    def tag(value: t.Any, tags: t.Union[AnsibleDatatagBase, t.Iterable[AnsibleDatatagBase]], *, value_type: type[_T]) -> _T: ...  # pragma: nocover
 
     @staticmethod
     @t.overload
-    def tag(value: _T, tags: t.Union[AnsibleDatatagBase, t.Iterable[AnsibleDatatagBase]], *, value_type: None = None) -> _T:
-        ...  # pragma: nocover
+    def tag(value: _T, tags: t.Union[AnsibleDatatagBase, t.Iterable[AnsibleDatatagBase]], *, value_type: None = None) -> _T: ...  # pragma: nocover
 
     @staticmethod
     def tag(value: _T, tags: t.Union[AnsibleDatatagBase, t.Iterable[AnsibleDatatagBase]], *, value_type: t.Optional[type] = None) -> _T:
@@ -459,36 +454,8 @@ if sys.version_info >= (3, 9):
     class _AnsibleTagsMapping(dict[type[_TAnsibleDatatagBase], _TAnsibleDatatagBase]):
         __slots__ = _NO_INSTANCE_STORAGE
 
-        # DTFIX-FUTURE: do we want to try to implement read-only dict support?
-        #        what we have below works for deepcopy, but not pickle
-        #        it's also not perfect, since __init__ still mutates the dict
-        # def update(self, *args, **kwargs) -> None:
-        #     raise NotImplementedError()
-        #
-        # def clear(self, *args, **kwargs) -> None:
-        #     raise NotImplementedError()
-        #
-        # def pop(self, *args, **kwargs) -> None:
-        #     raise NotImplementedError()
-        #
-        # def popitem(self, *args, **kwargs) -> None:
-        #     raise NotImplementedError()
-        #
-        # def setdefault(self, *args, **kwargs) -> None:
-        #     raise NotImplementedError()
-        #
-        # def __ior__(self, *args, **kwargs) -> None:
-        #     raise NotImplementedError()
-        #
-        # def __delitem__(self, *args, **kwargs):
-        #     raise NotImplementedError()
-        #
-        # def __setitem__(self, *args, **kwargs) -> None:
-        #     raise NotImplementedError(f'{args} {kwargs}')
-        #
-        # def __deepcopy__(self, *args, **kwargs) -> t.Any:
-        #     return self
 else:
+
     class _AnsibleTagsMapping(dict):
         __slots__ = _NO_INSTANCE_STORAGE
 
@@ -498,6 +465,7 @@ class _EmptyROInternalTagsMapping(dict):
     Optimizes empty tag mapping by using a shared singleton read-only dict.
     Since mappingproxy is not pickle-able and causes other problems, we had to roll our own.
     """
+
     def __new__(cls):
         try:
             # noinspection PyUnresolvedReferences
@@ -527,6 +495,7 @@ Also used as a sentinel to cheaply determine that a type is not tagged by using 
 
 class CollectionWithMro(c.Collection, t.Protocol):
     """Used to represent a Collection with __mro__ in a TypeGuard for tools that don't include __mro__ in Collection."""
+
     __mro__: tuple[type, ...]
 
 
@@ -686,9 +655,9 @@ class AnsibleTaggedObject(AnsibleSerializable):
 
     @classmethod
     def _instance_factory_collection(
-            cls,
-            value: t.Iterable,
-            tags_mapping: _AnsibleTagsMapping,
+        cls,
+        value: t.Iterable,
+        tags_mapping: _AnsibleTagsMapping,
     ) -> t.Self:
         if type(value) in AnsibleTaggedObject._collection_types:
             # use the underlying iterator to avoid access/iteration side effects (e.g. templating/wrapping on Lazy subclasses)

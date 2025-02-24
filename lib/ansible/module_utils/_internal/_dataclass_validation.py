@@ -116,7 +116,7 @@ def inject_post_init_validation(cls: type, allow_subclasses=False) -> None:
             idx_ref = f'{local_ref}_idx'
             item_ref = f'{local_ref}_item'
             item_name = f'{target_name}[{{{idx_ref}!r}}]'
-            item_type, = t.get_args(list_type)
+            (item_type,) = t.get_args(list_type)
 
             append_line(f"""if isinstance({target_ref}, {known_types[list]}):""")
             append_line(f"""    for {idx_ref}, {item_ref} in enumerate({target_ref}):""")
@@ -211,7 +211,7 @@ def _extract_type(target_type: type, of_type: type) -> type:
     if origin_type is t.Union or (_union_type and isinstance(target_type, _union_type)):
         args = t.get_args(target_type)
         extracted_types = [arg for arg in args if type(arg) is of_type or t.get_origin(arg) is of_type]  # pylint: disable=unidiomatic-typecheck
-        extracted_type, = extracted_types
+        (extracted_type,) = extracted_types
         return extracted_type
 
     raise NotImplementedError(f'{target_type} is not supported')

@@ -76,8 +76,9 @@ def _is_module_traceback_enabled(event: TracebackEvent) -> bool:
             # than to mask the triggering error by issuing a new error/warning here.
             from ..basic import _PARSED_MODULE_ARGS
 
-            _module_tracebacks_enabled_events = \
-                frozenset(TracebackEvent[value.upper()] for value in _PARSED_MODULE_ARGS.get('_ansible_tracebacks_for'))  # type: ignore[union-attr]
+            _module_tracebacks_enabled_events = frozenset(
+                TracebackEvent[value.upper()] for value in _PARSED_MODULE_ARGS.get('_ansible_tracebacks_for')
+            )  # type: ignore[union-attr]
         except BaseException:
             return True  # if things failed early enough that we can't figure this out, assume we want a traceback for troubleshooting
 

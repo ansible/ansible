@@ -1,4 +1,5 @@
 """Patches for builtin `dataclasses` module."""
+
 # deprecated: description='verify ClassVar support in dataclasses has been fixed in Python before removing this patching code', python_version='3.13'
 
 from __future__ import annotations

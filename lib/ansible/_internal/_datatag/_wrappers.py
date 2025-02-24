@@ -12,6 +12,7 @@ class TaggedStreamWrapper(ObjectProxy):
     Janky proxy around IOBase to allow streams to carry tags and support basic interrogation by the tagging API.
     Most tagging operations will have undefined behavior for this type.
     """
+
     _self__ansible_tags_mapping: _datatag._AnsibleTagsMapping
 
     def __init__(self, stream: io.IOBase, tags: _datatag.AnsibleDatatagBase | _t.Iterable[_datatag.AnsibleDatatagBase]) -> None:

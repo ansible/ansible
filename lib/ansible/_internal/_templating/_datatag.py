@@ -31,6 +31,7 @@ class _TrippedDeprecationInfo:
 
 class DeprecatedAccessAuditContext(NotifiableAccessContextBase):
     """When active, captures metadata about managed accesses to `Deprecated` tagged objects."""
+
     _type_interest = frozenset([Deprecated])
 
     @classmethod

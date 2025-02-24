@@ -51,6 +51,7 @@ class Marker(StrictUndefined, Tripwire):
     Direct or managed access to most `Marker` attributes will raise a `MarkerError`, which usually ends the current innermost templating
     operation and converts the `MarkerError` back to the origin Marker instance (subject to the `MarkerBehavior` in effect at the time).
     """
+
     # DTFIX-MERGE: ideally this would be abstract, since it's not supposed to be instantiated, but it has no abstract members currently
 
     __slots__ = ('_marker_template_source',)
@@ -196,6 +197,7 @@ class TruncationMarker(Marker):
     A subsequent `Marker` value (this instance) indicates the template may have been truncated as a result.
     It will only be visible if the previous `Marker` was ignored/replaced instead of being tripped, which would raise an exception.
     """
+
     # DTFIX-MERGE: make this a singleton?
 
     __slots__ = ()
@@ -294,6 +296,7 @@ class JinjaCallContext(NotifiableAccessContextBase):
     An audit context that wraps all Jinja (template/filter/test/lookup/method/function) calls.
     While active, calls `trip()` on managed access of `Marker` objects unless the callee declares an understanding of markers.
     """
+
     _mask = True
 
     def __init__(self, accept_marker: bool) -> None:

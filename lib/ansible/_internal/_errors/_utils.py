@@ -281,7 +281,7 @@ class SourceContext:
             line = line.replace('\t', ' ')  # mixed tab/space handling is intentionally disabled since we're both format and display config agnostic
 
             if len(line) > max_src_line_len:
-                line = line[:max_src_line_len - len(truncation_marker)] + truncation_marker
+                line = line[: max_src_line_len - len(truncation_marker)] + truncation_marker
                 usable_line_len = max_src_line_len - len(truncation_marker)
 
             annotated_source_lines.append(f'{str(line_num).rjust(line_label_width)}{" " if line else ""}{line}')

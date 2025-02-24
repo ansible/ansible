@@ -32,8 +32,17 @@ from ansible.parsing.dataloader import DataLoader
 
 from ._datatag import DeprecatedAccessAuditContext
 from ._jinja_bits import (
-    AnsibleTemplate, _TemplateCompileContext, TemplateOverrides, AnsibleEnvironment, defer_template_error, create_template_error, is_possibly_template,
-    is_possibly_all_template, AnsibleTemplateExpression, _finalize_template_result, FinalizeMode
+    AnsibleTemplate,
+    _TemplateCompileContext,
+    TemplateOverrides,
+    AnsibleEnvironment,
+    defer_template_error,
+    create_template_error,
+    is_possibly_template,
+    is_possibly_all_template,
+    AnsibleTemplateExpression,
+    _finalize_template_result,
+    FinalizeMode,
 )
 from ._jinja_common import _TemplateConfig, MarkerError, ExceptionMarker
 from ._lazy_containers import _AnsibleLazyTemplateMixin
@@ -331,8 +340,9 @@ class TemplateEngine:
                     template_result = defer_template_error(ex, variable, is_expression=False)
 
                 if ctx.is_top_level:
-                    template_result = self._finalize_top_level_template_result(variable, options, template_result,
-                                                                               stop_on_container=mode is TemplateMode.STOP_ON_CONTAINER)
+                    template_result = self._finalize_top_level_template_result(
+                        variable, options, template_result, stop_on_container=mode is TemplateMode.STOP_ON_CONTAINER
+                    )
 
             return template_result
 

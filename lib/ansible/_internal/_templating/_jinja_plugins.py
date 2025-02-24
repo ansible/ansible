@@ -147,8 +147,7 @@ class JinjaPluginIntercept(c.MutableMapping):
                 template = TemplateContext.current().template_value
 
                 _display.deprecated(
-                    msg=f"The test plugin {plugin_name!r} returned a non-boolean result of type {type(test_res)!r}. "
-                        "Test plugins must have a boolean result.",
+                    msg=f"The test plugin {plugin_name!r} returned a non-boolean result of type {type(test_res)!r}. Test plugins must have a boolean result.",
                     obj=template,
                     version="2.21",
                 )
@@ -185,6 +184,7 @@ class JinjaPluginIntercept(c.MutableMapping):
 
 class _DirectCall:
     """Functions/methods marked `_DirectCall` bypass Jinja Environment checks for `Marker`."""
+
     _marker_attr: str = "_directcall"
 
     @classmethod
@@ -213,6 +213,7 @@ def _lookup(plugin_name: str, /, *args, **kwargs) -> t.Any:
 @dataclasses.dataclass
 class _LookupContext(AmbientContextBase):
     """Ambient context that wraps lookup execution, providing information about how it was invoked."""
+
     invoked_as_with: bool
 
 

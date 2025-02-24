@@ -12,8 +12,8 @@ import typing as t
 @t.runtime_checkable
 class _EncryptedStringProtocol(t.Protocol):
     """Protocol representing an `EncryptedString`, since it cannot be imported here."""
-    def _decrypt(self) -> str:
-        ...
+
+    def _decrypt(self) -> str: ...
 
 
 def _to_text(value: str | bytes | _EncryptedStringProtocol | None, strict: bool = False) -> str | None:

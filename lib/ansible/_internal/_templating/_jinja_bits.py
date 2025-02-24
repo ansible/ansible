@@ -139,8 +139,8 @@ class TemplateOverrides:
             if eol == -1:
                 raise ValueError(f"Missing newline after {JINJA2_OVERRIDE!r} override.")
 
-            line = template[len(JINJA2_OVERRIDE):eol]
-            template = template[eol + 1:]
+            line = template[len(JINJA2_OVERRIDE) : eol]
+            template = template[eol + 1 :]
             override_kwargs = {}
 
             for pair in line.split(','):
@@ -196,6 +196,7 @@ class AnsibleContext(Context):
     runs them through AnsibleAccessContext. This allows usage of variables
     to be tracked. If needed, values can also be modified before being returned.
     """
+
     environment: AnsibleEnvironment  # narrow the type specified by the base
 
     def __init__(self, *args, **kwargs):
@@ -255,6 +256,7 @@ class ArgSmuggler:
     e.g., see https://github.com/pallets/jinja/blob/3.1.3/src/jinja2/environment.py#L1296 and
     https://github.com/pallets/jinja/blob/3.1.3/src/jinja2/environment.py#L1566.
     """
+
     jinja_vars: c.Mapping[str, t.Any] | None
 
     @classmethod
@@ -279,6 +281,7 @@ class AnsibleTemplateExpression:
     Wrapper around Jinja's TemplateExpression for converting MarkerError back into Marker.
     This is needed to make expression error handling consistent with templates, since Jinja does not support a custom type for Environment.compile_expression.
     """
+
     def __init__(self, template_expression: TemplateExpression) -> None:
         self._template_expression = template_expression
 
@@ -351,11 +354,7 @@ class AnsibleCodeGenerator(NativeCodeGenerator):
         """
         value = node.as_const(frame.eval_ctx)
 
-        if (
-            _TemplateConfig.allow_embedded_templates and
-            type(value) is str and  # pylint: disable=unidiomatic-typecheck
-            is_possibly_template(value)
-        ):
+        if _TemplateConfig.allow_embedded_templates and type(value) is str and is_possibly_template(value):  # pylint: disable=unidiomatic-typecheck
             # deprecated: description='embedded Jinja constant string template support' core_version='2.21'
             self.write(f'environment._access_const({value!r})')
         else:
@@ -383,6 +382,7 @@ class _TemplateCompileContext(_ambient_context.AmbientContextBase):
     This context is active during Ansible's explicit compilation of templates/expressions, but not during Jinja's runtime compilation.
     Historically, Ansible-specific pre-processing like `escape_backslashes` was not applied to imported/included templates.
     """
+
     escape_backslashes: bool
 
 
@@ -496,6 +496,7 @@ def create_template_error(ex: Exception, variable: t.Any, is_expression: bool) -
 # DTFIX-RELEASE: implement CapturedExceptionMarker deferral support on call (and lookup), filter/test plugins, etc.
 #                also update the protomatter integration test once this is done (the test was written differently since this wasn't done yet)
 
+
 class AnsibleEnvironment(ImmutableSandboxedEnvironment):
     """
     Our custom environment, which simply allows us to override the class-level
@@ -505,7 +506,7 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
     context_class = AnsibleContext
     template_class = AnsibleTemplate
     code_generator_class = AnsibleCodeGenerator
-    intercepted_binops = frozenset({'eq', })
+    intercepted_binops = frozenset(('eq',))
 
     _lexer_cache = LRUCache(50)
 
@@ -650,12 +651,14 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
         if csc := _CompileStateSmugglingCtx.current(optional=True):
             origin = Origin.get_tag(csc.template_source) or Origin.UNKNOWN
 
-            source = '\n'.join((
-                "import sys; breakpoint() if type(sys.breakpointhook) is not type(breakpoint) else None",
-                f"# original template source from {str(origin)!r}: ",
-                '\n'.join(f'# {line}' for line in (csc.template_source or '').splitlines()),
-                source
-            ))
+            source = '\n'.join(
+                (
+                    "import sys; breakpoint() if type(sys.breakpointhook) is not type(breakpoint) else None",
+                    f"# original template source from {str(origin)!r}: ",
+                    '\n'.join(f'# {line}' for line in (csc.template_source or '').splitlines()),
+                    source,
+                )
+            )
 
             source_temp_dir = self._debuggable_template_source_path
             source_temp_dir.mkdir(parents=True, exist_ok=True)

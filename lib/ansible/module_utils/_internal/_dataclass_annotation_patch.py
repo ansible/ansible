@@ -1,4 +1,5 @@
 """Patch broken ClassVar support in dataclasses when ClassVar is accessed via a module other than `typing`."""
+
 # deprecated: description='verify ClassVar support in dataclasses has been fixed in Python before removing this patching code', python_version='3.12'
 
 from __future__ import annotations

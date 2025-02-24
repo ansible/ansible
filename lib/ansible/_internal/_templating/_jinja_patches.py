@@ -1,4 +1,5 @@
 """Runtime patches for Jinja bugs affecting Ansible."""
+
 from __future__ import annotations
 
 import jinja2
@@ -30,6 +31,7 @@ def _patch_jinja_missing_type() -> None:
     See: https://github.com/pallets/jinja/issues/2027
     """
     if getattr(jinja2.utils.missing, '__reduce__')() != 'missing':
+
         def __reduce__(*_args):
             return 'missing'
 

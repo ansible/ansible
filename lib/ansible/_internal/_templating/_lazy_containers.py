@@ -44,9 +44,9 @@ class _AnsibleLazyTemplateMixin:
     # always pass through this mixin; we want to silently ignore those types
     # NB: additional values are added at runtime by other Python modules to avoid circular imports
     _ignore_types: t.ClassVar[set[type]] = (
-        set(PASS_THROUGH_SCALAR_VAR_TYPES) |
-        set(Marker.concrete_subclasses) |  # vault marker is added later once it's defined
-        {
+        set(PASS_THROUGH_SCALAR_VAR_TYPES)
+        | set(Marker.concrete_subclasses)  # vault marker is added later once it's defined
+        | {
             HostVars,
             HostVarsVars,
             types.FunctionType,  # DTFIX-MERGE: global functions returned from Jinja globals __getitem__ def _lookup
@@ -193,8 +193,7 @@ class _LazyValue:
     value: t.Any
 
 
-class NoKeySentinel(Sentinel):
-    ...
+class NoKeySentinel(Sentinel): ...
 
 
 @t.final  # consumers of lazy collections rely heavily on the concrete types being final

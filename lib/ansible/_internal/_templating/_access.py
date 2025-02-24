@@ -71,7 +71,7 @@ class AnsibleAccessContext:
         if not self._notify_contexts:
             return
 
-        value_types = {type(value), } | AnsibleTagHelper.tag_types(value)
+        value_types = AnsibleTagHelper.tag_types(value) | frozenset((type(value),))
         masked: set[type] = set()
 
         for ctx in reversed(self._notify_contexts):

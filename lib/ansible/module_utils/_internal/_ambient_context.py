@@ -15,6 +15,7 @@ class AmbientContextBase:
     An abstract base context manager that, once entered, will be accessible via its `current` classmethod to any code in the same
     `contextvars` context (e.g. same thread/coroutine), until it is exited.
     """
+
     __slots__ = ('_contextvar_token',)
 
     # DTFIX-MERGE: subclasses need to be able to opt-in to blocking nested contexts of the same type (basically optional per-callstack singleton behavior)

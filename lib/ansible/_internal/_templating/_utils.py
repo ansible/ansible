@@ -10,12 +10,13 @@ if t.TYPE_CHECKING:
 
 class TemplateContext(_ambient_context.AmbientContextBase):
     def __init__(
-        self, *,
+        self,
+        *,
         template_value: t.Any,
         templar: TemplateEngine,
         options: TemplateOptions,
         stop_on_template: bool = False,
-        _render_jinja_const_template: bool = False
+        _render_jinja_const_template: bool = False,
     ):
         self._template_value = template_value
         self._templar = templar
@@ -54,6 +55,7 @@ class _OmitType:
     `Omit` placeholder value will be visible to plugins during templating. The only time a template result
     will include `Omit` outside a templating context is when the template renders to the scalar value `Omit`.
     """
+
     __slots__ = ()
 
     # DTFIX-MERGE: this keeps pickle happy, but not JSON/YAML for callbacks; just teach them about it?

@@ -49,12 +49,16 @@ class Origin(AnsibleDatatagBase):
         """Return a new origin based on an existing one, with the given fields replaced."""
         return dataclasses.replace(
             self,
-            **{key: value for key, value in dict(
-                path=path,
-                description=description,
-                line_num=line_num,
-                col_num=col_num,
-            ).items() if value is not ...}  # type: ignore[arg-type]
+            **{
+                key: value
+                for key, value in dict(
+                    path=path,
+                    description=description,
+                    line_num=line_num,
+                    col_num=col_num,
+                ).items()
+                if value is not ...
+            },  # type: ignore[arg-type]
         )
 
     def _post_validate(self) -> None:
@@ -89,6 +93,7 @@ Origin.UNKNOWN = Origin(description='<unknown>')
 @dataclasses.dataclass(**_tag_dataclass_kwargs)
 class VaultedValue(AnsibleDatatagBase):
     """Tag for vault-encrypted strings that carries the original ciphertext for round-tripping."""
+
     ciphertext: str
 
 
