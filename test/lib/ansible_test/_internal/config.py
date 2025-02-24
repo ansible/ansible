@@ -262,6 +262,7 @@ class SanityConfig(TestConfig):
         self.allow_disabled: bool = args.allow_disabled
         self.enable_optional_errors: bool = args.enable_optional_errors
         self.prime_venvs: bool = args.prime_venvs
+        self.fix: bool = getattr(args, 'fix', False)
 
         self.display_stderr = self.lint or self.list_tests
 

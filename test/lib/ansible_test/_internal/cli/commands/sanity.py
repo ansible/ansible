@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 
 from ...config import (
+    data_context,
     SanityConfig,
 )
 
@@ -101,5 +102,12 @@ def do_sanity(
         action='store_true',
         help='prepare virtual environments without running tests',
     )
+
+    if data_context().content.is_ansible:
+        sanity.add_argument(
+            '--fix',
+            action='store_true',
+            help='fix issues when possible instead of reporting them',
+        )
 
     add_environments(parser, completer, ControllerMode.DELEGATED, TargetMode.SANITY)  # sanity

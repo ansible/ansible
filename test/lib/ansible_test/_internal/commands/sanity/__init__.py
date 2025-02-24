@@ -992,6 +992,7 @@ class SanityScript(SanityTest, metaclass=abc.ABCMeta):
             ANSIBLE_TEST_TARGET_PYTHON_VERSION=python.version,
             ANSIBLE_TEST_CONTROLLER_PYTHON_VERSIONS=','.join(CONTROLLER_PYTHON_VERSIONS),
             ANSIBLE_TEST_REMOTE_ONLY_PYTHON_VERSIONS=','.join(REMOTE_ONLY_PYTHON_VERSIONS),
+            ANSIBLE_TEST_FIX_MODE=str(int(args.fix)),
         )
 
         if self.min_max_python_only:
