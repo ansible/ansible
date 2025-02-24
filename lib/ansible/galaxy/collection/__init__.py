@@ -971,7 +971,12 @@ def uninstall_collections(requirements: list[Requirement], search_paths: list[st
         ):
             if requirement.ver in (None, "*") or meets_requirements(installed.ver, requirement.ver):
                 collections.append(installed)
+        if not collections or collections[-1].fqcn != requirement.fqcn or (
+            requirement.ver not in (None, "*") and not meets_requirements(collections[-1].ver, requirement.ver)
+        ):
+            display.warning(f"Skipping collection {requirement} as it is not installed.")
 
+    display.display(f"Found {len(collections)} collections to remove.")
     remove = set()
     keep = set()
     collection_paths = {}

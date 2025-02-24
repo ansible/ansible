@@ -493,7 +493,12 @@ def uninstall_roles(requirements: list[GalaxyRole], search_paths: list[str], ski
                 gr = GalaxyRole(requirement.galaxy, requirement.api, role_name, requirement.src, requirement.version, requirement.scm, path)
                 if requirement.version is None or (gr.install_info or {}).get("version") == requirement.version:
                     roles.append(gr)
+        if not roles or roles[-1].name != requirement.name or (
+            requirement.version is not None and (roles[-1].install_info or {}).get("version") != requirement.version
+        ):
+            display.warning(f"Skipping role {requirement.name} ({requirement.version or 'unknown version'}) as it is not installed.")
 
+    display.display(f"Found {len(roles)} roles to remove.")
     remove = set()
     keep = set()
     role_paths = {}
