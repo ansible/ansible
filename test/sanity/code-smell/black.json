@@ -1,0 +1,10 @@
+{
+    "prefixes": [
+        "test/sanity/code-smell/black."
+    ],
+    "extensions": [
+        ".py"
+    ],
+    "error_code": "ansible-test",
+    "output": "path-message"
+}
