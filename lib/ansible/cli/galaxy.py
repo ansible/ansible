@@ -381,8 +381,22 @@ class GalaxyCLI(CLI):
     def add_uninstall_options(self, parser, parents=None):
         galaxy_type = "role" if parser.metavar == "ROLE_ACTION" else "collection"
 
-        uninstall_parser = parser.add_parser("uninstall", parents=parents or [],
-                                             help=f"Uninstall collections from {C.COLLECTIONS_PATHS} and roles from {C.DEFAULT_ROLES_PATH}")
+        if self._implicit_role:
+            description = (
+                f"Uninstall roles by name, or roles and collections together by providing a --requirements-file. "
+                f"Roles will be uninstalled from the configured role paths: {', '.join(C.DEFAULT_ROLES_PATH)}. "
+                f"Collections will be uninstalled from the configured collection paths: {', '.join(C.COLLECTIONS_PATHS)}. "
+            )
+        else:
+            if galaxy_type == "role":
+                description = f"Uninstall roles from the configured role paths: {', '.join(C.DEFAULT_ROLES_PATH)}. "
+            else:
+                description = f"Uninstall collections from the configured collection paths: {', '.join(C.COLLECTIONS_PATHS)}. "
+            description += f"To remove all versions of a {galaxy_type}, only specify a {galaxy_type} name. "
+
+        uninstall_parser = parser.add_parser("uninstall", parents=parents, description=description +
+                                             "This is a destructive operation and cannot be reversed.",
+                                             help=f"Uninstall {galaxy_type}s.")
 
         if galaxy_type == "role":
             uninstall_parser.add_argument("--roles-path", dest="roles_path", default=C.DEFAULT_ROLES_PATH,
@@ -393,14 +407,18 @@ class GalaxyCLI(CLI):
                                           type=opt_help.unfrack_path(pathsep=True), action=opt_help.PrependListAction,
                                           help="Remove collections from additional paths.")
 
+        if self._implicit_role:
+            galaxy_types = "roles and collections"
+        else:
+            galaxy_types = f"{galaxy_type}s"
+
         # one required, mutually exclusive
-        uninstall_parser.add_argument("args", metavar=f"{galaxy_type}_name", nargs="*", help=f"{galaxy_type.upper()} to uninstall")
-        uninstall_parser.add_argument("-r", "--requirements-file", dest="requirements",
-                                      help="A file containing a list of collections to be installed.")
+        uninstall_parser.add_argument("args", metavar=f"{galaxy_type}_name", nargs="*", help=f"{galaxy_type.upper()} to uninstall.")
+        uninstall_parser.add_argument("-r", "--requirements-file", dest="requirements", help=f"A file containing a list of {galaxy_types} to uninstall.")
 
         # bypass prompting
         uninstall_parser.add_argument("-y", "--yes", dest="yes", action="store_true", default=False,
-                                      help=f"Remove all {galaxy_type}s matching the requirements without prompting")
+                                      help=f"Remove all {galaxy_types} matching the requirements without prompting.")
 
         uninstall_parser.set_defaults(func=self.execute_uninstall)
 
