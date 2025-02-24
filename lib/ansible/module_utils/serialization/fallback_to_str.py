@@ -47,15 +47,15 @@ class _Profile(_json._JSONSerializationProfile["Encoder", "Decoder"]):
 
     @classmethod
     def handle_key(cls, k: _t.Any) -> _t.Any:
-        # DTFIX-MERGE: is this the correct way to handle container keys? special processing will be skipped on the container contents
-
         while mapped_callable := cls.serialize_map.get(type(k)):
             k = mapped_callable(k)
 
-        if type(k) in (list, dict):
-            return _dumps(k, cls=Encoder)
+        k = cls.default(k)
 
-        return cls.default(k)
+        if not isinstance(k, str):
+            k = _dumps(k, cls=Encoder)
+
+        return k
 
     @classmethod
     def default(cls, o: _t.Any) -> _t.Any:
@@ -65,7 +65,7 @@ class _Profile(_json._JSONSerializationProfile["Encoder", "Decoder"]):
         if isinstance(o, _c.Mapping):
             return dict(o)
 
-        if isinstance(o, _c.Sequence) and not isinstance(o, (str, bytes)):
+        if isinstance(o, _c.Collection) and not isinstance(o, (str, bytes)):
             return list(o)
 
         return str(o)

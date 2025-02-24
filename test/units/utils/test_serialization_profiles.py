@@ -45,6 +45,8 @@ basic_values = (
     {1},
     dict(a=1),
     CustomMapping(dict(a=1)),
+    {(1,2): "three"},
+    {frozenset((1,2)): "three"},
 )
 
 # DTFIX-MERGE: we need tests for recursion, specifically things like custom sequences and mappings when using the legacy serializer

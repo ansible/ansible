@@ -34,5 +34,13 @@ _TestParameters(profile_name='inventory_legacy', value={'a': 1}, tags=(Deprecate
 _TestParameters(profile_name='inventory_legacy', value={'a': 1}, lazy=True): _TestOutput(payload='{"a": 1}', round_trip={'a': 1}, tags=()),
 _TestParameters(profile_name='inventory_legacy', value={'a': 1}, tags=(Deprecated(msg='x'),), lazy=True): _TestOutput(payload='{"a": 1}', round_trip={'a': 1}, tags=()),
 _TestParameters(profile_name='inventory_legacy', value=CustomMapping({'a': 1})): _TestOutput(payload='{"a": 1}', round_trip={'a': 1}, tags=()),
-_TestParameters(profile_name='inventory_legacy', value=CustomMapping({'a': 1}), tags=(Deprecated(msg='x'),)): _TestOutput(payload='{"a": 1}', round_trip={'a': 1}, tags=())
+_TestParameters(profile_name='inventory_legacy', value=CustomMapping({'a': 1}), tags=(Deprecated(msg='x'),)): _TestOutput(payload='{"a": 1}', round_trip={'a': 1}, tags=()),
+_TestParameters(profile_name='inventory_legacy', value={(1, 2): 'three'}): _TestOutput(payload='{"(1, 2)": "three"}', round_trip={'(1, 2)': 'three'}, tags=()),
+_TestParameters(profile_name='inventory_legacy', value={(1, 2): 'three'}, tags=(Deprecated(msg='x'),)): _TestOutput(payload='{"(1, 2)": "three"}', round_trip={'(1, 2)': 'three'}, tags=()),
+_TestParameters(profile_name='inventory_legacy', value={(1, 2): 'three'}, lazy=True): _TestOutput(payload='{"(1, 2)": "three"}', round_trip={'(1, 2)': 'three'}, tags=()),
+_TestParameters(profile_name='inventory_legacy', value={(1, 2): 'three'}, tags=(Deprecated(msg='x'),), lazy=True): _TestOutput(payload='{"(1, 2)": "three"}', round_trip={'(1, 2)': 'three'}, tags=()),
+_TestParameters(profile_name='inventory_legacy', value={frozenset({1, 2}): 'three'}): _TestOutput(payload='{"frozenset({1, 2})": "three"}', round_trip={'frozenset({1, 2})': 'three'}, tags=()),
+_TestParameters(profile_name='inventory_legacy', value={frozenset({1, 2}): 'three'}, tags=(Deprecated(msg='x'),)): _TestOutput(payload='{"frozenset({1, 2})": "three"}', round_trip={'frozenset({1, 2})': 'three'}, tags=()),
+_TestParameters(profile_name='inventory_legacy', value={frozenset({1, 2}): 'three'}, lazy=True): _TestOutput(payload='{"frozenset({1, 2})": "three"}', round_trip={'frozenset({1, 2})': 'three'}, tags=()),
+_TestParameters(profile_name='inventory_legacy', value={frozenset({1, 2}): 'three'}, tags=(Deprecated(msg='x'),), lazy=True): _TestOutput(payload='{"frozenset({1, 2})": "three"}', round_trip={'frozenset({1, 2})': 'three'}, tags=())
 }

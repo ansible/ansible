@@ -34,5 +34,13 @@ _TestParameters(profile_name='module_legacy_c2m', value={'a': 1}, tags=(Deprecat
 _TestParameters(profile_name='module_legacy_c2m', value={'a': 1}, lazy=True): _TestOutput(payload='{"a": 1}', round_trip={'a': 1}, tags=()),
 _TestParameters(profile_name='module_legacy_c2m', value={'a': 1}, tags=(Deprecated(msg='x'),), lazy=True): _TestOutput(payload='{"a": 1}', round_trip={'a': 1}, tags=()),
 _TestParameters(profile_name='module_legacy_c2m', value=CustomMapping({'a': 1})): _TestOutput(payload='{"a": 1}', round_trip={'a': 1}, tags=()),
-_TestParameters(profile_name='module_legacy_c2m', value=CustomMapping({'a': 1}), tags=(Deprecated(msg='x'),)): _TestOutput(payload='{"a": 1}', round_trip={'a': 1}, tags=())
+_TestParameters(profile_name='module_legacy_c2m', value=CustomMapping({'a': 1}), tags=(Deprecated(msg='x'),)): _TestOutput(payload='{"a": 1}', round_trip={'a': 1}, tags=()),
+_TestParameters(profile_name='module_legacy_c2m', value={(1, 2): 'three'}): _TestOutput(payload=TypeError("Key of type 'tuple' is not JSON serializable by the 'module_legacy_c2m' profile."), round_trip=None, tags=()),
+_TestParameters(profile_name='module_legacy_c2m', value={(1, 2): 'three'}, tags=(Deprecated(msg='x'),)): _TestOutput(payload=TypeError("Key of type 'tuple' is not JSON serializable by the 'module_legacy_c2m' profile."), round_trip=None, tags=()),
+_TestParameters(profile_name='module_legacy_c2m', value={(1, 2): 'three'}, lazy=True): _TestOutput(payload=TypeError("Key of type 'tuple' is not JSON serializable by the 'module_legacy_c2m' profile."), round_trip=None, tags=()),
+_TestParameters(profile_name='module_legacy_c2m', value={(1, 2): 'three'}, tags=(Deprecated(msg='x'),), lazy=True): _TestOutput(payload=TypeError("Key of type 'tuple' is not JSON serializable by the 'module_legacy_c2m' profile."), round_trip=None, tags=()),
+_TestParameters(profile_name='module_legacy_c2m', value={frozenset({1, 2}): 'three'}): _TestOutput(payload=TypeError("Key of type 'frozenset' is not JSON serializable by the 'module_legacy_c2m' profile."), round_trip=None, tags=()),
+_TestParameters(profile_name='module_legacy_c2m', value={frozenset({1, 2}): 'three'}, tags=(Deprecated(msg='x'),)): _TestOutput(payload=TypeError("Key of type 'frozenset' is not JSON serializable by the 'module_legacy_c2m' profile."), round_trip=None, tags=()),
+_TestParameters(profile_name='module_legacy_c2m', value={frozenset({1, 2}): 'three'}, lazy=True): _TestOutput(payload=TypeError("Key of type 'frozenset' is not JSON serializable by the 'module_legacy_c2m' profile."), round_trip=None, tags=()),
+_TestParameters(profile_name='module_legacy_c2m', value={frozenset({1, 2}): 'three'}, tags=(Deprecated(msg='x'),), lazy=True): _TestOutput(payload=TypeError("Key of type 'frozenset' is not JSON serializable by the 'module_legacy_c2m' profile."), round_trip=None, tags=())
 }
