@@ -997,6 +997,7 @@ def uninstall_collections(requirements: list[Requirement], search_paths: list[st
     rc = 0
     for label, paths in collection_paths.items():
         rc = _uninstall_paths(label, paths) or rc
+    return rc
 
 
 @contextmanager

@@ -3,4 +3,4 @@ minor_changes:
   Added simple ``uninstall`` functionality to ``ansible-galaxy``.
   Unless ``--yes``/``-y`` is provided, paths will only be removed after user confirmation.
   Provide a ``--requirements-file`` to uninstall roles and collections at the same time.
-  Dependencies are not uninstalled, only direct requsts.
+  Dependencies are not uninstalled, only direct requests.
