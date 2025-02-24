@@ -25,8 +25,7 @@ from ansible import _internal, constants as C
 from ansible.errors import AnsibleError, AnsiblePluginCircularRedirect, AnsiblePluginRemovedError, AnsibleCollectionUnsupportedVersionError
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.module_utils.six import string_types
-from ansible.parsing.utils.yaml import from_yaml
-from ansible.parsing.yaml.loader import AnsibleLoader
+from ansible.parsing.yaml.loader import AnsibleLoader, _AnsibleInstrumentedLoader
 from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder, _get_collection_metadata
@@ -1451,7 +1450,7 @@ def _load_plugin_filter():
     if os.path.exists(filter_cfg):
         with open(filter_cfg, 'rb') as f:
             try:
-                filter_data = from_yaml(f.read())
+                filter_data = yaml.load(f, Loader=_AnsibleInstrumentedLoader)
             except Exception as e:
                 display.warning(u'The plugin filter file, {0} was not parsable.'
                                 u' Skipping: {1}'.format(filter_cfg, to_text(e)))

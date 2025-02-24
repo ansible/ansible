@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import abc
 import copy
 import typing as t
 
@@ -38,21 +39,37 @@ display = Display()
 _TRUSTED_AS_TEMPLATE: t.Final[TrustedAsTemplate] = TrustedAsTemplate()
 
 
-class AnsibleConstructor(SafeConstructor):
+class _BaseConstructor(SafeConstructor, metaclass=abc.ABCMeta):
+    """Base class for Ansible YAML constructors."""
+
+    @classmethod
+    @abc.abstractmethod
+    def _register_constructors(cls) -> None:
+        """Method used to register constructors to derived types during class initialization."""
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        """Initialization for derived types."""
+        cls._register_constructors()
+
+
+class _AnsibleInstrumentedConstructor(_BaseConstructor):
+    """Ansible constructor which supports Ansible custom behavior such as `Origin` tagging, but no Ansible-specific YAML tags."""
+
     name: t.Any  # provided by the YAML parser, which retrieves it from the stream
 
-    def __init__(
-        self,
-        origin: Origin,
-        trusted_as_template: bool = False,
-    ) -> None:
-        self._origin = origin
-        super(AnsibleConstructor, self).__init__()
-        self._trusted_as_template = trusted_as_template
+    def __init__(self, origin: Origin, trusted_as_template: bool) -> None:
+        if not origin.line_num:
+            origin = origin.replace(line_num=1)
 
-        # volatile state var used during recursive construction of a value tagged unsafe
-        self._unsafe_depth = 0
+        self._origin = origin
+        self._trusted_as_template = trusted_as_template
         self._duplicate_key_mode = C.config.get_config_value('DUPLICATE_YAML_DICT_KEY')
+
+        super().__init__()
+
+    @property
+    def trusted_as_template(self) -> bool:
+        return self._trusted_as_template
 
     def construct_yaml_map(self, node):
         data = self._node_position_info(node).tag({})  # always an ordered dictionary on py3.7+
@@ -97,7 +114,7 @@ class AnsibleConstructor(SafeConstructor):
         origin = self._node_position_info(node)
         display.deprecated(
             msg='Use of the YAML `!!omap` tag is deprecated.',
-            version='2.21',
+            version='2.23',
             obj=origin,
             help_text='Use a standard mapping instead, as key order is always preserved.',
         )
@@ -109,7 +126,7 @@ class AnsibleConstructor(SafeConstructor):
         origin = self._node_position_info(node)
         display.deprecated(
             msg='Use of the YAML `!!pairs` tag is deprecated.',
-            version='2.21',
+            version='2.23',
             obj=origin,
             help_text='Use a standard mapping instead.',
         )
@@ -125,7 +142,7 @@ class AnsibleConstructor(SafeConstructor):
 
         tags = [self._node_position_info(node)]
 
-        if self._trusted_as_template and not self._unsafe_depth:
+        if self.trusted_as_template:
             # NB: since we're not context aware, this will happily add trust to dictionary keys; this is actually necessary for
             #  certain backward compat scenarios, though might be accomplished in other ways if we wanted to avoid trusting keys in
             #  the general scenario
@@ -144,28 +161,10 @@ class AnsibleConstructor(SafeConstructor):
         value = self.construct_mapping(node)
         data.update(value)
 
-    def construct_yaml_vault(self, node: Node) -> EncryptedString:
-        ciphertext = self._resolve_and_construct_object(node)
-
-        if not isinstance(ciphertext, str):
-            raise AnsibleConstructorError(problem=f"the {node.tag!r} tag requires a string value", problem_mark=node.start_mark)
-
-        encrypted_string = AnsibleTagHelper.tag_copy(ciphertext, EncryptedString(ciphertext=AnsibleTagHelper.untag(ciphertext)))
-
-        return encrypted_string
-
     def construct_yaml_seq(self, node):
         data = self._node_position_info(node).tag([])
         yield data
         data.extend(self.construct_sequence(node))
-
-    def construct_yaml_unsafe(self, node):
-        self._unsafe_depth += 1
-
-        try:
-            return self._resolve_and_construct_object(node)
-        finally:
-            self._unsafe_depth -= 1
 
     def _resolve_and_construct_object(self, node):
         # use a copied node to avoid mutating existing node and tripping the recursion check in construct_object
@@ -180,68 +179,79 @@ class AnsibleConstructor(SafeConstructor):
     def _node_position_info(self, node) -> Origin:
         # the line number where the previous token has ended (plus empty lines)
         # Add one so that the first line is line 1 rather than line 0
-        return self._origin.replace(line_num=node.start_mark.line + 1, col_num=node.start_mark.column + 1)
+        return self._origin.replace(line_num=node.start_mark.line + self._origin.line_num, col_num=node.start_mark.column + 1)
 
-# DTFIX-MERGE: review and deprecate tags below as appropriate
+    @classmethod
+    def _register_constructors(cls) -> None:
+        constructors: dict[str, t.Callable] = {
+            'tag:yaml.org,2002:binary': cls.construct_yaml_binary,
+            'tag:yaml.org,2002:float': cls.construct_yaml_float,
+            'tag:yaml.org,2002:int': cls.construct_yaml_int,
+            'tag:yaml.org,2002:map': cls.construct_yaml_map,
+            'tag:yaml.org,2002:omap': cls.construct_yaml_omap,
+            'tag:yaml.org,2002:pairs': cls.construct_yaml_pairs,
+            'tag:yaml.org,2002:python/dict': cls.construct_yaml_map,
+            'tag:yaml.org,2002:python/unicode': cls.construct_yaml_str,
+            'tag:yaml.org,2002:seq': cls.construct_yaml_seq,
+            'tag:yaml.org,2002:set': cls.construct_yaml_set,
+            'tag:yaml.org,2002:str': cls.construct_yaml_str,
+            'tag:yaml.org,2002:timestamp': cls.construct_yaml_timestamp,
+        }
+
+        for tag, constructor in constructors.items():
+            cls.add_constructor(tag, constructor)
 
 
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:map',
-    AnsibleConstructor.construct_yaml_map)  # type: ignore[type-var]
+class AnsibleConstructor(_AnsibleInstrumentedConstructor):
+    """Ansible constructor which supports Ansible custom behavior such as `Origin` tagging, as well as Ansible-specific YAML tags."""
 
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:python/dict',
-    AnsibleConstructor.construct_yaml_map)  # type: ignore[type-var]
+    def __init__(self, origin: Origin, trusted_as_template: bool) -> None:
+        self._unsafe_depth = 0  # volatile state var used during recursive construction of a value tagged unsafe
 
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:str',
-    AnsibleConstructor.construct_yaml_str)  # type: ignore[type-var]
+        super().__init__(origin=origin, trusted_as_template=trusted_as_template)
 
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:binary',
-    AnsibleConstructor.construct_yaml_binary)  # type: ignore[type-var]
+    @property
+    def trusted_as_template(self) -> bool:
+        return self._trusted_as_template and not self._unsafe_depth
 
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:set',
-    AnsibleConstructor.construct_yaml_set)  # type: ignore[type-var]
+    def construct_yaml_unsafe(self, node):
+        self._unsafe_depth += 1
 
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:omap',
-    AnsibleConstructor.construct_yaml_omap)  # type: ignore[type-var]
+        try:
+            return self._resolve_and_construct_object(node)
+        finally:
+            self._unsafe_depth -= 1
 
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:pairs',
-    AnsibleConstructor.construct_yaml_pairs)  # type: ignore[type-var]
+    def construct_yaml_vault(self, node: Node) -> EncryptedString:
+        ciphertext = self._resolve_and_construct_object(node)
 
-AnsibleConstructor.add_constructor(
-    'tag:yaml.org,2002:int',
-    AnsibleConstructor.construct_yaml_int)  # type: ignore[type-var]
+        if not isinstance(ciphertext, str):
+            raise AnsibleConstructorError(problem=f"the {node.tag!r} tag requires a string value", problem_mark=node.start_mark)
 
-AnsibleConstructor.add_constructor(
-    'tag:yaml.org,2002:float',
-    AnsibleConstructor.construct_yaml_float)  # type: ignore[type-var]
+        encrypted_string = AnsibleTagHelper.tag_copy(ciphertext, EncryptedString(ciphertext=AnsibleTagHelper.untag(ciphertext)))
 
-AnsibleConstructor.add_constructor(
-    'tag:yaml.org,2002:timestamp',
-    AnsibleConstructor.construct_yaml_timestamp)  # type: ignore[type-var]
+        return encrypted_string
 
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:python/unicode',
-    AnsibleConstructor.construct_yaml_str)  # type: ignore[type-var]
+    def construct_yaml_vault_encrypted(self, node: Node) -> EncryptedString:
+        origin = self._node_position_info(node)
+        display.deprecated(
+            msg='Use of the YAML `!vault-encrypted` tag is deprecated.',
+            version='2.23',
+            obj=origin,
+            help_text='Use the `!vault` tag instead.',
+        )
 
-AnsibleConstructor.add_constructor(
-    u'tag:yaml.org,2002:seq',
-    AnsibleConstructor.construct_yaml_seq)  # type: ignore[type-var]
+        return self.construct_yaml_vault(node)
 
-AnsibleConstructor.add_constructor(
-    u'!unsafe',
-    AnsibleConstructor.construct_yaml_unsafe)  # type: ignore[type-var]
+    @classmethod
+    def _register_constructors(cls) -> None:
+        super()._register_constructors()
 
-AnsibleConstructor.add_constructor(
-    u'!vault',
-    AnsibleConstructor.construct_yaml_vault)  # type: ignore[type-var]
+        constructors: dict[str, t.Callable] = {
+            '!unsafe': cls.construct_yaml_unsafe,
+            '!vault': cls.construct_yaml_vault,
+            '!vault-encrypted': cls.construct_yaml_vault_encrypted,
+        }
 
-# FIXME: deprecate !vault-encrypted
-AnsibleConstructor.add_constructor(
-    u'!vault-encrypted',
-    AnsibleConstructor.construct_yaml_vault)  # type: ignore[type-var]
+        for tag, constructor in constructors.items():
+            cls.add_constructor(tag, constructor)

@@ -16,6 +16,8 @@ import os.path
 import re
 import textwrap
 
+import yaml
+
 import ansible.plugins.loader as plugin_loader
 
 from pathlib import Path
@@ -31,8 +33,8 @@ from ansible.module_utils.common.json import json_dump
 from ansible.module_utils.common.yaml import yaml_dump
 from ansible.module_utils.six import string_types
 from ansible.parsing.plugin_docs import read_docstub
-from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.dumper import AnsibleDumper
+from ansible.parsing.yaml.loader import AnsibleLoader, _AnsibleInstrumentedLoader
 from ansible.plugins.list import list_plugins
 from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
@@ -40,6 +42,7 @@ from ansible.utils.collection_loader._collection_finder import _get_collection_n
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_plugin_docs, get_docstring, get_versioned_doclink
+from ansible.utils.datatag import trust_value
 
 display = Display()
 
@@ -127,7 +130,7 @@ class RoleMixin(object):
 
         try:
             with open(path, 'r') as f:
-                data = from_yaml(f.read(), file_name=path)
+                data = yaml.load(trust_value(f), Loader=AnsibleLoader)
                 if data is None:
                     data = {}
         except (IOError, OSError) as ex:
@@ -704,7 +707,7 @@ class DocCLI(CLI, RoleMixin):
 
     @staticmethod
     def _list_keywords():
-        return from_yaml(pkgutil.get_data('ansible', 'keyword_desc.yml'))
+        return yaml.load(pkgutil.get_data('ansible', 'keyword_desc.yml'), Loader=_AnsibleInstrumentedLoader)
 
     @staticmethod
     def _get_keywords_docs(keys):
