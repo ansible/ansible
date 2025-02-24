@@ -872,6 +872,7 @@ class SanityScript(SanityTest, metaclass=abc.ABCMeta):
 
             self.__all_targets: bool = self.config.get('all_targets')
             self.__no_targets: bool = self.config.get('no_targets')
+            self.__split_targets: bool = self.config.get('split_targets')
             self.__include_directories: bool = self.config.get('include_directories')
             self.__include_symlinks: bool = self.config.get('include_symlinks')
             self.__error_code: str | None = self.config.get('error_code', None)
@@ -889,6 +890,7 @@ class SanityScript(SanityTest, metaclass=abc.ABCMeta):
 
             self.__all_targets = False
             self.__no_targets = True
+            self.__split_targets = False
             self.__include_directories = False
             self.__include_symlinks = False
             self.__error_code = None
@@ -924,6 +926,11 @@ class SanityScript(SanityTest, metaclass=abc.ABCMeta):
     def no_targets(self) -> bool:
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return self.__no_targets
+
+    @property
+    def split_targets(self) -> bool:
+        """True if the test requires target paths to be split between controller-only and target paths."""
+        return self.__split_targets
 
     @property
     def include_directories(self) -> bool:
@@ -1019,6 +1026,12 @@ class SanityScript(SanityTest, metaclass=abc.ABCMeta):
                 raise ApplicationError('Unsupported output type: %s' % self.output)
 
         if not self.no_targets:
+            if self.split_targets:
+                target_paths = set(target.path for target in self.filter_remote_targets(list(targets.targets)))
+                controller_path_list = sorted(set(paths) - target_paths)
+                target_path_list = sorted(set(paths) & target_paths)
+                paths = controller_path_list + ['--'] + target_path_list
+
             data = '\n'.join(paths)
 
             if data:

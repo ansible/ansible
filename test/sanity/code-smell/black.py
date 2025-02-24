@@ -13,12 +13,26 @@ def main() -> None:
     """Main program entry point."""
     paths = sys.argv[1:] or sys.stdin.read().splitlines()
 
-    env = os.environ.copy()
+    separator_idx = paths.index('--')
+    controller_paths = paths[:separator_idx]
+    target_paths = paths[separator_idx + 1 :]
 
-    controller_python_versions = env['ANSIBLE_TEST_CONTROLLER_PYTHON_VERSIONS'].split(',')
-    fix_mode = bool(int(env['ANSIBLE_TEST_FIX_MODE']))
+    controller_python_versions = os.environ['ANSIBLE_TEST_CONTROLLER_PYTHON_VERSIONS'].split(',')
+    remote_only_python_versions = os.environ['ANSIBLE_TEST_REMOTE_ONLY_PYTHON_VERSIONS'].split(',')
+    fix_mode = bool(int(os.environ['ANSIBLE_TEST_FIX_MODE']))
 
-    version_options = [('-t', f'py{version.replace(".", "")}') for version in controller_python_versions]
+    target_python_versions = remote_only_python_versions + controller_python_versions
+
+    black(controller_paths, controller_python_versions, fix_mode)
+    black(target_paths, target_python_versions, fix_mode)
+
+
+def black(paths: list[str], python_versions: list[str], fix_mode: bool) -> None:
+    """Run black on the specified paths."""
+    if not paths:
+        return
+
+    version_options = [('-t', f'py{version.replace(".", "")}') for version in python_versions]
 
     options = {
         '-m': 'black',
@@ -40,7 +54,7 @@ def main() -> None:
     cmd.extend(paths)
 
     try:
-        completed_process = subprocess.run(cmd, env=env, capture_output=True, check=True, text=True)
+        completed_process = subprocess.run(cmd, capture_output=True, check=True, text=True)
         stdout, stderr = completed_process.stdout, completed_process.stderr
 
         if stdout:
