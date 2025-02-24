@@ -1,0 +1,2 @@
+minor_changes:
+  - winrm - Documented all valid winrm connection plugin options instead of relying on the extras var lookup.
