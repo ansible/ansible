@@ -1,4 +1,5 @@
 """Test runner for all Ansible tests."""
+
 from __future__ import annotations
 
 import os

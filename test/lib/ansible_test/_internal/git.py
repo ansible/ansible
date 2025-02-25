@@ -1,4 +1,5 @@
 """Wrapper around git command-line tools."""
+
 from __future__ import annotations
 
 import re

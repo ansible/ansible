@@ -1,4 +1,5 @@
 """Execute Ansible sanity tests."""
+
 from __future__ import annotations
 
 import abc

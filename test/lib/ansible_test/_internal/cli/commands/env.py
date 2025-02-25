@@ -1,4 +1,5 @@
 """Command line parsing for the `env` command."""
+
 from __future__ import annotations
 
 import argparse

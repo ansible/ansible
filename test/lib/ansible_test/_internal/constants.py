@@ -1,4 +1,5 @@
 """Constants used by ansible-test. Imports should not be used in this file (other than to import the target common constants)."""
+
 from __future__ import annotations
 
 from .._util.target.common.constants import (

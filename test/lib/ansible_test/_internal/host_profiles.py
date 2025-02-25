@@ -1,4 +1,5 @@
 """Profiles to represent individual test hosts or a user-provided inventory file."""
+
 from __future__ import annotations
 
 import abc

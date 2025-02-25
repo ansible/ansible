@@ -1,4 +1,5 @@
 """Source provider for content which has been installed."""
+
 from __future__ import annotations
 
 import os

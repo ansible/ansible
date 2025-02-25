@@ -1,4 +1,5 @@
 """Test metadata for passing data to delegated tests."""
+
 from __future__ import annotations
 import typing as t
 

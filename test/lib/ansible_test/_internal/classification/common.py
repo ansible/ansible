@@ -1,4 +1,5 @@
 """Common classification code used by multiple languages."""
+
 from __future__ import annotations
 
 import os

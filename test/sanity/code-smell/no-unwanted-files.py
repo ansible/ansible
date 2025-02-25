@@ -1,4 +1,5 @@
 """Prevent unwanted files from being added to the source tree."""
+
 from __future__ import annotations
 
 import os

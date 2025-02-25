@@ -1,4 +1,5 @@
 """A plugin for pylint to identify imports and functions which should not be used."""
+
 from __future__ import annotations
 
 import os

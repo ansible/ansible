@@ -1,4 +1,5 @@
 """Common utility code that depends on CommonConfig."""
+
 from __future__ import annotations
 
 import collections.abc as c
@@ -65,6 +66,7 @@ CHECK_YAML_VERSIONS: dict[str, t.Any] = {}
 
 class ExitHandler:
     """Simple exit handler implementation."""
+
     _callbacks: list[tuple[t.Callable, tuple[t.Any, ...], dict[str, t.Any]]] = []
 
     @staticmethod

@@ -1,4 +1,5 @@
 """Verify the contents of the built sdist and wheel."""
+
 from __future__ import annotations
 
 import contextlib

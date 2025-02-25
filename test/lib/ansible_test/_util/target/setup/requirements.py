@@ -1,4 +1,5 @@
 """A tool for installing test requirements on the controller and target host."""
+
 from __future__ import annotations
 
 # pylint: disable=wrong-import-position
@@ -290,6 +291,7 @@ class ApplicationError(Exception):
 
 class SubprocessError(ApplicationError):
     """A command returned a non-zero status."""
+
     def __init__(self, cmd, status, stdout, stderr):  # type: (t.List[str], int, str, str) -> None
         message = 'A command failed with status %d: %s' % (status, shlex.join(cmd))
 

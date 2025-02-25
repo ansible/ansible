@@ -1,4 +1,5 @@
 """Disallow use of unwanted Unicode characters."""
+
 from __future__ import annotations
 
 import re

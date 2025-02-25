@@ -1,4 +1,5 @@
 """Miscellaneous utility functions and classes specific to ansible cli tools."""
+
 from __future__ import annotations
 
 import json

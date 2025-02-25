@@ -1,4 +1,5 @@
 """Utility code for facilitating collection of code coverage when running tests."""
+
 from __future__ import annotations
 
 import dataclasses
