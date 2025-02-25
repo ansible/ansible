@@ -11,7 +11,7 @@ from ansible.module_utils._internal import _datatag
 @dataclasses.dataclass(**_datatag._tag_dataclass_kwargs)
 class Deprecated(_datatag.AnsibleDatatagBase):
     msg: str
-    help_text: str | None = None
+    help_text: t.Optional[str] = None
     removal_date: t.Optional[datetime.date] = None
     removal_version: t.Optional[str] = None
     plugin: t.Optional[_messages.PluginInfo] = None
