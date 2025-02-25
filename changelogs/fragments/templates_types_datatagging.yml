@@ -132,6 +132,8 @@ bugfixes:
   - display - The ``Display.deprecated`` method once again properly handles the ``removed=True`` argument (https://github.com/ansible/ansible/issues/82358).
 
 deprecated_features:
+  - templating - The ``ansible_managed`` variable available for certain templating scenarios, such as the ``template`` action and ``template`` lookup has been deprecated.
+    Define and use a custom variable instead of relying on ``ansible_managed``.
   - display - The ``Display.get_deprecation_message`` method has been deprecated.
     Call ``Display.deprecated`` to display a deprecation message, or call it with ``removed=True`` to raise an ``AnsibleError``.
   - facts - In a future Ansible release, gathered facts will no longer be accessible as top-level host variables; they must be accessed via `ansible_facts`.

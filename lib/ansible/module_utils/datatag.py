@@ -14,6 +14,7 @@ def deprecate_value(
     value: _T,
     msg: str,
     *,
+    help_text: str | None = None,
     removal_date: str | _datetime.date | None = None,
     removal_version: str | None = None,
 ) -> _T:
@@ -31,6 +32,7 @@ def deprecate_value(
 
     deprecated = _tags.Deprecated(
         msg=msg,
+        help_text=help_text,
         removal_date=removal_date,
         removal_version=removal_version,
         plugin=_plugin_exec_context.PluginExecContext.get_current_plugin_info(),

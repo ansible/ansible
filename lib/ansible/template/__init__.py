@@ -1,13 +1,21 @@
 from __future__ import annotations as _annotations
 
 import contextlib as _contextlib
+import datetime
+import os
+import pwd
+import time
 import typing as _t
 
 from jinja2 import environment as _environment
 
-from ansible import errors as _errors
 from ansible import _internal
+from ansible import constants
+from ansible import errors as _errors
 from ansible._internal._templating import _jinja_bits, _engine, _jinja_common
+from ansible.module_utils._internal import _datatag
+from ansible.module_utils.datatag import deprecate_value
+from ansible.utils.datatag import trust_value
 from ansible.utils.display import Display as _Display
 
 if _t.TYPE_CHECKING:  # pragma: nocover
@@ -338,3 +346,56 @@ class Templar:
             disable_lookups=disable_lookups,
             convert_data=convert_data,
         )
+
+
+def generate_ansible_template_vars(path: str, fullpath: str | None = None, dest_path: str | None = None) -> dict[str, object]:
+    """
+    Generate and return a dictionary with variable metadata about the template specified by `fullpath`.
+    If `fullpath` is `None`, `path` will be used instead.
+    """
+    if fullpath is None:
+        fullpath = os.path.abspath(path)
+
+    template_path = fullpath
+    template_stat = os.stat(template_path)
+
+    template_uid: int | str
+
+    try:
+        template_uid = pwd.getpwuid(template_stat.st_uid).pw_name
+    except KeyError:
+        template_uid = template_stat.st_uid
+
+    managed_default = constants.config.get_config_value('DEFAULT_MANAGED_STR')
+
+    managed_str = managed_default.format(
+        # IMPORTANT: These values must be constant strings to avoid template injection.
+        #            Use Jinja template expressions where variables are needed.
+        host="{{ template_host }}",
+        uid="{{ template_uid }}",
+        file="{{ template_path }}",
+    )
+
+    ansible_managed = time.strftime(managed_str, time.localtime(template_stat.st_mtime))
+    # DTFIX-MERGE: should this just be copy_origin or something else?
+    ansible_managed = _datatag.AnsibleTagHelper.tag_copy(managed_default, ansible_managed)
+    ansible_managed = trust_value(ansible_managed)
+    ansible_managed = deprecate_value(
+        value=ansible_managed,
+        msg="The `ansible_managed` variable is deprecated.",
+        help_text="Define and use a custom variable instead.",
+        removal_version='2.23',
+    )
+
+    temp_vars = dict(
+        template_host=os.uname()[1],
+        template_path=path,
+        template_mtime=datetime.datetime.fromtimestamp(template_stat.st_mtime),
+        template_uid=template_uid,
+        template_run_date=datetime.datetime.now(),
+        template_destpath=dest_path,
+        template_fullpath=fullpath,
+        ansible_managed=ansible_managed,
+    )
+
+    return temp_vars

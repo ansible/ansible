@@ -57,6 +57,7 @@ class DeprecatedAccessAuditContext(NotifiableAccessContextBase):
 
             display._deprecated_with_plugin_info(
                 msg=msg,
+                help_text=item.deprecated.help_text,
                 version=item.deprecated.removal_version,
                 date=item.deprecated.removal_date,
                 obj=item.template,
