@@ -1,0 +1,2 @@
+minor_changes:
+  - service_facts - add an option ``include_user`` to support user systemd services (https://github.com/ansible/ansible/issues/79410).
