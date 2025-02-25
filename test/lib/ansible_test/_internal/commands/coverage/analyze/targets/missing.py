@@ -1,4 +1,5 @@
 """Identify aggregated coverage in one file missing from another."""
+
 from __future__ import annotations
 
 import os

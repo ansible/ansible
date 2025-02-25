@@ -1,4 +1,5 @@
 """Provides compatibility with first-generation host delegation options in ansible-test."""
+
 from __future__ import annotations
 
 import argparse

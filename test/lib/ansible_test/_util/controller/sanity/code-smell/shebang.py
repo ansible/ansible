@@ -1,4 +1,5 @@
 """Check shebangs, execute bits and byte order marks."""
+
 from __future__ import annotations
 
 import os

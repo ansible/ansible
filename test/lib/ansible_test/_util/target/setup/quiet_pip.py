@@ -1,4 +1,5 @@
 """Custom entry-point for pip that filters out unwanted logging and warnings."""
+
 from __future__ import annotations
 
 import logging

@@ -1,4 +1,5 @@
 """Command line parsing for the `coverage analyze targets missing` command."""
+
 from __future__ import annotations
 
 import argparse

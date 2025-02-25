@@ -1,4 +1,5 @@
 """Loading, parsing and storing of completion configurations."""
+
 from __future__ import annotations
 
 import abc

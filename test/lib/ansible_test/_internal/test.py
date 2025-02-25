@@ -1,4 +1,5 @@
 """Classes for storing and processing test results."""
+
 from __future__ import annotations
 
 import collections.abc as c
@@ -141,12 +142,12 @@ class TestTimeout(TestResult):
 
         # Include a leading newline to improve readability on Shippable "Tests" tab.
         # Without this, the first line becomes indented.
-        output = '''
+        output = """
 One or more of the following situations may be responsible:
 
 - Code changes have resulted in tests that hang or run for an excessive amount of time.
 - Tests have been added which exceed the time limit when combined with existing tests.
-- Test infrastructure and/or external dependencies are operating slower than normal.'''
+- Test infrastructure and/or external dependencies are operating slower than normal."""
 
         if args.coverage:
             output += '\n- Additional overhead from collecting code coverage has resulted in tests exceeding the time limit.'

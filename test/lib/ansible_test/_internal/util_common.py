@@ -1,4 +1,5 @@
 """Common utility code that depends on CommonConfig."""
+
 from __future__ import annotations
 
 import collections.abc as c
@@ -65,6 +66,7 @@ CHECK_YAML_VERSIONS: dict[str, t.Any] = {}
 
 class ExitHandler:
     """Simple exit handler implementation."""
+
     _callbacks: list[tuple[t.Callable, tuple[t.Any, ...], dict[str, t.Any]]] = []
 
     @staticmethod
@@ -410,7 +412,7 @@ def create_interpreter_wrapper(interpreter: str, injected_interpreter: str) -> N
     # injected_interpreter could be a script from the system or our own wrapper created for the --venv option
     shebang_interpreter = sys.executable
 
-    code = textwrap.dedent('''
+    code = textwrap.dedent("""
     #!%s
 
     from __future__ import annotations
@@ -421,7 +423,7 @@ def create_interpreter_wrapper(interpreter: str, injected_interpreter: str) -> N
     python = '%s'
 
     execv(python, [python] + argv[1:])
-    ''' % (shebang_interpreter, interpreter)).lstrip()
+    """ % (shebang_interpreter, interpreter)).lstrip()
 
     write_text_file(injected_interpreter, code)
 

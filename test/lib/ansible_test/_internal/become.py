@@ -1,4 +1,5 @@
 """Become abstraction for interacting with test hosts."""
+
 from __future__ import annotations
 
 import abc

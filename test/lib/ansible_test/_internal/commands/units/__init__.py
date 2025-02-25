@@ -1,4 +1,5 @@
 """Execute unit tests using pytest."""
+
 from __future__ import annotations
 
 import os

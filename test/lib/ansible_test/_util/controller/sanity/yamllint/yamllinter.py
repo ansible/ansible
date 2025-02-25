@@ -1,4 +1,5 @@
 """Wrapper around yamllint that supports YAML embedded in Ansible modules."""
+
 from __future__ import annotations
 
 import ast
@@ -29,6 +30,7 @@ def main():
 
 class TestConstructor(SafeConstructor):
     """Yaml Safe Constructor that knows about Ansible tags."""
+
     def construct_yaml_unsafe(self, node):
         """Construct an unsafe tag."""
         try:
@@ -60,6 +62,7 @@ TestConstructor.add_constructor(
 
 class TestLoader(CParser, TestConstructor, Resolver):
     """Custom YAML loader that recognizes custom Ansible tags."""
+
     def __init__(self, stream):
         CParser.__init__(self, stream)
         TestConstructor.__init__(self)
@@ -68,6 +71,7 @@ class TestLoader(CParser, TestConstructor, Resolver):
 
 class YamlChecker:
     """Wrapper around yamllint that supports YAML embedded in Ansible modules."""
+
     def __init__(self):
         self.messages = []
 

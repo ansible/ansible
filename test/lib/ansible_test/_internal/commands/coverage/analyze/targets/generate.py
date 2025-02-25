@@ -1,4 +1,5 @@
 """Analyze code coverage data to determine which integration test targets provide coverage for each arc or line."""
+
 from __future__ import annotations
 
 import os

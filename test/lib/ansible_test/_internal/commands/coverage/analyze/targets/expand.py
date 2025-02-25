@@ -1,4 +1,5 @@
 """Expand target names in an aggregated coverage file."""
+
 from __future__ import annotations
 import typing as t
 

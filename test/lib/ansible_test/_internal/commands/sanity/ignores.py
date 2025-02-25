@@ -1,4 +1,5 @@
 """Sanity test for the sanity ignore file."""
+
 from __future__ import annotations
 
 import os

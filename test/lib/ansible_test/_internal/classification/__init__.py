@@ -1,4 +1,5 @@
 """Classify changes in Ansible code."""
+
 from __future__ import annotations
 
 import collections

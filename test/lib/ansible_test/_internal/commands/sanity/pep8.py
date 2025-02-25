@@ -1,4 +1,5 @@
 """Sanity test for PEP 8 style guidelines using pycodestyle."""
+
 from __future__ import annotations
 
 import os

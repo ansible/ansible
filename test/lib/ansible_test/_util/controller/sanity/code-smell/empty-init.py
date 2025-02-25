@@ -1,4 +1,5 @@
 """Require empty __init__.py files."""
+
 from __future__ import annotations
 
 import os

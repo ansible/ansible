@@ -1,4 +1,5 @@
 """Python syntax checker with lint friendly output."""
+
 from __future__ import annotations
 
 import sys

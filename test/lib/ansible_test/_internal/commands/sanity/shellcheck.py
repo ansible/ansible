@@ -1,4 +1,5 @@
 """Sanity test using shellcheck."""
+
 from __future__ import annotations
 
 import os

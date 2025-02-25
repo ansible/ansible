@@ -1,4 +1,5 @@
 """Temporary plugin to prevent stdout noise pollution from finalization of abandoned generators."""
+
 from __future__ import annotations
 
 import sys

@@ -1,4 +1,5 @@
 """Inventory creation from host profiles."""
+
 from __future__ import annotations
 
 import shutil

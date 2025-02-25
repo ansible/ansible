@@ -1,4 +1,5 @@
 """Combine code coverage files."""
+
 from __future__ import annotations
 
 import collections.abc as c

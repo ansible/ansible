@@ -1,4 +1,5 @@
 """A tool for probing cgroups to determine write access."""
+
 from __future__ import annotations
 
 import json

@@ -1,4 +1,5 @@
 """Show information about the test environment."""
+
 from __future__ import annotations
 
 import datetime
@@ -49,6 +50,7 @@ from ...timeout import (
 
 class EnvConfig(CommonConfig):
     """Configuration for the `env` command."""
+
     def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'env')
 

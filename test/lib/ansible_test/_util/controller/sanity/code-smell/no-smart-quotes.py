@@ -1,4 +1,5 @@
 """Disallow use of Unicode quotes."""
+
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 

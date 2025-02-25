@@ -1,4 +1,5 @@
 """Open a shell prompt inside an ansible-test environment."""
+
 from __future__ import annotations
 
 import os

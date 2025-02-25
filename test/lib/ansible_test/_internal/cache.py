@@ -1,4 +1,5 @@
 """Cache for commonly shared data that is intended to be immutable."""
+
 from __future__ import annotations
 
 import collections.abc as c

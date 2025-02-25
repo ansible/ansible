@@ -1,4 +1,5 @@
 """Sanity test using validate-modules."""
+
 from __future__ import annotations
 
 import collections

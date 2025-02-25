@@ -1,4 +1,5 @@
 """Support code for working with Azure Pipelines."""
+
 from __future__ import annotations
 
 import os

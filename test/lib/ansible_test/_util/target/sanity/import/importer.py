@@ -1,4 +1,5 @@
 """Import the given python module(s) and report error(s) encountered."""
+
 from __future__ import annotations
 
 
@@ -43,6 +44,7 @@ def main():
         # noinspection PyCompatibility
         from importlib import import_module
     except ImportError:
+
         def import_module(name, package=None):  # type: (str, str | None) -> types.ModuleType
             assert package is None
             __import__(name)
@@ -142,11 +144,13 @@ def main():
 
     class ImporterAnsibleModule:
         """Replacement for AnsibleModule to support import testing."""
+
         def __init__(self, *args, **kwargs):
             raise ImporterAnsibleModuleException()
 
     class RestrictedModuleLoader:
         """Python module loader that restricts inappropriate imports."""
+
         def __init__(self, path, name, restrict_to_module_paths):
             self.path = path
             self.name = name
@@ -431,6 +435,7 @@ def main():
 
     class Capture:
         """Captured output and/or exception."""
+
         def __init__(self):
             # use buffered IO to simulate StringIO; allows Ansible's stream patching to behave without warnings
             self.stdout = TextIOWrapper(BytesIO())
@@ -489,6 +494,7 @@ def main():
         finally:
             if import_type == 'plugin' and not collection_loader:
                 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+
                 _AnsibleCollectionFinder._remove()  # pylint: disable=protected-access
 
             if sys.meta_path[0] != restricted_loader:

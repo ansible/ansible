@@ -1,4 +1,5 @@
 """Linux control group constants, classes and utilities."""
+
 from __future__ import annotations
 
 import codecs

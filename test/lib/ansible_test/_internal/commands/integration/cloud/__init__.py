@@ -1,4 +1,5 @@
 """Plugin system for cloud providers and environments for use in integration tests."""
+
 from __future__ import annotations
 
 import abc

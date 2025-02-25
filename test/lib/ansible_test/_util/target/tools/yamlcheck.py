@@ -1,4 +1,5 @@
 """Show availability of PyYAML and libyaml support."""
+
 from __future__ import annotations
 
 import json

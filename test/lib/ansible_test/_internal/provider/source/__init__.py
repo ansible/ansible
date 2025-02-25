@@ -1,4 +1,5 @@
 """Common code for source providers."""
+
 from __future__ import annotations
 
 import abc

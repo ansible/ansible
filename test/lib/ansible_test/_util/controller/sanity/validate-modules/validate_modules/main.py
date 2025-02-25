@@ -688,7 +688,7 @@ class ModuleValidator(Validator):
         # check "shape" of each module name
 
         legacy_ps_requires = r'(?im)^#\s*Requires\s+\-Module(?:s?)\s+(Ansible\.ModuleUtils\..+)'
-        ps_requires = r'''(?imx)
+        ps_requires = r"""(?imx)
             ^\#\s*AnsibleRequires\s+-PowerShell\s+
             (
                 # Builtin PowerShell module
@@ -700,8 +700,8 @@ class ModuleValidator(Validator):
                 # Relative collection PowerShell module
                 (\.[\w\.]+)
             )
-            (\s+-Optional)?'''
-        csharp_requires = r'''(?imx)
+            (\s+-Optional)?"""
+        csharp_requires = r"""(?imx)
             ^\#\s*AnsibleRequires\s+-CSharpUtil\s+
             (
                 # Builtin C# util
@@ -713,7 +713,7 @@ class ModuleValidator(Validator):
                 # Relative collection C# util
                 (\.[\w\.]+)
             )
-            (\s+-Optional)?'''
+            (\s+-Optional)?"""
 
         found_requires = False
 

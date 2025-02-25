@@ -1,4 +1,5 @@
 """High level functions for working with SSH."""
+
 from __future__ import annotations
 
 import dataclasses

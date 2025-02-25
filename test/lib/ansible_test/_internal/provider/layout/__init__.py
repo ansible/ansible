@@ -1,4 +1,5 @@
 """Code for finding content."""
+
 from __future__ import annotations
 
 import abc

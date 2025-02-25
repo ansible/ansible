@@ -1,4 +1,5 @@
 """Composite argument key-value parsers used by other parsers."""
+
 from __future__ import annotations
 
 import typing as t

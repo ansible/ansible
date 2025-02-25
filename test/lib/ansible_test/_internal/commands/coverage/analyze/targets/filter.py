@@ -1,4 +1,5 @@
 """Filter an aggregated coverage file, keeping only the specified targets."""
+
 from __future__ import annotations
 
 import collections.abc as c
