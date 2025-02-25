@@ -34,7 +34,7 @@ from ansible.module_utils._internal._datatag import (
     AnsibleTagHelper,
 )
 
-from ansible.errors.handler import ErrorAction
+from ansible._internal._errors._handler import ErrorAction
 from ansible.parsing import vault as _vault
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 

@@ -12,7 +12,7 @@ from jinja2.utils import missing
 from ansible.module_utils.common.messages import ErrorSummary, Detail
 from ansible.constants import config
 from ansible.errors import AnsibleUndefinedVariable, AnsibleTypeError
-from ansible.errors.handler import ErrorHandler
+from ansible._internal._errors._handler import ErrorHandler
 from ansible.module_utils._internal._datatag import Tripwire, _untaggable_types
 
 from ._access import NotifiableAccessContextBase

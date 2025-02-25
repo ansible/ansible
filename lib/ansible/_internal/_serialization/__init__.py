@@ -54,7 +54,6 @@ class StateTrackingMixIn(HasCurrent):
         return self._stack[1:] + [self._current]
 
 
-# DTFIX-MERGE: bikeshed name and home (what's our public API going to be?)
 class AnsibleVariableVisitor:
     """Utility visitor base class to recursively apply various behaviors and checks to variable object graphs."""
 

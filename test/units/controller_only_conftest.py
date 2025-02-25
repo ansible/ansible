@@ -5,7 +5,7 @@ import typing as t
 import pytest
 from pytest_mock import MockerFixture
 
-from ansible.errors.handler import ErrorHandler, ErrorAction
+from ansible._internal._errors._handler import ErrorHandler, ErrorAction
 from ansible.parsing.vault import VaultSecretsContext, VaultSecret
 from ansible._internal._templating._engine import _TemplateConfig
 

@@ -21,7 +21,7 @@ from ansible.module_utils._internal._datatag import (
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
 from ansible.errors import AnsibleVariableTypeError
-from ansible.errors.handler import Skippable
+from ansible._internal._errors._handler import Skippable
 from ansible.vars.hostvars import HostVarsVars, HostVars
 
 from ._access import AnsibleAccessContext

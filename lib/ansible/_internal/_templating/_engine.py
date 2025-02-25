@@ -24,7 +24,7 @@ from ansible.errors import (
 )
 
 from ansible.module_utils._internal._datatag import AnsibleTaggedObject, NotTaggableError, AnsibleTagHelper
-from ansible.errors.handler import Skippable
+from ansible._internal._errors._handler import Skippable
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 from ansible.utils.display import Display
 from ansible.utils.vars import validate_variable_name

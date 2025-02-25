@@ -10,7 +10,7 @@ from ansible.module_utils.common.messages import ErrorSummary, Detail, _dataclas
 class AnsibleCapturedError(AnsibleRuntimeError):
     """An exception representing error detail captured in another context where the error detail must be serialized to be preserved."""
 
-    context: t.ClassVar[str]  # DTFIX-MERGE: rename this and make it private since derived types may not be internal?
+    context: t.ClassVar[str]
 
     def __init__(
         self,

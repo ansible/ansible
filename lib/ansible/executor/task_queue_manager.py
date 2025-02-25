@@ -28,7 +28,7 @@ import multiprocessing.queues
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, ExitCode, AnsibleCallbackError
-from ansible.errors.handler import ErrorHandler
+from ansible._internal._errors._handler import ErrorHandler
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import TaskResult

@@ -35,7 +35,7 @@ from ansible.errors import (
     TemplateTrustCheckFailedError,
 )
 from ansible._internal._templating._errors import AnsibleTemplatePluginRuntimeError, AnsibleTemplatePluginLoadError, AnsibleTemplatePluginNotFoundError
-from ansible.errors.handler import ErrorAction, ErrorHandler
+from ansible._internal._errors._handler import ErrorAction, ErrorHandler
 from ansible.module_utils._internal._datatag import AnsibleTagHelper, AnsibleDatatagBase
 from ansible.module_utils._internal._datatag._tags import Deprecated
 from ansible._internal._templating import _transform

@@ -7,7 +7,7 @@ import pytest_mock
 
 from ansible.constants import config
 from ansible.errors import AnsibleUndefinedConfigEntry
-from ansible.errors.handler import ErrorHandler, ErrorAction, Skippable, _SkipException
+from ansible._internal._errors._handler import ErrorHandler, ErrorAction, Skippable, _SkipException
 from ansible.utils.display import Display
 
 

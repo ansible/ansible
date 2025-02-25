@@ -9,7 +9,7 @@ from ansible.constants import config
 
 display = Display()
 
-# DTFIX-RELEASE: add sanity test to detect use of skip_on_ignore without Skippable (and vice-versa)
+# FUTURE: add sanity test to detect use of skip_on_ignore without Skippable (and vice versa)
 
 
 class ErrorAction(enum.Enum):

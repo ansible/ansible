@@ -10,7 +10,7 @@ try:
     from ansible import _internal  # sets is_controller=True in controller context
     from ansible.module_utils._internal import is_controller  # allow checking is_controller
     from ansible._internal._templating._jinja_common import _TemplateConfig
-    from ansible.errors.handler import ErrorHandler, ErrorAction
+    from ansible._internal._errors._handler import ErrorHandler, ErrorAction
 except ImportError:
     # likely doing only module_utils testing; ignore here and rely on test_templar::test_trust_fail_raises_in_tests to ensure the right behavior
     pass
