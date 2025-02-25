@@ -21,9 +21,10 @@ from ansible.utils.serialization import legacy
 
 def from_yaml(
     data: str,
-    file_name: str | None = None,  # DTFIX-MERGE: consider deprecating this in favor of tagging Origin on data
-    show_content: bool = True,  # deprecated: description='deprecate show_content in favor of RedactAnnotatedSourceContext' core_version='2.22'
-    vault_secrets: list[tuple[str, VaultSecret]] | None = None,  # DTFIX-MERGE: can we remove/deprecate this?
+    file_name: str | None = None,  # DTFIX-RELEASE: consider deprecating this in favor of tagging Origin on data
+    # DTFIX-MERGE: RedactAnnotatedSourceContext isn't public yet, fix that or change the deferred deprecation below
+    show_content: bool = True,  # deprecated: description='deprecate show_content in favor of RedactAnnotatedSourceContext' core_version='2.23'
+    vault_secrets: list[tuple[str, VaultSecret]] | None = None,  # deprecated: description='Deprecate vault_secrets, it has no effect.' core_version='2.23'
     json_only: bool = False,
 ) -> t.Any:
     """Creates a Python data structure from the given data, which can be either a JSON or YAML string."""

@@ -183,23 +183,15 @@ class Encoder(_json.AnsibleProfileJSONEncoder):
 class Decoder(_json.AnsibleProfileJSONDecoder):
     _profile = _Profile
 
-    def __init__(
-        self,
-        # DTFIX-MERGE: can we eliminate origin and trusted_as_template args by having a way to attach them to input streams?
-        origin: _tags.Origin | None = None,
-        trusted_as_template: bool | None = None,
-        **kwargs,
-    ):
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
-        self._origin: _tags.Origin | None = origin
-        self._trusted_as_template = trusted_as_template
+        # NB: these can only be sampled properly when loading strings, eg, `json.loads`; the global `json.load` function does not expose the file-like to us
+        self._origin: _tags.Origin | None = None
+        self._trusted_as_template: bool = False
 
     def raw_decode(self, s: str, idx: int = 0) -> tuple[_t.Any, int]:
-        if self._origin is None:
-            self._origin = _tags.Origin.get_tag(s)
-
-        if self._trusted_as_template is None:
-            self._trusted_as_template = _tags.TrustedAsTemplate.is_tagged_on(s)
+        self._origin = _tags.Origin.get_tag(s)
+        self._trusted_as_template = _tags.TrustedAsTemplate.is_tagged_on(s)
 
         return super().raw_decode(s, idx)

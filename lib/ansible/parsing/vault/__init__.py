@@ -405,7 +405,6 @@ class FileVaultSecret(VaultSecret):
     def load(self):
         self._bytes = self._read_file(self.filename)
 
-    # DTFIX-MERGE: this seems to suffer from inception issues- how are multiple vault passwords handled?
     def _read_file(self, filename):
         """
         Read a vault password from a file or if executable, execute the script and
@@ -638,33 +637,23 @@ class VaultLib:
                                                 vault_id=vault_id)
         return b_vaulttext
 
-    def decrypt(self, vaulttext, filename=None, obj=None):
+    def decrypt(self, vaulttext):
         """Decrypt a piece of vault encrypted data.
 
         :arg vaulttext: a string to decrypt.  Since vault encrypted data is an
             ascii text format this can be either a byte str or unicode string.
-        :kwarg filename: a filename that the data came from.  This is only
-            used to make better error messages in case the data cannot be
-            decrypted.
-        :returns: a byte string containing the decrypted data and the vault-id that was used
-
+        :returns: a byte string containing the decrypted data
         """
-        plaintext, vault_id, vault_secret = self.decrypt_and_get_vault_id(vaulttext, filename=filename, obj=obj)
+        plaintext, vault_id, vault_secret = self.decrypt_and_get_vault_id(vaulttext)
         return plaintext
 
-    def decrypt_and_get_vault_id(self, vaulttext, filename=None, obj=None):
+    def decrypt_and_get_vault_id(self, vaulttext):
         """Decrypt a piece of vault encrypted data.
 
         :arg vaulttext: a string to decrypt.  Since vault encrypted data is an
             ascii text format this can be either a byte str or unicode string.
-        :kwarg filename: a filename that the data came from.  This is only
-            used to make better error messages in case the data cannot be
-            decrypted.
         :returns: a byte string containing the decrypted data and the vault-id vault-secret that was used
-
         """
-        # DTFIX-MERGE: deprecate/fail on presence filename/obj args; should never have been plumbed here in the first place
-
         origin = Origin.get_tag(vaulttext)
 
         b_vaulttext = to_bytes(vaulttext, nonstring='error')  # enforce vaulttext is str/bytes, keep type check if removing type conversion

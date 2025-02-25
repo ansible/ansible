@@ -20,8 +20,7 @@ from ansible.module_utils.common import json as _json
 class _Profile(_json._JSONSerializationProfile["Encoder", "Decoder"]):
     @classmethod
     def post_init(cls) -> None:
-        cls.serialize_map = {
-            # DTFIX-MERGE: support serialization of every type that is supported in the Ansible variable type system
+        cls.serialize_map: dict[type, _t.Callable] = {
             bytes: cls.serialize_bytes_as_str,
             set: cls.serialize_as_list,
             tuple: cls.serialize_as_list,

@@ -144,8 +144,6 @@ class StrategyModule(StrategyBase):
                     # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
                     # will only send this task to the first host in the list.
 
-                    # DTFIX-MERGE: centralize `bypasses_host_loop` as a property on Task so each strategy doesn't have to implement it
-
                     try:
                         task_action = templar.template(task.action)
                     except AnsibleValueOmittedError:

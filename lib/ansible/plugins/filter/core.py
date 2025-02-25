@@ -624,7 +624,7 @@ def _cleansed_groupby(*args, **kwargs):
 
     return res
 
-# DTFIX-MERGE: make these dumb wrappers more dynamic
+# DTFIX-RELEASE: make these dumb wrappers more dynamic
 
 
 @accept_marker

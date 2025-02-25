@@ -228,7 +228,6 @@ class ModuleArgsParser:
             check_raw = action in FREEFORM_ACTIONS
             args = parse_kv(thing, check_raw=check_raw)
         elif isinstance(thing, EncryptedString):
-            # DTFIX-MERGE: this doesn't work in devel- do we want to allow it here or not?
             args = dict(_raw_params=thing)
         elif thing is None:
             # this can happen with modules which take no params, like ping:

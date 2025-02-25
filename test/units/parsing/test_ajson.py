@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import os
 import json
+import pathlib
 
 import pytest
 
@@ -47,8 +48,8 @@ def vault_data():
 
     profile = legacy
 
-    with open(os.path.join(os.path.dirname(__file__), 'fixtures/ajson.json')) as f:
-        data = json.load(f, cls=get_decoder(profile), trusted_as_template=True)
+    raw_data = TrustedAsTemplate().tag((pathlib.Path(__file__).parent / 'fixtures/ajson.json').read_text())
+    data = json.loads(raw_data, cls=get_decoder(profile))
 
     data_0 = data['password']
     data_1 = data['bar']['baz'][0]['password']
@@ -179,24 +180,17 @@ class TestAnsibleJSONEncoder:
         assert ansible_json_encoder.default(test_input) == expected
 
 
-@pytest.mark.parametrize("trust_input_str, override_trust_value, expected_trust", (
-    (True, None, True),
-    (True, True, True),
-    (True, False, False),
-    (False, None, False),
-    (False, True, True),
-    (False, False, False),
+@pytest.mark.parametrize("trust_input_str", (
+    True,
+    False
 ))
-def test_string_trust_propagation(trust_input_str: bool, override_trust_value: bool | None, expected_trust: bool) -> None:
-    """
-    Verify that input trust propagation behaves as expected. An explicit boolean `trusted_as_template` arg to the decoder is always
-    respected; if not specified, the presence of trust on the input string determines if trust is applied to outputs.
-    """
+def test_string_trust_propagation(trust_input_str: bool) -> None:
+    """Verify that input trust propagation behaves as expected. The presence of trust on the input string determines if trust is applied to outputs."""
     data = '{"foo": "bar"}'
 
     if trust_input_str:
         data = TrustedAsTemplate().tag(data)
 
-    res = json.loads(data, cls=legacy.Decoder, trusted_as_template=override_trust_value)
+    res = json.loads(data, cls=legacy.Decoder)
 
-    assert expected_trust == TrustedAsTemplate.is_tagged_on(res['foo'])
+    assert trust_input_str == TrustedAsTemplate.is_tagged_on(res['foo'])

@@ -1361,11 +1361,13 @@ class Jinja2Loader(PluginLoader):
             raise AnsibleError('Do not set both path_only and class_only when calling PluginLoader.all()')
 
         self._ensure_non_collection_wrappers(*args, **kwargs)
-        # DTFIX-MERGE: surface these plugin errors (as wrapped plugins?) instead of hiding them
+
+        plugins = [plugin for plugin in self._cached_non_collection_wrappers.values() if not isinstance(plugin, _DeferredPluginLoadFailure)]
+
         if path_only:
-            yield from (w._original_path for w in self._cached_non_collection_wrappers.values() if not isinstance(w, _DeferredPluginLoadFailure))
+            yield from (w._original_path for w in plugins)
         else:
-            yield from (w for w in self._cached_non_collection_wrappers.values() if not isinstance(w, _DeferredPluginLoadFailure))
+            yield from (w for w in plugins)
 
     def _ensure_non_collection_wrappers(self, *args, **kwargs):
         if self._cached_non_collection_wrappers:

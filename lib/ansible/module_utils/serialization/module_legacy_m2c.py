@@ -18,7 +18,8 @@ class _Profile(_json._JSONSerializationProfile["Encoder", "Decoder"]):
         cls.allowed_ansible_serializable_types = _json._common_module_types | _json._common_module_response_types
 
         cls.serialize_map = {
-            bytes: cls.bytes_to_text,  # legacy behavior from jsonify and container_to_text  # DTFIX-MERGE: not quite feature parity, no derived type support
+            # DTFIX-MERGE: not quite feature parity, no derived type support for these items
+            bytes: cls.bytes_to_text,  # legacy behavior from jsonify and container_to_text
             set: cls.serialize_as_list,  # legacy _json_encode_fallback behavior
             tuple: cls.serialize_as_list,  # JSONEncoder built-in behavior
             _datetime.date: cls.serialize_as_isoformat,  # legacy parameters.py does this before serialization
