@@ -255,6 +255,6 @@ def test_get_text_file_contents() -> None:
     origin = Origin.get_tag(read_contents)
 
     assert origin.path == temp_file.name
-    assert origin.line_num == 1
-    assert origin.col_num == 1
+    assert origin.line_num is None
+    assert origin.col_num is None
     assert origin.description is None

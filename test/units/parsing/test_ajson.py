@@ -17,11 +17,11 @@ from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.parsing.vault import EncryptedString, AnsibleVaultError
 from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.module_utils.serialization import get_decoder, get_encoder
-from ansible.utils.serialization import legacy
+from ansible._internal._serialization import _legacy
 
 
 def test_AnsibleJSONDecoder_vault(_empty_vault_secrets_context):
-    profile = legacy
+    profile = _legacy
 
     with open(os.path.join(os.path.dirname(__file__), 'fixtures/ajson.json')) as f:
         data = json.load(f, cls=get_decoder(profile))
@@ -46,7 +46,7 @@ def vault_data():
     Return a list of tuples (input, expected).
     """
 
-    profile = legacy
+    profile = _legacy
 
     raw_data = TrustedAsTemplate().tag((pathlib.Path(__file__).parent / 'fixtures/ajson.json').read_text())
     data = json.loads(raw_data, cls=get_decoder(profile))
@@ -160,7 +160,7 @@ class TestAnsibleJSONEncoder:
         """
         Test for passing vaulted values to AnsibleJSONEncoder.default().
         """
-        profile = legacy
+        profile = _legacy
         assert json.dumps(test_input, cls=get_encoder(profile)) == '{"__ansible_vault": "%s"}' % expected.replace('\n', '\\n')
 
     @pytest.mark.parametrize(
@@ -191,6 +191,6 @@ def test_string_trust_propagation(trust_input_str: bool) -> None:
     if trust_input_str:
         data = TrustedAsTemplate().tag(data)
 
-    res = json.loads(data, cls=legacy.Decoder)
+    res = json.loads(data, cls=_legacy.Decoder)
 
     assert trust_input_str == TrustedAsTemplate.is_tagged_on(res['foo'])

@@ -18,9 +18,11 @@ from ansible.module_utils.common import json as _json
 
 
 class _Profile(_json._JSONSerializationProfile["Encoder", "Decoder"]):
+    serialize_map: _t.ClassVar[dict[type, _t.Callable]]
+
     @classmethod
     def post_init(cls) -> None:
-        cls.serialize_map: dict[type, _t.Callable] = {
+        cls.serialize_map = {
             bytes: cls.serialize_bytes_as_str,
             set: cls.serialize_as_list,
             tuple: cls.serialize_as_list,

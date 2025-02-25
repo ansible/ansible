@@ -37,7 +37,7 @@ from ansible.template import Templar
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
-from ansible.module_utils.serialization import fallback_to_str
+from ansible.module_utils._internal._serialization import _fallback_to_str
 
 import yaml
 
@@ -254,7 +254,7 @@ class CallbackBase(AnsiblePlugin):
             return abridged_result
 
         if result_format == 'json':
-            return json.dumps(abridged_result, cls=fallback_to_str.Encoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+            return json.dumps(abridged_result, cls=_fallback_to_str.Encoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
 
         elif result_format == 'yaml':
             # None is a sentinel in this case that indicates default behavior

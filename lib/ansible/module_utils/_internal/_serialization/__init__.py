@@ -27,6 +27,10 @@ def get_module_serialization_profile_name(name: str, controller_to_module: bool)
     return name
 
 
+def get_module_serialization_profile_module_name(name: str, controller_to_module: bool) -> str:
+    return get_serialization_module_name(get_module_serialization_profile_name(name, controller_to_module))
+
+
 def get_serialization_profile(name: str | types.ModuleType) -> _JSONSerializationProfile:
     return getattr(get_serialization_module(name), '_Profile')
 
@@ -40,18 +44,20 @@ def get_serialization_module_name(name: str | types.ModuleType) -> str:
         if '.' in name:
             return name  # name is already fully qualified
 
-        target_name = f'ansible.module_utils.serialization.{name}'
-        controller_name = f'ansible.utils.serialization.{name}'
+        target_name = f'{__name__}._{name}'
     elif isinstance(name, types.ModuleType):
         return name.__name__
     else:
-        raise TypeError(f'Name is {type(name)} intead of {str} or {types.ModuleType}.')
+        raise TypeError(f'Name is {type(name)} instead of {str} or {types.ModuleType}.')
 
     if importlib.util.find_spec(target_name):
         return target_name
 
     # the value of is_controller can change after import; always pick it up from the module
-    if _internal.is_controller and importlib.util.find_spec(controller_name):
-        return controller_name
+    if _internal.is_controller:
+        controller_name = f'ansible._internal._serialization._{name}'
+
+        if importlib.util.find_spec(controller_name):
+            return controller_name
 
     raise ValueError(f'Unknown profile name {name!r}.')

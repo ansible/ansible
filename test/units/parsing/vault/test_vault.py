@@ -743,11 +743,8 @@ class TestVaultLib(unittest.TestCase):
                          ('wrong-password', TextVaultSecret('wrong-password'))]
 
         v_multi = vault.VaultLib(vault_secrets)
-        self.assertRaisesRegex(errors.AnsibleError,
-                               '.*Decryption failed.*',
-                               v_multi.decrypt,
-                               b_vaulttext,
-                               filename='/dev/null/fake/filename')
+        with self.assertRaisesRegex(errors.AnsibleError, '.*Decryption failed.*'):
+            v_multi.decrypt(b_vaulttext)
 
     def test_encrypt_decrypt_aes256_multiple_secrets_one_valid(self):
         plaintext = u'Some text to encrypt in a café'

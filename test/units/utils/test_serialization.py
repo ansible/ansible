@@ -12,8 +12,9 @@ import pytest
 from ansible.module_utils._internal._datatag import AnsibleTaggedObject, _untaggable_types, AnsibleTagHelper
 from ansible.module_utils._internal._datatag._tags import Deprecated
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
-from ansible.module_utils.serialization import module_legacy_c2m, module_legacy_m2c, module_modern_c2m, module_modern_m2c, get_encoder, get_decoder, tagless
-from ansible.utils.serialization import legacy
+from ansible.module_utils.serialization import get_encoder, get_decoder
+from ansible.module_utils._internal._serialization import _module_legacy_m2c, _tagless, _module_legacy_c2m, _module_modern_c2m, _module_modern_m2c
+from ansible._internal._serialization import _legacy
 
 _simple_json_values = (
     'hello',
@@ -36,7 +37,7 @@ origin = Origin(path='/absolute/path/for/testing')
 @pytest.mark.parametrize("value, expected", _converted_json_values, ids=str)
 def test_modern_controller_to_module_converted_types(value: t.Any, expected: t.Any) -> None:
     args = dict(untagged_value=value, tagged_value=origin.tag(value))
-    profile = module_modern_c2m
+    profile = _module_modern_c2m
     payload = json.dumps(args, cls=get_encoder(profile))
     result = json.loads(payload, cls=get_decoder(profile))
 
@@ -52,7 +53,7 @@ def test_modern_controller_to_module_converted_types(value: t.Any, expected: t.A
 @pytest.mark.parametrize("value, expected", _converted_json_values, ids=str)
 def test_legacy_controller_to_module_converted_types(value: t.Any, expected: t.Any) -> None:
     args = dict(untagged_value=value, tagged_value=origin.tag(value))
-    profile = module_legacy_c2m
+    profile = _module_legacy_c2m
     payload = json.dumps(args, cls=get_encoder(profile))
     result = json.loads(payload, cls=get_decoder(profile))
 
@@ -69,7 +70,7 @@ def test_legacy_controller_to_module_converted_types(value: t.Any, expected: t.A
 def test_modern_module_to_controller_converted_types(value: t.Any, expected: t.Any) -> None:
     deprecation_tag = Deprecated(msg='go away')
     args = dict(untagged_value=value, tagged_value=deprecation_tag.tag(value))
-    profile = module_modern_m2c
+    profile = _module_modern_m2c
     payload = json.dumps(args, cls=get_encoder(profile))
     result = json.loads(payload, cls=get_decoder(profile))
 
@@ -90,7 +91,7 @@ def test_modern_module_to_controller_converted_types(value: t.Any, expected: t.A
 @pytest.mark.parametrize("value, expected", _converted_json_values, ids=str)
 def test_legacy_module_to_controller_converted_types(value: t.Any, expected: t.Any) -> None:
     args = dict(untagged_value=value)
-    profile = module_modern_m2c
+    profile = _module_modern_m2c
     payload = json.dumps(args, cls=get_encoder(profile))
     result = json.loads(payload, cls=get_decoder(profile))
 
@@ -104,7 +105,7 @@ def test_legacy_module_to_controller_converted_types(value: t.Any, expected: t.A
 @pytest.mark.parametrize("value", _simple_json_values, ids=str)
 def test_modern_controller_to_module(value: t.Any) -> None:
     args = dict(untagged_value=value, tagged_value=origin.tag(value))
-    profile = module_modern_c2m
+    profile = _module_modern_c2m
     payload = json.dumps(args, cls=get_encoder(profile))
     result = json.loads(payload, cls=get_decoder(profile))
 
@@ -120,7 +121,7 @@ def test_modern_controller_to_module(value: t.Any) -> None:
 @pytest.mark.parametrize("value", _simple_json_values, ids=str)
 def test_legacy_controller_to_module(value: t.Any) -> None:
     args = dict(untagged_value=value, tagged_value=origin.tag(value))
-    profile = module_legacy_c2m
+    profile = _module_legacy_c2m
     payload = json.dumps(args, cls=get_encoder(profile))
     result = json.loads(payload, cls=get_decoder(profile))
 
@@ -141,7 +142,7 @@ def test_modern_module_to_controller(value: t.Any) -> None:
         tagged_value=deprecation_tag.tag(value),
         # tagged_with_unwanted_tag_only=origin.tag(value),
     )
-    profile = module_modern_m2c
+    profile = _module_modern_m2c
     payload = json.dumps(args, cls=get_encoder(profile))
     result = json.loads(payload, cls=get_decoder(profile))
 
@@ -170,7 +171,7 @@ def test_legacy_module_to_controller(value: t.Any) -> None:
         # tagged_value=deprecation_tag.tag(value),
         # tagged_with_unwanted_tag_only=origin.tag(value),
     )
-    profile = module_legacy_m2c
+    profile = _module_legacy_m2c
     payload = json.dumps(args, cls=get_encoder(profile))
     result = json.loads(payload, cls=get_decoder(profile))
 
@@ -194,9 +195,10 @@ def test_legacy(value: t.Any) -> None:
         tagged_value=origin.tag(value),
         trusted_value=apply_trust(value),
     )
-    profile = legacy
+    profile = _legacy
     payload = json.dumps(args, cls=get_encoder(profile))
-    result = json.loads(payload, cls=get_decoder(profile), trusted_as_template=True)
+    payload = TrustedAsTemplate().tag(payload)
+    result = json.loads(payload, cls=get_decoder(profile))
 
     untagged_value = result['untagged_value']
     tagged_value = result['tagged_value']
@@ -217,7 +219,7 @@ def test_legacy(value: t.Any) -> None:
 ), ids=str)
 def test_legacy_converted_types(value: t.Any, expected: t.Any) -> None:
     args = dict(untagged_value=value, tagged_value=origin.tag(value))
-    profile = legacy
+    profile = _legacy
     payload = json.dumps(args, cls=get_encoder(profile))
     result = json.loads(payload, cls=get_decoder(profile))
 
@@ -237,7 +239,7 @@ def test_tagless(value: t.Any) -> None:
         tagged_value=origin.tag(value),
         trusted_value=apply_trust(value),
     )
-    profile = tagless
+    profile = _tagless
     payload = json.dumps(args, cls=get_encoder(profile))
     result = json.loads(payload, cls=get_decoder(profile))
 
@@ -255,7 +257,7 @@ def test_tagless(value: t.Any) -> None:
 @pytest.mark.parametrize("value, expected", _converted_json_values, ids=str)
 def test_tagless_converted_types(value: t.Any, expected: t.Any) -> None:
     args = dict(untagged_value=value, tagged_value=origin.tag(value))
-    profile = tagless
+    profile = _tagless
     payload = json.dumps(args, cls=get_encoder(profile))
     result = json.loads(payload, cls=get_decoder(profile))
 

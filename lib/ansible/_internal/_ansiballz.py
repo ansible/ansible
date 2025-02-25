@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import datetime
+
 # For test-module.py script to tell this is a ANSIBALLZ_WRAPPER
 _ANSIBALLZ_WRAPPER = True
 
@@ -41,7 +43,7 @@ def _ansiballz_main(
     params: str,
     profile: str,
     plugin_info_dict: dict[str, object],
-    date_time: tuple[int, int, int, int, int, int],
+    date_time: datetime.datetime,
     coverage_config: str | None,
     coverage_output: str | None,
     rlimit_nofile: int,
@@ -127,7 +129,7 @@ def _ansiballz_main(
         # clocks set to a pre-1980 year (for instance, Raspberry Pi)
         zinfo = zipfile.ZipInfo()
         zinfo.filename = 'sitecustomize.py'
-        zinfo.date_time = date_time
+        zinfo.date_time = date_time.utctimetuple()[:6]
         z.writestr(zinfo, sitecustomize)
         z.close()
 

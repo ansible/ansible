@@ -22,7 +22,8 @@ from ansible._internal._templating._lazy_containers import _AnsibleLazyTemplateM
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
 from ansible._internal._templating._utils import TemplateContext
 from ansible._internal._datatag._tags import TrustedAsTemplate
-from ansible.module_utils.serialization import get_encoder, get_decoder, fallback_to_str
+from ansible.module_utils.serialization import get_encoder, get_decoder
+from ansible.module_utils._internal._serialization import _fallback_to_str
 from ansible.utils import serialization as controller_serialization
 from ansible.errors import AnsibleRuntimeError
 
@@ -45,8 +46,8 @@ basic_values = (
     {1},
     dict(a=1),
     CustomMapping(dict(a=1)),
-    {(1,2): "three"},
-    {frozenset((1,2)): "three"},
+    {(1, 2): "three"},
+    {frozenset((1, 2)): "three"},
 )
 
 # DTFIX-MERGE: we need tests for recursion, specifically things like custom sequences and mappings when using the legacy serializer
@@ -244,7 +245,7 @@ additional_test_parameters: list[_TestParameters] = []
 
 # DTFIX-MERGE: need better testing for containers, especially for tagged values in containers
 
-additional_test_parameters.extend(ProfileHelper(fallback_to_str._Profile.profile_name).create_parameters_from_values(
+additional_test_parameters.extend(ProfileHelper(_fallback_to_str._Profile.profile_name).create_parameters_from_values(
     b'\x00',  # valid utf-8 strict, JSON escape sequence required
     b'\x80',  # utf-8 strict decoding fails, forcing the use of an error handler such as surrogateescape, JSON escape sequence required
     '\udc80',  # same as above, but already a string (verify that the string version is handled the same as the bytes version)

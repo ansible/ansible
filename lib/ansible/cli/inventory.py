@@ -21,7 +21,7 @@ from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleRuntimeError
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.utils.serialization import inventory_legacy
+from ansible._internal._serialization import _inventory_legacy
 from ansible.utils.vars import combine_vars
 from ansible.utils.display import Display
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
@@ -170,7 +170,7 @@ class InventoryCLI(CLI):
         elif context.CLIARGS['toml']:
             results = toml_dumps(stuff)
         else:
-            results = json.dumps(stuff, cls=inventory_legacy.Encoder, sort_keys=True, indent=4)
+            results = json.dumps(stuff, cls=_inventory_legacy.Encoder, sort_keys=True, indent=4)
 
         return results
 
@@ -295,7 +295,7 @@ class InventoryCLI(CLI):
         # populate meta
         results['_meta'] = {
             'hostvars': {},
-            'profile': inventory_legacy.Encoder.profile_name,
+            'profile': _inventory_legacy.Encoder.profile_name,
         }
 
         for host in hosts:

@@ -154,7 +154,7 @@ def _parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None):
     return b_ciphertext, b_version, cipher_name, vault_id
 
 
-def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None, filename=None):
+def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None):
     """Parse the vaulttext envelope
 
     When data is saved, it has a header prepended and is formatted into 80
@@ -162,11 +162,8 @@ def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None, filena
     and then removes the header and the inserted newlines.  The string returned
     is suitable for processing by the Cipher classes.
 
-    :arg b_vaulttext: byte str containing the data from a save file
-    :kwarg default_vault_id: The vault_id name to use if the vaulttext does not provide one.
-    :kwarg filename: The filename that the data came from.  This is only
-        used to make better error messages in case the data cannot be
-        decrypted. This is optional.
+    :arg b_vaulttext_envelope: byte str containing the data from a save file
+    :arg default_vault_id: The vault_id name to use if the vaulttext does not provide one.
     :returns: A tuple of byte str of the vaulttext suitable to pass to parse_vaultext,
         a byte str of the vault format version,
         the name of the cipher used, and the vault_id.
@@ -890,7 +887,7 @@ class VaultEditor:
         ciphertext = self.read_data(filename)
 
         try:
-            plaintext = self.vault.decrypt(ciphertext, filename=filename)
+            plaintext = self.vault.decrypt(ciphertext)
         except AnsibleError as e:
             raise AnsibleError("%s for %s" % (to_native(e), to_native(filename)))
         self.write_data(plaintext, output_file or filename, shred=False)
@@ -930,7 +927,7 @@ class VaultEditor:
 
         # Figure out the vault id from the file, to select the right secret to re-encrypt it
         # (duplicates parts of decrypt, but alas...)
-        dummy, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext, filename=filename)
+        dummy, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
 
         # vault id here may not be the vault id actually used for decrypting
         # as when the edited file has no vault-id but is decrypted by non-default id in secrets
@@ -948,7 +945,7 @@ class VaultEditor:
         vaulttext = to_text(b_vaulttext)
 
         try:
-            plaintext = self.vault.decrypt(vaulttext, filename=filename)
+            plaintext = self.vault.decrypt(vaulttext)
             return plaintext
         except AnsibleError as e:
             raise AnsibleVaultError("%s for %s" % (to_native(e), to_native(filename)))
@@ -1001,7 +998,7 @@ class VaultEditor:
                 data = sys.stdin.buffer.read()
             else:
                 with open(filename, "rb") as fh:
-                    data = fh.read()
+                    data = Origin(path=filename).tag(fh.read())
         except Exception as e:
             msg = to_native(e)
             if not msg:

@@ -217,7 +217,7 @@ class _JSONSerializationProfile(t.Generic[_T_encoder, _T_decoder]):
 
         cls.post_init()
 
-        cls.profile_name = cls.__module__.rsplit('.', maxsplit=1)[-1]
+        cls.profile_name = cls.__module__.rsplit('.', maxsplit=1)[-1].lstrip('_')
 
         wrapper_types = set(obj for obj in cls.serialize_map.values() if isinstance(obj, type) and issubclass(obj, AnsibleSerializableWrapper))
 

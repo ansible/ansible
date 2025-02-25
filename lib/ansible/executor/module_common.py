@@ -27,10 +27,10 @@ import os
 import pathlib
 import pickle
 import shlex
-import time
 import zipfile
 import re
 import pkgutil
+import types
 import typing as t
 
 from ast import AST, Import, ImportFrom
@@ -51,20 +51,42 @@ from ansible.module_utils.common.text.converters import to_bytes, to_text, to_na
 from ansible.plugins.loader import module_utils_loader
 from ansible._internal._templating._engine import TemplateOptions
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, _nested_dict_get
+from ansible.module_utils._internal import _serialization, _ansiballz
+from ansible.module_utils import basic as _basic
 
 if t.TYPE_CHECKING:
     from ansible import template as _template
     from ansible.playbook.task import Task
 
 from ansible.utils.display import Display
-from collections import namedtuple
 
 import importlib.util
 import importlib.machinery
 
 display = Display()
 
-ModuleUtilsProcessEntry = namedtuple('ModuleUtilsProcessEntry', ['name_parts', 'is_ambiguous', 'has_redirected_child', 'is_optional'])
+
+@dataclasses.dataclass(frozen=True, order=True)
+class _ModuleUtilsProcessEntry:
+    """Represents a module/module_utils item awaiting import analysis."""
+    name_parts: tuple[str, ...]
+    is_ambiguous: bool = False
+    child_is_redirected: bool = False
+    is_optional: bool = False
+
+    @classmethod
+    def from_module(cls, module: types.ModuleType, append: str | None = None) -> t.Self:
+        name = module.__name__
+
+        if append:
+            name += '.' + append
+
+        return cls.from_module_name(name)
+
+    @classmethod
+    def from_module_name(cls, module_name: str) -> t.Self:
+        return cls(tuple(module_name.split('.')))
+
 
 REPLACER = b"#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_VERSION = b"\"<<ANSIBLE_VERSION>>\""
@@ -595,13 +617,15 @@ class CollectionModuleUtilLocator(ModuleUtilLocatorBase):
         return name_parts[5:]  # eg, foo.bar for ansible_collections.ns.coll.plugins.module_utils.foo.bar
 
 
-def _make_zinfo(filename, date_time, zf=None):
+def _make_zinfo(filename: str, date_time: datetime.datetime, zf: zipfile.ZipFile | None = None) -> zipfile.ZipInfo:
     zinfo = zipfile.ZipInfo(
         filename=filename,
-        date_time=date_time
+        date_time=date_time.utctimetuple()[:6],
     )
+
     if zf:
         zinfo.compress_type = zf.compression
+
     return zinfo
 
 
@@ -674,7 +698,7 @@ def _get_module_metadata(module: ast.Module) -> ModuleMetadata:
     return metadata
 
 
-def recursive_finder(name, module_fqn, module_data, zf, date_time=None) -> ModuleMetadata:
+def recursive_finder(name: str, module_fqn: str, module_data: str | bytes, zf: zipfile.ZipFile, date_time: datetime.datetime) -> ModuleMetadata:
     """
     Using ModuleDepFinder, make sure we have all of the module_utils files that
     the module and its module_utils files needs. (no longer actually recursive)
@@ -684,9 +708,6 @@ def recursive_finder(name, module_fqn, module_data, zf, date_time=None) -> Modul
     :arg zf: An open :python:class:`zipfile.ZipFile` object that holds the Ansible module payload
         which we're assembling
     """
-    if date_time is None:
-        date_time = time.gmtime()[:6]
-
     # py_module_cache maps python module names to a tuple of the code in the module
     # and the pathname to the module.
     # Here we pre-load it with modules which we create without bothering to
@@ -712,48 +733,49 @@ def recursive_finder(name, module_fqn, module_data, zf, date_time=None) -> Modul
     module_metadata = _get_module_metadata(tree)
     finder = ModuleDepFinder(module_fqn, tree)
 
-    # the format of this set is a tuple of the module name and whether or not the import is ambiguous as a module name
-    # or an attribute of a module (eg from x.y import z <-- is z a module or an attribute of x.y?)
-    modules_to_process = [ModuleUtilsProcessEntry(m, True, False, is_optional=m in finder.optional_imports) for m in finder.submodules]
-
-    # include module_utils that are always required
-    modules_to_process.append(ModuleUtilsProcessEntry(('ansible', 'module_utils', '_internal', '_ansiballz'), False, False, is_optional=False))
-    modules_to_process.append(ModuleUtilsProcessEntry(('ansible', 'module_utils', 'basic'), False, False, is_optional=False))
-
     if not isinstance(module_metadata, ModuleMetadataV1):
         raise NotImplementedError()
 
     profile = module_metadata.serialization_profile
 
-    modules_to_process.append(ModuleUtilsProcessEntry(('ansible', 'module_utils', 'serialization', f'module_{profile}_c2m'), False, False, is_optional=False))
-    modules_to_process.append(ModuleUtilsProcessEntry(('ansible', 'module_utils', 'serialization', f'module_{profile}_m2c'), False, False, is_optional=False))
+    # the format of this set is a tuple of the module name and whether the import is ambiguous as a module name
+    # or an attribute of a module (e.g. from x.y import z <-- is z a module or an attribute of x.y?)
+    modules_to_process = [_ModuleUtilsProcessEntry(m, True, False, is_optional=m in finder.optional_imports) for m in finder.submodules]
+
+    # include module_utils that are always required
+    modules_to_process.extend((
+        _ModuleUtilsProcessEntry.from_module(_ansiballz),
+        _ModuleUtilsProcessEntry.from_module(_basic),
+        _ModuleUtilsProcessEntry.from_module_name(_serialization.get_module_serialization_profile_module_name(profile, True)),
+        _ModuleUtilsProcessEntry.from_module_name(_serialization.get_module_serialization_profile_module_name(profile, False)),
+    ))
 
     module_info: ModuleUtilLocatorBase
 
     # we'll be adding new modules inline as we discover them, so just keep going til we've processed them all
     while modules_to_process:
         modules_to_process.sort()  # not strictly necessary, but nice to process things in predictable and repeatable order
-        py_module_name, is_ambiguous, child_is_redirected, is_optional = modules_to_process.pop(0)
+        entry = modules_to_process.pop(0)
 
-        if py_module_name in py_module_cache:
+        if entry.name_parts in py_module_cache:
             # this is normal; we'll often see the same module imported many times, but we only need to process it once
             continue
 
-        if py_module_name[0:2] == ('ansible', 'module_utils'):
-            module_info = LegacyModuleUtilLocator(py_module_name, is_ambiguous=is_ambiguous,
-                                                  mu_paths=module_utils_paths, child_is_redirected=child_is_redirected)
-        elif py_module_name[0] == 'ansible_collections':
-            module_info = CollectionModuleUtilLocator(py_module_name, is_ambiguous=is_ambiguous,
-                                                      child_is_redirected=child_is_redirected, is_optional=is_optional)
+        if entry.name_parts[0:2] == ('ansible', 'module_utils'):
+            module_info = LegacyModuleUtilLocator(entry.name_parts, is_ambiguous=entry.is_ambiguous,
+                                                  mu_paths=module_utils_paths, child_is_redirected=entry.child_is_redirected)
+        elif entry.name_parts[0] == 'ansible_collections':
+            module_info = CollectionModuleUtilLocator(entry.name_parts, is_ambiguous=entry.is_ambiguous,
+                                                      child_is_redirected=entry.child_is_redirected, is_optional=entry.is_optional)
         else:
             # FIXME: dot-joined result
             display.warning('ModuleDepFinder improperly found a non-module_utils import %s'
-                            % [py_module_name])
+                            % [entry.name_parts])
             continue
 
         # Could not find the module.  Construct a helpful error message.
         if not module_info.found:
-            if is_optional:
+            if entry.is_optional:
                 # this was a best-effort optional import that we couldn't find, oh well, move along...
                 continue
             # FIXME: use dot-joined candidate names
@@ -767,7 +789,7 @@ def recursive_finder(name, module_fqn, module_data, zf, date_time=None) -> Modul
 
         tree = _compile_module_ast('.'.join(module_info.fq_name_parts), module_info.source_code)
         finder = ModuleDepFinder('.'.join(module_info.fq_name_parts), tree, module_info.is_package)
-        modules_to_process.extend(ModuleUtilsProcessEntry(m, True, False, is_optional=m in finder.optional_imports)
+        modules_to_process.extend(_ModuleUtilsProcessEntry(m, True, False, is_optional=m in finder.optional_imports)
                                   for m in finder.submodules if m not in py_module_cache)
 
         # we've processed this item, add it to the output list
@@ -779,7 +801,7 @@ def recursive_finder(name, module_fqn, module_data, zf, date_time=None) -> Modul
             accumulated_pkg_name.append(pkg)  # we're accumulating this across iterations
             normalized_name = tuple(accumulated_pkg_name)  # extra machinations to get a hashable type (list is not)
             if normalized_name not in py_module_cache:
-                modules_to_process.append(ModuleUtilsProcessEntry(normalized_name, False, module_info.redirected, is_optional=is_optional))
+                modules_to_process.append(_ModuleUtilsProcessEntry(normalized_name, False, module_info.redirected, is_optional=entry.is_optional))
 
     for py_module_name in py_module_cache:
         py_module_file_name = py_module_cache[py_module_name][1]
@@ -794,7 +816,7 @@ def recursive_finder(name, module_fqn, module_data, zf, date_time=None) -> Modul
     return module_metadata
 
 
-def _compile_module_ast(module_name: str, source_code: str) -> ast.Module:
+def _compile_module_ast(module_name: str, source_code: str | bytes) -> ast.Module:
     origin = Origin.get_tag(source_code) or Origin.UNKNOWN
 
     # compile the source, process all relevant imported modules
@@ -807,6 +829,7 @@ def _compile_module_ast(module_name: str, source_code: str) -> ast.Module:
 
 
 def _is_binary(b_module_data):
+    """Heuristic to classify a file as binary by sniffing a 1k header; see https://stackoverflow.com/a/7392391"""
     textchars = bytearray(set([7, 8, 9, 10, 12, 13, 27]) | set(range(0x20, 0x100)) - set([0x7f]))
     start = b_module_data[:1024]
     return bool(start.translate(None, textchars))
@@ -845,7 +868,7 @@ def _get_ansible_module_fqn(module_path):
     return remote_module_fqn
 
 
-def _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data):
+def _add_module_to_zip(zf: zipfile.ZipFile, date_time: datetime.datetime, remote_module_fqn: str, b_module_data: bytes) -> None:
     """Add a module from ansible or from an ansible collection into the module zip"""
     module_path_parts = remote_module_fqn.split('.')
 
@@ -855,6 +878,8 @@ def _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data):
         _make_zinfo(module_path, date_time, zf=zf),
         b_module_data
     )
+
+    existing_paths: frozenset[str]
 
     # Write the __init__.py's necessary to get there
     if module_path_parts[0] == 'ansible':
@@ -995,10 +1020,9 @@ def _find_module_utils(
         remote_module_fqn = 'ansible.modules.%s' % module_name
 
     if module_substyle == 'python':
-        date_time = time.gmtime()[:6]
-        if date_time[0] < 1980:
-            date_string = datetime.datetime(*date_time, tzinfo=datetime.timezone.utc).strftime('%c')
-            raise AnsibleError(f'Cannot create zipfile due to pre-1980 configured date: {date_string}')
+        date_time = datetime.datetime.now(datetime.timezone.utc)
+        if date_time.year < 1980:
+            raise AnsibleError(f'Cannot create zipfile due to pre-1980 configured date: {date_time}')
 
         try:
             compression_method = getattr(zipfile, module_compression)
@@ -1011,7 +1035,9 @@ def _find_module_utils(
 
         os.makedirs(os.path.dirname(cached_module_filename), exist_ok=True)
 
-        zipdata = None
+        zipdata: bytes | None = None
+        module_metadata: ModuleMetadata | None = None
+
         # Optimization -- don't lock if the module has already been cached
         if os.path.exists(cached_module_filename):
             display.debug('ANSIBALLZ: using cached module: %s' % cached_module_filename)
@@ -1042,25 +1068,13 @@ def _find_module_utils(
                     # Write the assembled module to a temp file (write to temp
                     # so that no one looking for the file reads a partially
                     # written file)
-                    #
-                    # FIXME: Once split controller/remote is merged, this can be simplified to
-                    #        os.makedirs(lookup_path, exist_ok=True)
-                    if not os.path.exists(lookup_path):
-                        try:
-                            # Note -- if we have a global function to setup, that would
-                            # be a better place to run this
-                            os.makedirs(lookup_path)
-                        except OSError:
-                            # Multiple processes tried to create the directory. If it still does not
-                            # exist, raise the original exception.
-                            if not os.path.exists(lookup_path):
-                                raise
+                    os.makedirs(lookup_path, exist_ok=True)
                     display.debug('ANSIBALLZ: Writing module')
                     cached_module = _CachedModule(zip_data=zipdata, metadata=module_metadata)
                     cached_module.dump(cached_module_filename)
                     display.debug('ANSIBALLZ: Done creating module')
 
-            if zipdata is None:
+            if not zipdata:
                 display.debug('ANSIBALLZ: Reading module after lock')
                 # Another process wrote the file while we were waiting for
                 # the write lock.  Go ahead and read the data from disk
@@ -1072,8 +1086,6 @@ def _find_module_utils(
                                        'Look at traceback for that process for debugging information.')
 
                 zipdata, module_metadata = cached_module.zip_data, cached_module.metadata
-
-        zipdata = to_text(zipdata, errors='surrogate_or_strict')
 
         o_interpreter, o_args = _extract_interpreter(b_module_data)
         if o_interpreter is None:
@@ -1106,7 +1118,7 @@ def _find_module_utils(
 
         code = _get_ansiballz_code(shebang)
         args = dict(
-            zipdata=zipdata,
+            zipdata=to_text(zipdata),
             ansible_module=module_name,
             module_fqn=remote_module_fqn,
             params=encoded_params,

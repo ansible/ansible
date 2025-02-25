@@ -21,7 +21,7 @@ from ansible.playbook import Playbook
 from ansible.playbook.play import Play
 from ansible._internal._datatag._tags import Origin
 from ansible.utils.display import Display
-from ansible.utils.serialization import legacy
+from ansible._internal._serialization import _legacy
 
 display = Display()
 
@@ -79,7 +79,7 @@ class AdHocCLI(CLI):
         module_args = None
         if module_args_raw and module_args_raw.startswith('{') and module_args_raw.endswith('}'):
             try:
-                module_args = json.loads(module_args_raw, cls=legacy.Decoder)
+                module_args = json.loads(module_args_raw, cls=_legacy.Decoder)
             except AnsibleParserError:
                 pass
 

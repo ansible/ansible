@@ -5,8 +5,8 @@ Behavior is equivalent to pre 2.18 `AnsibleJSONEncoder` with vault_to_text=True.
 
 from __future__ import annotations
 
-from ..._internal import _serialization
-from . import legacy as _legacy
+from .. import _serialization
+from . import _legacy
 
 
 class _InventoryVariableVisitor(_legacy._LegacyVariableVisitor, _serialization.StateTrackingMixIn):

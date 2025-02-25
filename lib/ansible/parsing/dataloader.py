@@ -193,7 +193,7 @@ class DataLoader:
         except (IOError, OSError) as ex:
             raise AnsibleParserError(f"An error occurred while trying to read the file {file_name!r}.") from ex
 
-        data = Origin(path=file_name, line_num=1, col_num=1).tag(data)
+        data = Origin(path=file_name).tag(data)
 
         return self._decrypt_if_vault_data(data)
 
@@ -410,11 +410,11 @@ class DataLoader:
                         # if the file is encrypted and no password was specified,
                         # the decrypt call would throw an error, but we check first
                         # since the decrypt function doesn't know the file name
-                        data = f.read()
+                        data = Origin(path=real_path).tag(f.read())
                         if not self._vault.secrets:
                             raise AnsibleParserError("A vault password or secret must be specified to decrypt %s" % to_native(file_path))
 
-                        data = self._vault.decrypt(data, filename=real_path)
+                        data = self._vault.decrypt(data)
                         # Make a temp file
                         real_path = self._create_content_tempfile(data)
                         self._tempfiles.add(real_path)

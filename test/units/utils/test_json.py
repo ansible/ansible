@@ -9,7 +9,7 @@ import json
 import pytest
 
 from ansible.errors import AnsibleRuntimeError
-from ansible.module_utils.serialization import tagless
+from ansible.module_utils._internal._serialization import _tagless
 
 
 @pytest.mark.parametrize("value", (
@@ -29,4 +29,4 @@ from ansible.module_utils.serialization import tagless
 def test_invalid_utf8_decoding(value: str) -> None:
     """Verify that strings which cannot be encoded as valid UTF8 result in an error during deserialization."""
     with pytest.raises(AnsibleRuntimeError, match='^Refusing to deserialize an invalid UTF8 string value'):
-        json.loads(value, cls=tagless.Decoder)
+        json.loads(value, cls=_tagless.Decoder)

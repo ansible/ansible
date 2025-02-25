@@ -21,6 +21,7 @@ class _Untrusted:
     Used before serialization of strings not tagged TrustedAsTemplate when trust inversion is enabled and trust is allowed in the string's context.
     Used during deserialization of `__ansible_unsafe` strings to indicate they should not be tagged TrustedAsTemplate.
     """
+
     __slots__ = ('value',)
 
     def __init__(self, value: str) -> None:

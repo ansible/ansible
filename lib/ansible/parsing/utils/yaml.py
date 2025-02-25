@@ -16,7 +16,7 @@ from ansible.parsing.vault import VaultSecret
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.errors import AnsibleYAMLParserError
 from ansible._internal._datatag._tags import Origin
-from ansible.utils.serialization import legacy
+from ansible._internal._serialization import _legacy
 
 
 def from_yaml(
@@ -39,7 +39,7 @@ def from_yaml(
         try:
             # we first try to load this data as JSON.
             # Fixes issues with extra vars json strings not being parsed correctly by the yaml parser
-            return json.loads(data, cls=legacy.Decoder)
+            return json.loads(data, cls=_legacy.Decoder)
         except Exception as ex:
             json_ex = ex
 

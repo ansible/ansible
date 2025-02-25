@@ -15,14 +15,16 @@ class _Profile(_json._JSONSerializationProfile["Encoder", "Decoder"]):
     def post_init(cls) -> None:
         cls.serialize_map = {}
         cls.serialize_map.update(cls._common_discard_tags)
-        cls.serialize_map.update({
-            # The bytes type is not supported, use str instead (future module profiles may support a bytes wrapper distinct from `bytes`).
-            set: cls.serialize_as_list,  # legacy _json_encode_fallback behavior
-            tuple: cls.serialize_as_list,  # JSONEncoder built-in behavior
-            _datetime.date: _datatag.AnsibleSerializableDate,
-            _datetime.time: _datatag.AnsibleSerializableTime,
-            _datetime.datetime: _datatag.AnsibleSerializableDateTime,
-        })
+        cls.serialize_map.update(
+            {
+                # The bytes type is not supported, use str instead (future module profiles may support a bytes wrapper distinct from `bytes`).
+                set: cls.serialize_as_list,  # legacy _json_encode_fallback behavior
+                tuple: cls.serialize_as_list,  # JSONEncoder built-in behavior
+                _datetime.date: _datatag.AnsibleSerializableDate,
+                _datetime.time: _datatag.AnsibleSerializableTime,
+                _datetime.datetime: _datatag.AnsibleSerializableDateTime,
+            }
+        )
 
 
 class Encoder(_json.AnsibleProfileJSONEncoder):
