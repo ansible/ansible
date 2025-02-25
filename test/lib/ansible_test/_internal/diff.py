@@ -129,14 +129,14 @@ class DiffParser:
             try:
                 self.action()
             except Exception as ex:
-                message = textwrap.dedent('''
+                message = textwrap.dedent("""
                 %s
 
                      Line: %d
                  Previous: %s
                   Current: %s
                 %s
-                ''').strip() % (
+                """).strip() % (
                     ex,
                     self.line_number,
                     self.previous_line or '',

@@ -86,7 +86,7 @@ def bootstrap(pip: str, options: dict[str, t.Any]) -> None:
         try:
             download_file(url, temp_path)
         except Exception as ex:
-            raise ApplicationError(('''
+            raise ApplicationError(("""
 Download failed: %s
 
 The bootstrap script can be manually downloaded and saved to: %s
@@ -94,7 +94,7 @@ The bootstrap script can be manually downloaded and saved to: %s
 If you're behind a proxy, consider commenting on the following GitHub issue:
 
 https://github.com/ansible/ansible/issues/77304
-''' % (ex, cache_path)).strip())
+""" % (ex, cache_path)).strip())
 
         shutil.move(temp_path, cache_path)
 
