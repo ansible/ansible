@@ -14,7 +14,7 @@ import typing as t
 
 import pytest
 
-from ansible.module_utils import serialization as target_serialization
+from ansible.module_utils._internal import _serialization as target_serialization
 from ansible.module_utils._internal import _serialization
 from ansible.module_utils._internal._datatag import AnsibleDatatagBase, NotTaggableError, AnsibleTagHelper
 from ansible.module_utils._internal._datatag._tags import Deprecated
@@ -22,9 +22,9 @@ from ansible._internal._templating._lazy_containers import _AnsibleLazyTemplateM
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
 from ansible._internal._templating._utils import TemplateContext
 from ansible._internal._datatag._tags import TrustedAsTemplate
+from ansible._internal import _serialization as controller_serialization
 from ansible.module_utils.serialization import get_encoder, get_decoder
 from ansible.module_utils._internal._serialization import _fallback_to_str
-from ansible.utils import serialization as controller_serialization
 from ansible.errors import AnsibleRuntimeError
 
 from ..mock.custom_collections import CustomMapping, CustomSequence
@@ -64,7 +64,11 @@ def get_profile_names() -> tuple[str, ...]:
     names = []
 
     for package in packages:
-        for module in pkgutil.iter_modules(package.__path__, f'{package.__name__}.'):
+        modules = list(pkgutil.iter_modules(package.__path__, f'{package.__name__}.'))
+
+        assert modules  # ensure at least one serialization profile module was found
+
+        for module in modules:
             names.append(_serialization.get_serialization_profile(module.name).profile_name)
 
     return tuple(sorted(names))

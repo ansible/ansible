@@ -161,7 +161,7 @@ class LookupModule(LookupBase):
                 # argument.
                 # FIXME: why isn't this a chainmap with a sacrificial bottom layer?
                 vars = deepcopy(variables)
-                vars.update(generate_ansible_template_vars(term, lookupfile))
+                vars.update(generate_ansible_template_vars(term, full_path=lookupfile))
                 vars.update(lookup_template_vars)
 
                 overrides = TemplateOverrides(

@@ -3,8 +3,8 @@ from __future__ import annotations as _annotations
 import enum as _enum
 import types as _types
 
-from ansible.module_utils.common import json as _json
-from ansible.module_utils._internal import _serialization
+from .common import json as _json
+from ._internal import _serialization
 
 
 class Direction(_enum.Enum):

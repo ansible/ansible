@@ -69,7 +69,7 @@ MODULE_UTILS_BASIC_FILES = frozenset(('ansible/__init__.py',
                                       'ansible/module_utils/errors.py',
                                       'ansible/module_utils/parsing/__init__.py',
                                       'ansible/module_utils/parsing/convert_bool.py',
-                                      'ansible/module_utils/serialization/__init__.py',
+                                      'ansible/module_utils/serialization.py',
                                       'ansible/module_utils/six/__init__.py',
                                       ))
 

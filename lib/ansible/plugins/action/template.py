@@ -118,7 +118,7 @@ class ActionModule(ActionBase):
 
             # add ansible 'template' vars
             temp_vars = task_vars.copy()
-            temp_vars.update(generate_ansible_template_vars(self._task.args.get('src', None), source, dest))
+            temp_vars.update(generate_ansible_template_vars(self._task.args.get('src', None), full_path=source, dest_path=dest))
 
             overrides = TemplateOverrides(
                 block_start_string=block_start_string,

@@ -998,7 +998,7 @@ class VaultEditor:
                 data = sys.stdin.buffer.read()
             else:
                 with open(filename, "rb") as fh:
-                    data = Origin(path=filename).tag(fh.read())
+                    data = Origin(path=str(filename)).tag(fh.read())
         except Exception as e:
             msg = to_native(e)
             if not msg:
