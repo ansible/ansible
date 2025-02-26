@@ -85,7 +85,7 @@ class StrategyModule(StrategyBase):
                 iterator.set_state_for_host(host.name, state)
                 host_tasks.append((host, task))
 
-        if cur_task.action in C._ACTION_META and cur_task.args.get('_raw_params') == 'flush_handlers':
+        if cur_task._get_meta() == 'flush_handlers':
             iterator.all_tasks[iterator.cur_task:iterator.cur_task] = [h for b in iterator._play.handlers for h in b.block]
 
         return host_tasks
@@ -160,7 +160,7 @@ class StrategyModule(StrategyBase):
                         # for the linear strategy, we run meta tasks just once and for
                         # all hosts currently being iterated over rather than one host
                         results.extend(self._execute_meta(task, play_context, iterator, host))
-                        if task.args.get('_raw_params', None) not in ('noop', 'reset_connection', 'end_host', 'role_complete', 'flush_handlers', 'end_role'):
+                        if task._get_meta() not in ('noop', 'reset_connection', 'end_host', 'role_complete', 'flush_handlers', 'end_role'):
                             run_once = True
                         if (task.any_errors_fatal or run_once) and not task.ignore_errors:
                             any_errors_fatal = True

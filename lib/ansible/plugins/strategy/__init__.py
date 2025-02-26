@@ -899,7 +899,7 @@ class StrategyBase:
 
         # meta tasks store their args in the _raw_params field of args,
         # since they do not use k=v pairs, so get that
-        meta_action = task.args.get('_raw_params')
+        meta_action = task._get_meta()
 
         def _evaluate_conditional(conditional_host: Host) -> bool:
             if not task.when:
@@ -1006,7 +1006,7 @@ class StrategyBase:
             if _evaluate_conditional(target_host):
                 while True:
                     state, task = iterator.get_next_task_for_host(target_host, peek=True)
-                    if task.action in C._ACTION_META and task.args.get("_raw_params") == "role_complete":
+                    if task._get_meta() == "role_complete":
                         break
                     iterator.set_state_for_host(target_host.name, state)
                     display.debug("'%s' skipped because role has been ended via 'end_role'" % task)

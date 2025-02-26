@@ -281,11 +281,11 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             else:
                 if use_handlers:
                     task = Handler.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
-                    if task.get_meta() == "end_role":
+                    if task._get_meta() == "end_role":
                         raise AnsibleParserError("Cannot execute 'end_role' from a handler", obj=task)
                 else:
                     task = Task.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
-                    if task.get_meta() == "end_role" and role is None:
+                    if task._get_meta() == "end_role" and role is None:
                         raise AnsibleParserError("Cannot execute 'end_role' from outside of a role", obj=task)
 
                 task_list.append(task)

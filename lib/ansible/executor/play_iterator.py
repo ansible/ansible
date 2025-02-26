@@ -446,8 +446,7 @@ class PlayIterator:
                 # skip implicit flush_handlers if there are no handlers notified
                 if (
                     task.implicit
-                    and task.action in C._ACTION_META
-                    and task.args.get('_raw_params', None) == 'flush_handlers'
+                    and task._get_meta() == 'flush_handlers'
                     and (
                         # the state store in the `state` variable could be a nested state,
                         # notifications are always stored in the top level state, get it here

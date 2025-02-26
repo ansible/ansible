@@ -211,8 +211,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
 
         return args
 
-    def get_meta(self) -> str | None:
-        # DTFIX-MERGE: validate meta, return an enum?
+    def _get_meta(self) -> str | None:
+        # FUTURE: validate meta and return an enum instead of a str
         # meta currently does not support being templated, so we can cheat
         if self.action in C._ACTION_META:
             return self.args.get('_raw_params')
@@ -221,7 +221,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
 
     def __repr__(self):
         """ returns a human-readable representation of the task """
-        if meta := self.get_meta():
+        if meta := self._get_meta():
             return f"TASK: meta ({meta})"
         else:
             return "TASK: %s" % self.get_name()
