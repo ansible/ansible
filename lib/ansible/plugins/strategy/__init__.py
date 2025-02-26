@@ -1059,7 +1059,7 @@ class StrategyBase:
         else:
             raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
 
-        result = {'msg': msg}
+        result: dict[str, object] = {'msg': msg}
         if skipped:
             result['skipped'] = True
             result['skip_reason'] = skip_reason

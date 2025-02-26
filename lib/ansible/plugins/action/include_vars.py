@@ -9,7 +9,7 @@ import pathlib
 
 import ansible.constants as C
 from ansible.errors import AnsibleError
-from ansible._internal._datatag._tags import Origin, _EncryptedSource
+from ansible._internal._datatag._tags import _EncryptedSource
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.action import ActionBase
