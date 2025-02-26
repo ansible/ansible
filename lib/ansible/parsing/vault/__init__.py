@@ -995,10 +995,12 @@ class VaultEditor:
 
         try:
             if filename == '-':
-                data = sys.stdin.buffer.read()
+                data = Origin(description='<stdin>').tag(sys.stdin.buffer.read())
             else:
+                filename = os.path.abspath(filename)
+
                 with open(filename, "rb") as fh:
-                    data = Origin(path=str(filename)).tag(fh.read())
+                    data = Origin(path=filename).tag(fh.read())
         except Exception as e:
             msg = to_native(e)
             if not msg:
