@@ -15,6 +15,12 @@ DOCUMENTATION:
       description: A Base64 string to decode.
       type: string
       required: true
+    encoding:
+      description:
+        - The encoding to use to transform from a text string to a byte string.
+        - Defaults to using 'utf-8'.
+      type: string
+      required: false
 
 EXAMPLES: |
   # Base64 decode a string
@@ -22,6 +28,10 @@ EXAMPLES: |
 
   # Base64 decode the content of 'b64stuff' variable
   stuff: "{{ b64stuff | b64decode }}"
+
+  # Base64 decode the content with different encoding
+  stuff: "{{ 'QQBuAHMAaQBiAGwAZQAgAC0AIABPMIkwaDB/MAoA' | b64decode(encoding='utf-16-le') }}"
+  # => 'Ansible - くらとみ\n'
 
 RETURN:
   _value:
