@@ -99,7 +99,7 @@ class FieldAttributeBase:
                     fattributes[attr.alias] = attr
         return fattributes
 
-    def __init__(self):
+    def __init__(self) -> None:
 
         # initialize the data loader and variable manager, which will be provided
         # later when the object is actually loaded
