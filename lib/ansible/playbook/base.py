@@ -434,6 +434,7 @@ class FieldAttributeBase:
 
         new_me._loader = self._loader
         new_me._variable_manager = self._variable_manager
+        new_me._origin = self._origin
         new_me._validated = self._validated
         new_me._finalized = self._finalized
         new_me._uuid = self._uuid

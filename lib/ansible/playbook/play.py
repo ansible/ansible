@@ -437,5 +437,4 @@ class Play(Base, Taggable, CollectionSearch):
         new_me._included_path = self._included_path
         new_me._action_groups = self._action_groups
         new_me._group_actions = self._group_actions
-        new_me._origin = self._origin
         return new_me
