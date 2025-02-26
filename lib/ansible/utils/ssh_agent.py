@@ -57,9 +57,44 @@ else:
     HAS_CRYPTOGRAPHY = True
 
 
+class ProtocolMsgNumbers(enum.IntEnum):
+    # Responses
+    SSH_AGENT_FAILURE = 5
+    SSH_AGENT_SUCCESS = 6
+    SSH_AGENT_IDENTITIES_ANSWER = 12
+    SSH_AGENT_SIGN_RESPONSE = 14
+    SSH_AGENT_EXTENSION_FAILURE = 28
+    SSH_AGENT_EXTENSION_RESPONSE = 29
+
+    # Constraints
+    SSH_AGENT_CONSTRAIN_LIFETIME = 1
+    SSH_AGENT_CONSTRAIN_CONFIRM = 2
+    SSH_AGENT_CONSTRAIN_EXTENSION = 255
+
+    # Requests
+    SSH_AGENTC_REQUEST_IDENTITIES = 11
+    SSH_AGENTC_SIGN_REQUEST = 13
+    SSH_AGENTC_ADD_IDENTITY = 17
+    SSH_AGENTC_REMOVE_IDENTITY = 18
+    SSH_AGENTC_REMOVE_ALL_IDENTITIES = 19
+    SSH_AGENTC_ADD_SMARTCARD_KEY = 20
+    SSH_AGENTC_REMOVE_SMARTCARD_KEY = 21
+    SSH_AGENTC_LOCK = 22
+    SSH_AGENTC_UNLOCK = 23
+    SSH_AGENTC_ADD_ID_CONSTRAINED = 25
+    SSH_AGENTC_ADD_SMARTCARD_KEY_CONSTRAINED = 26
+    SSH_AGENTC_EXTENSION = 27
+
+    def to_blob(self) -> bytes:
+        return bytes([self])
+
+
 class SshAgentFailure(Exception):
     ...
 
+
+# NOTE: Classes below somewhat represent "Data Type Representations Used in the SSH Protocols"
+#       as specified by RFC4251
 
 @t.runtime_checkable
 class SupportsToBlob(t.Protocol):
@@ -150,38 +185,6 @@ class unicode_string(str, VariableSized):
     @classmethod
     def from_blob(cls, blob: memoryview | bytes) -> t.Self:
         return cls(bytes(blob).decode('utf-8'))
-
-
-class ProtocolMsgNumbers(enum.IntEnum):
-    # Responses
-    SSH_AGENT_FAILURE = 5
-    SSH_AGENT_SUCCESS = 6
-    SSH_AGENT_IDENTITIES_ANSWER = 12
-    SSH_AGENT_SIGN_RESPONSE = 14
-    SSH_AGENT_EXTENSION_FAILURE = 28
-    SSH_AGENT_EXTENSION_RESPONSE = 29
-
-    # Constraints
-    SSH_AGENT_CONSTRAIN_LIFETIME = 1
-    SSH_AGENT_CONSTRAIN_CONFIRM = 2
-    SSH_AGENT_CONSTRAIN_EXTENSION = 255
-
-    # Requests
-    SSH_AGENTC_REQUEST_IDENTITIES = 11
-    SSH_AGENTC_SIGN_REQUEST = 13
-    SSH_AGENTC_ADD_IDENTITY = 17
-    SSH_AGENTC_REMOVE_IDENTITY = 18
-    SSH_AGENTC_REMOVE_ALL_IDENTITIES = 19
-    SSH_AGENTC_ADD_SMARTCARD_KEY = 20
-    SSH_AGENTC_REMOVE_SMARTCARD_KEY = 21
-    SSH_AGENTC_LOCK = 22
-    SSH_AGENTC_UNLOCK = 23
-    SSH_AGENTC_ADD_ID_CONSTRAINED = 25
-    SSH_AGENTC_ADD_SMARTCARD_KEY_CONSTRAINED = 26
-    SSH_AGENTC_EXTENSION = 27
-
-    def to_blob(self) -> bytes:
-        return bytes([self])
 
 
 class KeyAlgo(str, VariableSized, enum.Enum):

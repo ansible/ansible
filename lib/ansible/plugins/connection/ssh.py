@@ -265,7 +265,6 @@ DOCUMENTATION = """
           vars:
             - name: ansible_pipelining
             - name: ansible_ssh_pipelining
-
       private_key_file:
           description:
               - Path to private key file to use for authentication.
@@ -283,7 +282,7 @@ DOCUMENTATION = """
               option: '--private-key'
       private_key:
           description:
-            - private key contents in PEM format. Requires the SSH_AGENT configuration to be enabled.
+            - Private key contents in PEM format. Requires the C(SSH_AGENT) configuration to be enabled.
           type: string
           ini:
             - section: defaults
@@ -295,7 +294,8 @@ DOCUMENTATION = """
           version_added: '2.19'
       private_key_passphrase:
           description:
-            - private key passphrase, dependent on ``private_key``.
+            - Private key passphrase, dependent on O(private_key).
+            - This does NOT have any effect when used with O(private_key_file).
           type: string
           ini:
             - section: defaults
