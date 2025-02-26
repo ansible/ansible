@@ -41,7 +41,7 @@ from ansible.plugins.loader import inventory_loader
 from ansible.utils.helpers import deduplicate_list
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
-from ansible.utils.ssh_agent import Client
+from ansible.utils.ssh_agent import SshAgentClient
 from ansible.utils.vars import combine_vars
 from ansible.vars.plugins import get_vars_from_inventory_sources
 
@@ -209,7 +209,7 @@ class InventoryManager(object):
                 sock = ssh_agent_cfg
 
         try:
-            with Client(sock) as client:
+            with SshAgentClient(sock) as client:
                 client.list()
         except Exception as e:
             raise AnsibleError(

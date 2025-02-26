@@ -439,7 +439,7 @@ from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.plugins.shell.powershell import _replace_stderr_clixml
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath, makedirs_safe
-from ansible.utils.ssh_agent import load_private_key, Client, PublicKeyMsg
+from ansible.utils.ssh_agent import load_private_key, SshAgentClient, PublicKeyMsg
 
 try:
     from cryptography.hazmat.primitives import serialization
@@ -763,7 +763,7 @@ class Connection(ConnectionBase):
         public_key = private_key.public_key()
         pubkey_msg = PublicKeyMsg.from_public_key(public_key)
         fingerprint = pubkey_msg.fingerprint()
-        with Client(auth_sock) as client:
+        with SshAgentClient(auth_sock) as client:
             if (public_key := private_key.public_key()) not in client:
                 display.vvv(f'SSH: SSH_AGENT adding {fingerprint} to agent', host=self.host)
                 client.add(

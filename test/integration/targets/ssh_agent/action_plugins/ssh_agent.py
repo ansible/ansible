@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 
 from ansible.plugins.action import ActionBase
-from ansible.utils.ssh_agent import Client
+from ansible.utils.ssh_agent import SshAgentClient
 from ansible.module_utils.common.text.converters import to_bytes
 
 
@@ -23,18 +23,18 @@ class ActionModule(ActionBase):
                 return {'failed': True, 'msg': 'not implemented'}
 
     def lock(self, password):
-        with Client(os.environ['SSH_AUTH_SOCK']) as client:
+        with SshAgentClient(os.environ['SSH_AUTH_SOCK']) as client:
             client.lock(to_bytes(password))
         return {'changed': True}
 
     def unlock(self, password):
-        with Client(os.environ['SSH_AUTH_SOCK']) as client:
+        with SshAgentClient(os.environ['SSH_AUTH_SOCK']) as client:
             client.unlock(to_bytes(password))
         return {'changed': True}
 
     def list(self):
         result = {'keys': [], 'nkeys': 0}
-        with Client(os.environ['SSH_AUTH_SOCK']) as client:
+        with SshAgentClient(os.environ['SSH_AUTH_SOCK']) as client:
             key_list = client.list()
             result['nkeys'] = key_list.nkeys
             for key in key_list.keys:

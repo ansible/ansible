@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import binascii
-import collections.abc
 import copy
 import dataclasses
 import enum
@@ -62,25 +61,105 @@ class SshAgentFailure(Exception):
     ...
 
 
-class mpint(int):
-    ...
+@t.runtime_checkable
+class SupportsToBlob(t.Protocol):
+    def to_blob(self) -> bytes:
+        ...
 
 
-class byte(int):
-    ...
+@t.runtime_checkable
+class SupportsFromBlob(t.Protocol):
+    @classmethod
+    def from_blob(cls, blob: memoryview | bytes) -> t.Self:
+        ...
+
+    @classmethod
+    def consume_from_blob(cls, blob: memoryview | bytes) -> tuple[t.Self, memoryview | bytes]:
+        ...
+
+
+class VariableSized:
+    @classmethod
+    def from_blob(cls, blob: memoryview | bytes) -> t.Self:
+        raise NotImplementedError
+
+    @classmethod
+    def consume_from_blob(cls, blob: memoryview | bytes) -> tuple[t.Self, memoryview | bytes]:
+        length = uint32.from_blob(blob[:4])
+        blob = blob[4:]
+        return cls.from_blob(blob[:length]), blob[length:]
+
+
+class uint32(int):
+    def to_blob(self) -> bytes:
+        return self.to_bytes(length=4, byteorder='big')
+
+    @classmethod
+    def from_blob(cls, blob: memoryview | bytes) -> t.Self:
+        return cls.from_bytes(blob, byteorder='big')
+
+    @classmethod
+    def consume_from_blob(cls, blob: memoryview | bytes) -> tuple[t.Self, memoryview | bytes]:
+        length = uint32(4)
+        return cls.from_blob(blob[:length]), blob[length:]
+
+
+class mpint(int, VariableSized):
+    def to_blob(self) -> bytes:
+        if self < 0:
+            raise ValueError("negative mpint not allowed")
+        if not self:
+            return b""
+        nbytes = (self.bit_length() + 8) // 8
+        ret = bytearray(self.to_bytes(length=nbytes, byteorder='big'))
+        ret[:0] = uint32(len(ret)).to_blob()
+        return ret
+
+    @classmethod
+    def from_blob(cls, blob: memoryview | bytes) -> t.Self:
+        if blob and blob[0] > 127:
+            raise ValueError("Invalid data")
+        return cls.from_bytes(blob, byteorder='big')
 
 
 class constraints(bytes):
-    ...
+    def to_blob(self) -> bytes:
+        return self
 
 
-class Protocol(enum.IntEnum):
+class binary_string(bytes, VariableSized):
+    def to_blob(self) -> bytes:
+        if length := len(self):
+            return uint32(length).to_blob() + self
+        else:
+            return b""
+
+    @classmethod
+    def from_blob(cls, blob: memoryview | bytes) -> t.Self:
+        return cls(blob)
+
+
+class unicode_string(str, VariableSized):
+    def to_blob(self) -> bytes:
+        val = self.encode('utf-8')
+        if length := len(val):
+            return uint32(length).to_blob() + val
+        else:
+            return b""
+
+    @classmethod
+    def from_blob(cls, blob: memoryview | bytes) -> t.Self:
+        return cls(bytes(blob).decode('utf-8'))
+
+
+class ProtocolMsgNumbers(enum.IntEnum):
     # Responses
     SSH_AGENT_FAILURE = 5
     SSH_AGENT_SUCCESS = 6
-    SSH_AGENT_EXTENSION_FAILURE = 28
     SSH_AGENT_IDENTITIES_ANSWER = 12
     SSH_AGENT_SIGN_RESPONSE = 14
+    SSH_AGENT_EXTENSION_FAILURE = 28
+    SSH_AGENT_EXTENSION_RESPONSE = 29
 
     # Constraints
     SSH_AGENT_CONSTRAIN_LIFETIME = 1
@@ -101,8 +180,11 @@ class Protocol(enum.IntEnum):
     SSH_AGENTC_ADD_SMARTCARD_KEY_CONSTRAINED = 26
     SSH_AGENTC_EXTENSION = 27
 
+    def to_blob(self) -> bytes:
+        return bytes([self])
 
-class KeyAlgo(str, enum.Enum):
+
+class KeyAlgo(str, VariableSized, enum.Enum):
     RSA = "ssh-rsa"
     DSA = "ssh-dss"
     ECDSA256 = "ecdsa-sha2-nistp256"
@@ -128,6 +210,14 @@ class KeyAlgo(str, enum.Enum):
             case _:
                 raise NotImplementedError(self.name)
 
+    def to_blob(self) -> bytes:
+        b_self = self.encode('utf-8')
+        return uint32(len(b_self)).to_blob() + b_self
+
+    @classmethod
+    def from_blob(cls, blob: memoryview | bytes) -> t.Self:
+        return cls(bytes(blob).decode('utf-8'))
+
 
 if HAS_CRYPTOGRAPHY:
     _ECDSA_KEY_TYPE: dict[KeyAlgo, type[EllipticCurve]] = {
@@ -139,12 +229,31 @@ if HAS_CRYPTOGRAPHY:
 
 @dataclasses.dataclass
 class Msg:
-    ...
+    def to_blob(self) -> bytes:
+        rv = bytearray()
+        for field in dataclasses.fields(self):
+            fv = getattr(self, field.name)
+            if isinstance(fv, SupportsToBlob):
+                rv.extend(fv.to_blob())
+            else:
+                raise NotImplementedError(field.type)
+        return rv
+
+    @classmethod
+    def from_blob(cls, blob: memoryview | bytes) -> t.Self:
+        args: list[t.Any] = []
+        for _field_name, field_type in t.get_type_hints(cls).items():
+            if isinstance(field_type, SupportsFromBlob):
+                fv, blob = field_type.consume_from_blob(blob)
+                args.append(fv)
+            else:
+                raise NotImplementedError(str(field_type))
+        return cls(*args)
 
 
 @dataclasses.dataclass(order=True, slots=True)
 class AgentLockMsg(Msg):
-    passphrase: bytes
+    passphrase: binary_string
 
 
 @dataclasses.dataclass
@@ -178,11 +287,11 @@ class PrivateKeyMsg(Msg):
                 key_size = private_key.key_size
                 return EcdsaPrivateKeyMsg(
                     getattr(KeyAlgo, f'ECDSA{key_size}'),
-                    f'nistp{key_size}',
-                    private_key.public_key().public_bytes(
+                    unicode_string(f'nistp{key_size}'),
+                    binary_string(private_key.public_key().public_bytes(
                         encoding=serialization.Encoding.X962,
                         format=serialization.PublicFormat.UncompressedPoint
-                    ),
+                    )),
                     pn.private_value,
                 )
             case Ed25519PrivateKey():
@@ -197,8 +306,8 @@ class PrivateKeyMsg(Msg):
                 )
                 return Ed25519PrivateKeyMsg(
                     KeyAlgo.ED25519,
-                    public_bytes,
-                    private_bytes + public_bytes,
+                    binary_string(public_bytes),
+                    binary_string(private_bytes + public_bytes),
                 )
             case _:
                 raise NotImplementedError(private_key)
@@ -213,7 +322,7 @@ class RSAPrivateKeyMsg(PrivateKeyMsg):
     iqmp: mpint
     p: mpint
     q: mpint
-    comments: str = dataclasses.field(default='', compare=False)
+    comments: unicode_string = dataclasses.field(default=unicode_string(''), compare=False)
     constraints: constraints = dataclasses.field(default=constraints(b''))
 
 
@@ -225,26 +334,26 @@ class DSAPrivateKeyMsg(PrivateKeyMsg):
     g: mpint
     y: mpint
     x: mpint
-    comments: str = dataclasses.field(default='', compare=False)
+    comments: unicode_string = dataclasses.field(default=unicode_string(''), compare=False)
     constraints: constraints = dataclasses.field(default=constraints(b''))
 
 
 @dataclasses.dataclass(order=True, slots=True)
 class EcdsaPrivateKeyMsg(PrivateKeyMsg):
     type: KeyAlgo
-    ecdsa_curve_name: str
-    Q: bytes
+    ecdsa_curve_name: unicode_string
+    Q: binary_string
     d: mpint
-    comments: str = dataclasses.field(default='', compare=False)
+    comments: unicode_string = dataclasses.field(default=unicode_string(''), compare=False)
     constraints: constraints = dataclasses.field(default=constraints(b''))
 
 
 @dataclasses.dataclass(order=True, slots=True)
 class Ed25519PrivateKeyMsg(PrivateKeyMsg):
     type: KeyAlgo
-    enc_a: bytes
-    k_env_a: bytes
-    comments: str = dataclasses.field(default='', compare=False)
+    enc_a: binary_string
+    k_env_a: binary_string
+    comments: unicode_string = dataclasses.field(default=unicode_string(''), compare=False)
     constraints: constraints = dataclasses.field(default=constraints(b''))
 
 
@@ -316,19 +425,19 @@ class PublicKeyMsg(Msg):
             case EllipticCurvePublicKey():
                 return EcdsaPublicKeyMsg(
                     getattr(KeyAlgo, f'ECDSA{public_key.curve.key_size}'),
-                    f'nistp{public_key.curve.key_size}',
-                    public_key.public_bytes(
+                    unicode_string(f'nistp{public_key.curve.key_size}'),
+                    binary_string(public_key.public_bytes(
                         encoding=serialization.Encoding.X962,
                         format=serialization.PublicFormat.UncompressedPoint
-                    )
+                    ))
                 )
             case Ed25519PublicKey():
                 return Ed25519PublicKeyMsg(
                     KeyAlgo.ED25519,
-                    public_key.public_bytes(
+                    binary_string(public_key.public_bytes(
                         encoding=serialization.Encoding.Raw,
                         format=serialization.PublicFormat.Raw,
-                    )
+                    ))
                 )
             case RSAPublicKey():
                 pn = public_key.public_numbers()
@@ -343,8 +452,8 @@ class PublicKeyMsg(Msg):
     def fingerprint(self):
         digest = hashlib.sha256()
         msg = copy.copy(self)
-        msg.comments = ''
-        k = encode(msg)
+        msg.comments = unicode_string('')
+        k = msg.to_blob()
         digest.update(k)
         return binascii.b2a_base64(
             digest.digest(),
@@ -357,7 +466,7 @@ class RSAPublicKeyMsg(PublicKeyMsg):
     type: KeyAlgo
     e: mpint
     n: mpint
-    comments: str = dataclasses.field(default='', compare=False)
+    comments: unicode_string = dataclasses.field(default=unicode_string(''), compare=False)
 
 
 @dataclasses.dataclass(order=True, slots=True)
@@ -367,171 +476,83 @@ class DSAPublicKeyMsg(PublicKeyMsg):
     q: mpint
     g: mpint
     y: mpint
-    comments: str = dataclasses.field(default='', compare=False)
+    comments: unicode_string = dataclasses.field(default=unicode_string(''), compare=False)
 
 
 @dataclasses.dataclass(order=True, slots=True)
 class EcdsaPublicKeyMsg(PublicKeyMsg):
     type: KeyAlgo
-    ecdsa_curve_name: str
-    Q: bytes
-    comments: str = dataclasses.field(default='', compare=False)
+    ecdsa_curve_name: unicode_string
+    Q: binary_string
+    comments: unicode_string = dataclasses.field(default=unicode_string(''), compare=False)
 
 
 @dataclasses.dataclass(order=True, slots=True)
 class Ed25519PublicKeyMsg(PublicKeyMsg):
     type: KeyAlgo
-    enc_a: bytes
-    comments: str = dataclasses.field(default='', compare=False)
+    enc_a: binary_string
+    comments: unicode_string = dataclasses.field(default=unicode_string(''), compare=False)
 
 
 @dataclasses.dataclass(order=True, slots=True)
 class KeyList(Msg):
-    nkeys: int
+    nkeys: uint32
+    keys: PublicKeyMsgList
+
+    def __post_init__(self):
+        if self.nkeys != len(self.keys):
+            raise SshAgentFailure(
+                "agent: invalid number of keys received for identities list"
+            )
+
+
+@dataclasses.dataclass(order=True, slots=True)
+class PublicKeyMsgList(Msg):
     keys: list[PublicKeyMsg]
 
-    def __init__(self, nkeys, *args):
-        self.nkeys = nkeys
-        self.keys = args
+    def __iter__(self):
+        yield from self.keys
+
+    def __len__(self):
+        return len(self.keys)
+
+    @classmethod
+    def from_blob(cls, blob: memoryview | bytes) -> t.Self:
+        ...
+
+    @classmethod
+    def consume_from_blob(cls, blob: memoryview | bytes) -> tuple[t.Self, memoryview | bytes]:
+        args: list[PublicKeyMsg] = []
+        while blob:
+            prev_blob = blob
+            key_blob, key_blob_length, comment_blob = cls._consume_field(blob)
+
+            peek_key_algo, _length, _blob = cls._consume_field(key_blob)
+            pub_key_msg_cls = PublicKeyMsg.get_dataclass(
+                KeyAlgo(bytes(peek_key_algo).decode('utf-8'))
+            )
+
+            _fv, comment_blob_length, blob = cls._consume_field(comment_blob)
+            key_plus_comment = (
+                prev_blob[4: (4 + key_blob_length) + (4 + comment_blob_length)]
+            )
+
+            args.append(pub_key_msg_cls.from_blob(key_plus_comment))
+        return cls(args), b""
+
+    @staticmethod
+    def _consume_field(
+            blob: memoryview | bytes
+    ) -> tuple[memoryview | bytes, uint32, memoryview | bytes]:
+        length = uint32.from_blob(blob[:4])
+        blob = blob[4:]
+        return blob[:length], length, blob[length:]
 
 
-def _to_bytes(val: int, length: int) -> bytes:
-    return val.to_bytes(length=length, byteorder='big')
-
-
-def _from_bytes(val: bytes) -> int:
-    return int.from_bytes(val, byteorder='big')
-
-
-def _to_mpint(val: int) -> bytes:
-    if val < 0:
-        raise ValueError("negative mpint not allowed")
-    if not val:
-        return b""
-    nbytes = (val.bit_length() + 8) // 8
-    ret = bytearray(_to_bytes(val, nbytes))
-    ret[:0] = _to_bytes(len(ret), 4)
-    return ret
-
-
-def _from_mpint(val: bytes) -> int:
-    if val and val[0] > 127:
-        raise ValueError("Invalid data")
-    return _from_bytes(val)
-
-
-def encode_dataclass(msg: Msg) -> collections.abc.Iterator[bytes]:
-    for field in dataclasses.fields(msg):
-        fv = getattr(msg, field.name)
-        match field.type:
-            case 'mpint':
-                yield _to_mpint(fv)
-            case 'int':  # uint32
-                yield _to_bytes(fv, 4)
-            case 'bool' | 'byte' | 'Protocol':
-                yield _to_bytes(fv, 1)
-            case 'str' | 'KeyAlgo':
-                if fv:
-                    fv = fv.encode('utf-8')
-                    yield _to_bytes(len(fv), 4)
-                    yield fv
-            case 'bytes':
-                if fv:
-                    yield _to_bytes(len(fv), 4)
-                    yield fv
-            case 'constraints':
-                yield fv
-            case _:
-                raise NotImplementedError(field.type)
-
-
-def parse_annotation(type: t.Any) -> tuple[str, str]:
-    if type.count('[') > 1:
-        raise NotImplementedError()
-    main, _sep, sub = type.removesuffix(']').partition('[')
-    return main, sub
-
-
-def _consume_field(
-        blob: memoryview,
-        type: t.Any | None = None
-) -> tuple[memoryview, int, memoryview]:
-    match type:
-        case 'int':
-            length = 4
-        case 'bool' | 'byte' | 'Protocol':
-            length = 1
-        case _:
-            length = _from_bytes(blob[:4])
-            blob = blob[4:]
-    return blob[:length], length, blob[length:]
-
-
-def decode_dataclass(blob: memoryview, dataclass: type[Msg]) -> Msg:
-    fi = 0
-    args: list[t.Any] = []
-    fields = dataclasses.fields(dataclass)
-    while blob:
-        field = fields[fi]
-        prev_blob = blob
-        fv, length, blob = _consume_field(blob, type=field.type)
-        main_type, sub_type = parse_annotation(field.type)
-        match main_type:
-            case 'mpint':
-                args.append(_from_mpint(fv))
-            case 'int':  # uint32
-                args.append(_from_bytes(fv))
-            case 'Protocol':
-                args.append(Protocol(_from_bytes(fv)))
-            case 'bool' | 'byte':
-                args.append(_from_bytes(fv))
-            case 'KeyAlgo':
-                args.append(KeyAlgo(fv.tobytes().decode('utf-8')))
-            case 'str':
-                args.append(fv.tobytes().decode('utf-8'))
-            case 'bytes':
-                args.append(bytes(fv))
-            case 'list':
-                # Lists should always be last
-                match sub_type:
-                    case 'PublicKeyMsg':
-                        peek, _length, _blob = _consume_field(fv)
-                        sub = PublicKeyMsg.get_dataclass(
-                            KeyAlgo(peek.tobytes().decode('utf-8'))
-                        )
-
-                        _fv, cl, blob = _consume_field(blob)
-                        key_plus_comment = (
-                            prev_blob[4:length + cl + 8]
-                        )
-                    case _:
-                        raise NotImplementedError(sub_type)
-
-                args.append(decode_dataclass(key_plus_comment, sub))
-                fi -= 1  # We are in a list, don't move to the next field
-            case _:
-                raise NotImplementedError(field.type)
-
-        fi += 1
-    return dataclass(*args)
-
-
-def encode(msg: Protocol | Msg) -> bytes:
-    if isinstance(msg, Protocol):
-        payload = bytes([msg])
-    else:
-        payload = b''.join(encode_dataclass(msg))
-    return payload
-
-
-class Client:
+class SshAgentClient:
     def __init__(self, auth_sock: str):
-        self._auth_sock = auth_sock
         self._sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self._sock.connect(auth_sock)
-
-    def terminate(self):
-        self._ssh_agent.terminate()
 
     def close(self):
         self._sock.close()
@@ -543,82 +564,73 @@ class Client:
         self.close()
 
     def send(self, msg: bytes) -> bytes:
-        length = _to_bytes(len(msg), 4)
+        length = uint32(len(msg)).to_blob()
         self._sock.sendall(length + msg)
-        bufsize = _from_bytes(self._sock.recv(4))
+        bufsize = uint32.from_blob(self._sock.recv(4))
         resp = self._sock.recv(bufsize)
-        if resp[0] == Protocol.SSH_AGENT_FAILURE:
+        if resp[0] == ProtocolMsgNumbers.SSH_AGENT_FAILURE:
             raise SshAgentFailure('agent: failure')
         return resp
 
     def remove_all(self):
-        msg = encode(Protocol.SSH_AGENTC_REMOVE_ALL_IDENTITIES)
-        self.send(msg)
-        return True
+        self.send(
+            ProtocolMsgNumbers.SSH_AGENTC_REMOVE_ALL_IDENTITIES.to_blob()
+        )
 
     def remove(self, public_key: CryptoPublicKey):
-        msg = encode(Protocol.SSH_AGENTC_REMOVE_IDENTITY)
-        key_blob = encode(
-            PublicKeyMsg.from_public_key(public_key)
+        key_blob = PublicKeyMsg.from_public_key(public_key).to_blob()
+        self.send(
+            ProtocolMsgNumbers.SSH_AGENTC_REMOVE_IDENTITY.to_blob() +
+            uint32(len(key_blob)).to_blob() + key_blob
         )
-        msg += _to_bytes(len(key_blob), 4)
-        msg += key_blob
-        self.send(msg)
-        return True
 
     def add(
             self,
             private_key: CryptoPrivateKey,
-            comments: str | None = None,
+            comments: unicode_string | None = None,
             lifetime: int | None = None,
             confirm: bool | None = None,
     ):
         key_msg = PrivateKeyMsg.from_private_key(private_key)
-        key_msg.comments = comments or ''
+        key_msg.comments = unicode_string(comments or '')
         if lifetime:
             key_msg.constraints += constraints(
-                [Protocol.SSH_AGENT_CONSTRAIN_LIFETIME]
-            ) + _to_bytes(lifetime, 4)
+                [ProtocolMsgNumbers.SSH_AGENT_CONSTRAIN_LIFETIME]
+            ).to_blob() + uint32(lifetime).to_blob()
         if confirm:
             key_msg.constraints += constraints(
-                [Protocol.SSH_AGENT_CONSTRAIN_CONFIRM]
-            )
+                [ProtocolMsgNumbers.SSH_AGENT_CONSTRAIN_CONFIRM]
+            ).to_blob()
 
         if key_msg.constraints:
-            msg = encode(Protocol.SSH_AGENTC_ADD_ID_CONSTRAINED)
+            msg = ProtocolMsgNumbers.SSH_AGENTC_ADD_ID_CONSTRAINED.to_blob()
         else:
-            msg = encode(Protocol.SSH_AGENTC_ADD_IDENTITY)
-        msg += encode(key_msg)
+            msg = ProtocolMsgNumbers.SSH_AGENTC_ADD_IDENTITY.to_blob()
+        msg += key_msg.to_blob()
         self.send(msg)
-        return True
 
     def list(self) -> KeyList:
-        req = encode(Protocol.SSH_AGENTC_REQUEST_IDENTITIES)
+        req = ProtocolMsgNumbers.SSH_AGENTC_REQUEST_IDENTITIES.to_blob()
         r = memoryview(bytearray(self.send(req)))
-        if r[0] != Protocol.SSH_AGENT_IDENTITIES_ANSWER:
+        if r[0] != ProtocolMsgNumbers.SSH_AGENT_IDENTITIES_ANSWER:
             raise SshAgentFailure(
                 'agent: non-identities answer received for identities list'
             )
-        return t.cast(KeyList, decode_dataclass(r[1:], KeyList))
+        return KeyList.from_blob(r[1:])
 
     def lock(self, passphrase: bytes):
-        msg = encode(Protocol.SSH_AGENTC_LOCK)
-        msg += encode(AgentLockMsg(passphrase))
-        self.send(msg)
-        return True
+        self.send(
+            ProtocolMsgNumbers.SSH_AGENTC_LOCK.to_blob() + AgentLockMsg(binary_string(passphrase)).to_blob()
+        )
 
     def unlock(self, passphrase: bytes):
-        msg = encode(Protocol.SSH_AGENTC_UNLOCK)
-        msg += encode(AgentLockMsg(passphrase))
-        self.send(msg)
-        return True
+        self.send(
+            ProtocolMsgNumbers.SSH_AGENTC_UNLOCK.to_blob() + AgentLockMsg(binary_string(passphrase)).to_blob()
+        )
 
     def __contains__(self, public_key: CryptoPublicKey) -> bool:
         msg = PublicKeyMsg.from_public_key(public_key)
-        for key in self.list().keys:
-            if key == msg:
-                return True
-        return False
+        return msg in self.list().keys
 
 
 def load_private_key(key_data: bytes, passphrase: bytes) -> CryptoPrivateKey:
