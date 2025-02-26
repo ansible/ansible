@@ -28,7 +28,6 @@ from ansible.module_utils._internal._datatag import Tripwire
 from ansible.module_utils._internal._datatag._tags import Deprecated
 from ansible.parsing import vault
 from ansible._internal._datatag._tags import VaultedValue, TrustedAsTemplate
-from ansible.parsing.yaml import dumper
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.filter.core import to_yaml, to_nice_yaml
@@ -48,7 +47,7 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
         self.good_vault = vault.VaultLib(self.vault_secrets)
         self.vault = self.good_vault
         self.stream = self._build_stream()
-        self.dumper = dumper.AnsibleDumper
+        self.dumper = AnsibleDumper
 
     def _build_stream(self, yaml_text=None):
         text = yaml_text or u''

@@ -34,7 +34,8 @@ from ansible.module_utils.common.yaml import yaml_dump
 from ansible.module_utils.six import string_types
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.parsing.yaml.loader import AnsibleLoader, _AnsibleInstrumentedLoader
+from ansible.parsing.yaml.loader import AnsibleLoader
+from ansible._internal._yaml._loader import AnsibleInstrumentedLoader
 from ansible.plugins.list import list_plugins
 from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
@@ -707,7 +708,7 @@ class DocCLI(CLI, RoleMixin):
 
     @staticmethod
     def _list_keywords():
-        return yaml.load(pkgutil.get_data('ansible', 'keyword_desc.yml'), Loader=_AnsibleInstrumentedLoader)
+        return yaml.load(pkgutil.get_data('ansible', 'keyword_desc.yml'), Loader=AnsibleInstrumentedLoader)
 
     @staticmethod
     def _get_keywords_docs(keys):

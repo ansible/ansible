@@ -86,14 +86,14 @@ Should be:
 
         # Check for common unquoted colon mistakes.
         elif (
-                # ignore lines starting with only whitespace and a colon
-                not target_line.lstrip().startswith(':') and
-                # find the value after list/dict preamble
-                (value_match := re.search(r'^\s*(?:-\s+)*(?:[\w\s\[\]{}]+:\s+)?(?P<value>.*)$', target_line)) and
-                # ignore properly quoted values
-                (target_fragment := _replace_quoted_value(value_match.group('value'))) and
-                # look for an unquoted colon in the value
-                (colon_match := re.search(r':($| )', target_fragment))
+            # ignore lines starting with only whitespace and a colon
+            not target_line.lstrip().startswith(':')
+            # find the value after list/dict preamble
+            and (value_match := re.search(r'^\s*(?:-\s+)*(?:[\w\s\[\]{}]+:\s+)?(?P<value>.*)$', target_line))
+            # ignore properly quoted values
+            and (target_fragment := _replace_quoted_value(value_match.group('value')))
+            # look for an unquoted colon in the value
+            and (colon_match := re.search(r':($| )', target_fragment))
         ):
             source_context = _utils.SourceContext.from_origin(origin.replace(col_num=value_match.start('value') + colon_match.start() + 1))
             message = 'Colons in unquoted values must be followed by a non-space character.'

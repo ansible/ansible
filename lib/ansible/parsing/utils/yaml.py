@@ -14,7 +14,7 @@ from ansible.errors import AnsibleJSONParserError
 from ansible._internal._errors import _utils
 from ansible.parsing.vault import VaultSecret
 from ansible.parsing.yaml.loader import AnsibleLoader
-from ansible.parsing.yaml.errors import AnsibleYAMLParserError
+from ansible._internal._yaml._errors import AnsibleYAMLParserError
 from ansible._internal._datatag._tags import Origin
 from ansible._internal._serialization import _legacy
 

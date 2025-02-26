@@ -7,7 +7,7 @@ import pytest
 
 from ansible.errors import AnsibleJSONParserError
 from ansible.parsing.vault import VaultHelper, EncryptedString
-from ansible.parsing.yaml.errors import AnsibleYAMLParserError
+from ansible._internal._yaml._errors import AnsibleYAMLParserError
 from ansible.parsing.utils.yaml import from_yaml
 
 from ..vault.test_vault import make_vault_ciphertext

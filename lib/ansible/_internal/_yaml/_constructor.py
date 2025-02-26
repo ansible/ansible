@@ -1,20 +1,3 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
 from __future__ import annotations
 
 import abc
@@ -32,7 +15,7 @@ from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 from ansible.parsing.vault import EncryptedString
 from ansible.utils.display import Display
 
-from .errors import AnsibleConstructorError
+from ._errors import AnsibleConstructorError
 
 display = Display()
 
@@ -52,7 +35,7 @@ class _BaseConstructor(SafeConstructor, metaclass=abc.ABCMeta):
         cls._register_constructors()
 
 
-class _AnsibleInstrumentedConstructor(_BaseConstructor):
+class AnsibleInstrumentedConstructor(_BaseConstructor):
     """Ansible constructor which supports Ansible custom behavior such as `Origin` tagging, but no Ansible-specific YAML tags."""
 
     name: t.Any  # provided by the YAML parser, which retrieves it from the stream
@@ -202,7 +185,7 @@ class _AnsibleInstrumentedConstructor(_BaseConstructor):
             cls.add_constructor(tag, constructor)
 
 
-class AnsibleConstructor(_AnsibleInstrumentedConstructor):
+class AnsibleConstructor(AnsibleInstrumentedConstructor):
     """Ansible constructor which supports Ansible custom behavior such as `Origin` tagging, as well as Ansible-specific YAML tags."""
 
     def __init__(self, origin: Origin, trusted_as_template: bool) -> None:

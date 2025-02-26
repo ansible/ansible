@@ -33,8 +33,8 @@ import unittest
 from ansible import errors
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.parsing.yaml.errors import AnsibleYAMLParserError
 from ansible.parsing.yaml.loader import AnsibleLoader
+from ansible._internal._yaml._errors import AnsibleYAMLParserError
 from ansible.parsing import vault
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 from ansible.module_utils._internal._datatag import _untaggable_types

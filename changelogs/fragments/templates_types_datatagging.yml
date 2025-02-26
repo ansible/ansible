@@ -94,8 +94,8 @@ breaking_changes:
     In cases where a matching mapping key is present, the associated value will be returned instead of an error. 
     This increases template environment isolation and ensures more consistent behavior between the ``.`` and ``[]`` operators.
   - inventory - Invalid variable names provided by inventories result in an inventory parse failure. This behavior is now consistent with other variable name usages throughout Ansible.
-  - The ``ansible.parsing.yaml.objects`` Python module has been removed.
-  - The ``ansible.utils.native_jinja`` Python module has been removed.
+  - internals - The ``ansible.utils.native_jinja`` Python module has been removed.
+  - internals - The ``AnsibleLoader`` and ``AnsibleDumper`` classes for working with YAML are now factory functions and cannot be extended.
 
 security_fixes:
   - templating - Ansible's template engine no longer processes Jinja templates in strings unless they are marked as coming from a trusted source.

@@ -14,7 +14,7 @@ from ansible import constants as C
 from ansible._internal._errors._utils import get_chained_message
 from ansible._internal._datatag._tags import Origin
 from ansible.parsing.utils.yaml import from_yaml
-from ansible.parsing.yaml.errors import AnsibleYAMLParserError
+from ansible._internal._yaml._errors import AnsibleYAMLParserError
 from ansible.utils.display import Display
 
 

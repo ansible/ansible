@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import difflib
+import functools
 import json
 import re
 import sys
@@ -30,8 +31,9 @@ from collections.abc import MutableMapping
 from copy import deepcopy
 
 from ansible import constants as C
+from ansible.module_utils._internal import _datatag
 from ansible.module_utils.common.messages import ErrorSummary
-from ansible.parsing.yaml.dumper import AnsibleDumper
+from ansible._internal._yaml import _dumper
 from ansible.plugins import AnsiblePlugin
 from ansible.template import Templar
 from ansible.utils.color import stringc
@@ -57,16 +59,35 @@ _YAML_BREAK_CHARS = '\n\x85\u2028\u2029'  # NL, NEL, LS, PS
 _SPACE_BREAK_RE = re.compile(fr' +([{_YAML_BREAK_CHARS}])')
 
 
-class _AnsibleCallbackDumper(AnsibleDumper):
-    def __init__(self, lossy=False):
+class _AnsibleCallbackDumper(_dumper.AnsibleDumper):
+    def __init__(self, *args, lossy: bool = False, **kwargs):
+        super().__init__(*args, **kwargs)
+
         self._lossy = lossy
 
-    def __call__(self, *args, **kwargs):
-        # pyyaml expects that we are passing an object that can be instantiated, but to
-        # smuggle the ``lossy`` configuration, we do that in ``__init__`` and then
-        # define this ``__call__`` that will mimic the ability for pyyaml to instantiate class
-        super().__init__(*args, **kwargs)
-        return self
+    def _pretty_represent_str(self, data):
+        """Uses block style for multi-line strings"""
+        data = _datatag.AnsibleTagHelper.as_native_type(data)
+
+        if _should_use_block(data):
+            style = '|'
+            if self._lossy:
+                data = _munge_data_for_lossy_yaml(data)
+        else:
+            style = self.default_style
+
+        node = yaml.representer.ScalarNode('tag:yaml.org,2002:str', data, style=style)
+
+        if self.alias_key is not None:
+            self.represented_objects[self.alias_key] = node
+
+        return node
+
+    @classmethod
+    def _register_representers(cls) -> None:
+        super()._register_representers()
+
+        cls.add_multi_representer(str, cls._pretty_represent_str)
 
 
 def _should_use_block(scalar):
@@ -75,6 +96,7 @@ def _should_use_block(scalar):
     for ch in _YAML_BREAK_CHARS:
         if ch in scalar:
             return True
+
     return False
 
 
@@ -93,12 +115,12 @@ class _SpecialCharacterTranslator:
         return None
 
 
-def _filter_yaml_special(scalar):
+def _filter_yaml_special(scalar: str) -> str:
     """Filter a string removing any character that libyaml/pyyaml declare as special"""
     return scalar.translate(_SpecialCharacterTranslator())
 
 
-def _munge_data_for_lossy_yaml(scalar):
+def _munge_data_for_lossy_yaml(scalar: str) -> str:
     """Modify a string so that analyze_scalar in libyaml/pyyaml will allow block formatting"""
     # we care more about readability than accuracy, so...
     # ...libyaml/pyyaml does not permit trailing spaces for block scalars
@@ -111,29 +133,7 @@ def _munge_data_for_lossy_yaml(scalar):
     return _SPACE_BREAK_RE.sub(r'\1', scalar)
 
 
-def _pretty_represent_str(self, data):
-    """Uses block style for multi-line strings"""
-    if _should_use_block(data):
-        style = '|'
-        if self._lossy:
-            data = _munge_data_for_lossy_yaml(data)
-    else:
-        style = self.default_style
-
-    node = yaml.representer.ScalarNode('tag:yaml.org,2002:str', data, style=style)
-    if self.alias_key is not None:
-        self.represented_objects[self.alias_key] = node
-    return node
-
-
-_AnsibleCallbackDumper.add_representer(
-    str,
-    _pretty_represent_str
-)
-
-
 class CallbackBase(AnsiblePlugin):
-
     """
     This is a base ansible callback class that does nothing. New callbacks should
     use this class as a base and override any callback methods they wish to execute
@@ -273,7 +273,7 @@ class CallbackBase(AnsiblePlugin):
                 yaml.dump(
                     abridged_result,
                     allow_unicode=True,
-                    Dumper=_AnsibleCallbackDumper(lossy=lossy),
+                    Dumper=functools.partial(_AnsibleCallbackDumper, lossy=lossy),
                     default_flow_style=False,
                     indent=indent,
                     # sort_keys=sort_keys  # This requires PyYAML>=5.1
@@ -319,7 +319,7 @@ class CallbackBase(AnsiblePlugin):
                 yaml.dump(
                     diff,
                     allow_unicode=True,
-                    Dumper=_AnsibleCallbackDumper(lossy=lossy),
+                    Dumper=functools.partial(_AnsibleCallbackDumper, lossy=lossy),
                     default_flow_style=False,
                     indent=4,
                     # sort_keys=sort_keys  # This requires PyYAML>=5.1
