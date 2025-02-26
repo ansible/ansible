@@ -105,6 +105,7 @@ class FieldAttributeBase:
         # later when the object is actually loaded
         self._loader = None
         self._variable_manager = None
+        self._origin: Origin | None = None
 
         # other internal params
         self._validated = False
@@ -148,6 +149,7 @@ class FieldAttributeBase:
         # the variable manager class is used to manage and merge variables
         # down to a single dictionary for reference in templating, etc.
         self._variable_manager = variable_manager
+        self._origin = Origin.get_tag(ds)
 
         # the data loader class is used to parse data from strings and files
         if loader is not None:
@@ -779,18 +781,16 @@ class Base(FieldAttributeBase):
 
     def get_path(self) -> str:
         """ return the absolute path of the playbook object and its line number """
-        # DTFIX-MERGE: this is an abuse of origin; we can kill this off in core (and deprecate) in favor of sampling this info on ds load or ?
-        origin: Origin | None = None
-        try:
-            origin = Origin.get_tag(self._ds)
-        except AttributeError:
+        origin = self._origin
+
+        if not origin:
             try:
-                origin = Origin.get_tag(self._parent._play._ds)
+                origin = self._parent._play._origin
             except AttributeError:
                 pass
 
-        if origin:
-            path = "%s:%s" % (origin.path, origin.line_num)
+        if origin and origin.path:
+            path = f"{origin.path}:{origin.line_num or 1}"
         else:
             path = ""
 

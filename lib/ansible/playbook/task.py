@@ -199,8 +199,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             templar=templar,
         )
 
-        # DTFIX-MERGE: the args dict should be tagged with the origin of the task
-
         try:
             with action_type.get_finalize_task_args_context() as finalize_context:
                 args = args_finalizer.finalize(action_type.finalize_task_arg, context=finalize_context)
@@ -208,6 +206,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             # DTFIX-MERGE: how does this impact error handling of template-related errors on task args?
             #  Check ignore_errors behavior with undefined/div-by-zero/etc against devel, in and out of loops.
             raise AnsibleError(f'Finalization of task args for {module_or_action_context.resolved_fqcn!r} failed.', obj=self.action) from ex
+
+        if self._origin:
+            args = self._origin.tag(args)
 
         return args
 
