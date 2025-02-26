@@ -146,11 +146,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         """Override module_defaults post validation to disable templating, which is handled by args post validation."""
         return value
 
-    def _post_validate_name(self, _attr, value, _templar) -> str:
-        """Skip templating of name, it will be done later."""
-        # DTFIX-MERGE: still necessary for tasks? We had it on base for everything, which caused play (and other?) names to never be templated under DT
-        return value
-
     def _post_validate_args(self, attr: str, value: t.Any, templar: TemplateEngine) -> dict[str, t.Any]:
         self.untemplated_args = value  # DTFIX-MERGE: can this be _ prefixed in 2.18 and earlier and removed in DT?
 
