@@ -208,6 +208,16 @@ class CallbackBase(AnsiblePlugin):
                 and result._result.get('_ansible_verbose_override', False) is False)
 
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False, serialize=True):
+        mask = self.get_option('mask').split(',')
+
+        def _mask(data):
+            for key, value in data.items():
+                if isinstance(value, dict):
+                    data[key] = _mask(value)
+                elif key in mask:
+                    data[key] = '***MASKED***'
+            return data
+
         try:
             result_format = self.get_option('result_format')
         except KeyError:

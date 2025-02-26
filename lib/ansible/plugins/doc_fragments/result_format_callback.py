@@ -46,4 +46,15 @@ class ModuleDocFragment(object):
           - key: callback_format_pretty
             section: defaults
         version_added: '2.13'
+      mask:
+        name: Comma-separated list of variables to mask
+        description:
+          - Replace matching key values with ***MASKED***
+        type: str
+        default: json
+        env:
+          - name: ANSIBLE_MASK
+        ini:
+          - key: mask
+            section: defaults
 """
