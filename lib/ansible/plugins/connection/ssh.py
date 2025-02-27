@@ -879,8 +879,7 @@ class Connection(ConnectionBase):
             key = self._populate_agent()
             b_args = (b'-o', b'IdentitiesOnly=yes', b'-o', b'IdentityFile="' + to_bytes(key, errors='surrogate_or_strict') + b'"')
             self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY/private_key set")
-
-        elif (key := self.get_option('private_key_file')):
+        elif key := self.get_option('private_key_file'):
             b_args = (b"-o", b'IdentityFile="' + to_bytes(os.path.expanduser(key), errors='surrogate_or_strict') + b'"')
             self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set")
 
