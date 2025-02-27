@@ -198,7 +198,7 @@ class InventoryManager(object):
                         f'Could not start ssh-agent: (rc={p.returncode}) {p.stderr}'
                     )
                 if (stdout := p.stdout.read(13)) != b'SSH_AUTH_SOCK':
-                    display.warn(
+                    display.warning(
                         f'The first 13 characters of stdout did not match the '
                         f'expected SSH_AUTH_SOCK. This may not be the right binary, '
                         f'or an incompatible agent: {stdout.decode()}'
