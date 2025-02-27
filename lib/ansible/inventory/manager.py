@@ -178,6 +178,7 @@ class InventoryManager(object):
         ssh_agent_cfg = C.config.get_config_value('SSH_AGENT')
         match ssh_agent_cfg:
             case 'none':
+                display.debug('SSH_AGENT set to none')
                 return
             case 'auto':
                 try:
@@ -195,7 +196,7 @@ class InventoryManager(object):
                 )
                 if p.poll() is not None:
                     raise AnsibleError(
-                        f'Could not start ssh-agent: (rc={p.returncode}) {p.stderr}'
+                        f'Could not start ssh-agent: rc={p.returncode} stderr="{p.stderr}"'
                     )
                 if (stdout := p.stdout.read(13)) != b'SSH_AUTH_SOCK':
                     display.warning(
@@ -214,7 +215,7 @@ class InventoryManager(object):
         except Exception as e:
             raise AnsibleError(
                 f'Could not communicate with ssh-agent using auth sock {sock}: {e}'
-            )
+            ) from e
 
         os.environ['SSH_AUTH_SOCK'] = os.environ['ANSIBLE_SSH_AGENT'] = sock
 
