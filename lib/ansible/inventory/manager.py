@@ -762,7 +762,12 @@ class InventoryManager(object):
 
 
 class _InventoryDataWrapper(_wrapt.ObjectProxy):
-    # declared as class attrs to signal ObjectProxy that we want them stored on the proxy, not the wrapped value
+    """
+    Proxy wrapper around InventoryData.
+    Allows `set_variable` calls to automatically apply template trust for plugins that don't know how.
+    """
+
+    # declared as class attrs to signal to ObjectProxy that we want them stored on the proxy, not the wrapped value
     _target_plugin = None
     _default_origin = None
 
@@ -774,8 +779,11 @@ class _InventoryDataWrapper(_wrapt.ObjectProxy):
 
     @functools.cached_property
     def _inspector(self) -> _serialization.AnsibleVariableVisitor:
-        # DTFIX-MERGE: we don't need to defer this if we instead change auto's plugin validation/load to
-        #  occur inside verify_file.
+        """
+        Inventory plugins can delegate to other plugins (e.g. `auto`).
+        This hack defers sampling the target plugin's `trusted_by_default` attr until `set_variable` is called, typically inside `parse`.
+        Trust is then optionally applied based on the plugin's declared intent via `trusted_by_default`.
+        """
         return _serialization.AnsibleVariableVisitor(
             trusted_as_template=self._target_plugin.trusted_by_default,
             origin=self._default_origin,
