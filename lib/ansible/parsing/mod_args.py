@@ -26,7 +26,6 @@ from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.parsing.vault import EncryptedString
 from ansible.plugins.loader import module_loader, action_loader
-from ansible._internal._templating._jinja_bits import is_possibly_template
 from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.fqcn import add_internal_fqcns
 
@@ -316,8 +315,6 @@ class ModuleArgsParser:
             if item in BUILTIN_TASKS:
                 is_action_candidate = True
             elif skip_action_validation:
-                is_action_candidate = True
-            elif not skip_action_validation and is_possibly_template(item):  # DTFIX-MERGE: document why this check is needed
                 is_action_candidate = True
             else:
                 try:
