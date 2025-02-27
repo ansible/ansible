@@ -69,7 +69,7 @@ class AnsibleError(Exception):
             self.__cause__ = orig_exc
 
     @property
-    def orig_exc(self):
+    def orig_exc(self) -> BaseException | None:
         """The underlying exception object.
 
         If the exception cause is undefined, it's set to :py:data:`None`.
@@ -77,7 +77,7 @@ class AnsibleError(Exception):
         return self.__cause__
 
     @orig_exc.setter
-    def orig_exc(self, underlying_exception):
+    def orig_exc(self, underlying_exception: BaseException | None) -> None:
         """Set the underlying exception as cause of the current one."""
         self.__cause__ = underlying_exception
 
