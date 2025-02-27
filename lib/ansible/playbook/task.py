@@ -40,8 +40,8 @@ from ansible.playbook.notifiable import Notifiable
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible._internal._templating import _marker_behaviors
-from ansible._internal._templating._jinja_bits import is_possibly_template, is_possibly_all_template
-from ansible._internal._templating._engine import TemplateEngine
+from ansible._internal._templating._jinja_bits import is_possibly_all_template
+from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
 
@@ -150,12 +150,11 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     def _post_validate_args(self, attr: str, value: t.Any, templar: TemplateEngine) -> dict[str, t.Any]:
         self.untemplated_args = value  # DTFIX-MERGE: can this be _ prefixed in 2.18 and earlier and removed in DT?
 
-        if is_possibly_template(self.action):  # DTFIX-MERGE: why is this check needed? remove it or explain why
-            try:
-                self.action = templar.template(self.action)
-            except AnsibleValueOmittedError:
-                # some strategies may trigger this error when templating task.action, but backstop here if not
-                raise AnsibleParserError("Omit is not valid for the `action` keyword.", obj=self.action) from None
+        try:
+            self.action = templar.template(self.action)
+        except AnsibleValueOmittedError:
+            # some strategies may trigger this error when templating task.action, but backstop here if not
+            raise AnsibleParserError("Omit is not valid for the `action` keyword.", obj=self.action) from None
 
         action_context = action_loader.get_with_context(self.action, collection_list=self.collections, class_only=True)
 
@@ -370,7 +369,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         This value is individually post-validated early by strategies for the benefit of callbacks.
         """
         with _marker_behaviors.ReplacingMarkerBehavior.warning_context() as replacing_behavior:
-            self.name = templar.extend(marker_behavior=replacing_behavior).template(value)
+            self.name = templar.extend(marker_behavior=replacing_behavior).template(value, options=TemplateOptions(value_for_omit=None))
 
         return self.name
 
