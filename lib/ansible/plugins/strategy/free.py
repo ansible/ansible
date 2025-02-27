@@ -38,7 +38,6 @@ from ansible.playbook.included_file import IncludedFile
 from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible._internal._templating._engine import TemplateEngine
-from ansible._internal._templating._marker_behaviors import ReplacingMarkerBehavior
 from ansible.utils.display import Display
 
 display = Display()
@@ -155,8 +154,7 @@ class StrategyModule(StrategyBase):
                             # corresponding action plugin
                             action = None
 
-                        with ReplacingMarkerBehavior.warning_context() as replacing_behavior:
-                            task.name = templar.extend(marker_behavior=replacing_behavior).template(task.name)
+                        task.post_validate_attribute("name", templar=templar)
 
                         run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
                         if run_once:

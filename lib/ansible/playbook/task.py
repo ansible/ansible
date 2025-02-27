@@ -39,6 +39,7 @@ from ansible.playbook.loop_control import LoopControl
 from ansible.playbook.notifiable import Notifiable
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
+from ansible._internal._templating import _marker_behaviors
 from ansible._internal._templating._jinja_bits import is_possibly_template, is_possibly_all_template
 from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.collection_loader import AnsibleCollectionConfig
@@ -168,7 +169,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         else:
             module_or_action_context = action_context.plugin_load_context
 
-        # DTFIX-MERGE: if _post_validate_args isn't called, this won't be set (e.g., meta, and ???) -- but pseudo-actions can't call this (yet)
         self.resolved_action = module_or_action_context.resolved_fqcn
 
         action_type: type[ActionBase] = action_context.object
@@ -198,8 +198,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             with action_type.get_finalize_task_args_context() as finalize_context:
                 args = args_finalizer.finalize(action_type.finalize_task_arg, context=finalize_context)
         except Exception as ex:
-            # DTFIX-MERGE: how does this impact error handling of template-related errors on task args?
-            #  Check ignore_errors behavior with undefined/div-by-zero/etc against devel, in and out of loops.
             raise AnsibleError(f'Finalization of task args for {module_or_action_context.resolved_fqcn!r} failed.', obj=self.action) from ex
 
         if self._origin:
@@ -365,6 +363,17 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         """
         return value
 
+    def _post_validate_name(self, attr, value, templar):
+        """
+        Override post-validation behavior for `name` to be best-effort for the vars available.
+        Direct access via `post_validate_attribute` writes the value back to provide a stable value.
+        This value is individually post-validated early by strategies for the benefit of callbacks.
+        """
+        with _marker_behaviors.ReplacingMarkerBehavior.warning_context() as replacing_behavior:
+            self.name = templar.extend(marker_behavior=replacing_behavior).template(value)
+
+        return self.name
+
     def _post_validate_environment(self, attr, value, templar):
         """
         Override post validation of vars on the play, as we don't want to
@@ -372,7 +381,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         """
         env = {}
 
-        # DTFIX-FUTURE: kill this with fire
+        # FUTURE: kill this with fire
         def _parse_env_kv(k, v):
             try:
                 env[k] = templar.template(v)

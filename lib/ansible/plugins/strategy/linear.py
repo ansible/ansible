@@ -36,15 +36,17 @@ from ansible.playbook.included_file import IncludedFile
 from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible._internal._templating._engine import TemplateEngine
-from ansible._internal._templating._marker_behaviors import ReplacingMarkerBehavior
 from ansible.utils.display import Display
+from ansible.inventory.host import Host
+from ansible.playbook.task import Task
+from ansible.executor.play_iterator import PlayIterator
 
 display = Display()
 
 
 class StrategyModule(StrategyBase):
 
-    def _get_next_task_lockstep(self, hosts, iterator):
+    def _get_next_task_lockstep(self, hosts: list[Host], iterator: PlayIterator) -> list[tuple[Host, Task]]:
         """
         Returns a list of (host, task) tuples, where the task may
         be a noop task to keep the iterator in lock step across
@@ -179,8 +181,7 @@ class StrategyModule(StrategyBase):
                             any_errors_fatal = True
 
                         if not callback_sent:
-                            with ReplacingMarkerBehavior.warning_context() as replacing_behavior:
-                                task.name = templar.extend(marker_behavior=replacing_behavior).template(task.name)
+                            task.post_validate_attribute("name", templar=templar)
 
                             if isinstance(task, Handler):
                                 self._tqm.send_callback('v2_playbook_on_handler_task_start', task)

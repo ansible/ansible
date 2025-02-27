@@ -529,8 +529,8 @@ class FieldAttributeBase:
         any _post_validate_<foo> functions.
         """
 
-        for (name, attribute) in self.fattributes.items():
-            value = self.post_validate_attribute(templar, name, attribute)
+        for name in self.fattributes:
+            value = self.post_validate_attribute(name, templar=templar)
 
             if value is not Sentinel:
                 # and assign the massaged value back to the attribute field
@@ -538,7 +538,9 @@ class FieldAttributeBase:
 
         self._finalized = True
 
-    def post_validate_attribute(self, templar: TemplateEngine, name: str, attribute: FieldAttribute):
+    def post_validate_attribute(self, name: str, *, templar: TemplateEngine):
+        attribute: FieldAttribute = self.fattributes[name]
+
         # DTFIX-FUTURE: this can probably be used in many getattr cases below, but the value may be out-of-date in some cases
         original_value = getattr(self, name)  # we save this original (likely Origin-tagged) value to pass as `obj` for errors
 
@@ -765,7 +767,7 @@ class Base(FieldAttributeBase):
             no_log = self.no_log
         else:
             try:
-                no_log = self.post_validate_attribute(templar, 'no_log', self.fattributes['no_log'])
+                no_log = self.post_validate_attribute('no_log', templar=templar)
             except Exception as ex:
                 display.error_as_warning('Invalid no_log value for task, output will be masked.', exception=ex)
                 no_log = True
