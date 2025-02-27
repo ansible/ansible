@@ -180,12 +180,12 @@ class InventoryManager(object):
             case 'none':
                 return
             case 'auto':
-                ssh_agent_dir = os.path.join(C.DEFAULT_LOCAL_TMP, 'ssh_agent')
-                os.mkdir(ssh_agent_dir, 0o700)
                 try:
                     ssh_agent_bin = get_bin_path('ssh-agent', required=True)
                 except ValueError as e:
                     raise AnsibleError('SSH_AGENT set to auto, but cannot find ssh-agent binary') from e
+                ssh_agent_dir = os.path.join(C.DEFAULT_LOCAL_TMP, 'ssh_agent')
+                os.mkdir(ssh_agent_dir, 0o700)
                 sock = os.path.join(ssh_agent_dir, 'agent.sock')
                 p = subprocess.Popen(
                     [ssh_agent_bin, '-D', '-s', '-a', sock],
