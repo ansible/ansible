@@ -1238,7 +1238,8 @@ def _iter_modules_impl(paths, prefix=''):
         prefix = _to_text(prefix)
     # yield (module_loader, name, ispkg) for each module/pkg under path
     # TODO: implement ignore/silent catch for unreadable?
-    # Mostly based off the logic in the builtin pkgutil.iter_modules importer
+    # Mostly based off the logic in the builtin pkgutil.iter_modules importer.
+    # Only difference is we don't check if dirs contains __init__.
     # https://github.com/python/cpython/blob/fda056e64bdfcac3dd3d13eebda0a24994d83cb8/Lib/pkgutil.py#L130-L168
     for path in paths:
         if not os.path.isdir(path):
@@ -1252,28 +1253,18 @@ def _iter_modules_impl(paths, prefix=''):
 
             mod_path = os.path.join(path, basename)
             ispkg = False
+            if not modname and os.path.isdir(mod_path) and '.' not in basename:
+                # exclude things that obviously aren't Python package dirs
+                # FIXME: this dir is adjustable in py3.8+, check for it
+                if basename == '__pycache__':
+                    continue
 
-            ispkg = (
-                not modname and
-                os.path.isdir(mod_path) and
-                '.' not in basename and
-                _is_dir_a_pkg(mod_path)
-            )
+                modname = basename
+                ispkg = True
 
             if modname and '.' not in modname:
                 yielded.add(modname)
                 yield prefix + modname, ispkg
-
-
-def _is_dir_a_pkg(path: str) -> bool:
-    """Checks if the directory is a Python package (contains __init__)."""
-    with os.scandir(path) as scandir_it:
-        for entry in scandir_it:
-            subname = inspect.getmodulename(entry.name)
-            if subname == '__init__':
-                return True
-
-    return False
 
 
 def _get_collection_metadata(collection_name):
