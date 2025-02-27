@@ -87,7 +87,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     poll = NonInheritableFieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
     register = NonInheritableFieldAttribute(isa='string', static=True)
     retries = NonInheritableFieldAttribute(isa='int')  # default is set in TaskExecutor
-    untemplated_args: dict[str, t.Any] = None
     until = NonInheritableFieldAttribute(isa='list', default=list)
 
     # deprecated, used to be loop and loop_args but loop has been repurposed
@@ -148,8 +147,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         return value
 
     def _post_validate_args(self, attr: str, value: t.Any, templar: TemplateEngine) -> dict[str, t.Any]:
-        self.untemplated_args = value  # DTFIX-MERGE: can this be _ prefixed in 2.18 and earlier and removed in DT?
-
         try:
             self.action = templar.template(self.action)
         except AnsibleValueOmittedError:
