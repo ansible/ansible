@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import base64
-import collections.abc as c
 import contextlib
 import json
 import os
@@ -22,7 +21,6 @@ from collections.abc import Sequence
 
 from ansible import constants as C
 from ansible._internal._errors import _captured
-from ansible._internal._templating._chain_templar import ChainTemplar
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
 from ansible._internal._errors import _utils
 from ansible.executor.module_common import modify_module, _BuiltModule
@@ -34,7 +32,6 @@ from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.serialization import get_module_decoder, Direction, get_module_encoder
 from ansible.module_utils.six import binary_type, string_types, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.parsing import vault as _vault
 from ansible.release import __version__
 from ansible.utils.collection_loader import resource_from_fqcr
 from ansible.utils.display import Display
@@ -45,7 +42,6 @@ from ansible._internal._templating import _engine
 
 from .. import _AnsiblePluginInfoMixin
 from ...module_utils.common.messages import PluginInfo
-from ...module_utils.datatag import native_type_name
 
 display = Display()
 
@@ -1503,51 +1499,3 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             result.update(msg=_utils._dedupe_and_concat_message_chain([md.msg for md in error_summary.details]))
 
         return result
-
-
-# DTFIX-MERGE: docstrings and/or move these experimental types under _internal?
-TaskArgsFinalizerCallback = t.Callable[[str, t.Any, _engine.TemplateEngine, t.Any], t.Any]
-
-
-@_internal.experimental
-class TaskArgsChainTemplar(ChainTemplar):
-    def __init__(self, *sources: c.Mapping, templar: _engine.TemplateEngine, callback: TaskArgsFinalizerCallback, context: t.Any) -> None:
-        super().__init__(*sources, templar=templar)
-
-        self.callback = callback
-        self.context = context
-
-    def template(self, key: t.Any, value: t.Any) -> t.Any:
-        return self.callback(key, value, self.templar, self.context)
-
-
-@_internal.experimental
-class TaskArgsFinalizer:
-    def __init__(self, *args: c.Mapping[str, t.Any] | str | None, templar: _engine.TemplateEngine) -> None:
-        self._args_layers = [arg for arg in args if arg is not None]
-        self._templar = templar
-
-    def finalize(self, callback: TaskArgsFinalizerCallback, context: t.Any) -> dict[str, t.Any]:
-        resolved_layers: list[c.Mapping[str, t.Any]] = []
-
-        for layer in self._args_layers:
-            if isinstance(layer, (str, _vault.EncryptedString)):  # EncryptedString can hide a template
-                if C.config.get_config_value('INJECT_FACTS_AS_VARS'):
-                    Display().warning(
-                        "Using a template for task args is unsafe in some situations "
-                        "(see https://docs.ansible.com/ansible/devel/reference_appendices/faq.html#argsplat-unsafe).",
-                        obj=layer,
-                    )
-
-                resolved_layer = self._templar.resolve_to_container(layer, options=_engine.TemplateOptions(value_for_omit={}))
-            else:
-                resolved_layer = layer
-
-            if not isinstance(resolved_layer, dict):
-                raise AnsibleError(f'Task args must resolve to a {native_type_name(dict)!r} not {native_type_name(resolved_layer)!r}.', obj=layer)
-
-            resolved_layers.append(resolved_layer)
-
-        ct = TaskArgsChainTemplar(*reversed(resolved_layers), templar=self._templar, callback=callback, context=context)
-
-        return ct.as_dict()

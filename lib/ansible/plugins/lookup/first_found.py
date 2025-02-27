@@ -144,7 +144,7 @@ import os
 import re
 import typing as t
 
-from ansible._internal import _task_context
+from ansible._internal import _task
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible._internal._templating._jinja_common import UndefinedMarker
@@ -227,7 +227,7 @@ class LookupModule(LookupBase):
             terms = _omit_undefined_markers(terms)  # recursively drop undefined values from terms for backwards compatibility
 
             # invoked_as_with shouldn't be possible outside a TaskContext
-            te_action = _task_context.TaskContext.current().task.action  # FIXME: this value has not been templated, it should be (historical problem)...
+            te_action = _task.TaskContext.current().task.action  # FIXME: this value has not been templated, it should be (historical problem)...
 
             # based on the presence of `var`/`template`/`file` in the enclosing task action name, choose a subdir to search
             for subdir in ['template', 'var', 'file']:

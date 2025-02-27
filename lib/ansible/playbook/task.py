@@ -27,7 +27,7 @@ from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.module_utils.six import string_types
 from ansible.parsing.mod_args import ModuleArgsParser, RAW_PARAM_MODULES
-from ansible.plugins.action import ActionBase, TaskArgsFinalizer
+from ansible.plugins.action import ActionBase
 from ansible.plugins.loader import action_loader, module_loader, lookup_loader
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
@@ -39,6 +39,7 @@ from ansible.playbook.loop_control import LoopControl
 from ansible.playbook.notifiable import Notifiable
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
+from ansible._internal import _task
 from ansible._internal._templating import _marker_behaviors
 from ansible._internal._templating._jinja_bits import is_possibly_all_template
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
@@ -182,7 +183,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             if raw_params_to_finalize and not is_possibly_all_template(raw_params_to_finalize):
                 raise AnsibleError(f'Action {module_or_action_context.resolved_fqcn!r} does not support raw params.', obj=self.action)
 
-        args_finalizer = TaskArgsFinalizer(
+        args_finalizer = _task.TaskArgsFinalizer(
             _get_action_arg_defaults(module_or_action_context.resolved_fqcn, self),
             vp,
             raw_params_to_finalize,
