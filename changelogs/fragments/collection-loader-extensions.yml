@@ -1,0 +1,6 @@
+bugfixes:
+  - >-
+    collection loader - Fix the collection loader logic to correctly return Python module when calling
+    ``pkgutil.iter_modules`` with a package that is inside a collection path and contains compiled Python extension
+    modules.
+

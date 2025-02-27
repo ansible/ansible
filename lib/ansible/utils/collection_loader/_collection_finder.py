@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import inspect
 import itertools
 import os
 import os.path
@@ -1237,23 +1238,42 @@ def _iter_modules_impl(paths, prefix=''):
         prefix = _to_text(prefix)
     # yield (module_loader, name, ispkg) for each module/pkg under path
     # TODO: implement ignore/silent catch for unreadable?
-    for b_path in map(_to_bytes, paths):
-        if not os.path.isdir(b_path):
+    # Mostly based off the logic in the builtin pkgutil.iter_modules importer
+    # https://github.com/python/cpython/blob/fda056e64bdfcac3dd3d13eebda0a24994d83cb8/Lib/pkgutil.py#L130-L168
+    for path in paths:
+        if not os.path.isdir(path):
             continue
-        for b_basename in sorted(os.listdir(b_path)):
-            b_candidate_module_path = os.path.join(b_path, b_basename)
-            if os.path.isdir(b_candidate_module_path):
-                # exclude things that obviously aren't Python package dirs
-                # FIXME: this dir is adjustable in py3.8+, check for it
-                if b'.' in b_basename or b_basename == b'__pycache__':
-                    continue
 
-                # TODO: proper string handling?
-                yield prefix + _to_text(b_basename), True
-            else:
-                # FIXME: match builtin ordering for package/dir/file, support compiled?
-                if b_basename.endswith(b'.py') and b_basename != b'__init__.py':
-                    yield prefix + _to_text(os.path.splitext(b_basename)[0]), False
+        yielded = set()
+        for basename in sorted(os.listdir(path)):
+            modname = inspect.getmodulename(basename)
+            if modname == '__init__' or modname in yielded:
+                continue
+
+            mod_path = os.path.join(path, basename)
+            ispkg = False
+
+            ispkg = (
+                not modname and
+                os.path.isdir(mod_path) and
+                '.' not in basename and
+                _is_dir_a_pkg(mod_path)
+            )
+
+            if modname and '.' not in modname:
+                yielded.add(modname)
+                yield prefix + modname, ispkg
+
+
+def _is_dir_a_pkg(path: str) -> bool:
+    """Checks if the directory is a Python package (contains __init__)."""
+    with os.scandir(path) as scandir_it:
+        for entry in scandir_it:
+            subname = inspect.getmodulename(entry.name)
+            if subname == '__init__':
+                return True
+
+    return False
 
 
 def _get_collection_metadata(collection_name):
