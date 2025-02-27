@@ -36,10 +36,6 @@ from ansible.errors.yaml_strings import (
 from ansible.module_utils.common.text.converters import to_native, to_text
 
 
-_UNDERLYING_EXC_SENTINEL = Exception()
-"""A sentinel object for use as a default for arguments in callables."""
-
-
 class AnsibleError(Exception):
     """
     This is the base class for all errors raised from Ansible code,
@@ -55,21 +51,14 @@ class AnsibleError(Exception):
     which should be returned by the DataLoader() class.
     """
 
-    def __init__(
-        self,
-        message="",
-        obj=None,
-        show_content=True,
-        suppress_extended_error=False,
-        orig_exc=_UNDERLYING_EXC_SENTINEL,
-    ):
+    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None):
         super(AnsibleError, self).__init__(message)
 
         self._show_content = show_content
         self._suppress_extended_error = suppress_extended_error
         self._message = to_native(message)
         self.obj = obj
-        if orig_exc is not _UNDERLYING_EXC_SENTINEL:
+        if orig_exc is not None:
             _emit_warning(
                 'Passing the underlying error through the `orig_exc` argument '
                 'is deprecated. Instead, use native Python 3 exception cause '
@@ -329,16 +318,7 @@ class AnsibleUndefinedVariable(AnsibleTemplateError):
 class AnsibleFileNotFound(AnsibleRuntimeError):
     """ a file missing failure """
 
-    def __init__(
-        self,
-        message="",
-        obj=None,
-        show_content=True,
-        suppress_extended_error=False,
-        orig_exc=_UNDERLYING_EXC_SENTINEL,
-        paths=None,
-        file_name=None,
-    ):
+    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, paths=None, file_name=None):
 
         self.file_name = file_name
         self.paths = paths
@@ -368,15 +348,7 @@ class AnsibleFileNotFound(AnsibleRuntimeError):
 class AnsibleAction(AnsibleRuntimeError):
     """ Base Exception for Action plugin flow control """
 
-    def __init__(
-        self,
-        message="",
-        obj=None,
-        show_content=True,
-        suppress_extended_error=False,
-        orig_exc=_UNDERLYING_EXC_SENTINEL,
-        result=None,
-    ):
+    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, result=None):
 
         super(AnsibleAction, self).__init__(message=message, obj=obj, show_content=show_content,
                                             suppress_extended_error=suppress_extended_error, orig_exc=orig_exc)
@@ -389,15 +361,7 @@ class AnsibleAction(AnsibleRuntimeError):
 class AnsibleActionSkip(AnsibleAction):
     """ an action runtime skip"""
 
-    def __init__(
-        self,
-        message="",
-        obj=None,
-        show_content=True,
-        suppress_extended_error=False,
-        orig_exc=_UNDERLYING_EXC_SENTINEL,
-        result=None,
-    ):
+    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, result=None):
         super(AnsibleActionSkip, self).__init__(message=message, obj=obj, show_content=show_content,
                                                 suppress_extended_error=suppress_extended_error, orig_exc=orig_exc, result=result)
         self.result.update({'skipped': True, 'msg': message})
@@ -405,15 +369,7 @@ class AnsibleActionSkip(AnsibleAction):
 
 class AnsibleActionFail(AnsibleAction):
     """ an action runtime failure"""
-    def __init__(
-        self,
-        message="",
-        obj=None,
-        show_content=True,
-        suppress_extended_error=False,
-        orig_exc=_UNDERLYING_EXC_SENTINEL,
-        result=None,
-    ):
+    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, result=None):
         super(AnsibleActionFail, self).__init__(message=message, obj=obj, show_content=show_content,
                                                 suppress_extended_error=suppress_extended_error, orig_exc=orig_exc, result=result)
         self.result.update({'failed': True, 'msg': message, 'exception': traceback.format_exc()})
