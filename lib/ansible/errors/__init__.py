@@ -274,7 +274,7 @@ class AnsibleTemplateSyntaxError(AnsibleTemplateError):
 class AnsibleBrokenConditionalError(AnsibleTemplateError):
     """A broken conditional with non-boolean result was used."""
 
-    help_text = 'Broken conditionals can be temporarily allowed with the `ALLOW_BROKEN_CONDITIONALS` configuration option.'
+    _default_help_text = 'Broken conditionals can be temporarily allowed with the `ALLOW_BROKEN_CONDITIONALS` configuration option.'
 
 
 class AnsibleUndefinedVariable(AnsibleTemplateError):
@@ -288,8 +288,8 @@ class AnsibleValueOmittedError(AnsibleTemplateError):
     indicate a bug.
     """
 
-    original_message = "A template was resolved to an Omit scalar."
-    help_text = "Callers must be prepared to handle this value. This is most likely a bug in the code requesting templating."
+    _default_message = "A template was resolved to an Omit scalar."
+    _default_help_text = "Callers must be prepared to handle this value. This is most likely a bug in the code requesting templating."
 
 
 class AnsibleTemplatePluginError(AnsibleTemplateError):
