@@ -10,7 +10,7 @@ import os
 import typing as t
 
 from collections import namedtuple
-from collections.abc import MutableSequence, MutableMapping
+from collections.abc import MutableMapping
 from glob import iglob
 from urllib.parse import urlparse
 from yaml import safe_load
@@ -30,12 +30,12 @@ from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection import HAS_PACKAGING, PkgReq
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.galaxy.dependency_resolution.versioning import OP_MAP
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
+from ansible.utils.version import LooseVersion, SemanticVersion
 
-
-_ALLOW_CONCRETE_POINTER_IN_SOURCE = False  # NOTE: This is a feature flag
 _GALAXY_YAML = b'galaxy.yml'
 _MANIFEST_JSON = b'MANIFEST.json'
 _SOURCE_METADATA_FILE = b'GALAXY.yml'
@@ -306,31 +306,35 @@ class _ComputedReqKindsMixin:
         return cls.from_requirement_dict(req, artifacts_manager)
 
     @classmethod
-    def from_requirement_dict(cls, collection_req, art_mgr, validate_signature_options=True):
-        req_name = collection_req.get('name', None)
-        req_version = collection_req.get('version', '*')
-        req_type = collection_req.get('type')
-        # TODO: decide how to deprecate the old src API behavior
-        req_source = collection_req.get('source', None)
-        req_signature_sources = collection_req.get('signatures', None)
-        if req_signature_sources is not None:
-            if validate_signature_options and art_mgr.keyring is None:
-                raise AnsibleError(
-                    f"Signatures were provided to verify {req_name} but no keyring was configured."
-                )
+    def from_requirement_dict(cls, collection_req: dict, art_mgr: ConcreteArtifactsManager, validate_signature_options: bool = True):
+        DEFAULT_VERSION = '*'
+        result = ArgumentSpecValidator(
+            argument_spec=dict(
+                name=dict(type='str', required=True),
+                signatures=dict(type='list', elements='str'),
+                source=dict(type='raw'),
+                type=dict(type='str', choices=['file', 'galaxy', 'git', 'url', 'dir', 'subdirs']),
+                version=dict(default=DEFAULT_VERSION, type='str')
+            )
+        ).validate(collection_req)
 
-            if not isinstance(req_signature_sources, MutableSequence):
-                req_signature_sources = [req_signature_sources]
-            req_signature_sources = frozenset(req_signature_sources)
+        req_name = result.validated_parameters.get('name')
+        req_version = result.validated_parameters.get('version')
+        req_type = result.validated_parameters.get('type')
+        # TODO: decide how to deprecate the old src API behavior
+        req_source = result.validated_parameters.get('source')
+        req_signature_sources = result.validated_parameters.get('signatures')
+        if result.error_messages:
+            raise AnsibleError(
+                'Failed to parse collection requirement entry: '
+                '{collection_req!s}: {error_messages!s}'.format(
+                    collection_req=collection_req,
+                    error_messages=', '.join(result.error_messages)
+                )
+            )
 
         if req_type is None:
-            if (  # FIXME: decide on the future behavior:
-                    _ALLOW_CONCRETE_POINTER_IN_SOURCE
-                    and req_source is not None
-                    and _is_concrete_artifact_pointer(req_source)
-            ):
-                src_path = req_source
-            elif (
+            if (
                     req_name is not None
                     and AnsibleCollectionRef.is_valid_collection_name(req_name)
             ):
@@ -405,6 +409,23 @@ class _ComputedReqKindsMixin:
                     'requirement type.',
                 )
 
+        if req_signature_sources is not None and req_type == 'galaxy':
+            if validate_signature_options and art_mgr.keyring is None:
+                raise AnsibleError(
+                    f"Signatures were provided to verify {req_name} but no keyring was configured."
+                )
+
+            req_signature_sources = frozenset(req_signature_sources)
+
+        if (
+            req_version
+            and req_version != DEFAULT_VERSION
+            and req_type == 'subdirs'
+        ):
+            raise AnsibleError(
+                f"The {req_name} 'version' key is not applicable."
+            )
+
         if req_type not in {'file', 'galaxy', 'git', 'url', 'dir', 'subdirs'}:
             raise AnsibleError(
                 "The collection requirement entry key 'type' must be "
@@ -417,6 +438,19 @@ class _ComputedReqKindsMixin:
                 "the key 'name' if it's requested from a Galaxy-like "
                 'index server.',
             )
+
+        if req_type != 'git' and req_version != '*':
+            for segment in req_version.split(','):
+                if segment[:2] in OP_MAP:
+                    segment = segment[2:]
+                elif segment[0] in OP_MAP:
+                    segment = segment[1:]
+                try:
+                    SemanticVersion.from_loose_version(LooseVersion(segment))
+                except ValueError:
+                    raise AnsibleError(
+                        f"The {req_name} 'version' key is not a valid version."
+                    )
 
         if req_type != 'galaxy' and req_source is None:
             req_source, req_name = req_name, None

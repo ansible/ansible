@@ -10,6 +10,16 @@ import operator
 from ansible.module_utils.compat.version import LooseVersion
 from ansible.utils.version import SemanticVersion
 
+OP_MAP = {
+    '!=': operator.ne,
+    '==': operator.eq,
+    '=': operator.eq,
+    '>=': operator.ge,
+    '>': operator.gt,
+    '<=': operator.le,
+    '<': operator.lt,
+}
+
 
 def is_pre_release(version):
     # type: (str) -> bool
@@ -35,19 +45,10 @@ def meets_requirements(version, requirements):
 
     Each requirement is delimited by ','.
     """
-    op_map = {
-        '!=': operator.ne,
-        '==': operator.eq,
-        '=': operator.eq,
-        '>=': operator.ge,
-        '>': operator.gt,
-        '<=': operator.le,
-        '<': operator.lt,
-    }
 
     for req in requirements.split(','):
         op_pos = 2 if len(req) > 1 and req[1] == '=' else 1
-        op = op_map.get(req[:op_pos])
+        op = OP_MAP.get(req[:op_pos])
 
         requirement = req[op_pos:]
         if not op:

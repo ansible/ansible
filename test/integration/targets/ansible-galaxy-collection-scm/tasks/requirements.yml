@@ -26,12 +26,9 @@
     that:
       - result.failed
       - >-
-        "ERROR! Neither the collection requirement entry key 'name',
-        nor 'source' point to a concrete resolvable collection artifact.
-        Also 'name' is not an FQCN. A valid collection name must be in
-        the format <namespace>.<collection>. Please make sure that the
-        namespace and the collection name contain characters from
-        [a-zA-Z0-9_] only." in result.stderr
+        result.stderr is search("ERROR! Failed to parse collection requirement entry:
+        {'source': 'git\+file:///tmp/.*/galaxy/development/amazon.aws/.git'}:
+        missing required arguments: name")
 
 - name: test source is not a git repo even if name is provided
   command: 'ansible-galaxy collection install -r source_and_name.yml'

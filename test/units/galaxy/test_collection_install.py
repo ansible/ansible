@@ -434,6 +434,17 @@ def test_build_requirement_from_tar_invalid_manifest(tmp_path_factory):
         Requirement.from_requirement_dict({'name': to_text(tar_path)}, concrete_artifact_cm)
 
 
+def test_build_requirement_from_tar_unsupported_collection_keys(collection_artifact):
+    tmp_path = os.path.join(os.path.split(collection_artifact[1])[0], b'temp')
+    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(tmp_path, validate_certs=False)
+    expected = (
+        r"Failed to parse collection requirement entry: {'name': '.+', 'invalid_key': 'foo', 'key': 'bar'}: "
+        r'invalid_key, key\. Supported parameters include: name, signatures, source, type, version\.'
+    )
+    with pytest.raises(AnsibleError, match=expected):
+        Requirement.from_requirement_dict({'name': to_text(collection_artifact[1]), 'invalid_key': 'foo', 'key': 'bar'}, concrete_artifact_cm)
+
+
 def test_build_requirement_from_name(galaxy_server, monkeypatch, tmp_path_factory):
     mock_get_versions = MagicMock()
     mock_get_versions.return_value = ['2.1.9', '2.1.10']
@@ -719,6 +730,38 @@ def test_build_requirement_from_name_multiple_version_results(galaxy_server, mon
 
     assert mock_get_versions.call_count == 1
     assert mock_get_versions.mock_calls[0][1] == ('namespace', 'collection')
+
+
+def test_build_requirement_valid_loose_version(collection_artifact):
+    tmp_path = os.path.join(os.path.split(collection_artifact[1])[0], b'temp')
+    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(tmp_path, validate_certs=False)
+    assert Requirement.from_requirement_dict({'name': 'foo.bar', 'version': '6'}, concrete_artifact_cm).ver == u'6'
+
+
+def test_build_requirement_valid_semantic_version(collection_artifact):
+    tmp_path = os.path.join(os.path.split(collection_artifact[1])[0], b'temp')
+    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(tmp_path, validate_certs=False)
+    assert Requirement.from_requirement_dict({'name': 'foo.bar', 'version': '1.0.0'}, concrete_artifact_cm).ver == u'1.0.0'
+
+
+def test_build_requirement_invalid_version(collection_artifact):
+    tmp_path = os.path.join(os.path.split(collection_artifact[1])[0], b'temp')
+    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(tmp_path, validate_certs=False)
+    expected = (
+        r"The foo\.bar 'version' key is not a valid version."
+    )
+    with pytest.raises(AnsibleError, match=expected):
+        Requirement.from_requirement_dict({'name': 'foo.bar', 'version': 'foobar'}, concrete_artifact_cm)
+
+
+def test_build_requirement_invalid_version_constraint(collection_artifact):
+    tmp_path = os.path.join(os.path.split(collection_artifact[1])[0], b'temp')
+    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(tmp_path, validate_certs=False)
+    expected = (
+        r"The foo\.bar 'version' key is not a valid version."
+    )
+    with pytest.raises(AnsibleError, match=expected):
+        Requirement.from_requirement_dict({'name': 'foo.bar', 'version': '>=1.0.0,<=foobar'}, concrete_artifact_cm)
 
 
 def test_candidate_with_conflict(monkeypatch, tmp_path_factory, galaxy_server):
