@@ -57,6 +57,12 @@ else:
     HAS_CRYPTOGRAPHY = True
 
 
+if t.TYPE_CHECKING:
+    from cryptography.hazmat.primitives.asymmetric.dsa import DSAPrivateNumbers
+    from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateNumbers
+    from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateNumbers
+
+
 class ProtocolMsgNumbers(enum.IntEnum):
     # Responses
     SSH_AGENT_FAILURE = 5
@@ -262,31 +268,31 @@ class AgentLockMsg(Msg):
 @dataclasses.dataclass
 class PrivateKeyMsg(Msg):
     @staticmethod
-    def from_private_key(private_key):
+    def from_private_key(private_key: CryptoPrivateKey):
         match private_key:
             case RSAPrivateKey():
-                pn = private_key.private_numbers()
+                pn: RSAPrivateNumbers = private_key.private_numbers()  # type: ignore[no-redef]
                 return RSAPrivateKeyMsg(
                     KeyAlgo.RSA,
-                    pn.public_numbers.n,
-                    pn.public_numbers.e,
-                    pn.d,
-                    pn.iqmp,
-                    pn.p,
-                    pn.q,
+                    mpint(pn.public_numbers.n),
+                    mpint(pn.public_numbers.e),
+                    mpint(pn.d),
+                    mpint(pn.iqmp),
+                    mpint(pn.p),
+                    mpint(pn.q),
                 )
             case DSAPrivateKey():
-                pn = private_key.private_numbers()
+                pn: DSAPrivateNumbers = private_key.private_numbers()  # type: ignore[no-redef]
                 return DSAPrivateKeyMsg(
                     KeyAlgo.DSA,
-                    pn.public_numbers.parameter_numbers.p,
-                    pn.public_numbers.parameter_numbers.q,
-                    pn.public_numbers.parameter_numbers.g,
-                    pn.public_numbers.y,
-                    pn.x,
+                    mpint(pn.public_numbers.parameter_numbers.p),
+                    mpint(pn.public_numbers.parameter_numbers.q),
+                    mpint(pn.public_numbers.parameter_numbers.g),
+                    mpint(pn.public_numbers.y),
+                    mpint(pn.x),
                 )
             case EllipticCurvePrivateKey():
-                pn = private_key.private_numbers()
+                pn: EllipticCurvePrivateNumbers = private_key.private_numbers()  # type: ignore[no-redef]
                 key_size = private_key.key_size
                 return EcdsaPrivateKeyMsg(
                     getattr(KeyAlgo, f'ECDSA{key_size}'),
@@ -295,7 +301,7 @@ class PrivateKeyMsg(Msg):
                         encoding=serialization.Encoding.X962,
                         format=serialization.PublicFormat.UncompressedPoint
                     )),
-                    pn.private_value,
+                    mpint(pn.private_value),
                 )
             case Ed25519PrivateKey():
                 public_bytes = private_key.public_key().public_bytes(
@@ -414,16 +420,16 @@ class PublicKeyMsg(Msg):
                 raise NotImplementedError(type)
 
     @staticmethod
-    def from_public_key(public_key):
+    def from_public_key(public_key: CryptoPublicKey):
         match public_key:
             case DSAPublicKey():
-                pn = public_key.public_numbers()
+                pn: DSAPublicNumbers = public_key.public_numbers()  # type: ignore[no-redef]
                 return DSAPublicKeyMsg(
                     KeyAlgo.DSA,
-                    pn.parameter_numbers.p,
-                    pn.parameter_numbers.q,
-                    pn.parameter_numbers.g,
-                    pn.y
+                    mpint(pn.parameter_numbers.p),
+                    mpint(pn.parameter_numbers.q),
+                    mpint(pn.parameter_numbers.g),
+                    mpint(pn.y)
                 )
             case EllipticCurvePublicKey():
                 return EcdsaPublicKeyMsg(
@@ -443,11 +449,11 @@ class PublicKeyMsg(Msg):
                     ))
                 )
             case RSAPublicKey():
-                pn = public_key.public_numbers()
+                pn: RSAPublicNumbers = public_key.public_numbers()  # type: ignore[no-redef]
                 return RSAPublicKeyMsg(
                     KeyAlgo.RSA,
-                    pn.e,
-                    pn.n
+                    mpint(pn.e),
+                    mpint(pn.n)
                 )
             case _:
                 raise NotImplementedError(public_key)
@@ -590,7 +596,7 @@ class SshAgentClient:
     def add(
             self,
             private_key: CryptoPrivateKey,
-            comments: unicode_string | None = None,
+            comments: str | None = None,
             lifetime: int | None = None,
             confirm: bool | None = None,
     ):
