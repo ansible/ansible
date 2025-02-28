@@ -8,7 +8,6 @@ from __future__ import annotations
 import typing as t
 from collections import defaultdict
 from contextlib import suppress as suppress_exceptions
-from logging import getLogger
 
 try:
     from resolvelib import BaseReporter
@@ -25,7 +24,11 @@ except ImportError:
         class Criterion:  # type: ignore[no-redef]
             pass
 
+from ansible.utils.display import Display
 from .dataclasses import Candidate, Requirement
+
+
+display = Display()
 
 
 _CLI_APP_NAME = 'ansible-galaxy'
@@ -46,8 +49,6 @@ _MESSAGES_AT_REJECT_COUNT = {
         'runtime. If you want to abort this run, press Ctrl + C.'
     ),
 }
-
-_logger = getLogger(__name__)
 
 
 class CollectionDependencyReporter(BaseReporter):
@@ -76,7 +77,7 @@ class CollectionDependencyReporter(BaseReporter):
         except KeyError as key_err:
             raise LookupError from key_err
 
-        _logger.info(collection_rejection_message.format(fqcn=candidate.fqcn))
+        display.display(collection_rejection_message.format(fqcn=candidate.fqcn))
 
     def rejecting_candidate(  # resolvelib >= 0.9.0
             self,
@@ -98,7 +99,7 @@ class CollectionDependencyReporter(BaseReporter):
             else:
                 msg += 'The user requested '
             msg += repr(req)
-        _logger.debug(msg)
+        display.debug(msg)
 
     def backtracking(self, candidate: Candidate) -> None:  # resolvelib < 0.9.0
         """Print out rejection messages on pre-defined limit hits."""
