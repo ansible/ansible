@@ -21,21 +21,20 @@ from ansible._internal._serialization import _legacy
 
 def from_yaml(
     data: str,
-    file_name: str | None = None,  # DTFIX-RELEASE: consider deprecating this in favor of tagging Origin on data
-    # DTFIX-MERGE: RedactAnnotatedSourceContext isn't public yet, fix that or change the deferred deprecation below
-    show_content: bool = True,  # deprecated: description='deprecate show_content in favor of RedactAnnotatedSourceContext' core_version='2.23'
+    file_name: str | None = None,
+    show_content: bool = True,
     vault_secrets: list[tuple[str, VaultSecret]] | None = None,  # deprecated: description='Deprecate vault_secrets, it has no effect.' core_version='2.23'
     json_only: bool = False,
 ) -> t.Any:
     """Creates a Python data structure from the given data, which can be either a JSON or YAML string."""
+    # FUTURE: provide Ansible-specific top-level APIs to expose JSON and YAML serialization/deserialization to hide the error handling logic
+    #         once those are in place, defer deprecate this entire function
+
     origin = Origin.get_or_create_tag(data, file_name)
 
     data = origin.tag(data)
 
-    # DTFIX-MERGE: provide Ansible-specific top-level APIs to expose JSON and YAML serialization/deserialization to hide the error handling logic
-
     with _utils.RedactAnnotatedSourceContext.when(not show_content):
-        # FIXME: this whole two-step should be unnecessary, implement this natively in the YAML decoder or delegate?
         try:
             # we first try to load this data as JSON.
             # Fixes issues with extra vars json strings not being parsed correctly by the yaml parser
