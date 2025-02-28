@@ -11,6 +11,12 @@ DOCUMENTATION:
       description: A string to encode.
       type: string
       required: true
+    encoding:
+      description:
+        - The encoding to use to transform from a text string to a byte string.
+        - Defaults to using 'utf-8'.
+      type: string
+      required: false
 
 EXAMPLES: |
   # Base64 encode a string
@@ -18,6 +24,10 @@ EXAMPLES: |
 
   # Base64 encode the content of 'stuff' variable
   b64stuff: "{{ stuff | b64encode }}"
+
+  # Base64 encode the content with different encoding
+  b64stuff: "{{ 'Ansible - くらとみ\n' | b64encode(encoding='utf-16-le') }}"
+  # => 'QQBuAHMAaQBiAGwAZQAgAC0AIABPMIkwaDB/MAoA'
 
 RETURN:
   _value:
