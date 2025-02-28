@@ -723,7 +723,7 @@ def test_broken_conditionals_enabled(value: t.Any, expected_result: bool, mocker
 
     if isinstance(value, str) and is_possibly_all_template(value):
         assert deprecated_spy.call_count == 2
-        assert any ("should not be surrounded" in call.kwargs['msg'] for call in deprecated_spy.call_args_list)
+        assert any("should not be surrounded" in call.kwargs['msg'] for call in deprecated_spy.call_args_list)
     else:
         assert deprecated_spy.call_count == 1
 
