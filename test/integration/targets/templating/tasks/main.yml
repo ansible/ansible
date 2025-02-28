@@ -248,3 +248,22 @@
       that:
         - result is failed
         - result.msg is contains("undecryptable variable")
+
+  - name: vaulted values are not trusted for templating
+    vars:
+      # value is {{ "not trusted" }} encrypted with "blarblar"
+      vaulted_with_template: !vault |
+        $ANSIBLE_VAULT;1.1;AES256
+        36306639316132393663356162643765396231396462623962373832643539306635356639366633
+        6234303731383636623165633330653435336130613361370a373931613335353762376433636263
+        35363536613933396532636430646337393932393166396133613666386433353932373063356235
+        3666336365616535610a636534333332633930326331353533626332363263363666373730386264
+        31643561353465613030343632663036313963363634663231393665316437646530
+      decrypt_vaulted_value: '{{ vaulted_with_template | unvault("blarblar") }}'
+    debug:
+      var: decrypt_vaulted_value
+    register: vault_value_untrusted
+
+  - assert:
+      that:
+      - vault_value_untrusted.decrypt_vaulted_value == ('{' ~ '{ "not trusted" }}')

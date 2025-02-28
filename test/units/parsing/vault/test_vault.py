@@ -40,7 +40,7 @@ from ansible.parsing.vault import EncryptedString, VaultSecretsContext, VaultLib
 from ansible._internal._templating._jinja_common import VaultExceptionMarker, TruncationMarker, Marker
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
 from ansible._internal._templating._utils import TemplateContext
-from ansible._internal._datatag._tags import VaultedValue, Origin
+from ansible._internal._datatag._tags import VaultedValue, Origin, TrustedAsTemplate
 from ansible.utils.collection_loader import _EncryptedStringProtocol
 
 from units.mock.loader import DictDataLoader
@@ -1004,3 +1004,11 @@ def test_encrypted_string_path_fspath(_vault_secrets_context, expression: str, e
 def test_protocol_conformance(_vault_secrets_context) -> None:
     """Verify that the `_EncryptedStringProtocol` defined by the collection loader is implemented."""
     assert isinstance(make_encrypted_string("hey"), _EncryptedStringProtocol)
+
+
+def test_encrypted_string_cannot_be_trusted() -> None:
+    """Verify that `EncryptedString` cannot be trusted for templating."""
+    es = EncryptedString(ciphertext='x')
+    still_not_trusted = TrustedAsTemplate().tag(es)
+
+    assert not TrustedAsTemplate.is_tagged_on(still_not_trusted)

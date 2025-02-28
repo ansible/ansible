@@ -38,7 +38,7 @@ from ansible.module_utils._internal._datatag import (
     AnsibleTagHelper, AnsibleTaggedObject, _AnsibleTagsMapping, _EmptyROInternalTagsMapping, _EMPTY_INTERNAL_TAGS_MAPPING,
 )
 from ansible._internal._templating import _jinja_common
-from ansible._internal._datatag._tags import Origin, VaultedValue
+from ansible._internal._datatag._tags import Origin, VaultedValue, TrustedAsTemplate
 
 HAS_CRYPTOGRAPHY = False
 CRYPTOGRAPHY_BACKEND = None
@@ -1314,8 +1314,6 @@ class EncryptedString(AnsibleTaggedObject):
     Despite supporting `str` methods, access to an instance of this type through templating is recommended over direct access.
     """
 
-    # DTFIX-MERGE: DT allows templates in vaulted values; previously they were marked unsafe (why?) - if we want to preserve the old behavior,
-    #              just remove TrustedAsTemplate everywhere we create an EncryptedString, since the tag will propagate to the output string upon decryption.
     __slots__ = ('_ciphertext', '_plaintext', '_ansible_tags_mapping')
 
     _subclasses_native_type: t.ClassVar[bool] = False
@@ -1336,6 +1334,13 @@ class EncryptedString(AnsibleTaggedObject):
     @classmethod
     def _instance_factory(cls, value: t.Any, tags_mapping: _AnsibleTagsMapping) -> EncryptedString:
         instance = EncryptedString.__new__(EncryptedString)
+
+        # In 2.18 and earlier, vaulted values were not trusted.
+        # This maintains backwards compatibility with that.
+        # Additionally, supporting templating on vaulted values could be problematic for a few cases:
+        # 1) There's no composability of YAML tags, so you can't use `!unsafe` and `!vault` together.
+        # 2) It would make composability of `EncryptedString` with a possible future `TemplateString` more difficult.
+        tags_mapping.pop(TrustedAsTemplate, None)
 
         object.__setattr__(instance, '_ciphertext', value._ciphertext)
         object.__setattr__(instance, '_plaintext', value._plaintext)

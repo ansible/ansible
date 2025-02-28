@@ -35,7 +35,6 @@ from ansible.module_utils._internal._datatag import (
 )
 
 from ansible._internal._errors._handler import ErrorAction
-from ansible.parsing import vault as _vault
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 
 from ._access import AnsibleAccessContext
@@ -898,8 +897,7 @@ def is_possibly_template(value: str, overrides: TemplateOverrides = TemplateOver
     A lightweight check to determine if the given string looks like it contains a template, even if that template is invalid.
     Returns `True` if the given string starts with a Jinja overrides header or if it contains template start strings.
     """
-    # pylint: disable=unidiomatic-typecheck
-    return type(value) is _vault.EncryptedString or value.startswith(JINJA2_OVERRIDE) or overrides._contains_start_string(value)
+    return value.startswith(JINJA2_OVERRIDE) or overrides._contains_start_string(value)
 
 
 def is_possibly_all_template(value: str, overrides: TemplateOverrides = TemplateOverrides.DEFAULT):
@@ -907,8 +905,7 @@ def is_possibly_all_template(value: str, overrides: TemplateOverrides = Template
     A lightweight check to determine if the given string looks like it contains *only* a template, even if that template is invalid.
     Returns `True` if the given string starts with a Jinja overrides header or if it starts and ends with Jinja template delimiters.
     """
-    # pylint: disable=unidiomatic-typecheck
-    return type(value) is _vault.EncryptedString or value.startswith(JINJA2_OVERRIDE) or overrides._starts_and_ends_with_jinja_delimiters(value)
+    return value.startswith(JINJA2_OVERRIDE) or overrides._starts_and_ends_with_jinja_delimiters(value)
 
 
 class FinalizeMode(enum.Enum):
