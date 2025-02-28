@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -ex
+set -eux
 
 unset USR
 # this should succeed and return 'nobody' as var is undefined

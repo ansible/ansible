@@ -108,7 +108,7 @@
 - name: assert task was successfully checked
   assert:
     that:
-    - fnf_result.finished
+    - fnf_result.finished == 1
     - fnf_result is finished
 
 - name: test graceful module failure

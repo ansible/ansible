@@ -232,7 +232,7 @@
   vars:
     error: "{{ result.stderr | regex_replace('\\n', ' ') }}"
     expected_error: >-
-            ERROR! Failed to resolve the requested dependencies map.
+            Failed to resolve the requested dependencies map.
             Got the candidate namespace3.name:1.0.0 (direct request)
             which didn't satisfy all of the following requirements:
             * namespace3.name:1.2.0
@@ -241,7 +241,7 @@
   vars:
     error: "{{ result.stderr | regex_replace('\\n', ' ') }}"
     expected_error: >-
-            ERROR! Failed to resolve the requested dependencies map.
+            Failed to resolve the requested dependencies map.
             Got the candidate namespace3.name:1.0.0 (dependency of tmp_parent.name:1.0.0)
             which didn't satisfy all of the following requirements:
             * namespace3.name:1.2.0
@@ -535,7 +535,7 @@
 - assert:
     that:
       - required_together is failed
-      - '"ERROR! Signatures were provided to verify namespace1.name1 but no keyring was configured." in required_together.stderr'
+      - required_together.stderr is contains("Signatures were provided to verify namespace1.name1 but no keyring was configured.")
 
 - name: install collections with ansible-galaxy install -r with invalid signatures - {{ test_id }}
   # Note that --keyring is a valid option for 'ansible-galaxy install -r ...', not just 'ansible-galaxy collection ...'
@@ -796,7 +796,7 @@
     - name: assert cache version list is ignored on a collection version change - {{ test_id }}
       assert:
         that:
-        - '"Installing ''cache.cache:1.0.{{ cache_version_build }}'' to" in install_cached_update.stdout'
+        - '"Installing ''cache.cache:1.0." ~ cache_version_build ~ "'' to" in install_cached_update.stdout'
         - (install_cached_update_actual.content | b64decode | from_json).collection_info.version == '1.0.' ~ cache_version_build
 
 - name: install collection with symlink - {{ test_id }}

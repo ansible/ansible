@@ -392,7 +392,8 @@
               # We expect the role to actually run, but will fail because an undefined variable was referenced
               # and validation wasn't performed up front (thus not returning 'argument_errors').
               - "'argument_errors' not in ansible_failed_result"
-              - "'The task includes an option with an undefined variable.' in ansible_failed_result.msg"
+              - |
+                ansible_failed_result.msg is contains "'c_int' is undefined"
 
 - name: "New play to reset vars: Test collection-based role"
   hosts: localhost

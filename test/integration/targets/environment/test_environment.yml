@@ -96,7 +96,7 @@
     - name: assert foo==outer
       assert:
         that:
-          - "{{ test_foo.results[0].stdout == 'outer' }}"
+          - test_foo.results[0].stdout == 'outer'
 
     - name: set environment on a task
       environment:
@@ -120,7 +120,7 @@
     - name: assert foo==outer
       assert:
         that:
-          - "{{ test_foo.results[0].stdout == 'outer' }}"
+          - test_foo.results[0].stdout == 'outer'
 
     - name: set environment on a block
       environment:
@@ -170,4 +170,4 @@
     - name: assert foo==outer
       assert:
         that:
-          - "{{ test_foo.results[0].stdout == 'outer' }}"
+          - test_foo.results[0].stdout == 'outer'

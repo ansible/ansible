@@ -5,7 +5,7 @@
 - assert:
     that:
         - 'integer_sum == 3'
-        - 'integer_sum|type_debug == "int"'
+        - integer_sum|type_debug == "int"
 
 - name: add casted string and int
   set_fact:
@@ -14,7 +14,6 @@
 - assert:
     that:
         - 'integer_sum2 == 3'
-        - 'integer_sum2|type_debug == "int"'
 
 - name: concatenate int and string
   set_fact:
@@ -23,7 +22,6 @@
 - assert:
     that:
         - string_sum == "'12'"
-        - 'string_sum|type_debug in ["str", "unicode"]'
 
 - name: add two lists
   set_fact:
@@ -32,7 +30,6 @@
 - assert:
     that:
         - 'list_sum == ["one", "two", "three", "four"]'
-        - 'list_sum|type_debug == "list"'
 
 - name: add two lists, multi expression
   set_fact:
@@ -40,7 +37,8 @@
 
 - assert:
     that:
-        - 'list_sum_multi|type_debug in ["str", "unicode"]'
+        - |
+            list_sum_multi == "['one', 'two'] + ['three', 'four']"
 
 - name: add two dicts
   set_fact:
@@ -58,7 +56,6 @@
 - assert:
     that:
         - 'list_for_strings == "onetwo"'
-        - 'list_for_strings|type_debug in ["str", "unicode"]'
 
 - name: loop through list with int
   set_fact:
@@ -67,7 +64,6 @@
 - assert:
     that:
         - 'list_for_int == 1'
-        - 'list_for_int|type_debug == "int"'
 
 - name: loop through list with ints
   set_fact:
@@ -75,8 +71,7 @@
 
 - assert:
     that:
-        - 'list_for_ints == 42'
-        - 'list_for_ints|type_debug == "int"'
+        - 'list_for_ints | int == 42'
 
 - name: loop through list to create a new list
   set_fact:

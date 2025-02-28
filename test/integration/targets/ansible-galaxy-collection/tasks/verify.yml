@@ -44,7 +44,7 @@
     that:
       - verify is success
       - >-
-        "Found API version '{{ test_api_fallback_versions }}' with Galaxy server {{ test_api_fallback }}" in verify.stdout
+        "Found API version '" + test_api_fallback_versions + "' with Galaxy server " + test_api_fallback in verify.stdout
 
 - name: verify the installed collection against the server
   command: ansible-galaxy collection verify ansible_test.verify:1.0.0 -s {{ test_name }} {{ galaxy_verbosity }}

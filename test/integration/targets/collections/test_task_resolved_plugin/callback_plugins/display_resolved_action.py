@@ -27,8 +27,8 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).__init__(*args, **kwargs)
         self.requested_to_resolved = {}
 
-    def v2_playbook_on_task_start(self, task, is_conditional):
-        self.requested_to_resolved[task.action] = task.resolved_action
+    def v2_runner_on_ok(self, result):
+        self.requested_to_resolved[result._task.action] = result._task.resolved_action
 
     def v2_playbook_on_stats(self, stats):
         for requested, resolved in self.requested_to_resolved.items():

@@ -3,6 +3,7 @@
 set -eux
 
 export ANSIBLE_ROLES_PATH=./roles
+export ANSIBLE_GATHERING=explicit
 
 function gen_task_files() {
     for i in $(printf "%03d " {1..39}); do
@@ -80,7 +81,7 @@ ANSIBLE_STRATEGY='free' ansible-playbook undefined_var/playbook.yml  -i inventor
 # include_ + apply (explicit inheritance)
 ANSIBLE_STRATEGY='linear' ansible-playbook apply/include_apply.yml -i inventory "$@" --tags foo
 set +e
-OUT=$(ANSIBLE_STRATEGY='linear' ansible-playbook apply/import_apply.yml -i inventory "$@" --tags foo 2>&1 | grep 'ERROR! Invalid options for import_tasks: apply')
+OUT=$(ANSIBLE_STRATEGY='linear' ansible-playbook apply/import_apply.yml -i inventory "$@" --tags foo 2>&1 | grep 'Invalid options for import_tasks: apply')
 set -e
 if [[ -z "$OUT" ]]; then
     echo "apply on import_tasks did not cause error"
@@ -105,7 +106,7 @@ ANSIBLE_HOST_PATTERN_MISMATCH=warning ansible-playbook run_once/playbook.yml "$@
 
 # https://github.com/ansible/ansible/issues/48936
 ansible-playbook -v handler_addressing/playbook.yml 2>&1 | tee test_handler_addressing.out
-test "$(grep -E -c 'include handler task|ERROR! The requested handler '"'"'do_import'"'"' was not found' test_handler_addressing.out)" = 2
+test "$(grep -E -c 'include handler task|The requested handler '"'"'do_import'"'"' was not found' test_handler_addressing.out)" = 2
 
 # https://github.com/ansible/ansible/issues/49969
 ansible-playbook -v parent_templating/playbook.yml 2>&1 | tee test_parent_templating.out

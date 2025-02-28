@@ -76,10 +76,8 @@
     - assert:
         that:
           - ansible_failed_task.name == "EXPECTED FAILURE - test invalid arg"
-          - ansible_failed_result.msg in [expected1, expected2]
-      vars:
-        expected1: "unrecognized arguments to with_sequence: ['junk']"
-        expected2: "unrecognized arguments to with_sequence: [u'junk']"
+          - '"unrecognized arguments to with_sequence: " in ansible_failed_result.msg'
+          - '"junk" in ansible_failed_result.msg'
 
 - block:
     - name: EXPECTED FAILURE - test bad kv value
@@ -144,7 +142,7 @@
     - assert:
         that:
           - ansible_failed_task.name == "EXPECTED FAILURE - test no count or end"
-          - ansible_failed_result.msg == "must specify count or end in with_sequence"
+          - ansible_failed_result.msg is contains "must specify count or end in with_sequence"
 
 - block:
     - name: EXPECTED FAILURE - test both count and end
@@ -157,7 +155,7 @@
     - assert:
         that:
           - ansible_failed_task.name == "EXPECTED FAILURE - test both count and end"
-          - ansible_failed_result.msg == "can't specify both count and end in with_sequence"
+          - ansible_failed_result.msg is contains "can't specify both count and end in with_sequence"
 
 - block:
     - name: EXPECTED FAILURE - test count backwards message
@@ -170,7 +168,7 @@
     - assert:
         that:
           - ansible_failed_task.name == "EXPECTED FAILURE - test count backwards message"
-          - ansible_failed_result.msg == "to count backwards make stride negative"
+          - ansible_failed_result.msg is contains "to count backwards make stride negative"
 
 - block:
     - name: EXPECTED FAILURE - test count forward message
@@ -183,7 +181,7 @@
     - assert:
         that:
           - ansible_failed_task.name == "EXPECTED FAILURE - test count forward message"
-          - ansible_failed_result.msg == "to count forward don't make stride negative"
+          - ansible_failed_result.msg is contains "to count forward don't make stride negative"
 
 - block:
     - name: EXPECTED FAILURE - test bad format string message
@@ -196,7 +194,7 @@
     - assert:
         that:
           - ansible_failed_task.name == "EXPECTED FAILURE - test bad format string message"
-          - ansible_failed_result.msg == expected
+          - ansible_failed_result.msg is contains expected
       vars:
         expected: "bad formatting string: d"
 

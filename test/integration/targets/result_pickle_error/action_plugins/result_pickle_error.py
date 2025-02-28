@@ -4,11 +4,13 @@
 
 from __future__ import annotations
 
+import typing as t
+
 from ansible.plugins.action import ActionBase
 
 
 class CannotBePickled:
-    def __getstate__(self):
+    def __getstate__(self) -> t.NoReturn:
         raise Exception('pickle intentionally not supported')
 
 

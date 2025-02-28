@@ -131,7 +131,7 @@
       - "unarchive08_stat.stat.mode == '0601'"
       # Verify that file list is generated
       - "'files' in unarchive08"
-      - "{{unarchive08['files']| length}} == 3"
+      - unarchive08['files']| length == 3
       - "'foo-unarchive.txt' in unarchive08['files']"
       - "'foo-unarchive-777.txt' in unarchive08['files']"
       - "'FOO-UNAR.TXT' in unarchive08['files']"
@@ -163,7 +163,7 @@
       - "unarchive08_stat.stat.mode == '0601'"
       # Verify that file list is generated
       - "'files' in unarchive08"
-      - "{{unarchive08['files']| length}} == 3"
+      - unarchive08['files']| length == 3
       - "'foo-unarchive.txt' in unarchive08['files']"
       - "'foo-unarchive-777.txt' in unarchive08['files']"
       - "'FOO-UNAR.TXT' in unarchive08['files']"

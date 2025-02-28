@@ -45,9 +45,9 @@
     - name: loop
       debug:
       ignore_errors: true
-      changed_when: '{{ item.changed }}'
-      failed_when: '{{ item.failed }}'
-      when: '{{ item.when }}'
+      changed_when: item.changed
+      failed_when: item.failed
+      when: item.when
       loop:
         # ok
         - changed: false
