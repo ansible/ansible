@@ -99,7 +99,7 @@ class CollectionDependencyReporter(BaseReporter):
             else:
                 msg += 'The user requested '
             msg += str(req)
-        display.debug(msg)
+        display.v(msg)
 
     def backtracking(self, candidate: Candidate) -> None:  # resolvelib < 0.9.0
         """Print out rejection messages on pre-defined limit hits."""
