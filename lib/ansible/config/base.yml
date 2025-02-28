@@ -10,6 +10,7 @@ _ANSIBLE_CONNECTION_PATH:
   type: path
   version_added: "2.18"
 ALLOW_BROKEN_CONDITIONALS:
+  # This config option will be deprecated once it no longer has any effect (2.23).
   name: Allow broken conditionals
   default: false
   description:

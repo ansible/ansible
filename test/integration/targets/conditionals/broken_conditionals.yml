@@ -11,12 +11,3 @@
 
     - assert:
         that: result.failed != allow_broken_conditionals
-
-    - name: use a conditional with a templated non-boolean result
-      assert:
-        that: "{{ 'broken template' }}"
-      ignore_errors: yes
-      register: result
-
-    - assert:
-        that: result.failed != allow_broken_conditionals

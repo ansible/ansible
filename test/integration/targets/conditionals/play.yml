@@ -469,3 +469,14 @@
       - assert:
           that:
           - not sentinel_stat.stat.exists
+
+    - name: use a conditional with an untrusted string result
+      assert:
+        that: "{{ '1 == 1' }}"
+      ignore_errors: yes
+      register: untrusted_cond
+
+    - assert:
+        that:
+        - untrusted_cond is failed
+        - untrusted_cond.msg is contains "untrusted template or expression"

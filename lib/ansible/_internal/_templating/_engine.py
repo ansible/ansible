@@ -525,19 +525,15 @@ class TemplateEngine:
             return self._finalize_top_level_template_result(expression, options, template_result, is_expression=True)
 
     _BROKEN_CONDITIONAL_ALLOWED_FRAGMENT = 'Broken conditionals are currently allowed because the `ALLOW_BROKEN_CONDITIONALS` configuration option is enabled.'
+    _CONDITIONAL_AS_TEMPLATE_MSG = 'Conditionals should not be surrounded by templating delimiters such as {{ }} or {% %}.'
 
-    def evaluate_conditional(self, conditional: str | bool) -> bool:
+    def _strip_conditional_handle_empty(self, conditional) -> t.Any:
         """
-        Evaluate a trusted string expression or boolean and return its boolean result. A non-boolean result will raise `AnsibleBrokenConditionalError`.
-        The ALLOW_BROKEN_CONDITIONALS configuration option can temporarily relax this requirement, allowing truthy conditionals to succeed.
-        The ALLOW_EMBEDDED_TEMPLATES configuration option can temporarily enable inline Jinja template delimiter support (e.g., {{ }}, {% %}).
+        Strips leading/trailing whitespace from the input expression.
+        If `ALLOW_BROKEN_CONDITIONALS` is enabled, None/empty is coerced to True (legacy behavior, deprecated).
+        Otherwise, None/empty results in a broken conditional error being raised.
         """
-        # DTFIX-MERGE: this is an entry point into templating, can return non-bool if already within a template context (see `except AnsibleUndefinedVariable`)
-
-        if type(conditional) is bool:  # pylint: disable=unidiomatic-typecheck
-            return conditional
-
-        if is_str := isinstance(conditional, str):
+        if isinstance(conditional, str):
             # Always strip conditional input strings. Neither conditional expressions nor all-template conditionals have legit reasons to preserve
             # surrounding whitespace, and they complicate detection and processing of all-template fallback cases.
             conditional = conditional.strip()
@@ -556,40 +552,58 @@ class TemplateEngine:
 
             raise AnsibleBrokenConditionalError("Empty conditional expressions are not allowed.", obj=conditional)
 
-        is_expression = is_str and not is_possibly_all_template(conditional)
+        return conditional
 
-        if is_str and not is_expression:
-            msg = 'Conditionals should not be surrounded by templating delimiters such as {{ }} or {% %}.'
+    def _normalize_and_evaluate_conditional(self, conditional: str | bool) -> t.Any:
+        """Validate and normalize a conditional input value, resolving allowed embedded template cases and evaluating the resulting expression."""
+        conditional = self._strip_conditional_handle_empty(conditional)
 
-            if _TemplateConfig.allow_embedded_templates:
-                _display.deprecated(msg=msg, obj=conditional, version='2.21')
-            else:
-                raise AnsibleBrokenConditionalError(message=msg, obj=conditional)
+        # this must follow `_strip_conditional_handle_empty`, since None/empty are coerced to bool (deprecated)
+        if type(conditional) is bool:  # pylint: disable=unidiomatic-typecheck
+            return conditional
 
         try:
-            if not is_str:
+            if not isinstance(conditional, str):
                 if _TemplateConfig.allow_broken_conditionals:
-                    # because the input isn't a string, the result will never be a bool; the broken conditional warning below will apply on the result
-                    result = self.template(conditional)
-                else:
-                    raise AnsibleBrokenConditionalError(
-                        message="Conditional expressions must be strings.",
-                        obj=conditional,
-                    )
+                    # because the input isn't a string, the result will never be a bool; the broken conditional warning in the caller will apply on the result
+                    return self.template(conditional)
 
-            elif _TemplateConfig.allow_embedded_templates:
-                if is_expression:
-                    # Disable escape_backslashes when processing conditionals, to maintain backwards compatibility.
-                    # This is necessary because conditionals were previously evaluated using {% %}, which was *NOT* affected by escape_backslashes.
-                    # Now that conditionals use expressions, they would be affected by escape_backslashes if it was not disabled.
-                    result = self.evaluate_expression(conditional, escape_backslashes=False, _render_jinja_const_template=True)
-                else:
-                    result = self.template(conditional)
+                raise AnsibleBrokenConditionalError(message="Conditional expressions must be strings.", obj=conditional)
+
+            if is_possibly_all_template(conditional):
+                # Indirection of trusted expressions is always allowed. If the expression appears to be entirely wrapped in template delimiters,
+                # we must resolve it. e.g. `when: "{{ some_var_resolving_to_a_trusted_expression_string }}"`.
+                # Some invalid meta-templating corner cases may sneak through here (e.g., `when: '{{ "foo" }} == {{ "bar" }}'`); these will
+                # result in an untrusted expression error.
+                result = self.template(conditional)
+                result = self._strip_conditional_handle_empty(result)
+
+                if not isinstance(result, str):
+                    _display.deprecated(msg=self._CONDITIONAL_AS_TEMPLATE_MSG, obj=conditional, version='2.23')
+
+                    return result  # not an expression
+
+                # The only allowed use of templates for conditionals is for indirect usage of an expression.
+                # Any other usage should simply be an expression, not an attempt at meta templating.
+                expression = result
             else:
-                result = self.evaluate_expression(conditional, escape_backslashes=False)
+                expression = conditional
+
+            # Disable escape_backslashes when processing conditionals, to maintain backwards compatibility.
+            # This is necessary because conditionals were previously evaluated using {% %}, which was *NOT* affected by escape_backslashes.
+            # Now that conditionals use expressions, they would be affected by escape_backslashes if it was not disabled.
+            return self.evaluate_expression(expression, escape_backslashes=False, _render_jinja_const_template=True)
+
         except AnsibleUndefinedVariable as ex:
             # DTFIX-FUTURE: we're only augmenting the message for context here; once we have proper contextual tracking, we can dump the re-raise
             raise AnsibleUndefinedVariable("Error while evaluating conditional.", obj=conditional) from ex
+
+    def evaluate_conditional(self, conditional: str | bool) -> bool:
+        """
+        Evaluate a trusted string expression or boolean and return its boolean result. A non-boolean result will raise `AnsibleBrokenConditionalError`.
+        The ALLOW_BROKEN_CONDITIONALS configuration option can temporarily relax this requirement, allowing truthy conditionals to succeed.
+        """
+        result = self._normalize_and_evaluate_conditional(conditional)
 
         if isinstance(result, bool):
             return result
@@ -602,7 +616,7 @@ class TemplateEngine:
         )
 
         if _TemplateConfig.allow_broken_conditionals:
-            _display.deprecated(msg=msg, obj=conditional, help_text=self._BROKEN_CONDITIONAL_ALLOWED_FRAGMENT, version='2.21')
+            _display.deprecated(msg=msg, obj=conditional, help_text=self._BROKEN_CONDITIONAL_ALLOWED_FRAGMENT, version='2.23')
 
             return bool_result
 

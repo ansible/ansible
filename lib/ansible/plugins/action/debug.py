@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from ansible.errors import AnsibleValueOmittedError, AnsibleError, TemplateTrustCheckFailedError
+from ansible.errors import AnsibleValueOmittedError, AnsibleError
 from ansible.module_utils.common.validation import _check_type_str_no_conversion
 from ansible.plugins.action import ActionBase
 from ansible._internal._templating._jinja_common import UndefinedMarker, TruncationMarker
@@ -37,8 +37,6 @@ class ActionModule(ActionBase):
     _requires_connection = False
 
     def run(self, tmp=None, task_vars=None):
-        # DTFIX-MERGE: we need more consistent error handling, either all failures should be ignored or none of them
-
         validation_result, new_module_args = self.validate_argument_spec(
             argument_spec=dict(
                 msg=dict(type='raw', default='Hello world!'),
@@ -68,18 +66,11 @@ class ActionModule(ActionBase):
                 # If var name is same as result, try to template it
                 try:
                     results = self._templar._engine.extend(marker_behavior=var_behavior).evaluate_expression(raw_var_arg)
-                except TemplateTrustCheckFailedError as ex:
-                    results = raw_var_arg
-                    display.error_as_warning("The `var` expression must be trusted.", exception=ex)
                 except AnsibleValueOmittedError as ex:
                     results = repr(Omit)
                     display.warning("The result of the `var` expression could not be omitted; a placeholder was used instead.", obj=ex.obj)
                 except Exception as ex:
                     raise AnsibleError('Error while resolving `var` expression.', obj=raw_var_arg) from ex
-
-                # DTFIX-MERGE: how should debug handle the case of var being a template?
-                #        if the template results in an undefined value, the ReplaceUndefined behavior makes the result even more confusing
-                #        it seems like at a minimum, a warning about not using templates for `var` would be appropriate
 
                 result[raw_var_arg] = results
             else:

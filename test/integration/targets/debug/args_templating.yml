@@ -79,17 +79,36 @@
     that:
       - result is skipped
 
-# DTFIX-RELEASE: this capability works in devel; we'd need to have a special templating mode that propagates trust for all
+# this capability worked <=2.18; we'd need to have a special templating mode that propagates trust for all
 # inline constant strings in visit_Const (vs just those with handlebars today)... If present, this allows some degree
 # of dynamic variable selection for `var` (eg ternary), but you could also just use `msg`.
-- name: templated var with trusted scalar works
+- name: templated var with trusted scalar silently fails
   vars:
     trusted_varname: hi mom
   debug:
     var: '{{ "trusted_varname" }}'
+  ignore_errors: true
   register: result
 
 - assert:
     that:
-      #- result.trusted_varname == "hi mom"  # this is what devel does
-      - result.trusted_varname == "trusted_varname"
+      #- result.trusted_varname == "hi mom"  # this is what <=2.18 does
+      - result is failed
+      - result.msg is contains 'untrusted template or expression'
+
+- vars:
+    k1: v1
+    k2: v2
+  block:
+  - name: debug var indirection works for trusted string literals
+    debug:
+      var: '{{ item }}'
+    loop:
+      - k1
+      - k2
+    register: var_indirect_loop
+
+  - assert:
+      that:
+        - var_indirect_loop.results[0].k1 == k1
+        - var_indirect_loop.results[1].k2 == k2

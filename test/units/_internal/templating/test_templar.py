@@ -685,9 +685,8 @@ BROKEN_CONDITIONAL_VALUES = [
     ("1", True),
     ("1.1", True),
     ("'abc'", True),
-    ("{{ 'dude' }}", True),
-    ("{{ '' }}", False),
-    ("{{ None }}", False),
+    ("{{ '' }}", True),
+    ("{{ None }}", True),
     ("{{ 0 }}", False),
     ("{{ 0.0 }}", False),
     ("{{ [] }}", False),
@@ -724,12 +723,12 @@ def test_broken_conditionals_enabled(value: t.Any, expected_result: bool, mocker
 
     if isinstance(value, str) and is_possibly_all_template(value):
         assert deprecated_spy.call_count == 2
-        assert "should not be surrounded" in deprecated_spy.call_args_list[0].kwargs['msg']
+        assert any ("should not be surrounded" in call.kwargs['msg'] for call in deprecated_spy.call_args_list)
     else:
         assert deprecated_spy.call_count == 1
 
-    if value in (None, ''):
-        assert "Empty conditional" in deprecated_spy.call_args_list[-1].kwargs['msg']
+    if value in (None, '', "{{ '' }}", "{{ None }}"):
+        assert any("Empty conditional" in call.kwargs['msg'] for call in deprecated_spy.call_args_list)
     else:
         assert "must have a boolean result" in deprecated_spy.call_args_list[-1].kwargs['msg']
 

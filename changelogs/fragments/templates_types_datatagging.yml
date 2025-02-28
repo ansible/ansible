@@ -145,7 +145,8 @@ deprecated_features:
     Null values are no longer automatically converted to another value during templating of single variable references.
   - template lookup - The jinja2_native option is no longer used in the Ansible Core code base.
     Jinja2 native mode is now the default and only option.
-  - conditionals - Conditionals using Jinja templating delimiters (e.g., ``{{``, ``{%``) should be rewritten as expressions without delimiters.
+  - conditionals - Conditionals using Jinja templating delimiters (e.g., ``{{``, ``{%``) should be rewritten as expressions without delimiters, unless the entire conditional value is a single template that resolves to a trusted string expression.
+    This is useful for dynamic indirection of conditional expressions, but is limited to trusted literal string expressions.
   - templating - The ``disable_lookups`` option has no effect, since plugins must be updated to apply trust before any templating can be performed.
   - to_yaml/to_nice_yaml filters - Implicit YAML dumping of vaulted value ciphertext is deprecated.
     Set `dump_vault_tags` to explicitly specify the desired behavior.

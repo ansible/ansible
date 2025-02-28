@@ -107,18 +107,18 @@
     that:
       - res.deprecations | map(attribute="msg") | select('contains', 'should not be surrounded by templating delimiters') | length == 1
 
-- name: templated strings in expressions are processed
+- name: quoted string literal templates in conditional expressions are processed
   # solution: enable visit_Const trust tagging when processing a conditional expression (not a conditional template)
   assert:
     that: |
       "dude" == "du{{'de'}}"
 
-- name: templated strings in function args are processed in expressions
+- name: templated strings in function args are processed in conditional expressions
   assert:
     that: |
       dict({"dude": "{{ 'dude' }}"})["dude"] == "dude"
 
-- name: templated strings in function args are not processed in templates
+- name: templated strings in function args are not processed in conditional templates
   assert:
     that: |
       {{ dict({"dude": "{{ 'dude' }}"})["dude"] == "{" + "{ 'dude' }}" }}
@@ -129,7 +129,7 @@
     that: |
       {{ "du{" + "{'de'}}" == "du{{'de'}}" }}
 
-- name: templated strings in non-lookup function args are ignored
+- name: templated string literals in non-lookup function args are ignored
   # solution: do not template values in visit_Const, do not apply trust tags to const tagged values unless the function is a lookup
   debug:
     msg: |-
@@ -161,8 +161,6 @@
   register: result
   failed_when: result.msg | reject | length != 0
 
-
-
 - name: templated strings in lookup names are ignored
   # solution: exclude the lookup name from trust tagging and templating
   debug:
@@ -176,7 +174,7 @@
       - debug.msg is contains ('lookup plugin')
       - debug.msg is contains ('not found')
 
-- name: meta templating works in devel, but is not supported in data tagging
+- name: meta-templating expressions is not supported
   assert:
     that: |
       {{ 'hello' }} == {{ 'world' }}
@@ -186,7 +184,30 @@
 - assert:
     that:
     - result is failed
-    - result.msg is contains("must have a boolean result")
+    - result.msg is contains("untrusted template or expression")
+
+- name: validate template-indirected conditional expression success
+  assert:
+    that: '{{ item }}'  # only allowed when the template result is a trusted string literal; no meta-expressions!
+  loop:
+    - 1 == 1
+    - 2 == 2
+
+- name: validate template-indirected conditional expression failure
+  assert:
+    that: '{{ item }}'
+  loop:
+    - 1 == 1
+    - 1 == 42  # a false expression; ensure that we're actually evaluating
+  ignore_errors: true
+  register: cond_fail
+
+- assert:
+    that:
+    - cond_fail is failed
+    - cond_fail.results[1].msg is contains "Assertion failed"
+    - cond_fail.results[1].item == "1 == 42"
+
 
 # DTFIX-FUTURE: restore tests for `quiet` arg with a custom callback or output validation test
 # see: https://github.com/ansible/ansible/tree/d2bdbadb0327d519c1c353bf3e28f83ba1b59485/test/integration/targets/assert

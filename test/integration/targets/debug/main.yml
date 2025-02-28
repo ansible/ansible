@@ -13,10 +13,16 @@
       debug: var=item
       loop: [1, 2, 3]
 
-    - name: ensure that explicitly-tagged unsafe debug var does not template
+    - name: ensure that explicitly-tagged unsafe debug var fails
       debug:
         var: !unsafe debug_me
+      ignore_errors: true
       register: debug_out_unsafe
+
+    - assert:
+        that:
+          - debug_out_unsafe is failed
+          - debug_out_unsafe.msg is contains "untrusted template or expression"
 
     - name: ensure that the same var templates properly when its expression is not marked unsafe
       debug:
@@ -25,7 +31,6 @@
 
     - assert:
         that:
-        - debug_out_unsafe.debug_me == 'debug_me'
         - debug_out_safe.debug_me == 'hi mom'
 
     - name: render a data structure
