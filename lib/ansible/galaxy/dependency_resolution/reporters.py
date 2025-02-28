@@ -95,10 +95,10 @@ class CollectionDependencyReporter(BaseReporter):
             req, parent = req_info.requirement, req_info.parent
             msg += '\n    '
             if parent:
-                msg += f'{parent !r} depends on '
+                msg += f'{parent !s} depends on '
             else:
                 msg += 'The user requested '
-            msg += repr(req)
+            msg += str(req)
         display.debug(msg)
 
     def backtracking(self, candidate: Candidate) -> None:  # resolvelib < 0.9.0
